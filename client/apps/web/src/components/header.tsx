@@ -8,6 +8,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@trenova/shared/components/ui/breadcrumb";
+import { useSidebarFold } from "@/components/navigation/sidebar-fold";
 import { useBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { useHistoryNavigation } from "@/hooks/use-history-navigation";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
@@ -16,7 +17,6 @@ import { getPageTitle } from "@/lib/route-utils";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import { useNavigationStore } from "@/stores/navigation-store";
 import type { ToggleFavoriteRequest } from "@/types/page-favorite";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { SystemInformation } from "./system-information";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function Header() {
   return (
@@ -129,7 +130,9 @@ export function FavoriteToggle({ className }: { className?: string }) {
     invalidateQueries: [queries.pageFavorite.all._def, queries.pageFavorite.check._def],
     optimisticUpdate: (_variables, currentData) => !currentData,
     onSuccess: (result) => {
-      toast.success(result.favorited ? "Added to favorites" : "Removed from favorites");
+      toast.success(
+        result.favorited ? translate("Added to favorites") : translate("Removed from favorites"),
+      );
     },
   });
 
@@ -217,10 +220,9 @@ export function HeaderBreadcrumbs() {
   );
 }
 
-export function SidebarToggle() {
-  const collapsed = useNavigationStore((state) => state.sidebarCollapsed);
-  const toggleSidebar = useNavigationStore((state) => state.toggleSidebar);
-  const label = collapsed ? "Show sidebar" : "Hide sidebar";
+export function SidebarToggle({ className }: { className?: string }) {
+  const { shown, toggle } = useSidebarFold();
+  const label = shown ? "Hide sidebar" : "Show sidebar";
 
   return (
     <Tooltip>
@@ -230,9 +232,10 @@ export function SidebarToggle() {
             type="button"
             variant="ghost"
             size="icon-xs"
-            onClick={toggleSidebar}
+            onClick={toggle}
             aria-label={label}
-            aria-pressed={!collapsed}
+            aria-pressed={shown}
+            className={className}
           />
         }
       >

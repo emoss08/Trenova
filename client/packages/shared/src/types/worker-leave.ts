@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const leaveCaseStatusSchema = z.enum(["Pending", "Approved", "Denied", "Closed"]);
 export type LeaveCaseStatus = z.infer<typeof leaveCaseStatusSchema>;
@@ -47,7 +48,7 @@ export const leaveCaseFormSchema = z
     notes: z.string().nullable(),
   })
   .refine((values) => values.endsAt === null || values.endsAt >= values.startsAt, {
-    message: "Leave cannot end before it begins",
+    error: () => translate("Leave cannot end before it begins"),
     path: ["endsAt"],
   });
 export type LeaveCaseFormValues = z.infer<typeof leaveCaseFormSchema>;
@@ -57,8 +58,8 @@ export const leaveDayFormSchema = z.object({
   usedOn: z.number(),
   hours: z
     .number()
-    .positive("Record more than zero hours")
-    .max(24, "A day cannot hold more than 24 hours"),
+    .positive({ error: () => translate("Record more than zero hours") })
+    .max(24, { error: () => translate("A day cannot hold more than 24 hours") }),
   notes: z.string().nullable(),
 });
 export type LeaveDayFormValues = z.infer<typeof leaveDayFormSchema>;
@@ -73,20 +74,29 @@ export const leaveControlFormSchema = z
     measurementMethod: leaveMeasurementMethodSchema,
     entitlementWeeks: z
       .number()
-      .min(12, "FMLA entitles an eligible employee to at least twelve weeks"),
+      .min(12, {
+        error: () => translate("FMLA entitles an eligible employee to at least twelve weeks"),
+      }),
     militaryCaregiverWeeks: z
       .number()
-      .min(26, "Military caregiver leave is at least twenty-six weeks"),
-    workweekHours: z.number().positive("A workweek must be more than zero hours").max(168),
+      .min(26, { error: () => translate("Military caregiver leave is at least twenty-six weeks") }),
+    workweekHours: z
+      .number()
+      .positive({ error: () => translate("A workweek must be more than zero hours") })
+      .max(168),
     eligibilityMonths: z.number().int().min(0).max(120),
     eligibilityHours: z.number().int().min(0).max(8760),
     certificationDueDays: z
       .number()
       .int()
-      .min(15, "The employee must be given at least fifteen days (29 CFR 825.305(b))"),
+      .min(15, {
+        error: () =>
+          translate("The employee must be given at least fifteen days (29 CFR 825.305(b))"),
+      }),
   })
   .refine((values) => values.militaryCaregiverWeeks >= values.entitlementWeeks, {
-    message: "Military caregiver leave cannot be shorter than the ordinary entitlement",
+    error: () =>
+      translate("Military caregiver leave cannot be shorter than the ordinary entitlement"),
     path: ["militaryCaregiverWeeks"],
   });
 export type LeaveControlFormValues = z.infer<typeof leaveControlFormSchema>;

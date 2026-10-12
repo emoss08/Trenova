@@ -27,24 +27,26 @@ import { useChecklistInvalidation } from "./use-checklist-invalidation";
 
 export type ItemNoteMode = "skip" | "notApplicable";
 
-const COPY: Record<
-  ItemNoteMode,
-  { title: string; description: string; submit: string; required: string }
-> = {
-  skip: {
-    title: "Skip item",
-    description:
-      "The item settles without being done. It still counts toward closing the checklist, so say why.",
-    submit: "Skip item",
-    required: "Say why this item is being skipped",
-  },
-  notApplicable: {
-    title: "Mark not applicable",
-    description: "Use this when the item does not apply to this worker at all.",
-    submit: "Mark not applicable",
-    required: "Say why this item does not apply",
-  },
-};
+type NoteCopy = { title: string; description: string; submit: string; required: string };
+
+function noteCopy(mode: ItemNoteMode): NoteCopy {
+  if (mode === "skip") {
+    return {
+      title: translate("Skip item"),
+      description: translate(
+        "The item settles without being done. It still counts toward closing the checklist, so say why.",
+      ),
+      submit: translate("Skip item"),
+      required: translate("Say why this item is being skipped"),
+    };
+  }
+  return {
+    title: translate("Mark not applicable"),
+    description: translate("Use this when the item does not apply to this worker at all."),
+    submit: translate("Mark not applicable"),
+    required: translate("Say why this item does not apply"),
+  };
+}
 
 function noteSchema(required: string) {
   return z.object({
@@ -70,7 +72,7 @@ export function ItemNoteDialog({ open, onOpenChange, workerId, mode, item }: Ite
   const t = useT();
 
   const invalidate = useChecklistInvalidation(workerId);
-  const copy = COPY[mode];
+  const copy = noteCopy(mode);
   const form = useForm<NoteValues>({
     resolver: zodResolver(noteSchema(copy.required)) as Resolver<NoteValues>,
     defaultValues: { note: "" },
@@ -97,7 +99,9 @@ export function ItemNoteDialog({ open, onOpenChange, workerId, mode, item }: Ite
         : markWorkerChecklistItemNotApplicable(input);
     },
     onSuccess: () => {
-      toast.success(mode === "skip" ? "Item skipped" : "Item marked not applicable");
+      toast.success(
+        mode === "skip" ? translate("Item skipped") : translate("Item marked not applicable"),
+      );
       void invalidate();
       onOpenChange(false);
     },
@@ -107,10 +111,10 @@ export function ItemNoteDialog({ open, onOpenChange, workerId, mode, item }: Ite
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t(copy.title)}</DialogTitle>
+          <DialogTitle>{copy.title}</DialogTitle>
           <DialogDescription>
             {item ? <span className="font-medium">{t(item.label)}. </span> : null}
-            {t(copy.description)}
+            {copy.description}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

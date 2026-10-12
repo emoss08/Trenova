@@ -8,6 +8,7 @@ import type { PayeeClassification } from "@trenova/shared/types/driver-pay";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function payProfileStatusInput(row: PayProfileRow, status: "Active" | "Inactive") {
   return {
@@ -55,8 +56,10 @@ function StatusCell({ row }: { row: PayProfileRow }) {
         await queryClient.invalidateQueries({ queryKey: ["pay-profile-list"] });
         toast.success(
           status === "Active"
-            ? "Pay profile activated"
-            : "Pay profile deactivated — existing assignments keep paying until reassigned",
+            ? translate("Pay profile activated")
+            : translate(
+                "Pay profile deactivated — existing assignments keep paying until reassigned",
+              ),
         );
       }}
     />
@@ -79,12 +82,16 @@ function componentSummary(row: PayProfileRow): string {
         return `${kind} ${Number(component.rate)}%`;
       }
       if (component.bands && component.bands.length > 0) {
-        return `${kind} (${component.bands.length} bands)`;
+        return translate(
+          "{0} ({1, plural, one {# band} other {# bands}})",
+          kind,
+          component.bands.length,
+        );
       }
       return `${kind} $${Number(component.rate).toFixed(2)} ${method.toLowerCase()}`;
     })
     .join(" · ")
-    .concat(components.length > 3 ? ` +${components.length - 3} more` : "");
+    .concat(components.length > 3 ? ` ${translate("+{0} more", components.length - 3)}` : "");
 }
 
 export function getColumns(t: TranslateFn): ColumnDef<PayProfileRow>[] {

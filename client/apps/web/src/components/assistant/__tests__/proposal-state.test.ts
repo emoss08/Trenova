@@ -325,6 +325,20 @@ describe("pollIntervalFor", () => {
     expect(pollIntervalFor([], [plan({ status: "Completed", completedSteps: 2 })])).toBe(false);
     expect(pollIntervalFor([], [plan({ status: "Pending" })])).toBe(false);
   });
+
+  /*
+   * The server publishes the proposal's change when an approval commits and
+   * when it has run, so with realtime connected the 2 s poll only repeated
+   * what the event already said: an open Desk polled every running card's
+   * lists every two seconds. Connected, it is a slow safety net in case an
+   * event is lost; disconnected, it is the 2 s poll it always was.
+   */
+  it("polls slowly while realtime is connected, as a net for a lost event", () => {
+    const running = [proposal({ status: "Accepted" })];
+    expect(pollIntervalFor(running, [], true)).toBe(15_000);
+    expect(pollIntervalFor(running, [], false)).toBe(2000);
+    expect(pollIntervalFor([proposal({ status: "Pending" })], [], true)).toBe(false);
+  });
 });
 
 /**

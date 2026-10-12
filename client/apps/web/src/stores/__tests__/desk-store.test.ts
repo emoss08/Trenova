@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { rememberActiveArtifact, useDeskStore } from "../desk-store";
+import { rememberActiveArtifact, useDeskStore, withLiveHandoff } from "../desk-store";
 
 /**
  * The rail is the Desk's table of contents, and whether a person keeps it
@@ -68,5 +68,51 @@ describe("rememberActiveArtifact", () => {
     expect(Object.keys(remembered)).toHaveLength(40);
     expect(remembered.thr_0).toBeUndefined();
     expect(remembered.thr_44).toBe("art_44");
+  });
+});
+
+/**
+ * What the reply being written says about a hand-off, per conversation, for
+ * the top bar's menu. A reader is woken by a new record only, so an unchanged
+ * report must leave the record as it was.
+ */
+describe("the live hand-off", () => {
+  const billing: readonly string[] = ["agdef_billing"];
+
+  beforeEach(() => {
+    useDeskStore.setState({ liveHandoff: {} });
+  });
+
+  it("keeps what each conversation's reply said, and forgets it once the reply is gone", () => {
+    const { setLiveHandoff } = useDeskStore.getState();
+    setLiveHandoff("thr_1", { asked: true, agentIds: billing });
+    setLiveHandoff("thr_2", { asked: false, agentIds: [] });
+
+    expect(useDeskStore.getState().liveHandoff).toEqual({
+      thr_1: { asked: true, agentIds: ["agdef_billing"] },
+      thr_2: { asked: false, agentIds: [] },
+    });
+
+    setLiveHandoff("thr_1", null);
+    expect(useDeskStore.getState().liveHandoff).toEqual({
+      thr_2: { asked: false, agentIds: [] },
+    });
+  });
+
+  it("leaves the record alone when nothing changed", () => {
+    const current = withLiveHandoff({}, "thr_1", { asked: true, agentIds: billing });
+
+    expect(withLiveHandoff(current, "thr_1", { asked: true, agentIds: billing })).toBe(current);
+    expect(withLiveHandoff(current, "thr_9", null)).toBe(current);
+    expect(withLiveHandoff(current, "thr_1", { asked: false, agentIds: billing })).not.toBe(
+      current,
+    );
+  });
+
+  it("is not remembered between visits", () => {
+    useDeskStore.getState().setLiveHandoff("thr_1", { asked: true, agentIds: billing });
+
+    const partialize = useDeskStore.persist.getOptions().partialize;
+    expect(partialize?.(useDeskStore.getState())).not.toHaveProperty("liveHandoff");
   });
 });

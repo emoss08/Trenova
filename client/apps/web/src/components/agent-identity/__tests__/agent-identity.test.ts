@@ -158,7 +158,7 @@ describe("resolveAgentIdentity icon provenance", () => {
 describe("agent icons", () => {
   function serverIcons(): string[] {
     const source = readFileSync(
-      join(repoRoot(), "services/tms/internal/core/domain/agentdefinition/identity.go"),
+      join(repoRoot(), "services/tms/internal/modules/agent/domain/agentdefinition/identity.go"),
       "utf8",
     );
     const values = new Map<string, string>();
@@ -184,7 +184,7 @@ describe("agent icons", () => {
   // server draws with a banknote must not be drawn here with a robot.
   it("implies the icon the server implies for every starter", () => {
     const source = readFileSync(
-      join(repoRoot(), "services/tms/internal/core/domain/agentdefinition/identity.go"),
+      join(repoRoot(), "services/tms/internal/modules/agent/domain/agentdefinition/identity.go"),
       "utf8",
     );
     const values = new Map<string, string>();

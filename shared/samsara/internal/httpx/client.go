@@ -2,6 +2,7 @@ package httpx
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -10,9 +11,12 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/restx"
+	"github.com/emoss08/trenova/shared/samsara/internal/ratelimit"
 	samsaratypes "github.com/emoss08/trenova/shared/samsara/types"
 	"github.com/go-resty/resty/v2"
 )
+
+const defaultRateLimitPenalty = time.Second
 
 type RetryConfig struct {
 	Enabled        bool
@@ -28,6 +32,7 @@ type Config struct {
 	UserAgent  string
 	HTTPClient *http.Client
 	Retry      RetryConfig
+	Limiter    ratelimit.Limiter
 }
 
 type Request struct {
@@ -45,6 +50,25 @@ type Requester interface {
 
 type Client struct {
 	resty *resty.Client
+}
+
+type endpointContextKey struct{}
+
+type rateLimitWaitError struct {
+	err error
+}
+
+func (e *rateLimitWaitError) Error() string {
+	return "wait for samsara rate limit: " + e.err.Error()
+}
+
+func (e *rateLimitWaitError) Unwrap() error {
+	return e.err
+}
+
+type endpoint struct {
+	method string
+	path   string
 }
 
 //nolint:gocritic // constructor config is passed by value as immutable input.
@@ -72,6 +96,7 @@ func New(
 	}
 
 	configureRetries(rc, cfg.Retry)
+	configureRateLimit(rc, cfg.Limiter)
 
 	return &Client{resty: rc}, nil
 }
@@ -81,7 +106,9 @@ func (c *Client) Do(
 	ctx context.Context,
 	req Request,
 ) error {
-	request := c.resty.R().SetContext(ctx)
+	request := c.resty.R().SetContext(
+		context.WithValue(ctx, endpointContextKey{}, endpoint{method: req.Method, path: req.Path}),
+	)
 	if req.Query != nil {
 		request.SetQueryParamsFromValues(req.Query)
 	}
@@ -143,7 +170,8 @@ func configureRetries(client *resty.Client, cfg RetryConfig) {
 
 	client.AddRetryCondition(func(resp *resty.Response, err error) bool {
 		if err != nil {
-			return true
+			var waitErr *rateLimitWaitError
+			return !errors.As(err, &waitErr)
 		}
 		if resp == nil {
 			return false
@@ -163,6 +191,41 @@ func configureRetries(client *resty.Client, cfg RetryConfig) {
 			return 0, nil
 		}
 		return d, nil
+	})
+}
+
+func configureRateLimit(client *resty.Client, limiter ratelimit.Limiter) {
+	if limiter == nil {
+		return
+	}
+
+	client.OnBeforeRequest(func(_ *resty.Client, req *resty.Request) error {
+		ctx := req.Context()
+		target, ok := ctx.Value(endpointContextKey{}).(endpoint)
+		if !ok {
+			return nil
+		}
+		if err := limiter.Wait(ctx, target.method, target.path); err != nil {
+			return &rateLimitWaitError{err: err}
+		}
+		return nil
+	})
+
+	client.OnAfterResponse(func(_ *resty.Client, resp *resty.Response) error {
+		if resp == nil || resp.Request == nil ||
+			resp.StatusCode() != http.StatusTooManyRequests {
+			return nil
+		}
+		target, ok := resp.Request.Context().Value(endpointContextKey{}).(endpoint)
+		if !ok {
+			return nil
+		}
+		penalty, parsed := restx.ParseRetryAfter(resp.Header().Get("Retry-After"))
+		if !parsed {
+			penalty = defaultRateLimitPenalty
+		}
+		limiter.Penalize(target.method, target.path, penalty)
+		return nil
 	})
 }
 

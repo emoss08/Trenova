@@ -1,9 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { registerCatalogSource, setLocale } from "@trenova/shared/i18n/runtime";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { formatUnixDate } from "./date";
 import {
+  describeTrainingRecordOn,
   describeTrainingTiming,
   sortTrainingWorstFirst,
   trainingHealthMeta,
   trainingProgress,
+  trainingRecordStatusLabel,
 } from "./training";
 
 describe("trainingHealthMeta", () => {
@@ -76,5 +80,36 @@ describe("trainingProgress", () => {
       ]),
     ).toEqual({ satisfied: 2, required: 3, ratio: 2 / 3 });
     expect(trainingProgress([])).toEqual({ satisfied: 0, required: 0, ratio: 1 });
+  });
+});
+
+describe("training record status", () => {
+  // 2026-03-04 12:00 UTC: midday, so the calendar day is the same in every test time zone.
+  const completedAt = 1772625600;
+
+  beforeAll(async () => {
+    await registerCatalogSource({
+      es: async () => ({
+        "Completed {0}": "Completado el {0}",
+        "In progress since {0}": "En curso desde el {0}",
+        "In progress": "En curso",
+      }),
+    });
+    await setLocale("es");
+  });
+
+  afterAll(async () => {
+    await setLocale("en");
+  });
+
+  it("lets a translation place the date where its grammar needs it", () => {
+    const date = formatUnixDate(completedAt);
+    expect(describeTrainingRecordOn("Completed", completedAt)).toBe(`Completado el ${date}`);
+    expect(describeTrainingRecordOn("InProgress", completedAt)).toBe(`En curso desde el ${date}`);
+  });
+
+  it("names a status without a date in the reader's language", () => {
+    expect(trainingRecordStatusLabel("InProgress")).toBe("En curso");
+    expect(trainingRecordStatusLabel("Waived")).toBe("Waived");
   });
 });

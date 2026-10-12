@@ -107,7 +107,7 @@ describe("rateConfirmationSchema", () => {
 
 describe("publicRateConfirmationSchema", () => {
   // Fixture written from PublicRateConfirmationView in
-  // services/tms/internal/core/services/rateconfirmationservice/public.go:
+  // services/tms/internal/modules/rating/app/rateconfirmationservice/public.go:
   // all strings are always present (possibly empty), stops is a JSON array.
   it("parses the public preview payload", () => {
     const parsed = publicRateConfirmationSchema.parse({

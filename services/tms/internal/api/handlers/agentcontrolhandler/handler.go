@@ -5,8 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -16,13 +18,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              serviceports.AgentControlService
+	Service              agentports.AgentControlService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service serviceports.AgentControlService
+	service agentports.AgentControlService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -35,9 +37,9 @@ func New(p Params) *Handler {
 	}
 }
 
-func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
-	return serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalType(authCtx.PrincipalType),
+func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
+	return permissionports.RequestActor{
+		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
 		PrincipalID:    authCtx.PrincipalID,
 		UserID:         authCtx.UserID,
 		APIKeyID:       authCtx.APIKeyID,
@@ -93,7 +95,7 @@ func (h *Handler) update(c *gin.Context) {
 	actor := requestActorFromAuthContext(authCtx)
 	updated, err := h.service.Update(
 		c.Request.Context(),
-		&serviceports.UpdateAgentControlRequest{
+		&agentports.UpdateAgentControlRequest{
 			ShadowMode:             body.ShadowMode,
 			BillingAgentEnabled:    body.BillingAgentEnabled,
 			DecisionTimeoutSeconds: body.DecisionTimeoutSeconds,

@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { useDataTableRowActions, useDataTableRowState } from "@/contexts/data-table-row-context";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -16,13 +17,13 @@ import { Fragment } from "react";
 
 type ActionsCellProps = {
   row: Row<Shipment>;
-  actions: RowAction<Shipment>[];
-  expanded: boolean;
   onToggleExpanded: () => void;
 };
 
-export function ActionsCell({ row, actions, expanded, onToggleExpanded }: ActionsCellProps) {
+export function ActionsCell({ row, onToggleExpanded }: ActionsCellProps) {
   const t = useT();
+  const actions = useDataTableRowActions<Shipment>();
+  const { isExpanded: expanded } = useDataTableRowState();
   const visible = actions.filter((action) => !action.hidden?.(row));
   const standard = visible.filter((action) => action.variant !== "destructive");
   const destructive = visible.filter((action) => action.variant === "destructive");
@@ -38,7 +39,9 @@ export function ActionsCell({ row, actions, expanded, onToggleExpanded }: Action
         disabled={disabled}
         startContent={Icon ? <Icon className="size-3.5" /> : undefined}
         endContent={
-          action.shortcut ? <DropdownMenuShortcut>{action.shortcut}</DropdownMenuShortcut> : undefined
+          action.shortcut ? (
+            <DropdownMenuShortcut>{action.shortcut}</DropdownMenuShortcut>
+          ) : undefined
         }
         onClick={(event) => {
           event.stopPropagation();
@@ -49,7 +52,10 @@ export function ActionsCell({ row, actions, expanded, onToggleExpanded }: Action
   };
 
   return (
-    <div className="flex items-center justify-end gap-0.5" onClick={(event) => event.stopPropagation()}>
+    <div
+      className="flex items-center justify-end gap-0.5"
+      onClick={(event) => event.stopPropagation()}
+    >
       <Button
         variant="ghost"
         size="icon-xs"

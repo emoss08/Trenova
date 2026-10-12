@@ -38,9 +38,10 @@ export function ARKpiRow() {
         size="lg"
         label={t("AR outstanding")}
         value={formatCurrency(kpis.overview.totalOpenMinor / 100)}
-        sub={`${kpis.overview.openInvoiceCount} open ${
-          kpis.overview.openInvoiceCount === 1 ? "invoice" : "invoices"
-        }`}
+        sub={t(
+          "{0, plural, one {# open invoice} other {# open invoices}}",
+          kpis.overview.openInvoiceCount,
+        )}
         to="/accounting/ar/aging"
       />
       <KpiStripItem
@@ -71,7 +72,7 @@ export function ARKpiRow() {
         label={t("Overdue")}
         tone={kpis.overduePercent >= 25 ? "danger" : undefined}
         value={`${kpis.overduePercent.toFixed(1)}%`}
-        sub={`${formatCurrency(kpis.overview.overdueMinor / 100)} past due`}
+        sub={t("{0} past due", formatCurrency(kpis.overview.overdueMinor / 100))}
         to="/accounting/ar/open-items"
       />
     </KpiStrip>

@@ -60,7 +60,9 @@ export function providerBrandDomain(
     return null;
   }
   if (isPrivateHost(host)) {
-    return null;
+    // A private host could be any server, but Ollama's own protocol is spoken
+    // by Ollama alone, so that one still names its vendor.
+    return provider.kind === "Ollama" ? (KIND_VENDOR_DOMAIN.Ollama ?? null) : null;
   }
 
   const preset = presets.find(
@@ -74,4 +76,22 @@ export function providerBrandDomain(
   }
 
   return registrableDomain(host);
+}
+
+/** Services an AWS host names in its own label, as `bedrock-runtime.<region>.amazonaws.com` does. */
+const SERVICE_HOSTS: readonly { label: RegExp; presetKey: string }[] = [
+  { label: /^bedrock(-[a-z]+)?$/, presetKey: "bedrock" },
+];
+
+/**
+ * The preset whose mark a saved provider takes when its host names the service
+ * rather than only the vendor, or null to leave the logo to the domain.
+ */
+export function providerBrandPresetKey(provider: { baseUrl: string }): string | null {
+  const host = hostOf(provider.baseUrl);
+  if (!host) {
+    return null;
+  }
+  const first = host.split(".")[0] ?? "";
+  return SERVICE_HOSTS.find((service) => service.label.test(first))?.presetKey ?? null;
 }

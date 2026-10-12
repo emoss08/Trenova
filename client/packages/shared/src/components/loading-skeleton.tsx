@@ -3,9 +3,11 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Skeleton } from "./ui/skeleton";
 import { Spinner } from "./ui/spinner";
 import { TextShimmer } from "./ui/text-shimmer";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 export default function LoadingSkeleton() {
   const t = useT();
+  const rt = useRichT();
 
   return (
     <div className="flex min-h-screen flex-row items-center justify-center text-center">
@@ -15,9 +17,13 @@ export default function LoadingSkeleton() {
             <Spinner className="size-10" />
           </div>
           <p className="mb-2 text-xl font-semibold">
-            {t("Hang tight!")}{" "}
-            <u className="font-semibold underline decoration-info">{t("Trenova")}</u>{" "}
-            {t("is gearing up for you.")}
+            {rt(
+              "Hang tight! <u>{0}</u> is gearing up for you.",
+              {
+                u: (c) => <u className="font-semibold underline decoration-info">{c}</u>,
+              },
+              t("Trenova"),
+            )}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {t(

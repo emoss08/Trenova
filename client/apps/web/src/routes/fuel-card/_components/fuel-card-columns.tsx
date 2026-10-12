@@ -96,10 +96,13 @@ export function getColumns(t: TranslateFn): ColumnDef<FuelCardRow>[] {
       },
       enableSorting: false,
       meta: {
+        label: t("Assigned worker"),
         apiField: "assignedWorkerId",
-        filterable: false,
         sortable: false,
         exportValue: (row: FuelCardRow) => row.assignedWorker?.wholeName ?? "",
+        filterable: true,
+        filterType: "record",
+        filterRecord: "WORKER",
       },
     },
     {
@@ -127,10 +130,13 @@ export function getColumns(t: TranslateFn): ColumnDef<FuelCardRow>[] {
       enableSorting: false,
       size: 110,
       meta: {
+        label: t("Assigned tractor"),
         apiField: "assignedTractorId",
-        filterable: false,
         sortable: false,
         exportValue: (row: FuelCardRow) => row.assignedTractor?.code ?? "",
+        filterable: true,
+        filterType: "record",
+        filterRecord: "TRACTOR",
       },
     },
     {

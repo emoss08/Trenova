@@ -9,11 +9,11 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -80,7 +80,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.FuelCard)
 					return obj.Provider, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider),
+				Marshal: gqlexec.Marshal(marshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardProvider),
 			},
 			{
 				Name:     "lastFour",
@@ -141,7 +141,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.FuelCard)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelCardStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardStatus),
+				Marshal: gqlexec.Marshal(marshalNFuelCardStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardStatus),
 			},
 			{
 				Name:       "expiresAt",
@@ -232,7 +232,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.FuelCard)
 					return gqlexec.Resolver[resolverFuelCard](ec, "FuelCard").AssignedWorker(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker),
+				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 			{
 				Name:       "assignedTractor",
@@ -244,7 +244,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.FuelCard)
 					return gqlexec.Resolver[resolverFuelCard](ec, "FuelCard").AssignedTractor(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtractorᚐTractor),
+				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
 		}},
 		{Object: "FuelCardConnection", Fields: []*gqlexec.Field{
@@ -290,7 +290,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelCardEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelCard),
+				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
 			{
 				Name:     "cursor",
@@ -312,7 +312,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelCardSyncResult)
 					return obj.Provider, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider),
+				Marshal: gqlexec.Marshal(marshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardProvider),
 			},
 			{
 				Name:     "batchId",
@@ -536,7 +536,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return obj.QuantityUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelQuantityUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐQuantityUnit),
+				Marshal: gqlexec.Marshal(marshalNFuelQuantityUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐQuantityUnit),
 			},
 			{
 				Name:       "gallons",
@@ -611,7 +611,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchaseSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐPurchaseSource),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchaseSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐPurchaseSource),
 			},
 			{
 				Name:       "importBatchId",
@@ -694,7 +694,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").Tractor(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtractorᚐTractor),
+				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
 			{
 				Name:       "worker",
@@ -706,7 +706,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").Worker(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker),
+				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 			{
 				Name:       "jurisdiction",
@@ -719,7 +719,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").Jurisdiction(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdiction),
+				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdiction),
 			},
 			{
 				Name:       "fuelCard",
@@ -731,7 +731,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.FuelPurchase)
 					return gqlexec.Resolver[resolverFuelPurchase](ec, "FuelPurchase").FuelCard(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelCard),
+				Marshal: gqlexec.Marshal(marshalOFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
 		}},
 		{Object: "FuelPurchaseConnection", Fields: []*gqlexec.Field{
@@ -777,7 +777,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelPurchaseEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelPurchase),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelPurchase),
 			},
 			{
 				Name:     "cursor",
@@ -829,7 +829,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.ImportBatch)
 					return obj.Provider, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider),
+				Marshal: gqlexec.Marshal(marshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardProvider),
 			},
 			{
 				Name:     "origin",
@@ -839,7 +839,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.ImportBatch)
 					return obj.Origin, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportOrigin2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportOrigin),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportOrigin2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportOrigin),
 			},
 			{
 				Name:     "feedReference",
@@ -879,7 +879,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.ImportBatch)
 					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").SourceFormat(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOFuelImportFormat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐSourceFormat),
+				Marshal: gqlexec.Marshal(marshalOFuelImportFormat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐSourceFormat),
 			},
 			{
 				Name:     "status",
@@ -889,7 +889,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.ImportBatch)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportStatus),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportStatus),
 			},
 			{
 				Name:       "defaultFuelType",
@@ -954,7 +954,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.ImportBatch)
 					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").Summary(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOFuelPurchaseImportSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportSummary),
+				Marshal: gqlexec.Marshal(marshalOFuelPurchaseImportSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportSummary),
 			},
 			{
 				Name:     "rowCount",
@@ -1079,7 +1079,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.ImportBatch)
 					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").Document(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumentᚐDocument),
+				Marshal: gqlexec.Marshal(marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument),
 			},
 			{
 				Name:       "defaultFuelCard",
@@ -1091,7 +1091,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.ImportBatch)
 					return gqlexec.Resolver[resolverFuelPurchaseImportBatch](ec, "FuelPurchaseImportBatch").DefaultFuelCard(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelCard),
+				Marshal: gqlexec.Marshal(marshalOFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
 			{
 				Name:       "rows",
@@ -1152,7 +1152,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelPurchaseImportBatchEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportBatch),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch),
 			},
 			{
 				Name:     "cursor",
@@ -1227,7 +1227,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelPurchaseImportParsed)
 					return obj.QuantityUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOFuelQuantityUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐQuantityUnit),
+				Marshal: gqlexec.Marshal(marshalOFuelQuantityUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐQuantityUnit),
 			},
 			{
 				Name:     "gallons",
@@ -1312,7 +1312,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelPurchaseImportResolveResult)
 					return obj.Batch, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportBatch),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch),
 			},
 			{
 				Name:     "reviewed",
@@ -1445,7 +1445,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.ImportRow)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportRowStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportRowStatus),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportRowStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportRowStatus),
 			},
 			{
 				Name:     "error",
@@ -1530,7 +1530,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*fuelpurchase.ImportRow)
 					return gqlexec.Resolver[resolverFuelPurchaseImportRow](ec, "FuelPurchaseImportRow").ResolvedTractor(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtractorᚐTractor),
+				Marshal: gqlexec.Marshal(marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor),
 			},
 		}},
 		{Object: "FuelPurchaseImportRowConnection", Fields: []*gqlexec.Field{
@@ -1576,7 +1576,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FuelPurchaseImportRowEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportRow),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportRow),
 			},
 			{
 				Name:     "cursor",
@@ -1721,7 +1721,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFuelCard(ctx, fc.Args["input"].(gqlmodel.FuelCardInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelCard),
+				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
 			{
 				Name:       "updateFuelCard",
@@ -1734,7 +1734,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFuelCard(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.FuelCardInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelCard),
+				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
 			{
 				Name:       "cancelFuelCard",
@@ -1747,7 +1747,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelFuelCard(ctx, fc.Args["input"].(gqlmodel.CancelFuelCardInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelCard),
+				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
 			{
 				Name:       "assignFuelCard",
@@ -1760,7 +1760,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignFuelCard(ctx, fc.Args["input"].(gqlmodel.AssignFuelCardInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelCard),
+				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
 			{
 				Name:       "syncFuelCardFeed",
@@ -1786,7 +1786,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFuelPurchase(ctx, fc.Args["input"].(gqlmodel.FuelPurchaseInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelPurchase),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelPurchase),
 			},
 			{
 				Name:       "updateFuelPurchase",
@@ -1799,7 +1799,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFuelPurchase(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.FuelPurchaseInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelPurchase),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelPurchase),
 			},
 			{
 				Name:       "deleteFuelPurchase",
@@ -1824,7 +1824,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFuelPurchaseImport(ctx, fc.Args["input"].(gqlmodel.CreateFuelPurchaseImportInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportBatch),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch),
 			},
 			{
 				Name:       "stageFuelPurchaseImport",
@@ -1837,7 +1837,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").StageFuelPurchaseImport(ctx, fc.Args["input"].(gqlmodel.StageFuelPurchaseImportInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportBatch),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch),
 			},
 			{
 				Name:       "commitFuelPurchaseImport",
@@ -1850,7 +1850,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CommitFuelPurchaseImport(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportBatch),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch),
 			},
 			{
 				Name:       "resolveFuelPurchaseImportRows",
@@ -1876,7 +1876,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DiscardFuelPurchaseImport(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["reason"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportBatch),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -1906,7 +1906,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelCard(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelCard),
+				Marshal: gqlexec.Marshal(marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard),
 			},
 			{
 				Name:       "fuelPurchases",
@@ -1934,7 +1934,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelPurchase(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelPurchase),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelPurchase),
 			},
 			{
 				Name:       "fuelPurchaseImports",
@@ -1962,7 +1962,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FuelPurchaseImport(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportBatch),
+				Marshal: gqlexec.Marshal(marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch),
 			},
 			{
 				Name:       "fuelPurchaseImportTemplate",
@@ -2192,7 +2192,7 @@ func field_Mutation_syncFuelCardFeed_args(ctx context.Context, ec *gqlexec.Exec,
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "provider",
 		func(ctx context.Context, v any) (fuelpurchase.CardProvider, error) {
-			return unmarshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, ec, v)
+			return unmarshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -2443,7 +2443,7 @@ func field_Query_fuelPurchaseImportTemplate_args(ctx context.Context, ec *gqlexe
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "provider",
 		func(ctx context.Context, v any) (fuelpurchase.CardProvider, error) {
-			return unmarshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, ec, v)
+			return unmarshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -2570,7 +2570,7 @@ func unmarshalInputCreateFuelPurchaseImportInput(ctx context.Context, ec *gqlexe
 		switch k {
 		case "provider":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-			data, err := unmarshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, ec, v)
+			data, err := unmarshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -2631,7 +2631,7 @@ func unmarshalInputFuelCardInput(ctx context.Context, ec *gqlexec.Exec, obj any)
 		switch k {
 		case "provider":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-			data, err := unmarshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, ec, v)
+			data, err := unmarshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -2673,7 +2673,7 @@ func unmarshalInputFuelCardInput(ctx context.Context, ec *gqlexec.Exec, obj any)
 			it.AssignedTractorID = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalOFuelCardStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardStatus(ctx, ec, v)
+			data, err := unmarshalOFuelCardStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -2762,14 +2762,14 @@ func unmarshalInputFuelCardsInput(ctx context.Context, ec *gqlexec.Exec, obj any
 			it.Sort = data
 		case "provider":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-			data, err := unmarshalOFuelCardProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, ec, v)
+			data, err := unmarshalOFuelCardProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Provider = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalOFuelCardStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardStatus(ctx, ec, v)
+			data, err := unmarshalOFuelCardStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -2844,7 +2844,7 @@ func unmarshalInputFuelPurchaseImportRowsInput(ctx context.Context, ec *gqlexec.
 			it.After = data
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOFuelPurchaseImportRowStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportRowStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOFuelPurchaseImportRowStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportRowStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -2919,21 +2919,21 @@ func unmarshalInputFuelPurchaseImportsInput(ctx context.Context, ec *gqlexec.Exe
 			it.Sort = data
 		case "origin":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("origin"))
-			data, err := unmarshalOFuelPurchaseImportOrigin2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportOrigin(ctx, ec, v)
+			data, err := unmarshalOFuelPurchaseImportOrigin2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportOrigin(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Origin = data
 		case "provider":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-			data, err := unmarshalOFuelCardProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, ec, v)
+			data, err := unmarshalOFuelCardProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardProvider(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Provider = data
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOFuelPurchaseImportStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOFuelPurchaseImportStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3035,7 +3035,7 @@ func unmarshalInputFuelPurchaseInput(ctx context.Context, ec *gqlexec.Exec, obj 
 			it.Quantity = data
 		case "quantityUnit":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantityUnit"))
-			data, err := unmarshalOFuelQuantityUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐQuantityUnit(ctx, ec, v)
+			data, err := unmarshalOFuelQuantityUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐQuantityUnit(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3201,7 +3201,7 @@ func unmarshalInputFuelPurchasesInput(ctx context.Context, ec *gqlexec.Exec, obj
 			it.FuelTypes = data
 		case "sources":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sources"))
-			data, err := unmarshalOFuelPurchaseSource2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐPurchaseSourceᚄ(ctx, ec, v)
+			data, err := unmarshalOFuelPurchaseSource2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐPurchaseSourceᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3323,7 +3323,7 @@ func unmarshalNFuelCardInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider(ctx context.Context, ec *gqlexec.Exec, v any) (fuelpurchase.CardProvider, error) {
+func unmarshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardProvider(ctx context.Context, ec *gqlexec.Exec, v any) (fuelpurchase.CardProvider, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := fuelpurchase.CardProvider(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3334,13 +3334,13 @@ func unmarshalNFuelCardsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFuelPurchaseImportRowStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportRowStatus(ctx context.Context, ec *gqlexec.Exec, v any) (fuelpurchase.ImportRowStatus, error) {
+func unmarshalNFuelPurchaseImportRowStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportRowStatus(ctx context.Context, ec *gqlexec.Exec, v any) (fuelpurchase.ImportRowStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := fuelpurchase.ImportRowStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFuelPurchaseImportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportStatus(ctx context.Context, ec *gqlexec.Exec, v any) (fuelpurchase.ImportStatus, error) {
+func unmarshalNFuelPurchaseImportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportStatus(ctx context.Context, ec *gqlexec.Exec, v any) (fuelpurchase.ImportStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := fuelpurchase.ImportStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3356,7 +3356,7 @@ func unmarshalNFuelPurchaseInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFuelPurchaseSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐPurchaseSource(ctx context.Context, ec *gqlexec.Exec, v any) (fuelpurchase.PurchaseSource, error) {
+func unmarshalNFuelPurchaseSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐPurchaseSource(ctx context.Context, ec *gqlexec.Exec, v any) (fuelpurchase.PurchaseSource, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := fuelpurchase.PurchaseSource(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3433,7 +3433,7 @@ func unmarshalOFilterGroupInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFilterGroupInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFilterGroupInput)
 }
 
-func unmarshalOFuelCardProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelpurchase.CardProvider, error) {
+func unmarshalOFuelCardProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardProvider(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelpurchase.CardProvider, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3442,7 +3442,7 @@ func unmarshalOFuelCardProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFuelCardStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelpurchase.CardStatus, error) {
+func unmarshalOFuelCardStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelpurchase.CardStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3451,7 +3451,7 @@ func unmarshalOFuelCardStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFuelPurchaseImportOrigin2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportOrigin(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelpurchase.ImportOrigin, error) {
+func unmarshalOFuelPurchaseImportOrigin2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportOrigin(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelpurchase.ImportOrigin, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3460,11 +3460,11 @@ func unmarshalOFuelPurchaseImportOrigin2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFuelPurchaseImportRowStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportRowStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]fuelpurchase.ImportRowStatus, error) {
+func unmarshalOFuelPurchaseImportRowStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportRowStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]fuelpurchase.ImportRowStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFuelPurchaseImportRowStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportRowStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFuelPurchaseImportRowStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportRowStatus)
 }
 
 func unmarshalOFuelPurchaseImportRowsInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFuelPurchaseImportRowsInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.FuelPurchaseImportRowsInput, error) {
@@ -3475,21 +3475,21 @@ func unmarshalOFuelPurchaseImportRowsInput2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFuelPurchaseImportStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]fuelpurchase.ImportStatus, error) {
+func unmarshalOFuelPurchaseImportStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]fuelpurchase.ImportStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFuelPurchaseImportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFuelPurchaseImportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportStatus)
 }
 
-func unmarshalOFuelPurchaseSource2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐPurchaseSourceᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]fuelpurchase.PurchaseSource, error) {
+func unmarshalOFuelPurchaseSource2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐPurchaseSourceᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]fuelpurchase.PurchaseSource, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFuelPurchaseSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐPurchaseSource)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFuelPurchaseSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐPurchaseSource)
 }
 
-func unmarshalOFuelQuantityUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐQuantityUnit(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelpurchase.QuantityUnit, error) {
+func unmarshalOFuelQuantityUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐQuantityUnit(ctx context.Context, ec *gqlexec.Exec, v any) (*fuelpurchase.QuantityUnit, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3577,7 +3577,7 @@ func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Selec
 	return res
 }
 
-func marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelCard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.FuelCard) graphql.Marshaler {
+func marshalNFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.FuelCard) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3609,7 +3609,7 @@ func marshalNFuelCardEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return ec.MarshalType(ctx, sel, "FuelCardEdge", v)
 }
 
-func marshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardProvider(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.CardProvider) graphql.Marshaler {
+func marshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardProvider(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.CardProvider) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3617,7 +3617,7 @@ func marshalNFuelCardProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return res
 }
 
-func marshalNFuelCardStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐCardStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.CardStatus) graphql.Marshaler {
+func marshalNFuelCardStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐCardStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.CardStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3641,7 +3641,7 @@ func marshalNFuelImportTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "FuelImportTemplate", v)
 }
 
-func marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelPurchase(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.FuelPurchase) graphql.Marshaler {
+func marshalNFuelPurchase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelPurchase(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.FuelPurchase) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3673,7 +3673,7 @@ func marshalNFuelPurchaseEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return ec.MarshalType(ctx, sel, "FuelPurchaseEdge", v)
 }
 
-func marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportBatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.ImportBatch) graphql.Marshaler {
+func marshalNFuelPurchaseImportBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportBatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.ImportBatch) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3705,7 +3705,7 @@ func marshalNFuelPurchaseImportBatchEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "FuelPurchaseImportBatchEdge", v)
 }
 
-func marshalNFuelPurchaseImportOrigin2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportOrigin(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.ImportOrigin) graphql.Marshaler {
+func marshalNFuelPurchaseImportOrigin2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportOrigin(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.ImportOrigin) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3721,7 +3721,7 @@ func marshalNFuelPurchaseImportResolveResult2ᚖgithubᚗcomᚋemoss08ᚋtrenova
 	return ec.MarshalType(ctx, sel, "FuelPurchaseImportResolveResult", v)
 }
 
-func marshalNFuelPurchaseImportRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.ImportRow) graphql.Marshaler {
+func marshalNFuelPurchaseImportRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.ImportRow) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3753,7 +3753,7 @@ func marshalNFuelPurchaseImportRowEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return ec.MarshalType(ctx, sel, "FuelPurchaseImportRowEdge", v)
 }
 
-func marshalNFuelPurchaseImportRowStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportRowStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.ImportRowStatus) graphql.Marshaler {
+func marshalNFuelPurchaseImportRowStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportRowStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.ImportRowStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3761,7 +3761,7 @@ func marshalNFuelPurchaseImportRowStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
-func marshalNFuelPurchaseImportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.ImportStatus) graphql.Marshaler {
+func marshalNFuelPurchaseImportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.ImportStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3769,7 +3769,7 @@ func marshalNFuelPurchaseImportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNFuelPurchaseSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐPurchaseSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.PurchaseSource) graphql.Marshaler {
+func marshalNFuelPurchaseSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐPurchaseSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.PurchaseSource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3777,7 +3777,7 @@ func marshalNFuelPurchaseSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return res
 }
 
-func marshalNFuelQuantityUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐQuantityUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.QuantityUnit) graphql.Marshaler {
+func marshalNFuelQuantityUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐQuantityUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fuelpurchase.QuantityUnit) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3801,7 +3801,7 @@ func marshalNIFTAFuelType2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypes�
 	return res
 }
 
-func marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiftaᚐJurisdiction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.Jurisdiction) graphql.Marshaler {
+func marshalNIFTAJurisdiction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdiction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ifta.Jurisdiction) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3866,14 +3866,14 @@ func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Se
 	return res
 }
 
-func marshalOFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐFuelCard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.FuelCard) graphql.Marshaler {
+func marshalOFuelCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐFuelCard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.FuelCard) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FuelCard", v)
 }
 
-func marshalOFuelImportFormat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐSourceFormat(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.SourceFormat) graphql.Marshaler {
+func marshalOFuelImportFormat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐSourceFormat(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.SourceFormat) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -3888,14 +3888,14 @@ func marshalOFuelPurchaseImportParsed2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "FuelPurchaseImportParsed", v)
 }
 
-func marshalOFuelPurchaseImportSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐImportSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.ImportSummary) graphql.Marshaler {
+func marshalOFuelPurchaseImportSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐImportSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.ImportSummary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FuelPurchaseImportSummary", v)
 }
 
-func marshalOFuelQuantityUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋfuelpurchaseᚐQuantityUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.QuantityUnit) graphql.Marshaler {
+func marshalOFuelQuantityUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋfuelpurchaseᚐQuantityUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fuelpurchase.QuantityUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -3964,21 +3964,21 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	return res
 }
 
-func marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtractorᚐTractor(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tractor.Tractor) graphql.Marshaler {
+func marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋtractorᚐTractor(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tractor.Tractor) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Tractor", v)
 }
 
-func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
+func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Worker", v)
 }
 
-func marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumentᚐDocument(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *document.Document) graphql.Marshaler {
+func marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *document.Document) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -1,0 +1,9 @@
+package edijobs
+
+import "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+
+type ApproveLoadTenderTransferWorkflowPayload = ediservice.ApproveLoadTenderTransferWorkflowPayload
+type ApproveLoadTenderTransferWorkflowResult = ediservice.ApproveLoadTenderTransferWorkflowResult
+type DeliverEDIMessageWorkflowPayload = ediservice.DeliverEDIMessageWorkflowPayload
+type DeliverEDIMessageWorkflowResult = ediservice.DeliverEDIMessageWorkflowResult
+type MarkEDIMessageDeadLetteredPayload = ediservice.MarkEDIMessageDeadLetteredPayload

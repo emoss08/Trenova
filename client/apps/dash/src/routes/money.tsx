@@ -18,6 +18,7 @@ import { ExpensesSection } from "../_components/expenses-section";
 import { useDashFeatures } from "../_components/use-dash-features";
 import { DisputeStatusBadge, disputeCategoryLabels } from "../_components/portal-badges";
 import { canWithdrawDispute, escrowProgressPercent } from "../lib/settlement";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function DashMoneyPage() {
   const t = useT();
@@ -187,7 +188,9 @@ function DisputeItem({ dispute }: DisputeItemProps) {
       toast.success(t("Dispute withdrawn."));
       await queryClient.invalidateQueries({ queryKey: ["dash-disputes"] });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "We couldn't withdraw the dispute.");
+      toast.error(
+        error instanceof Error ? error.message : translate("We couldn't withdraw the dispute."),
+      );
     } finally {
       setPending(false);
     }

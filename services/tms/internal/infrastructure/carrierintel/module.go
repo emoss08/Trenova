@@ -1,11 +1,11 @@
 package carrierintel
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/carrierokconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/fmcsaconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/outboundlimit"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"go.uber.org/fx"
 )
 
@@ -17,10 +17,10 @@ var Module = fx.Module("carrierintel",
 	),
 )
 
-func newCarrierOK(cfg *config.Config) services.CarrierIntelConnector {
+func newCarrierOK(cfg *config.Config) carrierintelports.CarrierIntelConnector {
 	return carrierokconnector.New(cfg)
 }
 
-func newFMCSA(cfg *config.Config) services.CarrierIntelConnector {
+func newFMCSA(cfg *config.Config) carrierintelports.CarrierIntelConnector {
 	return fmcsaconnector.New(cfg)
 }

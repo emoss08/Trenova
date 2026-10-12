@@ -18,6 +18,7 @@ import {
   TrendUp01Icon,
   UserCheck01Icon,
 } from "@trenova/shared/components/icons";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 export type EmploymentEventMeta = {
   label: string;
@@ -30,67 +31,67 @@ export type EmploymentEventMeta = {
 
 const META: Record<EmploymentEventKind, EmploymentEventMeta> = {
   Hired: {
-    label: EMPLOYMENT_EVENT_LABELS.Hired,
+    label: sourceLabels(EMPLOYMENT_EVENT_LABELS).Hired,
     icon: Briefcase01Icon,
     toneClass: "bg-success-subtle text-success-foreground ring-success/30",
     hint: "Opens the timeline. Recorded automatically when a worker is created.",
   },
   ProbationEnded: {
-    label: EMPLOYMENT_EVENT_LABELS.ProbationEnded,
+    label: sourceLabels(EMPLOYMENT_EVENT_LABELS).ProbationEnded,
     icon: CheckVerified01Icon,
     toneClass: "bg-accent-sky/15 text-accent-sky-on-subtle ring-accent-sky/30",
     hint: "Informational — nothing on the worker changes.",
   },
   Promoted: {
-    label: EMPLOYMENT_EVENT_LABELS.Promoted,
+    label: sourceLabels(EMPLOYMENT_EVENT_LABELS).Promoted,
     icon: TrendUp01Icon,
     toneClass: "bg-accent-violet/15 text-accent-violet-on-subtle ring-accent-violet/30",
     hint: "Moves the worker to a new driver type or worker type.",
   },
   Transferred: {
-    label: EMPLOYMENT_EVENT_LABELS.Transferred,
+    label: sourceLabels(EMPLOYMENT_EVENT_LABELS).Transferred,
     icon: SwitchHorizontal01Icon,
     toneClass: "bg-accent-indigo/15 text-accent-indigo-on-subtle ring-accent-indigo/30",
     hint: "Moves the worker to another fleet or manager.",
   },
   LeaveStarted: {
-    label: EMPLOYMENT_EVENT_LABELS.LeaveStarted,
+    label: sourceLabels(EMPLOYMENT_EVENT_LABELS).LeaveStarted,
     icon: CalendarMinus01Icon,
     toneClass: "bg-warning-subtle text-warning-foreground ring-warning/30",
     hint: "Takes the worker off the dispatch board until the leave ends.",
   },
   LeaveEnded: {
-    label: EMPLOYMENT_EVENT_LABELS.LeaveEnded,
+    label: sourceLabels(EMPLOYMENT_EVENT_LABELS).LeaveEnded,
     icon: CalendarCheck01Icon,
     toneClass: "bg-success-subtle text-success-foreground ring-success/30",
     hint: "Returns the worker to the dispatch board.",
   },
   Suspended: {
-    label: EMPLOYMENT_EVENT_LABELS.Suspended,
+    label: sourceLabels(EMPLOYMENT_EVENT_LABELS).Suspended,
     icon: SlashCircle01Icon,
     toneClass: "bg-warning-subtle text-warning-foreground ring-warning/30",
     hint: "Blocks dispatch without ending employment.",
   },
   Reinstated: {
-    label: EMPLOYMENT_EVENT_LABELS.Reinstated,
+    label: sourceLabels(EMPLOYMENT_EVENT_LABELS).Reinstated,
     icon: UserCheck01Icon,
     toneClass: "bg-success-subtle text-success-foreground ring-success/30",
     hint: "Lifts a suspension.",
   },
   Terminated: {
-    label: EMPLOYMENT_EVENT_LABELS.Terminated,
+    label: sourceLabels(EMPLOYMENT_EVENT_LABELS).Terminated,
     icon: DoorOpenIcon,
     toneClass: "bg-danger-subtle text-danger-foreground ring-danger/30",
     hint: "Ends employment: closes PTO and pay assignments and cancels upcoming time off.",
   },
   Rehired: {
-    label: EMPLOYMENT_EVENT_LABELS.Rehired,
+    label: sourceLabels(EMPLOYMENT_EVENT_LABELS).Rehired,
     icon: RefreshCcw01Icon,
     toneClass: "bg-success-subtle text-success-foreground ring-success/30",
     hint: "Reopens employment and enrols the worker in the default PTO policy.",
   },
   RateChanged: {
-    label: EMPLOYMENT_EVENT_LABELS.RateChanged,
+    label: sourceLabels(EMPLOYMENT_EVENT_LABELS).RateChanged,
     icon: CurrencyDollarCircleIcon,
     toneClass: "bg-accent-teal/15 text-accent-teal-on-subtle ring-accent-teal/30",
     hint: "Notes a pay change. Pay profiles still drive settlement.",

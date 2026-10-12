@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	corerepositories "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/redis/go-redis/v9"
@@ -29,7 +29,7 @@ type accountingOAuthStateRepository struct {
 
 func NewAccountingOAuthStateRepository(
 	p AccountingOAuthStateRepositoryParams,
-) corerepositories.AccountingOAuthStateRepository {
+) accountingsyncports.AccountingOAuthStateRepository {
 	return &accountingOAuthStateRepository{
 		client: p.Client,
 		l:      p.Logger.Named("redis.accounting-oauth-state-repository"),
@@ -38,7 +38,7 @@ func NewAccountingOAuthStateRepository(
 
 func (r *accountingOAuthStateRepository) Save(
 	ctx context.Context,
-	state *corerepositories.AccountingOAuthState,
+	state *accountingsyncports.AccountingOAuthState,
 	ttl time.Duration,
 ) error {
 	return redishelpers.SetStringJSON(
@@ -53,8 +53,8 @@ func (r *accountingOAuthStateRepository) Save(
 func (r *accountingOAuthStateRepository) Take(
 	ctx context.Context,
 	state string,
-) (*corerepositories.AccountingOAuthState, error) {
-	entity := new(corerepositories.AccountingOAuthState)
+) (*accountingsyncports.AccountingOAuthState, error) {
+	entity := new(accountingsyncports.AccountingOAuthState)
 	err := redishelpers.TakeStringJSON(ctx, r.client, accountingOAuthStatePrefix+state, entity)
 	if errors.Is(err, redis.Nil) {
 		return nil, errortypes.NewNotFoundError(

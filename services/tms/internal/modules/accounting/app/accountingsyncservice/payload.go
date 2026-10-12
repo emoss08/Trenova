@@ -1,0 +1,988 @@
+package accountingsyncservice
+
+import (
+	"context"
+	"errors"
+	"strings"
+	"time"
+
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/money"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
+)
+
+const trenovaNotePrefix = "Trenova "
+
+func documentLabel(objectType accountingsync.SyncObjectType, number string) string {
+	var kind string
+	switch objectType {
+	case accountingsync.SyncObjectCreditMemo:
+		kind = "Credit memo"
+	case accountingsync.SyncObjectDebitMemo:
+		kind = "Debit memo"
+	case accountingsync.SyncObjectCustomerPayment:
+		kind = "Payment"
+	case accountingsync.SyncObjectCreditApplication:
+		kind = "Credit application"
+	case accountingsync.SyncObjectCustomer:
+		kind = "Customer"
+	case accountingsync.SyncObjectInvoice:
+		kind = "Invoice"
+	case accountingsync.SyncObjectCarrierVendor:
+		kind = "Carrier"
+	case accountingsync.SyncObjectDriverVendor:
+		kind = "Driver"
+	case accountingsync.SyncObjectCarrierBill:
+		kind = "Carrier settlement"
+	case accountingsync.SyncObjectDriverBill:
+		kind = "Owner-operator settlement"
+	case accountingsync.SyncObjectCarrierBillPay:
+		kind = "Payment of carrier settlement"
+	case accountingsync.SyncObjectDriverBillPay:
+		kind = "Payment of owner-operator settlement"
+	case accountingsync.SyncObjectJournalEntry:
+		kind = "Journal entry"
+	case accountingsync.SyncObjectJournalSummary:
+		kind = "Journal entries for"
+	default:
+		kind = "Document"
+	}
+	if number == "" {
+		return kind
+	}
+	return kind + " " + number
+}
+
+func (s *Service) checkBooks(
+	sess *pushSession,
+	currency string,
+	documentDate int64,
+	label string,
+) error {
+	home := strings.ToUpper(strings.TrimSpace(sess.conn.ExternalHomeCurrency))
+	code := strings.ToUpper(strings.TrimSpace(currency))
+	if home != "" && code != "" && code != home && !sess.conn.ExternalMultiCurrencyEnabled {
+		return blocked(
+			accountingsync.SyncErrorCurrency,
+			label+" is in "+code+" but the books are kept in "+home,
+			"Turn on multicurrency in "+sess.providerName+", or skip this record",
+		)
+	}
+	if sess.conn.BooksClosedOn(documentDate) {
+		resolution := "Reopen the period in " + sess.providerName + ", or skip this record"
+		if sess.redatesToNextOpen {
+			resolution = "Reopen the period in " + sess.providerName +
+				", send it dated on the first open day, or skip this record"
+		}
+		return blocked(
+			accountingsync.SyncErrorClosedPeriod,
+			label+" is dated in a period closed in "+sess.providerName,
+			resolution,
+		)
+	}
+	return nil
+}
+
+func sentDateNote(
+	record *accountingsync.AccountingSyncRecord,
+	documentDate int64,
+	loc *time.Location,
+) string {
+	if record.RedatedTo == nil {
+		return ""
+	}
+	return " Dated " + timeutils.FormatCalendarDate(documentDate, loc) +
+		" in Trenova; sent on the first open day of the books."
+}
+
+func (s *Service) customerRef(
+	ctx context.Context,
+	sess *pushSession,
+	res *resolver,
+	customerID pulid.ID,
+) (string, error) {
+	return s.partyRef(ctx, sess, res, accountingsync.SyncObjectCustomer, customerID)
+}
+
+func (s *Service) salesRef(
+	ctx context.Context,
+	sess *pushSession,
+	inv *invoice.Invoice,
+) (string, error) {
+	objectType := accountingsync.SyncObjectTypeForBill(inv.BillType)
+	label := documentLabel(objectType, inv.Number)
+	existing, err := s.objectRecords(ctx, sess, objectType, inv.ID)
+	if err != nil {
+		return "", err
+	}
+	if created := documentRecord(existing); created != nil {
+		switch {
+		case isSynced(created):
+			return created.ExternalID, nil
+		case !created.Status.IsFinal():
+			return "", waitingOn(created, label)
+		}
+	} else if sess.conn.Covers(inv.InvoiceDate) && inv.PostedAt != nil {
+		dependency, enqueueErr := s.enqueueDependency(
+			ctx,
+			sess,
+			&accountingsyncports.AccountingSyncEnqueueRequest{
+				ObjectType:   objectType,
+				ObjectID:     inv.ID,
+				ObjectNumber: inv.Number,
+				Operation:    accountingsync.SyncOperationCreate,
+				Revision:     1,
+				DocumentDate: inv.InvoiceDate,
+			},
+		)
+		if enqueueErr != nil {
+			return "", enqueueErr
+		}
+		if dependency != nil && !dependency.Status.IsFinal() {
+			s.kick(ctx, sess.tenant, sess.conn.ID)
+			return "", waitingOn(dependency, label)
+		}
+	}
+
+	found, ok, err := sess.writer.FindDocument(
+		ctx,
+		&accountingsyncports.AccountingFindDocumentRequest{
+			Auth:      sess.auth,
+			Kind:      objectType,
+			DocNumber: inv.Number,
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+	if !ok {
+		return "", blocked(
+			accountingsync.SyncErrorNotFound,
+			label+" is not in "+sess.providerName,
+			"Enter "+label+" in "+sess.providerName+" with the same number, then retry; or skip this record",
+		)
+	}
+	return found.ExternalID, nil
+}
+
+func (s *Service) pushSales(
+	ctx context.Context,
+	sess *pushSession,
+	record *accountingsync.AccountingSyncRecord,
+) (*pushResult, error) {
+	inv, err := s.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+		ID:         record.ObjectID,
+		TenantInfo: sess.tenant,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, blocked(accountingsync.SyncErrorNotFound,
+				"The document no longer exists in Trenova", "Skip this record")
+		}
+		return nil, err
+	}
+	label := documentLabel(record.ObjectType, inv.Number)
+	if inv.PostedAt == nil ||
+		(inv.Status != invoice.StatusPosted && inv.Status != invoice.StatusVoided) {
+		return nil, blocked(accountingsync.SyncErrorValidation,
+			label+" is not posted", "Post it in Trenova, or skip this record")
+	}
+	if err = s.checkBooks(
+		sess,
+		inv.CurrencyCode,
+		record.SentDate(inv.InvoiceDate),
+		label,
+	); err != nil {
+		return nil, err
+	}
+
+	var target *accountingsync.AccountingSyncRecord
+	if record.Operation == accountingsync.SyncOperationUpdate {
+		if target, err = s.updateTarget(ctx, sess, record, label); err != nil {
+			return nil, err
+		}
+	}
+
+	res := newResolver(s, sess)
+	customerID, err := s.customerRef(ctx, sess, res, inv.CustomerID)
+	if err != nil {
+		return nil, err
+	}
+
+	doc, err := s.salesDocument(ctx, sess, res, record, inv)
+	if err != nil {
+		return nil, err
+	}
+	doc.CustomerExternalID = customerID
+
+	var written *accountingsyncports.AccountingDocumentResult
+	if target != nil {
+		doc.ExternalID = target.ExternalID
+		doc.Refs = target.ExternalRefs
+		written, err = sess.writer.UpdateSalesDocument(ctx, doc)
+	} else {
+		written, err = s.createAdopting(
+			ctx,
+			sess,
+			record,
+			&accountingsyncports.AccountingFindDocumentRequest{
+				DocNumber:              doc.DocNumber,
+				CounterpartyExternalID: customerID,
+				TxnDate:                doc.TxnDate,
+				Total:                  salesTotal(doc.Lines),
+			},
+			func() (*accountingsyncports.AccountingDocumentResult, error) {
+				return sess.writer.CreateSalesDocument(ctx, doc)
+			},
+		)
+	}
+	if err != nil {
+		return partial(written), err
+	}
+	return finishedResult(sess, record, written, doc, res.mappingIDs())
+}
+
+func (s *Service) salesDocument(
+	ctx context.Context,
+	sess *pushSession,
+	res *resolver,
+	record *accountingsync.AccountingSyncRecord,
+	inv *invoice.Invoice,
+) (*accountingsyncports.AccountingSalesDocument, error) {
+	sign := decimal.NewFromInt(1)
+	if record.ObjectType == accountingsync.SyncObjectCreditMemo && inv.TotalAmount.IsNegative() {
+		sign = decimal.NewFromInt(-1)
+	}
+
+	postedAt := inv.InvoiceDate
+	if inv.PostedAt != nil {
+		postedAt = *inv.PostedAt
+	}
+	rate, err := s.exchangeRate(ctx, sess, &documentRate{
+		label:          documentLabel(record.ObjectType, inv.Number),
+		currency:       inv.CurrencyCode,
+		stamp:          inv.ExchangeRate,
+		stampDate:      inv.ExchangeRateDate,
+		documentDate:   inv.InvoiceDate,
+		accountingDate: postedAt,
+		persist:        s.stampInvoice(sess, inv.ID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	doc := &accountingsyncports.AccountingSalesDocument{
+		Auth:         sess.auth,
+		RequestID:    record.RequestID,
+		Kind:         record.ObjectType,
+		DocNumber:    inv.Number,
+		TxnDate:      timeutils.FormatCalendarDate(record.SentDate(inv.InvoiceDate), sess.loc),
+		CurrencyCode: inv.CurrencyCode,
+		ExchangeRate: rate,
+		PrivateNote:  salesNote(inv) + sentDateNote(record, inv.InvoiceDate, sess.loc),
+		CustomerMemo: customerMemo(inv),
+		Lines:        make([]accountingsyncports.AccountingDocumentLine, 0, len(inv.Lines)),
+		Refs:         record.ExternalRefs,
+	}
+	if limit := sess.limits.MaxDocNumberLength; limit > 0 && len([]rune(inv.Number)) > limit {
+		doc.DocNumber = ""
+	}
+	if inv.DueDate != nil && record.ObjectType != accountingsync.SyncObjectCreditMemo {
+		doc.DueDate = timeutils.FormatCalendarDate(*inv.DueDate, sess.loc)
+	}
+	if inv.PaymentTerm != "" && record.ObjectType != accountingsync.SyncObjectCreditMemo &&
+		sess.profile.Offers(accountingsync.TargetPaymentTerm) {
+		term, err := res.optional(ctx, mappingTarget{
+			TargetType: accountingsync.TargetPaymentTerm,
+			Key:        string(inv.PaymentTerm),
+		})
+		if err != nil {
+			return nil, err
+		}
+		doc.TermExternalID = term
+	}
+
+	for _, line := range inv.Lines {
+		if line == nil || line.Amount.IsZero() {
+			continue
+		}
+		target := lineTarget(line)
+		externalID, refErr := res.require(ctx, target)
+		if refErr != nil {
+			return nil, refErr
+		}
+		entry := accountingsyncports.AccountingDocumentLine{
+			Description: line.Description,
+			Quantity:    line.Quantity.Abs(),
+			UnitPrice:   line.UnitPrice.Mul(sign),
+			Amount:      line.Amount.Mul(sign),
+		}
+		setLineRef(&entry, sess.profile.KindFor(target.TargetType), externalID)
+		if inv.ServiceDate != nil {
+			entry.ServiceDate = timeutils.FormatCalendarDate(*inv.ServiceDate, sess.loc)
+		}
+		doc.Lines = append(doc.Lines, entry)
+	}
+	if len(doc.Lines) == 0 {
+		return nil, &noopError{reason: documentLabel(record.ObjectType, inv.Number) +
+			" has no amounts to send"}
+	}
+
+	if record.ObjectType == accountingsync.SyncObjectCreditMemo {
+		if err := s.applyReversal(ctx, sess, inv, doc); err != nil {
+			return nil, err
+		}
+	}
+	return doc, nil
+}
+
+func setLineRef(
+	line *accountingsyncports.AccountingDocumentLine,
+	kind accountingsync.ReferenceKind,
+	externalID string,
+) {
+	if kind == accountingsync.ReferenceKindAccount {
+		line.AccountExternalID = externalID
+		return
+	}
+	line.ItemExternalID = externalID
+}
+
+func lineTarget(line *invoice.InvoiceLine) mappingTarget {
+	if !line.AccessorialChargeID.IsNil() {
+		label := "Charge code " + line.ChargeCode
+		if line.ChargeCode == "" {
+			label = "Accessorial charge " + line.Description
+		}
+		return mappingTarget{
+			TargetType: accountingsync.TargetAccessorialCharge,
+			ObjectID:   line.AccessorialChargeID,
+			Label:      label,
+		}
+	}
+	key := string(line.Type)
+	if line.Type != invoice.InvoiceLineTypeMemo {
+		key = string(invoice.InvoiceLineTypeFreight)
+	}
+	return mappingTarget{
+		TargetType: accountingsync.TargetLineType,
+		Key:        key,
+		Label:      strings.ToLower(key) + " lines",
+	}
+}
+
+func salesNote(inv *invoice.Invoice) string {
+	parts := []string{trenovaNotePrefix + inv.Number}
+	if inv.ShipmentProNumber != "" {
+		parts = append(parts, "PRO "+inv.ShipmentProNumber)
+	}
+	if inv.MemoReason != "" {
+		parts = append(parts, inv.MemoReason)
+	}
+	return strings.Join(parts, " · ")
+}
+
+func customerMemo(inv *invoice.Invoice) string {
+	parts := make([]string, 0, 3)
+	if inv.ShipmentProNumber != "" {
+		parts = append(parts, "PRO "+inv.ShipmentProNumber)
+	}
+	if inv.ShipmentBOL != "" {
+		parts = append(parts, "BOL "+inv.ShipmentBOL)
+	}
+	if inv.OrderNumber != "" {
+		parts = append(parts, "Order "+inv.OrderNumber)
+	}
+	return strings.Join(parts, " · ")
+}
+
+func (s *Service) applyReversal(
+	ctx context.Context,
+	sess *pushSession,
+	memo *invoice.Invoice,
+	doc *accountingsyncports.AccountingSalesDocument,
+) error {
+	if memo.SourceInvoiceAdjustmentID.IsNil() {
+		return nil
+	}
+	adjustment, err := s.adjustments.GetByID(
+		ctx,
+		invoiceadjustmentports.GetInvoiceAdjustmentRequest{
+			ID:         memo.SourceInvoiceAdjustmentID,
+			TenantInfo: sess.tenant,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	if adjustment.Kind != invoiceadjustment.KindFullReversal {
+		return nil
+	}
+	original, err := s.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+		ID:         adjustment.OriginalInvoiceID,
+		TenantInfo: sess.tenant,
+	})
+	if err != nil {
+		return err
+	}
+
+	externalID, err := s.salesRef(ctx, sess, original)
+	if err != nil {
+		var syncErr *accountingsync.SyncError
+		if !errors.As(err, &syncErr) || syncErr.Category != accountingsync.SyncErrorNotFound {
+			return err
+		}
+		return &noopError{reason: documentLabel(accountingsync.SyncObjectInvoice, original.Number) +
+			" was never in " + sess.providerName + ", so its reversal is not sent either"}
+	}
+	doc.ApplyToExternalID = externalID
+	doc.ApplyAmount = memo.TotalAmount.Abs()
+	return nil
+}
+
+func (s *Service) pushSalesVoid(
+	ctx context.Context,
+	sess *pushSession,
+	record *accountingsync.AccountingSyncRecord,
+) (*pushResult, error) {
+	existing, err := s.objectRecords(ctx, sess, record.ObjectType, record.ObjectID)
+	if err != nil {
+		return nil, err
+	}
+	created := documentRecord(existing)
+	if done, voidErr := s.settleUnsent(ctx, created, record); done {
+		return nil, voidErr
+	}
+	if created.SharesProviderDocument() {
+		return nil, sharedDocumentError(sess, documentLabel(record.ObjectType, record.ObjectNumber))
+	}
+	ref := &accountingsyncports.AccountingDocumentRef{
+		Auth:       sess.auth,
+		RequestID:  record.RequestID,
+		Kind:       record.ObjectType,
+		ExternalID: created.ExternalID,
+		Refs:       mergedRefs(existing),
+	}
+	written, err := sess.writer.VoidSalesDocument(ctx, ref)
+	if err != nil {
+		return partial(written), err
+	}
+	return finishedResult(sess, record, written, ref, nil)
+}
+
+func (s *Service) settleUnsent(
+	ctx context.Context,
+	created *accountingsync.AccountingSyncRecord,
+	record *accountingsync.AccountingSyncRecord,
+) (bool, error) {
+	switch {
+	case created == nil:
+		return true, &noopError{reason: "It never reached the books, so there is nothing to undo"}
+	case isSynced(created):
+		return false, nil
+	case created.Status == accountingsync.SyncStatusInFlight:
+		return true, waitFor(created.ID, "Waiting for the original to finish sending")
+	default:
+		if created.Supersede() {
+			if _, err := s.records.Update(ctx, created); err != nil {
+				return true, err
+			}
+		}
+		if _, err := s.records.SupersedeOlder(
+			ctx,
+			&accountingsyncports.SupersedeAccountingSyncRecordsRequest{
+				TenantInfo:     record.TenantInfo(),
+				ConnectionID:   record.ConnectionID,
+				ObjectType:     record.ObjectType,
+				ObjectID:       record.ObjectID,
+				Operation:      accountingsync.SyncOperationUpdate,
+				BeforeRevision: maxRevision,
+			},
+		); err != nil {
+			return true, err
+		}
+		return true, &noopError{
+			reason: "It never reached the books, so the queued send was withdrawn",
+		}
+	}
+}
+
+const maxRevision = int64(1) << 62
+
+func sharedDocumentError(sess *pushSession, label string) *accountingsync.SyncError {
+	return blocked(
+		accountingsync.SyncErrorConflict,
+		label+" was recorded in "+sess.providerName+
+			" as part of one payment with other documents, so Trenova cannot change it alone",
+		"Edit that payment in "+sess.providerName+", then skip this record",
+	)
+}
+
+func paymentMethodLabel(method customerpayment.Method) string {
+	return "Payment method " + string(method)
+}
+
+func (s *Service) pushPayment(
+	ctx context.Context,
+	sess *pushSession,
+	record *accountingsync.AccountingSyncRecord,
+) (*pushResult, error) {
+	payment, err := s.payments.GetByID(ctx, customerpaymentports.GetCustomerPaymentByIDRequest{
+		ID:         record.ObjectID,
+		TenantInfo: sess.tenant,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, blocked(accountingsync.SyncErrorNotFound,
+				"The payment no longer exists in Trenova", "Skip this record")
+		}
+		return nil, err
+	}
+	label := documentLabel(accountingsync.SyncObjectCustomerPayment, payment.ReferenceNumber)
+	if err = s.checkBooks(
+		sess,
+		payment.CurrencyCode,
+		record.SentDate(payment.AccountingDate),
+		label,
+	); err != nil {
+		return nil, err
+	}
+
+	existing, err := s.objectRecords(ctx, sess, record.ObjectType, record.ObjectID)
+	if err != nil {
+		return nil, err
+	}
+	externalID := ""
+	if record.Operation == accountingsync.SyncOperationUpdate {
+		created := documentRecord(existing)
+		if created == nil {
+			dependency, enqueueErr := s.enqueueDependency(
+				ctx,
+				sess,
+				&accountingsyncports.AccountingSyncEnqueueRequest{
+					ObjectType:   record.ObjectType,
+					ObjectID:     record.ObjectID,
+					ObjectNumber: record.ObjectNumber,
+					Operation:    accountingsync.SyncOperationCreate,
+					Revision:     1,
+					DocumentDate: payment.AccountingDate,
+				},
+			)
+			if enqueueErr != nil {
+				return nil, enqueueErr
+			}
+			created = dependency
+		}
+		switch {
+		case created == nil:
+			return nil, &noopError{
+				reason: "The payment was never sent, so there is nothing to update",
+			}
+		case isSynced(created) && created.SharesProviderDocument():
+			return nil, sharedDocumentError(sess, label)
+		case isSynced(created):
+			externalID = created.ExternalID
+		case created.Status.IsFinal():
+			return nil, &noopError{reason: "The payment was skipped, so its changes are not sent"}
+		default:
+			s.kick(ctx, sess.tenant, sess.conn.ID)
+			return nil, waitingOn(created, label)
+		}
+	}
+
+	res := newResolver(s, sess)
+	refs, err := s.paymentRefs(ctx, sess, res, payment)
+	if err != nil {
+		return nil, err
+	}
+	rate, err := s.exchangeRate(ctx, sess, &documentRate{
+		label:          label,
+		currency:       payment.CurrencyCode,
+		stamp:          payment.ExchangeRate,
+		stampDate:      payment.ExchangeRateDate,
+		documentDate:   payment.PaymentDate,
+		accountingDate: payment.AccountingDate,
+		persist:        s.stampPayment(sess, payment.ID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	doc := &accountingsyncports.AccountingPaymentDocument{
+		Auth:               sess.auth,
+		RequestID:          record.RequestID,
+		ExternalID:         externalID,
+		CustomerExternalID: refs.customer,
+		TxnDate: timeutils.FormatCalendarDate(
+			record.SentDate(payment.AccountingDate),
+			sess.loc,
+		),
+		CurrencyCode:             payment.CurrencyCode,
+		ExchangeRate:             rate,
+		PaymentMethodExternalID:  refs.method,
+		DepositAccountExternalID: refs.deposit,
+		ReferenceNumber:          payment.ReferenceNumber,
+		PrivateNote: paymentNote(payment) +
+			sentDateNote(record, payment.AccountingDate, sess.loc),
+		TotalAmount: money.DecimalFromMinor(payment.AmountMinor),
+		Applications: make(
+			[]accountingsyncports.AccountingPaymentApplication,
+			0,
+			len(payment.Applications),
+		),
+		Refs: record.ExternalRefs,
+	}
+	if err = s.paymentApplications(ctx, sess, res, payment, existing, doc); err != nil {
+		return nil, err
+	}
+
+	save := func() (*accountingsyncports.AccountingDocumentResult, error) {
+		return sess.writer.SavePayment(ctx, doc)
+	}
+	var written *accountingsyncports.AccountingDocumentResult
+	if doc.ExternalID == "" {
+		written, err = s.createAdopting(
+			ctx,
+			sess,
+			record,
+			&accountingsyncports.AccountingFindDocumentRequest{
+				DocNumber:              doc.ReferenceNumber,
+				CounterpartyExternalID: doc.CustomerExternalID,
+				TxnDate:                doc.TxnDate,
+				Total:                  doc.TotalAmount,
+				AppliesToExternalIDs:   appliedInvoices(doc.Applications),
+			},
+			save,
+		)
+	} else {
+		written, err = save()
+	}
+	if err != nil {
+		return partial(written), err
+	}
+	return finishedResult(sess, record, written, doc, res.mappingIDs())
+}
+
+type paymentExternalRefs struct {
+	customer string
+	deposit  string
+	method   string
+}
+
+func (s *Service) paymentRefs(
+	ctx context.Context,
+	sess *pushSession,
+	res *resolver,
+	payment *customerpayment.Payment,
+) (paymentExternalRefs, error) {
+	customerID, err := s.customerRef(ctx, sess, res, payment.CustomerID)
+	if err != nil {
+		return paymentExternalRefs{}, err
+	}
+	deposit, err := res.require(ctx, mappingTarget{
+		TargetType: accountingsync.TargetAccountRole,
+		Key:        accountingsync.AccountRoleDeposit,
+		Label:      "The deposit account",
+	})
+	if err != nil {
+		return paymentExternalRefs{}, err
+	}
+	refs := paymentExternalRefs{customer: customerID, deposit: deposit}
+	if !sess.profile.Offers(accountingsync.TargetPaymentMethod) {
+		return refs, nil
+	}
+	refs.method, err = res.require(ctx, mappingTarget{
+		TargetType: accountingsync.TargetPaymentMethod,
+		Key:        string(payment.PaymentMethod),
+		Label:      paymentMethodLabel(payment.PaymentMethod),
+	})
+	if err != nil {
+		return paymentExternalRefs{}, err
+	}
+	return refs, nil
+}
+
+func paymentNote(payment *customerpayment.Payment) string {
+	note := trenovaNotePrefix + "payment"
+	if payment.ReferenceNumber != "" {
+		note += " " + payment.ReferenceNumber
+	}
+	if payment.Memo != "" {
+		note += " · " + payment.Memo
+	}
+	return note
+}
+
+func (s *Service) paymentApplications(
+	ctx context.Context,
+	sess *pushSession,
+	res *resolver,
+	payment *customerpayment.Payment,
+	existing []*accountingsync.AccountingSyncRecord,
+	doc *accountingsyncports.AccountingPaymentDocument,
+) error {
+	if len(payment.Applications) == 0 {
+		return nil
+	}
+	ids := make([]pulid.ID, 0, len(payment.Applications))
+	for _, app := range payment.Applications {
+		ids = append(ids, app.InvoiceID)
+	}
+	invoices, err := s.invoices.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
+		TenantInfo: sess.tenant,
+		InvoiceIDs: ids,
+	})
+	if err != nil {
+		return err
+	}
+	byID := make(map[pulid.ID]*invoice.Invoice, len(invoices))
+	for _, inv := range invoices {
+		byID[inv.ID] = inv
+	}
+
+	priorRefs := mergedRefs(existing)
+	shortPaid := false
+	for _, app := range payment.Applications {
+		inv, ok := byID[app.InvoiceID]
+		if !ok {
+			return blocked(accountingsync.SyncErrorNotFound,
+				"An invoice this payment applies to no longer exists", "Skip this record")
+		}
+		externalID, refErr := s.salesRef(ctx, sess, inv)
+		if refErr != nil {
+			return refErr
+		}
+		entry := accountingsyncports.AccountingPaymentApplication{
+			InvoiceExternalID: externalID,
+			InvoiceNumber:     inv.Number,
+			AppliedAmount:     money.DecimalFromMinor(app.AppliedAmountMinor),
+			ShortPayAmount:    money.DecimalFromMinor(app.ShortPayAmountMinor),
+			ShortPayCreditExternalID: priorRefs[accountingsync.ExternalRefShortPayPrefix+
+				externalID],
+		}
+		shortPaid = shortPaid || app.ShortPayAmountMinor > 0
+		doc.Applications = append(doc.Applications, entry)
+	}
+
+	if !shortPaid {
+		return nil
+	}
+	kind := sess.profile.KindFor(accountingsync.TargetItemRole)
+	label := "The short-pay write-off item"
+	if kind == accountingsync.ReferenceKindAccount {
+		label = "The short-pay write-off account"
+	}
+	writeOff, err := res.require(ctx, mappingTarget{
+		TargetType: accountingsync.TargetItemRole,
+		Key:        accountingsync.ItemRoleShortPayWriteOff,
+		Label:      label,
+	})
+	if err != nil {
+		return err
+	}
+	if kind == accountingsync.ReferenceKindAccount {
+		doc.ShortPayAccountExternalID = writeOff
+		return nil
+	}
+	doc.ShortPayItemExternalID = writeOff
+	return nil
+}
+
+func (s *Service) pushPaymentVoid(
+	ctx context.Context,
+	sess *pushSession,
+	record *accountingsync.AccountingSyncRecord,
+) (*pushResult, error) {
+	existing, err := s.objectRecords(ctx, sess, record.ObjectType, record.ObjectID)
+	if err != nil {
+		return nil, err
+	}
+	created := documentRecord(existing)
+	if done, voidErr := s.settleUnsent(ctx, created, record); done {
+		return nil, voidErr
+	}
+	if created.SharesProviderDocument() {
+		return nil, sharedDocumentError(sess, documentLabel(record.ObjectType, record.ObjectNumber))
+	}
+	for _, other := range existing {
+		if other.Operation == accountingsync.SyncOperationUpdate &&
+			other.Status == accountingsync.SyncStatusInFlight {
+			return nil, waitFor(other.ID, "Waiting for a change to the payment to finish sending")
+		}
+	}
+	if _, err = s.records.SupersedeOlder(
+		ctx,
+		&accountingsyncports.SupersedeAccountingSyncRecordsRequest{
+			TenantInfo:     record.TenantInfo(),
+			ConnectionID:   record.ConnectionID,
+			ObjectType:     record.ObjectType,
+			ObjectID:       record.ObjectID,
+			Operation:      accountingsync.SyncOperationUpdate,
+			BeforeRevision: maxRevision,
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	ref := &accountingsyncports.AccountingDocumentRef{
+		Auth:       sess.auth,
+		RequestID:  record.RequestID,
+		Kind:       record.ObjectType,
+		ExternalID: created.ExternalID,
+		Refs:       mergedRefs(existing),
+	}
+	written, err := sess.writer.VoidPayment(ctx, ref)
+	if err != nil {
+		return partial(written), err
+	}
+	return finishedResult(sess, record, written, ref, nil)
+}
+
+func (s *Service) pushCreditApplication(
+	ctx context.Context,
+	sess *pushSession,
+	record *accountingsync.AccountingSyncRecord,
+) (*pushResult, error) {
+	app, err := s.payments.GetCreditMemoApplicationByID(
+		ctx,
+		customerpaymentports.GetCreditMemoApplicationRequest{
+			ID:         record.ObjectID,
+			TenantInfo: sess.tenant,
+		},
+	)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, blocked(accountingsync.SyncErrorNotFound,
+				"The credit application no longer exists in Trenova", "Skip this record")
+		}
+		return nil, err
+	}
+	invoices, err := s.invoices.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
+		TenantInfo: sess.tenant,
+		InvoiceIDs: []pulid.ID{app.InvoiceID, app.CreditMemoInvoiceID},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var target, memo *invoice.Invoice
+	for _, inv := range invoices {
+		switch inv.ID {
+		case app.InvoiceID:
+			target = inv
+		case app.CreditMemoInvoiceID:
+			memo = inv
+		}
+	}
+	if target == nil || memo == nil {
+		return nil, blocked(accountingsync.SyncErrorNotFound,
+			"A document this credit application links no longer exists", "Skip this record")
+	}
+	label := documentLabel(accountingsync.SyncObjectCreditApplication, memo.Number)
+	if err = s.checkBooks(
+		sess,
+		memo.CurrencyCode,
+		record.SentDate(app.AccountingDate),
+		label,
+	); err != nil {
+		return nil, err
+	}
+
+	res := newResolver(s, sess)
+	customerID, err := s.customerRef(ctx, sess, res, target.CustomerID)
+	if err != nil {
+		return nil, err
+	}
+	invoiceID, err := s.salesRef(ctx, sess, target)
+	if err != nil {
+		return nil, err
+	}
+	memoID, err := s.salesRef(ctx, sess, memo)
+	if err != nil {
+		return nil, err
+	}
+	rate, err := s.exchangeRate(ctx, sess, &documentRate{
+		label:          label,
+		currency:       memo.CurrencyCode,
+		stamp:          memo.ExchangeRate,
+		stampDate:      memo.ExchangeRateDate,
+		documentDate:   memo.InvoiceDate,
+		accountingDate: app.AccountingDate,
+		persist:        s.stampInvoice(sess, memo.ID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	doc := &accountingsyncports.AccountingCreditApplicationDocument{
+		Auth:               sess.auth,
+		RequestID:          record.RequestID,
+		CustomerExternalID: customerID,
+		TxnDate: timeutils.FormatCalendarDate(
+			record.SentDate(app.AccountingDate),
+			sess.loc,
+		),
+		CurrencyCode:         memo.CurrencyCode,
+		ExchangeRate:         rate,
+		InvoiceExternalID:    invoiceID,
+		CreditMemoExternalID: memoID,
+		Amount:               money.DecimalFromMinor(app.AppliedAmountMinor),
+		PrivateNote: "Applies " + memo.Number + " to " + target.Number +
+			sentDateNote(record, app.AccountingDate, sess.loc),
+	}
+	written, err := s.createAdopting(
+		ctx,
+		sess,
+		record,
+		&accountingsyncports.AccountingFindDocumentRequest{
+			CounterpartyExternalID: customerID,
+			TxnDate:                doc.TxnDate,
+			Total:                  doc.Amount,
+			AppliesToExternalIDs:   []string{invoiceID},
+			CreditExternalID:       memoID,
+		},
+		func() (*accountingsyncports.AccountingDocumentResult, error) {
+			return sess.writer.CreateCreditApplication(ctx, doc)
+		},
+	)
+	if err != nil {
+		return partial(written), err
+	}
+	return finishedResult(sess, record, written, doc, res.mappingIDs())
+}
+
+func (s *Service) pushCreditApplicationVoid(
+	ctx context.Context,
+	sess *pushSession,
+	record *accountingsync.AccountingSyncRecord,
+) (*pushResult, error) {
+	existing, err := s.objectRecords(ctx, sess, record.ObjectType, record.ObjectID)
+	if err != nil {
+		return nil, err
+	}
+	created := documentRecord(existing)
+	if done, voidErr := s.settleUnsent(ctx, created, record); done {
+		return nil, voidErr
+	}
+	ref := &accountingsyncports.AccountingDocumentRef{
+		Auth:       sess.auth,
+		RequestID:  record.RequestID,
+		Kind:       record.ObjectType,
+		ExternalID: created.ExternalID,
+		Refs:       mergedRefs(existing),
+	}
+	written, err := sess.writer.VoidCreditApplication(ctx, ref)
+	if err != nil {
+		return partial(written), err
+	}
+	return finishedResult(sess, record, written, ref, nil)
+}

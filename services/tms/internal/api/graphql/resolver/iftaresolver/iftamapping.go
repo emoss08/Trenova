@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -117,13 +117,13 @@ func iftaPeriodFromInput(input gqlmodel.IFTAPeriodInput) (ifta.Period, error) {
 func iftaTaxRatesRequestFromGraphQL(
 	connection *base.GqlDataTableConnection,
 	input gqlmodel.IFTATaxRatesInput,
-) (*repositories.ListTaxRatesRequest, error) {
+) (*iftaports.ListTaxRatesRequest, error) {
 	jurisdictionID, err := base.OptionalScopedID("jurisdictionId", input.JurisdictionID)
 	if err != nil {
 		return nil, err
 	}
 
-	req := &repositories.ListTaxRatesRequest{
+	req := &iftaports.ListTaxRatesRequest{
 		Filter:              connection.Filter,
 		Cursor:              connection.Cursor,
 		JurisdictionID:      jurisdictionID,
@@ -143,7 +143,7 @@ func iftaTaxRatesRequestFromGraphQL(
 func iftaMileageEntriesRequestFromGraphQL(
 	connection *base.GqlDataTableConnection,
 	input gqlmodel.IFTAMileageEntriesInput,
-) (*repositories.ListMileageEntriesRequest, error) {
+) (*iftaports.ListMileageEntriesRequest, error) {
 	tractorID, err := base.OptionalScopedID("tractorId", input.TractorID)
 	if err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func iftaMileageEntriesRequestFromGraphQL(
 		return nil, err
 	}
 
-	req := &repositories.ListMileageEntriesRequest{
+	req := &iftaports.ListMileageEntriesRequest{
 		Filter:              connection.Filter,
 		Cursor:              connection.Cursor,
 		TractorID:           tractorID,
@@ -174,8 +174,8 @@ func iftaMileageEntriesRequestFromGraphQL(
 func iftaReturnsRequestFromGraphQL(
 	connection *base.GqlDataTableConnection,
 	input gqlmodel.IFTAReturnsInput,
-) *repositories.ListReturnsRequest {
-	return &repositories.ListReturnsRequest{
+) *iftaports.ListReturnsRequest {
+	return &iftaports.ListReturnsRequest{
 		Filter:   connection.Filter,
 		Cursor:   connection.Cursor,
 		Year:     base.IntValue(input.Year),
@@ -292,7 +292,7 @@ func applyIFTAMileageEntryInput(
 }
 
 func backfillResultToModel(
-	result *serviceports.BackfillJurisdictionMilesResult,
+	result *shipmentports.BackfillJurisdictionMilesResult,
 ) *gqlmodel.JurisdictionMilesBackfillResult {
 	if result == nil {
 		return nil

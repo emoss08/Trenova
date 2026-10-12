@@ -5,13 +5,14 @@ import (
 	"context"
 	"fmt"
 	"image/color"
+	"os"
 	"strings"
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/pdfreader"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -91,7 +92,7 @@ func newReader(t *testing.T, cfg *config.PDFReaderConfig) *pdfreader.Reader {
 	return reader
 }
 
-func openDoc(t *testing.T, reader *pdfreader.Reader, data []byte) services.PDFDocument {
+func openDoc(t *testing.T, reader *pdfreader.Reader, data []byte) kernelports.PDFDocument {
 	t.Helper()
 	doc, err := reader.Open(t.Context(), data)
 	require.NoError(t, err)
@@ -206,10 +207,10 @@ func TestReaderRejectsBadInput(t *testing.T) {
 	reader := newReader(t, nil)
 
 	_, err := reader.Open(t.Context(), nil)
-	require.ErrorIs(t, err, services.ErrPDFUnreadable)
+	require.ErrorIs(t, err, kernelports.ErrPDFUnreadable)
 
 	_, err = reader.Open(t.Context(), []byte("this is not a pdf"))
-	require.ErrorIs(t, err, services.ErrPDFUnreadable)
+	require.ErrorIs(t, err, kernelports.ErrPDFUnreadable)
 
 	doc := openDoc(t, reader, buildPDF(letterPage(invoiceContent)))
 	_, err = doc.RenderPage(t.Context(), 1, 72)
@@ -279,4 +280,32 @@ func TestReaderRefusesWorkAfterClose(t *testing.T) {
 
 	_, err := reader.Open(t.Context(), buildPDF(letterPage(invoiceContent)))
 	require.Error(t, err)
+}
+
+func TestReaderReadsABrowserRenderedRateConfirmationRowByRow(t *testing.T) {
+	t.Parallel()
+
+	data, err := os.ReadFile(
+		"../../../../deskbench/fixtures/attachments/rate-confirmation-np-77120-revised.pdf",
+	)
+	require.NoError(t, err)
+
+	reader := newReader(t, nil)
+	doc := openDoc(t, reader, data)
+	layout, err := doc.PageLayout(t.Context(), 0)
+	require.NoError(t, err)
+
+	for _, row := range []string{
+		"Bill To:   Acme Manufacturing   Load #:   NP-77120",
+		"SHIPPER#1:   Los Angeles Terminal   Pick Up Date:   03/15/27",
+		"Address:   1200 E 7th St   Pick Up Time:   08:00-12:00",
+		"Auto parts   38,000 lbs   Pallet(s)   22   22",
+		"RECEIVER #1:   Chicago Distribution Center   Delivery Date:   03/18/27",
+		"Chicago, IL 60609   Delivery#:   DL-90314",
+		"Line Haul - FLAT RATE   1   $3,200.00   $3,200.00",
+		"Total:   $3,610.00",
+	} {
+		assert.Contains(t, layout.Text, row)
+	}
+	assert.Contains(t, layout.Text, "every four hours in transit, and at delivery.")
 }

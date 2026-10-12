@@ -3,7 +3,7 @@ package aitrace
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -72,6 +72,8 @@ const (
 	AIReasoningTokens      = attribute.Key("trenova.ai.reasoning_tokens")
 	AITruncated            = attribute.Key("trenova.ai.truncated")
 	AIThinkingDropped      = attribute.Key("trenova.ai.thinking_dropped")
+	AICacheMissReason      = attribute.Key("trenova.ai.cache_miss.reason")
+	AICacheMissedTokens    = attribute.Key("trenova.ai.cache_miss.missed_tokens")
 	AIToolEffect           = attribute.Key("trenova.ai.tool.effect")
 	AIToolKind             = attribute.Key("trenova.ai.tool.kind")
 	AIStepKey              = attribute.Key("trenova.ai.step.key")

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/instancebootstrap"
-	"github.com/emoss08/trenova/internal/core/services/instancebootstrapservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
+	"github.com/emoss08/trenova/internal/modules/identity/app/instancebootstrapservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"

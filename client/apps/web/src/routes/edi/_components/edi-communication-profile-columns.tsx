@@ -74,10 +74,10 @@ export function getCommunicationProfileColumns(
       meta: {
         label: t("Partner"),
         apiField: "ediPartnerId",
-        filterable: true,
         sortable: false,
-        filterType: "text",
-        defaultFilterOperator: "eq",
+        filterable: true,
+        filterType: "record",
+        filterRecord: "EDI_PARTNER",
       },
     },
     {

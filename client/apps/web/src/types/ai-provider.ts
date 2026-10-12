@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * A provider is identified by the wire protocol it speaks rather than the vendor
@@ -29,6 +30,79 @@ export const reasoningEffortSchema = z.enum(["Off", "None", "Minimal", "Low", "M
  * gateway's alias. Only Anthropic Messages providers take anything but Auto.
  */
 export const thinkingStyleSchema = z.enum(["Auto", "Effort", "Budget"]);
+
+/**
+ * Where an Anthropic Messages provider reaches Claude. Direct calls the base
+ * URL with the API key, which every other kind always does.
+ */
+export const aiProviderPlatformSchema = z.enum([
+  "Direct",
+  "Bedrock",
+  "VertexAI",
+  "ClaudePlatformAWS",
+  "ClaudePlatformGoogleCloud",
+  "Foundry",
+]);
+
+/**
+ * How a request to a platform proves who sent it. Server uses the cloud
+ * credentials of the server Trenova runs on, where its operator allows it,
+ * and stores nothing.
+ */
+export const aiProviderPlatformAuthSchema = z.enum([
+  "ApiKey",
+  "AccessKey",
+  "ServiceAccount",
+  "EntraID",
+  "Server",
+]);
+
+/** A platform setting the editor asks for. */
+export const aiProviderPlatformSettingSchema = z.enum([
+  "region",
+  "projectId",
+  "workspaceId",
+  "resource",
+  "accessKeyId",
+  "tenantId",
+  "clientId",
+]);
+
+/**
+ * What a platform needs besides its credential. None of it is secret; a
+ * setting the platform does not take is empty.
+ */
+export const aiProviderPlatformSettingsSchema = z.object({
+  auth: aiProviderPlatformAuthSchema,
+  region: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  projectId: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  workspaceId: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  accessKeyId: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  resource: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  tenantId: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  clientId: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+});
 
 /**
  * Vendor request fields the endpoint takes that the protocol does not
@@ -88,8 +162,13 @@ export const embeddingDimensionsSchema = z
   .number()
   .int()
   .refine((value) => (EMBEDDING_DIMENSIONS as readonly number[]).includes(value), {
-    message: "Embedding dimensions must be 768, 1024 or 1536",
+    error: () => translate("Embedding dimensions must be 768, 1024 or 1536"),
   });
+
+export const capActionSchema = z.enum(["Next", "Stop"]);
+
+export const PROVIDER_TIMEOUT_SECONDS = { min: 5, max: 600, initial: 60 } as const;
+export const PROVIDER_MAX_CONCURRENT = { min: 1, max: 64, initial: 8 } as const;
 
 export const aiProviderTestOutcomeSchema = z.object({
   success: z.boolean(),
@@ -116,9 +195,14 @@ export const aiProviderSchema = z.object({
   structuredOutputMode: structuredOutputModeSchema,
   reasoningEffort: reasoningEffortSchema.default("Off"),
   thinkingStyle: thinkingStyleSchema.default("Auto"),
+  platform: aiProviderPlatformSchema.default("Direct"),
+  platformSettings: aiProviderPlatformSettingsSchema.nullable().optional().default(null),
   extraBody: extraBodySchema,
   inputCostPerMillion: pricePerMillionSchema,
   outputCostPerMillion: pricePerMillionSchema,
+  /** Null charges the protocol's usual share of the input price. */
+  cacheReadCostPerMillion: pricePerMillionSchema,
+  cacheWriteCostPerMillion: pricePerMillionSchema,
   maxTokens: z.number().default(8192),
   /** `[]Task` with nullzero on the server: a provider with no tasks arrives as null. */
   tasks: z.preprocess((value) => value ?? [], z.array(aiTaskSchema)),
@@ -128,17 +212,27 @@ export const aiProviderSchema = z.object({
   trusted: z.boolean().default(false),
   enabled: z.boolean().default(false),
   lastTest: aiProviderTestOutcomeSchema.nullable().optional().default(null),
+  timeoutSeconds: z.number().default(PROVIDER_TIMEOUT_SECONDS.initial),
+  maxConcurrent: z.number().default(PROVIDER_MAX_CONCURRENT.initial),
+  monthlyCapUsd: pricePerMillionSchema,
+  onCap: capActionSchema.default("Next"),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
 
 export const saveAIProviderRequestSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Name is required") }),
   description: z.string().optional().default(""),
   kind: aiProviderKindSchema,
   baseUrl: z.string().optional().default(""),
-  model: z.string().trim().min(1, "Model is required"),
+  model: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Model is required") }),
   /**
    * Omitted entirely when unchanged, so editing a provider never round-trips the
    * secret. An empty string clears the stored credential.
@@ -148,9 +242,13 @@ export const saveAIProviderRequestSchema = z.object({
   structuredOutputMode: structuredOutputModeSchema,
   reasoningEffort: reasoningEffortSchema.default("Off"),
   thinkingStyle: thinkingStyleSchema.default("Auto"),
+  platform: aiProviderPlatformSchema.default("Direct"),
+  platformSettings: aiProviderPlatformSettingsSchema.nullable().default(null),
   extraBody: extraBodySchema,
   inputCostPerMillion: z.number().min(0).nullable().default(null),
   outputCostPerMillion: z.number().min(0).nullable().default(null),
+  cacheReadCostPerMillion: z.number().min(0).nullable().default(null),
+  cacheWriteCostPerMillion: z.number().min(0).nullable().default(null),
   maxTokens: z.number().min(256).max(200000).default(8192),
   tasks: z.array(aiTaskSchema).default([]),
   priority: z.number().min(0).default(100),
@@ -158,6 +256,33 @@ export const saveAIProviderRequestSchema = z.object({
   embeddingInputStyle: embeddingInputStyleSchema.default("None"),
   trusted: z.boolean().default(false),
   enabled: z.boolean().default(false),
+  timeoutSeconds: z
+    .number()
+    .int()
+    .min(PROVIDER_TIMEOUT_SECONDS.min, {
+      error: () => translate("At least {0} seconds", PROVIDER_TIMEOUT_SECONDS.min),
+    })
+    .max(PROVIDER_TIMEOUT_SECONDS.max, {
+      error: () => translate("At most {0} seconds", PROVIDER_TIMEOUT_SECONDS.max),
+    })
+    .default(PROVIDER_TIMEOUT_SECONDS.initial),
+  maxConcurrent: z
+    .number()
+    .int()
+    .min(PROVIDER_MAX_CONCURRENT.min, {
+      error: () => translate("At least {0}", PROVIDER_MAX_CONCURRENT.min),
+    })
+    .max(PROVIDER_MAX_CONCURRENT.max, {
+      error: () => translate("At most {0}", PROVIDER_MAX_CONCURRENT.max),
+    })
+    .default(PROVIDER_MAX_CONCURRENT.initial),
+  monthlyCapUsd: z
+    .number()
+    .positive({ error: () => translate("A cap must be more than $0") })
+    .nullable()
+    .default(null),
+  onCap: capActionSchema.default("Next"),
+  keepPreviousKey: z.boolean().default(false),
   version: z.number().default(0),
 });
 
@@ -199,6 +324,25 @@ export const aiProviderPresetSchema = z.object({
   tasks: z.preprocess((value) => value ?? [], z.array(aiTaskSchema)),
   embeddingDimensions: z.number().optional().default(0),
   embeddingInputStyle: embeddingInputStyleSchema.optional(),
+  /** Where an Anthropic Messages preset reaches Claude. */
+  platform: aiProviderPlatformSchema.optional().default("Direct"),
+});
+
+export const aiProviderPlatformAuthDescriptorSchema = z.object({
+  auth: aiProviderPlatformAuthSchema,
+  requiresCredential: z.boolean(),
+  settings: z.preprocess((value) => value ?? [], z.array(aiProviderPlatformSettingSchema)),
+});
+
+/**
+ * The shape of a platform: the settings it needs, the ways it signs in (the
+ * first being its default), and whether it lists its models.
+ */
+export const aiProviderPlatformDescriptorSchema = z.object({
+  platform: aiProviderPlatformSchema,
+  settings: z.preprocess((value) => value ?? [], z.array(aiProviderPlatformSettingSchema)),
+  auths: z.preprocess((value) => value ?? [], z.array(aiProviderPlatformAuthDescriptorSchema)),
+  listsModels: z.boolean().default(true),
 });
 
 export const aiTaskDescriptorSchema = z.object({
@@ -224,15 +368,24 @@ export const aiProviderCatalogSchema = z.object({
     (value) => value ?? [],
     z.array(embeddingInputStyleDescriptorSchema),
   ),
+  platforms: z.preprocess((value) => value ?? [], z.array(aiProviderPlatformDescriptorSchema)),
+  /** Whether a platform provider may sign in with the server's own cloud identity. */
+  serverCloudCredentials: z.boolean().default(false),
 });
 
 export type AIProvider = z.infer<typeof aiProviderSchema>;
 export type AIProviderTestOutcome = z.infer<typeof aiProviderTestOutcomeSchema>;
 export type AIProviderKind = z.infer<typeof aiProviderKindSchema>;
 export type AITask = z.infer<typeof aiTaskSchema>;
+export type CapAction = z.infer<typeof capActionSchema>;
 export type StructuredOutputMode = z.infer<typeof structuredOutputModeSchema>;
 export type ReasoningEffort = z.infer<typeof reasoningEffortSchema>;
 export type ThinkingStyle = z.infer<typeof thinkingStyleSchema>;
+export type AIProviderPlatform = z.infer<typeof aiProviderPlatformSchema>;
+export type AIProviderPlatformAuth = z.infer<typeof aiProviderPlatformAuthSchema>;
+export type AIProviderPlatformSetting = z.infer<typeof aiProviderPlatformSettingSchema>;
+export type AIProviderPlatformSettings = z.infer<typeof aiProviderPlatformSettingsSchema>;
+export type AIProviderPlatformDescriptor = z.infer<typeof aiProviderPlatformDescriptorSchema>;
 export type SaveAIProviderRequest = z.infer<typeof saveAIProviderRequestSchema>;
 export type TestAIProviderResult = z.infer<typeof testAIProviderResultSchema>;
 export type AIProviderCatalog = z.infer<typeof aiProviderCatalogSchema>;

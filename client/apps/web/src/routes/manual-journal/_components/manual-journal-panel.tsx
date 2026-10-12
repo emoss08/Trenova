@@ -248,7 +248,7 @@ function EditPanel({
       open={open}
       onOpenChange={onOpenChange}
       size="xl"
-      title={journal?.requestNumber ? `Journal ${journal.requestNumber}` : "Manual Journal"}
+      title={journal?.requestNumber ? t("Journal {0}", journal.requestNumber) : t("Manual Journal")}
       description={t("View or manage this manual journal entry.")}
       headerActions={status ? <AccountingStatusBadge status={status} /> : undefined}
       footer={footer}

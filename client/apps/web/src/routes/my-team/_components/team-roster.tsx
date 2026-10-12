@@ -246,6 +246,7 @@ function MemberList({ rows, now }: { rows: ClassifiedMember[]; now: number }) {
 }
 
 function MemberRow({ row, now }: { row: ClassifiedMember; now: number }) {
+  const t = useT();
   const { member } = row;
   const left = member.status !== "Active";
   const tenure = formatTenure(member.hireDate, member.terminationDate, now);
@@ -266,7 +267,7 @@ function MemberRow({ row, now }: { row: ClassifiedMember; now: number }) {
           title={
             left && member.terminationDate
               ? `${formatUnixDate(member.hireDate)} – ${formatUnixDate(member.terminationDate)}`
-              : `Since ${formatUnixDate(member.hireDate)}`
+              : t("Since {0}", formatUnixDate(member.hireDate))
           }
         >
           {tenure}

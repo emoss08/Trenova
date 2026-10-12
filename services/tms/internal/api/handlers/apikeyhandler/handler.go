@@ -5,10 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -101,14 +100,19 @@ func (h *Handler) list(c *gin.Context) {
 		return
 	}
 	req := pagination.NewQueryOptions(c, authCtx)
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[services.APIKeyResponse], error) {
-		return h.apiKeyService.ListAPIKeys(
-			c.Request.Context(),
-			&repositories.ListAPIKeysRequest{
-				Filter: req,
-			},
-		)
-	})
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[apikeyports.APIKeyResponse], error) {
+			return h.apiKeyService.ListAPIKeys(
+				c.Request.Context(),
+				&apikeyports.ListAPIKeysRequest{
+					Filter: req,
+				},
+			)
+		},
+	)
 }
 
 // @Summary Create an API key
@@ -131,7 +135,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	req := new(services.CreateAPIKeyRequest)
+	req := new(apikeyports.CreateAPIKeyRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -214,7 +218,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	req := new(services.UpdateAPIKeyRequest)
+	req := new(apikeyports.UpdateAPIKeyRequest)
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return

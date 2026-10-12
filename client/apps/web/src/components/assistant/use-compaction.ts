@@ -1,11 +1,7 @@
 import { queries } from "@/lib/queries";
+import { updateCachedThread } from "@/lib/thread-list";
 import { apiService } from "@/services/api";
-import type {
-  AssistantStreamEvent,
-  AssistantThread,
-  AssistantThreadList,
-  ContextUsage,
-} from "@/types/assistant";
+import type { AssistantStreamEvent, AssistantThread, ContextUsage } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useEffect, useReducer, useRef } from "react";
@@ -53,16 +49,7 @@ export function useCompaction(thread: AssistantThread, busy: boolean) {
         queries.assistant.thread(thread.id).queryKey,
         (cached) => (cached ? merge(cached) : cached),
       );
-      queryClient.setQueryData<AssistantThreadList>(
-        queries.assistant.threads().queryKey,
-        (cached) =>
-          cached
-            ? {
-                ...cached,
-                items: cached.items.map((item) => (item.id === thread.id ? merge(item) : item)),
-              }
-            : cached,
-      );
+      updateCachedThread(queryClient, thread.id, merge);
     },
     [queryClient, thread.id],
   );

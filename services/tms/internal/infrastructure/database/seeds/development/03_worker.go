@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
@@ -318,6 +318,7 @@ func (s *WorkerSeed) Run(ctx context.Context, tx bun.Tx) error {
 						Type:           ptoTypes[typeIdx],
 						StartDate:      startDate,
 						EndDate:        endDate,
+						Days:           worker.ComputePTODays(startDate, endDate, nil, true, nil),
 						Reason:         ptoReasons[rng.Intn(len(ptoReasons))], //nolint:gosec // deterministic seed data generation
 						CreatedAt:      now,
 						UpdatedAt:      now,

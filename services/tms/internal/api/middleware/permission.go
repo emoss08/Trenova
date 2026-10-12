@@ -2,8 +2,9 @@ package middleware
 
 import (
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
@@ -13,12 +14,12 @@ import (
 type PermissionMiddlewareParams struct {
 	fx.In
 
-	PermissionEngine services.PermissionEngine
+	PermissionEngine permissionports.PermissionEngine
 	ErrorHandler     *helpers.ErrorHandler
 }
 
 type PermissionMiddleware struct {
-	permEngine   services.PermissionEngine
+	permEngine   permissionports.PermissionEngine
 	errorHandler *helpers.ErrorHandler
 }
 
@@ -54,6 +55,24 @@ func (m *PermissionMiddleware) RequirePermission(
 
 		c.Set("permission_result", result)
 		c.Next()
+	}
+}
+
+func (m *PermissionMiddleware) RequireParamPermission(
+	param string,
+	operation permission.Operation,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		resource := c.Param(param)
+		if !permission.LooksLikeResource(resource) {
+			m.errorHandler.HandleError(c, errortypes.NewValidationError(
+				param,
+				errortypes.ErrInvalid,
+				"Resource is invalid",
+			))
+			return
+		}
+		m.RequirePermission(resource, operation)(c)
 	}
 }
 
@@ -114,9 +133,9 @@ func (m *PermissionMiddleware) RequireAllPermissions(checks ...PermissionCheck) 
 	}
 }
 
-func GetPermissionResult(c *gin.Context) *services.PermissionCheckResult {
+func GetPermissionResult(c *gin.Context) *permissionports.PermissionCheckResult {
 	if result, exists := c.Get("permission_result"); exists {
-		if pr, ok := result.(*services.PermissionCheckResult); ok {
+		if pr, ok := result.(*permissionports.PermissionCheckResult); ok {
 			return pr
 		}
 	}
@@ -127,9 +146,9 @@ func BuildPermissionCheckRequest(
 	authCtx *authctx.AuthContext,
 	resource string,
 	operation permission.Operation,
-) *services.PermissionCheckRequest {
-	return &services.PermissionCheckRequest{
-		PrincipalType:     services.PrincipalType(authCtx.PrincipalType),
+) *permissionports.PermissionCheckRequest {
+	return &permissionports.PermissionCheckRequest{
+		PrincipalType:     kernelports.PrincipalType(authCtx.PrincipalType),
 		PrincipalID:       authCtx.PrincipalID,
 		UserID:            authCtx.UserID,
 		APIKeyID:          authCtx.APIKeyID,
@@ -143,8 +162,8 @@ func BuildPermissionCheckRequest(
 
 func permissionContextAttributes(
 	authCtx *authctx.AuthContext,
-) services.RequestContextAttributes {
-	return services.RequestContextAttributes{
+) permissionports.RequestContextAttributes {
+	return permissionports.RequestContextAttributes{
 		ActiveRoleIDs:         authCtx.ActiveRoleIDs,
 		AuthenticatorAAL:      authCtx.AuthenticatorAAL,
 		FederationFAL:         authCtx.FederationFAL,

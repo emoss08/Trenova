@@ -190,7 +190,7 @@ export function ReviewCard({
             variant="ghost"
             className="text-destructive ml-auto"
             disabled={busy}
-            aria-label={`Delete ${review.title}`}
+            aria-label={t("Delete {0}", review.title)}
             onClick={() => onDelete(review)}
           >
             <Trash01Icon className="size-3.5" />

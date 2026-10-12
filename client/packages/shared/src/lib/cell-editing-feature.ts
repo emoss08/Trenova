@@ -24,6 +24,11 @@ export type CellEditCommitParams<TData extends RowData = RowData> = {
   value: unknown;
   previousValue: unknown;
   row: TData;
+  /**
+   * The write is one of many from a paste or a fill. The table announces the batch
+   * and refetches once when it ends, so the commit should do neither for each cell.
+   */
+  batch?: boolean;
 };
 
 export type CellEditCommitFn<TData extends RowData = RowData> = (

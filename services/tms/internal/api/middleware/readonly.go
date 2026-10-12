@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -26,6 +26,9 @@ var readOnlyWriteAllowedPaths = map[string]struct{}{
 	"/api/v1/assistant/turns/:turnID/stop":                             {},
 	"/api/v1/shipments/:shipmentID/comments/typing":                    {},
 	"/api/v1/shipments/:shipmentID/comments/presence":                  {},
+	"/api/v1/realtime/presence/:resource":                              {},
+	"/api/v1/realtime/presence/:resource/:recordID":                    {},
+	"/api/v1/inbox/presence":                                           {},
 	"/api/v1/shipments/calculate-totals":                               {},
 	"/api/v1/shipments/calculate-distance":                             {},
 	"/api/v1/shipments/check-for-duplicate-bols":                       {},
@@ -70,13 +73,13 @@ var expiredAllowedPaths = map[string]struct{}{
 type ReadOnlyGuardParams struct {
 	fx.In
 
-	Plans        services.PlanService
+	Plans        platformplanports.PlanService
 	ErrorHandler *helpers.ErrorHandler
 	Logger       *zap.Logger
 }
 
 type ReadOnlyGuard struct {
-	plans        services.PlanService
+	plans        platformplanports.PlanService
 	errorHandler *helpers.ErrorHandler
 	l            *zap.Logger
 }

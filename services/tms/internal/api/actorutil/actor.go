@@ -1,14 +1,15 @@
 package actorutil
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-func FromAuthContext(auth *authctx.AuthContext) *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalType(auth.PrincipalType),
+func FromAuthContext(auth *authctx.AuthContext) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  kernelports.PrincipalType(auth.PrincipalType),
 		PrincipalID:    auth.PrincipalID,
 		UserID:         auth.UserID,
 		APIKeyID:       auth.APIKeyID,

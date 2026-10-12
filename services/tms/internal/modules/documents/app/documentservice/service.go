@@ -1,0 +1,1351 @@
+//nolint:funlen // existing legacy workflow/API shape is intentionally kept stable
+package documentservice
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"mime/multipart"
+	"path/filepath"
+	"slices"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
+
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	workflowstarterservice "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/documentshipmentdraftports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
+	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/fileutils"
+	"github.com/emoss08/trenova/shared/hashutils"
+	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
+	"go.temporal.io/api/serviceerror"
+	"go.temporal.io/sdk/client"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	Logger               *zap.Logger
+	DB                   kernelports.DBConnection
+	Repo                 documentports.DocumentRepository
+	PacketRuleRepo       documentpacketruleports.DocumentPacketRuleRepository
+	DocumentTypeRepo     documenttypeports.DocumentTypeRepository
+	DraftRepo            documentshipmentdraftports.DocumentShipmentDraftRepository
+	Shipments            shipmentports.ShipmentRepository
+	CacheRepo            customerports.DocumentCacheRepository
+	SessionRepo          documentuploadports.DocumentUploadSessionRepository
+	Storage              kernelports.Client
+	Validator            *Validator
+	AuditService         auditports.AuditService
+	DocumentIntelligence documentports.DocumentContentService
+	SearchProjection     documentsearchprojectionports.DocumentSearchProjectionService
+	WorkflowStarter      kernelports.WorkflowStarter
+	UsageProvider        platformcatalogports.UsageProvider `optional:"true"`
+	Config               *config.Config
+	ThumbnailGenerator   *thumbnailservice.Generator
+	Encryption           *encryptionservice.Service
+	Realtime             agentports.RealtimeService
+	AICorrections        aicorrectionports.AICorrectionService `optional:"true"`
+	Triage               inboundmessageports.TriageEventSink   `optional:"true"`
+}
+
+type Service struct {
+	l                    *zap.Logger
+	db                   kernelports.DBConnection
+	repo                 documentports.DocumentRepository
+	packetRuleRepo       documentpacketruleports.DocumentPacketRuleRepository
+	documentTypeRepo     documenttypeports.DocumentTypeRepository
+	draftRepo            documentshipmentdraftports.DocumentShipmentDraftRepository
+	shipments            shipmentports.ShipmentRepository
+	cacheRepo            customerports.DocumentCacheRepository
+	sessionRepo          documentuploadports.DocumentUploadSessionRepository
+	storage              kernelports.Client
+	validator            *Validator
+	auditService         auditports.AuditService
+	documentIntelligence documentports.DocumentContentService
+	searchProjection     documentsearchprojectionports.DocumentSearchProjectionService
+	workflowStarter      kernelports.WorkflowStarter
+	usageProvider        platformcatalogports.UsageProvider
+	config               *config.StorageConfig
+	thumbnailGenerator   *thumbnailservice.Generator
+	encryption           *encryptionservice.Service
+	realtime             agentports.RealtimeService
+	aiCorrections        aicorrectionports.AICorrectionService
+	triage               inboundmessageports.TriageEventSink
+}
+
+func New(p Params) *Service { //nolint:gocritic // stable API shape
+	workflowStarter := p.WorkflowStarter
+	if workflowStarter == nil {
+		workflowStarter = workflowstarterservice.New(workflowstarterservice.Params{})
+	}
+
+	documentIntelligence := p.DocumentIntelligence
+	if documentIntelligence == nil {
+		documentIntelligence = noopDocumentContentService{}
+	}
+
+	searchProjection := p.SearchProjection
+	if searchProjection == nil {
+		searchProjection = noopDocumentSearchProjectionService{}
+	}
+
+	return &Service{
+		l:                    p.Logger.Named("service.document"),
+		db:                   p.DB,
+		repo:                 p.Repo,
+		packetRuleRepo:       p.PacketRuleRepo,
+		documentTypeRepo:     p.DocumentTypeRepo,
+		draftRepo:            p.DraftRepo,
+		shipments:            p.Shipments,
+		cacheRepo:            p.CacheRepo,
+		sessionRepo:          p.SessionRepo,
+		storage:              p.Storage,
+		validator:            p.Validator,
+		auditService:         p.AuditService,
+		documentIntelligence: documentIntelligence,
+		searchProjection:     searchProjection,
+		workflowStarter:      workflowStarter,
+		usageProvider:        p.UsageProvider,
+		config:               p.Config.GetStorageConfig(),
+		thumbnailGenerator:   p.ThumbnailGenerator,
+		encryption:           p.Encryption,
+		realtime:             p.Realtime,
+		aiCorrections:        p.AICorrections,
+		triage:               p.Triage,
+	}
+}
+
+type UploadRequest = documentports.UploadRequest
+
+type UploadResult = documentports.DocumentUploadResult
+
+type DocumentContent = documentports.DocumentContent
+
+type BulkUploadRequest struct {
+	TenantInfo   pagination.TenantInfo
+	Actor        permissionports.RequestActor
+	Files        []*multipart.FileHeader
+	ResourceID   string
+	ResourceType string
+	LineageID    string
+}
+
+type BulkUploadResult struct {
+	Documents []*document.Document
+	Errors    []error
+}
+
+func (s *Service) List(
+	ctx context.Context,
+	req *documentports.ListDocumentsRequest,
+) (*pagination.ListResult[*document.Document], error) {
+	return s.repo.List(ctx, req)
+}
+
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	req *documentports.DocumentSelectOptionsRequest,
+) (*pagination.ListResult[*document.Document], error) {
+	return s.repo.SelectOptions(ctx, req)
+}
+
+func (s *Service) Get(
+	ctx context.Context,
+	req documentports.GetDocumentByIDRequest,
+) (*document.Document, error) {
+	entity, err := s.cacheRepo.GetByID(ctx, req)
+	if err == nil {
+		return entity, nil
+	}
+	if !errors.Is(err, customerports.ErrCacheMiss) {
+		s.l.Warn(
+			"failed to load document from cache",
+			zap.Error(err),
+			zap.String("documentID", req.ID.String()),
+		)
+	}
+
+	return s.repo.GetByID(ctx, req)
+}
+
+func (s *Service) GetByResource(
+	ctx context.Context,
+	req *documentports.GetDocumentsByResourceRequest,
+) ([]*document.Document, error) {
+	return s.repo.GetByResourceID(ctx, req)
+}
+
+func (s *Service) Upload(
+	ctx context.Context,
+	req *documentports.UploadRequest,
+) (*UploadResult, error) {
+	log := s.l.With(
+		zap.String("operation", "Upload"),
+		zap.String("resourceId", req.ResourceID),
+		zap.String("resourceType", req.ResourceType),
+	)
+
+	processingProfile, err := document.NormalizeProcessingProfile(req.ProcessingProfile)
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			"processingProfile",
+			errortypes.ErrInvalid,
+			"Invalid processing profile",
+		)
+	}
+
+	if multiErr := s.validator.ValidateFile(req.File); multiErr != nil {
+		return nil, multiErr
+	}
+
+	file, err := req.File.Open()
+	if err != nil {
+		log.Error("failed to open file", zap.Error(err))
+		return nil, errortypes.NewDatabaseError("Failed to process uploaded file").WithInternal(err)
+	}
+	defer file.Close()
+
+	return s.storeUpload(ctx, log, &uploadInput{
+		req:               req,
+		processingProfile: processingProfile,
+		fileName:          req.File.Filename,
+		size:              req.File.Size,
+		contentType:       req.File.Header.Get("Content-Type"),
+		read:              func() ([]byte, error) { return io.ReadAll(file) },
+	})
+}
+
+func (s *Service) Store(
+	ctx context.Context,
+	req *documentports.StoreDocumentRequest,
+) (*document.Document, error) {
+	log := s.l.With(
+		zap.String("operation", "Store"),
+		zap.String("resourceId", req.ResourceID),
+		zap.String("resourceType", req.ResourceType),
+	)
+
+	size := int64(len(req.Content))
+	if multiErr := s.validator.ValidateUploadMetadata(
+		req.FileName,
+		size,
+		req.ContentType,
+	); multiErr != nil {
+		return nil, multiErr
+	}
+
+	upload := &documentports.UploadRequest{
+		TenantInfo:   req.TenantInfo,
+		Actor:        req.Actor,
+		ResourceID:   req.ResourceID,
+		ResourceType: req.ResourceType,
+		Description:  req.Description,
+		Tags:         req.Tags,
+	}
+	if req.DocumentTypeID.IsNotNil() {
+		upload.DocumentTypeID = req.DocumentTypeID.String()
+	}
+
+	result, err := s.storeUpload(ctx, log, &uploadInput{
+		req:               upload,
+		processingProfile: document.ProcessingProfileNone,
+		fileName:          req.FileName,
+		size:              size,
+		contentType:       req.ContentType,
+		read:              func() ([]byte, error) { return req.Content, nil },
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Document, nil
+}
+
+type uploadInput struct {
+	req               *documentports.UploadRequest
+	processingProfile document.ProcessingProfile
+	fileName          string
+	size              int64
+	contentType       string
+	read              func() ([]byte, error)
+}
+
+func (s *Service) storeUpload(
+	ctx context.Context,
+	log *zap.Logger,
+	in *uploadInput,
+) (*UploadResult, error) {
+	req := in.req
+	processingProfile := in.processingProfile
+	contentType := in.contentType
+	storagePath := fileutils.GenerateStoragePath(
+		req.TenantInfo.OrgID.String(),
+		req.ResourceType,
+		in.fileName,
+	)
+	docID := pulid.MustNew("doc_")
+	if err := usageservice.CheckDocumentUploadLimit(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentUploadUsageParams{
+			TenantInfo: req.TenantInfo,
+			Actor:      req.Actor,
+			DocumentID: docID,
+		},
+	); err != nil {
+		return nil, err
+	}
+	if err := usageservice.CheckDocumentBytesLimit(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentBytesUsageParams{
+			TenantInfo: req.TenantInfo,
+			Actor:      req.Actor,
+			Bytes:      in.size,
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	lineageID, lineageInfo, err := s.prepareUploadLineage(ctx, req, docID)
+	if err != nil {
+		return nil, err
+	}
+
+	plaintext, err := in.read()
+	if err != nil {
+		log.Error("failed to read uploaded file", zap.Error(err))
+		return nil, errortypes.NewDatabaseError("Failed to process uploaded file").WithInternal(err)
+	}
+
+	uploadBody, cryptoMode, cryptoVersion, err := s.documentUploadBody(
+		plaintext,
+		req.TenantInfo,
+		storagePath,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	fileInfo, err := s.storage.Upload(ctx, &kernelports.UploadParams{
+		Key:         storagePath,
+		ContentType: contentType,
+		Size:        int64(len(uploadBody)),
+		Body:        bytes.NewReader(uploadBody),
+		Metadata: map[string]string{
+			"original_name": in.fileName,
+			"resource_id":   req.ResourceID,
+			"resource_type": req.ResourceType,
+			"crypto_mode":   cryptoMode,
+		},
+	})
+	if err != nil {
+		log.Error("failed to upload file to storage", zap.Error(err))
+		return nil, errortypes.NewDatabaseError("Failed to upload file").WithInternal(err)
+	}
+
+	doc := &document.Document{
+		ID:                 docID,
+		OrganizationID:     req.TenantInfo.OrgID,
+		BusinessUnitID:     req.TenantInfo.BuID,
+		LineageID:          lineageID,
+		VersionNumber:      s.nextVersionNumber(lineageInfo),
+		IsCurrentVersion:   true,
+		FileName:           filepath.Base(storagePath),
+		OriginalName:       in.fileName,
+		FileSize:           in.size,
+		FileType:           contentType,
+		StoragePath:        storagePath,
+		ChecksumSHA256:     hashutils.SHA256BytesHex(plaintext),
+		StorageVersionID:   fileInfo.VersionID,
+		CryptoMode:         cryptoMode,
+		CryptoVersion:      cryptoVersion,
+		PreviewStoragePath: "",
+		Status:             document.StatusActive,
+		Description:        req.Description,
+		ResourceID:         req.ResourceID,
+		ResourceType:       req.ResourceType,
+		ProcessingProfile:  processingProfile,
+		Tags:               req.Tags,
+		UploadedByID:       req.TenantInfo.UserID,
+		PreviewStatus:      previewStatusForFileType(contentType),
+	}
+
+	if req.DocumentTypeID != "" {
+		docTypeID, parseErr := pulid.MustParse(req.DocumentTypeID)
+		if parseErr != nil {
+			return nil, errortypes.NewValidationError(
+				"documentTypeId", errortypes.ErrInvalid, "Invalid document type ID",
+			)
+		}
+		doc.DocumentTypeID = &docTypeID
+	}
+
+	if err = s.makeCurrentDocumentVersion(ctx, doc, lineageInfo); err != nil {
+		log.Error("failed to create document record", zap.Error(err))
+		if delErr := s.deleteStoredObject(ctx, storagePath, fileInfo.VersionID); delErr != nil {
+			log.Error("failed to cleanup storage after db failure", zap.Error(delErr))
+		}
+		return nil, err
+	}
+	doc.IsCurrentVersion = true
+
+	createdDoc := doc
+
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
+		Resource:       permission.ResourceDocument,
+		ResourceID:     createdDoc.GetID().String(),
+		Operation:      permission.OpCreate,
+		UserID:         req.TenantInfo.UserID,
+		CurrentState:   jsonutils.MustToJSON(createdDoc),
+		OrganizationID: createdDoc.OrganizationID,
+		BusinessUnitID: createdDoc.BusinessUnitID,
+	}, auditservice.WithComment("Document uploaded")); err != nil {
+		log.Error("failed to log audit action", zap.Error(err))
+	}
+	if lineageInfo != nil {
+		s.deleteSearchProjection(ctx, lineageInfo)
+	}
+	s.syncSearchProjection(ctx, log, createdDoc, "")
+	inboundmessageports.AnnounceDocumentAttached(ctx, s.triage, createdDoc)
+
+	if s.thumbnailGenerator.SupportsThumbnail(contentType) {
+		s.startThumbnailWorkflow(ctx, log, createdDoc)
+	}
+	if createdDoc.ProcessingProfile.SupportsIntelligence() {
+		enqueueErr := s.documentIntelligence.EnqueueExtraction(
+			ctx,
+			createdDoc,
+			req.TenantInfo.UserID,
+		)
+		if enqueueErr != nil {
+			log.Error("failed to enqueue document content extraction",
+				zap.String("documentId", createdDoc.GetID().String()),
+				zap.Error(enqueueErr),
+			)
+		}
+	}
+	s.recordDocumentUploadUsage(ctx, log, createdDoc, req.TenantInfo, &req.Actor)
+	s.publishDocumentInvalidation(ctx, createdDoc, &req.Actor, permission.OpCreate)
+
+	return &UploadResult{Document: createdDoc}, nil
+}
+
+func (s *Service) publishDocumentInvalidation(
+	ctx context.Context,
+	doc *document.Document,
+	actor *permissionports.RequestActor,
+	operation permission.Operation,
+) {
+	if s.realtime == nil || doc == nil {
+		return
+	}
+	params := &realtimeinvalidation.PublishParams{
+		OrganizationID: doc.OrganizationID,
+		BusinessUnitID: doc.BusinessUnitID,
+		Resource:       permission.ResourceDocument.String(),
+		Action:         string(operation),
+		RecordID:       doc.ID,
+		Entity: map[string]string{
+			metadataResourceID:   doc.ResourceID,
+			metadataResourceType: doc.ResourceType,
+		},
+	}
+	if actor != nil {
+		params.ActorUserID = actor.UserID
+		params.ActorType = actor.PrincipalType
+		params.ActorID = actor.PrincipalID
+		params.ActorAPIKeyID = actor.APIKeyID
+	}
+	if err := realtimeinvalidation.Publish(ctx, s.realtime, params); err != nil {
+		s.l.Warn("failed to publish document invalidation", zap.Error(err))
+	}
+}
+
+func (s *Service) prepareUploadLineage(
+	ctx context.Context,
+	req *documentports.UploadRequest,
+	docID pulid.ID,
+) (pulid.ID, *document.Document, error) {
+	if strings.TrimSpace(req.LineageID) == "" {
+		return docID, nil, nil
+	}
+
+	parsedLineageID, err := pulid.MustParse(req.LineageID)
+	if err != nil {
+		return "", nil, errortypes.NewValidationError(
+			"lineageId",
+			errortypes.ErrInvalid,
+			"Invalid lineage ID",
+		)
+	}
+
+	lineageInfo, err := s.resolveLineageForUpload(ctx, parsedLineageID, req.TenantInfo)
+	if err != nil {
+		return "", nil, err
+	}
+	if lineageInfo.ResourceID != req.ResourceID || lineageInfo.ResourceType != req.ResourceType {
+		return "", nil, errortypes.NewConflictError(
+			"Document lineage does not belong to the selected resource",
+		)
+	}
+
+	return lineageInfo.LineageID, lineageInfo, nil
+}
+
+func (s *Service) documentUploadBody(
+	plaintext []byte,
+	tenantInfo pagination.TenantInfo,
+	storagePath string,
+) (body []byte, cryptoMode string, cryptoVersion int16, err error) {
+	if s.encryption == nil {
+		return nil, "", 0, errortypes.NewBusinessError("Document encryption is not configured")
+	}
+
+	encrypted, err := s.encryption.EncryptBytesWithAAD(
+		plaintext,
+		storedobject.AAD(tenantInfo, storagePath),
+	)
+	if err != nil {
+		return nil, "", 0, errortypes.NewBusinessError("Failed to encrypt document").
+			WithInternal(err)
+	}
+
+	return []byte(encrypted), encryptionservice.CryptoModeForCiphertext(encrypted), 1, nil
+}
+
+func (s *Service) recordDocumentUploadUsage(
+	ctx context.Context,
+	log *zap.Logger,
+	doc *document.Document,
+	tenantInfo pagination.TenantInfo,
+	actor *permissionports.RequestActor,
+) {
+	if _, err := usageservice.RecordDocumentUpload(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentUploadUsageParams{
+			TenantInfo: tenantInfo,
+			Actor:      *actor,
+			DocumentID: doc.ID,
+		},
+	); err != nil {
+		log.Warn(
+			"failed to record document upload usage",
+			zap.String("documentId", doc.ID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func (s *Service) startThumbnailWorkflow(
+	ctx context.Context,
+	log *zap.Logger,
+	doc *document.Document,
+) {
+	if !s.workflowStarter.Enabled() {
+		log.Debug("temporal client not configured, skipping thumbnail generation")
+		return
+	}
+
+	workflowID := fmt.Sprintf("thumbnail-%s", doc.ID.String())
+
+	payload := &thumbnailcontract.GenerateThumbnailPayload{
+		DocumentID:     doc.ID,
+		OrganizationID: doc.OrganizationID,
+		BusinessUnitID: doc.BusinessUnitID,
+		StoragePath:    doc.StoragePath,
+		ContentType:    doc.FileType,
+		ResourceType:   doc.ResourceType,
+	}
+
+	_, err := s.workflowStarter.StartWorkflow(
+		ctx,
+		client.StartWorkflowOptions{
+			ID:                                       workflowID,
+			TaskQueue:                                temporaltype.ThumbnailTaskQueue,
+			WorkflowExecutionErrorWhenAlreadyStarted: true,
+			StaticSummary: fmt.Sprintf(
+				"Generating thumbnail for document %s",
+				doc.ID,
+			),
+		},
+		"GenerateThumbnailWorkflow",
+		payload,
+	)
+	if err != nil {
+		var alreadyStarted *serviceerror.WorkflowExecutionAlreadyStarted
+		if errors.As(err, &alreadyStarted) {
+			return
+		}
+		log.Warn("failed to start thumbnail workflow",
+			zap.String("documentId", doc.ID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func (s *Service) BulkUpload(
+	ctx context.Context,
+	req *BulkUploadRequest,
+) (*BulkUploadResult, error) {
+	log := s.l.With(
+		zap.String("operation", "BulkUpload"),
+		zap.String("resourceId", req.ResourceID),
+		zap.String("resourceType", req.ResourceType),
+		zap.Int("fileCount", len(req.Files)),
+	)
+
+	if multiErr := s.validator.ValidateFiles(req.Files); multiErr != nil {
+		return nil, multiErr
+	}
+
+	result := &BulkUploadResult{
+		Documents: make([]*document.Document, 0, len(req.Files)),
+		Errors:    make([]error, 0),
+	}
+
+	for _, file := range req.Files {
+		uploadResult, err := s.Upload(ctx, &documentports.UploadRequest{
+			TenantInfo:   req.TenantInfo,
+			Actor:        req.Actor,
+			File:         file,
+			ResourceID:   req.ResourceID,
+			ResourceType: req.ResourceType,
+			LineageID:    req.LineageID,
+		})
+		if err != nil {
+			log.Warn(
+				"failed to upload file in bulk operation",
+				zap.String("filename", file.Filename),
+				zap.Error(err),
+			)
+			result.Errors = append(result.Errors, fmt.Errorf("%s: %w", file.Filename, err))
+			continue
+		}
+		result.Documents = append(result.Documents, uploadResult.Document)
+	}
+
+	return result, nil
+}
+
+func (s *Service) GetDownloadURL(
+	ctx context.Context,
+	req documentports.GetDocumentByIDRequest,
+) (string, error) {
+	log := s.l.With(
+		zap.String("operation", "GetDownloadURL"),
+		zap.String("documentId", req.ID.String()),
+	)
+
+	doc, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return "", err
+	}
+
+	url, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
+		Key:                doc.StoragePath,
+		Expiry:             s.config.GetPresignedURLExpiry(),
+		ContentDisposition: fileutils.ContentDisposition("attachment", doc.OriginalName),
+	})
+	if err != nil {
+		log.Error("failed to generate presigned URL", zap.Error(err))
+		return "", errortypes.NewDatabaseError("Failed to generate download URL").WithInternal(err)
+	}
+
+	s.recordAccess(ctx, req.TenantInfo, doc, documentAccessDownload, documentChannelPresignedURL)
+	return url, nil
+}
+
+func (s *Service) GetViewURL(
+	ctx context.Context,
+	req documentports.GetDocumentByIDRequest,
+) (string, error) {
+	log := s.l.With(
+		zap.String("operation", "GetViewURL"),
+		zap.String("documentId", req.ID.String()),
+	)
+
+	doc, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return "", err
+	}
+
+	url, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
+		Key:                doc.StoragePath,
+		Expiry:             s.config.GetPresignedURLExpiry(),
+		ContentDisposition: viewContentDisposition(doc),
+	})
+	if err != nil {
+		log.Error("failed to generate presigned URL for viewing", zap.Error(err))
+		return "", errortypes.NewDatabaseError("Failed to generate view URL").WithInternal(err)
+	}
+
+	s.recordAccess(ctx, req.TenantInfo, doc, documentAccessView, documentChannelPresignedURL)
+	return url, nil
+}
+
+func (s *Service) GetDownloadContent(
+	ctx context.Context,
+	req documentports.GetDocumentByIDRequest,
+) (*DocumentContent, error) {
+	doc, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := s.readDocumentObject(ctx, doc, req.TenantInfo, doc.StoragePath)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordAccess(ctx, req.TenantInfo, doc, documentAccessDownload, documentChannelContent)
+	return &DocumentContent{
+		Document:           doc,
+		Body:               io.NopCloser(bytes.NewReader(body)),
+		ContentType:        doc.FileType,
+		ContentLength:      int64(len(body)),
+		ContentDisposition: fileutils.ContentDisposition("attachment", doc.OriginalName),
+	}, nil
+}
+
+func (s *Service) GetViewContent(
+	ctx context.Context,
+	req documentports.GetDocumentByIDRequest,
+) (*DocumentContent, error) {
+	doc, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := s.readDocumentObject(ctx, doc, req.TenantInfo, doc.StoragePath)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordAccess(ctx, req.TenantInfo, doc, documentAccessView, documentChannelContent)
+	return &DocumentContent{
+		Document:           doc,
+		Body:               io.NopCloser(bytes.NewReader(body)),
+		ContentType:        doc.FileType,
+		ContentLength:      int64(len(body)),
+		ContentDisposition: viewContentDisposition(doc),
+	}, nil
+}
+
+func (s *Service) GetPreviewContent(
+	ctx context.Context,
+	req documentports.GetDocumentByIDRequest,
+) (*DocumentContent, error) {
+	doc, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if doc.PreviewStatus != document.PreviewStatusReady || doc.PreviewStoragePath == "" {
+		return nil, errortypes.NewNotFoundError("Preview not available for this document")
+	}
+
+	body, err := s.readStoredObject(
+		ctx,
+		doc.PreviewStoragePath,
+		storedobject.AAD(req.TenantInfo, doc.PreviewStoragePath),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DocumentContent{
+		Document:           doc,
+		Body:               io.NopCloser(bytes.NewReader(body)),
+		ContentType:        "image/webp",
+		ContentLength:      int64(len(body)),
+		ContentDisposition: "inline",
+	}, nil
+}
+
+func (s *Service) readDocumentObject(
+	ctx context.Context,
+	doc *document.Document,
+	tenantInfo pagination.TenantInfo,
+	storagePath string,
+) ([]byte, error) {
+	return s.readStoredObject(ctx, storagePath, storedobject.AAD(tenantInfo, doc.StoragePath))
+}
+
+func (s *Service) readStoredObject(
+	ctx context.Context,
+	storagePath string,
+	aad encryptionservice.AAD,
+) ([]byte, error) {
+	return storedobject.Read(ctx, s.storage, s.encryption, storagePath, aad)
+}
+
+func viewContentDisposition(doc *document.Document) string {
+	disposition := "inline"
+	if isActiveContentType(doc.FileType) {
+		disposition = "attachment"
+	}
+
+	return fileutils.ContentDisposition(disposition, doc.OriginalName)
+}
+
+func isActiveContentType(contentType string) bool {
+	switch strings.ToLower(strings.TrimSpace(contentType)) {
+	case "text/html", "application/xhtml+xml", "image/svg+xml":
+		return true
+	default:
+		return false
+	}
+}
+
+func (s *Service) Delete(
+	ctx context.Context,
+	req documentports.DeleteDocumentRequest,
+	userID pulid.ID,
+) error {
+	log := s.l.With(
+		zap.String("operation", "Delete"),
+		zap.String("documentId", req.ID.String()),
+	)
+
+	doc, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest(req))
+	if err != nil {
+		return err
+	}
+
+	if doc.LineageID.IsNil() {
+		if err = s.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if txErr := s.detachUploadSessionsForDocuments(
+					txCtx,
+					[]pulid.ID{doc.ID},
+					req.TenantInfo,
+				); txErr != nil {
+					log.Error("failed to clear upload session document reference", zap.Error(txErr))
+					return errortypes.NewDatabaseError("Failed to detach upload sessions from document").
+						WithInternal(txErr)
+				}
+				return s.repo.Delete(txCtx, req)
+			},
+		); err != nil {
+			return err
+		}
+
+		s.cleanupDocumentStorage(ctx, log, doc)
+		if err = s.auditService.LogAction(&auditports.LogActionParams{
+			Resource:       permission.ResourceDocument,
+			ResourceID:     doc.GetID().String(),
+			Operation:      permission.OpDelete,
+			UserID:         userID,
+			PreviousState:  jsonutils.MustToJSON(doc),
+			OrganizationID: doc.OrganizationID,
+			BusinessUnitID: doc.BusinessUnitID,
+		}, auditservice.WithComment("Document deleted")); err != nil {
+			log.Error("failed to log audit action", zap.Error(err))
+		}
+		return nil
+	}
+
+	versions, err := s.repo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
+		LineageID:  doc.LineageID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		versionIDs := documentIDs(versions)
+		lineageIDs := []pulid.ID{doc.LineageID}
+		if txErr := s.detachUploadSessionsForDocuments(
+			txCtx,
+			versionIDs,
+			req.TenantInfo,
+		); txErr != nil {
+			log.Error("failed to clear upload session document reference", zap.Error(txErr))
+			return errortypes.NewDatabaseError("Failed to detach upload sessions from document").
+				WithInternal(txErr)
+		}
+
+		return s.repo.DeleteByLineageIDs(txCtx, documentports.DeleteDocumentLineageRequest{
+			LineageIDs: lineageIDs,
+			TenantInfo: req.TenantInfo,
+		})
+	}); err != nil {
+		return err
+	}
+
+	for _, version := range versions {
+		s.cleanupDocumentStorage(ctx, log, version)
+	}
+
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
+		Resource:       permission.ResourceDocument,
+		ResourceID:     doc.GetID().String(),
+		Operation:      permission.OpDelete,
+		UserID:         userID,
+		PreviousState:  jsonutils.MustToJSON(doc),
+		OrganizationID: doc.OrganizationID,
+		BusinessUnitID: doc.BusinessUnitID,
+	}, auditservice.WithComment("Document deleted")); err != nil {
+		log.Error("failed to log audit action", zap.Error(err))
+	}
+
+	return nil
+}
+
+type BulkDeleteRequest struct {
+	IDs        []pulid.ID
+	TenantInfo pagination.TenantInfo
+	UserID     pulid.ID
+}
+
+type BulkDeleteResult struct {
+	DeletedCount int
+	Errors       []error
+}
+
+func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
+	ctx context.Context,
+	req *BulkDeleteRequest,
+) (*BulkDeleteResult, error) {
+	log := s.l.With(
+		zap.String("operation", "BulkDelete"),
+		zap.Int("count", len(req.IDs)),
+	)
+
+	if len(req.IDs) == 0 {
+		return &BulkDeleteResult{DeletedCount: 0}, nil
+	}
+
+	plan, err := s.PlanDelete(ctx, req)
+	if err != nil {
+		log.Error("failed to plan bulk document delete", zap.Error(err))
+		return nil, err
+	}
+	docs := plan.Documents
+
+	result := &BulkDeleteResult{
+		Errors: make([]error, 0),
+	}
+
+	if slices.ContainsFunc(
+		docs,
+		func(doc *document.Document) bool { return doc.LineageID.IsNil() },
+	) {
+		if err = s.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if txErr := s.detachUploadSessionsForDocuments(
+					txCtx,
+					documentIDs(docs),
+					req.TenantInfo,
+				); txErr != nil {
+					log.Error(
+						"failed to clear upload session document references during bulk delete",
+						zap.Error(txErr),
+					)
+					return errortypes.NewDatabaseError("Failed to detach upload sessions from documents").
+						WithInternal(txErr)
+				}
+				return s.repo.BulkDelete(txCtx, documentports.BulkDeleteDocumentRequest{
+					IDs:        req.IDs,
+					TenantInfo: req.TenantInfo,
+				})
+			},
+		); err != nil {
+			log.Error("failed to bulk delete documents from database", zap.Error(err))
+			return nil, err
+		}
+
+		result.DeletedCount = len(docs)
+		for _, doc := range docs {
+			s.cleanupDocumentStorage(ctx, log, doc)
+		}
+		for _, doc := range docs {
+			if err = s.auditService.LogAction(&auditports.LogActionParams{
+				Resource:       permission.ResourceDocument,
+				ResourceID:     doc.GetID().String(),
+				Operation:      permission.OpDelete,
+				UserID:         req.UserID,
+				PreviousState:  jsonutils.MustToJSON(doc),
+				OrganizationID: doc.OrganizationID,
+				BusinessUnitID: doc.BusinessUnitID,
+			}, auditservice.WithComment("Document deleted (bulk)")); err != nil {
+				log.Warn("failed to log audit action for bulk delete",
+					zap.String("documentId", doc.ID.String()),
+					zap.Error(err),
+				)
+			}
+		}
+		return result, nil
+	}
+
+	docIDs := make([]pulid.ID, 0, len(docs))
+	lineageIDs := make([]pulid.ID, 0, len(docs))
+	lineageSet := make(map[string]struct{}, len(docs))
+	versionsByLineage := make(map[string][]*document.Document, len(docs))
+	for _, doc := range docs {
+		versions := plan.Versions[doc.LineageID]
+		versionsByLineage[doc.LineageID.String()] = versions
+		for _, version := range versions {
+			docIDs = append(docIDs, version.ID)
+		}
+		if _, ok := lineageSet[doc.LineageID.String()]; ok {
+			continue
+		}
+		lineageSet[doc.LineageID.String()] = struct{}{}
+		lineageIDs = append(lineageIDs, doc.LineageID)
+	}
+
+	if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if txErr := s.detachUploadSessionsForDocuments(
+			txCtx,
+			docIDs,
+			req.TenantInfo,
+		); txErr != nil {
+			log.Error(
+				"failed to clear upload session document references during bulk delete",
+				zap.Error(txErr),
+			)
+			return errortypes.NewDatabaseError("Failed to detach upload sessions from documents").
+				WithInternal(txErr)
+		}
+
+		return s.repo.DeleteByLineageIDs(txCtx, documentports.DeleteDocumentLineageRequest{
+			LineageIDs: lineageIDs,
+			TenantInfo: req.TenantInfo,
+		})
+	}); err != nil {
+		log.Error("failed to bulk delete documents from database", zap.Error(err))
+		return nil, err
+	}
+
+	result.DeletedCount = len(docIDs)
+
+	for _, versions := range versionsByLineage {
+		for _, doc := range versions {
+			s.cleanupDocumentStorage(ctx, log, doc)
+		}
+	}
+
+	for _, doc := range docs {
+		if err = s.auditService.LogAction(&auditports.LogActionParams{
+			Resource:       permission.ResourceDocument,
+			ResourceID:     doc.GetID().String(),
+			Operation:      permission.OpDelete,
+			UserID:         req.UserID,
+			PreviousState:  jsonutils.MustToJSON(doc),
+			OrganizationID: doc.OrganizationID,
+			BusinessUnitID: doc.BusinessUnitID,
+		}, auditservice.WithComment("Document deleted (bulk)")); err != nil {
+			log.Warn("failed to log audit action for bulk delete",
+				zap.String("documentId", doc.ID.String()),
+				zap.Error(err),
+			)
+		}
+	}
+
+	return result, nil
+}
+
+func (s *Service) detachUploadSessionsForDocuments(
+	ctx context.Context,
+	docIDs []pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) error {
+	return dbtx.WriteErr(ctx, s.db, func(ctx context.Context) error {
+		if len(docIDs) == 0 {
+			return nil
+		}
+
+		db := s.db.DBForContext(ctx)
+		if db == nil {
+			if len(docIDs) == 1 {
+				return s.sessionRepo.ClearDocumentReference(ctx, docIDs[0], tenantInfo)
+			}
+			return s.sessionRepo.ClearDocumentReferences(ctx, docIDs, tenantInfo)
+		}
+
+		documentIDStrings := make([]string, 0, len(docIDs))
+		for _, id := range docIDs {
+			documentIDStrings = append(documentIDStrings, id.String())
+		}
+
+		if _, err := db.
+			NewUpdate().
+			Table("document_upload_sessions").
+			Set("document_id = NULL").
+			Where("document_id IN (?)", bun.List(documentIDStrings)).
+			Where("organization_id = ?", tenantInfo.OrgID).
+			Where("business_unit_id = ?", tenantInfo.BuID).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		remaining, err := db.
+			NewSelect().
+			Table("document_upload_sessions").
+			Where("document_id IN (?)", bun.List(documentIDStrings)).
+			Where("organization_id = ?", tenantInfo.OrgID).
+			Where("business_unit_id = ?", tenantInfo.BuID).
+			Count(ctx)
+		if err != nil {
+			return err
+		}
+
+		if remaining > 0 {
+			return fmt.Errorf(
+				"document upload session references remain after detach: %d",
+				remaining,
+			)
+		}
+
+		return nil
+	})
+}
+
+func (s *Service) GetPreviewURL(
+	ctx context.Context,
+	req documentports.GetDocumentByIDRequest,
+) (string, error) {
+	log := s.l.With(
+		zap.String("operation", "GetPreviewURL"),
+		zap.String("documentId", req.ID.String()),
+	)
+
+	doc, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return "", err
+	}
+
+	if doc.PreviewStatus != document.PreviewStatusReady || doc.PreviewStoragePath == "" {
+		return "", errortypes.NewNotFoundError("Preview not available for this document")
+	}
+
+	url, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
+		Key:    doc.PreviewStoragePath,
+		Expiry: s.config.GetPresignedURLExpiry(),
+	})
+	if err != nil {
+		log.Error("failed to generate presigned URL for preview", zap.Error(err))
+		return "", errortypes.NewDatabaseError("Failed to generate preview URL").WithInternal(err)
+	}
+
+	return url, nil
+}
+
+type DocumentURLSet struct {
+	DownloadURL string
+	PreviewURL  string
+}
+
+func (s *Service) PresignDocumentURLs(
+	ctx context.Context,
+	docs []*document.Document,
+) (map[pulid.ID]DocumentURLSet, error) {
+	urls := make(map[pulid.ID]DocumentURLSet, len(docs))
+	expiry := s.config.GetPresignedURLExpiry()
+
+	for _, doc := range docs {
+		if doc == nil {
+			continue
+		}
+
+		downloadURL, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
+			Key:                doc.StoragePath,
+			Expiry:             expiry,
+			ContentDisposition: fileutils.ContentDisposition("attachment", doc.OriginalName),
+		})
+		if err != nil {
+			s.l.Error("failed to presign document download URL",
+				zap.String("documentId", doc.ID.String()),
+				zap.Error(err))
+			return nil, errortypes.NewDatabaseError("Failed to generate download URL").
+				WithInternal(err)
+		}
+
+		set := DocumentURLSet{DownloadURL: downloadURL}
+		if doc.PreviewStatus == document.PreviewStatusReady && doc.PreviewStoragePath != "" {
+			previewURL, previewErr := s.storage.GetPresignedURL(
+				ctx,
+				&kernelports.PresignedURLParams{
+					Key:    doc.PreviewStoragePath,
+					Expiry: expiry,
+				},
+			)
+			if previewErr != nil {
+				s.l.Warn("failed to presign document preview URL",
+					zap.String("documentId", doc.ID.String()),
+					zap.Error(previewErr))
+			} else {
+				set.PreviewURL = previewURL
+			}
+		}
+
+		urls[doc.ID] = set
+	}
+
+	return urls, nil
+}
+
+func (s *Service) cleanupDocumentStorage(
+	ctx context.Context,
+	log *zap.Logger,
+	doc *document.Document,
+) {
+	failedPaths := make([]string, 0, 2)
+
+	if err := s.deleteStoredObject(ctx, doc.StoragePath, doc.StorageVersionID); err != nil {
+		log.Warn("failed to delete file from storage after document delete",
+			zap.String("documentId", doc.ID.String()),
+			zap.String("storagePath", doc.StoragePath),
+			zap.Error(err),
+		)
+		failedPaths = append(failedPaths, doc.StoragePath)
+	}
+
+	if doc.PreviewStoragePath == "" {
+		s.enqueueStorageCleanup(ctx, log, doc.ID, failedPaths)
+		return
+	}
+
+	if err := s.deleteStoredObject(ctx, doc.PreviewStoragePath, ""); err != nil {
+		log.Warn("failed to delete preview from storage after document delete",
+			zap.String("documentId", doc.ID.String()),
+			zap.String("previewStoragePath", doc.PreviewStoragePath),
+			zap.Error(err),
+		)
+		failedPaths = append(failedPaths, doc.PreviewStoragePath)
+	}
+
+	s.enqueueStorageCleanup(ctx, log, doc.ID, failedPaths)
+}
+
+func (s *Service) deleteStoredObject(ctx context.Context, key, versionID string) error {
+	if strings.TrimSpace(key) == "" {
+		return nil
+	}
+
+	if strings.TrimSpace(versionID) == "" {
+		exists, err := s.storage.Exists(ctx, key)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return nil
+		}
+
+		fileInfo, err := s.storage.GetFileInfo(ctx, key)
+		if err != nil {
+			return err
+		}
+		versionID = fileInfo.VersionID
+	}
+
+	return s.storage.DeleteObject(ctx, &kernelports.DeleteObjectParams{
+		Key:       key,
+		VersionID: versionID,
+	})
+}
+
+func (s *Service) syncSearchProjection(
+	ctx context.Context,
+	log *zap.Logger,
+	doc *document.Document,
+	contentText string,
+) {
+	if err := s.searchProjection.Upsert(ctx, doc, contentText); err != nil {
+		log.Warn("failed to sync document search projection",
+			zap.String("documentId", doc.ID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func previewStatusForFileType(contentType string) document.PreviewStatus {
+	if document.SupportsPreview(contentType) {
+		return document.PreviewStatusPending
+	}
+
+	return document.PreviewStatusUnsupported
+}
+
+func (s *Service) enqueueStorageCleanup(
+	ctx context.Context,
+	log *zap.Logger,
+	documentID pulid.ID,
+	paths []string,
+) {
+	if len(paths) == 0 || !s.workflowStarter.Enabled() {
+		return
+	}
+
+	paths = slices.Compact(paths)
+	_, err := s.workflowStarter.StartWorkflow(
+		ctx,
+		client.StartWorkflowOptions{
+			ID: fmt.Sprintf(
+				"document-storage-cleanup-%s-%d",
+				documentID.String(),
+				timeutils.NowUnix(),
+			),
+			TaskQueue:     temporaltype.UploadTaskQueue,
+			StaticSummary: fmt.Sprintf("Cleaning up document storage for %s", documentID.String()),
+		},
+		"CleanupDocumentStorageWorkflow",
+		&documentuploadcontract.CleanupDocumentStoragePayload{
+			BasePayload: temporaltype.BasePayload{
+				Timestamp: timeutils.NowUnix(),
+			},
+			DocumentID: documentID,
+			Paths:      paths,
+		},
+	)
+	if err != nil {
+		log.Warn("failed to enqueue document storage cleanup",
+			zap.String("documentId", documentID.String()),
+			zap.Strings("paths", paths),
+			zap.Error(err),
+		)
+	}
+}

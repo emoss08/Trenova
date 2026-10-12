@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
 import { KPI_VALUE_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
@@ -150,8 +151,8 @@ export function BenefitsOverview({
 
 function describeCovered(waived: number, starting: number, ending: number): string {
   const parts: string[] = [];
-  if (waived > 0) parts.push(`${waived} declined`);
-  if (starting > 0) parts.push(`${starting} starting soon`);
-  if (ending > 0) parts.push(`${ending} ending soon`);
-  return parts.length > 0 ? parts.join(" · ") : "Nobody declined, nothing in flux";
+  if (waived > 0) parts.push(translate("{0} declined", waived));
+  if (starting > 0) parts.push(translate("{0} starting soon", starting));
+  if (ending > 0) parts.push(translate("{0} ending soon", ending));
+  return parts.length > 0 ? parts.join(" · ") : translate("Nobody declined, nothing in flux");
 }

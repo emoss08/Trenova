@@ -4,7 +4,7 @@ package recurringshipmentresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	recurringshipmentservice "github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
+	recurringshipmentservice "github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 )
 
 type Deps struct {

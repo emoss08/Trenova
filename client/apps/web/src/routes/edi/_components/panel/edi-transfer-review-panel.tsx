@@ -104,9 +104,11 @@ export function EDITransferReviewPanel({
       open={open}
       onOpenChange={onOpenChange}
       size={direction === "inbound" ? "2xl" : "xl"}
-      title={direction === "inbound" ? "Review Inbound Load Tender" : "Review Outbound Load Tender"}
+      title={
+        direction === "inbound" ? t("Review Inbound Load Tender") : t("Review Outbound Load Tender")
+      }
       description={
-        transfer?.tenderPayload.bol ? `BOL ${transfer.tenderPayload.bol}` : "Load tender"
+        transfer?.tenderPayload.bol ? t("BOL {0}", transfer.tenderPayload.bol) : t("Load tender")
       }
       footer={
         <>
@@ -180,8 +182,8 @@ export function EDITransferReviewPanel({
         title={t("Reject load tender")}
         description={
           transfer?.tenderPayload.bol
-            ? `Reject the load tender for BOL ${transfer.tenderPayload.bol}.`
-            : "Reject this load tender."
+            ? t("Reject the load tender for BOL {0}.", transfer.tenderPayload.bol)
+            : t("Reject this load tender.")
         }
         placeholder={t("Reason shared with the submitting partner")}
         confirmLabel={t("Reject transfer")}

@@ -11,9 +11,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tableconfigurationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -64,7 +64,7 @@ func (r *MutationResolver) PatchTableConfiguration(ctx context.Context, id strin
 
 	existing, err := r.TableConfigurationService.GetByID(
 		ctx,
-		repositories.GetTableConfigurationByIDRequest{
+		tableconfigurationports.GetTableConfigurationByIDRequest{
 			ConfigurationID: configurationID,
 			TenantInfo:      base.TenantInfo(authCtx),
 		},
@@ -144,7 +144,7 @@ func (r *QueryResolver) TableConfigurations(ctx context.Context, input gqlmodel.
 
 	result, err := r.TableConfigurationService.ListConnection(
 		ctx,
-		&repositories.ListTableConfigurationConnectionRequest{
+		&tableconfigurationports.ListTableConfigurationConnectionRequest{
 			Filter:     tableInput.Filter,
 			Cursor:     tableInput.Cursor,
 			Resource:   base.StringValue(resource),
@@ -171,7 +171,7 @@ func (r *QueryResolver) TableConfiguration(ctx context.Context, id string) (*tab
 
 	return r.TableConfigurationService.GetByID(
 		ctx,
-		repositories.GetTableConfigurationByIDRequest{
+		tableconfigurationports.GetTableConfigurationByIDRequest{
 			ConfigurationID: configurationID,
 			TenantInfo:      base.TenantInfo(authCtx),
 		},
@@ -186,7 +186,7 @@ func (r *QueryResolver) DefaultTableConfiguration(ctx context.Context, resource 
 
 	entity, err := r.TableConfigurationService.GetDefaultForResource(
 		ctx,
-		repositories.GetDefaultTableConfigurationRequest{
+		tableconfigurationports.GetDefaultTableConfigurationRequest{
 			Resource:   resource,
 			TenantInfo: base.TenantInfo(authCtx),
 		},

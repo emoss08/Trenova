@@ -4,7 +4,7 @@ package hazmatsegregationruleresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	hazmatsegregationruleservice "github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
+	hazmatsegregationruleservice "github.com/emoss08/trenova/internal/modules/reference/app/hazmatsegregationruleservice"
 )
 
 type Deps struct {

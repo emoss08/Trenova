@@ -3,6 +3,7 @@ package drivers
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/shared/samsara/internal/httpx"
@@ -96,9 +97,83 @@ func TestCreateValidation(t *testing.T) {
 		}},
 	)
 
-	_, err := svc.Create(t.Context(), CreateRequest{})
-	require.Error(t, err)
-	assert.ErrorIs(t, err, ErrDriverNameRequired)
+	tests := []struct {
+		name    string
+		req     CreateRequest
+		wantErr error
+	}{
+		{name: "missing name", req: CreateRequest{}, wantErr: ErrDriverNameRequired},
+		{
+			name:    "blank name",
+			req:     CreateRequest{Name: "   ", Username: "u", Password: "p"},
+			wantErr: ErrDriverNameRequired,
+		},
+		{
+			name: "name too long",
+			req: CreateRequest{
+				Name:     strings.Repeat("n", 256),
+				Username: "u",
+				Password: "p",
+			},
+			wantErr: ErrDriverNameTooLong,
+		},
+		{
+			name:    "missing username",
+			req:     CreateRequest{Name: "Driver", Password: "p"},
+			wantErr: ErrDriverUsernameRequired,
+		},
+		{
+			name:    "username with space",
+			req:     CreateRequest{Name: "Driver", Username: "a b", Password: "p"},
+			wantErr: ErrDriverUsernameInvalid,
+		},
+		{
+			name:    "username with at sign",
+			req:     CreateRequest{Name: "Driver", Username: "a@b", Password: "p"},
+			wantErr: ErrDriverUsernameInvalid,
+		},
+		{
+			name: "username too long",
+			req: CreateRequest{
+				Name:     "Driver",
+				Username: strings.Repeat("u", 190),
+				Password: "p",
+			},
+			wantErr: ErrDriverUsernameTooLong,
+		},
+		{
+			name:    "missing password",
+			req:     CreateRequest{Name: "Driver", Username: "driver.one"},
+			wantErr: ErrDriverPasswordRequired,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := svc.Create(t.Context(), tt.req)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, tt.wantErr)
+		})
+	}
+}
+
+func TestListValidatesActivationStatus(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(
+		&httpxtest.MockRequester{DoFunc: func(_ context.Context, req httpx.Request) error {
+			assert.Equal(t, ActivationStatusDeactivated, req.Query.Get("driverActivationStatus"))
+			return nil
+		}},
+	)
+
+	_, err := svc.List(t.Context(), ListParams{DriverActivationStatus: "inactive"})
+	require.ErrorIs(t, err, ErrDriverActivationStatusInvalid)
+
+	_, err = svc.List(t.Context(), ListParams{DriverActivationStatus: ActivationStatusDeactivated})
+	require.NoError(t, err)
 }
 
 func TestCreatePathAndResponse(t *testing.T) {
@@ -117,7 +192,11 @@ func TestCreatePathAndResponse(t *testing.T) {
 		}},
 	)
 
-	driver, err := svc.Create(t.Context(), CreateRequest{Name: name})
+	driver, err := svc.Create(t.Context(), CreateRequest{
+		Name:     name,
+		Username: "driver.one",
+		Password: "secret",
+	})
 	require.NoError(t, err)
 	require.NotNil(t, driver.Name)
 	assert.Equal(t, name, string(*driver.Name))
@@ -140,7 +219,7 @@ func TestUpdateValidation(t *testing.T) {
 func TestUpdatePathAndResponse(t *testing.T) {
 	t.Parallel()
 
-	driverID := "driver-123"
+	driverID := "1654973"
 	name := "Driver Updated"
 	svc := NewService(
 		&httpxtest.MockRequester{DoFunc: func(_ context.Context, req httpx.Request) error {
@@ -158,4 +237,18 @@ func TestUpdatePathAndResponse(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, driver.Name)
 	assert.Equal(t, name, string(*driver.Name))
+}
+
+func TestUpdateEscapesExternalIDPath(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(
+		&httpxtest.MockRequester{DoFunc: func(_ context.Context, req httpx.Request) error {
+			assert.Equal(t, "/fleet/drivers/payrollId:A%2FB%3F1", req.Path)
+			return nil
+		}},
+	)
+
+	_, err := svc.Update(t.Context(), "payrollId:A/B?1", UpdateRequest{})
+	require.NoError(t, err)
 }

@@ -37,6 +37,7 @@ type ClockGaugeProps = {
 };
 
 function ClockGauge({ label, remainingMs, limitMs, defaultTone }: ClockGaugeProps) {
+  const t = useT();
   const value = limitMs > 0 ? remainingMs / limitMs : 0;
   const tone = gaugeTone(remainingMs, defaultTone);
   return (
@@ -46,7 +47,7 @@ function ClockGauge({ label, remainingMs, limitMs, defaultTone }: ClockGaugeProp
         size={132}
         strokeWidth={9}
         tone={tone}
-        aria-label={`${label} remaining`}
+        aria-label={t("{0} remaining", label)}
       >
         <div className="flex flex-col items-center leading-none">
           <span className="text-xl font-semibold tabular-nums">

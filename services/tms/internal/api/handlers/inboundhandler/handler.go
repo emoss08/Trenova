@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )

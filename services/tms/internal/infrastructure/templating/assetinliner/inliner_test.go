@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/imageutils"
 	"github.com/stretchr/testify/assert"
@@ -51,7 +51,7 @@ type fakeStorage struct {
 	err       error
 }
 
-func (f *fakeStorage) Download(_ context.Context, key string) (*storage.DownloadResult, error) {
+func (f *fakeStorage) Download(_ context.Context, key string) (*kernelports.DownloadResult, error) {
 	f.requested = append(f.requested, key)
 	if f.err != nil {
 		return nil, f.err
@@ -60,7 +60,7 @@ func (f *fakeStorage) Download(_ context.Context, key string) (*storage.Download
 	if !ok {
 		return nil, errors.New("object not found")
 	}
-	return &storage.DownloadResult{
+	return &kernelports.DownloadResult{
 		Body:        io.NopCloser(bytes.NewReader(body)),
 		ContentType: "application/octet-stream",
 		Size:        int64(len(body)),

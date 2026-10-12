@@ -3,11 +3,11 @@ package dispatchconsoleresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
-	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
 func mapDispatchBoard(board *dispatchconsoleservice.Board) *gqlmodel.DispatchBoard {
@@ -36,7 +36,7 @@ func mapDispatchBoard(board *dispatchconsoleservice.Board) *gqlmodel.DispatchBoa
 }
 
 func mapDispatchSummary(
-	summary *repositories.BoardSummary,
+	summary *shipmentports.BoardSummary,
 ) *gqlmodel.DispatchBoardSummary {
 	if summary == nil {
 		return &gqlmodel.DispatchBoardSummary{}
@@ -280,7 +280,7 @@ func mapDispatchFindings(
 	return mapped
 }
 
-func mapDispatchPlan(plan *services.DispatchPlan) *gqlmodel.DispatchPlan {
+func mapDispatchPlan(plan *agentports.DispatchPlan) *gqlmodel.DispatchPlan {
 	if plan == nil {
 		return nil
 	}

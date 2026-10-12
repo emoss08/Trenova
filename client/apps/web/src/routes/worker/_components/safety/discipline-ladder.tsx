@@ -189,13 +189,13 @@ export function DisciplineLadder({
                   ) : null}
                 </div>
                 <RowActionsMenu
-                  label={`Actions for ${meta.label}`}
+                  label={t("Actions for {0}", t(meta.label))}
                   actions={
                     canRescind && status === "Active"
                       ? [
                           {
                             id: "rescind",
-                            label: `Rescind ${meta.label}`,
+                            label: t("Rescind {0}", t(meta.label)),
                             icon: FlipBackwardIcon,
                             disabled: busy,
                             destructive: true,

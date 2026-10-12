@@ -1,11 +1,13 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 // import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { APP_CATALOGS } from "@/lib/app-catalogs";
 import { edition } from "@/lib/edition";
 import { installPlanLimitHandler } from "@/lib/plan-limit-handler";
 import { queryClient } from "@/lib/query-client";
 import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";
+import { MotionPreferenceProvider } from "@/components/motion-preference-provider";
 import { I18nProvider } from "@trenova/shared/i18n/provider";
 import { registerCatalogSource } from "@trenova/shared/i18n/runtime";
 import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/shared/lib/graphql";
@@ -116,7 +118,11 @@ function useUserLocale(): string | null {
 }
 
 function LocalizedApp({ children }: { children: React.ReactNode }) {
-  return <I18nProvider userLocale={useUserLocale()}>{children}</I18nProvider>;
+  return (
+    <I18nProvider catalogs={APP_CATALOGS} userLocale={useUserLocale()}>
+      {children}
+    </I18nProvider>
+  );
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -125,7 +131,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <NuqsAdapter processUrlSearchParams={normalizeSearchParams}>
           <ThemeProvider defaultTheme="system" storageKey="trenova-ui-theme">
-            <LocalizedApp>{children}</LocalizedApp>
+            <MotionPreferenceProvider>
+              <LocalizedApp>{children}</LocalizedApp>
+            </MotionPreferenceProvider>
             {/*<ReactQueryDevtools
               buttonPosition="bottom-left"
               initialIsOpen={false}

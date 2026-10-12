@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -58,7 +58,7 @@ func (h *Handler) listPartnerSettingSchemas(c *gin.Context) {
 		func() (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error) {
 			return h.service.ListPartnerSettingSchemas(
 				c.Request.Context(),
-				&repositories.ListEDIPartnerSettingSchemasRequest{
+				&ediports.ListEDIPartnerSettingSchemasRequest{
 					Filter:   req,
 					Standard: edi.EDIStandard(helpers.QueryString(c, "standard", "")),
 					TransactionSet: edi.TransactionSet(
@@ -85,7 +85,7 @@ func (h *Handler) getPartnerSettingSchema(c *gin.Context) {
 
 	schema, err := h.service.GetPartnerSettingSchema(
 		c.Request.Context(),
-		repositories.GetEDIPartnerSettingSchemaRequest{
+		ediports.GetEDIPartnerSettingSchemaRequest{
 			ID:         schemaID,
 			TenantInfo: tenantInfoFromAuth(authCtx),
 		},
@@ -153,8 +153,8 @@ func (h *Handler) selectPartnerSettingFieldOptions(c *gin.Context) {
 func (h *Handler) partnerSettingFieldRequest(
 	c *gin.Context,
 	req *pagination.QueryOptions,
-) *repositories.ListEDIPartnerSettingFieldsRequest {
-	fieldReq := &repositories.ListEDIPartnerSettingFieldsRequest{
+) *ediports.ListEDIPartnerSettingFieldsRequest {
+	fieldReq := &ediports.ListEDIPartnerSettingFieldsRequest{
 		Filter:         req,
 		Standard:       edi.EDIStandard(helpers.QueryString(c, "standard", "")),
 		TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "")),

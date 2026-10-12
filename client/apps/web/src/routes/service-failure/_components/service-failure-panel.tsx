@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -59,6 +59,37 @@ function toUpdate(row: ServiceFailureRow): ServiceFailureUpdate {
     x12ExceptionCode: row.x12ExceptionCode,
     version: row.version,
   };
+}
+
+function panelDescription(t: TranslateFn, status: string, lateMinutes: number): string {
+  switch (status) {
+    case "Open":
+      return t(
+        "Open · {0, plural, one {# minute after grace} other {# minutes after grace}}",
+        lateMinutes,
+      );
+    case "Reviewed":
+      return t(
+        "Reviewed · {0, plural, one {# minute after grace} other {# minutes after grace}}",
+        lateMinutes,
+      );
+    case "Resolved":
+      return t(
+        "Resolved · {0, plural, one {# minute after grace} other {# minutes after grace}}",
+        lateMinutes,
+      );
+    case "Voided":
+      return t(
+        "Voided · {0, plural, one {# minute after grace} other {# minutes after grace}}",
+        lateMinutes,
+      );
+    default:
+      return t(
+        "{0} · {1, plural, one {# minute after grace} other {# minutes after grace}}",
+        status,
+        lateMinutes,
+      );
+  }
 }
 
 export function ServiceFailurePanel({
@@ -128,8 +159,8 @@ export function ServiceFailurePanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title={row?.number ?? "Service Failure"}
-      description={row ? `${row.status} · ${row.lateMinutes} minute(s) after grace` : undefined}
+      title={row?.number ?? t("Service failure")}
+      description={row ? panelDescription(t, row.status, row.lateMinutes) : undefined}
       footer={
         <>
           <Button type="button" variant="outline" onClick={handleClose}>

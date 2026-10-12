@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/distanceprofileservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/places/app/distanceprofileservice"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -93,7 +93,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListDistanceProfileRequest{Filter: req},
+				&distanceprofileports.ListDistanceProfileRequest{Filter: req},
 			)
 		},
 	)
@@ -110,7 +110,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.DistanceProfileSelectOptionsRequest{SelectQueryRequest: req},
+				&distanceprofileports.DistanceProfileSelectOptionsRequest{SelectQueryRequest: req},
 			)
 		},
 	)
@@ -127,10 +127,13 @@ func (h *Handler) get(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetDistanceProfileByIDRequest{
-		ID:         id,
-		TenantInfo: pagination.FromAuth(authCtx),
-	})
+	entity, err := h.service.Get(
+		c.Request.Context(),
+		distanceprofileports.GetDistanceProfileByIDRequest{
+			ID:         id,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -183,10 +186,13 @@ func (h *Handler) patch(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	existing, err := h.service.Get(c.Request.Context(), repositories.GetDistanceProfileByIDRequest{
-		ID:         id,
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-	})
+	existing, err := h.service.Get(
+		c.Request.Context(),
+		distanceprofileports.GetDistanceProfileByIDRequest{
+			ID:         id,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -210,10 +216,14 @@ func (h *Handler) delete(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if err = h.service.Delete(c.Request.Context(), repositories.DeleteDistanceProfileRequest{
-		ID:         id,
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-	}, authCtx.UserID); err != nil {
+	if err = h.service.Delete(
+		c.Request.Context(),
+		distanceprofileports.DeleteDistanceProfileRequest{
+			ID:         id,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+		},
+		authCtx.UserID,
+	); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -229,7 +239,7 @@ func (h *Handler) setDefault(c *gin.Context) {
 	}
 	updated, err := h.service.SetDefault(
 		c.Request.Context(),
-		repositories.GetDistanceProfileByIDRequest{
+		distanceprofileports.GetDistanceProfileByIDRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

@@ -196,20 +196,41 @@ describe("buildRailItems", () => {
 
   // Each quality table is its own view, so the section lists them; the
   // answers people rated down are read under the right to read feedback.
+  // The sweep's settings open over the agents, so they are not a view of their own.
   it("lists the quality views, worst-rated answers only where feedback may be read", () => {
-    const views = (permissions: RailPermissions) =>
-      buildRailItems(counts, permissions, t)
-        .find((item) => item.tab === "quality")
-        ?.children.map((child) => child.view);
+    const quality = (permissions: RailPermissions) =>
+      buildRailItems(counts, permissions, t).find((item) => item.tab === "quality");
 
-    expect(views(all)).toEqual(["agents", "runs", "ratings", "golden", "extraction", "settings"]);
-    expect(views({ ...all, ratings: false })).toEqual([
+    expect(quality(all)?.children.map((child) => child.view)).toEqual([
+      "agents",
+      "runs",
+      "ratings",
+      "golden",
+      "extraction",
+    ]);
+    expect(quality(all)?.children.find((child) => child.view === "ratings")?.label).toBe(
+      "Worst rated",
+    );
+    expect(quality({ ...all, ratings: false })?.children.map((child) => child.view)).toEqual([
       "agents",
       "runs",
       "golden",
       "extraction",
-      "settings",
     ]);
+  });
+
+  it("counts the proposals waiting on the Proposals view", () => {
+    const activity = (pendingProposals: number) =>
+      buildRailItems({ ...counts, pendingProposals }, all, t).find(
+        (item) => item.tab === "activity",
+      );
+
+    expect(activity(3)?.children.find((child) => child.view === "proposals")?.label).toBe(
+      "Proposals · 3",
+    );
+    expect(activity(0)?.children.find((child) => child.view === "proposals")?.label).toBe(
+      "Proposals",
+    );
   });
 
   it("lists quality only where the golden set may be read", () => {

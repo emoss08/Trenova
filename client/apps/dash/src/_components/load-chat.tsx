@@ -30,8 +30,10 @@ import { useDashFeatures } from "./use-dash-features";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { daysUntil, formatUnixMonthDay, formatUnixTime } from "@trenova/shared/lib/date";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
-const commentTypeLabels: Record<string, string> = {
+const commentTypeLabels: Record<string, string> = defineLabels({
   Internal: "Note",
   Dispatch: "Dispatch",
   DriverUpdate: "You",
@@ -44,7 +46,7 @@ const commentTypeLabels: Record<string, string> = {
   Document: "Documents",
   Billing: "Billing",
   Compliance: "Compliance",
-};
+});
 
 function messageTime(unix: number): string {
   const time = formatUnixTime(unix);
@@ -104,7 +106,8 @@ function ChatComposer({ shipmentId }: { shipmentId: string }) {
       scrollToEnd({ behavior: "smooth" });
       await queryClient.invalidateQueries({ queryKey: ["dash-load-comments", shipmentId] });
     },
-    onError: (error: Error) => toast.error(error.message || "We couldn't send your message."),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("We couldn't send your message.")),
   });
 
   const handleSend = () => {

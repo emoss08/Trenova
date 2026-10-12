@@ -1,0 +1,102 @@
+package locationservice
+
+import (
+	"context"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/fx"
+)
+
+type ValidatorParams struct {
+	fx.In
+
+	DB *postgres.Connection
+}
+
+type Validator struct {
+	validator validationframework.TenantedEntityValidator[*location.Location]
+}
+
+func NewValidator(p ValidatorParams) *Validator {
+	return &Validator{
+		validator: validationframework.
+			NewTenantedValidatorBuilder[*location.Location]().
+			WithModelName("Location").
+			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
+			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
+			WithUniqueField(
+				"code",
+				"code",
+				"Location with this code already exists in your organization",
+				func(l *location.Location) any { return l.Code },
+			).
+			WithCustomReferenceCheck(
+				"stateId",
+				"State does not exist",
+				func(l *location.Location) pulid.ID { return l.StateID },
+				validationframework.NewUSStateReferenceCheck(p.DB),
+			).
+			WithCustomReferenceCheck(
+				"locationCategoryId",
+				"Location category does not exist",
+				func(l *location.Location) pulid.ID { return l.LocationCategoryID },
+				createLocationCategoryCheck(p.DB),
+			).
+			Build(),
+	}
+}
+
+func createLocationCategoryCheck(
+	db *postgres.Connection,
+) validationframework.CustomReferenceCheckFunc {
+	return func(ctx context.Context, orgID, buID pulid.ID, refID pulid.ID) (bool, error) {
+		return dbtx.Read(ctx, db, func(ctx context.Context) (bool, error) {
+			if refID.IsNil() {
+				return true, nil
+			}
+
+			exists, err := db.DBForContext(ctx).NewSelect().
+				TableExpr("location_categories").
+				ColumnExpr("1").
+				Where("id = ?", refID).
+				Where("organization_id = ?", orgID).
+				Where("business_unit_id = ?", buID).
+				Exists(ctx)
+			if err != nil {
+				return false, err
+			}
+			return exists, nil
+		})
+	}
+}
+
+func (v *Validator) ValidateCreate(
+	ctx context.Context,
+	entity *location.Location,
+) *errortypes.MultiError {
+	return v.validator.ValidateCreate(ctx, entity)
+}
+
+func (v *Validator) ValidateUpdate(
+	ctx context.Context,
+	entity *location.Location,
+) *errortypes.MultiError {
+	multiErr := v.validator.ValidateUpdate(ctx, entity)
+	if multiErr == nil {
+		multiErr = errortypes.NewMultiError()
+	}
+	if strings.TrimSpace(entity.Code) == "" {
+		multiErr.Add("code", errortypes.ErrRequired, "Code is required")
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}

@@ -1,0 +1,141 @@
+package common
+
+import (
+	"fmt"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+)
+
+const NounDriverSettlement = "driver settlement"
+
+const DriverSettlementReads = "list_driver_settlements or get_driver_settlement"
+
+const PaymentMethodCheck = "Check"
+
+const PaymentMethodOther = "Other"
+
+var DriverPaymentMethods = agenttoolschema.Source(
+	"driverSettlement.paymentMethod",
+	[]string{"ACH", PaymentMethodCheck, "InstantPay", PaymentMethodOther},
+)
+
+func DriverSettlementLedger() SettlementLedger[driversettlement.Settlement] {
+	return SettlementLedger[driversettlement.Settlement]{
+		Resource: permission.ResourceDriverSettlement,
+		Kind:     permission.RecordKind(permission.ResourceDriverSettlement),
+		Artifact: DriverSettlementEntity,
+		Noun:     NounDriverSettlement,
+		Sources:  DriverSettlementReads,
+		ByName: " list_driver_settlements finds it by the driver's name as query, with no " +
+			"lookup before it.",
+		Sensitive: []string{
+			"grossEarningsMinor",
+			"reimbursementsMinor",
+			"deductionsMinor",
+			"netPayMinor",
+		},
+		Facts:   DriverSettlementFacts,
+		Effects: driverSettlementEffects,
+	}
+}
+
+func DriverSettlementFacts(entity *driversettlement.Settlement) *SettlementFacts {
+	facts := &SettlementFacts{
+		ID:       entity.ID,
+		Number:   entity.SettlementNumber,
+		Version:  entity.Version,
+		Status:   string(entity.Status),
+		Currency: entity.CurrencyCode,
+		Totals: []SettlementTotal{
+			{Label: "Earnings", Minor: entity.GrossEarningsMinor},
+			{Label: "Reimbursements", Minor: entity.ReimbursementsMinor},
+			{Label: "Deductions", Minor: -entity.DeductionsMinor},
+			{Label: "Carried in", Minor: entity.CarryForwardInMinor},
+		},
+	}
+	if entity.Worker != nil {
+		facts.Payee = entity.Worker.FullName()
+	}
+
+	return facts
+}
+
+func driverSettlementEffects(
+	action settlementshared.Action,
+	plan *settlementshared.ActionPlan[*driversettlement.Settlement],
+) []string {
+	switch action { //nolint:exhaustive // only these actions reach beyond the settlement itself
+	case settlementshared.ActionApprove:
+		return []string{approvalEffects(plan.Before)}
+	case settlementshared.ActionPost:
+		return []string{
+			"It is queued for the accounting system as a bill, and the driver is told in " +
+				"the driver portal that it was posted.",
+		}
+	case settlementshared.ActionMarkPaid:
+		return []string{
+			"It is queued for the accounting system as a bill payment, and the driver is " +
+				"told in the driver portal that it was paid.",
+		}
+	case settlementshared.ActionVoid:
+		return []string{voidEffects(plan.Before)}
+	case settlementshared.ActionRecalculate:
+		return []string{
+			"It is rebuilt from the pay events accrued for its period and the pay profile " +
+				"in force; manual adjustments are kept.",
+		}
+	default:
+		return nil
+	}
+}
+
+func approvalEffects(entity *driversettlement.Settlement) string {
+	var deductions, escrow, advances, earnings int
+	for _, line := range entity.Lines {
+		if line == nil {
+			continue
+		}
+		switch line.Category { //nolint:exhaustive // the categories approval applies to a balance
+		case driversettlement.LineCategoryDeduction:
+			if line.RecurringDeductionID != nil {
+				deductions++
+			}
+		case driversettlement.LineCategoryEscrowContribution:
+			escrow++
+		case driversettlement.LineCategoryAdvanceRecovery:
+			advances++
+		case driversettlement.LineCategoryEarning, driversettlement.LineCategoryReimbursement:
+			if line.RecurringEarningID != nil {
+				earnings++
+			}
+		}
+	}
+	if deductions+escrow+advances+earnings == 0 {
+		return "Approving applies no recurring deduction, escrow contribution or advance recovery."
+	}
+
+	return fmt.Sprintf(
+		"Approving applies %s, %s, %s and %s to their running balances.",
+		CountOf(deductions, "recurring deduction"),
+		CountOf(earnings, "recurring earning"),
+		CountOf(escrow, "escrow contribution"),
+		CountOf(advances, "advance recovery"),
+	)
+}
+
+func voidEffects(entity *driversettlement.Settlement) string {
+	switch entity.Status { //nolint:exhaustive // the statuses a void reverses more than the status of
+	case driversettlement.StatusPosted:
+		return "Its journal entry is reversed, the deductions, escrow contributions and " +
+			"advance recoveries it applied are undone, and its pay events return to the " +
+			"unsettled pool."
+	case driversettlement.StatusApproved:
+		return "The deductions, escrow contributions and advance recoveries it applied are " +
+			"undone, and its pay events return to the unsettled pool."
+	default:
+		return "Its pay events return to the unsettled pool."
+	}
+}

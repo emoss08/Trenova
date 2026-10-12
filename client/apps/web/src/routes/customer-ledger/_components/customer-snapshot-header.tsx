@@ -105,7 +105,10 @@ export function CustomerSnapshotHeader({
             hasCreditLimit ? (
               <span className="flex flex-col gap-1.5">
                 <span>{(utilization * 100).toFixed(0)}%</span>
-                <span aria-hidden className="bg-muted block h-1 w-full overflow-hidden rounded-full">
+                <span
+                  aria-hidden
+                  className="bg-muted block h-1 w-full overflow-hidden rounded-full"
+                >
                   <span
                     className={cn("block h-full rounded-full", utilizationBarClass)}
                     style={{ width: `${utilizationPct}%` }}
@@ -179,14 +182,22 @@ export function CustomerSnapshotHeader({
             <DescriptionList columns={2}>
               <DescriptionItem label={t("Oldest open invoice")} numeric>
                 {snapshot.oldestOpenInvoiceDate ? (
-                  `${formatDateOrDash(snapshot.oldestOpenInvoiceDate)} · ${snapshot.oldestDaysPastDue}d past due`
+                  t(
+                    "{0} · {1}d past due",
+                    formatDateOrDash(snapshot.oldestOpenInvoiceDate),
+                    snapshot.oldestDaysPastDue,
+                  )
                 ) : (
                   <DescriptionEmpty />
                 )}
               </DescriptionItem>
               <DescriptionItem label={t("Last payment")} numeric>
                 {snapshot.lastPaymentDate ? (
-                  `${formatCurrency(snapshot.lastPaymentMinor / 100)} on ${formatDateOrDash(snapshot.lastPaymentDate)}`
+                  t(
+                    "{0} on {1}",
+                    formatCurrency(snapshot.lastPaymentMinor / 100),
+                    formatDateOrDash(snapshot.lastPaymentDate),
+                  )
                 ) : (
                   <DescriptionEmpty />
                 )}

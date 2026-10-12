@@ -98,10 +98,10 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
           <Figure
             label={t("Total compensation")}
             value={formatMinor(total.totalCompensationMinor)}
-            detail={`${employerSharePercent(
-              total.employerBenefitMinor,
-              total.totalCompensationMinor,
-            )}% is benefits`}
+            detail={t(
+              "{0}% is benefits",
+              employerSharePercent(total.employerBenefitMinor, total.totalCompensationMinor),
+            )}
           />
         </div>
       ) : null}
@@ -157,7 +157,11 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
                     variant="ghost"
                     isLoading={endMutation.isPending}
                     onClick={() => endMutation.mutate(enrollment.id)}
-                    aria-label={`End ${enrollment.benefitPlan?.name ?? "cover"}`}
+                    aria-label={
+                      enrollment.benefitPlan?.name
+                        ? t("End {0}", enrollment.benefitPlan.name)
+                        : t("End cover")
+                    }
                   >
                     {t("End cover")}
                   </Button>

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/samber/lo"
@@ -64,6 +65,17 @@ func (e *ApplicationError) ToTemporalError() error {
 			string(e.Type),
 			e.Cause,
 			e.Details,
+		)
+	}
+
+	if e.RetryAfter > 0 {
+		return temporal.NewApplicationErrorWithOptions(
+			e.Message,
+			string(e.Type),
+			temporal.ApplicationErrorOptions{
+				Details:        []any{e.Details},
+				NextRetryDelay: time.Duration(e.RetryAfter) * time.Second,
+			},
 		)
 	}
 

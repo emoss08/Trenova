@@ -59,6 +59,7 @@ import { Link } from "react-router";
 import { TenderLivePanel } from "./tender-live-panel";
 import { formatOfferRate } from "./tender-vocabulary";
 import type { DispatchActions } from "./use-dispatch-actions";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 type GuidePreview = MatchedRoutingGuide | RoutingGuideOption;
 
@@ -184,6 +185,7 @@ function WaterfallTab({
   onScreening: (screening: GuideScreeningSummary | null) => void;
 }) {
   const t = useT();
+  const rt = useRichT();
 
   const [overrideGuideId, setOverrideGuideId] = useState("");
 
@@ -244,11 +246,16 @@ function WaterfallTab({
         </>
       ) : (
         <p className="text-muted-foreground py-2 text-xs">
-          {t("No routing guide matches this lane. Pick one explicitly below, or")}{" "}
-          <Link to="/dispatch/routing-guides" className="underline">
-            {t("create a routing guide")}
-          </Link>{" "}
-          {t("for it.")}
+          {rt(
+            "No routing guide matches this lane. Pick one explicitly below, or <link>create a routing guide</link> for it.",
+            {
+              link: (c) => (
+                <Link to="/dispatch/routing-guides" className="underline">
+                  {c}
+                </Link>
+              ),
+            },
+          )}
         </p>
       )}
 

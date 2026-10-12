@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import {
   type ApiErrorResponse,
+  type EditConflict,
   type NormalizedApiError,
   type ProblemType,
   type ValidationError,
@@ -118,6 +119,10 @@ export class ApiRequestError extends Error {
 
   getParams(): Record<string, string> {
     return this.data.params ?? {};
+  }
+
+  getConflict(): EditConflict | null {
+    return this.data.conflict ?? null;
   }
 }
 
@@ -260,6 +265,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     const errorData = await response.json().catch(() => ({
       type: "internal-error",
       title: translate("Request failed"),
+      // i18n-ignore: HTTP status code, the same in every language
       detail: `HTTP ${response.status}`,
       status: response.status,
     }));
@@ -297,6 +303,7 @@ async function uploadRequest<T>(
     const errorData = await response.json().catch(() => ({
       type: "internal-error",
       title: translate("Upload failed"),
+      // i18n-ignore: HTTP status code, the same in every language
       detail: `HTTP ${response.status}`,
       status: response.status,
     }));
@@ -360,6 +367,7 @@ async function uploadWithProgress<T>(
           errorData = {
             type: "internal-error",
             title: translate("Upload failed"),
+            // i18n-ignore: HTTP status code, the same in every language
             detail: `HTTP ${xhr.status}`,
             status: xhr.status,
           };

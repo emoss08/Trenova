@@ -9,15 +9,15 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/telematicsmapping"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/telematicsmapping"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -159,10 +159,10 @@ func (r *QueryResolver) ShipmentDriverFeasibility(ctx context.Context, shipmentI
 		return nil, err
 	}
 
-	entity, err := r.ShipmentService.Get(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := r.ShipmentService.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         id,
 		TenantInfo: base.TenantInfo(authCtx),
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -220,6 +220,27 @@ func (r *QueryResolver) VehiclePositions(ctx context.Context, maxAgeSeconds *int
 		out = append(out, mapVehiclePosition(position))
 	}
 	return out, nil
+}
+
+func (r *QueryResolver) VehiclePosition(ctx context.Context, tractorID string) (*gqlmodel.VehiclePosition, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceTractor, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.Parse(tractorID)
+	if err != nil {
+		return nil, err
+	}
+
+	position, err := r.TelematicsService.GetVehiclePosition(ctx, base.TenantInfo(authCtx), id)
+	if errortypes.IsNotFoundError(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return mapVehiclePosition(position), nil
 }
 
 func (r *QueryResolver) WorkerHosStates(ctx context.Context, workerIds []string, limit *int) ([]*gqlmodel.WorkerHosState, error) {
@@ -385,7 +406,7 @@ func (r *QueryResolver) WorkerHosDailyLogs(ctx context.Context, workerID string,
 	return out, nil
 }
 
-func (r *QueryResolver) VehicleInspections(ctx context.Context, tractorID *string, workerID *string, since *int, limit *int) ([]*gqlmodel.VehicleInspection, error) {
+func (r *QueryResolver) VehicleInspections(ctx context.Context, tractorID *string, workerID *string, since *int, limit *int, before *int, beforeID *string) ([]*gqlmodel.VehicleInspection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTractor, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -417,13 +438,30 @@ func (r *QueryResolver) VehicleInspections(ctx context.Context, tractorID *strin
 		resultLimit = *limit
 	}
 
+	var beforeAt int64
+	if before != nil && *before > 0 {
+		beforeAt = int64(*before)
+	}
+	var beforeCursor pulid.ID
+	if beforeID != nil {
+		parsed, parseErr := pulid.Parse(*beforeID)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		beforeCursor = parsed
+	}
+
 	inspections, err := r.TelematicsService.ListVehicleInspections(
 		ctx,
-		base.TenantInfo(authCtx),
-		tractorFilter,
-		workerFilter,
-		sinceAt,
-		resultLimit,
+		&telematicsports.ListVehicleInspectionsRequest{
+			TenantInfo: base.TenantInfo(authCtx),
+			TractorID:  tractorFilter,
+			WorkerID:   workerFilter,
+			Since:      sinceAt,
+			Limit:      resultLimit,
+			Before:     beforeAt,
+			BeforeID:   beforeCursor,
+		},
 	)
 	if err != nil {
 		return nil, err

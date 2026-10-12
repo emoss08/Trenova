@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -34,7 +34,7 @@ func NewTrainingCourseOpenRecordCountLoaderFactory(
 	return &TrainingCourseOpenRecordCountLoaderFactory{counter: p.WorkerTrainingService}
 }
 
-func (f *TrainingCourseOpenRecordCountLoaderFactory) NewForTenant(
+func newTrainingCourseOpenRecordCountLoader(f *TrainingCourseOpenRecordCountLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, int] {
 	return newLoader(f.batchFunc(tenantInfo))

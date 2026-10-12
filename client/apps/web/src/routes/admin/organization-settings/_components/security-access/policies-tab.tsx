@@ -290,7 +290,7 @@ const PolicyRow = memo(function PolicyRow({
           size="icon-sm"
           variant="ghost"
           className="text-destructive hover:text-destructive"
-          aria-label={`Delete ${policy.name}`}
+          aria-label={t("Delete {0}", policy.name)}
           onClick={() => onDeletePolicy(policy.id)}
         >
           <Trash01Icon />

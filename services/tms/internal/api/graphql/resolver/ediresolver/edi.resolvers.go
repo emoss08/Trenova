@@ -10,10 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -50,7 +50,7 @@ func (r *QueryResolver) EDIPartners(ctx context.Context, input gqlmodel.DataTabl
 		return nil, err
 	}
 
-	result, err := r.EdiService.ListPartnersCursor(ctx, &repositories.ListEDIPartnersRequest{
+	result, err := r.EdiService.ListPartnersCursor(ctx, &ediports.ListEDIPartnersRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -74,7 +74,7 @@ func (r *QueryResolver) EDICommunicationProfiles(ctx context.Context, input gqlm
 
 	result, err := r.EdiService.ListCommunicationProfilesCursor(
 		ctx,
-		&repositories.ListEDICommunicationProfilesRequest{
+		&ediports.ListEDICommunicationProfilesRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -97,7 +97,7 @@ func (r *QueryResolver) EDITransfers(ctx context.Context, input gqlmodel.DataTab
 		return nil, err
 	}
 
-	req := &repositories.ListEDITransfersRequest{
+	req := &ediports.ListEDITransfersRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	}
@@ -125,7 +125,7 @@ func (r *QueryResolver) EDIMessages(ctx context.Context, input gqlmodel.DataTabl
 		return nil, err
 	}
 
-	req := &repositories.ListEDIMessagesRequest{
+	req := &ediports.ListEDIMessagesRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	}
@@ -162,7 +162,7 @@ func (r *QueryResolver) EDIInboundFiles(ctx context.Context, input gqlmodel.Data
 		return nil, err
 	}
 
-	req := &repositories.ListEDIInboundFilesRequest{
+	req := &ediports.ListEDIInboundFilesRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	}
@@ -196,7 +196,7 @@ func (r *QueryResolver) EDITemplates(ctx context.Context, input gqlmodel.DataTab
 		return nil, err
 	}
 
-	req := &repositories.ListEDITemplatesRequest{
+	req := &ediports.ListEDITemplatesRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	}
@@ -229,7 +229,7 @@ func (r *QueryResolver) EDIMappingProfiles(ctx context.Context, input gqlmodel.D
 		return nil, err
 	}
 
-	req := &repositories.ListEDIMappingProfilesRequest{
+	req := &ediports.ListEDIMappingProfilesRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	}
@@ -260,7 +260,7 @@ func (r *QueryResolver) EDITestCases(ctx context.Context, input gqlmodel.DataTab
 		return nil, err
 	}
 
-	req := &repositories.ListEDITestCasesRequest{
+	req := &ediports.ListEDITestCasesRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	}

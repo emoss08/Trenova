@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { BenefitEnrollmentListRow, BenefitPlanRow } from "@/lib/graphql/benefits";
 import {
   ENROLLMENT_STANDING_LABELS,
@@ -203,19 +204,35 @@ function describeEntry(
   switch (standing) {
     case "declined":
       return entry.waivedReason
-        ? `Declined ${formatUnixDate(entry.effectiveFrom)} · ${entry.waivedReason}`
-        : `Declined ${formatUnixDate(entry.effectiveFrom)}`;
+        ? translate("Declined {0} · {1}", formatUnixDate(entry.effectiveFrom), entry.waivedReason)
+        : translate("Declined {0}", formatUnixDate(entry.effectiveFrom));
     case "ended":
-      return `${coverageTierLabel(entry.coverageTier)} · ended ${
-        entry.effectiveTo ? formatUnixDate(entry.effectiveTo) : ""
-      }`.trim();
+      return entry.effectiveTo
+        ? translate(
+            "{0} · ended {1}",
+            coverageTierLabel(entry.coverageTier),
+            formatUnixDate(entry.effectiveTo),
+          )
+        : translate("{0} · ended", coverageTierLabel(entry.coverageTier));
     case "starting":
-      return `${coverageTierLabel(entry.coverageTier)} · from ${formatUnixDate(entry.effectiveFrom)}`;
+      return translate(
+        "{0} · from {1}",
+        coverageTierLabel(entry.coverageTier),
+        formatUnixDate(entry.effectiveFrom),
+      );
     case "ending":
-      return `${coverageTierLabel(entry.coverageTier)} · until ${
-        entry.effectiveTo ? formatUnixDate(entry.effectiveTo) : ""
-      }`.trim();
+      return entry.effectiveTo
+        ? translate(
+            "{0} · until {1}",
+            coverageTierLabel(entry.coverageTier),
+            formatUnixDate(entry.effectiveTo),
+          )
+        : translate("{0} · until", coverageTierLabel(entry.coverageTier));
     default:
-      return `${coverageTierLabel(entry.coverageTier)} · since ${formatUnixDate(entry.effectiveFrom)}`;
+      return translate(
+        "{0} · since {1}",
+        coverageTierLabel(entry.coverageTier),
+        formatUnixDate(entry.effectiveFrom),
+      );
   }
 }

@@ -42,24 +42,30 @@ export function StatementTimeline({
       key: "accrue",
       label: t("Accruing"),
       detail: hasFreight
-        ? `${statement.shipmentCount} shipment${statement.shipmentCount === 1 ? "" : "s"} · ${periodRange(statement.periodStart, statement.periodEnd)}`
-        : `Nothing yet · ${periodRange(statement.periodStart, statement.periodEnd)}`,
+        ? t(
+            "{0, plural, one {# shipment} other {# shipments}} · {1}",
+            statement.shipmentCount,
+            periodRange(statement.periodStart, statement.periodEnd),
+          )
+        : t("Nothing yet · {0}", periodRange(statement.periodStart, statement.periodEnd)),
       state: due ? "done" : "active",
       Icon: CheckIcon,
     },
     {
       key: "bill",
-      label: due ? "Billing" : "Bills",
+      label: due ? t("Billing") : t("Bills"),
       detail: billsInLabel(statement.periodEnd, nowSeconds),
       state: due ? "active" : "pending",
       Icon: statement.autoBill ? BotIcon : UserCheck01Icon,
     },
     {
       key: "invoice",
-      label: statement.invoiceCount === 1 ? "One invoice" : `${statement.invoiceCount} invoices`,
+      label: t("{0, plural, one {One invoice} other {# invoices}}", statement.invoiceCount),
       detail: hasFreight
-        ? `${splitLabel(statement.splitBy)} · ${statement.detail === "Summary" ? "summary" : "itemised"}`
-        : "Nothing to bill",
+        ? statement.detail === "Summary"
+          ? t("{0} · summary", splitLabel(statement.splitBy))
+          : t("{0} · itemised", splitLabel(statement.splitBy))
+        : t("Nothing to bill"),
       state: "pending",
       Icon: ReceiptTextIcon,
     },
@@ -87,7 +93,7 @@ export function StatementTimeline({
                 step.state === "pending" && "text-muted-foreground",
               )}
             >
-              {t(step.label)}
+              {step.label}
             </span>
             <span className="text-muted-foreground block truncate text-xs">{step.detail}</span>
           </span>

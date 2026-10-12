@@ -28,7 +28,7 @@ TODO
 enterprise/
 .playwright-mcp
 shipment_page_design
-# Captured feature screenshots are regenerated with scripts/screenshots; only the README is tracked
+# Captured feature screenshots are regenerated with tools/screenshots; only the README is tracked
 docs/screenshots/light/
 docs/screenshots/dark/
 /i18n-extract
@@ -40,6 +40,8 @@ docs/screenshots/dark/
 # repository and is copied here only for Cloud builds (docs/engineering/editions.md).
 services/tms/internal/cloud/
 services/tms/cmd/cli/edition_cloud.go
+services/tms/cmd/api/edition_cloud.go
+services/tms/cmd/worker/edition_cloud.go
 client/packages/cloud/
 
 *:Zone.Identifier

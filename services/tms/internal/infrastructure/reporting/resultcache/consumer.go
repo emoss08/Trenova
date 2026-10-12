@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -183,7 +183,7 @@ var Module = fx.Module("report-result-cache",
 	fx.Provide(
 		fx.Annotate(
 			New,
-			fx.As(new(services.ReportResultCache)),
+			fx.As(new(reportports.ReportResultCache)),
 		),
 	),
 	fx.Invoke(NewConsumer),

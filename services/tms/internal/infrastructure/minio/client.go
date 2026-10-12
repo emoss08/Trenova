@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"go.uber.org/fx"
@@ -39,7 +39,7 @@ type Client struct {
 	l                *zap.Logger
 }
 
-func New(p Params) (storage.Client, error) {
+func New(p Params) (kernelports.Client, error) {
 	cfg := p.Config.GetStorageConfig()
 	storageCfg, err := newStorageClientConfig(cfg)
 	if err != nil {
@@ -210,8 +210,8 @@ func newMinioOptions(
 
 func (c *Client) Upload(
 	ctx context.Context,
-	params *storage.UploadParams,
-) (*storage.FileInfo, error) {
+	params *kernelports.UploadParams,
+) (*kernelports.FileInfo, error) {
 	log := c.l.With(
 		zap.String("operation", "Upload"),
 		zap.String("key", params.Key),
@@ -232,7 +232,7 @@ func (c *Client) Upload(
 		return nil, fmt.Errorf("failed to upload file: %w", err)
 	}
 
-	return &storage.FileInfo{
+	return &kernelports.FileInfo{
 		Key:          info.Key,
 		Size:         info.Size,
 		ContentType:  params.ContentType,
@@ -242,7 +242,7 @@ func (c *Client) Upload(
 	}, nil
 }
 
-func (c *Client) Download(ctx context.Context, key string) (*storage.DownloadResult, error) {
+func (c *Client) Download(ctx context.Context, key string) (*kernelports.DownloadResult, error) {
 	log := c.l.With(
 		zap.String("operation", "Download"),
 		zap.String("key", key),
@@ -261,7 +261,7 @@ func (c *Client) Download(ctx context.Context, key string) (*storage.DownloadRes
 		return nil, fmt.Errorf("failed to get file info: %w", err)
 	}
 
-	return &storage.DownloadResult{
+	return &kernelports.DownloadResult{
 		Body:        obj,
 		ContentType: stat.ContentType,
 		Size:        stat.Size,
@@ -270,12 +270,12 @@ func (c *Client) Download(ctx context.Context, key string) (*storage.DownloadRes
 }
 
 func (c *Client) Delete(ctx context.Context, key string) error {
-	return c.DeleteObject(ctx, &storage.DeleteObjectParams{Key: key})
+	return c.DeleteObject(ctx, &kernelports.DeleteObjectParams{Key: key})
 }
 
 func (c *Client) DeleteObject(
 	ctx context.Context,
-	params *storage.DeleteObjectParams,
+	params *kernelports.DeleteObjectParams,
 ) error {
 	log := c.l.With(
 		zap.String("operation", "Delete"),
@@ -354,7 +354,7 @@ func (c *Client) DeletePrefix(ctx context.Context, prefix string) (int64, error)
 
 func (c *Client) GetPresignedURL(
 	ctx context.Context,
-	params *storage.PresignedURLParams,
+	params *kernelports.PresignedURLParams,
 ) (string, error) {
 	log := c.l.With(
 		zap.String("operation", "GetPresignedURL"),
@@ -388,7 +388,7 @@ func (c *Client) GetPresignedURL(
 
 func (c *Client) GetPresignedUploadURL(
 	ctx context.Context,
-	params *storage.PresignedUploadURLParams,
+	params *kernelports.PresignedUploadURLParams,
 ) (string, error) {
 	client := c.client
 	if c.publicClient != nil {
@@ -405,7 +405,7 @@ func (c *Client) GetPresignedUploadURL(
 
 func (c *Client) InitiateMultipartUpload(
 	ctx context.Context,
-	params *storage.MultipartUploadParams,
+	params *kernelports.MultipartUploadParams,
 ) (string, error) {
 	opts := minio.PutObjectOptions{
 		ContentType: params.ContentType,
@@ -424,7 +424,7 @@ func (c *Client) InitiateMultipartUpload(
 
 func (c *Client) GetMultipartUploadPartURL(
 	ctx context.Context,
-	params *storage.MultipartUploadPartURLParams,
+	params *kernelports.MultipartUploadPartURLParams,
 ) (string, error) {
 	reqParams := make(url.Values)
 	reqParams.Set("partNumber", strconv.Itoa(params.PartNumber))
@@ -445,7 +445,7 @@ func (c *Client) GetMultipartUploadPartURL(
 
 func (c *Client) CompleteMultipartUpload(
 	ctx context.Context,
-	params *storage.CompleteMultipartUploadParams,
+	params *kernelports.CompleteMultipartUploadParams,
 ) error {
 	parts := make([]minio.CompletePart, 0, len(params.Parts))
 	for _, part := range params.Parts {
@@ -475,7 +475,7 @@ func (c *Client) CompleteMultipartUpload(
 
 func (c *Client) AbortMultipartUpload(
 	ctx context.Context,
-	params *storage.AbortMultipartUploadParams,
+	params *kernelports.AbortMultipartUploadParams,
 ) error {
 	if err := c.core.AbortMultipartUpload(ctx, c.bucket, params.Key, params.UploadID); err != nil {
 		return fmt.Errorf("failed to abort multipart upload: %w", err)
@@ -486,16 +486,16 @@ func (c *Client) AbortMultipartUpload(
 
 func (c *Client) ListMultipartUploadParts(
 	ctx context.Context,
-	params *storage.ListMultipartUploadPartsParams,
-) ([]storage.UploadedPart, error) {
+	params *kernelports.ListMultipartUploadPartsParams,
+) ([]kernelports.UploadedPart, error) {
 	result, err := c.core.ListObjectParts(ctx, c.bucket, params.Key, params.UploadID, 0, 10000)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list multipart upload parts: %w", err)
 	}
 
-	parts := make([]storage.UploadedPart, 0, len(result.ObjectParts))
+	parts := make([]kernelports.UploadedPart, 0, len(result.ObjectParts))
 	for _, part := range result.ObjectParts {
-		parts = append(parts, storage.UploadedPart{
+		parts = append(parts, kernelports.UploadedPart{
 			PartNumber: part.PartNumber,
 			ETag:       part.ETag,
 			Size:       part.Size,
@@ -518,7 +518,7 @@ func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 	return true, nil
 }
 
-func (c *Client) GetFileInfo(ctx context.Context, key string) (*storage.FileInfo, error) {
+func (c *Client) GetFileInfo(ctx context.Context, key string) (*kernelports.FileInfo, error) {
 	log := c.l.With(
 		zap.String("operation", "GetFileInfo"),
 		zap.String("key", key),
@@ -530,7 +530,7 @@ func (c *Client) GetFileInfo(ctx context.Context, key string) (*storage.FileInfo
 		return nil, fmt.Errorf("failed to get file info: %w", err)
 	}
 
-	info := &storage.FileInfo{
+	info := &kernelports.FileInfo{
 		Key:          stat.Key,
 		Size:         stat.Size,
 		ContentType:  stat.ContentType,

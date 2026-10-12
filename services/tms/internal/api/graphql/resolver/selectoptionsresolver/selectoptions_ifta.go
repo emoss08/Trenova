@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
@@ -24,7 +24,7 @@ func (r *Deps) resolveIFTAJurisdictionSelectOptions(
 ) (*gqlmodel.SelectOptionConnection, error) {
 	jurisdictions, err := r.IftaService.ListJurisdictions(
 		ctx,
-		&repositories.ListJurisdictionsRequest{
+		&iftaports.ListJurisdictionsRequest{
 			MembersOnly: selectOptionBoolFilter(req.Filters, "membersOnly"),
 		},
 	)

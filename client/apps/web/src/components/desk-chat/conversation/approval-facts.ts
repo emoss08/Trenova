@@ -1,4 +1,5 @@
 import type { ProposalPreview } from "@/lib/graphql/agent-preview";
+import { resourceLabel } from "@/lib/resource-label";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 
 /** One field the change sets, said once for every record it touches. */
@@ -22,21 +23,32 @@ export type ApprovalFacts = {
   wouldFail: string | null;
   /** Records that changed since the agent drafted the change. */
   changedSince: number;
+  /** The change makes the records it counts rather than acting on existing ones. */
+  creates: boolean;
 };
 
 /** The field a write over many records uses to say what happens to each. */
 export const OUTCOME_FIELD = "outcome";
 export const REFUSED_PREFIX = "Refused:";
 
-type PreviewField = ProposalPreview["changes"][number]["fields"][number];
+type PreviewChange = ProposalPreview["changes"][number];
+type PreviewField = PreviewChange["fields"][number];
 
+/**
+ * A value as one line of text. A value that points at another record reads
+ * as that record's name; the id it holds is never shown, so a record the
+ * reader may not see says so, and one with no name left says it is gone.
+ */
 export function valueText(
   value: unknown,
   ref: PreviewField["beforeRef"] | PreviewField["afterRef"] | undefined,
   t: TranslateFn,
 ): string {
-  if (ref?.label) {
-    return ref.label;
+  if (ref) {
+    if (ref.withheld) {
+      return t("Hidden by your data access");
+    }
+    return ref.label || t("A record that is no longer there");
   }
   if (value === null || value === undefined || value === "") {
     return t("None");
@@ -48,6 +60,11 @@ export function valueText(
   return JSON.stringify(value);
 }
 
+/** The record a change is for, by its name, or by its kind when it has none: never its id. */
+export function recordName(change: Pick<PreviewChange, "label" | "resource">): string {
+  return change.label || resourceLabel(change.resource);
+}
+
 /**
  * The card's facts from the preview the server computed: the records the
  * change touches and, when every record has the same field set, that field
@@ -56,18 +73,28 @@ export function valueText(
  */
 export function approvalFacts(preview: ProposalPreview | undefined, t: TranslateFn): ApprovalFacts {
   if (!preview) {
-    return { count: 0, resource: "", field: null, refused: [], wouldFail: null, changedSince: 0 };
+    return {
+      count: 0,
+      resource: "",
+      field: null,
+      refused: [],
+      wouldFail: null,
+      changedSince: 0,
+      creates: false,
+    };
   }
-  const changes = preview.changes.filter((change) => !change.withheld);
+  const shown = preview.changes.filter((change) => !change.withheld);
+  const resource = shown[0]?.resource ?? "";
+  const changes = shown.filter((change) => change.resource === resource);
   const count = changes.length + preview.withheldCount;
-  const resource = changes[0]?.resource ?? "";
+  const creates = changes.length > 0 && changes.every((change) => change.operation === "Create");
   const refused = changes.flatMap((change) => {
     const outcome = change.fields.find((field) => field.path === OUTCOME_FIELD);
     const text = typeof outcome?.after === "string" ? outcome.after : "";
     return text.startsWith(REFUSED_PREFIX)
       ? [
           {
-            label: change.label || change.entityId || "",
+            label: recordName(change),
             reason: text.slice(REFUSED_PREFIX.length).trim(),
           },
         ]
@@ -78,7 +105,7 @@ export function approvalFacts(preview: ProposalPreview | undefined, t: Translate
   const changedSince = changes.filter((change) =>
     change.fields.some((field) => field.changedSinceProposed),
   ).length;
-  const extra = { refused, wouldFail, changedSince };
+  const extra = { refused, wouldFail, changedSince, creates };
   const first = changes[0]?.fields.find((field) => !field.withheld && field.path !== OUTCOME_FIELD);
   if (!first) {
     return { count, resource, field: null, ...extra };
@@ -129,4 +156,17 @@ export function refusalReasons(refused: readonly { reason: string }[]): [string,
     counts.set(item.reason, (counts.get(item.reason) ?? 0) + 1);
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+/**
+ * What the card says the change reaches: "on 11 items" for records it acts
+ * on, "3 shipments in all" for several it creates, nothing for one it creates.
+ */
+export function scopePhrase(facts: ApprovalFacts, t: TranslateFn): string | null {
+  if (facts.count === 0 || (facts.creates && facts.count === 1)) {
+    return null;
+  }
+  const counted = recordCount(facts.resource, facts.count, t);
+
+  return facts.creates ? t("{0} in all", counted) : t("on {0}", counted);
 }

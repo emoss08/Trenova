@@ -3,6 +3,11 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { WarningProps } from "@trenova/shared/types/fields";
 import React, { useMemo } from "react";
 import { Label } from "@trenova/shared/components/ui/label";
+import {
+  FieldNameProvider,
+  useFieldRegistration,
+  type FieldValueFormat,
+} from "@trenova/shared/lib/form-field-registry";
 
 export function ErrorMessage({ formError, id }: { formError?: string; id?: string }) {
   const t = useT();
@@ -60,18 +65,41 @@ type FieldWrapperProps = {
   error?: string;
   descriptionId?: string;
   errorId?: string;
+  /**
+   * Where the label and description sit: above the control, or in a column
+   * beside it, for a settings form read down a list of rows.
+   */
+  layout?: FieldLayout;
+  /** The form field's name; inside a form it registers the field and its label. */
+  name?: string;
+  /**
+   * How the field's values read where the stored value is not readable, such as an
+   * option's key; a change review shows values through it.
+   */
+  formatValue?: FieldValueFormat;
 };
 
-export function FieldLabel({ label, required }: { label?: React.ReactNode; required?: boolean }) {
+export type FieldLayout = "stacked" | "inline";
+
+export function FieldLabel({
+  label,
+  required,
+  className,
+}: {
+  label?: React.ReactNode;
+  required?: boolean;
+  className?: string;
+}) {
   if (!label) {
     return null;
   }
 
+  const classes = cn("block text-xs font-medium", required && "required", className);
   if (React.isValidElement(label)) {
-    return <div className={cn("block text-xs font-medium", required && "required")}>{label}</div>;
+    return <div className={classes}>{label}</div>;
   }
 
-  return <Label className={cn("block text-xs font-medium", required && "required")}>{label}</Label>;
+  return <Label className={classes}>{label}</Label>;
 }
 
 function FieldWrapperInner({ children }: { children: React.ReactNode }) {
@@ -92,7 +120,12 @@ export function FieldWrapper({
   error,
   descriptionId,
   errorId,
+  layout = "stacked",
+  name,
+  formatValue,
 }: FieldWrapperProps) {
+  useFieldRegistration(name, label, formatValue);
+  const control = name ? <FieldNameProvider name={name}>{children}</FieldNameProvider> : children;
   const descriptionElement = useMemo(() => {
     return !error && (description || warning?.show) ? (
       <FieldDescription description={description} warning={warning} id={descriptionId} />
@@ -103,6 +136,28 @@ export function FieldWrapper({
     return error ? <ErrorMessage formError={error} id={errorId} /> : null;
   }, [error, errorId]);
 
+  if (layout === "inline") {
+    return (
+      <div
+        className={cn(
+          "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-x-4",
+          className,
+        )}
+      >
+        <div className="flex min-w-0 flex-col gap-1 pt-2">
+          <FieldLabel label={label} required={required} className="text-sm" />
+          {(description || warning?.show) && (
+            <FieldDescription description={description} warning={warning} id={descriptionId} />
+          )}
+        </div>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          {control}
+          {errorElement}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("flex flex-col gap-0.5", className)}>
       {label && (
@@ -110,7 +165,7 @@ export function FieldWrapper({
           <FieldLabel label={label} required={required} />
         </FieldWrapperInner>
       )}
-      {children}
+      {control}
       <FieldWrapperDescriptionInner>
         {descriptionElement}
         {errorElement}

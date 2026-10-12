@@ -12,15 +12,16 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
-	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
-	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -417,7 +418,7 @@ func (r *MutationResolver) MarkDriverSettlementPaid(ctx context.Context, input g
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverSettlementService.MarkPaid(ctx, &services.MarkSettlementPaidRequest{
+	return r.DriverSettlementService.MarkPaid(ctx, &carriersettlementports.MarkSettlementPaidRequest{
 		TenantInfo:       base.TenantInfo(authCtx),
 		SettlementID:     settlementID,
 		PaymentMethod:    input.PaymentMethod,
@@ -646,8 +647,8 @@ func (r *PayProfileResolver) ActiveAssignmentCount(ctx context.Context, obj *dri
 	if err != nil {
 		return 0, err
 	}
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.PayProfileActiveAssignmentCount.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		return loaders.PayProfileActiveAssignmentCount(ctx, obj.ID.String())
 	}
 	return r.PayProfileRepo.CountActiveAssignments(ctx, base.TenantInfo(authCtx), obj.ID)
 }
@@ -669,7 +670,7 @@ func (r *QueryResolver) PayProfiles(ctx context.Context, input gqlmodel.DataTabl
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.PayProfileRepo.ListConnection(ctx, &repositories.ListPayProfileConnectionRequest{
+	result, err := r.PayProfileRepo.ListConnection(ctx, &driverpayports.ListPayProfileConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -688,7 +689,7 @@ func (r *QueryResolver) PayProfile(ctx context.Context, id string) (*driverpay.P
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid pay profile")
 	}
-	return r.DriverPayService.GetProfile(ctx, repositories.GetPayProfileByIDRequest{
+	return r.DriverPayService.GetProfile(ctx, driverpayports.GetPayProfileByIDRequest{
 		ID:                profileID,
 		TenantInfo:        base.TenantInfo(authCtx),
 		IncludeComponents: true,
@@ -704,7 +705,7 @@ func (r *QueryResolver) WorkerPayAssignments(ctx context.Context, workerID strin
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
 	}
-	return r.DriverPayService.ListWorkerAssignments(ctx, repositories.ListWorkerPayAssignmentsRequest{
+	return r.DriverPayService.ListWorkerAssignments(ctx, driverpayports.ListWorkerPayAssignmentsRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		WorkerID:   id,
 	})
@@ -719,7 +720,7 @@ func (r *QueryResolver) EffectiveWorkerPayAssignment(ctx context.Context, worker
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
 	}
-	assignment, err := r.DriverPayService.GetEffectiveAssignment(ctx, repositories.GetWorkerPayAssignmentRequest{
+	assignment, err := r.DriverPayService.GetEffectiveAssignment(ctx, driverpayports.GetWorkerPayAssignmentRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		WorkerID:   id,
 	})
@@ -750,7 +751,7 @@ func (r *QueryResolver) RecurringDeductions(ctx context.Context, input gqlmodel.
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.RecurringDeductionRepo.ListConnection(ctx, &repositories.ListRecurringDeductionConnectionRequest{
+	result, err := r.RecurringDeductionRepo.ListConnection(ctx, &driverpayports.ListRecurringDeductionConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -769,7 +770,7 @@ func (r *QueryResolver) RecurringDeduction(ctx context.Context, id string) (*dri
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid deduction")
 	}
-	return r.DriverPayService.GetDeduction(ctx, repositories.GetRecurringDeductionByIDRequest{
+	return r.DriverPayService.GetDeduction(ctx, driverpayports.GetRecurringDeductionByIDRequest{
 		ID:         deductionID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -784,7 +785,7 @@ func (r *QueryResolver) RecurringEarnings(ctx context.Context, input gqlmodel.Da
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.RecurringEarningRepo.ListConnection(ctx, &repositories.ListRecurringEarningConnectionRequest{
+	result, err := r.RecurringEarningRepo.ListConnection(ctx, &driverpayports.ListRecurringEarningConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -803,7 +804,7 @@ func (r *QueryResolver) RecurringEarning(ctx context.Context, id string) (*drive
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid earning")
 	}
-	return r.DriverPayService.GetEarning(ctx, repositories.GetRecurringEarningByIDRequest{
+	return r.DriverPayService.GetEarning(ctx, driverpayports.GetRecurringEarningByIDRequest{
 		ID:         earningID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -818,7 +819,7 @@ func (r *QueryResolver) PayCodes(ctx context.Context, input gqlmodel.DataTableCo
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.DriverPayService.ListPayCodesConnection(ctx, &repositories.ListPayCodeConnectionRequest{
+	result, err := r.DriverPayService.ListPayCodesConnection(ctx, &driverpayports.ListPayCodeConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -837,7 +838,7 @@ func (r *QueryResolver) PayCode(ctx context.Context, id string) (*driverpay.PayC
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid pay code")
 	}
-	return r.DriverPayService.GetPayCode(ctx, repositories.GetPayCodeByIDRequest{
+	return r.DriverPayService.GetPayCode(ctx, driverpayports.GetPayCodeByIDRequest{
 		ID:         payCodeID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -848,7 +849,7 @@ func (r *QueryResolver) PayCodeOptions(ctx context.Context, direction *driverpay
 	if err != nil {
 		return nil, err
 	}
-	req := repositories.ListActivePayCodesRequest{TenantInfo: base.TenantInfo(authCtx)}
+	req := driverpayports.ListActivePayCodesRequest{TenantInfo: base.TenantInfo(authCtx)}
 	if direction != nil {
 		req.Direction = *direction
 	}
@@ -864,7 +865,7 @@ func (r *QueryResolver) PayAdvances(ctx context.Context, input gqlmodel.DataTabl
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.PayAdvanceRepo.ListConnection(ctx, &repositories.ListPayAdvanceConnectionRequest{
+	result, err := r.PayAdvanceRepo.ListConnection(ctx, &driverpayports.ListPayAdvanceConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -883,7 +884,7 @@ func (r *QueryResolver) PayAdvance(ctx context.Context, id string) (*driverpay.P
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid advance")
 	}
-	return r.DriverPayService.GetAdvance(ctx, repositories.GetPayAdvanceByIDRequest{
+	return r.DriverPayService.GetAdvance(ctx, driverpayports.GetPayAdvanceByIDRequest{
 		ID:         advanceID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -898,7 +899,7 @@ func (r *QueryResolver) EscrowAccounts(ctx context.Context, input gqlmodel.DataT
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.EscrowAccountRepo.ListConnection(ctx, &repositories.ListEscrowAccountConnectionRequest{
+	result, err := r.EscrowAccountRepo.ListConnection(ctx, &driverpayports.ListEscrowAccountConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -917,7 +918,7 @@ func (r *QueryResolver) EscrowAccount(ctx context.Context, id string) (*driverpa
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid escrow account")
 	}
-	return r.DriverPayService.GetEscrowAccount(ctx, repositories.GetEscrowAccountByIDRequest{
+	return r.DriverPayService.GetEscrowAccount(ctx, driverpayports.GetEscrowAccountByIDRequest{
 		ID:                  accountID,
 		TenantInfo:          base.TenantInfo(authCtx),
 		IncludeTransactions: true,
@@ -933,7 +934,7 @@ func (r *QueryResolver) DriverSettlements(ctx context.Context, input gqlmodel.Da
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.DriverSettlementRepo.ListConnection(ctx, &repositories.ListDriverSettlementConnectionRequest{
+	result, err := r.DriverSettlementRepo.ListConnection(ctx, &driversettlementports.ListDriverSettlementConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -952,7 +953,7 @@ func (r *QueryResolver) DriverSettlement(ctx context.Context, id string) (*drive
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid settlement")
 	}
-	return r.DriverSettlementService.Get(ctx, repositories.GetDriverSettlementByIDRequest{
+	return r.DriverSettlementService.Get(ctx, driversettlementports.GetDriverSettlementByIDRequest{
 		ID:           settlementID,
 		TenantInfo:   base.TenantInfo(authCtx),
 		IncludeLines: true,
@@ -968,7 +969,7 @@ func (r *QueryResolver) SettlementBatches(ctx context.Context, input gqlmodel.Da
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.SettlementBatchRepo.ListConnection(ctx, &repositories.ListSettlementBatchConnectionRequest{
+	result, err := r.SettlementBatchRepo.ListConnection(ctx, &driversettlementports.ListSettlementBatchConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -987,7 +988,7 @@ func (r *QueryResolver) SettlementBatch(ctx context.Context, id string) (*driver
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid batch")
 	}
-	return r.DriverSettlementService.GetBatch(ctx, repositories.GetSettlementBatchByIDRequest{
+	return r.DriverSettlementService.GetBatch(ctx, driversettlementports.GetSettlementBatchByIDRequest{
 		ID:                 batchID,
 		TenantInfo:         base.TenantInfo(authCtx),
 		IncludeSettlements: true,
@@ -1003,7 +1004,7 @@ func (r *QueryResolver) DriverPayEvents(ctx context.Context, input gqlmodel.Data
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.PayEventRepo.ListConnection(ctx, &repositories.ListPayEventConnectionRequest{
+	result, err := r.PayEventRepo.ListConnection(ctx, &driversettlementports.ListPayEventConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -1088,7 +1089,7 @@ func (r *QueryResolver) SettlementWorkspaceSummary(ctx context.Context, periodSt
 	)
 }
 
-func (r *QueryResolver) UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*repositories.UnsettledWorkerSummary, error) {
+func (r *QueryResolver) UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*driversettlementports.UnsettledWorkerSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverSettlement, permission.OpRead)
 	if err != nil {
 		return nil, err

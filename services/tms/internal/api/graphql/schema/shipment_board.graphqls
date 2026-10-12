@@ -82,29 +82,32 @@ type ShipmentStageSummary {
   revenue: Decimal!
 }
 
+"""
+A way to group the board other than by stage. Dates are the local day, in the
+board's time zone, of the first pickup or the last delivery.
+"""
+enum ShipmentBoardGrouping {
+  ShipDate
+  DeliveryDate
+  Customer
+  Owner
+}
+
+type ShipmentBoardGroup {
+  """
+  The value rows are grouped on: a YYYY-MM-DD day, a customer id or a user id.
+  Empty for shipments with no date or no owner.
+  """
+  key: String!
+  "The customer's or owner's name. Empty for days, which the client formats."
+  label: String!
+  count: Int!
+  revenue: Decimal!
+}
+
 type ShipmentQuickFilterCount {
   filter: ShipmentQuickFilter!
   count: Int!
-}
-
-enum ShipmentFacet {
-  Status
-  Equipment
-  TenderStatus
-  Customer
-}
-
-type ShipmentFacetValue {
-  value: String!
-  label: String!
-  count: Int!
-}
-
-type ShipmentFacetCounts {
-  facet: ShipmentFacet!
-  "The field filter the values apply to."
-  field: String!
-  values: [ShipmentFacetValue!]!
 }
 
 type ShipmentBriefingSegment {
@@ -113,11 +116,18 @@ type ShipmentBriefingSegment {
   filter: ShipmentQuickFilter
 }
 
+"""
+The day's brief for the board. It is written once for the organization's
+working day, before it starts, and again when every open issue it named has
+been cleared; reading it never asks the model anything.
+"""
 type ShipmentBriefing {
   segments: [ShipmentBriefingSegment!]!
   "The model wrote the wording; false means the deterministic sentence."
   narrated: Boolean!
   generatedAt: Timestamp!
+  "Which of the day's briefs this is, starting at 1."
+  generation: Int!
 }
 
 enum CapacityUnitKind {
@@ -423,8 +433,16 @@ type ShipmentWatchlist {
 extend type Query {
   shipmentBoardCapabilities: ShipmentBoardCapabilities!
   shipmentStageSummary(input: ShipmentBoardScopeInput!): [ShipmentStageSummary!]!
+  "Group headers and totals for the board grouped by something other than stage, in board order."
+  shipmentBoardGroups(
+    input: ShipmentBoardScopeInput!
+    groupBy: ShipmentBoardGrouping!
+  ): [ShipmentBoardGroup!]!
   shipmentQuickFilterCounts(input: ShipmentBoardScopeInput!): [ShipmentQuickFilterCount!]!
-  shipmentFacetCounts(input: ShipmentBoardScopeInput!, facets: [ShipmentFacet!]!): [ShipmentFacetCounts!]!
+  """
+  The day's board brief. It is written for the organization's own day and
+  time zone, so the timezone argument no longer changes it.
+  """
   shipmentBriefing(timezone: String!): ShipmentBriefing!
   shipmentCapacity(kind: CapacityUnitKind!): ShipmentCapacity!
   capacityUnitMatches(kind: CapacityUnitKind!, unitId: ID!, limit: Int = 2): [CapacityMatch!]!

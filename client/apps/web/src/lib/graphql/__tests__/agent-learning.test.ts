@@ -87,7 +87,7 @@ function reaches(resource: string, queryKey: readonly unknown[]): boolean {
 /*
 When a look back keeps a lesson from a conversation, agentreflectionservice
 publishes resource "agent_memory", action "learned", to that person
-(services/tms/internal/core/ports/services/agentreflection.go). The note under
+(services/tms/internal/modules/agent/app/agentreflectionservice/lessons.go). The note under
 the reply and the Desk's memory list both have to move with it.
 */
 describe("agent_memory realtime", () => {

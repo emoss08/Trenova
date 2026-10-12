@@ -164,9 +164,12 @@ function HoldReasonEditPanel({ open, onOpenChange, row, form }: HoldReasonEditPa
   }, [open, isSubmitting, handleSubmit, defaultAction]);
 
   const panelDescription = row?.updatedAt
-    ? `Last updated on ${formatToUserTimezone(row.updatedAt as number, {
-        timeFormat: TimeFormat.enum["24-hour"],
-      })}`
+    ? t(
+        "Last updated on {0}",
+        formatToUserTimezone(row.updatedAt as number, {
+          timeFormat: TimeFormat.enum["24-hour"],
+        }),
+      )
     : undefined;
 
   return (

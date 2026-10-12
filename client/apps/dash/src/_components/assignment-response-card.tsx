@@ -15,6 +15,7 @@ import { CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function AssignmentResponseCard({ load }: { load: PortalLoad }) {
   const t = useT();
@@ -34,14 +35,15 @@ export function AssignmentResponseCard({ load }: { load: PortalLoad }) {
     onSuccess: async (_, accept) => {
       toast.success(
         accept
-          ? "You're on it — dispatch can see you accepted."
-          : "Dispatch has been notified so they can replan.",
+          ? translate("You're on it — dispatch can see you accepted.")
+          : translate("Dispatch has been notified so they can replan."),
       );
       setDeclineOpen(false);
       setReason("");
       await queryClient.invalidateQueries({ queryKey: ["dash-loads"] });
     },
-    onError: (error: Error) => toast.error(error.message || "We couldn't send your response."),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("We couldn't send your response.")),
   });
 
   const respondable =

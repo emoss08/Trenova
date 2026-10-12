@@ -1,0 +1,110 @@
+# The Desk's worker card: who the worker is, whether they can be dispatched,
+# and the license and medical dates their qualification hangs on, without the
+# PTO, custom fields and tenant details the edit panel loads.
+query DeskWorkerCard($id: ID!) {
+  worker(id: $id) {
+    id
+    status
+    type
+    driverType
+    firstName
+    lastName
+    phoneNumber
+    email
+    city
+    externalId
+    assignmentBlocked
+    canBeAssigned
+    availableForDispatch
+    createdAt
+    state {
+      abbreviation
+    }
+    fleetCode {
+      id
+      code
+    }
+    manager {
+      id
+      name
+    }
+    profile {
+      licenseNumber
+      cdlClass
+      cdlRestrictions
+      endorsement
+      licenseExpiry
+      hazmatExpiry
+      medicalCardExpiry
+      twicExpiry
+      physicalDueDate
+      mvrDueDate
+      hireDate
+      isQualified
+      disqualificationReason
+      licenseState {
+        abbreviation
+      }
+    }
+  }
+}
+
+# The driver's clocks as telematics last reported them, and the latest
+# violations, for the card's hours-of-service section.
+query DeskWorkerHos($workerId: ID!, $violations: Int!) {
+  workerHosState(workerId: $workerId) {
+    dutyStatus
+    driveRemainingMs
+    driveLimitMs
+    shiftRemainingMs
+    shiftLimitMs
+    cycleRemainingMs
+    cycleLimitMs
+    breakRemainingMs
+    breakLimitMs
+    currentTractorId
+    rulesetCycle
+    recordedAt
+  }
+  workerHosViolations(workerId: $workerId, limit: $violations) {
+    violationType
+    description
+    durationMs
+    violationStartAt
+  }
+}
+
+# Whether the worker is in good standing, and what stands against them, ranked
+# worst first.
+query DeskWorkerStanding($workerId: ID!) {
+  workerOverview(workerId: $workerId) {
+    standing
+    concerns {
+      severity
+      code
+      headline
+      detail
+    }
+  }
+}
+
+# The worker's credentials beyond the license and medical dates on their
+# profile, each with how it stands.
+query DeskWorkerCredentials($workerId: ID!) {
+  workerCredentialSummary(workerId: $workerId) {
+    items {
+      health
+      daysUntilExpiry
+      required
+      credentialType {
+        id
+        name
+        profileField
+      }
+      credential {
+        id
+        expiresAt
+      }
+    }
+  }
+}

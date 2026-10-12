@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/costingservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/vikstrous/dataloadgen"
 	"go.uber.org/fx"
@@ -27,7 +27,7 @@ func NewShipmentProfitabilityLoaderFactory(
 	}
 }
 
-func (f *ShipmentProfitabilityLoaderFactory) NewForTenant(
+func newShipmentProfitabilityLoader(f *ShipmentProfitabilityLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *costingservice.ShipmentProfitabilityEstimate] {
 	return newLoader(f.batchFunc(tenantInfo))

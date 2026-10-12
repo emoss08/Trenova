@@ -1,11 +1,8 @@
 /* Desk v2 memory: the Memory page (design/pages.jsx MemoryPage, pages.css
    pg-* and mm-*) and the memory notes in a conversation (design/memory.jsx,
    memory.css). Values are the design's, mapped onto --dsk-* tokens. */
-.dsk {
-  --dk-mem: oklch(0.62 0.17 300);
-}
-.dark .dsk {
-  --dk-mem: oklch(0.74 0.14 300);
+:is(.dsk, .dk-chat) {
+  --dk-mem: var(--accent-violet);
 }
 
 /* ---- page frame (pages.css .pg*) ---- */
@@ -100,35 +97,6 @@
 .dk-mm-set .dk-mm-seg {
   background: var(--dsk-card);
 }
-.dk-mm-seg button {
-  height: 28px;
-  padding: 0 11px;
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--dsk-muted);
-  transition:
-    background 140ms,
-    color 140ms;
-}
-.dk-mm-seg button:hover:not(:disabled) {
-  color: var(--dsk-fg);
-}
-.dk-mm-seg button.dk-on {
-  background: var(--dsk-card);
-  color: var(--dsk-fg);
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.08),
-    0 0 0 1px var(--dsk-b-sub);
-}
-.dk-mm-set .dk-mm-seg button.dk-on {
-  background: var(--dsk-ink);
-  color: var(--dsk-ink-fg);
-  box-shadow: none;
-}
-.dk-mm-seg button:disabled {
-  cursor: not-allowed;
-}
 
 /* ---- add ---- */
 .dk-mm-add {
@@ -169,9 +137,6 @@
   background: var(--dsk-sunken);
   cursor: pointer;
 }
-.dk-mm-add .dk-ax-btn:disabled {
-  opacity: 0.35;
-}
 
 /* ---- filters ---- */
 .dk-mm-tools {
@@ -186,23 +151,6 @@
   display: flex;
   gap: 2px;
   flex-wrap: wrap;
-}
-.dk-mm-f button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  font-size: 12.5px;
-  color: var(--dsk-muted);
-}
-.dk-mm-f button:hover {
-  color: var(--dsk-fg);
-}
-.dk-mm-f button.dk-on {
-  background: var(--dsk-ink);
-  color: var(--dsk-ink-fg);
 }
 .dk-mm-f em {
   font-style: normal;
@@ -293,13 +241,6 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-.dk-mem-card .dk-mm-why {
-  margin-top: 8px;
-}
-.dk-mem-tx .dk-mm-why {
-  margin-top: 3px;
-  font-size: 11.5px;
-}
 .dk-mm-scope {
   height: 22px;
   font-size: 11.5px;
@@ -320,10 +261,6 @@
 .dk-mm-acts:focus-within {
   opacity: 1;
 }
-.dk-mm-acts .dk-ib {
-  width: 26px;
-  height: 26px;
-}
 .dk-mm-r.dk-gone {
   flex-direction: row;
   align-items: center;
@@ -331,11 +268,6 @@
   font-size: 12.5px;
   color: var(--dsk-subtle);
   background: var(--dsk-sunken);
-}
-.dk-mm-r.dk-gone button {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--dsk-fg);
 }
 .dk-mm-ed textarea {
   width: 100%;
@@ -394,37 +326,6 @@
 .dk-mrc {
   margin: 0 0 10px;
 }
-.dk-mrc-b {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 26px;
-  padding: 0 9px 0 3px;
-  border-radius: 8px;
-  font: inherit;
-  font-size: 12px;
-  color: var(--dsk-muted);
-  background: none;
-  border: 0;
-  cursor: pointer;
-  transition:
-    background 120ms,
-    color 120ms;
-}
-.dk-mrc-b:hover,
-.dk-mrc.dk-open .dk-mrc-b {
-  background: var(--dsk-hover);
-  color: var(--dsk-fg);
-}
-.dk-mrc-cv {
-  display: grid;
-  place-items: center;
-  color: var(--dsk-faint);
-  transition: transform 200ms var(--dk-settle);
-}
-.dk-mrc.dk-open .dk-mrc-cv {
-  transform: rotate(90deg);
-}
 .dk-mrc-l {
   display: grid;
   gap: 2px;
@@ -461,219 +362,298 @@
   font-size: 11.5px;
   color: var(--dsk-subtle);
 }
-.dk-mrc-m button,
-.dk-mem-l {
-  margin-left: auto;
-  padding: 0;
-  font: inherit;
-  font-size: 11.5px;
-  color: var(--dsk-muted);
-  background: none;
-  border: 0;
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: var(--dsk-b-strong);
-  text-underline-offset: 2px;
-}
-.dk-mrc-m button:hover,
-.dk-mem-l:hover {
-  color: var(--dsk-fg);
-  text-decoration-color: currentColor;
-}
-.dk-mrc-m button:disabled,
-.dk-mem-l:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
 
+/* ---- the memory under a reply (design_handoff_desk_memory) ---- */
 .dk-mem {
-  margin-top: 12px;
-  font-size: 12.5px;
-}
-.dk-mem-done {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px 8px 8px;
-  border-radius: 10px;
-  background: color-mix(in oklch, var(--dk-mem) 6%, var(--dsk-card));
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--dk-mem) 22%, var(--dsk-b-sub));
-  animation: dk-memin 420ms var(--dk-spring) both;
-}
-.dk-mem-tx {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  line-height: 1.45;
-  color: var(--dsk-fg2);
-  text-wrap: pretty;
-}
-.dk-mem-tx em {
-  font-style: normal;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--dk-mem);
-}
-.dk-mem-acts {
-  display: flex;
-  gap: 12px;
-  flex: none;
-}
-.dk-mem-acts .dk-mem-l {
-  margin: 0;
-}
-.dk-mem-off {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--dsk-subtle);
-}
-.dk-mem-off .dk-mem-ic {
-  color: var(--dsk-faint);
-  background: var(--dsk-sunken);
-}
-.dk-mem-off .dk-mem-l {
-  margin-left: 4px;
-}
-.dk-mem-card {
-  padding: 10px 12px 10px;
-  border-radius: 12px;
+  margin-top: 14px;
+  border-radius: var(--radius-surface);
   background: var(--dsk-card);
-  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
-  animation: dk-memin 380ms var(--dk-spring) both;
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+  animation: dk-mem-in 420ms var(--dk-settle) both;
+  transition: box-shadow 240ms;
 }
-.dk-mem-card.dk-ask {
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--dk-mem) 30%, var(--dsk-b-sub));
+.dk-mem.dk-mem-saved,
+.dk-mem.dk-mem-kept,
+.dk-mem.dk-mem-no,
+.dk-mem.dk-mem-off {
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
 }
 .dk-mem-h {
   display: flex;
   align-items: center;
   gap: 8px;
+  height: 38px;
+  padding: 0 5px 0 11px;
 }
-.dk-mem-h b {
+.dk-mem-gl {
+  display: grid;
+  place-items: center;
+  color: var(--accent-violet);
+}
+.dk-mem-gl svg path:first-child {
+  fill: transparent;
+  transition: fill 260ms;
+}
+.dk-mem-gl.dk-filled svg path:first-child {
+  fill: var(--accent-violet-subtle);
+}
+.dk-mem-gl.dk-faint {
+  color: var(--dsk-faint);
+}
+.dk-mem-kept .dk-mem-gl {
+  animation: dk-mem-pop 520ms var(--dk-spring);
+}
+.dk-mem-t {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.dk-mem-t b {
   font-weight: 500;
+  color: var(--dsk-fg);
 }
-.dk-mem-card textarea {
+.dk-mem-t > span {
+  min-width: 0;
+  color: var(--dsk-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-mem-a {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dk-mem-saved .dk-mem-a {
+  opacity: 0;
+  transition: opacity 160ms;
+}
+.dk-mem-saved:hover .dk-mem-a,
+.dk-mem-saved:focus-within .dk-mem-a,
+.dk-mem-saved.dk-editing .dk-mem-a {
+  opacity: 1;
+}
+@media (hover: none) {
+  .dk-mem-saved .dk-mem-a {
+    opacity: 1;
+  }
+}
+
+/* the body folds away once the memory is kept or turned down */
+.dk-mem-bw {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows 360ms var(--dk-settle),
+    opacity 240ms;
+}
+.dk-mem-bw > div {
+  min-height: 0;
+  overflow: hidden;
+}
+.dk-mem-kept .dk-mem-bw,
+.dk-mem-no .dk-mem-bw {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+.dk-mem-b {
+  padding: 0 14px 12px 33px;
+}
+
+/* steps */
+.dk-mem-sa {
+  margin: -4px -8px -4px -4px;
+}
+/* the viewport: base-ui's on a pointer, the plain scroller on touch */
+.dk-mem-sa > [data-slot="scroll-area-viewport"],
+.dk-mem-sa > div[tabindex] {
+  max-height: 172px;
+  padding: 4px 8px 4px 4px;
+}
+.dk-mem-st {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: dk-mem-step;
+}
+.dk-mem-st li {
+  counter-increment: dk-mem-step;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--dsk-fg2);
+  text-wrap: pretty;
+}
+.dk-mem-st li::before {
+  content: counter(dk-mem-step);
+  font: 500 11px/20px var(--font-mono);
+  color: var(--dsk-faint);
+}
+.dk-mem-p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--dsk-fg2);
+  white-space: pre-wrap;
+  text-wrap: pretty;
+}
+.dk-mem-st code,
+.dk-mem-p code {
+  padding: 1px 5px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 4px;
+  font: 500 0.86em var(--font-mono);
+  color: var(--dsk-fg);
+  background: var(--dsk-sunken);
+}
+.dk-mem-edit {
+  border-radius: var(--radius-control);
+  cursor: text;
+  outline: none;
+  transition:
+    background 140ms,
+    box-shadow 140ms;
+}
+.dk-mem-edit:hover,
+.dk-mem-edit:focus-visible {
+  background: color-mix(in srgb, var(--dsk-hover) 60%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--dsk-hover) 60%, transparent);
+}
+.dk-mem-ed {
   display: block;
   width: 100%;
-  margin: 8px 0 0;
-  padding: 7px 9px;
-  border-radius: 8px;
+  margin: 0;
+  padding: 0;
   border: 0;
+  outline: none;
   resize: none;
   overflow: hidden;
   font: inherit;
   font-size: 13px;
-  line-height: 1.5;
-  color: var(--dsk-fg);
-  background: var(--dsk-sunken);
-  outline: none;
-  box-shadow: inset 0 0 0 1px transparent;
-  transition: box-shadow 140ms;
+  line-height: 1.55;
+  color: var(--dsk-fg2);
+  background: var(--dsk-card);
+  box-shadow: none;
 }
-.dk-mem-card textarea:focus {
-  box-shadow:
-    inset 0 0 0 1px color-mix(in oklch, var(--dk-mem) 55%, transparent),
-    0 0 0 3px color-mix(in oklch, var(--dk-mem) 14%, transparent);
-}
-.dk-mem-f {
+
+/* the note under the steps, and Why */
+.dk-mem-n {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  min-width: 0;
   margin-top: 9px;
-  flex-wrap: wrap;
-}
-.dk-mem-fl {
   font-size: 11.5px;
+  color: var(--dsk-faint);
+}
+.dk-mem-n > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dk-mem-ww {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms var(--dk-settle);
+}
+.dk-mem-ww > div {
+  min-height: 0;
+  overflow: hidden;
+}
+.dk-mem.dk-why-on .dk-mem-ww {
+  grid-template-rows: 1fr;
+}
+.dk-mem-why {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 6px 10px;
+  margin: 8px 0 0;
+  padding-top: 9px;
+  border-top: 1px dashed var(--dsk-b);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.dk-mem-why > div {
+  display: contents;
+}
+.dk-mem-why dt {
+  min-width: 0;
+  font-weight: 400;
   color: var(--dsk-subtle);
 }
-.dk-mem-seg {
-  display: inline-flex;
-  padding: 2px;
-  border-radius: 7px;
-  background: var(--dsk-sunken);
+.dk-mem-why dd {
+  display: block;
+  margin: 0;
+  overflow: visible;
+  color: var(--dsk-fg2);
+  text-wrap: pretty;
+  -webkit-line-clamp: unset;
 }
-.dk-mem-seg button {
-  height: 22px;
-  padding: 0 8px;
-  border-radius: 5px;
-  font: inherit;
-  font-size: 11.5px;
-  color: var(--dsk-muted);
+.dk-mem-why .dk-mem-st li,
+.dk-mem-why .dk-mem-p {
+  font-size: 12px;
+  color: var(--dsk-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--dsk-b-strong);
+}
+.dk-mem-why .dk-mem-st li::before {
+  line-height: 18px;
+}
+.dk-mem-why code {
+  padding: 0;
+  border: 0;
+  color: var(--dsk-subtle);
   background: none;
-  border: 0;
-  cursor: pointer;
 }
-.dk-mem-seg button.dk-on {
-  color: var(--dsk-fg);
-  background: var(--dsk-raised);
-  box-shadow:
-    0 0 0 1px var(--dsk-b-sub),
-    0 1px 2px rgba(0, 0, 0, 0.08);
-}
-.dk-mem-seg button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-.dk-mem-sp {
-  flex: 1;
-}
-/* desk.css .bt.sm */
-.dk-mem-bt {
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--dsk-muted);
-  transition:
-    background 140ms,
-    color 140ms;
-}
-.dk-mem-bt:hover {
-  background: var(--dsk-hover);
-  color: var(--dsk-fg);
-}
-.dk-mem-save {
-  height: 26px;
-  padding: 0 11px;
-  border-radius: 7px;
-  border: 0;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  color: #fff;
-  background: var(--dk-mem);
-  cursor: pointer;
-}
-.dk-mem-save:hover {
-  filter: brightness(1.08);
-}
-.dk-mem-save:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-@keyframes dk-memin {
+
+/* who it is for: the shared popover, opened from the word */
+
+@keyframes dk-mem-in {
   from {
     opacity: 0;
-    transform: translateY(4px) scale(0.985);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
     transform: none;
   }
 }
+@keyframes dk-mem-pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .dk-mem-done,
-  .dk-mem-card,
+  .dk-mem,
+  .dk-mem-kept .dk-mem-gl,
   .dk-mrc-l,
   .dk-mm-r.dk-fresh,
   .dk-pg-in {
     animation: none;
+  }
+  .dk-mem,
+  .dk-mem-gl svg path:first-child,
+  .dk-mem-a,
+  .dk-mem-edit,
+  .dk-mem-bw,
+  .dk-mem-ww,
+  .dk-mem-gl {
+    transition: none;
   }
 }
 
@@ -695,16 +675,4 @@
 }
 .dk-mm-r:first-child {
   border-top: 0;
-}
-/* the segmented control, small and locked, as the agent page uses it (pages.css) */
-.dk-mm-seg.dk-sm button {
-  height: 24px;
-  padding: 0 9px;
-  font-size: 11.5px;
-}
-.dk-mm-seg.dk-locked {
-  opacity: 0.7;
-}
-.dk-mm-seg button:disabled {
-  cursor: not-allowed;
 }

@@ -1,0 +1,23 @@
+{
+  "A load's carrier cost stays out of settlements until its carrier invoice match is resolved, and a settlement with unmatched loads cannot be approved.": "在承运商发票匹配解决之前，该货载的承运成本不会纳入结算，且含有未匹配货载的结算无法批准。",
+  "Accounts payable account": "应付账款科目",
+  "Auto-accept within tolerance": "在容差范围内自动接受",
+  "Auto-match inbound invoices": "自动比对收到的发票",
+  "Auto-matched invoices within the variance tolerance are resolved into the carrier's settlement pool without review. Requires auto-match.": "差异在容差范围内且已自动比对的发票，会直接纳入承运商的结算池而免经审查。需启用自动比对。",
+  "Automate the routine AP run so reviewers focus on exceptions.": "将例行的应付账款作业自动化，让审查人员专注于例外情形。",
+  "Carrier invoices are compared to the negotiated buy rate; gaps beyond the tolerance flag a variance.": "承运商发票会与议定采购运价比对；差距超出容差时会标记为差异。",
+  "Carrier settlement control updated": "承运商结算控制项已更新",
+  "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts": "设置承运商的薪资期间、成本计提触发条件、批次自动化、发票比对容差，以及应付账款过账科目",
+  "Defines the carrier settlement cycle and when purchased-transportation cost accrues.": "定义承运商的结算周期，以及外购运力成本的计提时点。",
+  "GL defaults for carrier settlement postings — posting debits purchased transportation and credits accounts payable; blank falls back to the accounting control defaults.": "承运商结算过账的总账默认值 — 过账时借记外购运力、贷记应付账款；留空则沿用会计控制的默认值。",
+  "Generate a carrier settlement batch automatically when each pay period closes.": "每个薪资期间结束时自动生成一批承运商结算。",
+  "Hold pay until the invoice is matched": "在发票匹配完成前暂缓付款",
+  "How often carriers are settled — weekly is the industry norm for brokered freight.": "承运商的结算频率 — 经纪货运的业界惯例为每周结算。",
+  "Inbound EDI 210 invoices from tendered carriers are matched to their carrier assignment automatically; gaps beyond the tolerance still land in the review workspace.": "来自受托承运商的 EDI 210 收件发票会自动与其派车比对；差距超出容差者仍会进入审查工作区。",
+  "Invoice totals within this amount of the buy rate auto-match; larger gaps flag a variance for review.": "发票总额与采购运价的差距在此金额内时自动比对；差距更大者会标记为差异并送审。",
+  "Posting accounts": "过账科目",
+  "The AP account credited when a settlement posts and debited when it is paid.": "结算过账时贷记、付款时借记的应付账款科目。",
+  "The expense account debited for carrier cost when a settlement posts.": "结算过账时就承运商成本借记的费用科目。",
+  "The shipment milestone at which carrier cost accrues into the settlement pool.": "承运商成本计入结算池的运单里程碑。",
+  "Variance tolerance": "差异容差"
+}

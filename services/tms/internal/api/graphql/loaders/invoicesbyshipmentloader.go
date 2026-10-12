@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,14 +14,14 @@ import (
 type invoicesByShipmentIDsLister interface {
 	ListByShipmentIDs(
 		ctx context.Context,
-		req repositories.ListInvoicesByShipmentIDsRequest,
+		req invoiceports.ListInvoicesByShipmentIDsRequest,
 	) (map[pulid.ID][]*invoice.Invoice, error)
 }
 
 type InvoicesByShipmentIDLoaderFactoryParams struct {
 	fx.In
 
-	InvoiceRepo repositories.InvoiceRepository
+	InvoiceRepo invoiceports.InvoiceRepository
 }
 
 type InvoicesByShipmentIDLoaderFactory struct {
@@ -36,7 +36,7 @@ func NewInvoicesByShipmentIDLoaderFactory(
 	}
 }
 
-func (f *InvoicesByShipmentIDLoaderFactory) NewForTenant(
+func newInvoicesByShipmentIDLoader(f *InvoicesByShipmentIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*invoice.Invoice] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -47,7 +47,7 @@ func (f *InvoicesByShipmentIDLoaderFactory) batchFunc(
 ) batchFetchFunc[[]*invoice.Invoice] {
 	return batchGroupFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*invoice.Invoice, error) {
-			return f.invoices.ListByShipmentIDs(ctx, repositories.ListInvoicesByShipmentIDsRequest{
+			return f.invoices.ListByShipmentIDs(ctx, invoiceports.ListInvoicesByShipmentIDsRequest{
 				TenantInfo:  tenantInfo,
 				ShipmentIDs: ids,
 			})

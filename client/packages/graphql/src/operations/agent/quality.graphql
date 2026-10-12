@@ -122,6 +122,9 @@ query AgentQualityOverview($window: Int) {
     agentsWithCases
     judgeEnabled
     regressionThreshold
+    worstRegression {
+      ...AgentSuiteRunFields
+    }
   }
 }
 

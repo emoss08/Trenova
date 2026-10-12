@@ -25,7 +25,9 @@ import {
   CheckDoubleIcon,
   Inbox01Icon,
   MailCheckIcon,
+  Settings01Icon,
 } from "@trenova/shared/components/icons";
+import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { NotificationItem, type NotificationItemActions } from "./notification-item";
@@ -112,6 +114,7 @@ export default function NotificationPanel({
   const markUnread = useNotificationAction("unread");
   const archive = useNotificationAction("dismiss");
   const restore = useNotificationAction("restore");
+  const openDialog = useAppDialogsStore((state) => state.openDialog);
   const markAllRead = useMarkAllNotificationsRead();
 
   const actions = useMemo<NotificationItemActions>(
@@ -163,18 +166,37 @@ export default function NotificationPanel({
             </Badge>
           )}
         </div>
-        {unreadCount > 0 && tab === "inbox" && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="xxs"
-            className="text-2xs text-muted-foreground"
-            onClick={() => markAllRead.mutate()}
-          >
-            <CheckDoubleIcon className="size-3" />
-            {t("Mark all read")}
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {unreadCount > 0 && tab === "inbox" && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="xxs"
+              className="text-2xs text-muted-foreground"
+              onClick={() => markAllRead.mutate()}
+            >
+              <CheckDoubleIcon className="size-3" />
+              {t("Mark all read")}
+            </Button>
+          )}
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={t("Notification settings")}
+                  className="text-muted-foreground"
+                  onClick={() => openDialog("settings", { section: "notifications" })}
+                />
+              }
+            >
+              <Settings01Icon className="size-3" />
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t("Notification settings")}</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       <div className="border-border flex items-center justify-between border-b pr-3 pl-2">

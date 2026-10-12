@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -163,12 +163,46 @@ func TestToAnthropicMessages_ReplaysSignedThinkingAheadOfToolCalls(t *testing.T)
 	require.Len(t, messages, 3)
 	blocks := messages[1].Content
 	require.Len(t, blocks, 3)
-	assert.Equal(t, "thinking", blocks[0].Type)
-	assert.Equal(t, "Hold seems right.", blocks[0].Thinking)
-	assert.Equal(t, "sig_1", blocks[0].Signature)
-	assert.Equal(t, "redacted_thinking", blocks[1].Type)
-	assert.Equal(t, "blob", blocks[1].Data)
-	assert.Equal(t, "tool_use", blocks[2].Type)
+	require.NotNil(t, blocks[0].OfThinking)
+	assert.Equal(t, "Hold seems right.", blocks[0].OfThinking.Thinking)
+	assert.Equal(t, "sig_1", blocks[0].OfThinking.Signature)
+	require.NotNil(t, blocks[1].OfRedactedThinking)
+	assert.Equal(t, "blob", blocks[1].OfRedactedThinking.Data)
+	assert.NotNil(t, blocks[2].OfToolUse)
+}
+
+// A signed thinking block whose summary came back empty still carries the
+// thinking field: Anthropic refuses the block without it, which failed every
+// tool loop where the model thought briefly. Other blocks never carry it.
+func TestToAnthropicMessages_ReplaysEmptyThinkingWithItsField(t *testing.T) {
+	t.Parallel()
+
+	messages := toAnthropicMessages([]Message{
+		{Role: RoleUser, Content: "who works here"},
+		{
+			Role: RoleAssistant,
+			ToolCalls: []ToolCall{
+				{ID: "toolu_1", Name: "find_in_trenova", Arguments: map[string]any{}},
+			},
+			Reasoning: &ReasoningTrace{Signature: "sig_1"},
+		},
+		{Role: RoleTool, ToolCallID: "toolu_1", Content: "{}"},
+	})
+
+	require.Len(t, messages, 3)
+	encoded, err := sonic.Marshal(messages[1].Content)
+	require.NoError(t, err)
+
+	var blocks []map[string]any
+	require.NoError(t, sonic.Unmarshal(encoded, &blocks))
+	require.Len(t, blocks, 2)
+	assert.Equal(t, "thinking", blocks[0]["type"])
+	thinking, present := blocks[0]["thinking"]
+	assert.True(t, present)
+	assert.Empty(t, thinking)
+	assert.Equal(t, "sig_1", blocks[0]["signature"])
+	assert.Equal(t, "tool_use", blocks[1]["type"])
+	assert.NotContains(t, blocks[1], "thinking")
 }
 
 // A trace without a signature — one read off a provider that never signed it
@@ -182,7 +216,7 @@ func TestToAnthropicMessages_DoesNotReplayUnsignedThinking(t *testing.T) {
 
 	require.Len(t, messages, 1)
 	require.Len(t, messages[0].Content, 1)
-	assert.Equal(t, "text", messages[0].Content[0].Type)
+	assert.NotNil(t, messages[0].Content[0].OfText)
 }
 
 // DeepSeek-shaped servers stream the chain of thought as reasoning_content,
@@ -508,4 +542,26 @@ func TestReplay_SendsATraceOnlyToTheProtocolThatProducedIt(t *testing.T) {
 	assert.Empty(t, replayReasoning(fromAnthropic))
 	assert.Len(t, replayReasoning(fromResponses), 1)
 	assert.Len(t, replayReasoning(untagged), 1)
+}
+
+// A request's reasoning override wins over the provider's setting, so a
+// classifier on a provider configured Off still tells the model not to reason.
+func TestOpenAIResponsesAdapter_ARequestCanAskForNoReasoning(t *testing.T) {
+	t.Parallel()
+
+	server, captured := streamServer(t, "text/event-stream", sse(
+		[2]string{"response.created", `{"type":"response.created","response":{"model":"gpt-x"}}`},
+		[2]string{
+			"response.completed",
+			`{"type":"response.completed","response":{"model":"gpt-x","status":"completed","output":[],"usage":{"input_tokens":3,"output_tokens":1}}}`,
+		},
+	))
+	_, _ = streamWith(t, NewOpenAIResponsesAdapter(), reasoningCall(
+		aiprovider.KindOpenAIResponses, server.URL, aiprovider.ReasoningOff,
+		&Request{Messages: UserMessage("hi"), Reasoning: aiprovider.ReasoningNone},
+	))
+
+	reasoning, _ := (*captured)["reasoning"].(map[string]any)
+	require.NotNil(t, reasoning)
+	assert.Equal(t, "none", reasoning["effort"])
 }

@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -69,7 +72,7 @@ func (s *AssistantConversationSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			cols := buncolgen.ThreadColumns
+			cols := conversationcol.ThreadColumns
 			count, err := tx.NewSelect().
 				Model((*conversation.Thread)(nil)).
 				Where(cols.OrganizationID.Eq(), refs.org.ID).
@@ -112,12 +115,12 @@ func (s *AssistantConversationSeed) loadRefs(
 	refs := &conversationSeedRefs{org: org, admin: admin, now: timeutils.NowUnix()}
 
 	agents := make([]*agentdefinition.Definition, 0, 2)
-	agentCols := buncolgen.DefinitionColumns
+	agentCols := agentdefinitioncol.DefinitionColumns
 	if err = tx.NewSelect().
 		Model(&agents).
 		Where(agentCols.OrganizationID.Eq(), org.ID).
 		Where(agentCols.BusinessUnitID.Eq(), org.BusinessUnitID).
-		Where(agentCols.Name.In(), bun.In([]string{SeedAgentDispatchName, SeedAgentBillingName})).
+		Where(agentCols.Name.In(), bun.List([]string{SeedAgentDispatchName, SeedAgentBillingName})).
 		Scan(ctx); err != nil {
 		return nil, fmt.Errorf("load seeded agents: %w", err)
 	}
@@ -133,7 +136,7 @@ func (s *AssistantConversationSeed) loadRefs(
 		return nil, fmt.Errorf("seeded agents not found: %w", seedhelpers.ErrEntityNotFound)
 	}
 
-	shipmentCols := buncolgen.ShipmentColumns
+	shipmentCols := shipmentcol.ShipmentColumns
 	refs.shipment = new(shipment.Shipment)
 	if err = tx.NewSelect().
 		Model(refs.shipment).
@@ -167,10 +170,13 @@ func (s *AssistantConversationSeed) seedDispatchThread(
 	callID := "call_" + pulid.MustNew("").String()
 	messages := []*conversation.Message{
 		{
-			ThreadID:      thread.ID,
-			Sequence:      0,
-			Role:          conversation.RoleUser,
-			Content:       fmt.Sprintf("Where is %s right now and who is on it?", refs.shipment.ProNumber),
+			ThreadID: thread.ID,
+			Sequence: 0,
+			Role:     conversation.RoleUser,
+			Content: fmt.Sprintf(
+				"Where is %s right now and who is on it?",
+				refs.shipment.ProNumber,
+			),
 			ScopeStage:    "Deterministic",
 			ScopeCategory: "TransportationOperations",
 			CreatedAt:     startedAt,

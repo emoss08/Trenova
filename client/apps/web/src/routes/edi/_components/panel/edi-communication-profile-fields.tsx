@@ -216,7 +216,11 @@ export function TransportProfileFields({
         <SftpEndpointSections control={control} title={t("SFTP endpoint")} />
         <DeliveryRetrySection control={control} />
         <EDIEmptyState
-          message={`Save a ${authMode === "password" ? "password" : "private key"} in the Secrets tab before activating this profile.`}
+          message={
+            authMode === "password"
+              ? t("Save a password in the Secrets tab before activating this profile.")
+              : t("Save a private key in the Secrets tab before activating this profile.")
+          }
         />
       </>
     );
@@ -273,7 +277,11 @@ export function TransportProfileFields({
       <SftpEndpointSections control={control} title={t("VAN gateway endpoint")} />
       <DeliveryRetrySection control={control} />
       <EDIEmptyState
-        message={`Save a ${authMode === "password" ? "password" : "private key"} in the Secrets tab before activating this profile.`}
+        message={
+          authMode === "password"
+            ? t("Save a password in the Secrets tab before activating this profile.")
+            : t("Save a private key in the Secrets tab before activating this profile.")
+        }
       />
     </>
   );

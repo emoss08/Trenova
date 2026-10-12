@@ -6,6 +6,8 @@ import {
   extensionState,
   filterExtensions,
   sortExtensions,
+  holdsExtension,
+  withExtensionTools,
 } from "../extension-roster";
 
 function extension(overrides: Partial<AgentExtensionCatalogItem>): AgentExtensionCatalogItem {
@@ -133,5 +135,34 @@ describe("dailyUsageShare", () => {
     expect(dailyUsageShare(extension({ usage: { ...usage, requestsToday: 50 } }))).toBe(0.25);
     expect(dailyUsageShare(extension({ usage: { ...usage, requestsToday: 900 } }))).toBe(1);
     expect(dailyUsageShare(extension({ dailyRequestLimit: 0 }))).toBe(0);
+  });
+});
+
+/**
+ * An agent holds an extension when it holds every tool the extension adds; giving it the
+ * extension adds the tools it lacks, and taking it away removes only the extension's.
+ */
+describe("holdsExtension and withExtensionTools", () => {
+  const tools = [{ name: "web_search", label: "", description: "" }, { name: "web_fetch", label: "", description: "" }];
+
+  it("holds only with every one of the extension's tools", () => {
+    expect(holdsExtension(["web_search", "web_fetch", "list_loads"], tools)).toBe(true);
+    expect(holdsExtension(["web_search", "list_loads"], tools)).toBe(false);
+    expect(holdsExtension([], tools)).toBe(false);
+    expect(holdsExtension(["list_loads"], [])).toBe(false);
+  });
+
+  it("adds the missing tools once and keeps the agent's own order", () => {
+    expect(withExtensionTools(["list_loads", "web_search"], tools, true)).toEqual([
+      "list_loads",
+      "web_search",
+      "web_fetch",
+    ]);
+  });
+
+  it("removes only the extension's tools", () => {
+    expect(withExtensionTools(["web_search", "list_loads", "web_fetch"], tools, false)).toEqual([
+      "list_loads",
+    ]);
   });
 });

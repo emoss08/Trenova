@@ -9,10 +9,10 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -134,7 +134,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*distanceoverride.DistanceOverride)
 					return obj.OriginLocation, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation),
+				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation),
 			},
 			{
 				Name:      "destinationLocation",
@@ -144,7 +144,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*distanceoverride.DistanceOverride)
 					return obj.DestinationLocation, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation),
+				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation),
 			},
 			{
 				Name:      "customer",
@@ -154,7 +154,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*distanceoverride.DistanceOverride)
 					return obj.Customer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer),
+				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
 			{
 				Name:      "intermediateStops",
@@ -164,7 +164,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*distanceoverride.DistanceOverride)
 					return obj.IntermediateStops, nil
 				},
-				Marshal: gqlexec.Marshal(marshalODistanceOverrideStop2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdistanceoverrideᚐDistanceOverrideStopᚄ),
+				Marshal: gqlexec.Marshal(marshalODistanceOverrideStop2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceoverrideᚐDistanceOverrideStopᚄ),
 			},
 			{
 				Name:      "businessUnit",
@@ -174,7 +174,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*distanceoverride.DistanceOverride)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "organization",
@@ -184,7 +184,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*distanceoverride.DistanceOverride)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 		}},
 		{Object: "DistanceOverrideConnection", Fields: []*gqlexec.Field{
@@ -230,7 +230,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DistanceOverrideEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdistanceoverrideᚐDistanceOverride),
+				Marshal: gqlexec.Marshal(marshalNDistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceoverrideᚐDistanceOverride),
 			},
 			{
 				Name:     "cursor",
@@ -272,7 +272,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*distanceoverride.DistanceOverrideStop)
 					return obj.Location, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation),
+				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -301,7 +301,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").DistanceOverride(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalODistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdistanceoverrideᚐDistanceOverride),
+				Marshal: gqlexec.Marshal(marshalODistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceoverrideᚐDistanceOverride),
 			},
 		}},
 	},
@@ -363,7 +363,7 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNDistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdistanceoverrideᚐDistanceOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *distanceoverride.DistanceOverride) graphql.Marshaler {
+func marshalNDistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceoverrideᚐDistanceOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *distanceoverride.DistanceOverride) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -395,7 +395,7 @@ func marshalNDistanceOverrideEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "DistanceOverrideEdge", v)
 }
 
-func marshalNDistanceOverrideStop2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdistanceoverrideᚐDistanceOverrideStop(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *distanceoverride.DistanceOverrideStop) graphql.Marshaler {
+func marshalNDistanceOverrideStop2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceoverrideᚐDistanceOverrideStop(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *distanceoverride.DistanceOverrideStop) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -459,30 +459,30 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "BusinessUnit", v)
 }
 
-func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
+func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Customer", v)
 }
 
-func marshalODistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdistanceoverrideᚐDistanceOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *distanceoverride.DistanceOverride) graphql.Marshaler {
+func marshalODistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceoverrideᚐDistanceOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *distanceoverride.DistanceOverride) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "DistanceOverride", v)
 }
 
-func marshalODistanceOverrideStop2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdistanceoverrideᚐDistanceOverrideStopᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*distanceoverride.DistanceOverrideStop) graphql.Marshaler {
+func marshalODistanceOverrideStop2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceoverrideᚐDistanceOverrideStopᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*distanceoverride.DistanceOverrideStop) graphql.Marshaler {
 	return gqlexec.List[*distanceoverride.DistanceOverrideStop]{
-		Elem:        marshalNDistanceOverrideStop2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdistanceoverrideᚐDistanceOverrideStop,
+		Elem:        marshalNDistanceOverrideStop2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋdistanceoverrideᚐDistanceOverrideStop,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
@@ -500,14 +500,14 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
+func marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Location", v)
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

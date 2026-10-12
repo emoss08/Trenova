@@ -371,7 +371,7 @@ function InvoiceAdjustmentLineEditorRow({
           fixedDecimalScale
           allowNegative={false}
           placeholder="0.0000"
-          aria-label={`Credit amount for ${line.description}`}
+          aria-label={t("Credit amount for {0}", line.description)}
         />
       </div>
       <div className="pt-0.5">
@@ -387,7 +387,7 @@ function InvoiceAdjustmentLineEditorRow({
           fixedDecimalScale
           allowNegative={false}
           placeholder="0.0000"
-          aria-label={`Rebill amount for ${line.description}`}
+          aria-label={t("Rebill amount for {0}", line.description)}
         />
       </div>
     </div>

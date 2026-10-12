@@ -10,8 +10,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 )
 
 func (r *QueryResolver) RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error) {
@@ -27,7 +30,7 @@ func (r *QueryResolver) RateAgreements(ctx context.Context, input gqlmodel.DataT
 
 	result, err := r.RateAgreementService.ListConnection(
 		ctx,
-		&repositories.ListRateAgreementConnectionRequest{
+		&rateagreementports.ListRateAgreementConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -52,7 +55,7 @@ func (r *QueryResolver) RateZones(ctx context.Context, input gqlmodel.DataTableC
 
 	result, err := r.RateZoneService.ListConnection(
 		ctx,
-		&repositories.ListRateZoneConnectionRequest{
+		&ratezoneports.ListRateZoneConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -77,7 +80,7 @@ func (r *QueryResolver) RateMatrices(ctx context.Context, input gqlmodel.DataTab
 
 	result, err := r.RateMatrixService.ListConnection(
 		ctx,
-		&repositories.ListRateMatrixConnectionRequest{
+		&ratematrixports.ListRateMatrixConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -102,7 +105,7 @@ func (r *QueryResolver) RateQuotes(ctx context.Context, input gqlmodel.DataTable
 
 	result, err := r.RateQuoteService.ListConnection(
 		ctx,
-		&repositories.ListRateQuoteConnectionRequest{
+		&ratequoteports.ListRateQuoteConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},

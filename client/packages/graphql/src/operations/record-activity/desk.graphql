@@ -1,0 +1,29 @@
+# What has been done to one record, newest first, a page at a time, for a Desk
+# card's activity. The count is read with the first page only.
+query DeskRecordActivity(
+  $resourceId: ID!
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean!
+) {
+  auditEntriesByResourceId(resourceId: $resourceId, input: $input) {
+    edges {
+      node {
+        id
+        operation
+        timestamp
+        changes
+        comment
+        principalType
+        user {
+          id
+          name
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+  }
+}

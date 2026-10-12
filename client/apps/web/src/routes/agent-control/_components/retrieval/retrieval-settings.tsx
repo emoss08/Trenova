@@ -1,150 +1,105 @@
-import { MoneyField } from "@/components/fields/money-field";
-import { SwitchField } from "@/components/fields/switch-field";
-import { SectionPanel } from "@/components/section-panel";
-import { useApiMutation } from "@/hooks/use-api-mutation";
-import {
-  AI_RETRIEVAL_FAILED_LIST_KEY,
-  updateAIRetrievalSettings,
-  type AIRetrievalSettings,
-  type AIRetrievalStatus,
-} from "@/lib/graphql/ai-retrieval";
-import { queries } from "@/lib/queries";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "@trenova/shared/components/ui/button";
-import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { InputField } from "@/components/fields/input-field";
+import { formatUsd } from "@/lib/ai-usage-format";
+import { centsToDecimal, decimalToCents } from "@/lib/decimal-cents";
+import type { AIRetrievalSettings } from "@/lib/graphql/ai-retrieval";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useEffect, useMemo } from "react";
-import { useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
-import {
-  RETRIEVAL_SOURCE_TYPES,
-  SOURCE_LABEL,
-  SOURCE_SETTING,
-  retrievalSettingsSchema,
-  toSettingsFormValues,
-  toSettingsPatch,
-  type RetrievalSettingsFormValues,
-} from "./retrieval-model";
+import { useForm } from "react-hook-form";
+import { aicFieldTrigger } from "../edit/field-trigger";
+import { Ic } from "../kit/ic";
+import { SecH, Switch } from "../kit/layout";
+import { parseBudgetCents } from "./retrieval-model";
 
-const FORM_ID = "ai-retrieval-settings-form";
-
-type RetrievalSettingsPanelProps = {
+type RetrievalSettingsProps = {
   settings: AIRetrievalSettings;
   canUpdate: boolean;
+  busy: boolean;
+  onBudget: (budgetUsd: string) => void;
+  onPause: (paused: boolean) => void;
 };
 
 /**
- * What is indexed and what indexing may spend. A source turned off is still
- * found by its words; one turned on is indexed within the hour. Saving sends
- * only what changed, so it never undoes a change the indexer or another
- * person made in the meantime.
+ * What indexing may spend and whether it runs. The budget covers indexing for the
+ * calendar month (UTC); searches count against each agent's own budget instead.
  */
-export function RetrievalSettingsPanel({ settings, canUpdate }: RetrievalSettingsPanelProps) {
+export function RetrievalSettingsPanel({
+  settings,
+  canUpdate,
+  busy,
+  onBudget,
+  onPause,
+}: RetrievalSettingsProps) {
   const t = useT();
+  const savedCents = decimalToCents(settings.monthlyIndexingBudgetUsd);
+  const savedText = (savedCents / 100).toFixed(2);
+  const form = useForm<{ budget: string }>({ values: { budget: savedText } });
+
+  const commit = () => {
+    const cents = parseBudgetCents(form.getValues("budget"));
+    form.reset({ budget: savedText });
+    if (cents !== null && cents !== savedCents) {
+      onBudget(centsToDecimal(cents));
+    }
+  };
 
   return (
-    <SectionPanel
-      title={t("Settings")}
-      help={t(
-        "Indexing embeds each source's text with the model routed to the Embedding task. The budget covers indexing for the calendar month (UTC); when it is spent, indexing pauses until the next month or a higher budget.",
-      )}
-    >
-      <SettingsForm settings={settings} canUpdate={canUpdate} />
-    </SectionPanel>
-  );
-}
-
-function SettingsForm({ settings, canUpdate }: RetrievalSettingsPanelProps) {
-  const t = useT();
-  const queryClient = useQueryClient();
-  const defaults = useMemo(() => toSettingsFormValues(settings), [settings]);
-  const form = useForm<RetrievalSettingsFormValues>({
-    resolver: zodResolver(retrievalSettingsSchema) as Resolver<RetrievalSettingsFormValues>,
-    defaultValues: defaults,
-    mode: "onChange",
-  });
-  const { control, handleSubmit, reset, formState } = form;
-
-  useEffect(() => {
-    reset(defaults);
-  }, [defaults, reset]);
-
-  const save = useApiMutation<
-    AIRetrievalStatus,
-    RetrievalSettingsFormValues,
-    unknown,
-    RetrievalSettingsFormValues
-  >({
-    mutationFn: (values) => updateAIRetrievalSettings(toSettingsPatch(values, defaults)),
-    onSuccess: async (status) => {
-      queryClient.setQueryData(queries.aiRetrieval.status().queryKey, status);
-      await queryClient.invalidateQueries({ queryKey: [AI_RETRIEVAL_FAILED_LIST_KEY] });
-      toast.success(t("Retrieval settings saved"));
-    },
-    form,
-    resourceName: t("Retrieval settings"),
-  });
-
-  return (
-    <form
-      id={FORM_ID}
-      onSubmit={handleSubmit((values) => save.mutate(values))}
-      className="flex flex-col"
-    >
-      <FormGroup cols={1} className="p-3">
-        {RETRIEVAL_SOURCE_TYPES.map((sourceType) => (
-          <FormControl key={sourceType}>
-            <SwitchField
-              control={control}
-              name={SOURCE_SETTING[sourceType]}
-              label={t(SOURCE_LABEL[sourceType].label)}
-              description={t(SOURCE_LABEL[sourceType].description)}
-              outlined
-              readOnly={!canUpdate}
+    <section className="sec">
+      <SecH
+        t={t("Settings")}
+        r={<span className="sh2-n">{t("From the indexer's next round")}</span>}
+      />
+      <div className="pol">
+        <div className="po">
+          <div className="po-h">
+            <Ic n="dollar" s={14} />
+            <b>{t("Monthly indexing budget")}</b>
+          </div>
+          <InputField
+            control={form.control}
+            name="budget"
+            inputMode="decimal"
+            aria-label={t("Monthly indexing budget")}
+            disabled={!canUpdate || busy}
+            leftElement={<span className="text-xs text-muted-foreground">$</span>}
+            sideText={t("per month")}
+            inputClassProps={aicFieldTrigger}
+            onBlur={commit}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") event.currentTarget.blur();
+              if (event.key === "Escape") form.reset({ budget: savedText });
+            }}
+          />
+          <p>
+            {t(
+              "Indexing stops for the month when it's reached. Searches count against each agent's own budget, not this one.",
+            )}
+          </p>
+          {settings.pausedReason === "Budget" && (
+            <p className="po-m t-w">
+              {t(
+                "This month's {0} is spent. Raise it to resume now.",
+                formatUsd(settings.monthlyIndexingBudgetUsd) ?? "",
+              )}
+            </p>
+          )}
+        </div>
+        <div className="po">
+          <div className="po-h">
+            <Ic n="pause" s={14} />
+            <b>{t("Pause indexing")}</b>
+            <span className="sp" />
+            <Switch
+              on={settings.paused && settings.pausedReason === "Manual"}
+              label={t("Pause indexing")}
+              disabled={!canUpdate || busy}
+              onChange={onPause}
             />
-          </FormControl>
-        ))}
-        <FormControl>
-          <MoneyField
-            control={control}
-            name="monthlyIndexingBudgetCents"
-            label={t("Monthly indexing budget (USD)")}
-            description={t(
-              "Search queries are not counted here; they count against each agent's budget.",
-            )}
-            readOnly={!canUpdate}
-          />
-        </FormControl>
-        <FormControl>
-          <SwitchField
-            control={control}
-            name="paused"
-            label={t("Pause indexing")}
-            description={t(
-              "Nothing new is indexed and agents search by keyword only until indexing is resumed.",
-            )}
-            outlined
-            readOnly={!canUpdate}
-          />
-        </FormControl>
-      </FormGroup>
-      <div className="border-border flex items-center justify-between gap-2 border-t px-3 py-2">
-        <span className="text-muted-foreground text-xs">
-          {canUpdate
-            ? t("Changes apply from the indexer's next round.")
-            : t("Changing these needs the right to update AI providers.")}
-        </span>
-        <Button
-          type="submit"
-          form={FORM_ID}
-          size="sm"
-          disabled={!canUpdate || !formState.isDirty || save.isPending}
-          isLoading={save.isPending}
-        >
-          {t("Save settings")}
-        </Button>
+          </div>
+          <p>{t("Nothing new is indexed, and agents search by keyword until it's resumed.")}</p>
+        </div>
+        {!canUpdate && (
+          <p className="po-f">{t("Changing these needs the right to update AI providers.")}</p>
+        )}
       </div>
-    </form>
+    </section>
   );
 }

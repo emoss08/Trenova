@@ -84,3 +84,15 @@ func TestLoad_SaysWhereTheDocumentIntelligenceSectionWent(t *testing.T) {
 	assert.Contains(t, err.Error(), "has been removed")
 	assert.Contains(t, err.Error(), "ai.documentExtraction")
 }
+
+// Cache diagnostics ask the Claude API to keep a fingerprint of every call, so
+// they stay off unless an operator turns them on, including when there is no
+// AI section at all.
+func TestAIConfig_CacheDiagnosticsAreOffUnlessTurnedOn(t *testing.T) {
+	t.Parallel()
+
+	var absent *config.AIConfig
+	assert.False(t, absent.CacheDiagnosticsEnabled())
+	assert.False(t, (&config.AIConfig{}).CacheDiagnosticsEnabled())
+	assert.True(t, (&config.AIConfig{CacheDiagnostics: true}).CacheDiagnosticsEnabled())
+}

@@ -59,6 +59,7 @@ function draftVariable(variable: FormulaEditorVariable): FormulaDraftVariable {
         defaultValue: scalarDefault(variable.defaultValue),
       };
     default: {
+      // i18n-ignore: variable description sent to the drafting model in the request payload
       const kind = `A ${variable.type} value.`;
       return {
         name: variable.name,

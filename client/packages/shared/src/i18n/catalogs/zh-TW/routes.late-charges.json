@@ -1,0 +1,16 @@
+{
+  "As of": "截至",
+  "Assess late charges": "核算逾期費用",
+  "Assess late charges now?": "是否立即核算逾期費用？",
+  "Assess now": "立即核算",
+  "Failed to load the late charge preview. Try refreshing the page.": "無法載入逾期費用預覽，請重新整理頁面再試一次。",
+  "Late charge assessment is disabled for this organization. You can still preview here; enable it in billing control to raise memos.": "此組織已停用逾期費用核算功能。您仍可在此預覽；請至帳務控制中啟用該功能以開立通知單。",
+  "Overdue invoices charged once per thirty-day period at each customer's rate, raised as one debit memo per customer.": "逾期發票按各客戶的費率，每三十天計收一次，並為每位客戶各開立一張借項通知單。",
+  "Period {0}": "期間 {0}",
+  "Preview as of {0}": "截至 {0} 的預覽",
+  "Raises {0, plural, one {# debit memo} other {# debit memos}} totalling {1}. Each invoice period is charged once; a rerun cannot double-charge.": "開立 {0, plural, other {# 筆借項通知單}}，合計 {1}。每個發票期間僅計收一次；重新執行不會重複計費。",
+  "Run as of {0}: {1, plural, one {# memo} other {# memos}} raised, {2} skipped": "截至 {0} 執行：已開立 {1, plural, other {# 筆通知單}}，略過 {2} 筆",
+  "The nightly run only previews: it computes what it would raise and writes nothing. Run it here to raise the memos, or switch the mode to Automatic in billing control.": "夜間作業僅供預覽：計算將產生的結果但不寫入任何資料。請在此執行以開立通知單，或至帳務控制將模式切換為「自動」。",
+  "The nightly run raises and posts these debit memos automatically; running now assesses them ahead of it.": "夜間作業會自動開立並過帳這些借項通知單；現在執行即可提前核算。",
+  "{0, plural, one {# debit memo} other {# debit memos}} raised for {1}": "已為 {1} 開立 {0, plural, other {# 筆借項通知單}}"
+}

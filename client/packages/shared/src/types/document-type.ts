@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { nullableStringSchema, optionalStringSchema, tenantInfoSchema } from "./helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const documentClassificationSchema = z.enum([
   "Public",
@@ -25,8 +26,14 @@ export type DocumentCategory = z.infer<typeof documentCategorySchema>;
 
 export const documentTypeSchema = z.object({
   ...tenantInfoSchema.shape,
-  code: z.string().min(1, { message: "Code is required" }).max(10),
-  name: z.string().min(1, { message: "Name is required" }).max(100),
+  code: z
+    .string()
+    .min(1, { error: () => translate("Code is required") })
+    .max(10),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(100),
   description: optionalStringSchema,
   color: nullableStringSchema,
   documentClassification: documentClassificationSchema,

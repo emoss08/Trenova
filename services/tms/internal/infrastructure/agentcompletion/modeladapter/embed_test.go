@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -97,7 +98,7 @@ func embeddingProvider(
 
 func embedCallFor(
 	provider *aiprovider.Provider,
-	purpose serviceports.EmbeddingPurpose,
+	purpose aiusageports.EmbeddingPurpose,
 	inputs ...string,
 ) *EmbedCall {
 	return &EmbedCall{
@@ -144,7 +145,7 @@ func TestOpenAIResponsesEmbed_UsesTheVersionedPathAndOrdersByIndex(t *testing.T)
 	)
 	resp, err := NewOpenAIResponsesAdapter().(Embedder).Embed(
 		t.Context(),
-		embedCallFor(provider, serviceports.EmbeddingPurposeDocument, "first", "second"),
+		embedCallFor(provider, aiusageports.EmbeddingPurposeDocument, "first", "second"),
 	)
 	require.NoError(t, err)
 
@@ -180,7 +181,7 @@ func TestOpenAIChatEmbed_SendsVoyageInputTypeAndOutputDimension(t *testing.T) {
 
 	_, err := adapter.Embed(
 		t.Context(),
-		embedCallFor(provider, serviceports.EmbeddingPurposeDocument, "a rate confirmation"),
+		embedCallFor(provider, aiusageports.EmbeddingPurposeDocument, "a rate confirmation"),
 	)
 	require.NoError(t, err)
 
@@ -192,7 +193,7 @@ func TestOpenAIChatEmbed_SendsVoyageInputTypeAndOutputDimension(t *testing.T) {
 
 	_, err = adapter.Embed(
 		t.Context(),
-		embedCallFor(provider, serviceports.EmbeddingPurposeQuery, "reefer loads"),
+		embedCallFor(provider, aiusageports.EmbeddingPurposeQuery, "reefer loads"),
 	)
 	require.NoError(t, err)
 
@@ -217,7 +218,7 @@ func TestOpenAIChatEmbed_LeavesDimensionsToTheExtraBodyWhenItNamesThem(t *testin
 
 	_, err := NewOpenAIChatAdapter().(Embedder).Embed(
 		t.Context(),
-		embedCallFor(provider, serviceports.EmbeddingPurposeDocument, "text"),
+		embedCallFor(provider, aiusageports.EmbeddingPurposeDocument, "text"),
 	)
 	require.NoError(t, err)
 
@@ -253,7 +254,7 @@ func TestOllamaEmbed_UsesTheNativeEndpointWithNomicPrefixes(t *testing.T) {
 
 	resp, err := adapter.Embed(
 		t.Context(),
-		embedCallFor(provider, serviceports.EmbeddingPurposeDocument, "one", "two"),
+		embedCallFor(provider, aiusageports.EmbeddingPurposeDocument, "one", "two"),
 	)
 	require.NoError(t, err)
 
@@ -271,7 +272,7 @@ func TestOllamaEmbed_UsesTheNativeEndpointWithNomicPrefixes(t *testing.T) {
 
 	_, err = adapter.Embed(
 		t.Context(),
-		embedCallFor(provider, serviceports.EmbeddingPurposeQuery, "late deliveries"),
+		embedCallFor(provider, aiusageports.EmbeddingPurposeQuery, "late deliveries"),
 	)
 	require.NoError(t, err)
 
@@ -294,11 +295,11 @@ func TestEmbed_WrongDimensionIsANonRetryableConfigurationError(t *testing.T) {
 
 	_, err := NewOpenAIChatAdapter().(Embedder).Embed(
 		t.Context(),
-		embedCallFor(provider, serviceports.EmbeddingPurposeDocument, "text"),
+		embedCallFor(provider, aiusageports.EmbeddingPurposeDocument, "text"),
 	)
 	require.Error(t, err)
 
-	assert.ErrorIs(t, err, serviceports.ErrEmbeddingDimensionMismatch)
+	assert.ErrorIs(t, err, aiusageports.ErrEmbeddingDimensionMismatch)
 	var business *errortypes.BusinessError
 	assert.True(t, errors.As(err, &business), "a person has to change the configuration")
 	assert.False(t, IsRetryable(err), "asking again returns the same size")
@@ -317,10 +318,10 @@ func TestEmbed_RejectsAReplyWithTheWrongNumberOfVectors(t *testing.T) {
 
 	_, err := NewOllamaAdapter().(Embedder).Embed(
 		t.Context(),
-		embedCallFor(provider, serviceports.EmbeddingPurposeDocument, "one", "two"),
+		embedCallFor(provider, aiusageports.EmbeddingPurposeDocument, "one", "two"),
 	)
 	require.Error(t, err)
-	assert.ErrorIs(t, err, serviceports.ErrEmbeddingResponseInvalid)
+	assert.ErrorIs(t, err, aiusageports.ErrEmbeddingResponseInvalid)
 	assert.False(t, IsRetryable(err))
 }
 
@@ -342,7 +343,7 @@ func TestEmbed_ReadsAReplyWithoutIndexesInArrivalOrder(t *testing.T) {
 
 	resp, err := NewOpenAIChatAdapter().(Embedder).Embed(
 		t.Context(),
-		embedCallFor(provider, serviceports.EmbeddingPurposeDocument, "one", "two"),
+		embedCallFor(provider, aiusageports.EmbeddingPurposeDocument, "one", "two"),
 	)
 	require.NoError(t, err)
 	assert.InDelta(t, 1, resp.Vectors[0][0], 0.0001)
@@ -365,7 +366,7 @@ func TestEmbed_ProviderRefusalIsATransportError(t *testing.T) {
 
 	_, err := NewOpenAIChatAdapter().(Embedder).Embed(
 		t.Context(),
-		embedCallFor(provider, serviceports.EmbeddingPurposeDocument, "text"),
+		embedCallFor(provider, aiusageports.EmbeddingPurposeDocument, "text"),
 	)
 
 	var transport *TransportError
@@ -381,7 +382,7 @@ func TestRegistry_HasNoEmbedderForAnthropic(t *testing.T) {
 
 	_, err := registry.Embedder(aiprovider.KindAnthropicMessages)
 	require.Error(t, err)
-	assert.ErrorIs(t, err, serviceports.ErrNoProviderConfigured)
+	assert.ErrorIs(t, err, agentports.ErrNoProviderConfigured)
 
 	for _, kind := range []aiprovider.Kind{
 		aiprovider.KindOpenAIResponses,

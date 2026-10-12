@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   carrierLifecycleEligibility,
-  carrierLifecycleVerbs,
+  carrierLifecycleMessages,
   eligibleCarrierSettlements,
 } from "../carrier-settlement-lifecycle";
 
@@ -49,9 +49,14 @@ describe("eligibleCarrierSettlements", () => {
     }
   });
 
-  it("has a verb for every action", () => {
-    for (const action of Object.keys(carrierLifecycleEligibility)) {
-      expect(carrierLifecycleVerbs[action as keyof typeof carrierLifecycleVerbs]).toBeTruthy();
-    }
+  it("words the outcome of every action as a whole sentence", () => {
+    expect(carrierLifecycleMessages("Submit").succeeded(1)).toBe("1 settlement submitted");
+    expect(carrierLifecycleMessages("Post").succeeded(3)).toBe("3 settlements posted");
+    expect(carrierLifecycleMessages("MarkPaid").partial(2, 1)).toBe(
+      "2 settlements marked paid, 1 failed",
+    );
+    expect(carrierLifecycleMessages("Approve").allFailed(4)).toBe(
+      "All 4 selected settlements failed",
+    );
   });
 });

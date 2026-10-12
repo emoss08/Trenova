@@ -8,11 +8,14 @@ import { REPORT_RUN_STATUS_LABELS, REPORT_RUN_TRIGGER_LABELS } from "@/types/rep
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { AlertCircleIcon, ZapIcon } from "@trenova/shared/components/icons";
 import { ReportFormatBadge, ReportRunStatusBadge } from "./report-badges";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
-const runStatusChoices = Object.entries(REPORT_RUN_STATUS_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
+const runStatusChoices = Object.entries(sourceLabels(REPORT_RUN_STATUS_LABELS)).map(
+  ([value, label]) => ({
+    value,
+    label,
+  }),
+);
 
 function formatDuration(durationMs: number): string {
   if (durationMs <= 0) return "—";

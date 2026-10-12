@@ -4,7 +4,7 @@ import {
 } from "@/components/autocomplete-fields";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { linkInboundMessage, type InboundMessageDetail } from "@/lib/graphql/inbox";
+import type { InboundMessageDetail } from "@/lib/graphql/inbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -19,8 +19,9 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { useTriageActions } from "./use-triage-actions";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /** The column's length, so a long reason is a field error rather than a failed save. */
 const MAX_REASON_LENGTH = 2000;
@@ -32,11 +33,13 @@ export const linkMessageSchema = z
     reason: z
       .string()
       .trim()
-      .min(1, { error: "Say why this is the right record" })
-      .max(MAX_REASON_LENGTH, { error: `At most ${MAX_REASON_LENGTH} characters` }),
+      .min(1, { error: () => translate("Say why this is the right record") })
+      .max(MAX_REASON_LENGTH, {
+        error: () => translate("At most {0} characters", MAX_REASON_LENGTH),
+      }),
   })
   .refine((value) => Boolean(value.shipmentId) || Boolean(value.customerId), {
-    error: "Choose a shipment, a customer, or both",
+    error: () => translate("Choose a shipment, a customer, or both"),
     path: ["shipmentId"],
   });
 
@@ -61,6 +64,7 @@ export function LinkMessageDialog({
   onLinked: () => Promise<void> | void;
 }) {
   const t = useT();
+  const actions = useTriageActions();
   const form = useForm<LinkMessageValues>({
     resolver: zodResolver(linkMessageSchema),
     defaultValues: {
@@ -82,13 +86,12 @@ export function LinkMessageDialog({
 
   const linkMutation = useApiMutation({
     mutationFn: (values: LinkMessageValues) =>
-      linkInboundMessage(message.id, {
+      actions.link(message.id, {
         shipmentId: values.shipmentId || null,
         customerId: values.customerId || null,
         reason: values.reason.trim(),
       }),
     onSuccess: async () => {
-      toast.success(t("Linked"));
       onOpenChange(false);
       await onLinked();
     },

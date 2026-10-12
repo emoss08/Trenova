@@ -33,6 +33,7 @@ import {
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 type MicrosoftSSOFormValues = MicrosoftSSOConfig & {
   allowedDomainsText: string;
@@ -73,6 +74,7 @@ function CopyableInput({ value, label }: { value: string; label: string }) {
 
 export function MicrosoftSSOCard({ organizationId }: { organizationId: string }) {
   const t = useT();
+  const rt = useRichT();
 
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -193,17 +195,20 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                     <InfoCircleIcon />
                     <AlertDescription>
                       <p>
-                        {t("To configure SSO, register an app in")}{" "}
-                        <a
-                          href="https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium underline underline-offset-2"
-                        >
-                          {t("Microsoft Entra ID")}
-                        </a>
-                        {t(
-                          ", copy the redirect URL below into the app's authentication settings, then paste the credentials here.",
+                        {rt(
+                          "To configure SSO, register an app in <a>Microsoft Entra ID</a>, copy the redirect URL below into the app's authentication settings, then paste the credentials here.",
+                          {
+                            a: (c) => (
+                              <a
+                                href="https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-medium underline underline-offset-2"
+                              >
+                                {c}
+                              </a>
+                            ),
+                          },
                         )}
                       </p>
                     </AlertDescription>
@@ -352,11 +357,17 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                       >
                         <CopyableInput value={tenantLoginUrl} label={t("Login URL")} />
                         <p className="text-muted-foreground text-xs">
-                          {t("Replace")}{" "}
-                          <code className="bg-muted rounded-md px-1 py-0.5 font-mono text-xs">
-                            {t("{loginSlug}")}
-                          </code>{" "}
-                          {t("with your organization's login slug from General settings.")}
+                          {rt(
+                            "Replace <code>{0}</code> with your organization's login slug from General settings.",
+                            {
+                              code: (c) => (
+                                <code className="bg-muted rounded-md px-1 py-0.5 font-mono text-xs">
+                                  {c}
+                                </code>
+                              ),
+                            },
+                            "{loginSlug}",
+                          )}
                         </p>
                       </FormSection>
                     </>

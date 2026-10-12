@@ -169,6 +169,11 @@ func (r *BaseScopedRule[T]) Validate(
 	return r.validateFn(ctx, entity, valCtx, multiErr)
 }
 
+type ScopedEntityValidator[T ScopedEntity] interface {
+	ValidateCreate(ctx context.Context, entity T) *errortypes.MultiError
+	ValidateUpdate(ctx context.Context, entity T) *errortypes.MultiError
+}
+
 type ScopedValidator[T ScopedEntity] struct {
 	modelName         string
 	uniquenessChecker UniquenessChecker

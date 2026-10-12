@@ -6,13 +6,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-func ToolPolicyViewToModel(view *services.AgentToolPolicyView) *gqlmodel.AgentToolPolicy {
+func ToolPolicyViewToModel(view *agentports.AgentToolPolicyView) *gqlmodel.AgentToolPolicy {
 	policy := &view.Policy
 	out := &gqlmodel.AgentToolPolicy{
 		ID:                 policy.Name,
@@ -57,15 +57,38 @@ func ToolPolicyViewToModel(view *services.AgentToolPolicyView) *gqlmodel.AgentTo
 		source := policy.Source
 		out.Source = &source
 	}
+	applyRule(out, view)
 
 	return out
 }
 
+func applyRule(out *gqlmodel.AgentToolPolicy, view *agentports.AgentToolPolicyView) {
+	declared := &view.Policy
+	if view.Declared != nil {
+		declared = view.Declared
+	}
+	out.DeclaredMaxTier = tierOr(declared.MaxTier, agent.TierAutoExecute)
+	out.DeclaredReadsExternal = declared.ReadsExternal
+	if !out.DeclaredReadsExternal.IsValid() {
+		out.DeclaredReadsExternal = agent.ExternalReadNever
+	}
+	if view.Override == nil {
+		return
+	}
+	out.RuleVersion = int(view.Override.Version)
+	if !view.Override.Empty() {
+		out.Rule = view.Override
+	}
+}
+
 func (r *Deps) AgentToolSafetyPolicy(
-	obj *services.AgentToolSafety,
+	obj *agentports.AgentToolSafety,
 ) (*gqlmodel.AgentToolPolicy, error) {
 	if obj == nil {
 		return nil, errortypes.NewNotFoundError("Tool not found")
+	}
+	if obj.Policy != nil {
+		return ToolPolicyViewToModel(obj.Policy), nil
 	}
 
 	view, ok := r.AgentSafetyService.ToolPolicy(obj.PolicyName)
@@ -86,27 +109,26 @@ func tierOr(tier, fallback agent.AutonomyTier) agent.AutonomyTier {
 
 func (r *Deps) AgentSafetyTools(
 	ctx context.Context,
-	obj *services.AgentSafetySubject,
-) ([]*services.AgentToolSafety, error) {
+	obj *agentports.AgentSafetySubject,
+) ([]*agentports.AgentToolSafety, error) {
 	if obj == nil || obj.Agent == nil {
-		return []*services.AgentToolSafety{}, nil
+		return []*agentports.AgentToolSafety{}, nil
 	}
 
-	loadersForRequest, ok := loaders.FromContext(ctx)
-	if !ok || loadersForRequest == nil {
+	if !loaders.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Agent trust loader is not configured")
 	}
 
-	trust, err := loadersForRequest.ToolTrustByAgentID.Load(ctx, obj.Agent.ID.String())
+	trust, err := loaders.ToolTrustByAgentID(ctx, obj.Agent.ID.String())
 	if err != nil {
 		return nil, err
 	}
 
-	assessed := r.AgentSafetyService.Assess(ctx, &services.AssessAgentSafetyRequest{
+	assessed := r.AgentSafetyService.Assess(ctx, &agentports.AssessAgentSafetyRequest{
 		Subject: obj,
 		Trust:   trust,
 	})
-	out := make([]*services.AgentToolSafety, 0, len(assessed))
+	out := make([]*agentports.AgentToolSafety, 0, len(assessed))
 	for idx := range assessed {
 		out = append(out, &assessed[idx])
 	}
@@ -116,7 +138,7 @@ func (r *Deps) AgentSafetyTools(
 
 func (r *Deps) AgentSafetyReach(
 	ctx context.Context,
-	obj *services.AgentSafetySubject,
+	obj *agentports.AgentSafetySubject,
 ) (*gqlmodel.AgentReach, error) {
 	if obj == nil || obj.Agent == nil {
 		return nil, errortypes.NewNotFoundError("Agent not found")
@@ -127,24 +149,23 @@ func (r *Deps) AgentSafetyReach(
 		return nil, err
 	}
 
-	loadersForRequest, ok := loaders.FromContext(ctx)
-	if !ok || loadersForRequest == nil {
+	if !loaders.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Agent access loader is not configured")
 	}
 
-	granted, err := loadersForRequest.AccessRolesByAgentID.Load(ctx, obj.Agent.ID.String())
+	granted, err := loaders.AccessRolesByAgentID(ctx, obj.Agent.ID.String())
 	if err != nil {
 		return nil, err
 	}
 
-	warnings := r.AgentSafetyService.ReachWarnings(&services.AgentReachRequest{
+	warnings := r.AgentSafetyService.ReachWarnings(&agentports.AgentReachRequest{
 		Subject:      obj,
 		GrantedRoles: len(granted),
 	})
 	reach := &gqlmodel.AgentReach{
 		AccessMode: obj.Agent.EffectiveAccessMode(),
 		Roles:      []*permission.Role{},
-		Warnings:   make([]*services.AgentReachWarning, 0, len(warnings)),
+		Warnings:   make([]*agentports.AgentReachWarning, 0, len(warnings)),
 	}
 	for idx := range warnings {
 		reach.Warnings = append(reach.Warnings, &warnings[idx])
@@ -154,4 +175,25 @@ func (r *Deps) AgentSafetyReach(
 	}
 
 	return reach, nil
+}
+
+func toolRuleChange(input *gqlmodel.AgentToolRuleInput) agentports.ToolRuleChange {
+	var change agentports.ToolRuleChange
+	if input.MaxTier != nil {
+		change.MaxTier = *input.MaxTier
+	}
+	if input.ReadsExternal != nil {
+		change.ReadsExternal = *input.ReadsExternal
+	}
+
+	return change
+}
+
+func impactPointers(impacts []agentports.AgentToolRuleImpact) []*agentports.AgentToolRuleImpact {
+	out := make([]*agentports.AgentToolRuleImpact, len(impacts))
+	for idx := range impacts {
+		out[idx] = &impacts[idx]
+	}
+
+	return out
 }

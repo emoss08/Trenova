@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { decimalStringSchema } from "./helpers";
 import { tenantInfoSchema } from "./helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const detentionPolicyStatusSchema = z.enum(["Active", "Inactive", "Draft"]);
 export type DetentionPolicyStatus = z.infer<typeof detentionPolicyStatusSchema>;
@@ -148,8 +149,14 @@ export const detentionPolicySchema = z
   .object({
     ...tenantInfoSchema.shape,
 
-    name: z.string().min(1, { error: "Name is required" }).max(100),
-    code: z.string().min(1, { error: "Code is required" }).max(50),
+    name: z
+      .string()
+      .min(1, { error: () => translate("Name is required") })
+      .max(100),
+    code: z
+      .string()
+      .min(1, { error: () => translate("Code is required") })
+      .max(50),
     description: z.string().default(""),
     status: detentionPolicyStatusSchema.default("Draft"),
 
@@ -180,7 +187,9 @@ export const detentionPolicySchema = z
     roundingMode: detentionRoundingModeSchema.default("Up"),
 
     rateSource: detentionRateSourceSchema.default("Accessorial"),
-    accessorialChargeId: z.string().min(1, { error: "Accessorial charge is required" }),
+    accessorialChargeId: z
+      .string()
+      .min(1, { error: () => translate("Accessorial charge is required") }),
     // A policy that does not use a rate ladder carries no tiers, and the server
     // sends that absence as null. Normalize it so nothing downstream has to.
     tiers: z.preprocess((value) => value ?? [], z.array(detentionPolicyTierSchema)),
@@ -207,17 +216,17 @@ export const detentionPolicySchema = z
     comments: z.string().default(""),
   })
   .refine((data) => data.roundingMode === "Exact" || data.billingIncrementMinutes > 0, {
-    error: "Billing increment must be greater than zero unless rounding is Exact",
+    error: () => translate("Billing increment must be greater than zero unless rounding is Exact"),
     path: ["billingIncrementMinutes"],
   })
   .refine((data) => data.rateSource !== "Tiers" || data.tiers.length > 0, {
-    error: "Add at least one rate tier when the rate source is Tiers",
+    error: () => translate("Add at least one rate tier when the rate source is Tiers"),
     path: ["tiers"],
   })
   .refine(
     (data) => data.notificationRequirement !== "Required" || data.unnotifiedBehavior !== "Bill",
     {
-      error: "A required notice must Flag or Suppress billing when it is missed",
+      error: () => translate("A required notice must Flag or Suppress billing when it is missed"),
       path: ["unnotifiedBehavior"],
     },
   )
@@ -227,7 +236,7 @@ export const detentionPolicySchema = z
       !data.effectiveEndDate ||
       data.effectiveEndDate > data.effectiveStartDate,
     {
-      error: "Expiration must be after the effective date",
+      error: () => translate("Expiration must be after the effective date"),
       path: ["effectiveEndDate"],
     },
   );

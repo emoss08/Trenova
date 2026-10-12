@@ -125,13 +125,21 @@ export type SettlementPayTrigger = z.infer<typeof settlementPayTriggerSchema>;
 const decimalStringSchema = z
   .string()
   .refine((value) => value === "" || !Number.isNaN(Number(value)), {
-    message: "Must be a valid number",
+    error: () => translate("Must be a valid number"),
   });
 
 export const mileageBandFormSchema = z.object({
-  minMiles: z.number().int().min(0, "Minimum miles cannot be negative"),
-  maxMiles: z.number().int().min(0, "Maximum miles cannot be negative"),
-  rate: decimalStringSchema.refine((value) => value !== "", "Rate is required"),
+  minMiles: z
+    .number()
+    .int()
+    .min(0, { error: () => translate("Minimum miles cannot be negative") }),
+  maxMiles: z
+    .number()
+    .int()
+    .min(0, { error: () => translate("Maximum miles cannot be negative") }),
+  rate: decimalStringSchema.refine((value) => value !== "", {
+    error: () => translate("Rate is required"),
+  }),
 });
 export type MileageBandFormValues = z.infer<typeof mileageBandFormSchema>;
 
@@ -140,7 +148,9 @@ export const payProfileComponentFormSchema = z
     kind: payComponentKindSchema,
     method: payCalcMethodSchema,
     description: optionalStringSchema,
-    rate: decimalStringSchema.refine((value) => value !== "", "Rate is required"),
+    rate: decimalStringSchema.refine((value) => value !== "", {
+      error: () => translate("Rate is required"),
+    }),
     revenueBasis: payRevenueBasisSchema.optional().nullable(),
     bands: z.array(mileageBandFormSchema).optional(),
     freeTimeMinutes: z.number().int().min(0).optional(),
@@ -175,40 +185,54 @@ export type PayProfileComponentFormValues = z.infer<typeof payProfileComponentFo
 
 export const payProfileFormSchema = z.object({
   status: z.enum(["Active", "Inactive"]),
-  name: z.string().min(1, "Name is required").max(100),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(100),
   description: optionalStringSchema,
   classification: payeeClassificationSchema,
   guaranteedPeriodMinimum: z.number().min(0).optional().nullable(),
   perDiemRatePerMile: decimalStringSchema.optional(),
   perDiemDailyCap: z.number().min(0).optional().nullable(),
-  components: z.array(payProfileComponentFormSchema).min(1, "Add at least one pay component"),
+  components: z
+    .array(payProfileComponentFormSchema)
+    .min(1, { error: () => translate("Add at least one pay component") }),
 });
 export type PayProfileFormValues = z.infer<typeof payProfileFormSchema>;
 
 export const assignPayProfileFormSchema = z.object({
-  workerId: z.string().min(1, "Worker is required"),
-  payProfileId: z.string().min(1, "Pay profile is required"),
-  effectiveFrom: z.number().int().min(1, "Effective from date is required"),
+  workerId: z.string().min(1, { error: () => translate("Worker is required") }),
+  payProfileId: z.string().min(1, { error: () => translate("Pay profile is required") }),
+  effectiveFrom: z
+    .number()
+    .int()
+    .min(1, { error: () => translate("Effective from date is required") }),
   effectiveTo: z.number().int().optional().nullable(),
   splitPercent: z
     .number()
-    .gt(0, "Split percent must be greater than zero")
-    .max(100, "Split percent cannot exceed 100"),
+    .gt(0, { error: () => translate("Split percent must be greater than zero") })
+    .max(100, { error: () => translate("Split percent cannot exceed 100") }),
   notes: optionalStringSchema,
 });
 export type AssignPayProfileFormValues = z.infer<typeof assignPayProfileFormSchema>;
 
 export const recurringDeductionFormSchema = z
   .object({
-    workerId: z.string().min(1, "Worker is required"),
-    payCodeId: z.string().min(1, "Pay code is required"),
+    workerId: z.string().min(1, { error: () => translate("Worker is required") }),
+    payCodeId: z.string().min(1, { error: () => translate("Pay code is required") }),
     escrowContribution: z.boolean(),
     status: recurringDeductionStatusSchema,
     frequency: recurringDeductionFrequencySchema,
-    description: z.string().min(1, "Description is required").max(255),
-    amount: z.number().gt(0, "Amount must be greater than zero"),
+    description: z
+      .string()
+      .min(1, { error: () => translate("Description is required") })
+      .max(255),
+    amount: z.number().gt(0, { error: () => translate("Amount must be greater than zero") }),
     totalCap: z.number().gt(0).optional().nullable(),
-    startDate: z.number().int().min(1, "Start date is required"),
+    startDate: z
+      .number()
+      .int()
+      .min(1, { error: () => translate("Start date is required") }),
     endDate: z.number().int().optional().nullable(),
   })
   .superRefine((deduction, ctx) => {
@@ -228,14 +252,20 @@ export type RecurringDeductionFormValues = z.infer<typeof recurringDeductionForm
 
 export const recurringEarningFormSchema = z
   .object({
-    workerId: z.string().min(1, "Worker is required"),
-    payCodeId: z.string().min(1, "Pay code is required"),
+    workerId: z.string().min(1, { error: () => translate("Worker is required") }),
+    payCodeId: z.string().min(1, { error: () => translate("Pay code is required") }),
     status: recurringEarningStatusSchema,
     frequency: recurringEarningFrequencySchema,
-    description: z.string().min(1, "Description is required").max(255),
-    amount: z.number().gt(0, "Amount must be greater than zero"),
+    description: z
+      .string()
+      .min(1, { error: () => translate("Description is required") })
+      .max(255),
+    amount: z.number().gt(0, { error: () => translate("Amount must be greater than zero") }),
     totalCap: z.number().gt(0).optional().nullable(),
-    startDate: z.number().int().min(1, "Start date is required"),
+    startDate: z
+      .number()
+      .int()
+      .min(1, { error: () => translate("Start date is required") }),
     endDate: z.number().int().optional().nullable(),
   })
   .superRefine((earning, ctx) => {
@@ -253,10 +283,15 @@ export const payCodeFormSchema = z.object({
   direction: payCodeDirectionSchema,
   code: z
     .string()
-    .min(1, "Code is required")
+    .min(1, { error: () => translate("Code is required") })
     .max(20)
-    .regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/, "Use letters, digits, dashes, or underscores only"),
-  name: z.string().min(1, "Name is required").max(100),
+    .regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/, {
+      error: () => translate("Use letters, digits, dashes, or underscores only"),
+    }),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(100),
   description: z.string().max(500).optional().nullable(),
   status: z.enum(["Active", "Inactive"]),
   taxable: z.boolean(),
@@ -267,22 +302,25 @@ export const payCodeFormSchema = z.object({
 export type PayCodeFormValues = z.infer<typeof payCodeFormSchema>;
 
 export const issuePayAdvanceFormSchema = z.object({
-  workerId: z.string().min(1, "Worker is required"),
+  workerId: z.string().min(1, { error: () => translate("Worker is required") }),
   source: payAdvanceSourceSchema,
   reference: optionalStringSchema,
-  issuedDate: z.number().int().min(1, "Issued date is required"),
-  amount: z.number().gt(0, "Amount must be greater than zero"),
+  issuedDate: z
+    .number()
+    .int()
+    .min(1, { error: () => translate("Issued date is required") }),
+  amount: z.number().gt(0, { error: () => translate("Amount must be greater than zero") }),
   notes: optionalStringSchema,
 });
 export type IssuePayAdvanceFormValues = z.infer<typeof issuePayAdvanceFormSchema>;
 
 export const openEscrowAccountFormSchema = z.object({
-  workerId: z.string().min(1, "Worker is required"),
-  targetAmount: z.number().min(0, "Target amount cannot be negative"),
+  workerId: z.string().min(1, { error: () => translate("Worker is required") }),
+  targetAmount: z.number().min(0, { error: () => translate("Target amount cannot be negative") }),
   annualInterestRate: z
     .number()
-    .min(0, "Interest rate cannot be negative")
-    .max(100, "Interest rate cannot exceed 100")
+    .min(0, { error: () => translate("Interest rate cannot be negative") })
+    .max(100, { error: () => translate("Interest rate cannot exceed 100") })
     .optional()
     .nullable(),
   openedDate: z.number().int().optional().nullable(),

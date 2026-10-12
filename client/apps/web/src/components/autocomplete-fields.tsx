@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { benefitPlanTypeLabel } from "@trenova/shared/lib/benefits";
 import { describeShiftPattern } from "@trenova/shared/lib/scheduling";
@@ -28,7 +29,7 @@ import type { ReactNode } from "react";
 export type _ServerEndpointTypes = API_ENDPOINTS | SELECT_OPTIONS_ENDPOINTS;
 import type { Control, FieldPath, FieldValues, Path, RegisterOptions } from "react-hook-form";
 import { Autocomplete, AutocompleteField } from "./fields/autocomplete/autocomplete";
-import { FieldWrapper } from "./fields/field-components";
+import { FieldWrapper, type FieldLayout } from "./fields/field-components";
 import { MultiSelectAutocompleteField } from "./fields/multi-select-field";
 import { ColorOptionValue } from "./fields/select-components";
 import { SelectField } from "./fields/select-field";
@@ -38,7 +39,9 @@ type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   name: Path<TForm>;
   label?: string;
   rules?: RegisterOptions<TForm, Path<TForm>>;
-  description?: string;
+  description?: ReactNode;
+  /** Where the label sits: above the control, or beside it in a settings row. */
+  layout?: FieldLayout;
   clearable?: boolean;
   placeholder?: string;
   disabled?: boolean;
@@ -335,6 +338,10 @@ const emailProfileSelectOptionsGraphQL = {
   resource: "EMAIL_PROFILE",
 } satisfies GraphQLSelectOptionsConfig;
 
+const aiProviderSelectOptionsGraphQL = {
+  resource: "AI_PROVIDER",
+} satisfies GraphQLSelectOptionsConfig;
+
 function getDocumentLabel(option: Document) {
   const documentTypeLabel = option.documentType?.name?.trim();
   const fileName = option.originalName?.trim() || option.fileName?.trim() || option.id;
@@ -393,6 +400,54 @@ function EDIOptionStack({ primary, secondary }: { primary: ReactNode; secondary?
         <span className="text-2xs text-muted-foreground w-full truncate">{secondary}</span>
       ) : null}
     </div>
+  );
+}
+
+function aiProviderDisplay(option: GraphQLSelectOption) {
+  return option.description ? `${option.label} · ${option.description}` : option.label;
+}
+
+type AIProviderAutocompleteProps = {
+  label: string;
+  /** The chosen provider's id; empty for none. */
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  triggerClassName?: string;
+};
+
+/**
+ * The enabled providers that answer the assistant, searched by name or model. Clearing
+ * it leaves the value empty rather than null, which is what a form that keeps "none" as
+ * an empty id expects.
+ */
+export function AIProviderAutocomplete({
+  label,
+  value,
+  onValueChange,
+  placeholder,
+  disabled,
+  triggerClassName,
+}: AIProviderAutocompleteProps) {
+  return (
+    <Autocomplete<GraphQLSelectOption, FieldValues>
+      graphql={aiProviderSelectOptionsGraphQL}
+      label={label}
+      value={value || null}
+      onChange={(nextValue: string | number | null | undefined) =>
+        onValueChange(nextValue ? String(nextValue) : "")
+      }
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={aiProviderDisplay}
+      renderOption={(option) => (
+        <EDIOptionStack primary={option.label} secondary={option.description || ""} />
+      )}
+      placeholder={placeholder}
+      disabled={!!disabled}
+      clearable
+      triggerClassName={triggerClassName}
+    />
   );
 }
 
@@ -757,6 +812,46 @@ export function ShipmentAutocompleteField<T extends FieldValues>({
         </div>
       )}
       {...props}
+    />
+  );
+}
+
+type ShipmentAutocompleteProps = {
+  label: string;
+  /** The chosen shipment's id; empty for none. */
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  triggerClassName?: string;
+};
+
+/** A shipment searched by PRO, BOL or lane, outside a form. Clearing it leaves the value empty. */
+export function ShipmentAutocomplete({
+  label,
+  value,
+  onValueChange,
+  placeholder,
+  disabled,
+  triggerClassName,
+}: ShipmentAutocompleteProps) {
+  return (
+    <Autocomplete<GraphQLSelectOption, FieldValues>
+      graphql={shipmentSelectOptionsGraphQL}
+      label={label}
+      value={value || null}
+      onChange={(nextValue: string | number | null | undefined) =>
+        onValueChange(nextValue ? String(nextValue) : "")
+      }
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <EDIOptionStack primary={option.label} secondary={option.description || ""} />
+      )}
+      placeholder={placeholder}
+      disabled={!!disabled}
+      clearable
+      triggerClassName={triggerClassName}
     />
   );
 }
@@ -2591,11 +2686,11 @@ export function trainingCourseOptionSummary(option: GraphQLSelectOption) {
   const delivery = selectOptionMetaString(option, "delivery") as TrainingDelivery;
   const parts = [TRAINING_DELIVERY_LABELS[delivery] ?? delivery];
   const minutes = selectOptionMetaNumber(option, "durationMinutes");
-  if (minutes) parts.push(`${minutes} min`);
+  if (minutes) parts.push(translate("{0} min", minutes));
   const passingScore = selectOptionMetaString(option, "passingScore");
-  if (passingScore) parts.push(`pass ≥ ${Number(passingScore).toFixed(0)}%`);
+  if (passingScore) parts.push(translate("pass ≥ {0}%", Number(passingScore).toFixed(0)));
   const validityMonths = selectOptionMetaNumber(option, "validityMonths");
-  if (validityMonths) parts.push(`valid ${validityMonths} mo`);
+  if (validityMonths) parts.push(translate("valid {0} mo", validityMonths));
 
   return parts.filter(Boolean).join(" · ");
 }
@@ -2625,9 +2720,13 @@ export function PerformanceReviewTemplateAutocompleteField<T extends FieldValues
 function reviewTemplateOptionSummary(option: GraphQLSelectOption) {
   const itemCount = selectOptionMetaNumber(option, "itemCount") ?? 0;
   const cadenceMonths = selectOptionMetaNumber(option, "cadenceMonths");
-  const items = `${itemCount} item${itemCount === 1 ? "" : "s"}`;
-
-  return cadenceMonths ? `${items} · every ${cadenceMonths} months` : items;
+  return cadenceMonths
+    ? translate(
+        "{0, plural, one {# item} other {# items}} · {1, plural, one {every # month} other {every # months}}",
+        itemCount,
+        cadenceMonths,
+      )
+    : translate("{0, plural, one {# item} other {# items}}", itemCount);
 }
 
 export function PtoPolicyAutocompleteField<T extends FieldValues>({

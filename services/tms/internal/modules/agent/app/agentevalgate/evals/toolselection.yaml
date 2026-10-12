@@ -1,0 +1,1046 @@
+# Natural-language requests and the tools find_tools should load for them.
+# A case passes top-1 when the first tool found is one of `expect`, and
+# recall@5 when one of them is among the first five. The floors both are
+# checked against live in toolselection.floors.json; raise them with -update
+# after an improvement, never lower them to hide a regression.
+cases:
+  - request: email the customer an update
+    expect: [email_customer]
+  - request: send the customer a delay notice by email
+    expect: [email_customer]
+  - request: who is driving load 123
+    expect: [get_shipment, search_shipments, get_dispatch_board]
+  - request: which driver is assigned to shipment 4471
+    expect: [get_shipment, search_shipments, get_dispatch_board]
+  - request: text the driver that the pickup moved to 3pm
+    expect: [notify_driver]
+  - request: message the driver about the new delivery window
+    expect: [notify_driver]
+  - request: record a customer payment against their open invoices
+    expect: [post_customer_payment]
+  - request: apply the ACH payment we received to invoice 889
+    expect: [post_customer_payment, match_bank_receipt]
+  - request: match this bank receipt to the posted payment
+    expect: [match_bank_receipt]
+  - request: show the bank receipts that did not reconcile
+    expect: [list_bank_receipt_exceptions]
+  - request: read the email that came in from the shipper
+    expect: [get_inbound_message, list_inbound_messages]
+  - request: reply to the inbound email from the broker
+    expect: [reply_to_inbound_message]
+  - request: which shipments are picking up today
+    expect: [list_shipments, search_shipments]
+  - request: find shipment by pro number
+    expect: [search_shipments]
+  - request: where is my truck right now
+    expect: [list_vehicle_positions, get_shipment_tracking]
+  - request: track the shipment location
+    expect: [get_shipment_tracking]
+  - request: which driver licenses and medical cards expire this month
+    expect: [list_expiring_credentials]
+  - request: ask the driver to renew their medical card
+    expect: [request_credential_renewal]
+  - request: how many hours of service does the driver have left
+    expect: [get_worker_hos]
+  - request: rank the best drivers for this move
+    expect: [rank_move_candidates]
+  - request: assign a driver and tractor to the move
+    expect: [assign_move]
+  - request: tender the load to carriers
+    expect: [tender_move_to_carriers, tender_move_to_routing_guide]
+  - request: shop carriers for a rate on this lane
+    expect: [shop_carriers]
+  - request: put the shipment on hold
+    expect: [place_shipment_hold]
+  - request: release the hold on the shipment
+    expect: [release_shipment_hold]
+  - request: cancel the shipment
+    expect: [cancel_shipment]
+  - request: create a new shipment for Acme
+    expect: [create_shipment]
+  - request: quote a rate for a load from Dallas to Chicago
+    expect: [quote_shipment]
+  - request: add a comment to the shipment
+    expect: [add_shipment_comment]
+  - request: who has time off booked this week
+    expect: [list_time_off]
+  - request: approve the driver's PTO request
+    expect: [approve_worker_pto]
+  - request: reject the vacation request
+    expect: [reject_worker_pto]
+  - request: which invoices are overdue
+    expect: [list_invoices]
+  - request: post these five draft invoices
+    expect: [post_invoices]
+  - request: post all of the approved draft invoices at once
+    expect: [post_invoices]
+  - request: post draft invoice 1042
+    expect: [post_invoice, post_invoices]
+  - request: email these invoices to their customers
+    expect: [send_invoices]
+  - request: send invoice 7001 to the customer
+    expect: [send_invoice, send_invoices]
+  - request: approve all of the clean billing queue items
+    expect: [approve_billing_queue_items]
+  - request: approve billing queue item 5001
+    expect: [approve_billing_queue_item, approve_billing_queue_items]
+  - request: check invoices 1041, 1042 and 1043 before posting them
+    expect: [get_invoices, list_invoices]
+  - request: show me each of these draft invoices with their totals
+    expect: [get_invoices, list_invoices]
+  - request: look up the customer's billing details
+    expect: [get_customer, list_customers]
+  - request: waive the detention charge
+    expect: [waive_detention]
+  - request: approve the held detention charge so the shipment can be invoiced
+    expect: [approve_detention]
+  - request: send the customer a detention notice
+    expect: [send_detention_notice]
+  - request: which stops are accruing detention
+    expect: [list_detention_desk, get_detention_occurrence]
+  - request: fix the wrong accessorial charge code
+    expect: [correct_charge_code]
+  - request: ask the shipper for the missing proof of delivery
+    expect: [request_missing_docs]
+  - request: attach the BOL document to the shipment
+    expect: [attach_document_to_shipment]
+  - request: what does the rate confirmation document say
+    expect: [get_document_summary]
+  - request: record the arrival time at the stop
+    expect: [record_stop_actual]
+  - request: mark the tractor out of service
+    expect: [update_tractor_status]
+  - request: list the trailers in the yard
+    expect: [list_trailers]
+  - request: run the on-time delivery report
+    expect: [run_report, list_reports]
+  - request: build a dashboard of revenue by customer
+    expect: [create_dashboard]
+  - request: email this report every Monday
+    expect: [schedule_report]
+  - request: remember that Acme closes at four on Fridays
+    expect: [remember]
+  - request: what did we record about this customer before
+    expect: [recall_memory]
+  - request: open the shipments page
+    expect: [open_page]
+  - request: how do I set up a rate matrix in Trenova
+    expect: [find_in_trenova]
+  - request: flag this for a person to review
+    expect: [flag_for_manual_review, raise_exception]
+  - request: what are the carrier risk alerts
+    expect: [get_carrier_intel_event, acknowledge_carrier_intel_event]
+  - request: add a widget to my home dashboard
+    expect: [add_home_widget]
+  - request: which weather alerts affect our lanes
+    expect: [list_weather_alerts]
+  - request: which service failures happened last week
+    expect: [list_service_failures]
+  - request: find the rate confirmation that mentions a lumper fee
+    expect: [search_documents]
+  - request: which document says the consignee requires an appointment
+    expect: [search_documents]
+  - request: search our documents for bill of lading 88213
+    expect: [search_documents]
+  - request: find the contract clause about the fuel surcharge
+    expect: [search_documents]
+  - request: look through the attached files for the delivery receipt signed by Jones
+    expect: [search_documents]
+  - request: is there a proof of delivery that notes damaged pallets
+    expect: [search_documents]
+  - request: which permit document lists the oversize route through Ohio
+    expect: [search_documents]
+  - request: find the email where the shipper complained about a late pickup
+    expect: [search_inbound_messages]
+  - request: search the inbox for messages about load 4471
+    expect: [search_inbound_messages, list_inbound_messages]
+  - request: did a broker email us about a rate increase
+    expect: [search_inbound_messages]
+  - request: look for the message asking to reschedule the delivery appointment
+    expect: [search_inbound_messages]
+  - request: which emails mention a damaged shipment
+    expect: [search_inbound_messages]
+  - request: find mail from Globex about detention charges
+    expect: [search_inbound_messages]
+  - request: is quickbooks connected
+    expect: [get_accounting_sync_status]
+  - request: why is the accounting sync not working
+    expect: [get_accounting_sync_status, check_accounting_connection]
+  - request: check the quickbooks connection again now
+    expect: [check_accounting_connection, get_accounting_sync_status]
+  - request: what still needs mapping before quickbooks can sync
+    expect: [list_accounting_mapping_gaps]
+  - request: which quickbooks account does our revenue post to
+    expect: [get_accounting_mapping, list_accounting_mapping_gaps]
+  - request: map the detention charge to the Detention item in quickbooks
+    expect: [set_accounting_mapping, get_accounting_mapping]
+  - request: that customer mapping is wrong, unmap it
+    expect: [clear_accounting_mapping, get_accounting_mapping]
+  - request: create the lumper fee as an item in quickbooks
+    expect: [create_accounting_reference_record, get_accounting_mapping]
+  - request: I just added new accounts in quickbooks, pull them in
+    expect: [refresh_accounting_reference_data]
+  - request: which invoices failed to sync to quickbooks
+    expect: [list_accounting_sync_records]
+  - request: how many documents are queued to go to quickbooks
+    expect: [get_accounting_sync_status, list_accounting_sync_records]
+  - request: why did this sync record fail and how many tries did it take
+    expect: [get_accounting_sync_record, list_accounting_sync_records]
+  - request: did invoice 1042 reach quickbooks
+    expect: [get_record_accounting_sync_state, list_accounting_sync_records]
+  - request: retry the failed quickbooks sync now that the outage is over
+    expect: [retry_accounting_sync]
+  - request: skip that invoice, we entered it in quickbooks by hand
+    expect: [skip_accounting_sync]
+  - request: pause sending to quickbooks during the outage
+    expect: [pause_accounting_sync]
+  - request: which payments recorded in quickbooks are waiting to be applied in trenova
+    expect: [list_accounting_inbound_changes]
+  - request: apply the customer payment from quickbooks for acme
+    expect: [apply_accounting_inbound_change, list_accounting_inbound_changes]
+  - request: ignore that quickbooks payment, we already keyed it in trenova
+    expect: [ignore_accounting_inbound_change, list_accounting_inbound_changes]
+  - request: which invoices were changed in quickbooks after we sent them
+    expect: [list_accounting_drift_findings]
+  - request: send trenova's total for that invoice to quickbooks again
+    expect: [resolve_accounting_drift, list_accounting_drift_findings]
+  - request: dismiss that small rounding difference with quickbooks
+    expect: [dismiss_accounting_drift, list_accounting_drift_findings]
+  - request: compare quickbooks with trenova now
+    expect: [check_accounting_drift]
+  - request: resume sending documents to quickbooks
+    expect: [resume_accounting_sync]
+  - request: backfill last year's invoices into quickbooks
+    expect: [request_accounting_backfill]
+  - request: show the accounts receivable aging by customer
+    expect: [get_ar_aging]
+  - request: which customers owe us money over 90 days
+    expect: [get_ar_aging, list_ar_open_items]
+  - request: list the open unpaid invoices for Acme with days past due
+    expect: [list_ar_open_items, list_invoices]
+  - request: which receivables are disputed or short paid
+    expect: [list_ar_open_items, list_collections_worklist]
+  - request: pull the account statement for this customer
+    expect: [get_customer_statement]
+  - request: what was Acme billed and paid this quarter, and what is the running balance
+    expect: [get_customer_statement]
+  - request: who should collections call first today
+    expect: [list_collections_worklist]
+  - request: show the critical collections worklist
+    expect: [list_collections_worklist]
+  - request: list the posted journal entries from last month
+    expect: [list_journal_entries]
+  - request: find the journal entry for invoice 1042
+    expect: [list_journal_entries, get_journal_entry]
+  - request: open the journal entry and show its debit and credit lines
+    expect: [get_journal_entry]
+  - request: which GL accounts did this journal entry post to
+    expect: [get_journal_entry]
+  - request: show the chart of accounts
+    expect: [list_gl_accounts]
+  - request: find the general ledger account code for fuel expense
+    expect: [list_gl_accounts]
+  - request: which fiscal periods are still open
+    expect: [list_fiscal_periods]
+  - request: when does the current fiscal period end
+    expect: [list_fiscal_periods]
+  - request: what is blocking us from closing the fiscal period
+    expect: [get_fiscal_close_blockers]
+  - request: can we close the books for March
+    expect: [get_fiscal_close_blockers, list_fiscal_periods]
+  - request: list the driver settlements waiting for approval
+    expect: [list_driver_settlements]
+  - request: which driver pay settlements have exceptions
+    expect: [list_driver_settlements]
+  - request: open this driver settlement and show its deduction lines
+    expect: [get_driver_settlement]
+  - request: why is the net pay on Maria's settlement negative
+    expect: [get_driver_settlement, list_driver_settlements]
+  - request: which loads has the driver been paid for
+    expect: [list_driver_pay_events]
+  - request: is the pay event for shipment 4471 on hold
+    expect: [list_driver_pay_events]
+  - request: how much has the driver earned that is not settled yet
+    expect: [get_worker_earnings_summary]
+  - request: what is the driver's escrow balance and outstanding advances
+    expect: [get_worker_earnings_summary]
+  - request: read the pay dispute the driver submitted
+    expect: [get_settlement_dispute]
+  - request: what did the driver say in their settlement dispute
+    expect: [get_settlement_dispute]
+  - request: list the carrier settlements paid this month
+    expect: [list_carrier_settlements]
+  - request: which carrier settlements are pending approval
+    expect: [list_carrier_settlements]
+  - request: open the carrier settlement and show its cost lines
+    expect: [get_carrier_settlement]
+  - request: when was this carrier settlement paid
+    expect: [get_carrier_settlement, list_carrier_settlements]
+  - request: approve Ana's driver settlement
+    expect: [approve_driver_settlement, approve_driver_settlements]
+  - request: post the approved carrier settlement to the ledger
+    expect: [post_carrier_settlement, post_carrier_settlements]
+  - request: approve all of this week's pending driver settlements
+    expect: [approve_driver_settlements]
+  - request: post these approved driver settlements to the ledger together
+    expect: [post_driver_settlements]
+  - request: approve the pending carrier settlements in one go
+    expect: [approve_carrier_settlements]
+  - request: post every approved carrier settlement for the period at once
+    expect: [post_carrier_settlements]
+  - request: record that the driver settlement was paid by check
+    expect: [record_driver_settlement_payment]
+  - request: void the carrier settlement
+    expect: [void_carrier_settlement]
+  - request: add a fuel advance adjustment to the driver settlement
+    expect: [add_driver_settlement_adjustment]
+  - request: generate this week's driver settlement batch
+    expect: [generate_driver_settlement_batch]
+  - request: hold the driver's pay for load 4471 until the paperwork arrives
+    expect: [hold_driver_pay_event]
+  - request: release the held pay event
+    expect: [release_driver_pay_event]
+  - request: pay the driver now, off cycle
+    expect: [pay_driver_now]
+  - request: issue a pay advance to the driver
+    expect: [issue_pay_advance]
+  - request: write off the advance the driver still owes
+    expect: [write_off_pay_advance]
+  - request: open an escrow account for the owner operator
+    expect: [open_escrow_account]
+  - request: close the escrow account and refund the balance
+    expect: [close_escrow_account]
+  - request: set up a recurring insurance deduction
+    expect: [create_recurring_deduction]
+  - request: accept the carrier invoice with its variance
+    expect: [accept_carrier_invoice_match_with_variance]
+  - request: which EDI carrier invoices have no carrier
+    expect: [list_edi_carrier_invoices]
+  - request: list the deduction pay codes
+    expect: [list_pay_codes]
+  - request: which pay profile is the driver assigned to
+    expect: [list_pay_assignments]
+  - request: which carrier invoices have a variance against the expected cost
+    expect: [list_carrier_invoice_matches]
+  - request: show the carrier freight invoice matches for Swift
+    expect: [list_carrier_invoice_matches]
+  - request: list the active rate agreements for this customer
+    expect: [list_rate_agreements]
+  - request: which carrier contracts and tariffs do we have
+    expect: [list_rate_agreements]
+  - request: show the lane rules and weight breaks in this rate agreement
+    expect: [get_rate_agreement]
+  - request: what minimum charge does the contract set on the Dallas lane
+    expect: [get_rate_agreement]
+  - request: show the cells of the rate matrix
+    expect: [get_rate_matrix]
+  - request: what does the zone to zone rate grid say for freight class 70
+    expect: [get_rate_matrix]
+  - request: what is this week's fuel surcharge rate per mile
+    expect: [get_fuel_surcharge_rates]
+  - request: which diesel index price is the fuel program using
+    expect: [get_fuel_surcharge_rates]
+  - request: list the customer orders that are in progress
+    expect: [list_orders]
+  - request: find the order with PO number 88213
+    expect: [list_orders]
+  - request: which shipments and charges belong to this order
+    expect: [get_order]
+  - request: has the order charge been invoiced yet
+    expect: [get_order]
+  - request: which inbound EDI files were quarantined today
+    expect: [list_edi_inbound_files]
+  - request: show the EDI files the trading partner sent this week
+    expect: [list_edi_inbound_files]
+  - request: why did this inbound EDI file fail to process
+    expect: [get_edi_inbound_file]
+  - request: show the raw X12 of the EDI file
+    expect: [get_edi_inbound_file]
+  - request: which EDI load tenders are pending approval
+    expect: [list_edi_transfers]
+  - request: why was the EDI tender transfer rejected
+    expect: [list_edi_transfers]
+  - request: is the EDI trading partner set up and ready
+    expect: [get_edi_partner]
+  - request: is inbound turned on for this EDI partner
+    expect: [get_edi_partner]
+  - request: what is on the watchtower right now
+    expect: [list_watchtower_items]
+  - request: show the critical items on the watchtower feed
+    expect: [list_watchtower_items]
+  - request: read me the daily briefing
+    expect: [get_daily_briefing]
+  - request: what does the morning briefing say for billing
+    expect: [get_daily_briefing]
+  - request: which agent runs failed today
+    expect: [list_agent_runs]
+  - request: list the runs the billing agent made this week
+    expect: [list_agent_runs, get_agent_run]
+  - request: accept the extracted rate on the import
+    expect: [accept_field]
+  - request: accept the BOL field the document read
+    expect: [accept_field]
+  - request: accept all the high confidence fields on the import
+    expect: [accept_all_confident]
+  - request: accept every confident value from the rate confirmation
+    expect: [accept_all_confident]
+  - request: set the weight field on the import to 42000
+    expect: [set_field_value]
+  - request: correct the BOL value on the imported shipment
+    expect: [set_field_value]
+  - request: set the customer on the import to Acme Foods
+    expect: [set_required_field]
+  - request: set the rating method required for the imported shipment
+    expect: [set_required_field]
+  - request: match the pickup stop to one of our locations
+    expect: [set_stop_location]
+  - request: set the delivery stop location on the import
+    expect: [set_stop_location]
+  - request: schedule the pickup stop for Tuesday at 8am
+    expect: [set_stop_schedule]
+  - request: set the delivery window on the import stop
+    expect: [set_stop_schedule]
+  - request: create a new location for this consignee address
+    expect: [create_location]
+  - request: add a location for the shipper facility we do not have yet
+    expect: [create_location]
+  - request: list the formula templates we rate with
+    expect: [list_formula_templates]
+  - request: which rating methods are active
+    expect: [list_formula_templates]
+  - request: show me the reefer formula template with its minimum charge and rounding
+    expect: [get_formula_template, list_formula_templates]
+  - request: what variables and functions can a rating formula use
+    expect: [describe_formula_schema]
+  - request: describe the formula schema and its rate tables
+    expect: [describe_formula_schema]
+  - request: test this formula expression on a 500 mile load
+    expect: [test_formula_expression]
+  - request: what would this formula charge for a sample load
+    expect: [test_formula_expression]
+  - request: write a formula that charges per mile with a minimum
+    expect: [propose_formula]
+  - request: propose a rating formula with a hazmat surcharge
+    expect: [propose_formula]
+  - request: reopen the canceled shipment, the load is back on
+    expect: [uncancel_shipment]
+  - request: make Maria the owner of shipment 4471
+    expect: [transfer_shipment_ownership]
+  - request: rerate the shipment from its contract
+    expect: [rerate_shipment]
+  - request: recalculate the miles on shipment 4471
+    expect: [recalculate_shipment_distance]
+  - request: duplicate shipment 4471 three times for next week
+    expect: [duplicate_shipment]
+  - request: change the hold so it also blocks billing
+    expect: [update_shipment_hold]
+  - request: split the move at the Memphis yard as a relay
+    expect: [split_move_at_relay]
+  - request: pin that comment to the top of the thread
+    expect: [pin_shipment_comment]
+  - request: mark the comment about the late pickup resolved
+    expect: [resolve_shipment_comment]
+  - request: delete my comment on the shipment
+    expect: [delete_shipment_comment]
+  - request: void the service failure that was opened by mistake
+    expect: [void_service_failure]
+  - request: the customer disputes the detention charge
+    expect: [dispute_detention]
+  - request: create an order for Acme with PO 5512
+    expect: [create_order]
+  - request: add a consolidation fee to the order
+    expect: [add_order_charge]
+  - request: attach these shipments to the order
+    expect: [attach_order_shipments]
+  - request: close the billed order
+    expect: [close_order]
+  - request: set up a recurring shipment every weekday for Acme
+    expect: [create_recurring_shipment]
+  - request: pause the recurring shipment
+    expect: [set_recurring_shipment_status]
+  - request: which recurring shipments generate tomorrow
+    expect: [list_recurring_shipments]
+  - request: put Maria on the early shift pattern from Monday
+    expect: [assign_worker_shift]
+  - request: what shift schedule is the driver on
+    expect: [get_worker_schedule]
+  - request: approve the shift swap between the two drivers
+    expect: [approve_shift_swap]
+  - request: vet this carrier before we tender to it
+    expect: [vet_carrier]
+  - request: turn on monitoring for these carriers
+    expect: [set_carrier_monitoring]
+  - request: import the carrier we found in sourcing by its DOT number
+    expect: [import_sourced_carrier]
+  - request: verify the carrier's truck VIN is registered to them
+    expect: [verify_carrier_equipment]
+  - request: reassign the fuel charge on this billing item to the other customer
+    expect: [reassign_billing_charge]
+  - request: stop the billing transfer that is still running
+    expect: [manage_billing_transfer_run]
+  - request: draft a manual journal entry to accrue September fuel
+    expect: [draft_manual_journal]
+  - request: change the lines on the draft manual journal
+    expect: [revise_manual_journal_draft]
+  - request: submit the manual journal for approval
+    expect: [submit_manual_journal]
+  - request: cancel that manual journal, it was entered twice
+    expect: [cancel_manual_journal]
+  - request: post the approved manual journal to the general ledger
+    expect: [post_manual_journal]
+  - request: which manual journals are waiting to be posted
+    expect: [list_manual_journals]
+  - request: reverse journal entry JE-104, it hit the wrong account
+    expect: [request_journal_reversal]
+  - request: post the approved journal reversal
+    expect: [post_journal_reversal]
+  - request: cancel the journal reversal, the entry was right
+    expect: [cancel_journal_reversal]
+  - request: close the September fiscal period
+    expect: [close_fiscal_period]
+  - request: lock the fiscal period while we review the books
+    expect: [lock_fiscal_period]
+  - request: reopen the closed fiscal period for a late invoice
+    expect: [reopen_fiscal_period]
+  - request: open the next fiscal period so postings are accepted
+    expect: [open_fiscal_period]
+  - request: confirm the proposed quickbooks mappings
+    expect: [confirm_accounting_mapping_proposals, set_accounting_mapping]
+  - request: reject the proposed accounting mapping for this customer
+    expect: [reject_accounting_mapping_proposal, clear_accounting_mapping]
+  - request: release the documents held for approval to quickbooks
+    expect: [release_accounting_sync]
+  - request: pause the accounting backfill
+    expect: [change_accounting_backfill]
+  - request: assign the bank receipt work item to Maria
+    expect: [triage_bank_receipt_work_item]
+  - request: record the diesel receipt from the Love's in Amarillo for tractor 112
+    expect: [record_fuel_purchase]
+  - request: enter this fuel receipt so it counts on the IFTA return
+    expect: [record_fuel_purchase]
+  - request: the gallons on that fuel purchase were keyed wrong, fix them
+    expect: [correct_fuel_purchase]
+  - request: delete the fuel purchase that was entered twice
+    expect: [delete_fuel_purchase]
+  - request: which fuel purchases did tractor 112 make in Texas last month
+    expect: [list_fuel_purchases]
+  - request: give the new Comdata fuel card to tractor 208
+    expect: [assign_fuel_card]
+  - request: which fuel cards are not assigned to a tractor
+    expect: [list_fuel_cards]
+  - request: commit the staged fuel card statement
+    expect: [commit_fuel_purchase_import]
+  - request: discard the fuel statement that was uploaded twice
+    expect: [discard_fuel_purchase_import]
+  - request: the card is assigned now, post the fuel rows the import was holding
+    expect: [resolve_fuel_purchase_import_rows]
+  - request: which fuel statement imports are waiting to be committed
+    expect: [list_fuel_purchase_imports]
+  - request: generate the IFTA return for the third quarter
+    expect: [generate_ifta_return]
+  - request: recompute the draft IFTA return after the fuel corrections
+    expect: [recompute_ifta_return]
+  - request: amend the filed IFTA return, Texas purchases were left out
+    expect: [amend_ifta_return]
+  - request: delete the draft IFTA return made for the wrong quarter
+    expect: [delete_ifta_return]
+  - request: which IFTA returns are still drafts
+    expect: [list_ifta_returns]
+  - request: add the state miles from this trip sheet for the IFTA return
+    expect: [record_ifta_mileage_entry]
+  - request: correct the jurisdiction miles on that mileage entry
+    expect: [correct_ifta_mileage_entry]
+  - request: remove the duplicate IFTA mileage entry
+    expect: [delete_ifta_mileage_entry]
+  - request: which IFTA mileage entries were recorded for tractor 112
+    expect: [list_ifta_mileage_entries]
+  - request: what is the code for the Oklahoma IFTA jurisdiction
+    expect: [list_ifta_jurisdictions]
+  - request: work out the state by state miles for this move again
+    expect: [recalculate_move_jurisdiction_miles]
+  - request: backfill jurisdiction miles for the quarter's unattributed moves
+    expect: [backfill_jurisdiction_miles]
+  - request: draft a rate agreement for Acme from their rate sheet
+    expect: [draft_rate_agreement]
+  - request: change the lanes on the draft rate agreement before it goes for review
+    expect: [revise_rate_agreement_draft]
+  - request: copy last year's Acme contract into a new draft for the renewal
+    expect: [duplicate_rate_agreement]
+  - request: submit the draft rate agreement for approval
+    expect: [submit_rate_agreement]
+  - request: approve the Acme rate agreement so it starts pricing
+    expect: [approve_rate_agreement]
+  - request: reject the rate agreement, the Dallas lane rate is wrong
+    expect: [reject_rate_agreement]
+  - request: suspend the rate agreement while the customer is on credit hold
+    expect: [suspend_rate_agreement]
+  - request: put the suspended rate agreement back in service
+    expect: [resume_rate_agreement]
+  - request: archive the expired rate agreement
+    expect: [archive_rate_agreement]
+  - request: amend the active contract's Dallas lane rate from November 1
+    expect: [amend_rate_agreement_rules]
+  - request: apply a 3.5 percent general rate increase to every customer contract
+    expect: [apply_rate_increase]
+  - request: apply the uploaded rate sheet to its agreement
+    expect: [commit_rate_import]
+  - request: discard the rate sheet import, it is last month's file
+    expect: [discard_rate_import]
+  - request: which rate sheet imports are waiting for review
+    expect: [list_rate_imports]
+  - request: simulate the draft contract against last quarter's shipments
+    expect: [run_rate_simulation]
+  - request: record this week's price on our custom fuel index
+    expect: [record_fuel_index_price]
+  - request: the fuel index price for Monday was entered wrong, correct it
+    expect: [correct_fuel_index_price]
+  - request: which manual prices are on the custom fuel index
+    expect: [list_fuel_index_prices]
+  - request: cancel the report run, I picked the wrong dates
+    expect: [cancel_report_run]
+  - request: delete my saved late deliveries report
+    expect: [delete_report]
+  - request: reset my copy of the built-in report to the original
+    expect: [reset_report_fork]
+  - request: delete the ops dashboard
+    expect: [delete_dashboard]
+  - request: change the weekly report schedule to email the controller too
+    expect: [update_report_schedule]
+  - request: stop emailing the scheduled report
+    expect: [delete_report_schedule, update_report_schedule]
+  - request: which reports are scheduled to be emailed
+    expect: [list_report_schedules]
+  - request: log the accident the driver had on I-80 this morning
+    expect: [open_worker_safety_event]
+  - request: add the roadside violation from the inspection report
+    expect: [record_safety_violation]
+  - request: close the safety event now that the brakes are fixed
+    expect: [change_worker_safety_event_status]
+  - request: show this driver's safety events and violations
+    expect: [list_worker_safety_events]
+  - request: give the driver recognition for a million safe miles
+    expect: [give_worker_recognition]
+  - request: schedule a post-accident drug test for the driver
+    expect: [schedule_dot_test]
+  - request: draw this quarter's random drug and alcohol testing round
+    expect: [run_dot_random_draw]
+  - request: which drivers were selected in the random testing draw
+    expect: [get_dot_random_draw]
+  - request: mark the random selection as notified
+    expect: [update_dot_random_selection]
+  - request: open an FMLA leave case for the driver
+    expect: [open_leave_case]
+  - request: record a day of leave taken against the leave case
+    expect: [record_leave_day]
+  - request: assign the hazmat training course to these drivers
+    expect: [assign_worker_training, assign_required_worker_training]
+  - request: record that the driver completed the training course
+    expect: [record_training_completion]
+  - request: record the driver's new medical card
+    expect: [record_worker_credential]
+  - request: archive the endorsement the driver surrendered
+    expect: [archive_worker_credential]
+  - request: file a previous employer on the driver qualification file
+    expect: [record_employment_verification]
+  - request: we followed up with the previous employer again today
+    expect: [log_employment_verification_request]
+  - request: mark the road test on the onboarding checklist complete
+    expect: [update_worker_checklist_item]
+  - request: enter the injury on the OSHA log
+    expect: [record_worker_injury]
+  - request: file a vacation time off request for the driver
+    expect: [request_worker_pto]
+  - request: record the oversize permit Indiana issued for this shipment
+    expect: [record_shipment_permit]
+  - request: resolve the driver's pay dispute and pay back the detention
+    expect: [resolve_settlement_dispute]
+  - request: approve the lumper expense the driver submitted for reimbursement
+    expect: [review_driver_expense]
+  - request: generate the payroll export for the last two weeks
+    expect: [generate_payroll_export]
+  - request: draft the performance review scores for the driver
+    expect: [draft_performance_review]
+  - request: onboard a new carrier with their USDOT and MC numbers
+    expect: [create_carrier]
+  - request: change the carrier's remit to address
+    expect: [update_carrier]
+  - request: mark these carriers do not use
+    expect: [update_carrier_status]
+  - request: add a new customer account for Acme Foods
+    expect: [create_customer]
+  - request: change the customer's billing address
+    expect: [update_customer]
+  - request: deactivate the customer we no longer ship for
+    expect: [update_customer_status]
+  - request: add a new commodity with its freight class
+    expect: [create_commodity]
+  - request: change the commodity's temperature range
+    expect: [update_commodity]
+  - request: retire the commodities we stopped carrying
+    expect: [update_commodity_status]
+  - request: add a hazardous material with its UN number and packing group
+    expect: [create_hazardous_material]
+  - request: fix the ERG guide number on the hazmat record
+    expect: [update_hazardous_material]
+  - request: deactivate the hazardous material we no longer haul
+    expect: [update_hazardous_material_status]
+  - request: fix the facility address on the location
+    expect: [update_location]
+  - request: deactivate the location that closed
+    expect: [update_location_status]
+  - request: add a new tractor to the fleet
+    expect: [create_tractor]
+  - request: reassign the truck to a different driver and renew its registration
+    expect: [update_tractor]
+  - request: the tractor is actually sitting in the Dallas yard, locate it there
+    expect: [locate_tractor]
+  - request: add a new reefer trailer to the fleet
+    expect: [create_trailer]
+  - request: record the trailer's last inspection date
+    expect: [update_trailer]
+  - request: the trailer was dropped at another yard, locate it there
+    expect: [locate_trailer]
+  - request: delete the duplicate document upload
+    expect: [delete_documents]
+  - request: restore the previous version of the document
+    expect: [restore_document_version]
+  - request: restore the insight we dismissed
+    expect: [restore_insight]
+  - request: change the table change alert to watch a different column
+    expect: [update_table_change_alert]
+  - request: pause my change alert
+    expect: [set_table_change_alert_status]
+  - request: delete the change alert I no longer need
+    expect: [delete_table_change_alert]
+  - request: which change alerts do I have set up
+    expect: [list_table_change_alerts]
+  - request: dismiss the weather item on the watchtower feed
+    expect: [dismiss_watchtower_item]
+  - request: file the scanned PODs from capture intake onto their shipments
+    expect: [file_capture_items]
+  - request: discard the blank scanned page
+    expect: [discard_capture_item]
+  - request: discard the whole scanned stack in capture intake
+    expect: [discard_capture_batch]
+  - request: show the scanned paperwork waiting in capture intake
+    expect: [list_capture_batches]
+  - request: which equipment manufacturers do we have
+    expect: [list_equipment_manufacturers]
+  - request: the carrier's invoice for load 5521 matches the rate con, clear it for payment
+    expect: [accept_carrier_invoice_match]
+  - request: match the carrier's EDI 210 to the load it is billing for
+    expect: [create_carrier_invoice_match]
+  - request: that carrier bill was matched to the wrong load and is a duplicate, reject the match
+    expect: [reject_carrier_invoice_match]
+  - request: the inbound carrier invoice came in with an unknown SCAC, tie it to the right carrier in our system
+    expect: [link_edi_carrier_invoice_to_carrier]
+  - request: add a $150 lumper reimbursement line to the carrier's draft settlement
+    expect: [add_carrier_settlement_adjustment]
+  - request: delete the manual deduction line on ABC Trucking's pending carrier settlement
+    expect: [remove_carrier_settlement_adjustment]
+  - request: remove the manual adjustment I put on Mike's driver settlement by mistake
+    expect: [remove_driver_settlement_adjustment]
+  - request: approve the Blue Line Carriers settlement for this pay period
+    expect: [approve_carrier_settlement, approve_carrier_settlements]
+  - request: send the carrier settlement for Rapid Freight back to draft, the fuel advance is wrong
+    expect: [reject_carrier_settlement]
+  - request: send Jose's driver settlement back to draft, his detention pay is missing
+    expect: [reject_driver_settlement]
+  - request: the carrier's draft settlement lines look right now, send it up for approval
+    expect: [submit_carrier_settlement]
+  - request: Maria's draft driver settlement is ready, send it up for approval
+    expect: [submit_driver_settlement]
+  - request: rerun the totals on the carrier's draft settlement, two more loads accrued since
+    expect: [recalculate_carrier_settlement]
+  - request: recompute the driver's draft settlement from what has accrued, keep my manual adjustments
+    expect: [recalculate_driver_settlement]
+  - request: generate this pay period's draft settlements for all of our carriers
+    expect: [generate_carrier_settlement_batch]
+  - request: generate a draft settlement for driver Tom Reyes for last week's pay period
+    expect: [generate_driver_settlement]
+  - request: post Ana's approved driver settlement to the general ledger
+    expect: [post_driver_settlement, post_driver_settlements]
+  - request: we paid the carrier settlement by ACH yesterday, reference 88213, mark it paid
+    expect: [record_carrier_settlement_payment]
+  - request: void Derek's driver settlement, it was generated for the wrong period and has not been paid
+    expect: [void_driver_settlement]
+  - request: add the late load pay that missed generation onto the driver's draft settlement
+    expect: [attach_pay_events_to_settlement]
+  - request: pull load 7731's pay off this driver settlement, it belongs in next week's period
+    expect: [detach_pay_event_from_settlement]
+  - request: the driver says his settlement is short, mark his pay dispute as under review
+    expect: [start_settlement_dispute_review]
+  - request: credit $200 to the owner-operator's escrow balance for the trailer damage repair
+    expect: [adjust_escrow_account]
+  - request: the amended lease raises the owner operator's escrow target balance to $2,500 with 2% interest
+    expect: [update_escrow_account]
+  - request: put driver Chen on the per-mile team pay profile starting Monday
+    expect: [assign_pay_profile]
+  - request: Larry is leaving Friday, end his pay profile as of that date
+    expect: [end_pay_assignment]
+  - request: set up a $50 weekly safety bonus added to the driver's pay every settlement
+    expect: [create_recurring_earning]
+  - request: pause the weekly safety bonus on Kim's pay
+    expect: [update_recurring_earning]
+  - request: raise Kim's weekly truck lease deduction to $400
+    expect: [update_recurring_deduction]
+  - request: undo last week's payroll run, two of the timesheets in it were wrong
+    expect: [void_payroll_export]
+  - request: drop shipment 4412 from the proposed invoice run, it is not ready to bill
+    expect: [adjust_invoice_run_membership]
+  - request: use Acme's posted credit memo to settle their open invoices
+    expect: [apply_credit_memo]
+  - request: apply the unapplied cash left on Acme's posted payment to their open invoices
+    expect: [apply_customer_payment]
+  - request: approve the pending adjustment on invoice 2210 so the credit memo gets posted
+    expect: [approve_invoice_adjustment]
+  - request: deny the pending write-off adjustment on invoice 3120, the customer still owes it
+    expect: [reject_invoice_adjustment]
+  - request: draft a partial credit on posted invoice 1180 for the biller to review before it is submitted
+    expect: [save_invoice_adjustment_draft]
+  - request: credit and rebill posted invoice 3302 for the corrected weight
+    expect: [submit_invoice_adjustment]
+  - request: charge late fees on everything past due as of the end of the month
+    expect: [assess_late_charges]
+  - request: assign Sarah as the biller on the queue item for load 9921
+    expect: [assign_billing_queue_biller, assign_billing_queue_billers]
+  - request: assign me as the biller on all of these billing queue items
+    expect: [assign_billing_queue_billers]
+  - request: check these billing queue items before we post them
+    expect: [get_billing_queue_items, list_billing_queue_items]
+  - request: that billing queue item is a duplicate, cancel it so it never gets billed
+    expect: [cancel_billing_queue_item]
+  - request: park the billing item until the lumper receipt shows up
+    expect: [hold_billing_queue_item]
+  - request: the rate on this billing item is wrong, flag it as an exception for the biller
+    expect: [move_billing_item_to_exception]
+  - request: kick this billing item back to operations to fix the missing stop times
+    expect: [send_billing_item_back_to_ops]
+  - request: unblock the billing queue item and move it into review so a biller can work it
+    expect: [transition_item_to_in_review, transition_items_to_in_review]
+  - request: move all of the waiting billing queue items into review
+    expect: [transition_items_to_in_review, assign_billing_queue_billers]
+  - request: send yesterday's delivered loads over to the billing queue
+    expect: [transfer_to_billing]
+  - request: bill the statement customer's open period now instead of waiting for month end
+    expect: [bill_statement_now]
+  - request: build a consolidated invoice run for last week's approved uninvoiced freight
+    expect: [build_invoice_run]
+  - request: scrap the invoice run I built for the wrong period
+    expect: [cancel_invoice_run]
+  - request: commit the reviewed invoice run so the proposed invoices become drafts
+    expect: [commit_invoice_run]
+  - request: draft an invoice for the delivered shipments on order 5512
+    expect: [create_invoice]
+  - request: issue a $100 goodwill credit to Acme with no shipment behind it
+    expect: [create_invoice_memo]
+  - request: re-render the PDF on invoice 7781 so it shows the corrected address
+    expect: [generate_invoice_pdf]
+  - request: the customer is short-paying invoice 4410 over a damage claim, open a dispute
+    expect: [open_invoice_dispute]
+  - request: close out the dispute on invoice 4410, we agreed to a $75 credit
+    expect: [resolve_invoice_dispute]
+  - request: the customer dropped their complaint about invoice 4410, withdraw the dispute
+    expect: [withdraw_invoice_dispute]
+  - request: Acme's check bounced, reverse that payment
+    expect: [reverse_customer_payment]
+  - request: send posted invoice 6620 to the customer's EDI partner as a 210
+    expect: [send_invoice_edi]
+  - request: loop my teammate Dana in on invoice 3390 with a note
+    expect: [share_invoice]
+  - request: undo the credit memo application on invoice 2004, it went to the wrong invoice
+    expect: [unapply_credit_memo]
+  - request: change the memo and email recipients on the draft invoice before it goes out
+    expect: [update_invoice_draft]
+  - request: invoice 5523 went to the wrong customer, void it
+    expect: [void_invoice]
+  - request: close the reconciliation work item for that deposit without matching it, it was a transfer between our own accounts
+    expect: [resolve_bank_receipt_work_item]
+  - request: unlock September in the books so a few late postings can still land
+    expect: [unlock_fiscal_period]
+  - request: QuickBooks refused the invoice because that month is closed, send it dated on the first open day
+    expect: [redate_accounting_sync]
+  - request: the customer canceled order 8810, cancel it and every load on it
+    expect: [cancel_order]
+  - request: split shipment 4471 off order 990 so it gets billed on its own
+    expect: [detach_order_shipment]
+  - request: drop the detention charge from order 6612 before we invoice
+    expect: [remove_order_charge]
+  - request: split the fuel surcharge on order 6612 60/40 between the shipper and the consignee
+    expect: [set_order_charge_allocations, update_order_charge]
+  - request: change the PO number and BOL on order 6612
+    expect: [update_order]
+  - request: change the lumper charge amount on order 6612 to $185
+    expect: [update_order_charge]
+  - request: fix the typo in my comment on shipment 4471 and make it high priority
+    expect: [edit_shipment_comment]
+  - request: unpin the gate code note from the top of the shipment thread, it changed
+    expect: [unpin_shipment_comment]
+  - request: change the weight to 42,000 lbs and the pieces to 22 on shipment 4471
+    expect: [update_shipment]
+  - request: the state issued the oversize permit for load 5530, activate it with the permit number
+    expect: [update_shipment_permit]
+  - request: spin up next Tuesday's load from the weekly Walmart recurring schedule now instead of waiting
+    expect: [generate_recurring_shipment]
+  - request: change the weekly Kroger recurring shipment to run Mondays and Thursdays
+    expect: [update_recurring_shipment]
+  - request: mark the move in transit, the driver just left the shipper
+    expect: [update_move_status]
+  - request: take the driver and truck off these two moves, they have not started yet
+    expect: [unassign_moves]
+  - request: cover this move with Swift at the $2,100 they agreed to
+    expect: [assign_move_to_carrier]
+  - request: pull the outside carrier off the move and void their rate con
+    expect: [cancel_carrier_assignment]
+  - request: generate the rate con for the carrier covering this move
+    expect: [generate_rate_confirmation]
+  - request: email the rate confirmation to the carrier so they can sign it
+    expect: [send_rate_confirmation]
+  - request: the carrier signed and faxed back the rate con, mark it confirmed
+    expect: [record_rate_confirmation_confirmed]
+  - request: void the old rate con revision so its sign link stops working
+    expect: [void_rate_confirmation]
+  - request: withdraw the tender, we covered the load ourselves
+    expect: [cancel_tender]
+  - request: the carrier called and accepted the tender offer by phone, log their answer
+    expect: [record_tender_response]
+  - request: the detention clock at the Kroger DC needs a person to work it, hand it off
+    expect: [escalate_detention]
+  - request: mark trailer 5312 out of service, it is in the shop
+    expect: [update_trailer_status]
+  - request: do not give Raul any new loads until his medical card is renewed
+    expect: [place_worker_dispatch_hold]
+  - request: change the reason code on the late delivery service failure to weather
+    expect: [update_service_failure]
+  - request: mark the late delivery service failure reviewed with the customer caused reason code
+    expect: [review_service_failure]
+  - request: close the service failure on load 5520, the consignee was closed and we rescheduled
+    expect: [resolve_service_failure]
+  - request: accept the 204 load tender Walmart sent us over EDI
+    expect: [accept_edi_tender]
+  - request: decline the EDI 204 from Target, we have no capacity that week
+    expect: [decline_edi_tender]
+  - request: withdraw the load tender we sent our partner company over EDI, they have not answered
+    expect: [cancel_edi_tender]
+  - request: close out the EDI tender that went unanswered past its response deadline
+    expect: [expire_edi_tender]
+  - request: tender this new shipment to Partner Logistics over EDI
+    expect: [send_edi_tender]
+  - request: resend the 214 we already delivered to Walmart exactly as it was
+    expect: [replay_edi_message]
+  - request: run the quarantined inbound EDI files through processing again
+    expect: [reprocess_edi_inbound_files]
+  - request: the outbound 210s failed to reach the partner, try delivering them again
+    expect: [retry_edi_message_delivery]
+  - request: the shipper changed the pickup date on the load they tendered us over EDI, apply that change
+    expect: [review_edi_tender_change]
+  - request: the partner reported a cancellation on the EDI linked load, reject that status
+    expect: [review_edi_transfer_change]
+  - request: send Walmart a 214 status update that the load delivered
+    expect: [send_edi_status_update]
+  - request: that broker email is about shipment 4471, link it since the automatic match missed
+    expect: [link_inbound_message]
+  - request: mark that email from the shipper as ignored, it is spam
+    expect: [mark_inbound_message]
+  - request: update the carrier's profile with the corrected MC number and insurance from the intelligence check
+    expect: [apply_carrier_intel_suggestions]
+  - request: note that I reviewed Swift's carrier intelligence and checked their authority
+    expect: [mark_carrier_intel_reviewed]
+  - request: close the carrier finding about the insurance lapse, they sent a new certificate
+    expect: [resolve_carrier_intel_event]
+  - request: check this broker customer's FMCSA authority and bond by its DOT number
+    expect: [vet_customer_broker]
+  - request: add two days to Tom's PTO balance for the holiday he worked
+    expect: [adjust_worker_pto_balance]
+  - request: cancel Mike's approved vacation next week, he is coming in after all
+    expect: [cancel_worker_pto]
+  - request: change Ana's pending time-off request to three days instead of two
+    expect: [update_worker_pto]
+  - request: attach the scanned medical card we have on file to Joe's medical certificate
+    expect: [attach_worker_credential_document]
+  - request: attach the signed sign-in sheet to Pat's hazmat training assignment
+    expect: [attach_worker_training_document]
+  - request: fix the license number on Pat's CDL
+    expect: [update_worker_credential]
+  - request: cancel this quarter's random testing selection so we can draw again
+    expect: [cancel_dot_random_draw]
+  - request: the drug test did not happen because the clinic was closed, cancel it
+    expect: [cancel_dot_test]
+  - request: finalize the draft random testing round so the selections stand
+    expect: [finalize_dot_random_draw]
+  - request: cancel the onboarding checklist for Dan, he never started
+    expect: [cancel_worker_checklist]
+  - request: start the annual file audit checklist for driver Lee
+    expect: [start_worker_checklist]
+  - request: close Rita's FMLA case, she is back at work
+    expect: [close_leave_case]
+  - request: we asked Rita for medical certification on her FMLA case, start the clock
+    expect: [request_leave_certification]
+  - request: fix the end date on Rita's leave case and add the doctor's note
+    expect: [update_leave_case]
+  - request: remove the leave day logged for Rita on the 12th, it was entered by mistake
+    expect: [delete_leave_day]
+  - request: change the hours on Rita's recorded leave day to 4
+    expect: [update_leave_day]
+  - request: close Sam's open defensive driving training without a completion, the course was retired
+    expect: [close_worker_training]
+  - request: remove the duplicate previous employer on Jake's qualification file
+    expect: [delete_employment_verification]
+  - request: the previous employer answered, record their response on Jake's DQ file
+    expect: [update_employment_verification]
+  - request: delete the draft performance review I started for the wrong driver
+    expect: [delete_performance_review]
+  - request: open a draft annual performance review for Ken from the standard template
+    expect: [start_performance_review]
+  - request: remove the roadside violation cited on that inspection in error, it is skewing our CSA scores
+    expect: [delete_safety_violation]
+  - request: fix the BASIC and severity weight on the violation cited at the roadside inspection
+    expect: [update_safety_violation]
+  - request: delete the duplicate injury case on the OSHA log
+    expect: [delete_worker_injury]
+  - request: update the injury case, five days away from work and he returned on Monday
+    expect: [update_worker_injury]
+  - request: remove the kudos I gave the wrong driver
+    expect: [delete_worker_recognition]
+  - request: delete the hard braking event recorded on Mark by mistake and drop its points
+    expect: [delete_worker_safety_event]
+  - request: correct the fine amount on Mark's safety event
+    expect: [update_worker_safety_event]
+  - request: remove Carla from her shift pattern after Friday
+    expect: [end_worker_shift_assignment]
+  - request: Carla wants to trade her Saturday for Ben's Tuesday, set up the swap
+    expect: [propose_shift_swap]
+  - request: deny the shift swap between Carla and Ben, we need coverage that day
+    expect: [reject_shift_swap]
+  - request: Carla called and no longer wants the swap she asked for, withdraw it
+    expect: [withdraw_shift_swap]
+  - request: Ben is unavailable to work Sundays from now on, set that on his schedule preferences
+    expect: [set_worker_availability_preference]
+  - request: add an on-time delivery tile to the operations dashboard
+    expect: [add_dashboard_tile]
+  - request: reorder my home page so the open loads widget comes first
+    expect: [arrange_home_layout]
+  - request: take the weather widget off my home page
+    expect: [remove_home_widget]
+  - request: build a custom report of revenue per mile by customer and save it
+    expect: [create_report]
+  - request: make my own copy of the built-in lane profitability report so I can tweak it
+    expect: [fork_report]
+  - request: rename my saved revenue report and make it visible to the team
+    expect: [update_report]
+  - request: alert me whenever a customer is put on credit hold
+    expect: [create_table_change_alert]
+  - request: save this filtered shipments view so I can pick it again later
+    expect: [save_table_view]
+  - request: forget that Acme wants 24 hours notice, that arrangement ended
+    expect: [forget_memory]
+  - request: dismiss that insight about empty miles, it is not worth acting on
+    expect: [dismiss_insight]
+  - request: Look up David Park as a driver by name.
+    expect: [search_worker, get_worker]
+  - request: search worker by name Emily Chen
+    expect: [search_worker, get_worker]
+  - request: locate tractor TRC-002 and available dry van trailers for dispatch
+    expect: [list_tractors, list_trailers]
+  - request: Find David Park in the worker roster so I can identify his settlement
+    expect: [search_worker, get_worker]

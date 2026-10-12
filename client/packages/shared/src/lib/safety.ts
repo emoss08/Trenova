@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import {
   DISCIPLINARY_LEVEL_LABELS,
   INSPECTION_RESULT_LABELS,
@@ -130,18 +131,24 @@ export function describeSafetyEvent(event: SafetyEventDescriptor): string {
   const kind = SAFETY_EVENT_KIND_LABELS[event.kind] ?? event.kind;
   if (event.kind === "NearMiss") return kind;
   if (event.kind === "Inspection") {
-    const level = event.inspectionLevel ? `Level ${event.inspectionLevel} ` : "";
     const outcome = event.inspectionResult
-      ? ` — ${(INSPECTION_RESULT_LABELS[event.inspectionResult] ?? "").toLowerCase()}`
+      ? (INSPECTION_RESULT_LABELS[event.inspectionResult] ?? "").toLowerCase()
       : "";
     // The level reads as the start of the phrase when there is one, so the
     // kind only drops its capital behind it.
-    return `${level}${level ? kind.toLowerCase() : kind}${outcome}`;
+    if (event.inspectionLevel) {
+      return outcome
+        ? translate("Level {0} {1} — {2}", event.inspectionLevel, kind.toLowerCase(), outcome)
+        : translate("Level {0} {1}", event.inspectionLevel, kind.toLowerCase());
+    }
+    return outcome ? translate("{0} — {1}", kind, outcome) : kind;
   }
   const severity = describeSeverity(event.severity);
   const base = `${severity} ${kind.toLowerCase()}`;
   if (event.kind !== "Accident") return base;
-  return `${base}, ${event.preventable ? "preventable" : "non-preventable"}`;
+  return event.preventable
+    ? translate("{0}, preventable", base)
+    : translate("{0}, non-preventable", base);
 }
 
 /** Clean-inspection record for the last twelve months. */
@@ -149,7 +156,12 @@ export function summariseInspections(counts: {
   inspections: number;
   inspectionsPassed: number;
 }): string {
-  if (counts.inspections <= 0) return "No inspections in the last year";
+  if (counts.inspections <= 0) return translate("No inspections in the last year");
   const percent = Math.round((counts.inspectionsPassed / counts.inspections) * 100);
-  return `${counts.inspectionsPassed} of ${counts.inspections} clean (${percent}%)`;
+  return translate(
+    "{0} of {1} clean ({2}%)",
+    counts.inspectionsPassed,
+    counts.inspections,
+    percent,
+  );
 }

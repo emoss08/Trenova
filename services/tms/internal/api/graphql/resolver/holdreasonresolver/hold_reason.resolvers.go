@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/holdreason"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/holdreasonports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) HoldReasons(ctx context.Context, input gqlmodel.DataTabl
 
 	result, err := r.HoldReasonService.ListConnection(
 		ctx,
-		&repositories.ListHoldReasonConnectionRequest{
+		&holdreasonports.ListHoldReasonConnectionRequest{
 			Filter:            tableInput.Filter,
 			Cursor:            tableInput.Cursor,
 			HoldReasonColumns: holdReasonColumns(ctx, "edges.node"),
@@ -53,7 +53,7 @@ func (r *QueryResolver) HoldReason(ctx context.Context, id string) (*holdreason.
 		return nil, err
 	}
 
-	return r.HoldReasonService.Get(ctx, repositories.GetHoldReasonByIDRequest{
+	return r.HoldReasonService.Get(ctx, holdreasonports.GetHoldReasonByIDRequest{
 		ID:         holdReasonID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

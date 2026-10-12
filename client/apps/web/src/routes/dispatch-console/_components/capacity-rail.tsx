@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatUnixTime } from "@trenova/shared/lib/date";
-import { cn, pluralize } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { GripVerticalIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useRef } from "react";
 import { CapacityRailRowsSkeleton } from "./console-skeletons";
@@ -29,6 +29,7 @@ function DriverRow({
   isSelected: boolean;
   onSelect: (workerId: string) => void;
 }) {
+  const t = useT();
   const availability = availabilityMeta(driver.availability);
   const duty = driver.dutyStatus ? dutyStatusMeta(driver.dutyStatus) : undefined;
   const isBlocked = driver.availability === "Blocked";
@@ -42,15 +43,15 @@ function DriverRow({
   const isBusy = !isBlocked && driver.availability !== "Open";
   const statusLabel =
     isBusy && driver.projectedTimeAvailable > 0
-      ? `Free ${formatUnixTime(driver.projectedTimeAvailable)}`
-      : availability.label;
+      ? t("Free {0}", formatUnixTime(driver.projectedTimeAvailable))
+      : t(availability.label);
 
   const context = [
     driver.formattedLocation || `${driver.city}, ${driver.stateAbbreviation}`,
     driver.tractorCode,
-    duty?.label,
+    duty ? t(duty.label) : undefined,
     driver.openAssignments > 0
-      ? `${driver.openAssignments} ${pluralize("load", driver.openAssignments)}`
+      ? t("{0, plural, one {# load} other {# loads}}", driver.openAssignments)
       : undefined,
   ].filter(Boolean);
 

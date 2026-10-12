@@ -79,6 +79,7 @@ type CellProps = {
 };
 
 function HeatCell({ value, max, origin, destination, total }: CellProps) {
+  const t = useT();
   if (value === null) {
     return (
       <div
@@ -90,13 +91,19 @@ function HeatCell({ value, max, origin, destination, total }: CellProps) {
     );
   }
 
-  const t = max > 0 ? value / max : 0;
-  const opacity = Math.round(t * 100);
-  const isHighIntensity = t > HIGH_INTENSITY_THRESHOLD;
+  const intensity = max > 0 ? value / max : 0;
+  const opacity = Math.round(intensity * 100);
+  const isHighIntensity = intensity > HIGH_INTENSITY_THRESHOLD;
   const percent = total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
   const tooltipContent = value
-    ? `${origin} → ${destination}: ${value} loads · ${percent}% of total`
-    : `${origin} → ${destination}: 0 loads`;
+    ? t(
+        "{0} → {1}: {2, plural, one {# load} other {# loads}} · {3}% of total",
+        origin,
+        destination,
+        value,
+        percent,
+      )
+    : t("{0} → {1}: 0 loads", origin, destination);
 
   return (
     <Tooltip>

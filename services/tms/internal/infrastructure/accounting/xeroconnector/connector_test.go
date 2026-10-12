@@ -14,10 +14,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/stretchr/testify/assert"
@@ -163,11 +163,11 @@ func TestCompaniesListsTheOrganisationsOfThisConsent(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	companies, err := conn.Companies(t.Context(), &services.AccountingTokenGrant{
+	companies, err := conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
 		AccessToken: accessTokenWithEvent("evt-1"),
 	}, "")
 	require.NoError(t, err)
-	assert.Equal(t, []services.AccountingCompany{
+	assert.Equal(t, []accountingsyncports.AccountingCompany{
 		{ID: testTenant, Name: "Acme Freight", ConnectionID: "11111111-1111-4111-8111-111111111111"},
 		{
 			ID:           "55555555-5555-4555-8555-555555555555",
@@ -191,12 +191,12 @@ func TestCompaniesFailsWithoutAnOrganisation(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	_, err := conn.Companies(t.Context(), &services.AccountingTokenGrant{
+	_, err := conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
 		AccessToken: accessTokenWithEvent("evt-2"),
 	}, "")
 	require.ErrorIs(t, err, errNoCompany)
 
-	_, err = conn.Companies(t.Context(), &services.AccountingTokenGrant{AccessToken: "opaque"}, "")
+	_, err = conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{AccessToken: "opaque"}, "")
 	require.ErrorIs(t, err, xero.ErrMalformedToken)
 }
 
@@ -214,8 +214,8 @@ func TestReleaseCompaniesDeletesTheirConnections(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	err := conn.ReleaseCompanies(t.Context(), &services.AccountingTokenGrant{AccessToken: "token"},
-		[]services.AccountingCompany{
+	err := conn.ReleaseCompanies(t.Context(), &accountingsyncports.AccountingTokenGrant{AccessToken: "token"},
+		[]accountingsyncports.AccountingCompany{
 			{ID: "a", ConnectionID: "11111111-1111-4111-8111-111111111111"},
 			{ID: "b", ConnectionID: "44444444-4444-4444-8444-444444444444"},
 			{ID: "c"},
@@ -284,10 +284,10 @@ func TestVerifyApp(t *testing.T) {
 
 	require.NoError(t, verifyAppAgainst(t, http.StatusBadRequest, `{"error":"invalid_grant"}`))
 	err := verifyAppAgainst(t, http.StatusBadRequest, `{"error":"invalid_client"}`)
-	require.ErrorIs(t, err, services.ErrAccountingAppRejected)
+	require.ErrorIs(t, err, accountingsyncports.ErrAccountingAppRejected)
 	err = verifyAppAgainst(t, http.StatusBadGateway, `{}`)
 	require.Error(t, err)
-	assert.NotErrorIs(t, err, services.ErrAccountingAppRejected)
+	assert.NotErrorIs(t, err, accountingsyncports.ErrAccountingAppRejected)
 }
 
 func sign(key string, body []byte) string {

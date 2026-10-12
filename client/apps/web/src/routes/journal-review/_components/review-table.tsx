@@ -70,6 +70,7 @@ export default function JournalReviewTable() {
   return (
     <DataTable<JournalReviewRow>
       name="Journal entry"
+      emptyTitle={t("No journal entries yet")}
       queryKey={JOURNAL_REVIEW_TABLE_KEY}
       graphql={journalReviewTableGraphQLConfig}
       resource={Resource.JournalEntry}

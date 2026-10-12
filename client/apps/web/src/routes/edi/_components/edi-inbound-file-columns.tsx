@@ -61,8 +61,10 @@ export function getInboundFileColumns(t: TranslateFn): ColumnDef<EDIInboundFileR
       meta: {
         label: t("Partner"),
         apiField: "ediPartnerId",
-        filterable: false,
         sortable: false,
+        filterable: true,
+        filterType: "record",
+        filterRecord: "EDI_PARTNER",
       },
     },
     {

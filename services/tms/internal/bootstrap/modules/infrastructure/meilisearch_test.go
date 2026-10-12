@@ -3,8 +3,8 @@ package infrastructure
 import (
 	"testing"
 
-	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
@@ -25,7 +25,7 @@ func TestMeilisearchClientModuleProvidesSearchRepository(t *testing.T) {
 		fx.Supply(zap.NewNop()),
 		fx.WithLogger(func() fxevent.Logger { return fxevent.NopLogger }),
 		MeilisearchClientModule,
-		fx.Invoke(func(repo repoports.SearchRepository) {
+		fx.Invoke(func(repo customerports.SearchRepository) {
 			require.NotNil(t, repo)
 		}),
 	)

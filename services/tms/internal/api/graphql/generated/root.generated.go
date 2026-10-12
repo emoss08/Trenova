@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentsafetyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentscorecardexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aiauditexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aicontrolexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aifeedbackexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aiproviderexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/airetrievalexec"
@@ -31,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingqueueexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingtransferexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/bulkeditexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/captureexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriercapacityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
@@ -41,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerpaymentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customfielddefinitionexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/datatableinsightexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
@@ -73,6 +76,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/homelayoutexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/iftaexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundmessageexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundreplyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceadjustmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoicedisputeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceexec"
@@ -110,12 +114,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/storedmileageexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablechangealertexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tableconfigurationexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablelayoutexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/telematicsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenantexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenderexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/timesheetexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tractorexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/trailerexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/triageexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/userexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/usstateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/watchtowerexec"
@@ -132,105 +138,129 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workertrainingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/accounttype"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/agentquality"
-	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/domain/aitraining"
-	"github.com/emoss08/trenova/internal/core/domain/apikey"
-	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/domain/briefing"
-	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/domain/commodity"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/domain/customfield"
-	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
-	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
-	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/email"
-	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
-	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
-	"github.com/emoss08/trenova/internal/core/domain/holdreason"
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
-	"github.com/emoss08/trenova/internal/core/domain/journalsource"
-	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
-	"github.com/emoss08/trenova/internal/core/domain/latecharge"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
-	"github.com/emoss08/trenova/internal/core/domain/order"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/domain/servicetype"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
-	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
-	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
-	"github.com/emoss08/trenova/internal/core/services/captureservice"
-	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
-	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
-	"github.com/emoss08/trenova/internal/core/services/driverportalservice"
-	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
-	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
-	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
-	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
-	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
-	"github.com/emoss08/trenova/internal/core/services/settlementshared"
-	"github.com/emoss08/trenova/internal/core/services/timesheetservice"
-	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
-	"github.com/emoss08/trenova/internal/core/services/workeremploymentservice"
-	"github.com/emoss08/trenova/internal/core/services/workerinjuryservice"
-	"github.com/emoss08/trenova/internal/core/services/workeroverviewservice"
-	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
-	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	gqlparser "github.com/vektah/gqlparser/v2"
@@ -243,9 +273,14 @@ type ResolverRoot interface {
 	AIAuditChainStatus() AIAuditChainStatusResolver
 	AIAuditEvent() AIAuditEventResolver
 	AIAuditExport() AIAuditExportResolver
+	AIControlSegment() AIControlSegmentResolver
+	AIControlSummary() AIControlSummaryResolver
 	AICorrection() AICorrectionResolver
 	AIFeedback() AIFeedbackResolver
 	AIProvider() AIProviderResolver
+	AIProviderKeyInfo() AIProviderKeyInfoResolver
+	AIRouteChoice() AIRouteChoiceResolver
+	AITuneUpEvidence() AITuneUpEvidenceResolver
 	AccessorialCharge() AccessorialChargeResolver
 	AccountingAppCredential() AccountingAppCredentialResolver
 	AccountingAppSettings() AccountingAppSettingsResolver
@@ -261,8 +296,10 @@ type ResolverRoot interface {
 	AccountingSyncRecord() AccountingSyncRecordResolver
 	AgentDecision() AgentDecisionResolver
 	AgentDefinition() AgentDefinitionResolver
+	AgentDraft() AgentDraftResolver
 	AgentEvalCase() AgentEvalCaseResolver
 	AgentEvaluation() AgentEvaluationResolver
+	AgentInstructionFinding() AgentInstructionFindingResolver
 	AgentMemory() AgentMemoryResolver
 	AgentPlan() AgentPlanResolver
 	AgentPreviewFieldChange() AgentPreviewFieldChangeResolver
@@ -280,7 +317,10 @@ type ResolverRoot interface {
 	AgentRun() AgentRunResolver
 	AgentRunEvent() AgentRunEventResolver
 	AgentSafety() AgentSafetyResolver
+	AgentSafetySummary() AgentSafetySummaryResolver
 	AgentSuiteRun() AgentSuiteRunResolver
+	AgentToolHolders() AgentToolHoldersResolver
+	AgentToolRule() AgentToolRuleResolver
 	AgentToolSafety() AgentToolSafetyResolver
 	AgentWorstRatedAnswer() AgentWorstRatedAnswerResolver
 	ApiKey() ApiKeyResolver
@@ -367,10 +407,14 @@ type ResolverRoot interface {
 	IFTAReturnLine() IFTAReturnLineResolver
 	IFTAReturnProblem() IFTAReturnProblemResolver
 	IFTATaxRate() IFTATaxRateResolver
+	InboundActivity() InboundActivityResolver
 	InboundAttachment() InboundAttachmentResolver
 	InboundMailbox() InboundMailboxResolver
 	InboundMailboxCredentials() InboundMailboxCredentialsResolver
 	InboundMessage() InboundMessageResolver
+	InboundReply() InboundReplyResolver
+	InboundSnooze() InboundSnoozeResolver
+	InboundSplitDocument() InboundSplitDocumentResolver
 	Invoice() InvoiceResolver
 	InvoiceAdjustment() InvoiceAdjustmentResolver
 	InvoiceAdjustmentApprovalQueueItem() InvoiceAdjustmentApprovalQueueItemResolver
@@ -416,6 +460,7 @@ type ResolverRoot interface {
 	RoutingGuideEntry() RoutingGuideEntryResolver
 	SafetyScorecard() SafetyScorecardResolver
 	ServiceFailure() ServiceFailureResolver
+	ServiceFailureShipment() ServiceFailureShipmentResolver
 	ServiceFailureStop() ServiceFailureStopResolver
 	SettlementControl() SettlementControlResolver
 	SettlementException() SettlementExceptionResolver
@@ -431,6 +476,17 @@ type ResolverRoot interface {
 	Tractor() TractorResolver
 	Trailer() TrailerResolver
 	TrainingCourse() TrainingCourseResolver
+	TriageAction() TriageActionResolver
+	TriageAssignee() TriageAssigneeResolver
+	TriageBriefing() TriageBriefingResolver
+	TriageConflict() TriageConflictResolver
+	TriageDeckItem() TriageDeckItemResolver
+	TriageHandOff() TriageHandOffResolver
+	TriageReplyTemplate() TriageReplyTemplateResolver
+	TriageRule() TriageRuleResolver
+	TriageSettings() TriageSettingsResolver
+	TriageStopTimes() TriageStopTimesResolver
+	TriageView() TriageViewResolver
 	User() UserResolver
 	WatchtowerItem() WatchtowerItemResolver
 	Worker() WorkerResolver
@@ -470,7 +526,7 @@ type DirectiveRoot struct{}
 type ComplexityRoot struct{}
 
 type AIAuditChainStatusResolver interface {
-	LastVerificationStatus(ctx context.Context, obj *services.AIAuditChainStatus) (*aiaudit.VerificationStatus, error)
+	LastVerificationStatus(ctx context.Context, obj *aiauditports.AIAuditChainStatus) (*aiaudit.VerificationStatus, error)
 }
 
 type AIAuditEventResolver interface {
@@ -492,6 +548,16 @@ type AIAuditExportResolver interface {
 	Downloadable(ctx context.Context, obj *aiaudit.AIAuditExport) (bool, error)
 }
 
+type AIControlSegmentResolver interface {
+	Target(ctx context.Context, obj *aicontrolsummary.Segment) (*string, error)
+	ProviderID(ctx context.Context, obj *aicontrolsummary.Segment) (*string, error)
+	Tone(ctx context.Context, obj *aicontrolsummary.Segment) (*string, error)
+}
+
+type AIControlSummaryResolver interface {
+	VisibleFailures(ctx context.Context, obj *aicontrolsummary.Summary) ([]*aicontrolsummary.ProviderFailure, error)
+}
+
 type AICorrectionResolver interface {
 	Task(ctx context.Context, obj *aicorrection.Correction) (string, error)
 	SourceType(ctx context.Context, obj *aicorrection.Correction) (string, error)
@@ -506,6 +572,24 @@ type AIFeedbackResolver interface {
 type AIProviderResolver interface {
 	InputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	OutputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+	CacheReadCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+	CacheWriteCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+	MonthlyCapUsd(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+	MonthSpendUsd(ctx context.Context, obj *aiprovider.Provider) (string, error)
+	APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiprovider.KeyInfo, error)
+}
+
+type AIProviderKeyInfoResolver interface {
+	AddedBy(ctx context.Context, obj *aiprovider.KeyInfo) (*tenant.User, error)
+}
+
+type AIRouteChoiceResolver interface {
+	ProviderID(ctx context.Context, obj *aiprovider.RouteChoice) (*string, error)
+}
+
+type AITuneUpEvidenceResolver interface {
+	FromTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error)
+	ToTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error)
 }
 
 type AccessorialChargeResolver interface {
@@ -518,8 +602,8 @@ type AccountingAppCredentialResolver interface {
 }
 
 type AccountingAppSettingsResolver interface {
-	ActiveSource(ctx context.Context, obj *services.AccountingAppSettings) (*accountingsync.AppSource, error)
-	InstanceEnvironment(ctx context.Context, obj *services.AccountingAppSettings) (*accountingsync.AppEnvironment, error)
+	ActiveSource(ctx context.Context, obj *accountingsyncports.AccountingAppSettings) (*accountingsync.AppSource, error)
+	InstanceEnvironment(ctx context.Context, obj *accountingsyncports.AccountingAppSettings) (*accountingsync.AppEnvironment, error)
 }
 
 type AccountingConnectionResolver interface {
@@ -543,9 +627,9 @@ type AccountingDriftFindingResolver interface {
 }
 
 type AccountingDriftFixPreviewResolver interface {
-	Direction(ctx context.Context, obj *services.AccountingDriftFixPreview) (*accountingsync.DriftDirection, error)
-	FixObject(ctx context.Context, obj *services.AccountingDriftFixPreview) (*accountingsync.DriftFixObject, error)
-	Operation(ctx context.Context, obj *services.AccountingDriftFixPreview) (*accountingsync.SyncOperation, error)
+	Direction(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.DriftDirection, error)
+	FixObject(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.DriftFixObject, error)
+	Operation(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.SyncOperation, error)
 }
 
 type AccountingInboundChangeResolver interface {
@@ -583,7 +667,7 @@ type AccountingSyncAttemptResolver interface {
 }
 
 type AccountingSyncAttentionGroupResolver interface {
-	ErrorCategory(ctx context.Context, obj *repositories.AccountingSyncAttentionGroup) (*accountingsync.SyncErrorCategory, error)
+	ErrorCategory(ctx context.Context, obj *accountingsyncports.AccountingSyncAttentionGroup) (*accountingsync.SyncErrorCategory, error)
 }
 
 type AccountingSyncRecordResolver interface {
@@ -609,6 +693,11 @@ type AgentDefinitionResolver interface {
 	OpenRuns(ctx context.Context, obj *agentdefinition.Definition) (int, error)
 }
 
+type AgentDraftResolver interface {
+	EventKinds(ctx context.Context, obj *agentports.AgentDraft) ([]string, error)
+	ToolTiers(ctx context.Context, obj *agentports.AgentDraft) (map[string]any, error)
+}
+
 type AgentEvalCaseResolver interface {
 	History(ctx context.Context, obj *agentquality.EvalCase) ([]map[string]any, error)
 	PageContext(ctx context.Context, obj *agentquality.EvalCase) (map[string]any, error)
@@ -627,6 +716,11 @@ type AgentEvaluationResolver interface {
 	Checks(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
 	Judge(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
 	Fingerprint(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
+}
+
+type AgentInstructionFindingResolver interface {
+	Resource(ctx context.Context, obj *agentlint.Finding) (string, error)
+	Operation(ctx context.Context, obj *agentlint.Finding) (string, error)
 }
 
 type AgentMemoryResolver interface {
@@ -686,7 +780,7 @@ type AgentProposalFieldResolver interface {
 }
 
 type AgentQualityAgentResolver interface {
-	ID(ctx context.Context, obj *services.AgentQualityAgent) (string, error)
+	ID(ctx context.Context, obj *agentqualityports.AgentQualityAgent) (string, error)
 }
 
 type AgentQualityControlResolver interface {
@@ -712,10 +806,14 @@ type AgentRunEventResolver interface {
 }
 
 type AgentSafetyResolver interface {
-	AgentID(ctx context.Context, obj *services.AgentSafetySubject) (string, error)
-	OrganizationShadow(ctx context.Context, obj *services.AgentSafetySubject) (bool, error)
-	Tools(ctx context.Context, obj *services.AgentSafetySubject) ([]*services.AgentToolSafety, error)
-	Reach(ctx context.Context, obj *services.AgentSafetySubject) (*gqlmodel.AgentReach, error)
+	AgentID(ctx context.Context, obj *agentports.AgentSafetySubject) (string, error)
+	OrganizationShadow(ctx context.Context, obj *agentports.AgentSafetySubject) (bool, error)
+	Tools(ctx context.Context, obj *agentports.AgentSafetySubject) ([]*agentports.AgentToolSafety, error)
+	Reach(ctx context.Context, obj *agentports.AgentSafetySubject) (*gqlmodel.AgentReach, error)
+}
+
+type AgentSafetySummaryResolver interface {
+	OpenSensitiveAgentIds(ctx context.Context, obj *agentports.AgentSafetySummary) ([]string, error)
 }
 
 type AgentSuiteRunResolver interface {
@@ -726,13 +824,23 @@ type AgentSuiteRunResolver interface {
 	CostUsd(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
 }
 
+type AgentToolHoldersResolver interface {
+	AgentIds(ctx context.Context, obj *agentports.AgentToolHolders) ([]string, error)
+}
+
+type AgentToolRuleResolver interface {
+	MaxTier(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.AutonomyTier, error)
+	ReadsExternal(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.ExternalRead, error)
+	UpdatedBy(ctx context.Context, obj *agent.ToolRuleOverride) (*tenant.User, error)
+}
+
 type AgentToolSafetyResolver interface {
-	ID(ctx context.Context, obj *services.AgentToolSafety) (string, error)
-	Policy(ctx context.Context, obj *services.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error)
+	ID(ctx context.Context, obj *agentports.AgentToolSafety) (string, error)
+	Policy(ctx context.Context, obj *agentports.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error)
 }
 
 type AgentWorstRatedAnswerResolver interface {
-	ID(ctx context.Context, obj *services.AgentWorstRatedAnswer) (string, error)
+	ID(ctx context.Context, obj *agentqualityports.AgentWorstRatedAnswer) (string, error)
 }
 
 type ApiKeyResolver interface {
@@ -760,7 +868,7 @@ type BriefingSectionResolver interface {
 type CaptureBatchResolver interface {
 	User(ctx context.Context, obj *capture.CaptureBatch) (*tenant.User, error)
 	Device(ctx context.Context, obj *capture.CaptureBatch) (*capture.CaptureDevice, error)
-	Target(ctx context.Context, obj *capture.CaptureBatch) (*repositories.CaptureRecordLabel, error)
+	Target(ctx context.Context, obj *capture.CaptureBatch) (*captureports.CaptureRecordLabel, error)
 	OpenItemCount(ctx context.Context, obj *capture.CaptureBatch) (int, error)
 	IsEditable(ctx context.Context, obj *capture.CaptureBatch) (bool, error)
 	Pages(ctx context.Context, obj *capture.CaptureBatch) ([]*capture.CapturePage, error)
@@ -768,7 +876,7 @@ type CaptureBatchResolver interface {
 }
 
 type CaptureCoverSheetResolver interface {
-	Target(ctx context.Context, obj *gqlmodel.CaptureCoverSheet) (*repositories.CaptureRecordLabel, error)
+	Target(ctx context.Context, obj *gqlmodel.CaptureCoverSheet) (*captureports.CaptureRecordLabel, error)
 }
 
 type CaptureDeviceResolver interface {
@@ -778,9 +886,9 @@ type CaptureDeviceResolver interface {
 
 type CaptureItemResolver interface {
 	PageCount(ctx context.Context, obj *capture.CaptureItem) (int, error)
-	SuggestedRecord(ctx context.Context, obj *capture.CaptureItem) (*repositories.CaptureRecordLabel, error)
+	SuggestedRecord(ctx context.Context, obj *capture.CaptureItem) (*captureports.CaptureRecordLabel, error)
 	SuggestionSource(ctx context.Context, obj *capture.CaptureItem) (*capture.SuggestionSource, error)
-	FiledRecord(ctx context.Context, obj *capture.CaptureItem) (*repositories.CaptureRecordLabel, error)
+	FiledRecord(ctx context.Context, obj *capture.CaptureItem) (*captureports.CaptureRecordLabel, error)
 	FiledBy(ctx context.Context, obj *capture.CaptureItem) (*tenant.User, error)
 }
 
@@ -1097,7 +1205,7 @@ type ExtractionRolloutResolver interface {
 }
 
 type ExtractionShadowReportResolver interface {
-	CostUsd(ctx context.Context, obj *services.ExtractionShadowReport) (string, error)
+	CostUsd(ctx context.Context, obj *extractionshadowports.ExtractionShadowReport) (string, error)
 }
 
 type ExtractionShadowResultResolver interface {
@@ -1274,13 +1382,33 @@ type IFTATaxRateResolver interface {
 	Jurisdiction(ctx context.Context, obj *ifta.TaxRate) (*ifta.Jurisdiction, error)
 }
 
+type InboundActivityResolver interface {
+	Actor(ctx context.Context, obj *triage.Activity) (*tenant.User, error)
+	Until(ctx context.Context, obj *triage.Activity) (*int, error)
+	FromClassification(ctx context.Context, obj *triage.Activity) (*inboundmessage.Classification, error)
+	ToClassification(ctx context.Context, obj *triage.Activity) (*inboundmessage.Classification, error)
+	RecordID(ctx context.Context, obj *triage.Activity) (*string, error)
+}
+
 type InboundAttachmentResolver interface {
 	DocumentID(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error)
+	FiledShipmentID(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error)
+	FiledShipment(ctx context.Context, obj *inboundmessage.InboundAttachment) (*shipmentports.ShipmentSummary, error)
+	FiledAs(ctx context.Context, obj *inboundmessage.InboundAttachment) (*string, error)
+	FiledAt(ctx context.Context, obj *inboundmessage.InboundAttachment) (*int, error)
+	Pages(ctx context.Context, obj *inboundmessage.InboundAttachment) ([]*inboundmessage.AttachmentPage, error)
+	SplitDocuments(ctx context.Context, obj *inboundmessage.InboundAttachment) ([]*inboundmessage.SplitDocument, error)
+	Reading(ctx context.Context, obj *inboundmessage.InboundAttachment) (*inboundmessageports.DocumentReading, error)
 }
 
 type InboundMailboxResolver interface {
 	HasSigningSecret(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error)
 	HasAPIKey(ctx context.Context, obj *inboundmessage.Mailbox) (bool, error)
+	LastReceivedAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error)
+	Health(ctx context.Context, obj *inboundmessage.Mailbox) (inboundmessage.SourceHealth, error)
+	TestSentAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error)
+	TestReceivedAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error)
+	BlockedSenders(ctx context.Context, obj *inboundmessage.Mailbox) ([]string, error)
 }
 
 type InboundMailboxCredentialsResolver interface {
@@ -1299,9 +1427,45 @@ type InboundMessageResolver interface {
 	Attachments(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*inboundmessage.InboundAttachment, error)
 	AttachmentCount(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error)
 	Preview(ctx context.Context, obj *inboundmessage.InboundMessage) (string, error)
-	MatchedShipment(ctx context.Context, obj *inboundmessage.InboundMessage) (*repositories.ShipmentSummary, error)
+	MatchedShipment(ctx context.Context, obj *inboundmessage.InboundMessage) (*shipmentports.ShipmentSummary, error)
 	MatchedCustomer(ctx context.Context, obj *inboundmessage.InboundMessage) (*customer.Customer, error)
 	NeedsReview(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error)
+	ThreadCount(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error)
+	OwnerID(ctx context.Context, obj *inboundmessage.InboundMessage) (*string, error)
+	Owner(ctx context.Context, obj *inboundmessage.InboundMessage) (*tenant.User, error)
+	DueAt(ctx context.Context, obj *inboundmessage.InboundMessage) (*int, error)
+	ResponseTargetMinutes(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error)
+	Snooze(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessageports.SnoozeView, error)
+	AwaitingReply(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessageports.AwaitingReplyView, error)
+	HandledByNova(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error)
+	HandledByRuleID(ctx context.Context, obj *inboundmessage.InboundMessage) (*string, error)
+	HandledAction(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessage.NovaAction, error)
+	Reviewer(ctx context.Context, obj *inboundmessage.InboundMessage) (*tenant.User, error)
+	Activity(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Activity, error)
+	Actions(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Action, error)
+	Replies(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Reply, error)
+	ReplyDraft(ctx context.Context, obj *inboundmessage.InboundMessage) (*triage.Reply, error)
+	LoadDraft(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessage.LoadDraft, error)
+	Facts(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*inboundmessage.Fact, error)
+	Conflicts(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*inboundmessage.Conflict, error)
+}
+
+type InboundReplyResolver interface {
+	CcAddresses(ctx context.Context, obj *triage.Reply) ([]string, error)
+	TemplateID(ctx context.Context, obj *triage.Reply) (*string, error)
+	SuggestedAddress(ctx context.Context, obj *triage.Reply) (*string, error)
+	SentBy(ctx context.Context, obj *triage.Reply) (*tenant.User, error)
+	SentAt(ctx context.Context, obj *triage.Reply) (*int, error)
+}
+
+type InboundSnoozeResolver interface {
+	WatchShipment(ctx context.Context, obj *inboundmessageports.SnoozeView) (*shipmentports.ShipmentSummary, error)
+	DocumentTypeName(ctx context.Context, obj *inboundmessageports.SnoozeView) (*string, error)
+	SnoozedBy(ctx context.Context, obj *inboundmessageports.SnoozeView) (*tenant.User, error)
+}
+
+type InboundSplitDocumentResolver interface {
+	DocumentID(ctx context.Context, obj *inboundmessage.SplitDocument) (string, error)
 }
 
 type InvoiceResolver interface {
@@ -1320,7 +1484,7 @@ type InvoiceResolver interface {
 	DaysPastDue(ctx context.Context, obj *invoice.Invoice) (*int, error)
 	PaymentApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.Application, error)
 	CreditApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.CreditMemoApplication, error)
-	EDISendPlan(ctx context.Context, obj *invoice.Invoice) (*services.InvoiceEDISendPlan, error)
+	EDISendPlan(ctx context.Context, obj *invoice.Invoice) (*invoiceports.InvoiceEDISendPlan, error)
 	Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoice.InvoiceDispute, error)
 	OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoice.InvoiceDispute, error)
 	LateChargeAssessments(ctx context.Context, obj *invoice.Invoice) ([]*latecharge.LateChargeAssessment, error)
@@ -1335,11 +1499,11 @@ type InvoiceAdjustmentResolver interface {
 }
 
 type InvoiceAdjustmentApprovalQueueItemResolver interface {
-	RebillStrategy(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (*invoiceadjustment.RebillStrategy, error)
-	CreditTotalAmount(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error)
-	RebillTotalAmount(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error)
-	NetDeltaAmount(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error)
-	RerateVariancePercent(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	RebillStrategy(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (*invoiceadjustment.RebillStrategy, error)
+	CreditTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	RebillTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	NetDeltaAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	RerateVariancePercent(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
 }
 
 type InvoiceAdjustmentLineResolver interface {
@@ -1378,7 +1542,7 @@ type JournalEntryLineResolver interface {
 }
 
 type JournalReviewSummaryResolver interface {
-	PostingMode(ctx context.Context, obj *services.JournalReviewSummary) (string, error)
+	PostingMode(ctx context.Context, obj *journalentryports.JournalReviewSummary) (string, error)
 }
 
 type JurisdictionRuleResolver interface {
@@ -1391,7 +1555,7 @@ type LateChargeAssessmentResolver interface {
 }
 
 type LateChargeLineResolver interface {
-	RatePercent(ctx context.Context, obj *services.LateChargeLine) (string, error)
+	RatePercent(ctx context.Context, obj *latechargeports.LateChargeLine) (string, error)
 }
 
 type LeaveControlResolver interface {
@@ -1419,11 +1583,11 @@ type MutationResolver interface {
 	PatchTrailer(ctx context.Context, id string, input gqlmodel.TrailerPatchInput) (*trailer.Trailer, error)
 	BulkUpdateTrailerStatus(ctx context.Context, input gqlmodel.BulkUpdateTrailerStatusInput) ([]*trailer.Trailer, error)
 	LocateTrailer(ctx context.Context, input gqlmodel.LocateTrailerInput) (*equipmentcontinuity.EquipmentContinuity, error)
-	SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*services.AccountingSyncStatus, error)
-	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncStatus, error)
-	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*services.AccountingAuthorizationStart, error)
+	SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*accountingsyncports.AccountingSyncStatus, error)
+	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncStatus, error)
+	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingAuthorizationStart, error)
 	CompleteAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsync.AccountingConnection, error)
-	FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*services.AccountingAuthorizationCompletion, error)
+	FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsyncports.AccountingAuthorizationCompletion, error)
 	ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingsync.AccountingConnection, error)
 	DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
 	CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
@@ -1449,7 +1613,7 @@ type MutationResolver interface {
 	IgnoreAccountingInboundChange(ctx context.Context, input gqlmodel.IgnoreAccountingInboundChangeInput) (*accountingsync.AccountingInboundChange, error)
 	ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error)
 	DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error)
-	CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*services.AccountingDriftOverview, error)
+	CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingDriftOverview, error)
 	DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
 	DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error)
 	DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
@@ -1461,26 +1625,40 @@ type MutationResolver interface {
 	CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
 	UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
 	SetAgentMemoryStatus(ctx context.Context, id string, status agent.MemoryStatus) (*agent.Memory, error)
+	ReviewAgentMemory(ctx context.Context, id string, version int) (*agent.Memory, error)
 	ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agent.Memory, error)
 	DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agent.Memory, error)
 	ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agent.AgentException, error)
 	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*tenant.AgentControl, error)
+	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agentdefinition.TestPrompt, error)
+	DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
-	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*services.AgentCapabilities, error)
+	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentports.AgentCapabilities, error)
+	DraftAgentFromDescription(ctx context.Context, description string) (*agentports.AgentDraft, error)
+	TightenAgentInstructions(ctx context.Context, instructions string) (*agentports.TightenedAgentInstructions, error)
 	CreateAgentEvalCase(ctx context.Context, input gqlmodel.CreateAgentEvalCaseInput) (*gqlmodel.AgentEvalCaseCapture, error)
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
 	ReplayAgentEvalCase(ctx context.Context, id string) (*agent.Evaluation, error)
 	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentquality.SuiteRun, error)
 	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentquality.Control, error)
+	SaveAgentToolRule(ctx context.Context, name string, version int, input gqlmodel.AgentToolRuleInput) (*gqlmodel.AgentToolRuleSaved, error)
 	RequestAIAuditExport(ctx context.Context, input gqlmodel.RequestAIAuditExportInput) (*aiaudit.AIAuditExport, error)
-	AiAuditExportDownload(ctx context.Context, id string) (*services.AIAuditExportDownload, error)
-	VerifyAIAuditChain(ctx context.Context) (*services.AIAuditChainStatus, error)
+	AiAuditExportDownload(ctx context.Context, id string) (*aiauditports.AIAuditExportDownload, error)
+	VerifyAIAuditChain(ctx context.Context) (*aiauditports.AIAuditChainStatus, error)
+	DismissAIProviderFailure(ctx context.Context, providerID string, lastFailureAt int) (bool, error)
+	RestoreAIProviderFailure(ctx context.Context, providerID string) (bool, error)
+	ApplyAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
+	DismissAITuneUp(ctx context.Context, id string, version int, days *int) (*gqlmodel.AITuneUp, error)
+	RestoreAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
 	SetMyAIFeedback(ctx context.Context, input gqlmodel.SetMyAIFeedbackInput) (*aifeedback.Feedback, error)
 	ClearMyAIFeedback(ctx context.Context, input gqlmodel.AIFeedbackTargetInput) (bool, error)
-	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*services.AIRetrievalStatus, error)
-	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*services.AIRetrievalStatus, error)
+	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*agentports.TestAIProviderResult, error)
+	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
+	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
+	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*agentports.AIRetrievalStatus, error)
+	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalStatus, error)
 	CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*driverpay.BenefitPlan, error)
 	UpdateBenefitPlan(ctx context.Context, input gqlmodel.UpdateBenefitPlanInput) (*driverpay.BenefitPlan, error)
 	EnrollBenefit(ctx context.Context, input gqlmodel.EnrollBenefitInput) (*driverpay.WorkerBenefitEnrollment, error)
@@ -1496,6 +1674,8 @@ type MutationResolver interface {
 	RetryBillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
 	MarkBriefingRead(ctx context.Context, id string) (*briefing.Briefing, error)
 	RegenerateBriefing(ctx context.Context, input gqlmodel.TodaysBriefingInput) (*briefing.Briefing, error)
+	StartBulkEdit(ctx context.Context, input gqlmodel.BulkEditInput) (*gqlmodel.BulkEditJob, error)
+	UndoMyBulkEdit(ctx context.Context, id string) (*gqlmodel.BulkEditJob, error)
 	EditCaptureItems(ctx context.Context, batchID string, input gqlmodel.EditCaptureItemsInput) (*capture.CaptureBatch, error)
 	FileCaptureItem(ctx context.Context, id string, input gqlmodel.FileCaptureItemInput) (*capture.CaptureItem, error)
 	FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*captureservice.FileItemsResult, error)
@@ -1710,21 +1890,55 @@ type MutationResolver interface {
 	RotateInboundMailboxToken(ctx context.Context, id string) (*inboundmessageservice.MailboxCredentials, error)
 	SetInboundMailboxSigningSecret(ctx context.Context, id string, secret string) (*inboundmessage.Mailbox, error)
 	SetInboundMailboxAPIKey(ctx context.Context, id string, apiKey string) (*inboundmessage.Mailbox, error)
+	ReviewInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, input gqlmodel.BulkReviewInboundMessagesInput) (*inboundmessageports.BulkResult, error)
+	ReopenInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput) (*inboundmessageports.BulkResult, error)
+	AssignInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, ownerID *string) (*inboundmessageports.BulkResult, error)
+	SnoozeInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, input gqlmodel.SnoozeInboundMessagesInput) (*inboundmessageports.BulkResult, error)
+	WakeInboundMessage(ctx context.Context, id string) (*inboundmessage.InboundMessage, error)
+	WaitForInboundReply(ctx context.Context, id string, until int) (*inboundmessage.InboundMessage, error)
+	StopWaitingForInboundReply(ctx context.Context, id string) (*inboundmessage.InboundMessage, error)
+	UnlinkInboundMessage(ctx context.Context, id string, record gqlmodel.InboundLinkedRecord) (*inboundmessage.InboundMessage, error)
+	SendInboundMailboxTest(ctx context.Context, id string) (*inboundmessage.Mailbox, error)
+	HandOffTriage(ctx context.Context, toUserID string) (*inboundmessageports.HandOffResult, error)
+	ReadUnreadInboundMessages(ctx context.Context) (int, error)
+	CreateMyTriageView(ctx context.Context, name string, query string) (*triage.View, error)
+	RenameMyTriageView(ctx context.Context, id string, name string) (*triage.View, error)
+	DeleteMyTriageView(ctx context.Context, id string) (bool, error)
+	UpdateTriageResponseTargets(ctx context.Context, input []*gqlmodel.TriageResponseTargetInput) ([]*inboundmessageports.ResponseTargetView, error)
+	UpdateTriageSettings(ctx context.Context, input gqlmodel.TriageSettingsInput) (*triage.Settings, error)
+	DraftInboundReply(ctx context.Context, messageID string) (*triage.Reply, error)
+	SaveInboundReplyDraft(ctx context.Context, messageID string, subject string, body string, documentIds []string) (*triage.Reply, error)
+	DiscardInboundReplyDraft(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
+	SendInboundReply(ctx context.Context, input gqlmodel.SendInboundReplyInput) (*triage.Reply, error)
+	DraftInboundMany(ctx context.Context, messageIds []string) (int, error)
+	CreateTriageReplyTemplate(ctx context.Context, input gqlmodel.TriageReplyTemplateInput) (*triage.ReplyTemplate, error)
+	UpdateTriageReplyTemplate(ctx context.Context, id string, version int, input gqlmodel.TriageReplyTemplateInput) (*triage.ReplyTemplate, error)
+	DeleteTriageReplyTemplate(ctx context.Context, id string) (bool, error)
+	DraftInboundLoad(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
+	DiscardInboundLoad(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
+	CreateInboundLoad(ctx context.Context, messageID string, fields []*gqlmodel.TriageLoadFieldInput) (*inboundmessage.InboundMessage, error)
+	FileInboundAttachment(ctx context.Context, input gqlmodel.FileInboundAttachmentInput) (*inboundmessage.InboundMessage, error)
+	FileInboundMany(ctx context.Context, messageIds []string) (*inboundmessageports.BulkResult, error)
+	UnfileInboundAttachment(ctx context.Context, attachmentID string) (*inboundmessage.InboundMessage, error)
+	LogInboundException(ctx context.Context, messageID string, input gqlmodel.LogInboundExceptionInput) (*inboundmessage.InboundMessage, error)
+	BlockInboundSender(ctx context.Context, messageID string) (*inboundmessage.InboundMessage, error)
+	UnblockInboundSender(ctx context.Context, mailboxID string, sender string) (*inboundmessage.Mailbox, error)
+	DecideInboundStops(ctx context.Context, messageID string, decision inboundmessage.StopsDecision) (*inboundmessage.InboundMessage, error)
 	CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoice.Invoice, error)
 	CreateInvoiceFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoice.Invoice, error)
-	CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*services.CreateInvoicesResult, error)
-	CreateInvoicesFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*services.CreateInvoicesResult, error)
-	VoidInvoice(ctx context.Context, input gqlmodel.VoidInvoiceInput) (*services.VoidInvoiceResult, error)
+	CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
+	CreateInvoicesFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
+	VoidInvoice(ctx context.Context, input gqlmodel.VoidInvoiceInput) (*invoiceports.VoidInvoiceResult, error)
 	CreateMemo(ctx context.Context, input gqlmodel.CreateMemoInput) (*invoice.Invoice, error)
-	SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*services.InvoiceEDISendResult, error)
+	SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*invoiceports.InvoiceEDISendResult, error)
 	ApproveInvoiceAdjustment(ctx context.Context, adjustmentID string) (*invoiceadjustment.InvoiceAdjustment, error)
 	RejectInvoiceAdjustment(ctx context.Context, input gqlmodel.RejectInvoiceAdjustmentInput) (*invoiceadjustment.InvoiceAdjustment, error)
 	OpenInvoiceDispute(ctx context.Context, input gqlmodel.OpenInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
 	ResolveInvoiceDispute(ctx context.Context, input gqlmodel.ResolveInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
 	WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
-	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*services.JournalReviewResult, error)
-	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*services.JournalReviewResult, error)
-	AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*services.LateChargeAssessmentResult, error)
+	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
+	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
+	AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error)
 	MarkNotificationsRead(ctx context.Context, ids []string) (bool, error)
 	MarkNotificationsUnread(ctx context.Context, ids []string) (bool, error)
 	MarkAllNotificationsRead(ctx context.Context) (bool, error)
@@ -1769,6 +1983,8 @@ type MutationResolver interface {
 	AdjustWorkerPTOBalance(ctx context.Context, input gqlmodel.AdjustWorkerPTOBalanceInput) (*worker.WorkerPTOLedgerEntry, error)
 	RunPTOAccrual(ctx context.Context, input gqlmodel.RunPTOAccrualInput) (*gqlmodel.PTOAccrualRunPayload, error)
 	CreateReportDefinition(ctx context.Context, input gqlmodel.SaveReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
+	ExportTableView(ctx context.Context, input gqlmodel.ExportTableViewInput) (*gqlmodel.TableExportResult, error)
+	ScheduleTableView(ctx context.Context, input gqlmodel.ScheduleTableViewInput) (*gqlmodel.TableExportResult, error)
 	UpdateReportDefinition(ctx context.Context, input gqlmodel.UpdateReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
 	DeleteReportDefinition(ctx context.Context, id string) (bool, error)
 	ForkCannedReport(ctx context.Context, input gqlmodel.ForkCannedReportInput) (*gqlmodel.ReportDefinition, error)
@@ -1830,6 +2046,8 @@ type MutationResolver interface {
 	DeleteTableConfiguration(ctx context.Context, id string) (bool, error)
 	SetDefaultTableConfiguration(ctx context.Context, id string) (*tableconfiguration.TableConfiguration, error)
 	SetOrgDefaultTableConfiguration(ctx context.Context, id string, enabled bool) (*tableconfiguration.TableConfiguration, error)
+	SaveMyTableLayout(ctx context.Context, input gqlmodel.TableLayoutInput) (*gqlmodel.TableLayout, error)
+	ResetMyTableLayout(ctx context.Context, resource string) (bool, error)
 	SaveTelematicsFormMapping(ctx context.Context, input gqlmodel.SaveTelematicsFormMappingInput) (*gqlmodel.TelematicsFormMapping, error)
 	DeleteTelematicsFormMapping(ctx context.Context, id string) (bool, error)
 	UpdateOrganization(ctx context.Context, id string, input gqlmodel.OrganizationInput) (*tenant.Organization, error)
@@ -1845,6 +2063,14 @@ type MutationResolver interface {
 	PatchTractor(ctx context.Context, id string, input gqlmodel.TractorPatchInput) (*tractor.Tractor, error)
 	BulkUpdateTractorStatus(ctx context.Context, input gqlmodel.BulkUpdateTractorStatusInput) ([]*tractor.Tractor, error)
 	LocateTractor(ctx context.Context, input gqlmodel.LocateTractorInput) (*equipmentcontinuity.EquipmentContinuity, error)
+	CreateTriageRule(ctx context.Context, input gqlmodel.TriageRuleInput) (*triage.Rule, error)
+	UpdateTriageRule(ctx context.Context, id string, version int, input gqlmodel.TriageRuleInput) (*triage.Rule, error)
+	SetTriageRuleEnabled(ctx context.Context, id string, enabled bool) (*triage.Rule, error)
+	DeleteTriageRule(ctx context.Context, id string) (bool, error)
+	CorrectInboundClassification(ctx context.Context, id string, classification inboundmessage.Classification) (*inboundmessage.InboundMessage, error)
+	FlagInboundFact(ctx context.Context, id string, key string) (*inboundmessage.InboundMessage, error)
+	ResolveInboundConflict(ctx context.Context, id string, conflictID string, resolution inboundmessage.ConflictResolution) (*inboundmessage.InboundMessage, error)
+	ReopenInboundConflict(ctx context.Context, id string, conflictID string) (*inboundmessage.InboundMessage, error)
 	MarkWatchtowerSeen(ctx context.Context, seenAt *int) (*gqlmodel.WatchtowerCounts, error)
 	DismissWatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
 	HandOffWatchtowerItem(ctx context.Context, id string, input gqlmodel.HandOffWatchtowerItemInput) (*gqlmodel.WatchtowerHandOffResult, error)
@@ -1854,7 +2080,7 @@ type MutationResolver interface {
 	ApproveWorkerPTO(ctx context.Context, id string) (*worker.WorkerPTO, error)
 	RejectWorkerPTO(ctx context.Context, id string, reason string) (*worker.WorkerPTO, error)
 	CancelWorkerPTO(ctx context.Context, id string, reason *string) (*worker.WorkerPTO, error)
-	BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*services.PTOBulkActionPayload, error)
+	BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*workerports.PTOBulkActionPayload, error)
 	CreateWorkerChecklistTemplate(ctx context.Context, input gqlmodel.WorkerChecklistTemplateInput) (*worker.WorkerChecklistTemplate, error)
 	UpdateWorkerChecklistTemplate(ctx context.Context, id string, input gqlmodel.WorkerChecklistTemplateInput) (*worker.WorkerChecklistTemplate, error)
 	ArchiveWorkerChecklistTemplate(ctx context.Context, id string, version *int) (*worker.WorkerChecklistTemplate, error)
@@ -1982,14 +2208,14 @@ type PTOAvailabilityResolver interface {
 }
 
 type PTOBalanceSummaryResolver interface {
-	TotalBalanceDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error)
-	TotalPendingDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error)
-	AccruedYtdDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error)
-	UsedYtdDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error)
+	TotalBalanceDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
+	TotalPendingDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
+	AccruedYtdDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
+	UsedYtdDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
 }
 
 type PTOChartDataPointResolver interface {
-	Workers(ctx context.Context, obj *repositories.PTOChartDataPoint) (map[string]any, error)
+	Workers(ctx context.Context, obj *workerports.PTOChartDataPoint) (map[string]any, error)
 }
 
 type PTOLiabilityReportResolver interface {
@@ -2070,38 +2296,38 @@ type QueryResolver interface {
 	AccessorialCharge(ctx context.Context, id string) (*accessorialcharge.AccessorialCharge, error)
 	AccountTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountTypeConnection, error)
 	AccountType(ctx context.Context, id string) (*accounttype.AccountType, error)
-	AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncStatus, error)
-	AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*services.AccountingMappingSummary, error)
+	AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncStatus, error)
+	AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingMappingSummary, error)
 	AccountingMappings(ctx context.Context, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingMappingFilterInput) (*gqlmodel.AccountingMappingConnection, error)
-	AccountingSyncSummary(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncSummary, error)
+	AccountingSyncSummary(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncSummary, error)
 	AccountingSyncRecords(ctx context.Context, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingSyncRecordFilterInput) (*gqlmodel.AccountingSyncRecordConnection, error)
 	AccountingSyncRecordTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingSyncRecordConnection, error)
 	AccountingSyncRecord(ctx context.Context, id string) (*accountingsync.AccountingSyncRecord, error)
 	AccountingSyncAttempts(ctx context.Context, recordID string) ([]*accountingsync.AccountingSyncAttempt, error)
-	AccountingSyncObjectStates(ctx context.Context, objectIds []string) ([]*services.AccountingSyncObjectState, error)
+	AccountingSyncObjectStates(ctx context.Context, objectIds []string) ([]*accountingsyncports.AccountingSyncObjectState, error)
 	AccountingBackfills(ctx context.Context, integrationType integration.Type) ([]*accountingsync.AccountingBackfill, error)
-	AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*services.AccountingInboundOverview, error)
+	AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingInboundOverview, error)
 	AccountingInboundChangeTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingInboundChangeConnection, error)
 	AccountingInboundChange(ctx context.Context, id string) (*accountingsync.AccountingInboundChange, error)
-	AccountingInboundApplyPreview(ctx context.Context, id string) (*services.AccountingInboundApplyPreview, error)
-	AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*services.AccountingDriftOverview, error)
+	AccountingInboundApplyPreview(ctx context.Context, id string) (*accountingsyncports.AccountingInboundApplyPreview, error)
+	AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingDriftOverview, error)
 	AccountingDriftFindingTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingDriftFindingConnection, error)
 	AccountingDriftFinding(ctx context.Context, id string) (*accountingsync.AccountingDriftFinding, error)
-	AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*services.AccountingDriftFixPreview, error)
+	AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsyncports.AccountingDriftFixPreview, error)
 	AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingsync.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingsync.AccountingReferenceObject, error)
-	ArAgingSummary(ctx context.Context, asOfDate *int) (*services.ARAgingSummary, error)
-	ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*repositories.AROpenItem, error)
-	ArCustomerLedger(ctx context.Context, customerID string) ([]*repositories.ARLedgerEntry, error)
-	ArCustomerStatement(ctx context.Context, customerID string, startDate *int, asOfDate *int) (*services.ARCustomerStatement, error)
-	ArDashboardKpis(ctx context.Context) (*services.ARDashboardKPIs, error)
-	ArDsoTrend(ctx context.Context, weeks *int) ([]*services.ARDSOTrendPoint, error)
-	ArAgingTrend(ctx context.Context, weeks *int) ([]*repositories.ARAgingTrendPoint, error)
-	ArCashFlowForecast(ctx context.Context, pastWeeks *int, futureWeeks *int) ([]*repositories.ARCashFlowPoint, error)
-	ArCollectionPerformance(ctx context.Context, periodDays *int) (*services.ARCollectionPerformance, error)
-	ArTopOverdueCustomers(ctx context.Context, limit *int) ([]*repositories.ARTopOverdueCustomer, error)
-	ArCollectionsWorklist(ctx context.Context, limit *int) ([]*repositories.ARCollectionsWorklistItem, error)
-	ArCustomerProfile(ctx context.Context, customerID string) (*services.ARCustomerProfile, error)
-	ArPaymentStats(ctx context.Context) (*repositories.ARPaymentStats, error)
+	ArAgingSummary(ctx context.Context, asOfDate *int) (*customerledgerports.ARAgingSummary, error)
+	ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*customerledgerports.AROpenItem, error)
+	ArCustomerLedger(ctx context.Context, customerID string) ([]*customerledgerports.ARLedgerEntry, error)
+	ArCustomerStatement(ctx context.Context, customerID string, startDate *int, asOfDate *int) (*customerledgerports.ARCustomerStatement, error)
+	ArDashboardKpis(ctx context.Context) (*customerledgerports.ARDashboardKPIs, error)
+	ArDsoTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARDSOTrendPoint, error)
+	ArAgingTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARAgingTrendPoint, error)
+	ArCashFlowForecast(ctx context.Context, pastWeeks *int, futureWeeks *int) ([]*customerledgerports.ARCashFlowPoint, error)
+	ArCollectionPerformance(ctx context.Context, periodDays *int) (*customerledgerports.ARCollectionPerformance, error)
+	ArTopOverdueCustomers(ctx context.Context, limit *int) ([]*customerledgerports.ARTopOverdueCustomer, error)
+	ArCollectionsWorklist(ctx context.Context, limit *int) ([]*customerledgerports.ARCollectionsWorklistItem, error)
+	ArCustomerProfile(ctx context.Context, customerID string) (*customerledgerports.ARCustomerProfile, error)
+	ArPaymentStats(ctx context.Context) (*customerledgerports.ARPaymentStats, error)
 	AgentRuns(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunConnection, error)
 	AgentRun(ctx context.Context, id string) (*agent.AgentRun, error)
 	AgentProposals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentProposalConnection, error)
@@ -2113,24 +2339,32 @@ type QueryResolver interface {
 	AgentEvaluation(ctx context.Context, id string) (*agent.Evaluation, error)
 	AgentMemory(ctx context.Context, id string) (*agent.Memory, error)
 	AgentReflections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentReflectionConnection, error)
-	AgentMemoryUsage(ctx context.Context) (*services.AgentMemoryUsage, error)
+	AgentMemoryUsage(ctx context.Context) (*agentports.AgentMemoryUsage, error)
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
+	AgentPromotionPreview(ctx context.Context, threshold int) ([]*agentports.ToolPromotion, error)
+	AgentActivitySummary(ctx context.Context, since int) (*gqlmodel.AgentActivitySummary, error)
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
+	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
+	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
 	AgentDefinition(ctx context.Context, id string) (*agentdefinition.Definition, error)
+	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error)
+	AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error)
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
-	AgentCapabilities(ctx context.Context, agentID string) (*services.AgentCapabilities, error)
+	AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error)
+	AgentCapabilities(ctx context.Context, agentID string) (*agentports.AgentCapabilities, error)
+	AgentDraftingAvailable(ctx context.Context) (bool, error)
 	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
 	AgentPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error)
 	MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
 	MyPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error)
 	AgentEvalCases(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvalCaseConnection, error)
 	AgentEvalCase(ctx context.Context, id string) (*agentquality.EvalCase, error)
-	AgentQualityOverview(ctx context.Context, window *int) (*services.AgentQualityOverview, error)
-	AgentQuality(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentQualityDetail, error)
+	AgentQualityOverview(ctx context.Context, window *int) (*agentqualityports.AgentQualityOverview, error)
+	AgentQuality(ctx context.Context, agentDefinitionID string, window *int) (*agentqualityports.AgentQualityDetail, error)
 	AgentQualityAgents(ctx context.Context, input gqlmodel.AgentQualityAgentsInput) (*gqlmodel.AgentQualityAgentConnection, error)
 	AgentQualityAgentConnection(ctx context.Context, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentQualityAgentConnection, error)
 	AgentWorstRatedAnswers(ctx context.Context, input gqlmodel.AgentWorstRatedAnswersInput) (*gqlmodel.AgentWorstRatedAnswerConnection, error)
@@ -2142,28 +2376,37 @@ type QueryResolver interface {
 	AgentSuiteRunCaseConnection(ctx context.Context, suiteRunID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunCaseConnection, error)
 	AgentQualityControl(ctx context.Context) (*agentquality.Control, error)
 	AgentRunEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunEventConnection, error)
+	AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*agentports.AgentToolRuleImpact, error)
+	AgentToolHolders(ctx context.Context) ([]*agentports.AgentToolHolders, error)
 	AgentToolPolicies(ctx context.Context) ([]*gqlmodel.AgentToolPolicy, error)
 	AgentToolPolicyConnection(ctx context.Context, input gqlmodel.AgentToolPolicyConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
 	AgentToolRuleConnection(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
 	AgentToolSafetyConnection(ctx context.Context, agentIds []string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolSafetyConnection, error)
-	AgentSafetySummary(ctx context.Context) (*services.AgentSafetySummary, error)
-	AgentSafety(ctx context.Context, agentIds []string) ([]*services.AgentSafetySubject, error)
+	AgentSafetySummary(ctx context.Context) (*agentports.AgentSafetySummary, error)
+	AgentSafety(ctx context.Context, agentIds []string) ([]*agentports.AgentSafetySubject, error)
 	AgentScorecard(ctx context.Context, input gqlmodel.AgentScorecardInput) (*gqlmodel.AgentScorecard, error)
 	AiAuditEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditEventConnection, error)
 	AiAuditEvent(ctx context.Context, id string) (*aiaudit.AIAuditEvent, error)
-	AiAuditChainStatus(ctx context.Context) (*services.AIAuditChainStatus, error)
+	AiAuditChainStatus(ctx context.Context) (*aiauditports.AIAuditChainStatus, error)
 	AiAuditExports(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditExportConnection, error)
 	AiAuditExport(ctx context.Context, id string) (*aiaudit.AIAuditExport, error)
+	AiControlSummary(ctx context.Context, tab aicontrolsummary.Tab) (*aicontrolsummary.Summary, error)
+	AiAgentRoster(ctx context.Context) ([]*gqlmodel.AIAgentRosterStat, error)
+	AiTuneUps(ctx context.Context) (*gqlmodel.AITuneUps, error)
 	MyAIFeedback(ctx context.Context, input gqlmodel.MyAIFeedbackInput) ([]*aifeedback.Feedback, error)
 	AiFeedback(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIFeedbackConnection, error)
-	AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentFeedbackSummary, error)
+	AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*aifeedbackports.AgentFeedbackSummary, error)
+	AiProviderModels(ctx context.Context, input gqlmodel.AIProviderEndpointInput) ([]*gqlmodel.AIProviderModelOption, error)
 	AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error)
 	AiProvider(ctx context.Context, id string) (*aiprovider.Provider, error)
-	AiRetrievalStatus(ctx context.Context) (*services.AIRetrievalStatus, error)
-	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*services.AIRetrievalReindexEstimate, error)
+	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*aiprovider.TaskRoute, error)
+	AiRetrievalStatus(ctx context.Context) (*agentports.AIRetrievalStatus, error)
+	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalReindexEstimate, error)
 	AiRetrievalFailedEntryConnection(ctx context.Context, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIRetrievalFailedEntryConnection, error)
 	AiTrainingExportHistory(ctx context.Context) ([]*aitraining.ExportHistoryEntry, error)
-	AiUsageSummary(ctx context.Context, since *int) (*services.AIUsageSummary, error)
+	AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error)
+	AiUsageSummary(ctx context.Context, since *int) (*aiusageports.AIUsageSummary, error)
+	AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*aiusageports.AIUsageDay, error)
 	APIKeys(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.APIKeyConnection, error)
 	APIKey(ctx context.Context, id string) (*apikey.Key, error)
 	AttentionSummary(ctx context.Context) (*gqlmodel.AttentionSummary, error)
@@ -2174,7 +2417,7 @@ type QueryResolver interface {
 	BenefitPlan(ctx context.Context, id string) (*driverpay.BenefitPlan, error)
 	WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool) ([]*driverpay.WorkerBenefitEnrollment, error)
 	BenefitEnrollments(ctx context.Context, planID *string, statuses []driverpay.BenefitEnrollmentStatus, openOnly *bool, limit *int) ([]*driverpay.WorkerBenefitEnrollment, error)
-	BenefitCosts(ctx context.Context, planYear *int) ([]*repositories.BenefitCostRow, error)
+	BenefitCosts(ctx context.Context, planYear *int) ([]*driverpayports.BenefitCostRow, error)
 	WorkerTotalCompensation(ctx context.Context, workerID string, planYear *int) (*benefitsservice.TotalCompensation, error)
 	MyTotalCompensation(ctx context.Context, planYear *int) (*benefitsservice.TotalCompensation, error)
 	BillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
@@ -2183,6 +2426,10 @@ type QueryResolver interface {
 	TodaysBriefing(ctx context.Context, input gqlmodel.TodaysBriefingInput) (*briefing.Briefing, error)
 	Briefing(ctx context.Context, id string) (*briefing.Briefing, error)
 	Briefings(ctx context.Context, input gqlmodel.ListBriefingsInput) ([]*briefing.Briefing, error)
+	BulkEditFields(ctx context.Context, resource string) ([]*gqlmodel.BulkEditField, error)
+	PreviewBulkEdit(ctx context.Context, input gqlmodel.BulkEditInput) (*gqlmodel.BulkEditPreview, error)
+	MyBulkEdit(ctx context.Context, id string) (*gqlmodel.BulkEditJob, error)
+	MyBulkEdits(ctx context.Context, resource *string, limit *int) ([]*gqlmodel.BulkEditJob, error)
 	MyCaptureAccess(ctx context.Context) (*captureservice.Access, error)
 	CaptureAgentRelease(ctx context.Context) (*capturereleaseservice.Release, error)
 	CaptureBatches(ctx context.Context, input gqlmodel.CaptureBatchesInput) (*gqlmodel.CaptureBatchConnection, error)
@@ -2214,7 +2461,7 @@ type QueryResolver interface {
 	CarrierIntelRawPayload(ctx context.Context, carrierID string, snapshotID string) (map[string]any, error)
 	CarrierIntelLookup(ctx context.Context, input gqlmodel.CarrierIntelLookupInput) (*gqlmodel.CarrierIntelProspectLookup, error)
 	CarrierSourcingSearch(ctx context.Context, input gqlmodel.CarrierSourcingSearchInput) (*carrierintelservice.SourcingPage, error)
-	CarrierSourcingAutocomplete(ctx context.Context, query string, limit *int) ([]*services.CarrierIntelSuggestion, error)
+	CarrierSourcingAutocomplete(ctx context.Context, query string, limit *int) ([]*carrierintelports.CarrierIntelSuggestion, error)
 	CarrierEquipmentVerifications(ctx context.Context, carrierAssignmentID string) ([]*carrierintel.CarrierEquipmentVerification, error)
 	MyCarrierIntelligence(ctx context.Context, refresh *bool) (*gqlmodel.MyCarrierIntelligence, error)
 	CarrierSettlements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierSettlementConnection, error)
@@ -2242,6 +2489,10 @@ type QueryResolver interface {
 	Customer(ctx context.Context, id string) (*customer.Customer, error)
 	CustomerPayments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerPaymentConnection, error)
 	CustomerPayment(ctx context.Context, id string) (*customerpayment.Payment, error)
+	DataTableFacets(ctx context.Context, input gqlmodel.DataTableFacetInput) (*gqlmodel.DataTableFacets, error)
+	DataTableAggregates(ctx context.Context, input gqlmodel.DataTableAggregateInput) (*gqlmodel.DataTableAggregates, error)
+	DataTableSeries(ctx context.Context, input gqlmodel.DataTableSeriesInput) (*gqlmodel.DataTableSeries, error)
+	DataTableInsightFields(ctx context.Context, resource string) ([]*gqlmodel.DataTableInsightField, error)
 	PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error)
 	PendingDecisionSummary(ctx context.Context) (*gqlmodel.PendingDecisionSummary, error)
 	RecentDecisions(ctx context.Context, since int, first *int) ([]*gqlmodel.RecentDecision, error)
@@ -2344,7 +2595,7 @@ type QueryResolver interface {
 	SettlementControl(ctx context.Context) (*tenant.SettlementControl, error)
 	CurrentSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
 	SettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*driversettlementservice.WorkspaceSummary, error)
-	UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*repositories.UnsettledWorkerSummary, error)
+	UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*driversettlementports.UnsettledWorkerSummary, error)
 	PreviewDriverSettlement(ctx context.Context, workerID string, periodStart *int, periodEnd *int) (*driversettlement.Settlement, error)
 	ExportSettlementBatchCSV(ctx context.Context, batchID string) (string, error)
 	EDIPartners(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EDIPartnerConnection, error)
@@ -2365,8 +2616,8 @@ type QueryResolver interface {
 	EquipmentManufacturer(ctx context.Context, id string) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	EquipmentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput, classes []equipmenttype.Class) (*gqlmodel.EquipmentTypeConnection, error)
 	EquipmentType(ctx context.Context, id string) (*equipmenttype.EquipmentType, error)
-	ExtractionAccuracy(ctx context.Context, windowDays *int) (*services.ExtractionAccuracy, error)
-	ExtractionProviderTrends(ctx context.Context) (*services.ExtractionProviderTrends, error)
+	ExtractionAccuracy(ctx context.Context, windowDays *int) (*extractionevalports.ExtractionAccuracy, error)
+	ExtractionProviderTrends(ctx context.Context) (*extractionevalports.ExtractionProviderTrends, error)
 	AiCorrections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AICorrectionConnection, error)
 	AiCorrection(ctx context.Context, id string) (*aicorrection.Correction, error)
 	ExtractionEvalCases(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionEvalCaseConnection, error)
@@ -2376,9 +2627,9 @@ type QueryResolver interface {
 	ExtractionEvalResults(ctx context.Context, runID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionEvalResultConnection, error)
 	ExtractionEvalResult(ctx context.Context, id string) (*extractioneval.ExtractionResult, error)
 	ExtractionRollout(ctx context.Context) (*extractionrollout.ExtractionRollout, error)
-	ExtractionRolloutReport(ctx context.Context) (*services.ExtractionRolloutReport, error)
+	ExtractionRolloutReport(ctx context.Context) (*extractionrolloutports.ExtractionRolloutReport, error)
 	ExtractionShadowSettings(ctx context.Context) (*extractionshadow.ShadowSettings, error)
-	ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*services.ExtractionShadowReport, error)
+	ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*extractionshadowports.ExtractionShadowReport, error)
 	ExtractionShadowResults(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionShadowResultConnection, error)
 	ExtractionShadowResult(ctx context.Context, id string) (*extractionshadow.ShadowResult, error)
 	FiscalYears(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalYearConnection, error)
@@ -2429,23 +2680,35 @@ type QueryResolver interface {
 	InboundMessage(ctx context.Context, id string) (*inboundmessage.InboundMessage, error)
 	InboundMessageCounts(ctx context.Context) (*inboundmessageservice.Counts, error)
 	InboundMailboxes(ctx context.Context) ([]*inboundmessage.Mailbox, error)
+	InboundThread(ctx context.Context, threadKey string) ([]*inboundmessage.InboundMessage, error)
+	MyTriageViews(ctx context.Context) ([]*triage.View, error)
+	TriageResponseTargets(ctx context.Context) ([]*inboundmessageports.ResponseTargetView, error)
+	TriageSettings(ctx context.Context) (*triage.Settings, error)
+	TriageAssignees(ctx context.Context) ([]*inboundmessageports.AssigneeView, error)
+	TriageReplyTemplates(ctx context.Context) ([]*triage.ReplyTemplate, error)
+	RenderTriageReplyTemplate(ctx context.Context, templateID string, messageID string) (string, error)
+	TriageStopTimes(ctx context.Context, messageID string) (*inboundmessageports.StopTimes, error)
+	TriageShipmentPeek(ctx context.Context, shipmentID string) (*inboundmessageports.ShipmentPeek, error)
+	TriageCustomerPeek(ctx context.Context, customerID string) (*inboundmessageports.CustomerPeek, error)
+	InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundmessageports.ReplyAttachable, error)
+	InboundReplyAttachmentLimit(ctx context.Context) (int, error)
 	Invoices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.InvoiceConnection, error)
 	Invoice(ctx context.Context, id string) (*invoice.Invoice, error)
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 	InvoiceAdjustmentApprovals(ctx context.Context, input gqlmodel.InvoiceAdjustmentApprovalsInput) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error)
-	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*repositories.InvoiceAdjustmentOperationsSummary, error)
+	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error)
 	InvoiceDisputes(ctx context.Context, invoiceID string) ([]*invoice.InvoiceDispute, error)
 	JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error)
 	JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error)
 	JournalSourceByObject(ctx context.Context, sourceType string, sourceID string) (*journalsource.Source, error)
 	JournalReviewTable(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error)
-	JournalReviewSummary(ctx context.Context) (*services.JournalReviewSummary, error)
+	JournalReviewSummary(ctx context.Context) (*journalentryports.JournalReviewSummary, error)
 	JournalReversals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalReversalConnection, error)
 	JournalReversal(ctx context.Context, id string) (*journalreversal.Reversal, error)
 	JurisdictionRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleConnection, error)
 	JurisdictionRule(ctx context.Context, id string) (*jurisdictionrule.JurisdictionRule, error)
 	JurisdictionRuleOverrides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleOverrideConnection, error)
-	LateChargePreview(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*services.LateChargeAssessmentResult, error)
+	LateChargePreview(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error)
 	Locations(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.LocationConnection, error)
 	Location(ctx context.Context, id string) (*location.Location, error)
 	LocationCategories(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.LocationCategoryConnection, error)
@@ -2476,7 +2739,7 @@ type QueryResolver interface {
 	WorkerPTOLedger(ctx context.Context, input gqlmodel.WorkerPTOLedgerInput) (*gqlmodel.WorkerPTOLedgerConnection, error)
 	WorkerPTOAvailability(ctx context.Context, input gqlmodel.PTOAvailabilityInput) (*ptoledgerservice.AvailabilityResult, error)
 	PreviewWorkerPTOAccrual(ctx context.Context, workerID string, asOf *int) ([]*ptoledgerservice.PlannedEntry, error)
-	PTOBalanceSummary(ctx context.Context) (*repositories.PTOBalanceSummary, error)
+	PTOBalanceSummary(ctx context.Context) (*workerports.PTOBalanceSummary, error)
 	PTOLiabilityReport(ctx context.Context, asOf *int) (*ptoledgerservice.LiabilityReport, error)
 	RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error)
 	RateZones(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateZoneConnection, error)
@@ -2517,7 +2780,7 @@ type QueryResolver interface {
 	WorkerPolicyCompliance(ctx context.Context, id string) (*gqlmodel.PolicyCompliance, error)
 	WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*worker.WorkerPolicyAcknowledgement, error)
 	ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*worker.WorkerProfileChangeRequest, error)
-	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string) (*gqlmodel.ServiceFailureConnection, error)
+	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string, locationID *string) (*gqlmodel.ServiceFailureConnection, error)
 	ServiceFailure(ctx context.Context, id string) (*servicefailure.ServiceFailure, error)
 	ServiceFailureReasonCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ServiceFailureReasonCodeConnection, error)
 	ServiceFailureReasonCode(ctx context.Context, id string) (*servicefailure.ReasonCode, error)
@@ -2537,8 +2800,8 @@ type QueryResolver interface {
 	ShipmentPreviousRates(ctx context.Context, input gqlmodel.ShipmentPreviousRatesInput) (*gqlmodel.ShipmentPreviousRatesResponse, error)
 	ShipmentBoardCapabilities(ctx context.Context) (*gqlmodel.ShipmentBoardCapabilities, error)
 	ShipmentStageSummary(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentStageSummary, error)
+	ShipmentBoardGroups(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, groupBy shipment.BoardGrouping) ([]*gqlmodel.ShipmentBoardGroup, error)
 	ShipmentQuickFilterCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentQuickFilterCount, error)
-	ShipmentFacetCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, facets []repositories.ShipmentFacet) ([]*gqlmodel.ShipmentFacetCounts, error)
 	ShipmentBriefing(ctx context.Context, timezone string) (*gqlmodel.ShipmentBriefing, error)
 	ShipmentCapacity(ctx context.Context, kind gqlmodel.CapacityUnitKind) (*gqlmodel.ShipmentCapacity, error)
 	CapacityUnitMatches(ctx context.Context, kind gqlmodel.CapacityUnitKind, unitID string, limit *int) ([]*gqlmodel.CapacityMatch, error)
@@ -2556,17 +2819,19 @@ type QueryResolver interface {
 	TableConfigurations(ctx context.Context, input gqlmodel.DataTableConnectionInput, resource *string, visibility *tableconfiguration.Visibility) (*gqlmodel.TableConfigurationConnection, error)
 	TableConfiguration(ctx context.Context, id string) (*tableconfiguration.TableConfiguration, error)
 	DefaultTableConfiguration(ctx context.Context, resource string) (*tableconfiguration.TableConfiguration, error)
+	MyTableLayout(ctx context.Context, resource string) (*gqlmodel.TableLayout, error)
 	ShipmentFormSubmissions(ctx context.Context, shipmentID string) ([]*gqlmodel.TelematicsFormSubmission, error)
 	TelematicsFormMappings(ctx context.Context) ([]*gqlmodel.TelematicsFormMapping, error)
 	TelematicsFormMapping(ctx context.Context, id string) (*gqlmodel.TelematicsFormMapping, error)
 	ShipmentDriverFeasibility(ctx context.Context, shipmentID string) ([]*gqlmodel.DriverFeasibility, error)
 	VehiclePositions(ctx context.Context, maxAgeSeconds *int) ([]*gqlmodel.VehiclePosition, error)
+	VehiclePosition(ctx context.Context, tractorID string) (*gqlmodel.VehiclePosition, error)
 	WorkerHosStates(ctx context.Context, workerIds []string, limit *int) ([]*gqlmodel.WorkerHosState, error)
 	WorkerHosState(ctx context.Context, workerID string) (*gqlmodel.WorkerHosState, error)
 	WorkerHosViolations(ctx context.Context, workerID *string, since *int, limit *int) ([]*gqlmodel.WorkerHosViolation, error)
 	WorkerHosLogs(ctx context.Context, workerID string, startTime int, endTime int) ([]*gqlmodel.WorkerHosLogEntry, error)
 	WorkerHosDailyLogs(ctx context.Context, workerID string, startDate string, endDate string) ([]*gqlmodel.WorkerHosDailyLog, error)
-	VehicleInspections(ctx context.Context, tractorID *string, workerID *string, since *int, limit *int) ([]*gqlmodel.VehicleInspection, error)
+	VehicleInspections(ctx context.Context, tractorID *string, workerID *string, since *int, limit *int, before *int, beforeID *string) ([]*gqlmodel.VehicleInspection, error)
 	WorkerFormSubmissions(ctx context.Context, workerID string, startTime int, endTime int) ([]*gqlmodel.WorkerFormSubmission, error)
 	HosCertificationSummary(ctx context.Context, startDate string, endDate string) ([]*gqlmodel.HosCertificationSummary, error)
 	TelematicsStatus(ctx context.Context) (*gqlmodel.TelematicsStatus, error)
@@ -2584,14 +2849,21 @@ type QueryResolver interface {
 	PayrollExportRows(ctx context.Context, id string) ([]*timesheetservice.PayrollExportRow, error)
 	Tractors(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) (*gqlmodel.TractorConnection, error)
 	Tractor(ctx context.Context, id string) (*tractor.Tractor, error)
+	TriageBriefing(ctx context.Context) (*inboundmessageports.Briefing, error)
+	TriageRules(ctx context.Context) ([]*triage.Rule, error)
+	TriageRulePreview(ctx context.Context, input gqlmodel.TriageRuleInput) (*inboundmessageports.RulePreview, error)
+	TriageRuleMatches(ctx context.Context, id string) (*inboundmessageports.RulePreview, error)
+	TriageSenderDomains(ctx context.Context, query *string) ([]string, error)
+	InboundSenderProfile(ctx context.Context, messageID string) (*inboundmessageports.SenderProfile, error)
 	Users(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.UserConnection, error)
 	User(ctx context.Context, id string) (*tenant.User, error)
 	WatchtowerItems(ctx context.Context, input gqlmodel.WatchtowerItemsInput) (*gqlmodel.WatchtowerItemConnection, error)
 	WatchtowerCounts(ctx context.Context) (*gqlmodel.WatchtowerCounts, error)
 	Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.WorkerConnection, error)
+	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
 	UpcomingWorkerPTO(ctx context.Context, input gqlmodel.UpcomingWorkerPTOInput) (*gqlmodel.WorkerPTOConnection, error)
-	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*repositories.PTOChartDataPoint, error)
+	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerports.PTOChartDataPoint, error)
 	WorkerChecklistTemplates(ctx context.Context, input gqlmodel.WorkerChecklistTemplatesInput) (*gqlmodel.WorkerChecklistTemplateConnection, error)
 	WorkerChecklistTemplate(ctx context.Context, id string) (*worker.WorkerChecklistTemplate, error)
 	ActiveWorkerChecklistTemplates(ctx context.Context) ([]*worker.WorkerChecklistTemplate, error)
@@ -2607,7 +2879,7 @@ type QueryResolver interface {
 	DriverQualificationFile(ctx context.Context, workerID string) (*worker.DQFFile, error)
 	WorkerEmploymentVerifications(ctx context.Context, workerID string) ([]*worker.WorkerEmploymentVerification, error)
 	OutstandingEmploymentVerifications(ctx context.Context) ([]*worker.WorkerEmploymentVerification, error)
-	DqfRetentionCandidates(ctx context.Context) ([]*repositories.DQFRetentionCandidate, error)
+	DqfRetentionCandidates(ctx context.Context) ([]*workerports.DQFRetentionCandidate, error)
 	WorkerDOTTests(ctx context.Context, workerID string) ([]*worker.WorkerDOTTest, error)
 	WorkerDOTTest(ctx context.Context, id string) (*worker.WorkerDOTTest, error)
 	OpenDOTTests(ctx context.Context) ([]*worker.WorkerDOTTest, error)
@@ -2672,6 +2944,14 @@ type SafetyScorecardResolver interface {
 
 type ServiceFailureResolver interface {
 	StopType(ctx context.Context, obj *servicefailure.ServiceFailure) (gqlmodel.StopType, error)
+	CreatedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+	ReviewedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+	ResolvedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+	VoidedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+}
+
+type ServiceFailureShipmentResolver interface {
+	Customer(ctx context.Context, obj *shipment.Shipment) (*customer.Customer, error)
 }
 
 type ServiceFailureStopResolver interface {
@@ -2751,6 +3031,77 @@ type TrailerResolver interface {
 type TrainingCourseResolver interface {
 	PassingScore(ctx context.Context, obj *worker.TrainingCourse) (*string, error)
 	OpenRecordCount(ctx context.Context, obj *worker.TrainingCourse) (int, error)
+}
+
+type TriageActionResolver interface {
+	Attachment(ctx context.Context, obj *triage.Action) (*inboundmessage.InboundAttachment, error)
+	Shipment(ctx context.Context, obj *triage.Action) (*shipmentports.ShipmentSummary, error)
+	ReplyPurpose(ctx context.Context, obj *triage.Action) (*triage.ReplyPurpose, error)
+	RefusedFileName(ctx context.Context, obj *triage.Action) (*string, error)
+	Reply(ctx context.Context, obj *triage.Action) (*triage.Reply, error)
+	CreatedShipment(ctx context.Context, obj *triage.Action) (*shipmentports.ShipmentSummary, error)
+	StopsDecision(ctx context.Context, obj *triage.Action) (*inboundmessage.StopsDecision, error)
+	ExceptionKind(ctx context.Context, obj *triage.Action) (*inboundmessage.ExceptionKind, error)
+	CompletedAt(ctx context.Context, obj *triage.Action) (*int, error)
+}
+
+type TriageAssigneeResolver interface {
+	User(ctx context.Context, obj *inboundmessageports.AssigneeView) (*tenant.User, error)
+}
+
+type TriageBriefingResolver interface {
+	UnhealthySources(ctx context.Context, obj *inboundmessageports.Briefing) ([]*inboundmessage.Mailbox, error)
+	OnCall(ctx context.Context, obj *inboundmessageports.Briefing) (*tenant.User, error)
+}
+
+type TriageConflictResolver interface {
+	AttachmentID(ctx context.Context, obj *inboundmessage.Conflict) (*string, error)
+	ExistingDocumentID(ctx context.Context, obj *inboundmessage.Conflict) (*string, error)
+	ExistingShipment(ctx context.Context, obj *inboundmessage.Conflict) (*shipmentports.ShipmentSummary, error)
+	ExistingFiledAt(ctx context.Context, obj *inboundmessage.Conflict) (*int, error)
+	ExistingAmount(ctx context.Context, obj *inboundmessage.Conflict) (*string, error)
+	NewAmount(ctx context.Context, obj *inboundmessage.Conflict) (*string, error)
+	LoadIndex(ctx context.Context, obj *inboundmessage.Conflict) (*int, error)
+	Resolution(ctx context.Context, obj *inboundmessage.Conflict) (*inboundmessage.ConflictResolution, error)
+	ResolvedAt(ctx context.Context, obj *inboundmessage.Conflict) (*int, error)
+	Options(ctx context.Context, obj *inboundmessage.Conflict) ([]inboundmessage.ConflictResolution, error)
+}
+
+type TriageDeckItemResolver interface {
+	Owner(ctx context.Context, obj *inboundmessageports.DeckItem) (*tenant.User, error)
+}
+
+type TriageHandOffResolver interface {
+	To(ctx context.Context, obj *inboundmessageports.HandOffResult) (*tenant.User, error)
+}
+
+type TriageReplyTemplateResolver interface {
+	CreatedBy(ctx context.Context, obj *triage.ReplyTemplate) (*tenant.User, error)
+}
+
+type TriageRuleResolver interface {
+	MailboxID(ctx context.Context, obj *triage.Rule) (*string, error)
+	Mailbox(ctx context.Context, obj *triage.Rule) (*inboundmessage.Mailbox, error)
+	AssigneeID(ctx context.Context, obj *triage.Rule) (*string, error)
+	Assignee(ctx context.Context, obj *triage.Rule) (*tenant.User, error)
+	CreatedBy(ctx context.Context, obj *triage.Rule) (*tenant.User, error)
+	MatchesThisMonth(ctx context.Context, obj *triage.Rule) (int, error)
+	LastMatchedAt(ctx context.Context, obj *triage.Rule) (*int, error)
+	LastMatch(ctx context.Context, obj *triage.Rule) (*inboundmessageports.Sample, error)
+}
+
+type TriageSettingsResolver interface {
+	OnCallUser(ctx context.Context, obj *triage.Settings) (*tenant.User, error)
+	OnCallUserID(ctx context.Context, obj *triage.Settings) (*string, error)
+	Timezone(ctx context.Context, obj *triage.Settings) (string, error)
+}
+
+type TriageStopTimesResolver interface {
+	Shipment(ctx context.Context, obj *inboundmessageports.StopTimes) (*shipmentports.ShipmentSummary, error)
+}
+
+type TriageViewResolver interface {
+	Waiting(ctx context.Context, obj *triage.View) (int, error)
 }
 
 type UserResolver interface {
@@ -3008,6 +3359,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		agentsafetyexec.Shard,
 		agentscorecardexec.Shard,
 		aiauditexec.Shard,
+		aicontrolexec.Shard,
 		aifeedbackexec.Shard,
 		aiproviderexec.Shard,
 		airetrievalexec.Shard,
@@ -3020,6 +3372,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		billingqueueexec.Shard,
 		billingtransferexec.Shard,
 		briefingexec.Shard,
+		bulkeditexec.Shard,
 		captureexec.Shard,
 		carrierexec.Shard,
 		carriercapacityexec.Shard,
@@ -3030,6 +3383,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		customerexec.Shard,
 		customerpaymentexec.Shard,
 		customfielddefinitionexec.Shard,
+		datatableinsightexec.Shard,
 		decisionsexec.Shard,
 		deskmemoryexec.Shard,
 		detentionexec.Shard,
@@ -3062,6 +3416,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		homelayoutexec.Shard,
 		iftaexec.Shard,
 		inboundmessageexec.Shard,
+		inboundreplyexec.Shard,
 		invoiceexec.Shard,
 		invoiceadjustmentexec.Shard,
 		invoicedisputeexec.Shard,
@@ -3099,12 +3454,14 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		storedmileageexec.Shard,
 		tablechangealertexec.Shard,
 		tableconfigurationexec.Shard,
+		tablelayoutexec.Shard,
 		telematicsexec.Shard,
 		tenantexec.Shard,
 		tenderexec.Shard,
 		timesheetexec.Shard,
 		tractorexec.Shard,
 		trailerexec.Shard,
+		triageexec.Shard,
 		userexec.Shard,
 		usstateexec.Shard,
 		watchtowerexec.Shard,
@@ -3134,9 +3491,14 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AIAuditChainStatus":                 func() any { return r.AIAuditChainStatus() },
 			"AIAuditEvent":                       func() any { return r.AIAuditEvent() },
 			"AIAuditExport":                      func() any { return r.AIAuditExport() },
+			"AIControlSegment":                   func() any { return r.AIControlSegment() },
+			"AIControlSummary":                   func() any { return r.AIControlSummary() },
 			"AICorrection":                       func() any { return r.AICorrection() },
 			"AIFeedback":                         func() any { return r.AIFeedback() },
 			"AIProvider":                         func() any { return r.AIProvider() },
+			"AIProviderKeyInfo":                  func() any { return r.AIProviderKeyInfo() },
+			"AIRouteChoice":                      func() any { return r.AIRouteChoice() },
+			"AITuneUpEvidence":                   func() any { return r.AITuneUpEvidence() },
 			"AccessorialCharge":                  func() any { return r.AccessorialCharge() },
 			"AccountingAppCredential":            func() any { return r.AccountingAppCredential() },
 			"AccountingAppSettings":              func() any { return r.AccountingAppSettings() },
@@ -3152,8 +3514,10 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AccountingSyncRecord":               func() any { return r.AccountingSyncRecord() },
 			"AgentDecision":                      func() any { return r.AgentDecision() },
 			"AgentDefinition":                    func() any { return r.AgentDefinition() },
+			"AgentDraft":                         func() any { return r.AgentDraft() },
 			"AgentEvalCase":                      func() any { return r.AgentEvalCase() },
 			"AgentEvaluation":                    func() any { return r.AgentEvaluation() },
+			"AgentInstructionFinding":            func() any { return r.AgentInstructionFinding() },
 			"AgentMemory":                        func() any { return r.AgentMemory() },
 			"AgentPlan":                          func() any { return r.AgentPlan() },
 			"AgentPreviewFieldChange":            func() any { return r.AgentPreviewFieldChange() },
@@ -3171,7 +3535,10 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AgentRun":                           func() any { return r.AgentRun() },
 			"AgentRunEvent":                      func() any { return r.AgentRunEvent() },
 			"AgentSafety":                        func() any { return r.AgentSafety() },
+			"AgentSafetySummary":                 func() any { return r.AgentSafetySummary() },
 			"AgentSuiteRun":                      func() any { return r.AgentSuiteRun() },
+			"AgentToolHolders":                   func() any { return r.AgentToolHolders() },
+			"AgentToolRule":                      func() any { return r.AgentToolRule() },
 			"AgentToolSafety":                    func() any { return r.AgentToolSafety() },
 			"AgentWorstRatedAnswer":              func() any { return r.AgentWorstRatedAnswer() },
 			"ApiKey":                             func() any { return r.ApiKey() },
@@ -3258,10 +3625,14 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"IFTAReturnLine":                     func() any { return r.IFTAReturnLine() },
 			"IFTAReturnProblem":                  func() any { return r.IFTAReturnProblem() },
 			"IFTATaxRate":                        func() any { return r.IFTATaxRate() },
+			"InboundActivity":                    func() any { return r.InboundActivity() },
 			"InboundAttachment":                  func() any { return r.InboundAttachment() },
 			"InboundMailbox":                     func() any { return r.InboundMailbox() },
 			"InboundMailboxCredentials":          func() any { return r.InboundMailboxCredentials() },
 			"InboundMessage":                     func() any { return r.InboundMessage() },
+			"InboundReply":                       func() any { return r.InboundReply() },
+			"InboundSnooze":                      func() any { return r.InboundSnooze() },
+			"InboundSplitDocument":               func() any { return r.InboundSplitDocument() },
 			"Invoice":                            func() any { return r.Invoice() },
 			"InvoiceAdjustment":                  func() any { return r.InvoiceAdjustment() },
 			"InvoiceAdjustmentApprovalQueueItem": func() any { return r.InvoiceAdjustmentApprovalQueueItem() },
@@ -3307,6 +3678,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"RoutingGuideEntry":                  func() any { return r.RoutingGuideEntry() },
 			"SafetyScorecard":                    func() any { return r.SafetyScorecard() },
 			"ServiceFailure":                     func() any { return r.ServiceFailure() },
+			"ServiceFailureShipment":             func() any { return r.ServiceFailureShipment() },
 			"ServiceFailureStop":                 func() any { return r.ServiceFailureStop() },
 			"SettlementControl":                  func() any { return r.SettlementControl() },
 			"SettlementException":                func() any { return r.SettlementException() },
@@ -3322,6 +3694,17 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"Tractor":                            func() any { return r.Tractor() },
 			"Trailer":                            func() any { return r.Trailer() },
 			"TrainingCourse":                     func() any { return r.TrainingCourse() },
+			"TriageAction":                       func() any { return r.TriageAction() },
+			"TriageAssignee":                     func() any { return r.TriageAssignee() },
+			"TriageBriefing":                     func() any { return r.TriageBriefing() },
+			"TriageConflict":                     func() any { return r.TriageConflict() },
+			"TriageDeckItem":                     func() any { return r.TriageDeckItem() },
+			"TriageHandOff":                      func() any { return r.TriageHandOff() },
+			"TriageReplyTemplate":                func() any { return r.TriageReplyTemplate() },
+			"TriageRule":                         func() any { return r.TriageRule() },
+			"TriageSettings":                     func() any { return r.TriageSettings() },
+			"TriageStopTimes":                    func() any { return r.TriageStopTimes() },
+			"TriageView":                         func() any { return r.TriageView() },
 			"User":                               func() any { return r.User() },
 			"WatchtowerItem":                     func() any { return r.WatchtowerItem() },
 			"Worker":                             func() any { return r.Worker() },
@@ -4994,6 +5377,8 @@ enum AgentSubjectType {
   AccountingInboundChange
   AccountingDriftFinding
   FormulaTemplate
+  Invoice
+  InvoiceDispute
 }
 
 enum AgentRunTrigger {
@@ -5002,6 +5387,7 @@ enum AgentRunTrigger {
   Scheduled
   Event
   Continuous
+  Wait
 }
 
 enum AgentRunStatus {
@@ -5513,8 +5899,17 @@ type AgentMemory {
   scope: AgentMemoryScope!
   ownerUserId: ID
   roleId: ID
-  "Written by a run that had read content from outside the organization; an agent that reads it back is tainted by it."
+  "Written by a run that had read content from outside the organization. Kept after a review, as where the memory came from."
   tainted: Boolean!
+  """
+  Whether a turn that reads the memory is tainted by it: written after outside content and not
+  reviewed since. Every money, customer-visible and outside-recipient write of such a turn
+  waits for a person.
+  """
+  taints: Boolean!
+  "The person who read the tainted memory and kept it; from then on it taints no turn."
+  reviewedByUserId: ID
+  reviewedAt: Timestamp
   "The run whose outside content the memory carries."
   taintRunId: ID
   sourceRunId: ID
@@ -5814,6 +6209,12 @@ input AgentControlInput {
   personMonthlyMessages: Int
   "Absent leaves whether agents learn from their work as it is."
   learningOff: Boolean
+  """
+  The version the person loaded. When someone saved since, the update is
+  refused with who saved, when and what they changed. Absent applies the
+  update to whatever is there.
+  """
+  version: Int
   billingAgentEnabled: Boolean
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int
@@ -5838,6 +6239,23 @@ extend type Query {
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentException(id: ID!): AgentException
   agentControl: AgentControl!
+  """
+  The tools that would move up a tier with earned autonomy on at the threshold:
+  their clean streak has already reached it, and their agent's ceiling and the
+  tool's policy leave room above. Saving earned autonomy on, or a lower
+  threshold, promotes them. Changes nothing.
+  """
+  agentPromotionPreview(threshold: Int!): [AgentToolPromotion!]!
+}
+
+"A tool whose clean streak has earned its agent's next tier."
+type AgentToolPromotion {
+  agentDefinitionId: ID!
+  agentName: String!
+  toolName: String!
+  streak: Int!
+  from: AgentAutonomyTier!
+  to: AgentAutonomyTier!
 }
 
 extend type Mutation {
@@ -5883,12 +6301,51 @@ extend type Mutation {
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
   "Retires or restores a memory; a retired one is kept and no longer read. A suggested memory is refused."
   setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
-  "Makes a suggested memory Active, with the text as the administrator edited it."
+  """
+  Clears a tainted memory's taint once a person has read it and keeps it: it is followed as the
+  organization's own and no longer taints the turns that read it. Refused for a memory that does
+  not taint, and for one changed since the version given.
+  """
+  reviewAgentMemory(id: ID!, version: Int!): AgentMemory!
+  "Makes a suggested memory Active, with the text as the administrator edited it. A tainted suggestion approved is reviewed."
   approveAgentMemorySuggestion(id: ID!, input: ApproveAgentMemorySuggestionInput!): AgentMemory!
   "Refuses a suggested memory; its pattern is not suggested again for 30 days."
   dismissAgentMemorySuggestion(id: ID!, version: Int!): AgentMemory!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
   updateAgentControl(input: AgentControlInput!): AgentControl!
+}
+
+"""
+What the organization's agents did since a moment the reader names (the start of their day),
+for the head of Activity. Counts a reader may not see are null.
+"""
+type AgentActivitySummary {
+  since: Timestamp!
+  "Runs started since then."
+  runs: Int!
+  "Runs started since then that failed."
+  runsFailed: Int!
+  "Runs working now, whenever they started."
+  runsWorking: Int!
+  "Runs waiting on a person's decision, whenever they started."
+  runsAwaiting: Int!
+  "Proposals waiting on a person; null without read access to agent proposals."
+  pendingProposals: Int
+  "When the longest-waiting proposal was made; null when none waits or it may not be read."
+  oldestPendingAt: Timestamp
+  "Exceptions open or in review; null without read access to agent exceptions."
+  openExceptions: Int
+  "The days the decisions below are counted over."
+  decisionWindowDays: Int!
+  "Proposals people decided in the window; null without read access to agent proposals."
+  decided: Int
+  "The share of those approved exactly as proposed; null when none was decided or it may not be read."
+  approvedAsProposed: Float
+}
+
+extend type Query {
+  "What agents did since the moment given, at most 31 days ago."
+  agentActivitySummary(since: Timestamp!): AgentActivitySummary!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentdefinition.graphqls", Input: `enum AgentTemplate {
@@ -6200,9 +6657,87 @@ type AgentAccessPreview {
   sensitiveTools: [String!]!
 }
 
+"""
+An agent as it stood after one save. Each save of an agent becomes a version,
+written with the save, so the history never names a save that did not happen.
+"""
+type AgentDefinitionVersion {
+  id: ID!
+  "The agent's version number after this save."
+  version: Int!
+  "What this save changed, in the builder's words, or Created."
+  summary: String!
+  "Who saved it. Absent for a save made by the system or by a removed user."
+  author: User
+  createdAt: Timestamp!
+}
+
+"""
+How an agent in shadow compares with the people doing the same work. Each
+write it recorded instead of offering is set beside what a person did to the
+same record in the three days after.
+"""
+type AgentShadowReport {
+  "The period read, in days."
+  days: Int!
+  "Every write the agent recorded in the period."
+  recorded: Int!
+  "Writes a person then made too: the same record, and the fields the write named."
+  matched: Int!
+  "Of the writes people answered, the share that matched what they did, 0 to 1. Absent until people answer one."
+  matchRate: Float
+  "Writes whose record a person changed some other way."
+  wouldReject: Int!
+  "Writes that failed when they were simulated."
+  wouldFail: Int!
+  "Writes whose record nobody touched afterwards."
+  unanswered: Int!
+}
+
+"Instructions as the builder holds them, with the tools the draft holds."
+input AgentInstructionLintInput {
+  "At most 20000 characters."
+  instructions: String!
+  toolNames: [String!]!
+  disabledToolNames: [String!]
+}
+
+"""
+A sentence of an agent's instructions asking for something none of its tools
+can do, read from the tool registry: the record it names and the operation it
+asks for.
+"""
+type AgentInstructionFinding {
+  "Byte offset of the sentence in the instructions."
+  start: Int!
+  "Byte offset just past the sentence."
+  end: Int!
+  excerpt: String!
+  "The record the sentence names, as the permission registry knows it."
+  resource: String!
+  "The record's name for a person."
+  resourceLabel: String!
+  "What the sentence asks to do to it: read, create, update, cancel and so on."
+  operation: String!
+  "The tools in the registry that would do it. Empty when none does."
+  tools: [String!]!
+}
+
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
+  "What a draft's instructions ask for that none of its tools can do. Saves nothing."
+  agentInstructionLint(input: AgentInstructionLintInput!): [AgentInstructionFinding!]!
+  "An agent's shadow period over the last days (default 30, at most 90)."
+  agentShadowReport(agentId: ID!, days: Int): AgentShadowReport!
   agentDefinition(id: ID!): AgentDefinition
+  "An agent's saves, newest first. At most 50."
+  agentDefinitionVersions(agentId: ID!, limit: Int): [AgentDefinitionVersion!]!
+  """
+  An earlier version of an agent as a draft of the agent as it is now: that
+  version's settings on the current version number, so saving the draft
+  replaces the agent the way any edit does. Saves nothing.
+  """
+  agentDefinitionVersionDraft(agentId: ID!, version: Int!): AgentDefinition!
   "The chat agents the caller may use, enabled and by name."
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   "Each role's coverage of an agent's tools, for choosing who may use it."
@@ -6213,6 +6748,25 @@ extend type Query {
   and changes nothing.
   """
   agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
+}
+
+"A prompt kept with an agent for trying it again after an edit."
+type AgentTestPrompt {
+  id: ID!
+  prompt: String!
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  "The prompts kept with an agent, oldest first. At most 20."
+  agentTestPrompts(agentId: ID!): [AgentTestPrompt!]!
+}
+
+extend type Mutation {
+  "Keeps a prompt with an agent. At most 2000 characters, and 20 prompts an agent."
+  keepAgentTestPrompt(agentId: ID!, prompt: String!): AgentTestPrompt!
+  "Removes a kept prompt."
+  deleteAgentTestPrompt(agentId: ID!, id: ID!): Boolean!
 }
 
 extend type Mutation {
@@ -6345,6 +6899,79 @@ extend type Mutation {
     agentId: ID!
     input: UpdateAgentCapabilitiesInput!
   ): AgentCapabilities!
+}
+
+"Something drafting changed or left out of what the model proposed."
+type AgentDraftNote {
+  "The setting, as the builder names it: toolNames, toolTiers.<tool>, eventKinds, cronExpression and so on."
+  field: String!
+  "What the model proposed; empty when it proposed nothing."
+  value: String!
+  "Why it was changed or left out."
+  reason: String!
+}
+
+"""
+An agent a model drafted from a description of its job, in the shape the
+builder saves. Nothing is saved. Its tools come from the registry, each change
+held at that tool's own maximum and the ceiling, and it runs in shadow.
+"""
+type AgentDraft {
+  name: String!
+  description: String!
+  "An icon the app offers, or empty."
+  icon: String!
+  "An accent the app offers, or empty."
+  accent: String!
+  instructions: String!
+  guardrails: [String!]!
+  triggerMode: AgentTriggerMode!
+  cronExpression: String!
+  cronTimezone: String!
+  eventKinds: [String!]!
+  intervalSeconds: Int!
+  toolNames: [String!]!
+  "Autonomy per change tool, keyed by tool name; each held at the tool's maximum and autonomyCeiling."
+  toolTiers: JSON!
+  autonomyCeiling: AgentAutonomyTier!
+  dataAccessCeiling: AgentDataAccessCeiling!
+  outputMode: AgentOutputMode!
+  enabled: Boolean!
+  shadowMode: Boolean!
+  decisionTimeoutSeconds: Int!
+  runTimeoutSeconds: Int!
+  maxToolCalls: Int!
+  maxConcurrentRuns: Int!
+  "What was changed or left out of the model's draft, so the builder can say so."
+  notes: [AgentDraftNote!]!
+}
+
+"Instructions a model tightened: the same meaning, shorter, every {{placeholder}} kept."
+type AgentInstructionsTightened {
+  instructions: String!
+  "False when the model returned the instructions as they were."
+  changed: Boolean!
+}
+
+extend type Query {
+  """
+  Whether drafting an agent and tightening its instructions with AI are
+  offered: an enabled provider takes the AssistantChat task.
+  """
+  agentDraftingAvailable: Boolean!
+}
+
+extend type Mutation {
+  """
+  Drafts an agent from a sentence or two (at most 1000 characters) describing
+  its job. Saves nothing. Needs permission to create agents.
+  """
+  draftAgentFromDescription(description: String!): AgentDraft!
+  """
+  Tightens an agent's instructions (at most 20000 characters) without changing
+  what they ask for. Saves nothing. Needs permission to create or update agents.
+  """
+  tightenAgentInstructions(instructions: String!): AgentInstructionsTightened!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentpreview.graphqls", Input: `"How much of what a write would do its preview could say."
@@ -6914,6 +7541,8 @@ type AgentQualityOverview {
   agentsWithCases: Int!
   judgeEnabled: Boolean!
   regressionThreshold: Float!
+  "The open regression that fell furthest below its agent's recent median; null when none is open."
+  worstRegression: AgentSuiteRun
 }
 
 "An answer people rated down, with the most recent thumbs down on it."
@@ -7279,6 +7908,47 @@ type AgentToolPolicy {
   agentToolRuleConnection; null everywhere else.
   """
   runsWithoutPerson: Boolean
+  "The most freedom the rule declared beside the tool allows; maxTier is lower when the organization holds it lower."
+  declaredMaxTier: AgentAutonomyTier!
+  "How much of its result the declared rule treats as outside text."
+  declaredReadsExternal: AgentExternalRead!
+  "The organization's own rule for the tool; null when it keeps the declared one."
+  rule: AgentToolRule
+  "The version of the organization's rule an edit is made against; 0 when there is none yet."
+  ruleVersion: Int!
+}
+
+"An organization holding one tool lower than its declared rule."
+type AgentToolRule {
+  "Null when it keeps the declared most freedom."
+  maxTier: AgentAutonomyTier
+  "Null when it keeps the declared outside text setting."
+  readsExternal: AgentExternalRead
+  reason: String!
+  updatedAt: Timestamp!
+  updatedBy: User
+}
+
+"An organization's rule for one tool. Absent fields keep what the tool declares."
+input AgentToolRuleInput {
+  maxTier: AgentAutonomyTier
+  readsExternal: AgentExternalRead
+  "Why it changed; required when the most freedom changes, and kept in the audit trail."
+  reason: String
+}
+
+"What one agent holding the tool does before and after a rule change."
+type AgentToolRuleImpact {
+  agentId: ID!
+  agentName: String!
+  before: AgentAutonomyAnswer!
+  after: AgentAutonomyAnswer!
+}
+
+type AgentToolRuleSaved {
+  tool: AgentToolPolicy!
+  "The agents whose answer moved."
+  affected: [AgentToolRuleImpact!]!
 }
 
 "What one tool does on one agent for a representative call."
@@ -7398,9 +8068,31 @@ type AgentSafetySummary {
   openWithSensitive: Int!
   "The resources the tools need, for filtering; general for a tool that needs no grant."
   resources: [String!]!
+  "Tools that change something, counted by the widest audience their work reaches."
+  egressCounts: [AgentEgressCount!]!
+  "The titles of the tools counted in runWithoutPerson, alphabetically."
+  unattendedTools: [String!]!
+  "The agents counted in openWithSensitive."
+  openSensitiveAgentIds: [ID!]!
+}
+
+"The agents that hold one tool."
+type AgentToolHolders {
+  policyName: String!
+  agentIds: [ID!]!
+}
+
+"How many tools that change something reach one audience at most."
+type AgentEgressCount {
+  egress: AgentEgressClass!
+  count: Int!
 }
 
 extend type Query {
+  "What every agent holding the tool would do under a rule, before saving it."
+  agentToolRuleImpact(name: String!, input: AgentToolRuleInput!): [AgentToolRuleImpact!]!
+  "Every tool some agent holds, with the agents that hold it."
+  agentToolHolders: [AgentToolHolders!]!
   "Every tool's safety policy, by name."
   agentToolPolicies: [AgentToolPolicy!]!
     @deprecated(reason: "Use agentToolRuleConnection, which pages, filters and sorts on the server.")
@@ -7431,6 +8123,11 @@ extend type Query {
   """
   agentSafety(agentIds: [ID!]): [AgentSafety!]!
 }
+
+extend type Mutation {
+  "Holds a tool lower than its declared rule for this organization, or returns it to the declared rule."
+  saveAgentToolRule(name: String!, version: Int!, input: AgentToolRuleInput!): AgentToolRuleSaved!
+}
 `, BuiltIn: false},
 	{Name: "../schema/agentscorecard.graphqls", Input: `"How far back a scorecard looks."
 enum AgentScorecardWindow {
@@ -7452,6 +8149,26 @@ type AgentToolOutcome {
   pending: Int!
   "Writes the trust ladder let through without asking anyone."
   automatic: Int!
+}
+
+"""
+How often one tool's calls ended one way over the window, counted from every
+call that reached the tool, refusals included. A call the runtime refused
+never became a proposal, so the proposal counts cannot show it.
+"""
+type AgentToolVerdict {
+  toolName: String!
+  "ran, proposed, simulated, denied, invalid, duplicate, over_budget, failed or unknown."
+  verdict: String!
+  calls: Int!
+  "The reasons given most often, most frequent first. A call that ran gives none."
+  topReasons: [AgentToolVerdictReason!]!
+}
+
+"One reason a tool's calls were refused or failed, and how many calls gave it."
+type AgentToolVerdictReason {
+  reason: String!
+  calls: Int!
 }
 
 "One day of the trend line."
@@ -7527,6 +8244,8 @@ type AgentScorecard {
   estimatedMinutesSaved: Int!
 
   byTool: [AgentToolOutcome!]!
+  "How each tool's calls ended, by tool and verdict, with the commonest reasons."
+  toolVerdicts: [AgentToolVerdict!]!
   trend: [AgentScorecardPoint!]!
   toolTrust: [AgentToolTrust!]!
 }
@@ -7854,6 +8573,220 @@ extend type Mutation {
   verifyAIAuditChain: AIAuditChainStatus!
 }
 `, BuiltIn: false},
+	{Name: "../schema/aicontrol.graphqls", Input: `"A tab of AI control that opens with a sentence."
+enum AIControlTab {
+  Overview
+  Agents
+  Providers
+}
+
+"""
+One run of a sentence. A target makes it a link: watchtower, providers, routing,
+agents:shadow, agents:waiting, or provider (with providerId). Tone colours a
+link: warn or danger.
+"""
+type AIControlSegment {
+  text: String!
+  strong: Boolean!
+  target: String
+  providerId: ID
+  tone: String
+}
+
+"The organization's agents and what they are doing."
+type AIControlAgentCounts {
+  total: Int!
+  on: Int!
+  working: Int!
+  "Proposals waiting on a person."
+  waiting: Int!
+  "Agents on and in shadow."
+  shadow: Int!
+  "Proposals shadow agents recorded over the last 30 days."
+  shadowRecorded: Int!
+}
+
+"An enabled provider whose last call failed and has not succeeded since."
+type AIProviderFailure {
+  providerId: ID!
+  name: String!
+  "Failed calls over the last day."
+  failedCalls: Int!
+  lastFailureAt: Timestamp!
+}
+
+"What a tab's sentence may say."
+type AIControlFacts {
+  agents: AIControlAgentCounts!
+  providersOn: Int!
+  failing: [AIProviderFailure!]!
+  "Tasks no enabled provider can take."
+  uncovered: Int!
+  "Every agent is paused and runs in shadow."
+  paused: Boolean!
+}
+
+"""
+The sentence that heads a tab. It is worked out from the records on every
+read; a model rewords it only when they say something new, and what it wrote is
+kept until they move again.
+"""
+type AIControlSummary {
+  tab: AIControlTab!
+  segments: [AIControlSegment!]!
+  "A model wrote it; false is the sentence the facts say on their own."
+  narrated: Boolean!
+  "A model is rewording it; read again in a few seconds."
+  pending: Boolean!
+  factsHash: String!
+  generatedAt: Timestamp!
+  facts: AIControlFacts!
+  "The failing providers the reader has not put away since they last failed."
+  visibleFailures: [AIProviderFailure!]!
+}
+
+"""
+What one agent has done lately, for its row on the Agents tab: runs on each of
+the last 14 days and the decisions people made on its proposals over 30.
+"""
+type AIAgentRosterStat {
+  agentId: ID!
+  "Runs started on each of the last 14 days, oldest first; the last is today."
+  runsByDay: [Int!]!
+  runs: Int!
+  approved: Int!
+  modified: Int!
+  rejected: Int!
+  failed: Int!
+  "Proposals it recorded in shadow, which nobody was offered."
+  shadowRecorded: Int!
+  "Approved or changed, of every decided proposal, 0 to 1. Absent until someone has decided."
+  approvalRate: Float
+}
+
+extend type Query {
+  aiControlSummary(tab: AIControlTab!): AIControlSummary!
+  "Every agent that has run or proposed lately; an agent with neither is left out."
+  aiAgentRoster: [AIAgentRosterStat!]!
+}
+
+extend type Mutation {
+  "Puts away, for the caller, the notice that a provider is failing, up to the failure they saw."
+  dismissAIProviderFailure(providerId: ID!, lastFailureAt: Timestamp!): Boolean!
+  "Brings a put-away failure notice back."
+  restoreAIProviderFailure(providerId: ID!): Boolean!
+}
+
+"What a tune-up would change."
+enum AITuneUpKind {
+  "Let a tool its agent's people keep approving unchanged run one tier more freely."
+  RaiseToolTier
+  "Put a provider that keeps catching a failing one ahead of it."
+  ReorderProviders
+  "Take an agent whose recorded proposals match what people did out of shadow."
+  LeaveShadow
+  "Give a task nothing serves to a provider that can take it."
+  AssignTask
+  "Turn off a chat agent nobody has asked anything in two weeks."
+  TurnOffIdleAgent
+}
+
+enum AITuneUpStatus {
+  Open
+  Applied
+  Dismissed
+}
+
+"The agent a tune-up changes."
+type AITuneUpAgent {
+  id: ID!
+  name: String!
+  icon: String!
+  accent: String!
+}
+
+"A provider a tune-up names."
+type AITuneUpProvider {
+  id: ID!
+  name: String!
+  kind: AIProviderKind!
+}
+
+"""
+What the runs showed. Each kind fills what its sentence names; the rest are
+zero.
+"""
+type AITuneUpEvidence {
+  "The tier the tool runs at on the agent now."
+  fromTier: AgentAutonomyTier
+  "The tier it would move to."
+  toTier: AgentAutonomyTier
+  "Approvals in a row that changed nothing."
+  streak: Int!
+  approvals: Int!
+  approvalsPerWeek: Float!
+  rejections: Int!
+  "Calls the provider that catches the failures answered."
+  calls: Int!
+  "Calls the provider first in line failed."
+  failed: Int!
+  "Failed calls the next provider answered."
+  rescued: Int!
+  "Writes the agent recorded in shadow."
+  recorded: Int!
+  "Share of the recorded writes people answered that matched what they did, 0 to 1."
+  matchRate: Float!
+  wouldFail: Int!
+  tasks: [AITask!]!
+  "The model the provider that would take the task serves."
+  model: String!
+  lastRunAt: Timestamp
+  "When the agent last ran, or was created when it never has."
+  idleSince: Timestamp!
+  "Tools the agent holds."
+  tools: Int!
+}
+
+"A change to how AI is set up that the last 30 days of runs argue for."
+type AITuneUp {
+  id: ID!
+  kind: AITuneUpKind!
+  agent: AITuneUpAgent
+  "The provider the change acts on: the one moved ahead, or the one given the task."
+  provider: AITuneUpProvider
+  "The provider moved behind."
+  otherProvider: AITuneUpProvider
+  toolName: String
+  task: AITask
+  evidence: AITuneUpEvidence!
+  status: AITuneUpStatus!
+  dismissedUntil: Timestamp
+  computedAt: Timestamp!
+  version: Int!
+}
+
+"The tune-ups offered now, worked out nightly."
+type AITuneUps {
+  items: [AITuneUp!]!
+  "When they were last worked out; null before the first time."
+  computedAt: Timestamp
+  "How many days of runs they are drawn from."
+  windowDays: Int!
+}
+
+extend type Query {
+  aiTuneUps: AITuneUps!
+}
+
+extend type Mutation {
+  "Makes the change a tune-up suggests."
+  applyAITuneUp(id: ID!, version: Int!): AITuneUp!
+  "Puts a tune-up away for some days, 30 unless given; the same change is not suggested again until then."
+  dismissAITuneUp(id: ID!, version: Int!, days: Int): AITuneUp!
+  "Brings a put-away tune-up back."
+  restoreAITuneUp(id: ID!, version: Int!): AITuneUp!
+}
+`, BuiltIn: false},
 	{Name: "../schema/aifeedback.graphqls", Input: `"The kind of AI output a rating is about."
 enum AIFeedbackTargetType {
   "An answer the conversation's agent gave."
@@ -8082,6 +9015,71 @@ enum AIThinkingStyle {
 }
 
 """
+Where an Anthropic Messages provider reaches Claude. Direct calls the base URL
+with the API key, which every other kind always does.
+"""
+enum AIProviderPlatform {
+  Direct
+  "Amazon Bedrock's Messages endpoint."
+  Bedrock
+  "Google Vertex AI's Anthropic publisher models."
+  VertexAI
+  "Claude Platform on AWS: the Claude API run by Anthropic, billed through AWS."
+  ClaudePlatformAWS
+  "Claude Platform on Google Cloud."
+  ClaudePlatformGoogleCloud
+  "Microsoft Foundry."
+  Foundry
+}
+
+"How a request to a platform proves who sent it."
+enum AIProviderPlatformAuth {
+  "The stored key: an Anthropic, Bedrock or Foundry API key."
+  ApiKey
+  "Signed with an IAM access key; the secret access key is stored."
+  AccessKey
+  "Tokens from a Google service account key, which is stored."
+  ServiceAccount
+  "Tokens from Microsoft Entra ID for an app registration; its client secret is stored."
+  EntraID
+  "The cloud credentials of the server Trenova runs on, where the server allows it. Nothing is stored."
+  Server
+}
+
+"""
+What a platform needs besides its credential. None of it is secret; a setting
+the platform does not take is empty.
+"""
+type AIProviderPlatformSettings {
+  auth: AIProviderPlatformAuth!
+  "The AWS region, the Vertex AI region or the Google Cloud location."
+  region: String!
+  "The Google Cloud project."
+  projectId: String!
+  "The Anthropic workspace, for Claude Platform on AWS and on Google Cloud."
+  workspaceId: String!
+  "The IAM access key that signs requests."
+  accessKeyId: String!
+  "The Foundry resource name."
+  resource: String!
+  "The Entra ID tenant."
+  tenantId: String!
+  "The Entra ID app registration's client ID."
+  clientId: String!
+}
+
+input AIProviderPlatformSettingsInput {
+  auth: AIProviderPlatformAuth
+  region: String
+  projectId: String
+  workspaceId: String
+  accessKeyId: String
+  resource: String
+  tenantId: String
+  clientId: String
+}
+
+"""
 How an embedding endpoint is told whether a text is a stored document or a
 search query. None sends both the same way; VoyageInputType sends Voyage's
 input_type field; NomicPrefix adds the search_document and search_query
@@ -8140,6 +9138,10 @@ type AIProvider {
   reasoningEffort: AIReasoningEffort!
   "How a Claude model behind an id the system cannot read takes thinking."
   thinkingStyle: AIThinkingStyle!
+  "Where an Anthropic Messages provider reaches Claude."
+  platform: AIProviderPlatform!
+  "What the platform needs besides the credential. Null for a provider called directly."
+  platformSettings: AIProviderPlatformSettings
   """
   Vendor request fields this endpoint takes that the protocol does not
   define, merged under the fields this system sets. Null when the endpoint
@@ -8150,6 +9152,17 @@ type AIProvider {
   inputCostPerMillion: Decimal
   "USD per million output tokens; null means unknown."
   outputCostPerMillion: Decimal
+  """
+  USD per million prompt tokens read from the provider's cache. Null charges
+  the protocol's usual share of the input price: a tenth.
+  """
+  cacheReadCostPerMillion: Decimal
+  """
+  USD per million prompt tokens written to the provider's cache. Null charges
+  the protocol's usual multiple of the input price: one and a quarter times
+  for Anthropic Messages, the input price for the others.
+  """
+  cacheWriteCostPerMillion: Decimal
   maxTokens: Int!
   tasks: [AITask!]!
   priority: Int!
@@ -8160,9 +9173,44 @@ type AIProvider {
   trusted: Boolean!
   enabled: Boolean!
   lastTest: AIProviderTestOutcome
+  "How long one call may take before it fails and the task moves to the next provider."
+  timeoutSeconds: Int!
+  "Calls this provider takes at once across every server. Past it, work moves to the next provider."
+  maxConcurrent: Int!
+  "Most this provider may spend in a calendar month, in USD. Null means no cap."
+  monthlyCapUsd: Decimal
+  "What happens to a task once the monthly cap is reached."
+  onCap: AIProviderCapAction!
+  "Spend so far this calendar month (UTC), over the calls that carried a price."
+  monthSpendUsd: Decimal!
+  "The stored credential, described without the secret. Null when none is stored."
+  apiKey: AIProviderKeyInfo
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"What a provider does with a task once its monthly cap is reached."
+enum AIProviderCapAction {
+  "The task goes to the next provider in line."
+  Next
+  "The task fails rather than moving on."
+  Stop
+}
+
+"""
+A stored credential, described without the secret: enough of its ends to tell
+two keys apart, who added it and when it was last used.
+"""
+type AIProviderKeyInfo {
+  "The vendor prefix the key starts with, such as sk-ant-; empty when it has none."
+  prefix: String!
+  lastFour: String!
+  addedAt: Timestamp!
+  addedBy: User
+  lastUsedAt: Timestamp
+  "While the key it replaced is still kept as a fallback, when that stops."
+  previousKeyExpiresAt: Timestamp
 }
 
 type AIProviderEdge {
@@ -8176,9 +9224,132 @@ type AIProviderConnection {
   totalCount: Int
 }
 
+"A provider as its editor holds it, reduced to what decides where tasks go."
+input AIProviderRoutingDraftInput {
+  "The provider being edited. Absent for a new one."
+  id: ID
+  name: String!
+  kind: AIProviderKind!
+  tasks: [AITask!]!
+  priority: Int!
+  embeddingDimensions: Int
+  trusted: Boolean!
+  enabled: Boolean!
+}
+
+"The provider a task goes to. Draft is the provider being edited, which has no ID until it is first saved."
+type AIRouteChoice {
+  providerId: ID
+  name: String!
+  draft: Boolean!
+}
+
+"""
+Where one task goes now and where it would go with a draft saved. An absent
+choice is a task no provider serves. Providers resting after repeated failures
+are skipped at run time and are not reflected here.
+"""
+type AITaskRoute {
+  task: AITask!
+  before: AIRouteChoice
+  after: AIRouteChoice
+  changed: Boolean!
+}
+
+"""
+An endpoint as an editor holds it, before it is saved. With providerId and no
+apiKey, the provider's stored key is used.
+"""
+input AIProviderEndpointInput {
+  providerId: ID
+  kind: AIProviderKind!
+  "Where an Anthropic Messages endpoint reaches Claude. Omitted calls the base URL directly."
+  platform: AIProviderPlatform
+  platformSettings: AIProviderPlatformSettingsInput
+  baseUrl: String!
+  apiKey: String
+  allowPrivateNetwork: Boolean!
+}
+
+"Where a model's listed price came from."
+enum AIModelPriceSource {
+  "The provider's own model list."
+  Provider
+  "OpenRouter's public catalog: an estimate of the list price, not what a contract charges."
+  OpenRouter
+}
+
+"One model an endpoint says it serves."
+type AIProviderModelOption {
+  id: String!
+  displayName: String!
+  "Tokens of context, when the endpoint or the model id says."
+  contextWindow: Int
+  "Bytes on disk, for a model a local server holds."
+  sizeBytes: Float
+  "A local server has it in memory now."
+  loaded: Boolean!
+  embedding: Boolean!
+  inputCostPerMillion: Decimal
+  outputCostPerMillion: Decimal
+  "Where the prices came from; null when there are none."
+  priceSource: AIModelPriceSource
+  "When the provider released the model (for a local server, when it was pulled), when the endpoint says."
+  createdAt: Timestamp
+}
+
+input AIProviderDraftTestInput {
+  endpoint: AIProviderEndpointInput!
+  model: String!
+  structuredOutputMode: AIStructuredOutputMode
+  tasks: [AITask!]!
+  embeddingDimensions: Int
+  embeddingInputStyle: AIEmbeddingInputStyle
+  timeoutSeconds: Int
+}
+
+"What a probe of an unsaved endpoint revealed, with a next step when it failed."
+type AIProviderDraftTestResult {
+  success: Boolean!
+  message: String!
+  "The endpoint's own words, such as the transport error."
+  detail: String!
+  "What to try next. Empty when it worked."
+  hint: String!
+  modelIdentifier: String!
+  schemaHonoured: Boolean!
+  latencyMs: Int!
+}
+
+"The fields of a provider that change on their own, from its row and read sheet."
+input AIProviderPatchInput {
+  enabled: Boolean @goField(omittable: true)
+  trusted: Boolean @goField(omittable: true)
+  allowPrivateNetwork: Boolean @goField(omittable: true)
+  tasks: [AITask!] @goField(omittable: true)
+  "A new credential. It replaces the stored one and is never returned."
+  apiKey: String @goField(omittable: true)
+  inputCostPerMillion: Decimal @goField(omittable: true)
+  outputCostPerMillion: Decimal @goField(omittable: true)
+  cacheReadCostPerMillion: Decimal @goField(omittable: true)
+  cacheWriteCostPerMillion: Decimal @goField(omittable: true)
+}
+
 extend type Query {
+  "The models an endpoint serves, asked of the endpoint itself."
+  aiProviderModels(input: AIProviderEndpointInput!): [AIProviderModelOption!]!
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   aiProvider(id: ID!): AIProvider
+  "Where each task goes now and where it would go with the draft saved. Saves nothing."
+  aiRoutePreview(draft: AIProviderRoutingDraftInput!): [AITaskRoute!]!
+}
+
+extend type Mutation {
+  "Probes an unsaved endpoint once and records nothing."
+  testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderDraftTestResult!
+  "Sets the routing order: the first ID takes work first. Every provider must be listed once."
+  reorderAIProviders(ids: [ID!]!): [AIProvider!]!
+  patchAIProvider(id: ID!, version: Int!, input: AIProviderPatchInput!): AIProvider!
 }
 `, BuiltIn: false},
 	{Name: "../schema/airetrieval.graphqls", Input: `"What retrieval indexes by meaning."
@@ -8497,9 +9668,48 @@ type AIUsageFailure {
   at: Timestamp!
 }
 
+"One calendar day of model usage, in the timezone it was asked for."
+type AIUsageDay {
+  "The day, YYYY-MM-DD."
+  day: String!
+  calls: Int!
+  failed: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  "Sum over the calls that carried a price; see pricedCalls."
+  costUsd: Decimal!
+  pricedCalls: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+}
+
+type AIUsageFeatureEdge {
+  node: AIUsageFeatureSlice!
+  cursor: String!
+}
+
+"""
+Model usage by feature as a table: searchable by feature, filterable and
+sortable on feature, calls, failed, tokens, costUsd and latencyP50Ms.
+"""
+type AIUsageFeatureConnection {
+  edges: [AIUsageFeatureEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
 extend type Query {
+  "Model usage by feature over the last days (default 7, at most 366), as a table."
+  aiUsageFeatures(input: DataTableConnectionInput!, days: Int): AIUsageFeatureConnection!
   "Model usage since the given instant, defaulting to the last seven days."
   aiUsageSummary(since: Timestamp): AIUsageSummary!
+  """
+  Model usage day by day for the last days (default 7, at most 90), ending
+  today, oldest first. A day with no calls is listed with zeros. Days are read
+  in the IANA timezone given, UTC when absent. With providerId, only that
+  provider's calls.
+  """
+  aiUsageDaily(days: Int, timezone: String, providerId: ID): [AIUsageDay!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/api_key.graphqls", Input: `type ApiKey {
@@ -9107,6 +10317,86 @@ extend type Mutation {
   markBriefingRead(id: ID!): Briefing!
   "Writes today's page again from current figures, replacing what was there."
   regenerateBriefing(input: TodaysBriefingInput!): Briefing!
+}
+`, BuiltIn: false},
+	{Name: "../schema/bulk_edit.graphqls", Input: `"A value a bulk-editable field can be set to."
+type BulkEditOption {
+  value: String!
+  label: String!
+}
+
+"A field of a table that can be changed on many rows at once."
+type BulkEditField {
+  name: String!
+  label: String!
+  "record (picked from a list of records) or select (one of a fixed set)."
+  kind: String!
+  "For a record field, the select-option resource its values are picked from."
+  record: String
+  options: [BulkEditOption!]!
+}
+
+input BulkEditSelectionInput {
+  "The rows chosen one by one."
+  ids: [ID!]
+  "Or every row matching the table's filters, resolved by the server when the edit runs."
+  filter: DataTableConnectionInput
+  "The table's own list options beyond filters, such as the shipment board's quick filters."
+  options: JSON
+}
+
+input BulkEditInput {
+  resource: String!
+  field: String!
+  value: String!
+  selection: BulkEditSelectionInput!
+}
+
+type BulkEditPreview {
+  "How many rows the edit would reach."
+  count: Int!
+  "True when more rows match than one bulk edit can change."
+  tooMany: Boolean!
+}
+
+type BulkEditFailure {
+  id: ID!
+  message: String!
+}
+
+"One change made to many rows at once, and how far it has got."
+type BulkEditJob {
+  id: ID!
+  resource: String!
+  field: String!
+  value: String!
+  "Queued, Running, Completed, Failed, Undoing or Undone."
+  status: String!
+  totalCount: Int!
+  processedCount: Int!
+  changedCount: Int!
+  failedCount: Int!
+  failureMessage: String!
+  "The first rows that could not be changed, with why."
+  failures: [BulkEditFailure!]!
+  canUndo: Boolean!
+  completedAt: Timestamp
+  undoneAt: Timestamp
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  bulkEditFields(resource: String!): [BulkEditField!]!
+  previewBulkEdit(input: BulkEditInput!): BulkEditPreview!
+  myBulkEdit(id: ID!): BulkEditJob
+  myBulkEdits(resource: String, limit: Int): [BulkEditJob!]!
+}
+
+extend type Mutation {
+  "Starts changing one field on every chosen row; it runs in the background."
+  startBulkEdit(input: BulkEditInput!): BulkEditJob!
+  "Puts back every row the caller's bulk edit changed, within a day of it finishing."
+  undoMyBulkEdit(id: ID!): BulkEditJob!
 }
 `, BuiltIn: false},
 	{Name: "../schema/capture.graphqls", Input: `"Whether a paired companion may still act for its person."
@@ -12293,6 +13583,110 @@ extend type Mutation {
   unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication!
 }
 `, BuiltIn: false},
+	{Name: "../schema/data_table_insight.graphqls", Input: `"How many of a table's filtered rows hold each value of one field."
+input DataTableFacetInput {
+  "The table's permission resource, such as shipment."
+  resource: String!
+  field: String!
+  filter: DataTableConnectionInput
+  "Options the table's own list takes beyond filters, such as the shipment board's quick filters."
+  options: JSON
+  limit: Int = 20
+}
+
+type DataTableFacetBucket {
+  "The field's value, or null for rows that have none."
+  value: String
+  count: Int!
+}
+
+type DataTableFacets {
+  field: String!
+  "The most common values first."
+  buckets: [DataTableFacetBucket!]!
+  "Every row the filters match, including those in values not listed."
+  total: Int!
+}
+
+"Totals of a table's filtered rows."
+input DataTableAggregateInput {
+  resource: String!
+  fields: [String!]!
+  filter: DataTableConnectionInput
+  options: JSON
+}
+
+type DataTableAggregateValue {
+  field: String!
+  sum: Decimal
+  average: Decimal
+  min: Decimal
+  max: Decimal
+}
+
+type DataTableAggregates {
+  "Every row the filters match, on every page."
+  count: Int!
+  values: [DataTableAggregateValue!]!
+}
+
+type DataTableInsightField {
+  name: String!
+  facetable: Boolean!
+  summable: Boolean!
+  "Whether the field is a date a chart can follow rows over."
+  timeline: Boolean!
+}
+
+enum DataTableSeriesInterval {
+  WEEK
+  MONTH
+}
+
+"""
+One small chart per row of another table: how many of this table's rows each one has,
+or their total, in each week or month up to now. A customer's shipments, a carrier's
+loads, a location's stops.
+"""
+input DataTableSeriesInput {
+  "The table counted, such as shipment."
+  resource: String!
+  "The field naming the row each chart belongs to, such as customerId."
+  groupField: String!
+  "The rows to chart, at most 200."
+  groupValues: [String!]!
+  "The date that places each counted row in a period."
+  dateField: String!
+  "A field to total instead of counting rows."
+  valueField: String
+  interval: DataTableSeriesInterval! = WEEK
+  "How many periods, ending with the current one."
+  periods: Int! = 12
+  "The time zone periods start in; UTC when absent."
+  timezone: String
+  filter: DataTableConnectionInput
+}
+
+type DataTableSeriesGroup {
+  value: String!
+  "One value per period, oldest first."
+  points: [Decimal!]!
+}
+
+type DataTableSeries {
+  "When each period starts, oldest first."
+  periodStarts: [Timestamp!]!
+  groups: [DataTableSeriesGroup!]!
+}
+
+extend type Query {
+  dataTableFacets(input: DataTableFacetInput!): DataTableFacets!
+  dataTableAggregates(input: DataTableAggregateInput!): DataTableAggregates!
+  dataTableSeries(input: DataTableSeriesInput!): DataTableSeries!
+  "The fields a table can be counted by or totalled, so a screen offers only those."
+  dataTableInsightFields(resource: String!): [DataTableInsightField!]!
+}
+`, BuiltIn: false},
 	{Name: "../schema/decisions.graphqls", Input: `"""
 One thing waiting on a person: a proposal that stands on its own, or a plan
 decided as a whole. A plan's steps never appear on their own.
@@ -13112,6 +14506,8 @@ input DetentionStatsInput {
   from: Timestamp!
   to: Timestamp!
   limit: Int
+  "Only the stops made at this location."
+  locationId: ID
 }
 
 extend type Query {
@@ -19869,9 +21265,30 @@ type InboundMailbox {
   hasSigningSecret: Boolean!
   "Whether an API key is set for reading message content. Resend posts only a message's metadata, so a Resend mailbox without one cannot read bodies or attachments. The key itself is never returned."
   hasApiKey: Boolean!
+  "When this address last received mail."
+  lastReceivedAt: Timestamp
+  "Whether mail is still arriving, worked out from when it last did."
+  health: InboundSourceHealth!
+  "When a test email was last sent to this address."
+  testSentAt: Timestamp
+  "When the last test email arrived. Later than testSentAt means the address works."
+  testReceivedAt: Timestamp
+  "Senders whose mail goes straight to Ignored: addresses, or domains without an @."
+  blockedSenders: [String!]!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"Whether a source is still delivering."
+enum InboundSourceHealth {
+  Healthy
+  "Nothing has arrived for longer than a working source goes quiet."
+  Quiet
+  "Connected but has never received anything."
+  NeverReceived
+  "Turned off."
+  Paused
 }
 
 """
@@ -19909,7 +21326,35 @@ type InboundAttachment {
   documentId: ID
   "Why this file was refused or could not be read; blank when it was."
   failureText: String!
+  "The shipment it was filed on, once it was."
+  filedShipmentId: ID
+  filedShipment: InboundShipmentRef
+  "The document type it was filed as."
+  filedAs: String
+  filedAt: Timestamp
+  "How many pages the file has; zero when it is not paged."
+  pageCount: Int!
+  "What each page looked like to the reading, for splitting a file into documents."
+  pages: [InboundAttachmentPage!]!
+  "The documents a split made, one per page range."
+  splitDocuments: [InboundSplitDocument!]!
   createdAt: Timestamp!
+}
+
+"One page of a file, as the reading saw it."
+type InboundAttachmentPage {
+  number: Int!
+  label: String!
+  "The document type the page looks like."
+  suggestedType: String!
+}
+
+"One document a split made from a range of pages."
+type InboundSplitDocument {
+  fromPage: Int!
+  toPage: Int!
+  documentId: ID!
+  documentType: String!
 }
 
 """
@@ -19965,6 +21410,35 @@ type InboundMessage {
   matchedCustomer: Customer
   "Whether this message is waiting on a person."
   needsReview: Boolean!
+  "The conversation it belongs to, from its Message-ID, In-Reply-To and References."
+  threadKey: String!
+  "How many messages share its thread."
+  threadCount: Int!
+  "The domain it came from."
+  senderDomain: String!
+  "Who it is assigned to."
+  ownerId: ID
+  owner: User
+  "When the organization's response target for its kind runs out. Absent once it is settled."
+  dueAt: Timestamp
+  "The response target that set dueAt, in minutes."
+  responseTargetMinutes: Int!
+  "Set while it is snoozed."
+  snooze: InboundSnooze
+  "Set while it waits on the sender to reply."
+  awaitingReply: InboundAwaitingReply
+  "Whether Nova read it. False when Nova was off when it arrived."
+  novaRead: Boolean!
+  "Whether Nova settled it on its own, under a rule or the mailbox's policy."
+  handledByNova: Boolean!
+  "The rule that settled it, where one did."
+  handledByRuleId: ID
+  "What Nova did when it settled it."
+  handledAction: TriageRuleAction
+  "Who settled it."
+  reviewer: User
+  "What happened to it, oldest first."
+  activity: [InboundActivity!]!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -19996,9 +21470,132 @@ type InboundMessageConnection {
   totalCount: Int
 }
 
+"A folder of the queue: a question about state rather than a filter."
+enum TriageLane {
+  "Waiting on a person and not parked."
+  Waiting
+  "Replied to, waiting for the sender to answer."
+  WaitingOnThem
+  "Waiting, and assigned to whoever is asking."
+  AssignedToMe
+  Snoozed
+  Handled
+  Ignored
+  Everything
+}
+
+"How a folder is ordered."
+enum TriageSort {
+  "Soonest response target first, the overdue ones at the top."
+  Due
+  Newest
+}
+
+"Something that wakes a snoozed message."
+enum InboundSnoozeEvent {
+  ShipmentDelivered
+  "A document of a given type is attached to the shipment."
+  DocumentAttached
+  "The shipment's invoice is paid."
+  InvoicePaid
+}
+
+"Why a message is out of the queue for now."
+type InboundSnooze {
+  "Set for a snooze until a time."
+  until: Timestamp
+  "Set for a snooze until something happens."
+  event: InboundSnoozeEvent
+  "The shipment the event is watched on."
+  watchShipment: InboundShipmentRef
+  "The document type DocumentAttached waits for."
+  documentTypeId: ID
+  documentTypeName: String
+  snoozedAt: Timestamp!
+  snoozedBy: User
+}
+
+"A message parked until the sender answers."
+type InboundAwaitingReply {
+  since: Timestamp!
+  "When it comes back if nobody replies."
+  until: Timestamp!
+}
+
+"Who did something to a message."
+enum InboundActorKind {
+  Person
+  Nova
+  System
+}
+
+"What happened to a message."
+enum InboundActivityKind {
+  Assigned
+  Unassigned
+  Snoozed
+  Woken
+  WaitingOnReply
+  StoppedWaiting
+  TheyReplied
+  ReplyDrafted
+  Replied
+  ReplyFailed
+  Linked
+  Unlinked
+  Filed
+  Unfiled
+  Split
+  Corrected
+  FactFlagged
+  Handled
+  Ignored
+  Reopened
+  LoadDrafted
+  LoadCreated
+  ExceptionLogged
+  SenderBlocked
+  StopsDecided
+  ConflictResolved
+  ConflictReopened
+  HandedOff
+  RuleApplied
+  RuleCreated
+  DueChanged
+  TestReceived
+  NovaRead
+}
+
+"""
+One line of a message's activity trace. Subject and detail are the names the
+line is about (a file, a shipment's PRO, a person, an address), never prose.
+"""
+type InboundActivity {
+  id: ID!
+  kind: InboundActivityKind!
+  actorKind: InboundActorKind!
+  actor: User
+  subject: String!
+  detail: String!
+  until: Timestamp
+  fromClassification: InboundClassification
+  toClassification: InboundClassification
+  recordId: ID
+  createdAt: Timestamp!
+}
+
 input InboundMessagesInput {
   first: Int = 25
   after: String
+  "The folder. Absent keeps the older status filter."
+  lane: TriageLane
+  sort: TriageSort = Newest
+  "Show one row per thread: the newest message of it in the folder."
+  collapseThreads: Boolean = false
+  "Only one thread, newest first."
+  threadKey: String
+  "Only messages assigned to this person."
+  ownerId: ID
   "Only these statuses; empty is every status."
   statuses: [InboundMessageStatus!]
   classification: InboundClassification
@@ -20012,7 +21609,16 @@ input InboundMessagesInput {
 
 "The inbox in numbers, for the lane counts."
 type InboundMessageCounts {
+  "Waiting on a person and not parked."
   waiting: Int!
+  waitingOnThem: Int!
+  snoozed: Int!
+  "Waiting, and assigned to whoever asked."
+  assignedToMe: Int!
+  "Waiting and past its response target."
+  overdue: Int!
+  "Still being read."
+  processing: Int!
   handled: Int!
   ignored: Int!
   quarantined: Int!
@@ -20043,6 +21649,100 @@ input ReviewInboundMessageInput {
   note: String
 }
 
+"Which messages a bulk change applies to: named ones, or everything in a folder."
+input TriageSelectionInput {
+  ids: [ID!]
+  "Everything in this folder, up to the server's bound."
+  folder: InboundMessagesInput
+}
+
+input SnoozeInboundMessagesInput {
+  "Until a time. Exactly one of until and event is set."
+  until: Timestamp
+  event: InboundSnoozeEvent
+  "The document type DocumentAttached waits for."
+  documentTypeId: ID
+}
+
+input BulkReviewInboundMessagesInput {
+  "Actioned or Ignored."
+  status: InboundMessageStatus!
+  note: String
+  "Turn on a rule that does this on its own next time, for one message's kind, sender domain and source."
+  teach: TriageRuleAction
+}
+
+"The record a message was linked to, to unlink."
+enum InboundLinkedRecord {
+  Shipment
+  Customer
+  Carrier
+}
+
+"What a bulk change did."
+type TriageBulkResult {
+  "The messages it changed, as they are now."
+  messages: [InboundMessage!]!
+  "How many it changed, including any past the ones returned."
+  affected: Int!
+  "A rule it turned on, where it was asked to."
+  ruleId: ID
+}
+
+"What handing the queue to the on-call person did."
+type TriageHandOff {
+  to: User!
+  affected: Int!
+}
+
+"A folder a person saved from a search."
+type TriageView {
+  id: ID!
+  name: String!
+  query: String!
+  position: Int!
+  "How many messages waiting on a person match it."
+  waiting: Int!
+}
+
+"How long a kind of message may wait before it is over target."
+type TriageResponseTarget {
+  classification: InboundClassification!
+  minutes: Int!
+  "Whether this is Trenova's default rather than the organization's own."
+  isDefault: Boolean!
+}
+
+input TriageResponseTargetInput {
+  classification: InboundClassification!
+  "Minutes, or null to go back to the default."
+  minutes: Int
+}
+
+"The organization's queue settings."
+type TriageSettings {
+  "Who the queue is handed to at the end of the day."
+  onCallUser: User
+  onCallUserId: ID
+  "Minutes after midnight, in the organization's time zone, when the day wraps up."
+  endOfDayMinute: Int!
+  timezone: String!
+  version: Int!
+}
+
+input TriageSettingsInput {
+  onCallUserId: ID
+  endOfDayMinute: Int!
+  version: Int!
+}
+
+"Someone a message can be assigned to."
+type TriageAssignee {
+  user: User!
+  "Waiting messages already assigned to them."
+  waiting: Int!
+}
+
 input LinkInboundMessageInput {
   shipmentId: ID
   customerId: ID
@@ -20058,6 +21758,15 @@ extend type Query {
   inboundMessageCounts: InboundMessageCounts!
   "The addresses this organization listens on."
   inboundMailboxes: [InboundMailbox!]!
+  "The messages in one thread, oldest first."
+  inboundThread(threadKey: String!): [InboundMessage!]!
+  "The folders the signed-in person saved."
+  myTriageViews: [TriageView!]!
+  "Every kind's response target, defaults included."
+  triageResponseTargets: [TriageResponseTarget!]!
+  triageSettings: TriageSettings!
+  "People who can be assigned messages."
+  triageAssignees: [TriageAssignee!]!
 }
 
 extend type Mutation {
@@ -20075,6 +21784,388 @@ extend type Mutation {
   setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
   "Seals and stores the key a Resend mailbox reads message bodies and attachments with: a full access re_ key."
   setInboundMailboxApiKey(id: ID!, apiKey: String!): InboundMailbox!
+  "Settles several messages, or a whole folder, at once."
+  reviewInboundMessages(selection: TriageSelectionInput!, input: BulkReviewInboundMessagesInput!): TriageBulkResult!
+  "Puts settled messages back in the queue."
+  reopenInboundMessages(selection: TriageSelectionInput!): TriageBulkResult!
+  "Assigns messages to a person, or unassigns them when ownerId is null."
+  assignInboundMessages(selection: TriageSelectionInput!, ownerId: ID): TriageBulkResult!
+  "Takes messages out of the queue until a time or an event."
+  snoozeInboundMessages(selection: TriageSelectionInput!, input: SnoozeInboundMessagesInput!): TriageBulkResult!
+  "Brings a snoozed message back now."
+  wakeInboundMessage(id: ID!): InboundMessage!
+  "Parks a message until the sender replies on its thread, or until a time."
+  waitForInboundReply(id: ID!, until: Timestamp!): InboundMessage!
+  "Brings a message waiting on a reply back now."
+  stopWaitingForInboundReply(id: ID!): InboundMessage!
+  "Removes a link a person or the reading made."
+  unlinkInboundMessage(id: ID!, record: InboundLinkedRecord!): InboundMessage!
+  "Sends a test email to a mailbox's address from the organization's outbound email."
+  sendInboundMailboxTest(id: ID!): InboundMailbox!
+  "Assigns everything still waiting to the on-call person."
+  handOffTriage(toUserId: ID!): TriageHandOff!
+  "Starts Nova reading every message it never read, after it was turned on."
+  readUnreadInboundMessages: Int!
+  createMyTriageView(name: String!, query: String!): TriageView!
+  renameMyTriageView(id: ID!, name: String!): TriageView!
+  deleteMyTriageView(id: ID!): Boolean!
+  "Sets response targets; a null minutes goes back to the default."
+  updateTriageResponseTargets(input: [TriageResponseTargetInput!]!): [TriageResponseTarget!]!
+  updateTriageSettings(input: TriageSettingsInput!): TriageSettings!
+}
+`, BuiltIn: false},
+	{Name: "../schema/inboundreply.graphqls", Input: `"Where a reply is."
+enum InboundReplyStatus {
+  Draft
+  Sending
+  Sent
+  "The provider refused it; failureText says why."
+  Failed
+}
+
+"A reply from a monitored address, stored with what the provider said about it."
+type InboundReply {
+  id: ID!
+  messageId: ID!
+  status: InboundReplyStatus!
+  fromAddress: String!
+  toAddress: String!
+  ccAddresses: [String!]!
+  subject: String!
+  body: String!
+  draftedByNova: Boolean!
+  templateId: ID
+  "Why the provider refused it."
+  failureText: String!
+  "Another address at the sender that is likely to accept it."
+  suggestedAddress: String
+  sentBy: User
+  sentAt: Timestamp
+  "The files it carries, as they were named when it was written."
+  attachments: [InboundReplyAttachment!]!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A stored document a reply carries, kept as it was when the reply was written."
+type InboundReplyAttachment {
+  documentId: ID!
+  fileName: String!
+  contentType: String!
+  byteSize: Int!
+}
+
+"Where a file a reply can carry is stored."
+enum InboundReplyAttachableSource {
+  "Came with the message, or was uploaded to it."
+  Message
+  Shipment
+  Customer
+  Carrier
+}
+
+"A stored document a reply to the message can carry."
+type InboundReplyAttachable {
+  "The document's id."
+  id: ID!
+  fileName: String!
+  contentType: String!
+  "The document type's name; blank when it has none."
+  documentType: String!
+  byteSize: Int!
+  createdAt: Timestamp!
+  source: InboundReplyAttachableSource!
+}
+
+input SendInboundReplyInput {
+  messageId: ID!
+  subject: String!
+  body: String!
+  "Another address to send to instead of the sender, after a refusal."
+  toAddress: String
+  templateId: ID
+  "The body is Nova's draft, sent as written or after edits."
+  draftedByNova: Boolean = false
+  "Documents to attach, from inboundReplyAttachables."
+  documentIds: [ID!]
+}
+
+"A reply people reuse, with placeholders filled in from the message and its shipment."
+type TriageReplyTemplate {
+  id: ID!
+  name: String!
+  "The text, with placeholders such as {first}, {pro}, {status}, {eta}, {lane}, {customer} and {po}."
+  body: String!
+  createdBy: User
+  version: Int!
+  createdAt: Timestamp!
+}
+
+input TriageReplyTemplateInput {
+  name: String!
+  body: String!
+}
+
+"A field of a load Nova drafted."
+enum TriageLoadFieldKey {
+  Customer
+  Origin
+  Destination
+  Pickup
+  Delivery
+  Equipment
+  Weight
+  Rate
+  Loads
+  WeekOf
+  RespondBy
+  Reference
+  Commodity
+  Instructions
+}
+
+type TriageLoadField {
+  key: TriageLoadFieldKey!
+  "Blank when Nova could not read it."
+  value: String!
+}
+
+"A load Nova drafted from a message, waiting for a person to check it."
+type TriageLoadDraft {
+  "The file it was read from; blank when it was read from the message text."
+  source: String!
+  fields: [TriageLoadField!]!
+  draftedAt: Timestamp!
+  draftedByNova: Boolean!
+}
+
+input TriageLoadFieldInput {
+  key: TriageLoadFieldKey!
+  value: String!
+}
+
+"A page range of a file, filed as its own document."
+input InboundAttachmentPagesInput {
+  fromPage: Int!
+  toPage: Int!
+  "The document type id to file the range as."
+  documentTypeId: ID!
+}
+
+input FileInboundAttachmentInput {
+  attachmentId: ID!
+  shipmentId: ID!
+  "The document type id to file it as. Ignored when pages are given."
+  documentTypeId: ID
+  "File page ranges as separate documents instead of the whole file."
+  pages: [InboundAttachmentPagesInput!]
+}
+
+input LogInboundExceptionInput {
+  kind: TriageExceptionKind!
+  quantity: Int!
+  "What was short, over or damaged: pallets, cases, pieces."
+  unit: String!
+  note: String
+}
+
+"One field of a document, as the extraction read it."
+type InboundDocumentField {
+  label: String!
+  value: String!
+  tone: TriageFactTone!
+}
+
+"What Nova read from an attached document."
+type InboundDocumentReading {
+  documentType: String!
+  confidence: Float!
+  pageCount: Int!
+  fields: [InboundDocumentField!]!
+}
+
+extend type InboundAttachment {
+  "What the extraction read from the document, once it has."
+  reading: InboundDocumentReading
+}
+
+"A step a message asks for."
+enum TriageActionKind {
+  File
+  BuildLoad
+  Reply
+  CheckStops
+  LogException
+  BlockSender
+  Link
+}
+
+"What a reply is for."
+enum TriageReplyPurpose {
+  ConfirmTender
+  AcceptTender
+  AnswerDispute
+  ReturnSigned
+  AskResend
+  SendEta
+}
+
+"How a detention dispute was settled after the stop times were checked."
+enum TriageStopsDecision {
+  Waive
+  StandBy
+}
+
+"A shortage, overage or damage noted on a delivery."
+enum TriageExceptionKind {
+  Shortage
+  Overage
+  Damage
+}
+
+"""
+One step a message asks for, in the order to do them. Worked out on the server
+from the message's state, so the reader, the action bar and the briefing agree.
+"""
+type TriageAction {
+  "Stable within a message: file:<attachment id>, load, reply, stops, exception, block or link."
+  id: String!
+  kind: TriageActionKind!
+  done: Boolean!
+  "Nova can do this step itself."
+  novaCanDo: Boolean!
+  attachment: InboundAttachment
+  "The shipment the step is about."
+  shipment: InboundShipmentRef
+  replyPurpose: TriageReplyPurpose
+  "For a reply asking for a file again, the file that was refused."
+  refusedFileName: String
+  reply: InboundReply
+  "Nova drafted the load and it waits for a look."
+  loadDrafted: Boolean!
+  "The shipment the step created."
+  createdShipment: InboundShipmentRef
+  stopsDecision: TriageStopsDecision
+  exceptionKind: TriageExceptionKind
+  completedAt: Timestamp
+}
+
+extend type InboundMessage {
+  "The steps it asks for."
+  actions: [TriageAction!]!
+  "Replies sent or drafted, oldest first."
+  replies: [InboundReply!]!
+  "The reply still being written, where there is one."
+  replyDraft: InboundReply
+  "The load Nova drafted, waiting for a look."
+  loadDraft: TriageLoadDraft
+}
+
+"The stop times a detention dispute turns on, read from the shipment."
+type TriageStopTimes {
+  shipment: InboundShipmentRef!
+  stopName: String!
+  appointmentStart: Timestamp
+  appointmentEnd: Timestamp
+  arrivedAt: Timestamp
+  checkedInAt: Timestamp
+  departedAt: Timestamp
+  "Minutes after the appointment window closed; zero when on time."
+  lateMinutes: Int!
+  billedDetentionMinutes: Int!
+  billedDetentionAmount: Decimal
+  "Whether the customer's terms pay detention on a late arrival."
+  detentionPaysWhenLate: Boolean!
+  "Where the arrival time came from: ELD, geofence or a person."
+  arrivalSource: String!
+}
+
+"A stop on a shipment peek."
+type TriagePeekStop {
+  kind: String!
+  city: String!
+  state: String!
+  scheduledAt: Timestamp
+  arrivedAt: Timestamp
+  departedAt: Timestamp
+  done: Boolean!
+}
+
+"A shipment, as a peek shows it."
+type TriageShipmentPeek {
+  id: ID!
+  proNumber: String!
+  bol: String!
+  poNumber: String!
+  status: String!
+  customerName: String!
+  equipment: String!
+  driverName: String!
+  "How far along the route it is, from 0 to 1."
+  progress: Float!
+  late: Boolean!
+  eta: Timestamp
+  deliveredAt: Timestamp
+  stops: [TriagePeekStop!]!
+  "Document types already on file."
+  documentsOnFile: [String!]!
+}
+
+"A customer, as a peek shows it."
+type TriageCustomerPeek {
+  id: ID!
+  code: String!
+  name: String!
+  since: Timestamp!
+  shipmentsThisWeek: Int!
+  waitingInTriage: Int!
+  shipments: [TriageShipmentPeek!]!
+  messages: [TriageSample!]!
+}
+
+extend type Query {
+  triageReplyTemplates: [TriageReplyTemplate!]!
+  "A template with its placeholders filled in from a message and its shipment."
+  renderTriageReplyTemplate(templateId: ID!, messageId: ID!): String!
+  triageStopTimes(messageId: ID!): TriageStopTimes
+  triageShipmentPeek(shipmentId: ID!): TriageShipmentPeek!
+  triageCustomerPeek(customerId: ID!): TriageCustomerPeek!
+  "Documents a reply to the message can carry: its own files and those on its shipment, customer and carrier."
+  inboundReplyAttachables(messageId: ID!): [InboundReplyAttachable!]!
+  "The most a reply's files may add up to, in bytes."
+  inboundReplyAttachmentLimit: Int!
+}
+
+extend type Mutation {
+  "Has Nova draft a reply. It is stored as the message's draft."
+  draftInboundReply(messageId: ID!): InboundReply!
+  "Saves what a person wrote as the message's draft. documentIds replaces the draft's files; leaving it out keeps them."
+  saveInboundReplyDraft(messageId: ID!, subject: String!, body: String!, documentIds: [ID!]): InboundReply!
+  discardInboundReplyDraft(messageId: ID!): InboundMessage!
+  "Sends a reply from the mailbox's address. A refusal comes back as a Failed reply, not an error."
+  sendInboundReply(input: SendInboundReplyInput!): InboundReply!
+  "Has Nova draft replies or loads for many messages; they arrive as each is ready."
+  draftInboundMany(messageIds: [ID!]!): Int!
+  createTriageReplyTemplate(input: TriageReplyTemplateInput!): TriageReplyTemplate!
+  updateTriageReplyTemplate(id: ID!, version: Int!, input: TriageReplyTemplateInput!): TriageReplyTemplate!
+  deleteTriageReplyTemplate(id: ID!): Boolean!
+  "Has Nova draft the load a message describes."
+  draftInboundLoad(messageId: ID!): InboundMessage!
+  discardInboundLoad(messageId: ID!): InboundMessage!
+  "Creates the load from the checked draft, as a new shipment."
+  createInboundLoad(messageId: ID!, fields: [TriageLoadFieldInput!]!): InboundMessage!
+  "Files an attachment on a shipment, whole or split into page ranges."
+  fileInboundAttachment(input: FileInboundAttachmentInput!): InboundMessage!
+  "Files every readable attachment of each message on its matched shipment."
+  fileInboundMany(messageIds: [ID!]!): TriageBulkResult!
+  unfileInboundAttachment(attachmentId: ID!): InboundMessage!
+  "Adds a shortage, overage or damage exception to the matched shipment."
+  logInboundException(messageId: ID!, input: LogInboundExceptionInput!): InboundMessage!
+  "Sends the sender's future mail on this source straight to Ignored, and ignores this message."
+  blockInboundSender(messageId: ID!): InboundMessage!
+  unblockInboundSender(mailboxId: ID!, sender: String!): InboundMailbox!
+  "Records what to do about a detention dispute after checking the stop times, and drafts the reply."
+  decideInboundStops(messageId: ID!, decision: TriageStopsDecision!): InboundMessage!
 }
 `, BuiltIn: false},
 	{Name: "../schema/invoice.graphqls", Input: `enum InvoiceStatus {
@@ -21177,6 +23268,9 @@ type Location {
 type LocationReference {
   id: ID!
   name: String!
+  "Where the location is, when it has been geocoded."
+  latitude: Float
+  longitude: Float
 }
 
 type LocationEdge {
@@ -23233,8 +25327,52 @@ extend type Query {
   reportDashboard(id: ID!): ReportDashboard!
 }
 
+input TableExportColumnInput {
+  "The field the column shows, as the table filters and sorts by it."
+  field: String!
+  label: String!
+}
+
+"What a data table is showing, to export or schedule as a report."
+input TableExportViewInput {
+  resource: String!
+  columns: [TableExportColumnInput!]!
+  filter: DataTableConnectionInput
+}
+
+input ExportTableViewInput {
+  name: String!
+  view: TableExportViewInput!
+  "csv, xlsx or pdf."
+  format: String!
+}
+
+input ScheduleTableViewInput {
+  name: String!
+  view: TableExportViewInput!
+  cronExpression: String!
+  timezone: String
+  formats: [String!]!
+  emailRecipients: [String!]
+  emailAttach: Boolean
+  emailInline: Boolean
+}
+
+type TableExportResult {
+  "The report the view was saved as; it lives in the person's reports."
+  definitionId: ID!
+  run: ReportRun
+  schedule: ReportSchedule
+  "Columns the report could not show, by label."
+  skippedColumns: [String!]!
+}
+
 extend type Mutation {
   createReportDefinition(input: SaveReportDefinitionInput!): ReportDefinition!
+  "Saves a table's view as a report and runs it in the background, with no row limit beyond the report's own."
+  exportTableView(input: ExportTableViewInput!): TableExportResult!
+  "Saves a table's view as a report and sends it on a schedule."
+  scheduleTableView(input: ScheduleTableViewInput!): TableExportResult!
   updateReportDefinition(input: UpdateReportDefinitionInput!): ReportDefinition!
   deleteReportDefinition(id: ID!): Boolean!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
@@ -23649,6 +25787,7 @@ extend type Query {
 	{Name: "../schema/select_options.graphqls", Input: `enum SelectOptionResource {
   ACCESSORIAL_CHARGE
   ACCOUNT_TYPE
+  AI_PROVIDER
   CAPTURE_DEVICE
   CAPTURE_PROFILE
   CARRIER
@@ -23922,6 +26061,7 @@ type ServiceFailureShipment {
   id: ID!
   proNumber: String!
   bol: String
+  customer: Customer
 }
 
 type ServiceFailureStop {
@@ -23962,12 +26102,23 @@ type ServiceFailure {
   x12ReasonCodeOverride: String!
   x12ExceptionCode: String!
   detectedAt: Timestamp!
+  reviewedAt: Timestamp
+  resolvedAt: Timestamp
+  voidedAt: Timestamp
+  voidReason: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
   shipment: ServiceFailureShipment
   stop: ServiceFailureStop
   reasonCode: ServiceFailureReasonCode
+  """
+  Who logged the failure by hand; null for one detected or received.
+  """
+  createdBy: User
+  reviewedBy: User
+  resolvedBy: User
+  voidedBy: User
 }
 
 type ServiceFailureEdge {
@@ -23982,7 +26133,12 @@ type ServiceFailureConnection {
 }
 
 extend type Query {
-  serviceFailures(input: DataTableConnectionInput!, shipmentId: ID): ServiceFailureConnection!
+  serviceFailures(
+    input: DataTableConnectionInput!
+    shipmentId: ID
+    "Only failures at a stop made at this location."
+    locationId: ID
+  ): ServiceFailureConnection!
   serviceFailure(id: ID!): ServiceFailure
 }
 `, BuiltIn: false},
@@ -26006,6 +28162,16 @@ input ShipmentsInput {
   quickFilters: [ShipmentQuickFilterInput!]
   "IANA time zone for day and hour quick filters."
   timezone: String
+  "Only shipments with a live move assigned to one of these tractors."
+  tractorIds: [ID!]
+  "Only shipments with a live move assigned to one of these trailers."
+  trailerIds: [ID!]
+  "Only shipments with a live move one of these workers drives, in either seat."
+  workerIds: [ID!]
+  "Only shipments with a live stop at one of these locations."
+  stopLocationIds: [ID!]
+  "Only shipments with a live move tendered to one of these carriers."
+  carrierIds: [ID!]
 }
 
 input ShipmentEventsInput {
@@ -26164,29 +28330,32 @@ type ShipmentStageSummary {
   revenue: Decimal!
 }
 
+"""
+A way to group the board other than by stage. Dates are the local day, in the
+board's time zone, of the first pickup or the last delivery.
+"""
+enum ShipmentBoardGrouping {
+  ShipDate
+  DeliveryDate
+  Customer
+  Owner
+}
+
+type ShipmentBoardGroup {
+  """
+  The value rows are grouped on: a YYYY-MM-DD day, a customer id or a user id.
+  Empty for shipments with no date or no owner.
+  """
+  key: String!
+  "The customer's or owner's name. Empty for days, which the client formats."
+  label: String!
+  count: Int!
+  revenue: Decimal!
+}
+
 type ShipmentQuickFilterCount {
   filter: ShipmentQuickFilter!
   count: Int!
-}
-
-enum ShipmentFacet {
-  Status
-  Equipment
-  TenderStatus
-  Customer
-}
-
-type ShipmentFacetValue {
-  value: String!
-  label: String!
-  count: Int!
-}
-
-type ShipmentFacetCounts {
-  facet: ShipmentFacet!
-  "The field filter the values apply to."
-  field: String!
-  values: [ShipmentFacetValue!]!
 }
 
 type ShipmentBriefingSegment {
@@ -26195,11 +28364,18 @@ type ShipmentBriefingSegment {
   filter: ShipmentQuickFilter
 }
 
+"""
+The day's brief for the board. It is written once for the organization's
+working day, before it starts, and again when every open issue it named has
+been cleared; reading it never asks the model anything.
+"""
 type ShipmentBriefing {
   segments: [ShipmentBriefingSegment!]!
   "The model wrote the wording; false means the deterministic sentence."
   narrated: Boolean!
   generatedAt: Timestamp!
+  "Which of the day's briefs this is, starting at 1."
+  generation: Int!
 }
 
 enum CapacityUnitKind {
@@ -26505,8 +28681,16 @@ type ShipmentWatchlist {
 extend type Query {
   shipmentBoardCapabilities: ShipmentBoardCapabilities!
   shipmentStageSummary(input: ShipmentBoardScopeInput!): [ShipmentStageSummary!]!
+  "Group headers and totals for the board grouped by something other than stage, in board order."
+  shipmentBoardGroups(
+    input: ShipmentBoardScopeInput!
+    groupBy: ShipmentBoardGrouping!
+  ): [ShipmentBoardGroup!]!
   shipmentQuickFilterCounts(input: ShipmentBoardScopeInput!): [ShipmentQuickFilterCount!]!
-  shipmentFacetCounts(input: ShipmentBoardScopeInput!, facets: [ShipmentFacet!]!): [ShipmentFacetCounts!]!
+  """
+  The day's board brief. It is written for the organization's own day and
+  time zone, so the timezone argument no longer changes it.
+  """
   shipmentBriefing(timezone: String!): ShipmentBriefing!
   shipmentCapacity(kind: CapacityUnitKind!): ShipmentCapacity!
   capacityUnitMatches(kind: CapacityUnitKind!, unitId: ID!, limit: Int = 2): [CapacityMatch!]!
@@ -26796,6 +28980,32 @@ extend type Mutation {
   setOrgDefaultTableConfiguration(id: ID!, enabled: Boolean!): TableConfiguration!
 }
 `, BuiltIn: false},
+	{Name: "../schema/table_layout.graphqls", Input: `"The arrangement of one data table a person last left it in."
+type TableLayout {
+  resource: String!
+  "Columns shown, ordered, sized and pinned, the density, colour rules and the view it was based on."
+  layout: JSON!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+input TableLayoutInput {
+  resource: String!
+  layout: JSON!
+}
+
+extend type Query {
+  "The caller's own layout for a table, or null when they have not changed it."
+  myTableLayout(resource: String!): TableLayout
+}
+
+extend type Mutation {
+  "Keeps the caller's arrangement of a table, replacing the one before."
+  saveMyTableLayout(input: TableLayoutInput!): TableLayout!
+  "Forgets the caller's arrangement of a table, so it opens as its default view."
+  resetMyTableLayout(resource: String!): Boolean!
+}
+`, BuiltIn: false},
 	{Name: "../schema/telematics.graphqls", Input: `type VehiclePosition {
   tractorId: ID!
   tractorCode: String!
@@ -27015,12 +29225,25 @@ extend type Query {
   telematicsFormMapping(id: ID!): TelematicsFormMapping
   shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
   vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
+  "One tractor's latest reported position, however old; null when the tractor has never reported one."
+  vehiclePosition(tractorId: ID!): VehiclePosition
   workerHosStates(workerIds: [ID!], limit: Int): [WorkerHosState!]!
   workerHosState(workerId: ID!): WorkerHosState
   workerHosViolations(workerId: ID, since: Timestamp, limit: Int): [WorkerHosViolation!]!
   workerHosLogs(workerId: ID!, startTime: Timestamp!, endTime: Timestamp!): [WorkerHosLogEntry!]!
   workerHosDailyLogs(workerId: ID!, startDate: String!, endDate: String!): [WorkerHosDailyLog!]!
-  vehicleInspections(tractorId: ID, workerId: ID, since: Timestamp, limit: Int): [VehicleInspection!]!
+  """
+  Inspections newest first. Pass the startedAt and id of the last one seen as
+  before and beforeId to read the next page.
+  """
+  vehicleInspections(
+    tractorId: ID
+    workerId: ID
+    since: Timestamp
+    limit: Int
+    before: Timestamp
+    beforeId: ID
+  ): [VehicleInspection!]!
   workerFormSubmissions(workerId: ID!, startTime: Timestamp!, endTime: Timestamp!): [WorkerFormSubmission!]!
   hosCertificationSummary(startDate: String!, endDate: String!): [HosCertificationSummary!]!
   telematicsStatus: TelematicsStatus!
@@ -27420,7 +29643,14 @@ extend type Mutation {
   voidPayrollExport(input: VoidPayrollExportInput!): PayrollExport!
 }
 `, BuiltIn: false},
-	{Name: "../schema/tractor.graphqls", Input: `type TractorEdge {
+	{Name: "../schema/tractor.graphqls", Input: `"Who owns a piece of equipment."
+enum EquipmentOwnershipType {
+  CompanyOwned
+  Leased
+  OwnerOperator
+}
+
+type TractorEdge {
   node: Tractor!
   cursor: String!
 }
@@ -27463,6 +29693,16 @@ type Tractor {
   Whether the tractor's miles and fuel enter the IFTA return.
   """
   iftaQualified: Boolean!
+  "Who owns the tractor: the company, a lessor, or the owner-operator who drives it."
+  ownershipType: EquipmentOwnershipType!
+  "The owner-operator who owns the tractor, when it is theirs."
+  ownerWorkerId: ID
+  "The lessor a leased tractor is leased from."
+  lessorName: String!
+  "The lessor's reference for the lease."
+  leaseReference: String!
+  "When the lease on a leased tractor ends."
+  leaseEndDate: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -27475,6 +29715,7 @@ type Tractor {
   state: UsState
   primaryWorker: Worker
   secondaryWorker: Worker
+  ownerWorker: Worker
   lastKnownLocation: LocationReference
 }
 
@@ -27614,6 +29855,16 @@ type Trailer {
   registrationExpiry: Timestamp
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  "Who owns the trailer: the company, a lessor, or an owner-operator."
+  ownershipType: EquipmentOwnershipType!
+  "The owner-operator who owns the trailer, when it is theirs."
+  ownerWorkerId: ID
+  "The lessor a leased trailer is leased from."
+  lessorName: String!
+  "The lessor's reference for the lease."
+  leaseReference: String!
+  "When the lease on a leased trailer ends."
+  leaseEndDate: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -27624,6 +29875,7 @@ type Trailer {
   equipmentManufacturer: EquipmentManufacturer
   fleetCode: FleetCode
   registrationState: UsState
+  ownerWorker: Worker
   lastKnownLocation: LocationReference
 }
 
@@ -27713,6 +29965,369 @@ type Mutation {
   patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
   bulkUpdateTrailerStatus(input: BulkUpdateTrailerStatusInput!): [Trailer!]!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
+}
+`, BuiltIn: false},
+	{Name: "../schema/triage.graphqls", Input: `"What Nova may do with a message on its own."
+enum TriageRuleAction {
+  "File its documents on the matched shipment."
+  FileOnShipment
+  "File an invoice and queue it for carrier pay."
+  FileAndQueuePay
+  "Draft a reply for a person to check."
+  DraftReply
+  "Draft the load for a person to check."
+  DraftLoad
+  "Link it to the customer or carrier the sender belongs to."
+  LinkBySender
+  Ignore
+  "Assign it to a person."
+  Assign
+}
+
+"Who a rule's messages come from."
+enum TriageSenderScope {
+  Anyone
+  AnyCustomer
+  AnyCarrier
+  "Everyone at a domain, and its subdomains."
+  Domain
+  "One address."
+  Address
+}
+
+"""
+A rule, which reads as a sentence: when a kind of message arrives from someone
+on a source, Nova should do something.
+"""
+type TriageRule {
+  id: ID!
+  classification: InboundClassification!
+  senderScope: TriageSenderScope!
+  "The domain or address, for those scopes; blank otherwise."
+  sender: String!
+  "The source it applies to; absent is every source."
+  mailboxId: ID
+  mailbox: InboundMailbox
+  action: TriageRuleAction!
+  assigneeId: ID
+  assignee: User
+  enabled: Boolean!
+  createdBy: User
+  "Messages it settled since the start of this month."
+  matchesThisMonth: Int!
+  "Every message it ever settled."
+  matchCount: Int!
+  lastMatchedAt: Timestamp
+  "The last message it handled."
+  lastMatch: TriageSample
+  version: Int!
+  createdAt: Timestamp!
+}
+
+input TriageRuleInput {
+  classification: InboundClassification!
+  senderScope: TriageSenderScope!
+  sender: String
+  mailboxId: ID
+  action: TriageRuleAction!
+  assigneeId: ID
+  enabled: Boolean = true
+}
+
+"Why a message a rule would have matched looks wrong for it."
+enum TriageRuleMismatch {
+  "A person corrected what kind of message it was."
+  KindCorrected
+  "It was never matched to a record, so there was nothing to act on."
+  NoMatchedRecord
+  "A person settled it differently from what the rule would do."
+  PersonDisagreed
+}
+
+"A message a rule would have matched."
+type TriageRuleMatch {
+  messageId: ID!
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  receivedAt: Timestamp!
+  "The PRO, PO or reference the message was about, where it was matched."
+  reference: String!
+  "Why it looks off; absent when it looks right."
+  mismatch: TriageRuleMismatch
+}
+
+"What a rule would have done over the last thirty days."
+type TriageRulePreview {
+  matched: Int!
+  "How many of those look off."
+  off: Int!
+  "The newest matches, off ones first."
+  matches: [TriageRuleMatch!]!
+  since: Timestamp!
+}
+
+"A rule worth turning on, from what people keep doing by hand."
+type TriageRuleSuggestion {
+  classification: InboundClassification!
+  senderScope: TriageSenderScope!
+  sender: String!
+  mailboxId: ID
+  action: TriageRuleAction!
+  "How many of these people settled that way by hand."
+  handledByHand: Int!
+  "How many of these arrived in the window."
+  total: Int!
+}
+
+"A message, as a line in a list Nova shows."
+type TriageSample {
+  messageId: ID!
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  classification: InboundClassification
+  receivedAt: Timestamp!
+  "The PRO, PO or file name the line is about."
+  reference: String!
+}
+
+"How sure a fact Nova read is to need a look."
+enum TriageFactTone {
+  Neutral
+  Warning
+}
+
+"Something Nova read out of a message, with the words it read it from."
+type TriageFact {
+  key: String!
+  label: String!
+  value: String!
+  "The words in the message the fact was read from."
+  quote: String!
+  tone: TriageFactTone!
+  "A person said it is wrong."
+  flagged: Boolean!
+}
+
+"What a conflict is about."
+enum TriageConflictKind {
+  "The shipment already has a document of the same kind."
+  DuplicateDocument
+  "A load in a tender looks like one already on the board."
+  OverlappingLoad
+}
+
+"How a conflict was settled."
+enum TriageConflictResolution {
+  ReplaceExisting
+  KeepBoth
+  SkipDuplicate
+  ConfirmNew
+}
+
+"Something about a message that clashes with what is already on file."
+type TriageConflict {
+  id: String!
+  kind: TriageConflictKind!
+  attachmentId: ID
+  existingDocumentId: ID
+  existingShipment: InboundShipmentRef
+  existingFiledAt: Timestamp
+  existingAmount: Decimal
+  newAmount: Decimal
+  "Which load in the tender, counting from one."
+  loadIndex: Int
+  resolution: TriageConflictResolution
+  resolvedAt: Timestamp
+  "The choices that settle it, in the order to offer them."
+  options: [TriageConflictResolution!]!
+}
+
+extend type InboundMessage {
+  "What Nova read out of it."
+  facts: [TriageFact!]!
+  "Clashes with what is on file."
+  conflicts: [TriageConflict!]!
+  "A person corrected what kind of message it is."
+  classificationCorrected: Boolean!
+}
+
+"Which part of the deck a waiting message is in."
+enum TriageDeckGroup {
+  "Documents to file on a matched shipment."
+  File
+  "Drafts Nova can write."
+  Draft
+  "Needs a person's call."
+  Decide
+  "Without a record."
+  Link
+  "Held back as possibly unsafe."
+  Held
+}
+
+"A waiting message, as the briefing names it."
+type TriageDeckItem {
+  messageId: ID!
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  classification: InboundClassification
+  receivedAt: Timestamp!
+  dueAt: Timestamp
+  "The next step it asks for."
+  action: TriageAction
+  owner: User
+}
+
+"One card of the briefing's deck."
+type TriageDeckCard {
+  group: TriageDeckGroup!
+  count: Int!
+  estimateMinutes: Int!
+  "The first few, soonest due first."
+  items: [TriageDeckItem!]!
+  "Every message in the card, for its one action."
+  messageIds: [ID!]!
+}
+
+"Something Nova did on its own today, counted by what it did."
+type TriageHandledGroup {
+  action: TriageRuleAction!
+  classification: InboundClassification
+  count: Int!
+  samples: [TriageSample!]!
+}
+
+"One hour of arrivals."
+type TriageArrivalBucket {
+  hourStart: Timestamp!
+  handledByNova: Int!
+  leftForPerson: Int!
+}
+
+"A message on the river."
+type TriageRiverPoint {
+  messageId: ID!
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  classification: InboundClassification
+  receivedAt: Timestamp!
+  dueAt: Timestamp
+  "Settled, or parked until later."
+  done: Boolean!
+}
+
+"The corrections people made to Nova's reading."
+type TriageCorrections {
+  thisWeek: Int!
+  "Reading accuracy this week against last, in percentage points."
+  accuracyChange: Float!
+  accuracy: Float!
+}
+
+"Which part of the day the briefing is for."
+enum TriageBriefingPhase {
+  Day
+  EndOfDay
+}
+
+"""
+The briefing: what Nova did, what is left, and what to do first. One aggregate,
+cached per organization and refreshed on every change to the queue.
+"""
+type TriageBriefing {
+  generatedAt: Timestamp!
+  "The organization's local midnight the day's figures count from."
+  dayStart: Timestamp!
+  phase: TriageBriefingPhase!
+  "No source connected, or nothing has ever arrived."
+  firstDay: Boolean!
+  "Whether Nova reads new mail. Off when no model is set up for it."
+  novaEnabled: Boolean!
+  activeSources: Int!
+  waiting: Int!
+  overdue: Int!
+  "Settled by people today."
+  closedByPeopleToday: Int!
+  handledByNovaToday: Int!
+  handledByNova: [TriageHandledGroup!]!
+  arrivals: [TriageArrivalBucket!]!
+  "Messages Nova settled today, for the river's Nova lane."
+  novaPoints: [TriageRiverPoint!]!
+  "Messages left for a person today, for the river's lane."
+  yours: [TriageRiverPoint!]!
+  deck: [TriageDeckCard!]!
+  "The waiting message most over its target."
+  longestWaiting: TriageDeckItem
+  estimateMinutes: Int!
+  corrections: TriageCorrections!
+  "Snoozed or waiting on a reply."
+  comingBack: Int!
+  unhealthySources: [InboundMailbox!]!
+  suggestion: TriageRuleSuggestion
+  onCall: User
+  "At the end of the day: what carries over, soonest due first."
+  carryOver: [TriageDeckItem!]!
+}
+
+"Who a sender is to the organization."
+enum InboundSenderRole {
+  Customer
+  Broker
+  Carrier
+  Driver
+  Unknown
+}
+
+"One kind of mail a sender sends, and how often."
+type InboundSenderKindCount {
+  classification: InboundClassification!
+  count: Int!
+}
+
+"What is known about a sender, from their mail and the records it matched."
+type InboundSenderProfile {
+  address: String!
+  name: String!
+  domain: String!
+  role: InboundSenderRole!
+  "When the customer or carrier they belong to was added."
+  since: Timestamp
+  messagesLast90Days: Int!
+  "How long it usually takes to settle their mail, in minutes."
+  usualReplyMinutes: Int
+  kinds: [InboundSenderKindCount!]!
+  rules: [TriageRule!]!
+  recent: [TriageSample!]!
+}
+
+extend type Query {
+  triageBriefing: TriageBriefing!
+  triageRules: [TriageRule!]!
+  "What a rule would have matched over the last thirty days, before it is turned on."
+  triageRulePreview(input: TriageRuleInput!): TriageRulePreview!
+  "What an existing rule matched, or would have, over the last thirty days."
+  triageRuleMatches(id: ID!): TriageRulePreview!
+  "Domains that have sent mail, for a rule's sender."
+  triageSenderDomains(query: String): [String!]!
+  inboundSenderProfile(messageId: ID!): InboundSenderProfile!
+}
+
+extend type Mutation {
+  createTriageRule(input: TriageRuleInput!): TriageRule!
+  updateTriageRule(id: ID!, version: Int!, input: TriageRuleInput!): TriageRule!
+  setTriageRuleEnabled(id: ID!, enabled: Boolean!): TriageRule!
+  deleteTriageRule(id: ID!): Boolean!
+  "Says what kind of message it really is. Nova reads mail from the sender that way from now on."
+  correctInboundClassification(id: ID!, classification: InboundClassification!): InboundMessage!
+  "Says a fact Nova read is wrong."
+  flagInboundFact(id: ID!, key: String!): InboundMessage!
+  resolveInboundConflict(id: ID!, conflictId: String!, resolution: TriageConflictResolution!): InboundMessage!
+  "Undoes a conflict's resolution."
+  reopenInboundConflict(id: ID!, conflictId: String!): InboundMessage!
 }
 `, BuiltIn: false},
 	{Name: "../schema/us_state.graphqls", Input: `type UsState {
@@ -28198,6 +30813,8 @@ input WorkerPTOChartInput {
 
 extend type Query {
   workers(input: DataTableConnectionInput!): WorkerConnection!
+  "One worker, with the profile, state, fleet, manager and license state it is asked for."
+  worker(id: ID!): Worker
   workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
   upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!

@@ -1,3 +1,4 @@
+import { JURISDICTION_VERIFICATION_LABELS } from "@/lib/jurisdiction-verification";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -27,7 +28,14 @@ export function getColumns(t: TranslateFn): ColumnDef<JurisdictionRuleRow>[] {
         </span>
       ),
       size: 200,
-      meta: { label: t("State"), apiField: "stateId", sortable: true },
+      meta: {
+        label: t("State"),
+        apiField: "stateId",
+        sortable: true,
+        filterable: true,
+        filterType: "record",
+        filterRecord: "US_STATE",
+      },
     },
     {
       accessorKey: "verificationState",
@@ -36,7 +44,7 @@ export function getColumns(t: TranslateFn): ColumnDef<JurisdictionRuleRow>[] {
       // is a research baseline, and requirements derived from it say so.
       cell: ({ row }) => (
         <Badge variant={VERIFICATION_VARIANT[row.original.verificationState]}>
-          {row.original.verificationState}
+          {JURISDICTION_VERIFICATION_LABELS[row.original.verificationState]}
         </Badge>
       ),
       size: 130,
@@ -100,7 +108,7 @@ export function getColumns(t: TranslateFn): ColumnDef<JurisdictionRuleRow>[] {
       header: t("Lead time"),
       cell: ({ row }) => {
         const days = row.original.permitLeadTimeDays;
-        return `${days} day${days === 1 ? "" : "s"}`;
+        return t("{0, plural, one {# day} other {# days}}", days);
       },
       size: 110,
       meta: { label: t("Lead time"), apiField: "permitLeadTimeDays", sortable: true },

@@ -4,6 +4,7 @@ import type {
   AgentMemorySubjectType,
 } from "@trenova/graphql/generated/graphql";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * The most characters one memory may hold. The single client copy of the
@@ -41,8 +42,10 @@ export const memoryFormSchema = z
     content: z
       .string()
       .trim()
-      .min(1, "Say what the agents should know")
-      .max(MEMORY_CONTENT_LIMIT, `Keep it to ${MEMORY_CONTENT_LIMIT} characters`),
+      .min(1, { error: () => translate("Say what the agents should know") })
+      .max(MEMORY_CONTENT_LIMIT, {
+        error: () => translate("Keep it to {0} characters", MEMORY_CONTENT_LIMIT),
+      }),
     subjectType: z.preprocess(
       (value) => (value === "" || value === undefined ? null : value),
       z.enum(memorySubjectTypeValues).nullable(),
@@ -62,14 +65,14 @@ export const memoryFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["subjectId"],
-        message: "Pick the record this is about",
+        message: translate("Pick the record this is about"),
       });
     }
     if (values.subjectId && !values.subjectType) {
       ctx.addIssue({
         code: "custom",
         path: ["subjectType"],
-        message: "Say what kind of record this is about",
+        message: translate("Say what kind of record this is about"),
       });
     }
   });
@@ -98,5 +101,26 @@ export function toMemoryInput(values: MemoryFormValues): AgentMemoryInput {
     toolName: toolName === "" ? null : toolName,
     expiresAt: values.expiresAt,
     version: values.version,
+  };
+}
+
+/** A kept memory as the editor holds it. */
+export function memoryValuesFromRow(row: {
+  kind: MemoryFormValues["kind"];
+  content: string;
+  subjectType?: MemoryFormValues["subjectType"] | null;
+  subjectId?: string | null;
+  toolName?: string | null;
+  expiresAt?: number | null;
+  version: number;
+}): MemoryFormValues {
+  return {
+    kind: row.kind,
+    content: row.content,
+    subjectType: row.subjectType ?? null,
+    subjectId: row.subjectId ?? null,
+    toolName: row.toolName ?? "",
+    expiresAt: row.expiresAt ?? null,
+    version: row.version,
   };
 }

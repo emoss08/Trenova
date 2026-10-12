@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Sheet, SheetContent } from "@trenova/shared/components/ui/sheet";
 import { useEditorTheme } from "../components/designer-shared";
 import { useEDIMessageInspectionQuery } from "../hooks/use-edi-document-queries";
@@ -23,6 +24,7 @@ export default function MessageInspectorSheet({
   onTabChange: (tab: InspectorTab) => void;
   onSelectSegment: (segmentIndex: number) => void;
 }) {
+  const t = useT();
   const inspectionQuery = useEDIMessageInspectionQuery(open ? messageId : "");
   const context = inspectionQuery.data
     ? buildMessageInspectorContext(inspectionQuery.data)
@@ -33,7 +35,7 @@ export default function MessageInspectorSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[min(1280px,calc(100vw-2rem))] gap-0 p-0 sm:max-w-none">
-        <InspectorHeader context={context} fallbackTitle={`Message ${messageId}`} />
+        <InspectorHeader context={context} fallbackTitle={t("Message {0}", messageId)} />
         {!context || !inspection ? (
           <InspectorState state={inspectionQuery.isLoading ? "loading" : "empty"} />
         ) : (

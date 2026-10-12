@@ -82,7 +82,7 @@ function verdictLead(preview: DispatchAssignmentPreview): {
     const deadline = preview.score.hosRestStartDeadline;
     const message =
       deadline > 0
-        ? `${strategy.phrase} — rest must start by ${formatUnixTime(deadline)}`
+        ? translate("{0} — rest must start by {1}", strategy.phrase, formatUnixTime(deadline))
         : strategy.phrase;
     return { message, promotedFinding: null };
   }

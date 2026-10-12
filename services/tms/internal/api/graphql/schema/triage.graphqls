@@ -1,0 +1,362 @@
+"What Nova may do with a message on its own."
+enum TriageRuleAction {
+  "File its documents on the matched shipment."
+  FileOnShipment
+  "File an invoice and queue it for carrier pay."
+  FileAndQueuePay
+  "Draft a reply for a person to check."
+  DraftReply
+  "Draft the load for a person to check."
+  DraftLoad
+  "Link it to the customer or carrier the sender belongs to."
+  LinkBySender
+  Ignore
+  "Assign it to a person."
+  Assign
+}
+
+"Who a rule's messages come from."
+enum TriageSenderScope {
+  Anyone
+  AnyCustomer
+  AnyCarrier
+  "Everyone at a domain, and its subdomains."
+  Domain
+  "One address."
+  Address
+}
+
+"""
+A rule, which reads as a sentence: when a kind of message arrives from someone
+on a source, Nova should do something.
+"""
+type TriageRule {
+  id: ID!
+  classification: InboundClassification!
+  senderScope: TriageSenderScope!
+  "The domain or address, for those scopes; blank otherwise."
+  sender: String!
+  "The source it applies to; absent is every source."
+  mailboxId: ID
+  mailbox: InboundMailbox
+  action: TriageRuleAction!
+  assigneeId: ID
+  assignee: User
+  enabled: Boolean!
+  createdBy: User
+  "Messages it settled since the start of this month."
+  matchesThisMonth: Int!
+  "Every message it ever settled."
+  matchCount: Int!
+  lastMatchedAt: Timestamp
+  "The last message it handled."
+  lastMatch: TriageSample
+  version: Int!
+  createdAt: Timestamp!
+}
+
+input TriageRuleInput {
+  classification: InboundClassification!
+  senderScope: TriageSenderScope!
+  sender: String
+  mailboxId: ID
+  action: TriageRuleAction!
+  assigneeId: ID
+  enabled: Boolean = true
+}
+
+"Why a message a rule would have matched looks wrong for it."
+enum TriageRuleMismatch {
+  "A person corrected what kind of message it was."
+  KindCorrected
+  "It was never matched to a record, so there was nothing to act on."
+  NoMatchedRecord
+  "A person settled it differently from what the rule would do."
+  PersonDisagreed
+}
+
+"A message a rule would have matched."
+type TriageRuleMatch {
+  messageId: ID!
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  receivedAt: Timestamp!
+  "The PRO, PO or reference the message was about, where it was matched."
+  reference: String!
+  "Why it looks off; absent when it looks right."
+  mismatch: TriageRuleMismatch
+}
+
+"What a rule would have done over the last thirty days."
+type TriageRulePreview {
+  matched: Int!
+  "How many of those look off."
+  off: Int!
+  "The newest matches, off ones first."
+  matches: [TriageRuleMatch!]!
+  since: Timestamp!
+}
+
+"A rule worth turning on, from what people keep doing by hand."
+type TriageRuleSuggestion {
+  classification: InboundClassification!
+  senderScope: TriageSenderScope!
+  sender: String!
+  mailboxId: ID
+  action: TriageRuleAction!
+  "How many of these people settled that way by hand."
+  handledByHand: Int!
+  "How many of these arrived in the window."
+  total: Int!
+}
+
+"A message, as a line in a list Nova shows."
+type TriageSample {
+  messageId: ID!
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  classification: InboundClassification
+  receivedAt: Timestamp!
+  "The PRO, PO or file name the line is about."
+  reference: String!
+}
+
+"How sure a fact Nova read is to need a look."
+enum TriageFactTone {
+  Neutral
+  Warning
+}
+
+"Something Nova read out of a message, with the words it read it from."
+type TriageFact {
+  key: String!
+  label: String!
+  value: String!
+  "The words in the message the fact was read from."
+  quote: String!
+  tone: TriageFactTone!
+  "A person said it is wrong."
+  flagged: Boolean!
+}
+
+"What a conflict is about."
+enum TriageConflictKind {
+  "The shipment already has a document of the same kind."
+  DuplicateDocument
+  "A load in a tender looks like one already on the board."
+  OverlappingLoad
+}
+
+"How a conflict was settled."
+enum TriageConflictResolution {
+  ReplaceExisting
+  KeepBoth
+  SkipDuplicate
+  ConfirmNew
+}
+
+"Something about a message that clashes with what is already on file."
+type TriageConflict {
+  id: String!
+  kind: TriageConflictKind!
+  attachmentId: ID
+  existingDocumentId: ID
+  existingShipment: InboundShipmentRef
+  existingFiledAt: Timestamp
+  existingAmount: Decimal
+  newAmount: Decimal
+  "Which load in the tender, counting from one."
+  loadIndex: Int
+  resolution: TriageConflictResolution
+  resolvedAt: Timestamp
+  "The choices that settle it, in the order to offer them."
+  options: [TriageConflictResolution!]!
+}
+
+extend type InboundMessage {
+  "What Nova read out of it."
+  facts: [TriageFact!]!
+  "Clashes with what is on file."
+  conflicts: [TriageConflict!]!
+  "A person corrected what kind of message it is."
+  classificationCorrected: Boolean!
+}
+
+"Which part of the deck a waiting message is in."
+enum TriageDeckGroup {
+  "Documents to file on a matched shipment."
+  File
+  "Drafts Nova can write."
+  Draft
+  "Needs a person's call."
+  Decide
+  "Without a record."
+  Link
+  "Held back as possibly unsafe."
+  Held
+}
+
+"A waiting message, as the briefing names it."
+type TriageDeckItem {
+  messageId: ID!
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  classification: InboundClassification
+  receivedAt: Timestamp!
+  dueAt: Timestamp
+  "The next step it asks for."
+  action: TriageAction
+  owner: User
+}
+
+"One card of the briefing's deck."
+type TriageDeckCard {
+  group: TriageDeckGroup!
+  count: Int!
+  estimateMinutes: Int!
+  "The first few, soonest due first."
+  items: [TriageDeckItem!]!
+  "Every message in the card, for its one action."
+  messageIds: [ID!]!
+}
+
+"Something Nova did on its own today, counted by what it did."
+type TriageHandledGroup {
+  action: TriageRuleAction!
+  classification: InboundClassification
+  count: Int!
+  samples: [TriageSample!]!
+}
+
+"One hour of arrivals."
+type TriageArrivalBucket {
+  hourStart: Timestamp!
+  handledByNova: Int!
+  leftForPerson: Int!
+}
+
+"A message on the river."
+type TriageRiverPoint {
+  messageId: ID!
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  classification: InboundClassification
+  receivedAt: Timestamp!
+  dueAt: Timestamp
+  "Settled, or parked until later."
+  done: Boolean!
+}
+
+"The corrections people made to Nova's reading."
+type TriageCorrections {
+  thisWeek: Int!
+  "Reading accuracy this week against last, in percentage points."
+  accuracyChange: Float!
+  accuracy: Float!
+}
+
+"Which part of the day the briefing is for."
+enum TriageBriefingPhase {
+  Day
+  EndOfDay
+}
+
+"""
+The briefing: what Nova did, what is left, and what to do first. One aggregate,
+cached per organization and refreshed on every change to the queue.
+"""
+type TriageBriefing {
+  generatedAt: Timestamp!
+  "The organization's local midnight the day's figures count from."
+  dayStart: Timestamp!
+  phase: TriageBriefingPhase!
+  "No source connected, or nothing has ever arrived."
+  firstDay: Boolean!
+  "Whether Nova reads new mail. Off when no model is set up for it."
+  novaEnabled: Boolean!
+  activeSources: Int!
+  waiting: Int!
+  overdue: Int!
+  "Settled by people today."
+  closedByPeopleToday: Int!
+  handledByNovaToday: Int!
+  handledByNova: [TriageHandledGroup!]!
+  arrivals: [TriageArrivalBucket!]!
+  "Messages Nova settled today, for the river's Nova lane."
+  novaPoints: [TriageRiverPoint!]!
+  "Messages left for a person today, for the river's lane."
+  yours: [TriageRiverPoint!]!
+  deck: [TriageDeckCard!]!
+  "The waiting message most over its target."
+  longestWaiting: TriageDeckItem
+  estimateMinutes: Int!
+  corrections: TriageCorrections!
+  "Snoozed or waiting on a reply."
+  comingBack: Int!
+  unhealthySources: [InboundMailbox!]!
+  suggestion: TriageRuleSuggestion
+  onCall: User
+  "At the end of the day: what carries over, soonest due first."
+  carryOver: [TriageDeckItem!]!
+}
+
+"Who a sender is to the organization."
+enum InboundSenderRole {
+  Customer
+  Broker
+  Carrier
+  Driver
+  Unknown
+}
+
+"One kind of mail a sender sends, and how often."
+type InboundSenderKindCount {
+  classification: InboundClassification!
+  count: Int!
+}
+
+"What is known about a sender, from their mail and the records it matched."
+type InboundSenderProfile {
+  address: String!
+  name: String!
+  domain: String!
+  role: InboundSenderRole!
+  "When the customer or carrier they belong to was added."
+  since: Timestamp
+  messagesLast90Days: Int!
+  "How long it usually takes to settle their mail, in minutes."
+  usualReplyMinutes: Int
+  kinds: [InboundSenderKindCount!]!
+  rules: [TriageRule!]!
+  recent: [TriageSample!]!
+}
+
+extend type Query {
+  triageBriefing: TriageBriefing!
+  triageRules: [TriageRule!]!
+  "What a rule would have matched over the last thirty days, before it is turned on."
+  triageRulePreview(input: TriageRuleInput!): TriageRulePreview!
+  "What an existing rule matched, or would have, over the last thirty days."
+  triageRuleMatches(id: ID!): TriageRulePreview!
+  "Domains that have sent mail, for a rule's sender."
+  triageSenderDomains(query: String): [String!]!
+  inboundSenderProfile(messageId: ID!): InboundSenderProfile!
+}
+
+extend type Mutation {
+  createTriageRule(input: TriageRuleInput!): TriageRule!
+  updateTriageRule(id: ID!, version: Int!, input: TriageRuleInput!): TriageRule!
+  setTriageRuleEnabled(id: ID!, enabled: Boolean!): TriageRule!
+  deleteTriageRule(id: ID!): Boolean!
+  "Says what kind of message it really is. Nova reads mail from the sender that way from now on."
+  correctInboundClassification(id: ID!, classification: InboundClassification!): InboundMessage!
+  "Says a fact Nova read is wrong."
+  flagInboundFact(id: ID!, key: String!): InboundMessage!
+  resolveInboundConflict(id: ID!, conflictId: String!, resolution: TriageConflictResolution!): InboundMessage!
+  "Undoes a conflict's resolution."
+  reopenInboundConflict(id: ID!, conflictId: String!): InboundMessage!
+}

@@ -70,7 +70,7 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
     },
     onSuccess: async (data, values) => {
       toast.success(t("Changes have been saved."), {
-        description: `${title} created successfully`,
+        description: t("{0} created successfully", title),
       });
       onOpenChange(false);
       reset();

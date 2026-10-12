@@ -2,78 +2,73 @@ package modeladapter
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"slices"
 	"strings"
 
+	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/anthropics/anthropic-sdk-go/packages/param"
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-const (
-	anthropicVersion = "2023-06-01"
-	// anthropicBindingBeta opens thinking.block_binding, which is a 400
-	// without it.
-	anthropicBindingBeta = "thinking-binding-controls-2026-08-01"
+// anthropicBindingBeta opens thinking.block_binding, which is a 400 without
+// it.
+const anthropicBindingBeta = anthropic.AnthropicBetaThinkingBindingControls2026_08_01
 
-	anthropicThinkingAdaptive = "adaptive"
-	anthropicFormatJSONSchema = "json_schema"
+const (
+	anthropicTextBlock     = "text"
+	anthropicToolUseBlock  = "tool_use"
+	anthropicThinkingBlock = "thinking"
+	anthropicRedactedBlock = "redacted_thinking"
 )
 
-type anthropicAdapter struct{}
+type anthropicAdapter struct {
+	credentials *platformCredentials
+}
 
-// NewAnthropicAdapter speaks the Anthropic Messages API. Bedrock's mantle
-// endpoint serves this same shape, so pointing a provider's base URL there needs
-// no separate adapter.
-func NewAnthropicAdapter() Adapter { return anthropicAdapter{} }
+// NewAnthropicAdapter speaks the Anthropic Messages API, called directly or
+// through the platform a provider names.
+func NewAnthropicAdapter() Adapter {
+	return anthropicAdapter{credentials: newPlatformCredentials()}
+}
 
 func (anthropicAdapter) Kind() aiprovider.Kind { return aiprovider.KindAnthropicMessages }
 
-type anthropicRequest struct {
-	Model     string `json:"model"`
-	MaxTokens int    `json:"max_tokens"`
-	// System is sent as blocks rather than a string so the last one can carry a
-	// cache breakpoint. Anthropic accepts either shape.
-	System       []anthropicBlock       `json:"system,omitempty"`
-	Messages     []anthropicMessage     `json:"messages"`
-	Tools        []anthropicTool        `json:"tools,omitempty"`
-	OutputConfig *anthropicOutputConfig `json:"output_config,omitempty"`
-	Stream       bool                   `json:"stream,omitempty"`
-	Thinking     *anthropicThinking     `json:"thinking,omitempty"`
-}
+// anthropicParams is the request every call sends: the tools, the system
+// prompt and the conversation, each marked where its prefix is worth keeping,
+// and thinking asked for the way the configured model takes it.
+func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessageNewParams {
+	params := anthropic.BetaMessageNewParams{
+		Model:     call.Provider.Model,
+		MaxTokens: int64(call.Request.MaxTokens),
+		System:    cachedSystem(call.Request.System, call.Request.SystemStable),
+		Messages: cachedConversation(
+			anthropicConversation(attached.messages, attached.blocks),
+		),
+		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
+	}
+	applyThinking(&params, call)
+	applyDiagnostics(&params, call)
 
-// anthropicThinking is how a request asks a model to think. A model from
-// before adaptive thinking takes a token budget ("enabled"); a current one
-// thinks by effort ("adaptive", the effort in output_config) and refuses a
-// budget outright. Display "summarized" asks for the readable summary, which
-// the current models leave out unless asked.
-type anthropicThinking struct {
-	Type         string                 `json:"type"`
-	BudgetTokens int                    `json:"budget_tokens,omitempty"`
-	Display      string                 `json:"display,omitempty"`
-	BlockBinding *anthropicBlockBinding `json:"block_binding,omitempty"`
-}
-
-// anthropicBlockBinding is what a model that binds each thinking block to the
-// conversation before it does with a block whose conversation changed.
-type anthropicBlockBinding struct {
-	PrefixMismatchBehavior string `json:"prefix_mismatch_behavior"`
+	return params
 }
 
 // applyThinking asks for thinking the way the configured model takes it.
-func (r *anthropicRequest) applyThinking(call *Call) {
+func applyThinking(params *anthropic.BetaMessageNewParams, call *Call) {
 	model := providerTraits(call.Provider)
 	if !model.adaptive {
-		r.applyThinkingBudget(call)
+		applyThinkingBudget(params, call)
 		return
 	}
 
 	effort := call.reasoning()
 	switch {
 	case effort.Enabled():
-		r.Thinking = &anthropicThinking{Type: anthropicThinkingAdaptive, Display: "summarized"}
-		r.config().Effort = anthropicEffort(effort)
+		params.Thinking = adaptiveThinking(anthropic.BetaThinkingConfigAdaptiveDisplaySummarized)
+		params.OutputConfig.Effort = anthropicEffort(effort)
 	case effort.Disabled():
 		// None is the least thinking the model allows. A model that always
 		// thinks, refuses "disabled", or is an effort model the operator named
@@ -81,18 +76,27 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 		// "disabled" is told so; the rest do not think unless asked.
 		switch {
 		case model.thinksAlways || model.disableRefused || model.declared:
-			r.Thinking = &anthropicThinking{Type: anthropicThinkingAdaptive}
-			r.config().Effort = "low"
+			params.Thinking = adaptiveThinking("")
+			params.OutputConfig.Effort = anthropic.BetaOutputConfigEffortLow
 		case model.disableNeedsLowEffort:
-			r.Thinking = &anthropicThinking{Type: "disabled"}
+			params.Thinking = anthropic.BetaThinkingConfigParamUnion{
+				OfDisabled: &anthropic.BetaThinkingConfigDisabledParam{},
+			}
 		}
 	}
 	if model.bindsPrefix {
-		r.bindThinking()
+		bindThinking(params)
 	}
-	if r.Thinking != nil && r.Thinking.Type == anthropicThinkingAdaptive &&
-		r.MaxTokens < reasoningAnswerFloor {
-		r.MaxTokens = reasoningAnswerFloor
+	if params.Thinking.OfAdaptive != nil && params.MaxTokens < reasoningAnswerFloor {
+		params.MaxTokens = reasoningAnswerFloor
+	}
+}
+
+func adaptiveThinking(
+	display anthropic.BetaThinkingConfigAdaptiveDisplay,
+) anthropic.BetaThinkingConfigParamUnion {
+	return anthropic.BetaThinkingConfigParamUnion{
+		OfAdaptive: &anthropic.BetaThinkingConfigAdaptiveParam{Display: display},
 	}
 }
 
@@ -101,151 +105,166 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 // than refuse the request. Within a turn the replayed history holds still, but
 // a tool found mid-turn changes the tool list every earlier block was bound
 // to. The binding rides on a thinking object, so Off sends adaptive, which is
-// what these models do when told nothing.
-func (r *anthropicRequest) bindThinking() {
-	if r.Thinking == nil {
-		r.Thinking = &anthropicThinking{Type: anthropicThinkingAdaptive}
+// what these models do when told nothing. The binding beta goes only to the
+// models that take it: a gateway in front of an older one may refuse a beta it
+// does not know.
+func bindThinking(params *anthropic.BetaMessageNewParams) {
+	binding := anthropic.BetaThinkingBlockBindingParam{
+		PrefixMismatchBehavior: anthropic.BetaThinkingPrefixMismatchBehaviorDropBlock,
 	}
-	r.Thinking.BlockBinding = &anthropicBlockBinding{PrefixMismatchBehavior: "drop_block"}
-}
-
-// anthropicHeaders are the headers a request to the configured model carries.
-// The binding beta goes only to the models that take it: a gateway in front
-// of an older one may refuse a beta it does not know.
-func anthropicHeaders(call *Call) map[string]string {
-	headers := map[string]string{
-		"x-api-key":         call.APIKey,
-		"anthropic-version": anthropicVersion,
+	switch {
+	case params.Thinking.OfAdaptive != nil:
+		params.Thinking.OfAdaptive.BlockBinding = binding
+	case params.Thinking.OfEnabled != nil:
+		params.Thinking.OfEnabled.BlockBinding = binding
+	case params.Thinking.OfDisabled == nil:
+		params.Thinking = anthropic.BetaThinkingConfigParamUnion{
+			OfAdaptive: &anthropic.BetaThinkingConfigAdaptiveParam{BlockBinding: binding},
+		}
 	}
-	if providerTraits(call.Provider).bindsPrefix {
-		headers["anthropic-beta"] = anthropicBindingBeta
-	}
-
-	return headers
+	params.Betas = append(params.Betas, anthropicBindingBeta)
 }
 
 // applyThinkingBudget asks a model from before adaptive thinking to think
 // with a token budget, and raises the reply ceiling so the budget fits under
 // it with room to answer.
-func (r *anthropicRequest) applyThinkingBudget(call *Call) {
+func applyThinkingBudget(params *anthropic.BetaMessageNewParams, call *Call) {
 	budget := call.reasoning().ThinkingBudget()
 	if budget == 0 {
 		return
 	}
-	r.Thinking = &anthropicThinking{Type: "enabled", BudgetTokens: budget}
-	if floor := budget + thinkingAnswerRoom; r.MaxTokens < floor {
-		r.MaxTokens = floor
+	params.Thinking = anthropic.BetaThinkingConfigParamUnion{
+		OfEnabled: &anthropic.BetaThinkingConfigEnabledParam{BudgetTokens: int64(budget)},
+	}
+	if floor := int64(budget + thinkingAnswerRoom); params.MaxTokens < floor {
+		params.MaxTokens = floor
 	}
 }
 
 // anthropicEffort is the effort a reasoning level asks a current model for.
 // These models have no "minimal"; low is the least.
-func anthropicEffort(effort aiprovider.ReasoningEffort) string {
+func anthropicEffort(effort aiprovider.ReasoningEffort) anthropic.BetaOutputConfigEffort {
 	switch effort {
 	case aiprovider.ReasoningMedium:
-		return "medium"
+		return anthropic.BetaOutputConfigEffortMedium
 	case aiprovider.ReasoningHigh:
-		return "high"
+		return anthropic.BetaOutputConfigEffortHigh
 	case aiprovider.ReasoningOff,
 		aiprovider.ReasoningNone,
 		aiprovider.ReasoningMinimal,
 		aiprovider.ReasoningLow:
-		return "low"
+		return anthropic.BetaOutputConfigEffortLow
 	default:
-		return "low"
+		return anthropic.BetaOutputConfigEffortLow
 	}
 }
 
-func (r *anthropicRequest) config() *anthropicOutputConfig {
-	if r.OutputConfig == nil {
-		r.OutputConfig = &anthropicOutputConfig{}
+// applyOutputSchema asks for a reply that satisfies the schema, where the
+// provider enforces one and no tools are offered alongside it.
+func applyOutputSchema(params *anthropic.BetaMessageNewParams, call *Call) {
+	schema := call.Request.OutputSchema
+	if schema == nil || len(call.Request.Tools) > 0 ||
+		call.Provider.StructuredOutputMode != aiprovider.StructuredOutputJSONSchema {
+		return
+	}
+	params.OutputConfig.Format = anthropic.BetaJSONOutputFormatParam{
+		Schema: anthropicOutputSchema(schema),
+	}
+}
+
+func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, error) {
+	attached := attachFiles(ctx, call)
+	resp, err := a.complete(ctx, call, &attached)
+	if refusedOverFiles(err, &attached) {
+		plain := plainConversation(call, &attached)
+		resp, err = a.complete(ctx, call, &plain)
 	}
 
-	return r.OutputConfig
+	return resp, err
 }
 
-// anthropicMessage carries content as blocks rather than a string, since tool
-// use and tool results are block types rather than roles.
-type anthropicMessage struct {
-	Role    string           `json:"role"`
-	Content []anthropicBlock `json:"content"`
+func (a anthropicAdapter) complete(
+	ctx context.Context,
+	call *Call,
+	attached *anthropicFiles,
+) (*Response, error) {
+	params := anthropicParams(call, attached)
+	applyOutputSchema(&params, call)
+
+	service, err := anthropicMessages(ctx, call, false, a.credentials)
+	if err != nil {
+		return nil, err
+	}
+	message, err := service.New(ctx, params, anthropicBlockingOptions(call)...)
+	if err != nil {
+		return nil, err
+	}
+
+	content := anthropicContent(message.Content)
+	text, toolCalls := splitAnthropicContent(content)
+
+	return &Response{
+		Text:             text,
+		ToolCalls:        toolCalls,
+		ModelIdentifier:  message.Model,
+		InputTokens:      int(message.Usage.InputTokens),
+		OutputTokens:     int(message.Usage.OutputTokens),
+		CacheReadTokens:  int(message.Usage.CacheReadInputTokens),
+		CacheWriteTokens: int(message.Usage.CacheCreationInputTokens),
+		Refused:          message.StopReason == anthropic.BetaStopReasonRefusal,
+		Truncated:        message.StopReason == anthropic.BetaStopReasonMaxTokens,
+		Reasoning:        anthropicReasoning(content),
+		OutputLimit:      int(params.MaxTokens),
+		ThinkingDropped:  thinkingDropped(message.InputTransformations),
+		MessageID:        message.ID,
+		CacheDiagnosis:   anthropicDiagnosis(message),
+		Files:            attached.report,
+	}, nil
 }
 
+// anthropicBlock is one block of a reply, read off the SDK's union into the
+// fields the adapter uses.
 type anthropicBlock struct {
-	Type         string                 `json:"type"`
-	Text         string                 `json:"text,omitempty"`
-	CacheControl *anthropicCacheControl `json:"cache_control,omitempty"`
-
-	// tool_use
-	ID    string         `json:"id,omitempty"`
-	Name  string         `json:"name,omitempty"`
-	Input map[string]any `json:"input,omitempty"`
-	// InputError is why streamed input JSON did not parse; never on the wire.
-	InputError string `json:"-"`
-
-	// tool_result
-	ToolUseID string `json:"tool_use_id,omitempty"`
-	Content   string `json:"content,omitempty"`
-
-	// thinking and redacted_thinking. The signature is the provider's proof
-	// that the block is its own; a tool result replayed without it is refused.
-	Thinking  string `json:"thinking,omitempty"`
-	Signature string `json:"signature,omitempty"`
-	Data      string `json:"data,omitempty"`
-	IsError   bool   `json:"is_error,omitempty"`
+	Type      string
+	Text      string
+	ID        string
+	Name      string
+	Arguments map[string]any
+	// InputError is why a tool call's input did not parse.
+	InputError string
+	Thinking   string
+	Signature  string
+	Data       string
 }
 
-type anthropicTool struct {
-	Name         string                 `json:"name"`
-	Description  string                 `json:"description"`
-	InputSchema  map[string]any         `json:"input_schema"`
-	CacheControl *anthropicCacheControl `json:"cache_control,omitempty"`
-}
+func anthropicContent(blocks []anthropic.BetaContentBlockUnion) []anthropicBlock {
+	content := make([]anthropicBlock, 0, len(blocks))
+	for idx := range blocks {
+		block := &blocks[idx]
+		read := anthropicBlock{
+			Type:      block.Type,
+			Text:      block.Text,
+			ID:        block.ID,
+			Name:      block.Name,
+			Thinking:  block.Thinking,
+			Signature: block.Signature,
+			Data:      block.Data,
+		}
+		if block.Type == anthropicToolUseBlock {
+			read.Arguments, read.InputError = decodeArguments(string(block.Input))
+		}
+		content = append(content, read)
+	}
 
-// anthropicCacheControl marks the end of a prefix worth keeping. Everything
-// before the mark is cached; a later request whose bytes match up to that point
-// reads it back instead of paying for it again.
-type anthropicCacheControl struct {
-	Type string `json:"type"`
-}
-
-func ephemeralCache() *anthropicCacheControl {
-	return &anthropicCacheControl{Type: "ephemeral"}
-}
-
-type anthropicOutputConfig struct {
-	Format *anthropicOutputFormat `json:"format,omitempty"`
-	Effort string                 `json:"effort,omitempty"`
-}
-
-type anthropicOutputFormat struct {
-	Type   string         `json:"type"`
-	Schema map[string]any `json:"schema"`
-}
-
-type anthropicResponse struct {
-	Model                string                         `json:"model"`
-	StopReason           string                         `json:"stop_reason"`
-	Content              []anthropicBlock               `json:"content"`
-	Usage                anthropicUsage                 `json:"usage"`
-	InputTransformations []anthropicInputTransformation `json:"input_transformations"`
-}
-
-// anthropicInputTransformation is a change the API made to the request before
-// the model read it, such as a thinking block it dropped because the
-// conversation before it had changed.
-type anthropicInputTransformation struct {
-	Type   string `json:"type"`
-	Path   string `json:"path"`
-	Reason string `json:"reason"`
+	return content
 }
 
 // thinkingDropped counts the thinking blocks the API dropped from a request.
 // An entry that only allowed a mismatched block through is not a drop.
-func thinkingDropped(transformations []anthropicInputTransformation) int {
+func thinkingDropped(transformations []anthropic.BetaInputTransformationUnion) int {
 	dropped := 0
-	for _, transformation := range transformations {
-		if transformation.Type == "thinking_dropped" {
+	for idx := range transformations {
+		if transformations[idx].Type == "thinking_dropped" {
 			dropped++
 		}
 	}
@@ -254,16 +273,13 @@ func thinkingDropped(transformations []anthropicInputTransformation) int {
 }
 
 type anthropicUsage struct {
-	InputTokens              int `json:"input_tokens"`
-	OutputTokens             int `json:"output_tokens"`
-	CacheReadInputTokens     int `json:"cache_read_input_tokens"`
-	CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
+	InputTokens              int64
+	OutputTokens             int64
+	CacheReadInputTokens     int64
+	CacheCreationInputTokens int64
 }
 
-func (u *anthropicUsage) merge(update *anthropicUsage) {
-	if update == nil {
-		return
-	}
+func (u *anthropicUsage) merge(update anthropicUsage) {
 	if update.InputTokens > 0 {
 		u.InputTokens = update.InputTokens
 	}
@@ -276,83 +292,6 @@ func (u *anthropicUsage) merge(update *anthropicUsage) {
 	if update.CacheCreationInputTokens > 0 {
 		u.CacheCreationInputTokens = update.CacheCreationInputTokens
 	}
-}
-
-func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, error) {
-	body := anthropicRequest{
-		Model:     call.Provider.Model,
-		MaxTokens: call.Request.MaxTokens,
-		System:    cachedSystem(call.Request.System, call.Request.SystemStable),
-		Messages:  cachedConversation(toAnthropicMessages(call.Request.Messages)),
-		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
-	}
-	body.applyThinking(call)
-
-	if schema := call.Request.OutputSchema; schema != nil &&
-		len(call.Request.Tools) == 0 &&
-		call.Provider.StructuredOutputMode == aiprovider.StructuredOutputJSONSchema {
-		body.config().Format = &anthropicOutputFormat{
-			Type:   anthropicFormatJSONSchema,
-			Schema: schema,
-		}
-	}
-
-	var envelope anthropicResponse
-	err := postJSON(
-		ctx,
-		call.Client,
-		call.Provider.ResolvedBaseURL()+"/v1/messages",
-		anthropicHeaders(call),
-		body,
-		&envelope,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	text, toolCalls := splitAnthropicContent(envelope.Content)
-
-	return &Response{
-		Text:             text,
-		ToolCalls:        toolCalls,
-		ModelIdentifier:  envelope.Model,
-		InputTokens:      envelope.Usage.InputTokens,
-		OutputTokens:     envelope.Usage.OutputTokens,
-		CacheReadTokens:  envelope.Usage.CacheReadInputTokens,
-		CacheWriteTokens: envelope.Usage.CacheCreationInputTokens,
-		Refused:          envelope.StopReason == "refusal",
-		Truncated:        envelope.StopReason == "max_tokens",
-		Reasoning:        anthropicReasoning(envelope.Content),
-		OutputLimit:      body.MaxTokens,
-		ThinkingDropped:  thinkingDropped(envelope.InputTransformations),
-	}, nil
-}
-
-// anthropicStreamEvent is the union of every event the Messages API streams.
-// Only the fields a given type carries are set; the rest decode to their zero
-// values and are ignored.
-type anthropicStreamEvent struct {
-	Type    string `json:"type"`
-	Index   int    `json:"index"`
-	Message *struct {
-		Model                string                         `json:"model"`
-		Usage                anthropicUsage                 `json:"usage"`
-		InputTransformations []anthropicInputTransformation `json:"input_transformations"`
-	} `json:"message"`
-	ContentBlock *anthropicBlock `json:"content_block"`
-	Delta        *struct {
-		Type        string `json:"type"`
-		Text        string `json:"text"`
-		PartialJSON string `json:"partial_json"`
-		StopReason  string `json:"stop_reason"`
-		Thinking    string `json:"thinking"`
-		Signature   string `json:"signature"`
-	} `json:"delta"`
-	Usage *anthropicUsage `json:"usage"`
-	Error *struct {
-		Type    string `json:"type"`
-		Message string `json:"message"`
-	} `json:"error"`
 }
 
 // anthropicStreamBlock accumulates one content block as its deltas arrive. Text
@@ -370,26 +309,34 @@ func (a anthropicAdapter) Stream(
 	call *Call,
 	sink StreamSink,
 ) (*Response, error) {
-	body := anthropicRequest{
-		Model:     call.Provider.Model,
-		MaxTokens: call.Request.MaxTokens,
-		System:    cachedSystem(call.Request.System, call.Request.SystemStable),
-		Messages:  cachedConversation(toAnthropicMessages(call.Request.Messages)),
-		Tools:     cachedTools(toAnthropicTools(call.Request.Tools)),
-		Stream:    true,
+	attached := attachFiles(ctx, call)
+	emitted := false
+	watched := func(text string) {
+		emitted = true
+		sink(text)
 	}
-	body.applyThinking(call)
+	resp, err := a.stream(ctx, call, watched, &attached)
+	if !emitted && refusedOverFiles(err, &attached) {
+		plain := plainConversation(call, &attached)
+		resp, err = a.stream(ctx, call, sink, &plain)
+	}
 
-	stream, err := postStream(
-		ctx,
-		call,
-		call.Provider.ResolvedBaseURL()+"/v1/messages",
-		anthropicHeaders(call),
-		body,
-	)
+	return resp, err
+}
+
+func (a anthropicAdapter) stream(
+	ctx context.Context,
+	call *Call,
+	sink StreamSink,
+	attached *anthropicFiles,
+) (*Response, error) {
+	params := anthropicParams(call, attached)
+
+	service, err := anthropicMessages(ctx, call, true, a.credentials)
 	if err != nil {
 		return nil, err
 	}
+	stream := service.NewStreaming(ctx, params)
 	defer func() { _ = stream.Close() }()
 
 	var (
@@ -397,69 +344,65 @@ func (a anthropicAdapter) Stream(
 		usage      anthropicUsage
 		stopReason string
 		dropped    int
-		blocks     = map[int]*anthropicStreamBlock{}
-		order      []int
+		messageID  string
+		diagnosis  *CacheDiagnosis
+		blocks     = map[int64]*anthropicStreamBlock{}
+		order      []int64
 	)
 
 	// messageStopped is the closing event; with the stop reason it is how a
 	// finished reply is told from a dropped connection.
 	messageStopped := false
-	err = readSSE(stream, func(_, data string) error {
-		var event anthropicStreamEvent
-		if err := sonic.Unmarshal([]byte(data), &event); err != nil {
-			return fmt.Errorf("decode stream event: %w", err)
-		}
-
+	for stream.Next() {
+		event := stream.Current()
 		switch event.Type {
 		case "message_start":
-			if event.Message != nil {
-				model = event.Message.Model
-				usage.merge(&event.Message.Usage)
-				dropped = thinkingDropped(event.Message.InputTransformations)
-			}
+			model = event.Message.Model
+			usage.merge(anthropicUsage{
+				InputTokens:              event.Message.Usage.InputTokens,
+				OutputTokens:             event.Message.Usage.OutputTokens,
+				CacheReadInputTokens:     event.Message.Usage.CacheReadInputTokens,
+				CacheCreationInputTokens: event.Message.Usage.CacheCreationInputTokens,
+			})
+			dropped = thinkingDropped(event.Message.InputTransformations)
+			messageID = event.Message.ID
+			diagnosis = anthropicDiagnosis(&event.Message)
 		case "content_block_start":
-			if event.ContentBlock == nil {
-				return nil
-			}
-			block := &anthropicStreamBlock{block: *event.ContentBlock}
-			block.text.WriteString(event.ContentBlock.Text)
-			blocks[event.Index] = block
+			blocks[event.Index] = openedBlock(&event.ContentBlock)
 			order = append(order, event.Index)
 		case "content_block_delta":
 			block, ok := blocks[event.Index]
-			if !ok || event.Delta == nil {
-				return nil
+			if !ok {
+				continue
 			}
-			switch event.Delta.Type {
+			delta := event.Delta
+			switch delta.Type {
 			case "text_delta":
-				block.text.WriteString(event.Delta.Text)
-				if event.Delta.Text != "" {
-					sink(event.Delta.Text)
+				block.text.WriteString(delta.Text)
+				if delta.Text != "" {
+					sink(delta.Text)
 				}
 			case "input_json_delta":
-				block.input.WriteString(event.Delta.PartialJSON)
+				block.input.WriteString(delta.PartialJSON)
 			case "thinking_delta":
-				block.thinking.WriteString(event.Delta.Thinking)
-				call.think(event.Delta.Thinking)
+				block.thinking.WriteString(delta.Thinking)
+				call.think(delta.Thinking)
 			case "signature_delta":
-				block.block.Signature += event.Delta.Signature
+				block.block.Signature += delta.Signature
 			}
 		case "message_stop":
 			messageStopped = true
 		case "message_delta":
-			if event.Delta != nil {
-				stopReason = stringutils.FirstNonEmpty(event.Delta.StopReason, stopReason)
-			}
-			usage.merge(event.Usage)
-		case "error":
-			if event.Error != nil {
-				return streamError(event.Error.Type, event.Error.Message)
-			}
-			return streamError("", "")
+			stopReason = stringutils.FirstNonEmpty(string(event.Delta.StopReason), stopReason)
+			usage.merge(anthropicUsage{
+				InputTokens:              event.Usage.InputTokens,
+				OutputTokens:             event.Usage.OutputTokens,
+				CacheReadInputTokens:     event.Usage.CacheReadInputTokens,
+				CacheCreationInputTokens: event.Usage.CacheCreationInputTokens,
+			})
 		}
-
-		return nil
-	})
+	}
+	err = anthropicStreamFailure(stream.Err())
 	if err == nil && stopReason == "" && !messageStopped {
 		err = errStreamCut
 	}
@@ -467,42 +410,78 @@ func (a anthropicAdapter) Stream(
 		return nil, interrupted(err, model)
 	}
 
-	content := make([]anthropicBlock, 0, len(order))
-	for _, index := range order {
-		streamed := blocks[index]
-		block := streamed.block
-		switch block.Type {
-		case "text":
-			block.Text = streamed.text.String()
-		case "thinking":
-			block.Thinking = streamed.thinking.String()
-		case "tool_use":
-			if raw := streamed.input.String(); strings.TrimSpace(raw) != "" {
-				block.Input, block.InputError = decodeArguments(raw)
-			}
-			if block.Input == nil {
-				block.Input = map[string]any{}
-			}
-		}
-		content = append(content, block)
-	}
-
+	content := streamedContent(blocks, order)
 	text, toolCalls := splitAnthropicContent(content)
 
 	return &Response{
 		Text:             text,
 		ToolCalls:        toolCalls,
 		ModelIdentifier:  stringutils.FirstNonEmpty(model, call.Provider.Model),
-		InputTokens:      usage.InputTokens,
-		OutputTokens:     usage.OutputTokens,
-		CacheReadTokens:  usage.CacheReadInputTokens,
-		CacheWriteTokens: usage.CacheCreationInputTokens,
-		Refused:          stopReason == "refusal",
-		Truncated:        stopReason == "max_tokens",
+		InputTokens:      int(usage.InputTokens),
+		OutputTokens:     int(usage.OutputTokens),
+		CacheReadTokens:  int(usage.CacheReadInputTokens),
+		CacheWriteTokens: int(usage.CacheCreationInputTokens),
+		Refused:          stopReason == string(anthropic.BetaStopReasonRefusal),
+		Truncated:        stopReason == string(anthropic.BetaStopReasonMaxTokens),
 		Reasoning:        anthropicReasoning(content),
-		OutputLimit:      body.MaxTokens,
+		OutputLimit:      int(params.MaxTokens),
 		ThinkingDropped:  dropped,
+		MessageID:        messageID,
+		CacheDiagnosis:   diagnosis,
+		Files:            attached.report,
 	}, nil
+}
+
+// openedBlock is a block as the stream opens it, before any delta.
+func openedBlock(
+	start *anthropic.BetaRawContentBlockStartEventContentBlockUnion,
+) *anthropicStreamBlock {
+	block := &anthropicStreamBlock{block: anthropicBlock{
+		Type:      start.Type,
+		ID:        start.ID,
+		Name:      start.Name,
+		Signature: start.Signature,
+		Data:      start.Data,
+	}}
+	block.text.WriteString(start.Text)
+
+	return block
+}
+
+// streamedContent is the reply's blocks in the order they opened, each with
+// the text, thinking or arguments its deltas added up to.
+func streamedContent(blocks map[int64]*anthropicStreamBlock, order []int64) []anthropicBlock {
+	content := make([]anthropicBlock, 0, len(order))
+	for _, index := range order {
+		streamed := blocks[index]
+		block := streamed.block
+		switch block.Type {
+		case anthropicTextBlock:
+			block.Text = streamed.text.String()
+		case anthropicThinkingBlock:
+			block.Thinking = streamed.thinking.String()
+		case anthropicToolUseBlock:
+			block.Arguments, block.InputError = decodeArguments(streamed.input.String())
+		}
+		content = append(content, block)
+	}
+
+	return content
+}
+
+// anthropicStreamFailure reads an error event the provider sent inside an
+// otherwise healthy stream as the failure it names, retryable when the fault
+// is on the provider's side. Anything else is returned as it came.
+func anthropicStreamFailure(err error) error {
+	var apiErr *anthropic.Error
+	if !errors.As(err, &apiErr) {
+		return err
+	}
+
+	var envelope errorEnvelope
+	_ = sonic.UnmarshalString(apiErr.RawJSON(), &envelope)
+
+	return streamError(envelope.Error.Type, envelope.Error.Message)
 }
 
 // anthropicReasoning gathers the thinking blocks of a reply into one trace.
@@ -511,13 +490,14 @@ func anthropicReasoning(blocks []anthropicBlock) *ReasoningTrace {
 	var trace ReasoningTrace
 	var text strings.Builder
 	found := false
-	for _, block := range blocks {
+	for idx := range blocks {
+		block := &blocks[idx]
 		switch block.Type {
-		case "thinking":
+		case anthropicThinkingBlock:
 			found = true
 			text.WriteString(block.Thinking)
 			trace.Signature = stringutils.FirstNonEmpty(trace.Signature, block.Signature)
-		case "redacted_thinking":
+		case anthropicRedactedBlock:
 			found = true
 			trace.Redacted = append(trace.Redacted, block.Data)
 		}
@@ -533,20 +513,23 @@ func anthropicReasoning(blocks []anthropicBlock) *ReasoningTrace {
 // replayThinking is the thinking a previous assistant turn must open with.
 // Anthropic refuses a tool result whose preceding thinking is missing, so the
 // signed block goes back exactly as it came, redacted blocks included.
-func replayThinking(trace *ReasoningTrace) []anthropicBlock {
+func replayThinking(trace *ReasoningTrace) []anthropic.BetaContentBlockParamUnion {
 	if !trace.ReplayableBy(string(aiprovider.KindAnthropicMessages)) {
 		return nil
 	}
-	blocks := make([]anthropicBlock, 0, len(trace.Redacted)+1)
+	blocks := make([]anthropic.BetaContentBlockParamUnion, 0, len(trace.Redacted)+1)
 	if trace.Signature != "" {
-		blocks = append(blocks, anthropicBlock{
-			Type:      "thinking",
-			Thinking:  trace.Text,
-			Signature: trace.Signature,
+		blocks = append(blocks, anthropic.BetaContentBlockParamUnion{
+			OfThinking: &anthropic.BetaThinkingBlockParam{
+				Thinking:  trace.Text,
+				Signature: trace.Signature,
+			},
 		})
 	}
 	for _, data := range trace.Redacted {
-		blocks = append(blocks, anthropicBlock{Type: "redacted_thinking", Data: data})
+		blocks = append(blocks, anthropic.BetaContentBlockParamUnion{
+			OfRedactedThinking: &anthropic.BetaRedactedThinkingBlockParam{Data: data},
+		})
 	}
 
 	return blocks
@@ -560,8 +543,17 @@ func replayThinking(trace *ReasoningTrace) []anthropicBlock {
 // is a 400 on the models that check, while dropping a leading run of blocks
 // is an edit every model accepts, and most ignore earlier turns' thinking
 // anyway. A tool result needs its own turn's thinking before it, which stays.
-func toAnthropicMessages(messages []Message) []anthropicMessage {
-	out := make([]anthropicMessage, 0, len(messages))
+func toAnthropicMessages(messages []Message) []anthropic.BetaMessageParam {
+	return anthropicConversation(messages, nil)
+}
+
+// anthropicConversation is the conversation as the API takes it, with the
+// blocks that carry each user message's files ahead of its text.
+func anthropicConversation(
+	messages []Message,
+	files map[int][]anthropic.BetaContentBlockParamUnion,
+) []anthropic.BetaMessageParam {
+	out := make([]anthropic.BetaMessageParam, 0, len(messages))
 	currentTurn := 0
 	for i := len(messages) - 1; i >= 0; i-- {
 		if messages[i].Role == RoleUser {
@@ -570,44 +562,62 @@ func toAnthropicMessages(messages []Message) []anthropicMessage {
 		}
 	}
 
-	for i, msg := range messages {
+	for i := range messages {
+		msg := &messages[i]
 		switch msg.Role {
 		case RoleTool:
-			// A tool result is a user-role message carrying a tool_result block,
-			// not a role of its own.
-			out = append(out, anthropicMessage{
-				Role: "user",
-				Content: []anthropicBlock{{
-					Type:      "tool_result",
-					ToolUseID: msg.ToolCallID,
-					Content:   msg.Content,
-					IsError:   msg.IsError,
-				}},
+			// A tool result is a tool_result block in a user-role message, not
+			// a role of its own. The results of one turn's calls share a
+			// message: sent one per message, they teach the model to stop
+			// calling tools in parallel.
+			block := anthropic.BetaContentBlockParamUnion{OfToolResult: anthropicToolResult(msg)}
+			if last, results := lastToolResults(out); last != nil {
+				last.Content = slices.Insert(last.Content, results, block)
+				continue
+			}
+			out = append(out, anthropic.BetaMessageParam{
+				Role:    anthropic.BetaMessageParamRoleUser,
+				Content: []anthropic.BetaContentBlockParamUnion{block},
 			})
 		case RoleAssistant:
-			blocks := make([]anthropicBlock, 0, len(msg.ToolCalls)+2)
+			blocks := make([]anthropic.BetaContentBlockParamUnion, 0, len(msg.ToolCalls)+2)
 			if i >= currentTurn {
 				blocks = append(blocks, replayThinking(msg.Reasoning)...)
 			}
 			if strings.TrimSpace(msg.Content) != "" {
-				blocks = append(blocks, anthropicBlock{Type: "text", Text: msg.Content})
+				blocks = append(blocks, anthropic.BetaContentBlockParamUnion{
+					OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
+				})
 			}
 			for _, tc := range msg.ToolCalls {
-				blocks = append(blocks, anthropicBlock{
-					Type:  "tool_use",
-					ID:    tc.ID,
-					Name:  tc.Name,
-					Input: tc.Arguments,
+				blocks = append(blocks, anthropic.BetaContentBlockParamUnion{
+					OfToolUse: &anthropic.BetaToolUseBlockParam{
+						ID:    tc.ID,
+						Name:  tc.Name,
+						Input: toolUseInput(tc.Arguments),
+					},
 				})
 			}
 			if len(blocks) == 0 {
 				continue
 			}
-			out = append(out, anthropicMessage{Role: "assistant", Content: blocks})
+			out = append(out, anthropic.BetaMessageParam{
+				Role:    anthropic.BetaMessageParamRoleAssistant,
+				Content: blocks,
+			})
 		default:
-			out = append(out, anthropicMessage{
-				Role:    "user",
-				Content: []anthropicBlock{{Type: "text", Text: msg.Content}},
+			blocks := append(slices.Clone(files[i]), anthropic.BetaContentBlockParamUnion{
+				OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
+			})
+			// Text that follows tool results joins their message, after them,
+			// which is the order the API asks for.
+			if last, _ := lastToolResults(out); last != nil {
+				last.Content = append(last.Content, blocks...)
+				continue
+			}
+			out = append(out, anthropic.BetaMessageParam{
+				Role:    anthropic.BetaMessageParamRoleUser,
+				Content: blocks,
 			})
 		}
 	}
@@ -615,38 +625,92 @@ func toAnthropicMessages(messages []Message) []anthropicMessage {
 	return out
 }
 
-func toAnthropicTools(tools []ToolSpec) []anthropicTool {
+// lastToolResults is the final message when it is a user message that opens
+// with tool results, and how many it opens with. A further result goes in after
+// them and any text after it, since the API takes every result ahead of any
+// text. A person's own message never opens with a result, so it is never the
+// message returned.
+func lastToolResults(
+	out []anthropic.BetaMessageParam,
+) (message *anthropic.BetaMessageParam, results int) {
+	if len(out) == 0 {
+		return nil, 0
+	}
+	last := &out[len(out)-1]
+	if last.Role != anthropic.BetaMessageParamRoleUser {
+		return nil, 0
+	}
+	for results < len(last.Content) && last.Content[results].OfToolResult != nil {
+		results++
+	}
+	if results == 0 {
+		return nil, 0
+	}
+
+	return last, results
+}
+
+// anthropicToolResult carries a tool's output as a text block. An empty
+// output sends no content, since an empty text block is refused.
+func anthropicToolResult(msg *Message) *anthropic.BetaToolResultBlockParam {
+	result := &anthropic.BetaToolResultBlockParam{ToolUseID: msg.ToolCallID}
+	if msg.Content != "" {
+		result.Content = []anthropic.BetaToolResultBlockParamContentUnion{{
+			OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
+		}}
+	}
+	if msg.IsError {
+		result.IsError = param.NewOpt(true)
+	}
+
+	return result
+}
+
+func toAnthropicTools(tools []ToolSpec) []anthropic.BetaToolUnionParam {
 	if len(tools) == 0 {
 		return nil
 	}
 
-	out := make([]anthropicTool, 0, len(tools))
+	out := make([]anthropic.BetaToolUnionParam, 0, len(tools))
 	for _, tool := range tools {
-		out = append(out, anthropicTool{
-			Name:        tool.Name,
-			Description: tool.Description,
-			InputSchema: toolschema.ForModel(tool.Parameters),
+		out = append(out, anthropic.BetaToolUnionParam{
+			OfTool: &anthropic.BetaToolParam{
+				Name:        tool.Name,
+				Description: param.NewOpt(tool.Description),
+				InputSchema: param.Override[anthropic.BetaToolInputSchemaParam](
+					toolschema.ForModel(tool.Parameters),
+				),
+			},
 		})
 	}
 
 	return out
 }
 
+func toolUseInput(arguments map[string]any) map[string]any {
+	if arguments == nil {
+		return map[string]any{}
+	}
+
+	return arguments
+}
+
 func splitAnthropicContent(blocks []anthropicBlock) (string, []ToolCall) {
 	var text string
 	toolCalls := make([]ToolCall, 0, len(blocks))
 
-	for _, block := range blocks {
+	for idx := range blocks {
+		block := &blocks[idx]
 		switch block.Type {
-		case "text":
+		case anthropicTextBlock:
 			if text == "" && strings.TrimSpace(block.Text) != "" {
 				text = block.Text
 			}
-		case "tool_use":
+		case anthropicToolUseBlock:
 			toolCalls = append(toolCalls, ToolCall{
 				ID:             block.ID,
 				Name:           block.Name,
-				Arguments:      block.Input,
+				Arguments:      toolUseInput(block.Arguments),
 				ArgumentsError: block.InputError,
 			})
 		}
@@ -681,35 +745,35 @@ The marks go at the end of each block rather than the start, because what is
 cached is everything up to the mark. An empty tool list, system prompt or
 conversation gets no mark: a breakpoint on nothing still costs a write.
 */
-func cachedTools(tools []anthropicTool) []anthropicTool {
+func cachedTools(tools []anthropic.BetaToolUnionParam) []anthropic.BetaToolUnionParam {
 	if len(tools) == 0 {
 		return tools
 	}
-
-	tools[len(tools)-1].CacheControl = ephemeralCache()
+	if mark := tools[len(tools)-1].GetCacheControl(); mark != nil {
+		*mark = anthropic.NewBetaCacheControlEphemeralParam()
+	}
 
 	return tools
 }
 
-func cachedSystem(system string, stable int) []anthropicBlock {
+func cachedSystem(system string, stable int) []anthropic.BetaTextBlockParam {
 	if system == "" {
 		return nil
 	}
 	if stable <= 0 || stable >= len(system) {
-		return []anthropicBlock{{
-			Type:         "text",
+		return []anthropic.BetaTextBlockParam{{
 			Text:         system,
-			CacheControl: ephemeralCache(),
+			CacheControl: anthropic.NewBetaCacheControlEphemeralParam(),
 		}}
 	}
 
-	return []anthropicBlock{
-		{Type: "text", Text: system[:stable], CacheControl: ephemeralCache()},
-		{Type: "text", Text: system[stable:]},
+	return []anthropic.BetaTextBlockParam{
+		{Text: system[:stable], CacheControl: anthropic.NewBetaCacheControlEphemeralParam()},
+		{Text: system[stable:]},
 	}
 }
 
-func cachedConversation(messages []anthropicMessage) []anthropicMessage {
+func cachedConversation(messages []anthropic.BetaMessageParam) []anthropic.BetaMessageParam {
 	if len(messages) == 0 {
 		return messages
 	}
@@ -717,7 +781,9 @@ func cachedConversation(messages []anthropicMessage) []anthropicMessage {
 	if len(last.Content) == 0 {
 		return messages
 	}
-	last.Content[len(last.Content)-1].CacheControl = ephemeralCache()
+	if mark := last.Content[len(last.Content)-1].GetCacheControl(); mark != nil {
+		*mark = anthropic.NewBetaCacheControlEphemeralParam()
+	}
 
 	return messages
 }

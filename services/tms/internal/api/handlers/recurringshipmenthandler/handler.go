@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -144,7 +144,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListRecurringShipmentsRequest{
+				&recurringshipmentports.ListRecurringShipmentsRequest{
 					Filter: req,
 				},
 			)
@@ -176,7 +176,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		&repositories.GetRecurringShipmentByIDRequest{
+		&recurringshipmentports.GetRecurringShipmentByIDRequest{
 			ID:            recurringShipmentID,
 			TenantInfo:    pagination.FromAuth(authCtx),
 			ExpandDetails: c.Query("expandDetails") == "true",
@@ -299,7 +299,7 @@ func (h *Handler) updateStatus(c *gin.Context) {
 
 	updated, err := h.service.UpdateStatus(
 		c.Request.Context(),
-		&repositories.UpdateRecurringShipmentStatusRequest{
+		&recurringshipmentports.UpdateRecurringShipmentStatusRequest{
 			TenantInfo:          pagination.FromAuthAsUser(authCtx),
 			RecurringShipmentID: recurringShipmentID,
 			Status:              req.Status,
@@ -332,7 +332,7 @@ func (h *Handler) updateStatus(c *gin.Context) {
 func (h *Handler) match(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(repositories.MatchRecurringShipmentsRequest)
+	req := new(recurringshipmentports.MatchRecurringShipmentsRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -391,7 +391,7 @@ func (h *Handler) generate(c *gin.Context) {
 
 	result, err := h.service.Generate(
 		c.Request.Context(),
-		&repositories.GenerateRecurringShipmentRequest{
+		&recurringshipmentports.GenerateRecurringShipmentRequest{
 			TenantInfo:          pagination.FromAuthAsUser(authCtx),
 			RecurringShipmentID: recurringShipmentID,
 			OccurrenceAt:        req.OccurrenceAt,
@@ -438,7 +438,7 @@ func (h *Handler) listRuns(c *gin.Context) {
 		func() (*pagination.ListResult[*recurringshipment.RecurringShipmentRun], error) {
 			return h.service.ListRuns(
 				c.Request.Context(),
-				&repositories.ListRecurringShipmentRunsRequest{
+				&recurringshipmentports.ListRecurringShipmentRunsRequest{
 					TenantInfo:          pagination.FromAuthAsUser(authCtx),
 					RecurringShipmentID: recurringShipmentID,
 					Filter:              req,
@@ -471,7 +471,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.RecurringShipmentSelectOptionsRequest{
+				&recurringshipmentports.RecurringShipmentSelectOptionsRequest{
 					SelectQueryRequest: req,
 				},
 			)
@@ -502,7 +502,7 @@ func (h *Handler) getOption(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		&repositories.GetRecurringShipmentByIDRequest{
+		&recurringshipmentports.GetRecurringShipmentByIDRequest{
 			ID:         recurringShipmentID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},

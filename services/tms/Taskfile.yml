@@ -7,9 +7,8 @@ vars:
   BUILD_DIR: ./build
   CLI_BINARY: "trenova-cli{{exeExt}}"
   CLI_PATH: "{{.BUILD_DIR}}/{{.CLI_BINARY}}"
-  DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/docker-compose-local.yml"
+  DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/dev/compose.yml"
   CLIENT_DIR: "{{.ROOT_DIR}}/client"
-  KAFKA_SCRIPTS: "{{.ROOT_DIR}}/scripts/kafka"
   TEST_DB_CONTAINER: trenova-integration-postgres
   TEST_DB_PORT: "55432"
   TEST_POSTGRES_DSN: "postgres://postgres:postgres@localhost:55432/trenova_test?sslmode=disable"
@@ -91,13 +90,38 @@ tasks:
   run-watch:
     desc: Run the API server with hot reload
     cmds:
-      - air {{.AIR_FLAGS}} api run
+      - air {{.AIR_FLAGS}}
+
+  build-bench:
+    desc: "Measure rebuild times after representative edits (task build-bench -- --target cli --mode air)"
+    cmds:
+      - ./scripts/buildbench/buildbench.sh {{.CLI_ARGS}}
+
+  run-worker-watch:
+    desc: Run the worker service with hot reload
+    cmds:
+      - >-
+        air {{.AIR_FLAGS}}
+        --build.cmd "go build -tags nomsgpack -gcflags='github.com/emoss08/trenova/...=-N -l' -ldflags='-s -w' -o ./tmp/trenova-worker ./cmd/worker"
+        --build.bin "./tmp/trenova-worker"
 
   run-worker:
     desc: Run the worker service
     deps: [build-cli]
     cmds:
       - "{{.CLI_PATH}} worker run"
+
+  desk-ask:
+    desc: "Send the Desk a message on this checkout's code and print everything it did (task desk-ask -- \"msg\")"
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} desk ask {{.CLI_ARGS}}"
+
+  desk-bench:
+    desc: Run the Desk scenarios under deskbench/scenarios and compare with the previous run
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} desk run {{.CLI_ARGS}}"
 
   clean:
     desc: Remove build artifacts
@@ -206,6 +230,7 @@ tasks:
     desc: Run linter
     cmds:
       - golangci-lint run{{if .GO_JOBS}} --concurrency={{.GO_JOBS}}{{end}} ./...
+      - go run ./scripts/archlint
 
   fmt:
     desc: Format code
@@ -519,7 +544,7 @@ tasks:
   watch:
     desc: Run API with hot reload
     cmds:
-      - air {{.AIR_FLAGS}} api run
+      - air {{.AIR_FLAGS}}
 
   watch-ui:
     desc: Run frontend with hot reload
@@ -597,24 +622,16 @@ tasks:
   tools:
     desc: Install required tools
     cmds:
-      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
       - go install github.com/securego/gosec/v2/cmd/gosec@latest
-      - go install github.com/cosmtrek/air@latest
+      - go install github.com/air-verse/air@latest
       - go install github.com/sonatype-nexus-community/nancy@latest
 
-  kafka-reset:
-    desc: Reset Kafka
-    cmds:
-      - bash {{.KAFKA_SCRIPTS}}/reset-kafka.sh
-
-  kafka-setup:
-    desc: Setup Kafka
-    cmds:
-      - bash {{.KAFKA_SCRIPTS}}/setup-debezium-connector.sh
-
   reset-all:
-    desc: Reset all services
-    deps: [db-reset, db-seed, redis-flush, kafka-reset, kafka-setup]
+    desc: Reset the database (drop, create, migrate, seed) and flush Redis
+    cmds:
+      - task: db-reset
+      - task: redis-flush
 
   quick-start:
     desc: Quick start for new developers

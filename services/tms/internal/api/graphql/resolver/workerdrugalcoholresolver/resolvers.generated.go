@@ -4,7 +4,7 @@ package workerdrugalcoholresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	workerdrugalcoholservice "github.com/emoss08/trenova/internal/core/services/workerdrugalcoholservice"
+	workerdrugalcoholservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 )
 
 type Deps struct {

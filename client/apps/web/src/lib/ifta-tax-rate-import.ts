@@ -1,4 +1,6 @@
 import type { IftaTaxRateInput } from "@trenova/graphql/generated/graphql";
+import { formatList } from "@trenova/shared/i18n/format";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { compareDecimalStrings, decimalPattern } from "@trenova/shared/types/decimal";
 import { iftaFuelTypeSchema, type IftaFuelType } from "@trenova/shared/types/fuel-ifta-enums";
 import { IFTA_RATE_SCALE } from "@trenova/shared/types/ifta-tax-rate";
@@ -154,20 +156,33 @@ function resolveJurisdiction(
   const candidates = lookup.byCode.get(code) ?? [];
   if (candidates.length === 1) return { jurisdiction: candidates[0], error: null };
   if (candidates.length > 1) {
-    const forms = candidates
-      .map((candidate) => `${candidate.countryCode.toUpperCase()}-${code}`)
-      .join(" or ");
+    const forms = formatList(
+      candidates.map((candidate) => `${candidate.countryCode.toUpperCase()}-${code}`),
+      "disjunction",
+    );
     return {
       jurisdiction: null,
-      error: `Jurisdiction "${raw}" exists in more than one country; write it as ${forms}.`,
+      error: translate(
+        'Jurisdiction "{0}" exists in more than one country; write it as {1}.',
+        raw,
+        forms,
+      ),
     };
   }
-  return { jurisdiction: null, error: `Unknown jurisdiction "${raw}".` };
+  return { jurisdiction: null, error: translate('Unknown jurisdiction "{0}".', raw) };
 }
 
-function validateRate(raw: string, label: "Rate" | "Surcharge"): string | null {
-  if (!RATE_PATTERN.test(raw)) return `${label} must be a number with up to four decimals.`;
-  if (compareDecimalStrings(raw, "0") < 0) return `${label} cannot be negative.`;
+function validateRate(raw: string, field: "rate" | "surcharge"): string | null {
+  if (!RATE_PATTERN.test(raw)) {
+    return field === "rate"
+      ? translate("Rate must be a number with up to four decimals.")
+      : translate("Surcharge must be a number with up to four decimals.");
+  }
+  if (compareDecimalStrings(raw, "0") < 0) {
+    return field === "rate"
+      ? translate("Rate cannot be negative.")
+      : translate("Surcharge cannot be negative.");
+  }
   return null;
 }
 
@@ -178,14 +193,16 @@ export function parseIftaTaxRateCsv(
   const lines = text.replace(/^﻿/, "").split(/\r\n|\n|\r/);
   const headerIndex = lines.findIndex((line) => line.trim() !== "");
   if (headerIndex === -1) {
-    return { fileErrors: ["The file is empty."], rows: [], valid: [] };
+    return { fileErrors: [translate("The file is empty.")], rows: [], valid: [] };
   }
 
   const columns = resolveColumns(splitCsvLine(lines[headerIndex]));
   const missing = REQUIRED_COLUMNS.filter((key) => columns[key] === undefined);
   if (missing.length > 0) {
     return {
-      fileErrors: missing.map((key) => `The file has no "${COLUMN_NAMES[key]}" column.`),
+      fileErrors: missing.map((key) =>
+        translate('The file has no "{0}" column.', COLUMN_NAMES[key]),
+      ),
       rows: [],
       valid: [],
     };
@@ -216,7 +233,7 @@ export function parseIftaTaxRateCsv(
     rows.push(row);
 
     if (row.jurisdictionCode === "") {
-      row.error = "Jurisdiction is required.";
+      row.error = translate("Jurisdiction is required.");
       continue;
     }
     const { jurisdiction, error: jurisdictionError } = resolveJurisdiction(
@@ -228,26 +245,26 @@ export function parseIftaTaxRateCsv(
       continue;
     }
     if (row.fuelType === "") {
-      row.error = "Fuel type is required.";
+      row.error = translate("Fuel type is required.");
       continue;
     }
     const fuelType = resolveFuelType(row.fuelType);
     if (!fuelType) {
-      row.error = `Unknown fuel type "${row.fuelType}".`;
+      row.error = translate('Unknown fuel type "{0}".', row.fuelType);
       continue;
     }
     row.fuelType = fuelType;
     if (row.ratePerGallon === "") {
-      row.error = "Rate is required.";
+      row.error = translate("Rate is required.");
       continue;
     }
-    const rateError = validateRate(row.ratePerGallon, "Rate");
+    const rateError = validateRate(row.ratePerGallon, "rate");
     if (rateError) {
       row.error = rateError;
       continue;
     }
     if (row.surchargeRatePerGallon !== null) {
-      const surchargeError = validateRate(row.surchargeRatePerGallon, "Surcharge");
+      const surchargeError = validateRate(row.surchargeRatePerGallon, "surcharge");
       if (surchargeError) {
         row.error = surchargeError;
         continue;
@@ -256,7 +273,12 @@ export function parseIftaTaxRateCsv(
     const key = `${jurisdiction.id}|${fuelType}`;
     const firstLine = seen.get(key);
     if (firstLine !== undefined) {
-      row.error = `Duplicate of line ${firstLine} (${jurisdiction.code.toUpperCase()}, ${fuelType}).`;
+      row.error = translate(
+        "Duplicate of line {0} ({1}, {2}).",
+        firstLine,
+        jurisdiction.code.toUpperCase(),
+        fuelType,
+      );
       continue;
     }
     seen.set(key, row.line);
@@ -273,7 +295,11 @@ export function parseIftaTaxRateCsv(
   }
 
   if (rows.length === 0) {
-    return { fileErrors: ["The file has a header row but no rates."], rows: [], valid: [] };
+    return {
+      fileErrors: [translate("The file has a header row but no rates.")],
+      rows: [],
+      valid: [],
+    };
   }
 
   return { fileErrors: [], rows, valid };

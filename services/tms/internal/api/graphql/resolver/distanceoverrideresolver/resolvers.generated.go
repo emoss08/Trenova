@@ -4,7 +4,7 @@ package distanceoverrideresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	distanceoverrideservice "github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
+	distanceoverrideservice "github.com/emoss08/trenova/internal/modules/places/app/distanceoverrideservice"
 )
 
 type Deps struct {

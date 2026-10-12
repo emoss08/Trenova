@@ -162,11 +162,12 @@ type RateLineProps = {
 };
 
 function RateLine({ label, selected, target }: RateLineProps) {
+  const t = useT();
   const share = target > 0 ? Math.min(100, Math.round((selected / target) * 100)) : 0;
   return (
     <div
       role="img"
-      aria-label={`${label}: ${selected} of ${target}`}
+      aria-label={t("{0}: {1} of {2}", label, selected, target)}
       className="grid grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-2 text-xs"
     >
       <span className="text-muted-foreground">{label}</span>

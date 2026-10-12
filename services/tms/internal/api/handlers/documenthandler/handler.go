@@ -6,16 +6,20 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/domain/documentupload"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/documentservice"
-	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentuploadservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,9 +34,9 @@ type Params struct {
 
 	Service                *documentservice.Service
 	UploadService          *documentuploadservice.Service
-	DocumentContentService serviceports.DocumentContentService
-	ImportAssistant        serviceports.ShipmentImportAssistantService
-	PageAssistant          serviceports.PageAssistant `optional:"true"`
+	DocumentContentService documentports.DocumentContentService
+	ImportAssistant        shipmentports.ShipmentImportAssistantService
+	PageAssistant          agentports.PageAssistant `optional:"true"`
 	ErrorHandler           *helpers.ErrorHandler
 	PermissionMiddleware   *middleware.PermissionMiddleware
 	Config                 *config.Config `optional:"true"`
@@ -42,18 +46,18 @@ type Params struct {
 type Handler struct {
 	service         *documentservice.Service
 	uploadService   *documentuploadservice.Service
-	contentService  serviceports.DocumentContentService
-	importAssistant serviceports.ShipmentImportAssistantService
-	pageAssistant   serviceports.PageAssistant
+	contentService  documentports.DocumentContentService
+	importAssistant shipmentports.ShipmentImportAssistantService
+	pageAssistant   agentports.PageAssistant
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
 	storageConfig   config.StorageConfig
 	logger          *zap.Logger
 }
 
-func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
-	return serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalType(authCtx.PrincipalType),
+func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
+	return permissionports.RequestActor{
+		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
 		PrincipalID:    authCtx.PrincipalID,
 		UserID:         authCtx.UserID,
 		APIKeyID:       authCtx.APIKeyID,
@@ -110,7 +114,7 @@ func NewTestHandler(
 	service *documentservice.Service,
 	eh *helpers.ErrorHandler,
 	pm *middleware.PermissionMiddleware,
-	importAssistant ...serviceports.ShipmentImportAssistantService,
+	importAssistant ...shipmentports.ShipmentImportAssistantService,
 ) *Handler {
 	return NewTestHandlerWithConfig(service, eh, pm, &config.Config{}, importAssistant...)
 }
@@ -120,9 +124,9 @@ func NewTestHandlerWithConfig(
 	eh *helpers.ErrorHandler,
 	pm *middleware.PermissionMiddleware,
 	cfg *config.Config,
-	importAssistant ...serviceports.ShipmentImportAssistantService,
+	importAssistant ...shipmentports.ShipmentImportAssistantService,
 ) *Handler {
-	var assistant serviceports.ShipmentImportAssistantService
+	var assistant shipmentports.ShipmentImportAssistantService
 	if len(importAssistant) > 0 {
 		assistant = importAssistant[0]
 	}
@@ -323,7 +327,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*document.Document], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListDocumentsRequest{
+				&documentports.ListDocumentsRequest{
 					Filter:       req,
 					ResourceID:   helpers.QueryString(c, "resourceId", ""),
 					ResourceType: helpers.QueryString(c, "resourceType", ""),
@@ -359,7 +363,7 @@ func (h *Handler) getOption(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetDocumentByIDRequest{
+		documentports.GetDocumentByIDRequest{
 			ID:         documentID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -405,7 +409,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*document.Document], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.DocumentSelectOptionsRequest{
+				&documentports.DocumentSelectOptionsRequest{
 					SelectQueryRequest: req,
 					ResourceID:         c.Query("resourceId"),
 					ResourceType:       c.Query("resourceType"),
@@ -438,7 +442,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetDocumentByIDRequest{
+		documentports.GetDocumentByIDRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -514,7 +518,7 @@ func (h *Handler) download(c *gin.Context) {
 
 	content, err := h.service.GetDownloadContent(
 		c.Request.Context(),
-		repositories.GetDocumentByIDRequest{
+		documentports.GetDocumentByIDRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -552,7 +556,7 @@ func (h *Handler) view(c *gin.Context) {
 
 	content, err := h.service.GetViewContent(
 		c.Request.Context(),
-		repositories.GetDocumentByIDRequest{
+		documentports.GetDocumentByIDRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -590,7 +594,7 @@ func (h *Handler) preview(c *gin.Context) {
 
 	content, err := h.service.GetPreviewContent(
 		c.Request.Context(),
-		repositories.GetDocumentByIDRequest{
+		documentports.GetDocumentByIDRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -699,7 +703,7 @@ func (h *Handler) createUploadSession(c *gin.Context) {
 
 	session, err := h.uploadService.CreateSession(
 		c.Request.Context(),
-		&serviceports.CreateSessionRequest{
+		&documentuploadports.CreateSessionRequest{
 			TenantInfo:        pagination.FromAuthAsUser(authCtx),
 			Actor:             requestActorFromAuthContext(authCtx),
 			ResourceID:        req.ResourceID,
@@ -727,7 +731,7 @@ func (h *Handler) listActiveUploadSessions(c *gin.Context) {
 
 	sessions, err := h.uploadService.ListActive(
 		c.Request.Context(),
-		&repositories.ListActiveDocumentUploadSessionsRequest{
+		&documentuploadports.ListActiveDocumentUploadSessionsRequest{
 			TenantInfo:   pagination.FromAuth(authCtx),
 			ResourceID:   helpers.QueryString(c, "resourceId", ""),
 			ResourceType: helpers.QueryString(c, "resourceType", ""),
@@ -751,7 +755,7 @@ func (h *Handler) getUploadSession(c *gin.Context) {
 
 	state, err := h.uploadService.GetSessionState(
 		c.Request.Context(),
-		repositories.GetDocumentUploadSessionByIDRequest{
+		documentuploadports.GetDocumentUploadSessionByIDRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -780,7 +784,7 @@ func (h *Handler) getUploadPartURLs(c *gin.Context) {
 
 	targets, err := h.uploadService.GetPartUploadTargets(
 		c.Request.Context(),
-		&serviceports.PartRequest{
+		&documentuploadports.PartRequest{
 			TenantInfo:  pagination.FromAuthAsUser(authCtx),
 			SessionID:   id,
 			PartNumbers: req.PartNumbers,
@@ -814,7 +818,7 @@ func (h *Handler) uploadSessionPart(c *gin.Context) {
 
 	session, err := h.uploadService.UploadPart(
 		c.Request.Context(),
-		&serviceports.UploadPartRequest{
+		&documentuploadports.UploadPartRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			SessionID:  id,
 			PartNumber: partNumber,
@@ -840,7 +844,7 @@ func (h *Handler) completeUploadSession(c *gin.Context) {
 
 	session, err := h.uploadService.Complete(
 		c.Request.Context(),
-		&serviceports.CompletionRequest{
+		&documentuploadports.CompletionRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			Actor:      requestActorFromAuthContext(authCtx),
 			SessionID:  id,
@@ -862,7 +866,7 @@ func (h *Handler) cancelUploadSession(c *gin.Context) {
 		return
 	}
 
-	if err = h.uploadService.Cancel(c.Request.Context(), &serviceports.CancelRequest{
+	if err = h.uploadService.Cancel(c.Request.Context(), &documentuploadports.CancelRequest{
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 		SessionID:  id,
 	}); err != nil {
@@ -979,7 +983,7 @@ func (h *Handler) delete(c *gin.Context) {
 
 	err = h.service.Delete(
 		c.Request.Context(),
-		repositories.DeleteDocumentRequest{
+		documentports.DeleteDocumentRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -1089,7 +1093,7 @@ func (h *Handler) getByResource(c *gin.Context) {
 
 	documents, err := h.service.GetByResource(
 		c.Request.Context(),
-		&repositories.GetDocumentsByResourceRequest{
+		&documentports.GetDocumentsByResourceRequest{
 			TenantInfo:          pagination.FromAuth(authCtx),
 			ResourceID:          resourceID,
 			ResourceType:        resourceType,
@@ -1389,7 +1393,7 @@ func (h *Handler) openImportAssistantThread(c *gin.Context) {
 	actor := requestActorFromAuthContext(authCtx)
 	opened, err := h.pageAssistant.OpenPageThread(
 		c.Request.Context(),
-		&serviceports.OpenPageThreadRequest{
+		&agentports.OpenPageThreadRequest{
 			TenantInfo:  pagination.FromAuthAsUser(authCtx),
 			Origin:      conversation.ThreadOriginImport,
 			SubjectType: agent.SubjectDocument,

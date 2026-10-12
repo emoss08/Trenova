@@ -89,7 +89,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
         ? assignWorkerPosition(holderId, positionId)
         : assignUserPosition(holderId, positionId),
     onSuccess: (_data, { positionId }) => {
-      toast.success(positionId ? "Put on the position" : "Taken off the position");
+      toast.success(positionId ? t("Put on the position") : t("Taken off the position"));
       form.reset({ holderId: "" });
       invalidate();
     },
@@ -226,7 +226,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
                         <Button
                           size="icon-xs"
                           variant="ghost"
-                          aria-label={`Take ${holder.name} off the position`}
+                          aria-label={t("Take {0} off the position", holder.name)}
                           disabled={assign.isPending}
                           onClick={() => assign.mutate({ holderId: holder.id, positionId: null })}
                         >

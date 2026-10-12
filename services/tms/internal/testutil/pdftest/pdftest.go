@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/pdfreader"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,11 +14,11 @@ var shared = sync.OnceValue(func() *pdfreader.Reader {
 	return pdfreader.NewReader(nil, nil)
 })
 
-func Reader() services.PDFReader {
+func Reader() kernelports.PDFReader {
 	return shared()
 }
 
-func Open(t testing.TB, pdf []byte) services.PDFDocument {
+func Open(t testing.TB, pdf []byte) kernelports.PDFDocument {
 	t.Helper()
 
 	doc, err := shared().Open(t.Context(), pdf)

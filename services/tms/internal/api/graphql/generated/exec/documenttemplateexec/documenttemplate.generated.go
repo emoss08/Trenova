@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -179,7 +179,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*documenttemplate.DocumentTemplate)
 					return obj.ActiveVersion, nil
 				},
-				Marshal: gqlexec.Marshal(marshalODocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
+				Marshal: gqlexec.Marshal(marshalODocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
 			{
 				Name:      "versions",
@@ -189,7 +189,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*documenttemplate.DocumentTemplate)
 					return obj.Versions, nil
 				},
-				Marshal: gqlexec.Marshal(marshalODocumentTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersionᚄ),
+				Marshal: gqlexec.Marshal(marshalODocumentTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersionᚄ),
 			},
 			{
 				Name:      "assignments",
@@ -199,7 +199,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*documenttemplate.DocumentTemplate)
 					return obj.Assignments, nil
 				},
-				Marshal: gqlexec.Marshal(marshalODocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ),
+				Marshal: gqlexec.Marshal(marshalODocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ),
 			},
 		}},
 		{Object: "DocumentTemplateAssignment", Fields: []*gqlexec.Field{
@@ -302,7 +302,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*documenttemplate.DocumentTemplateAssignment)
 					return obj.Template, nil
 				},
-				Marshal: gqlexec.Marshal(marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
+				Marshal: gqlexec.Marshal(marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
 			},
 			{
 				Name:      "customer",
@@ -312,7 +312,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*documenttemplate.DocumentTemplateAssignment)
 					return obj.Customer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer),
+				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
 		}},
 		{Object: "DocumentTemplateAssignmentConnection", Fields: []*gqlexec.Field{
@@ -358,7 +358,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DocumentTemplateAssignmentEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment),
 			},
 			{
 				Name:     "cursor",
@@ -476,7 +476,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DocumentTemplateEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
 			},
 			{
 				Name:     "cursor",
@@ -538,7 +538,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DocumentTemplateKind)
 					return obj.Channels, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateChannel2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐChannelᚄ),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateChannel2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐChannelᚄ),
 			},
 			{
 				Name:     "paged",
@@ -589,7 +589,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DocumentTemplateKind)
 					return obj.Template, nil
 				},
-				Marshal: gqlexec.Marshal(marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
+				Marshal: gqlexec.Marshal(marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
 			},
 			{
 				Name:     "source",
@@ -599,7 +599,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DocumentTemplateKind)
 					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐTemplateSource),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐTemplateSource),
 			},
 		}},
 		{Object: "DocumentTemplatePreview", Fields: []*gqlexec.Field{
@@ -641,7 +641,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DocumentTemplatePreview)
 					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐTemplateSource),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐTemplateSource),
 			},
 			{
 				Name:     "contentHash",
@@ -693,7 +693,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DocumentTemplateVariable)
 					return obj.Type, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐVariableType),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐVariableType),
 			},
 			{
 				Name:     "description",
@@ -794,7 +794,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*documenttemplate.DocumentTemplateVersion)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐVersionStatus),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐVersionStatus),
 			},
 			{
 				Name:     "subject",
@@ -863,7 +863,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*documenttemplate.DocumentTemplateVersion)
 					return obj.PageSize, nil
 				},
-				Marshal: gqlexec.Marshal(marshalODocumentTemplatePageSize2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐPageSize),
+				Marshal: gqlexec.Marshal(marshalODocumentTemplatePageSize2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐPageSize),
 			},
 			{
 				Name:     "orientation",
@@ -872,7 +872,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*documenttemplate.DocumentTemplateVersion)
 					return obj.Orientation, nil
 				},
-				Marshal: gqlexec.Marshal(marshalODocumentTemplateOrientation2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐOrientation),
+				Marshal: gqlexec.Marshal(marshalODocumentTemplateOrientation2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐOrientation),
 			},
 			{
 				Name:     "marginTop",
@@ -1031,7 +1031,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateDocumentTemplate(ctx, fc.Args["input"].(gqlmodel.DocumentTemplateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
 			},
 			{
 				Name:       "updateDocumentTemplate",
@@ -1044,7 +1044,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDocumentTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DocumentTemplateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
 			},
 			{
 				Name:       "deleteDocumentTemplate",
@@ -1069,7 +1069,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateDocumentTemplateVersion(ctx, fc.Args["input"].(gqlmodel.CreateDocumentTemplateVersionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
 			{
 				Name:       "updateDocumentTemplateVersion",
@@ -1082,7 +1082,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDocumentTemplateVersion(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DocumentTemplateVersionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
 			{
 				Name:       "publishDocumentTemplateVersion",
@@ -1095,7 +1095,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PublishDocumentTemplateVersion(ctx, fc.Args["id"].(string), fc.Args["notes"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
 			{
 				Name:       "archiveDocumentTemplateVersion",
@@ -1108,7 +1108,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchiveDocumentTemplateVersion(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
 			{
 				Name:       "deleteDocumentTemplateVersion",
@@ -1133,7 +1133,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RollbackDocumentTemplate(ctx, fc.Args["versionId"].(string), fc.Args["notes"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
 			{
 				Name:       "assignDocumentTemplate",
@@ -1146,7 +1146,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignDocumentTemplate(ctx, fc.Args["input"].(gqlmodel.AssignDocumentTemplateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment),
 			},
 			{
 				Name:       "unassignDocumentTemplate",
@@ -1199,7 +1199,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentTemplate(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
+				Marshal: gqlexec.Marshal(marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplate),
 			},
 			{
 				Name:       "documentTemplateVersion",
@@ -1212,7 +1212,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentTemplateVersion(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalODocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
+				Marshal: gqlexec.Marshal(marshalODocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion),
 			},
 			{
 				Name:       "documentTemplateKinds",
@@ -1252,7 +1252,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomerDocumentTemplateAssignments(ctx, fc.Args["customerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ),
 			},
 			{
 				Name:       "renderDocumentTemplatePreview",
@@ -1886,14 +1886,14 @@ func unmarshalInputDocumentTemplateVersionInput(ctx context.Context, ec *gqlexec
 			it.FooterHTML = data
 		case "pageSize":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageSize"))
-			data, err := unmarshalODocumentTemplatePageSize2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐPageSize(ctx, ec, v)
+			data, err := unmarshalODocumentTemplatePageSize2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐPageSize(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.PageSize = data
 		case "orientation":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orientation"))
-			data, err := unmarshalODocumentTemplateOrientation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐOrientation(ctx, ec, v)
+			data, err := unmarshalODocumentTemplateOrientation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐOrientation(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -2081,7 +2081,7 @@ func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*b
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalODocumentTemplateOrientation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐOrientation(ctx context.Context, ec *gqlexec.Exec, v any) (*documenttemplate.Orientation, error) {
+func unmarshalODocumentTemplateOrientation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐOrientation(ctx context.Context, ec *gqlexec.Exec, v any) (*documenttemplate.Orientation, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -2090,7 +2090,7 @@ func unmarshalODocumentTemplateOrientation2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalODocumentTemplatePageSize2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐPageSize(ctx context.Context, ec *gqlexec.Exec, v any) (*documenttemplate.PageSize, error) {
+func unmarshalODocumentTemplatePageSize2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐPageSize(ctx context.Context, ec *gqlexec.Exec, v any) (*documenttemplate.PageSize, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -2139,7 +2139,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttemplate.DocumentTemplate) graphql.Marshaler {
+func marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttemplate.DocumentTemplate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2147,15 +2147,15 @@ func marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return ec.MarshalType(ctx, sel, "DocumentTemplate", v)
 }
 
-func marshalNDocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
+func marshalNDocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
 	return gqlexec.List[*documenttemplate.DocumentTemplateAssignment]{
-		Elem:        marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment,
+		Elem:        marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
+func marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2187,7 +2187,7 @@ func marshalNDocumentTemplateAssignmentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return ec.MarshalType(ctx, sel, "DocumentTemplateAssignmentEdge", v)
 }
 
-func marshalNDocumentTemplateChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.Channel) graphql.Marshaler {
+func marshalNDocumentTemplateChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.Channel) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2195,9 +2195,9 @@ func marshalNDocumentTemplateChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNDocumentTemplateChannel2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐChannelᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []documenttemplate.Channel) graphql.Marshaler {
+func marshalNDocumentTemplateChannel2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐChannelᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []documenttemplate.Channel) graphql.Marshaler {
 	return gqlexec.List[documenttemplate.Channel]{
-		Elem:        marshalNDocumentTemplateChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐChannel,
+		Elem:        marshalNDocumentTemplateChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐChannel,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -2267,7 +2267,7 @@ func marshalNDocumentTemplatePreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "DocumentTemplatePreview", v)
 }
 
-func marshalNDocumentTemplateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐTemplateSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.TemplateSource) graphql.Marshaler {
+func marshalNDocumentTemplateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐTemplateSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.TemplateSource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2291,7 +2291,7 @@ func marshalNDocumentTemplateVariable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "DocumentTemplateVariable", v)
 }
 
-func marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐVariableType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.VariableType) graphql.Marshaler {
+func marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐVariableType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.VariableType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2299,7 +2299,7 @@ func marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return res
 }
 
-func marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+func marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2307,7 +2307,7 @@ func marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "DocumentTemplateVersion", v)
 }
 
-func marshalNDocumentTemplateVersionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐVersionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.VersionStatus) graphql.Marshaler {
+func marshalNDocumentTemplateVersionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐVersionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.VersionStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2372,33 +2372,33 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
+func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Customer", v)
 }
 
-func marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttemplate.DocumentTemplate) graphql.Marshaler {
+func marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttemplate.DocumentTemplate) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "DocumentTemplate", v)
 }
 
-func marshalODocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
+func marshalODocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
 	return gqlexec.List[*documenttemplate.DocumentTemplateAssignment]{
-		Elem:        marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment,
+		Elem:        marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalODocumentTemplateOrientation2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐOrientation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.Orientation) graphql.Marshaler {
+func marshalODocumentTemplateOrientation2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐOrientation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.Orientation) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
 
-func marshalODocumentTemplatePageSize2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐPageSize(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.PageSize) graphql.Marshaler {
+func marshalODocumentTemplatePageSize2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐPageSize(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttemplate.PageSize) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
@@ -2410,14 +2410,14 @@ func marshalODocumentTemplateVariable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalODocumentTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+func marshalODocumentTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
 	return gqlexec.List[*documenttemplate.DocumentTemplateVersion]{
-		Elem:        marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion,
+		Elem:        marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalODocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+func marshalODocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

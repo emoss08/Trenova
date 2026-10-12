@@ -3,16 +3,15 @@ package roleassignmenthandler
 import (
 	"net/http"
 
-	"go.uber.org/fx"
-
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/roleassignmentservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/roleassignmentservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/fx"
 )
 
 type Params struct {
@@ -69,7 +68,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*permission.UserRoleAssignment], error) {
-			return h.service.List(c.Request.Context(), &repositories.ListRoleAssignmentsRequest{
+			return h.service.List(c.Request.Context(), &permissionports.ListRoleAssignmentsRequest{
 				Filter:      req,
 				ExpandRoles: helpers.QueryBool(c, "expandRoles", false),
 			},
@@ -101,7 +100,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
-		repositories.GetRoleAssignmentByIDRequest{
+		permissionports.GetRoleAssignmentByIDRequest{
 			TenantInfo:       pagination.FromAuth(authCtx),
 			RoleAssignmentID: roleAssignmentID,
 			ExpandRoles:      helpers.QueryBool(c, "expandRoles", false),

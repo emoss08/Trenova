@@ -3,7 +3,7 @@ package testutil
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/stretchr/testify/require"
 )
 

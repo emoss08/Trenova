@@ -1,6 +1,7 @@
 package iamhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
 	"net/http"
 	"testing"
 
@@ -25,7 +26,7 @@ func newIAMHandler(t *testing.T) *iamhandler.Handler {
 	})
 
 	return iamhandler.New(iamhandler.Params{
-		Service:      mocks.NewMockIAMService(t),
+		Service:      iamportsmock.NewMockIAMService(t),
 		ErrorHandler: errorHandler,
 		PermissionMiddleware: middleware.NewPermissionMiddleware(
 			middleware.PermissionMiddlewareParams{

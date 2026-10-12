@@ -44,10 +44,10 @@ export function CredentialHistory({ archived }: { archived: readonly WorkerCrede
                   {[
                     credential.number,
                     credential.expiresAt
-                      ? `Expired ${formatUnixDateMedium(credential.expiresAt)}`
-                      : "No expiry",
+                      ? t("Expired {0}", formatUnixDateMedium(credential.expiresAt))
+                      : t("No expiry"),
                     credential.archivedAt
-                      ? `Archived ${formatUnixDateMedium(credential.archivedAt)}`
+                      ? t("Archived {0}", formatUnixDateMedium(credential.archivedAt))
                       : null,
                   ]
                     .filter(Boolean)

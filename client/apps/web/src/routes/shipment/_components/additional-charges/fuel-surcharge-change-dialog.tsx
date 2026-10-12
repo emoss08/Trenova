@@ -11,6 +11,7 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import type { FuelSurchargeChange } from "@/hooks/use-shipment-totals-preview";
 import { FuelIcon } from "@trenova/shared/components/icons";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 function money(value: number) {
   return `$${value.toFixed(2)}`;
@@ -23,6 +24,7 @@ type FuelSurchargeChangeDialogProps = {
 
 export function FuelSurchargeChangeDialog({ change, onResolve }: FuelSurchargeChangeDialogProps) {
   const t = useT();
+  const rt = useRichT();
 
   return (
     <AlertDialog
@@ -39,17 +41,12 @@ export function FuelSurchargeChangeDialog({ change, onResolve }: FuelSurchargeCh
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-2">
             <span className="block">
-              {t(
-                "A change to this shipment (like an updated stop or distance) re-rated the automatic fuel surcharge from",
-              )}{" "}
-              <span className="text-foreground font-medium tabular-nums">
-                {change ? money(change.previousAmount) : ""}
-              </span>{" "}
-              to{" "}
-              <span className="text-foreground font-medium tabular-nums">
-                {change ? money(change.nextAmount) : ""}
-              </span>
-              {t(". Only one fuel surcharge line is kept — choose which amount to bill.")}
+              {rt(
+                "A change to this shipment (like an updated stop or distance) re-rated the automatic fuel surcharge from <b>{0}</b> to <b>{1}</b>. Only one fuel surcharge line is kept — choose which amount to bill.",
+                { b: (c) => <span className="text-foreground font-medium tabular-nums">{c}</span> },
+                change ? money(change.previousAmount) : "",
+                change ? money(change.nextAmount) : "",
+              )}
             </span>
             <span className="block">
               {t(

@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { RotaBoardRow } from "@/lib/graphql/scheduling";
 import {
   rotaConflicts,
@@ -9,7 +9,7 @@ import {
 } from "@/lib/scheduling-board";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { formatShiftDate, rotaStateTone } from "@trenova/shared/lib/scheduling";
+import { formatShiftDate } from "@trenova/shared/lib/scheduling";
 import {
   AlertTriangleIcon,
   CheckCircleIcon,
@@ -86,6 +86,23 @@ export function RotaAttention({ rows, swaps, onOpenSwaps }: RotaAttentionProps) 
   );
 }
 
+function conflictDetail(t: TranslateFn, date: string, state: string): string {
+  switch (state) {
+    case "Scheduled":
+      return t("{0} · rostered while scheduled", date);
+    case "Assigned":
+      return t("{0} · rostered while assigned", date);
+    case "TimeOff":
+      return t("{0} · rostered while time off", date);
+    case "Leave":
+      return t("{0} · rostered while leave", date);
+    case "Unavailable":
+      return t("{0} · rostered while unavailable", date);
+    default:
+      return t("{0} · rostered while off", date);
+  }
+}
+
 function AttentionList({
   conflicts,
   unrostered,
@@ -101,8 +118,8 @@ function AttentionList({
       key: `conflict-${conflict.workerId}-${conflict.date}`,
       workerId: conflict.workerId,
       name: conflict.name,
-      detail: `${formatShiftDate(conflict.date)} · rostered while ${rotaStateTone(conflict.state).label.toLowerCase()}`,
-      badge: "Conflict",
+      detail: conflictDetail(t, formatShiftDate(conflict.date), conflict.state),
+      badge: t("Conflict"),
       tone: "danger" as const,
     })),
     ...unrostered.map((worker) => ({
@@ -110,9 +127,11 @@ function AttentionList({
       workerId: worker.workerId,
       name: worker.name,
       detail: worker.shiftName
-        ? `On ${worker.shiftName}, with no working day this week`
-        : `On no pattern${worker.fleetCode ? ` · ${worker.fleetCode}` : ""}`,
-      badge: "No shift",
+        ? t("On {0}, with no working day this week", worker.shiftName)
+        : worker.fleetCode
+          ? t("On no pattern · {0}", worker.fleetCode)
+          : t("On no pattern"),
+      badge: t("No shift"),
       tone: "warning" as const,
     })),
   ];

@@ -1,3 +1,4 @@
+import { deliverToDesktop } from "@/lib/desktop-notifications";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { downloadReportRun } from "@/hooks/use-reports";
 import { aiAuditExportNotice, downloadAIAuditExport } from "@/lib/ai-audit-exports";
@@ -30,11 +31,25 @@ import {
   isShipmentCommentEvent,
 } from "@/lib/shipment-comment-realtime";
 import { isOtherUsersTurnEvent } from "@/lib/assistant-turn-realtime";
+import {
+  boundCaseRecordsIn,
+  CASE_QUERY_ROOTS,
+  mayTouchCase,
+  touchesCase,
+} from "@/lib/case-realtime";
+import { cachedThreadLists } from "@/lib/thread-list";
+import { createInboundMessagePatcher, isInboundMessageEvent } from "@/lib/triage/realtime";
+import { senderName } from "@/lib/triage/message-state";
+import { useTriageStore } from "@/stores/triage-store";
 import { parseReplyReady } from "@/components/assistant/reply-ready";
 import { announceReplyReady } from "@/components/assistant/reply-ready-toast";
 import { releaseTurnReaders } from "@/components/assistant/turn-readers";
 
 const COALESCE_DELAY_MS = 300;
+// A root refetched less than this long ago waits for the trailing flush, so a
+// burst of events on one conversation is one refetch a second, not one per
+// event; the first change still lands after COALESCE_DELAY_MS.
+const MIN_REFETCH_INTERVAL_MS = 1000;
 
 export function useRealtimeConnection() {
   const t = useT();
@@ -72,7 +87,56 @@ export function useRealtimeConnection() {
     }
 
     const pendingKeys = pendingKeysRef.current;
+    const lastFlushedAt = new Map<string, number>();
     let disposed = false;
+
+    // A message that arrives while Triage is open joins its folder with an
+    // entry of its own and a word about who it is from; anywhere else it only
+    // moves the counts.
+    const inboundMessages = createInboundMessagePatcher({
+      queryClient,
+      meId: user.id,
+      onArrival: (message) => {
+        const triage = useTriageStore.getState();
+        if (triage.mounted === 0) {
+          return;
+        }
+        triage.markArrival(message.id);
+        toast(t("New from {0}", senderName(message)));
+      },
+    });
+
+    // Refetches every pending root not refetched within the last
+    // MIN_REFETCH_INTERVAL_MS, and comes back for the rest when their
+    // interval is up.
+    const flush = () => {
+      flushTimeoutRef.current = null;
+      const now = Date.now();
+      const due: Array<{ root: QueryKeyRoot; activeOnly: boolean }> = [];
+      let nextIn = Number.POSITIVE_INFINITY;
+      pendingKeys.forEach((entry, id) => {
+        const since = now - (lastFlushedAt.get(id) ?? Number.NEGATIVE_INFINITY);
+        if (since >= MIN_REFETCH_INTERVAL_MS) {
+          due.push(entry);
+          pendingKeys.delete(id);
+          lastFlushedAt.set(id, now);
+          return;
+        }
+        nextIn = Math.min(nextIn, MIN_REFETCH_INTERVAL_MS - since);
+      });
+      if (pendingKeys.size > 0) {
+        flushTimeoutRef.current = window.setTimeout(flush, nextIn);
+      }
+
+      void Promise.all(
+        due.map(({ root, activeOnly: onScreen }) =>
+          queryClient.invalidateQueries({
+            queryKey: queryKeyPrefix(root),
+            refetchType: onScreen ? "active" : "all",
+          }),
+        ),
+      );
+    };
 
     // A root asked for by any event in the window refetches everywhere
     // unless every one of those events wanted only what is on screen.
@@ -84,20 +148,7 @@ export function useRealtimeConnection() {
       });
       if (flushTimeoutRef.current !== null) return;
 
-      flushTimeoutRef.current = window.setTimeout(() => {
-        const rootsToInvalidate = Array.from(pendingKeys.values());
-        pendingKeys.clear();
-        flushTimeoutRef.current = null;
-
-        void Promise.all(
-          rootsToInvalidate.map(({ root, activeOnly: onScreen }) =>
-            queryClient.invalidateQueries({
-              queryKey: queryKeyPrefix(root),
-              refetchType: onScreen ? "active" : "all",
-            }),
-          ),
-        );
-      }, COALESCE_DELAY_MS);
+      flushTimeoutRef.current = window.setTimeout(flush, COALESCE_DELAY_MS);
     };
 
     const invalidateCoreKeys = () => {
@@ -176,6 +227,13 @@ export function useRealtimeConnection() {
               t,
             });
           } else if (isForCurrentUser && notif.title) {
+            deliverToDesktop(notif, () => {
+              const link = notif.data?.link;
+              if (typeof link === "string" && link.startsWith("/")) {
+                void navigateRef.current(link);
+              }
+            });
+
             const runId =
               notif.eventType === "report_run_completed" && typeof notif.data?.runId === "string"
                 ? notif.data.runId
@@ -245,6 +303,20 @@ export function useRealtimeConnection() {
       }
       useRealtimeStore.getState().setLastEventAt(Date.now());
 
+      // A change to the record a Desk case is about can settle the case or
+      // tick its checklist, whatever else the event moves.
+      if (
+        mayTouchCase(evt) &&
+        touchesCase(evt, boundCaseRecordsIn(cachedThreadLists(queryClient)))
+      ) {
+        enqueueInvalidation(CASE_QUERY_ROOTS);
+      }
+
+      if (isInboundMessageEvent(evt)) {
+        inboundMessages.handle(evt);
+        return;
+      }
+
       if (isShipmentCommentEvent(evt)) {
         handleShipmentCommentEvent(queryClient, evt, user.id);
         return;
@@ -293,6 +365,7 @@ export function useRealtimeConnection() {
 
     return () => {
       disposed = true;
+      inboundMessages.dispose();
       offState();
       offResource();
       offReset();

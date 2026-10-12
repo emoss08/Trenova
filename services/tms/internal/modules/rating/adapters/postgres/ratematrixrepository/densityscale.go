@@ -1,0 +1,291 @@
+package ratematrixrepository
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type DensityScaleParams struct {
+	fx.In
+
+	DB     *postgres.Connection
+	Logger *zap.Logger
+}
+
+type densityScaleRepository struct {
+	db *postgres.Connection
+	l  *zap.Logger
+}
+
+func NewDensityScaleRepository(p DensityScaleParams) ratematrixports.DensityScaleRepository {
+	return &densityScaleRepository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.densityscale-repository"),
+	}
+}
+
+func orderTiers(sq *bun.SelectQuery) *bun.SelectQuery {
+	return sq.Order(ratematrixcol.DensityScaleTierColumns.FromPcf.OrderAsc())
+}
+
+func (r *densityScaleRepository) List(
+	ctx context.Context,
+	req *ratematrixports.ListRateMatrixRequest,
+) (*pagination.ListResult[*ratematrix.DensityScale], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*ratematrix.DensityScale], error) {
+			log := r.l.With(zap.String("operation", "List"))
+
+			cols := ratematrixcol.DensityScaleColumns
+			entities := make([]*ratematrix.DensityScale, 0, req.Filter.Pagination.SafeLimit())
+
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(buncolgen.Rel(ratematrixcol.DensityScaleRelations.Tiers), orderTiers).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = querybuilder.ApplyFilters(
+						sq,
+						ratematrixcol.DensityScaleTable.Alias,
+						req.Filter,
+						(*ratematrix.DensityScale)(nil),
+					)
+
+					return sq.Apply(ratematrixcol.DensityScaleApplyTenant(req.Filter.TenantInfo)).
+						Limit(int64(req.Filter.Pagination.SafeLimit())).
+						Offset(int64(req.Filter.Pagination.SafeOffset())).
+						Order(cols.EffectiveFrom.OrderDesc())
+				}).
+				ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count density scales", zap.Error(err))
+				return nil, err
+			}
+
+			return &pagination.ListResult[*ratematrix.DensityScale]{
+				Items: entities,
+				Total: int(total),
+			}, nil
+		},
+	)
+}
+
+func (r *densityScaleRepository) GetByID(
+	ctx context.Context,
+	req *ratematrixports.GetDensityScaleRequest,
+) (*ratematrix.DensityScale, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratematrix.DensityScale, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByID"),
+			zap.String("id", req.DensityScaleID.String()),
+		)
+
+		entity := new(ratematrix.DensityScale)
+		cols := ratematrixcol.DensityScaleColumns
+
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Relation(buncolgen.Rel(ratematrixcol.DensityScaleRelations.Tiers), orderTiers).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return ratematrixcol.DensityScaleScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.DensityScaleID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get density scale", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "DensityScale")
+		}
+
+		return entity, nil
+	})
+}
+
+// GetOrgDefault returns the scale a rule uses when it does not name one.
+//
+// A missing default is not an error. An organization that never rates by
+// density has no scale, and the caller falls back to the commodity's own class.
+func (r *densityScaleRepository) GetOrgDefault(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*ratematrix.DensityScale, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratematrix.DensityScale, error) {
+		log := r.l.With(zap.String("operation", "GetOrgDefault"))
+
+		entity := new(ratematrix.DensityScale)
+		cols := ratematrixcol.DensityScaleColumns
+
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Relation(buncolgen.Rel(ratematrixcol.DensityScaleRelations.Tiers), orderTiers).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return ratematrixcol.DensityScaleScopeTenant(sq, tenantInfo).
+					Where(cols.IsOrgDefault.IsTrue()).
+					Where(cols.Status.Eq(), domaintypes.StatusActive)
+			}).
+			Scan(ctx)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return nil, nil //nolint:nilnil // an organization may not rate by density at all
+			}
+			log.Error("failed to get default density scale", zap.Error(err))
+
+			return nil, err
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *densityScaleRepository) Create(
+	ctx context.Context,
+	entity *ratematrix.DensityScale,
+) (*ratematrix.DensityScale, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratematrix.DensityScale, error) {
+		log := r.l.With(zap.String("operation", "Create"), zap.String("code", entity.Code))
+
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+			if _, iErr := r.db.DBForContext(c).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(c); iErr != nil {
+				return iErr
+			}
+
+			stampTiers(entity, false)
+
+			return r.insertTiers(c, entity)
+		})
+		if err != nil {
+			log.Error("failed to create density scale", zap.Error(err))
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Density scale is busy. Retry the request.",
+			)
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *densityScaleRepository) Update(
+	ctx context.Context,
+	entity *ratematrix.DensityScale,
+) (*ratematrix.DensityScale, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratematrix.DensityScale, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("id", entity.ID.String()),
+		)
+
+		ov := entity.Version
+		entity.Version++
+
+		cols := ratematrixcol.DensityScaleColumns
+		tierCols := ratematrixcol.DensityScaleTierColumns
+
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+			results, uErr := r.db.DBForContext(c).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(cols.Version.Eq(), ov).
+				OmitZero().
+				Returning("*").
+				Exec(c)
+			if uErr != nil {
+				return uErr
+			}
+
+			if uErr = dberror.CheckRowsAffected(
+				results,
+				"DensityScale",
+				entity.ID.String(),
+			); uErr != nil {
+				return uErr
+			}
+
+			if _, dErr := r.db.DBForContext(c).
+				NewDelete().
+				Model((*ratematrix.DensityScaleTier)(nil)).
+				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+					return ratematrixcol.DensityScaleTierScopeTenantDelete(dq, pagination.TenantInfo{
+						OrgID: entity.OrganizationID,
+						BuID:  entity.BusinessUnitID,
+					}).
+						Where(tierCols.RateDensityScaleID.Eq(), entity.ID)
+				}).
+				Exec(c); dErr != nil {
+				return dErr
+			}
+
+			stampTiers(entity, true)
+
+			return r.insertTiers(c, entity)
+		})
+		if err != nil {
+			log.Error("failed to update density scale", zap.Error(err))
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Density scale is busy. Retry the request.",
+			)
+		}
+
+		return entity, nil
+	})
+}
+
+func stampTiers(entity *ratematrix.DensityScale, resetIDs bool) {
+	for _, tier := range entity.Tiers {
+		if tier == nil {
+			continue
+		}
+
+		if resetIDs {
+			tier.ID = pulid.Nil
+		}
+
+		tier.RateDensityScaleID = entity.ID
+		tier.OrganizationID = entity.OrganizationID
+		tier.BusinessUnitID = entity.BusinessUnitID
+	}
+}
+
+func (r *densityScaleRepository) insertTiers(
+	ctx context.Context,
+	entity *ratematrix.DensityScale,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if len(entity.Tiers) == 0 {
+			return nil
+		}
+
+		_, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(&entity.Tiers).
+			Returning("*").
+			Exec(ctx)
+
+		return err
+	})
+}

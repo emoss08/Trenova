@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { PtoStatusBadge, ptoTypeLabels } from "./portal-badges";
 import { PtoBalanceStrip, useMyPtoBalances } from "./pto-balance-strip";
 import { useDashFeatures } from "./use-dash-features";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const ptoTypes = Object.keys(ptoTypeLabels) as PortalPtoType[];
 
@@ -54,7 +55,8 @@ export function PtoSection() {
         queryClient.invalidateQueries({ queryKey: ["dash-pto-balances"] }),
       ]);
     },
-    onError: (error: Error) => toast.error(error.message || "We couldn't cancel that request."),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("We couldn't cancel that request.")),
   });
 
   return (
@@ -168,7 +170,8 @@ function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProp
       reset();
       onOpenChange(false);
     },
-    onError: (error: Error) => toast.error(error.message || "We couldn't send your request."),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("We couldn't send your request.")),
   });
 
   const canSubmit = startDate.length > 0 && endDate.length > 0 && reason.trim().length > 0;

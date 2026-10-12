@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import {
@@ -31,6 +32,7 @@ import {
   workerStandingMeta,
 } from "@trenova/shared/lib/worker-standing";
 import { CheckIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
+import { ptoTypeLabel } from "./pto/worker-pto-balances";
 
 type WorkerOverviewTabProps = {
   workerId: string;
@@ -329,23 +331,23 @@ function CredentialsCard({
   const problems = summary.expiredCount + summary.missingCount;
   const state: CardState =
     problems > 0
-      ? { variant: "danger", label: `${problems} lapsed` }
+      ? { variant: "danger", label: t("{0} lapsed", problems) }
       : summary.expiringCount > 0
-        ? { variant: "warning", label: `${summary.expiringCount} expiring` }
+        ? { variant: "warning", label: t("{0} expiring", summary.expiringCount) }
         : null;
 
   return (
     <MetricCard
       testId="overview-card-credentials"
       title={t("Credentials")}
-      value={`${summary.validCount} of ${summary.requiredCount}`}
-      unit="valid"
+      value={t("{0} of {1}", summary.validCount, summary.requiredCount)}
+      unit={t("valid")}
       detail={
         describeCounts([
-          [summary.expiredCount, "expired"],
-          [summary.missingCount, "missing"],
-          [summary.expiringCount, "expiring soon"],
-        ]) ?? "Everything on file is in date."
+          [summary.expiredCount, t("{0} expired", summary.expiredCount)],
+          [summary.missingCount, t("{0} missing", summary.missingCount)],
+          [summary.expiringCount, t("{0} expiring soon", summary.expiringCount)],
+        ]) ?? t("Everything on file is in date.")
       }
       state={state}
       onOpen={onOpen}
@@ -360,24 +362,24 @@ function TrainingCard({ summary, onOpen }: { summary: OverviewTraining; onOpen: 
   const soon = summary.dueCount + summary.expiringCount;
   const state: CardState =
     problems > 0
-      ? { variant: "danger", label: `${problems} behind` }
+      ? { variant: "danger", label: t("{0} behind", problems) }
       : soon > 0
-        ? { variant: "warning", label: `${soon} due soon` }
+        ? { variant: "warning", label: t("{0} due soon", soon) }
         : null;
 
   return (
     <MetricCard
       testId="overview-card-training"
       title={t("Training")}
-      value={`${summary.currentCount} of ${summary.requiredCount}`}
-      unit="current"
+      value={t("{0} of {1}", summary.currentCount, summary.requiredCount)}
+      unit={t("current")}
       detail={
         describeCounts([
-          [summary.overdueCount, "overdue"],
-          [summary.expiredCount, "expired"],
-          [summary.missingCount, "never assigned"],
-          [soon, "due soon"],
-        ]) ?? "Every required course is in date."
+          [summary.overdueCount, t("{0} overdue", summary.overdueCount)],
+          [summary.expiredCount, t("{0} expired", summary.expiredCount)],
+          [summary.missingCount, t("{0} never assigned", summary.missingCount)],
+          [soon, t("{0} due soon", soon)],
+        ]) ?? t("Every required course is in date.")
       }
       state={state}
       onOpen={onOpen}
@@ -400,14 +402,20 @@ function SafetyCard({ card, onOpen }: { card: OverviewSafety; onOpen: () => void
       testId="overview-card-safety"
       title={t("Safety")}
       value={String(card.score)}
-      unit="score"
+      unit={t("score")}
       detail={
         describeCounts([
-          [card.activePoints, "active points"],
-          [card.preventableAccidents, "preventable"],
-          [card.outOfServiceOrders, "out of service"],
-          [card.activeDiscipline, "active actions"],
-        ]) ?? "No points and nothing outstanding."
+          [
+            card.activePoints,
+            t("{0, plural, one {# active point} other {# active points}}", card.activePoints),
+          ],
+          [card.preventableAccidents, t("{0} preventable", card.preventableAccidents)],
+          [card.outOfServiceOrders, t("{0} out of service", card.outOfServiceOrders)],
+          [
+            card.activeDiscipline,
+            t("{0, plural, one {# active action} other {# active actions}}", card.activeDiscipline),
+          ],
+        ]) ?? t("No points and nothing outstanding.")
       }
       state={state}
       onOpen={onOpen}
@@ -426,7 +434,7 @@ function ChecklistCard({
 
   const state: CardState =
     checklist.progress.overdue > 0
-      ? { variant: "warning", label: `${checklist.progress.overdue} overdue` }
+      ? { variant: "warning", label: t("{0} overdue", checklist.progress.overdue) }
       : null;
 
   return (
@@ -435,7 +443,11 @@ function ChecklistCard({
       title={t("Checklist")}
       value={`${checklist.progress.percent}%`}
       unit={checklist.name}
-      detail={`${checklist.progress.requiredDone} of ${checklist.progress.requiredTotal} required items settled`}
+      detail={t(
+        "{0} of {1, plural, one {# required item settled} other {# required items settled}}",
+        checklist.progress.requiredDone,
+        checklist.progress.requiredTotal,
+      )}
       state={state}
       onOpen={onOpen}
     >
@@ -461,19 +473,18 @@ function PTOCard({
       testId="overview-card-pto"
       title={t("Time off")}
       value={lead ? formatDays(lead.availableDays) : "—"}
-      unit={lead ? `${lead.ptoType.toLowerCase()} days` : undefined}
+      unit={lead ? t("{0} days", t(ptoTypeLabel(lead.ptoType))) : undefined}
       detail={
         tracked.length > 1
           ? tracked
               .slice(1)
-              .map(
-                (balance) =>
-                  `${formatDays(balance.availableDays)} ${balance.ptoType.toLowerCase()}`,
+              .map((balance) =>
+                t("{0} {1}", formatDays(balance.availableDays), t(ptoTypeLabel(balance.ptoType))),
               )
               .join(" · ")
           : lead
-            ? "Available after pending requests."
-            : "No tracked balances."
+            ? t("Available after pending requests.")
+            : t("No tracked balances.")
       }
       onOpen={onOpen}
     />
@@ -493,11 +504,11 @@ function ReviewsCard({
 }) {
   const t = useT();
 
-  const value = open ? "Open" : last?.overallScore ? formatScore(last.overallScore) : "—";
-  const unit = open ? open.title : last?.overallScore ? "last score" : undefined;
+  const value = open ? t("Open") : last?.overallScore ? formatScore(last.overallScore) : "—";
+  const unit = open ? open.title : last?.overallScore ? t("last score") : undefined;
   const detail = [
-    last ? `Last: ${last.title}` : "Nothing closed yet.",
-    nextReviewAt ? `Next due ${formatUnixDate(nextReviewAt)}` : null,
+    last ? t("Last: {0}", last.title) : t("Nothing closed yet."),
+    nextReviewAt ? t("Next due {0}", formatUnixDate(nextReviewAt)) : null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -548,7 +559,7 @@ function AtAGlance({ overview }: { overview: WorkerOverview }) {
  * nothing to report so the caller can say something reassuring instead.
  */
 function describeCounts(counts: readonly [number, string][]): string | null {
-  const parts = counts.filter(([value]) => value > 0).map(([value, label]) => `${value} ${label}`);
+  const parts = counts.filter(([value]) => value > 0).map(([, message]) => message);
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
@@ -571,8 +582,8 @@ function describeTenure(hireDate: number | null, asOf: number): string | null {
   const years = (asOf - hireDate) / (365.25 * 24 * 60 * 60);
   if (years < 1) {
     const months = Math.max(1, Math.round(years * 12));
-    return `${months} month${months === 1 ? "" : "s"} in`;
+    return translate("{0, plural, one {# month in} other {# months in}}", months);
   }
   const rounded = Math.round(years * 10) / 10;
-  return `${rounded} year${rounded === 1 ? "" : "s"} in`;
+  return translate("{0, plural, one {# year in} other {# years in}}", rounded);
 }

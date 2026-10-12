@@ -4,13 +4,14 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerledgerportsmock"
+
 	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
@@ -22,7 +23,7 @@ import (
 
 func setupHandler(
 	t *testing.T,
-	repo repositories.AccountsReceivableRepository,
+	repo customerledgerports.AccountsReceivableRepository,
 ) *accountsreceivablehandler.Handler {
 	t.Helper()
 
@@ -51,10 +52,10 @@ func setupHandler(
 func TestHandlerOpenItems(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAccountsReceivableRepository(t)
+	repo := customerledgerportsmock.NewMockAccountsReceivableRepository(t)
 	repo.EXPECT().
 		ListOpenItems(mock.Anything, mock.Anything).
-		Return([]*repositories.AROpenItem{
+		Return([]*customerledgerports.AROpenItem{
 			{
 				InvoiceID:       pulid.MustNew("inv_"),
 				CustomerID:      pulid.MustNew("cus_"),
@@ -72,7 +73,7 @@ func TestHandlerOpenItems(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	var resp []*repositories.AROpenItem
+	var resp []*customerledgerports.AROpenItem
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	require.Len(t, resp, 1)
 	assert.Equal(t, int64(5000), resp[0].OpenAmountMinor)
@@ -81,7 +82,7 @@ func TestHandlerOpenItems(t *testing.T) {
 func TestHandlerOpenItemsBadCustomerID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAccountsReceivableRepository(t)
+	repo := customerledgerportsmock.NewMockAccountsReceivableRepository(t)
 	handler := setupHandler(t, repo)
 	ginCtx := sharedtestutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -98,17 +99,17 @@ func TestHandlerCustomerStatement(t *testing.T) {
 	t.Parallel()
 
 	customerID := pulid.MustNew("cus_")
-	repo := mocks.NewMockAccountsReceivableRepository(t)
+	repo := customerledgerportsmock.NewMockAccountsReceivableRepository(t)
 	repo.EXPECT().GetCustomerName(mock.Anything, mock.Anything).Return("Acme", nil).Once()
 	repo.EXPECT().
 		ListOpenItems(mock.Anything, mock.Anything).
-		Return([]*repositories.AROpenItem{
+		Return([]*customerledgerports.AROpenItem{
 			{InvoiceID: pulid.MustNew("inv_"), CustomerID: customerID, OpenAmountMinor: 5000},
 		}, nil).
 		Once()
 	repo.EXPECT().
 		ListCustomerLedger(mock.Anything, mock.Anything).
-		Return([]*repositories.ARLedgerEntry{
+		Return([]*customerledgerports.ARLedgerEntry{
 			{
 				CustomerID:      customerID,
 				TransactionDate: 10,
@@ -127,10 +128,10 @@ func TestHandlerCustomerStatement(t *testing.T) {
 		Once()
 	repo.EXPECT().
 		GetCustomerAging(mock.Anything, mock.Anything).
-		Return(&repositories.ARCustomerAgingRow{
+		Return(&customerledgerports.ARCustomerAgingRow{
 			CustomerID:   customerID,
 			CustomerName: "Acme",
-			Buckets:      repositories.ARAgingBucketTotals{TotalOpenMinor: 5000},
+			Buckets:      customerledgerports.ARAgingBucketTotals{TotalOpenMinor: 5000},
 		}, nil).
 		Once()
 	handler := setupHandler(t, repo)
@@ -143,7 +144,7 @@ func TestHandlerCustomerStatement(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	var resp serviceports.ARCustomerStatement
+	var resp customerledgerports.ARCustomerStatement
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, customerID, resp.CustomerID)
 	assert.Equal(t, "Acme", resp.CustomerName)

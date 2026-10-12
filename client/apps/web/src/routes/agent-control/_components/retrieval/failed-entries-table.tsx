@@ -116,6 +116,7 @@ export default function FailedEntriesTable() {
       ) : null}
       <DataTable<AIRetrievalFailedEntryRow>
         name="Failed Item"
+        emptyTitle={t("No failed items yet")}
         queryKey={AI_RETRIEVAL_FAILED_LIST_KEY}
         graphql={graphql}
         resource={Resource.AIProvider}

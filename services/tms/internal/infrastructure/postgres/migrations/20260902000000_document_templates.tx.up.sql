@@ -68,7 +68,7 @@ CREATE TYPE "generated_document_delivery_enum" AS ENUM(
 
 --bun:split
 -- kind is varchar rather than a Postgres enum, deliberately: the Go registry in
--- internal/core/domain/documenttemplate is the single source of truth for which
+-- internal/modules/documents/domain/documenttemplate is the single source of truth for which
 -- kinds exist, and adding one must not require a migration. This diverges from the
 -- repository's usual habit of modelling enums in the database.
 CREATE TABLE IF NOT EXISTS "document_templates"(

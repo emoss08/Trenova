@@ -1,3 +1,4 @@
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { ArtIcon, DeskArtKindIcon, type DeskArtKind } from "./desk-art-kinds";
@@ -15,15 +16,16 @@ export function DeskArtifactsEmpty({ onClose }: { onClose: () => void }) {
   return (
     <div className="dk-axe" data-slot="artifacts-empty">
       <div className="dk-axe-top">
-        <button
-          type="button"
-          className="dk-ax-ib"
+        <Button
+          variant="quiet"
+          size="icon-sm"
+          className="text-dsk-subtle"
           title={t("Close")}
           aria-label={t("Close")}
           onClick={onClose}
         >
           <ArtIcon name="x" size={13} stroke={2.2} />
-        </button>
+        </Button>
       </div>
       <div className="dk-axe-c">
         <div className="dk-axe-stack" aria-hidden>

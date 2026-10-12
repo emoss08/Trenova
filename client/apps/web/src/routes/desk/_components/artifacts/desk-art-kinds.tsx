@@ -1,8 +1,82 @@
 import type { AssistantArtifact } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { ReactNode } from "react";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const ICONS = {
+  shipment: (
+    <>
+      <path d="M3.5 6.5h10v9h-10zM13.5 9.5h4l3 3v3h-7" />
+      <circle cx="7" cy="17" r="1.6" />
+      <circle cx="17" cy="17" r="1.6" />
+    </>
+  ),
+  tractor: (
+    <>
+      <path d="M4 16.5V9.5h6.5l2.5-3.5h3.5l3.5 4.5v6h-2" />
+      <path d="M13 6v5.5h7M4 16.5h3M11 16.5h3.5" />
+      <circle cx="9" cy="17" r="1.8" />
+      <circle cx="16.5" cy="17" r="1.8" />
+    </>
+  ),
+  trailer: (
+    <>
+      <path d="M3.5 6.5h14v9.5h-14zM17.5 13h3" />
+      <path d="M3.5 16h2M10.5 16h3" />
+      <circle cx="8" cy="17" r="1.8" />
+      <circle cx="13" cy="17" r="1.8" />
+    </>
+  ),
+  worker: (
+    <>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20.5c.6-3.9 3.3-6 7-6s6.4 2.1 7 6" />
+    </>
+  ),
+  location: (
+    <>
+      <path d="M12 20.5s-6-5.4-6-10.3a6 6 0 0 1 12 0c0 4.9-6 10.3-6 10.3z" />
+      <circle cx="12" cy="10" r="2.2" />
+    </>
+  ),
+  carrier: (
+    <>
+      <path d="M2.5 7.5h11v8h-11zM13.5 10h3.5l3 3v2.5h-6.5" />
+      <path d="M6 4.5h4.5M8.25 2.5v4" />
+      <circle cx="6.5" cy="17" r="1.6" />
+      <circle cx="16.5" cy="17" r="1.6" />
+    </>
+  ),
+  order: (
+    <>
+      <path d="M6.5 4.5h11v16h-11z" />
+      <path d="M9.5 3v3M14.5 3v3M9.5 10h5M9.5 13.5h5M9.5 17h3" />
+    </>
+  ),
+  failure: (
+    <>
+      <circle cx="10.5" cy="12.5" r="7.5" />
+      <path d="M10.5 8.5v4.2l2.8 1.8M19.5 4v5M19.5 12v.01" />
+    </>
+  ),
+  agreement: (
+    <>
+      <path d="M6 3.5h12v17H6z" />
+      <path d="M9 8h6M9 11.5h6M8.8 16.8c.9-1.4 1.8-1.4 2.3 0s1.5 1.3 3.9-.6" />
+    </>
+  ),
+  customer: (
+    <>
+      <path d="M4.5 20.5V7l7.5-3.5L19.5 7v13.5" />
+      <path d="M3 20.5h18M9 9.5h1.5M13.5 9.5H15M9 13h1.5M13.5 13H15M10.5 20.5V17h3v3.5" />
+    </>
+  ),
+  formula: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+      <path d="M11 8.5c-1.3 0-1.9.7-2.1 2l-.8 4.8c-.2 1.3-.8 1.9-2.1 1.9M7.2 12h3.6M13.2 11l3.6 4.5M16.8 11l-3.6 4.5" />
+    </>
+  ),
   bill: (
     <>
       <path d="M6 3.5h12v17l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3z" />
@@ -135,6 +209,7 @@ export function ArtIcon({
 }) {
   return (
     <svg
+      className="size-auto"
       width={size}
       height={size}
       viewBox="0 0 24 24"
@@ -163,9 +238,20 @@ export type DeskArtKind =
   | "view"
   | "decision"
   | "extract"
-  | "bill";
+  | "bill"
+  | "formula"
+  | "shipment"
+  | "customer"
+  | "tractor"
+  | "trailer"
+  | "worker"
+  | "location"
+  | "carrier"
+  | "order"
+  | "failure"
+  | "agreement";
 
-const KIND_LABELS: Record<DeskArtKind, string> = {
+const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   table: "Table",
   record: "Record",
   rate: "Rate explanation",
@@ -178,6 +264,45 @@ const KIND_LABELS: Record<DeskArtKind, string> = {
   decision: "Decision",
   extract: "Extraction",
   bill: "Billing item",
+  formula: "Formula template",
+  shipment: "Shipment",
+  customer: "Customer",
+  tractor: "Tractor",
+  trailer: "Trailer",
+  worker: "Worker",
+  location: "Location",
+  carrier: "Carrier",
+  order: "Order",
+  failure: "Service failure",
+  agreement: "Rate agreement",
+});
+
+/**
+ * Records the Desk draws as a card of their own, each with its own mark: a
+ * billing queue item as the item a biller reviews, a formula template as the
+ * formula a biller reads, a shipment as the load a dispatcher follows, a
+ * customer as the account an account manager or a biller keeps, a tractor or a
+ * trailer as the unit a dispatcher or fleet manager runs, a worker as the
+ * driver a dispatcher or safety manager puts on loads, a location as the dock
+ * a planner sends trucks to, a carrier as the partner a carrier manager
+ * qualifies and pays, an order as the business a customer service rep and a
+ * biller follow from taken to billed, a service failure as the miss a customer
+ * service rep explains and settles, a rate agreement as the terms a pricing
+ * analyst holds freight to.
+ */
+const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
+  billing_queue_item: "bill",
+  formula_template: "formula",
+  shipment: "shipment",
+  customer: "customer",
+  tractor: "tractor",
+  trailer: "trailer",
+  worker: "worker",
+  location: "location",
+  carrier: "carrier",
+  order: "order",
+  service_failure: "failure",
+  rate_agreement: "agreement",
 };
 
 export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload">): DeskArtKind {
@@ -187,10 +312,12 @@ export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload"
     case "report_preview":
     case "report_run":
       return "report";
-    case "entity_card":
-      // A billing queue item is drawn as the item a biller reviews, not as a
-      // record card, and the design gives it its own mark.
-      return artifact.payload.entity === "billing_queue_item" ? "bill" : "record";
+    case "entity_card": {
+      const entity = artifact.payload.entity;
+      return typeof entity === "string" && Object.hasOwn(CARD_KINDS, entity)
+        ? CARD_KINDS[entity]
+        : "record";
+    }
     case "rate_explanation":
       return "rate";
     case "email_draft":
@@ -247,6 +374,28 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("Extraction");
     case "bill":
       return t("Billing item");
+    case "formula":
+      return t("Formula template");
+    case "shipment":
+      return t("Shipment");
+    case "customer":
+      return t("Customer");
+    case "tractor":
+      return t("Tractor");
+    case "trailer":
+      return t("Trailer");
+    case "worker":
+      return t("Worker");
+    case "location":
+      return t("Location");
+    case "carrier":
+      return t("Carrier");
+    case "order":
+      return t("Order");
+    case "failure":
+      return t("Service failure");
+    case "agreement":
+      return t("Rate agreement");
   }
 }
 

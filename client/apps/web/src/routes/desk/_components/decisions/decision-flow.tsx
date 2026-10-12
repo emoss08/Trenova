@@ -14,6 +14,7 @@ import {
   type ReasonDialogRequest,
 } from "@/routes/agent-control/_components/activity/reason-dialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -37,6 +38,11 @@ import {
 /** How long a decided card takes to leave before the next one comes in. */
 const LEAVE_MS = 320;
 const SEEN_KEY = "desk.decisions.seen";
+const LINK_CLASS =
+  "text-sm font-medium whitespace-nowrap text-dsk-fg underline decoration-dsk-fg/30 underline-offset-2 hover:decoration-current";
+const NAV_CLASS =
+  "size-7.5 rounded-lg text-dsk-muted inset-ring inset-ring-dsk-b-sub hover:bg-dsk-hover hover:text-dsk-fg";
+const DECIDE_CLASS = "h-9.5 gap-2.5 rounded-lg pr-2.5 pl-4 text-base @max-[900px]/mainc:pl-3";
 
 type Item = {
   node: PendingDecisionNode;
@@ -395,21 +401,24 @@ export function DecisionFlow() {
                 <i>{group.items.length}</i>
               </div>
               {group.items.map((item) => (
-                <button
+                <Button
                   key={item.id}
-                  type="button"
+                  variant="bare"
+                  size="bare"
                   className={cn(
-                    "dk-dc2-qi",
-                    current?.id === item.id && "dk-on",
+                    "dk-dc2-qi relative flex w-full gap-2.25 rounded-lg px-2 py-1.75 text-left transition-colors duration-100",
+                    current?.id === item.id
+                      ? "dk-on bg-dsk-card ring-1 ring-dsk-b"
+                      : "hover:bg-dsk-hover",
                     batch?.includes(item.id) && "dk-in",
                   )}
                   aria-current={current?.id === item.id ? "true" : undefined}
                   onClick={() => setCurrentId(item.id)}
                 >
                   <DeskAgentTile agent={item.node.run?.definition ?? null} size="xs" />
-                  <span>
-                    <b>{item.title}</b>
-                    <em>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <b className="truncate text-sm font-medium">{item.title}</b>
+                    <em className="text-xs text-dsk-subtle not-italic @max-[900px]/mainc:hidden">
                       {formatTimeAgo(item.node.createdAt * 1000)}
                       {item.reversible ? "" : ` · ${t("final")}`}
                     </em>
@@ -419,19 +428,20 @@ export function DecisionFlow() {
                       <span className="sr-only">{t("Not opened yet")}</span>
                     </span>
                   )}
-                </button>
+                </Button>
               ))}
             </div>
           ))}
           {queue.hasNextPage && (
-            <button
-              type="button"
-              className="dk-ec-link dk-dc2-qmore"
+            <Button
+              variant="bare"
+              size="bare"
+              className={cn(LINK_CLASS, "mx-2 mt-2.5")}
               onClick={() => void queue.fetchNextPage()}
               disabled={queue.isFetchingNextPage}
             >
               {t("Load more")}
-            </button>
+            </Button>
           )}
           {!queue.isLoading && items.length === 0 && (
             <div className="dk-dc2-qe">{t("Queue clear")}</div>
@@ -505,20 +515,26 @@ export function DecisionFlow() {
                         {t("All {0}", current.tool)}
                         {unopened > 0 && ` · ${t("{0} not opened yet", unopened)}`}
                       </span>
-                      <button type="button" className="dk-ec-link" onClick={() => setBatch(null)}>
+                      <Button
+                        variant="bare"
+                        size="bare"
+                        className={cn(LINK_CLASS, "ml-auto")}
+                        onClick={() => setBatch(null)}
+                      >
                         {t("Just this one")}
-                      </button>
+                      </Button>
                     </>
                   ) : (
                     <>
                       <span>{t("{0} more {1} waiting", like.length - 1, current.tool)}</span>
-                      <button
-                        type="button"
-                        className="dk-ec-link"
+                      <Button
+                        variant="bare"
+                        size="bare"
+                        className={cn(LINK_CLASS, "ml-auto")}
                         onClick={() => setBatch(like.map((item) => item.id))}
                       >
                         {t("Decide all {0} together", like.length)}
-                      </button>
+                      </Button>
                       <span className="dk-kbd" aria-hidden>
                         X
                       </span>
@@ -546,26 +562,28 @@ export function DecisionFlow() {
         )}
         {current && (
           <div className="dk-dc2-bar">
-            <button
-              type="button"
-              className="dk-dc2-nav"
+            <Button
+              variant="quiet"
+              size="icon-sm"
+              className={cn(NAV_CLASS, "[&_svg]:-rotate-90")}
               onClick={() => go(-1)}
               title={t("Previous (K)")}
               aria-label={t("Previous")}
               aria-keyshortcuts="K"
             >
               <DeskIcon name="chevR" size={12} stroke={2.4} />
-            </button>
-            <button
-              type="button"
-              className="dk-dc2-nav dk-dn"
+            </Button>
+            <Button
+              variant="quiet"
+              size="icon-sm"
+              className={cn(NAV_CLASS, "[&_svg]:rotate-90")}
               onClick={() => go(1)}
               title={t("Next (J)")}
               aria-label={t("Next")}
               aria-keyshortcuts="J"
             >
               <DeskIcon name="chevR" size={12} stroke={2.4} />
-            </button>
+            </Button>
             <span className="dk-dc2-pos">
               {index + 1} / {items.length}
               {queue.hasNextPage ? "+" : ""}
@@ -574,13 +592,22 @@ export function DecisionFlow() {
             {canDecide ? (
               <>
                 {editable && (
-                  <button type="button" className="dk-ec-link" onClick={() => modify()}>
+                  <Button
+                    variant="bare"
+                    size="bare"
+                    className={cn(LINK_CLASS, "@max-[900px]/mainc:hidden")}
+                    onClick={() => modify()}
+                  >
                     {t("Change values")}
-                  </button>
+                  </Button>
                 )}
-                <button
-                  type="button"
-                  className="dk-dc2-btn"
+                <Button
+                  variant="quiet"
+                  size="lg"
+                  className={cn(
+                    DECIDE_CLASS,
+                    "text-dsk-fg inset-ring inset-ring-dsk-b hover:bg-dsk-hover hover:text-dsk-fg",
+                  )}
                   disabled={busy}
                   onClick={() => decline()}
                   aria-keyshortcuts="D"
@@ -589,10 +616,10 @@ export function DecisionFlow() {
                   <span className="dk-kbd" aria-hidden>
                     D
                   </span>
-                </button>
-                <button
-                  type="button"
-                  className="dk-dc2-btn dk-ink"
+                </Button>
+                <Button
+                  size="lg"
+                  className={cn(DECIDE_CLASS, "dk-dc2-ok")}
                   disabled={busy || (batch === null && !gate?.approvable)}
                   onClick={() => void approve()}
                   aria-keyshortcuts="A"
@@ -601,7 +628,7 @@ export function DecisionFlow() {
                   <span className="dk-kbd" aria-hidden>
                     A
                   </span>
-                </button>
+                </Button>
               </>
             ) : (
               <span className="dk-dc2-qe">{t("You can read these, but not decide them.")}</span>

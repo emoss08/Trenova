@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const repoRoot = resolve(packageRoot, "../../..");
 
-const SOURCE = "services/tms/internal/core/domain/permission/resource_gen.go";
+const SOURCE = "services/tms/internal/modules/identity/domain/permission/resource_gen.go";
 const OUTPUT = "client/packages/shared/src/types/generated/permission-resources.ts";
 
 // Keys are the Go identifier with its Resource prefix removed, verbatim — so Go's

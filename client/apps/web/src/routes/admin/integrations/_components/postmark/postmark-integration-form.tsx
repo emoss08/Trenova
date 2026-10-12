@@ -135,7 +135,11 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
             <SensitiveField
               name="configuration.serverToken"
               control={control}
-              label={`Server Token ${hasServerToken ? "(leave blank to keep existing token)" : ""}`}
+              label={
+                hasServerToken
+                  ? t("Server Token (leave blank to keep existing token)")
+                  : t("Server Token")
+              }
               autoComplete="off"
               placeholder={hasServerToken ? "********" : "Postmark server token"}
               description={t("Used by the server for Postmark API calls.")}

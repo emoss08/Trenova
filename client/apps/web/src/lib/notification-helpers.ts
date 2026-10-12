@@ -7,6 +7,7 @@ import {
   InfoCircleIcon,
 } from "@trenova/shared/components/icons";
 import { createElement } from "react";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export function formatTimestamp(unixSeconds: number): string {
   return formatDistanceToNowStrict(new Date(unixSeconds * 1000), {
@@ -28,9 +29,9 @@ export function getNotificationDayGroup(unixSeconds: number): NotificationDayGro
   return "Older";
 }
 
-export const SOURCE_LABELS: Record<string, string> = {
+export const SOURCE_LABELS: Record<string, string> = defineLabels({
   table_change_alert: "Table Change",
-};
+});
 
 export const PRIORITY_CONFIG: Record<
   string,

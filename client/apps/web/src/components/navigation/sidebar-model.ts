@@ -63,6 +63,22 @@ function moduleRoutePrefixes(module: NavModule): readonly string[] {
 }
 
 /**
+ * A module with no pages of its own to list is a destination, not a menu, so
+ * the sidebar draws it as a link. Settings is the exception: its pages come
+ * from the admin links rather than its own navigation.
+ */
+export function isDirectLinkModule(module: NavModule): boolean {
+  return module.id !== "admin" && module.navigation.length === 0;
+}
+
+export function isModuleActive(module: NavModule, pathname: string): boolean {
+  if (module.basePath === "/") {
+    return pathname === "/";
+  }
+  return moduleRoutePrefixes(module).some((prefix) => isRouteActive(pathname, prefix));
+}
+
+/**
  * The module a location belongs to, longest prefix wins. Home only claims the
  * root so it never shadows a module whose prefix happens to start with `/`.
  */

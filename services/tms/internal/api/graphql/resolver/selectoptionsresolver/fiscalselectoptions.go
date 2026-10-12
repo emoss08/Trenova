@@ -5,9 +5,10 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -18,7 +19,7 @@ func (r *Deps) resolveFiscalYearSelectOptions(
 	if len(req.IDs) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.FiscalYearRepo.GetByID(ctx, repositories.GetFiscalYearByIDRequest{
+			entity, err := r.FiscalYearRepo.GetByID(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 				ID:         id,
 				TenantInfo: req.TenantInfo,
 			})
@@ -33,7 +34,7 @@ func (r *Deps) resolveFiscalYearSelectOptions(
 
 	result, err := r.FiscalYearRepo.SelectOptions(
 		ctx,
-		&repositories.FiscalYearSelectOptionsRequest{
+		&fiscalyearports.FiscalYearSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -55,10 +56,13 @@ func (r *Deps) resolveFiscalPeriodSelectOptions(
 	if len(req.IDs) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.FiscalPeriodRepo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest{
-				ID:         id,
-				TenantInfo: req.TenantInfo,
-			})
+			entity, err := r.FiscalPeriodRepo.GetByID(
+				ctx,
+				fiscalperiodports.GetFiscalPeriodByIDRequest{
+					ID:         id,
+					TenantInfo: req.TenantInfo,
+				},
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -70,7 +74,7 @@ func (r *Deps) resolveFiscalPeriodSelectOptions(
 
 	result, err := r.FiscalPeriodRepo.SelectOptions(
 		ctx,
-		&repositories.FiscalPeriodSelectOptionsRequest{
+		&fiscalperiodports.FiscalPeriodSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 			FiscalYearID:       selectOptionIDFilter(req.Filters, "fiscalYearId"),
 		},

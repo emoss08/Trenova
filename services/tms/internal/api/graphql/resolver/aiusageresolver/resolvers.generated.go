@@ -4,12 +4,12 @@ package aiusageresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	aiusageports "github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 )
 
 type Deps struct {
 	*base.Core
-	AiUsageService services.AIUsageService
+	AiUsageService aiusageports.AIUsageService
 }
 
 type QueryResolver struct{ *Deps }

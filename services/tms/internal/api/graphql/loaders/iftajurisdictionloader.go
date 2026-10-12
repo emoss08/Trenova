@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/services/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -33,7 +33,7 @@ func NewIFTAJurisdictionByIDLoaderFactory(
 	}
 }
 
-func (f *IFTAJurisdictionByIDLoaderFactory) NewForTenant(
+func newIFTAJurisdictionByIDLoader(f *IFTAJurisdictionByIDLoaderFactory,
 	_ pagination.TenantInfo,
 ) *dataloadgen.Loader[string, *ifta.Jurisdiction] {
 	return newLoader(f.batchFunc())

@@ -9,6 +9,7 @@ import type {
   ReportNegativeStyle,
   ReportNotation,
 } from "@trenova/shared/lib/report-format";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const REPORT_IR_VERSION = 1;
 
@@ -349,14 +350,14 @@ export function operatorChoice(operator: string): ReportOperatorChoice | undefin
   ].find((choice) => choice.value === operator);
 }
 
-export const REPORT_AGGREGATION_LABELS: Record<ReportAggregation, string> = {
+export const REPORT_AGGREGATION_LABELS: Record<ReportAggregation, string> = defineLabels({
   count: "Count",
   count_distinct: "Count distinct",
   sum: "Sum",
   avg: "Average",
   min: "Minimum",
   max: "Maximum",
-};
+});
 
 /** Mirrors `pkg/reportfmt.Band`: a fixed width or an ascending boundary list. */
 export type ReportBandSpec = {
@@ -529,7 +530,7 @@ export const REPORT_TEXT_TRANSFORM_CHOICES: Choice<ReportTransformOp>[] = [
   { value: "trim", label: "Trim whitespace" },
 ];
 
-export const REPORT_TRANSFORM_LABELS: Record<ReportTransformOp, string> = {
+export const REPORT_TRANSFORM_LABELS: Record<ReportTransformOp, string> = defineLabels({
   round: "Round",
   ceil: "Round up",
   floor: "Round down",
@@ -540,7 +541,7 @@ export const REPORT_TRANSFORM_LABELS: Record<ReportTransformOp, string> = {
   lower: "lowercase",
   title: "Title case",
   trim: "Trim whitespace",
-};
+});
 
 export const MAX_TRANSFORM_PRECISION = 6;
 
@@ -591,7 +592,7 @@ export const REPORT_CHART_TYPE_CHOICES: Choice<ReportChartType>[] = [
   { value: "map", label: "Map" },
 ];
 
-export const REPORT_CHART_TYPE_LABELS: Record<ReportChartType, string> = {
+export const REPORT_CHART_TYPE_LABELS: Record<ReportChartType, string> = defineLabels({
   bar: "Bar",
   hbar: "Horizontal bar",
   line: "Line",
@@ -601,7 +602,7 @@ export const REPORT_CHART_TYPE_LABELS: Record<ReportChartType, string> = {
   scatter: "Scatter",
   kpi: "KPI tile",
   map: "Map",
-};
+});
 
 // Mirrors report.ChartType.NeedsDimension: KPI tiles, scatter plots, and maps
 // read their position from somewhere other than a grouping column.
@@ -726,32 +727,32 @@ export const REPORT_CATEGORY_CHOICES: { value: string; label: string }[] = [
   { value: "custom", label: "Custom" },
 ];
 
-export const REPORT_RUN_STATUS_LABELS: Record<string, string> = {
+export const REPORT_RUN_STATUS_LABELS: Record<string, string> = defineLabels({
   queued: "Queued",
   running: "Running",
   succeeded: "Succeeded",
   failed: "Failed",
   canceled: "Canceled",
   expired: "Expired",
-};
+});
 
-export const REPORT_RUN_TRIGGER_LABELS: Record<string, string> = {
+export const REPORT_RUN_TRIGGER_LABELS: Record<string, string> = defineLabels({
   manual: "Manual",
   scheduled: "Scheduled",
   api: "API",
-};
+});
 
-export const REPORT_DEFINITION_STATUS_LABELS: Record<string, string> = {
+export const REPORT_DEFINITION_STATUS_LABELS: Record<string, string> = defineLabels({
   draft: "Draft",
   active: "Active",
   archived: "Archived",
   needs_attention: "Needs Attention",
-};
+});
 
-export const REPORT_VISIBILITY_LABELS: Record<string, string> = {
+export const REPORT_VISIBILITY_LABELS: Record<string, string> = defineLabels({
   private: "Private",
   shared: "Shared",
-};
+});
 
 export function parseReportIR(definition: unknown): ReportIR | null {
   if (!definition || typeof definition !== "object") return null;

@@ -26,6 +26,8 @@ import {
   loadMembers,
   readNavigation,
   readPageHeader,
+  readDeskCards,
+  readRecordKinds,
   readRecordLinks,
   readRoutes,
   sourcePaths,
@@ -172,6 +174,8 @@ function build() {
   const routes = readRoutes(paths, members);
   const navigation = readNavigation(paths, members);
   const recordLinks = readRecordLinks(paths);
+  const recordKinds = readRecordKinds(paths);
+  const deskCards = readDeskCards(paths);
   const guides = readGuides(GUIDES_DIR, REPO_ROOT, errors);
   const navIndex = navigationIndex(navigation);
 
@@ -315,7 +319,24 @@ function build() {
     if (!served) {
       errors.push(`record link ${entity} opens on ${link.path}, which no route serves`);
     }
-    records.push({ entity, label: link.label, path: link.path, params: link.params ?? {} });
+    if (!recordKinds.has(entity)) {
+      errors.push(
+        `record link ${entity} is not a kind of record the server knows; declare it in the ` +
+          `permission registry and regenerate (docs/engineering/record-kinds.md)`,
+      );
+    }
+    records.push({
+      entity,
+      label: link.label,
+      path: link.path,
+      params: link.params ?? {},
+      ...(deskCards.has(entity) ? { deskCard: true } : {}),
+    });
+  }
+  for (const entity of deskCards) {
+    if (!Object.hasOwn(recordLinks, entity)) {
+      errors.push(`desk card ${entity} has no record link to open its rows from`);
+    }
   }
 
   const modules = navigation.modules.map((module) => ({

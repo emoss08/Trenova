@@ -14,7 +14,11 @@ import type {
 import type { IconComponent } from "@trenova/shared/components/icons";
 import { z } from "zod";
 import type { CellEditCommitFn } from "../lib/cell-editing-feature";
-import type { DataTableFeatures } from "../lib/table-features";
+import type {
+  ClientSortedTableFeatures,
+  DataTableFeatures,
+  DataTableViewState,
+} from "../lib/table-features";
 import type { SelectOption } from "./fields";
 import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import type { GraphQLExecutableDocument, TypedGraphQLDocument } from "./graphql";
@@ -41,7 +45,17 @@ export type Column<TData extends RowData, TValue extends CellData = CellData> = 
 
 export type Row<TData extends RowData> = TanStackRow<DataTableFeatures, TData>;
 
-export type Table<TData extends RowData> = TanStackReactTable<DataTableFeatures, TData>;
+export type Table<TData extends RowData> = TanStackReactTable<
+  DataTableFeatures,
+  TData,
+  DataTableViewState
+>;
+
+/** A column of a table that sorts its rows in the browser. */
+export type ClientSortedColumnDef<
+  TData extends RowData,
+  TValue extends CellData = CellData,
+> = TanStackColumnDef<ClientSortedTableFeatures, TData, TValue>;
 
 export type Cell<TData extends RowData, TValue extends CellData = CellData> = TanStackCell<
   DataTableFeatures,
@@ -142,6 +156,11 @@ export type AddRecordAction = {
 
 export type DataTableProps<TData extends Record<string, any>> = {
   columns: ColumnDef<TData>[];
+  /**
+   * Ways to filter the table beyond its columns, such as the records a row points at
+   * that have no column of their own. Offered in the filter builder after the columns.
+   */
+  filterFields?: DataTableFilterField[];
   name: string;
   queryKey: string;
   graphql: DataTableGraphQLSource<TData>;
@@ -163,6 +182,8 @@ export type DataTableProps<TData extends Record<string, any>> = {
   enableCreateAction?: boolean;
   enableReadOnlyPanel?: boolean;
   initialColumnVisibility?: Record<string, boolean>;
+  /** Columns pinned from the first paint and kept pinned under any saved view. */
+  initialColumnPinning?: { left: string[]; right: string[] };
   onCellEditCommit?: CellEditCommitFn<TData>;
   /**
    * Draws the table's own empty state in place of the generic one. It is told
@@ -170,6 +191,11 @@ export type DataTableProps<TData extends Record<string, any>> = {
    * table's own clear-filters action to offer.
    */
   renderEmptyState?: (state: DataTableEmptyStateRenderProps) => React.ReactNode;
+  /**
+   * The translated title shown when the table has no records and no filter is
+   * on. A whole message naming the records, such as t("No shipments yet").
+   */
+  emptyTitle?: string;
   /**
    * Filters the table's surroundings put on it: a range or a record chosen
    * beside the table rather than in its filter builder. They are ANDed ahead
@@ -204,6 +230,8 @@ export type DataTableGroup = {
   count?: number;
   /** Right-aligned summary for the whole group, such as its revenue. */
   aggregate?: React.ReactNode;
+  /** What the summary measures, shown beside it ("Revenue"). */
+  aggregateLabel?: string;
 };
 
 /**
@@ -212,9 +240,26 @@ export type DataTableGroup = {
  * drops collapsed groups with a `notin` filter, so a collapsed group costs no
  * rows. Group totals come from the caller, who can count past the page.
  */
+/** The filters that drop collapsed groups from the server's pages. */
+export type DataTableGroupScope = {
+  fieldFilters: FieldFilter[];
+  filterGroups: FilterGroup[];
+};
+
 export type DataTableGrouping<TData> = {
   field: string;
   direction?: SortDirection;
+  /**
+   * Sorted right after the group field, ahead of the person's own sort, so
+   * rows whose group field ties but whose key differs (two customers with one
+   * name) never interleave.
+   */
+  tieBreakers?: SortField[];
+  /**
+   * How collapsed groups are dropped when a key is not the field's own value,
+   * such as the day of a timestamp. Defaults to `field notin keys`.
+   */
+  collapsedScope?: (keys: readonly DataTableGroupKey[]) => DataTableGroupScope;
   groups: DataTableGroup[];
   getGroupKey: (row: TData) => DataTableGroupKey;
   collapsedKeys: readonly DataTableGroupKey[];
@@ -257,14 +302,38 @@ export type DataTableViewContext = {
   queryOptions: Omit<DataTableQueryOptions, "cursor">;
 };
 
+/** One entry the search field offers while it is focused and empty. */
+export type DataTableSearchSuggestion = {
+  key: string;
+  label: string;
+  count?: number;
+  /** A token class for the dot drawn ahead of the label. */
+  dotClassName?: string;
+  /** Already applied, so the entry reads as chosen. */
+  selected?: boolean;
+  onSelect: () => void;
+};
+
+export type DataTableSearchSuggestions = {
+  title: string;
+  items: DataTableSearchSuggestion[];
+  /** Told when the list opens and closes, so counts can be fetched only while it shows. */
+  onOpenChange?: (open: boolean) => void;
+};
+
+/** Filters a table applies outside the field filters, shown and cleared with the filter chips. */
+export type DataTableExtraChips = {
+  items: { key: string; label: string; onRemove: () => void }[];
+  onClear: () => void;
+};
+
 export type DataTableToolbarSlots = {
-  /** Replaces the plain search input; receives the table's search state. */
-  search?: (props: { query: string; onSearchChange: (query: string) => void }) => React.ReactNode;
-  /** Replaces the filter builder, for a table that filters by facets. */
-  filter?: (props: {
-    filters: FilterItem[];
-    onFiltersChange: (filters: FilterItem[]) => void;
-  }) => React.ReactNode;
+  /** Entries the search field offers while it is focused and empty. */
+  searchSuggestions?: DataTableSearchSuggestions;
+  /** A key that focuses the search field from anywhere on the page. */
+  searchShortcut?: string;
+  /** Filters the host applies itself, drawn as chips beside the table's own. */
+  chips?: DataTableExtraChips;
   /** Controls placed before the display menu. */
   trailing?: React.ReactNode;
   /** Controls placed after the saved views. */
@@ -383,7 +452,14 @@ export const filterOperatorSchema = z.enum([
 
 export type FilterOperator = z.infer<typeof filterOperatorSchema>;
 
-export const filterVariantSchema = z.enum(["text", "number", "select", "date", "boolean"]);
+export const filterVariantSchema = z.enum([
+  "text",
+  "number",
+  "select",
+  "date",
+  "boolean",
+  "record",
+]);
 
 export type FilterVariant = z.infer<typeof filterVariantSchema>;
 
@@ -431,7 +507,40 @@ export interface SingleFilterItem extends FilterItemBase {
   value: unknown;
   filterType: FilterVariant;
   filterOptions?: SelectOption[];
+  /** For a `record` filter, the kind of record its values name (a customer, a location). */
+  filterRecord?: string;
 }
+
+export type DataTableAggregateKind = "sum" | "average" | "min" | "max";
+
+/**
+ * A column's total across every row the filters match, computed by the server. The
+ * table must offer the field for totals; a column whose field it does not is left blank.
+ */
+export type DataTableColumnAggregate = {
+  /** The server field totalled; the column's `apiField` when absent. */
+  field?: string;
+  format?: "money" | "number";
+  /** Shown in the totals row; the rest appear on hover. Defaults to the sum. */
+  kind?: DataTableAggregateKind;
+  /** Written before the total in the totals row, such as "Revenue". */
+  label?: string;
+  /** How large the total is drawn: 12px, 15px or 17px. Defaults to `md`. */
+  size?: "sm" | "md" | "lg";
+};
+
+/**
+ * One way a table can be filtered. A column offers its own; a table can add more
+ * that are not columns at all (who owns a shipment, its bill-to customer).
+ */
+export type DataTableFilterField = {
+  apiField: string;
+  label: string;
+  filterType: FilterVariant;
+  filterOptions?: SelectOption[];
+  filterRecord?: string;
+  defaultFilterOperator?: FilterOperator;
+};
 
 export interface FilterGroupItem extends FilterItemBase {
   type: "group";

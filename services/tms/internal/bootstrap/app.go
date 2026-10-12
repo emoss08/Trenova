@@ -1,109 +1,10 @@
 package bootstrap
 
 import (
+	"github.com/emoss08/trenova/internal/bootstrap/apiapp"
+	"github.com/emoss08/trenova/internal/bootstrap/core"
 	"github.com/emoss08/trenova/internal/bootstrap/edition"
-	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
-	"github.com/emoss08/trenova/internal/bootstrap/modules"
-	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
-	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/agentextensionservice"
-	"github.com/emoss08/trenova/internal/core/services/agentguard"
-	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/core/services/agentruneventservice"
-	"github.com/emoss08/trenova/internal/core/services/agentruntime"
-	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
-	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
-	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
-	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
-	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
-	"github.com/emoss08/trenova/internal/core/services/aitraininghistoryservice"
-	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
-	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
-	"github.com/emoss08/trenova/internal/core/services/assistantservice"
-	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
-	"github.com/emoss08/trenova/internal/core/services/editransport"
-	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/core/services/formula"
-	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
-	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
-	"github.com/emoss08/trenova/internal/core/services/integrationservice"
-	"github.com/emoss08/trenova/internal/core/services/planservice"
-	"github.com/emoss08/trenova/internal/core/services/productguideservice"
-	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
-	"github.com/emoss08/trenova/internal/core/services/quotaservice"
-	"github.com/emoss08/trenova/internal/core/services/rateengine"
-	"github.com/emoss08/trenova/internal/core/services/retrievalquery"
-	"github.com/emoss08/trenova/internal/core/services/runstepledger"
-	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
-	"github.com/emoss08/trenova/internal/core/temporaljobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/accountingsyncjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentqualityjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/aiauditjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/aicorrectionjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/aifeedbackjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/briefingjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/capturejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/carrierintelligencejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/carriersettlementjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/completionjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/conversationschedulejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/dispatchjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/distancemileagejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/edijobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/exchangeratejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/extractionevaljobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/extractionshadowjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/fiscaljobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/formulatemplatejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelcardjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelpricejobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/importassistantjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/inboundjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/insightjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/ptojobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/recurringshipmentjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/reflectionjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/retrievaljobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/settlementjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/telematicsjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/watchtowerjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
-	accountinginfra "github.com/emoss08/trenova/internal/infrastructure/accounting"
-	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
-	agentextensioninfra "github.com/emoss08/trenova/internal/infrastructure/agentextension"
-	carrierintelinfra "github.com/emoss08/trenova/internal/infrastructure/carrierintel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/fuelcard"
-	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
-	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
-	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
-	telematicsinfra "github.com/emoss08/trenova/internal/infrastructure/telematics"
-	"github.com/emoss08/trenova/internal/infrastructure/turnstream"
+	"github.com/emoss08/trenova/internal/bootstrap/workerapp"
 	"go.uber.org/fx"
 )
 
@@ -115,120 +16,10 @@ func Options() fx.Option {
 	return OptionsFor(edition.Current())
 }
 
-//nolint:funlen // the module list is the application graph
 func OptionsFor(e *edition.Edition) fx.Option {
 	return fx.Options(
-		config.SectionsOption(e.ConfigSections...),
-		config.Module,
-		config.Hooks(),
-		infrastructure.ObservabilityModule,
-		infrastructure.RedisModule,
-		infrastructure.RedisRepositoriesModule,
-		infrastructure.RateLimitModule,
-		infrastructure.DatabaseModule,
-		modules.ValidatorModule,
-		modules.PostgresRepositoryModule,
-		planservice.Module,
-		quotaservice.Module,
-		modules.QueryCacheModule,
-		fx.Provide(encryptionservice.New),
-		fx.Provide(integrationservice.New),
-		fx.Provide(fx.Annotate(
-			func(svc *integrationservice.Service) services.FuelCardFeedResolver { return svc },
-		)),
-		fuelcard.Module,
-		carrierintelinfra.Module,
-		accountinginfra.Module,
-		agentextensioninfra.Module,
-		agentextensionservice.Module,
-		fx.Provide(telematicsinfra.NewFactory),
-		formula.Module,
-		formulatemplateservice.Module,
-		formulaassistantservice.Module,
-		rateengine.Module,
-		editransport.Module,
-		temporaljobs.Module,
-		schedule.Module,
-		auditjobs.Module,
-		aiauditjobs.Module,
-		billingjobs.Module,
-		billingtransferjobs.Module,
-		billingqueuejobs.Module,
-		detentionjobs.Module,
-		ptojobs.Module,
-		distancemileagejobs.Module,
-		documentintelligencejobs.Module,
-		documentuploadjobs.Module,
-		edijobs.Module,
-		emailjobs.Module,
-		exchangeratejobs.Module,
-		fuelcardjobs.Module,
-		carrierintelligencejobs.Module,
-		accountingsyncjobs.Module,
-		fuelpricejobs.Module,
-		formulatemplatejobs.Module,
-		ratesimjobs.Module,
-		thumbnailjobs.Module,
-		smsjobs.Module,
-		samsarajobs.Module,
-		telematicsjobs.Module,
-		shipmentjobs.Module,
-		agentjobs.Module,
-		reflectionjobs.Module,
-		agentqualityjobs.Module,
-		agentflow.Module,
-		assistantjobs.Module,
-		completionjobs.Module,
-		importassistantjobs.Module,
-		agenttoolservice.Module,
-		agentquerytoolservice.Module,
-		agenttoolcatalog.Module,
-		agenttoolpolicy.Module,
-		productguideservice.Module,
-		retrievalquery.Module,
-		agentguard.Module,
-		agentruntime.Module,
-		runstepledger.Module,
-		agentruneventservice.Module,
-		aiauditservice.Module,
-		turnstream.Module,
-		watchtowersources.Module,
-		proposalrecorder.Module,
-		assistantservice.Module,
-		assistantturnservice.Module,
-		assistantfollowupservice.Module,
-		conversationscheduleservice.Module,
-		conversationschedulejobs.Module,
-		completionrouter.Module,
-		recurringshipmentjobs.Module,
-		settlementjobs.Module,
-		carriersettlementjobs.Module,
-		tenderjobs.Module,
-		compliancejobs.Module,
-		insightjobs.Module,
-		watchtowerjobs.Module,
-		inboundjobs.Module,
-		capturejobs.Module,
-		briefingjobs.Module,
-		aicorrectionjobs.Module,
-		extractionevaljobs.Module,
-		extractionshadowjobs.Module,
-		fx.Provide(aitraininghistoryservice.NewEmpty),
-		fx.Provide(aidocumentservice.NewContract),
-		aifeedbackjobs.Module,
-		decisioncommitjobs.Module,
-		retrievaljobs.Module,
-		iftajobs.Module,
-		dispatchjobs.Module,
-		weatheralertjobs.Module,
-		fiscaljobs.Module,
-		invoiceadjustmentjobs.Module,
-		reportjobs.Module,
-		reportingrender.Module,
-		reportingresultcache.Module,
-		fx.Provide(reportingexecutor.New),
-		analyticsservice.Module,
-		e.Option(),
+		core.OptionsFor(e),
+		workerapp.Modules(),
 	)
 }
 
@@ -246,25 +37,7 @@ func APIOptions() fx.Option {
 }
 
 func APIOptionsFor(e *edition.Edition) fx.Option {
-	return fx.Options(
-		api.HelpersModule,
-		api.GraphQLModule,
-		api.HandlersModule,
-		api.MiddlewareModule,
-		api.ServerModule,
-		api.PprofServerModule,
-		api.MonitoringServerModule,
-		api.RouterModule,
-		api.ServiceModule,
-		modulesinfra.StorageModule,
-		modulesinfra.SMSModule,
-		modulesinfra.PDFRenderModule,
-		modulesinfra.TemplatingModule,
-		modulesinfra.RealtimePublisherModule,
-		modulesinfra.RealtimeGatewayModule,
-		modulesinfra.MeilisearchClientModule,
-		e.APIOption(),
-	)
+	return apiapp.OptionsFor(e)
 }
 
 func WorkerOptions() fx.Option {
@@ -272,18 +45,9 @@ func WorkerOptions() fx.Option {
 }
 
 func WorkerOptionsFor(e *edition.Edition) fx.Option {
-	return fx.Options(
-		modulesinfra.StorageModule,
-		modulesinfra.RealtimePublisherModule,
-		modulesinfra.MeilisearchClientModule,
-		modulesinfra.SMSModule,
-		modulesinfra.PDFRenderModule,
-		modulesinfra.TemplatingModule,
-		api.ServiceModule,
-		temporaljobs.WorkerModule,
-		agentjobs.WorkerModule,
-		conversationschedulejobs.WorkerModule,
-		agentqualityjobs.WorkerModule,
-		e.WorkerOption(),
-	)
+	return workerapp.OptionsFor(e)
+}
+
+func UnscheduledWorkerOptions() fx.Option {
+	return workerapp.UnscheduledOptions()
 }

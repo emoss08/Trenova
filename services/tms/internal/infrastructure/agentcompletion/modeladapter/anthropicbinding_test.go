@@ -6,8 +6,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -63,12 +64,12 @@ func toolLoopHistory() []Message {
 	}
 }
 
-func signaturesSent(messages []anthropicMessage) []string {
+func signaturesSent(messages []anthropic.BetaMessageParam) []string {
 	var signatures []string
 	for _, message := range messages {
 		for _, block := range message.Content {
-			if block.Type == "thinking" {
-				signatures = append(signatures, block.Signature)
+			if block.OfThinking != nil {
+				signatures = append(signatures, block.OfThinking.Signature)
 			}
 		}
 	}

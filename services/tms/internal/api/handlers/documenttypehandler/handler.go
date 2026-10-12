@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/reference/app/documenttypeservice"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -112,7 +112,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*documenttype.DocumentType], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListDocumentTypesRequest{
+				&documenttypeports.ListDocumentTypesRequest{
 					Filter: req,
 				},
 			)
@@ -142,7 +142,7 @@ func (h *Handler) getOption(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetDocumentTypeByIDRequest{
+		documenttypeports.GetDocumentTypeByIDRequest{
 			ID:         docTypeID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -204,7 +204,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetDocumentTypeByIDRequest{
+		documenttypeports.GetDocumentTypeByIDRequest{
 			ID:         docTypeID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -316,7 +316,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetDocumentTypeByIDRequest{
+		documenttypeports.GetDocumentTypeByIDRequest{
 			ID:         docTypeID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

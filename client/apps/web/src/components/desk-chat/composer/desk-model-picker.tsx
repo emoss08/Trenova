@@ -1,4 +1,5 @@
 import type { AssistantProviderOption } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -204,10 +205,15 @@ export function DeskModelPicker({
   return (
     <div className="dk-mp2" ref={rootRef}>
       <GeminiGradient />
-      <button
-        type="button"
+      <Button
+        variant="bare"
+        size="bare"
         ref={buttonRef}
-        className={cn("dk-mp2-b", open && "dk-on", !selected && "dk-auto")}
+        className={cn(
+          "dk-mp2-b h-7 max-w-50 gap-1.75 rounded-full pr-2 pl-1.75 text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
+          open && "dk-on bg-dsk-hover text-dsk-fg",
+          !selected && "dk-auto relative isolate text-dsk-fg2 hover:text-dsk-fg2",
+        )}
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -246,7 +252,7 @@ export function DeskModelPicker({
         >
           <path d="M6 9l6 6 6-6" />
         </svg>
-      </button>
+      </Button>
       {open && (
         <div className="dk-mp2-pop" onKeyDown={onKeyDown}>
           <div className="dk-mp2-s">
@@ -276,15 +282,16 @@ export function DeskModelPicker({
             {rows.map((row, index) => {
               if (row.auto) {
                 return (
-                  <button
+                  <Button
                     key="auto"
                     id={`${listId}-${index}`}
-                    type="button"
+                    variant="bare"
+                    size="bare"
                     role="option"
                     tabIndex={-1}
                     aria-selected={value === ""}
                     className={cn(
-                      "dk-mp2-auto",
+                      "dk-mp2-auto relative isolate mb-1 flex w-full gap-2.75 overflow-hidden rounded-lg px-2.5 py-2.25 text-left",
                       highlighted === index && "dk-hi",
                       value === "" && "dk-sel",
                     )}
@@ -326,7 +333,7 @@ export function DeskModelPicker({
                         <DeskIcon name="check" size={13} stroke={2.4} />
                       </span>
                     )}
-                  </button>
+                  </Button>
                 );
               }
               const { option, order } = row;
@@ -342,18 +349,19 @@ export function DeskModelPicker({
                       {VENDOR_NAMES[vendor] ?? t("Self-hosted")}
                     </div>
                   )}
-                  <button
+                  <Button
                     id={`${listId}-${index}`}
-                    type="button"
+                    variant="bare"
+                    size="bare"
                     role="option"
                     tabIndex={-1}
                     aria-selected={value === option.id}
                     aria-disabled={option.unavailable}
                     className={cn(
-                      "dk-mp2-r",
-                      highlighted === index && "dk-hi",
+                      "dk-mp2-r flex w-full gap-2.5 rounded-lg px-2.5 py-1.75 text-left transition-colors duration-100",
+                      highlighted === index && "dk-hi bg-dsk-hover",
                       value === option.id && "dk-sel",
-                      option.unavailable && "dk-down",
+                      option.unavailable && "dk-down cursor-not-allowed",
                     )}
                     style={{ animationDelay: `${Math.min(index, 8) * 22}ms` }}
                     title={
@@ -379,7 +387,7 @@ export function DeskModelPicker({
                         <DeskIcon name="check" size={13} stroke={2.4} />
                       </span>
                     )}
-                  </button>
+                  </Button>
                 </Fragment>
               );
             })}

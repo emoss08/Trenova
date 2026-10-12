@@ -6,10 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -113,7 +113,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*locationcategory.LocationCategory], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListLocationCategoriesRequest{
+				&locationcategoryports.ListLocationCategoriesRequest{
 					Filter: req,
 				},
 			)
@@ -143,7 +143,7 @@ func (h *Handler) getOption(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetLocationCategoryByIDRequest{
+		locationcategoryports.GetLocationCategoryByIDRequest{
 			ID:         locationCategoryID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -205,7 +205,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetLocationCategoryByIDRequest{
+		locationcategoryports.GetLocationCategoryByIDRequest{
 			ID:         locationCategoryID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -319,7 +319,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetLocationCategoryByIDRequest{
+		locationcategoryports.GetLocationCategoryByIDRequest{
 			ID:         locationCategoryID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

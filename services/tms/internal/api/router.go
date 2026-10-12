@@ -31,11 +31,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/casechecklisthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/databasesessionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/detentionhandler"
@@ -70,6 +70,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/holdreasonhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/inboxpresencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
@@ -83,6 +84,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/notificationpreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/onboardinghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
@@ -168,6 +170,7 @@ type RouterParams struct {
 	OnboardingHandler               *onboardinghandler.Handler
 	DriverPortalHandler             *driverportalhandler.Handler
 	PushHandler                     *pushhandler.Handler
+	NotificationPreferenceHandler   *notificationpreferencehandler.Handler
 	BankReceiptHandler              *bankreceipthandler.Handler
 	BankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	BankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
@@ -182,12 +185,12 @@ type RouterParams struct {
 	WorkerHandler                   *workerhandler.Handler
 	PermissionHandler               *permissionhandler.Handler
 	RealtimeHandler                 *realtimehandler.Handler
+	InboxPresenceHandler            *inboxpresencehandler.Handler
 	RoleHandler                     *rolehandler.Handler
 	RoleAssignmentHandler           *roleassignmenthandler.Handler
 	SearchHandler                   *searchhandler.Handler
 	UsStateHandler                  *usstatehandler.Handler
 	CustomFieldHandler              *customfieldhandler.Handler
-	DatabaseSessionHandler          *databasesessionhandler.Handler
 	DocumentHandler                 *documenthandler.Handler
 	ReportHandler                   *reporthandler.Handler
 	DocumentOperationsHandler       *documentoperationshandler.Handler
@@ -267,6 +270,7 @@ type RouterParams struct {
 	JournalReversalHandler          *journalreversalhandler.Handler
 	ManualJournalHandler            *manualjournalhandler.Handler
 	BillingControlHandler           *billingcontrolhandler.Handler
+	CaseChecklistHandler            *casechecklisthandler.Handler
 	InvoiceAdjustmentControlHandler *invoiceadjustmentcontrolhandler.Handler
 	BillingQueueHandler             *billingqueuehandler.Handler
 	DataEntryControlHandler         *dataentrycontrolhandler.Handler
@@ -307,6 +311,7 @@ type Router struct {
 	onboardingHandler               *onboardinghandler.Handler
 	driverPortalHandler             *driverportalhandler.Handler
 	pushHandler                     *pushhandler.Handler
+	notificationPreferenceHandler   *notificationpreferencehandler.Handler
 	bankReceiptHandler              *bankreceipthandler.Handler
 	bankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
@@ -332,12 +337,12 @@ type Router struct {
 	workerHandler                   *workerhandler.Handler
 	permissionHandler               *permissionhandler.Handler
 	realtimeHandler                 *realtimehandler.Handler
+	inboxPresenceHandler            *inboxpresencehandler.Handler
 	roleHandler                     *rolehandler.Handler
 	roleAssignmentHandler           *roleassignmenthandler.Handler
 	searchHandler                   *searchhandler.Handler
 	usStateHandler                  *usstatehandler.Handler
 	customFieldHandler              *customfieldhandler.Handler
-	databaseSessionHandler          *databasesessionhandler.Handler
 	documentHandler                 *documenthandler.Handler
 	reportHandler                   *reporthandler.Handler
 	documentOperationsHandler       *documentoperationshandler.Handler
@@ -406,6 +411,7 @@ type Router struct {
 	journalReversalHandler          *journalreversalhandler.Handler
 	manualJournalHandler            *manualjournalhandler.Handler
 	billingControlHandler           *billingcontrolhandler.Handler
+	caseChecklistHandler            *casechecklisthandler.Handler
 	invoiceAdjustmentControlHandler *invoiceadjustmentcontrolhandler.Handler
 	billingQueueHandler             *billingqueuehandler.Handler
 	dataEntryControlHandler         *dataentrycontrolhandler.Handler
@@ -448,6 +454,7 @@ func NewRouter(p RouterParams) *Router {
 		onboardingHandler:               p.OnboardingHandler,
 		driverPortalHandler:             p.DriverPortalHandler,
 		pushHandler:                     p.PushHandler,
+		notificationPreferenceHandler:   p.NotificationPreferenceHandler,
 		bankReceiptHandler:              p.BankReceiptHandler,
 		bankReceiptBatchHandler:         p.BankReceiptBatchHandler,
 		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
@@ -473,12 +480,12 @@ func NewRouter(p RouterParams) *Router {
 		workerHandler:                   p.WorkerHandler,
 		permissionHandler:               p.PermissionHandler,
 		realtimeHandler:                 p.RealtimeHandler,
+		inboxPresenceHandler:            p.InboxPresenceHandler,
 		roleHandler:                     p.RoleHandler,
 		roleAssignmentHandler:           p.RoleAssignmentHandler,
 		searchHandler:                   p.SearchHandler,
 		usStateHandler:                  p.UsStateHandler,
 		customFieldHandler:              p.CustomFieldHandler,
-		databaseSessionHandler:          p.DatabaseSessionHandler,
 		documentHandler:                 p.DocumentHandler,
 		reportHandler:                   p.ReportHandler,
 		documentOperationsHandler:       p.DocumentOperationsHandler,
@@ -547,6 +554,7 @@ func NewRouter(p RouterParams) *Router {
 		journalReversalHandler:          p.JournalReversalHandler,
 		manualJournalHandler:            p.ManualJournalHandler,
 		billingControlHandler:           p.BillingControlHandler,
+		caseChecklistHandler:            p.CaseChecklistHandler,
 		invoiceAdjustmentControlHandler: p.InvoiceAdjustmentControlHandler,
 		billingQueueHandler:             p.BillingQueueHandler,
 		dataEntryControlHandler:         p.DataEntryControlHandler,
@@ -621,8 +629,6 @@ func (r *Router) setupRoutes() {
 }
 
 func (r *Router) setupGraphQLRoutes(rg *gin.RouterGroup) {
-	r.graphQLHandler.RegisterPlaygroundRoutes(r.publicGroup(rg))
-
 	protected := r.protectedGroup(rg)
 	r.graphQLHandler.RegisterRoutes(protected)
 }
@@ -653,6 +659,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 
 	r.driverPortalHandler.RegisterProtectedRoutes(protected)
 	r.pushHandler.RegisterRoutes(protected)
+	r.notificationPreferenceHandler.RegisterRoutes(protected)
 	r.organizationHandler.RegisterRoutes(protected)
 	r.onboardingHandler.RegisterRoutes(protected)
 	r.dataRetentionHandler.RegisterRoutes(protected)
@@ -671,12 +678,12 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.workerHandler.RegisterRoutes(protected)
 	r.permissionHandler.RegisterRoutes(protected)
 	r.realtimeHandler.RegisterRoutes(protected)
+	r.inboxPresenceHandler.RegisterRoutes(protected)
 	r.roleHandler.RegisterRoutes(protected)
 	r.roleAssignmentHandler.RegisterRoutes(protected)
 	r.searchHandler.RegisterRoutes(protected)
 	r.usStateHandler.RegisterRoutes(protected)
 	r.customFieldHandler.RegisterRoutes(protected)
-	r.databaseSessionHandler.RegisterRoutes(protected)
 	r.documentHandler.RegisterRoutes(protected)
 	r.reportHandler.RegisterRoutes(protected)
 	r.documentOperationsHandler.RegisterRoutes(protected)
@@ -749,6 +756,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.journalReversalHandler.RegisterRoutes(protected)
 	r.manualJournalHandler.RegisterRoutes(protected)
 	r.billingControlHandler.RegisterRoutes(protected)
+	r.caseChecklistHandler.RegisterRoutes(protected)
 	r.invoiceAdjustmentControlHandler.RegisterRoutes(protected)
 	r.billingQueueHandler.RegisterRoutes(protected)
 	r.dataEntryControlHandler.RegisterRoutes(protected)

@@ -39,6 +39,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDashProfile } from "./dash-layout";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * Policies the driver is bound by, signed or not. What still needs doing sits
@@ -161,7 +162,8 @@ function PolicyDrawer({
     onSuccess: (url) => {
       window.open(url, "_blank", "noopener");
     },
-    onError: (error: Error) => toast.error(error.message || "Could not open the document"),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("Could not open the document")),
   });
 
   const sign = useMutation({
@@ -171,14 +173,16 @@ function PolicyDrawer({
         signatureName: needsSignature ? signature.trim() : undefined,
       }),
     onSuccess: async () => {
-      toast.success(needsSignature ? "Signed — thank you." : "Marked as read.");
+      toast.success(
+        needsSignature ? translate("Signed — thank you.") : translate("Marked as read."),
+      );
       setSignature("");
       setAgreed(false);
       await queryClient.invalidateQueries({ queryKey: ["dash-policies"] });
       await queryClient.invalidateQueries({ queryKey: ["dash-features"] });
       onOpenChange(false);
     },
-    onError: (error: Error) => toast.error(error.message || "That did not go through."),
+    onError: (error: Error) => toast.error(error.message || translate("That did not go through.")),
   });
 
   return (

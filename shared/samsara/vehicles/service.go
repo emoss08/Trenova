@@ -46,9 +46,6 @@ func (s *service) StatsAll(ctx context.Context, params StatsParams) ([]StatsData
 	if err := params.Validate(); err != nil {
 		return nil, err
 	}
-	if params.Limit == 0 {
-		params.Limit = 512
-	}
 
 	items := make([]StatsData, 0)
 	for {

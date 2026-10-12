@@ -25,7 +25,10 @@ export function CostEventPanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title={`Cost Event — ${row.proNumber || costEventTypeLabel(row.eventType as CarrierCostEventType)}`}
+      title={t(
+        "Cost Event — {0}",
+        row.proNumber || costEventTypeLabel(row.eventType as CarrierCostEventType),
+      )}
       description={row.carrier?.name}
       size="md"
     >

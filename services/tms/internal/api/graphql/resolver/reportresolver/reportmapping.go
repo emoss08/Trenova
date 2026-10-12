@@ -7,17 +7,20 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
-	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportfmt"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -731,7 +734,7 @@ func reportRunConnectionToModel(
 
 func reportCatalogToModel(
 	ctx context.Context,
-	engine services.PermissionEngine,
+	engine permissionports.PermissionEngine,
 	tenant pagination.TenantInfo,
 ) (*gqlmodel.ReportCatalog, error) {
 	catalog := &reportcatalog.Default
@@ -750,7 +753,7 @@ func reportCatalogToModel(
 			continue
 		}
 
-		entities = append(entities, catalogEntityToModel(entity, detail))
+		entities = append(entities, catalogEntityToModel(i18n.FromContext(ctx), entity, detail))
 	}
 
 	return &gqlmodel.ReportCatalog{
@@ -759,7 +762,7 @@ func reportCatalogToModel(
 	}, nil
 }
 
-func hasReportReadOperation(detail *services.ResourcePermissionDetail) bool {
+func hasReportReadOperation(detail *permissionports.ResourcePermissionDetail) bool {
 	for _, op := range detail.Operations {
 		if op == permission.OpRead {
 			return true
@@ -769,8 +772,9 @@ func hasReportReadOperation(detail *services.ResourcePermissionDetail) bool {
 }
 
 func catalogEntityToModel(
+	locale i18n.Locale,
 	entity *reportcatalog.Entity,
-	detail *services.ResourcePermissionDetail,
+	detail *permissionports.ResourcePermissionDetail,
 ) *gqlmodel.ReportCatalogEntity {
 	fields := make([]*gqlmodel.ReportCatalogField, 0, len(entity.Fields))
 	for i := range entity.Fields {
@@ -788,7 +792,7 @@ func catalogEntityToModel(
 		for _, ev := range field.EnumValues {
 			enumValues = append(enumValues, &gqlmodel.ReportCatalogEnumValue{
 				Value: ev.Value,
-				Label: ev.Label,
+				Label: i18n.Translate(locale, ev.Label),
 			})
 		}
 
@@ -799,8 +803,8 @@ func catalogEntityToModel(
 
 		fields = append(fields, &gqlmodel.ReportCatalogField{
 			Key:          field.Key,
-			Label:        field.Label,
-			Description:  nilIfEmpty(field.Description),
+			Label:        i18n.Translate(locale, field.Label),
+			Description:  nilIfEmpty(i18n.Translate(locale, field.Description)),
 			Type:         string(field.Type),
 			Format:       nilIfEmpty(string(field.Format)),
 			Nullable:     field.Nullable,
@@ -818,7 +822,7 @@ func catalogEntityToModel(
 		edge := &entity.Edges[i]
 		edges = append(edges, &gqlmodel.ReportCatalogEdge{
 			Name:        edge.Name,
-			Label:       edge.Label,
+			Label:       i18n.Translate(locale, edge.Label),
 			Target:      edge.Target,
 			Cardinality: string(edge.Cardinality),
 			Traversable: edge.Traversable,
@@ -828,9 +832,9 @@ func catalogEntityToModel(
 	return &gqlmodel.ReportCatalogEntity{
 		Key:               entity.Key,
 		Resource:          entity.Resource.String(),
-		Label:             entity.Label,
-		PluralLabel:       entity.PluralLabel,
-		Description:       nilIfEmpty(entity.Description),
+		Label:             i18n.Translate(locale, entity.Label),
+		PluralLabel:       i18n.Translate(locale, entity.PluralLabel),
+		Description:       nilIfEmpty(i18n.Translate(locale, entity.Description)),
 		Category:          entity.Category,
 		OwnScopeSupported: entity.OwnershipColumn != "",
 		Fields:            fields,
@@ -870,7 +874,7 @@ func reportPreviewToModel(result *reportingservice.PreviewResult) *gqlmodel.Repo
 
 // encodeReportRow keeps decimals lossless across the JSON boundary: a float64
 // would quietly round money the formatter is about to render.
-func encodeReportRow(row services.ReportRow) []any {
+func encodeReportRow(row reportports.ReportRow) []any {
 	encoded := make([]any, len(row))
 	for i, value := range row {
 		if dec, ok := value.(decimal.Decimal); ok {
@@ -916,8 +920,8 @@ func emptyIfNil(values []string) []string {
 func reportingRequest(authCtx *authctx.AuthContext) reportingservice.Request {
 	return reportingservice.Request{
 		TenantInfo: base.TenantInfo(authCtx),
-		Principal: services.PrincipalInfo{
-			Type:     services.PrincipalType(authCtx.PrincipalType),
+		Principal: kernelports.PrincipalInfo{
+			Type:     kernelports.PrincipalType(authCtx.PrincipalType),
 			ID:       authCtx.PrincipalID,
 			UserID:   authCtx.UserID,
 			APIKeyID: authCtx.APIKeyID,

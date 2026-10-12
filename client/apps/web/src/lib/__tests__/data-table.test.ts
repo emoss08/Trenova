@@ -1,12 +1,21 @@
 import { describe, expect, it } from "vitest";
-import type { FilterItem, SingleFilterItem } from "@trenova/shared/types/data-table";
+import type {
+  ColumnDef,
+  DataTableFilterField,
+  FilterItem,
+  SingleFilterItem,
+} from "@trenova/shared/types/data-table";
 import {
   convertFilterItemsToFieldFilters,
   convertFilterItemsToFilterGroups,
   generateFilterId,
   generateGroupId,
+  buildFilterItemsFromUrlState,
+  columnFacetField,
   getDefaultOperatorForVariant,
+  getFilterableFields,
   getOperatorLabel,
+  isChangedSince,
   getOperatorsForVariant,
   initializeFilterItemsFromFilterGroups,
   isValidFilterValue,
@@ -341,5 +350,208 @@ describe("generateFilterId", () => {
 describe("generateGroupId", () => {
   it("returns a string matching the group-* pattern", () => {
     expect(generateGroupId()).toMatch(/^group-\d+-[a-z0-9]+$/);
+  });
+});
+
+type ShipmentRow = { id: string; customer: { name: string }; status: string; notes: string };
+
+const shipmentColumns: ColumnDef<ShipmentRow>[] = [
+  {
+    id: "customer",
+    accessorKey: "customer",
+    meta: {
+      apiField: "customer.name",
+      label: "Customer name",
+      filterable: true,
+      filterType: "text",
+      defaultFilterOperator: "contains",
+      extraFilters: [
+        { apiField: "customerId", label: "Customer", filterType: "record", filterRecord: "CUSTOMER" },
+      ],
+    },
+  },
+  {
+    id: "status",
+    accessorKey: "status",
+    meta: { apiField: "status", label: "Status", filterable: true, filterType: "select" },
+  },
+  { id: "notes", accessorKey: "notes", meta: { apiField: "notes", label: "Notes" } },
+];
+
+const tableFields: DataTableFilterField[] = [
+  { apiField: "ownerId", label: "Owner", filterType: "record", filterRecord: "USER" },
+  { apiField: "customerId", label: "Customer again", filterType: "record", filterRecord: "CUSTOMER" },
+];
+
+describe("getFilterableFields", () => {
+  it("offers each column, then the column's extra filters, then the table's own fields", () => {
+    const fields = getFilterableFields(shipmentColumns, tableFields);
+
+    expect(fields.map((field) => field.apiField)).toEqual([
+      "customer.name",
+      "customerId",
+      "status",
+      "ownerId",
+    ]);
+  });
+
+  it("leaves out a column that is not filterable", () => {
+    const fields = getFilterableFields(shipmentColumns);
+
+    expect(fields.some((field) => field.apiField === "notes")).toBe(false);
+  });
+
+  it("offers a field named twice once, as the first that names it", () => {
+    const customer = getFilterableFields(shipmentColumns, tableFields).filter(
+      (field) => field.apiField === "customerId",
+    );
+
+    expect(customer).toHaveLength(1);
+    expect(customer[0]).toMatchObject({ label: "Customer", id: "customer:customerId" });
+  });
+
+  it("gives a record field its record kind and opens it on 'is any of'", () => {
+    const owner = getFilterableFields(shipmentColumns, tableFields).find(
+      (field) => field.apiField === "ownerId",
+    );
+
+    expect(owner).toMatchObject({
+      id: "field:ownerId",
+      filterType: "record",
+      filterRecord: "USER",
+      defaultOperator: "in",
+    });
+  });
+
+  it("keeps a column's own default operator", () => {
+    const name = getFilterableFields(shipmentColumns).find(
+      (field) => field.apiField === "customer.name",
+    );
+
+    expect(name?.defaultOperator).toBe("contains");
+  });
+});
+
+describe("buildFilterItemsFromUrlState", () => {
+  it("restores a record filter from the address with its record kind and label", () => {
+    const fields = getFilterableFields(shipmentColumns, tableFields);
+    const [item] = buildFilterItemsFromUrlState(
+      {
+        fieldFilters: [{ field: "ownerId", operator: "in", value: ["usr_1", "usr_2"] }],
+        filterGroups: [],
+      },
+      fields,
+    ) as SingleFilterItem[];
+
+    expect(item).toMatchObject({
+      field: "field:ownerId",
+      apiField: "ownerId",
+      label: "Owner",
+      filterType: "record",
+      filterRecord: "USER",
+      operator: "in",
+      value: ["usr_1", "usr_2"],
+    });
+  });
+
+  it("restores a field it no longer offers as plain text rather than dropping it", () => {
+    const [item] = buildFilterItemsFromUrlState(
+      { fieldFilters: [{ field: "retiredId", operator: "eq", value: "x" }], filterGroups: [] },
+      getFilterableFields(shipmentColumns),
+    ) as SingleFilterItem[];
+
+    expect(item).toMatchObject({ apiField: "retiredId", filterType: "text", value: "x" });
+  });
+
+  it("restores a group of several filters joined by 'or' after the first", () => {
+    const [group] = buildFilterItemsFromUrlState(
+      {
+        fieldFilters: [],
+        filterGroups: [
+          {
+            filters: [
+              { field: "customerId", operator: "eq", value: "cus_1" },
+              { field: "status", operator: "eq", value: "New" },
+            ],
+          },
+        ],
+      },
+      getFilterableFields(shipmentColumns),
+    );
+
+    expect(group).toMatchObject({
+      type: "group",
+      items: [
+        { apiField: "customerId", connector: "and", filterRecord: "CUSTOMER" },
+        { apiField: "status", connector: "or" },
+      ],
+    });
+  });
+});
+
+describe("isChangedSince", () => {
+  it("marks a row updated after the moment", () => {
+    expect(isChangedSince({ id: "a", updatedAt: 200 }, 100)).toBe(true);
+  });
+
+  it("does not mark a row updated at or before the moment", () => {
+    expect(isChangedSince({ id: "a", updatedAt: 100 }, 100)).toBe(false);
+    expect(isChangedSince({ id: "a", updatedAt: 50 }, 100)).toBe(false);
+  });
+
+  it("marks nothing on a first visit, when there is no moment yet", () => {
+    expect(isChangedSince({ id: "a", updatedAt: 200 }, 0)).toBe(false);
+  });
+
+  it("never marks a row its query did not give an updatedAt", () => {
+    expect(isChangedSince({ id: "a" }, 100)).toBe(false);
+    expect(isChangedSince({ id: "a", updatedAt: "200" }, 100)).toBe(false);
+    expect(isChangedSince(null, 100)).toBe(false);
+  });
+});
+
+describe("columnFacetField", () => {
+  const column = (meta: Record<string, unknown>) =>
+    ({ id: "col", columnDef: { meta } }) as unknown as Parameters<typeof columnFacetField>[0];
+  const fields = getFilterableFields(shipmentColumns, tableFields);
+
+  it("counts a select column by its own field when the table can count it", () => {
+    const field = columnFacetField(
+      column({ apiField: "status", filterType: "select", label: "Status" }),
+      fields,
+      new Set(["status"]),
+    );
+
+    expect(field).toMatchObject({ apiField: "status", filterType: "select" });
+  });
+
+  it("counts a text column by the field it names, as that field is filtered", () => {
+    const field = columnFacetField(
+      column({ apiField: "customer.name", filterType: "text", facetField: "customerId" }),
+      fields,
+      new Set(["customerId"]),
+    );
+
+    expect(field).toMatchObject({ apiField: "customerId", filterType: "record" });
+  });
+
+  it("offers nothing for a field the server cannot count", () => {
+    expect(
+      columnFacetField(column({ apiField: "status", filterType: "select" }), fields, new Set()),
+    ).toBeNull();
+  });
+
+  it("offers nothing for a plain text column or one turned off", () => {
+    const facetable = new Set(["notes", "status"]);
+    expect(
+      columnFacetField(column({ apiField: "notes", filterType: "text" }), fields, facetable),
+    ).toBeNull();
+    expect(
+      columnFacetField(
+        column({ apiField: "status", filterType: "select", facetField: false }),
+        fields,
+        facetable,
+      ),
+    ).toBeNull();
   });
 });

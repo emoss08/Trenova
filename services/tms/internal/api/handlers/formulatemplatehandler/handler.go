@@ -3,9 +3,10 @@ package formulatemplatehandler
 import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
@@ -14,18 +15,18 @@ type Params struct {
 	fx.In
 
 	Service              *formulatemplateservice.Service
-	PageAssistant        services.PageAssistant `optional:"true"`
+	PageAssistant        agentports.PageAssistant `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
-	PermissionEngine     services.PermissionEngine
+	PermissionEngine     permissionports.PermissionEngine
 }
 
 type Handler struct {
 	service       *formulatemplateservice.Service
-	pageAssistant services.PageAssistant
+	pageAssistant agentports.PageAssistant
 	eh            *helpers.ErrorHandler
 	pm            *middleware.PermissionMiddleware
-	permEngine    services.PermissionEngine
+	permEngine    permissionports.PermissionEngine
 }
 
 func New(p Params) *Handler {

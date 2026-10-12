@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,12 +17,12 @@ import (
 type Params struct {
 	fx.In
 
-	Service      serviceports.GlobalSearchService
+	Service      kernelports.GlobalSearchService
 	ErrorHandler *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service serviceports.GlobalSearchService
+	service kernelports.GlobalSearchService
 	eh      *helpers.ErrorHandler
 }
 
@@ -46,11 +46,11 @@ func (h *Handler) globalSearch(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.Search(c.Request.Context(), &serviceports.GlobalSearchRequest{
+	result, err := h.service.Search(c.Request.Context(), &kernelports.GlobalSearchRequest{
 		Query:      strings.TrimSpace(c.Query("query")),
 		TenantInfo: pagination.FromAuth(authCtx),
-		Principal: serviceports.PrincipalInfo{
-			Type:     serviceports.PrincipalType(authCtx.PrincipalType),
+		Principal: kernelports.PrincipalInfo{
+			Type:     kernelports.PrincipalType(authCtx.PrincipalType),
 			ID:       authCtx.PrincipalID,
 			UserID:   authCtx.UserID,
 			APIKeyID: authCtx.APIKeyID,

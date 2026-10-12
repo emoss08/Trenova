@@ -86,16 +86,20 @@ describe("quality settings form", () => {
       regressionThresholdPoints: 10,
       minCases: 10,
       forceRerunDays: 7,
+      version: control.version,
     });
   });
 
   // An empty timezone is left out so the server keeps the organization's
   // own; the version read is sent so a newer save is not overwritten.
   it("saves at the version it opened on, in the server's units", () => {
-    const input = toUpdateInput(
-      { ...toFormValues(control), runHour: "23", timezone: "  ", judgeSamplePercent: 35 },
-      4,
-    );
+    const input = toUpdateInput({
+      ...toFormValues(control),
+      runHour: "23",
+      timezone: "  ",
+      judgeSamplePercent: 35,
+      version: 4,
+    });
 
     expect(input).toEqual({
       version: 4,
@@ -112,11 +116,12 @@ describe("quality settings form", () => {
     });
     expect("timezone" in input).toBe(false);
     expect(
-      toUpdateInput({ ...toFormValues(control), timezone: " America/Chicago " }, 0).timezone,
+      toUpdateInput({ ...toFormValues(control), timezone: " America/Chicago " }).timezone,
     ).toBe("America/Chicago");
   });
 
   it("refuses a monthly budget below one night's", () => {
+    expect(qualityControlSchema.parse(toFormValues(control)).version).toBe(control.version);
     const result = qualityControlSchema.safeParse({
       ...toFormValues(control),
       nightlyBudgetCents: 6000,

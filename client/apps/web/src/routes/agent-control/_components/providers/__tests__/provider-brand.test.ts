@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { providerBrandDomain, type BrandPreset } from "../provider-brand";
+import { providerBrandDomain, providerBrandPresetKey, type BrandPreset } from "../provider-brand";
 
 const presets: BrandPreset[] = [
   { kind: "OpenAIChat", baseUrl: "https://openrouter.ai/api/v1", domain: "openrouter.ai" },
@@ -41,6 +41,15 @@ describe("providerBrandDomain", () => {
     ).toBeNull();
   });
 
+  it("names Ollama on a private endpoint, since only Ollama speaks its protocol", () => {
+    expect(
+      providerBrandDomain({ kind: "Ollama", baseUrl: "http://localhost:11434" }, presets),
+    ).toBe("ollama.com");
+    expect(
+      providerBrandDomain({ kind: "Ollama", baseUrl: "http://10.0.0.5:11434" }, presets),
+    ).toBe("ollama.com");
+  });
+
   it("falls back to the protocol's vendor when no endpoint is set", () => {
     expect(providerBrandDomain({ kind: "AnthropicMessages", baseUrl: "" }, presets)).toBe(
       "anthropic.com",
@@ -66,5 +75,33 @@ describe("providerBrandDomain", () => {
 
   it("returns null for an endpoint that is not a URL", () => {
     expect(providerBrandDomain({ kind: "OpenAIChat", baseUrl: "not a url" }, presets)).toBeNull();
+  });
+});
+
+/**
+ * Bedrock is served from AWS hosts whose registrable domain names AWS, not
+ * Bedrock, so the service is read from the host itself.
+ */
+describe("providerBrandPresetKey", () => {
+  it("knows a Bedrock endpoint by its host on either AWS domain", () => {
+    for (const baseUrl of [
+      "https://bedrock-runtime.us-east-1.amazonaws.com",
+      "https://bedrock-mantle.eu-west-1.api.aws/v1",
+      "https://BEDROCK-RUNTIME.us-west-2.amazonaws.com/",
+    ]) {
+      expect(providerBrandPresetKey({ baseUrl }), baseUrl).toBe("bedrock");
+    }
+  });
+
+  it("leaves every other endpoint to the domain lookup", () => {
+    for (const baseUrl of [
+      "",
+      "https://s3.us-east-1.amazonaws.com",
+      "https://notbedrock.example.com",
+      "https://api.groq.com/openai/v1",
+      "not a url",
+    ]) {
+      expect(providerBrandPresetKey({ baseUrl }), baseUrl).toBeNull();
+    }
   });
 });

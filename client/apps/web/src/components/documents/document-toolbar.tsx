@@ -129,7 +129,7 @@ export function DocumentToolbar({
           variant="outline"
           size="icon-sm"
           onClick={toggleSortDirection}
-          aria-label={`Sort ${sortDirection === "asc" ? "descending" : "ascending"}`}
+          aria-label={sortDirection === "asc" ? t("Sort descending") : t("Sort ascending")}
         >
           {sortDirection === "asc" ? (
             <SortDescendingIcon className="size-4" />

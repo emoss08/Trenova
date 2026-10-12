@@ -70,7 +70,7 @@ export function EDIPartnerScorecards({ scorecards }: { scorecards: EDIPartnerSco
                   <Link
                     to={`/edi/messages?query=${encodeURIComponent(card.partnerCode)}`}
                     className="flex flex-col hover:underline"
-                    title={`Open messages filtered to ${card.partnerName}`}
+                    title={t("Open messages filtered to {0}", card.partnerName)}
                   >
                     <span className="text-sm font-medium">{card.partnerName}</span>
                     <span className="text-muted-foreground text-xs">{card.partnerCode}</span>

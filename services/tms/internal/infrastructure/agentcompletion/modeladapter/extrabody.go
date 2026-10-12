@@ -2,7 +2,7 @@ package modeladapter
 
 import (
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 )
 
 // mergeExtraBody folds a provider's own request fields into the body an

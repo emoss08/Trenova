@@ -1,9 +1,15 @@
 import type { ConversationSchedule } from "@/types/assistant";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { describe, expect, it, vi } from "vitest";
+import { registerCatalogSource, setLocale, translate } from "@trenova/shared/i18n/runtime";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { DeskScheduleCard } from "../conversation/desk-schedule-card";
-import { nextRunLabel, patchScheduleList, scheduleLine } from "../conversation/desk-schedules";
+import {
+  cadenceLabel,
+  nextRunLabel,
+  patchScheduleList,
+  scheduleLine,
+} from "../conversation/desk-schedules";
 
 const t: TranslateFn = (message, ...args) =>
   (message ?? "").replace(/\{(\d)\}/g, (_, index: string) => String(args[Number(index)]));
@@ -138,5 +144,69 @@ describe("DeskScheduleCard", () => {
     );
     expect(screen.getByText("Schedule deleted")).toBeTruthy();
     expect(container.querySelector(".dk-schc.dk-gone")).not.toBeNull();
+  });
+});
+
+/*
+The cadence is written from the schedule's cron when it is read, so it is in
+the reader's language whatever language it was asked in. The label the server
+stored is the fallback for a cron the card does not describe.
+*/
+describe("cadenceLabel", () => {
+  it("names the days and the time from the cron", () => {
+    expect(cadenceLabel(schedule(), t)).toBe("Every weekday · 7:30 AM");
+    expect(cadenceLabel(schedule({ cronExpression: "0 8 * * *" }), t)).toBe("Every day · 8:00 AM");
+    expect(cadenceLabel(schedule({ cronExpression: "0 0 * * 1" }), t)).toBe(
+      "Every Monday · 12:00 AM",
+    );
+    expect(cadenceLabel(schedule({ cronExpression: "45 17 * * 0" }), t)).toBe(
+      "Every Sunday · 5:45 PM",
+    );
+    expect(cadenceLabel(schedule({ cronExpression: "0 12 * * 6" }), t)).toBe(
+      "Every Saturday · 12:00 PM",
+    );
+  });
+
+  it("falls back to the stored label for a cron it does not describe", () => {
+    expect(cadenceLabel(schedule({ cadence: "Stored", cronExpression: "0 8 1 * *" }), t)).toBe(
+      "Stored",
+    );
+    expect(cadenceLabel(schedule({ cadence: "Stored", cronExpression: "" }), t)).toBe("Stored");
+  });
+});
+
+describe("a schedule read in another language", () => {
+  beforeAll(async () => {
+    await registerCatalogSource({
+      es: async () => ({
+        "Every weekday · {0}": "Cada día laborable · {0}",
+        "Every Friday · {0}": "Todos los viernes · {0}",
+        "{0} · next {1}": "{0} · próxima {1}",
+      }),
+      "zh-CN": async () => ({
+        "Every weekday · {0}": "每个工作日 · {0}",
+      }),
+    });
+    await setLocale("es");
+  });
+
+  afterAll(async () => {
+    await setLocale("en");
+  });
+
+  it("writes the cadence, its time and the next run in Spanish", () => {
+    // ICU writes the Spanish meridiem as "p.m." or "p. m." depending on its version.
+    expect(cadenceLabel(schedule({ cronExpression: "30 16 * * 5" }), translate)).toMatch(
+      /^Todos los viernes · 4:30 p\.\s?m\.$/,
+    );
+    expect(scheduleLine(schedule(), saturdayNoon, chicago, translate)).toMatch(
+      /^Cada día laborable · 7:30 a\.\s?m\. · próxima lun, 5 oct\.? · 7:30 a\.\s?m\.$/,
+    );
+  });
+
+  it("writes the cadence in Chinese for a schedule asked in English", async () => {
+    await setLocale("zh-CN");
+    expect(cadenceLabel(schedule(), translate)).toBe("每个工作日 · 上午7:30");
+    await setLocale("es");
   });
 });

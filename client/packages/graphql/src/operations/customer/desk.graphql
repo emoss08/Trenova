@@ -1,0 +1,69 @@
+# The Desk's customer card: who the customer is, how they are billed and where
+# their credit stands, without the email profile and accounting codes the edit
+# panel loads.
+query DeskCustomerCard($id: ID!) {
+  customer(id: $id) {
+    id
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    dotNumber
+    mcNumber
+    createdAt
+    updatedAt
+    state {
+      abbreviation
+    }
+    billingProfile {
+      paymentTerm
+      billingCycle
+      invoiceDelivery
+      emailInvoiceEnabled
+      ediInvoiceEnabled
+      autoBill
+      creditLimit
+      creditBalance
+      creditStatus
+      enforceCreditLimit
+      creditHoldReason
+      fuelSurchargeMode
+      billingCurrency
+      requirePONumber
+      requireBOLNumber
+      requireDeliveryNumber
+      taxExempt
+      applyLateCharges
+      lateChargeRate
+      gracePeriodDays
+      billingNotes
+      documentTypes {
+        id
+        name
+      }
+    }
+  }
+}
+
+# The rate agreements that price a customer's freight, for the card.
+query DeskCustomerRateAgreements($input: DataTableConnectionInput!) {
+  rateAgreements(input: $input) {
+    edges {
+      node {
+        id
+        code
+        name
+        status
+        agreementType
+        effectiveFrom
+        effectiveTo
+        autoRenew
+        renewalNoticeDays
+      }
+    }
+    totalCount
+  }
+}

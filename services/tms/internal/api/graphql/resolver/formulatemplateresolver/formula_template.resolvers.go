@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -61,7 +61,7 @@ func (r *QueryResolver) FormulaTemplates(ctx context.Context, input gqlmodel.Dat
 
 	result, err := r.FormulaTemplateService.ListConnection(
 		ctx,
-		&repositories.ListFormulaTemplateConnectionRequest{
+		&formulatemplateports.ListFormulaTemplateConnectionRequest{
 			Filter:                 tableInput.Filter,
 			Cursor:                 tableInput.Cursor,
 			FormulaTemplateColumns: formulaTemplateColumns(ctx, "edges.node"),
@@ -85,7 +85,7 @@ func (r *QueryResolver) FormulaTemplate(ctx context.Context, id string) (*formul
 		return nil, err
 	}
 
-	return r.FormulaTemplateService.GetByID(ctx, repositories.GetFormulaTemplateByIDRequest{
+	return r.FormulaTemplateService.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
 		TemplateID: templateID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

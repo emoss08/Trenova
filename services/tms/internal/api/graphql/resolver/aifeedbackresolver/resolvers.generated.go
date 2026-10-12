@@ -4,12 +4,12 @@ package aifeedbackresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	aifeedbackports "github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 )
 
 type Deps struct {
 	*base.Core
-	AiFeedbackService services.AIFeedbackService
+	AiFeedbackService aifeedbackports.AIFeedbackService
 }
 
 type AIFeedbackResolver struct{ *Deps }

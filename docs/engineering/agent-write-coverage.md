@@ -85,37 +85,37 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 79 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 260 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 28 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 70 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 80 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 268 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 94 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 44 |
-| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 3 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 51 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 46 |
+| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 8 |
 
 ## Totals
 
-999 writes: 520 GraphQL mutations and 479 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1086 writes: 582 GraphQL mutations and 504 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 386 |
-| Exempt | 610 |
-| — Security | 79 |
-| — Configuration | 260 |
-| — User preference | 28 |
-| — Infrastructure | 46 |
-| — Agent administration | 70 |
+| Covered by a tool | 389 |
+| Exempt | 670 |
+| — Security | 80 |
+| — Configuration | 268 |
+| — User preference | 38 |
+| — Infrastructure | 52 |
+| — Agent administration | 94 |
 | — Counterparty | 33 |
-| — Read-only | 47 |
-| — Attestation | 44 |
-| — Duplicate | 3 |
-| **Pending** | **3** |
-| Total | 999 |
+| — Read-only | 51 |
+| — Attestation | 46 |
+| — Duplicate | 8 |
+| **Pending** | **27** |
+| Total | 1086 |
 
-Of the 389 writes an agent should be able to make, 386 have a tool (99%).
+Of the 416 writes an agent should be able to make, 389 have a tool (93%).
 
 ## Pending
 
@@ -126,6 +126,30 @@ The writes no tool performs yet, and what the tool would do.
 | billingqueue | `mutation releaseBillingQueueItem` | Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. |
 | billingqueue | `mutation resolveBillingQueueIssue` | Settle one of a billing queue item's checks with one of the options the check offers. |
 | billingqueue | `mutation undoBillingQueueIssue` | Take back how a billing queue item's check was settled and put back any charge the settlement changed. |
+| inboundmessage | `mutation assignInboundMessages` | Assign inbound messages to a person, or take them off whoever has them. |
+| inboundmessage | `mutation handOffTriage` | Hand everything still waiting in Triage to the on-call person at the end of the day. |
+| inboundmessage | `mutation reopenInboundMessages` | Put settled inbound messages back in the Triage queue. |
+| inboundmessage | `mutation snoozeInboundMessages` | Snooze inbound messages until a time, a delivery, a document or a payment. |
+| inboundmessage | `mutation stopWaitingForInboundReply` | Bring an inbound message waiting on a reply back to the queue now. |
+| inboundmessage | `mutation unlinkInboundMessage` | Remove the shipment, customer or carrier an inbound message was linked to. |
+| inboundmessage | `mutation waitForInboundReply` | Park an inbound message until the sender replies on its thread, or until a time. |
+| inboundmessage | `mutation wakeInboundMessage` | Bring a snoozed inbound message back to the queue now. |
+| inboundreply | `mutation blockInboundSender` | Send a sender's future mail on a source straight to Ignored, and ignore the message. |
+| inboundreply | `mutation createInboundLoad` | Create the shipment a tender in Triage describes, from the fields a person checked. |
+| inboundreply | `mutation decideInboundStops` | Waive or stand by a disputed detention charge after checking the stop times, and draft the answer. |
+| inboundreply | `mutation discardInboundLoad` | Throw away the load Nova drafted from an inbound message. |
+| inboundreply | `mutation discardInboundReplyDraft` | Throw away the reply draft waiting on an inbound message. |
+| inboundreply | `mutation draftInboundLoad` | Have Nova read the load an inbound tender describes into a draft for a person to check. |
+| inboundreply | `mutation draftInboundMany` | Have Nova draft replies and loads for many inbound messages in the background. |
+| inboundreply | `mutation draftInboundReply` | Have Nova draft a reply to an inbound message for a person to review. |
+| inboundreply | `mutation fileInboundAttachment` | File an email attachment on a shipment as a typed document, whole or split into page ranges. |
+| inboundreply | `mutation fileInboundMany` | File every readable attachment of each inbound message on its matched shipment. |
+| inboundreply | `mutation logInboundException` | Log a shortage, overage or damage from a delivery on the shipment as a billing hold. |
+| inboundreply | `mutation saveInboundReplyDraft` | Save a person's reply to an inbound message as its draft. |
+| inboundreply | `mutation unblockInboundSender` | Let a blocked sender's mail on a source reach the queue again. |
+| inboundreply | `mutation unfileInboundAttachment` | Take an email attachment back off the shipment it was filed on. |
+| triage | `mutation reopenInboundConflict` | Reopen a settled duplicate-document or repeated-load conflict on a triage message |
+| triage | `mutation resolveInboundConflict` | Settle a duplicate-document or repeated-load conflict on a triage message: replace or keep the document on file, skip or confirm the load |
 
 ## By domain
 
@@ -136,18 +160,20 @@ The writes no tool performs yet, and what the tool would do.
 | accountingsync | 31 | 20 | 11 | 0 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
-| agent | 15 | 2 | 13 | 0 |
-| agentdefinition | 7 | 0 | 7 | 0 |
+| agent | 16 | 2 | 14 | 0 |
+| agentdefinition | 12 | 0 | 12 | 0 |
 | agentextension | 2 | 0 | 2 | 0 |
 | agentquality | 6 | 0 | 6 | 0 |
 | agentrun | 1 | 0 | 1 | 0 |
+| agentsafety | 1 | 0 | 1 | 0 |
 | aiaudit | 3 | 0 | 3 | 0 |
+| aicontrol | 5 | 0 | 5 | 0 |
 | aifeedback | 2 | 0 | 2 | 0 |
-| aiprovider | 4 | 0 | 4 | 0 |
+| aiprovider | 7 | 0 | 7 | 0 |
 | airetrieval | 2 | 0 | 2 | 0 |
 | apikey | 4 | 0 | 4 | 0 |
 | assignment | 1 | 0 | 1 | 0 |
-| assistant | 20 | 0 | 20 | 0 |
+| assistant | 32 | 2 | 30 | 0 |
 | auth | 7 | 0 | 7 | 0 |
 | bankreceipt | 2 | 1 | 1 | 0 |
 | bankreceiptbatch | 1 | 0 | 1 | 0 |
@@ -157,17 +183,18 @@ The writes no tool performs yet, and what the tool would do.
 | billingqueue | 14 | 7 | 4 | 3 |
 | billingtransfer | 3 | 3 | 0 | 0 |
 | briefing | 2 | 0 | 2 | 0 |
+| bulkedit | 2 | 0 | 2 | 0 |
 | capture | 25 | 4 | 21 | 0 |
 | carrier | 4 | 4 | 0 | 0 |
 | carriercapacity | 3 | 3 | 0 | 0 |
 | carrierintelligence | 15 | 9 | 6 | 0 |
 | carriersettlement | 16 | 15 | 1 | 0 |
+| casechecklist | 2 | 0 | 2 | 0 |
 | commodity | 4 | 4 | 0 | 0 |
 | costing | 2 | 0 | 2 | 0 |
 | customer | 4 | 4 | 0 | 0 |
 | customerpayment | 5 | 5 | 0 | 0 |
 | customfield | 4 | 0 | 4 | 0 |
-| databasesession | 1 | 0 | 1 | 0 |
 | dataentrycontrol | 1 | 0 | 1 | 0 |
 | dataretention | 1 | 0 | 1 | 0 |
 | decisions | 1 | 0 | 1 | 0 |
@@ -213,7 +240,9 @@ The writes no tool performs yet, and what the tool would do.
 | iam | 14 | 0 | 14 | 0 |
 | ifta | 14 | 9 | 5 | 0 |
 | inbound | 1 | 0 | 1 | 0 |
-| inboundmessage | 7 | 2 | 5 | 0 |
+| inboundmessage | 23 | 2 | 13 | 8 |
+| inboundreply | 18 | 1 | 3 | 14 |
+| inboxpresence | 2 | 0 | 2 | 0 |
 | insight | 2 | 2 | 0 | 0 |
 | integration | 5 | 0 | 5 | 0 |
 | invoice | 12 | 11 | 1 | 0 |
@@ -230,6 +259,7 @@ The writes no tool performs yet, and what the tool would do.
 | locationcategory | 3 | 0 | 3 | 0 |
 | manualjournal | 7 | 5 | 2 | 0 |
 | notification | 5 | 0 | 5 | 0 |
+| notificationpreference | 1 | 0 | 1 | 0 |
 | onboarding | 1 | 0 | 1 | 0 |
 | order | 10 | 10 | 0 | 0 |
 | organization | 4 | 0 | 4 | 0 |
@@ -249,9 +279,9 @@ The writes no tool performs yet, and what the tool would do.
 | ratequote | 3 | 0 | 3 | 0 |
 | ratesimulation | 1 | 1 | 0 | 0 |
 | ratezone | 3 | 0 | 3 | 0 |
-| realtime | 3 | 0 | 3 | 0 |
+| realtime | 7 | 0 | 7 | 0 |
 | recurringshipment | 5 | 4 | 1 | 0 |
-| report | 17 | 13 | 4 | 0 |
+| report | 19 | 13 | 6 | 0 |
 | role | 11 | 0 | 11 | 0 |
 | routingguide | 3 | 0 | 3 | 0 |
 | scheduling | 7 | 5 | 2 | 0 |
@@ -269,6 +299,7 @@ The writes no tool performs yet, and what the tool would do.
 | storedmileage | 1 | 0 | 1 | 0 |
 | tablechangealert | 5 | 5 | 0 | 0 |
 | tableconfiguration | 6 | 1 | 5 | 0 |
+| tablelayout | 2 | 0 | 2 | 0 |
 | tablequery | 1 | 0 | 1 | 0 |
 | telematics | 4 | 0 | 4 | 0 |
 | tenant | 1 | 0 | 1 | 0 |
@@ -277,7 +308,8 @@ The writes no tool performs yet, and what the tool would do.
 | timesheet | 7 | 2 | 5 | 0 |
 | tractor | 5 | 5 | 0 | 0 |
 | trailer | 5 | 5 | 0 | 0 |
-| user | 16 | 0 | 16 | 0 |
+| triage | 8 | 0 | 6 | 2 |
+| user | 20 | 0 | 20 | 0 |
 | version | 1 | 0 | 1 | 0 |
 | watchtower | 3 | 1 | 2 | 0 |
 | worker | 8 | 5 | 3 | 0 |
@@ -302,7 +334,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `notify_driver` | driver_message | create |
 | `place_worker_dispatch_hold` | worker_dispatch_hold | create |
 | `raise_exception` | agent_exception | create |
-| `reply_to_inbound_message` | customer_communication | create |
 | `request_credential_renewal` | worker_credential | update |
 | `request_missing_docs` | customer_communication | create |
 
@@ -388,6 +419,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation dismissAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
 | `mutation replayAgentRun` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `mutation resolveAgentException`<br>twin `POST /api/v1/agent-exceptions/:exceptionID/resolve/` | Exempt, agent-administration: An agent exception is an agent handing a case to a person; the person resolves it. |
+| `mutation reviewAgentMemory` | Exempt, agent-administration: A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold. |
 | `mutation setAgentMemoryStatus` | Tool: `forget_memory` |
 | `mutation undoMyDecision` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation updateAgentControl`<br>twin `PUT /api/v1/agent-controls/` | Exempt, agent-administration: The organization-wide switches and ceilings every agent runs under. |
@@ -397,11 +429,16 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation deleteAgentTestPrompt` | Exempt, agent-administration: Removes a prompt a person kept in an agent's builder. |
+| `mutation draftAgentFromDescription` | Exempt, read-only: Asks a model to draft an agent from a description and returns the draft; it saves nothing, and saving it is the agent builder's create. |
+| `mutation keepAgentTestPrompt` | Exempt, agent-administration: Keeps a prompt a person tries an agent with in its builder; an agent has no use for keeping prompts to test itself. |
 | `mutation setAgentAccess` | Exempt, security: Decides which people may use which agents. |
 | `mutation setRoleAgentAccess` | Exempt, security: Decides which roles may use which agents. |
+| `mutation tightenAgentInstructions` | Exempt, read-only: Asks a model to shorten an agent's instructions and returns the text; it saves nothing. |
 | `mutation updateAgentCapabilities` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `DELETE /api/v1/agent-definitions/:agentID/`<br>agentdefinitionhandler.remove | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `POST /api/v1/agent-definitions/`<br>agentdefinitionhandler.create | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
+| `POST /api/v1/agent-definitions/dry-run/`<br>agentdefinitionhandler.dryRun | Exempt, read-only: Tries a draft agent once with every write simulated; it saves and changes nothing. |
 | `POST /api/v1/agent-definitions/preview-prompt/`<br>agentdefinitionhandler.previewPrompt | Exempt, read-only: Renders an agent prompt for review and saves nothing. |
 | `PUT /api/v1/agent-definitions/:agentID/`<br>agentdefinitionhandler.update | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 
@@ -429,6 +466,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `POST /api/v1/agent-runs/`<br>agentrunhandler.start | Exempt, agent-administration: Starts an agent on demand; agents hand work to one another through delegate_task instead. |
 
+### agentsafety
+
+| Write | Decision |
+| --- | --- |
+| `mutation saveAgentToolRule` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
+
 ### aiaudit
 
 | Write | Decision |
@@ -436,6 +479,16 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation aiAuditExportDownload` | Exempt, read-only: Returns a download link for an export already produced. |
 | `mutation requestAIAuditExport` | Exempt, agent-administration: The AI audit trail is how people check what agents did; an agent must not drive its own audit. |
 | `mutation verifyAIAuditChain` | Exempt, agent-administration: The AI audit trail is how people check what agents did; an agent must not drive its own audit. |
+
+### aicontrol
+
+| Write | Decision |
+| --- | --- |
+| `mutation applyAITuneUp` | Exempt, agent-administration: Applies a change to how agents and providers are set up that the runs suggested; it is the human check on AI setup. |
+| `mutation dismissAIProviderFailure` | Exempt, user-preference: Puts away a notice on one person's own overview; it changes nothing anyone else sees. |
+| `mutation dismissAITuneUp` | Exempt, agent-administration: Puts away a suggested change to AI setup; it changes no record an agent works on. |
+| `mutation restoreAIProviderFailure` | Exempt, user-preference: Brings back a notice one person put away on their own overview. |
+| `mutation restoreAITuneUp` | Exempt, agent-administration: Brings back a suggested change to AI setup that was put away. |
 
 ### aifeedback
 
@@ -448,6 +501,9 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation patchAIProvider` | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
+| `mutation reorderAIProviders` | Exempt, agent-administration: Sets the order in which the model providers agents run on take work. |
+| `mutation testAIProviderDraft` | Exempt, read-only: Tests an unsaved provider's credentials once and returns the result; it saves nothing. |
 | `DELETE /api/v1/ai-providers/:providerID/`<br>aiproviderhandler.remove | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
 | `POST /api/v1/ai-providers/`<br>aiproviderhandler.create | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
 | `POST /api/v1/ai-providers/:providerID/test/`<br>aiproviderhandler.test | Exempt, read-only: Tests the provider credentials and returns the result. |
@@ -481,8 +537,11 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `DELETE /api/v1/assistant/schedules/:scheduleID/`<br>assistanthandler.deleteSchedule | Exempt, agent-administration: Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload. |
 | `DELETE /api/v1/assistant/threads/:threadID/`<br>assistanthandler.deleteThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `DELETE /api/v1/assistant/threads/:threadID/case/`<br>assistanthandler.unbindCase | Exempt, agent-administration: A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on. |
+| `DELETE /api/v1/assistant/threads/:threadID/queue/:itemID/`<br>assistanthandler.removeQueued | Exempt, agent-administration: Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words. |
 | `PATCH /api/v1/assistant/schedules/:scheduleID/`<br>assistanthandler.updateSchedule | Exempt, agent-administration: Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload. |
 | `PATCH /api/v1/assistant/threads/:threadID/`<br>assistanthandler.updateThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `PATCH /api/v1/assistant/threads/:threadID/queue/:itemID/`<br>assistanthandler.editQueued | Exempt, agent-administration: Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words. |
 | `POST /api/v1/assistant/ask/`<br>assistanthandler.ask | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/schedules/:scheduleID/run/`<br>assistanthandler.runSchedule | Exempt, agent-administration: Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload. |
 | `POST /api/v1/assistant/threads/`<br>assistanthandler.startThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
@@ -490,15 +549,24 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/restore/`<br>assistanthandler.restoreDocumentVersion | Exempt, agent-administration: A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself. |
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/rewrite/`<br>assistanthandler.rewriteDocument | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/versions/`<br>assistanthandler.saveDocumentVersion | Exempt, agent-administration: A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself. |
+| `POST /api/v1/assistant/threads/:threadID/case/await-reply/`<br>assistanthandler.awaitCaseReply | Tool: `wait_until` |
+| `POST /api/v1/assistant/threads/:threadID/case/snooze/`<br>assistanthandler.snoozeCase | Exempt, agent-administration: A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on. |
+| `POST /api/v1/assistant/threads/:threadID/case/ticks/`<br>assistanthandler.tickCaseItem | Exempt, agent-administration: A tick on a step the organization added for a person to tick is that person's word that it was done; an agent ticking it would vouch for itself. |
+| `POST /api/v1/assistant/threads/:threadID/case/wake/`<br>assistanthandler.wakeCase | Exempt, agent-administration: A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on. |
 | `POST /api/v1/assistant/threads/:threadID/compact/`<br>assistanthandler.compactThread | Exempt, agent-administration: Compacting a conversation manages the agent's own context window; the runtime compacts on its own limits and no record changes. |
 | `POST /api/v1/assistant/threads/:threadID/handoff/`<br>assistanthandler.handoff | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/threads/:threadID/messages/`<br>assistanthandler.sendMessage | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `POST /api/v1/assistant/threads/:threadID/queue/`<br>assistanthandler.enqueue | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `POST /api/v1/assistant/threads/:threadID/queue/:itemID/send/`<br>assistanthandler.sendQueued | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/threads/:threadID/read/`<br>assistanthandler.markThreadRead | Exempt, agent-administration: Marking a conversation read arranges the person's own Desk; it changes no record an agent acts on. |
 | `POST /api/v1/assistant/threads/:threadID/requests/`<br>assistanthandler.requestMore | Exempt, agent-administration: Asking an administrator for access to an agent, or for more allowance, budget or daily requests, is a person's request about their own use of the assistant; an agent that could ask for its own limits to be raised would defeat them. |
 | `POST /api/v1/assistant/threads/:threadID/schedules/`<br>assistanthandler.createSchedule | Exempt, agent-administration: Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload. |
 | `POST /api/v1/assistant/threads/:threadID/turns/`<br>assistanthandler.startTurn | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `POST /api/v1/assistant/threads/:threadID/waits/:waitID/cancel/`<br>assistanthandler.cancelWait | Tool: `cancel_wait` |
 | `POST /api/v1/assistant/turns/:turnID/stop/`<br>assistanthandler.stopTurn | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `PUT /api/v1/assistant/threads/:threadID/case/`<br>assistanthandler.bindCase | Exempt, agent-administration: A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on. |
 | `PUT /api/v1/assistant/threads/:threadID/proposals/:proposalID/edits/`<br>assistanthandler.saveProposalEdits | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
+| `PUT /api/v1/assistant/threads/:threadID/queue/order/`<br>assistanthandler.reorderQueue | Exempt, agent-administration: Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words. |
 
 ### auth
 
@@ -582,6 +650,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation markBriefingRead` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation regenerateBriefing` | Exempt, agent-administration: Asks the briefing agent to write the briefing again. |
+
+### bulkedit
+
+| Write | Decision |
+| --- | --- |
+| `mutation startBulkEdit` | Exempt, duplicate: Applies a write listed elsewhere (bulkUpdateCustomerStatus, bulkUpdateLocationStatus, bulkUpdateCarrierStatus, transferShipmentOwnership) to many rows; each row goes through that write's own service. |
+| `mutation undoMyBulkEdit` | Exempt, duplicate: Puts rows back through the same writes startBulkEdit applies (bulkUpdateCustomerStatus, bulkUpdateLocationStatus, bulkUpdateCarrierStatus, transferShipmentOwnership). |
 
 ### capture
 
@@ -671,6 +746,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation updateCarrierSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 | `mutation voidCarrierSettlement` | Tool: `void_carrier_settlement` |
 
+### casechecklist
+
+| Write | Decision |
+| --- | --- |
+| `DELETE /api/v1/case-checklists/:templateID/`<br>casechecklisthandler.delete | Exempt, configuration: How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it. |
+| `PUT /api/v1/case-checklists/`<br>casechecklisthandler.save | Exempt, configuration: How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it. |
+
 ### commodity
 
 | Write | Decision |
@@ -714,12 +796,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `PATCH /api/v1/custom-fields/definitions/:definitionID/`<br>customfieldhandler.patch | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
 | `POST /api/v1/custom-fields/definitions/`<br>customfieldhandler.create | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
 | `PUT /api/v1/custom-fields/definitions/:definitionID/`<br>customfieldhandler.update | Exempt, configuration: Custom field definitions change the shape of records for everyone; an administrator owns them. |
-
-### databasesession
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/admin/database-sessions/:pid/terminate/`<br>databasesessionhandler.terminate | Exempt, security: Terminating database sessions is a platform administrator's emergency control. |
 
 ### dataentrycontrol
 
@@ -1297,13 +1373,59 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation assignInboundMessages` | Pending: Assign inbound messages to a person, or take them off whoever has them. |
 | `mutation createInboundMailbox` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
+| `mutation createMyTriageView` | Exempt, user-preference: A saved search in one person's own Triage sidebar. |
+| `mutation deleteMyTriageView` | Exempt, user-preference: A saved search in one person's own Triage sidebar. |
+| `mutation handOffTriage` | Pending: Hand everything still waiting in Triage to the on-call person at the end of the day. |
 | `mutation linkInboundMessage` | Tool: `link_inbound_message` |
+| `mutation readUnreadInboundMessages` | Exempt, agent-administration: Sets Nova reading the backlog it never read; it switches an agent on rather than doing an agent's work. |
+| `mutation renameMyTriageView` | Exempt, user-preference: A saved search in one person's own Triage sidebar. |
+| `mutation reopenInboundMessages` | Pending: Put settled inbound messages back in the Triage queue. |
 | `mutation reviewInboundMessage` | Tool: `mark_inbound_message` |
+| `mutation reviewInboundMessages` | Exempt, duplicate: The bulk form of reviewInboundMessage; mark_inbound_message settles each message. |
 | `mutation rotateInboundMailboxToken` | Exempt, security: Replaces the secret that authenticates mail forwarded into the mailbox. |
+| `mutation sendInboundMailboxTest` | Exempt, configuration: Checks that a connected address receives mail while an administrator sets the mailbox up. |
 | `mutation setInboundMailboxApiKey` | Exempt, security: Sets the provider credential the mailbox reads forwarded mail's content with. |
 | `mutation setInboundMailboxSigningSecret` | Exempt, security: Sets the secret that authenticates mail forwarded into the mailbox. |
+| `mutation snoozeInboundMessages` | Pending: Snooze inbound messages until a time, a delivery, a document or a payment. |
+| `mutation stopWaitingForInboundReply` | Pending: Bring an inbound message waiting on a reply back to the queue now. |
+| `mutation unlinkInboundMessage` | Pending: Remove the shipment, customer or carrier an inbound message was linked to. |
 | `mutation updateInboundMailbox` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
+| `mutation updateTriageResponseTargets` | Exempt, configuration: How long each kind of message may wait is an organization-wide setting an administrator owns. |
+| `mutation updateTriageSettings` | Exempt, configuration: The on-call person and the end of the working day are organization-wide settings an administrator owns. |
+| `mutation waitForInboundReply` | Pending: Park an inbound message until the sender replies on its thread, or until a time. |
+| `mutation wakeInboundMessage` | Pending: Bring a snoozed inbound message back to the queue now. |
+
+### inboundreply
+
+| Write | Decision |
+| --- | --- |
+| `mutation blockInboundSender` | Pending: Send a sender's future mail on a source straight to Ignored, and ignore the message. |
+| `mutation createInboundLoad` | Pending: Create the shipment a tender in Triage describes, from the fields a person checked. |
+| `mutation createTriageReplyTemplate` | Exempt, configuration: Reply templates are organization-wide wording an administrator maintains; replies use them. |
+| `mutation decideInboundStops` | Pending: Waive or stand by a disputed detention charge after checking the stop times, and draft the answer. |
+| `mutation deleteTriageReplyTemplate` | Exempt, configuration: Reply templates are organization-wide wording an administrator maintains; replies use them. |
+| `mutation discardInboundLoad` | Pending: Throw away the load Nova drafted from an inbound message. |
+| `mutation discardInboundReplyDraft` | Pending: Throw away the reply draft waiting on an inbound message. |
+| `mutation draftInboundLoad` | Pending: Have Nova read the load an inbound tender describes into a draft for a person to check. |
+| `mutation draftInboundMany` | Pending: Have Nova draft replies and loads for many inbound messages in the background. |
+| `mutation draftInboundReply` | Pending: Have Nova draft a reply to an inbound message for a person to review. |
+| `mutation fileInboundAttachment` | Pending: File an email attachment on a shipment as a typed document, whole or split into page ranges. |
+| `mutation fileInboundMany` | Pending: File every readable attachment of each inbound message on its matched shipment. |
+| `mutation logInboundException` | Pending: Log a shortage, overage or damage from a delivery on the shipment as a billing hold. |
+| `mutation saveInboundReplyDraft` | Pending: Save a person's reply to an inbound message as its draft. |
+| `mutation sendInboundReply` | Tool: `reply_to_inbound_message` |
+| `mutation unblockInboundSender` | Pending: Let a blocked sender's mail on a source reach the queue again. |
+| `mutation unfileInboundAttachment` | Pending: Take an email attachment back off the shipment it was filed on. |
+| `mutation updateTriageReplyTemplate` | Exempt, configuration: Reply templates are organization-wide wording an administrator maintains; replies use them. |
+
+### inboxpresence
+
+| Write | Decision |
+| --- | --- |
+| `DELETE /api/v1/inbox/presence/`<br>inboxpresencehandler.leave | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
+| `POST /api/v1/inbox/presence/`<br>inboxpresencehandler.join | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 
 ### insight
 
@@ -1456,6 +1578,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation markNotificationsRead` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation markNotificationsUnread` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation restoreNotifications` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+
+### notificationpreference
+
+| Write | Decision |
+| --- | --- |
+| `PUT /api/v1/users/me/notification-preferences/`<br>notificationpreferencehandler.update | Exempt, user-preference: What reaches a person outside the bell, and when, is their own choice; it changes nothing anyone else sees. |
 
 ### onboarding
 
@@ -1637,7 +1765,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `DELETE /api/v1/realtime/presence/:resource/`<br>realtimehandler.leaveView | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
+| `DELETE /api/v1/realtime/presence/:resource/:recordID/`<br>realtimehandler.leaveRecord | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 | `DELETE /api/v1/shipments/:shipmentID/comments/presence/`<br>realtimehandler.leaveShipmentComments | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
+| `POST /api/v1/realtime/presence/:resource/`<br>realtimehandler.joinView | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
+| `POST /api/v1/realtime/presence/:resource/:recordID/`<br>realtimehandler.joinRecord | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 | `POST /api/v1/shipments/:shipmentID/comments/presence/`<br>realtimehandler.joinShipmentComments | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 | `POST /api/v1/shipments/:shipmentID/comments/typing/`<br>realtimehandler.typingShipmentComments | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 
@@ -1664,9 +1796,11 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation deleteReportDefinition` | Tool: `delete_report` |
 | `mutation deleteReportSchedule` | Tool: `delete_report_schedule` |
 | `mutation deleteReportView` | Exempt, user-preference: A saved view is one person's own columns and filters on a report page. |
+| `mutation exportTableView` | Exempt, duplicate: Saves a table's view through createReportDefinition and runs it through runReport; those writes are listed under report. |
 | `mutation forkCannedReport` | Tool: `fork_report` |
 | `mutation resetCannedFork` | Tool: `reset_report_fork` |
 | `mutation runReport` | Tool: `run_report` |
+| `mutation scheduleTableView` | Exempt, duplicate: Saves a table's view through createReportDefinition and schedules it through createReportSchedule; those writes are listed under report. |
 | `mutation updateReportDashboard` | Tool: `add_dashboard_tile` |
 | `mutation updateReportDefinition` | Tool: `update_report` |
 | `mutation updateReportSchedule` | Tool: `update_report_schedule` |
@@ -1784,7 +1918,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation uncancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/uncancel/` | Tool: `uncancel_shipment` |
 | `mutation unpinShipmentComment` | Tool: `unpin_shipment_comment` |
 | `mutation unresolveShipmentComment` | Tool: `resolve_shipment_comment` |
-| `mutation updateShipment`<br>twin `PUT /api/v1/shipments/:shipmentID/` | Tool: `update_shipment` |
+| `mutation updateShipment`<br>twin `PUT /api/v1/shipments/:shipmentID/` | Tool: `update_shipment`, `reschedule_stop`, `add_shipment_charge` |
 | `mutation updateShipmentComment`<br>twin `PUT /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `edit_shipment_comment` |
 | `POST /api/v1/shipments/:shipmentID/holds/`<br>shipmenthandler.createHold | Tool: `place_shipment_hold` |
 | `POST /api/v1/shipments/:shipmentID/holds/:holdID/release/`<br>shipmenthandler.releaseHold | Tool: `release_shipment_hold` |
@@ -1861,6 +1995,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation setOrgDefaultTableConfiguration` | Exempt, configuration: Sets the table view everyone in the organization starts from. |
 | `mutation updateTableConfiguration` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 
+### tablelayout
+
+| Write | Decision |
+| --- | --- |
+| `mutation resetMyTableLayout` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+| `mutation saveMyTableLayout` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+
 ### tablequery
 
 | Write | Decision |
@@ -1930,13 +2071,28 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation patchTrailer`<br>twin `PATCH /api/v1/trailers/:trailerID/` | Tool: `update_trailer` |
 | `mutation updateTrailer`<br>twin `PUT /api/v1/trailers/:trailerID/` | Tool: `update_trailer` |
 
+### triage
+
+| Write | Decision |
+| --- | --- |
+| `mutation correctInboundClassification` | Exempt, attestation: A person's verdict on what Nova read; it trains Nova and the sender's hints, so an agent correcting it would grade its own reading. |
+| `mutation createTriageRule` | Exempt, agent-administration: Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent. |
+| `mutation deleteTriageRule` | Exempt, agent-administration: Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent. |
+| `mutation flagInboundFact` | Exempt, attestation: A person's verdict on what Nova read; it trains Nova, so an agent flagging it would grade its own reading. |
+| `mutation reopenInboundConflict` | Pending: Reopen a settled duplicate-document or repeated-load conflict on a triage message |
+| `mutation resolveInboundConflict` | Pending: Settle a duplicate-document or repeated-load conflict on a triage message: replace or keep the document on file, skip or confirm the load |
+| `mutation setTriageRuleEnabled` | Exempt, agent-administration: Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent. |
+| `mutation updateTriageRule` | Exempt, agent-administration: Rules decide what Nova may do with mail on its own; a person who manages the queue sets them, never an agent. |
+
 ### user
 
 | Write | Decision |
 | --- | --- |
 | `DELETE /api/v1/users/:userID/mfa/`<br>userhandler.resetUserMFA | Exempt, security: Resetting a person's second sign-in factor decides who can sign in as them. |
 | `DELETE /api/v1/users/me/profile-picture/`<br>userhandler.deleteProfilePicture | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+| `DELETE /api/v1/users/me/sessions/:sessionID/`<br>userhandler.revokeMySession | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
 | `PATCH /api/v1/users/:userID/`<br>userhandler.patch | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
+| `PATCH /api/v1/users/me/profile/`<br>userhandler.updateMyProfile | Exempt, user-preference: A person's own job title, phone and avatar; they describe themselves and no agent speaks for them. |
 | `PATCH /api/v1/users/me/settings/`<br>userhandler.updateMySettings | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `POST /api/v1/users/:userID/permissions/simulate/`<br>userhandler.simulatePermissions | Exempt, read-only: Shows what a user could do with a set of roles and saves nothing. |
 | `POST /api/v1/users/:userID/reset-password/`<br>userhandler.sendPasswordReset | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
@@ -1947,9 +2103,11 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/users/me/mfa/totp/disable/`<br>userhandler.disableTOTP | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
 | `POST /api/v1/users/me/mfa/totp/enroll/`<br>userhandler.beginTOTPEnrollment | Exempt, security: A person's second sign-in factor proves who they are; an agent holds no credentials of its own and never enrolls or removes one. |
 | `POST /api/v1/users/me/profile-picture/`<br>userhandler.uploadProfilePicture | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+| `POST /api/v1/users/me/sessions/revoke-others/`<br>userhandler.revokeMyOtherSessions | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
 | `POST /api/v1/users/me/switch-organization/`<br>userhandler.switchOrganization | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PUT /api/v1/users/:userID/`<br>userhandler.update | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PUT /api/v1/users/:userID/organization-memberships/`<br>userhandler.replaceOrganizationMemberships | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
+| `PUT /api/v1/users/me/availability/`<br>userhandler.updateMyAvailability | Exempt, user-preference: Whether a person is available, focusing or away, and who covers for them, is theirs alone to say. |
 
 ### version
 

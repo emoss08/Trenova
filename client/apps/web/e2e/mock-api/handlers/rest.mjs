@@ -1,13 +1,23 @@
-import { ORG, permissionManifest, USER } from "../fixtures/session.mjs";
+import { EXTENSION_ROUTES } from "./aiextensions.mjs";
+import { PROVIDER_ROUTES } from "./aiproviders.mjs";
+import { AI_ROUTES } from "./aicontrol.mjs";
+import { TRIAGE_ROUTES } from "./triage.mjs";
+import { DESK_CARD_ROUTES } from "./deskcards.mjs";
+import { ORG, permissionManifest } from "../fixtures/session.mjs";
+import { SETTINGS_ROUTES } from "./settings.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
 const ROUTES = [
-  ["GET", /^\/api\/v1\/users\/me\/?$/, () => USER],
+  ...TRIAGE_ROUTES,
+  ...PROVIDER_ROUTES,
+  ...EXTENSION_ROUTES,
+  ...AI_ROUTES,
+  ...DESK_CARD_ROUTES,
+  ...SETTINGS_ROUTES,
   ["GET", /^\/api\/v1\/me\/permissions\/?$/, () => permissionManifest()],
   ["GET", /^\/api\/v1\/me\/permissions\/version\/?$/, () => ({ checksum: "mock", expiresAt: Math.floor(Date.now() / 1000) + 86400 })],
   ["GET", /^\/api\/v1\/system\/version\/?$/, () => ({ version: "mock", commit: "mock", buildDate: "" })],
-  ["GET", /^\/api\/v1\/system\/network-pulse\/?$/, () => ({ status: "ok" })],
   ["GET", /^\/api\/v1\/system\/public-config\/?$/, () => ({})],
   ["GET", /^\/api\/v1\/auth\/csrf\/?$/, () => ({ csrfToken: "mock-csrf", headerName: "X-CSRF-Token" })],
   [
@@ -37,6 +47,7 @@ const ROUTES = [
     () => ({ currentVersion: "mock", updateAvailable: false, latestRelease: null, lastChecked: 0 }),
   ],
   ["GET", /^\/api\/v1\/page-favorites\/check\/?$/, () => ({ favorited: false })],
+  ["GET", /^\/api\/v1\/page-favorites\/?$/, () => []],
   ["GET", /^\/api\/v1\/assistant\/threads\/?$/, () => ({ items: [], total: 0 })],
   ["GET", /^\/api\/v1\/assistant\/turns\/active\/?$/, () => ({ items: [] })],
   ["GET", /^\/api\/v1\/documents\/uploads\/active\/?$/, () => []],
@@ -45,11 +56,16 @@ const ROUTES = [
   ["GET", /^\/api\/v1\/tables\/?$/, () => ({ results: [], count: 0 })],
 ];
 
-export function handleRest(state, { method, path }) {
+export function handleRest(state, { method, path, query, body }) {
   for (const [routeMethod, pattern, handler] of ROUTES) {
     if (routeMethod === method && pattern.test(path)) {
-      const payload = handler(state, path);
+      const payload = handler(state, path, body, query);
       if (payload && payload.__stream) return { known: true, stream: true };
+      if (payload && payload.__raw) return { known: true, raw: payload.__raw, contentType: payload.contentType };
+      if (payload && payload.__sse) return { known: true, sse: payload.__sse };
+      if (payload && payload.__status) {
+        return { known: true, status: payload.__status, payload: payload.body };
+      }
       return { known: true, payload };
     }
   }

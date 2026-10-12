@@ -1,6 +1,7 @@
 package shipmentmovehandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"net/http"
 	"testing"
@@ -8,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmovehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +24,7 @@ import (
 
 func setupShipmentMoveHandler(
 	t *testing.T,
-	service *mocks.MockShipmentMoveService,
+	service *shipmentportsmock.MockShipmentMoveService,
 ) *shipmentmovehandler.Handler {
 	t.Helper()
 
@@ -53,9 +54,9 @@ func TestShipmentMoveHandler_UpdateStatus_Success(t *testing.T) {
 	t.Parallel()
 
 	moveID := pulid.MustNew("sm_")
-	service := mocks.NewMockShipmentMoveService(t)
+	service := shipmentportsmock.NewMockShipmentMoveService(t)
 	service.EXPECT().
-		UpdateStatus(mock.Anything, mock.MatchedBy(func(req *repositories.UpdateMoveStatusRequest) bool {
+		UpdateStatus(mock.Anything, mock.MatchedBy(func(req *shipmentports.UpdateMoveStatusRequest) bool {
 			return req.MoveID == moveID &&
 				req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.Status == shipment.MoveStatusInTransit
@@ -79,7 +80,7 @@ func TestShipmentMoveHandler_UpdateStatus_Success(t *testing.T) {
 func TestShipmentMoveHandler_BulkUpdateStatus_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	handler := setupShipmentMoveHandler(t, mocks.NewMockShipmentMoveService(t))
+	handler := setupShipmentMoveHandler(t, shipmentportsmock.NewMockShipmentMoveService(t))
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/shipment-moves/bulk-update-status/").
@@ -98,13 +99,13 @@ func TestShipmentMoveHandler_RecordStopActual_Success(t *testing.T) {
 	moveID := pulid.MustNew("sm_")
 	stopID := pulid.MustNew("stp_")
 	occurredAt := int64(1767787200)
-	service := mocks.NewMockShipmentMoveService(t)
+	service := shipmentportsmock.NewMockShipmentMoveService(t)
 	service.EXPECT().
-		RecordStopActual(mock.Anything, mock.MatchedBy(func(req *repositories.RecordStopActualRequest) bool {
+		RecordStopActual(mock.Anything, mock.MatchedBy(func(req *shipmentports.RecordStopActualRequest) bool {
 			return req.MoveID == moveID &&
 				req.StopID == stopID &&
 				req.TenantInfo.OrgID == testutil.TestOrgID &&
-				req.Action == repositories.StopActualActionArrive &&
+				req.Action == shipmentports.StopActualActionArrive &&
 				req.OccurredAt != nil &&
 				*req.OccurredAt == occurredAt
 		})).
@@ -138,12 +139,12 @@ func TestShipmentMoveHandler_RecordStopActual_DepartWithoutOccurredAt(t *testing
 
 	moveID := pulid.MustNew("sm_")
 	stopID := pulid.MustNew("stp_")
-	service := mocks.NewMockShipmentMoveService(t)
+	service := shipmentportsmock.NewMockShipmentMoveService(t)
 	service.EXPECT().
-		RecordStopActual(mock.Anything, mock.MatchedBy(func(req *repositories.RecordStopActualRequest) bool {
+		RecordStopActual(mock.Anything, mock.MatchedBy(func(req *shipmentports.RecordStopActualRequest) bool {
 			return req.MoveID == moveID &&
 				req.StopID == stopID &&
-				req.Action == repositories.StopActualActionDepart &&
+				req.Action == shipmentports.StopActualActionDepart &&
 				req.OccurredAt == nil
 		})).
 		Return(&shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusCompleted}, nil).
@@ -171,9 +172,9 @@ func TestShipmentMoveHandler_RecordStopActual_BusinessErrorPassthrough(t *testin
 
 	moveID := pulid.MustNew("sm_")
 	stopID := pulid.MustNew("stp_")
-	service := mocks.NewMockShipmentMoveService(t)
+	service := shipmentportsmock.NewMockShipmentMoveService(t)
 	service.EXPECT().
-		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
+		RecordStopActual(mock.Anything, mock.AnythingOfType("*shipmentports.RecordStopActualRequest")).
 		Return(nil, errortypes.NewBusinessError("You've already arrived at this stop")).
 		Once()
 
@@ -199,7 +200,7 @@ func TestShipmentMoveHandler_RecordStopActual_BadJSON(t *testing.T) {
 
 	moveID := pulid.MustNew("sm_")
 	stopID := pulid.MustNew("stp_")
-	handler := setupShipmentMoveHandler(t, mocks.NewMockShipmentMoveService(t))
+	handler := setupShipmentMoveHandler(t, shipmentportsmock.NewMockShipmentMoveService(t))
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath(
@@ -221,15 +222,15 @@ func TestShipmentMoveHandler_SplitMove_Success(t *testing.T) {
 
 	moveID := pulid.MustNew("sm_")
 	newDeliveryLocationID := pulid.MustNew("loc_")
-	service := mocks.NewMockShipmentMoveService(t)
+	service := shipmentportsmock.NewMockShipmentMoveService(t)
 	service.EXPECT().
-		SplitMove(mock.Anything, mock.MatchedBy(func(req *repositories.SplitMoveRequest) bool {
+		SplitMove(mock.Anything, mock.MatchedBy(func(req *shipmentports.SplitMoveRequest) bool {
 			return req.MoveID == moveID &&
 				req.NewDeliveryLocationID == newDeliveryLocationID &&
 				req.TenantInfo.OrgID == testutil.TestOrgID
 		})).
-		RunAndReturn(func(_ context.Context, req *repositories.SplitMoveRequest) (*repositories.SplitMoveResponse, error) {
-			return &repositories.SplitMoveResponse{
+		RunAndReturn(func(_ context.Context, req *shipmentports.SplitMoveRequest) (*shipmentports.SplitMoveResponse, error) {
+			return &shipmentports.SplitMoveResponse{
 				OriginalMove: &shipment.ShipmentMove{ID: req.MoveID},
 				NewMove:      &shipment.ShipmentMove{ID: pulid.MustNew("sm_")},
 			}, nil
@@ -258,7 +259,7 @@ func TestShipmentMoveHandler_SplitMove_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 
-	var resp repositories.SplitMoveResponse
+	var resp shipmentports.SplitMoveResponse
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	require.NotNil(t, resp.OriginalMove)
 	require.NotNil(t, resp.NewMove)

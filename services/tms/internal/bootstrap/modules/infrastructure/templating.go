@@ -1,10 +1,10 @@
 package infrastructure
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/infrastructure/templating/assetinliner"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -34,11 +34,11 @@ func newTemplateEngine() (*templateengine.Engine, error) {
 type assetInlinerParams struct {
 	fx.In
 
-	Storage storage.Client
+	Storage kernelports.Client
 	Logger  *zap.Logger
 }
 
-func newAssetInliner(p assetInlinerParams) services.AssetInliner {
+func newAssetInliner(p assetInlinerParams) documenttemplateports.AssetInliner {
 	return assetinliner.New(assetinliner.Params{
 		Storage: p.Storage,
 		Logger:  p.Logger,

@@ -23,6 +23,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Award01Icon, CheckIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const DASH_SAFETY_KEY = "dash-safety";
 export const DASH_RECOGNITIONS_KEY = "dash-recognitions";
@@ -157,7 +158,7 @@ function DisciplineRow({ action }: { action: PortalDisciplinaryAction }) {
       await queryClient.invalidateQueries({ queryKey: [DASH_DISCIPLINE_KEY] });
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Could not send that. Try again.");
+      toast.error(error.message || translate("Could not send that. Try again."));
     },
   });
 

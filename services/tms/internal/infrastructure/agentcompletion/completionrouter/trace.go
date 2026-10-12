@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/shopspring/decimal"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -27,7 +27,7 @@ type attemptSpec struct {
 	attempt     int
 	failover    bool
 	maxTokens   int
-	attribution serviceports.AIUsageAttribution
+	attribution aiusageports.AIUsageAttribution
 }
 
 func (s *Service) startAttempt(
@@ -103,11 +103,7 @@ func attemptCost(attempt *usageAttempt) *decimal.Decimal {
 		return nil
 	}
 
-	return attempt.provider.CostForTask(
-		attempt.task,
-		attempt.outcome.InputTokens,
-		attempt.outcome.OutputTokens,
-	)
+	return attempt.provider.CostForTask(attempt.task, attempt.outcome.tokenUsage())
 }
 
 func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
@@ -118,7 +114,7 @@ func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
 	}
 
 	input := int64(outcome.InputTokens)
-	if modeladapter.CacheSeparateFromInput(attempt.provider.Kind) {
+	if attempt.provider.Kind.CachesOutsideInput() {
 		input += int64(outcome.CacheReadTokens + outcome.CacheWriteTokens)
 	}
 	usage.ResponseModel = outcome.Model
@@ -129,6 +125,10 @@ func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
 	usage.ReasoningTokens = int64(outcome.ReasoningTokens)
 	usage.Truncated = outcome.Truncated
 	usage.ThinkingDropped = int64(outcome.ThinkingDropped)
+	if diagnosis := outcome.CacheDiagnosis; diagnosis != nil {
+		usage.CacheMissReason = diagnosis.Reason
+		usage.CacheMissedTokens = int64(diagnosis.MissedTokens)
+	}
 	if outcome.FinishReason != "" {
 		usage.FinishReasons = []string{outcome.FinishReason}
 	}

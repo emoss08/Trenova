@@ -12,12 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -42,11 +42,11 @@ func (r *InvoiceResolver) ShipperCustomer(ctx context.Context, obj *invoice.Invo
 		return nil, err
 	}
 
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.CustomerByID.Load(ctx, obj.ShipperCustomerID.String())
+	if loaders.Available(ctx) {
+		return loaders.CustomerByID(ctx, obj.ShipperCustomerID.String())
 	}
 
-	return r.CustomerService.Get(ctx, repositories.GetCustomerByIDRequest{
+	return r.CustomerService.Get(ctx, customerports.GetCustomerByIDRequest{
 		ID:         obj.ShipperCustomerID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -69,8 +69,7 @@ func (r *InvoiceResolver) RelatedInvoices(ctx context.Context, obj *invoice.Invo
 		return []*invoice.Invoice{}, nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return []*invoice.Invoice{}, nil
 	}
 
@@ -78,7 +77,7 @@ func (r *InvoiceResolver) RelatedInvoices(ctx context.Context, obj *invoice.Invo
 	for _, id := range legIDs {
 		keys = append(keys, id.String())
 	}
-	groups, err := l.InvoicesByShipmentID.LoadAll(ctx, keys)
+	groups, err := loaders.InvoicesByShipmentIDAll(ctx, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -138,11 +137,11 @@ func (r *InvoiceResolver) ReferenceInvoice(ctx context.Context, obj *invoice.Inv
 		return nil, err
 	}
 
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.InvoiceByID.Load(ctx, obj.ReferenceInvoiceID.String())
+	if loaders.Available(ctx) {
+		return loaders.InvoiceByID(ctx, obj.ReferenceInvoiceID.String())
 	}
 
-	return r.InvoiceService.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	return r.InvoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         obj.ReferenceInvoiceID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -184,12 +183,11 @@ func (r *InvoiceResolver) PaymentApplications(ctx context.Context, obj *invoice.
 		return nil, err
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return []*customerpayment.Application{}, nil
 	}
 
-	return l.CustomerPaymentApplicationsByInvoiceID.Load(ctx, obj.ID.String())
+	return loaders.CustomerPaymentApplicationsByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *InvoiceResolver) CreditApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.CreditMemoApplication, error) {
@@ -200,32 +198,30 @@ func (r *InvoiceResolver) CreditApplications(ctx context.Context, obj *invoice.I
 		return nil, err
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
+	if !loaders.Available(ctx) {
 		return []*customerpayment.CreditMemoApplication{}, nil
 	}
 
-	return l.CreditMemoApplicationsByInvoiceID.Load(ctx, obj.ID.String())
+	return loaders.CreditMemoApplicationsByInvoiceID(ctx, obj.ID.String())
 }
 
-func (r *InvoiceResolver) EDISendPlan(ctx context.Context, obj *invoice.Invoice) (*services.InvoiceEDISendPlan, error) {
+func (r *InvoiceResolver) EDISendPlan(ctx context.Context, obj *invoice.Invoice) (*invoiceports.InvoiceEDISendPlan, error) {
 	if obj == nil {
-		return &services.InvoiceEDISendPlan{Status: invoice.EDISendStatusNotSent, Blockers: []string{}}, nil
+		return &invoiceports.InvoiceEDISendPlan{Status: invoice.EDISendStatusNotSent, Blockers: []string{}}, nil
 	}
 	if _, err := r.RequireAuth(ctx); err != nil {
 		return nil, err
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l == nil {
-		return &services.InvoiceEDISendPlan{
+	if !loaders.Available(ctx) {
+		return &invoiceports.InvoiceEDISendPlan{
 			InvoiceID: obj.ID,
 			Status:    obj.EDISendStatus,
 			Blockers:  []string{},
 		}, nil
 	}
 
-	return l.InvoiceEDISendPlanByInvoiceID.Load(ctx, obj.ID.String())
+	return loaders.InvoiceEDISendPlanByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *InvoiceLineResolver) Quantity(ctx context.Context, obj *invoice.InvoiceLine) (string, error) {
@@ -269,7 +265,7 @@ func (r *MutationResolver) CreateInvoiceFromShipments(ctx context.Context, shipm
 
 	return r.InvoiceService.CreateFromShipments(
 		ctx,
-		&services.CreateInvoiceFromShipmentsRequest{
+		&invoiceports.CreateInvoiceFromShipmentsRequest{
 			ShipmentIDs:    ids,
 			TenantInfo:     base.TenantInfo(authCtx),
 			OffCycleReason: stringutils.FromPtr(offCycleReason),
@@ -291,7 +287,7 @@ func (r *MutationResolver) CreateInvoiceFromOrder(ctx context.Context, orderID s
 
 	return r.InvoiceService.CreateFromOrder(
 		ctx,
-		&services.CreateInvoiceFromOrderRequest{
+		&invoiceports.CreateInvoiceFromOrderRequest{
 			OrderID:        id,
 			TenantInfo:     base.TenantInfo(authCtx),
 			OffCycleReason: stringutils.FromPtr(offCycleReason),
@@ -300,7 +296,7 @@ func (r *MutationResolver) CreateInvoiceFromOrder(ctx context.Context, orderID s
 	)
 }
 
-func (r *MutationResolver) CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*services.CreateInvoicesResult, error) {
+func (r *MutationResolver) CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -313,7 +309,7 @@ func (r *MutationResolver) CreateInvoicesFromShipments(ctx context.Context, ship
 
 	return r.InvoiceService.CreateInvoicesFromShipments(
 		ctx,
-		&services.CreateInvoiceFromShipmentsRequest{
+		&invoiceports.CreateInvoiceFromShipmentsRequest{
 			ShipmentIDs:    ids,
 			TenantInfo:     base.TenantInfo(authCtx),
 			OffCycleReason: stringutils.FromPtr(offCycleReason),
@@ -322,7 +318,7 @@ func (r *MutationResolver) CreateInvoicesFromShipments(ctx context.Context, ship
 	)
 }
 
-func (r *MutationResolver) CreateInvoicesFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*services.CreateInvoicesResult, error) {
+func (r *MutationResolver) CreateInvoicesFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -335,7 +331,7 @@ func (r *MutationResolver) CreateInvoicesFromOrder(ctx context.Context, orderID 
 
 	return r.InvoiceService.CreateInvoicesFromOrder(
 		ctx,
-		&services.CreateInvoiceFromOrderRequest{
+		&invoiceports.CreateInvoiceFromOrderRequest{
 			OrderID:        id,
 			TenantInfo:     base.TenantInfo(authCtx),
 			OffCycleReason: stringutils.FromPtr(offCycleReason),
@@ -344,7 +340,7 @@ func (r *MutationResolver) CreateInvoicesFromOrder(ctx context.Context, orderID 
 	)
 }
 
-func (r *MutationResolver) VoidInvoice(ctx context.Context, input gqlmodel.VoidInvoiceInput) (*services.VoidInvoiceResult, error) {
+func (r *MutationResolver) VoidInvoice(ctx context.Context, input gqlmodel.VoidInvoiceInput) (*invoiceports.VoidInvoiceResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpCancel)
 	if err != nil {
 		return nil, err
@@ -357,7 +353,7 @@ func (r *MutationResolver) VoidInvoice(ctx context.Context, input gqlmodel.VoidI
 
 	return r.InvoiceService.VoidInvoice(
 		ctx,
-		&services.VoidInvoiceRequest{
+		&invoiceports.VoidInvoiceRequest{
 			InvoiceID:   invoiceID,
 			TenantInfo:  base.TenantInfo(authCtx),
 			Reason:      input.Reason,
@@ -381,7 +377,7 @@ func (r *MutationResolver) CreateMemo(ctx context.Context, input gqlmodel.Create
 	return r.InvoiceService.CreateMemo(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*services.InvoiceEDISendResult, error) {
+func (r *MutationResolver) SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*invoiceports.InvoiceEDISendResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpSubmit)
 	if err != nil {
 		return nil, err
@@ -394,7 +390,7 @@ func (r *MutationResolver) SendInvoiceEDI(ctx context.Context, invoiceID string,
 
 	return r.InvoiceService.SendEDI(
 		ctx,
-		&services.SendInvoiceEDIRequest{
+		&invoiceports.SendInvoiceEDIRequest{
 			InvoiceID:  id,
 			TenantInfo: base.TenantInfo(authCtx),
 			Force:      force != nil && *force,
@@ -416,7 +412,7 @@ func (r *QueryResolver) Invoices(ctx context.Context, input gqlmodel.DataTableCo
 
 	result, err := r.InvoiceService.ListConnection(
 		ctx,
-		&repositories.ListInvoiceConnectionRequest{
+		&invoiceports.ListInvoiceConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -439,7 +435,7 @@ func (r *QueryResolver) Invoice(ctx context.Context, id string) (*invoice.Invoic
 		return nil, err
 	}
 
-	return r.InvoiceService.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	return r.InvoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         invoiceID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

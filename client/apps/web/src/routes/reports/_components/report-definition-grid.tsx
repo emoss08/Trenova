@@ -282,7 +282,7 @@ export function ReportDefinitionGrid({
       },
       {
         onSuccess: (created) => {
-          toast.success(`Duplicated as "${created.name}"`, {
+          toast.success(t('Duplicated as "{0}"', created.name), {
             action: {
               label: t("Open"),
               onClick: () => void navigate(`/reports/builder/${created.id}`),
@@ -290,7 +290,7 @@ export function ReportDefinitionGrid({
           });
         },
         onError: (error) =>
-          toast.error(graphQLErrorMessage(error, "Failed to duplicate the report")),
+          toast.error(graphQLErrorMessage(error, t("Failed to duplicate the report"))),
       },
     );
   };
@@ -348,11 +348,7 @@ export function ReportDefinitionGrid({
         <div className="space-y-6 p-4">
           {groups.map((group) => (
             <section key={group.key} className="space-y-3">
-              <CategoryGroupHeader
-                label={t(group.label)}
-                count={group.items.length}
-                noun="report"
-              />
+              <CategoryGroupHeader label={t(group.label)} count={group.items.length} />
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {group.items.map((definition) => (
                   <DefinitionCard

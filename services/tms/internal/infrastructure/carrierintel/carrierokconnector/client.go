@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/carrierok"
 )
 
@@ -23,10 +23,10 @@ const (
 )
 
 var (
-	_ services.CarrierIntelClient          = (*Client)(nil)
-	_ services.CarrierIntelSearcher        = (*Client)(nil)
-	_ services.CarrierIntelNativeMonitor   = (*Client)(nil)
-	_ services.CarrierIntelEquipmentLookup = (*Client)(nil)
+	_ carrierintelports.CarrierIntelClient          = (*Client)(nil)
+	_ carrierintelports.CarrierIntelSearcher        = (*Client)(nil)
+	_ carrierintelports.CarrierIntelNativeMonitor   = (*Client)(nil)
+	_ carrierintelports.CarrierIntelEquipmentLookup = (*Client)(nil)
 )
 
 type Client struct {
@@ -48,8 +48,8 @@ func (c *Client) IsSandbox() bool {
 
 func (c *Client) Lookup(
 	ctx context.Context,
-	req *services.CarrierIntelLookupRequest,
-) (*services.CarrierIntelLookupResult, error) {
+	req *carrierintelports.CarrierIntelLookupRequest,
+) (*carrierintelports.CarrierIntelLookupResult, error) {
 	if req == nil || req.Identifier.IsZero() {
 		return nil, errorMapper.InvalidRequest(messageIdentifierRequired)
 	}
@@ -109,7 +109,7 @@ func (c *Client) Lookup(
 	outcome.Found = true
 	c.recorder.Record(ctx, outcome)
 
-	return &services.CarrierIntelLookupResult{
+	return &carrierintelports.CarrierIntelLookupResult{
 		Profile:     profile,
 		Raw:         sdkProfile.Raw,
 		Endpoint:    endpoint,
@@ -121,8 +121,8 @@ func (c *Client) Lookup(
 
 func (c *Client) Search(
 	ctx context.Context,
-	req *services.CarrierIntelSearchRequest,
-) (*services.CarrierIntelSearchResult, error) {
+	req *carrierintelports.CarrierIntelSearchRequest,
+) (*carrierintelports.CarrierIntelSearchResult, error) {
 	if req == nil {
 		return nil, errorMapper.InvalidRequest(messageSearchCriteria)
 	}
@@ -155,15 +155,15 @@ func (c *Client) Search(
 	outcome.Found = true
 	c.recorder.Record(ctx, outcome)
 
-	items := make([]services.CarrierIntelSearchHit, 0, len(result.Items))
+	items := make([]carrierintelports.CarrierIntelSearchHit, 0, len(result.Items))
 	for idx := range result.Items {
 		profile := normalizeProfile(&result.Items[idx])
-		items = append(items, services.CarrierIntelSearchHit{
+		items = append(items, carrierintelports.CarrierIntelSearchHit{
 			Profile:     profile,
 			ProviderRef: providerRef(&result.Items[idx], profile),
 		})
 	}
-	return &services.CarrierIntelSearchResult{
+	return &carrierintelports.CarrierIntelSearchResult{
 		Items: items,
 		Total: int(max(result.TotalCount, int64(len(items)))),
 	}, nil
@@ -173,7 +173,7 @@ func (c *Client) Autocomplete(
 	ctx context.Context,
 	query string,
 	limit int,
-) ([]services.CarrierIntelSuggestion, error) {
+) ([]carrierintelports.CarrierIntelSuggestion, error) {
 	term := strings.TrimSpace(query)
 	if len([]rune(term)) < 2 {
 		return nil, errorMapper.InvalidRequest(messageAutocompleteTerm)
@@ -194,9 +194,9 @@ func (c *Client) Autocomplete(
 	outcome.Found = true
 	c.recorder.Record(ctx, outcome)
 
-	out := make([]services.CarrierIntelSuggestion, 0, len(suggestions))
+	out := make([]carrierintelports.CarrierIntelSuggestion, 0, len(suggestions))
 	for _, suggestion := range suggestions {
-		out = append(out, services.CarrierIntelSuggestion{
+		out = append(out, carrierintelports.CarrierIntelSuggestion{
 			DOTNumber: suggestion.DOTNumber,
 			LegalName: suggestion.LegalName,
 			DBAName:   suggestion.DBAName,
@@ -207,8 +207,10 @@ func (c *Client) Autocomplete(
 	return out, nil
 }
 
-func trimIdentifier(id services.CarrierIntelIdentifier) services.CarrierIntelIdentifier {
-	return services.CarrierIntelIdentifier{
+func trimIdentifier(
+	id carrierintelports.CarrierIntelIdentifier,
+) carrierintelports.CarrierIntelIdentifier {
+	return carrierintelports.CarrierIntelIdentifier{
 		DOTNumber:    strings.TrimSpace(id.DOTNumber),
 		DocketNumber: strings.TrimSpace(id.DocketNumber),
 		Company:      strings.TrimSpace(id.Company),
@@ -218,7 +220,7 @@ func trimIdentifier(id services.CarrierIntelIdentifier) services.CarrierIntelIde
 	}
 }
 
-func profileQuery(id services.CarrierIntelIdentifier) carrierok.ProfileQuery {
+func profileQuery(id carrierintelports.CarrierIntelIdentifier) carrierok.ProfileQuery {
 	switch {
 	case id.DOTNumber != "":
 		return carrierok.ProfileQuery{DOTNumber: id.DOTNumber}
@@ -235,7 +237,7 @@ func profileQuery(id services.CarrierIntelIdentifier) carrierok.ProfileQuery {
 	}
 }
 
-func fmcsaQuery(id services.CarrierIntelIdentifier) (carrierok.FMCSAQuery, bool) {
+func fmcsaQuery(id carrierintelports.CarrierIntelIdentifier) (carrierok.FMCSAQuery, bool) {
 	switch {
 	case id.DOTNumber != "":
 		return carrierok.FMCSAQuery{DOTNumber: id.DOTNumber}, true

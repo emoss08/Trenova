@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import type { RateAgreementReviewAction } from "@/services/rate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -23,6 +23,42 @@ import {
 } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+// One whole sentence per action: the action's wire value is not a word a reader's language
+// can be built around.
+function commentRequiredMessage(action: RateAgreementReviewAction, t: TranslateFn): string {
+  switch (action) {
+    case "submit":
+      return t("A comment is required to submit this agreement for review");
+    case "approve":
+      return t("A comment is required to approve this agreement");
+    case "reject":
+      return t("A comment is required to reject this agreement");
+    case "suspend":
+      return t("A comment is required to suspend this agreement");
+    case "resume":
+      return t("A comment is required to resume this agreement");
+    case "archive":
+      return t("A comment is required to archive this agreement");
+  }
+}
+
+function reviewFailedMessage(action: RateAgreementReviewAction, t: TranslateFn): string {
+  switch (action) {
+    case "submit":
+      return t("The agreement could not be submitted for review");
+    case "approve":
+      return t("The agreement could not be approved");
+    case "reject":
+      return t("The agreement could not be rejected");
+    case "suspend":
+      return t("The agreement could not be suspended");
+    case "resume":
+      return t("The agreement could not be resumed");
+    case "archive":
+      return t("The agreement could not be archived");
+  }
+}
 
 const ACTION_CONFIG: Record<
   RateAgreementReviewAction,
@@ -154,7 +190,7 @@ export function ReviewActionDialog({
       onOpenChange(false);
     },
     onError: () => {
-      toast.error(`Failed to ${action} agreement`, {
+      toast.error(reviewFailedMessage(action, t), {
         description: t("Please try again or contact your system administrator."),
       });
     },
@@ -202,7 +238,7 @@ export function ReviewActionDialog({
             isInvalid={commentInvalid}
           />
           {commentInvalid && (
-            <p className="text-2xs text-destructive">{t("A comment is required to {0}", action)}</p>
+            <p className="text-2xs text-destructive">{commentRequiredMessage(action, t)}</p>
           )}
         </div>
 

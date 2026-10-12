@@ -1,0 +1,106 @@
+package accountingcontrolpolicyservice
+
+import (
+	"slices"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	Logger *zap.Logger
+}
+
+type Service struct{ l *zap.Logger }
+
+type ResolveFXQuoteDateRequest struct {
+	Policy         tenant.ExchangeRateDatePolicy
+	DocumentDate   int64
+	AccountingDate int64
+}
+
+func New(p Params) *Service {
+	return &Service{l: p.Logger.Named("service.accounting-control-policy")}
+}
+
+func (s *Service) CanCreateInvoiceLedgerEntry(
+	control *tenant.AccountingControl,
+	event tenant.JournalSourceEventType,
+) bool {
+	if control == nil {
+		return false
+	}
+
+	if control.AccountingBasis == tenant.AccountingBasisCash {
+		return false
+	}
+
+	if control.RevenueRecognitionPolicy != tenant.RevenueRecognitionOnInvoicePost {
+		return false
+	}
+
+	switch event {
+	case tenant.JournalSourceEventInvoicePosted,
+		tenant.JournalSourceEventCreditMemoPosted,
+		tenant.JournalSourceEventDebitMemoPosted:
+		return true
+	case tenant.JournalSourceEventCustomerPaymentPosted,
+		tenant.JournalSourceEventCustomerShortPayRecognized,
+		tenant.JournalSourceEventCustomerPaymentReversed,
+		tenant.JournalSourceEventVendorBillPosted,
+		tenant.JournalSourceEventVendorPaymentPosted:
+		return false
+	default:
+		return false
+	}
+}
+
+func (s *Service) CanUseAutomaticSourcePosting(
+	control *tenant.AccountingControl,
+	event tenant.JournalSourceEventType,
+) bool {
+	if control == nil || control.JournalPostingMode != tenant.JournalPostingModeAutomatic {
+		return false
+	}
+
+	if !s.CanCreateInvoiceLedgerEntry(control, event) {
+		return false
+	}
+
+	return slices.Contains(control.AutoPostSourceEvents, event)
+}
+
+func (s *Service) ValidateManualPeriodClose(control *tenant.AccountingControl) error {
+	if control == nil {
+		return nil
+	}
+
+	if control.PeriodCloseMode == tenant.PeriodCloseModeSystemScheduled {
+		return errortypes.NewBusinessError(
+			"Fiscal periods configured for system-scheduled close cannot be closed manually",
+		)
+	}
+
+	if control.RequirePeriodCloseApproval {
+		return errortypes.NewBusinessError(
+			"Fiscal period close approval is required before the period can be closed manually",
+		)
+	}
+
+	return nil
+}
+
+func (s *Service) ResolveFXQuoteDate(req ResolveFXQuoteDateRequest) (int64, error) {
+	switch req.Policy {
+	case tenant.ExchangeRateDatePolicyDocumentDate:
+		return req.DocumentDate, nil
+	case tenant.ExchangeRateDatePolicyAccountingDate:
+		return req.AccountingDate, nil
+	default:
+		return 0, errortypes.NewBusinessError("unsupported exchange rate date policy")
+	}
+}

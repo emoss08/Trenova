@@ -106,7 +106,10 @@ func Parse(markdown string) []Block {
 			flush()
 			var quoted []string
 			for ; idx < len(lines) && strings.HasPrefix(strings.TrimSpace(lines[idx]), ">"); idx++ {
-				quoted = append(quoted, strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(lines[idx]), ">")))
+				quoted = append(
+					quoted,
+					strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(lines[idx]), ">")),
+				)
 			}
 			idx--
 			blocks = append(blocks, Block{Kind: BlockQuote, Text: strings.Join(quoted, " ")})

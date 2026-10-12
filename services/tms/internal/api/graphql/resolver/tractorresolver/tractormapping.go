@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -18,7 +18,7 @@ func tractorRelationIncludes(
 	includeEquipmentDetails *bool,
 	includeFleetDetails *bool,
 	includeWorkerDetails *bool,
-) repositories.TractorRelationIncludes {
+) tractorports.TractorRelationIncludes {
 	return tractorRelationIncludesForFields(
 		func(path string) bool {
 			return graphql.FieldRequested(ctx, path)
@@ -36,7 +36,7 @@ func tractorRelationIncludesForFields(
 	includeEquipmentDetails *bool,
 	includeFleetDetails *bool,
 	includeWorkerDetails *bool,
-) repositories.TractorRelationIncludes {
+) tractorports.TractorRelationIncludes {
 	equipmentDetailsAllowed := includeEquipmentDetails == nil || *includeEquipmentDetails
 	fleetDetailsAllowed := includeFleetDetails == nil || *includeFleetDetails
 	workerDetailsAllowed := includeWorkerDetails == nil || *includeWorkerDetails
@@ -54,8 +54,9 @@ func tractorRelationIncludesForFields(
 	)
 	primaryWorkerSelection, primaryWorkerSelected := selection.Relations["primaryWorker"]
 	secondaryWorkerSelection, secondaryWorkerSelected := selection.Relations["secondaryWorker"]
+	_, ownerWorkerSelected := selection.Relations["ownerWorker"]
 
-	includes := repositories.TractorRelationIncludes{
+	includes := tractorports.TractorRelationIncludes{
 		IncludeBusinessUnit:           selection.HasRelation("businessUnit"),
 		IncludeOrganization:           selection.HasRelation("organization"),
 		IncludeState:                  selection.HasRelation("state"),
@@ -70,6 +71,7 @@ func tractorRelationIncludesForFields(
 		IncludeSecondaryWorkerState:   secondaryWorkerSelection.Selection.HasRelation("state"),
 		IncludeSecondaryWorkerFleet:   secondaryWorkerSelection.Selection.HasRelation("fleetCode"),
 		IncludeSecondaryWorkerManager: secondaryWorkerSelection.Selection.HasRelation("manager"),
+		IncludeOwnerWorker:            ownerWorkerSelected,
 		IncludeLastKnownLocation:      selection.HasSpecial("lastKnownLocation"),
 		IncludeCustomFields:           selection.HasSpecial("customFields"),
 		TractorColumns:                selection.Columns,
@@ -88,6 +90,9 @@ func tractorRelationIncludesForFields(
 	}
 	if includes.IncludeSecondaryWorker {
 		includes.SecondaryWorkerColumns = selection.RelationColumns("secondaryWorker")
+	}
+	if includes.IncludeOwnerWorker {
+		includes.OwnerWorkerColumns = selection.RelationColumns("ownerWorker")
 	}
 
 	return includes
@@ -147,7 +152,9 @@ func tractorLastKnownLocationReference(entity *tractor.Tractor) *gqlmodel.Locati
 	}
 
 	return &gqlmodel.LocationReference{
-		ID:   entity.LastKnownLocationID.String(),
-		Name: entity.LastKnownLocationName,
+		ID:        entity.LastKnownLocationID.String(),
+		Name:      entity.LastKnownLocationName,
+		Latitude:  entity.LastKnownLocationLatitude,
+		Longitude: entity.LastKnownLocationLongitude,
 	}
 }

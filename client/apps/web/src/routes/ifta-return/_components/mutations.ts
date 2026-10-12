@@ -13,7 +13,7 @@ export function useGenerateIftaReturn(period: IftaPeriodKey) {
   return useMutation({
     mutationFn: () => generateIftaReturn({ year: period.year, quarter: period.quarter }),
     onSuccess: async () => {
-      toast.success(`${quarterLabel(period)} return generated`, {
+      toast.success(t("{0} return generated", quarterLabel(period)), {
         description: t(
           "The draft is computed from the miles, fuel and rates on file now. Recompute it whenever late data lands.",
         ),

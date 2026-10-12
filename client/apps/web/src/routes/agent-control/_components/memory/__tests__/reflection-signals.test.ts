@@ -6,7 +6,7 @@ const t = ((text: string) => text) as TranslateFn;
 
 /*
 The kinds are agent.ReflectionSignalKind in
-services/tms/internal/core/domain/agent/agentreflection.go. A memory's evidence
+services/tms/internal/modules/agent/domain/agent/agentreflection.go. A memory's evidence
 carries them as plain strings, so a kind the client has not been taught yet
 must still show, as it was recorded.
 */

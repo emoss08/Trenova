@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export {
   drugAlcoholStatusSchema,
@@ -105,7 +106,7 @@ export const dotTestFormSchema = z
       !["ReasonableSuspicion", "PostAccident"].includes(values.testType) ||
       Boolean(values.reason?.trim()),
     {
-      message: "Record what prompted this test",
+      error: () => translate("Record what prompted this test"),
       path: ["reason"],
     },
   );
@@ -129,12 +130,12 @@ export const dotTestResultFormSchema = z
   .refine(
     (values) => values.substance !== "Alcohol" || Boolean(values.alcoholConcentration?.trim()),
     {
-      message: "Record the concentration that was measured",
+      error: () => translate("Record the concentration that was measured"),
       path: ["alcoholConcentration"],
     },
   )
   .refine((values) => values.result !== "Pending", {
-    message: "Choose the result that came back",
+    error: () => translate("Choose the result that came back"),
     path: ["result"],
   });
 export type DOTTestResultFormValues = z.infer<typeof dotTestResultFormSchema>;
@@ -153,7 +154,7 @@ export const clearinghouseQueryFormSchema = z
       !["PreEmploymentFull", "Full"].includes(values.queryType) ||
       Boolean(values.consentObtainedAt),
     {
-      message: "A full query requires the driver's electronic consent",
+      error: () => translate("A full query requires the driver's electronic consent"),
       path: ["consentObtainedAt"],
     },
   );
@@ -168,11 +169,11 @@ export const clearinghouseAnswerFormSchema = z
     notes: z.string().nullable(),
   })
   .refine((values) => values.result !== "Pending", {
-    message: "Choose the answer that came back",
+    error: () => translate("Choose the answer that came back"),
     path: ["result"],
   })
   .refine((values) => values.result !== "ViolationsFound" || values.violationCount > 0, {
-    message: "Record how many violations the query returned",
+    error: () => translate("Record how many violations the query returned"),
     path: ["violationCount"],
   });
 export type ClearinghouseAnswerFormValues = z.infer<typeof clearinghouseAnswerFormSchema>;
@@ -193,7 +194,7 @@ export const violationProgressFormSchema = z
     notes: z.string().nullable(),
   })
   .refine((values) => !values.sapEvaluationCompletedAt || Boolean(values.sapReferredAt), {
-    message: "Record the referral before the evaluation that followed it",
+    error: () => translate("Record the referral before the evaluation that followed it"),
     path: ["sapReferredAt"],
   })
   .refine(
@@ -202,15 +203,21 @@ export const violationProgressFormSchema = z
       values.followUpTestCount === 0 ||
       values.followUpTestCount >= 6,
     {
-      message: "A follow-up programme is at least six tests (49 CFR 382.311)",
+      error: () => translate("A follow-up programme is at least six tests (49 CFR 382.311)"),
       path: ["followUpTestCount"],
     },
   );
 export type ViolationProgressFormValues = z.infer<typeof violationProgressFormSchema>;
 
 export const randomPoolFormSchema = z.object({
-  code: z.string().min(1, "Code is required").max(50),
-  name: z.string().min(1, "Name is required").max(100),
+  code: z
+    .string()
+    .min(1, { error: () => translate("Code is required") })
+    .max(50),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(100),
   description: z.string().nullable(),
   status: z.enum(["Active", "Inactive"]),
   period: randomPeriodSchema,

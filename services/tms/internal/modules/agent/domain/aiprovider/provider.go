@@ -1,0 +1,1012 @@
+package aiprovider
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/url"
+	"slices"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/httpsafe"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
+)
+
+const (
+	maxProviderNameLength = 100
+	maxModelLength        = 200
+	minMaxTokens          = 256
+	maxMaxTokens          = 200000
+	maxExtraBodyKeys      = 24
+	maxExtraBodyBytes     = 8192
+	defaultMaxTokens      = 8192
+	// minContextWindow and maxContextWindow bound a configured window. Below
+	// the floor a turn's prompt and tools alone would not fit; above the
+	// ceiling is a typo, not a model.
+	minContextWindow = 4096
+	maxContextWindow = 10_000_000
+
+	DefaultTimeoutSeconds = 60
+	MinTimeoutSeconds     = 5
+	MaxTimeoutSeconds     = 600
+	DefaultMaxConcurrent  = 8
+	MinMaxConcurrent      = 1
+	MaxMaxConcurrent      = 64
+	// RotationGrace is how long a replaced key is kept as a fallback when its
+	// replacement is saved with the old one kept.
+	RotationGrace = 24 * time.Hour
+)
+
+// maxMonthlyCap is the largest cap NUMERIC(12,2) holds.
+var maxMonthlyCap = decimal.RequireFromString("9999999999.99")
+
+// Provider is one configured model endpoint belonging to an organization. An
+// organization may hold several — a local model for classification, a hosted one
+// for anything that reaches the ledger — which is why this is a row per endpoint
+// rather than a credential keyed by vendor.
+type Provider struct {
+	bun.BaseModel `bun:"table:ai_providers,alias:aiprv" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
+
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+
+	Name        string `json:"name"        bun:"name,type:VARCHAR(100),notnull"`
+	Description string `json:"description" bun:"description,type:TEXT,nullzero"`
+	Kind        Kind   `json:"kind"        bun:"kind,type:VARCHAR(50),notnull"`
+
+	// BaseURL is the endpoint root, without the protocol-specific path. Empty
+	// falls back to Kind.DefaultBaseURL.
+	BaseURL string `json:"baseUrl" bun:"base_url,type:TEXT,nullzero"`
+	// Model is free text on purpose. Self-hosted deployments name models whatever
+	// they like ("llama3.3:70b", "qwen2.5-coder:32b"), so no closed set can hold.
+	Model string `json:"model" bun:"model,type:VARCHAR(200),notnull"`
+
+	// APIKey holds the credential encrypted at rest. It is cleared before the
+	// entity leaves the service layer.
+	APIKey string `json:"-" bun:"api_key,type:TEXT,nullzero"`
+
+	// AllowPrivateNetwork lets this provider reach a loopback or RFC 1918 address.
+	// It exists because a self-hosted model is normally unreachable otherwise, and
+	// it is deliberately per-provider so enabling it for an internal GPU box does
+	// not widen egress for every other provider.
+	AllowPrivateNetwork bool `json:"allowPrivateNetwork" bun:"allow_private_network,type:BOOLEAN,notnull"`
+
+	StructuredOutputMode StructuredOutputMode `json:"structuredOutputMode" bun:"structured_output_mode,type:VARCHAR(50),notnull"`
+	MaxTokens            int                  `json:"maxTokens"            bun:"max_tokens,type:INTEGER,notnull"`
+	// ContextWindowTokens is the model's context window, in tokens, when the
+	// operator knows it better than the model id does: a self-hosted model
+	// served with a shorter context than its family's, or an id nothing here
+	// can place. Nil reads the window off the model id.
+	ContextWindowTokens *int `json:"contextWindow" bun:"context_window,type:INTEGER,nullzero"`
+	// ReasoningEffort asks a model that can think to do so before answering.
+	// Off is the default: the parameter is refused by models without it.
+	ReasoningEffort ReasoningEffort `json:"reasoningEffort" bun:"reasoning_effort,type:VARCHAR(50),notnull,nullzero,default:'Off'"`
+	// ThinkingStyle says how a Claude model behind an id the adapter cannot
+	// read takes thinking. Auto reads the id.
+	ThinkingStyle ThinkingStyle `json:"thinkingStyle" bun:"thinking_style,type:VARCHAR(50),notnull,nullzero,default:'Auto'"`
+	// Platform is the service an Anthropic Messages provider reaches Claude
+	// through, and PlatformSettings what that service needs besides the
+	// credential. Every other kind is called directly.
+	Platform         Platform          `json:"platform"         bun:"platform,type:VARCHAR(50),notnull,nullzero,default:'Direct'"`
+	PlatformSettings *PlatformSettings `json:"platformSettings" bun:"platform_settings,type:JSONB,nullzero"`
+
+	// ExtraBody is merged into the request an OpenAI-compatible endpoint
+	// receives, for the fields that are the server's own rather than the
+	// protocol's.
+	//
+	// Every serving stack has some. NVIDIA's NIM takes chat_template_kwargs
+	// and reasoning_budget to steer a Nemotron model's thinking, and reads
+	// max_tokens where this system sends max_completion_tokens; vLLM takes
+	// top_k and repetition_penalty; OpenRouter takes provider routing. None
+	// of them belong in a typed request struct, because the next stack will
+	// want different ones again, and without a way through, a model that
+	// needs one simply cannot be used.
+	//
+	// It is merged under the fields this system sets rather than over them:
+	// a provider cannot redirect a call to another model, turn streaming on
+	// or off, or replace the tools and schema a caller asked for. What is
+	// left to it is sampling, vendor switches, and the fields this system
+	// has no opinion about.
+	ExtraBody map[string]any `json:"extraBody" bun:"extra_body,type:JSONB,nullzero"`
+
+	// InputCostPerMillion and OutputCostPerMillion are what the provider
+	// charges, in USD per million tokens, entered by the operator from the
+	// provider's price list. Both nil means the cost of a call is unknown and
+	// is reported as such, never as zero.
+	InputCostPerMillion  *decimal.Decimal `json:"inputCostPerMillion"  bun:"input_cost_per_million,type:NUMERIC(12,6),nullzero"`
+	OutputCostPerMillion *decimal.Decimal `json:"outputCostPerMillion" bun:"output_cost_per_million,type:NUMERIC(12,6),nullzero"`
+
+	// CacheReadCostPerMillion and CacheWriteCostPerMillion price the prompt
+	// tokens a provider served from its cache and the ones it wrote to it.
+	// Nil takes the protocol's usual multiple of the input price (see
+	// CacheReadMultiple and CacheWriteMultiple): most of a Desk turn's prompt is
+	// read from the cache, so pricing it as fresh input overstated an OpenAI
+	// call and leaving it out understated an Anthropic one.
+	CacheReadCostPerMillion  *decimal.Decimal `json:"cacheReadCostPerMillion"  bun:"cache_read_cost_per_million,type:NUMERIC(12,6),nullzero"`
+	CacheWriteCostPerMillion *decimal.Decimal `json:"cacheWriteCostPerMillion" bun:"cache_write_cost_per_million,type:NUMERIC(12,6),nullzero"`
+
+	// Tasks are the units of work this provider may serve. Priority orders the
+	// candidates for a task, lowest first, which gives fallback chains without a
+	// second table.
+	Tasks    []Task `json:"tasks"    bun:"tasks,type:TEXT[],array,nullzero"`
+	Priority int    `json:"priority" bun:"priority,type:INTEGER,notnull"`
+
+	EmbeddingDimensions *int                `json:"embeddingDimensions" bun:"embedding_dimensions,type:INTEGER,nullzero"`
+	EmbeddingInputStyle EmbeddingInputStyle `json:"embeddingInputStyle" bun:"embedding_input_style,type:VARCHAR(50),notnull,default:'None'"`
+
+	// Trusted marks a provider an administrator vouches for. A task that can drive
+	// a financial mutation will not route to an untrusted provider.
+	Trusted bool `json:"trusted" bun:"trusted,type:BOOLEAN,notnull"`
+	Enabled bool `json:"enabled" bun:"enabled,type:BOOLEAN,notnull"`
+
+	// LastTest is the outcome of the most recent live probe, kept so the
+	// configuration UI can show whether an endpoint was ever reachable without
+	// probing it again on every page load.
+	LastTest *TestOutcome `json:"lastTest" bun:"last_test,type:JSONB,nullzero"`
+
+	// TimeoutSeconds bounds one call to this provider. A call that runs past
+	// it is this provider's failure, and the task moves to the next one.
+	TimeoutSeconds int `json:"timeoutSeconds" bun:"timeout_seconds,type:INTEGER,notnull,nullzero,default:60"`
+	// MaxConcurrent is how many calls this provider takes at once across
+	// every server. Past it, work moves to the next provider.
+	MaxConcurrent int `json:"maxConcurrent" bun:"max_concurrent,type:INTEGER,notnull,nullzero,default:8"`
+	// MonthlyCapUSD is the most this provider may spend in a UTC calendar
+	// month, over the calls that carried a price. Nil means no cap.
+	MonthlyCapUSD *decimal.Decimal `json:"monthlyCapUsd" bun:"monthly_cap_usd,type:NUMERIC(12,2),nullzero"`
+	OnCap         CapAction        `json:"onCap"         bun:"on_cap,type:VARCHAR(10),notnull,nullzero,default:'Next'"`
+
+	// APIKeyPrefix and APIKeyLastFour are the only parts of the key kept in
+	// the clear: enough to tell two keys apart, never enough to use one.
+	APIKeyPrefix     string   `json:"apiKeyPrefix"     bun:"api_key_prefix,type:VARCHAR(20),nullzero"`
+	APIKeyLastFour   string   `json:"apiKeyLastFour"   bun:"api_key_last_four,type:VARCHAR(4),nullzero"`
+	APIKeyAddedAt    *int64   `json:"apiKeyAddedAt"    bun:"api_key_added_at,type:BIGINT,nullzero"`
+	APIKeyAddedByID  pulid.ID `json:"apiKeyAddedById"  bun:"api_key_added_by_id,type:VARCHAR(100),nullzero"`
+	APIKeyLastUsedAt *int64   `json:"apiKeyLastUsedAt" bun:"api_key_last_used_at,type:BIGINT,nullzero"`
+	// PreviousAPIKey is the key a rotation replaced, encrypted like APIKey,
+	// kept until RotationExpiresAt so calls refused with the new key can
+	// still be served while the change reaches the vendor.
+	PreviousAPIKey    string `json:"-"                 bun:"previous_api_key,type:TEXT,nullzero"`
+	RotationExpiresAt *int64 `json:"rotationExpiresAt" bun:"rotation_expires_at,type:BIGINT,nullzero"`
+
+	// HasAPIKey is set on the redacted copy so a client can tell a credential is
+	// stored without the secret making the trip.
+	HasAPIKey bool `json:"hasApiKey" bun:"-"`
+
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+}
+
+func (p *Provider) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+
+	switch query.(type) {
+	case *bun.InsertQuery:
+		if p.ID.IsNil() {
+			p.ID = pulid.MustNew("aiprv_")
+		}
+		p.CreatedAt = now
+		p.UpdatedAt = now
+	case *bun.UpdateQuery:
+		p.UpdatedAt = now
+	}
+
+	return nil
+}
+
+// TestOutcome is what a live probe of the endpoint revealed, recorded on the
+// provider when it ran.
+type TestOutcome struct {
+	Success         bool   `json:"success"`
+	Message         string `json:"message"`
+	ModelIdentifier string `json:"modelIdentifier,omitempty"`
+	SchemaHonoured  bool   `json:"schemaHonoured"`
+	LatencyMS       int64  `json:"latencyMs"`
+	Detail          string `json:"detail,omitempty"`
+	TestedAt        int64  `json:"testedAt"`
+}
+
+func (p *Provider) GetID() pulid.ID { return p.ID }
+
+func (p *Provider) GetCreatedAt() int64 { return p.CreatedAt }
+
+func (p *Provider) GetTableName() string { return "ai_providers" }
+
+// Redacted returns a copy safe to hand to a client. The credential never leaves
+// the service layer; callers are told only whether one is set, so the UI can show
+// a configured state without the secret making the trip.
+func (p *Provider) Redacted() *Provider {
+	clone := *p
+	clone.HasAPIKey = p.HasStoredAPIKey() || p.HasAPIKey
+	clone.APIKey = ""
+	clone.PreviousAPIKey = ""
+	if p.PreviousKeyExpired(timeutils.NowUnix()) {
+		clone.RotationExpiresAt = nil
+	}
+
+	return &clone
+}
+
+// KeyInfo describes the stored credential without the secret. It is nil
+// when no key is stored.
+type KeyInfo struct {
+	Prefix               string
+	LastFour             string
+	AddedAt              int64
+	AddedByID            pulid.ID
+	LastUsedAt           *int64
+	PreviousKeyExpiresAt *int64
+}
+
+// KeyInfo is what may be said about the stored key. A key stored before its
+// ends were recorded reads as added when the provider was created.
+func (p *Provider) KeyInfo(now int64) *KeyInfo {
+	if !p.HasStoredAPIKey() && !p.HasAPIKey {
+		return nil
+	}
+
+	info := &KeyInfo{
+		Prefix:     p.APIKeyPrefix,
+		LastFour:   p.APIKeyLastFour,
+		AddedAt:    p.CreatedAt,
+		AddedByID:  p.APIKeyAddedByID,
+		LastUsedAt: p.APIKeyLastUsedAt,
+	}
+	if p.APIKeyAddedAt != nil {
+		info.AddedAt = *p.APIKeyAddedAt
+	}
+	if p.RotationExpiresAt != nil && *p.RotationExpiresAt > now {
+		expires := *p.RotationExpiresAt
+		info.PreviousKeyExpiresAt = &expires
+	}
+
+	return info
+}
+
+// NeedsKeyFingerprint reports a stored key whose ends were never recorded.
+func (p *Provider) NeedsKeyFingerprint() bool {
+	return p.HasStoredAPIKey() && p.APIKeyLastFour == "" && p.APIKeyPrefix == ""
+}
+
+// PreviousKeyUsable reports a replaced key still inside its grace period.
+func (p *Provider) PreviousKeyUsable(now int64) bool {
+	return strings.TrimSpace(p.PreviousAPIKey) != "" &&
+		p.RotationExpiresAt != nil && *p.RotationExpiresAt > now
+}
+
+// PreviousKeyExpired reports a rotation whose grace period has run out.
+func (p *Provider) PreviousKeyExpired(now int64) bool {
+	return p.RotationExpiresAt != nil && *p.RotationExpiresAt <= now
+}
+
+// ForgetExpiredPreviousKey drops a replaced key whose grace period is over,
+// and reports whether there was one.
+func (p *Provider) ForgetExpiredPreviousKey(now int64) bool {
+	if !p.PreviousKeyExpired(now) {
+		return false
+	}
+	p.PreviousAPIKey = ""
+	p.RotationExpiresAt = nil
+
+	return true
+}
+
+// KeyReplacement is a new credential for a provider. Encrypted is empty to
+// clear the stored key.
+type KeyReplacement struct {
+	Encrypted    string
+	Prefix       string
+	LastFour     string
+	AddedByID    pulid.ID
+	Now          int64
+	KeepPrevious bool
+}
+
+// ReplaceAPIKey stores a new credential. With KeepPrevious, a key it
+// replaces is kept as a fallback for RotationGrace; otherwise any replaced
+// key is dropped.
+func (p *Provider) ReplaceAPIKey(r KeyReplacement) {
+	if r.KeepPrevious && r.Encrypted != "" && p.HasStoredAPIKey() {
+		expires := r.Now + int64(RotationGrace/time.Second)
+		p.PreviousAPIKey = p.APIKey
+		p.RotationExpiresAt = &expires
+	} else {
+		p.PreviousAPIKey = ""
+		p.RotationExpiresAt = nil
+	}
+
+	p.APIKey = r.Encrypted
+	p.APIKeyLastUsedAt = nil
+	if r.Encrypted == "" {
+		p.APIKeyPrefix = ""
+		p.APIKeyLastFour = ""
+		p.APIKeyAddedAt = nil
+		p.APIKeyAddedByID = pulid.Nil
+
+		return
+	}
+
+	addedAt := r.Now
+	p.APIKeyPrefix = r.Prefix
+	p.APIKeyLastFour = r.LastFour
+	p.APIKeyAddedAt = &addedAt
+	p.APIKeyAddedByID = r.AddedByID
+}
+
+// ResolvedTimeout is how long one call to this provider may take.
+func (p *Provider) ResolvedTimeout() time.Duration {
+	seconds := p.TimeoutSeconds
+	if seconds <= 0 {
+		seconds = DefaultTimeoutSeconds
+	}
+
+	return time.Duration(seconds) * time.Second
+}
+
+// ResolvedMaxConcurrent is how many calls this provider takes at once.
+func (p *Provider) ResolvedMaxConcurrent() int {
+	if p.MaxConcurrent <= 0 {
+		return DefaultMaxConcurrent
+	}
+
+	return p.MaxConcurrent
+}
+
+// ResolvedOnCap is what happens to a task once the monthly cap is reached.
+func (p *Provider) ResolvedOnCap() CapAction {
+	if p.OnCap == "" {
+		return CapActionNext
+	}
+
+	return p.OnCap
+}
+
+// Capped reports whether the provider has a monthly cap.
+func (p *Provider) Capped() bool {
+	return p.MonthlyCapUSD != nil
+}
+
+// CapReached reports whether spend has used up the monthly cap.
+func (p *Provider) CapReached(spend decimal.Decimal) bool {
+	return p.MonthlyCapUSD != nil && spend.GreaterThanOrEqual(*p.MonthlyCapUSD)
+}
+
+// HasStoredAPIKey reports whether a credential is stored.
+func (p *Provider) HasStoredAPIKey() bool {
+	return strings.TrimSpace(p.APIKey) != ""
+}
+
+func (p *Provider) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "aiprv",
+		UseSearchVector: false,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "name", Type: domaintypes.FieldTypeText},
+			{Name: "model", Type: domaintypes.FieldTypeText},
+			{Name: "kind", Type: domaintypes.FieldTypeEnum},
+		},
+	}
+}
+
+// ResolvedBaseURL is the endpoint this provider actually calls. A platform's
+// address is built from its settings unless one is entered, such as a private
+// endpoint.
+func (p *Provider) ResolvedBaseURL() string {
+	if trimmed := strings.TrimRight(strings.TrimSpace(p.BaseURL), "/"); trimmed != "" {
+		return trimmed
+	}
+
+	return p.platformBaseURL()
+}
+
+// Host is the host this provider is reached at, or empty when its address
+// does not parse.
+func (p *Provider) Host() string {
+	parsed, err := url.Parse(p.ResolvedBaseURL())
+	if err != nil {
+		return ""
+	}
+
+	return parsed.Hostname()
+}
+
+// openAIPlatformHost is where OpenAI serves its own API.
+const openAIPlatformHost = "api.openai.com"
+
+// OnOpenAIPlatform reports a Responses provider reached at OpenAI itself. It
+// takes request fields, such as a prompt cache key, that a server speaking
+// the same protocol elsewhere — Bedrock's mantle endpoint among them — may
+// refuse.
+func (p *Provider) OnOpenAIPlatform() bool {
+	return p.Kind == KindOpenAIResponses && p.Host() == openAIPlatformHost
+}
+
+// claudeAPIHost is where Anthropic serves the Claude API.
+const claudeAPIHost = "api.anthropic.com"
+
+// OnClaudeAPI reports an Anthropic Messages provider calling the Claude API
+// itself. It takes request fields, such as cache diagnostics, that Claude
+// Platform on AWS or Google Cloud, the cloud platforms and a gateway speaking
+// the same protocol do not.
+func (p *Provider) OnClaudeAPI() bool {
+	return p.Kind == KindAnthropicMessages &&
+		p.ResolvedPlatform() == PlatformDirect &&
+		strings.EqualFold(p.Host(), claudeAPIHost)
+}
+
+func nonNegativePrice(label string) validation.RuleFunc {
+	return func(value any) error {
+		price, _ := value.(*decimal.Decimal)
+		if price != nil && price.IsNegative() {
+			return errors.New(label + " per million tokens cannot be negative")
+		}
+
+		return nil
+	}
+}
+
+// Priced reports whether a call through this provider has a known cost.
+func (p *Provider) Priced() bool {
+	return p.InputCostPerMillion != nil && p.OutputCostPerMillion != nil
+}
+
+// TokenUsage is what one call consumed, as its provider reported it. Whether
+// Input already counts the cached prompt tokens depends on the protocol
+// (Kind.CachesOutsideInput).
+type TokenUsage struct {
+	Input      int
+	Output     int
+	CacheRead  int
+	CacheWrite int
+}
+
+// CostFor prices a call. Nil without a price list: an unknown cost is not a
+// free one, and a sum that silently counted it as zero would understate spend
+// by exactly the providers nobody got round to pricing.
+//
+// Prompt tokens are priced in three parts: those read from the provider's
+// cache, those written to it, and the rest at the input price.
+func (p *Provider) CostFor(usage TokenUsage) *decimal.Decimal {
+	if !p.Priced() {
+		return nil
+	}
+	cost := p.promptCost(usage).Add(perMillion(*p.OutputCostPerMillion, usage.Output))
+
+	return &cost
+}
+
+// InputCostFor prices a call that returns no generated tokens, an embedding.
+func (p *Provider) InputCostFor(usage TokenUsage) *decimal.Decimal {
+	if p.InputCostPerMillion == nil {
+		return nil
+	}
+	cost := p.promptCost(usage)
+
+	return &cost
+}
+
+func (p *Provider) CostForTask(t Task, usage TokenUsage) *decimal.Decimal {
+	if !t.Generates() {
+		return p.InputCostFor(usage)
+	}
+
+	return p.CostFor(usage)
+}
+
+// CacheReadPrice is what a cached prompt token costs per million: the price
+// entered for it, or the protocol's usual share of the input price.
+func (p *Provider) CacheReadPrice() *decimal.Decimal {
+	return p.cachePrice(p.CacheReadCostPerMillion, p.Kind.CacheReadMultiple())
+}
+
+// CacheWritePrice is what a prompt token written to the cache costs per
+// million: the price entered for it, or the protocol's usual multiple of the
+// input price.
+func (p *Provider) CacheWritePrice() *decimal.Decimal {
+	return p.cachePrice(p.CacheWriteCostPerMillion, p.Kind.CacheWriteMultiple())
+}
+
+func (p *Provider) cachePrice(entered *decimal.Decimal, multiple decimal.Decimal) *decimal.Decimal {
+	if entered != nil {
+		return entered
+	}
+	if p.InputCostPerMillion == nil {
+		return nil
+	}
+	price := p.InputCostPerMillion.Mul(multiple)
+
+	return &price
+}
+
+func (p *Provider) promptCost(usage TokenUsage) decimal.Decimal {
+	read := max(usage.CacheRead, 0)
+	write := max(usage.CacheWrite, 0)
+	fresh := max(usage.Input, 0)
+	if !p.Kind.CachesOutsideInput() {
+		fresh = max(fresh-read-write, 0)
+	}
+
+	return perMillion(*p.InputCostPerMillion, fresh).
+		Add(perMillion(*p.CacheReadPrice(), read)).
+		Add(perMillion(*p.CacheWritePrice(), write))
+}
+
+func perMillion(price decimal.Decimal, tokens int) decimal.Decimal {
+	if tokens == 0 {
+		return decimal.Zero
+	}
+
+	return price.Mul(decimal.NewFromInt(int64(tokens))).Div(oneMillion)
+}
+
+var oneMillion = decimal.NewFromInt(1_000_000)
+
+func ClampMaxTokens(tokens int) int {
+	return min(max(tokens, minMaxTokens), maxMaxTokens)
+}
+
+// ResolvedMaxTokens clamps the configured ceiling into the supported range.
+func (p *Provider) ResolvedMaxTokens() int {
+	if p.MaxTokens <= 0 {
+		return defaultMaxTokens
+	}
+
+	return p.MaxTokens
+}
+
+// NetworkPolicy is the egress policy this provider's HTTP client must enforce.
+func (p *Provider) NetworkPolicy() httpsafe.Policy {
+	return httpsafe.Policy{AllowPrivateNetworks: p.AllowPrivateNetwork}
+}
+
+// ServesTask reports whether this provider is a candidate for t.
+func (p *Provider) ServesTask(t Task) bool {
+	for _, task := range p.Tasks {
+		if task == t {
+			return true
+		}
+	}
+
+	return false
+}
+
+// CanServeTask reports whether this provider may serve t right now, and why not
+// when it may not. A disabled provider, or an untrusted one asked for work that
+// reaches the ledger, is not a candidate.
+func (p *Provider) CanServeTask(t Task) (bool, string) {
+	switch {
+	case !p.Enabled:
+		return false, "provider is disabled"
+	case !p.ServesTask(t):
+		return false, "provider is not assigned to this task"
+	case t.WritesToLedger() && !p.Trusted:
+		return false, "provider is not marked trusted, and this task can change financial records"
+	case t == TaskEmbedding && !p.Kind.SupportsEmbedding():
+		return false, "provider protocol has no embedding endpoint"
+	case t == TaskEmbedding && !IsAllowedEmbeddingDimension(p.ResolvedEmbeddingDimensions()):
+		return false, "provider has no supported embedding dimension configured"
+	default:
+		return true, ""
+	}
+}
+
+func (p *Provider) ServesOnlyEmbedding() bool {
+	return len(p.Tasks) == 1 && p.Tasks[0] == TaskEmbedding
+}
+
+func (p *Provider) ResolvedEmbeddingDimensions() int {
+	if p.EmbeddingDimensions == nil {
+		return 0
+	}
+
+	return *p.EmbeddingDimensions
+}
+
+func (p *Provider) ResolvedEmbeddingInputStyle() EmbeddingInputStyle {
+	if p.EmbeddingInputStyle == "" {
+		return EmbeddingInputStyleNone
+	}
+
+	return p.EmbeddingInputStyle
+}
+
+func (p *Provider) EmbeddingHost() string {
+	parsed, err := url.Parse(p.ResolvedBaseURL())
+	if err != nil || parsed.Host == "" {
+		return strings.ToLower(p.ResolvedBaseURL())
+	}
+
+	return strings.ToLower(parsed.Host)
+}
+
+func (p *Provider) EmbeddingModelKey() string {
+	dimensions := p.ResolvedEmbeddingDimensions()
+	if dimensions <= 0 {
+		return ""
+	}
+
+	var b strings.Builder
+	host := p.EmbeddingHost()
+	model := strings.TrimSpace(p.Model)
+	b.Grow(len(host) + len(model) + 6)
+	b.WriteString(host)
+	b.WriteByte('/')
+	b.WriteString(model)
+	b.WriteByte('@')
+	b.WriteString(strconv.Itoa(dimensions))
+
+	return b.String()
+}
+
+func (p *Provider) Validate(multiErr *errortypes.MultiError) {
+	p.applyDefaults()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
+		validation.Field(&p.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&p.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&p.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxProviderNameLength).
+				Error("Name cannot be longer than 100 characters"),
+		),
+		validation.Field(&p.Kind,
+			validation.Required.Error("Kind is required"),
+			domainvalidation.ValidEnum[Kind]("Kind is not a protocol this system speaks"),
+		),
+		validation.Field(&p.Model,
+			validation.Required.Error("Model is required"),
+			validation.Length(1, maxModelLength).
+				Error("Model cannot be longer than 200 characters"),
+		),
+		validation.Field(&p.StructuredOutputMode,
+			validation.Required.Error("Structured output mode is required"),
+			domainvalidation.ValidEnum[StructuredOutputMode](
+				"Structured output mode is invalid",
+			),
+		),
+		validation.Field(&p.ReasoningEffort,
+			validation.Required.Error("Reasoning effort is required"),
+			domainvalidation.ValidEnum[ReasoningEffort]("Reasoning effort is invalid"),
+		),
+		validation.Field(&p.ThinkingStyle,
+			validation.Required.Error("Thinking style is required"),
+			domainvalidation.ValidEnum[ThinkingStyle]("Thinking style is invalid"),
+			validation.When(
+				p.Kind != KindAnthropicMessages,
+				validation.In(ThinkingStyleAuto).
+					Error("Thinking style applies only to Anthropic Messages providers"),
+			),
+		),
+		validation.Field(&p.InputCostPerMillion, validation.By(nonNegativePrice("Input cost"))),
+		validation.Field(&p.OutputCostPerMillion, validation.By(nonNegativePrice("Output cost"))),
+		validation.Field(&p.CacheReadCostPerMillion,
+			validation.By(nonNegativePrice("Cache read cost")),
+			validation.When(p.InputCostPerMillion == nil, validation.Nil.Error(
+				"Enter the input cost before a cache read cost: a cache price stands beside it",
+			)),
+		),
+		validation.Field(&p.CacheWriteCostPerMillion,
+			validation.By(nonNegativePrice("Cache write cost")),
+			validation.When(p.InputCostPerMillion == nil, validation.Nil.Error(
+				"Enter the input cost before a cache write cost: a cache price stands beside it",
+			)),
+		),
+		validation.Field(&p.MaxTokens,
+			validation.Min(minMaxTokens).
+				Error("Max tokens must be at least 256"),
+			validation.Max(maxMaxTokens).
+				Error("Max tokens cannot exceed 200000"),
+		),
+		validation.Field(&p.ContextWindowTokens,
+			validation.Min(minContextWindow).
+				Error("Context window must be at least 4096 tokens"),
+			validation.Max(maxContextWindow).
+				Error("Context window cannot exceed 10000000 tokens"),
+		),
+		validation.Field(&p.Priority,
+			validation.Min(0).Error("Priority cannot be negative"),
+		),
+		validation.Field(&p.TimeoutSeconds,
+			validation.Min(MinTimeoutSeconds).Error("Timeout must be at least 5 seconds"),
+			validation.Max(MaxTimeoutSeconds).Error("Timeout cannot exceed 600 seconds"),
+		),
+		validation.Field(&p.MaxConcurrent,
+			validation.Min(MinMaxConcurrent).Error("Concurrent calls must be at least 1"),
+			validation.Max(MaxMaxConcurrent).Error("Concurrent calls cannot exceed 64"),
+		),
+		validation.Field(&p.MonthlyCapUSD, validation.By(validMonthlyCap)),
+		validation.Field(&p.OnCap,
+			validation.Required.Error("What happens at the cap is required"),
+			domainvalidation.ValidEnum[CapAction]("What happens at the cap must be Next or Stop"),
+		),
+	))
+
+	p.validatePlatform(multiErr)
+	p.validateTasks(multiErr)
+	p.validateEmbedding(multiErr)
+	p.validateEndpoint(multiErr)
+	p.validateExtraBody(multiErr)
+}
+
+func (p *Provider) validateEmbedding(multiErr *errortypes.MultiError) {
+	if !p.EmbeddingInputStyle.IsValid() {
+		multiErr.Add(
+			"embeddingInputStyle",
+			errortypes.ErrInvalid,
+			"Embedding input style is invalid",
+		)
+	}
+
+	if p.EmbeddingDimensions != nil && !IsAllowedEmbeddingDimension(*p.EmbeddingDimensions) {
+		multiErr.Add(
+			"embeddingDimensions",
+			errortypes.ErrInvalid,
+			"Embedding dimensions must be 768, 1024 or 1536",
+		)
+	}
+
+	embeddingAt := slices.Index(p.Tasks, TaskEmbedding)
+	if embeddingAt < 0 {
+		return
+	}
+
+	field := fmt.Sprintf("tasks[%d]", embeddingAt)
+	if p.Kind.IsValid() && !p.Kind.SupportsEmbedding() {
+		multiErr.Add(
+			field,
+			errortypes.ErrInvalid,
+			"This protocol has no embedding endpoint, so it cannot serve the Embedding task",
+		)
+	}
+
+	if len(p.Tasks) > 1 {
+		multiErr.Add(
+			field,
+			errortypes.ErrInvalid,
+			"An embedding model cannot also serve tasks that write text; add a separate provider for those",
+		)
+	}
+
+	if p.EmbeddingDimensions == nil {
+		multiErr.Add(
+			"embeddingDimensions",
+			errortypes.ErrRequired,
+			"Embedding dimensions are required for a provider that serves the Embedding task",
+		)
+	}
+}
+
+// reservedBodyKeys are the request fields this system owns. A provider that
+// could set them could send a call to a different model, silently disable
+// the tools a caller passed, or turn a blocking call into a stream nothing
+// is reading.
+var reservedBodyKeys = map[string]struct{}{
+	"model":              {},
+	"messages":           {},
+	"stream":             {},
+	"stream_options":     {},
+	"tools":              {},
+	"tool_choice":        {},
+	"response_format":    {},
+	"input":              {},
+	"contents":           {},
+	"prompt":             {},
+	"system":             {},
+	"system_instruction": {},
+}
+
+func (p *Provider) validateExtraBody(multiErr *errortypes.MultiError) {
+	if len(p.ExtraBody) == 0 {
+		return
+	}
+	if len(p.ExtraBody) > maxExtraBodyKeys {
+		multiErr.Add(
+			"extraBody",
+			errortypes.ErrInvalid,
+			"At most {0} extra request fields",
+			maxExtraBodyKeys,
+		)
+
+		return
+	}
+
+	for key := range p.ExtraBody {
+		trimmed := strings.TrimSpace(key)
+		if trimmed == "" {
+			multiErr.Add("extraBody", errortypes.ErrInvalid, "An extra field needs a name")
+
+			continue
+		}
+		if _, reserved := reservedBodyKeys[strings.ToLower(trimmed)]; reserved {
+			multiErr.Add(
+				"extraBody",
+				errortypes.ErrInvalid,
+				"{0} is set by this system and cannot be overridden",
+				trimmed,
+			)
+		}
+	}
+
+	encoded, err := sonic.Marshal(p.ExtraBody)
+	if err != nil {
+		multiErr.Add("extraBody", errortypes.ErrInvalid, "Extra fields must be JSON")
+
+		return
+	}
+	if len(encoded) > maxExtraBodyBytes {
+		multiErr.Add(
+			"extraBody",
+			errortypes.ErrInvalid,
+			"Extra fields cannot exceed {0} characters",
+			maxExtraBodyBytes,
+		)
+	}
+}
+
+// applyDefaults fills the fields whose absence means "the ordinary thing"
+// rather than a mistake. Reasoning effort is the case that mattered: the
+// column defaults to Off and most providers never set it, but validation
+// required it, so anything building a provider without naming it — a
+// seed, an import, a form that hides the field — was refused for omitting
+// the default.
+func (p *Provider) applyDefaults() {
+	if p.ReasoningEffort == "" {
+		p.ReasoningEffort = ReasoningOff
+	}
+	if p.StructuredOutputMode == "" {
+		p.StructuredOutputMode = StructuredOutputPrompted
+	}
+	if p.ThinkingStyle == "" {
+		p.ThinkingStyle = ThinkingStyleAuto
+	}
+	p.NormalizePlatformSettings()
+	if p.EmbeddingInputStyle == "" {
+		p.EmbeddingInputStyle = EmbeddingInputStyleNone
+	}
+	if p.TimeoutSeconds == 0 {
+		p.TimeoutSeconds = DefaultTimeoutSeconds
+	}
+	if p.MaxConcurrent == 0 {
+		p.MaxConcurrent = DefaultMaxConcurrent
+	}
+	if p.OnCap == "" {
+		p.OnCap = CapActionNext
+	}
+}
+
+func validMonthlyCap(value any) error {
+	limit, _ := value.(*decimal.Decimal)
+	switch {
+	case limit == nil:
+		return nil
+	case !limit.IsPositive():
+		return validation.NewError(
+			"validation_monthly_cap_positive",
+			"Monthly cap must be more than zero",
+		)
+	case limit.GreaterThan(maxMonthlyCap):
+		return validation.NewError(
+			"validation_monthly_cap_max",
+			"Monthly cap is larger than this system can hold",
+		)
+	case !limit.Equal(limit.Round(2)):
+		return validation.NewError(
+			"validation_monthly_cap_scale",
+			"Monthly cap takes at most two decimal places",
+		)
+	default:
+		return nil
+	}
+}
+
+func (p *Provider) validateTasks(multiErr *errortypes.MultiError) {
+	for idx, task := range p.Tasks {
+		if !task.IsValid() {
+			multiErr.Add(
+				fmt.Sprintf("tasks[%d]", idx),
+				errortypes.ErrInvalid,
+				"Task is not one this system routes",
+			)
+		}
+	}
+
+	if !p.Enabled {
+		return
+	}
+
+	// An enabled provider serving nothing is almost always a half-finished setup,
+	// and it fails silently at call time rather than at save time.
+	if len(p.Tasks) == 0 {
+		multiErr.Add(
+			"tasks",
+			errortypes.ErrInvalid,
+			"An enabled provider must serve at least one task",
+		)
+	}
+
+	for idx, task := range p.Tasks {
+		if task.WritesToLedger() && !p.Trusted {
+			multiErr.Add(
+				fmt.Sprintf("tasks[%d]", idx),
+				errortypes.ErrInvalid,
+				"This task can change financial records, so it can only be served by a provider marked trusted",
+			)
+		}
+	}
+}
+
+// ValidateEndpoint checks only where the provider is reached and with what,
+// for an endpoint an editor asks about before it is saved.
+func (p *Provider) ValidateEndpoint(multiErr *errortypes.MultiError) {
+	if !p.Kind.IsValid() {
+		multiErr.Add("kind", errortypes.ErrInvalid, "Unknown provider kind")
+		return
+	}
+	p.NormalizePlatformSettings()
+	p.validatePlatform(multiErr)
+	p.validateEndpoint(multiErr)
+}
+
+func (p *Provider) validateEndpoint(multiErr *errortypes.MultiError) {
+	if !p.Kind.IsValid() {
+		return
+	}
+
+	baseURL := p.ResolvedBaseURL()
+	if baseURL == "" && p.ResolvedPlatform() != PlatformDirect {
+		return
+	}
+	if baseURL == "" {
+		multiErr.Add(
+			"baseUrl",
+			errortypes.ErrRequired,
+			"Base URL is required for an OpenAI-compatible provider",
+		)
+		return
+	}
+
+	// Validated here so a bad or blocked endpoint is rejected while an
+	// administrator is looking at the form, not on the first call at midnight.
+	if _, err := httpsafe.ValidateURLWithPolicy(baseURL, p.NetworkPolicy()); err != nil {
+		multiErr.Add("baseUrl", errortypes.ErrInvalid, endpointErrorMessage(err))
+	}
+
+	if p.RequiresCredential() && strings.TrimSpace(p.APIKey) == "" {
+		multiErr.Add("apiKey", errortypes.ErrRequired, "API key is required for this provider")
+	}
+}
+
+func endpointErrorMessage(err error) string {
+	switch {
+	case errors.Is(err, httpsafe.ErrBlockedScheme):
+		return "Base URL must use http or https"
+	case errors.Is(err, httpsafe.ErrMissingHost):
+		return "Base URL must include a host"
+	case errors.Is(err, httpsafe.ErrBlockedAddress):
+		return "Base URL points at an address this server will not call. Enable \"Allow private network\" if this is a model server on your own network; link-local addresses are never allowed."
+	default:
+		return "Base URL is not a valid URL"
+	}
+}

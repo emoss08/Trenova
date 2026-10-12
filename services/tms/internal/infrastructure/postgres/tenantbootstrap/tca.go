@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/buncolgen/tablechangealertcol"
+
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
@@ -36,7 +37,7 @@ var defaultTCAAllowlist = []tcaAllowlistEntry{
 }
 
 func CreateTCAAllowlist(ctx context.Context, db bun.IDB, scope Scope) (int, error) {
-	cols := buncolgen.TCAAllowlistedTableColumns
+	cols := tablechangealertcol.TCAAllowlistedTableColumns
 	exists, err := db.NewSelect().
 		Model((*tablechangealert.TCAAllowlistedTable)(nil)).
 		Where(cols.OrganizationID.Eq(), scope.OrganizationID).

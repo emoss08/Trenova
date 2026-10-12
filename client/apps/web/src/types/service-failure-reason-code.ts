@@ -4,6 +4,7 @@ import {
   optionalStringSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const serviceFailureReasonCategorySchema = z.enum([
   "Carrier",
@@ -36,12 +37,12 @@ export const serviceFailureReasonCodeSchema = z.object({
   ...tenantInfoSchema.shape,
   code: z
     .string()
-    .min(1, { message: "Code is required" })
-    .max(64, { message: "Code must be less than 64 characters" }),
+    .min(1, { error: () => translate("Code is required") })
+    .max(64, { error: () => translate("Code must be less than 64 characters") }),
   label: z
     .string()
-    .min(1, { message: "Label is required" })
-    .max(120, { message: "Label must be less than 120 characters" }),
+    .min(1, { error: () => translate("Label is required") })
+    .max(120, { error: () => translate("Label must be less than 120 characters") }),
   description: nullableTextSchema,
   category: serviceFailureReasonCategorySchema.default("Carrier"),
   appliesTo: serviceFailureReasonCodeAppliesToSchema.default("Both"),

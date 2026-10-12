@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/routelint"
 	"github.com/emoss08/trenova/internal/api/writecoverage"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -187,8 +187,8 @@ func sampleWrites() []writecoverage.Write {
 	}
 }
 
-func sampleTools() map[string]serviceports.ToolPolicy {
-	return map[string]serviceports.ToolPolicy{
+func sampleTools() map[string]agentports.ToolPolicy {
+	return map[string]agentports.ToolPolicy{
 		"create_thing": {Name: "create_thing", Kind: agent.ToolKindAction},
 	}
 }

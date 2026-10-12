@@ -118,7 +118,8 @@ function StatementUploader({ batch, file, onUploaded, onFailed }: StatementUploa
 
   const upload = uploads[0];
   const progress = upload?.progress ?? 0;
-  const label = upload?.status === "success" ? "Reading the statement…" : `Uploading ${file.name}…`;
+  const label =
+    upload?.status === "success" ? t("Reading the statement…") : t("Uploading {0}…", file.name);
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border p-3" aria-busy="true">
@@ -242,7 +243,10 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
     onSuccess: async (committed) => {
       setBatch(committed);
       toast.success(t("Statement imported"), {
-        description: `${committed.committedCount} ${committed.committedCount === 1 ? "purchase" : "purchases"} recorded.`,
+        description: t(
+          "{0, plural, one {# purchase recorded.} other {# purchases recorded.}}",
+          committed.committedCount,
+        ),
       });
       await queryClient.invalidateQueries({ queryKey: [FUEL_PURCHASE_LIST_KEY] });
     },

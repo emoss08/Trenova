@@ -16,7 +16,8 @@ export type ControlPatch = Partial<
 /**
  * The input the mutation sends: the current switches with one of them changed.
  * Training consent is sent only when it is the switch being changed, so saving
- * any other switch never re-records who consented.
+ * any other switch never re-records who consented. The version loaded travels
+ * with it, so a switch flipped over someone else's save is refused, not lost.
  */
 export function controlInput(current: AgentControl, patch: ControlPatch): AgentControlInput {
   return {
@@ -25,6 +26,7 @@ export function controlInput(current: AgentControl, patch: ControlPatch): AgentC
     promotionThreshold: patch.promotionThreshold ?? current.promotionThreshold,
     personMonthlyMessages: patch.personMonthlyMessages ?? current.personMonthlyMessages,
     learningOff: patch.learningOff ?? current.learningOff,
+    version: current.version,
     ...(patch.aiTrainingConsent === undefined
       ? {}
       : { aiTrainingConsent: patch.aiTrainingConsent }),
@@ -40,13 +42,24 @@ export const PROMOTION_THRESHOLD_PRESETS = [5, 10, 25, 50] as const;
 
 export type ThresholdOption = { value: number; label: string };
 
-export function promotionThresholdOptions(current: number): ThresholdOption[] {
-  const values = new Set<number>(PROMOTION_THRESHOLD_PRESETS);
-  if (Number.isInteger(current) && current > 0) {
+/**
+ * A short list of presets to choose from, with the current value added when it was set
+ * some other way, so the control never shows nothing pressed. Sorted ascending.
+ */
+export function withPresets(presets: readonly number[], current: number): number[] {
+  const values = new Set<number>(presets);
+  if (Number.isFinite(current)) {
     values.add(current);
   }
 
-  return [...values].sort((a, b) => a - b).map((value) => ({ value, label: String(value) }));
+  return [...values].sort((a, b) => a - b);
+}
+
+export function promotionThresholdOptions(current: number): ThresholdOption[] {
+  return withPresets(
+    PROMOTION_THRESHOLD_PRESETS,
+    Number.isInteger(current) && current > 0 ? current : NaN,
+  ).map((value) => ({ value, label: String(value) }));
 }
 
 /**
@@ -56,10 +69,8 @@ export function promotionThresholdOptions(current: number): ThresholdOption[] {
 export const PERSON_ALLOWANCE_PRESETS = [0, 100, 250, 500, 1000] as const;
 
 export function personAllowanceOptions(current: number): number[] {
-  const values = new Set<number>(PERSON_ALLOWANCE_PRESETS);
-  if (Number.isInteger(current) && current >= 0) {
-    values.add(current);
-  }
-
-  return [...values].sort((a, b) => a - b);
+  return withPresets(
+    PERSON_ALLOWANCE_PRESETS,
+    Number.isInteger(current) && current >= 0 ? current : NaN,
+  );
 }

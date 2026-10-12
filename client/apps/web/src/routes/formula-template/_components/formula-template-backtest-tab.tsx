@@ -282,6 +282,7 @@ export default function FormulaTemplateBacktestTab({
     if (!mutation.data || mutation.data.results.length === 0) return;
     downloadCsv(
       backtestCsv(mutation.data.results),
+      // i18n-ignore: export file name
       exportFilename(`backtest ${template?.name ?? "formula template"}`),
     );
   };

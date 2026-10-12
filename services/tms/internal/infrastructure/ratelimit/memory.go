@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 type MemoryStoreOptions struct {
@@ -40,8 +40,8 @@ func NewMemoryStore(opts MemoryStoreOptions) *MemoryStore {
 
 func (s *MemoryStore) Check(
 	_ context.Context,
-	requests []repositories.RateLimitRequest,
-) ([]repositories.RateLimitDecision, error) {
+	requests []kernelports.RateLimitRequest,
+) ([]kernelports.RateLimitDecision, error) {
 	if err := validateRequests(requests); err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (s *MemoryStore) Check(
 		}
 	}
 
-	decisions := make([]repositories.RateLimitDecision, len(requests))
+	decisions := make([]kernelports.RateLimitDecision, len(requests))
 	for i := range requests {
 		if allAllowed {
 			s.buckets[requests[i].Key] = results[i].newTAT

@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/redis/go-redis/v9"
@@ -25,7 +25,7 @@ const (
 	datavKeyPrefix = "report:datav:"
 )
 
-var _ services.ReportResultCache = (*Cache)(nil)
+var _ reportports.ReportResultCache = (*Cache)(nil)
 
 type Params struct {
 	fx.In
@@ -41,7 +41,7 @@ type Cache struct {
 	l     *zap.Logger
 }
 
-func New(p Params) services.ReportResultCache {
+func New(p Params) reportports.ReportResultCache {
 	return &Cache{
 		redis: p.Redis,
 		cfg:   p.Config.GetReportingConfig(),
@@ -55,7 +55,7 @@ func New(p Params) services.ReportResultCache {
 // every table the query touches.
 func (c *Cache) Key(
 	ctx context.Context,
-	compiled *services.CompiledReportQuery,
+	compiled *reportports.CompiledReportQuery,
 	format report.Format,
 	orgID pulid.ID,
 ) (string, error) {
@@ -125,7 +125,7 @@ func (c *Cache) dataVersions(
 func (c *Cache) Lookup(
 	ctx context.Context,
 	key string,
-) (*services.ReportCacheEntry, bool, error) {
+) (*reportports.ReportCacheEntry, bool, error) {
 	raw, err := c.redis.Get(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
 		return nil, false, nil
@@ -134,7 +134,7 @@ func (c *Cache) Lookup(
 		return nil, false, fmt.Errorf("lookup report cache entry: %w", err)
 	}
 
-	var entry services.ReportCacheEntry
+	var entry reportports.ReportCacheEntry
 	if err = sonic.Unmarshal([]byte(raw), &entry); err != nil {
 		c.l.Warn("discarding malformed report cache entry", zap.Error(err))
 		return nil, false, nil
@@ -150,7 +150,7 @@ func (c *Cache) Lookup(
 func (c *Cache) Store(
 	ctx context.Context,
 	key string,
-	entry *services.ReportCacheEntry,
+	entry *reportports.ReportCacheEntry,
 ) error {
 	ttl := c.cfg.GetResultCacheTTL()
 	if entry.ArtifactExpiresAt > 0 {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const employmentVerificationStatusSchema = z.enum([
   "Pending",
@@ -37,7 +38,10 @@ export type DQFItemStatus = z.infer<typeof dqfItemStatusSchema>;
  */
 export const employmentVerificationFormSchema = z
   .object({
-    employerName: z.string().min(1, "Employer is required").max(150),
+    employerName: z
+      .string()
+      .min(1, { error: () => translate("Employer is required") })
+      .max(150),
     employerDotNumber: z.string().max(20).nullable(),
     employerMcNumber: z.string().max(20).nullable(),
     contactName: z.string().max(100).nullable(),
@@ -63,7 +67,7 @@ export const employmentVerificationFormSchema = z
       values.employedTo === null ||
       values.employedTo >= values.employedFrom,
     {
-      message: "The end of the employment cannot pre-date its start",
+      error: () => translate("The end of the employment cannot pre-date its start"),
       path: ["employedTo"],
     },
   )
@@ -73,16 +77,16 @@ export const employmentVerificationFormSchema = z
       values.status === "NotApplicable" ||
       Boolean(values.requestedAt),
     {
-      message: "Record when the request was sent",
+      error: () => translate("Record when the request was sent"),
       path: ["requestedAt"],
     },
   )
   .refine((values) => values.status !== "Received" || Boolean(values.responseReceivedAt), {
-    message: "Record when the response arrived",
+    error: () => translate("Record when the response arrived"),
     path: ["responseReceivedAt"],
   })
   .refine((values) => !values.hadAccidents || values.accidentCount > 0, {
-    message: "Record how many accidents the employer reported",
+    error: () => translate("Record how many accidents the employer reported"),
     path: ["accidentCount"],
   });
 export type EmploymentVerificationFormValues = z.infer<typeof employmentVerificationFormSchema>;

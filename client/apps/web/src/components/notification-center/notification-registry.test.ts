@@ -1,7 +1,12 @@
 import type { Notification } from "@trenova/shared/types/notification";
 import { describe, expect, it } from "vitest";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
+  buildNotificationCatalog,
+  SYSTEM_PREFERENCE_KEY,
+  TCA_PREFERENCE_KEY,
   getNotificationDescriptor,
   getNotificationLink,
   resolveNotificationDescriptor,
@@ -355,5 +360,65 @@ describe("notification registry — assistant replies", () => {
     const n = notification({ eventType: "tender_accepted" });
 
     expect(resolveNotificationDescriptor(n)).toBe(getNotificationDescriptor("tender_accepted"));
+  });
+});
+
+describe("notification catalog", () => {
+  const catalog = buildNotificationCatalog();
+  const types = catalog.flatMap((category) => category.types);
+
+  it("lists every kind once, grouped by the registry's category", () => {
+    const keys = types.map((type) => type.key);
+    expect(new Set(keys).size).toBe(keys.length);
+    const dispatch = catalog.find((category) => category.name === "Dispatch");
+    expect(new Set(dispatch?.types.map((type) => type.key))).toEqual(new Set(DISPATCH_EVENT_TYPES));
+    for (const category of catalog) {
+      expect(category.types.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("gives every kind a sentence a person reads, not its key", () => {
+    for (const type of types) {
+      expect(type.label).not.toBe(type.key);
+      expect(type.label.length).toBeGreaterThan(3);
+    }
+  });
+
+  it("puts table change alerts and system notices behind one key each, and locks the required ones", () => {
+    expect(types.find((type) => type.key === TCA_PREFERENCE_KEY)?.requiredReason).toBeNull();
+    expect(types.find((type) => type.key === SYSTEM_PREFERENCE_KEY)?.requiredReason).not.toBeNull();
+    expect(
+      types.find((type) => type.key === "ai_audit_chain_mismatch")?.requiredReason,
+    ).not.toBeNull();
+    expect(types.filter((type) => type.requiredReason !== null)).toHaveLength(2);
+  });
+
+  it("orders categories the way the settings page reads them and gives each a description", () => {
+    expect(catalog.map((category) => category.name).slice(0, 3)).toEqual([
+      "Mentions",
+      "Assistant",
+      "Dispatch",
+    ]);
+    expect(catalog.at(-1)?.name).toBe("System");
+    for (const category of catalog) {
+      expect(category.description).not.toBe("");
+    }
+  });
+
+  it("marks as urgent exactly the kinds the server delivers as urgent", () => {
+    const goSource = readFileSync(
+      resolve(
+        __dirname,
+        "../../../../../../services/tms/internal/modules/workspace/domain/notification/preference.go",
+      ),
+      "utf8",
+    );
+    const body = goSource.slice(goSource.indexOf("func urgentEventTypes()"));
+    const block = body.slice(0, body.indexOf("\n}\n"));
+    const serverUrgent = [...block.matchAll(/"([a-z0-9_.]+)"/g)].map((match) => match[1]);
+    serverUrgent.push("ai_audit_chain_mismatch");
+
+    const clientUrgent = types.filter((type) => type.urgent).map((type) => type.key);
+    expect(new Set(clientUrgent)).toEqual(new Set(serverUrgent));
   });
 });

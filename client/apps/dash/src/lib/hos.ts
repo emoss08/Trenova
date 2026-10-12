@@ -1,3 +1,4 @@
+import { formatRelativeTime } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import type { RingGaugeTone } from "@trenova/shared/components/ui/ring-gauge";
@@ -14,13 +15,13 @@ export function toDateKey(date: Date): string {
 
 export function timeAgo(unixSeconds: number, nowMs: number = Date.now()): string {
   const seconds = Math.max(0, Math.floor(nowMs / 1000) - unixSeconds);
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return translate("just now");
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return formatRelativeTime(-minutes * 60, "narrow");
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return formatRelativeTime(-hours * 3600, "narrow");
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return formatRelativeTime(-days * 86400, "narrow");
 }
 
 export function gaugeTone(remainingMs: number, defaultTone: RingGaugeTone): RingGaugeTone {

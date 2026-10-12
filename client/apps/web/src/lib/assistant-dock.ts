@@ -73,6 +73,9 @@ export function nearestDock(
   return left ? "bottom-left" : "bottom-right";
 }
 
+/** How far the beacon and its tab sit from the bottom edge in a bottom corner (`bottom-5`). */
+export const DOCK_EDGE_INSET = 20;
+
 /**
  * Fixed-position classes for something anchored in a corner, written out in
  * full so the stylesheet contains them. The top corners sit below the app

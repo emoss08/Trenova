@@ -10,7 +10,7 @@ activity and must keep to its determinism rules.
 
 ## The model
 
-`internal/core/domain/agent/preview.go`.
+`internal/modules/agent/domain/agent/preview.go`.
 
 | Type | Is |
 |---|---|
@@ -66,7 +66,7 @@ record would be plausible and wrong — parameter names are not fields, transiti
 fields, services compute totals — so each tool shares one plan function between `Execute` and
 `Preview`.
 
-`internal/core/services/toolpreview` builds the preview from that plan function:
+`internal/modules/agent/app/toolpreview` builds the preview from that plan function:
 
 | Function | Builds |
 |---|---|
@@ -102,13 +102,15 @@ repeatable-read transaction of its own (`toolsimulation.InSnapshot`).
 
 ## The preview service
 
-`internal/core/services/proposalpreviewservice`, behind `services.ProposalPreviewService`.
+`internal/modules/agent/app/proposalpreviewservice`, behind `agentports.ProposalPreviewService`.
 
 `ForProposal(ctx, {Proposal, Modifications, Viewer})`, in order:
 
 1. Refuses a reader outside the proposal's tenant (`ErrTenantMismatch`).
 2. A decided proposal returns the preview recorded when it was decided, filtered again for
-   this reader (`Recorded: true`); without one, its parameters.
+   this reader (`Recorded: true`); without one, its parameters. A record the recorded
+   preview names without a label (recorded before its kind could be labelled) is labelled
+   on read, before the filter; the recorded row and its digest are left as they were.
 3. A self-scoped tool's proposal is previewed only for its owner.
 4. Settles the parameters: changes are checked the way a decision checks them
    (`CheckModifications`, which refuses a change pointing the write at another record);
@@ -235,7 +237,7 @@ the box says how many were not previewed before such an approval records them un
 An approver's changes can never point the write at another record: `refuseRetarget`
 compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and again where it
 runs. The parameter holding the target's id is `readOnly` in `parameterFields` and in the
-chat's editable fields (`services.ProposalFields`).
+chat's editable fields (`agentports.ProposalFields`).
 
 ## Record subsets
 
@@ -256,7 +258,7 @@ array-of-ids parameter as a subset of one permission resource's records with
   a list of strings, back as the parameter's modification.
 - **Labels.** GraphQL reads them through the `SubsetLabels` loader: each subset field asks
   once for all of its ids, and a request's fields are labelled together, one query per
-  resource for each `services.MaxRecordLabelsPerResource` (5000) records. The chat's
+  resource for each `agentports.MaxRecordLabelsPerResource` (5000) records. The chat's
   `/assistant/threads/{id}/proposals/` labels every pending proposal in a thread in one
   `Labels` read. Both check the reader's read permission on the resource first and read
   nothing without it.
@@ -328,7 +330,7 @@ records, and approves exactly the set that remains:
 | `approve_carrier_settlements` | `settlementIds` (carrier settlement) | `approve_carrier_settlement` |
 | `post_carrier_settlements` | `settlementIds` (carrier settlement) | `post_carrier_settlement` |
 
-Each bulk tool wraps its single-record tool (`agenttoolservice/bulk_records.go`) and copies
+Each bulk tool wraps its single-record tool (`agenttools/common/bulk_records.go`) and copies
 its policy: the same class, permission and floor. A twin of a person-only tool runs only from a
 person's approval; a twin of a tool that may run on its own (`assign_billing_queue_billers`,
 `transition_items_to_in_review`) runs wherever its single would, and the review twin is held
@@ -346,7 +348,7 @@ refused: …". A run in which every record was refused fails. The single tools s
 their record, and their descriptions point to the bulk tool when there is more than one
 record.
 
-The settlement twins (`agenttoolservice/settlement_bulk_tools.go`) build their single tool
+The settlement twins (`agenttools/settlementtools/settlement_bulk_tools.go`) build their single tool
 from the same lifecycle text and ledger, so each settlement is planned and performed by
 `PlanAction` and `Perform` exactly as the single approve or post would, including the
 journal entry a posting books and, for a driver, the driver-visible egress that classifies
@@ -416,12 +418,12 @@ unstable digest shows itself.
 
 | Piece | Path (under `services/tms`) |
 |---|---|
-| Model, bounds, digest | `internal/core/domain/agent/preview.go`, `proposalbaseline.go` |
-| Ports | `internal/core/ports/services/{agenttool.go,proposalpreview.go}`, `ports/repositories/agentproposalbaseline.go` |
-| Builder | `internal/core/services/toolpreview/` |
-| Service | `internal/core/services/proposalpreviewservice/` |
-| Labels, baselines | `internal/infrastructure/postgres/repositories/{recordlabelrepository,agentproposalbaselinerepository}/` |
-| Filing | `internal/core/services/agentruntime/baseline.go` |
+| Model, bounds, digest | `internal/modules/agent/domain/agent/preview.go`, `proposalbaseline.go` |
+| Ports | `internal/modules/agent/ports/agentports/agenttool.go`, `internal/modules/agent/ports/agentports/proposalpreview.go`, `internal/modules/agent/ports/agentports/agentproposalbaseline.go` |
+| Builder | `internal/modules/agent/app/toolpreview/` |
+| Service | `internal/modules/agent/app/proposalpreviewservice/` |
+| Labels, baselines | `internal/modules/agent/adapters/postgres/{recordlabelrepository,agentproposalbaselinerepository}/` |
+| Filing | `internal/modules/agent/app/agentruntime/baseline.go` |
 | Decisions | `agentdecisionservice/preview.go`, `agentplanservice/preview.go`, `proposalexecutor` |
 | Migration | `20261231006790_agent_proposal_previews` (Postgres and the SQLite mirror) |
 
@@ -431,14 +433,22 @@ unstable digest shows itself.
   `TestEveryActionToolPreviewsWhatItWouldDo` (`agenttoolpolicy/preview_contract_test.go`)
   holds every registered action tool to a previewer, with no exemptions, so a new action
   tool without one fails CI.
-- **Labels cover the records previews name most.** A record of a resource the labeler has
-  no table for is shown without a name; people (`user`) are never labelled, since a user
-  is not scoped to one tenant.
+- **Labels cover every record a preview or subset points at.** `recordlabelrepository`
+  (`internal/modules/agent/adapters/postgres`) names each resource a tool's `WithRefs` map or
+  `toolschema.RecordSubset` names, and `TestLabelSources_NameEveryRecordAPreviewOrSubsetPointsAt`
+  fails for one it cannot read, so a new reference must come with a label. A record that
+  belongs to another is named through its owner (a leave case as "Jane Doe · Medical", a
+  tender offer by its carrier). People (`user`) are named only when they hold, or held, a
+  membership in the tenant's organization and business unit, or work in it now, since a user
+  is not scoped to one tenant. A record of a resource changed but never referenced (a
+  change's own resource) may still have no label; the client then names its kind, never its
+  id. A reference field is labelled for the record it names ("Assigned biller", not
+  "Assigned biller ID").
 - **A digest is per reader.** Two people with different access see different digests for
   the same proposal; each approves what they saw.
 - **Calls outside the database are guarded by the read-only mark and by tests.** The
   read-only transaction stops a preview writing to the database. `WithTx` also marks a
-  read-only transaction's context (`ports.IsReadOnly`), and after-commit callbacks queued
+  read-only transaction's context (`kernelports.IsReadOnly`), and after-commit callbacks queued
   in it are dropped, since nothing was committed. Work a service hands off outside its
   transaction must check the mark. Distance resolution does: it counts no stored-mileage
   hit and buffers no stored-mileage candidate, though it still asks PC*Miler, as the

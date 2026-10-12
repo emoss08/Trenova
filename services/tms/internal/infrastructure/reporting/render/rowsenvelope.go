@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/bytedance/sonic"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportrows"
 )
 
@@ -29,7 +29,7 @@ price change.
 // a caller streams rows through it rather than holding them.
 type rowsEnvelope struct {
 	out    *bufio.Writer
-	schema []serviceports.ReportResultColumn
+	schema []reportports.ReportResultColumn
 	// first tracks the row separator, since a streamed array cannot know
 	// whether it is at the start without being told.
 	first bool
@@ -38,7 +38,7 @@ type rowsEnvelope struct {
 	encoded []any
 }
 
-func newRowsEnvelope(sink io.Writer, schema []serviceports.ReportResultColumn) *rowsEnvelope {
+func newRowsEnvelope(sink io.Writer, schema []reportports.ReportResultColumn) *rowsEnvelope {
 	return &rowsEnvelope{
 		out:     bufio.NewWriterSize(sink, 64*1024),
 		schema:  schema,
@@ -47,7 +47,7 @@ func newRowsEnvelope(sink io.Writer, schema []serviceports.ReportResultColumn) *
 	}
 }
 
-func (e *rowsEnvelope) WriteHead(meta *serviceports.ReportRunMeta) error {
+func (e *rowsEnvelope) WriteHead(meta *reportports.ReportRunMeta) error {
 	metaJSON, err := sonic.Marshal(reportrows.Meta{
 		Title:       meta.Title,
 		Description: meta.Description,
@@ -82,7 +82,7 @@ func (e *rowsEnvelope) WriteHead(meta *serviceports.ReportRunMeta) error {
 	)
 }
 
-func (e *rowsEnvelope) WriteRow(row serviceports.ReportRow) error {
+func (e *rowsEnvelope) WriteRow(row reportports.ReportRow) error {
 	for i := range e.schema {
 		if i < len(row) {
 			e.encoded[i] = jsonValue(row[i])
@@ -113,7 +113,7 @@ func (e *rowsEnvelope) WriteRow(row serviceports.ReportRow) error {
 // totals may be nil: not every report has a total row, and a report that does
 // not is different from one whose totals are zero.
 func (e *rowsEnvelope) WriteTail(
-	totals serviceports.ReportRow,
+	totals reportports.ReportRow,
 	rowCount int64,
 	truncated bool,
 ) error {

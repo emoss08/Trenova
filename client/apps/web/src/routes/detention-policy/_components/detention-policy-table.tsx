@@ -17,6 +17,7 @@ export default function DetentionPolicyTable() {
   return (
     <DataTable<DetentionPolicyRow>
       name="Detention Policy"
+      emptyTitle={t("No detention policies yet")}
       queryKey="detention-policy-list"
       graphql={detentionPolicyTableGraphQLConfig}
       resource={Resource.DetentionPolicy}

@@ -16,6 +16,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./shipment-type-columns";
 import { ShipmentTypePanel } from "./shipment-type-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const INLINE_EDITABLE_FIELDS = new Set<keyof ShipmentTypeRow>(["code", "description"]);
 
@@ -34,9 +35,9 @@ export default function ShipmentTypeTable() {
           status: status as ShipmentType["status"],
         }),
         {
-          loading: "Updating status...",
-          success: "Status updated successfully",
-          error: "Failed to update status",
+          loading: translate("Updating status..."),
+          success: translate("Status updated successfully"),
+          error: translate("Failed to update status"),
           finally: async () => {
             await queryClient.invalidateQueries({
               queryKey: ["shipment-type-list"],
@@ -50,7 +51,7 @@ export default function ShipmentTypeTable() {
   );
 
   const handleCellEditCommit = useCallback<CellEditCommitFn<ShipmentTypeRow>>(
-    async ({ rowId, columnId, value }) => {
+    async ({ rowId, columnId, value, batch }) => {
       const field = columnId as keyof ShipmentTypeRow;
       if (!INLINE_EDITABLE_FIELDS.has(field)) return;
       if (field === "code" && (value === null || value === "")) {
@@ -58,6 +59,7 @@ export default function ShipmentTypeTable() {
       }
 
       await apiService.shipmentTypeService.patch(rowId, { [field]: value });
+      if (batch) return;
       await queryClient.invalidateQueries({
         queryKey: ["shipment-type-list"],
         refetchType: "all",
@@ -87,6 +89,7 @@ export default function ShipmentTypeTable() {
   return (
     <DataTable<ShipmentTypeRow>
       name="Shipment Type"
+      emptyTitle={t("No shipment types yet")}
       queryKey="shipment-type-list"
       graphql={shipmentTypeTableGraphQLConfig}
       resource={Resource.ShipmentType}

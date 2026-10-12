@@ -29,7 +29,10 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | Trenova support session started, elevated to write, returned to read-only, ended (Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice` | yes |
 | Request refused inside a Trenova support session (Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice` | yes |
 | Platform staff member added or removed (`trenova cloud staff`, Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice.StaffManager` | yes |
+| Agent tool rule held lower or returned to its declared rule, with the reason and the agents whose answer moved | `audit_entries` | `agenttoolruleservice` | yes |
+| Agent memory written after outside content reviewed (directly, or by approving it as a suggestion), so it no longer holds the writes of the turns that read it | `audit_entries` | `agentmemoryservice` | yes |
 | Document downloaded or viewed (content or presigned URL) | `audit_entries` | `documentservice` | — |
+| Document attached to an outbound email | `audit_entries` | `documentmailservice` | — |
 | Cross-tenant request refused | `audit_entries` | `middleware.TenantBoundaryMiddleware` | yes |
 
 Every row carries the request ID, client IP and user agent of the request that
@@ -51,7 +54,7 @@ balancer, list it there, or every row records the balancer's address.
 
 ## Authentication events
 
-`services.AuthEventRecorder` (`autheventservice`) writes one `auth_events` row per
+`iamports.AuthEventRecorder` (`autheventservice`) writes one `auth_events` row per
 attempt. The caller fills an `AuthEventRecord` (provider, outcome, user,
 organization, assurance levels, an error code) and the recorder adds the request
 metadata. `provider` names the method: `password`, `sso.<provider>`,
@@ -94,7 +97,7 @@ revocation are, and `api_keys.last_used_*` tracks use.
 
 ## Administrative changes
 
-Services that change who can do what take a `services.SecurityAuditor` and call
+Services that change who can do what take a `permissionports.SecurityAuditor` and call
 `RecordChange` after the change commits, with the resource, operation, actor,
 tenant, before and after state, a comment and metadata. The auditor:
 
@@ -145,6 +148,39 @@ or hands out a presigned URL, as a non-critical entry with operation `read` and
 driver portal and attachment reads are covered as well as the documents API.
 Preview thumbnails are not recorded. A read with no user (a share link) is
 attributed to the system principal; the request metadata identifies the requester.
+
+### Documents sent by email
+
+A feature that mails stored documents asks the documents module for them through
+`documentports.DocumentMailAttachments` (`documents/app/documentmailservice`), never by
+reading the files itself:
+
+- `Resolve` turns document ids into `emailports.EmailAttachment`s that carry the storage
+  object key, not the bytes. It reads the documents under the caller's tenant, refuses a
+  missing one or one that cannot be sent (archived, expired, rejected, or owned by an
+  assistant conversation) with a field error on `Field[i]`, checks that the person holds
+  `document:read` and read on each document's owning resource (`document.OwnerResource`),
+  and refuses more than `MaxMailAttachments` files or more than
+  `emailports.MaxAttachmentBytes` in all. That budget is what fits in the smallest
+  provider's message (Postmark's 10 MiB, base64-encoded, less `BodyAllowanceBytes` for the
+  body), defined once beside the provider ceilings in `emailports/limits.go`; billing's
+  invoice delivery reads the same constants. `System: true` is for Nova and other
+  unattended writers: it skips the person's access check, so what it resolves must be
+  resolved again, with the person, before anything is sent. With `Recipients` set,
+  `Resolve` writes one `read` entry per document with `metadata.access` `email`,
+  `metadata.channel` `attachment` and the recipients.
+- `Mailable` lists the sendable current documents on a set of records (`resourceType`,
+  `resourceId`), skipping the records the person cannot read and returning nothing without
+  `document:read`. It is what a picker of "files you could attach" reads.
+
+Documents are stored as envelope ciphertext bound to their tenant and storage path, so an
+object key alone would mail ciphertext. Each attachment the capability returns is
+`Seal: Document`; the email service keeps the seal on `email_message_attachments.seal` and,
+in the send activity, decrypts a sealed object with the document AAD of the message's own
+tenant. A key from another tenant fails to decrypt, and an unsealing failure fails the
+send without a retry. A file rendered for the occasion (a detention record, a report) is
+stored first with `documentports.DocumentStore.Store`, which writes it synchronously as a
+document on its record, so it is on file and its id can be attached at once.
 
 ## Writes an agent made
 

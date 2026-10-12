@@ -24,6 +24,7 @@ export function ManualJournalsPage() {
     >
       <DataTable<ManualJournalRow>
         name="ManualJournal"
+        emptyTitle={t("No manual journals yet")}
         queryKey="manual-journal-list"
         columns={columns}
         resource={Resource.ManualJournal}

@@ -1,4 +1,3 @@
-"use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import {
@@ -30,11 +29,13 @@ import type {
 } from "@/types/table-configuration";
 import { ChevronDownIcon, Download01Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { lazy, Suspense, useState } from "react";
+import { DataTableViewers } from "@/components/presence/data-table-viewers";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { DataTableSaveConfigDialog } from "./data-table-save-config-dialog";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
+import type { FilterableField } from "@/lib/data-table";
 
 const DataTableSearch = lazy(() => import("@/components/data-table/data-table-search"));
 
@@ -73,6 +74,8 @@ function SearchSkeleton() {
 }
 
 type DataTableExportContext<TData extends Record<string, any>> = {
+  /** The table's permission resource; with one, the table can export as a report. */
+  permissionResource?: string;
   graphql: DataTableGraphQLSource<TData>;
   queryOptions: Omit<DataTableQueryOptions, "cursor">;
   currentPageRows: TData[];
@@ -82,6 +85,7 @@ type DataTableExportContext<TData extends Record<string, any>> = {
 type DataTableToolbarProps<TData extends Record<string, any>> = {
   table: Table<TData>;
   columns: ColumnDef<TData>[];
+  filterFields: readonly FilterableField[];
   query: string;
   onSearchChange: (query: string) => void;
   filters: FilterItem[];
@@ -93,6 +97,12 @@ type DataTableToolbarProps<TData extends Record<string, any>> = {
   onAskApplied?: (composed: ComposedTableQuery) => void;
   addRecordActions?: AddRecordAction[];
   resource?: string;
+  /**
+   * The permission resource presence joins under. DataTable passes its name as
+   * resource, which also titles the "New" button, and "AI Audit Event" is no
+   * resource the server knows.
+   */
+  presenceResource?: string;
   currentConfig: TableConfig;
   onApplyConfig?: (config: TableConfig, source?: TableViewSource) => void;
   activeView?: ActiveTableView | null;
@@ -103,6 +113,15 @@ type DataTableToolbarProps<TData extends Record<string, any>> = {
   onFormatRulesChange?: (rules: TableFormatRule[]) => void;
   density?: TableDensity;
   onDensityChange?: (density: TableDensity) => void;
+  hasSavedLayout?: boolean;
+  onResetLayout?: () => void;
+  onFitColumns?: () => void;
+  highlightChanges?: boolean;
+  onHighlightChangesChange?: (on: boolean) => void;
+  showTotals?: boolean;
+  onShowTotalsChange?: (on: boolean) => void;
+  virtualized?: boolean;
+  onVirtualizedChange?: (on: boolean) => void;
   exportContext?: DataTableExportContext<TData>;
   slots?: DataTableToolbarSlots;
 };
@@ -110,6 +129,7 @@ type DataTableToolbarProps<TData extends Record<string, any>> = {
 export function DataTableToolbar<TData extends Record<string, any>>({
   table,
   columns,
+  filterFields,
   query,
   onSearchChange,
   filters,
@@ -120,6 +140,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
   onAskApplied,
   addRecordActions = [],
   resource,
+  presenceResource,
   currentConfig,
   onApplyConfig,
   activeView,
@@ -130,6 +151,15 @@ export function DataTableToolbar<TData extends Record<string, any>>({
   onFormatRulesChange,
   density = "comfortable",
   onDensityChange,
+  hasSavedLayout,
+  onResetLayout,
+  onFitColumns,
+  highlightChanges,
+  onHighlightChangesChange,
+  showTotals,
+  onShowTotalsChange,
+  virtualized,
+  onVirtualizedChange,
   exportContext,
   slots,
 }: DataTableToolbarProps<TData>) {
@@ -147,24 +177,22 @@ export function DataTableToolbar<TData extends Record<string, any>>({
     <>
       <div className="bleed:border-border bleed:border-b bleed:px-3 bleed:py-2 flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          {slots?.search ? (
-            slots.search({ query, onSearchChange })
-          ) : (
-            <Suspense fallback={<SearchSkeleton />}>
-              <DataTableSearch value={query} onChange={onSearchChange} />
-            </Suspense>
-          )}
-          {slots?.filter ? (
-            slots.filter({ filters, onFiltersChange })
-          ) : (
-            <Suspense fallback={<ToolbarButtonSkeleton />}>
-              <DataTableFilterBuilder
-                columns={columns as unknown as ColumnDef<RowData>[]}
-                filters={filters}
-                onFiltersChange={onFiltersChange}
-              />
-            </Suspense>
-          )}
+          <Suspense fallback={<SearchSkeleton />}>
+            <DataTableSearch
+              value={query}
+              onChange={onSearchChange}
+              suggestions={slots?.searchSuggestions}
+              shortcut={slots?.searchShortcut}
+            />
+          </Suspense>
+          <Suspense fallback={<ToolbarButtonSkeleton />}>
+            <DataTableFilterBuilder
+              fields={filterFields}
+              filters={filters}
+              onFiltersChange={onFiltersChange}
+              labelClassName={slots?.responsive?.label}
+            />
+          </Suspense>
           <Suspense fallback={<ToolbarButtonSkeleton />}>
             <DataTableSortBuilder
               columns={columns as unknown as ColumnDef<RowData>[]}
@@ -191,7 +219,25 @@ export function DataTableToolbar<TData extends Record<string, any>>({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          {presenceResource ? <DataTableViewers resource={presenceResource} /> : null}
           {slots?.trailing}
+          {showExport && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    aria-label={t("Export, print or schedule")}
+                    onClick={() => setExportDialogOpen(true)}
+                  >
+                    <Download01Icon className="size-4" />
+                  </Button>
+                }
+              />
+              <TooltipContent>{t("Export, print or schedule")}</TooltipContent>
+            </Tooltip>
+          )}
           <div className={cn("contents", slots?.responsive?.secondary)}>
             <Suspense fallback={<ToolbarButtonSkeleton />}>
               <DataTableDisplayMenu
@@ -202,26 +248,18 @@ export function DataTableToolbar<TData extends Record<string, any>>({
                 onEditFormatRules={
                   onFormatRulesChange ? () => setFormatDialogOpen(true) : undefined
                 }
+                hasSavedLayout={hasSavedLayout}
+                onResetLayout={onResetLayout}
+                onFitColumns={onFitColumns}
+                highlightChanges={highlightChanges}
+                onHighlightChangesChange={onHighlightChangesChange}
+                showTotals={showTotals}
+                onShowTotalsChange={onShowTotalsChange}
+                virtualized={virtualized}
+                onVirtualizedChange={onVirtualizedChange}
               />
             </Suspense>
           </div>
-          {showExport && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    aria-label={t("Export to CSV")}
-                    onClick={() => setExportDialogOpen(true)}
-                  >
-                    <Download01Icon className="size-4" />
-                  </Button>
-                }
-              />
-              <TooltipContent>{t("Export to CSV")}</TooltipContent>
-            </Tooltip>
-          )}
           <div className={cn("contents", slots?.responsive?.secondary)}>
             <Suspense fallback={<ToolbarButtonSkeleton />}>
               {resource && onApplyConfig && (
@@ -295,6 +333,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
             open={exportDialogOpen}
             onOpenChange={setExportDialogOpen}
             resource={resource}
+            permissionResource={exportContext.permissionResource}
             table={table as Table<Record<string, any>>}
             graphql={exportContext.graphql}
             queryOptions={exportContext.queryOptions}

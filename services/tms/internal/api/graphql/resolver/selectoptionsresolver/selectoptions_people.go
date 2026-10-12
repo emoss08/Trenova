@@ -4,11 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -22,7 +23,7 @@ func (r *Deps) resolveWorkerSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.WorkerService.Get(
 				ctx,
-				repositories.GetWorkerByIDRequest{
+				workerports.GetWorkerByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -38,7 +39,7 @@ func (r *Deps) resolveWorkerSelectOptions(
 
 	result, err := r.WorkerService.SelectOptions(
 		ctx,
-		&repositories.WorkerSelectOptionsRequest{
+		&workerports.WorkerSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 			OwnerOperatorsOnly: selectOptionBoolFilter(req.Filters, "ownerOperatorsOnly"),
 		},
@@ -61,7 +62,7 @@ func (r *Deps) resolveOrganizationSelectOptions(
 	if len(req.IDs) > 0 {
 		entities, err := r.OrganizationService.GetByIDs(
 			ctx,
-			portservices.GetOrganizationsByIDsRequest{
+			tenantports.GetOrganizationsByIDsRequest{
 				TenantInfo:      req.TenantInfo,
 				OrganizationIDs: req.IDs,
 			},
@@ -81,7 +82,7 @@ func (r *Deps) resolveOrganizationSelectOptions(
 
 	result, err := r.OrganizationService.SelectOptions(
 		ctx,
-		&repositories.SelectOrganizationOptionsRequest{
+		&tenantports.SelectOrganizationOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 			Scope:              selectOptionStringFilter(req.Filters, "scope"),
 			ExcludeCurrent:     selectOptionBoolFilter(req.Filters, "excludeCurrent"),
@@ -107,7 +108,7 @@ func (r *Deps) resolveUserSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.UserService.GetByID(
 				ctx,
-				repositories.GetUserByIDRequest{
+				tenantports.GetUserByIDRequest{
 					TenantInfo:   req.TenantInfo,
 					LookupUserID: id,
 				},
@@ -142,7 +143,7 @@ func (r *Deps) resolveRoleSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.RoleService.GetRoleByID(
 				ctx,
-				repositories.GetRoleByIDRequest{
+				permissionports.GetRoleByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},

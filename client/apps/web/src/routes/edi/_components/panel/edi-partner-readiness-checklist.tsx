@@ -8,6 +8,7 @@ import type { EDIPartner } from "@trenova/shared/types/edi";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, CheckCircleIcon, CircleIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const READINESS_LINKS: Record<string, { label: string; to: string } | undefined> = {
   "communication-profile": {
@@ -28,10 +29,10 @@ const READINESS_LINKS: Record<string, { label: string; to: string } | undefined>
   },
 };
 
-const READINESS_HINTS: Record<string, string> = {
+const READINESS_HINTS: Record<string, string> = defineLabels({
   details: "Fill in the contact email and timezone on the Details tab.",
   mappings: "Add entity mappings on the Mappings tab.",
-};
+});
 
 export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) {
   const t = useT();
@@ -79,12 +80,17 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
         <Alert variant="warning" size="sm">
           <AlertTriangleIcon />
           <AlertDescription>
-            {t(
-              "This partner is enabled for {0}{1}{2} exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.",
-              partner.enabledForInbound ? "inbound" : "",
-              partner.enabledForInbound && partner.enabledForOutbound ? " and " : "",
-              partner.enabledForOutbound ? "outbound" : "",
-            )}
+            {partner.enabledForInbound && partner.enabledForOutbound
+              ? t(
+                  "This partner is enabled for inbound and outbound exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.",
+                )
+              : partner.enabledForInbound
+                ? t(
+                    "This partner is enabled for inbound exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.",
+                  )
+                : t(
+                    "This partner is enabled for outbound exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.",
+                  )}
           </AlertDescription>
         </Alert>
       )}

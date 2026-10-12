@@ -25,6 +25,20 @@ export const validationErrorSchema = z.object({
 
 export type ValidationError = z.infer<typeof validationErrorSchema>;
 
+/**
+ * What a save that lost a race is told: the version saved in between, who saved it, when,
+ * and which settings they changed since the version the editor loaded.
+ */
+export const editConflictSchema = z.object({
+  version: z.number(),
+  updatedById: z.string().optional(),
+  updatedByName: z.string().optional(),
+  updatedAt: z.number(),
+  changes: z.array(z.object({ field: z.string(), label: z.string() })),
+});
+
+export type EditConflict = z.infer<typeof editConflictSchema>;
+
 export const apiErrorResponseSchema = z.object({
   type: z.string(),
   title: z.string(),
@@ -36,6 +50,7 @@ export const apiErrorResponseSchema = z.object({
   errors: z.array(validationErrorSchema).optional(),
   usageStats: z.any().optional(),
   params: z.record(z.string(), z.string()).optional(),
+  conflict: editConflictSchema.optional(),
 });
 
 export type ApiErrorResponse = z.infer<typeof apiErrorResponseSchema>;

@@ -4,16 +4,18 @@ package servicefailureresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 )
 
 type Deps struct {
 	*base.Core
-	ServiceFailureSvc services.ServiceFailureService
+	ServiceFailureSvc servicefailureports.ServiceFailureService
 }
 
 type QueryResolver struct{ *Deps }
 
 type ServiceFailureResolver struct{ *Deps }
+
+type ServiceFailureShipmentResolver struct{ *Deps }
 
 type ServiceFailureStopResolver struct{ *Deps }

@@ -1,0 +1,13 @@
+{
+  "1-3 Days": "1-3 天",
+  "4-7 Days": "4-7 天",
+  "7+ Days": "7 天以上",
+  "Exception aging": "例外账龄",
+  "Import a bank receipt file and every receipt it carries is matched against open invoices; what matched, what did not, and how long the exceptions have waited are counted here.": "导入银行入账文件后，其所载的每笔入账都会与未结发票比对；此处统计匹配成功、未成功者，以及例外已等待多久。",
+  "Loading the summary": "正在加载摘要",
+  "Match rate": "比对成功率",
+  "Nothing to reconcile yet": "尚无可核对的项目",
+  "Overview of bank receipt reconciliation status.": "银行入账核对状态总览。",
+  "Reconciliation summary": "核对摘要",
+  "Work items": "工作项目"
+}

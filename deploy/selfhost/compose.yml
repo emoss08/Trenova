@@ -204,7 +204,7 @@ services:
   # Renders organization-authored HTML to PDF, so it is locked down rather
   # than trusted: JavaScript off, only data: and its own staging files
   # allowed, no published port, no route through Caddy, no network off the
-  # host. See docker-compose-local.yml for why each flag is there.
+  # host. See dev/compose.yml for why each flag is there.
   gotenberg:
     image: gotenberg/gotenberg:8
     command:

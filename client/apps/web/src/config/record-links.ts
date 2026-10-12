@@ -1,3 +1,5 @@
+import type { RecordKind } from "@trenova/shared/types/generated/record-kinds";
+
 /**
  * Where a record opens.
  *
@@ -10,6 +12,12 @@
  * `{id}` stands for the record's id wherever it appears, in the path or in a
  * parameter's value. The product guide generator reads this file statically,
  * so entries stay plain literals.
+ *
+ * Each key is a kind of record the server knows (`RecordKind`, generated from
+ * the permission registry), so a link the server would refuse to hear about
+ * from its own page does not typecheck. The server accepts every one of them
+ * as a page's record without a list of its own. See
+ * docs/engineering/record-kinds.md.
  */
 export type RecordLink = {
   /** What the record is called, for a link's label. */
@@ -81,6 +89,10 @@ export const RECORD_LINKS = {
     path: "/billing/configuration-files/rate-matrices",
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
+  formula_template: {
+    label: "Formula template",
+    path: "/billing/configuration-files/formula-templates/{id}/edit",
+  },
   rate_agreement: {
     label: "Rate agreement",
     path: "/billing/rate-agreements",
@@ -143,6 +155,11 @@ export const RECORD_LINKS = {
     label: "Conversation",
     path: "/desk/t/{id}",
   },
+  inbound_message: {
+    label: "Message",
+    path: "/triage",
+    params: { message: "{id}" },
+  },
   accounting_sync_record: {
     label: "Sync record",
     path: "/accounting/sync",
@@ -195,7 +212,7 @@ export const RECORD_LINKS = {
       fieldFilters: '[{"field":"id","operator":"eq","value":"{id}"}]',
     },
   },
-} as const satisfies Record<string, RecordLink>;
+} as const satisfies Partial<Record<RecordKind, RecordLink>>;
 
 export type RecordEntityType = keyof typeof RECORD_LINKS;
 

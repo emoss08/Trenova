@@ -5,8 +5,9 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -15,13 +16,13 @@ import (
 type Params struct {
 	fx.In
 
-	PermissionEngine services.PermissionEngine
+	PermissionEngine permissionports.PermissionEngine
 	Registry         *permission.Registry
 	ErrorHandler     *helpers.ErrorHandler
 }
 
 type Handler struct {
-	permEngine services.PermissionEngine
+	permEngine permissionports.PermissionEngine
 	registry   *permission.Registry
 	eh         *helpers.ErrorHandler
 }
@@ -165,9 +166,9 @@ func (h *Handler) checkBatch(c *gin.Context) {
 		return
 	}
 
-	checks := make([]services.ResourceOperationCheck, len(req.Checks))
+	checks := make([]permissionports.ResourceOperationCheck, len(req.Checks))
 	for i, check := range req.Checks {
-		checks[i] = services.ResourceOperationCheck{
+		checks[i] = permissionports.ResourceOperationCheck{
 			Resource:  check.Resource,
 			Operation: check.Operation,
 		}
@@ -175,8 +176,8 @@ func (h *Handler) checkBatch(c *gin.Context) {
 
 	result, err := h.permEngine.CheckBatch(
 		c.Request.Context(),
-		&services.BatchPermissionCheckRequest{
-			PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
+		&permissionports.BatchPermissionCheckRequest{
+			PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
 			PrincipalID:    authCtx.PrincipalID,
 			UserID:         authCtx.UserID,
 			APIKeyID:       authCtx.APIKeyID,

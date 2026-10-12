@@ -7,6 +7,7 @@ import { formatUnixDateMedium, formatUnixDateTimeMedium } from "@trenova/shared/
 import { phaseTone, type StatusPhase } from "@trenova/shared/lib/status-phase";
 import { formatCurrency, formatPercent } from "@trenova/shared/lib/utils";
 import type { BadgeTone } from "@trenova/shared/types/badge";
+import { translateLabel } from "@trenova/shared/i18n/labels";
 
 /*
  * What a person reads of a record the assistant looked at.
@@ -544,13 +545,15 @@ export function humanizeKey(key: string): string {
     .split(/\s+/)
     .filter((word) => word !== "");
 
-  return words
-    .map((word, index) => {
-      const lowered = word.toLowerCase();
-      if (ACRONYMS.has(lowered)) return lowered.toUpperCase();
-      return index === 0 ? lowered.charAt(0).toUpperCase() + lowered.slice(1) : lowered;
-    })
-    .join(" ");
+  return translateLabel(
+    words
+      .map((word, index) => {
+        const lowered = word.toLowerCase();
+        if (ACRONYMS.has(lowered)) return lowered.toUpperCase();
+        return index === 0 ? lowered.charAt(0).toUpperCase() + lowered.slice(1) : lowered;
+      })
+      .join(" "),
+  );
 }
 
 /**

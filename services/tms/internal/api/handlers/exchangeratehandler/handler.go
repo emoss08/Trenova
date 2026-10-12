@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/exchangerateservice"
+	"github.com/emoss08/trenova/internal/modules/reference/app/exchangerateservice"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -136,7 +136,7 @@ func (h *Handler) refresh(c *gin.Context) {
 func (h *Handler) createSettlementQuote(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(services.CreateSettlementQuoteRequest)
+	req := new(exchangerateports.CreateSettlementQuoteRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return

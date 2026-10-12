@@ -326,7 +326,7 @@ describe("MyTeamConsole", () => {
     const panel = await screen.findByRole("region", { name: "Coming up" });
     expect(within(panel).getByText("Ada Byrne")).toBeInTheDocument();
     expect(within(panel).getByText(/2 years on/)).toBeInTheDocument();
-    expect(within(panel).getByText("In 5d")).toBeInTheDocument();
+    expect(within(panel).getByText("in 5d")).toBeInTheDocument();
     expect(within(panel).getByText("New Joiner")).toBeInTheDocument();
     expect(within(panel).getByText("3d ago")).toBeInTheDocument();
     expect(within(panel).queryByText("Far Off")).not.toBeInTheDocument();

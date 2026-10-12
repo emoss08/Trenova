@@ -52,6 +52,7 @@ export function RunsTable() {
   return (
     <DataTable<ExtractionEvalRunRow>
       name="Extraction Evaluation Run"
+      emptyTitle={t("No extraction evaluation runs yet")}
       queryKey={EXTRACTION_EVAL_RUN_LIST_KEY}
       graphql={extractionEvalRunTableGraphQLConfig}
       resource={Resource.AgentEvalSuite}

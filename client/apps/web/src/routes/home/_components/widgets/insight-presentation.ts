@@ -1,4 +1,5 @@
 import type { Insight, InsightMetric, InsightSeverity } from "@/types/insight";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * How a metric's value should read.
@@ -28,7 +29,7 @@ export function formatMetricValue(metric: InsightMetric): string {
     case "Hours":
       return `${trimNumber(value)}h`;
     case "Miles":
-      return `${Math.round(value).toLocaleString()} mi`;
+      return translate("{0} mi", Math.round(value).toLocaleString());
     default:
       return Math.round(value).toLocaleString();
   }

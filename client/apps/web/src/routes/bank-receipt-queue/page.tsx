@@ -36,14 +36,15 @@ import {
 } from "@trenova/shared/components/icons";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-const STATUS_LABELS: Record<WorkItemStatus, string> = {
+const STATUS_LABELS: Record<WorkItemStatus, string> = defineLabels({
   Open: "Open",
   Assigned: "Assigned",
   InReview: "In Review",
   Resolved: "Resolved",
   Dismissed: "Dismissed",
-};
+});
 
 const STATUS_VARIANTS: Record<WorkItemStatus, "neutral" | "warning" | "info" | "success"> = {
   Open: "neutral",

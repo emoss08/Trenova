@@ -22,12 +22,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const chargeFormSchema = z.object({
-  accessorialChargeId: z.string().min(1, "Required"),
+  accessorialChargeId: z.string().min(1, { error: () => translate("Required") }),
   method: accessorialChargeMethodSchema,
-  amount: z.number().min(0, "Must be positive"),
-  unit: z.number().int().min(1, "Must be at least 1").default(1),
+  amount: z.number().min(0, { error: () => translate("Must be positive") }),
+  unit: z
+    .number()
+    .int()
+    .min(1, { error: () => translate("Must be at least 1") })
+    .default(1),
 });
 
 type ChargeFormValues = z.infer<typeof chargeFormSchema>;

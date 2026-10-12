@@ -24,6 +24,7 @@ describe("stage", () => {
       [3, "Moving", 30],
     ]);
     expect(groups[1].aggregate).toBe("$41,201");
+    expect(groups.map((g) => g.aggregateLabel)).toEqual(["Revenue", "Revenue"]);
     expect(groups[0].swatchClassName).toBe("bg-danger");
   });
 

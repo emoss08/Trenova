@@ -29,6 +29,7 @@ import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFieldArray, useForm, useWatch, type Control } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const TARGET_KIND = {
   shipmentField: "ShipmentField",
@@ -178,7 +179,7 @@ function MappingItemRow({
           className="text-muted-foreground hover:text-destructive size-6 p-0"
           onClick={onRemove}
           disabled={!canRemove}
-          aria-label={`Remove field ${index + 1}`}
+          aria-label={t("Remove field {0}", index + 1)}
         >
           <Trash01Icon className="size-3.5" />
         </Button>
@@ -245,7 +246,9 @@ function MappingEditor({
     mutationFn: (values: MappingFormValues) =>
       saveTelematicsFormMappingGraphQL(toSaveInput(values)),
     onSuccess: async () => {
-      toast.success(initial.id ? "Form mapping updated" : "Form mapping created");
+      toast.success(
+        initial.id ? translate("Form mapping updated") : translate("Form mapping created"),
+      );
       await queryClient.invalidateQueries({
         queryKey: queries.telematics.formMappings().queryKey,
       });
@@ -382,7 +385,7 @@ function MappingRow({
         checked={mapping.enabled}
         disabled={toggling}
         onCheckedChange={onToggle}
-        aria-label={`Toggle ${mapping.name}`}
+        aria-label={t("Toggle {0}", mapping.name)}
       />
       <Button type="button" variant="outline" size="xs" onClick={onEdit}>
         {t("Edit")}
@@ -393,7 +396,7 @@ function MappingRow({
         size="xs"
         className="text-muted-foreground hover:text-destructive size-7 p-0"
         onClick={onDelete}
-        aria-label={`Delete ${mapping.name}`}
+        aria-label={t("Delete {0}", mapping.name)}
       >
         <Trash01Icon className="size-3.5" />
       </Button>
@@ -422,7 +425,7 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
         toSaveInput({ ...toFormValues(mapping), enabled: !mapping.enabled }),
       ),
     onSuccess: async (_data, mapping) => {
-      toast.success(mapping.enabled ? "Mapping disabled" : "Mapping enabled");
+      toast.success(mapping.enabled ? translate("Mapping disabled") : translate("Mapping enabled"));
       await invalidate();
     },
     onError: (error) => {

@@ -4,16 +4,16 @@ package carriersettlementresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	repositories "github.com/emoss08/trenova/internal/core/ports/repositories"
-	carriersettlementservice "github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
+	carriersettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 )
 
 type Deps struct {
 	*base.Core
 	CarrierSettlementService   *carriersettlementservice.Service
-	CarrierSettlementRepo      repositories.CarrierSettlementRepository
-	CarrierSettlementBatchRepo repositories.CarrierSettlementBatchRepository
-	CarrierCostEventRepo       repositories.CarrierCostEventRepository
+	CarrierSettlementRepo      carriersettlementports.CarrierSettlementRepository
+	CarrierSettlementBatchRepo carriersettlementports.CarrierSettlementBatchRepository
+	CarrierCostEventRepo       carriersettlementports.CarrierCostEventRepository
 }
 
 type CarrierSettlementResolver struct{ *Deps }

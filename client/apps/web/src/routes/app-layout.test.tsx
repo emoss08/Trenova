@@ -49,7 +49,6 @@ vi.mock("@/hooks/use-realtime-connection", () => ({
 vi.mock("@/services/update", () => ({
   updateService: {
     getVersion: vi.fn().mockResolvedValue({ version: "4.12.0", environment: "development" }),
-    getNetworkPulse: vi.fn().mockRejectedValue(new Error("disabled")),
   },
 }));
 
@@ -123,15 +122,13 @@ describe("AppLayout role activation", () => {
     expect(mocks.fetchManifest).toHaveBeenCalledTimes(1);
   });
 
-  it("shows the credential receipt without a session row", async () => {
+  it("scopes the role step to the session's organization, in the sign-in frame", async () => {
     renderAppLayout();
 
-    expect(screen.getByText("Identity")).toBeInTheDocument();
-    expect(screen.getByText("test@example.com")).toBeInTheDocument();
-    expect(screen.getByText("Workspace")).toBeInTheDocument();
-    expect(screen.getByText("Alpha Logistics")).toBeInTheDocument();
-    // The browser only ever sees a session id at login, so the gate omits that row
-    // rather than leaving one that can never fill.
+    expect(screen.getByRole("heading", { name: "Select active roles" })).toBeInTheDocument();
+    expect(screen.getByText(/Alpha Logistics/)).toBeInTheDocument();
+    // The old panel's credential receipt is gone with the shader stage.
+    expect(screen.queryByText("Identity")).not.toBeInTheDocument();
     expect(screen.queryByText("Session")).not.toBeInTheDocument();
   });
 });

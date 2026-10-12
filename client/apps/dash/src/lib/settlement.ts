@@ -1,4 +1,5 @@
 import type { PortalSettlementLine } from "@trenova/shared/lib/graphql/driver-portal";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const settlementCategoryOrder = [
   "Earning",
@@ -13,7 +14,7 @@ export const settlementCategoryOrder = [
 
 export type SettlementCategory = (typeof settlementCategoryOrder)[number];
 
-export const settlementCategoryLabels: Record<string, string> = {
+export const settlementCategoryLabels: Record<string, string> = defineLabels({
   Earning: "Earnings",
   GuaranteeTopUp: "Guarantee top-up",
   Reimbursement: "Reimbursements",
@@ -22,7 +23,7 @@ export const settlementCategoryLabels: Record<string, string> = {
   Deduction: "Deductions",
   EscrowContribution: "Escrow",
   AdvanceRecovery: "Advance recovery",
-};
+});
 
 const deductionCategories = new Set<string>(["Deduction", "EscrowContribution", "AdvanceRecovery"]);
 

@@ -4,11 +4,17 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps, GenericSelectOption } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import { Checkbox } from "../animate-ui/components/base/checkbox";
+import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
 
 type MultiCheckboxFieldProps<T extends FieldValues, TValue extends string> = FormControlProps<T> & {
   label: string;
   description?: string;
   options: ReadonlyArray<GenericSelectOption<TValue>>;
+  /**
+   * What clearing the last choice stores: null, which the server reads as a
+   * wildcard, or an empty list for a field where none chosen means none.
+   */
+  emptyAs?: "null" | "array";
 };
 
 /**
@@ -24,7 +30,9 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
   label,
   description,
   options,
+  emptyAs = "null",
 }: MultiCheckboxFieldProps<T, TValue>) {
+  useFieldRegistration(name, label);
   const t = useT();
 
   const groupId = `multi-checkbox-${name}`;
@@ -44,12 +52,14 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
           } else {
             next.delete(optionValue);
           }
-          onChange(next.size > 0 ? Array.from(next) : null);
+          onChange(next.size > 0 || emptyAs === "array" ? Array.from(next) : null);
         };
 
         return (
           <div className="flex w-full flex-col gap-1.5">
-            <Label htmlFor={groupId}>{label}</Label>
+            <Label htmlFor={groupId} className={cn(rules?.required && "required")}>
+              {label}
+            </Label>
             <div id={groupId} className="grid grid-cols-2 gap-1.5" role="group" aria-label={label}>
               {options.map((option) => {
                 const checked = selected.has(option.value);
@@ -85,7 +95,10 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
                           unavailable ? "cursor-not-allowed" : "cursor-pointer",
                         )}
                       >
-                        {t(option.label)}
+                        <span className="inline-flex items-center gap-1">
+                          {t(option.label)}
+                          {option.icon}
+                        </span>
                       </Label>
                       {option.disabled && option.description && (
                         <span id={`${optionId}-reason`} className="text-2xs text-muted-foreground">

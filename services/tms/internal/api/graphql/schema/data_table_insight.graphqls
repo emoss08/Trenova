@@ -1,0 +1,103 @@
+"How many of a table's filtered rows hold each value of one field."
+input DataTableFacetInput {
+  "The table's permission resource, such as shipment."
+  resource: String!
+  field: String!
+  filter: DataTableConnectionInput
+  "Options the table's own list takes beyond filters, such as the shipment board's quick filters."
+  options: JSON
+  limit: Int = 20
+}
+
+type DataTableFacetBucket {
+  "The field's value, or null for rows that have none."
+  value: String
+  count: Int!
+}
+
+type DataTableFacets {
+  field: String!
+  "The most common values first."
+  buckets: [DataTableFacetBucket!]!
+  "Every row the filters match, including those in values not listed."
+  total: Int!
+}
+
+"Totals of a table's filtered rows."
+input DataTableAggregateInput {
+  resource: String!
+  fields: [String!]!
+  filter: DataTableConnectionInput
+  options: JSON
+}
+
+type DataTableAggregateValue {
+  field: String!
+  sum: Decimal
+  average: Decimal
+  min: Decimal
+  max: Decimal
+}
+
+type DataTableAggregates {
+  "Every row the filters match, on every page."
+  count: Int!
+  values: [DataTableAggregateValue!]!
+}
+
+type DataTableInsightField {
+  name: String!
+  facetable: Boolean!
+  summable: Boolean!
+  "Whether the field is a date a chart can follow rows over."
+  timeline: Boolean!
+}
+
+enum DataTableSeriesInterval {
+  WEEK
+  MONTH
+}
+
+"""
+One small chart per row of another table: how many of this table's rows each one has,
+or their total, in each week or month up to now. A customer's shipments, a carrier's
+loads, a location's stops.
+"""
+input DataTableSeriesInput {
+  "The table counted, such as shipment."
+  resource: String!
+  "The field naming the row each chart belongs to, such as customerId."
+  groupField: String!
+  "The rows to chart, at most 200."
+  groupValues: [String!]!
+  "The date that places each counted row in a period."
+  dateField: String!
+  "A field to total instead of counting rows."
+  valueField: String
+  interval: DataTableSeriesInterval! = WEEK
+  "How many periods, ending with the current one."
+  periods: Int! = 12
+  "The time zone periods start in; UTC when absent."
+  timezone: String
+  filter: DataTableConnectionInput
+}
+
+type DataTableSeriesGroup {
+  value: String!
+  "One value per period, oldest first."
+  points: [Decimal!]!
+}
+
+type DataTableSeries {
+  "When each period starts, oldest first."
+  periodStarts: [Timestamp!]!
+  groups: [DataTableSeriesGroup!]!
+}
+
+extend type Query {
+  dataTableFacets(input: DataTableFacetInput!): DataTableFacets!
+  dataTableAggregates(input: DataTableAggregateInput!): DataTableAggregates!
+  dataTableSeries(input: DataTableSeriesInput!): DataTableSeries!
+  "The fields a table can be counted by or totalled, so a screen offers only those."
+  dataTableInsightFields(resource: String!): [DataTableInsightField!]!
+}

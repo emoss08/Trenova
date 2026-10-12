@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 // Wire values mirror the GraphQL enums IFTAFuelType, FuelCardProvider,
 // FuelCardStatus, FuelQuantityUnit, FuelPurchaseSource,
@@ -27,7 +28,7 @@ export const iftaFuelTypeSchema = z.enum([
 ]);
 export type IftaFuelType = z.infer<typeof iftaFuelTypeSchema>;
 
-export const IFTA_FUEL_TYPE_LABELS: Record<IftaFuelType, string> = {
+export const IFTA_FUEL_TYPE_LABELS: Record<IftaFuelType, string> = defineLabels({
   Diesel: "Diesel",
   Gasoline: "Gasoline",
   Gasohol: "Gasohol",
@@ -45,42 +46,42 @@ export const IFTA_FUEL_TYPE_LABELS: Record<IftaFuelType, string> = {
   DEF: "Diesel exhaust fluid (DEF)",
   Reefer: "Reefer fuel",
   Other: "Other",
-};
+});
 
 export const fuelCardProviderSchema = z.enum(["Comdata", "EFS", "WEX", "Other"]);
 export type FuelCardProvider = z.infer<typeof fuelCardProviderSchema>;
 
-export const FUEL_CARD_PROVIDER_LABELS: Record<FuelCardProvider, string> = {
+export const FUEL_CARD_PROVIDER_LABELS: Record<FuelCardProvider, string> = defineLabels({
   Comdata: "Comdata",
   EFS: "EFS",
   WEX: "WEX",
   Other: "Other",
-};
+});
 
 export const fuelCardStatusSchema = z.enum(["Active", "Suspended", "Cancelled"]);
 export type FuelCardStatus = z.infer<typeof fuelCardStatusSchema>;
 
-export const FUEL_CARD_STATUS_LABELS: Record<FuelCardStatus, string> = {
+export const FUEL_CARD_STATUS_LABELS: Record<FuelCardStatus, string> = defineLabels({
   Active: "Active",
   Suspended: "Suspended",
   Cancelled: "Cancelled",
-};
+});
 
 export const fuelQuantityUnitSchema = z.enum(["Gallon", "Litre"]);
 export type FuelQuantityUnit = z.infer<typeof fuelQuantityUnitSchema>;
 
-export const FUEL_QUANTITY_UNIT_LABELS: Record<FuelQuantityUnit, string> = {
+export const FUEL_QUANTITY_UNIT_LABELS: Record<FuelQuantityUnit, string> = defineLabels({
   Gallon: "Gallons",
   Litre: "Litres",
-};
+});
 
 export const fuelPurchaseSourceSchema = z.enum(["Manual", "CardImport"]);
 export type FuelPurchaseSource = z.infer<typeof fuelPurchaseSourceSchema>;
 
-export const FUEL_PURCHASE_SOURCE_LABELS: Record<FuelPurchaseSource, string> = {
+export const FUEL_PURCHASE_SOURCE_LABELS: Record<FuelPurchaseSource, string> = defineLabels({
   Manual: "Manual",
   CardImport: "Card import",
-};
+});
 
 export const fuelPurchaseImportStatusSchema = z.enum([
   "Pending",
@@ -91,38 +92,39 @@ export const fuelPurchaseImportStatusSchema = z.enum([
 ]);
 export type FuelPurchaseImportStatus = z.infer<typeof fuelPurchaseImportStatusSchema>;
 
-export const FUEL_PURCHASE_IMPORT_STATUS_LABELS: Record<FuelPurchaseImportStatus, string> = {
-  Pending: "Pending",
-  Parsed: "Parsed",
-  Committed: "Committed",
-  Failed: "Failed",
-  Discarded: "Discarded",
-};
+export const FUEL_PURCHASE_IMPORT_STATUS_LABELS: Record<FuelPurchaseImportStatus, string> =
+  defineLabels({
+    Pending: "Pending",
+    Parsed: "Parsed",
+    Committed: "Committed",
+    Failed: "Failed",
+    Discarded: "Discarded",
+  });
 
 export const iftaMileageSourceSchema = z.enum(["Manual", "RouteCalculation", "Telematics"]);
 export type IftaMileageSource = z.infer<typeof iftaMileageSourceSchema>;
 
-export const IFTA_MILEAGE_SOURCE_LABELS: Record<IftaMileageSource, string> = {
+export const IFTA_MILEAGE_SOURCE_LABELS: Record<IftaMileageSource, string> = defineLabels({
   Manual: "Manual",
   RouteCalculation: "Route calculation",
   Telematics: "Telematics",
-};
+});
 
 export const iftaReturnStatusSchema = z.enum(["Draft", "Finalized", "Filed"]);
 export type IftaReturnStatus = z.infer<typeof iftaReturnStatusSchema>;
 
-export const IFTA_RETURN_STATUS_LABELS: Record<IftaReturnStatus, string> = {
+export const IFTA_RETURN_STATUS_LABELS: Record<IftaReturnStatus, string> = defineLabels({
   Draft: "Draft",
   Finalized: "Finalized",
   Filed: "Filed",
-};
+});
 
 export const iftaQuarterSchema = z.enum(["1", "2", "3", "4"]);
 export type IftaQuarter = z.infer<typeof iftaQuarterSchema>;
 
-export const IFTA_QUARTER_LABELS: Record<IftaQuarter, string> = {
+export const IFTA_QUARTER_LABELS: Record<IftaQuarter, string> = defineLabels({
   "1": "Q1 (Jan–Mar)",
   "2": "Q2 (Apr–Jun)",
   "3": "Q3 (Jul–Sep)",
   "4": "Q4 (Oct–Dec)",
-};
+});

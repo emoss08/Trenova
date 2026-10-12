@@ -8,18 +8,23 @@ import type { LoaderFunction, LoaderFunctionArgs } from "react-router";
 // fetch: an observer keeps whatever staleTime it declares.
 export const PREFETCH_STALE_TIME_MS = 5_000;
 
+// staleTime and retry may be functions of the query in TanStack's own option
+// types; they are only forwarded to it, so the seam does not narrow them.
+interface RoutePrefetchOptions {
+  readonly queryKey: QueryKey;
+  readonly staleTime?: unknown;
+  readonly gcTime?: number;
+  readonly retry?: unknown;
+}
+
 /**
  * One query a route wants in flight before its page mounts. The objects produced by the
  * `queries.<domain>.<entry>()` factory already have this shape, so pages hand those over
  * directly. `queryFn` is declared as a method so the tuple-keyed functions the factory
  * generates remain assignable.
  */
-export interface RoutePrefetchQuery {
-  readonly queryKey: QueryKey;
+export interface RoutePrefetchQuery extends RoutePrefetchOptions {
   queryFn(context: QueryFunctionContext): unknown;
-  readonly staleTime?: number;
-  readonly gcTime?: number;
-  readonly retry?: boolean | number;
 }
 
 /**
@@ -27,9 +32,11 @@ export interface RoutePrefetchQuery {
  * pageParams }` where a plain one stores the payload itself, so warming one
  * through prefetchQuery would seed a cache entry the page then cannot read —
  * the page would throw on `data.pages`. Carrying the paging fields is what
- * lets `warm` reach for the right prefetch.
+ * lets `warm` reach for the right prefetch. `queryFn` is optional because
+ * `infiniteQueryOptions` types it so, even when the factory always sets one.
  */
-export interface RoutePrefetchInfiniteQuery extends RoutePrefetchQuery {
+export interface RoutePrefetchInfiniteQuery extends RoutePrefetchOptions {
+  queryFn?(context: QueryFunctionContext): unknown;
   readonly initialPageParam: unknown;
   readonly getNextPageParam: (...args: never[]) => unknown;
 }

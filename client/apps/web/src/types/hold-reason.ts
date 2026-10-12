@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { optionalStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const holdTypeSchema = z.enum([
   "OperationalHold",
@@ -20,12 +21,12 @@ export const holdReasonSchema = z.object({
   type: holdTypeSchema,
   code: z
     .string()
-    .min(1, { message: "Code is required" })
-    .max(64, { message: "Code must be less than 64 characters" }),
+    .min(1, { error: () => translate("Code is required") })
+    .max(64, { error: () => translate("Code must be less than 64 characters") }),
   label: z
     .string()
-    .min(1, { message: "Label is required" })
-    .max(100, { message: "Label must be less than 100 characters" }),
+    .min(1, { error: () => translate("Label is required") })
+    .max(100, { error: () => translate("Label must be less than 100 characters") }),
   description: optionalStringSchema,
   defaultSeverity: holdSeveritySchema,
   defaultBlocksDispatch: z.boolean().default(false),

@@ -1,3 +1,4 @@
+import { defineLabels } from "@trenova/shared/i18n/labels";
 /**
  * An employment cycle: everything between a hire (or rehire) and the
  * termination that ends it. Onboarding belongs to the event that opened the
@@ -100,12 +101,12 @@ export function cycleStage(cycle: EmploymentCycle): CycleStage {
   return "active";
 }
 
-export const CYCLE_STAGE_LABELS: Record<CycleStage, string> = {
+export const CYCLE_STAGE_LABELS: Record<CycleStage, string> = defineLabels({
   onboarding: "Onboarding",
   active: "Active",
   offboarding: "Offboarding",
   left: "Left",
-};
+});
 
 /** The steps of an employment, in the order they happen, for a stepper. */
 export const CYCLE_STEPS: CycleStage[] = ["onboarding", "active", "offboarding", "left"];

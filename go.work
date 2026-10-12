@@ -1,8 +1,8 @@
 go 1.26.0
 
 use (
-	./services/edi-partner-sim
-	./services/samsara-sim
+	./dev/edi-partner-sim
+	./dev/samsara-sim
 	./services/tms
 	./shared
 )

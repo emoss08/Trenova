@@ -1,4 +1,7 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { getOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
+import { isSessionExpiry } from "@trenova/shared/lib/error-presentation";
+import { isPathScopedLoader, pathScopedLoader } from "@trenova/shared/lib/session-loader";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import {
   hasOrganizationCapability,
@@ -14,6 +17,12 @@ function getOperationLabel(operation: number): string {
   );
 }
 
+/**
+ * Loads the permission manifest when none is held. Resolves false only when the server
+ * refused the session, which is the caller's cue to send the person to sign in. Any other
+ * failure — a rate limit, a server error, a dropped connection — says nothing about the
+ * session and is rethrown, so a route presents it with a retry instead of the login form.
+ */
 export async function ensurePermissionManifest(): Promise<boolean> {
   const { manifest, fetchManifest } = usePermissionStore.getState();
   if (manifest) {
@@ -23,8 +32,11 @@ export async function ensurePermissionManifest(): Promise<boolean> {
   try {
     await fetchManifest();
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    if (isSessionExpiry(error)) {
+      return false;
+    }
+    throw error;
   }
 }
 
@@ -32,7 +44,7 @@ export function createPermissionLoader(
   resource: string,
   operation: number = Operation.Read,
 ): LoaderFunction {
-  return async () => {
+  return pathScopedLoader(async () => {
     if (!(await ensurePermissionManifest())) {
       return redirect("/login");
     }
@@ -56,7 +68,7 @@ export function createPermissionLoader(
     }
 
     return null;
-  };
+  });
 }
 
 /**
@@ -72,15 +84,21 @@ export function createCapabilityLoader(capability: OrganizationCapabilityType): 
     }
 
     const label = organizationCapabilityLabel(capability);
-    throw new Response(`${label} is not enabled for this organization`, {
+    throw new Response(translate("{0} is not enabled for this organization", label), {
       status: 403,
-      statusText: `${label} not enabled`,
+      statusText: translate("{0} not enabled", label),
     });
   };
 }
 
+/**
+ * Runs loaders in order and returns the first answer that is not null. The combination is
+ * path-scoped when any part is: a route behind the session or permission gate revalidates
+ * only when its path changes, and a prefetch beside the gate is only a cache warm-up the
+ * mounted page's own queries already cover.
+ */
 export function combineLoaders(...loaders: LoaderFunction[]): LoaderFunction {
-  return async (args) => {
+  const combined: LoaderFunction = async (args) => {
     for (const loader of loaders) {
       const result = await loader(args);
       if (result !== null) {
@@ -89,4 +107,5 @@ export function combineLoaders(...loaders: LoaderFunction[]): LoaderFunction {
     }
     return null;
   };
+  return loaders.some(isPathScopedLoader) ? pathScopedLoader(combined) : combined;
 }

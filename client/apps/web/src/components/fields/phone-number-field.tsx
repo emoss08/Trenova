@@ -1,12 +1,14 @@
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import { PhoneInput, type PhoneInputProps } from "@trenova/shared/components/ui/phone-input";
-import { FieldWrapper } from "./field-components";
+import type React from "react";
+import { FieldWrapper, type FieldLayout } from "./field-components";
 
 type BasePhoneNumberFieldProps = Omit<PhoneInputProps, "name"> & {
   label?: string;
-  description?: string;
+  description?: React.ReactNode;
   inputClassProps?: string;
+  layout?: FieldLayout;
 };
 
 export type PhoneNumberFieldProps<T extends FieldValues> = BasePhoneNumberFieldProps &
@@ -20,6 +22,7 @@ export function PhoneNumberField<T extends FieldValues>({
   description,
   className,
   inputClassProps,
+  layout,
   ...props
 }: PhoneNumberFieldProps<T>) {
   const inputId = `input-${name}`;
@@ -33,11 +36,13 @@ export function PhoneNumberField<T extends FieldValues>({
       rules={rules}
       render={({ field, fieldState }) => (
         <FieldWrapper
+          name={name}
           label={label}
           description={description}
           required={!!rules?.required}
           error={fieldState.error?.message}
           className={className}
+          layout={layout}
         >
           <PhoneInput
             {...field}

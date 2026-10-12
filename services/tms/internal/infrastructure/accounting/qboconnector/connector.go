@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/emoss08/trenova/shared/restx"
@@ -36,7 +36,7 @@ type Params struct {
 }
 
 type Provider struct {
-	instance    *services.AccountingApp
+	instance    *accountingsyncports.AccountingApp
 	redirectURL string
 	apiOpts     []quickbooks.Option
 	oauthOpts   []quickbooks.Option
@@ -46,7 +46,7 @@ type Provider struct {
 	bound map[string]*Connector
 }
 
-var _ services.AccountingProvider = (*Provider)(nil)
+var _ accountingsyncports.AccountingProvider = (*Provider)(nil)
 
 type Connector struct {
 	env      quickbooks.Environment
@@ -56,7 +56,7 @@ type Connector struct {
 	l        *zap.Logger
 }
 
-var _ services.AccountingConnector = (*Connector)(nil)
+var _ accountingsyncports.AccountingConnector = (*Connector)(nil)
 
 func New(p Params) (*Provider, error) {
 	qbo := p.Config.Accounting.QuickBooks
@@ -74,7 +74,7 @@ func New(p Params) (*Provider, error) {
 		provider.apiOpts = append(provider.apiOpts, quickbooks.WithLimiter(p.Limiter, ""))
 	}
 	if qbo.IsConfigured(&p.Config.App) {
-		provider.instance = &services.AccountingApp{
+		provider.instance = &accountingsyncports.AccountingApp{
 			Source:               accountingsync.AppSourceInstance,
 			Environment:          environment,
 			ClientID:             strings.TrimSpace(qbo.ClientID),
@@ -90,7 +90,7 @@ func (p *Provider) IntegrationType() integration.Type {
 	return integration.TypeQuickBooksOnline
 }
 
-func (p *Provider) InstanceApp() (*services.AccountingApp, bool) {
+func (p *Provider) InstanceApp() (*accountingsyncports.AccountingApp, bool) {
 	if p.instance == nil {
 		return nil, false
 	}
@@ -102,11 +102,13 @@ func (p *Provider) RedirectURL() string {
 	return p.redirectURL
 }
 
-func (p *Provider) Bind(app *services.AccountingApp) (services.AccountingConnector, error) {
+func (p *Provider) Bind(
+	app *accountingsyncports.AccountingApp,
+) (accountingsyncports.AccountingConnector, error) {
 	return p.bind(app)
 }
 
-func (p *Provider) bind(app *services.AccountingApp) (*Connector, error) {
+func (p *Provider) bind(app *accountingsyncports.AccountingApp) (*Connector, error) {
 	if app == nil {
 		return nil, ErrNotConfigured
 	}
@@ -169,7 +171,7 @@ func apiEnvironment(environment accountingsync.AppEnvironment) (quickbooks.Envir
 	}
 }
 
-func bindingKey(app *services.AccountingApp) string {
+func bindingKey(app *accountingsyncports.AccountingApp) string {
 	return hashutils.SHA256Hex(strings.Join([]string{
 		string(app.Environment),
 		strings.TrimSpace(app.ClientID),
@@ -192,7 +194,7 @@ func (c *Connector) AuthorizeURL(state string) (string, error) {
 func (c *Connector) ExchangeCode(
 	ctx context.Context,
 	code string,
-) (*services.AccountingTokenGrant, error) {
+) (*accountingsyncports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
 		return nil, errNoRedirect
 	}
@@ -206,7 +208,7 @@ func (c *Connector) ExchangeCode(
 func (c *Connector) Refresh(
 	ctx context.Context,
 	refreshToken string,
-) (*services.AccountingTokenGrant, error) {
+) (*accountingsyncports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
 		return nil, errNoRedirect
 	}
@@ -226,19 +228,19 @@ func (c *Connector) Revoke(ctx context.Context, token string) error {
 
 func (c *Connector) Companies(
 	_ context.Context,
-	_ *services.AccountingTokenGrant,
+	_ *accountingsyncports.AccountingTokenGrant,
 	callbackRealmID string,
-) ([]services.AccountingCompany, error) {
+) ([]accountingsyncports.AccountingCompany, error) {
 	if callbackRealmID == "" {
 		return nil, errors.New("QuickBooks did not name the company that was authorized")
 	}
-	return []services.AccountingCompany{{ID: callbackRealmID}}, nil
+	return []accountingsyncports.AccountingCompany{{ID: callbackRealmID}}, nil
 }
 
 func (c *Connector) ReleaseCompanies(
 	context.Context,
-	*services.AccountingTokenGrant,
-	[]services.AccountingCompany,
+	*accountingsyncports.AccountingTokenGrant,
+	[]accountingsyncports.AccountingCompany,
 ) error {
 	return nil
 }
@@ -295,7 +297,7 @@ func (c *Connector) VerifyApp(ctx context.Context) error {
 	case err == nil, quickbooks.IsInvalidGrant(err):
 		return nil
 	case quickbooks.IsInvalidClient(err), quickbooks.IsUnauthorized(err):
-		return services.ErrAccountingAppRejected
+		return accountingsyncports.ErrAccountingAppRejected
 	default:
 		return err
 	}
@@ -328,8 +330,8 @@ func classifyError(err error) accountingsync.ErrorCategory {
 	}
 }
 
-func grantOf(token *quickbooks.Token) *services.AccountingTokenGrant {
-	return &services.AccountingTokenGrant{
+func grantOf(token *quickbooks.Token) *accountingsyncports.AccountingTokenGrant {
+	return &accountingsyncports.AccountingTokenGrant{
 		AccessToken:     token.AccessToken,
 		RefreshToken:    token.RefreshToken,
 		AccessTokenTTL:  token.AccessTokenTTL,

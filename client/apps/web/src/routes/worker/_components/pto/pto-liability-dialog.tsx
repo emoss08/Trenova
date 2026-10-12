@@ -63,10 +63,14 @@ export function PTOLiabilityDialog({
         <DialogHeader>
           <DialogTitle>{t("PTO liability")}</DialogTitle>
           <DialogDescription>
-            {t(
-              "Every tracked balance valued against its policy's termination rule. Liability is what the organisation would owe if everyone left {0}.",
-              data ? formatUnixDate(data.asOf) : "today",
-            )}
+            {data
+              ? t(
+                  "Every tracked balance valued against its policy's termination rule. Liability is what the organisation would owe if everyone left on {0}.",
+                  formatUnixDate(data.asOf),
+                )
+              : t(
+                  "Every tracked balance valued against its policy's termination rule. Liability is what the organisation would owe if everyone left today.",
+                )}
           </DialogDescription>
         </DialogHeader>
 

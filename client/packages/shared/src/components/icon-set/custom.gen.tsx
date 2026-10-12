@@ -392,6 +392,12 @@ export const NewspaperIcon = /* @__PURE__ */ createIcon(
     <path d="M16.5 7h1M16.5 11h1M9.5 15h8M9.5 18h5" />
   </>,
 );
+export const NovaRingIcon = /* @__PURE__ */ createIcon(
+  "NovaRing",
+  <>
+    <path d="M3.5 12a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0 -17 0Z" />
+  </>,
+);
 export const PauseIcon = /* @__PURE__ */ createIcon(
   "Pause",
   <>

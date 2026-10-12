@@ -17,6 +17,7 @@ export default function RoutingGuideTable() {
   return (
     <DataTable<RoutingGuideRow>
       name="Routing Guide"
+      emptyTitle={t("No routing guides yet")}
       queryKey="routing-guide-list"
       resource={Resource.RoutingGuide}
       columns={columns}

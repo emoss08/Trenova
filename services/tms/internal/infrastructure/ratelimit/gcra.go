@@ -3,7 +3,7 @@ package ratelimit
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 type gcraResult struct {
@@ -14,7 +14,7 @@ type gcraResult struct {
 	resetAfter time.Duration
 }
 
-func emissionInterval(policy repositories.RateLimitPolicy) int64 {
+func emissionInterval(policy kernelports.RateLimitPolicy) int64 {
 	interval := policy.Period.Microseconds() / int64(policy.Rate)
 	if interval < 1 {
 		return 1
@@ -22,7 +22,7 @@ func emissionInterval(policy repositories.RateLimitPolicy) int64 {
 	return interval
 }
 
-func evaluateGCRA(nowMicros, storedTAT int64, req repositories.RateLimitRequest) gcraResult {
+func evaluateGCRA(nowMicros, storedTAT int64, req kernelports.RateLimitRequest) gcraResult {
 	interval := emissionInterval(req.Policy)
 	tolerance := interval * int64(req.Policy.Burst)
 	cost := int64(max(req.Cost, 1))
@@ -52,10 +52,10 @@ func evaluateGCRA(nowMicros, storedTAT int64, req repositories.RateLimitRequest)
 }
 
 func decisionFrom(
-	req repositories.RateLimitRequest,
+	req kernelports.RateLimitRequest,
 	res gcraResult,
-) repositories.RateLimitDecision {
-	return repositories.RateLimitDecision{
+) kernelports.RateLimitDecision {
+	return kernelports.RateLimitDecision{
 		Allowed:    res.allowed,
 		Limit:      req.Policy.Burst,
 		Remaining:  res.remaining,
@@ -64,7 +64,7 @@ func decisionFrom(
 	}
 }
 
-func validateRequests(requests []repositories.RateLimitRequest) error {
+func validateRequests(requests []kernelports.RateLimitRequest) error {
 	for i := range requests {
 		if requests[i].Key == "" {
 			return ErrEmptyKey

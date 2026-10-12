@@ -7,6 +7,7 @@ import {
   ApproveAgentMemorySuggestionDocument,
   CreateAgentMemoryDocument,
   DismissAgentMemorySuggestionDocument,
+  ReviewAgentMemoryDocument,
   SetAgentMemoryStatusDocument,
   UpdateAgentMemoryDocument,
   type AgentMemoryInput,
@@ -35,7 +36,7 @@ export async function createAgentMemory(input: AgentMemoryInput) {
     variables: { input },
   });
 
-  return data.createAgentMemory;
+  return getFragmentData(AgentMemoryTableRowFieldsFragmentDoc, data.createAgentMemory);
 }
 
 export async function updateAgentMemory(id: string, input: AgentMemoryInput) {
@@ -45,7 +46,7 @@ export async function updateAgentMemory(id: string, input: AgentMemoryInput) {
     variables: { id, input },
   });
 
-  return data.updateAgentMemory;
+  return getFragmentData(AgentMemoryTableRowFieldsFragmentDoc, data.updateAgentMemory);
 }
 
 export async function setAgentMemoryStatus(id: string, status: AgentMemoryStatus) {
@@ -58,16 +59,78 @@ export async function setAgentMemoryStatus(id: string, status: AgentMemoryStatus
   return data.setAgentMemoryStatus;
 }
 
+/**
+ * Says a person has read a memory written after outside content and keeps it:
+ * from then on it is followed as the organization's own and taints no turn.
+ */
+export async function reviewAgentMemory(id: string, version: number) {
+  const data = await requestGraphQL({
+    document: ReviewAgentMemoryDocument,
+    operationName: "ReviewAgentMemory",
+    variables: { id, version },
+  });
+
+  return getFragmentData(AgentMemoryTableRowFieldsFragmentDoc, data.reviewAgentMemory);
+}
+
+export const taintingAgentMemoriesQueryKey = [AGENT_MEMORY_LIST_KEY, "tainting"] as const;
+
+/** The most tainting memories the notice reads at once. */
+const TAINTING_PAGE_SIZE = 25;
+
+/**
+ * Active memories written after outside content that nobody has reviewed. Each
+ * taints every turn that reads it, so those turns hold their money,
+ * customer-visible and outside-recipient writes for a person.
+ */
+export async function fetchTaintingAgentMemories(options?: {
+  signal?: AbortSignal;
+}): Promise<AgentMemoryTableRowFieldsFragment[]> {
+  const data = await requestGraphQL({
+    document: AgentMemoryTableDocument,
+    operationName: "AgentMemoryTable",
+    variables: {
+      input: {
+        first: TAINTING_PAGE_SIZE,
+        fieldFilters: [
+          { field: "status", operator: "eq", value: "Active" },
+          { field: "tainted", operator: "eq", value: true },
+          { field: "reviewedAt", operator: "isnull", value: null },
+        ],
+        sort: [{ field: "createdAt", direction: "desc" }],
+      },
+      includeTotalCount: false,
+    },
+    signal: options?.signal,
+  });
+
+  return data.agentMemories.edges.map((edge) =>
+    getFragmentData(AgentMemoryTableRowFieldsFragmentDoc, edge.node),
+  );
+}
+
 /** How many memories agents are currently reading, for the rail. */
 export async function fetchActiveAgentMemoryCount(options?: {
   signal?: AbortSignal;
 }): Promise<number> {
+  return countAgentMemories([{ field: "status", operator: "eq", value: "Active" }], options);
+}
+
+export const agentMemoryTotalQueryKey = [AGENT_MEMORY_LIST_KEY, "total"] as const;
+
+/** How many memories the organization keeps in any state, to tell an empty list apart. */
+export async function fetchAgentMemoryTotal(options?: { signal?: AbortSignal }): Promise<number> {
+  return countAgentMemories([], options);
+}
+
+async function countAgentMemories(
+  fieldFilters: { field: string; operator: string; value: string }[],
+  options?: { signal?: AbortSignal },
+): Promise<number> {
   const data = await requestGraphQL({
     document: AgentMemoryCountDocument,
     operationName: "AgentMemoryCount",
-    variables: {
-      input: { first: 1, fieldFilters: [{ field: "status", operator: "eq", value: "Active" }] },
-    },
+    variables: { input: { first: 1, fieldFilters } },
     signal: options?.signal,
   });
 

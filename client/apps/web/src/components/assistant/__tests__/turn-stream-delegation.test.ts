@@ -174,6 +174,52 @@ describe("reduceTurn hand-offs", () => {
     expect(delegate?.retrying).toMatchObject({ attempt: 1, provider: "Backup", kind: "restart" });
   });
 
+  it("puts the other agent's corrected reply in place of its own words, and nowhere else", () => {
+    const state = run([
+      ...handOff,
+      wire("delegate_reasoning", { agentId: AGENT, delegateCallId: CALL, text: "Saving it." }),
+      wire("delegate_delta", {
+        agentId: AGENT,
+        delegateCallId: CALL,
+        text: "Saved rpt_01M3Q2Y4SRFE0YW60JY6F5NRW7.",
+      }),
+      wire("delegate_reply_replaced", {
+        text: "Saved the report.",
+        reason: "The reply named internal record ids.",
+        agentId: AGENT,
+        delegateCallId: CALL,
+      }),
+    ]);
+
+    expect(state.retrying).toBeNull();
+    expect(state.segments[0]).toEqual({
+      kind: "text",
+      text: "I'll ask the Report Builder.",
+      closed: true,
+    });
+    const delegate = delegateSegment(state).delegate;
+    expect(delegate?.retrying).toBeNull();
+    expect(delegate?.segments).toEqual([
+      { kind: "reasoning", text: "Saving it.", closed: true },
+      { kind: "text", text: "Saved the report.", closed: false },
+    ]);
+  });
+
+  it("parses the other agent's corrected reply apart from the turn's own", () => {
+    expect(
+      parseAssistantStreamEvent(
+        "delegate_reply_replaced",
+        JSON.stringify({ text: "Saved.", agentId: AGENT, delegateCallId: CALL }),
+      ),
+    ).toEqual({
+      event: "delegate_reply_replaced",
+      data: { text: "Saved.", reason: "", agentId: AGENT, delegateCallId: CALL },
+    });
+    expect(() =>
+      parseAssistantStreamEvent("delegate_reply_replaced", JSON.stringify({ text: "Saved." })),
+    ).toThrow();
+  });
+
   it("keeps the account when the task ends, before the call itself settles", () => {
     const finished = run([
       ...handOff,

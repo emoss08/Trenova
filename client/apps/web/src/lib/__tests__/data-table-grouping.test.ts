@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { DataTableGroup, FieldFilter, SortField } from "@trenova/shared/types/data-table";
-import { buildGroupedBody, groupedScopeFilters, groupedSort } from "../data-table-grouping";
+import type {
+  DataTableGroup,
+  DataTableGroupScope,
+  SortField,
+} from "@trenova/shared/types/data-table";
+import { buildGroupedBody, groupedScope, groupedSort } from "../data-table-grouping";
 
 type TestRow = { id: string; stage: number };
 
@@ -43,23 +47,79 @@ describe("groupedSort", () => {
     ]);
   });
 
+  it("follows the group field with its tie-breakers, ahead of the person's sort", () => {
+    const sort: SortField[] = [
+      { field: "customerId", direction: "desc" },
+      { field: "createdAt", direction: "desc" },
+    ];
+    expect(
+      groupedSort(
+        { field: "customer.name", tieBreakers: [{ field: "customerId", direction: "asc" }] },
+        sort,
+      ),
+    ).toEqual([
+      { field: "customer.name", direction: "asc" },
+      { field: "customerId", direction: "asc" },
+      { field: "createdAt", direction: "desc" },
+    ]);
+  });
+
   it("leaves the sort alone when grouping is off", () => {
     const sort: SortField[] = [{ field: "proNumber", direction: "asc" }];
     expect(groupedSort(undefined, sort)).toBe(sort);
   });
 });
 
-describe("groupedScopeFilters", () => {
+describe("groupedScope", () => {
   it("excludes collapsed groups server-side", () => {
-    const filters = groupedScopeFilters({ field: "stageRank", collapsedKeys: [2, 5] });
-    expect(filters).toEqual<FieldFilter[]>([
-      { field: "stageRank", operator: "notin", value: [2, 5] },
-    ]);
+    expect(
+      groupedScope({ field: "stageRank", collapsedKeys: [2, 5] }),
+    ).toEqual<DataTableGroupScope>({
+      fieldFilters: [{ field: "stageRank", operator: "notin", value: [2, 5] }],
+      filterGroups: [],
+    });
+  });
+
+  it("lets a grouping whose keys are not field values say how to drop them", () => {
+    const scope: DataTableGroupScope = {
+      fieldFilters: [],
+      filterGroups: [
+        {
+          filters: [
+            { field: "shipperStop.scheduledWindowStart", operator: "lt", value: 100 },
+            { field: "shipperStop.scheduledWindowStart", operator: "gte", value: 200 },
+          ],
+        },
+      ],
+    };
+    const seen: unknown[] = [];
+    expect(
+      groupedScope({
+        field: "shipperStop.scheduledWindowStart",
+        collapsedKeys: ["2026-10-07"],
+        collapsedScope: (keys) => {
+          seen.push(keys);
+          return scope;
+        },
+      }),
+    ).toBe(scope);
+    expect(seen).toEqual([["2026-10-07"]]);
   });
 
   it("adds nothing when no group is collapsed or grouping is off", () => {
-    expect(groupedScopeFilters({ field: "stageRank", collapsedKeys: [] })).toEqual([]);
-    expect(groupedScopeFilters(undefined)).toEqual([]);
+    const empty: DataTableGroupScope = { fieldFilters: [], filterGroups: [] };
+    expect(groupedScope({ field: "stageRank", collapsedKeys: [] })).toEqual(empty);
+    expect(
+      groupedScope({
+        field: "stageRank",
+        collapsedKeys: [],
+        collapsedScope: () => ({
+          fieldFilters: [{ field: "x", operator: "eq", value: 1 }],
+          filterGroups: [],
+        }),
+      }),
+    ).toEqual(empty);
+    expect(groupedScope(undefined)).toEqual(empty);
   });
 });
 
@@ -159,5 +219,32 @@ describe("buildGroupedBody", () => {
       isLastPage: true,
     });
     expect(shape(items)).toEqual(["group:1", "row:a@0", "group:9", "row:z@1"]);
+  });
+});
+
+describe("buildGroupedBody while the next page loads", () => {
+  it("folds a group the moment it collapses, even with its rows still on screen", () => {
+    const items = buildGroupedBody({
+      rows: [row("a", 1), row("b", 1), row("c", 3)],
+      groups: GROUPS,
+      getGroupKey: getKey,
+      collapsedKeys: [1],
+      isFirstPage: true,
+      isLastPage: true,
+    });
+    expect(shape(items)).toEqual(["group:1:collapsed", "group:3", "row:c@2"]);
+  });
+
+  it("keeps the header of a group that just opened while its rows load", () => {
+    const items = buildGroupedBody({
+      rows: [row("c", 3)],
+      groups: GROUPS,
+      getGroupKey: getKey,
+      collapsedKeys: [],
+      loadingKeys: [2],
+      isFirstPage: true,
+      isLastPage: true,
+    });
+    expect(shape(items)).toEqual(["group:2", "group:3", "row:c@0"]);
   });
 });

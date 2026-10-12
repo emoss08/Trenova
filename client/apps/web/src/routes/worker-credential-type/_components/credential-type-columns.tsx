@@ -9,10 +9,11 @@ import {
   CREDENTIAL_CATEGORY_LABELS,
   credentialCategorySchema,
 } from "@trenova/shared/types/worker-credential";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const CATEGORY_CHOICES = credentialCategorySchema.options.map((value) => ({
   value,
-  label: CREDENTIAL_CATEGORY_LABELS[value],
+  label: sourceLabels(CREDENTIAL_CATEGORY_LABELS)[value],
 }));
 
 function requiredSummary(row: WorkerCredentialTypeRow): string {
@@ -101,7 +102,8 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerCredentialTypeRow>[]
     {
       accessorKey: "renewalWindowDays",
       header: t("Alert window"),
-      cell: ({ row }) => `${row.original.renewalWindowDays} days`,
+      cell: ({ row }) =>
+        t("{0, plural, one {# day} other {# days}}", row.original.renewalWindowDays),
       size: 110,
       meta: { apiField: "renewalWindowDays", sortable: true },
     },
@@ -110,7 +112,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerCredentialTypeRow>[]
       header: t("Validity"),
       cell: ({ row }) =>
         row.original.validityMonths ? (
-          `${row.original.validityMonths} mo`
+          t("{0} mo", row.original.validityMonths)
         ) : (
           <span className="text-muted-foreground">—</span>
         ),

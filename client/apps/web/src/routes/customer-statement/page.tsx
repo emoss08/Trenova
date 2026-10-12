@@ -166,7 +166,7 @@ export function CustomerStatementPage() {
     <PageLayout
       pageHeaderProps={{
         title: statement.customerName,
-        description: `Statement as of ${formatDate(statement.statementDate)}`,
+        description: t("Statement as of {0}", formatDate(statement.statementDate)),
         actions: backButton,
       }}
     >

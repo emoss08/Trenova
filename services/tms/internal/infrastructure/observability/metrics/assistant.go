@@ -37,6 +37,7 @@ type Assistant struct {
 	stepsReplayed    *prometheus.CounterVec
 	streamAttached   *prometheus.CounterVec
 	trajectoryEvents *prometheus.CounterVec
+	toolOutcomes     *prometheus.CounterVec
 }
 
 func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *Assistant {
@@ -117,6 +118,19 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 		[]string{"owner_kind", labelResult},
 	)
 
+	// Why tool calls fail, in aggregate. Each call's verdict is on its span and
+	// its step, but nothing added them up, so a tool the models keep calling
+	// wrongly looked the same as one that worked until somebody read threads.
+	m.toolOutcomes = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: "assistant",
+			Name:      "tool_outcomes_total",
+			Help:      "Agent tool calls by tool and by what became of the call",
+		},
+		[]string{"tool", "verdict"},
+	)
+
 	m.streamAttached = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: Namespace,
@@ -171,6 +185,7 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 		m.stepsReplayed,
 		m.streamAttached,
 		m.trajectoryEvents,
+		m.toolOutcomes,
 	)
 
 	return m
@@ -253,6 +268,16 @@ func (m *Assistant) RecordTrajectoryDropped(ownerKind string, count int) {
 	}
 
 	m.trajectoryEvents.WithLabelValues(ownerKind, "dropped").Add(float64(count))
+}
+
+// RecordToolOutcome files one tool call by what became of it: ran, proposed,
+// simulated, or the refusal that stopped it.
+func (m *Assistant) RecordToolOutcome(tool, verdict string) {
+	if !m.enabled() {
+		return
+	}
+
+	m.toolOutcomes.WithLabelValues(tool, verdict).Inc()
 }
 
 // RecordStreamAttach files a reader arriving at a turn.

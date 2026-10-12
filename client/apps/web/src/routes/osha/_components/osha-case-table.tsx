@@ -130,7 +130,7 @@ export function OshaCaseTable({
 
       {cases.length === 0 ? (
         <OshaEmptyLog
-          title={`Nothing recorded for ${year}`}
+          title={t("Nothing recorded for {0}", year)}
           description={
             "A year with no recordable case still posts a 300A with zeros in it.\n" +
             "A case is recorded from the worker's safety tab and lands here."
@@ -218,7 +218,7 @@ export function OshaCaseTable({
                     key={entry.id}
                     data-slot="table-row"
                     data-recordable={entry.recordable}
-                    aria-label={`Case ${label}`}
+                    aria-label={t("Case {0}", label)}
                     onClick={() => onOpen(entry)}
                     className={cn(
                       "hover:bg-muted/50 cursor-pointer border-b text-xs transition-colors last:border-0",
@@ -334,7 +334,7 @@ export function OshaCaseTable({
                       className="px-1 py-1 text-right align-middle"
                       onClick={(event) => event.stopPropagation()}
                     >
-                      <RowActionsMenu label={`Actions for case ${label}`} actions={actions} />
+                      <RowActionsMenu label={t("Actions for case {0}", label)} actions={actions} />
                     </td>
                   </tr>
                 );

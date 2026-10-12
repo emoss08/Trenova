@@ -6,16 +6,15 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,7 +42,7 @@ func grantKey(resource permission.Resource, op permission.Operation) string {
 }
 
 type fakeAIAuditService struct {
-	services.AIAuditService
+	aiauditports.AIAuditService
 
 	mu    sync.Mutex
 	calls []string
@@ -57,7 +56,7 @@ func (f *fakeAIAuditService) record(name string) {
 
 func (f *fakeAIAuditService) ListEvents(
 	context.Context,
-	*services.ListAIAuditEventsRequest,
+	*aiauditports.ListAIAuditEventsRequest,
 ) (*pagination.CursorListResult[*aiaudit.AIAuditEvent], error) {
 	f.record("ListEvents")
 
@@ -66,7 +65,7 @@ func (f *fakeAIAuditService) ListEvents(
 
 func (f *fakeAIAuditService) GetEvent(
 	context.Context,
-	repositories.GetAIAuditEventRequest,
+	aiauditports.GetAIAuditEventRequest,
 ) (*aiaudit.AIAuditEvent, error) {
 	f.record("GetEvent")
 
@@ -76,24 +75,24 @@ func (f *fakeAIAuditService) GetEvent(
 func (f *fakeAIAuditService) ChainStatus(
 	context.Context,
 	pagination.TenantInfo,
-) (*services.AIAuditChainStatus, error) {
+) (*aiauditports.AIAuditChainStatus, error) {
 	f.record("ChainStatus")
 
-	return &services.AIAuditChainStatus{}, nil
+	return &aiauditports.AIAuditChainStatus{}, nil
 }
 
 func (f *fakeAIAuditService) RequestVerification(
 	context.Context,
-	*services.RequestActor,
-) (*services.AIAuditChainStatus, error) {
+	*permissionports.RequestActor,
+) (*aiauditports.AIAuditChainStatus, error) {
 	f.record("RequestVerification")
 
-	return &services.AIAuditChainStatus{Verifying: true}, nil
+	return &aiauditports.AIAuditChainStatus{Verifying: true}, nil
 }
 
 func (f *fakeAIAuditService) RequestExport(
 	context.Context,
-	*services.RequestAIAuditExportRequest,
+	*aiauditports.RequestAIAuditExportRequest,
 ) (*aiaudit.AIAuditExport, error) {
 	f.record("RequestExport")
 
@@ -102,7 +101,7 @@ func (f *fakeAIAuditService) RequestExport(
 
 func (f *fakeAIAuditService) GetExport(
 	context.Context,
-	repositories.GetAIAuditExportRequest,
+	aiauditports.GetAIAuditExportRequest,
 ) (*aiaudit.AIAuditExport, error) {
 	f.record("GetExport")
 
@@ -111,7 +110,7 @@ func (f *fakeAIAuditService) GetExport(
 
 func (f *fakeAIAuditService) ListExports(
 	context.Context,
-	*repositories.ListAIAuditExportsRequest,
+	*aiauditports.ListAIAuditExportsRequest,
 ) (*pagination.CursorListResult[*aiaudit.AIAuditExport], error) {
 	f.record("ListExports")
 
@@ -120,11 +119,11 @@ func (f *fakeAIAuditService) ListExports(
 
 func (f *fakeAIAuditService) ExportDownload(
 	context.Context,
-	*services.GetAIAuditExportDownloadRequest,
-) (*services.AIAuditExportDownload, error) {
+	*aiauditports.GetAIAuditExportDownloadRequest,
+) (*aiauditports.AIAuditExportDownload, error) {
 	f.record("ExportDownload")
 
-	return &services.AIAuditExportDownload{}, nil
+	return &aiauditports.AIAuditExportDownload{}, nil
 }
 
 type aiAuditFixture struct {

@@ -17,6 +17,7 @@ export default function JournalReversalTable() {
   return (
     <DataTable<JournalReversalRow>
       name="Journal Reversal"
+      emptyTitle={t("No journal reversals yet")}
       queryKey="journal-reversal-list"
       graphql={journalReversalTableGraphQLConfig}
       resource={Resource.JournalReversal}

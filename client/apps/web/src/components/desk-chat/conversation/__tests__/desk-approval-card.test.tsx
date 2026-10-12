@@ -1,5 +1,5 @@
 import { approvalQueue, type ApprovalEntry } from "@/components/assistant/approval-queue";
-import { preview } from "@/components/assistant/__tests__/preview-fixtures";
+import { preview, record } from "@/components/assistant/__tests__/preview-fixtures";
 import type { ProposalPreview, ProposalPreviewRequest } from "@/lib/graphql/agent-preview";
 import type { AssistantProposal } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -154,5 +154,42 @@ describe("DeskApprovalCard for one proposal", () => {
     expect(screen.queryByRole("button", { name: /^Approve/ })).toBeNull();
     expect(approveRef.current).toBeNull();
     expect(decideMyProposal).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * A new shipment's preview lists the shipment and one change per stop. The
+ * card counted every change as a record of the first one's kind, so a load
+ * with four stops read "Enter a shipment on 5 shipments"; and a record being
+ * created is not one the change acts "on".
+ */
+describe("DeskApprovalCard for a change that creates records", () => {
+  const stop = (sequence: number) =>
+    record({
+      resource: "shipment_stop",
+      record: null,
+      entityId: null,
+      label: `Pickup stop ${sequence}`,
+      operation: "Create",
+    });
+
+  it("counts the records it creates, not their parts, and acts on none", async () => {
+    fetchProposalPreview.mockResolvedValue(
+      preview({
+        tool: "create_shipment",
+        changes: [
+          record({ record: null, entityId: null, label: "New shipment", operation: "Create" }),
+          stop(1),
+          stop(2),
+          stop(3),
+          stop(4),
+        ],
+      }),
+    );
+    renderCard();
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    expect(screen.queryByText(/shipments/)).toBeNull();
+    expect(screen.queryByText(/^on /)).toBeNull();
   });
 });

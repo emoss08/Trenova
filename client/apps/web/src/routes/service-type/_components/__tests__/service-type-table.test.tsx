@@ -3,11 +3,13 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import ServiceTypeTable from "../service-type-table";
+import { seedDataTableQueries } from "@/test/data-table-queries";
 
 const patchMock = vi.hoisted(() => vi.fn());
 
-const useDataTableQueryMock = vi.hoisted(() =>
-  vi.fn(() => ({
+// One answer, kept across renders, as React Query keeps an unchanged result.
+const useDataTableQueryMock = vi.hoisted(() => {
+  const result = {
     data: {
       results: [
         {
@@ -24,8 +26,9 @@ const useDataTableQueryMock = vi.hoisted(() =>
     isLoading: false,
     isError: false,
     error: null,
-  })),
-);
+  };
+  return vi.fn(() => result);
+});
 
 vi.mock("../service-type-panel", () => ({
   ServiceTypePanel: () => null,
@@ -52,19 +55,14 @@ vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));
 
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({
+vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", () => ({
+vi.mock("@/lib/queries", async () => ({
   queries: {
-    tableConfiguration: {
-      default: () => ({ queryKey: ["tableConfig-default"], queryFn: () => null }),
-      all: () => ({
-        queryKey: ["tableConfig-all"],
-        queryFn: () => ({ results: [], count: 0 }),
-      }),
-    },
+    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
   },
 }));
 
@@ -73,9 +71,9 @@ vi.mock("@trenova/shared/hooks/use-debounce", () => ({
 }));
 
 function renderServiceTypeTable() {
-  const queryClient = new QueryClient({
+  const queryClient = seedDataTableQueries(new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  });
+  }));
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
   render(
     <QueryClientProvider client={queryClient}>
@@ -96,8 +94,8 @@ describe("ServiceTypeTable inline cell editing", () => {
     patchMock.mockResolvedValue({});
     const { invalidateSpy } = renderServiceTypeTable();
 
-    fireEvent.click(screen.getByLabelText("Edit description"));
-    const input = await screen.findByRole("textbox", { name: "Edit description" });
+    fireEvent.click(screen.getByLabelText("Edit Description"));
+    const input = await screen.findByRole("textbox", { name: "Edit Description" });
     expect(input).toHaveValue("Less than truckload");
 
     fireEvent.change(input, { target: { value: "Volume LTL" } });
@@ -112,27 +110,27 @@ describe("ServiceTypeTable inline cell editing", () => {
         refetchType: "all",
       });
     });
-    expect(screen.queryByRole("textbox", { name: "Edit description" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Edit Description" })).not.toBeInTheDocument();
   });
 
   it("rejects clearing the code and keeps the editor open", async () => {
     renderServiceTypeTable();
 
-    fireEvent.click(screen.getByLabelText("Edit code"));
-    const input = await screen.findByRole("textbox", { name: "Edit code" });
+    fireEvent.click(screen.getByLabelText("Edit Code"));
+    const input = await screen.findByRole("textbox", { name: "Edit Code" });
     expect(input).toHaveValue("LTL");
 
     fireEvent.change(input, { target: { value: "" } });
     fireEvent.keyDown(input, { key: "Enter" });
 
     await waitFor(() => {
-      expect(screen.getByRole("textbox", { name: "Edit code" })).toBeInTheDocument();
+      expect(screen.getByRole("textbox", { name: "Edit Code" })).toBeInTheDocument();
     });
     expect(patchMock).not.toHaveBeenCalled();
   });
 
   it("does not offer inline editing on the timestamp column", () => {
     renderServiceTypeTable();
-    expect(screen.queryByLabelText("Edit createdAt")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Edit Created At")).not.toBeInTheDocument();
   });
 });

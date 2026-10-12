@@ -4,12 +4,12 @@ package scimgrouprolemappingresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	iamports "github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 )
 
 type Deps struct {
 	*base.Core
-	IamService services.IAMService
+	IamService iamports.IAMService
 }
 
 type QueryResolver struct{ *Deps }

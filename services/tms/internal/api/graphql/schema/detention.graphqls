@@ -560,6 +560,8 @@ input DetentionStatsInput {
   from: Timestamp!
   to: Timestamp!
   limit: Int
+  "Only the stops made at this location."
+  locationId: ID
 }
 
 extend type Query {

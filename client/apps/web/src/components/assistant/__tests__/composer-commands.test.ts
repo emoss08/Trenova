@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { registerCatalogSource, setLocale } from "@trenova/shared/i18n/runtime";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { matchSuggestions, slashQuery } from "../composer-commands";
 
 const suggestions = [
@@ -40,10 +41,12 @@ describe("matchSuggestions", () => {
 
 import {
   commandEntries,
+  COMPACT_COMMAND,
   fillCommand,
   isScheduleRequest,
   parseSlashCommand,
   SLASH_COMMANDS,
+  slotHint,
   splitScheduleSlots,
 } from "../composer-commands";
 
@@ -157,5 +160,133 @@ describe("/schedule", () => {
       "each morning",
       "list unassigned loads",
     ]);
+  });
+});
+
+/*
+The composer reads the same cadences the server does, in English, Spanish and
+Chinese whatever the language on screen. These mirror the cases in
+conversationschedule/cadence_test.go.
+*/
+describe("isScheduleRequest in Spanish and Chinese", () => {
+  it("reads a Spanish cadence at the start as a schedule", () => {
+    for (const text of [
+      "cada día laborable a las 7:30, ¿qué está bloqueando la cola de facturación?",
+      "todos los dias habiles a las 8 am: cargas sin asignar",
+      "/schedule todos los lunes a las 8 a. m., resume la detención por cliente",
+      "cada día revisa las cargas atrasadas",
+      "todas las mañanas a las 6:15, por favor lista las cargas sin asignar",
+      "cada semana a las 9, ¿cómo nos fue con el margen?",
+      "todos los viernes a las 4 y media de la tarde cierra la semana",
+      "todos los sabados a la 1 pm, ¿qué vence el lunes?",
+      "cada miércoles a las 12 de la noche: cierre",
+      "Todos Los Domingos a las 17:45 quién sigue en ruta",
+      "cada martes a las 7 y cuarto de la mañana, informe de antigüedad",
+    ]) {
+      expect(isScheduleRequest(text), text).toBe(true);
+    }
+  });
+
+  it("reads a Chinese cadence with a time or a separator as a schedule", () => {
+    for (const text of [
+      "每天8点，汇总延误的运单",
+      "每天早上7点半汇总未分配的货物",
+      "每个工作日上午7:30，计费队列卡在哪里？",
+      "每個工作日 17：45：誰還在路上？",
+      "/schedule 每周一上午 8 点, 请汇总上周各客户的滞留",
+      "每週五下午4點30分 總結本週",
+      "每周：利润怎么样？",
+      "每星期天晚上九点、下周到期的有哪些？",
+      "每个星期六中午12点，结算本周",
+      "/schedule 每日汇总运单",
+      "工作日每天20点 谁还在路上",
+    ]) {
+      expect(isScheduleRequest(text), text).toBe(true);
+    }
+  });
+
+  it("leaves questions that only open with cada or 每天 alone", () => {
+    for (const text of [
+      "cada vez que abro la cola va lento, ¿por qué?",
+      "cada hora revisa el tablero",
+      "¿Qué pasa cada lunes?",
+      "cada diario cuenta",
+      "todos los clientes, ¿quién debe más?",
+      "每天有多少票货？",
+      "每天早上有多少票货？",
+      "每周一次汇总",
+      "每日报告在哪里？",
+      "每个司机每天跑多少？",
+      "今天每天8点",
+    ]) {
+      expect(isScheduleRequest(text), text).toBe(false);
+    }
+  });
+});
+
+describe("/schedule in Spanish and Chinese", () => {
+  it("fills its when slot with the whole cadence and its request with the rest", () => {
+    expect(
+      parseSlashCommand("/schedule todos los lunes a las 8 a. m. resume la detención")?.args,
+    ).toEqual(["todos los lunes a las 8 a. m.", "resume la detención"]);
+    expect(parseSlashCommand("/schedule 每周一上午 8 点 汇总滞留")?.args).toEqual([
+      "每周一上午 8 点",
+      "汇总滞留",
+    ]);
+    expect(parseSlashCommand("/schedule 每天汇总运单")?.args).toEqual(["每天", "汇总运单"]);
+
+    const parsed = parseSlashCommand("/schedule 每週五下午4點半 總結本週")!;
+    expect(parsed.complete).toBe(true);
+    expect(isScheduleRequest(fillCommand(parsed.command, parsed.args))).toBe(true);
+  });
+
+  it("waits while the time is still being typed", () => {
+    expect(parseSlashCommand("/schedule cada lunes a las")?.complete).toBe(false);
+    expect(parseSlashCommand("/schedule cada lunes a las 8 de la")?.complete).toBe(false);
+    expect(parseSlashCommand("/schedule 每周一下午")?.complete).toBe(false);
+    expect(parseSlashCommand("/schedule 每周一 8")?.complete).toBe(false);
+    expect(parseSlashCommand("/schedule 每周一 8点")?.complete).toBe(false);
+  });
+});
+
+/**
+ * A command's prompt is a whole message in the catalog, so a person reading
+ * Spanish asks the agent in Spanish.
+ */
+describe("slash commands in another language", () => {
+  beforeAll(async () => {
+    await registerCatalogSource({
+      es: async () => ({
+        "What is the status of shipment {0} right now, and is anything holding it up?":
+          "¿Cuál es el estado del envío {0} ahora mismo y hay algo que lo retenga?",
+        "Quote a truckload shipment from {0} to {1}. Say which rate applied and what it is made of.":
+          "Cotiza un envío de carga completa de {0} a {1}. Indica qué tarifa se aplicó y de qué se compone.",
+        "PRO or shipment number": "Número PRO o de envío",
+      }),
+    });
+    await setLocale("es");
+  });
+
+  afterAll(async () => {
+    await setLocale("en");
+  });
+
+  it("writes the prompt in Spanish with each slot in place", () => {
+    const status = SLASH_COMMANDS.find((command) => command.name === "status")!;
+    expect(fillCommand(status, [" S12345 "])).toBe(
+      "¿Cuál es el estado del envío S12345 ahora mismo y hay algo que lo retenga?",
+    );
+    const quote = SLASH_COMMANDS.find((command) => command.name === "quote")!;
+    expect(fillCommand(quote, ["Dallas", "Chicago, IL"])).toBe(
+      "Cotiza un envío de carga completa de Dallas a Chicago, IL. Indica qué tarifa se aplicó y de qué se compone.",
+    );
+  });
+
+  it("shows the empty slots' hints in Spanish", () => {
+    expect(slotHint(parseSlashCommand("/status ")!)).toBe("{Número PRO o de envío}");
+  });
+
+  it("keeps /compact as the command it is", () => {
+    expect(fillCommand(COMPACT_COMMAND, [])).toBe("/compact");
   });
 });

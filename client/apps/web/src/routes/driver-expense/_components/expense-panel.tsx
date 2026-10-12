@@ -18,6 +18,7 @@ import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DriverExpenseStatusBadge } from "./expense-columns";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function ExpensePanel({
   open,
@@ -167,11 +168,15 @@ function ReviewForm({
         note: note.trim() || undefined,
       }),
     onSuccess: async () => {
-      toast.success(approve ? "Expense approved — reimbursement applied" : "Expense rejected");
+      toast.success(
+        approve
+          ? translate("Expense approved — reimbursement applied")
+          : translate("Expense rejected"),
+      );
       await onDone();
       onClose();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to review expense"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to review expense")),
   });
 
   return (

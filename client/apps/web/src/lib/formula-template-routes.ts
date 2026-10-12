@@ -1,3 +1,4 @@
+import { recordPath } from "@/config/record-links";
 import type { ImportTemplatesResponse } from "@trenova/shared/types/formula-template";
 
 const BASE = "/billing/configuration-files/formula-templates";
@@ -6,7 +7,7 @@ const BASE = "/billing/configuration-files/formula-templates";
 export const formulaTemplateRoutes = {
   list: BASE,
   new: `${BASE}/new`,
-  edit: (templateId: string) => `${BASE}/${templateId}/edit`,
+  edit: (templateId: string) => recordPath("formula_template", templateId),
 } as const;
 
 /**

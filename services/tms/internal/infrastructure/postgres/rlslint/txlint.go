@@ -14,6 +14,7 @@ import (
 
 var scopedHelpers = map[string]bool{
 	"Read": true, "Write": true, "ReadErr": true, "WriteErr": true, "Read2": true, "Write2": true,
+	"GetOrCreate": true,
 }
 
 type TxViolation struct {
@@ -59,7 +60,10 @@ func scanPackage(dir, root string) ([]TxViolation, error) {
 		return nil, err
 	}
 
-	conns := connectionFields(files)
+	pkg := &repositoryPackage{
+		conns:   connectionFields(files),
+		methods: methodDecls(files),
+	}
 	violations := make([]TxViolation, 0)
 	for path, file := range files {
 		rel, relErr := filepath.Rel(root, path)
@@ -68,11 +72,81 @@ func scanPackage(dir, root string) ([]TxViolation, error) {
 		}
 		violations = append(
 			violations,
-			scanRepositoryFile(fset, filepath.ToSlash(rel), file, conns)...,
+			scanRepositoryFile(fset, filepath.ToSlash(rel), file, pkg)...,
 		)
 	}
 
 	return violations, nil
+}
+
+type repositoryPackage struct {
+	conns   map[string]map[string]bool
+	methods map[string]map[string]*ast.FuncDecl
+}
+
+func methodDecls(files map[string]*ast.File) map[string]map[string]*ast.FuncDecl {
+	out := make(map[string]map[string]*ast.FuncDecl)
+	for _, file := range files {
+		for _, decl := range file.Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok || fn.Body == nil || fn.Recv == nil || len(fn.Recv.List) != 1 {
+				continue
+			}
+			typeName := receiverTypeName(fn.Recv.List[0].Type)
+			if out[typeName] == nil {
+				out[typeName] = make(map[string]*ast.FuncDecl)
+			}
+			out[typeName][fn.Name.Name] = fn
+		}
+	}
+
+	return out
+}
+
+func (p *repositoryPackage) callsUnscopedHelper(
+	body *ast.BlockStmt,
+	recv, typeName string,
+	visited map[string]bool,
+) bool {
+	fields := p.conns[typeName]
+	found := false
+	ast.Inspect(body, func(n ast.Node) bool {
+		if found {
+			return false
+		}
+		if _, isLit := n.(*ast.FuncLit); isLit {
+			return false
+		}
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		id, isIdent := sel.X.(*ast.Ident)
+		if !isIdent || id.Name != recv || ast.IsExported(sel.Sel.Name) || visited[sel.Sel.Name] {
+			return true
+		}
+		helper := p.methods[typeName][sel.Sel.Name]
+		if helper == nil || takesTransaction(helper.Type) || len(helper.Recv.List[0].Names) == 0 {
+			return true
+		}
+		visited[sel.Sel.Name] = true
+		helperRecv := helper.Recv.List[0].Names[0].Name
+		if runsInScopedTransaction(helper.Body, helperRecv, fields) {
+			return true
+		}
+		if referencesConnection(helper.Body, helperRecv, fields) ||
+			p.callsUnscopedHelper(helper.Body, helperRecv, typeName, visited) {
+			found = true
+		}
+
+		return !found
+	})
+
+	return found
 }
 
 func parseSources(fset *token.FileSet, dir string) (map[string]*ast.File, error) {
@@ -170,7 +244,7 @@ func scanRepositoryFile(
 	fset *token.FileSet,
 	rel string,
 	file *ast.File,
-	conns map[string]map[string]bool,
+	pkg *repositoryPackage,
 ) []TxViolation {
 	violations := make([]TxViolation, 0)
 
@@ -197,9 +271,14 @@ func scanRepositoryFile(
 		}
 
 		recvName := fn.Recv.List[0].Names[0].Name
-		fields := conns[receiverTypeName(fn.Recv.List[0].Type)]
-		if len(fields) == 0 || takesTransaction(fn.Type) ||
-			(!referencesConnection(fn.Body, recvName, fields) && !executesQuery(fn.Body)) {
+		typeName := receiverTypeName(fn.Recv.List[0].Type)
+		fields := pkg.conns[typeName]
+		if len(fields) == 0 || takesTransaction(fn.Type) {
+			continue
+		}
+		touches := referencesConnection(fn.Body, recvName, fields) || executesQuery(fn.Body) ||
+			pkg.callsUnscopedHelper(fn.Body, recvName, typeName, map[string]bool{})
+		if !touches {
 			continue
 		}
 

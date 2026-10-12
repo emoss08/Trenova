@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
@@ -12,7 +13,7 @@ import {
   type DriverSettlementRow,
 } from "@/lib/graphql/driver-settlement";
 import { BulkMarkPaidDialog } from "@/components/settlements/bulk-mark-paid-dialog";
-import { bulkActionEligibility, bulkActionVerbs } from "@/lib/settlement-lifecycle";
+import { bulkActionEligibility } from "@/lib/settlement-lifecycle";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DriverSettlementStatus } from "@trenova/shared/types/driver-pay";
 import type { BulkSettlementActionType } from "@trenova/graphql/generated/graphql";
@@ -47,7 +48,7 @@ const filterChips: Array<{ value: QueueFilter; label: string }> = [
 ];
 
 function workerName(settlement: DriverSettlementRow): string {
-  if (!settlement.worker) return "Unknown driver";
+  if (!settlement.worker) return translate("Unknown driver");
   return `${settlement.worker.firstName} ${settlement.worker.lastName}`.trim();
 }
 
@@ -222,7 +223,7 @@ export function SettlementQueue({
                     className="mt-0.5"
                     checked={checkedIds.has(settlement.id)}
                     onCheckedChange={() => toggleChecked(settlement.id)}
-                    aria-label={`Select settlement for ${workerName(settlement)}`}
+                    aria-label={t("Select settlement for {0}", workerName(settlement))}
                   />
                   <button
                     type="button"
@@ -270,6 +271,48 @@ export function SettlementQueue({
   );
 }
 
+function bulkSuccessMessage(action: BulkSettlementActionType, count: number): string {
+  switch (action) {
+    case "Submit":
+      return translate(
+        "{0, plural, one {# settlement submitted} other {# settlements submitted}}",
+        count,
+      );
+    case "Approve":
+      return translate(
+        "{0, plural, one {# settlement approved} other {# settlements approved}}",
+        count,
+      );
+    case "Post":
+      return translate(
+        "{0, plural, one {# settlement posted} other {# settlements posted}}",
+        count,
+      );
+    case "MarkPaid":
+      return translate(
+        "{0, plural, one {# settlement marked paid} other {# settlements marked paid}}",
+        count,
+      );
+  }
+}
+
+function bulkPartialMessage(
+  action: BulkSettlementActionType,
+  successCount: number,
+  failureCount: number,
+): string {
+  switch (action) {
+    case "Submit":
+      return translate("{0} submitted, {1} failed", successCount, failureCount);
+    case "Approve":
+      return translate("{0} approved, {1} failed", successCount, failureCount);
+    case "Post":
+      return translate("{0} posted, {1} failed", successCount, failureCount);
+    case "MarkPaid":
+      return translate("{0} marked paid, {1} failed", successCount, failureCount);
+  }
+}
+
 function BulkActionBar({
   checked,
   onClear,
@@ -307,20 +350,16 @@ function BulkActionBar({
         paymentReference: input.paymentReference,
       }),
     onSuccess: (result, input) => {
-      const verb = bulkActionVerbs[input.action];
       if (result.failureCount === 0) {
-        toast.success(
-          `${result.successCount} settlement${result.successCount === 1 ? "" : "s"} ${verb}`,
-        );
+        toast.success(bulkSuccessMessage(input.action, result.successCount));
       } else {
         const firstError = result.results.find((entry) => !entry.success)?.error;
-        toast.warning(
-          `${result.successCount} ${verb}, ${result.failureCount} failed${firstError ? ` — ${firstError}` : ""}`,
-        );
+        const partial = bulkPartialMessage(input.action, result.successCount, result.failureCount);
+        toast.warning(firstError ? translate("{0} — {1}", partial, firstError) : partial);
       }
       onComplete();
     },
-    onError: (error: Error) => toast.error(error.message || "Bulk action failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Bulk action failed")),
   });
 
   const actionButton = (
@@ -338,7 +377,10 @@ function BulkActionBar({
         className="h-7 text-xs"
         disabled={mutation.isPending}
         onClick={onClick ?? (() => mutation.mutate({ action }))}
-        title={`Applies to the ${count} selected settlement${count === 1 ? "" : "s"} in an eligible status; others are skipped`}
+        title={t(
+          "{0, plural, one {Applies to the # selected settlement in an eligible status; others are skipped} other {Applies to the # selected settlements in an eligible status; others are skipped}}",
+          count,
+        )}
       >
         {icon}
         {label} ({count})

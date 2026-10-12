@@ -4,12 +4,12 @@ package briefingresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	briefingports "github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 )
 
 type Deps struct {
 	*base.Core
-	BriefingService services.BriefingService
+	BriefingService briefingports.BriefingService
 }
 
 type BriefingSectionResolver struct{ *Deps }

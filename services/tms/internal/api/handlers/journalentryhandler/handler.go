@@ -6,10 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -103,7 +103,7 @@ func (h *Handler) listEntries(c *gin.Context) {
 		func() (*pagination.ListResult[*journalentry.JournalEntry], error) {
 			return h.service.ListEntries(
 				c.Request.Context(),
-				&repositories.ListJournalEntriesRequest{
+				&journalentryports.ListJournalEntriesRequest{
 					Filter:              query,
 					FiscalYearID:        fiscalYearID,
 					FiscalPeriodID:      fiscalPeriodID,

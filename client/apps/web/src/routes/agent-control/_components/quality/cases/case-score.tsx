@@ -56,7 +56,7 @@ export function CaseScore({ checks, caseScore }: { checks: unknown; caseScore: n
     >
       <DescriptionList layout="split" className="px-3 py-1">
         {read.checks.map((check) => (
-          <DescriptionItem key={check.name} label={t(CHECK_LABEL[check.name] ?? check.name)}>
+          <DescriptionItem key={check.name} label={CHECK_LABEL[check.name] ?? check.name}>
             <CheckValue check={check} />
           </DescriptionItem>
         ))}
@@ -65,7 +65,7 @@ export function CaseScore({ checks, caseScore }: { checks: unknown; caseScore: n
         <ul className="border-border text-muted-foreground flex flex-col gap-0.5 border-t px-3 py-2 text-xs">
           {findings.map((check) => (
             <li key={check.name}>
-              {t(CHECK_LABEL[check.name] ?? check.name)}: {check.findings.join(", ")}
+              {CHECK_LABEL[check.name] ?? check.name}: {check.findings.join(", ")}
             </li>
           ))}
         </ul>

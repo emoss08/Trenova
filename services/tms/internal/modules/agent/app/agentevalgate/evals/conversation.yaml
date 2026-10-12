@@ -1,0 +1,100 @@
+# Scripted turns that hold the runtime to its contract with a model. The
+# model's side is scripted, so a case fails on what the runtime does and never
+# on a model's mood: what a tool receives when a value is sent the way a small
+# model sends it, what a refusal tells the model, and what is recorded of a
+# reply that breaks a rule the prompt gives. Every case must pass.
+cases:
+  - name: a reprinted list points to its table
+    input: Which loads are running late today?
+    tools:
+      - name: list_shipments
+        table:
+          title: Late shipments
+          rows: 25
+    script:
+      - calls:
+          - name: list_shipments
+            args: {}
+      - reply: "Twenty-five loads are late; the oldest is PRO-1001."
+        reprintRows: 25
+    expect:
+      pointsToTable: list_shipments
+      noMarkdownTable: true
+
+  - name: internal record ids never reach the person
+    input: Is PRO-1001 late?
+    script:
+      - reply: >-
+          PRO-1001 (ID **shp_01M3Q2Y4SRFE0YW60JY6F5NRW7**) is late, and its move
+          `sm_01M3Q2Y3JYTGFNHAJX8H1DB6JH` has no driver.
+    expect:
+      noRecordIds: true
+
+  - name: a number sent as text and a lone id are read as the tool declares them
+    input: Check the last thirty loads, starting with that one.
+    tools:
+      - name: list_shipments
+        schema:
+          type: object
+          properties:
+            limit:
+              type: integer
+              description: How many to return.
+            shipmentIds:
+              type: array
+              description: The shipments to read, from search_shipments.
+              items:
+                type: string
+        result:
+          items: []
+    script:
+      - calls:
+          - name: list_shipments
+            args:
+              limit: "30"
+              shipmentIds: shp_01M3Q2Y4SRFE0YW60JY6F5NRW7
+      - reply: None of them are late.
+    expect:
+      noRefusals: true
+      received:
+        - tool: list_shipments
+          call: 1
+          calls: 1
+          args:
+            limit: 30
+            shipmentIds: [shp_01M3Q2Y4SRFE0YW60JY6F5NRW7]
+
+  - name: a value outside an enum is refused with the allowed values, then corrected
+    input: Show me the delayed loads.
+    tools:
+      - name: list_shipments
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              description: Which loads to list.
+              enum: [Late, OnTime]
+          required: [status]
+        result:
+          items: []
+    script:
+      - calls:
+          - name: list_shipments
+            args:
+              status: Delayed
+      - calls:
+          - name: list_shipments
+            args:
+              status: Late
+      - reply: No loads are late.
+    expect:
+      refusal:
+        tool: list_shipments
+        mentions: ["'Late', 'OnTime'"]
+      received:
+        - tool: list_shipments
+          call: 1
+          calls: 1
+          args:
+            status: Late

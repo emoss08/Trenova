@@ -12,17 +12,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/httpsafe"
@@ -37,14 +38,22 @@ type Params struct {
 
 	Logger     *zap.Logger
 	Config     *config.Config
-	Repo       repositories.AIProviderRepository
+	Repo       agentports.AIProviderRepository
 	Encryption *encryptionservice.Service
 	// Usage records every attempt. Optional so a router built without a
 	// database still answers; without it nothing is counted.
-	Usage    repositories.AIUsageRepository         `optional:"true"`
-	Metrics  *metrics.Registry                      `optional:"true"`
-	Breakers repositories.ProviderBreakerRepository `optional:"true"`
-	Quota    serviceports.QuotaGuard                `optional:"true"`
+	Usage    aiusageports.AIUsageRepository       `optional:"true"`
+	Metrics  *metrics.Registry                    `optional:"true"`
+	Breakers agentports.ProviderBreakerRepository `optional:"true"`
+	Quota    platformplanports.QuotaGuard         `optional:"true"`
+	// Spend, Slots and Keys enforce each provider's monthly cap and calls at
+	// once, and record when its key was last used.
+	Spend agentports.AIProviderSpendService  `optional:"true"`
+	Slots agentports.ProviderSlotRepository  `optional:"true"`
+	Keys  agentports.AIProviderKeyRepository `optional:"true"`
+	// Files reads the files a person attached, for a model that reads files
+	// itself. Optional: without it every file is read as its text.
+	Files agentports.MessageFileReader `optional:"true"`
 }
 
 type Service struct {
@@ -52,15 +61,20 @@ type Service struct {
 	// ai is the whole AI section: the master switch the router gates on,
 	// and the timeouts and retry budget it calls with.
 	ai         *config.AIConfig
-	repo       repositories.AIProviderRepository
+	repo       agentports.AIProviderRepository
 	encryption *encryptionservice.Service
 	adapters   *modeladapter.Registry
-	usage      repositories.AIUsageRepository
-	quota      serviceports.QuotaGuard
+	usage      aiusageports.AIUsageRepository
+	quota      platformplanports.QuotaGuard
 	genAI      *metrics.GenAI
 	// health rests a provider that keeps failing, so a turn does not pay for
 	// attempts on a provider that is down before reaching one that is up.
 	health *providerHealth
+	// limits holds each provider to its cap, its calls at once and its
+	// timeout.
+	limits *providerLimits
+	// files reads attached files for a model that reads files itself.
+	files agentports.MessageFileReader
 	// pause waits out a backoff. It is a field so tests can count the waits
 	// instead of sitting through them.
 	pause func(ctx context.Context, wait time.Duration) error
@@ -76,7 +90,7 @@ type Service struct {
 	streamClients map[bool]*http.Client
 }
 
-func New(p Params) serviceports.CompletionService {
+func New(p Params) agentports.CompletionService {
 	return newService(p)
 }
 
@@ -93,6 +107,8 @@ func newService(p Params) *Service {
 		genAI:         p.Metrics.GenAI(),
 		adapters:      modeladapter.NewRegistry(),
 		health:        newProviderHealth(nil).share(p.Breakers, logger),
+		limits:        newProviderLimits(&p),
+		files:         p.Files,
 		pause:         pauseFor,
 		clients:       make(map[bool]*http.Client, 2),
 		streamClients: make(map[bool]*http.Client, 2),
@@ -101,8 +117,8 @@ func newService(p Params) *Service {
 
 func (s *Service) CompleteStructured(
 	ctx context.Context,
-	req *serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	if !s.ai.AIEnabled() {
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
@@ -116,7 +132,7 @@ func (s *Service) CompleteStructured(
 		return nil, err
 	}
 
-	return &serviceports.StructuredCompletionResult{
+	return &agentports.StructuredCompletionResult{
 		Text:            outcome.Text,
 		ModelIdentifier: outcome.Model,
 		InputTokens:     outcome.InputTokens,
@@ -133,7 +149,7 @@ func (s *Service) assertWithinSpend(ctx context.Context, tenantInfo pagination.T
 		return nil
 	}
 
-	return quotaservice.Preflight(ctx, s.quota, &serviceports.QuotaRequest{
+	return quotaservice.Preflight(ctx, s.quota, &platformplanports.QuotaRequest{
 		TenantInfo: tenantInfo,
 		Meter:      platformcatalog.MeterAISpendCents,
 		Quantity:   1,
@@ -152,7 +168,12 @@ type runRequest struct {
 	// same task and trust checks as any other candidate.
 	PreferredProviderID pulid.ID
 	RequireProvider     bool
-	Attribution         serviceports.AIUsageAttribution
+	// HedgeAfter asks the next provider too when the one asked last has not
+	// answered by then; zero tries them one after another.
+	HedgeAfter time.Duration
+	// Reasoning overrides each provider's configured effort for this call.
+	Reasoning   aiprovider.ReasoningEffort
+	Attribution aiusageports.AIUsageAttribution
 }
 
 type runOutcome struct {
@@ -166,10 +187,22 @@ type runOutcome struct {
 	FinishReason     string
 	Truncated        bool
 	ThinkingDropped  int
+	CacheDiagnosis   *modeladapter.CacheDiagnosis
 	ProviderID       pulid.ID
 	ProviderKind     aiprovider.Kind
 	LatencyMs        int64
 	CostUSD          *decimal.Decimal
+}
+
+// tokenUsage is what the provider reported, in the shape a price is read
+// against, so every cost the router records is priced the same way.
+func (o *runOutcome) tokenUsage() aiprovider.TokenUsage {
+	return aiprovider.TokenUsage{
+		Input:      o.InputTokens,
+		Output:     o.OutputTokens,
+		CacheRead:  o.CacheReadTokens,
+		CacheWrite: o.CacheWriteTokens,
+	}
 }
 
 // candidatesFor resolves the providers allowed to serve a task, in the order
@@ -192,6 +225,9 @@ func (s *Service) candidatesFor(
 	if err != nil {
 		return nil, err
 	}
+	if ready, err = s.underCap(ctx, req.TenantInfo, ready); err != nil {
+		return nil, err
+	}
 
 	return preferFirst(ready, req.PreferredProviderID), nil
 }
@@ -209,7 +245,7 @@ func requiredProvider(
 
 	return nil, errortypes.NewBusinessError(
 		"The chosen AI provider is not enabled for {0}", string(task),
-	).WithInternal(serviceports.ErrRequiredProviderUnavailable)
+	).WithInternal(agentports.ErrRequiredProviderUnavailable)
 }
 
 func (s *Service) usableFor(
@@ -217,7 +253,7 @@ func (s *Service) usableFor(
 	task aiprovider.Task,
 	tenant pagination.TenantInfo,
 ) ([]*aiprovider.Provider, error) {
-	candidates, err := s.repo.ListForTask(ctx, repositories.ListAIProvidersForTaskRequest{
+	candidates, err := s.repo.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
 		Task:       task,
 		TenantInfo: tenant,
 	})
@@ -241,7 +277,7 @@ func (s *Service) usableFor(
 	if len(usable) == 0 {
 		return nil, errortypes.NewBusinessError(
 			"No AI provider is configured for {0}", string(task),
-		).WithInternal(serviceports.ErrNoProviderConfigured)
+		).WithInternal(agentports.ErrNoProviderConfigured)
 	}
 
 	return usable, nil
@@ -277,13 +313,13 @@ func restingError(resting []*aiprovider.Provider, wait time.Duration) error {
 			"{0} is paused for {1} seconds after repeated failures. Try again then, or pick another model",
 			resting[0].Name,
 			seconds,
-		).WithInternal(serviceports.ErrProvidersResting)
+		).WithInternal(agentports.ErrProvidersResting)
 	}
 
 	return errortypes.NewBusinessError(
 		"Every AI provider is paused after repeated failures; the first is back in {0} seconds",
 		seconds,
-	).WithInternal(serviceports.ErrProvidersResting)
+	).WithInternal(agentports.ErrProvidersResting)
 }
 
 func (s *Service) run(ctx context.Context, req *runRequest) (*runOutcome, error) {
@@ -300,6 +336,10 @@ func (s *Service) runAmong(
 	usable []*aiprovider.Provider,
 	req *runRequest,
 ) (*runOutcome, error) {
+	if req.HedgeAfter > 0 && len(usable) > 1 {
+		return s.runHedged(ctx, usable, req)
+	}
+
 	var lastErr error
 	for idx, provider := range usable {
 		// A caller that has gone is not answered by the next provider: the
@@ -308,60 +348,96 @@ func (s *Service) runAmong(
 			return nil, err
 		}
 
-		attemptCtx, span := s.startAttempt(ctx, &attemptSpec{
-			operation:   aitrace.OperationChat,
-			provider:    provider,
-			attempt:     idx + 1,
-			failover:    idx > 0,
-			maxTokens:   req.MaxTokens,
-			attribution: req.Attribution,
-		})
-		started := time.Now()
-		outcome, attemptErr := s.attempt(attemptCtx, provider, req)
-		latency := time.Since(started)
-		attemptErr = stopped(ctx, attemptErr)
-		s.observe(ctx, provider, attemptErr)
-		s.settleAttempt(attemptCtx, span, &usageAttempt{
-			provider:    provider,
-			task:        req.Task,
-			surface:     surfaceFor(aiusage.SurfaceStructured, req.Attribution),
-			attribution: req.Attribution,
-			tenant:      req.TenantInfo,
-			latency:     latency,
-			outcome:     outcome,
-			err:         attemptErr,
-			operation:   aitrace.OperationChat,
-			attempt:     idx + 1,
-			failover:    idx > 0,
-		})
+		outcome, attemptErr := s.tryProvider(ctx, &candidateAttempt{
+			provider: provider,
+			idx:      idx,
+			count:    len(usable),
+		}, req)
 		if attemptErr == nil {
-			outcome.LatencyMs = latency.Milliseconds()
-			outcome.CostUSD = provider.CostFor(outcome.InputTokens, outcome.OutputTokens)
-
 			return outcome, nil
 		}
 
 		if ctx.Err() != nil {
 			return nil, attemptErr
 		}
-
-		// A refusal is the model's decision, not a fault in the endpoint. Asking
-		// the next provider the same question invites it to answer something the
-		// first declined, so the chain stops here.
 		if errors.Is(attemptErr, errRefused) {
-			return nil, errortypes.NewBusinessError("The model declined this request")
+			return nil, errDeclined()
 		}
 
 		lastErr = attemptErr
-		s.logger.Warn("provider attempt failed, falling through",
-			zap.String("provider", provider.Name),
-			zap.String("kind", string(provider.Kind)),
-			zap.String("task", string(req.Task)),
-			zap.Error(attemptErr),
-		)
+		s.fellThrough(provider, req, attemptErr)
 	}
 
 	return nil, fmt.Errorf("every configured provider for %s failed: %w", req.Task, lastErr)
+}
+
+type candidateAttempt struct {
+	provider *aiprovider.Provider
+	idx      int
+	count    int
+}
+
+// tryProvider asks one candidate, settling the attempt's usage, trace and
+// health. ctx is the context the attempt runs under: the caller's, or for a
+// hedged call one that is canceled when another provider answers first, which
+// observe and stopped then read as a cancellation rather than a fault.
+func (s *Service) tryProvider(
+	ctx context.Context,
+	candidate *candidateAttempt,
+	req *runRequest,
+) (*runOutcome, error) {
+	provider, idx := candidate.provider, candidate.idx
+	attemptCtx, span := s.startAttempt(ctx, &attemptSpec{
+		operation:   aitrace.OperationChat,
+		provider:    provider,
+		attempt:     idx + 1,
+		failover:    idx > 0,
+		maxTokens:   req.MaxTokens,
+		attribution: req.Attribution,
+	})
+	started := time.Now()
+	outcome, attemptErr := s.attempt(lastCandidate(attemptCtx, idx, candidate.count), provider, req)
+	latency := time.Since(started)
+	attemptErr = stopped(ctx, attemptErr)
+	s.observe(ctx, provider, attemptErr)
+	s.settleAttempt(attemptCtx, span, &usageAttempt{
+		provider:    provider,
+		task:        req.Task,
+		surface:     surfaceFor(aiusage.SurfaceStructured, req.Attribution),
+		attribution: req.Attribution,
+		tenant:      req.TenantInfo,
+		latency:     latency,
+		outcome:     outcome,
+		err:         attemptErr,
+		operation:   aitrace.OperationChat,
+		attempt:     idx + 1,
+		failover:    idx > 0,
+	})
+	if attemptErr != nil {
+		return nil, attemptErr
+	}
+
+	s.touchKey(ctx, provider, req.TenantInfo)
+	outcome.LatencyMs = latency.Milliseconds()
+	outcome.CostUSD = provider.CostFor(outcome.tokenUsage())
+
+	return outcome, nil
+}
+
+// errDeclined ends the chain on a refusal. A refusal is the model's decision,
+// not a fault in the endpoint, and asking the next provider the same question
+// invites it to answer something the first declined.
+func errDeclined() error {
+	return errortypes.NewBusinessError("The model declined this request")
+}
+
+func (s *Service) fellThrough(provider *aiprovider.Provider, req *runRequest, err error) {
+	s.logger.Warn("provider attempt failed, falling through",
+		zap.String("provider", provider.Name),
+		zap.String("kind", string(provider.Kind)),
+		zap.String("task", string(req.Task)),
+		zap.Error(err),
+	)
 }
 
 var errRefused = errors.New("model declined the request")
@@ -391,12 +467,21 @@ func (s *Service) attempt(
 		return nil, err
 	}
 
-	apiKey, err := s.resolveAPIKey(provider)
+	timeout := provider.ResolvedTimeout()
+	release, err := s.claimSlot(ctx, provider, timeout)
 	if err != nil {
 		return nil, err
 	}
+	defer release()
 
-	resp, err := s.executeWithRetry(ctx, adapter, s.callFor(provider, apiKey, req))
+	limited := s.withDeadline(ctx, timeout)
+	var resp *modeladapter.Response
+	err = limited.finish(s.withKeyFallback(provider, func(apiKey string) error {
+		var callErr error
+		resp, callErr = s.executeWithRetry(limited.ctx, adapter, s.callFor(provider, apiKey, req))
+
+		return callErr
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -444,9 +529,10 @@ func (s *Service) callFor(
 	}
 
 	return &modeladapter.Call{
-		Provider: provider,
-		APIKey:   apiKey,
-		Client:   s.clientFor(provider),
+		Provider:                 provider,
+		APIKey:                   apiKey,
+		Client:                   s.clientFor(provider),
+		ServerCredentialsAllowed: s.ai.ServerCloudCredentialsAllowed(),
 		Request: &modeladapter.Request{
 			// A provider that cannot enforce the schema on the wire is given it in
 			// the prompt instead, so every candidate sees the same requirements.
@@ -456,6 +542,7 @@ func (s *Service) callFor(
 			SchemaName:   req.SchemaName,
 			MaxTokens:    maxTokens,
 			Sampling:     modeladapter.SamplingForTask(req.Task),
+			Reasoning:    req.Reasoning,
 		},
 	}
 }
@@ -475,7 +562,7 @@ func validateStructuredOutput(schema map[string]any, text string) error {
 
 	decoded := make(map[string]any, len(schema))
 	if err := modeladapter.ExtractJSON(text, &decoded); err != nil {
-		return fmt.Errorf("%w: %w", serviceports.ErrModelSchemaValidation, err)
+		return fmt.Errorf("%w: %w", agentports.ErrModelSchemaValidation, err)
 	}
 
 	return nil
@@ -562,7 +649,7 @@ func (s *Service) wait(ctx context.Context, wait time.Duration) error {
 func (s *Service) resolveAPIKey(provider *aiprovider.Provider) (string, error) {
 	stored := strings.TrimSpace(provider.APIKey)
 	if stored == "" {
-		if provider.Kind.RequiresAPIKey() {
+		if provider.RequiresCredential() {
 			return "", errortypes.NewBusinessError(
 				"AI provider {0} has no API key configured", provider.Name,
 			)

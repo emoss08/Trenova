@@ -3,8 +3,8 @@
 How AI work actually executes: where it runs, what makes it safe to retry,
 what survives a crash, and what is written down afterwards.
 
-Read this before changing anything under `internal/core/services/agentruntime/`,
-`internal/core/services/assistantservice/`, or any of the Temporal packages
+Read this before changing anything under `internal/modules/agent/app/agentruntime/`,
+`internal/modules/agent/app/assistantservice/`, or any of the Temporal packages
 named below.
 
 ## Everything is a workflow
@@ -20,9 +20,11 @@ Temporal returns succeeds.
 |---|---|---|
 | Assistant chat, Ask, decision follow-ups | `AssistantTurnWorkflow`, one per turn | `agent-chat-queue` |
 | Import and formula assistants | `AssistantTurnWorkflow`, one per turn, on the page's own thread | `agent-chat-queue` |
-| Table compose | `StructuredCompletionWorkflow` | `agent-chat-queue` |
+| Table compose, agent drafting and instruction tightening | `StructuredCompletionWorkflow` | `agent-chat-queue` |
 | Briefing regenerate | `WriteBriefingWorkflow` | `agent-chat-queue` |
 | AI provider test | `TestAIProviderWorkflow` | `agent-chat-queue` |
+| Provider editor: model list and unsaved test | `ListAIProviderModelsWorkflow`, `TestAIProviderDraftWorkflow` | `agent-chat-queue` |
+| Agent builder dry run | `AgentDryRunWorkflow`, one per try | `agent-chat-queue` |
 | Event-driven and scheduled agent runs | `AgentRunWorkflow` | `agent-background-queue` |
 | An agent's schedule firing | `AgentScheduledRunWorkflow` | `agent-background-queue` |
 | Agent evaluations (replays) | `AgentEvaluationWorkflow` | `agent-heavy-queue` |
@@ -74,7 +76,13 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   outside an enum, a wrong type, a missing nested value) is refused with one
   `path: message` line per problem and "Fix the call and send it again". The
   refusal is a failed call: it spends the tool budget and arms the repeat
-  guard. Schemas are compiled once per tool (`toolschema.Validator`); every
+  guard. The guard answers an identical failed call with the first failure
+  instead of running it; once a turn has sent failed calls again unchanged
+  twice (`maxRepeatedFailures`), it stops calling tools, answers any other
+  call in that batch as not run, and asks for an answer without tools under
+  `stuckNote`, which says to tell the person what was refused and what they
+  can do instead (`agent-loop-stop-on-repeats`; `stuckReply` when that answer
+  cannot be had). Schemas are compiled once per tool (`toolschema.Validator`); every
   object in a tool's schema is closed and every enum names its source
   (`agenttoolschema.Enum`, `x-enumOf`, stripped by `toolschema.ForModel`),
   which `agenttoolpolicy/schema_contract_test.go` holds. A tool that
@@ -83,6 +91,23 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   runs; `TestEveryActionToolValidatesBeforeFiling` lists the few that cannot,
   with the reason. All of it happens inside the activity, so no workflow
   command changes and no version gate is needed.
+- **A reply's reads run together.** Consecutive calls to tools that only look
+  something up (registered query tools whose effect is `lookup`, taken into
+  `TurnState.Reads` when the turn opens) are scheduled as activities before the
+  loop waits on any, up to `maxConcurrentReads` (8) at once, and settled in the
+  order the model asked, so the transcript, the stream and the model read the
+  calls' order whatever order they finish in (`concurrentreads.go`). Each read
+  is held to every check the loop makes before a dispatch as it joins, with the
+  waiting reads counted against the budget; anything else (a write, a refusal,
+  a call identical to a waiting one, a second call to the same `get_` tool,
+  whose card is bunched with the first by call id) settles the batch first and
+  takes the ordinary path. A read in a batch is dispatched with the taint and
+  outside-content flags the turn had when the batch started, which a query tool
+  never reads; a write after it always waits for the batch. In process
+  (`localEffects`, the red-team harness) the reads run one after another, since
+  a request's context may carry a transaction. Behind
+  `agent-loop-concurrent-reads`, asked only when a second read would join, and
+  a turn state without `Reads` runs every call on its own.
 - `find_tools` and `publish_artifact` are activities of their own. Call ids
   are minted through `workflow.SideEffect`, so a replay reads back the same id.
   An id an adapter made up from the call's position (Ollama, and an
@@ -124,7 +149,7 @@ host) for a one-minute cooldown, so a turn stops paying for attempts on a
 provider that is down. The count of failures is per process; the rest is
 shared. When a worker opens the breaker it also writes `ai:breaker:{providerID}`
 to Redis with a TTL equal to the cooldown, through the
-`repositories.ProviderBreakerRepository` port
+`agentports.ProviderBreakerRepository` port
 (`redis/repositories/providerbreaker.go`, provided in `RedisRepositoriesModule`
 and injected `optional:"true"`). The key is the provider row's id, so a
 tenant-owned provider is its own breaker, and the value is a marker: nothing
@@ -143,7 +168,7 @@ when the store answers again. A completion is never failed or held up by the
 store. Without Redis (tests, a CLI) the router is built without the port and
 the breaker is exactly the in-memory one.
 
-The kind of failure travels in the error's details (`modelcall.Failure`), so
+The kind of failure travels in the error's details (`modelcallcontract.Failure`), so
 whoever reads it afterwards — the saved turn, a request waiting on a one-shot
 call — still knows whether the provider refused, was unreachable, timed out, or
 no provider was configured, and a refusal keeps its own words.
@@ -177,6 +202,123 @@ keep a small ceiling from ending every turn partway through a tool call:
 
 The retry is one more model activity, so it is behind the `agent-loop-cut-off-call-retry`
 gate, asked only of a completion that meets the condition.
+
+### Speaking to Claude
+
+The Anthropic adapter builds and reads every request with the official Go SDK
+(`github.com/anthropics/anthropic-sdk-go`), on its beta Messages surface, so the
+request types cover every block, tool and beta the API has and a new one needs no
+hand-written JSON. Trenova keeps the transport around it
+(`modeladapter/anthropicclient.go`):
+
+- **Nothing from the environment.** The SDK's default client reads `ANTHROPIC_*`
+  credentials, base URL, a saved profile and custom headers from the process. On a
+  server that hosts many organizations those would reach every provider an
+  operator configured, so the service is built from the provider's key, address and
+  the router's HTTP client alone.
+- **No retries underneath the router.** The SDK makes one attempt. Retries, rests
+  and failover stay with the router and the workflow, which count each attempt.
+- **Failures read the same as every protocol.** A middleware turns a reply that is
+  not 2xx into the shared `TransportError` (status, retryability, message,
+  Retry-After) and wraps a stream in the idle guard. An error event inside a stream
+  becomes the same retryable or final failure as before.
+- **One turn's results travel together.** `toAnthropicMessages` puts the results of the
+  calls one assistant turn made into a single user message, in order, with any text that
+  follows them after the last result, as the API asks. Sent one per message they read as
+  serial work and teach the model to stop calling tools in parallel.
+- **Pinned on the wire.** `anthropicwire_internal_test.go` keeps the exact method,
+  path, headers and body for each family of model and thinking setting under
+  `testdata/anthropic_wire`. A change to how a request is built is a diff to read
+  there; `UPDATE_ANTHROPIC_WIRE=1` rewrites the files after a deliberate one.
+
+### Reaching Claude through a platform
+
+An Anthropic Messages provider names a `platform` (`aiprovider.Platform`, column
+`ai_providers.platform`) and, for anything but `Direct`, a `platform_settings` JSONB
+object (`aiprovider.PlatformSettings`): the way it signs in (`auth`) and the region,
+project, workspace, resource, access key ID, tenant and client ID that platform and
+way of signing in take. Check constraints keep the platform to its enum, to the
+Anthropic kind, and keep settings off a direct provider. The domain
+(`aiprovider/platform.go`) normalizes and validates every setting against a strict
+pattern, because each ends up in a host name or URL path, and derives the base URL
+when none is given:
+
+| Platform | Address | Signs in with |
+|---|---|---|
+| `Direct` | the provider's base URL | its API key |
+| `Bedrock` | `https://bedrock-mantle.{region}.api.aws/anthropic` | SigV4 (`bedrock-mantle`), a Bedrock API key as a bearer token, or the server's AWS identity |
+| `ClaudePlatformAWS` | `https://aws-external-anthropic.{region}.api.aws` | SigV4 (`aws-external-anthropic`), an API key, or the server's AWS identity; always the `anthropic-workspace-id` header |
+| `VertexAI` | `{region}-aiplatform.googleapis.com` (`global`, `us` and `eu` have their own hosts) | a service account key, or the server's Google identity |
+| `ClaudePlatformGoogleCloud` | `https://claude.googleapis.com/v1alpha/projects/{p}/locations/{loc}/workspaces/{w}/invoke` | a service account key, or the server's Google identity |
+| `Foundry` | `https://{resource}.services.ai.azure.com/anthropic` | an API key, or an Entra ID app registration's client secret |
+
+The adapter (`modeladapter/anthropicplatform.go`) signs requests in Trenova's own
+code, not with the SDK's platform packages, because those read credentials from the
+process environment. Each way of signing in is an SDK middleware registered last, so
+it runs innermost and signs the request exactly as it is sent; Vertex AI's middleware
+also moves the model from the body into the `:rawPredict`/`:streamRawPredict` path and
+sets `anthropic_version` to `vertex-2023-10-16`. Token sources and AWS credentials
+are cached in a 256-slot LRU keyed by a SHA-256 digest of the credential and its
+settings, so a rotated key is a new entry and no secret is a map key. A Google key
+must be a service account key (other credential files can make the server read files
+or call other addresses), loaded with its `token_uri` pinned to
+`https://oauth2.googleapis.com/token`. A token endpoint's 4xx becomes a final 401
+`TransportError`, not a retry.
+
+- **The server's own identity is opt-in.** `auth: Server` uses the AWS default chain
+  or Google application default credentials of the process. On a server shared by
+  many organizations that would let any organization spend the operator's cloud
+  account, so it works only when `ai.serverCloudCredentials` is true (default
+  false). The service refuses to save it otherwise, and every call checks it again
+  (`Call.ServerCredentialsAllowed`), so turning the setting off stops providers
+  already saved with it. Such a provider stores no key; saving one clears any.
+- **A credential stays with its target.** `aiprovider.SameCredentialTarget` compares
+  kind, platform, resolved settings and the base URL's origin. An update that changes
+  any of them without a new key is refused, and a draft test reuses the stored key
+  only for the target it was entered for. A service account key is fingerprinted by
+  its `private_key_id`, since every key file starts and ends alike.
+- **Not every platform lists models.** `Platform.ListsModels` is true for Direct and
+  both Claude Platforms; listing anywhere else returns `ErrModelsNotListed`, which the
+  prober reports as "type the model ID instead", and the editor skips the fetch.
+
+The catalog (`GET /ai-providers/catalog/`) describes each platform's settings, ways of
+signing in, which of those store a credential and whether it lists models, plus
+`serverCloudCredentials`, so the editor (`providers/platform-model.ts`) offers only
+what the server accepts and sends only the settings the chosen platform takes.
+`anthropicplatform_internal_test.go` checks every platform's address, headers and
+signature, re-verifying each SigV4 signature as AWS would.
+
+### Why a prompt cache missed
+
+`ai.cacheDiagnostics` (default false) has every agent chat call to a provider on the
+Claude API itself (`aiprovider.Provider.OnClaudeAPI`: Direct platform at
+`api.anthropic.com`) ask the API where its prompt stopped matching the call before
+it. Claude Platform on AWS and Google Cloud, Bedrock, Vertex AI, Foundry and gateways
+do not take the field, and one-shot completions have no call before them, so neither
+asks.
+
+The API keeps a short-lived fingerprint only of a call that asked, so every call
+sends `diagnostics`: `previous_message_id` null when there is nothing to name, else
+the id of the last reply this provider gave in the conversation
+(`modeladapter.previousReply`). That id travels on the assistant message
+(`agentports.Message.ReplyID`/`ReplyProvider`, from
+`ChatCompletionResult.ProviderMessageID`) and is saved in
+`assistant_messages.provider_message_id`, so a turn's first call names the last call
+of the turn before. A reply from another provider is passed over; one from this
+provider without an id (saved before the column) leaves nothing to name. Grounding
+and placement retries resend the rejected reply with its id; a hand-off or tool round
+the server wrote has none.
+
+The adapter reads `diagnostics` off the message, or off `message_start` on a stream,
+into `Response.CacheDiagnosis`: the reason (`model_changed`, `system_changed`,
+`tools_changed`, `messages_changed`, `previous_message_not_found`, `unavailable`, or
+`pending` when the comparison had not finished) and, for a change, the estimated
+tokens after the divergence. The router (`noteCacheDiagnosis`) logs a changed prompt
+at info, with the provider, model, cache counts, organization, agent, thread and run,
+and anything else at debug, and puts the reason on the attempt's span. A changed
+prompt is the harness's to fix: the most likely places are history replay shortening
+older tool results and anything per-turn written ahead of a cache breakpoint.
+Diagnostics never fail a call.
 
 ### Thinking on Claude
 
@@ -227,6 +369,54 @@ than any it names takes the newest known constraints.
   `Response.ThinkingDropped`, and the attempt span carries it as
   `trenova.ai.thinking_dropped`. A value that keeps appearing is the harness editing a
   conversation it should hold still.
+
+### Files the person attached
+
+A turn's user message carries the files attached to it as references
+(`agentports.Message.Files`): the document id, name, type, size, pages, and
+where the file's entry sits in the attachments block (`EntryStart`/`EntryEnd`),
+with the entry that replaces it when the file itself is sent (`NativeEntry`,
+rendered by `agentdefinition.RenderAttachments`). Only the current message's
+files are carried; an earlier message's are named in the replay and read with
+`read_attachment`, and a delegate's task carries none. Bytes never cross a
+durable boundary.
+
+The Anthropic adapter reads them at call time (`modeladapter/anthropicfiles.go`)
+through `Call.Files`, which the router binds to the request's tenant from
+`agentports.MessageFileReader` (`messagefileservice`, over the documents module's
+`conversationfileservice`, which decrypts through `storedobject` and finds only a
+conversation's documents; no view is recorded, as for document intelligence).
+`aiprovider.Provider.FileInput` decides who reads files: an Anthropic Messages
+provider whose model id reads as Claude, because the same protocol fronts other
+vendors' models that refuse a document block. A PDF goes as a `document` block
+(titled with the file name, its id as context) and a JPEG, PNG, GIF or WebP as an
+`image` block after a line naming it, ahead of the message's text, and the file's
+entry is swapped for one that says the file is attached, so its extracted text is
+not paid for twice. Swaps run last first and only where the span still opens with
+the file's `AttachmentEntryLead`.
+
+Anything else goes as its text, and `Response.Files` says why, which the router
+logs: a type the model does not read, an image over 3.75 MB, a PDF past 100 pages
+(600 on a million-token model), the request's files past 20 MB together, a PDF that
+will not open (counted and checked with `kernelports.PDFReader` when the worker has
+one), or a file that could not be read. A request the provider refuses with a 400 or
+413 while carrying files is sent once more without them, before anything has
+streamed. The reader keeps up to eight files of 8 MB or less for ten minutes, keyed
+by tenant and document, since every model call of a turn sends the same files.
+OpenAI and Ollama providers read the text as before.
+
+### How big a model's context is
+
+Compaction and the run overflow guard work from the provider's context window: the one
+an operator configured (filled from the model list when an endpoint reports it), and
+otherwise the one its model id names (`aiprovider.ContextWindowFor`). A Claude id in any
+endpoint's form is read by `aiprovider.ParseClaudeModel`, which the adapter's thinking
+rules use too: Opus and Sonnet from 4.6, Haiku from 5.5, and every Fable and Mythos get
+1,000,000 tokens; earlier Claude models, ids it cannot read, and a family it does not know
+get 200,000, since erring small only compacts sooner. A conversation compacts itself at
+`conversation.AutoCompactShare` (85%) of that window, so on a million-token model a thread
+can grow to about 850,000 tokens first. An organization that would rather pay for less
+context per call configures a smaller window on the provider; it always wins over the id.
 
 OpenAI-compatible servers that do not parse a model's tool-call template return it as text.
 The chat adapter lifts it (`modeladapter.liftInlineToolCalls`): a whole GLM call
@@ -301,8 +491,13 @@ opens tainted when:
   mark on the `shipment` (`agent.OutsideAuthoredTaint`), and the subject block
   of the prompt says who wrote it;
 - the person attached a file to the question;
-- a memory read into its prompt was written by a tainted run (a person's approval
-  of the `remember` that wrote it changes how it is rendered, not whether it taints);
+- a memory read into its prompt was written by a tainted run and nobody has
+  reviewed it since (`Memory.Taints`). A person's approval of the `remember` that
+  wrote it changes how it is rendered, not whether it taints; a review does both.
+  Approving a tainted suggestion (in AI Control or on the Desk) is its review, and
+  AI Control lists every Active memory that still taints with a "Reviewed, keep it"
+  action (`reviewAgentMemory`), because one such memory holds every money,
+  customer-visible and outside-recipient write of every turn that reads it;
 - its conversation is already tainted (`assistant_threads.taint`), which a
   decision follow-up inherits because it is a turn on the same conversation;
 - the agent that handed it a task was (`DelegateCall.Taint`).
@@ -410,7 +605,7 @@ What is kept:
 | `agent_runs` | `tainted`, `taint`, `tainted_at` |
 | `agent_proposals` | `tainted` (the run had read outside content when the write was decided), `taint`, `egress_class`, `held_by` |
 | `assistant_threads` | `taint`, `tainted_at` |
-| `agent_memories` | `tainted`, `taint_run_id`, for a memory `remember` wrote from a tainted or nil-taint run (`CarriesTaint`); `source_proposal_id` and `created_by_user_id` when a person approved the `remember` that wrote it |
+| `agent_memories` | `tainted`, `taint_run_id`, for a memory `remember` wrote from a tainted or nil-taint run (`CarriesTaint`); `source_proposal_id` and `created_by_user_id` when a person approved the `remember` that wrote it; `reviewed_by_user_id` and `reviewed_at` when a person reviewed it, after which it taints no turn while `tainted` still records where it came from |
 | `agent_reflections` | `tainted`, for a look back over a window that read outside content (or whose taint is unknown); every lesson it keeps is a suggestion and carries the window's taint |
 | `shipment_comments` | `metadata.tainted`, for a note `add_shipment_comment` wrote on its own after outside content |
 
@@ -429,7 +624,7 @@ a person decided), goes under "What this organization has recorded for its
 agents", grouped under a heading per thing it is about ("About Acme Foods
 (customer)", "About tool assign_move", "For the whole organization"), where an
 Instruction is followed as if the person who recorded it were asking now. A
-tainted memory nobody approved (`Memory.DrawnFromOutside`) goes under "Recorded
+tainted memory nobody approved or reviewed (`Memory.DrawnFromOutside`) goes under "Recorded
 by agents after reading outside content", fenced as
 `<memory_from_outside_content>`, each line naming the kind it was recorded as,
 and framed as information drawn from outside text that is never followed. It
@@ -455,10 +650,23 @@ The records a turn is about come first; the ones they name follow in the order
 a person reads the record. The links are batched reads
 (`agentmemorysubjectrepository.ListRecordLinks`, one query per kind per hop). Up
 to 500 active, unexpired candidates are then read, subject rows first, and
-ordered by `services.MemoryRanker`: `retrievalservice.MemoryRanker` fuses
+ordered by `agentports.MemoryRanker`: `retrievalservice.MemoryRanker` fuses
 recency and use count (`agentmemoryservice.RankByRecencyAndUse`) with the
 memories nearest the turn's query vector, and falls back to recency and use
-alone when the organization is not indexed or the search fails.
+alone when the organization is not indexed or the search fails. The ranker
+also returns the candidates at or above the similarity floor
+(`RankedMemories.Similar`).
+
+**What bears on the turn.** `agentmemoryservice.Relevance` marks a candidate as
+bearing on the turn (`agent.MemoryRelevance`, carried on
+`RuntimeContext.MemoryRelevance`) when it is at or above the similarity floor, or
+when its content, subject label or tool name shares a meaningful word with the
+turn's query text (`agentsearch.Terms` on the query, with the operator's words
+mapped to the schema's, against `agentsearch.TokenSet` on the memory; words under
+three letters are ignored). The two are unioned, so a memory found either way
+bears. When there is neither a usable vector nor any query words, nothing is
+judged and every candidate bears, which is how the fit worked before relevance
+was read.
 
 **What the prompt carries.** `OpenTurn` fits the candidates to the agent's
 `memory_token_budget` (6,000 tokens by default, 1,000–16,000; estimated with
@@ -471,14 +679,32 @@ what is left:
 4. memories about a tool loaded this turn (every held tool when the turn
    disclosed none);
 5. everything else — Facts, and Corrections to tools not loaded — in the
-   ranker's order.
+   ranker's order, **only when it bears on the turn**.
 
-Within the first four tiers an Instruction comes before a Correction, a
-Correction before a Procedure and a Procedure before a Fact (`MemoryKind.Rank`).
+Within a tier a memory that bears comes first, so a short budget keeps the
+standing rules that apply to this message; then an Instruction comes before a
+Correction, a Correction before a Procedure and a Procedure before a Fact
+(`MemoryKind.Rank`). The tier-5 memories that do not bear, and anything that did
+not fit, are counted (`MemoryFit.HeldBack`). When none are carried and some were
+held back, the prompt still says memories exist and to call `recall_memory` when
+the task may depend on one.
+
+**What counts as used.** Carrying a memory and using it are different things.
+`Definition.PlanMemories` returns the carried memories and, separately, those
+that were used (`MemoryFit.Used`): memories about a record the turn is about or
+names, memories about a tool picked for the turn (a disclosed turn's loaded
+tools), and any carried memory that bears on the turn. A standing Instruction or
+Procedure that does not bear is still carried and followed, but is not shown or
+counted. A memory about a tool that was only on hand (every held tool, when the
+turn disclosed none) waits in `MemoryFit.ByTool`, kept on `TurnState.ToolMemories`,
+and is added to `UsedMemoryIDs` and announced when the turn calls that tool
+(`Turn.noteToolMemories`). A state from before `ToolMemories` existed promotes
+none, so no `GetVersion` gate is needed.
 
 A memory over 1,200 characters is shown cut short with its id, and the prompt
-tells the model to read the rest with `recall_memory`. Only what fits is counted
-as used (`AgentMemoryService.RecordUse`), and only what fits taints the turn. A
+tells the model to read the rest with `recall_memory`. Only what was used is counted
+(`AgentMemoryService.RecordUse`), so `use_count` measures use rather than how
+often a memory sat in a prompt; only what fits taints the turn. A
 preview built outside a turn (`PreviewPrompt`) applies the same fit and counts
 nothing.
 
@@ -691,14 +917,32 @@ the workflow does, so a reader can never attach ahead of it.
 Every tool call a reader sees says what it does. `tool_started`, `tool_finished`
 and the tool calls on `message` carry `effect` (`lookup`, `change`, `navigate`,
 `discover`, `present`, `ask` or `delegate`), read from the tool's metadata
-(`serviceports.EffectOf`, which reads `Effect` from the tool's `Policy()`;
+(`agentports.EffectOf`, which reads `Effect` from the tool's `Policy()`;
 `find_tools`, `ask_user`, `publish_artifact` and `delegate_task` declare theirs in
 `agentruntime/runtimepolicies.go`). `tool_finished` also carries `summary`, a one-line label worked out
 where the tool ran from what it returned, or from a write's name or title. The
 thread's saved messages carry the same fields: `summary` is stored on the
 result, and `effect` is read from the registry when the messages are served, so
 a tool that no longer exists has none. The labels are data only; the loop
-decides nothing from them.
+decides nothing from them. A `find_tools` answer's `tool_finished` also carries
+`handOffAgents`, the person's other agents it named as holding what this agent
+could not load, the same ids its saved tool message keeps (`hand_off_agents`),
+so the Desk's hand-off menu leads with them while the turn is still running
+rather than only once it is saved.
+
+A reply that starts over and a reply that is corrected are told apart.
+`retrying` (kind `restart`) means a model is being asked again: a provider died
+partway, a cut-off call is asked again with more room, or a guard re-asks for a
+looping or ungrounded reply. The reader withdraws the attempt's streamed text
+and thinking, shows that it is retrying, and what follows is the whole reply.
+`reply_replaced` (`AssistantReplyReplacedEvent`: `text`, `reason`) means the
+runtime corrected the final reply after it streamed, without asking the model
+again: the reply passes and the output guard below. It carries the whole reply
+as recorded; the reader swaps its streamed reply text for it and shows no
+retry, and the thinking before it stays. Another agent's are
+`delegate_retrying` and `delegate_reply_replaced`, applied under the call that
+handed it the task. Both are recorded in the run's trajectory, `reply_replaced`
+after the `reply_regrounded` events saying what each pass changed.
 
 Each event's offset is its SSE event id, returned as `Last-Event-ID` to resume.
 The cursor is the last event the reader **applied**, not the last it received.
@@ -744,6 +988,117 @@ its own, in one plan with the turn's when several wait on the person. One level 
 **Read [agent-delegation.md](agent-delegation.md)
 before changing it.**
 
+### Steering and the queue
+
+A person can talk to a conversation while its agent is still working. What they
+type goes to `assistant_queued_messages` (`conversation.QueuedMessage`), one row
+per message in send order, through `assistantqueueservice` and the
+`/assistant/threads/:threadID/queue/` routes. The queue lives in the database so
+it survives a reload, another tab, and a restart of anything working on the
+reply.
+
+- **Steer** (`steer: true`, the composer's send gesture while a reply runs) also
+  signals the turn's workflow on `agentflow.SteerSignal` with the row's id and
+  words. The loop reads the signal between steps, before its next model call
+  (`TurnEffects.Interject`); reading a signal records no command, so the change
+  is asked about (`agent-loop-interjections`) only when one is waiting. The words
+  reach the model framed by `agentruntime.SteerPrompt` and are saved as a
+  `Steer` message, which history replay frames the same way and which does not
+  count as a turn of its own. The reader gets a `steered` event. A message with
+  files never steers: a reply under way reads words, not documents.
+- **Queue** (Option+Enter, or anything with files) waits for the reply to end.
+- **When a turn's record closes**, `FinishTurnActivity` (and a compaction's
+  close) asks `AssistantQueueSettler.SettleQueue` to delete the messages the turn
+  read (`FinishTurnInput.Steered`) and, after a turn that ended Completed or
+  Refused, to start the next waiting message as a turn of its own (origin
+  `Person`, as its owner, with the page, records, files and model it was queued
+  with). A queued message goes ahead of a decision follow-up; with nothing
+  queued, follow-ups resume as before. A stopped or failed turn holds the queue
+  until the person sends it on. The started turn is announced as `next_turn`
+  before the ending event, so the reader follows it without a gap.
+- **A steer the turn never read** (it arrived after the last step, or no
+  execution carried the turn) stays in the queue and is sent as the next message.
+  The row is the source of truth; the signal is only the fast path.
+- Claiming the head (`DELETE … FOR UPDATE SKIP LOCKED … RETURNING`) and the
+  partial unique index on live turns keep two closers from sending one message
+  twice; a claim whose turn cannot start is put back at its position.
+- `assistant_queue` realtime events, addressed to the owner, move every tab's
+  queue.
+
+### The world changing under a turn
+
+A turn watches the records it is about (`RunRequest.Records`: subject, page and
+mentions), the records its `get_*` calls read and the records its executed
+writes changed (`agentruntime.WorldState`, at most 64). Between steps, at most
+every three seconds by `workflow.Now`, it reads what changed since it last
+looked as a local activity (`agentflow.CheckWorldActivity`). The read is the
+realtime bus, not the database: `realtimebroker.ChangeFeed` scans the tenant's
+shard of the Redis stream from the cursor the turn opened with, at most 2,048
+entries per check, keeps tenant-wide `resource.invalidation` entries whose
+record is watched (a byte search before any decode), and merges several events
+for one record. Changes to a record the turn itself wrote, within fifteen seconds
+of the write, are its own and dropped. What is left reaches the model as a
+`WorldChange` notice (system words, not the person's), clears the repeat
+guard's memory of reads, is saved with the structured changes
+(`assistant_messages.world_changes`) and reaches the reader as `world_changed`.
+Delegated turns neither watch nor steer.
+
+### Records in play
+
+A conversation keeps the records it is about (`assistant_threads.working_set`,
+`conversation.WorkingRecord`, newest first, at most `MaxWorkingSet` = 12): its
+subject, what the person mentioned or had open, what the agent read with a
+`get_*` call (`agentruntime.RecordsRead`, the same rule the world watch uses; a
+failed read and another agent's delegated steps add nothing) and what its
+executed writes changed. `FinishTurn` adds them through `keepWorkingSet`; the
+subject always sorts first, and the kind is read off the id's prefix
+(`permission.RecordKindOfIDPrefix`), so an id of no known kind is never kept.
+
+Every turn reads them again while it is prepared, beside the subject
+(`checkTurn` → `anchorRecords` → `agentports.RecordAnchorReader`,
+`recordanchorservice`): this turn's mentions and page record first, then the
+working set, leaving out the subject, which `<subject_context>` already reads
+fresh. Access is checked per kind on every turn (`subjectaccess.MayReadResource`);
+a record the person can no longer read, one that is gone and one that could not
+be read are each named with a note and no facts. Each kind that moves has a
+batch reader:
+
+- **Shipment**: the tracking snapshot (`ShipmentTrackingReader.TrackingSnapshots`,
+  the same build `EtasByShipmentIDs` uses), rendered by
+  `shipmenttracking.Snapshot.Facts`: status and customer, what needs attention,
+  the next stop (arrived and not departed, or overdue and by how long), who covers
+  it, the last position, the driver's hours and the estimated arrival.
+- **Invoice**: status, settlement and dispute, bill-to, shipment and due date.
+  Amounts are left to `get_invoice`, which gates them by the reader's data access.
+- **Detention occurrence**: status and notice, the clock, and the charge priced as
+  of now for a running clock (`detentionservice.PriceOpenClock`).
+- **Tractor**: status and last position. **Trailer**: status. **Worker**: hours of
+  service, or that no ELD has reported any.
+
+Other kinds (a customer, a location) are named but not read: nothing on them
+changes under a conversation. What was read reaches the model as a
+`<records_in_play>` block ahead of the question, after the `Now:` line
+(`agentdefinition.DescribeAnchors`). It says the block is current and wins over
+anything said earlier, and every fact taken from a report rather than the record
+itself carries its age, "reported 40m ago", with "too old to plan on" past the
+tracking snapshot's own staleness (`shipmenttracking.PositionStale`, `HOSStale`).
+An ETA is as old as the position it was worked from.
+
+The block is never saved: the question is kept as the person typed it, so a later
+turn never replays an old snapshot as if it were current, compaction can drop the
+transcript without leaving a stale status or ETA behind, and the system prompt and
+the replayed history stay the same bytes from turn to turn for the provider's cache.
+The anchored records are also watched for changes during the turn
+(`watchedRecords`), so one that changes mid-turn reaches the model as a
+`WorldChange` notice. Delegated turns get no block.
+
+### Parking work on a wait
+
+An agent can park its work until something happens with `wait_until`; the turn
+ends, a workflow per wait holds the timer or listens for the event, and the work
+comes back as a turn with origin `WaitResolved` (or a run with trigger `Wait`).
+**Read [agent-waits.md](agent-waits.md) before changing it.**
+
 ### Decision follow-ups
 
 A decision on a proposal or plan a conversation raised is answered in that
@@ -773,6 +1128,69 @@ person declined:"; the agent answers it and may propose a different change.
 That turn is the rejection's own follow-up, so the note is never also sent as
 a message and the agent answers once.
 
+A follow-up is admitted without the scope guard: its input is a note Trenova wrote
+(`TrenovaWritten`, stage `Trenova`), and the classifier once read a decision note as an attempt
+to change the assistant's instructions and refused the turn that should have proposed the
+shipment its records were for. The report stays bound to the note and the card, but only about
+what ran: when what ran was a step toward something the person asked for that is not done
+(the customer and locations a shipment needs), the agent takes the next step with its tools
+instead of asking whether to (`continueTheWork`).
+
+### What a change wrote is shown
+
+A write that names the one record it made or changed (`ToolExecutionResult.Record`) shows that
+record beside the conversation, read again just then, without the person asking for it. Before,
+an approved `create_shipment` named its pro number and the person had to ask to see the
+shipment. The record is read as the person through the tool that reads its kind (`get_` and the
+record-link entity, by its one required parameter, `agentruntime.ReadRecord`) and drawn as that
+kind's card; a kind with no reader (a location, a commodity) is drawn from what the write
+reported, linked to the record's page. The card carries `written` with what the change did, and
+the shown note (`WrittenNote`) tells the model to point to it rather than read the record
+again; it is kept whether or not the reply manages the link (`ShownArtifact.MustBeLinked`). A
+write that ran inside a turn is shown as its call finishes (`artifactRecorder.observe`); one that
+ran on a person's approval is shown as its follow-up is prepared (`showWritten`), with the note
+pointing the follow-up at it, so a plan that made a customer, two locations and a commodity
+shows each of them. A card for a record read before is a new version of the same card, by the
+reader's lineage key.
+
+### Asking the person
+
+`ask_user` is answered by the loop itself (`agentruntime/askuser.go`), in workflow
+code: it reads and writes nothing, and its result is the question the thread pins
+above the person's message box. A call asks for one value in one of three shapes:
+
+- **A choice:** `options` (`value`, `label`, `detail`; at most 8), shown as
+  buttons, with a box for the person's own value unless `allowOther` is false.
+- **A typed value:** no options, a box only. `input` (`type`: `text`, `number`,
+  `date`, `datetime` or `record`; `recordKind` for a record) says what the box takes.
+  A record is picked from a search of one kind, and the kind is held to the
+  permission registry (`agent.IsKnownPageEntityType`); an unknown type, or a record
+  of no known kind, falls back to text. `otherHint` is the box's placeholder.
+- **A form:** `fields` (`key`, `label`, `type`, `recordKind`, `hint`, `optional`; at
+  most 8), the values a write tool refused for as missing, which together complete
+  that one write. A form has no options, no box of its own and no `input`.
+
+The stored result is `{question, options, allowOther, otherHint?, input?, fields?,
+note}`, with `options` always a list. Malformed options and fields are dropped one
+by one. The loop refuses, telling the model what to do instead: no question;
+nothing to answer with; options and fields together; fields none of which can be
+shown; and a typed-text question that asks for several values, which is one over
+160 characters or one that lists what it wants (two or more commas or semicolons,
+or one followed later by "and"; a comma between digits does not count). That last
+refusal sends a model that wants to create a record to call the write tool with
+what it knows and ask for exactly the missing values with `fields`, rather than
+interviewing the person first. A question already asked in the conversation's last
+turns is refused as repeated, and a run nobody watches or a delegate's task is told
+there is no one to ask.
+
+The note on a shown question tells the model to end its turn and write nothing
+more: the question is on screen, and the loop accepts an empty reply after one
+(`TestRun_AcceptsSilenceAfterAQuestion`). A refused ask is a failed result with
+verdict `invalid` and does not count as asked, so an empty reply after it is asked
+for again, and the same question may be asked again properly; a refused ask also
+does not count towards the repeated-question check of later turns
+(`askedQuestions`).
+
 ### A typed approval opens the approval box
 
 Typing "approved" decides nothing: a proposal is decided in the approval box
@@ -800,6 +1218,188 @@ each with the digest of the preview it showed. A plan's steps are asked for by `
 the plan's, anchored on its first waiting step. A step of a plan among
 `proposalIds` is refused with the plan's id, and a mix of tools is refused.
 Exactly one of the three parameters is given.
+
+### A proposal the agent replaced is withdrawn
+
+A turn's proposals are filed when it ends, and two or more become one plan the person
+approves whole. An agent that proposes a change, notices a mistake and proposes it again
+corrected would otherwise leave both in that plan: one approval ran both, and a load was
+entered twice. Once a turn has filed a proposal a person will decide, the loop offers
+`withdraw_proposal {proposalId, reason?}` (`agentruntime/withdrawproposal.go`). Every
+filing result names its proposal's id ("Recorded a proposal to run "create_shipment"
+(proposal ap_…)"), and the runtime answers the call itself, like `request_decision`: it
+marks that action `Withdrawn` on `PendingAction`, and the recorder records it
+`Superseded` (never pending, never a plan step, never on the watchtower, no draft
+artifact), so the approval box offers only what is still filed. Only a proposal of this
+turn can be withdrawn; one from an earlier turn is refused with the instruction to have the
+person reject it, since it is already in front of them, and one that already ran is refused
+too. A withdrawn action is left out of `ProposedSoFar` (so the same change filed again is a
+new proposal, not a duplicate), of the grounding guard's filed writes and of a delegate's
+report; a delegated turn is never offered the tool. The AI audit trail records the
+superseded proposal's `filed` event and the `withdraw_proposal` call like any runtime step,
+with no new event kind or canonical field. It took no gate: the tool is added to the turn's
+in-workflow tool set as data when a filing comes back, no command is added, and a history
+recorded before it never calls it.
+
+### What a tool receives
+
+Every call's arguments go through `contractCall` (`agentruntime/arguments.go`,
+`coerce.go`) before a tool, a preview or a card sees them. A misnamed
+parameter is renamed to the one it plainly means, the runtime's own owner key
+is set aside, and each value is read as the schema declares it wherever the
+reading is certain: a numeral sent as text becomes the number, a number sent
+for a text amount becomes its text, a lone value for a list becomes a list of
+one, comma-separated text becomes its parts, `{"item": [...]}` becomes the
+list, `"true"` becomes true, an enum value in another case becomes the
+declared spelling, and a null for an optional parameter is dropped. An
+optional parameter sent as `""` or as a list of nothing is read as not sent,
+and blank entries in a list of text are set aside: several models fill every
+parameter a tool declares, and a transfer that named one shipment also sent an
+empty customer and search beside it, which the tool read as filters given. A
+parameter whose empty value means something other than leaving it out is
+marked `toolschema.KeepEmpty` and keeps it: an update's field that an empty
+value clears (the master data kit's `clearable`, order amounts,
+`update_invoice_draft`, `update_service_failure`, a recurring series'
+blackout days), and a write's list whose absence means every record, where
+an empty list read as not sent would widen the call (the pay events
+`pay_worker_now` pays, the customers `assess_late_charges` charges, the sync
+records `retry_accounting_sync` retries, the suggestions
+`apply_carrier_intel_suggestions` applies).
+`TestEveryWriteWhoseOmissionWidensKeepsAnEmptyList` in the catalog contract
+holds every write whose description says leaving a parameter out means every
+record to marking it. What was left out is told back on one
+line ("Left out because they were empty: …"). The
+readings live in `toolschema.Coerce`, and the proposal executor makes the same
+ones (`proposalexecutor.CoerceParams`) on a proposal's parameters with the
+approver's changes laid over them, before they are checked and run: the
+approval editor sends what a person typed (`30`, `2026-10-01 08:00`), and a
+proposal filed before a parameter's shape was asserted carries what the model
+sent. The preview a person approves from reads them the same way
+(`proposalpreviewservice.settleParams`), so what is shown is what runs.
+Nothing is told back there; what runs is what was read. The id checks
+below stay in the runtime.
+
+Dates and times come in three shapes, each from one helper in
+`agenttoolschema` that sets the `format`, an example and the same sentence on
+every tool: `Date` (`date`, YYYY-MM-DD), `DateTime` (`date-time`, RFC 3339 with
+its offset) and `LocalDateTime` (`local-date-time`, YYYY-MM-DDTHH:MM with no
+zone, read in the timezone of where it happens). `pkg/toolschema` asserts all
+three (an empty string passes for a parameter marked `KeepEmpty`; elsewhere
+it never reaches the format, being read as not sent) and
+refuses a value of another shape in one sentence naming the shape and an
+example. "today", "yesterday" and "tomorrow" sent for a day become the day they
+name in the organization's timezone (`toolschema.WithToday`, which dispatch
+passes; the query tools' own "or today" parser and the master data kit's day
+field are retired onto `agenttoolschema.Date`). Midnight UTC sent for a day
+becomes the day, and a local time written
+with a space or with seconds becomes its minute; a number is never read as a
+date, and is refused as the Unix time it is. The shape is also said in the
+description. Anthropic and OpenAI's own endpoints are sent the full schema
+(`toolschema.ForModel` strips only the `x-` keywords); the OpenAI-compatible
+adapter, which reaches Gemini, vLLM and the rest, and Ollama are sent
+`ForPortableModel`, which also leaves out `examples` (Gemini's schema has only
+a root `example`) and the `local-date-time` format, which is Trenova's own. The call
+then has to fit the schema, and its record ids have to be ids of the right
+kind. An id parameter built with `agenttoolschema.RecordID` (or `RecordIDs` for
+a list) carries the resource it takes as `x-recordOf`, at any depth, and its
+value must carry that resource's prefix from the one table in the domain
+(`permission.Resource.IDPrefix`, held by a test to the prefix each entity's
+insert hook mints): a carrier's id sent for a customer is refused as "… is a
+carrier id; this parameter takes a customer id, from list_customers" rather
+than reaching the service and coming back "not found". An id whose resource
+covers several kinds of record (a qualification is an employment verification
+or a clearinghouse query), a record kept inside another's (an invoice line, a
+leave day), or a parameter that takes any of several kinds (a case's
+`subjectId`) is built with `agenttoolschema.KindID`/`KindIDs`, or marked in
+place with `OfKinds` (`OfResource` for a resource), and carries the kinds as
+`x-recordKinds`; each kind's prefix is declared in `permission.RecordKind`,
+held to the domain's mint by the same test, and a value of none of them is
+refused naming every kind it may be. A parameter with neither mark still has
+to hold something shaped like a record id when its description names where
+the id comes from (`from list_customers`); the catalog contract test
+(`TestEveryRecordIDParameterNamesItsKind`) fails on any id parameter left
+unmarked that is not listed, with its reason, among the few that hold no
+PULID. The marks are stripped from what a model is shown
+(`toolschema.ForModel`). What was renamed or re-read is told back with the result
+("Arguments were read as the tool declares them: … Send them that way from
+now on"), on a query result, a proposal and a write that ran. A refusal names
+each problem at its path with what the schema declares there (the type, the
+allowed values, the parameter's first sentence), and a key the tool does not
+take is answered with the parameters it does. The model's own call is never
+changed; the thread records what it sent.
+
+A proposal's result says why it waits (`heldReason`: the tool's tier, the
+agent's ceiling, a change that is always a person's, what it would reach, a
+condition, outside content, business hours), a permission denial says what to
+tell the person and not to try another way (`deniedAdvice`), and `remember`
+says whether the memory is kept or only offered on a card
+(`savedMemoryContent`). A tool done as a sequence declares it
+(`agentports.RecipeTool`), and the order is shown in the prompt's tool
+section and under the tool in a `find_tools` answer, with the prerequisite
+reads that were loaded alongside it. A `find_tools` need that names a tool the
+agent holds outright (`search_worker`) loads that tool first, ahead of the ranked
+matches, since the prompt lists what can be loaded by name. That is the only place the order of a
+piece of work is written: a template's starter instructions
+(`agentdefinition.Template.StarterInstructions`) hold its persona, what it puts
+first, its rules and what is always a person's decision, and name none of its
+tools (`TestTemplates_InstructionsLeaveTheOrderOfWorkToTheTools`). Walking
+through tools in prose told every turn about tools it had not loaded, went
+stale when a tool was renamed, and told an agent without a tool to call it.
+Every recipe and prerequisite names a registered tool, and a recipe names its
+own tool (`TestEveryRecipeNamesRegisteredTools`).
+
+A prerequisite only ever grants a read. A write a tool cannot finish its job without is
+declared instead as a companion (`agentports.CompanionTool`): `create_shipment` names
+`create_customer`, `create_location` and `create_commodity`, because a load from a broker
+Trenova has never seen names a customer, facilities and freight that do not exist yet, and an
+agent made in AI Control that held only shipment tools ended with "no match was found; no
+shipment was created". An agent holding the tool holds its companions (`heldTools`), they load
+with it, and each answers to its own policy, so it is proposed and approved like any write; one
+an administrator switched off for the agent stays off, and AI Control lists them under the
+agent's capabilities. What the companions are for is found in one call: `find_shipment_records`
+matches the customer, each stop's location (by name, then street) and each commodity, says
+which are missing, and lists the service types, shipment types, equipment types, location
+categories and rating methods to choose from. Before it, a load with two new stops spent the
+turn's twelve calls on one list call per record and ended without proposing anything. The turn
+proposes what is missing; once those are approved, the decision follow-up proposes the shipment
+with their new ids, and a later load for the same customer goes straight to `create_shipment`
+(`deskbench/scenarios/shipment-creation.yaml`).
+
+`create_location` places the address on the map through the organization's address lookup
+(`kernelports.AutoCompleteService`, Google Maps) and, when there is none or it finds nothing at
+that state and ZIP, saves the location without coordinates and says so on the card: an
+automatic geofence then has no shape until the location is geocoded in Locations. A circle is
+still drawn around a point, so it still needs one.
+
+The prompt's tool section groups changes only by what is certain before a
+call: a change that always records a proposal (`ToolSummary.AlwaysProposes`,
+from `agenttoolpolicy.AlwaysProposes`: the tool's promotable tier, its egress
+or the agent's ceiling keeps it below AutoExecute), one that runs at once for
+the person's own records (`PersonalRunsUnasked`), and the rest, which run at
+once or are recorded as a proposal depending on what the call reaches, with
+the result saying which and why. It used to call a tool whose static tier was
+AutoExecute a change that "runs as soon as you call it", and the turn's taint,
+a condition or the call's reach held it anyway.
+
+### An empty list says what would have matched
+
+A list or search result names what it applied (`searchedFor`). When the first page of a
+`newListTool` list comes back empty with a text or a filter applied, the tool probes before it
+answers (`listnearmiss.go`), each probe one row at most: is there anything at all, and does
+dropping the text, or any one of the first four filters, find something. The note then says
+which: "there are no hold reasons at all, so no other wording will find one", "dropping just
+one of these finds some: status equals Approved", or "together they rule everything out". A
+bare "nothing matched" sent models round a loop of near-identical calls, a status at a time,
+until the tool budget ran out. `search_shipments` does the same for its status: a search that
+finds nothing in the status asked for returns the rows its words match in any status, with a
+note saying none was in that status.
+
+Shipment rows from `list_shipments` and `search_shipments` carry the first pickup and the last
+delivery (place, window in the stop's zone) and who drives each move, or that it needs a
+driver (`ShipmentOptions.IncludeRoute`, loaded with the page as batched relations), and the
+search matches customers by name or code and stops by location name or city
+(`shipment_search_parties.go`) besides pro number and BOL. Without them, "which one picks up
+first" and "the sunbelt load to chicago" cost one `get_shipment` per row.
 
 ### Reads bunch into one table
 
@@ -835,6 +1435,120 @@ still drifts, or one written after the tool budget was spent, ends with a note
 to check the card. Each is a `reply_regrounded` event in the run's trajectory.
 The LLM judge that scores the same thing stays in the evaluations.
 
+Two rules the prompt gives are then enforced on every final reply, a
+delegate's included, before it is recorded (`replypass.go`): internal record
+ids are taken out the way the web client's `withoutRecordIds` takes them out
+(`shared/recordids`, the same cases; an `artifact:` link's address is left
+alone), and a markdown table of six or more rows that reprints a table the
+turn kept beside the conversation, and does not point to, is replaced by one
+sentence pointing to it with `ArtifactRef`. A reprint is recognised when at
+least half its first column is the kept table's first column
+(`ShownArtifact.Labels`, read from the artifact's rows by the observer and
+carried to the loop on `ToolOutcome.Shown`), or when the line above it and its
+first header name at least half the table's title words. The reply has
+already streamed, so a changed one is sent whole in a `reply_replaced` event,
+which the reader puts in place of what streamed; it is not a `retrying`
+restart, since the model was not asked again and the person would otherwise
+see the answer appear to fail and start over. Each pass that changed something
+is a `reply_regrounded` event (`strip_ids`, `point_to_table`) before it. The
+passes sit beneath the prompt's rules, not in place of them.
+
+Artifact links are then held to the contract in
+[desk-artifacts.md](desk-artifacts.md#naming-and-linking-artifacts) on every final reply the
+person reads (`placement.go`, behind `agent-loop-artifact-placement`; a delegate's reply is read
+by the agent that asked, which names what it needs in its own). The check is exact, not a
+judgement: a link stands outside a sentence when the sentence around it, split at `.`, `!` or `?`
+before a space, holds no word once the links are taken out, or when it sits in a table row, a
+heading or a fenced block. A reply that names an artifact outside a sentence, leaves out a table
+or document it must name (`ShownArtifact.MustBeLinked`, the same rule that keeps the artifact
+when the reply forgets it), or names an id the conversation never held is discarded once, the way
+the grounding guard does it: a `retrying` event, a `reply_regrounded` `relink_artifacts`, and a
+correction naming each link as it should be written. A rewrite that still breaks the contract, or
+a reply written after the tool budget was spent, is not asked again: each stray link is cut from
+where it stood, an id nobody holds is left as its words, and one sentence at the end of the reply
+names what was cut or left out (`The full table is in …`, `The full record is in …`), sent as a
+`reply_replaced` after a `reply_regrounded` `place_artifacts`. A clean reply costs one pass over
+its text; only a broken one costs a model call, and never more than one.
+
+The output guard (`agentguard.EvaluateOutput`) runs last, on every final
+reply. A reply with code in it is no longer refused whole: a fenced block with
+a programming-language tag, a fenced block holding source or markup, and a
+function or markup line with its body are each replaced by "[A code block was
+left out: this assistant handles transportation work, not software.]", and the
+rest of the answer is kept. The decision is still the signal that something
+upstream let a code request through: it is `Altered`, names the rule, and is
+logged; the reply's message keeps the guard's stage, category and reason, the
+run carries `OutputAltered` and `OutputRule`, and the turn's decision is the
+altered one. The reply as recorded is sent in a `reply_replaced` event, which
+replaces the streamed one without a retry.
+
+### An oversized tool result
+
+A result over 12,000 characters (`maxToolResultChars`, `agentruntime/fence.go`) is
+shortened before the model reads it. A JSON object keeps every field that is not a list
+whole and writes those first, then shortens its top-level lists to fit, with a note
+saying how many records each list shows and to answer counts from the totals. Cutting
+by bytes dropped exactly those fields: keys arrive sorted, so the dispatch board kept
+its drivers and moves and lost the summary that held the uncovered and late counts.
+A result that is not a JSON object, or does not fit even with its lists shortened, is
+still cut at a character boundary, with a note saying records are missing and not to
+count or infer from them.
+
+### Files a person attaches
+
+A file is uploaded against the conversation (`document.ConversationResourceType`)
+and its id rides on the message (`SendMessageRequest.AttachmentDocumentIDs`, at
+most `MaxMessageAttachments` = 5). `resolveAttachments` refuses an id that is not
+the person's own upload to this thread (`Document.AttachedBy`), so an attachment
+cannot be used to read another record's file, and reads what document
+intelligence has made of each one.
+
+The files reach the model on the message they came with, never in the system
+prompt: `agentdefinition.DescribeAttachments` writes an `<attachments>` block
+ahead of the question, after `<records_in_play>`, naming each file (id, name,
+type, pages, what it looks like, whether its reading has finished) with its text
+inside `<file_text>`. The message's files share `AttachmentTextBudget` (24,000
+characters), shortest first, so a short file always arrives whole and a long one
+says where its text stops and the offset to read on from. As with the anchors,
+the block is never saved; the question is kept as the person typed it. Every
+later turn replays that message with the same block, so the model always knows
+which message carried which file: within the last three turns (the window tool
+results are kept whole in) with the file's text again, read while the turn is
+prepared (`earlierFileTexts`, at most `MaxMessageAttachments` files), and named
+only before that, to be read again with `read_attachment`. Without the text, a
+decision's follow-up saw its own summary of the confirmation and no document
+behind it, decided it had made the details up, and withdrew them. The same texts
+count as what the turn read for the grounding guard (`RunRequest.FileTexts`), so
+a figure quoted from a file is not taken for an invented one. Before, the files were a section of the system prompt for the turn they
+came with and nowhere after it: the model was shown a 1,200-character excerpt,
+told to call `get_document_summary`, which an agent made in AI Control did not
+necessarily hold, and in the next turn the files had gone. Asked twice to read a
+re-uploaded rate confirmation, gpt-6-luna answered both times that no file was
+attached.
+
+`read_attachment` is a core tool, so every agent holds it, and it rides on any
+turn of a conversation a file was attached to (`toolSetRequest.attachments`). It
+reads only the person's own uploads to this thread (`QueryToolParams.ThreadID`):
+its text in reading order, one page of it, or a window from an offset, with what
+document intelligence found; without an id it lists the conversation's files,
+which is how a turn past a compaction finds them again. A file still being read
+is waited for, polling for up to 20 seconds, and one still not read says so
+rather than coming back empty. Its policy is the person's own read
+(`ToolScopeSelf`) that always reads outside content (`TaintSourceAttachment`), so
+a run nobody is watching goes without it and a turn that read a file proposes
+its later writes. `get_document_summary` stays for documents a record names.
+
+A native PDF page's text is its layout read top to bottom, each row's segments
+left to right with `kernelports.PDFColumnGap` between them
+(`pdfreader.arrange`), not the order its content stream happens to draw in,
+which put a rate confirmation's terms first and left every label a page away
+from its value. The stream's text is kept only when the layout misses some of it
+(`readsWhole`). The rate confirmation parser reads such a row as its cells
+(`splitLayoutCells`), so `SHIPPER#1:` is followed by the shipper's name and
+`Address:` by the street, and a stop's name and address fill the shipper and
+consignee when no label names them. Documents read before this keep their old
+text until they are extracted again.
+
 ### History replay
 
 A turn replays the newest 120 messages, and their tool results are most of it.
@@ -851,7 +1565,7 @@ grounding guard above still counts them as read.
 
 The system prompt names today's date only, so its cached prefix is the same all
 day. The question the model reads (never what the conversation keeps) opens with
-`Now: YYYY-MM-DD HH:MM zone` in the organization's zone, UTC when the zone is
+`Now: Weekday YYYY-MM-DD HH:MM zone` (the weekday so "next Friday" needs no asking) in the organization's zone, UTC when the zone is
 unknown, for an agent that reads the clock. `ask_user` option labels that carry a
 date read "Tue Oct 6 (in 7 days)", counted from the turn's own clock
 (`TurnEffects.Now`) in that zone; a past date on a scheduling question adds a note
@@ -863,15 +1577,25 @@ A provider reuses the start of a prompt only while it is the same bytes, so a
 request is laid out stable first:
 
 - **Bytes.** Every request body, the tools and the replayed tool-call arguments
-  included, is encoded with sorted keys (`modeladapter.requestJSON`); a map in
-  Go's random order made every request different.
+  included, is encoded with sorted keys (`modeladapter.requestJSON`, and the
+  SDK's encoder for Anthropic); a map in Go's random order made every request
+  different. `TestRequests_AreTheSameBytesEveryTime` holds every protocol to it.
 - **System prompt.** `BuildSystemPromptParts` writes what every turn of an agent
-  shares first (rules, instructions, the tools when all are offered, delegates,
-  artifacts, the guide, how to answer) and the turn's own part after it (runtime
-  context, memories, a disclosed tool list, proposals waiting on a decision).
-  The turn carries the shared part's length (`TurnState.SystemStable`) to the
-  adapter. `agentdefinition.PromptVersion` names this shape (v3) on runs,
-  evaluation cases and fingerprints.
+  shares first and the turn's own part after it. The shared part is, in order:
+  the identity line (the agent's name and description), Trenova's rules
+  (Boundaries, Working with records), the tools when all are offered (grouped
+  by what a call does, with the plural twins and the dashboard note only for an
+  agent that holds those tools; the request's schemas carry the descriptions),
+  the agents it may ask, artifacts, the product guide, how to answer, then the
+  organization's instructions and its Never list. The turn's own part is the
+  runtime context, memories, a disclosed tool list and proposals waiting on a
+  decision. Precedence is the order on the page: Trenova's sections bind the
+  organization's, which bind memories, which bind the message. The turn
+  carries the shared part's length (`TurnState.SystemStable`) to the adapter.
+  `agentdefinition.PromptVersion` names this shape (v7) on runs, evaluation
+  cases and fingerprints; the snapshots under
+  `domain/agentdefinition/testdata/prompts` are regenerated with
+  `go test -run TestPromptSnapshots ./internal/modules/agent/domain/agentdefinition/ -update`.
 - **Anthropic** gets three of its four marks: the last tool, the end of the
   shared system part, and the last block of the conversation, which lets each
   call of a tool loop read the exchange before it back from the cache.
@@ -968,7 +1692,7 @@ it.
   whose run is still open is refused by Temporal, where two requests reading a
   count of open runs could both have passed. The refusal is
   `ErrAgentRunAlreadyOpen`, which the publisher treats as a skip.
-  `PublishAgentEvent` defers through `ports.AfterCommit`: an event raised
+  `PublishAgentEvent` defers through `kernelports.AfterCommit`: an event raised
   inside `WithTx` is queued on the outermost transaction and published only
   once it commits, and dropped if it rolls back, so no run starts for a record
   that was never saved. Outside a transaction it publishes at once.
@@ -977,7 +1701,7 @@ it.
   interval, ending at its end date, paused while it is disabled, overlap
   skipped, catch-up window five minutes. Saving an agent syncs its schedule;
   `ReconcileDefinitionSchedulesWorkflow` runs when a worker starts and every
-  quarter hour, backfilling schedules and removing orphans. A firing starts
+  hour, backfilling schedules and removing orphans. A firing starts
   `AgentScheduledRunWorkflow`, which checks the agent may run now and starts
   the run for that slot; the slot keys the run, so it starts once however often
   the start is retried. The static schedule registry leaves these alone: they
@@ -991,6 +1715,42 @@ loop itself rather than as a child `AgentRunWorkflow`: a replay files nothing,
 waits on no decision and must never touch the live run's record, which is
 everything a run workflow exists to do.
 
+Every case's reply is also scored on its form (`agentscoring` check
+`replyForm`, weighted beside the others and needing no rubric): it fails a
+reply that shows an internal record id (`shared/recordids`) or writes out a
+markdown table longer than a dozen rows (`shared/mdtable`) instead of pointing
+to the table its tool kept. The runtime enforces both beneath the prompt, so a
+failure here means a model, a prompt change or the reply pass let one slip.
+
+The runtime's own contract with a model is held by scripted conversations,
+`agentevalgate/evals/conversation.yaml`, run through the kit's runtime
+(`agentevalgate.RunConversation`) with each case's stub reads as the only
+tools: a list reprinted as a markdown table is recorded as a pointer to its
+table, internal ids never reach the recorded reply, `"limit": "30"` and a lone
+id for a list reach the tool as the number and the list, and a value outside an
+enum is refused with the allowed values and the corrected call runs. The
+model's side is scripted, so a case fails on the runtime and never on a model;
+every case must pass.
+
+### Dry runs
+
+`AgentDryRunWorkflow` is the agent builder's "Try it": a draft agent, unsaved,
+answers one message against live data with simulation forced on. The draft
+travels whole in the payload, because there is nothing stored to read it back
+from; `AgentDefinitionService.Draft` builds and checks it exactly as a save
+would, without saving. It runs on the chat queue because a person is watching
+it, hosts a Workflow Stream like a chat turn, and is read on the same request
+that started it (`POST /agent-definitions/dry-run/`), so only the person who
+asked can read it; a reader who leaves cancels it.
+
+It leaves nothing behind but what it cost. Its run ID carries the evaluation
+prefix, so usage is counted as an evaluation and no proposal baseline is kept;
+it has no thread, no step ledger and no publishing, and no finish step files
+its proposals. Before `done` it publishes `dry_run_steps`: each of the draft's
+own tool calls with what it would have come to (`agentdryrun.Classify`: Runs,
+AskFirst, Propose, Recorded for a shadow agent, Simulated, NotHeld, Failed).
+A memory the prompt reads still has its use counted.
+
 ## One-shot calls
 
 `completionjobs` runs the model calls a person waits on outside a conversation.
@@ -999,11 +1759,16 @@ the workflow's budget is the request's own deadline less the margin the handler
 needs to answer, so a call never outlives the request waiting on it. A person who
 stops waiting cancels a call that was theirs alone.
 
-- `StructuredCompletionWorkflow` asks one structured question (table compose),
+- `StructuredCompletionWorkflow` asks one structured question (table compose,
+  and the agent builder's drafting and tightening, routed as `AssistantChat`),
   retried the `modelcall` way. Formula generate and explain no longer call it;
   they are turns of the formula assistant.
 - `TestAIProviderWorkflow` probes once and never retries: the administrator is
   asking whether the connection works now.
+- `ListAIProviderModelsWorkflow` and `TestAIProviderDraftWorkflow` ask an endpoint
+  the editor has not saved, once each. A key typed into the editor is encrypted
+  before it is handed over, so workflow history holds only ciphertext, and a
+  stored key is used only for the endpoint it was entered for.
 - `WriteBriefingWorkflow` rewrites a day's page.
 
 Two people testing the same provider, or rewriting the same page, share one
@@ -1210,6 +1975,19 @@ The whole table of link columns, and who writes each, is in
 duration says how long the answer took, first-event says how long a reader who
 attached as the turn began stared at nothing.
 
+`assistant_tool_outcomes_total{tool,verdict}` counts every tool call the loop
+answers, refusals included, by what became of it (the `aitrace` verdicts: ran,
+proposed, simulated, denied, invalid, duplicate, over_budget, failed, unknown).
+It is counted in one place, `recordToolResult`, and not while workflow code
+replays its history (`ReplayAware`); a name the model invented is counted as
+`unregistered`, so a confused model cannot mint a series per guess. The agent's
+scorecard carries the same breakdown per agent (`AgentScorecard.toolVerdicts`):
+counted from `agent_run_steps` by tool and verdict, with the three reasons given
+most often, so "which tool do the models keep calling wrongly, and how" is a
+read rather than an afternoon in threads. The ledger holds what reached
+dispatch; the loop's own refusals before it (an unparsed call, a tool not held,
+a spent budget) are only in the counter.
+
 `trajectory_events_total{result}` counts dropped events. They are invisible by
 design — the run carries on — so this is the only place they show up.
 
@@ -1262,13 +2040,19 @@ before the change:
 | `agent-loop-in-workflow` | `runInOneActivity`, `replayInOneActivity` | `RunAgentActivity`, `ReplayRunActivity`, `awaitDecision` |
 | `insight-refresh-per-organization` | `refreshInOneActivity` | `RefreshInsightsActivity` |
 | `daily-briefing-per-organization` | `writeInOneActivity` | `WriteDueBriefingsActivity` |
+| `weather-alert-poll-fetch-once` | `pollPerTenant` | `ListWeatherAlertTenantsActivity`, `PollNWSAlertsForTenantActivity`, and `WeatherAlertService.ListWeatherAlertTenants` / `PollNWSAlertsForTenant` |
 | `agent-loop-final-answer` | a turn that spends its tool budget ends on the canned `exhaustedReply` without asking the model for an answer | nothing; the check itself is the only cost |
 | `assistant-turn-close-unsaved` | a turn whose save fails on every attempt leaves its record Running, and the conversation refuses every later question | nothing; the check itself is the only cost |
 | `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |
 | `assistant-turn-prepare-local` | a turn prepares as a regular activity: a task-queue dispatch and a second workflow task before the model call is scheduled | nothing; `PrepareTurnActivity` stays registered, and the old branch keeps its priority and fairness keys |
 | `agent-loop-grounding-guard` | a reply that names what the filed writes do not hold is kept as written | nothing; the check itself is the only cost, and it is asked only of a reply the guard found wanting |
+| `agent-loop-reply-passes` | a final reply is recorded as the model wrote it, internal ids and reprinted tables included | nothing; the check itself is the only cost, and it is asked only of a reply the passes would change |
+| `agent-loop-artifact-placement` | a final reply is recorded with its artifact links wherever the model put them, including outside any sentence, and a table it was told to point to may go unnamed | nothing; the check itself is the only cost, and it is asked only of a reply that names an artifact outside a sentence, leaves out one it must name, or names one the conversation never held |
 | `agent-loop-cut-off-call-retry` | a completion cut off inside a tool call, or before any visible answer, ends the turn with `truncationNotice` (a broken native call is refused as invalid JSON and the model asked again at the same limit) | nothing; the check itself is the only cost, and it is asked only of a completion cut off that way |
+| `agent-loop-interjections` | a turn never reads what the person said while it worked, nor checks its records for changes; a steer waits in the queue and is sent as the next message | nothing; the check itself is the only cost, and it is asked only when a steer is waiting or a check of the records is due |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
+| `agent-loop-unshown-ask` | an `ask_user` call the runtime refused is an ordinary result that counts as asked: the turn may end in silence after it, and the same question is refused as repeated | nothing; the check itself is the only cost, and it is asked only of an ask the runtime refused |
+| `agent-loop-concurrent-reads` | each read is dispatched and settled before the next call of the reply starts | nothing; the check itself is the only cost, and it is asked only when a second read would join a batch |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
 | none: the workflow is retired whole | `ImportAssistantTurnWorkflow` on `agent-chat-queue`, which no route starts any more | the workflow, its activities and registry in `importassistantjobs`, `workflow_test.go`, and the turn machinery in `shipmentimportassistantservice` (the tool loop, `toolGrants`, `persistConversationTurn`); delete them once no `ImportAssistantTurnWorkflow` execution is open |
 
@@ -1285,7 +2069,10 @@ code only carries the two results between them.
 
 Hybrid tool ranking took no gate. The turn's query vector rides on `ToolSetState.Query`, and
 the tools a `find_tools` call found ride on `FindToolsResult.Found` into the saved message;
-both are optional data, and a history without them replays by keyword. See "Ranking" in
+both are optional data, and a history without them replays by keyword. The person's other
+agents that answer named as holding what the agent could not call ride the same way, on
+`FindToolsResult.HandOff` into the message's `hand_off_agents`; a history without them
+replays with none, which only leaves the Desk's hand-off menu in its usual order. See "Ranking" in
 [ai-retrieval.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/ai-retrieval.md).
 
 Tracing and provenance took no gate. No span is started in workflow code; the
@@ -1375,6 +2162,12 @@ expenses in [agent-workforce-tools.md](agent-workforce-tools.md#who-holds-them).
 | `save_table_view`, `add_home_widget`, `remove_home_widget`, `arrange_home_layout` | Each changes only the caller's own screen, a person's interface state that is no desk's job; the report analyst, the one desk near dashboards, builds report dashboards and never the person's home page. |
 
 ## Known limits
+
+- **A world change is best effort.** It is read from the realtime bus, which
+  drops events under publish backpressure, trims old entries and carries no
+  event addressed to one person; a check scans at most 2,048 entries and picks up
+  where it stopped. A write that publishes no record id (a bulk change) is not
+  seen.
 
 - **Resume is at-most-once.** A crash in the execute→settle window reports
   "began, outcome unknown" rather than replaying.

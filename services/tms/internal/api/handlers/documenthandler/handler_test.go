@@ -9,16 +9,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
+
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
-	"github.com/emoss08/trenova/internal/core/services/documentservice"
-	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,47 +38,47 @@ import (
 var errService = errors.New("service error")
 
 type mockStorageClient struct {
-	uploadFunc             func(ctx context.Context, params *storage.UploadParams) (*storage.FileInfo, error)
-	downloadFunc           func(ctx context.Context, key string) (*storage.DownloadResult, error)
+	uploadFunc             func(ctx context.Context, params *kernelports.UploadParams) (*kernelports.FileInfo, error)
+	downloadFunc           func(ctx context.Context, key string) (*kernelports.DownloadResult, error)
 	deleteFunc             func(ctx context.Context, key string) error
-	deleteObjectFunc       func(ctx context.Context, params *storage.DeleteObjectParams) error
-	getPresignedFunc       func(ctx context.Context, params *storage.PresignedURLParams) (string, error)
+	deleteObjectFunc       func(ctx context.Context, params *kernelports.DeleteObjectParams) error
+	getPresignedFunc       func(ctx context.Context, params *kernelports.PresignedURLParams) (string, error)
 	getPresignedUploadFunc func(
 		ctx context.Context,
-		params *storage.PresignedUploadURLParams,
+		params *kernelports.PresignedUploadURLParams,
 	) (string, error)
 	initiateMultipartFunc func(
 		ctx context.Context,
-		params *storage.MultipartUploadParams,
+		params *kernelports.MultipartUploadParams,
 	) (string, error)
 	getMultipartPartFunc func(
 		ctx context.Context,
-		params *storage.MultipartUploadPartURLParams,
+		params *kernelports.MultipartUploadPartURLParams,
 	) (string, error)
 	completeMultipartFunc func(
 		ctx context.Context,
-		params *storage.CompleteMultipartUploadParams,
+		params *kernelports.CompleteMultipartUploadParams,
 	) error
 	abortMultipartFunc func(
 		ctx context.Context,
-		params *storage.AbortMultipartUploadParams,
+		params *kernelports.AbortMultipartUploadParams,
 	) error
 	listMultipartPartsFunc func(
 		ctx context.Context,
-		params *storage.ListMultipartUploadPartsParams,
-	) ([]storage.UploadedPart, error)
+		params *kernelports.ListMultipartUploadPartsParams,
+	) ([]kernelports.UploadedPart, error)
 	existsFunc      func(ctx context.Context, key string) (bool, error)
-	getFileInfoFunc func(ctx context.Context, key string) (*storage.FileInfo, error)
+	getFileInfoFunc func(ctx context.Context, key string) (*kernelports.FileInfo, error)
 }
 
 func (m *mockStorageClient) Upload(
 	ctx context.Context,
-	params *storage.UploadParams,
-) (*storage.FileInfo, error) {
+	params *kernelports.UploadParams,
+) (*kernelports.FileInfo, error) {
 	if m.uploadFunc != nil {
 		return m.uploadFunc(ctx, params)
 	}
-	return &storage.FileInfo{
+	return &kernelports.FileInfo{
 		Key:         params.Key,
 		Size:        params.Size,
 		ContentType: params.ContentType,
@@ -83,7 +88,7 @@ func (m *mockStorageClient) Upload(
 func (m *mockStorageClient) Download(
 	ctx context.Context,
 	key string,
-) (*storage.DownloadResult, error) {
+) (*kernelports.DownloadResult, error) {
 	if m.downloadFunc != nil {
 		return m.downloadFunc(ctx, key)
 	}
@@ -99,7 +104,7 @@ func (m *mockStorageClient) Delete(ctx context.Context, key string) error {
 
 func (m *mockStorageClient) DeleteObject(
 	ctx context.Context,
-	params *storage.DeleteObjectParams,
+	params *kernelports.DeleteObjectParams,
 ) error {
 	if m.deleteObjectFunc != nil {
 		return m.deleteObjectFunc(ctx, params)
@@ -109,7 +114,7 @@ func (m *mockStorageClient) DeleteObject(
 
 func (m *mockStorageClient) GetPresignedURL(
 	ctx context.Context,
-	params *storage.PresignedURLParams,
+	params *kernelports.PresignedURLParams,
 ) (string, error) {
 	if m.getPresignedFunc != nil {
 		return m.getPresignedFunc(ctx, params)
@@ -126,7 +131,7 @@ func (m *mockStorageClient) Exists(ctx context.Context, key string) (bool, error
 
 func (m *mockStorageClient) GetPresignedUploadURL(
 	ctx context.Context,
-	params *storage.PresignedUploadURLParams,
+	params *kernelports.PresignedUploadURLParams,
 ) (string, error) {
 	if m.getPresignedUploadFunc != nil {
 		return m.getPresignedUploadFunc(ctx, params)
@@ -136,7 +141,7 @@ func (m *mockStorageClient) GetPresignedUploadURL(
 
 func (m *mockStorageClient) InitiateMultipartUpload(
 	ctx context.Context,
-	params *storage.MultipartUploadParams,
+	params *kernelports.MultipartUploadParams,
 ) (string, error) {
 	if m.initiateMultipartFunc != nil {
 		return m.initiateMultipartFunc(ctx, params)
@@ -146,7 +151,7 @@ func (m *mockStorageClient) InitiateMultipartUpload(
 
 func (m *mockStorageClient) GetMultipartUploadPartURL(
 	ctx context.Context,
-	params *storage.MultipartUploadPartURLParams,
+	params *kernelports.MultipartUploadPartURLParams,
 ) (string, error) {
 	if m.getMultipartPartFunc != nil {
 		return m.getMultipartPartFunc(ctx, params)
@@ -156,7 +161,7 @@ func (m *mockStorageClient) GetMultipartUploadPartURL(
 
 func (m *mockStorageClient) CompleteMultipartUpload(
 	ctx context.Context,
-	params *storage.CompleteMultipartUploadParams,
+	params *kernelports.CompleteMultipartUploadParams,
 ) error {
 	if m.completeMultipartFunc != nil {
 		return m.completeMultipartFunc(ctx, params)
@@ -166,7 +171,7 @@ func (m *mockStorageClient) CompleteMultipartUpload(
 
 func (m *mockStorageClient) AbortMultipartUpload(
 	ctx context.Context,
-	params *storage.AbortMultipartUploadParams,
+	params *kernelports.AbortMultipartUploadParams,
 ) error {
 	if m.abortMultipartFunc != nil {
 		return m.abortMultipartFunc(ctx, params)
@@ -176,8 +181,8 @@ func (m *mockStorageClient) AbortMultipartUpload(
 
 func (m *mockStorageClient) ListMultipartUploadParts(
 	ctx context.Context,
-	params *storage.ListMultipartUploadPartsParams,
-) ([]storage.UploadedPart, error) {
+	params *kernelports.ListMultipartUploadPartsParams,
+) ([]kernelports.UploadedPart, error) {
 	if m.listMultipartPartsFunc != nil {
 		return m.listMultipartPartsFunc(ctx, params)
 	}
@@ -187,16 +192,16 @@ func (m *mockStorageClient) ListMultipartUploadParts(
 func (m *mockStorageClient) GetFileInfo(
 	ctx context.Context,
 	key string,
-) (*storage.FileInfo, error) {
+) (*kernelports.FileInfo, error) {
 	if m.getFileInfoFunc != nil {
 		return m.getFileInfoFunc(ctx, key)
 	}
-	return &storage.FileInfo{Key: key}, nil
+	return &kernelports.FileInfo{Key: key}, nil
 }
 
 func setupHandler(
 	t *testing.T,
-	repo *mocks.MockDocumentRepository,
+	repo *documentportsmock.MockDocumentRepository,
 	storageClient *mockStorageClient,
 ) *handlerDeps {
 	t.Helper()
@@ -219,13 +224,13 @@ func setupHandler(
 
 type handlerDeps struct {
 	handler     *documenthandler.Handler
-	cacheRepo   *mocks.MockDocumentCacheRepository
-	sessionRepo *mocks.MockDocumentUploadSessionRepository
+	cacheRepo   *customerportsmock.MockDocumentCacheRepository
+	sessionRepo *documentuploadportsmock.MockDocumentUploadSessionRepository
 }
 
 func setupHandlerWithConfig(
 	t *testing.T,
-	repo *mocks.MockDocumentRepository,
+	repo *documentportsmock.MockDocumentRepository,
 	storageClient *mockStorageClient,
 	cfg *config.Config,
 ) *handlerDeps {
@@ -235,8 +240,8 @@ func setupHandlerWithConfig(
 
 	validator := documentservice.NewValidator(documentservice.ValidatorParams{Config: cfg})
 	thumbnailGen := thumbnailservice.NewGenerator(nil)
-	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
-	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
+	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
+	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
 
 	service := documentservice.NewTestService(
 		logger,
@@ -311,7 +316,7 @@ func TestDocumentHandler_List_Success(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*document.Document]{
 		Items: []*document.Document{
 			{
@@ -352,7 +357,7 @@ func TestDocumentHandler_List_Success(t *testing.T) {
 func TestDocumentHandler_List_WithFilters(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*document.Document]{
 		Items: []*document.Document{},
 		Total: 0,
@@ -379,7 +384,7 @@ func TestDocumentHandler_List_WithFilters(t *testing.T) {
 func TestDocumentHandler_List_RejectsOffset(t *testing.T) {
 	t.Parallel()
 
-	deps := setupHandler(t, mocks.NewMockDocumentRepository(t), &mockStorageClient{})
+	deps := setupHandler(t, documentportsmock.NewMockDocumentRepository(t), &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -396,7 +401,7 @@ func TestDocumentHandler_List_RejectsOffset(t *testing.T) {
 func TestDocumentHandler_List_ServiceError(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(nil, errService)
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
@@ -417,9 +422,9 @@ func TestDocumentHandler_Get_Success(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
@@ -437,7 +442,7 @@ func TestDocumentHandler_Get_Success(t *testing.T) {
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
 	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, repositories.ErrCacheMiss)
+		Return(nil, customerports.ErrCacheMiss)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -459,13 +464,13 @@ func TestDocumentHandler_Get_NotFound(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("Document not found"))
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
 	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, repositories.ErrCacheMiss)
+		Return(nil, customerports.ErrCacheMiss)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -481,7 +486,7 @@ func TestDocumentHandler_Get_NotFound(t *testing.T) {
 func TestDocumentHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
@@ -500,9 +505,9 @@ func TestDocumentHandler_Download_Success(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
@@ -516,10 +521,10 @@ func TestDocumentHandler_Download_Success(t *testing.T) {
 		})
 
 	storageClient := &mockStorageClient{
-		downloadFunc: func(_ context.Context, key string) (*storage.DownloadResult, error) {
+		downloadFunc: func(_ context.Context, key string) (*kernelports.DownloadResult, error) {
 			assert.Equal(t, "org/trailer/download.pdf", key)
 			body := encryptedDocumentBody(t, "download-body", "org/trailer/download.pdf")
-			return &storage.DownloadResult{
+			return &kernelports.DownloadResult{
 				Body:        io.NopCloser(strings.NewReader(body)),
 				ContentType: "application/pdf",
 				Size:        int64(len(body)),
@@ -549,7 +554,7 @@ func TestDocumentHandler_Download_NotFound(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("Document not found"))
 
@@ -569,7 +574,7 @@ func TestDocumentHandler_Download_NotFound(t *testing.T) {
 func TestDocumentHandler_Download_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
@@ -588,9 +593,9 @@ func TestDocumentHandler_Download_StorageError(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
 				ID:          req.ID,
 				StoragePath: "org/trailer/file.pdf",
@@ -598,7 +603,7 @@ func TestDocumentHandler_Download_StorageError(t *testing.T) {
 		})
 
 	storageClient := &mockStorageClient{
-		getPresignedFunc: func(_ context.Context, _ *storage.PresignedURLParams) (string, error) {
+		getPresignedFunc: func(_ context.Context, _ *kernelports.PresignedURLParams) (string, error) {
 			return "", errService
 		},
 	}
@@ -621,9 +626,9 @@ func TestDocumentHandler_View_Success(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
 				ID:           req.ID,
 				FileName:     "view.pdf",
@@ -635,10 +640,10 @@ func TestDocumentHandler_View_Success(t *testing.T) {
 		})
 
 	storageClient := &mockStorageClient{
-		downloadFunc: func(_ context.Context, key string) (*storage.DownloadResult, error) {
+		downloadFunc: func(_ context.Context, key string) (*kernelports.DownloadResult, error) {
 			assert.Equal(t, "org/trailer/view.pdf", key)
 			body := encryptedDocumentBody(t, "view-body", "org/trailer/view.pdf")
-			return &storage.DownloadResult{
+			return &kernelports.DownloadResult{
 				Body:        io.NopCloser(strings.NewReader(body)),
 				ContentType: "application/pdf",
 				Size:        int64(len(body)),
@@ -668,7 +673,7 @@ func TestDocumentHandler_View_NotFound(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("Document not found"))
 
@@ -688,7 +693,7 @@ func TestDocumentHandler_View_NotFound(t *testing.T) {
 func TestDocumentHandler_View_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
@@ -707,9 +712,9 @@ func TestDocumentHandler_View_StorageError(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
 				ID:          req.ID,
 				StoragePath: "org/trailer/file.pdf",
@@ -717,7 +722,7 @@ func TestDocumentHandler_View_StorageError(t *testing.T) {
 		})
 
 	storageClient := &mockStorageClient{
-		getPresignedFunc: func(_ context.Context, _ *storage.PresignedURLParams) (string, error) {
+		getPresignedFunc: func(_ context.Context, _ *kernelports.PresignedURLParams) (string, error) {
 			return "", errService
 		},
 	}
@@ -740,9 +745,9 @@ func TestDocumentHandler_Preview_Success(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
 				ID:                 req.ID,
 				FileName:           "preview.pdf",
@@ -755,10 +760,10 @@ func TestDocumentHandler_Preview_Success(t *testing.T) {
 		})
 
 	storageClient := &mockStorageClient{
-		downloadFunc: func(_ context.Context, key string) (*storage.DownloadResult, error) {
+		downloadFunc: func(_ context.Context, key string) (*kernelports.DownloadResult, error) {
 			assert.Equal(t, "org/trailer/preview-thumb.webp", key)
 			body := encryptedPreviewBody(t, "preview-body", key)
-			return &storage.DownloadResult{
+			return &kernelports.DownloadResult{
 				Body:        io.NopCloser(strings.NewReader(body)),
 				ContentType: "image/webp",
 				Size:        int64(len(body)),
@@ -787,9 +792,9 @@ func TestDocumentHandler_Preview_NoPreviewAvailable(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
 				ID:                 req.ID,
 				StoragePath:        "org/trailer/file.pdf",
@@ -815,7 +820,7 @@ func TestDocumentHandler_Preview_NotFound(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("Document not found"))
 
@@ -835,7 +840,7 @@ func TestDocumentHandler_Preview_NotFound(t *testing.T) {
 func TestDocumentHandler_Preview_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
@@ -852,7 +857,7 @@ func TestDocumentHandler_Preview_InvalidID(t *testing.T) {
 func TestDocumentHandler_Upload_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().Create(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *document.Document) (*document.Document, error) {
 			entity.ID = pulid.MustNew("doc_")
@@ -895,7 +900,7 @@ func TestDocumentHandler_Upload_Success(t *testing.T) {
 func TestDocumentHandler_Upload_MissingRequiredFields(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
@@ -921,7 +926,7 @@ func TestDocumentHandler_Upload_MissingRequiredFields(t *testing.T) {
 func TestDocumentHandler_Upload_MissingFile(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	resourceID := pulid.MustNew("tr_").String()
@@ -945,7 +950,7 @@ func TestDocumentHandler_Upload_MissingFile(t *testing.T) {
 func TestDocumentHandler_Upload_RequestBodyTooLarge(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	cfg := &config.Config{
 		App: config.AppConfig{Debug: true},
 		Storage: config.StorageConfig{
@@ -984,9 +989,9 @@ func TestDocumentHandler_Upload_RequestBodyTooLarge(t *testing.T) {
 func TestDocumentHandler_Upload_StorageError(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	storageClient := &mockStorageClient{
-		uploadFunc: func(_ context.Context, _ *storage.UploadParams) (*storage.FileInfo, error) {
+		uploadFunc: func(_ context.Context, _ *kernelports.UploadParams) (*kernelports.FileInfo, error) {
 			return nil, errService
 		},
 	}
@@ -1020,7 +1025,7 @@ func TestDocumentHandler_Upload_StorageError(t *testing.T) {
 func TestDocumentHandler_Upload_CreateError(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).Return(nil, errService)
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
@@ -1052,7 +1057,7 @@ func TestDocumentHandler_Upload_CreateError(t *testing.T) {
 func TestDocumentHandler_Upload_InvalidMIMEType(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	resourceID := pulid.MustNew("tr_").String()
@@ -1082,7 +1087,7 @@ func TestDocumentHandler_Upload_InvalidMIMEType(t *testing.T) {
 func TestDocumentHandler_UploadBulk_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().Create(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *document.Document) (*document.Document, error) {
 			entity.ID = pulid.MustNew("doc_")
@@ -1122,7 +1127,7 @@ func TestDocumentHandler_UploadBulk_Success(t *testing.T) {
 func TestDocumentHandler_UploadBulk_MissingFields(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
@@ -1146,7 +1151,7 @@ func TestDocumentHandler_UploadBulk_MissingFields(t *testing.T) {
 func TestDocumentHandler_UploadBulk_NoFiles(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	resourceID := pulid.MustNew("tr_").String()
@@ -1172,7 +1177,7 @@ func TestDocumentHandler_UploadBulk_NoFiles(t *testing.T) {
 func TestDocumentHandler_UploadBulk_TooManyFiles(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	cfg := &config.Config{
 		App: config.AppConfig{Debug: true},
 		Storage: config.StorageConfig{
@@ -1212,9 +1217,9 @@ func TestDocumentHandler_Delete_Success(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
@@ -1244,7 +1249,7 @@ func TestDocumentHandler_Delete_NotFound(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("Document not found"))
 
@@ -1264,7 +1269,7 @@ func TestDocumentHandler_Delete_NotFound(t *testing.T) {
 func TestDocumentHandler_Delete_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
@@ -1283,9 +1288,9 @@ func TestDocumentHandler_Delete_RepoError(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
 				ID:          req.ID,
 				StoragePath: "org/trailer/test.pdf",
@@ -1314,9 +1319,9 @@ func TestDocumentHandler_BulkDelete_Success(t *testing.T) {
 	docID1 := pulid.MustNew("doc_")
 	docID2 := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByIDs(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
 			docs := make([]*document.Document, 0, len(req.IDs))
 			for _, id := range req.IDs {
 				docs = append(docs, &document.Document{
@@ -1356,7 +1361,7 @@ func TestDocumentHandler_BulkDelete_Success(t *testing.T) {
 func TestDocumentHandler_BulkDelete_InvalidJSON(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
@@ -1374,7 +1379,7 @@ func TestDocumentHandler_BulkDelete_InvalidJSON(t *testing.T) {
 func TestDocumentHandler_BulkDelete_EmptyIDs(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
@@ -1394,7 +1399,7 @@ func TestDocumentHandler_BulkDelete_EmptyIDs(t *testing.T) {
 func TestDocumentHandler_BulkDelete_InvalidIDs(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
@@ -1416,7 +1421,7 @@ func TestDocumentHandler_BulkDelete_ServiceError(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).Return(nil, errService)
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
@@ -1442,7 +1447,7 @@ func TestDocumentHandler_GetByResource_Success(t *testing.T) {
 	docID2 := pulid.MustNew("doc_")
 	resourceID := pulid.MustNew("tr_").String()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("GetByResourceID", mock.Anything, mock.Anything).Return([]*document.Document{
 		{
 			ID:           docID1,
@@ -1482,7 +1487,7 @@ func TestDocumentHandler_GetByResource_Empty(t *testing.T) {
 
 	resourceID := pulid.MustNew("tr_").String()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("GetByResourceID", mock.Anything, mock.Anything).Return([]*document.Document{}, nil)
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
@@ -1507,7 +1512,7 @@ func TestDocumentHandler_GetByResource_ServiceError(t *testing.T) {
 
 	resourceID := pulid.MustNew("tr_").String()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("GetByResourceID", mock.Anything, mock.Anything).Return(nil, errService)
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
@@ -1526,7 +1531,7 @@ func TestDocumentHandler_GetByResource_ServiceError(t *testing.T) {
 func TestDocumentHandler_Upload_WithTags(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().Create(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *document.Document) (*document.Document, error) {
 			entity.ID = pulid.MustNew("doc_")
@@ -1567,9 +1572,9 @@ func TestDocumentHandler_Delete_WithPreviewPath(t *testing.T) {
 	docID := pulid.MustNew("doc_")
 	deletedPaths := make([]string, 0)
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
 				ID:                 req.ID,
 				OrganizationID:     testutil.TestOrgID,
@@ -1609,9 +1614,9 @@ func TestDocumentHandler_Preview_StorageError(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
 				ID:                 req.ID,
 				StoragePath:        "org/trailer/file.pdf",
@@ -1620,7 +1625,7 @@ func TestDocumentHandler_Preview_StorageError(t *testing.T) {
 		})
 
 	storageClient := &mockStorageClient{
-		getPresignedFunc: func(_ context.Context, _ *storage.PresignedURLParams) (string, error) {
+		getPresignedFunc: func(_ context.Context, _ *kernelports.PresignedURLParams) (string, error) {
 			return "", errService
 		},
 	}
@@ -1643,7 +1648,7 @@ func TestDocumentHandler_List_WithResourceIDFilter(t *testing.T) {
 
 	resourceID := pulid.MustNew("tr_").String()
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*document.Document]{
 		Items: []*document.Document{},
 		Total: 0,
@@ -1670,9 +1675,9 @@ func TestDocumentHandler_BulkDelete_BulkDeleteRepoError(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByIDs(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
 			docs := make([]*document.Document, 0, len(req.IDs))
 			for _, id := range req.IDs {
 				docs = append(docs, &document.Document{
@@ -1728,7 +1733,7 @@ func reviewableTestDocument(id pulid.ID, status document.Status) *document.Docum
 
 func serveDocumentReview(
 	t *testing.T,
-	repo *mocks.MockDocumentRepository,
+	repo *documentportsmock.MockDocumentRepository,
 	path string,
 	body map[string]any,
 ) *testutil.GinTestContext {
@@ -1753,7 +1758,7 @@ func TestDocumentHandler_Reject_Success(t *testing.T) {
 	t.Parallel()
 
 	docID := pulid.MustNew("doc_")
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(reviewableTestDocument(docID, document.StatusActive), nil).
 		Once()
@@ -1788,7 +1793,7 @@ func TestDocumentHandler_Reject_RequiresReason(t *testing.T) {
 	t.Parallel()
 
 	docID := pulid.MustNew("doc_")
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(reviewableTestDocument(docID, document.StatusActive), nil).
 		Once()
@@ -1813,7 +1818,7 @@ func TestDocumentHandler_Approve_ClearsRejection(t *testing.T) {
 	rejected.RejectedAt = &rejectedAt
 	rejected.RejectionReason = "Blurred"
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(rejected, nil).Once()
 	repo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(doc *document.Document) bool {
 		return doc.Status == document.StatusActive &&
@@ -1842,7 +1847,7 @@ func TestDocumentHandler_Approve_RefusesSupersededVersion(t *testing.T) {
 	superseded := reviewableTestDocument(docID, document.StatusActive)
 	superseded.IsCurrentVersion = false
 
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(superseded, nil).Once()
 
 	ginCtx := serveDocumentReview(t, repo, "/api/v1/documents/"+docID.String()+"/approve/", nil)

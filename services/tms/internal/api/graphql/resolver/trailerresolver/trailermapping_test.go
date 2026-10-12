@@ -3,7 +3,7 @@ package trailerresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -263,4 +263,57 @@ func TestTrailerConnectionToModel_PropagatesTotalCount(t *testing.T) {
 	require.NotNil(t, connection.TotalCount)
 	assert.Equal(t, total, *connection.TotalCount)
 	assert.Len(t, connection.Edges, 1)
+}
+
+func TestTrailerRelationIncludesForFields_LoadsOwnerOperatorOnlyWhenSelected(t *testing.T) {
+	t.Parallel()
+
+	selected := map[string]bool{
+		"ownershipType":         true,
+		"ownerWorker":           true,
+		"ownerWorker.firstName": true,
+	}
+	includes := trailerRelationIncludesForFields(
+		func(path string) bool { return selected[path] },
+		"",
+		nil,
+		nil,
+	)
+	assert.True(t, includes.IncludeOwnerWorker)
+	assert.Equal(t, []string{"id", "created_at", "first_name"}, includes.OwnerWorkerColumns)
+
+	without := trailerRelationIncludesForFields(
+		func(path string) bool { return path == "ownershipType" },
+		"",
+		nil,
+		nil,
+	)
+	assert.False(t, without.IncludeOwnerWorker)
+	assert.Nil(t, without.OwnerWorkerColumns)
+}
+
+func TestLastKnownLocationReference_CarriesTheLocationsCoordinates(t *testing.T) {
+	t.Parallel()
+
+	latitude, longitude := 35.4676, -97.5164
+	ref := lastKnownLocationReference(&trailer.Trailer{
+		LastKnownLocationID:        pulid.MustNew("loc_"),
+		LastKnownLocationName:      "Oklahoma City yard",
+		LastKnownLocationLatitude:  &latitude,
+		LastKnownLocationLongitude: &longitude,
+	})
+	require.NotNil(t, ref)
+	assert.Equal(t, "Oklahoma City yard", ref.Name)
+	require.NotNil(t, ref.Latitude)
+	assert.InDelta(t, latitude, *ref.Latitude, 0.0001)
+	require.NotNil(t, ref.Longitude)
+	assert.InDelta(t, longitude, *ref.Longitude, 0.0001)
+
+	ungeocoded := lastKnownLocationReference(&trailer.Trailer{
+		LastKnownLocationID:   pulid.MustNew("loc_"),
+		LastKnownLocationName: "Somewhere",
+	})
+	require.NotNil(t, ungeocoded)
+	assert.Nil(t, ungeocoded.Latitude)
+	assert.Nil(t, lastKnownLocationReference(&trailer.Trailer{}))
 }

@@ -7,9 +7,27 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
+
+func carrierByIDRequest(
+	fieldRequested func(string) bool,
+	id pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) carrierports.GetCarrierByIDRequest {
+	return carrierports.GetCarrierByIDRequest{
+		ID:         id,
+		TenantInfo: tenantInfo,
+		CarrierFilterOptions: carrierports.CarrierFilterOptions{
+			IncludeState:             fieldRequested("state") || fieldRequested("remitState"),
+			IncludeContacts:          fieldRequested("contacts"),
+			IncludeInsurancePolicies: fieldRequested("insurancePolicies"),
+		},
+	}
+}
 
 func carrierColumns(ctx context.Context, nodePathPrefix string) []string {
 	selection := projection.Select(

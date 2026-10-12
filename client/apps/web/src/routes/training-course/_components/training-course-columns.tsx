@@ -13,15 +13,16 @@ import {
   type TrainingCategory,
   type TrainingDelivery,
 } from "@trenova/shared/types/worker-training";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const CATEGORY_CHOICES = trainingCategorySchema.options.map((value) => ({
   value,
-  label: TRAINING_CATEGORY_LABELS[value],
+  label: sourceLabels(TRAINING_CATEGORY_LABELS)[value],
 }));
 
 const DELIVERY_CHOICES = trainingDeliverySchema.options.map((value) => ({
   value,
-  label: TRAINING_DELIVERY_LABELS[value],
+  label: sourceLabels(TRAINING_DELIVERY_LABELS)[value],
 }));
 
 function requiredSummary(row: TrainingCourseRow): string {
@@ -146,7 +147,11 @@ export function getColumns(t: TranslateFn): ColumnDef<TrainingCourseRow>[] {
               {t("Every {0} mo", row.original.validityMonths)}
             </Badge>
           ) : (
-            <Badge variant="neutral" appearance="outline" className="text-muted-foreground px-1.5 py-0 text-2xs">
+            <Badge
+              variant="neutral"
+              appearance="outline"
+              className="text-muted-foreground px-1.5 py-0 text-2xs"
+            >
               {t("One-time")}
             </Badge>
           )}
@@ -159,7 +164,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TrainingCourseRow>[] {
       header: t("Due after"),
       cell: ({ row }) =>
         row.original.dueDaysAfterAssignment > 0 ? (
-          `${row.original.dueDaysAfterAssignment} days`
+          t("{0, plural, one {# day} other {# days}}", row.original.dueDaysAfterAssignment)
         ) : (
           <span className="text-muted-foreground">—</span>
         ),

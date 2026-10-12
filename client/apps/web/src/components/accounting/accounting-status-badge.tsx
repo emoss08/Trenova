@@ -4,6 +4,7 @@ import type { BankReceiptBatchStatus } from "@/types/bank-receipt-batch";
 import type { WorkItemStatus } from "@/types/bank-receipt-work-item";
 import type { JournalReversalStatus } from "@/types/journal-reversal";
 import type { ManualJournalStatus } from "@/types/manual-journal";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export type AccountingStatus =
   | ManualJournalStatus
@@ -34,10 +35,10 @@ const STATUS_VARIANT_MAP: Record<string, BadgeVariant> = {
   Dismissed: "neutral",
 };
 
-const STATUS_LABEL_MAP: Record<string, string> = {
+const STATUS_LABEL_MAP: Record<string, string> = defineLabels({
   PendingApproval: "Pending Approval",
   InReview: "In Review",
-};
+});
 
 export function AccountingStatusBadge({ status }: { status: AccountingStatus }) {
   const variant = STATUS_VARIANT_MAP[status] ?? "secondary";

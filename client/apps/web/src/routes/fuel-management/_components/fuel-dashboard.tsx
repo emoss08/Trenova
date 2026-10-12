@@ -16,6 +16,7 @@ import { TrendDown01Icon, TrendUp01Icon } from "@trenova/shared/components/icons
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { FuelDashboardEmpty } from "./fuel-management-empty";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 const priceChartConfig = {
   price: {
@@ -51,6 +52,7 @@ function shortDate(priceDate: string) {
 
 export default function FuelDashboard({ onOpenIndices }: { onOpenIndices?: () => void }) {
   const t = useT();
+  const rt = useRichT();
 
   const { data: entries, isLoading } = useQuery(queries.fuelSurcharge.dashboard());
   const [selectedIndexId, setSelectedIndexId] = useState<string | null>(null);
@@ -96,12 +98,11 @@ export default function FuelDashboard({ onOpenIndices }: { onOpenIndices?: () =>
     <div className="space-y-4">
       {latestWeek && (
         <p className="text-muted-foreground text-sm">
-          {t("Latest DOE price week:")}{" "}
-          <span className="text-foreground font-medium">
-            {t("Mon {0}", formatWeekOf(latestWeek))}
-          </span>
-          {" · "}
-          {t("surcharge rates roll forward on each program's effective day")}
+          {rt(
+            "Latest DOE price week: <b>Mon {0}</b> · surcharge rates roll forward on each program's effective day",
+            { b: (c) => <span className="text-foreground font-medium">{c}</span> },
+            formatWeekOf(latestWeek),
+          )}
         </p>
       )}
 

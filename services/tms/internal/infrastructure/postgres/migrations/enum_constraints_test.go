@@ -3,27 +3,30 @@ package migrations
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/agentextension"
-	"github.com/emoss08/trenova/internal/core/domain/agentquality"
-	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/domain/aitraining"
-	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/domain/onboarding"
-	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/core/domain/subscription"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/stretchr/testify/require"
 )
 
@@ -241,12 +244,28 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(conversation.AllThreadOrigins()),
 		},
 		{
+			name:   "ck_case_checklist_templates_kind",
+			values: stringsOf(deskcase.AllChecklistKinds()),
+		},
+		{
+			name:   "ck_assistant_threads_snooze",
+			values: stringsOf(deskcase.AllSnoozeAnchors()),
+		},
+		{
 			name:   "ck_assistant_messages_kind",
 			values: stringsOf(conversation.AllMessageKinds()),
 		},
 		{
 			name:   "ck_assistant_turns_origin",
 			values: stringsOf(conversation.AllAssistantTurnOrigins()),
+		},
+		{
+			name:   "ck_agent_waits_kind",
+			values: stringsOf(agentwait.AllKinds()),
+		},
+		{
+			name:   "ck_agent_waits_status",
+			values: stringsOf(agentwait.AllStatuses()),
 		},
 		{
 			name:   "ck_agent_eval_cases_source",
@@ -319,6 +338,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_ai_providers_thinking_style",
 			values: stringsOf(aiprovider.AllThinkingStyles()),
+		},
+		{
+			name:   "ck_ai_providers_platform",
+			values: stringsOf(aiprovider.AllPlatforms()),
+		},
+		{
+			name:   "ck_ai_providers_on_cap",
+			values: stringsOf(aiprovider.AllCapActions()),
 		},
 		{
 			name:   "ck_ai_index_entries_source_type",
@@ -475,6 +502,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_shipment_suggestion_decisions_decision",
 			values: stringsOf(shipmentsuggestion.Decisions()),
+		},
+		{
+			name:   "ck_shipment_board_briefs_trigger",
+			values: stringsOf(shipmentbrief.Triggers()),
 		},
 	}
 

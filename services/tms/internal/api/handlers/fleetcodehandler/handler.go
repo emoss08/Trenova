@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -99,7 +99,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*fleetcode.FleetCode], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListFleetCodesRequest{
+				&fleetcodeports.ListFleetCodesRequest{
 					Filter:                req,
 					IncludeManagerDetails: helpers.QueryBool(c, "includeManagerDetails", false),
 				},
@@ -130,7 +130,7 @@ func (h *Handler) getOption(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetFleetCodeByIDRequest{
+		fleetcodeports.GetFleetCodeByIDRequest{
 			ID: fleetCodeID,
 			TenantInfo: &pagination.TenantInfo{
 				OrgID: authCtx.OrganizationID,
@@ -195,7 +195,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetFleetCodeByIDRequest{
+		fleetcodeports.GetFleetCodeByIDRequest{
 			ID: fleetCodeID,
 			TenantInfo: &pagination.TenantInfo{
 				OrgID: authCtx.OrganizationID,

@@ -16,16 +16,20 @@ import {
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { IFTA_FUEL_TYPE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
 
-const MPG_EXPLANATION =
-  "Total miles ÷ total gallons, per fuel type. Every jurisdiction's taxable gallons = its miles ÷ this MPG";
+function mpgExplanation(): string {
+  return translate(
+    "Total miles ÷ total gallons, per fuel type. Every jurisdiction's taxable gallons = its miles ÷ this MPG",
+  );
+}
 
 function mpgRows(ret: IftaReturnView): KpiInfoRow[] {
   if (ret.fleetMpgByFuelType.length === 0) {
     return [
       {
         label: translate("No fuel types"),
-        value:
+        value: translate(
           "No tractor ran miles in the quarter, so there is no average to take and no taxable gallons on any line.",
+        ),
       },
     ];
   }
@@ -33,8 +37,16 @@ function mpgRows(ret: IftaReturnView): KpiInfoRow[] {
     label: IFTA_FUEL_TYPE_LABELS[entry.fuelType],
     value:
       entry.mpg === null
-        ? `${formatIftaMeasure(entry.totalMiles, IFTA_MILES_DISPLAY_SCALE)} miles and no gallons bought, so this fuel type's lines carry no taxable gallons.`
-        : `${formatIftaMeasure(entry.totalMiles, IFTA_MILES_DISPLAY_SCALE)} miles ÷ ${formatIftaMeasure(entry.totalGallons, IFTA_GALLONS_SCALE)} gallons = ${formatIftaMeasure(entry.mpg, IFTA_MPG_SCALE)} mpg`,
+        ? translate(
+            "{0} miles and no gallons bought, so this fuel type's lines carry no taxable gallons.",
+            formatIftaMeasure(entry.totalMiles, IFTA_MILES_DISPLAY_SCALE),
+          )
+        : translate(
+            "{0} miles ÷ {1} gallons = {2} mpg",
+            formatIftaMeasure(entry.totalMiles, IFTA_MILES_DISPLAY_SCALE),
+            formatIftaMeasure(entry.totalGallons, IFTA_GALLONS_SCALE),
+            formatIftaMeasure(entry.mpg, IFTA_MPG_SCALE),
+          ),
   }));
 }
 
@@ -42,28 +54,32 @@ function statusFacts(ret: IftaReturnView): string {
   const facts: string[] = [];
   facts.push(
     ret.computedAt
-      ? `Computed ${formatUnixDateTime(ret.computedAt)}`
-      : "Not computed yet — recompute to build the lines",
+      ? translate("Computed {0}", formatUnixDateTime(ret.computedAt))
+      : translate("Not computed yet — recompute to build the lines"),
   );
   if (ret.finalizedAt) {
     facts.push(
-      `Finalized ${formatUnixDateTime(ret.finalizedAt)}${
-        ret.finalizedBy?.name ? ` by ${ret.finalizedBy.name}` : ""
-      }`,
+      ret.finalizedBy?.name
+        ? translate(
+            "Finalized {0} by {1}",
+            formatUnixDateTime(ret.finalizedAt),
+            ret.finalizedBy.name,
+          )
+        : translate("Finalized {0}", formatUnixDateTime(ret.finalizedAt)),
     );
   }
   if (ret.filedAt) {
     facts.push(
-      `Filed ${formatUnixDateTime(ret.filedAt)}${
-        ret.filingReference ? ` · ${ret.filingReference}` : ""
-      }`,
+      ret.filingReference
+        ? translate("Filed {0} · {1}", formatUnixDateTime(ret.filedAt), ret.filingReference)
+        : translate("Filed {0}", formatUnixDateTime(ret.filedAt)),
     );
   }
   if (ret.reopenedAt) {
     facts.push(
-      `Reopened ${formatUnixDateTime(ret.reopenedAt)}${
-        ret.reopenReason ? `: ${ret.reopenReason}` : ""
-      }`,
+      ret.reopenReason
+        ? translate("Reopened {0}: {1}", formatUnixDateTime(ret.reopenedAt), ret.reopenReason)
+        : translate("Reopened {0}", formatUnixDateTime(ret.reopenedAt)),
     );
   }
   return facts.join(" · ");
@@ -79,7 +95,7 @@ export function ReturnSummaryStrip({ ret }: { ret: IftaReturnView }) {
       <StatTile
         label={t("Total miles")}
         value={formatIftaMeasure(ret.totalMiles, IFTA_MILES_DISPLAY_SCALE)}
-        sub={`${formatIftaMeasure(ret.totalTaxableMiles, IFTA_MILES_DISPLAY_SCALE)} taxable`}
+        sub={t("{0} taxable", formatIftaMeasure(ret.totalTaxableMiles, IFTA_MILES_DISPLAY_SCALE))}
         hint={t(
           "Every mile attributed to a jurisdiction on a completed move in the quarter, plus manual entries.",
         )}
@@ -87,7 +103,7 @@ export function ReturnSummaryStrip({ ret }: { ret: IftaReturnView }) {
       <StatTile
         label={t("Tax-paid gallons")}
         value={formatIftaMeasure(ret.totalTaxPaidGallons, IFTA_GALLONS_SCALE)}
-        sub={`of ${formatIftaMeasure(ret.totalGallons, IFTA_GALLONS_SCALE)} bought`}
+        sub={t("of {0} bought", formatIftaMeasure(ret.totalGallons, IFTA_GALLONS_SCALE))}
         hint={t(
           "Gallons bought with the fuel tax already paid at the pump. Untaxed purchases count toward the fleet total but earn no credit.",
         )}
@@ -113,23 +129,30 @@ export function ReturnSummaryStrip({ ret }: { ret: IftaReturnView }) {
             </div>
             <KpiInfoPopover
               title={t("Fleet MPG")}
-              description={MPG_EXPLANATION}
+              description={mpgExplanation()}
               rows={mpgRows(ret)}
             />
           </div>
         }
         sub={t("Miles ÷ gallons, per fuel type")}
-        hint={MPG_EXPLANATION}
+        hint={mpgExplanation()}
       />
       <StatTile
         label={t(net.label)}
         value={formatIftaMoney(net.magnitude, ret.currencyCode)}
-        sub={`${formatIftaMeasure(ret.taxDue, IFTA_MONEY_SCALE)} tax + ${formatIftaMeasure(ret.surchargeDue, IFTA_MONEY_SCALE)} surcharge, in ${ret.currencyCode}`}
+        sub={t(
+          "{0} tax + {1} surcharge, in {2}",
+          formatIftaMeasure(ret.taxDue, IFTA_MONEY_SCALE),
+          formatIftaMeasure(ret.surchargeDue, IFTA_MONEY_SCALE),
+          ret.currencyCode,
+        )}
         tone={net.isCredit ? "info" : "warn"}
         hint={
           net.isCredit
-            ? "The fleet bought more taxed fuel than it burned, so the base jurisdiction owes it back."
-            : "Tax due plus surcharge due across every member jurisdiction on the return."
+            ? t(
+                "The fleet bought more taxed fuel than it burned, so the base jurisdiction owes it back.",
+              )
+            : t("Tax due plus surcharge due across every member jurisdiction on the return.")
         }
       />
       <StatTile

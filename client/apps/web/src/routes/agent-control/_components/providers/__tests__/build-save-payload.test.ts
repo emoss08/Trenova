@@ -10,6 +10,8 @@ function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormVa
     name: "Local qwen",
     description: "",
     kind: "OpenAIChat",
+    platform: "Direct",
+    platformSettings: null,
     baseUrl: "http://10.0.0.5:8000/v1",
     model: "qwen3:32b",
     apiKey: "",
@@ -20,6 +22,8 @@ function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormVa
     extraBodyText: "",
     inputCostPerMillion: null,
     outputCostPerMillion: null,
+    cacheReadCostPerMillion: null,
+    cacheWriteCostPerMillion: null,
     maxTokens: 8192,
     tasks: null,
     priority: 100,
@@ -27,13 +31,18 @@ function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormVa
     embeddingInputStyle: "None",
     trusted: false,
     enabled: true,
+    timeoutSeconds: 60,
+    maxConcurrent: 8,
+    monthlyCapUsd: null,
+    onCap: "Next",
+    keepPreviousKey: false,
     version: 0,
     ...overrides,
   };
 }
 
 /**
- * The server contract (services/tms/internal/core/ports/services/aiprovider.go):
+ * The server contract (services/tms/internal/modules/agent/ports/agentports/aiprovider_services.go):
  * an absent apiKey leaves the stored credential alone, an empty string clears it.
  * The edit form never receives the existing secret, so these cases decide whether
  * a credential survives a routine edit.
@@ -195,4 +204,39 @@ describe("buildSavePayload thinking style", () => {
       expect(payload.thinkingStyle).toBe("Auto");
     },
   );
+});
+
+/**
+ * Only the Anthropic protocol reports prompt tokens written to its cache, so a
+ * cache write price is kept for it and dropped for any other, the way the
+ * thinking style is. A cache read price applies to every protocol.
+ */
+describe("buildSavePayload cache prices", () => {
+  it("keeps both cache prices for Anthropic Messages", () => {
+    const payload = buildSavePayload(
+      formValues({
+        kind: "AnthropicMessages",
+        cacheReadCostPerMillion: 0.3,
+        cacheWriteCostPerMillion: 3.75,
+      }),
+      true,
+    );
+
+    expect(payload.cacheReadCostPerMillion).toBe(0.3);
+    expect(payload.cacheWriteCostPerMillion).toBe(3.75);
+  });
+
+  it("drops a cache write price for a protocol that reports no writes", () => {
+    const payload = buildSavePayload(
+      formValues({
+        kind: "OpenAIResponses",
+        cacheReadCostPerMillion: 0.2,
+        cacheWriteCostPerMillion: 3,
+      }),
+      true,
+    );
+
+    expect(payload.cacheReadCostPerMillion).toBe(0.2);
+    expect(payload.cacheWriteCostPerMillion).toBeNull();
+  });
 });

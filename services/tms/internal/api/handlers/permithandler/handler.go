@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/permit"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -19,14 +19,14 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.PermitService
+	Service              permitports.PermitService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
 }
 
 type Handler struct {
-	service services.PermitService
+	service permitports.PermitService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 	logger  *zap.Logger
@@ -283,7 +283,7 @@ func (h *Handler) waiveRequirement(c *gin.Context) {
 
 	waived, err := h.service.WaiveRequirement(
 		c.Request.Context(),
-		&services.WaiveRequirementRequest{
+		&permitports.WaiveRequirementRequest{
 			TenantInfo:    actorutil.TenantInfoFrom(authCtx),
 			RequirementID: requirementID,
 			// The waiving user comes from the session, never the payload: the point

@@ -1,0 +1,16 @@
+{
+  "Accounting mappings": "會計對應",
+  "Choose a mapping": "選擇一項對應",
+  "Connect it from the integrations page. Trenova reads its records and proposes the matches here.": "請從整合頁面連線。Trenova 會讀取其紀錄，並在此提出對應建議。",
+  "Every kind": "所有種類",
+  "Mapping totals": "對應總計",
+  "Mappings appear once {0}'s records have been read.": "讀取 {0} 的紀錄後，對應就會顯示。",
+  "No mappings match": "沒有相符的對應",
+  "Nothing to map yet": "目前沒有需要對應的項目",
+  "Pick one on the left to see what Trenova proposed, the records it considered, and to choose another.": "從左側選擇一項，即可查看 Trenova 的建議、考慮過的紀錄，並改選其他紀錄。",
+  "Required confirmed": "已確認的必要項",
+  "Search mappings": "搜尋對應",
+  "Try another kind or search.": "請嘗試其他種類或搜尋條件。",
+  "Which accounting system account, item, customer and vendor each Trenova record is sent as. Only confirmed mappings are used when syncing.": "每筆 Trenova 紀錄要以哪個會計系統帳戶、項目、客戶與供應商送出。同步時只會使用已確認的對應。",
+  "{0} is not connected": "{0} 尚未連線"
+}

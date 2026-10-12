@@ -15,16 +15,22 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// domainDir is resolved from this file rather than the working directory:
+// domainDirs are resolved from this file rather than the working directory:
 // SetupTestDB chdirs to find the migrations, so a relative path would break
 // depending on when it is read.
-func domainDir(t *testing.T) string {
+func domainDirs(t *testing.T) []string {
 	t.Helper()
 
 	_, thisFile, _, ok := runtime.Caller(0)
 	require.True(t, ok, "cannot locate the schemalint source directory")
 
-	return filepath.Join(filepath.Dir(thisFile), "..", "..", "..", "core", "domain")
+	dirs, err := filepath.Glob(
+		filepath.Join(filepath.Dir(thisFile), "..", "..", "..", "modules", "*", "domain"),
+	)
+	require.NoError(t, err)
+	require.NotEmpty(t, dirs, "found no module domain directories")
+
+	return dirs
 }
 
 // knownUnfixed is the escape hatch for a boolean column that defaults to TRUE
@@ -45,8 +51,12 @@ func TestBooleanDefaultsAreNotSubstituted(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	fields, err := BoolFieldsWithDefaultTag(domainDir(t))
-	require.NoError(t, err)
+	var fields []BoolField
+	for _, dir := range domainDirs(t) {
+		found, err := BoolFieldsWithDefaultTag(dir)
+		require.NoError(t, err)
+		fields = append(fields, found...)
+	}
 	require.NotEmpty(t, fields, "found no bun tags to check - has the domain moved?")
 
 	trueByDefault := columnsDefaultingTrue(t, ctx, db)

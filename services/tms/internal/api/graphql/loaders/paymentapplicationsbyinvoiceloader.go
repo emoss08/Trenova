@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,21 +14,21 @@ import (
 type paymentApplicationsByInvoiceIDsLister interface {
 	ListApplicationsByInvoiceIDs(
 		ctx context.Context,
-		req *repositories.ListApplicationsByInvoiceIDsRequest,
+		req *customerpaymentports.ListApplicationsByInvoiceIDsRequest,
 	) (map[pulid.ID][]*customerpayment.Application, error)
 }
 
 type creditMemoApplicationsByInvoiceIDsLister interface {
 	ListCreditMemoApplicationsByInvoiceIDs(
 		ctx context.Context,
-		req *repositories.ListApplicationsByInvoiceIDsRequest,
+		req *customerpaymentports.ListApplicationsByInvoiceIDsRequest,
 	) (map[pulid.ID][]*customerpayment.CreditMemoApplication, error)
 }
 
 type CustomerPaymentApplicationsByInvoiceIDLoaderFactoryParams struct {
 	fx.In
 
-	CustomerPaymentRepo repositories.CustomerPaymentRepository
+	CustomerPaymentRepo customerpaymentports.CustomerPaymentRepository
 }
 
 type CustomerPaymentApplicationsByInvoiceIDLoaderFactory struct {
@@ -43,7 +43,8 @@ func NewCustomerPaymentApplicationsByInvoiceIDLoaderFactory(
 	}
 }
 
-func (f *CustomerPaymentApplicationsByInvoiceIDLoaderFactory) NewForTenant(
+func newCustomerPaymentApplicationsByInvoiceIDLoader(
+	f *CustomerPaymentApplicationsByInvoiceIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*customerpayment.Application] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -56,7 +57,7 @@ func (f *CustomerPaymentApplicationsByInvoiceIDLoaderFactory) batchFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*customerpayment.Application, error) {
 			return f.applications.ListApplicationsByInvoiceIDs(
 				ctx,
-				&repositories.ListApplicationsByInvoiceIDsRequest{
+				&customerpaymentports.ListApplicationsByInvoiceIDsRequest{
 					TenantInfo: tenantInfo,
 					InvoiceIDs: ids,
 				},
@@ -68,7 +69,7 @@ func (f *CustomerPaymentApplicationsByInvoiceIDLoaderFactory) batchFunc(
 type CreditMemoApplicationsByInvoiceIDLoaderFactoryParams struct {
 	fx.In
 
-	CustomerPaymentRepo repositories.CustomerPaymentRepository
+	CustomerPaymentRepo customerpaymentports.CustomerPaymentRepository
 }
 
 type CreditMemoApplicationsByInvoiceIDLoaderFactory struct {
@@ -83,7 +84,7 @@ func NewCreditMemoApplicationsByInvoiceIDLoaderFactory(
 	}
 }
 
-func (f *CreditMemoApplicationsByInvoiceIDLoaderFactory) NewForTenant(
+func newCreditMemoApplicationsByInvoiceIDLoader(f *CreditMemoApplicationsByInvoiceIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*customerpayment.CreditMemoApplication] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -99,7 +100,7 @@ func (f *CreditMemoApplicationsByInvoiceIDLoaderFactory) batchFunc(
 		) (map[pulid.ID][]*customerpayment.CreditMemoApplication, error) {
 			return f.applications.ListCreditMemoApplicationsByInvoiceIDs(
 				ctx,
-				&repositories.ListApplicationsByInvoiceIDsRequest{
+				&customerpaymentports.ListApplicationsByInvoiceIDsRequest{
 					TenantInfo: tenantInfo,
 					InvoiceIDs: ids,
 				},

@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -413,7 +413,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionCollectability)
 					return obj.Band, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionScoreBand2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐScoreBand),
+				Marshal: gqlexec.Marshal(marshalNDetentionScoreBand2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐScoreBand),
 			},
 			{
 				Name:      "factors",
@@ -631,7 +631,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionEvidence)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionEvidenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐEvidenceKind),
+				Marshal: gqlexec.Marshal(marshalNDetentionEvidenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐEvidenceKind),
 			},
 			{
 				Name:     "source",
@@ -641,7 +641,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionEvidence)
 					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionEvidenceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐEvidenceSource),
+				Marshal: gqlexec.Marshal(marshalNDetentionEvidenceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐEvidenceSource),
 			},
 			{
 				Name:     "summary",
@@ -770,7 +770,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionNoticeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeKind),
+				Marshal: gqlexec.Marshal(marshalNDetentionNoticeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNoticeKind),
 			},
 			{
 				Name:     "channel",
@@ -780,7 +780,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.Channel, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionNoticeChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeChannel),
+				Marshal: gqlexec.Marshal(marshalNDetentionNoticeChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNoticeChannel),
 			},
 			{
 				Name:     "deliveryStatus",
@@ -790,7 +790,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.DeliveryStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionNoticeDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeDeliveryStatus),
+				Marshal: gqlexec.Marshal(marshalNDetentionNoticeDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNoticeDeliveryStatus),
 			},
 			{
 				Name:     "recipients",
@@ -1294,7 +1294,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.CapApplied, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionCapKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapKind),
+				Marshal: gqlexec.Marshal(marshalNDetentionCapKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐCapKind),
 			},
 			{
 				Name:     "convertedToLayover",
@@ -1324,7 +1324,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionOccurrenceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐOccurrenceStatus),
+				Marshal: gqlexec.Marshal(marshalNDetentionOccurrenceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐOccurrenceStatus),
 			},
 			{
 				Name:     "notificationStatus",
@@ -1334,7 +1334,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.NotificationStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionNotificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationStatus),
+				Marshal: gqlexec.Marshal(marshalNDetentionNotificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNotificationStatus),
 			},
 			{
 				Name:     "noticeSentAt",
@@ -1372,7 +1372,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.WaiverReason, nil
 				},
-				Marshal: gqlexec.Marshal(marshalODetentionWaiverReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐWaiverReason),
+				Marshal: gqlexec.Marshal(marshalODetentionWaiverReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐWaiverReason),
 			},
 			{
 				Name:     "waiverNote",
@@ -1635,7 +1635,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐPolicyStatus),
+				Marshal: gqlexec.Marshal(marshalNDetentionPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐPolicyStatus),
 			},
 			{
 				Name:     "isOrgDefault",
@@ -1761,7 +1761,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.ClockStartBasis, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionClockStartBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐClockStartBasis),
+				Marshal: gqlexec.Marshal(marshalNDetentionClockStartBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐClockStartBasis),
 			},
 			{
 				Name:     "lateArrivalRule",
@@ -1771,7 +1771,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.LateArrivalRule, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionLateArrivalRule2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐLateArrivalRule),
+				Marshal: gqlexec.Marshal(marshalNDetentionLateArrivalRule2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐLateArrivalRule),
 			},
 			{
 				Name:     "lateArrivalGraceMinutes",
@@ -1848,7 +1848,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.RoundingMode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionRoundingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRoundingMode),
+				Marshal: gqlexec.Marshal(marshalNDetentionRoundingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐRoundingMode),
 			},
 			{
 				Name:     "rateSource",
@@ -1858,7 +1858,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.RateSource, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionRateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRateSource),
+				Marshal: gqlexec.Marshal(marshalNDetentionRateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐRateSource),
 			},
 			{
 				Name:     "accessorialChargeId",
@@ -1925,7 +1925,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.DayBoundaryMode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionCapScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapScope),
+				Marshal: gqlexec.Marshal(marshalNDetentionCapScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐCapScope),
 			},
 			{
 				Name:     "convertToLayoverAtMinutes",
@@ -1953,7 +1953,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.NotificationRequirement, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionNotificationRequirement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationRequirement),
+				Marshal: gqlexec.Marshal(marshalNDetentionNotificationRequirement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNotificationRequirement),
 			},
 			{
 				Name:     "notificationLeadMinutes",
@@ -1983,7 +1983,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.UnnotifiedBehavior, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionUnnotifiedBehavior2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐUnnotifiedBehavior),
+				Marshal: gqlexec.Marshal(marshalNDetentionUnnotifiedBehavior2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐUnnotifiedBehavior),
 			},
 			{
 				Name:     "autoSendNotice",
@@ -2187,7 +2187,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionPolicyTier)
 					return obj.RateUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionTierRateUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐTierRateUnit),
+				Marshal: gqlexec.Marshal(marshalNDetentionTierRateUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐTierRateUnit),
 			},
 			{
 				Name:     "label",
@@ -2319,7 +2319,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.CapApplied, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionCapKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapKind),
+				Marshal: gqlexec.Marshal(marshalNDetentionCapKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐCapKind),
 			},
 			{
 				Name:     "status",
@@ -2329,7 +2329,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionOccurrenceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐOccurrenceStatus),
+				Marshal: gqlexec.Marshal(marshalNDetentionOccurrenceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐOccurrenceStatus),
 			},
 			{
 				Name:     "notificationStatus",
@@ -2339,7 +2339,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.NotificationStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDetentionNotificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationStatus),
+				Marshal: gqlexec.Marshal(marshalNDetentionNotificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNotificationStatus),
 			},
 			{
 				Name:     "suppressedByGate",
@@ -3366,7 +3366,7 @@ func unmarshalInputDetentionPolicyInput(ctx context.Context, ec *gqlexec.Exec, o
 			it.Description = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalODetentionPolicyStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐPolicyStatus(ctx, ec, v)
+			data, err := unmarshalODetentionPolicyStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐPolicyStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3450,14 +3450,14 @@ func unmarshalInputDetentionPolicyInput(ctx context.Context, ec *gqlexec.Exec, o
 			it.EffectiveEndDate = data
 		case "clockStartBasis":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clockStartBasis"))
-			data, err := unmarshalODetentionClockStartBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐClockStartBasis(ctx, ec, v)
+			data, err := unmarshalODetentionClockStartBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐClockStartBasis(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.ClockStartBasis = data
 		case "lateArrivalRule":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lateArrivalRule"))
-			data, err := unmarshalODetentionLateArrivalRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐLateArrivalRule(ctx, ec, v)
+			data, err := unmarshalODetentionLateArrivalRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐLateArrivalRule(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3513,14 +3513,14 @@ func unmarshalInputDetentionPolicyInput(ctx context.Context, ec *gqlexec.Exec, o
 			it.BillingIncrementMinutes = data
 		case "roundingMode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roundingMode"))
-			data, err := unmarshalODetentionRoundingMode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRoundingMode(ctx, ec, v)
+			data, err := unmarshalODetentionRoundingMode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐRoundingMode(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.RoundingMode = data
 		case "rateSource":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateSource"))
-			data, err := unmarshalODetentionRateSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRateSource(ctx, ec, v)
+			data, err := unmarshalODetentionRateSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐRateSource(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3569,7 +3569,7 @@ func unmarshalInputDetentionPolicyInput(ctx context.Context, ec *gqlexec.Exec, o
 			it.MaxChargePerShipment = data
 		case "dayBoundaryMode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dayBoundaryMode"))
-			data, err := unmarshalODetentionCapScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapScope(ctx, ec, v)
+			data, err := unmarshalODetentionCapScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐCapScope(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3590,7 +3590,7 @@ func unmarshalInputDetentionPolicyInput(ctx context.Context, ec *gqlexec.Exec, o
 			it.LayoverAccessorialChargeID = data
 		case "notificationRequirement":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notificationRequirement"))
-			data, err := unmarshalODetentionNotificationRequirement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationRequirement(ctx, ec, v)
+			data, err := unmarshalODetentionNotificationRequirement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNotificationRequirement(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3611,7 +3611,7 @@ func unmarshalInputDetentionPolicyInput(ctx context.Context, ec *gqlexec.Exec, o
 			it.NotificationDeadlineMinutes = data
 		case "unnotifiedBehavior":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unnotifiedBehavior"))
-			data, err := unmarshalODetentionUnnotifiedBehavior2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐUnnotifiedBehavior(ctx, ec, v)
+			data, err := unmarshalODetentionUnnotifiedBehavior2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐUnnotifiedBehavior(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3767,7 +3767,7 @@ func unmarshalInputDetentionStatsInput(ctx context.Context, ec *gqlexec.Exec, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"from", "to", "limit"}
+	fieldsInOrder := [...]string{"from", "to", "limit", "locationId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3795,6 +3795,13 @@ func unmarshalInputDetentionStatsInput(ctx context.Context, ec *gqlexec.Exec, ob
 				return it, err
 			}
 			it.Limit = data
+		case "locationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LocationID = data
 		}
 	}
 	return it, nil
@@ -3844,7 +3851,7 @@ func unmarshalInputDetentionTierInput(ctx context.Context, ec *gqlexec.Exec, obj
 			it.Rate = data
 		case "rateUnit":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateUnit"))
-			data, err := unmarshalODetentionTierRateUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐTierRateUnit(ctx, ec, v)
+			data, err := unmarshalODetentionTierRateUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐTierRateUnit(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3895,7 +3902,7 @@ func unmarshalInputDetentionWaiveInput(ctx context.Context, ec *gqlexec.Exec, ob
 			it.OccurrenceID = data
 		case "reason":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
-			data, err := unmarshalNDetentionWaiverReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐWaiverReason(ctx, ec, v)
+			data, err := unmarshalNDetentionWaiverReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐWaiverReason(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3966,7 +3973,7 @@ func unmarshalNDetentionWaiveInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNDetentionWaiverReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐWaiverReason(ctx context.Context, ec *gqlexec.Exec, v any) (detention.WaiverReason, error) {
+func unmarshalNDetentionWaiverReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐWaiverReason(ctx context.Context, ec *gqlexec.Exec, v any) (detention.WaiverReason, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := detention.WaiverReason(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4020,7 +4027,7 @@ func unmarshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalODetentionCapScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapScope(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.CapScope, error) {
+func unmarshalODetentionCapScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐCapScope(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.CapScope, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -4029,7 +4036,7 @@ func unmarshalODetentionCapScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalODetentionClockStartBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐClockStartBasis(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.ClockStartBasis, error) {
+func unmarshalODetentionClockStartBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐClockStartBasis(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.ClockStartBasis, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -4038,7 +4045,7 @@ func unmarshalODetentionClockStartBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalODetentionLateArrivalRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐLateArrivalRule(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.LateArrivalRule, error) {
+func unmarshalODetentionLateArrivalRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐLateArrivalRule(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.LateArrivalRule, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -4047,7 +4054,7 @@ func unmarshalODetentionLateArrivalRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalODetentionNotificationRequirement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationRequirement(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.NotificationRequirement, error) {
+func unmarshalODetentionNotificationRequirement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNotificationRequirement(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.NotificationRequirement, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -4056,7 +4063,7 @@ func unmarshalODetentionNotificationRequirement2ᚖgithubᚗcomᚋemoss08ᚋtren
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalODetentionPolicyStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐPolicyStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.PolicyStatus, error) {
+func unmarshalODetentionPolicyStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐPolicyStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.PolicyStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -4065,7 +4072,7 @@ func unmarshalODetentionPolicyStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalODetentionRateSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRateSource(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.RateSource, error) {
+func unmarshalODetentionRateSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐRateSource(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.RateSource, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -4074,7 +4081,7 @@ func unmarshalODetentionRateSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalODetentionRoundingMode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRoundingMode(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.RoundingMode, error) {
+func unmarshalODetentionRoundingMode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐRoundingMode(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.RoundingMode, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -4090,7 +4097,7 @@ func unmarshalODetentionTierInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNDetentionTierInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionTierInput)
 }
 
-func unmarshalODetentionTierRateUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐTierRateUnit(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.TierRateUnit, error) {
+func unmarshalODetentionTierRateUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐTierRateUnit(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.TierRateUnit, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -4099,7 +4106,7 @@ func unmarshalODetentionTierRateUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalODetentionUnnotifiedBehavior2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐUnnotifiedBehavior(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.UnnotifiedBehavior, error) {
+func unmarshalODetentionUnnotifiedBehavior2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐUnnotifiedBehavior(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.UnnotifiedBehavior, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -4210,7 +4217,7 @@ func marshalNDetentionBacktestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "DetentionBacktestResult", v)
 }
 
-func marshalNDetentionCapKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.CapKind) graphql.Marshaler {
+func marshalNDetentionCapKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐCapKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.CapKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4218,7 +4225,7 @@ func marshalNDetentionCapKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return res
 }
 
-func marshalNDetentionCapScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.CapScope) graphql.Marshaler {
+func marshalNDetentionCapScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐCapScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.CapScope) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4226,7 +4233,7 @@ func marshalNDetentionCapScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return res
 }
 
-func marshalNDetentionClockStartBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐClockStartBasis(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.ClockStartBasis) graphql.Marshaler {
+func marshalNDetentionClockStartBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐClockStartBasis(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.ClockStartBasis) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4278,7 +4285,7 @@ func marshalNDetentionEvidence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "DetentionEvidence", v)
 }
 
-func marshalNDetentionEvidenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐEvidenceKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.EvidenceKind) graphql.Marshaler {
+func marshalNDetentionEvidenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐEvidenceKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.EvidenceKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4286,7 +4293,7 @@ func marshalNDetentionEvidenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNDetentionEvidenceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐEvidenceSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.EvidenceSource) graphql.Marshaler {
+func marshalNDetentionEvidenceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐEvidenceSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.EvidenceSource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4294,7 +4301,7 @@ func marshalNDetentionEvidenceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNDetentionLateArrivalRule2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐLateArrivalRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.LateArrivalRule) graphql.Marshaler {
+func marshalNDetentionLateArrivalRule2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐLateArrivalRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.LateArrivalRule) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4310,7 +4317,7 @@ func marshalNDetentionNotice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	return ec.MarshalType(ctx, sel, "DetentionNotice", v)
 }
 
-func marshalNDetentionNoticeChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.NoticeChannel) graphql.Marshaler {
+func marshalNDetentionNoticeChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNoticeChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.NoticeChannel) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4318,7 +4325,7 @@ func marshalNDetentionNoticeChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNDetentionNoticeDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeDeliveryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.NoticeDeliveryStatus) graphql.Marshaler {
+func marshalNDetentionNoticeDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNoticeDeliveryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.NoticeDeliveryStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4326,7 +4333,7 @@ func marshalNDetentionNoticeDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return res
 }
 
-func marshalNDetentionNoticeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.NoticeKind) graphql.Marshaler {
+func marshalNDetentionNoticeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNoticeKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.NoticeKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4334,7 +4341,7 @@ func marshalNDetentionNoticeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return res
 }
 
-func marshalNDetentionNotificationRequirement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationRequirement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.NotificationRequirement) graphql.Marshaler {
+func marshalNDetentionNotificationRequirement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNotificationRequirement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.NotificationRequirement) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4342,7 +4349,7 @@ func marshalNDetentionNotificationRequirement2githubᚗcomᚋemoss08ᚋtrenova�
 	return res
 }
 
-func marshalNDetentionNotificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.NotificationStatus) graphql.Marshaler {
+func marshalNDetentionNotificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐNotificationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.NotificationStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4374,7 +4381,7 @@ func marshalNDetentionOccurrenceDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return ec.MarshalType(ctx, sel, "DetentionOccurrenceDetail", v)
 }
 
-func marshalNDetentionOccurrenceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐOccurrenceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.OccurrenceStatus) graphql.Marshaler {
+func marshalNDetentionOccurrenceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐOccurrenceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.OccurrenceStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4414,7 +4421,7 @@ func marshalNDetentionPolicyEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "DetentionPolicyEdge", v)
 }
 
-func marshalNDetentionPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐPolicyStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.PolicyStatus) graphql.Marshaler {
+func marshalNDetentionPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐPolicyStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.PolicyStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4446,7 +4453,7 @@ func marshalNDetentionPreviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "DetentionPreviewResult", v)
 }
 
-func marshalNDetentionRateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRateSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.RateSource) graphql.Marshaler {
+func marshalNDetentionRateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐRateSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.RateSource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4454,7 +4461,7 @@ func marshalNDetentionRateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return res
 }
 
-func marshalNDetentionRoundingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRoundingMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.RoundingMode) graphql.Marshaler {
+func marshalNDetentionRoundingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐRoundingMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.RoundingMode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4462,7 +4469,7 @@ func marshalNDetentionRoundingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNDetentionScoreBand2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐScoreBand(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.ScoreBand) graphql.Marshaler {
+func marshalNDetentionScoreBand2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐScoreBand(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.ScoreBand) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4486,7 +4493,7 @@ func marshalNDetentionScoreFactor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "DetentionScoreFactor", v)
 }
 
-func marshalNDetentionTierRateUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐTierRateUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.TierRateUnit) graphql.Marshaler {
+func marshalNDetentionTierRateUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐTierRateUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.TierRateUnit) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4494,7 +4501,7 @@ func marshalNDetentionTierRateUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNDetentionUnnotifiedBehavior2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐUnnotifiedBehavior(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.UnnotifiedBehavior) graphql.Marshaler {
+func marshalNDetentionUnnotifiedBehavior2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐUnnotifiedBehavior(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detention.UnnotifiedBehavior) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4644,7 +4651,7 @@ func marshalODetentionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	return ec.MarshalType(ctx, sel, "DetentionPolicy", v)
 }
 
-func marshalODetentionWaiverReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐWaiverReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *detention.WaiverReason) graphql.Marshaler {
+func marshalODetentionWaiverReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐWaiverReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *detention.WaiverReason) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

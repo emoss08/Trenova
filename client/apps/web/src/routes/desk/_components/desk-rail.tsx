@@ -1,3 +1,4 @@
+"use no memo";
 import logo from "@/assets/logo.webp";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { conversationPath } from "@/lib/conversation-path";
@@ -7,19 +8,22 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { Fragment, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useDeskSettingsStore } from "@/stores/desk-settings-store";
+import { Button } from "@trenova/shared/components/ui/button";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
-import { deskThreadState } from "@/components/desk-chat/rail/desk-thread-state";
-import { groupDeskThreadsByRecency } from "@/components/desk-chat/rail/desk-threads";
 import {
-  RailDot,
-  RailKnobCard,
-  railTime,
-  shelfHeading,
-  stateLabel,
-  useRailKnob,
-} from "@/components/desk-chat/rail/rail-parts";
+  deskRailRows,
+  type DeskRailRow,
+  type DeskRailShelf,
+} from "@/components/desk-chat/rail/desk-rail-rows";
+import type { DeskShelfKey } from "@/components/desk-chat/rail/desk-threads";
+import { shelfHeading } from "@/components/desk-chat/rail/rail-parts";
+import { useRichT } from "@trenova/shared/i18n/rich";
+import { deskIconClass } from "@/components/desk-chat/desk-button-styles";
+import { DeskRailList } from "./desk-rail-list";
+import { DeskRailThreadRow, type DeskRailRowActions } from "./desk-rail-row";
 
 /** Which of the Desk's places is in front, so the rail can light it. */
 export type DeskPlace = "today" | "watchtower" | "decisions" | "memory" | "thread" | "agent";
@@ -27,11 +31,23 @@ export type DeskPlace = "today" | "watchtower" | "decisions" | "memory" | "threa
 /** How long a deleted row takes to slide out before it leaves the list. */
 const ROW_LEAVE_MS = 260;
 
-const nowInSeconds = () => Math.floor(Date.now() / 1000);
+const NAV_ITEM_CLASS =
+  "relative z-1 flex h-7.5 w-full gap-2.5 rounded-lg pr-2 pl-2.5 text-left text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-fg/4 hover:text-dsk-fg";
+const NAV_ITEM_ON_CLASS = "text-dsk-fg hover:bg-transparent";
+const NAV_LABEL_CLASS = "min-w-0 flex-1 truncate";
 
 export type DeskRailProps = {
   place: DeskPlace;
-  threads: readonly AssistantThread[];
+  /** Every shelf in the rail's order, with what has been read of each. */
+  shelves: readonly DeskRailShelf[];
+  /** When the reader's day began, in Unix seconds: what each row's time is read against. */
+  today: number;
+  /** Every shelf was counted and none holds anything. */
+  noConversations: boolean;
+  /** Reads the next page of an open shelf, or its first again after it failed. */
+  onLoadMore: (shelf: DeskShelfKey) => void;
+  /** Told which conversations the rail draws, so a page left stale is read when it shows. */
+  onThreadsInView?: (threadIds: readonly string[]) => void;
   agentsById: ReadonlyMap<string, AgentChoice>;
   activeThreadId: string | null;
   canWatch: boolean;
@@ -44,21 +60,29 @@ export type DeskRailProps = {
   onSettings: () => void;
   onTogglePin: (thread: AssistantThread) => void;
   onDelete: (thread: AssistantThread) => void;
-  /** Renames a conversation from its row: double-click, type, Enter. */
-  onRename: (thread: AssistantThread, title: string) => void;
 };
 
 /**
  * The Desk's rail: the logo, search and a new conversation across the top,
  * the three places, then every conversation shelved by when it was last
- * touched. Each conversation is one line with a dot that says what it is
- * waiting on, and the current place sits on a raised card that slides to
- * whatever is chosen. Pin and delete come forward on hover in place of the
- * time; delete asks once more, inline, before it acts.
+ * touched. Each shelf folds away from its heading, and a folded shelf shows
+ * how many it holds and reads nothing more. Each conversation is one line
+ * with a dot that says what it is waiting on, and the current place sits on
+ * a raised card that slides to whatever is chosen. Pin and delete come
+ * forward on hover in place of the time; delete asks once more, inline,
+ * before it acts.
+ *
+ * Only the rows near the viewport are mounted, and each open shelf's next
+ * page is read as the reader nears the end of what is loaded, so a rail of
+ * thousands costs what a screenful does.
  */
 export function DeskRail({
   place,
-  threads,
+  shelves,
+  today,
+  noConversations,
+  onLoadMore,
+  onThreadsInView,
   agentsById,
   activeThreadId,
   canWatch,
@@ -70,23 +94,19 @@ export function DeskRail({
   onSettings,
   onTogglePin,
   onDelete,
-  onRename,
 }: DeskRailProps) {
   const t = useT();
+  const rt = useRichT();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const timezone = resolveUserTimezone(user?.timezone);
   const liveThreadIds = useLiveThreadIds();
-  const [now] = useState(nowInSeconds);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [leaving, setLeaving] = useState<string | null>(null);
-  const [editing, setEditing] = useState<string | null>(null);
-  const listRef = useRef<HTMLDivElement>(null);
 
-  const shelves = useMemo(
-    () => groupDeskThreadsByRecency(threads, now, { pinnedFirst: true, timezone }),
-    [now, threads, timezone],
-  );
+  const toggleShelf = useDeskSettingsStore((state) => state.toggleShelf);
+  const openThreadId = place === "thread" ? activeThreadId : null;
+  const rows = useMemo(() => deskRailRows(shelves, openThreadId), [openThreadId, shelves]);
 
   const activeKey =
     place === "thread" && activeThreadId
@@ -101,33 +121,92 @@ export function DeskRail({
               ? "n:agent"
               : "n:today";
 
-  const knob = useRailKnob(listRef, activeKey, shelves);
+  // One object for every row, kept while what it calls stays the same, so a
+  // row re-renders only when its own conversation or state changes.
+  const actions = useMemo<DeskRailRowActions>(
+    () => ({
+      open: (thread) => void navigate(conversationPath(thread.id)),
+      togglePin: onTogglePin,
+      confirmDelete: setConfirming,
+      cancelDelete: () => setConfirming(null),
+      remove: (thread) => {
+        setConfirming(null);
+        setLeaving(thread.id);
+        window.setTimeout(() => {
+          setLeaving(null);
+          onDelete(thread);
+        }, ROW_LEAVE_MS);
+      },
+    }),
+    [navigate, onDelete, onTogglePin],
+  );
 
-  const remove = (thread: AssistantThread) => {
-    if (confirming !== thread.id) {
-      setConfirming(thread.id);
-      return;
-    }
-    setConfirming(null);
-    setLeaving(thread.id);
-    window.setTimeout(() => {
-      setLeaving(null);
-      onDelete(thread);
-    }, ROW_LEAVE_MS);
-  };
-
-  const open = (thread: AssistantThread) => void navigate(conversationPath(thread.id));
-  const rename = (thread: AssistantThread, value: string) => {
-    setEditing(null);
-    const title = value.trim();
-    if (title !== "" && title !== thread.title) {
-      onRename(thread, title);
-    }
-  };
-  const openOnKey = (event: KeyboardEvent, thread: AssistantThread) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      open(thread);
+  const renderRow = (row: DeskRailRow) => {
+    switch (row.kind) {
+      case "shelf": {
+        const heading = shelfHeading(t, row.key);
+        const counted = row.collapsed && typeof row.count === "number" ? row.count : null;
+        return (
+          <Button
+            variant="bare"
+            size="bare"
+            className="dk-sb-gh dk-sb-gt"
+            aria-expanded={!row.collapsed}
+            aria-label={
+              counted === null
+                ? heading
+                : t("{0}, {1, plural, one {# conversation} other {# conversations}}", heading, counted)
+            }
+            onClick={() => toggleShelf(row.key)}
+          >
+            <span className="min-w-0 flex-1 truncate">{heading}</span>
+            {counted !== null && (
+              <em className="dk-sb-ct" aria-hidden>
+                {counted}
+              </em>
+            )}
+            <DeskIcon name="chevR" size={12} stroke={2} className="dk-sb-gc" />
+          </Button>
+        );
+      }
+      case "thread": {
+        const { thread } = row;
+        return (
+          <DeskRailThreadRow
+            thread={thread}
+            agentName={agentsById.get(thread.agentDefinitionId)?.name ?? null}
+            live={liveThreadIds.has(thread.id)}
+            active={thread.id === activeThreadId && place === "thread"}
+            confirming={confirming === thread.id}
+            leaving={leaving === thread.id}
+            today={today}
+            timezone={timezone}
+            actions={actions}
+          />
+        );
+      }
+      default:
+        return row.failed ? (
+          <div className="dk-sb-more dk-sb-more-err" role="alert">
+            <span>{t("Couldn't load more conversations")}</span>
+            <Button
+              variant="bare"
+              size="bare"
+              className="dk-sb-retry"
+              onClick={() => onLoadMore(row.shelf)}
+            >
+              {t("Try again")}
+            </Button>
+          </div>
+        ) : (
+          <div
+            className="dk-sb-more"
+            role="status"
+            aria-label={row.loading ? t("Loading more...") : undefined}
+          >
+            {row.loading && <span className="dk-sk dk-sb-skel" />}
+          </div>
+        );
     }
   };
 
@@ -138,184 +217,100 @@ export function DeskRail({
       <div className="dk-sb-top">
         <img className="dk-sb-logo" src={logo} alt={t("Trenova")} />
         <span style={{ flex: 1 }} />
-        <button
-          type="button"
-          className="dk-ib"
+        <Button
+          variant="quiet"
+          size="icon-sm"
+          className={deskIconClass}
           title={t("Search  ⌘K")}
           aria-label={t("Search")}
           onClick={onSearch}
         >
           <DeskIcon name="search" size={15} />
-        </button>
-        <button
-          type="button"
-          className="dk-ib dk-sb-new"
+        </Button>
+        <Button
+          variant="quiet"
+          size="icon-sm"
+          className={cn(
+            deskIconClass,
+            "dk-sb-new bg-dsk-card text-dsk-fg hover:text-dsk-fg [&_svg]:transition-transform [&_svg]:duration-[360ms] [&_svg]:ease-(--dk-spring) hover:[&_svg]:rotate-90",
+          )}
           title={t("New conversation  ⌘N")}
           aria-label={t("New conversation")}
           onClick={() => void navigate("/desk")}
         >
           <DeskIcon name="plus" size={15} stroke={2} />
-        </button>
+        </Button>
       </div>
 
-      <div className="dk-sb-list" ref={listRef}>
-        <RailKnobCard knob={knob} />
-        <button
-          type="button"
-          data-k="n:today"
-          className={cn("dk-sb-i", activeKey === "n:today" && "dk-on")}
-          onClick={() => void navigate("/desk")}
-        >
-          <DeskIcon name="home" size={14} />
-          <span>{t("Today")}</span>
-        </button>
-        {canWatch && (
-          <button
-            type="button"
-            data-k="n:watch"
-            className={cn("dk-sb-i", activeKey === "n:watch" && "dk-on")}
-            onClick={() => void navigate("/desk/watchtower")}
-          >
-            <DeskIcon name="radar" size={14} />
-            <span>{t("Watchtower")}</span>
-            <em className="dk-sb-ct">{watchtowerCount}</em>
-          </button>
-        )}
-        {canDecide && (
-          <button
-            type="button"
-            data-k="n:dec"
-            className={cn("dk-sb-i", activeKey === "n:dec" && "dk-on")}
-            onClick={() => void navigate("/desk/decisions")}
-          >
-            <DeskIcon name="inbox" size={14} />
-            <span>{t("Decisions")}</span>
-            <em className={cn("dk-sb-ct", decisionsWaitHere && "dk-w")}>{decisionsCount}</em>
-          </button>
-        )}
-        <button
-          type="button"
-          data-k="n:memory"
-          className={cn("dk-sb-i", activeKey === "n:memory" && "dk-on")}
-          onClick={() => void navigate("/desk/memory")}
-        >
-          <DeskIcon name="memory" size={14} />
-          <span>{t("Memory")}</span>
-        </button>
-
-        {shelves.map((shelf) => (
-          <Fragment key={shelf.key}>
-            <div className="dk-sb-gh">{shelfHeading(t, shelf.key)}</div>
-            {shelf.threads.map((thread) => {
-              const agent = agentsById.get(thread.agentDefinitionId);
-              const active = thread.id === activeThreadId && place === "thread";
-              const state = deskThreadState(thread, {
-                live: liveThreadIds.has(thread.id),
-                active,
-              });
-              const title = thread.title || t("Untitled conversation");
-              return (
-                <div
-                  key={thread.id}
-                  role="button"
-                  tabIndex={0}
-                  data-k={`c:${thread.id}`}
-                  className={cn(
-                    "dk-sb-i dk-sb-c",
-                    active && "dk-on",
-                    leaving === thread.id && "dk-out",
-                    confirming === thread.id && "dk-cf",
-                    editing === thread.id && "dk-ed",
-                  )}
-                  title={[
-                    agent?.name ?? t("Agent unavailable"),
-                    stateLabel(t, state),
-                    railTime(thread, now, timezone),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                  onClick={() => editing !== thread.id && open(thread)}
-                  onDoubleClick={() => {
-                    setConfirming(null);
-                    setEditing(thread.id);
-                  }}
-                  onKeyDown={(event) => editing !== thread.id && openOnKey(event, thread)}
-                  onMouseLeave={() => confirming === thread.id && setConfirming(null)}
-                >
-                  <RailDot state={state} />
-                  {editing === thread.id ? (
-                    <input
-                      className="dk-sb-in"
-                      // oxlint-disable-next-line jsx-a11y/no-autofocus -- the row turned into this field on purpose
-                      autoFocus
-                      defaultValue={thread.title}
-                      aria-label={t("Conversation name")}
-                      onFocus={(event) => event.target.select()}
-                      onClick={(event) => event.stopPropagation()}
-                      onBlur={(event) => rename(thread, event.target.value)}
-                      onKeyDown={(event) => {
-                        event.stopPropagation();
-                        if (event.key === "Enter") rename(thread, event.currentTarget.value);
-                        if (event.key === "Escape") setEditing(null);
-                      }}
-                    />
-                  ) : (
-                    <span className="dk-sb-t">{title}</span>
-                  )}
-                  <span
-                    className="dk-sb-acts"
-                    onClick={(event) => event.stopPropagation()}
-                    onKeyDown={(event) => event.stopPropagation()}
-                  >
-                    {confirming === thread.id ? (
-                      <button
-                        type="button"
-                        className="dk-sb-a dk-del dk-cf"
-                        onClick={() => remove(thread)}
-                      >
-                        {t("Delete")}
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          className={cn("dk-sb-a", thread.pinned && "dk-pinned")}
-                          data-tip={thread.pinned ? t("Unpin") : t("Pin")}
-                          aria-label={
-                            thread.pinned ? t("Unpin conversation") : t("Pin conversation")
-                          }
-                          aria-pressed={thread.pinned}
-                          onClick={() => onTogglePin(thread)}
-                        >
-                          <DeskIcon name="pin" size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          className="dk-sb-a dk-del"
-                          data-tip={t("Delete")}
-                          aria-label={t("Delete conversation")}
-                          onClick={() => remove(thread)}
-                        >
-                          <DeskIcon name="trash" size={13} />
-                        </button>
-                      </>
-                    )}
-                  </span>
-                </div>
-              );
-            })}
-          </Fragment>
-        ))}
-        {shelves.length === 0 && (
+      <DeskRailList
+        activeKey={activeKey}
+        rows={rows}
+        renderRow={renderRow}
+        onLoadMore={onLoadMore}
+        onThreadsInView={onThreadsInView}
+        nav={
           <>
-            <div className="dk-sb-gh">{t("Conversations")}</div>
-            <div className="dk-sb-empty">
-              {t("Your chats will show up here. Press")} <span className="dk-kbd">⌘N</span>{" "}
-              {t("to start one.")}
-            </div>
+            <Button
+              variant="bare"
+              size="bare"
+              data-k="n:today"
+              className={cn(NAV_ITEM_CLASS, activeKey === "n:today" && NAV_ITEM_ON_CLASS)}
+              onClick={() => void navigate("/desk")}
+            >
+              <DeskIcon name="home" size={14} />
+              <span className={NAV_LABEL_CLASS}>{t("Today")}</span>
+            </Button>
+            {canWatch && (
+              <Button
+                variant="bare"
+                size="bare"
+                data-k="n:watch"
+                className={cn(NAV_ITEM_CLASS, activeKey === "n:watch" && NAV_ITEM_ON_CLASS)}
+                onClick={() => void navigate("/desk/watchtower")}
+              >
+                <DeskIcon name="radar" size={14} />
+                <span className={NAV_LABEL_CLASS}>{t("Watchtower")}</span>
+                <em className="dk-sb-ct">{watchtowerCount}</em>
+              </Button>
+            )}
+            {canDecide && (
+              <Button
+                variant="bare"
+                size="bare"
+                data-k="n:dec"
+                className={cn(NAV_ITEM_CLASS, activeKey === "n:dec" && NAV_ITEM_ON_CLASS)}
+                onClick={() => void navigate("/desk/decisions")}
+              >
+                <DeskIcon name="inbox" size={14} />
+                <span className={NAV_LABEL_CLASS}>{t("Decisions")}</span>
+                <em className={cn("dk-sb-ct", decisionsWaitHere && "dk-w")}>{decisionsCount}</em>
+              </Button>
+            )}
+            <Button
+              variant="bare"
+              size="bare"
+              data-k="n:memory"
+              className={cn(NAV_ITEM_CLASS, activeKey === "n:memory" && NAV_ITEM_ON_CLASS)}
+              onClick={() => void navigate("/desk/memory")}
+            >
+              <DeskIcon name="memory" size={14} />
+              <span className={NAV_LABEL_CLASS}>{t("Memory")}</span>
+            </Button>
           </>
-        )}
-      </div>
+        }
+        empty={
+          noConversations ? (
+            <>
+              <div className="dk-sb-gh">{t("Conversations")}</div>
+              <div className="dk-sb-empty">
+                {rt("Your chats will show up here. Press <kbd/> to start one.", {
+                  kbd: () => <span className="dk-kbd">⌘N</span>,
+                })}
+              </div>
+            </>
+          ) : null
+        }
+      />
 
       <div className="dk-sb-me">
         <span className="dk-me">{getNameInitials(name, "")}</span>
@@ -323,18 +318,20 @@ export function DeskRail({
           {name}
         </b>
         <span style={{ flex: 1 }} />
-        <button
-          type="button"
-          className="dk-ib"
+        <Button
+          variant="quiet"
+          size="icon-sm"
+          className={deskIconClass}
           title={t("Settings")}
           aria-label={t("Desk settings")}
           onClick={onSettings}
         >
           <DeskIcon name="gear" size={15} />
-        </button>
-        <button
-          type="button"
-          className="dk-ib dk-sb-back"
+        </Button>
+        <Button
+          variant="quiet"
+          size="icon-sm"
+          className={cn(deskIconClass, "dk-sb-back relative overflow-hidden")}
           title={t("Back to Trenova")}
           aria-label={t("Back to Trenova")}
           onClick={() => void navigate("/")}
@@ -343,7 +340,7 @@ export function DeskRail({
             <DeskIcon name="chevL" size={14} />
           </span>
           <img className="dk-sb-bk-l" src={logo} alt="" />
-        </button>
+        </Button>
       </div>
     </aside>
   );

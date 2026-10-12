@@ -45,3 +45,44 @@ export function isRegisteredLeaf(control: FieldRegistry, path: string): boolean 
 
   return node !== null && typeof node === "object" && (node as RegisteredField)._f !== undefined;
 }
+
+/**
+ * Every message in a form's errors, nested ones included, each once and in the order
+ * the form holds them. The form-wide root message is left out: it has its own channel.
+ */
+export function fieldErrorMessages(errors: object): string[] {
+  const messages = new Set<string>();
+  const visit = (node: unknown, key: string) => {
+    if (!node || typeof node !== "object" || key === "root" || key === "ref") {
+      return;
+    }
+    const message = (node as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim() !== "") {
+      messages.add(message);
+    }
+    for (const [child, value] of Object.entries(node)) {
+      visit(value, child);
+    }
+  };
+  for (const [key, value] of Object.entries(errors)) {
+    visit(value, key);
+  }
+  return [...messages];
+}
+
+/**
+ * The messages of a server refusal that land on a field of the form, each once. The
+ * ones for no field of the form go to the form-wide root instead and are said there.
+ */
+export function refusedFieldMessages(
+  fieldErrors: readonly { field: string; message: string }[],
+  registry: FieldRegistry,
+): string[] {
+  return [
+    ...new Set(
+      fieldErrors
+        .filter((error) => isRegisteredLeaf(registry, normalizeFieldPath(error.field)))
+        .map((error) => error.message),
+    ),
+  ];
+}

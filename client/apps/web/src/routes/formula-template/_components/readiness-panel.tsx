@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
@@ -38,6 +38,11 @@ function CheckRow({ check }: { check: ReadinessCheck }) {
       </div>
     </li>
   );
+}
+
+function readinessHeading(step: ReadinessStep, ready: boolean, t: TranslateFn): string {
+  if (step === "submit") return ready ? t("Ready to submit") : t("Not ready to submit");
+  return ready ? t("Ready to approve") : t("Not ready to approve");
 }
 
 export function isReadyFor(step: ReadinessStep, readiness: ReadinessResponse): boolean {
@@ -107,10 +112,10 @@ export function ReadinessPanel({
             : "bg-danger-subtle text-danger-subtle-foreground",
         )}
       >
-        <span>{ready ? `${t("Ready to")} ` + step : `${t("Not ready to")} ` + step}</span>
+        <span>{readinessHeading(step, ready === true, t)}</span>
         {failing.length > 0 && (
           <span className="font-normal">
-            {t("{0} blocking {1}", failing.length, failing.length === 1 ? "issue" : "issues")}
+            {t("{0, plural, one {# blocking issue} other {# blocking issues}}", failing.length)}
           </span>
         )}
       </div>

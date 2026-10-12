@@ -1,3 +1,4 @@
+import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type {
   AgentSafetyHeader,
   AgentToolAutonomy,
@@ -34,6 +35,10 @@ export function policy(overrides: Partial<AgentToolPolicy>): AgentToolPolicy {
     carriesTaint: false,
     rationale: "Assigning a move changes only internal records.",
     explanation: "Runs at the tier the agent sets for it.",
+    declaredMaxTier: overrides.maxTier ?? "AutoExecute",
+    declaredReadsExternal: overrides.readsExternal ?? "Never",
+    ruleVersion: 0,
+    rule: null,
     ...overrides,
   };
 }
@@ -106,4 +111,23 @@ export function safety(
       ...agent,
     },
   };
+}
+
+/** An agent as the organization's list sends it, with only what Safety reads filled in. */
+export function definition(
+  id: string,
+  name: string,
+  overrides: Partial<AgentDefinitionRow> = {},
+): AgentDefinitionRow {
+  return {
+    id,
+    name,
+    icon: "",
+    accent: "",
+    toolNames: [],
+    autonomyCeiling: "AutoExecute",
+    enabled: true,
+    shadowMode: false,
+    ...overrides,
+  } as AgentDefinitionRow;
 }

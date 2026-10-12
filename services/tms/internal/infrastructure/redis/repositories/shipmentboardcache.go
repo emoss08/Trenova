@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,11 +36,13 @@ type shipmentBoardCache struct {
 	l      *zap.Logger
 }
 
-func NewShipmentBoardCache(p ShipmentBoardCacheParams) repositories.ShipmentBoardCache {
+func NewShipmentBoardCache(p ShipmentBoardCacheParams) shipmentports.ShipmentBoardCache {
 	return newShipmentBoardCache(p)
 }
 
-func NewShipmentBoardEpochBumper(p ShipmentBoardCacheParams) repositories.ShipmentBoardEpochBumper {
+func NewShipmentBoardEpochBumper(
+	p ShipmentBoardCacheParams,
+) shipmentports.ShipmentBoardEpochBumper {
 	return newShipmentBoardCache(p)
 }
 
@@ -60,7 +62,7 @@ func ShipmentBoardEpochKey(organizationID, businessUnitID pulid.ID) string {
 	}, ":")
 }
 
-func ShipmentBoardSectionKey(key *repositories.ShipmentBoardCacheKey) string {
+func ShipmentBoardSectionKey(key *shipmentports.ShipmentBoardCacheKey) string {
 	parts := []string{
 		shipmentBoardPrefix,
 		string(key.Section),
@@ -106,7 +108,7 @@ func (c *shipmentBoardCache) Epoch(
 
 func (c *shipmentBoardCache) Get(
 	ctx context.Context,
-	key *repositories.ShipmentBoardCacheKey,
+	key *shipmentports.ShipmentBoardCacheKey,
 	dest any,
 ) (bool, error) {
 	err := redishelpers.GetStringJSON(ctx, c.client, ShipmentBoardSectionKey(key), dest)
@@ -121,7 +123,7 @@ func (c *shipmentBoardCache) Get(
 
 func (c *shipmentBoardCache) Set(
 	ctx context.Context,
-	key *repositories.ShipmentBoardCacheKey,
+	key *shipmentports.ShipmentBoardCacheKey,
 	value any,
 ) error {
 	if err := redishelpers.SetStringJSON(

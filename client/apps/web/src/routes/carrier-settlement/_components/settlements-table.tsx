@@ -22,6 +22,7 @@ export default function CarrierSettlementsTable() {
   return (
     <DataTable<CarrierSettlementRow>
       name="Carrier Settlement"
+      emptyTitle={t("No carrier settlements yet")}
       queryKey="carrier-settlement-list"
       graphql={carrierSettlementTableGraphQLConfig}
       resource={Resource.CarrierSettlement}

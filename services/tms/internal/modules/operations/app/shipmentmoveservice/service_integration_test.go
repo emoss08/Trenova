@@ -1,0 +1,462 @@
+//go:build integration
+
+package shipmentmoveservice
+
+import (
+	"context"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentadditionalchargerepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommodityrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
+	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
+	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
+	"go.uber.org/zap"
+)
+
+func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
+	t.Parallel()
+
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	svc, shipmentRepo, _, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
+	// Only the flows that recompute shipment state read the control record, so
+	// the expectation belongs to those tests rather than the shared harness.
+	controlRepo.EXPECT().
+		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
+		Return(&tenant.ShipmentControl{
+			AutoDelayShipments:          true,
+			AutoDelayShipmentsThreshold: int16Ptr(30),
+		}, nil)
+	graph := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		db,
+		fixture,
+		tenantInfo,
+		testutil.ShipmentGraphParams{
+			BOL:          "BOL-UPD-001",
+			ProNumber:    "PRO-UPD-001",
+			ShipmentID:   pulid.MustNew("shp_"),
+			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+		},
+	)
+
+	updated, err := svc.UpdateStatus(ctx, &shipmentports.UpdateMoveStatusRequest{
+		TenantInfo: tenantInfo,
+		MoveID:     graph.Moves[0].ID,
+		Status:     shipment.MoveStatusAssigned,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+	assert.Equal(t, shipment.MoveStatusAssigned, updated.Status)
+
+	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+		ID:         graph.Shipment.ID,
+		TenantInfo: tenantInfo,
+		ShipmentOptions: shipmentports.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, shipment.StatusAssigned, persisted.Status)
+	require.Len(t, persisted.Moves, 1)
+	assert.Equal(t, shipment.MoveStatusAssigned, persisted.Moves[0].Status)
+}
+
+func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
+	t.Parallel()
+
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	svc, _, moveRepo, tenantInfo, fixture, _ := newIntegrationService(t, ctx, db)
+	graph := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		db,
+		fixture,
+		tenantInfo,
+		testutil.ShipmentGraphParams{
+			BOL:        "BOL-BULK-001",
+			ProNumber:  "PRO-BULK-001",
+			ShipmentID: pulid.MustNew("shp_"),
+			MoveStatuses: []shipment.MoveStatus{
+				shipment.MoveStatusNew,
+				shipment.MoveStatusCompleted,
+			},
+		},
+	)
+
+	updated, err := svc.BulkUpdateStatus(ctx, &shipmentports.BulkUpdateMoveStatusRequest{
+		TenantInfo: tenantInfo,
+		MoveIDs:    []pulid.ID{graph.Moves[0].ID, graph.Moves[1].ID},
+		Status:     shipment.MoveStatusAssigned,
+	})
+	require.Nil(t, updated)
+	require.Error(t, err)
+	assert.True(t, errortypes.IsBusinessError(err))
+
+	persistedMoves, err := moveRepo.GetMovesByShipmentID(
+		ctx,
+		&shipmentports.GetMovesByShipmentIDRequest{
+			ShipmentID:        graph.Shipment.ID,
+			TenantInfo:        tenantInfo,
+			ExpandMoveDetails: true,
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, persistedMoves, 2)
+	assert.Equal(t, shipment.MoveStatusNew, persistedMoves[0].Status)
+	assert.Equal(t, shipment.MoveStatusCompleted, persistedMoves[1].Status)
+}
+
+func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
+	t.Parallel()
+
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	svc, shipmentRepo, _, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
+	// Only the flows that recompute shipment state read the control record, so
+	// the expectation belongs to those tests rather than the shared harness.
+	controlRepo.EXPECT().
+		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
+		Return(&tenant.ShipmentControl{
+			AutoDelayShipments:          true,
+			AutoDelayShipmentsThreshold: int16Ptr(30),
+		}, nil)
+	graph := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		db,
+		fixture,
+		tenantInfo,
+		testutil.ShipmentGraphParams{
+			BOL:          "BOL-SPLIT-001",
+			ProNumber:    "PRO-SPLIT-001",
+			ShipmentID:   pulid.MustNew("shp_"),
+			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+		},
+	)
+	newDestination := testutil.MustCreateLocation(
+		t,
+		ctx,
+		db,
+		fixture,
+		tenantInfo,
+		"FINAL",
+		"Final Destination",
+	)
+
+	originalDelivery := graph.Moves[0].Stops[1]
+	response, err := svc.SplitMove(ctx, &shipmentports.SplitMoveRequest{
+		TenantInfo:            tenantInfo,
+		MoveID:                graph.Moves[0].ID,
+		NewDeliveryLocationID: newDestination.ID,
+		SplitPickupTimes: shipmentports.SplitStopTimes{
+			ScheduledWindowStart: originalDelivery.EffectiveScheduledWindowEnd() + 1_800,
+			ScheduledWindowEnd: integrationInt64Ptr(
+				originalDelivery.EffectiveScheduledWindowEnd() + 3_600,
+			),
+		},
+		NewDeliveryTimes: shipmentports.SplitStopTimes{
+			ScheduledWindowStart: originalDelivery.EffectiveScheduledWindowEnd() + 7_200,
+			ScheduledWindowEnd: integrationInt64Ptr(
+				originalDelivery.EffectiveScheduledWindowEnd() + 9_000,
+			),
+		},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, response)
+
+	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+		ID:         graph.Shipment.ID,
+		TenantInfo: tenantInfo,
+		ShipmentOptions: shipmentports.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, persisted.Moves, 2)
+	assert.Equal(t, shipment.StatusNew, persisted.Status)
+
+	originalMove := persisted.Moves[0]
+	newMove := persisted.Moves[1]
+
+	assert.Equal(t, graph.Moves[0].ID, originalMove.ID)
+	assert.Equal(t, int64(0), originalMove.Sequence)
+	require.Len(t, originalMove.Stops, 2)
+	assert.Equal(t, shipment.StopTypePickup, originalMove.Stops[0].Type)
+	assert.Equal(t, shipment.StopTypeSplitDelivery, originalMove.Stops[1].Type)
+	assert.Equal(t, originalDelivery.LocationID, originalMove.Stops[1].LocationID)
+
+	assert.NotEqual(t, graph.Moves[0].ID, newMove.ID)
+	assert.Equal(t, int64(1), newMove.Sequence)
+	assert.Nil(t, newMove.Assignment)
+	require.Len(t, newMove.Stops, 2)
+	assert.Equal(t, shipment.StopTypeSplitPickup, newMove.Stops[0].Type)
+	assert.Equal(t, originalDelivery.LocationID, newMove.Stops[0].LocationID)
+	assert.Equal(t, shipment.StopTypeDelivery, newMove.Stops[1].Type)
+	assert.Equal(t, newDestination.ID, newMove.Stops[1].LocationID)
+}
+
+func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
+	t.Parallel()
+
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	svc, _, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
+	controlRepo.EXPECT().
+		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
+		Return(&tenant.ShipmentControl{}, nil)
+	graph := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		db,
+		fixture,
+		tenantInfo,
+		testutil.ShipmentGraphParams{
+			BOL:          "BOL-ACT-001",
+			ProNumber:    "PRO-ACT-001",
+			ShipmentID:   pulid.MustNew("shp_"),
+			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
+		},
+	)
+	moveID := graph.Moves[0].ID
+	stopID := graph.Moves[0].Stops[0].ID
+
+	arrivedAt := timeutils.NowUnix() - 7_200
+	updated, err := svc.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
+		TenantInfo: tenantInfo,
+		MoveID:     moveID,
+		StopID:     stopID,
+		Action:     shipmentports.StopActualActionArrive,
+		OccurredAt: &arrivedAt,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+	assert.Equal(t, shipment.MoveStatusInTransit, updated.Status)
+
+	departedAt := arrivedAt + 1_800
+	updated, err = svc.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
+		TenantInfo: tenantInfo,
+		MoveID:     moveID,
+		StopID:     stopID,
+		Action:     shipmentports.StopActualActionDepart,
+		OccurredAt: &departedAt,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+
+	persistedMoves, err := moveRepo.GetMovesByShipmentID(
+		ctx,
+		&shipmentports.GetMovesByShipmentIDRequest{
+			ShipmentID:        graph.Shipment.ID,
+			TenantInfo:        tenantInfo,
+			ExpandMoveDetails: true,
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, persistedMoves, 1)
+	var persistedStop *shipment.Stop
+	for _, candidate := range persistedMoves[0].Stops {
+		if candidate.ID == stopID {
+			persistedStop = candidate
+			break
+		}
+	}
+	require.NotNil(t, persistedStop)
+	require.NotNil(t, persistedStop.ActualArrival)
+	require.NotNil(t, persistedStop.ActualDeparture)
+	assert.Equal(t, arrivedAt, *persistedStop.ActualArrival)
+	assert.Equal(t, departedAt, *persistedStop.ActualDeparture)
+	assert.Equal(t, shipment.StopStatusCompleted, persistedStop.Status)
+}
+
+func newIntegrationService(
+	t *testing.T,
+	ctx context.Context,
+	db *bun.DB,
+) (
+	shipmentports.ShipmentMoveService,
+	shipmentports.ShipmentRepository,
+	shipmentports.ShipmentMoveRepository,
+	pagination.TenantInfo,
+	*testutil.ShipmentIntegrationFixture,
+	*tenantportsmock.MockShipmentControlRepository,
+) {
+	t.Helper()
+
+	conn := postgres.NewTestConnection(db)
+	moveRepo := shipmentmoverepository.New(shipmentmoverepository.Params{
+		DB:     conn,
+		Logger: zap.NewNop(),
+	})
+	additionalChargeRepo := shipmentadditionalchargerepository.New(
+		shipmentadditionalchargerepository.Params{
+			DB:     conn,
+			Logger: zap.NewNop(),
+		},
+	)
+	accessorialRepo := accessorialchargerepository.New(accessorialchargerepository.Params{
+		DB:     conn,
+		Logger: zap.NewNop(),
+	})
+	commodityRepo := shipmentcommodityrepository.New(shipmentcommodityrepository.Params{
+		DB:     conn,
+		Logger: zap.NewNop(),
+	})
+	formulaRepo := formulatemplaterepository.New(formulatemplaterepository.Params{
+		DB:     conn,
+		Logger: zap.NewNop(),
+	})
+	shipmentRepo := shipmentrepository.New(shipmentrepository.Params{
+		DB:                         conn,
+		Logger:                     zap.NewNop(),
+		Generator:                  testutil.TestSequenceGenerator{SingleValue: "PRO-INTEGRATION"},
+		MoveRepository:             moveRepo,
+		AdditionalChargeRepository: additionalChargeRepo,
+		CommodityRepository:        commodityRepo,
+		ChargeAllocationRepository: chargeallocationrepository.New(
+			chargeallocationrepository.Params{DB: conn, Logger: zap.NewNop()},
+		),
+	})
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo.EXPECT().
+		GetByMoveID(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
+	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	holdRepo.EXPECT().
+		HasActiveDeliveryHold(mock.Anything, mock.Anything).
+		Return(false, nil).
+		Maybe()
+
+	registry := schema.NewRegistry()
+	testutil.RegisterShipmentFormulaSchema(t, registry)
+	res := resolver.NewResolver()
+	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
+		Registry: registry,
+		Resolver: res,
+	})
+	formulaEngine, err := engine.NewEngine(engine.Params{
+		Registry:   registry,
+		Resolver:   res,
+		EnvBuilder: envBuilder,
+	})
+	require.NoError(t, err)
+	formulaSvc := formula.NewService(formula.ServiceParams{
+		Logger:         zap.NewNop(),
+		Registry:       registry,
+		Engine:         formulaEngine,
+		Resolver:       res,
+		Repo:           formulaRepo,
+		VersionRepo:    moveIntgStubVersionRepo{},
+		RateMatrixRepo: moveIntgStubMatrixRepo{},
+	})
+	commercial := shipmentcommercial.New(shipmentcommercial.Params{
+		Logger:          zap.NewNop(),
+		RateEngine:      ratingtest.NewFallbackEngine(t, formulaSvc),
+		AccessorialRepo: accessorialRepo,
+	})
+
+	svc := New(Params{
+		Logger:         zap.NewNop(),
+		DB:             conn,
+		Repo:           moveRepo,
+		AssignmentRepo: assignmentRepo,
+		ShipmentRepo:   shipmentRepo,
+		HoldRepo:       holdRepo,
+		ControlRepo:    controlRepo,
+		EventService:   noopShipmentEventService{},
+		Commercial:     commercial,
+		Coordinator:    shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
+	})
+
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	tenantInfo := pagination.TenantInfo{
+		OrgID: data.Organization.ID,
+		BuID:  data.BusinessUnit.ID,
+	}
+
+	fixture := testutil.SeedShipmentIntegrationFixture(t, ctx, db, data, tenantInfo)
+
+	return svc, shipmentRepo, moveRepo, tenantInfo, fixture, controlRepo
+}
+
+func int16Ptr(value int16) *int16 {
+	return &value
+}
+
+func integrationInt64Ptr(value int64) *int64 {
+	return &value
+}
+
+type moveIntgStubVersionRepo struct {
+	formulatemplateports.FormulaTemplateVersionRepository
+}
+
+func (moveIntgStubVersionRepo) GetEffectiveVersion(
+	_ context.Context,
+	_ *formulatemplateports.GetEffectiveVersionRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}
+
+func (moveIntgStubVersionRepo) ListScheduled(
+	_ context.Context,
+	_ *formulatemplateports.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}
+
+type moveIntgStubMatrixRepo struct {
+	ratematrixports.RateMatrixRepository
+}
+
+func (moveIntgStubMatrixRepo) GetLookupData(
+	_ context.Context,
+	_ *ratematrixports.GetRateMatrixLookupDataRequest,
+) ([]*ratematrixports.RateMatrixLookupData, error) {
+	return nil, nil
+}
+
+func (moveIntgStubMatrixRepo) GetLookupStamp(
+	context.Context,
+	pagination.TenantInfo,
+) (string, error) {
+	return "", nil
+}

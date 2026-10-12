@@ -19,3 +19,9 @@ export function selectOptionMetaNumber(option: SelectOption, key: string): numbe
 export function selectOptionMetaBoolean(option: SelectOption, key: string): boolean {
   return option.meta?.[key] === true;
 }
+
+/** How a record reads wherever it is named in a list: its code before its name when it has one. */
+export function recordOptionLabel(option: SelectOption): string {
+  const code = selectOptionMetaString(option, "code");
+  return code ? `${code} - ${option.label}` : option.label;
+}

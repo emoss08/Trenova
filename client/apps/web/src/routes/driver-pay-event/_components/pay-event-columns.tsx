@@ -24,6 +24,7 @@ import { PauseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function invalidatePayEventQueries(queryClient: ReturnType<typeof useQueryClient>) {
   for (const key of [
@@ -53,7 +54,7 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
       toast.success(t("Hold released — the event will settle normally"));
       invalidatePayEventQueries(queryClient);
     } catch (error) {
-      toast.error((error as Error).message || "Failed to release hold");
+      toast.error((error as Error).message || translate("Failed to release hold"));
     } finally {
       setPending(false);
     }
@@ -68,7 +69,7 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
       setReason("");
       invalidatePayEventQueries(queryClient);
     } catch (error) {
-      toast.error((error as Error).message || "Failed to hold pay event");
+      toast.error((error as Error).message || translate("Failed to hold pay event"));
     } finally {
       setPending(false);
     }
@@ -81,7 +82,7 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
         disabled={pending}
         onClick={() => void release()}
         className="inline-flex cursor-pointer rounded-full bg-info-subtle px-1.5 py-px text-2xs font-medium text-info-foreground hover:bg-info-subtle dark:text-info-foreground dark:hover:bg-info-subtle"
-        title={`On hold: ${row.holdReason}. Click to release so the event settles normally.`}
+        title={t("On hold: {0}. Click to release so the event settles normally.", row.holdReason)}
       >
         {t("Held")}
       </button>

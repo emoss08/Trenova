@@ -5,10 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,13 +18,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              portservices.AssignmentService
+	Service              shipmentports.AssignmentService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service portservices.AssignmentService
+	service shipmentports.AssignmentService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -99,7 +98,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*shipment.Assignment], error) {
-			return h.service.List(c.Request.Context(), &repositories.ListAssignmentsRequest{
+			return h.service.List(c.Request.Context(), &shipmentports.ListAssignmentsRequest{
 				Filter: req,
 			})
 		},
@@ -129,7 +128,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		&repositories.GetAssignmentByIDRequest{
+		&shipmentports.GetAssignmentByIDRequest{
 			TenantInfo:   pagination.FromAuth(authCtx),
 			AssignmentID: assignmentID,
 		},
@@ -145,7 +144,7 @@ func (h *Handler) get(c *gin.Context) {
 func (h *Handler) checkWorkerCompliance(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(repositories.CheckWorkerComplianceRequest)
+	req := new(shipmentports.CheckWorkerComplianceRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -229,7 +228,7 @@ func (h *Handler) unassign(c *gin.Context) {
 
 	if err = h.service.Unassign(
 		c.Request.Context(),
-		&repositories.UnassignShipmentMoveRequest{
+		&shipmentports.UnassignShipmentMoveRequest{
 			TenantInfo:     pagination.FromAuthAsUser(authCtx),
 			ShipmentMoveID: moveID,
 		},
@@ -265,7 +264,7 @@ func (h *Handler) upsert(c *gin.Context, create bool) {
 	if create {
 		entity, svcErr := h.service.AssignToMove(
 			c.Request.Context(),
-			&repositories.AssignShipmentMoveRequest{
+			&shipmentports.AssignShipmentMoveRequest{
 				TenantInfo:        tenantInfo,
 				ShipmentMoveID:    moveID,
 				PrimaryWorkerID:   req.PrimaryWorkerID,
@@ -285,7 +284,7 @@ func (h *Handler) upsert(c *gin.Context, create bool) {
 
 	entity, svcErr := h.service.Reassign(
 		c.Request.Context(),
-		&repositories.ReassignShipmentMoveRequest{
+		&shipmentports.ReassignShipmentMoveRequest{
 			TenantInfo:        tenantInfo,
 			ShipmentMoveID:    moveID,
 			PrimaryWorkerID:   req.PrimaryWorkerID,

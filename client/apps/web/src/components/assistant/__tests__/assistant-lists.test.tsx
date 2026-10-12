@@ -139,7 +139,7 @@ describe("AssistantSidebar", () => {
     renderSidebar();
 
     const open = screen.getByRole("button", { name: /Which loads are stuck/ });
-    expect(open).toHaveClass("dk-sb-i", "dk-on");
+    expect(open).toHaveClass("dk-sb-c", "dk-on");
     expect(open).toHaveAttribute("aria-current", "true");
     expect(open).toHaveTextContent("3h");
     const waiting = screen.getByRole("button", { name: /Payments due this week/ });

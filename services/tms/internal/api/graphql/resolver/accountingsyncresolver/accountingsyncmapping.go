@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +24,7 @@ func errAccountingCompanyChoiceUnsupported() error {
 func (r *MutationResolver) finishAccountingAuthorization(
 	ctx context.Context,
 	input gqlmodel.CompleteAccountingAuthorizationInput,
-) (*services.AccountingAuthorizationCompletion, error) {
+) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountingIntegration,
@@ -39,7 +39,7 @@ func (r *MutationResolver) finishAccountingAuthorization(
 
 	return r.AccountingConnections.CompleteAuthorization(
 		ctx,
-		&services.CompleteAccountingAuthorizationRequest{
+		&accountingsyncports.CompleteAccountingAuthorizationRequest{
 			TenantInfo:      base.TenantInfo(authCtx),
 			UserID:          authCtx.UserID,
 			IntegrationType: input.IntegrationType,
@@ -58,7 +58,7 @@ func errAccountingNeedsAPerson() error {
 
 type accountingMappingActionFunc func(
 	context.Context,
-	*services.AccountingMappingActionRequest,
+	*accountingsyncports.AccountingMappingActionRequest,
 ) (*accountingsync.AccountingMapping, error)
 
 func (r *MutationResolver) accountingMappingAction(
@@ -79,7 +79,7 @@ func (r *MutationResolver) accountingMappingAction(
 		return nil, err
 	}
 
-	return action(ctx, &services.AccountingMappingActionRequest{
+	return action(ctx, &accountingsyncports.AccountingMappingActionRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		ID:         mappingID,
@@ -110,8 +110,8 @@ func accountingMappingConnectionToModel(
 
 func accountingMappingConfirmations(
 	input []*gqlmodel.ConfirmAccountingMappingInput,
-) ([]services.AccountingMappingConfirmation, error) {
-	items := make([]services.AccountingMappingConfirmation, 0, len(input))
+) ([]accountingsyncports.AccountingMappingConfirmation, error) {
+	items := make([]accountingsyncports.AccountingMappingConfirmation, 0, len(input))
 	for _, item := range input {
 		if item == nil {
 			continue
@@ -120,7 +120,7 @@ func accountingMappingConfirmations(
 		if err != nil {
 			return nil, err
 		}
-		items = append(items, services.AccountingMappingConfirmation{
+		items = append(items, accountingsyncports.AccountingMappingConfirmation{
 			ID:         id,
 			ExternalID: strings.TrimSpace(item.ExternalID),
 		})

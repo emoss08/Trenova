@@ -78,9 +78,7 @@ export function WhosOutStrip({
   return (
     <section className="flex shrink-0 flex-col gap-1.5" data-testid="whos-out-strip">
       <div className="flex items-baseline justify-between">
-        <p className="text-muted-foreground text-xs font-medium">
-          {t("Who's out")}
-        </p>
+        <p className="text-muted-foreground text-xs font-medium">{t("Who's out")}</p>
         <p className="text-muted-foreground text-xs tabular-nums">
           {t("{0} today · {1} this week", totalToday, distinctThisWeek)}
         </p>
@@ -121,14 +119,14 @@ function DayTile({
   const tile = (
     <button
       type="button"
-      aria-label={`${day.label}: ${count} out`}
+      aria-label={t("{0}: {1} out", day.label, count)}
       onClick={() => onSelectDay?.(day.unix)}
       onMouseEnter={() => onHighlightDay?.(day.unix)}
       onMouseLeave={() => onHighlightDay?.(null)}
       onFocus={() => onHighlightDay?.(day.unix)}
       onBlur={() => onHighlightDay?.(null)}
       className={cn(
-"ui-focus-ring flex min-w-0 flex-col gap-1 rounded-lg border px-2 py-1.5 text-left transition-colors outline-none",
+        "ui-focus-ring flex min-w-0 flex-col gap-1 rounded-lg border px-2 py-1.5 text-left transition-colors outline-none",
         isToday ? "border-primary/40 bg-primary/5" : "bg-accent/40 border-transparent",
         highlighted && "bg-accent border-border",
         count > 0 ? "hover:bg-accent" : "hover:bg-accent/70",

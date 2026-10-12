@@ -26,7 +26,7 @@ import { useMemo } from "react";
 import type { Control } from "react-hook-form";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { LaneScopeFields } from "./lane-scope-fields";
-import { useLaneScopeLabels } from "./use-lane-scope-labels";
+import { useLaneScopeLabels } from "@/hooks/use-lane-scope-labels";
 
 const NEW_LANE: RateAgreementRule = {
   label: "",
@@ -59,11 +59,11 @@ const NEW_LANE: RateAgreementRule = {
 export function LaneEditor() {
   const t = useT();
 
-  const { control, getValues } = useFormContext<RateAgreement>();
+  const { control } = useFormContext<RateAgreement>();
   const { fields, append, remove } = useFieldArray({ control, name: "rules" });
   const rules = (useWatch({ control, name: "rules" }) ?? []) as RateAgreementRule[];
   const resolveScopeValue = useLaneScopeLabels(rules);
-  const agreementId = getValues("id") ?? undefined;
+  const agreementId = useWatch({ control, name: "id" }) ?? undefined;
 
   // `rules` is a watched array and so is a fresh reference on every render.
   // Keying the memo on what coverage actually depends on means it recomputes

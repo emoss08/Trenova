@@ -1,0 +1,639 @@
+package shipmentmoveservice
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/equipmentavailabilityhelper"
+	"github.com/emoss08/trenova/internal/modules/operations/app/equipmentcontinuityhelper"
+	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailuretrigger"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	Logger          *zap.Logger
+	DB              kernelports.DBConnection
+	Repo            shipmentports.ShipmentMoveRepository
+	AssignmentRepo  shipmentports.AssignmentRepository
+	ShipmentRepo    shipmentports.ShipmentRepository
+	HoldRepo        shipmentports.ShipmentHoldRepository
+	ControlRepo     tenantports.ShipmentControlRepository
+	ContinuityRepo  equipmentcontinuityports.EquipmentContinuityRepository
+	Coordinator     *shipmentstate.Coordinator
+	Commercial      *shipmentcommercial.Calculator
+	EventService    shipmenteventports.ShipmentEventService
+	OrderDerivation orderports.OrderDerivationService
+	ServiceFailures servicefailureports.ServiceFailureEvaluator `optional:"true"`
+	Notifications   *notificationservice.Service                `optional:"true"`
+	DashControlRepo tenantports.DashControlRepository           `optional:"true"`
+	MoveObservers   []shipmentports.MoveStatusObserver          `                group:"move_status_observers"`
+	Publisher       agentports.AgentEventPublisher              `optional:"true"`
+}
+
+type service struct {
+	l               *zap.Logger
+	db              kernelports.DBConnection
+	repo            shipmentports.ShipmentMoveRepository
+	assignmentRepo  shipmentports.AssignmentRepository
+	shipmentRepo    shipmentports.ShipmentRepository
+	holdRepo        shipmentports.ShipmentHoldRepository
+	controlRepo     tenantports.ShipmentControlRepository
+	continuityRepo  equipmentcontinuityports.EquipmentContinuityRepository
+	coordinator     *shipmentstate.Coordinator
+	commercial      *shipmentcommercial.Calculator
+	eventService    shipmenteventports.ShipmentEventService
+	orderDerivation orderports.OrderDerivationService
+	serviceFailures servicefailureports.ServiceFailureEvaluator
+	notifications   *notificationservice.Service
+	dashControlRepo tenantports.DashControlRepository
+	moveObservers   []shipmentports.MoveStatusObserver
+	publisher       agentports.AgentEventPublisher
+}
+
+//nolint:gocritic // service constructor
+func New(p Params) shipmentports.ShipmentMoveService {
+	return &service{
+		l:               p.Logger.Named("service.shipment-move"),
+		db:              p.DB,
+		repo:            p.Repo,
+		assignmentRepo:  p.AssignmentRepo,
+		shipmentRepo:    p.ShipmentRepo,
+		holdRepo:        p.HoldRepo,
+		controlRepo:     p.ControlRepo,
+		continuityRepo:  p.ContinuityRepo,
+		coordinator:     p.Coordinator,
+		commercial:      p.Commercial,
+		eventService:    p.EventService,
+		orderDerivation: p.OrderDerivation,
+		serviceFailures: p.ServiceFailures,
+		notifications:   p.Notifications,
+		dashControlRepo: p.DashControlRepo,
+		moveObservers:   p.MoveObservers,
+		publisher:       p.Publisher,
+	}
+}
+
+func (s *service) notifyMoveObservers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	move *shipment.ShipmentMove,
+	previous shipment.MoveStatus,
+) {
+	if move == nil || previous == move.Status {
+		return
+	}
+	for _, observer := range s.moveObservers {
+		if observer == nil {
+			continue
+		}
+		if err := observer.AfterMoveStatusChange(ctx, tenantInfo, move, previous); err != nil {
+			s.l.Error("move status observer failed",
+				zap.String("moveId", move.ID.String()),
+				zap.Error(err))
+		}
+	}
+}
+
+func (s *service) recordMoveEvent(
+	ctx context.Context,
+	params *shipmenteventports.RecordShipmentEventParams,
+) {
+	if params == nil {
+		return
+	}
+	if err := s.eventService.Record(ctx, params); err != nil {
+		s.l.Warn("failed to record move event", zap.Error(err))
+	}
+}
+
+func tenantRefForMoveTenant(tenantInfo pagination.TenantInfo) shipmenteventservice.TenantRef {
+	return shipmenteventservice.TenantRef{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+	}
+}
+
+func actorForMoveTenant(tenantInfo pagination.TenantInfo) kernelports.AuditActor {
+	if tenantInfo.UserID.IsNil() {
+		return kernelports.AuditActor{}
+	}
+	return kernelports.AuditActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
+		PrincipalID:   tenantInfo.UserID,
+		UserID:        tenantInfo.UserID,
+	}
+}
+
+func (s *service) UpdateStatus(
+	ctx context.Context,
+	req *shipmentports.UpdateMoveStatusRequest,
+) (*shipment.ShipmentMove, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+
+	var updatedMove *shipment.ShipmentMove
+	var previousStatus shipment.MoveStatus
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		plan, err := s.planMoveStatus(txCtx, &moveStatusRequest{
+			tenantInfo: req.TenantInfo,
+			moveIDs:    []pulid.ID{req.MoveID},
+			status:     req.Status,
+			forUpdate:  true,
+		})
+		if err != nil {
+			return err
+		}
+		move := plan.moves[0]
+		previousStatus = move.Status
+
+		updatedMove, err = s.repo.UpdateStatus(txCtx, req)
+		if err != nil {
+			return err
+		}
+		if err = s.advanceEquipmentContinuityForMove(
+			txCtx,
+			req.TenantInfo,
+			updatedMove,
+			req.Status,
+		); err != nil {
+			return err
+		}
+
+		return s.refreshShipmentState(txCtx, move.ShipmentID, req.TenantInfo)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if updatedMove != nil && previousStatus != updatedMove.Status {
+		s.recordMoveEvent(ctx, shipmenteventservice.BuildMoveStatusChanged(
+			tenantRefForMoveTenant(req.TenantInfo),
+			updatedMove,
+			previousStatus,
+			actorForMoveTenant(req.TenantInfo),
+		))
+	}
+	if updatedMove != nil {
+		s.evaluateServiceFailuresAfterMoveStatus(ctx, updatedMove.ShipmentID, req.TenantInfo)
+		s.notifyMoveObservers(ctx, req.TenantInfo, updatedMove, previousStatus)
+	}
+
+	return updatedMove, nil
+}
+
+func (s *service) BulkUpdateStatus(
+	ctx context.Context,
+	req *shipmentports.BulkUpdateMoveStatusRequest,
+) ([]*shipment.ShipmentMove, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+
+	if err := validateUniqueMoveIDs(req.MoveIDs); err != nil {
+		return nil, err
+	}
+
+	var updatedMoves []*shipment.ShipmentMove
+	var plan *moveStatusPlan
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var err error
+		plan, err = s.planMoveStatus(txCtx, &moveStatusRequest{
+			tenantInfo: req.TenantInfo,
+			moveIDs:    req.MoveIDs,
+			status:     req.Status,
+			forUpdate:  true,
+		})
+		if err != nil {
+			return err
+		}
+
+		updatedMoves, err = s.repo.BulkUpdateStatus(txCtx, req)
+		if err != nil {
+			return err
+		}
+		for _, updatedMove := range updatedMoves {
+			if err = s.advanceEquipmentContinuityForMove(
+				txCtx,
+				req.TenantInfo,
+				updatedMove,
+				req.Status,
+			); err != nil {
+				return err
+			}
+		}
+
+		for _, shipmentID := range plan.shipmentIDs {
+			if err = s.refreshShipmentState(txCtx, shipmentID, req.TenantInfo); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.emitBulkMoveStatusEvents(ctx, req.TenantInfo, updatedMoves, plan.previous)
+	for _, shipmentID := range plan.shipmentIDs {
+		s.evaluateServiceFailuresAfterMoveStatus(ctx, shipmentID, req.TenantInfo)
+	}
+	s.notifyBulkMoveObservers(ctx, req.TenantInfo, updatedMoves, plan.previous)
+
+	return updatedMoves, nil
+}
+
+func validateUniqueMoveIDs(moveIDs []pulid.ID) error {
+	seen := make(map[pulid.ID]struct{}, len(moveIDs))
+	for _, moveID := range moveIDs {
+		if _, ok := seen[moveID]; ok {
+			return errortypes.NewBusinessError("Move IDs must be unique").
+				WithParam("moveId", moveID.String())
+		}
+		seen[moveID] = struct{}{}
+	}
+	return nil
+}
+
+func (s *service) notifyBulkMoveObservers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moves []*shipment.ShipmentMove,
+	previousStatuses map[pulid.ID]shipment.MoveStatus,
+) {
+	for _, m := range moves {
+		if m == nil {
+			continue
+		}
+		s.notifyMoveObservers(ctx, tenantInfo, m, previousStatuses[m.ID])
+	}
+}
+
+func (s *service) evaluateServiceFailuresAfterMoveStatus(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) {
+	err := servicefailuretrigger.EvaluateShipment(
+		ctx,
+		s.serviceFailures,
+		shipmentID,
+		tenantInfo,
+		servicefailuretrigger.ActorFromTenant(tenantInfo),
+	)
+	if err != nil {
+		s.l.Warn("failed to evaluate service failures after move status update",
+			zap.String("shipmentID", shipmentID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func (s *service) emitBulkMoveStatusEvents(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moves []*shipment.ShipmentMove,
+	previousStatuses map[pulid.ID]shipment.MoveStatus,
+) {
+	tenantRef := tenantRefForMoveTenant(tenantInfo)
+	actor := actorForMoveTenant(tenantInfo)
+	for _, m := range moves {
+		if m == nil {
+			continue
+		}
+		previous, ok := previousStatuses[m.ID]
+		if !ok || previous == m.Status {
+			continue
+		}
+		s.recordMoveEvent(ctx, shipmenteventservice.BuildMoveStatusChanged(
+			tenantRef, m, previous, actor,
+		))
+	}
+}
+
+func (s *service) SplitMove(
+	ctx context.Context,
+	req *shipmentports.SplitMoveRequest,
+) (*shipmentports.SplitMoveResponse, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+
+	var response *shipmentports.SplitMoveResponse
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		lockedMove, err := s.repo.GetByID(txCtx, &shipmentports.GetMoveByIDRequest{
+			MoveID:            req.MoveID,
+			TenantInfo:        req.TenantInfo,
+			ExpandMoveDetails: false,
+			ForUpdate:         true,
+		})
+		if err != nil {
+			return err
+		}
+
+		move, err := s.repo.GetByID(txCtx, &shipmentports.GetMoveByIDRequest{
+			MoveID:            req.MoveID,
+			TenantInfo:        req.TenantInfo,
+			ExpandMoveDetails: true,
+		})
+		if err != nil {
+			return err
+		}
+
+		if err = validateSplitRequest(req, move); err != nil {
+			return err
+		}
+
+		response, err = s.repo.SplitMove(txCtx, req)
+		if err != nil {
+			return err
+		}
+
+		return s.refreshShipmentState(txCtx, lockedMove.ShipmentID, req.TenantInfo)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (s *service) PreviewSplitMove(
+	ctx context.Context,
+	req *shipmentports.SplitMoveRequest,
+) (*shipmentports.MoveSplitPlan, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+
+	move, err := s.repo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+		MoveID:            req.MoveID,
+		TenantInfo:        req.TenantInfo,
+		ExpandMoveDetails: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = validateSplitRequest(req, move); err != nil {
+		return nil, err
+	}
+
+	return &shipmentports.MoveSplitPlan{
+		Move:  move,
+		Split: shipment.PlanMoveSplit(move, req.Spec()),
+	}, nil
+}
+
+func validateSplitRequest(req *shipmentports.SplitMoveRequest, move *shipment.ShipmentMove) error {
+	if len(move.Stops) != 2 {
+		return errortypes.NewBusinessError("Only simple two-stop moves can be split").
+			WithParam("moveId", move.ID.String())
+	}
+
+	if move.Status != shipment.MoveStatusNew && move.Status != shipment.MoveStatusAssigned {
+		return errortypes.NewBusinessError("Only new or assigned moves can be split").
+			WithParam("moveId", move.ID.String())
+	}
+
+	originStop := move.Stops[0]
+	deliveryStop := move.Stops[1]
+	if originStop.Type != shipment.StopTypePickup ||
+		deliveryStop.Type != shipment.StopTypeDelivery {
+		return errortypes.NewBusinessError("Only pickup-to-delivery moves can be split").
+			WithParam("moveId", move.ID.String())
+	}
+
+	if deliveryStop.LocationID == req.NewDeliveryLocationID {
+		return errortypes.NewBusinessError("New delivery location must differ from the current delivery location").
+			WithParam("moveId", move.ID.String())
+	}
+
+	splitPickupDeadline := req.SplitPickupTimes.ScheduledWindowStart
+	if req.SplitPickupTimes.ScheduledWindowEnd != nil {
+		splitPickupDeadline = *req.SplitPickupTimes.ScheduledWindowEnd
+		if splitPickupDeadline < req.SplitPickupTimes.ScheduledWindowStart {
+			return errortypes.NewBusinessError(
+				"Split pickup scheduled window end must be greater than or equal to the scheduled window start",
+			).WithParam("moveId", move.ID.String())
+		}
+	}
+
+	if req.NewDeliveryTimes.ScheduledWindowEnd != nil {
+		if *req.NewDeliveryTimes.ScheduledWindowEnd < req.NewDeliveryTimes.ScheduledWindowStart {
+			return errortypes.NewBusinessError(
+				"New delivery scheduled window end must be greater than or equal to the scheduled window start",
+			).WithParam("moveId", move.ID.String())
+		}
+	}
+
+	if req.SplitPickupTimes.ScheduledWindowStart < deliveryStop.EffectiveScheduledWindowEnd() {
+		return errortypes.NewBusinessError(
+			"Split pickup scheduled window start must occur after the original delivery window ends",
+		).WithParam("moveId", move.ID.String())
+	}
+
+	if req.NewDeliveryTimes.ScheduledWindowStart < splitPickupDeadline {
+		return errortypes.NewBusinessError(
+			"New delivery scheduled window start must occur after the split pickup window ends",
+		).WithParam("moveId", move.ID.String())
+	}
+
+	return nil
+}
+
+func (s *service) refreshShipmentState(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) error {
+	entity, err := s.loadShipment(ctx, shipmentID, tenantInfo)
+	if err != nil {
+		return err
+	}
+
+	control, err := s.deriveShipmentState(ctx, entity, tenantInfo)
+	if err != nil {
+		return err
+	}
+	if err = s.commercial.Recalculate(ctx, entity, control, pulid.Nil); err != nil {
+		return err
+	}
+	if _, err = s.shipmentRepo.UpdateDerivedState(ctx, entity); err != nil {
+		return err
+	}
+
+	if !entity.OrderID.IsNil() {
+		return s.orderDerivation.RecomputeOrder(ctx, tenantInfo, entity.OrderID)
+	}
+
+	return nil
+}
+
+func (s *service) loadShipment(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*shipment.Shipment, error) {
+	return s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+		ID:         shipmentID,
+		TenantInfo: tenantInfo,
+		ShipmentOptions: shipmentports.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+}
+
+// deriveShipmentState re-derives the shipment's status and dates from its
+// moves and stops, with the organization's delay threshold.
+func (s *service) deriveShipmentState(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
+) (*tenant.ShipmentControl, error) {
+	control, err := s.controlRepo.Get(
+		ctx,
+		tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	s.coordinator.RefreshShipmentStateWithDelayThreshold(
+		entity,
+		shipmentstate.ResolveControlDelayThreshold(control),
+	)
+
+	return control, nil
+}
+
+func (s *service) ensureNoDeliveryHold(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+	status shipment.MoveStatus,
+) error {
+	if status != shipment.MoveStatusCompleted {
+		return nil
+	}
+
+	hasHold, err := s.holdRepo.HasActiveDeliveryHold(ctx, &shipmentports.ActiveShipmentHoldRequest{
+		ShipmentID: shipmentID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if hasHold {
+		return errortypes.NewBusinessError("Shipment has an active delivery-blocking hold").
+			WithParam("shipmentId", shipmentID.String())
+	}
+
+	return nil
+}
+
+func (s *service) ensureEquipmentAvailableForProgress(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
+) error {
+	assignment, err := s.assignmentRepo.GetByMoveID(ctx, tenantInfo, moveID)
+	if err != nil || assignment == nil {
+		return err
+	}
+
+	return s.ensureAssignmentEquipmentAvailable(ctx, tenantInfo, assignment, moveID)
+}
+
+func (s *service) ensureEquipmentAvailableForProgressBulk(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
+	status shipment.MoveStatus,
+	seenTractors map[pulid.ID]pulid.ID,
+	seenTrailers map[pulid.ID]pulid.ID,
+) error {
+	if status != shipment.MoveStatusInTransit {
+		return nil
+	}
+
+	assignment, err := s.assignmentRepo.GetByMoveID(ctx, tenantInfo, moveID)
+	if err != nil || assignment == nil {
+		return err
+	}
+
+	if assignment.TractorID != nil {
+		if priorMoveID, ok := seenTractors[*assignment.TractorID]; ok {
+			return errortypes.NewBusinessError("Tractor is currently in progress on another move").
+				WithParam("tractorId", assignment.TractorID.String()).
+				WithParam("shipmentMoveId", priorMoveID.String())
+		}
+		seenTractors[*assignment.TractorID] = moveID
+	}
+
+	if assignment.TrailerID != nil {
+		if priorMoveID, ok := seenTrailers[*assignment.TrailerID]; ok {
+			return errortypes.NewBusinessError("Trailer is currently in progress on another move").
+				WithParam("trailerId", assignment.TrailerID.String()).
+				WithParam("shipmentMoveId", priorMoveID.String())
+		}
+		seenTrailers[*assignment.TrailerID] = moveID
+	}
+
+	return s.ensureAssignmentEquipmentAvailable(ctx, tenantInfo, assignment, moveID)
+}
+
+func (s *service) ensureAssignmentEquipmentAvailable(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	assignment *shipment.Assignment,
+	moveID pulid.ID,
+) error {
+	return equipmentavailabilityhelper.EnsureAssignmentEquipmentAvailable(
+		ctx,
+		s.assignmentRepo,
+		tenantInfo,
+		assignment,
+		moveID,
+	)
+}
+
+func (s *service) advanceEquipmentContinuityForMove(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	move *shipment.ShipmentMove,
+	status shipment.MoveStatus,
+) error {
+	if status != shipment.MoveStatusCompleted {
+		return nil
+	}
+
+	return equipmentcontinuityhelper.AdvanceForCompletedMove(
+		ctx,
+		s.continuityRepo,
+		tenantInfo,
+		move,
+	)
+}

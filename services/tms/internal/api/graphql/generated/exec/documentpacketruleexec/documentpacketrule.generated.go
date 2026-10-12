@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -197,7 +197,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DocumentPacketRuleEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentPacketRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumentpacketruleᚐDocumentPacketRule),
+				Marshal: gqlexec.Marshal(marshalNDocumentPacketRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentpacketruleᚐDocumentPacketRule),
 			},
 			{
 				Name:     "cursor",
@@ -236,7 +236,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentPacketRule(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalODocumentPacketRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumentpacketruleᚐDocumentPacketRule),
+				Marshal: gqlexec.Marshal(marshalODocumentPacketRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentpacketruleᚐDocumentPacketRule),
 			},
 		}},
 	},
@@ -306,7 +306,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNDocumentPacketRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumentpacketruleᚐDocumentPacketRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documentpacketrule.DocumentPacketRule) graphql.Marshaler {
+func marshalNDocumentPacketRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentpacketruleᚐDocumentPacketRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documentpacketrule.DocumentPacketRule) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -386,7 +386,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalODocumentPacketRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumentpacketruleᚐDocumentPacketRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documentpacketrule.DocumentPacketRule) graphql.Marshaler {
+func marshalODocumentPacketRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentpacketruleᚐDocumentPacketRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documentpacketrule.DocumentPacketRule) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

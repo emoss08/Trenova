@@ -46,7 +46,7 @@ import { AssignPolicyDialog } from "./assign-policy-dialog";
 
 const LEDGER_PAGE_SIZE = 25;
 
-function typeLabel(ptoType: string): string {
+export function ptoTypeLabel(ptoType: string): string {
   return ptoTypeChoices.find((choice) => choice.value === ptoType)?.label ?? ptoType;
 }
 
@@ -91,7 +91,12 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
     mutationFn: () => runPtoAccrual({ workerId }),
     onSuccess: (result) => {
       toast.success(t("Accrual run complete"), {
-        description: `${result.entriesPosted} posted, ${result.entriesCapped} capped, ${result.entriesSkipped} already posted.`,
+        description: t(
+          "{0} posted, {1} capped, {2} already posted.",
+          result.entriesPosted,
+          result.entriesCapped,
+          result.entriesSkipped,
+        ),
       });
       void invalidate();
     },
@@ -262,7 +267,9 @@ function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
       data-testid={`pto-balance-${balance.ptoType}`}
     >
       <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-xs font-medium">{typeLabel(balance.ptoType)}</p>
+        <p className="text-muted-foreground text-xs font-medium">
+          {t(ptoTypeLabel(balance.ptoType))}
+        </p>
         {!balance.enforced ? (
           <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
             {t("Not enforced")}
@@ -390,7 +397,7 @@ function LedgerTable({ workerId }: { workerId: string }) {
                   <td className="px-3 py-2 tabular-nums">
                     {formatUnixDateMedium(entry.effectiveAt)}
                   </td>
-                  <td className="px-3 py-2">{typeLabel(entry.ptoType)}</td>
+                  <td className="px-3 py-2">{t(ptoTypeLabel(entry.ptoType))}</td>
                   <td className="px-3 py-2">
                     {PTO_LEDGER_ENTRY_LABELS[entry.entryType]}
                     {entry.periodKey ? (

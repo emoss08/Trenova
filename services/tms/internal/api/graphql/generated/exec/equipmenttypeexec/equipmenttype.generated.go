@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -93,7 +93,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*equipmenttype.EquipmentType)
 					return obj.Class, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEquipmentClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐClass),
+				Marshal: gqlexec.Marshal(marshalNEquipmentClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐClass),
 			},
 			{
 				Name:     "color",
@@ -152,7 +152,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*equipmenttype.EquipmentType)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "organization",
@@ -162,7 +162,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*equipmenttype.EquipmentType)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 		}},
 		{Object: "EquipmentTypeConnection", Fields: []*gqlexec.Field{
@@ -208,7 +208,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EquipmentTypeEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐEquipmentType),
+				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType),
 			},
 			{
 				Name:     "cursor",
@@ -233,7 +233,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateEquipmentType(ctx, fc.Args["input"].(gqlmodel.EquipmentTypeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐEquipmentType),
+				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType),
 			},
 			{
 				Name:       "updateEquipmentType",
@@ -246,7 +246,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateEquipmentType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EquipmentTypeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐEquipmentType),
+				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType),
 			},
 			{
 				Name:       "patchEquipmentType",
@@ -259,7 +259,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchEquipmentType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EquipmentTypePatchInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐEquipmentType),
+				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType),
 			},
 			{
 				Name:       "bulkUpdateEquipmentTypeStatus",
@@ -272,7 +272,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateEquipmentTypeStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateEquipmentTypeStatusInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐEquipmentTypeᚄ),
+				Marshal: gqlexec.Marshal(marshalNEquipmentType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentTypeᚄ),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -301,7 +301,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").EquipmentType(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐEquipmentType),
+				Marshal: gqlexec.Marshal(marshalOEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType),
 			},
 		}},
 	},
@@ -418,7 +418,7 @@ func field_Query_equipmentTypes_args(ctx context.Context, ec *gqlexec.Exec, rawA
 	args["input"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "classes",
 		func(ctx context.Context, v any) ([]equipmenttype.Class, error) {
-			return unmarshalOEquipmentClass2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐClassᚄ(ctx, ec, v)
+			return unmarshalOEquipmentClass2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐClassᚄ(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -521,7 +521,7 @@ func unmarshalInputEquipmentTypeInput(ctx context.Context, ec *gqlexec.Exec, obj
 			it.Description = data
 		case "class":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("class"))
-			data, err := unmarshalNEquipmentClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐClass(ctx, ec, v)
+			data, err := unmarshalNEquipmentClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐClass(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -593,7 +593,7 @@ func unmarshalInputEquipmentTypePatchInput(ctx context.Context, ec *gqlexec.Exec
 			it.Description = graphql.OmittableOf(data)
 		case "class":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("class"))
-			data, err := unmarshalOEquipmentClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐClass(ctx, ec, v)
+			data, err := unmarshalOEquipmentClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐClass(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -644,7 +644,7 @@ func unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypes
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNEquipmentClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐClass(ctx context.Context, ec *gqlexec.Exec, v any) (equipmenttype.Class, error) {
+func unmarshalNEquipmentClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐClass(ctx context.Context, ec *gqlexec.Exec, v any) (equipmenttype.Class, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := equipmenttype.Class(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -683,14 +683,14 @@ func unmarshalOEntityStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomainty
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOEquipmentClass2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐClassᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]equipmenttype.Class, error) {
+func unmarshalOEquipmentClass2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐClassᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]equipmenttype.Class, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNEquipmentClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐClass)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNEquipmentClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐClass)
 }
 
-func unmarshalOEquipmentClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐClass(ctx context.Context, ec *gqlexec.Exec, v any) (*equipmenttype.Class, error) {
+func unmarshalOEquipmentClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐClass(ctx context.Context, ec *gqlexec.Exec, v any) (*equipmenttype.Class, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -731,7 +731,7 @@ func marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypes�
 	return res
 }
 
-func marshalNEquipmentClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐClass(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v equipmenttype.Class) graphql.Marshaler {
+func marshalNEquipmentClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐClass(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v equipmenttype.Class) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -739,15 +739,15 @@ func marshalNEquipmentClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
-func marshalNEquipmentType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐEquipmentTypeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*equipmenttype.EquipmentType) graphql.Marshaler {
+func marshalNEquipmentType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentTypeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*equipmenttype.EquipmentType) graphql.Marshaler {
 	return gqlexec.List[*equipmenttype.EquipmentType]{
-		Elem:        marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐEquipmentType,
+		Elem:        marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐEquipmentType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *equipmenttype.EquipmentType) graphql.Marshaler {
+func marshalNEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *equipmenttype.EquipmentType) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -819,14 +819,14 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "BusinessUnit", v)
 }
 
-func marshalOEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmenttypeᚐEquipmentType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *equipmenttype.EquipmentType) graphql.Marshaler {
+func marshalOEquipmentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋequipmentᚋdomainᚋequipmenttypeᚐEquipmentType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *equipmenttype.EquipmentType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -849,7 +849,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

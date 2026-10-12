@@ -4,7 +4,7 @@ package fleetcoderesolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	fleetcodeservice "github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
+	fleetcodeservice "github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
 )
 
 type Deps struct {

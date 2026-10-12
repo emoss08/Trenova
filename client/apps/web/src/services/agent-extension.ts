@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
@@ -16,7 +17,11 @@ export class AgentExtensionService {
 
   public async getConfig(type: string) {
     const response = await api.get(`/agent-extensions/${encodeURIComponent(type)}/config/`);
-    return safeParse(agentExtensionConfigResponseSchema, response, `${type} Extension Settings`);
+    return safeParse(
+      agentExtensionConfigResponseSchema,
+      response,
+      translate("{0} Extension Settings", type),
+    );
   }
 
   public async updateConfig(type: string, payload: UpdateAgentExtensionRequest) {
@@ -25,11 +30,19 @@ export class AgentExtensionService {
       `/agent-extensions/${encodeURIComponent(type)}/config/`,
       request,
     );
-    return safeParse(agentExtensionConfigResponseSchema, response, `${type} Extension Settings`);
+    return safeParse(
+      agentExtensionConfigResponseSchema,
+      response,
+      translate("{0} Extension Settings", type),
+    );
   }
 
   public async test(type: string) {
     const response = await api.post(`/agent-extensions/${encodeURIComponent(type)}/test/`);
-    return safeParse(agentExtensionTestResponseSchema, response, `${type} Extension Test`);
+    return safeParse(
+      agentExtensionTestResponseSchema,
+      response,
+      translate("{0} Extension Test", type),
+    );
   }
 }

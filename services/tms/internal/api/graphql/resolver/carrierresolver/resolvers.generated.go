@@ -4,7 +4,7 @@ package carrierresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	carrierservice "github.com/emoss08/trenova/internal/core/services/carrierservice"
+	carrierservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 )
 
 type Deps struct {

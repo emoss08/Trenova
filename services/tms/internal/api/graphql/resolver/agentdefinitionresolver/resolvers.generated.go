@@ -4,17 +4,26 @@ package agentdefinitionresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	agentdefinitionports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	agentshadowports "github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 )
 
 type Deps struct {
 	*base.Core
-	AgentDefinitionService services.AgentDefinitionService
-	AgentCapabilityService services.AgentCapabilityService
-	AgentAccessService     services.AgentAccessService
+	AgentDefinitionService agentdefinitionports.AgentDefinitionService
+	AgentCapabilityService agentports.AgentCapabilityService
+	AgentShadowService     agentshadowports.AgentShadowService
+	AgentTestPromptService agentdefinitionports.AgentTestPromptService
+	AgentDraftingService   agentports.AgentDraftingService
+	AgentAccessService     agentdefinitionports.AgentAccessService
 }
 
 type AgentDefinitionResolver struct{ *Deps }
+
+type AgentDraftResolver struct{ *Deps }
+
+type AgentInstructionFindingResolver struct{ *Deps }
 
 type MutationResolver struct{ *Deps }
 

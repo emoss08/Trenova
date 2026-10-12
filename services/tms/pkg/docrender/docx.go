@@ -108,7 +108,9 @@ func writeDOCXBlock(b *strings.Builder, block Block) {
 	case BlockQuote:
 		b.WriteString(paragraph("Quote", runs(block.Text)))
 	case BlockRule:
-		b.WriteString(`<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="4" w:color="E3E5E9"/></w:pBdr></w:pPr></w:p>`)
+		b.WriteString(
+			`<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="4" w:color="E3E5E9"/></w:pBdr></w:pPr></w:p>`,
+		)
 	case BlockParagraph:
 		b.WriteString(paragraph("", runs(block.Text)))
 	}
@@ -148,7 +150,9 @@ func runs(text string) string {
 		case SpanCode:
 			b.WriteString(run(span.Text, `<w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/>`))
 		case SpanCite:
-			b.WriteString(run(span.Text, `<w:vertAlign w:val="superscript"/><w:color w:val="4A5FC1"/>`))
+			b.WriteString(
+				run(span.Text, `<w:vertAlign w:val="superscript"/><w:color w:val="4A5FC1"/>`),
+			)
 		case SpanLink, SpanText:
 			b.WriteString(run(span.Text, ""))
 		}

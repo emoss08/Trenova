@@ -3,10 +3,10 @@ package shipmentboardresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
-func watchlistToModel(w *services.ShipmentWatchlist) *gqlmodel.ShipmentWatchlist {
+func watchlistToModel(w *shipmentports.ShipmentWatchlist) *gqlmodel.ShipmentWatchlist {
 	return &gqlmodel.ShipmentWatchlist{
 		Deliveries: deliveryWatchToModel(&w.Deliveries),
 		Uncovered:  uncoveredWatchToModel(&w.Uncovered),
@@ -15,7 +15,7 @@ func watchlistToModel(w *services.ShipmentWatchlist) *gqlmodel.ShipmentWatchlist
 	}
 }
 
-func deliveryWatchToModel(w *services.ShipmentDeliveryWatch) *gqlmodel.ShipmentDeliveryWatch {
+func deliveryWatchToModel(w *shipmentports.ShipmentDeliveryWatch) *gqlmodel.ShipmentDeliveryWatch {
 	buckets := make([]*gqlmodel.DeliveryHourBucket, 0, len(w.Buckets))
 	for _, bucket := range w.Buckets {
 		buckets = append(buckets, &gqlmodel.DeliveryHourBucket{
@@ -46,7 +46,9 @@ func deliveryWatchToModel(w *services.ShipmentDeliveryWatch) *gqlmodel.ShipmentD
 	}
 }
 
-func uncoveredWatchToModel(w *services.ShipmentUncoveredWatch) *gqlmodel.ShipmentUncoveredWatch {
+func uncoveredWatchToModel(
+	w *shipmentports.ShipmentUncoveredWatch,
+) *gqlmodel.ShipmentUncoveredWatch {
 	windows := make([]*gqlmodel.UncoveredWindowSummary, 0, len(w.Windows))
 	for _, window := range w.Windows {
 		windows = append(windows, &gqlmodel.UncoveredWindowSummary{
@@ -75,7 +77,9 @@ func uncoveredWatchToModel(w *services.ShipmentUncoveredWatch) *gqlmodel.Shipmen
 	return out
 }
 
-func detentionWatchToModel(w *services.ShipmentDetentionWatch) *gqlmodel.ShipmentDetentionWatch {
+func detentionWatchToModel(
+	w *shipmentports.ShipmentDetentionWatch,
+) *gqlmodel.ShipmentDetentionWatch {
 	top := make([]*gqlmodel.DetentionAccrual, 0, len(w.Top))
 	for _, item := range w.Top {
 		top = append(top, &gqlmodel.DetentionAccrual{
@@ -99,7 +103,7 @@ func detentionWatchToModel(w *services.ShipmentDetentionWatch) *gqlmodel.Shipmen
 	}
 }
 
-func billingWatchToModel(w *services.ShipmentBillingWatch) *gqlmodel.ShipmentBillingWatch {
+func billingWatchToModel(w *shipmentports.ShipmentBillingWatch) *gqlmodel.ShipmentBillingWatch {
 	customers := make([]*gqlmodel.ReadyToBillCustomer, 0, len(w.Customers))
 	for _, customer := range w.Customers {
 		customers = append(customers, &gqlmodel.ReadyToBillCustomer{

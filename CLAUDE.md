@@ -9,16 +9,24 @@ Trenova is a Transportation Management System (TMS) built as a Go monorepo with 
 ## Repository Structure
 
 ```
-trenova-2/
-├── services/
-│   ├── tms/                    # Main TMS service (API, worker, CLI)
-│   ├── gtc/                    # CDC pipeline (Postgres → Redis/Meilisearch)
-│   └── samsara-sim/            # Samsara simulator service
-├── shared/                     # Shared Go packages across services
-├── client/                     # Frontend Turborepo (apps/* + packages/*, pnpm)
-├── go.work                     # Go workspace configuration
-└── docker-compose-local.yml    # Local development infrastructure
+trenova/
+├── services/tms/          # Main TMS service (API, worker, CLI)
+├── client/                # pnpm + Turborepo: apps/web, apps/dash, packages/*
+├── desktop/capture/       # Windows scanning and printing companion (Rust)
+├── shared/                # Shared Go packages (its own module in go.work)
+├── i18n/                  # Translation catalogs and their tooling
+├── dev/                   # Local environment: compose.yml, config/, samsara-sim, edi-partner-sim
+├── deploy/                # Dockerfiles, self-host compose, Caddy, GTC routing, observability
+├── tools/                 # Not shipped: extraction-finetune (Python), screenshots, smack, release
+├── scripts/dialect-convert # SQLite migration converter (goes away with SQLite)
+├── docs/                  # engineering/, product-guide/, self-hosting/, notes/
+└── go.work                # Go workspace: services/tms, shared, dev/samsara-sim, dev/edi-partner-sim
 ```
+
+GTC, the change-data-capture pipeline, is a separate project (`github.com/emoss08/gtc`); this
+repository runs its image and keeps its routing in `deploy/gtc/sinks.yaml`. Each top-level
+directory names a role, not a language: put a new project where its role is, and keep `dev/`
+for what only a developer's machine runs and `tools/` for what is never shipped.
 
 ## Common Commands
 
@@ -81,7 +89,7 @@ Never reach across apps or import an app package from another app.
 ```bash
 # Go
 go test -v -run TestFunctionName ./path/to/package
-go test -v -run TestFunctionName ./internal/core/services/organization/...
+go test -v -run TestFunctionName ./internal/modules/identity/app/organizationservice/...
 
 # Client
 pnpm vitest run src/path/to/file.test.ts
@@ -93,23 +101,26 @@ pnpm vitest run src/path/to/file.test.ts
 
 ```
 services/tms/
-├── cmd/cli/                    # CLI entry point (Cobra)
-│   ├── api/                    # API server command
-│   └── db/                     # Database management commands
+├── cmd/
+│   ├── cli/                    # CLI entry point (Cobra): api run, worker run, db, redis, ...
+│   ├── api/                    # API-only binary
+│   └── worker/                 # Worker-only binary
 ├── internal/
-│   ├── api/                    # HTTP layer (Gin framework)
+│   ├── api/                    # HTTP layer (Gin framework) and GraphQL: inbound adapters
 │   │   ├── handlers/           # Request handlers
 │   │   ├── middleware/         # HTTP middleware
 │   │   └── router.go           # Route registration
-│   ├── bootstrap/              # Uber FX dependency injection modules
-│   ├── core/                   # Business logic (pure domain)
+│   ├── bootstrap/              # Uber FX graphs: core (shared), apiapp, workerapp
+│   ├── modules/<module>/       # One hexagon per business module
 │   │   ├── domain/             # Domain entities and value objects
-│   │   ├── ports/              # Interface definitions
-│   │   │   ├── repositories/   # Data access contracts
-│   │   │   └── services/       # Service port definitions
-│   │   └── services/           # Business logic implementations
-│   └── infrastructure/         # Technical implementations
+│   │   ├── ports/<entity>ports # Repository and service interfaces per entity
+│   │   ├── app/                # Application services
+│   │   ├── adapters/postgres/  # Repositories
+│   │   ├── jobs/               # Temporal workflows and activities; <name>contract packages
+│   │   └── module.go           # The module's fx options
+│   └── infrastructure/         # Cross-cutting technical adapters
 │       ├── postgres/           # PostgreSQL adapters (Bun ORM)
+│       ├── temporaljobs/       # Temporal client, worker runtime, schedules, workflow starter
 │       ├── redis/              # Redis cache adapters
 │       ├── database/           # Migrations and seeding
 │       └── config/             # Configuration management
@@ -149,7 +160,7 @@ Seeds are registered in `internal/infrastructure/database/seeder/seeds/register.
 
 ## Infrastructure (Docker Compose)
 
-Local development uses `docker-compose-local.yml`:
+Local development uses `dev/compose.yml`:
 
 | Service | Port | Purpose |
 |---------|------|---------|
@@ -189,7 +200,7 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 - Do not add comments to code
 - Use Bun ORM for database operations
 - Use Ozzo validation for struct validation
-- Follow hexagonal architecture — keep domain logic in `core/`, adapters in `infrastructure/`
+- Follow the modular hexagonal architecture — domain, ports, app, adapters and jobs live in their module under `internal/modules/<module>/` (see "Modules" below)
 - Use `sonic` for JSON — `encoding/json` is forbidden by lint
 - Format with `goimports` and `golines`
 - Use `t.Context()` instead of `context.Background()` in tests (Go 1.25+)
@@ -198,6 +209,7 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 - Avoid `interface{}` / `any` when a concrete or generic type is possible
 - Use `errors.New` / `fmt.Errorf` with `%w` — never discard errors silently
 - Preallocate slices/maps when the size is known (`make([]T, 0, n)`)
+- Never let an exported type, or the signature of an exported function or method, mention a concrete generic type that has methods (`*validationframework.TenantedValidator[*X]`, `*dataloadgen.Loader[K, V]`). Go compiles that type's methods again in every package that can see it, so hold it behind a generic interface (`validationframework.TenantedEntityValidator[*X]`) or in an unexported type reached only through package-level functions; an unexported field of an exported type still spreads it. See "Generics and build time" in [docs/engineering/module-architecture.md](docs/engineering/module-architecture.md).
 
 ### TypeScript/React
 - Format with OxFmt (`client/.oxfmtrc.json`): double quotes, semicolons, trailing commas, 100 char width
@@ -308,7 +320,7 @@ otherwise. Record links are built from one registry, `client/apps/web/src/config
 - Bind GraphQL enums to their domain type in `gqlgen.yml` (`RotaDayState: model: ...worker.RotaDayState`) when the string values match; that removes the need for a conversion resolver.
 - Every root resolver must reach a permission check or be listed, with a reason, in `internal/api/graphql/authzlint`; self-scoped operations are named `My<Thing>`. `task gqlschema-diff` fails on breaking schema changes; swapping a field between wire-compatible scalars (`Int`↔`Timestamp`, `String`↔`Decimal`) is reported as dangerous, not breaking.
 - Use the semantic scalars from `shared.graphqls`: `Timestamp` for Unix-second instants (never bare `Int` for a `*At`/`*Date` field) and `Decimal` for money and other exact quantities (never `String` or `Float`). Both bind to the same Go types as `Int`/`String`, so no mapper changes are needed.
-- A field resolver that fetches per parent row must go through a per-request dataloader in `internal/api/graphql/loaders` (`batchByIDFunc` for entities, `batchCountFunc` for counts, `batchGroupFunc` for child lists) backed by a `...ByIDs` repository method; never call a single-ID getter from an object-type resolver. Register the factory in `loaders/loaders.go` and `bootstrap/modules/api/graphql.go`.
+- A field resolver that fetches per parent row must go through a per-request dataloader in `internal/api/graphql/loaders` (`batchByIDFunc` for entities, `batchCountFunc` for counts, `batchGroupFunc` for child lists) backed by a `...ByIDs` repository method; never call a single-ID getter from an object-type resolver. Register the factory in `loaders/loaders.go` and `bootstrap/modules/api/graphql.go`, add its field to `set` and its accessor and `Attach` to `loaders/access.go`. Resolvers read loaders only through those accessors (`loaders.Available(ctx)`, `loaders.CustomerByID(ctx, id)`), and tests attach one with the factory's `Attach`. No exported type in `loaders` may have a field or method, even an unexported one, that mentions `dataloadgen.Loader`, and no exported function may take or return one: Go compiles a generic type's methods again in every package that can see the type, and the old exported `Loaders` struct cost about 1,000 compiled functions in each of 40 resolver packages.
 - Connection repositories only run their `COUNT` when `req.Cursor.IncludeTotalCount` is set; the GraphQL layer clears it when `totalCount` is not selected. New `ListConnection` methods must follow that gate.
 - Patch inputs (`*PatchInput`) mark fields `@goField(omittable: true)`: absent leaves the value alone, explicit `null` clears it (or fails validation for fields the entity requires). Generated mappers come from `resolver/mappergen`.
 - Clients send persisted operations by hash only; outside production the server re-reads `persisted-documents.json` on an unknown hash (`security.graphql.persistedDocumentsPath`), so run `pnpm --filter @trenova/graphql codegen` (or `pnpm dev`, which watches) after editing an operation. `/graphql` enforces a body-size limit and a per-user operation-cost budget (`security.graphql.*`).
@@ -321,8 +333,8 @@ HTTP-derived retry mapping, the step ledger that makes a retried write safe, the
 turn stream, per-agent schedules, the one-shot and batch workflows, and the
 `GetVersion` branches waiting on in-flight executions to drain.
 **Read [docs/engineering/agent-runtime.md](docs/engineering/agent-runtime.md)
-before changing anything under `internal/core/services/agentruntime/`,
-`assistantservice/`, or `internal/core/temporaljobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs,importassistantjobs}/`.**
+before changing anything under `internal/modules/agent/app/agentruntime/`,
+`assistantservice/`, or `internal/modules/agent/jobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs,importassistantjobs}/`.**
 Extensions (web search and anything like it) add agent-only tools that an organization turns
 on with its own vendor account; how they are gated, metered, and why a turn that read outside
 content proposes every later write, is in
@@ -330,6 +342,14 @@ content proposes every later write, is in
 How an agent looks back over a quiet conversation or a settled run and keeps what the work
 taught (`agentreflectionservice`, `reflectionjobs`, the `agent_reflections` table) is under
 "Learning from the work" in agent-runtime.md.
+An agent parking its work until something happens in the world (`wait_until`, a truck
+reaching a stop, a reply, an appointment or free time coming round, drive time running low,
+a time) and picking it up as a new turn or run is described in
+[docs/engineering/agent-waits.md](docs/engineering/agent-waits.md).
+A Desk conversation about a shipment, invoice or dispute is a case: its state (working,
+waiting, snoozed, settled) worked out on read, snoozes that follow the appointment or ETA,
+waiting on the customer's or a carrier's reply, and the ready-to-bill checklist are in
+[docs/engineering/desk-cases.md](docs/engineering/desk-cases.md).
 An agent handing a task to another agent (`delegate_task`, the per-agent
 allowlist, one level only, same person) is described in
 [docs/engineering/agent-delegation.md](docs/engineering/agent-delegation.md).
@@ -361,6 +381,37 @@ rows to their spans, and the known limits are in
 [docs/engineering/ai-tracing.md](docs/engineering/ai-tracing.md). Read it before adding a span,
 a trace attribute or a link column.
 
+## Desk Bench
+
+`trenova desk ask "…"` and `trenova desk run` (`task desk-ask`, `task desk-bench`) drive the
+Desk's agents through real turns on this checkout's code, on an in-process worker in its own
+Temporal namespace, and write every model request, tool call, verdict, refusal, proposal and
+follow-up to `.deskbench/runs/<time>/` (`summary.md`, `transcript.md`, `calls/`, `prompts/`,
+`tools/`). Use it to find and confirm fixes to tool descriptions, schemas and prompts;
+scenarios live in `services/tms/deskbench/scenarios/`, and every problem a run finds is recorded
+in `services/tms/deskbench/findings.yaml` (`trenova desk findings` lists and exports them). **Read
+[docs/engineering/desk-bench.md](docs/engineering/desk-bench.md) before changing
+`internal/deskbench` or writing scenarios.** It approves real writes, so run it against a
+seeded development database only.
+
+## Desk Artifacts
+
+Each Desk artifact kind has its own folder under `routes/desk/_components/artifacts/kinds/`.
+Resource cards (a record drawn for what it is read for, such as a formula template, opened
+from a table's row or looked up by the agent) live one folder each under `artifacts/cards/`,
+are lazy-loaded through `cards/registry.tsx`, and each ships a skeleton drawn in its own
+layout. **Read
+[docs/engineering/desk-artifacts.md](docs/engineering/desk-artifacts.md) before adding
+an artifact card or a part shared between cards.**
+
+## Record Kinds
+
+The server's permission registry owns which kinds of record exist; every other list of
+kinds (record links, page context and mentions, agent subjects, @ search tabs, Desk cards,
+memory) is generated from it, typed against it, or tested against it. **Read
+[docs/engineering/record-kinds.md](docs/engineering/record-kinds.md) before adding a kind
+of record or writing any table keyed by one**: never add another hand-kept list of kind names.
+
 ## Row-Level Security
 
 PostgreSQL enforces tenant isolation itself: every tenant table is under a FORCE
@@ -376,8 +427,8 @@ before a tenant is known.**
 ## Security Audit Trail
 
 Sign-ins, SSO callbacks, sign-outs and password resets write `auth_events` through
-`services.AuthEventRecorder`; API key, role, permission, IAM and membership changes write
-critical `audit_entries` through `services.SecurityAuditor`; document downloads and views
+`iamports.AuthEventRecorder`; API key, role, permission, IAM and membership changes write
+critical `audit_entries` through `permissionports.SecurityAuditor`; document downloads and views
 and refused cross-tenant requests (`tenantboundary.Report`) are recorded too, each with the
 request ID, client IP and user agent. Both tables are append-only and only the retention
 sweep may delete from them. **Read [docs/engineering/security-audit.md](docs/engineering/security-audit.md)
@@ -412,7 +463,7 @@ and every example is recorded so a withdrawal can be honoured later. **Read
 [docs/engineering/ai-training-export.md](docs/engineering/ai-training-export.md) before
 changing `domain/aitraining`, the Cloud edition's `internal/cloud/aitraining` packages
 (`aitrainingservice`, `aitrainingjobs`), or what a correction stores.** Datasets are rendered from an export with the production prompt builder and scored
-with the production reply reader; `ml/extraction-finetune` (Python) owns the training recipe — how a
+with the production reply reader; `tools/extraction-finetune` (Python) owns the training recipe — how a
 confirmed answer becomes a target, which examples become preference pairs — and the training
 itself. **Read [docs/engineering/extraction-fine-tuning.md](docs/engineering/extraction-fine-tuning.md)
 before changing the extraction prompt, reply schema, `aicorrection.Score`, or that pipeline** — a
@@ -448,10 +499,27 @@ middleware join through the `internal/api/routegroup` value groups, GraphQL exte
 `public_config_contributors`. Decide behaviour from an injected port (`PlanService.EnforcesPlans`,
 `EditionInfo.SharedTenancy`, an onboarding row existing), never from `platform.mode`.
 
+**Binaries and edition registration.** Besides `cmd/cli` (the production image's `api run`
+and `worker run`), the service builds `cmd/api` and `cmd/worker`, which link only the API's
+or the worker's graph (`internal/bootstrap/core` plus `apiapp` or `workerapp`). Each main
+registers its edition separately, so an overlay must also add `cmd/api/edition_cloud.go` and
+`cmd/worker/edition_cloud.go`, each calling `edition.Register(cloud.Edition())`; without them
+those two binaries run the self-hosted edition.
+
+## Modules
+
+`services/tms` is split into levelled modules, `internal/modules/<module>/{domain,ports,app,adapters/postgres,jobs}`
+with a `module.go` (`SharedOptions`, `APIOptions`) and a `jobs/jobs.go` (`WorkerOptions`). A module may import only
+the `domain`, `ports` and `<name>contract` packages of strictly lower modules, plus `pkg/*` and `internal/infrastructure/*`;
+an upward need is an inversion port declared low and provided by the higher `module.go`. `go run ./scripts/archlint`
+(`task lint`, CI) enforces it against `.go-arch-lint.yml`. Every package belongs to a module; `internal/core` no longer
+exists, and new code goes in its module.
+**Read [docs/engineering/module-architecture.md](docs/engineering/module-architecture.md) before adding a module, an entity, a port, a service or a job.**
+
 ## Bun ORM
 
-For help with Bun ORM, look in the [docs](docs/bun/).
-When writing repositories, always use the generated column helpers in `services/tms/pkg/buncolgen/` — never hand-write column references. Read [docs/bun/buncolgen.md](docs/bun/buncolgen.md) for the full method reference, canonical repository patterns, and regeneration workflow before writing any repository code.
+For help with Bun ORM, look in the [docs](docs/engineering/bun/).
+When writing repositories, always use the generated column helpers in `services/tms/pkg/buncolgen/` — never hand-write column references. Read [docs/engineering/bun/buncolgen.md](docs/engineering/bun/buncolgen.md) for the full method reference, canonical repository patterns, and regeneration workflow before writing any repository code.
 
 ## DO NOT
 - **Processes**: Do not run high usage tasks that will max out CPU, Disk and/or memory usage.

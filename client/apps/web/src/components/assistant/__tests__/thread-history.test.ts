@@ -1,4 +1,4 @@
-import type { AssistantMessage, AssistantMessagePage } from "@/types/assistant";
+import type { AssistantMessage, AssistantMessagePage, MemoryNote } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import {
   appendToHistory,
@@ -6,6 +6,7 @@ import {
   flattenHistory,
   hasOlderPages,
   oldestSequence,
+  replaceMemoryNote,
   threadLength,
 } from "../thread-history";
 
@@ -162,5 +163,57 @@ describe("appendToHistory ordering", () => {
     const appended = appendToHistory(history, [message(4), message(2), message(3)]);
 
     expect(appended?.pages[0].results.map((row) => row.sequence)).toEqual([0, 1, 2, 3, 4]);
+  });
+});
+
+describe("replaceMemoryNote", () => {
+  const note = (id: string, status = "Suggested"): MemoryNote => ({
+    id,
+    content: "Read the move first.",
+    kind: "Procedure",
+    scope: "Agent",
+    roleId: null,
+    roleName: null,
+    status,
+    source: "Reflection",
+    sourceTitle: null,
+    createdAt: 1,
+    version: 1,
+    editable: true,
+    reason: null,
+    replaces: null,
+    replacedBy: null,
+  });
+  const withNotes = (sequence: number, notes: MemoryNote[]): AssistantMessage => ({
+    ...message(sequence),
+    memories: notes,
+  });
+  const history = (...pages: AssistantMessage[][]) => ({
+    pages: pages.map((results) => ({ ...page([]), results })),
+    pageParams: pages.map(() => undefined),
+  });
+
+  it("updates every message that carries the memory, across pages", () => {
+    const cached = history(
+      [withNotes(3, [note("amem_1")]), message(4)],
+      [withNotes(1, [note("amem_1"), note("amem_2")])],
+    );
+
+    const next = replaceMemoryNote(cached, "amem_1", { status: "Active", version: 2 });
+
+    expect(next?.pages[0].results[0].memories?.[0]).toMatchObject({ status: "Active", version: 2 });
+    expect(next?.pages[1].results[0].memories?.[0]).toMatchObject({ status: "Active" });
+    expect(next?.pages[1].results[0].memories?.[1].status).toBe("Suggested");
+    expect(next?.pages[0].results[1]).toBe(cached.pages[0].results[1]);
+  });
+
+  it("returns the same history when no message carries the memory", () => {
+    const cached = history([withNotes(1, [note("amem_2")])]);
+
+    expect(replaceMemoryNote(cached, "amem_1", { status: "Active" })).toBe(cached);
+  });
+
+  it("leaves a thread that is not cached alone", () => {
+    expect(replaceMemoryNote(undefined, "amem_1", { status: "Active" })).toBeUndefined();
   });
 });

@@ -1,6 +1,7 @@
 import { kfmt } from "@/components/assistant/compaction";
 import { withoutRecordIds } from "@/lib/record-ids";
 import type { AssistantMessage } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
@@ -48,9 +49,10 @@ export function DeskCompactMark({ message }: { message: AssistantMessage }) {
     <div className={cn("dk-cmk", open && "dk-open")}>
       <div className="dk-cmk-l">
         <span className="dk-cmk-rule" />
-        <button
-          type="button"
-          className="dk-cmk-p"
+        <Button
+          variant="bare"
+          size="bare"
+          className="h-6.5 gap-1.75 rounded-full bg-dsk-card pr-2.5 pl-2 text-sm text-dsk-muted ring-1 ring-dsk-b-sub transition-colors duration-120 ring-inset hover:bg-dsk-hover hover:text-dsk-fg"
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
         >
@@ -72,7 +74,7 @@ export function DeskCompactMark({ message }: { message: AssistantMessage }) {
           <span className="dk-cmk-cv">
             <DeskIcon name="chevR" size={11} stroke={2} />
           </span>
-        </button>
+        </Button>
         <span className="dk-cmk-rule" />
       </div>
       {open && (

@@ -176,7 +176,7 @@ function EnvelopeBody({
       {requirements.length > 0 && (
         <div className="rounded-lg border">
           <CardHeader
-            title={`Permits required (${requirements.length})`}
+            title={t("Permits required ({0})", requirements.length)}
             meta={
               openCount > 0 ? (
                 <span className="text-2xs text-destructive font-medium tabular-nums">
@@ -206,7 +206,7 @@ function EnvelopeBody({
 
       {!!permits?.length && (
         <div className="rounded-lg border">
-          <CardHeader title={`Permits on file (${permits.length})`} />
+          <CardHeader title={t("Permits on file ({0})", permits.length)} />
           <ScrollArea className="rounded-b-lg" viewportClassName="max-h-64" maskHeight={16}>
             <ul className="divide-y">
               {permits.map((entry) => (
@@ -222,7 +222,7 @@ function EnvelopeBody({
           {escorts.length > 0 && (
             <KpiStripItem
               label={t("Escort vehicles")}
-              value={`${assessment.totalEscorts} for the trip`}
+              value={t("{0} for the trip", assessment.totalEscorts)}
               info={
                 <InfoPopover title={t("Escort vehicles")}>
                   {t("Counted once per role across the route, not once per state.")}

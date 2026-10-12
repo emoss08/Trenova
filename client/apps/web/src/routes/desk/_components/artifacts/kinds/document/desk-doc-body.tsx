@@ -1,0 +1,813 @@
+import { Button } from "@trenova/shared/components/ui/button";
+import { scrollParent } from "@/lib/dom";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useNowSeconds } from "@/hooks/use-now-seconds";
+import { queries } from "@/lib/queries";
+import { apiService } from "@/services/api";
+import { artifactDocumentUrl } from "@/services/assistant";
+import type { AssistantArtifact } from "@/types/assistant";
+import { useQueryClient } from "@tanstack/react-query";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn, downloadFromUrl } from "@trenova/shared/lib/utils";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
+import { VERSION_OPTION_CLASS, versionTriggerClass } from "../../desk-version-classes";
+import { documentFrom, type DocumentSource } from "../../artifact-payloads";
+import { ArtIcon } from "../../desk-art-kinds";
+import type { ArtifactLineage } from "../../desk-lineage";
+import {
+  editedBlockMarkdown,
+  inlineParts,
+  joinDocBlocks,
+  parseDocBlocks,
+  plainText,
+  readMinutes,
+  replaceDocBlock,
+  wordCount,
+  type DocBlock,
+} from "./doc-blocks";
+
+type RewriteMode = "shorter" | "plain" | "ask";
+type Selection = { blockId: string; x: number; y: number };
+type Suggestion = { blockId: string; mode: RewriteMode; ask: string; text: string };
+
+const TOAST_MS = 1600;
+
+const DOC_MENU_ITEM =
+  "w-full gap-2.5 rounded-lg px-2 py-1.75 text-left text-sm text-dsk-fg2 hover:bg-dsk-hover hover:text-dsk-fg [&_svg]:mx-1.5 [&_svg]:text-dsk-subtle";
+
+function docModeClass(on: boolean): string {
+  return cn(
+    "h-6.5 rounded-md px-2.75 text-sm font-medium text-dsk-muted transition-colors duration-140 disabled:opacity-40",
+    on && "bg-dsk-card text-dsk-fg ring-1 ring-dsk-b-sub",
+  );
+}
+
+function shortTime(at: number): string {
+  return new Date(at * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+/** A citation mark: the source's number, and what it is when pointed at. */
+function Cite({
+  n,
+  source,
+  onOpen,
+}: {
+  n: number;
+  source: DocumentSource | undefined;
+  onOpen: (id: string) => void;
+}) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  const show = () => {
+    window.clearTimeout(timer.current);
+    setOpen(true);
+  };
+  const hide = () => {
+    timer.current = window.setTimeout(() => setOpen(false), 120);
+  };
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  return (
+    <span
+      className="dk-dx-cw"
+      onMouseEnter={show}
+      onMouseLeave={hide}
+      contentEditable={false}
+      data-cite={n}
+    >
+      <Button
+        variant="bare"
+        size="bare"
+        className="dk-dx-c"
+        onClick={() => source?.artifactId && onOpen(source.artifactId)}
+        aria-label={source ? source.label : t("Source {0}", n)}
+      >
+        {n}
+      </Button>
+      {open && source && (
+        <span className="dk-dx-cp" onMouseEnter={show} onMouseLeave={hide}>
+          {source.tool !== "" && <code>{source.tool}</code>}
+          <b>{source.label}</b>
+          {source.detail !== "" && <em>{source.detail}</em>}
+          {source.artifactId !== "" && (
+            <Button
+              variant="bare"
+              size="bare"
+              className="mt-1.25 gap-1.25 self-start text-xs font-medium"
+              onClick={() => onOpen(source.artifactId)}
+            >
+              <ArtIcon name="ext" size={11} />
+              {t("Open artifact")}
+            </Button>
+          )}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** A block's text with its emphasis, links and citation marks. */
+function Rich({
+  text,
+  sources,
+  onOpen,
+}: {
+  text: string;
+  sources: Map<number, DocumentSource>;
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <>
+      {inlineParts(text).map((part, index) => {
+        switch (part.kind) {
+          case "cite":
+            return <Cite key={index} n={part.n} source={sources.get(part.n)} onOpen={onOpen} />;
+          case "bold":
+            return <b key={index}>{part.text}</b>;
+          case "italic":
+            return <i key={index}>{part.text}</i>;
+          case "code":
+            return <code key={index}>{part.text}</code>;
+          case "link":
+            return (
+              <a key={index} href={part.href} target="_blank" rel="noreferrer">
+                {part.text}
+              </a>
+            );
+          default:
+            return <Fragment key={index}>{part.text}</Fragment>;
+        }
+      })}
+    </>
+  );
+}
+
+/** A menu under a toolbar button, closed by a click outside it. */
+function DocMenu({
+  label,
+  icon,
+  children,
+}: {
+  label: string;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLSpanElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+  useOutsideDismiss(rootRef, open, close);
+
+  return (
+    <span className="dk-dx-m" ref={rootRef}>
+      <Button
+        variant="bare"
+        size="bare"
+        className="h-7.5 gap-1.5 rounded-lg px-2.25 text-sm font-medium text-dsk-fg2 ring-1 ring-dsk-b-sub ring-inset hover:bg-dsk-hover aria-expanded:bg-dsk-hover [&>svg:last-child]:text-dsk-subtle"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {icon}
+        {label}
+        <ArtIcon name="down" size={10} stroke={2.4} />
+      </Button>
+      {open && (
+        // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- the menu's own buttons carry the keys; the wrapper only folds it after a choice
+        <div className="dk-dx-mp dk-right" onClick={close}>
+          {children}
+        </div>
+      )}
+    </span>
+  );
+}
+
+/**
+ * A write-up the agent published, read as a page: a serif reading column with
+ * its kind, length and author above it, citation marks that say what each
+ * claim rests on, and the sources at the end. Every edit is a version: a
+ * person can rewrite a passage they select, edit any paragraph in place, go
+ * back to an earlier version and restore it, and take it away as a PDF, a
+ * Word file or text.
+ */
+export function DeskDocBody({
+  lineage,
+  shown,
+  onOpenArtifact,
+}: {
+  lineage: ArtifactLineage;
+  /** The version the workspace was asked to show. */
+  shown: AssistantArtifact;
+  onOpenArtifact: (id: string) => void;
+}) {
+  const t = useT();
+  const queryClient = useQueryClient();
+  const versions = lineage.versions;
+  const latestIndex = versions.length - 1;
+  const shownIndex = versions.findIndex((version) => version.id === shown.id);
+  const [view, setView] = useState<number | null>(
+    shownIndex >= 0 && shownIndex !== latestIndex ? shownIndex : null,
+  );
+  const index = view === null ? latestIndex : Math.min(view, latestIndex);
+  const current = versions[index];
+  const doc = useMemo(() => documentFrom(current), [current]);
+  const blocks = useMemo(() => parseDocBlocks(doc.body), [doc.body]);
+  const sources = useMemo(() => new Map(doc.sources.map((source) => [source.n, source])), [doc]);
+  const old = index !== latestIndex;
+  const threadId = current.threadId;
+
+  const now = useNowSeconds(30_000);
+  const [mode, setMode] = useState<"read" | "edit">("read");
+  const [dirty, setDirty] = useState(false);
+  const [editRevision, setEditRevision] = useState(0);
+  const [selection, setSelection] = useState<Selection | null>(null);
+  const [ask, setAsk] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const paperRef = useRef<HTMLElement>(null);
+  const versionsRef = useRef<HTMLSpanElement>(null);
+  const closeVersions = useCallback(() => setVersionsOpen(false), []);
+  useOutsideDismiss(versionsRef, versionsOpen, closeVersions);
+
+  useEffect(() => {
+    if (notice === null) return;
+    const timer = window.setTimeout(() => setNotice(null), TOAST_MS);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  const refresh = () =>
+    queryClient.invalidateQueries({ queryKey: queries.assistant.artifacts(threadId).queryKey });
+
+  const saveMutation = useApiMutation({
+    mutationFn: ({ body, note }: { body: string; note: string }) =>
+      apiService.assistantService.saveDocumentVersion(threadId, current.id, { body, note }),
+    onSuccess: async (saved) => {
+      await refresh();
+      setView(null);
+      setNotice(t("Saved as v{0}", saved.lineageSeq));
+    },
+    resourceName: "Document",
+  });
+  const restoreMutation = useApiMutation({
+    mutationFn: (id: string) => apiService.assistantService.restoreDocumentVersion(threadId, id),
+    onSuccess: async (saved) => {
+      await refresh();
+      setView(null);
+      setNotice(t("Restored as v{0}", saved.lineageSeq));
+    },
+    resourceName: "Document",
+  });
+  const rewriteMutation = useApiMutation({
+    mutationFn: (input: { block: DocBlock; mode: RewriteMode; ask: string }) =>
+      apiService.assistantService.rewriteDocument(threadId, current.id, {
+        text: input.block.raw,
+        mode: input.mode,
+        prompt: input.ask,
+      }),
+    onSuccess: (result, input) => {
+      setBusy(null);
+      setSuggestion({
+        blockId: input.block.id,
+        mode: input.mode,
+        ask: input.ask,
+        text: result.text,
+      });
+    },
+    onError: () => setBusy(null),
+    resourceName: "Document",
+  });
+
+  const words = wordCount(doc.body);
+  const headings = blocks.filter((block) => block.type === "h");
+  const editing = mode === "edit" && !old;
+
+  const scrollTo = (id: string) => {
+    const element = paperRef.current?.querySelector<HTMLElement>(`[data-blk="${id}"]`);
+    if (!element) return;
+    const scroller = scrollParent(element, { overflowing: true });
+    scroller?.scrollTo({
+      top:
+        scroller.scrollTop +
+        element.getBoundingClientRect().top -
+        scroller.getBoundingClientRect().top -
+        12,
+      behavior: "smooth",
+    });
+    element.classList.remove("dk-dx-hit");
+    void element.offsetWidth;
+    element.classList.add("dk-dx-hit");
+  };
+
+  const onMouseUp = () => {
+    if (mode !== "read" || old || busy || suggestion) return;
+    const picked = window.getSelection();
+    if (!picked || picked.isCollapsed || !picked.toString().trim()) {
+      setSelection(null);
+      return;
+    }
+    const anchor = picked.anchorNode;
+    const node = anchor && (anchor.nodeType === 1 ? (anchor as Element) : anchor.parentElement);
+    const element = node?.closest<HTMLElement>("[data-blk]");
+    const paper = paperRef.current;
+    if (!element || !paper || !paper.contains(element)) return;
+    const block = blocks.find((candidate) => candidate.id === element.dataset.blk);
+    if (!block || (block.type !== "p" && block.type !== "sum")) {
+      setSelection(null);
+      return;
+    }
+    const range = picked.getRangeAt(0).getBoundingClientRect();
+    const frame = paper.getBoundingClientRect();
+    setSelection({
+      blockId: block.id,
+      x: Math.max(8, Math.min(frame.width - 250, range.left - frame.left + range.width / 2 - 125)),
+      y: range.top - frame.top - 44,
+    });
+    setAsk("");
+  };
+
+  useEffect(() => {
+    const onDown = (event: MouseEvent) => {
+      if (event.target instanceof Element && event.target.closest(".dk-dx-sel")) return;
+      window.setTimeout(() => {
+        const picked = window.getSelection();
+        if (!picked || picked.isCollapsed) setSelection(null);
+      }, 0);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  const rewrite = (how: RewriteMode, prompt = "") => {
+    const block = blocks.find((candidate) => candidate.id === selection?.blockId);
+    if (!block) return;
+    setSelection(null);
+    window.getSelection()?.removeAllRanges();
+    setBusy(block.id);
+    rewriteMutation.mutate({ block, mode: how, ask: prompt });
+  };
+
+  const accept = () => {
+    if (!suggestion) return;
+    const note =
+      suggestion.mode === "shorter"
+        ? t("Shortened a paragraph")
+        : suggestion.mode === "plain"
+          ? t("Simplified a paragraph")
+          : t("Rewrote: “{0}”", suggestion.ask || t("paragraph"));
+    saveMutation.mutate({
+      body: replaceDocBlock(doc.body, suggestion.blockId, suggestion.text),
+      note,
+    });
+    setSuggestion(null);
+  };
+
+  const save = () => {
+    const paper = paperRef.current;
+    if (!paper) return;
+    const edited = blocks.map((block) => {
+      const element = paper.querySelector<HTMLElement>(`[data-blk="${block.id}"]`);
+      return element ? { ...block, raw: editedBlockMarkdown(block, element) } : block;
+    });
+    saveMutation.mutate({ body: joinDocBlocks(edited), note: t("Your edits") });
+    setDirty(false);
+    setMode("read");
+  };
+
+  const discard = () => {
+    setDirty(false);
+    setEditRevision((value) => value + 1);
+    setMode("read");
+  };
+
+  const switchMode = (next: "read" | "edit") => {
+    if (next === mode) return;
+    if (mode === "edit" && dirty) {
+      discard();
+      return;
+    }
+    setSelection(null);
+    setSuggestion(null);
+    setMode(next);
+  };
+
+  const copy = async (text: string, done: string) => {
+    await navigator.clipboard?.writeText(text);
+    setNotice(done);
+  };
+
+  const versionAuthor = (version: AssistantArtifact) => {
+    const versionDoc = documentFrom(version);
+    return versionDoc.editedBy === "person" ? t("You") : versionDoc.author || t("Agent");
+  };
+
+  const renderBlock = (block: DocBlock) => {
+    const key = `${block.id}:${current.id}:${mode}:${editRevision}`;
+    const editable =
+      editing && block.type !== "table" && block.type !== "code" && block.type !== "rule";
+    const common = {
+      "data-blk": block.id,
+      contentEditable: editable ? true : undefined,
+      suppressContentEditableWarning: true,
+      onInput: () => setDirty(true),
+      className: cn("dk-dx-b", `dk-dx-${block.type}`, busy === block.id && "dk-busy"),
+    };
+
+    if (suggestion?.blockId === block.id) {
+      const before = wordCount(block.raw);
+      const after = wordCount(suggestion.text);
+      return (
+        <div key={key} data-blk={block.id} className="dk-dx-b dk-dx-sgw">
+          <div className="dk-dx-sgh">
+            <ArtIcon name="diff" size={12} />
+            {suggestion.mode === "shorter"
+              ? t("Shorter")
+              : suggestion.mode === "plain"
+                ? t("Plainer")
+                : `“${suggestion.ask}”`}
+            <span>{t("{0} → {1} words", before, after)}</span>
+          </div>
+          <p className="dk-dx-old">{plainText(block.raw)}</p>
+          <p className="dk-dx-new">
+            <Rich text={suggestion.text} sources={sources} onOpen={onOpenArtifact} />
+          </p>
+          <div className="dk-dx-sga">
+            <Button variant="quiet" size="sm" onClick={() => setSuggestion(null)}>
+              {t("Keep original")}
+            </Button>
+            <Button
+              variant="quiet"
+              size="sm"
+              onClick={() => {
+                const again = suggestion;
+                setSuggestion(null);
+                setBusy(block.id);
+                rewriteMutation.mutate({ block, mode: again.mode, ask: again.ask });
+              }}
+            >
+              {t("Try again")}
+            </Button>
+            <Button size="sm" onClick={accept}>
+              <ArtIcon name="check" size={12} stroke={2.4} />
+              {t("Accept")}
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    const rich = (text: string) => <Rich text={text} sources={sources} onOpen={onOpenArtifact} />;
+    switch (block.type) {
+      case "h":
+        return (
+          <h3 key={key} {...common}>
+            {rich(block.text ?? "")}
+          </h3>
+        );
+      case "sum":
+      case "p":
+        return (
+          <p key={key} {...common}>
+            {rich(block.text ?? "")}
+          </p>
+        );
+      case "ol":
+      case "ul": {
+        const List = block.type;
+        return (
+          <List key={key} {...common}>
+            {(block.items ?? []).map((item, at) => (
+              <li key={at}>{rich(item)}</li>
+            ))}
+          </List>
+        );
+      }
+      case "quote":
+        return (
+          <blockquote key={key} {...common}>
+            {rich(block.text ?? "")}
+          </blockquote>
+        );
+      case "table":
+        return (
+          <div key={key} {...common}>
+            <table>
+              <thead>
+                <tr>
+                  {(block.header ?? []).map((cell, at) => (
+                    <th key={at}>{rich(cell)}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(block.rows ?? []).map((row, at) => (
+                  <tr key={at}>
+                    {row.map((cell, column) => (
+                      <td key={column}>{rich(cell)}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      case "code":
+        return (
+          <pre key={key} {...common}>
+            {block.raw.replace(/^```[^\n]*\n?/u, "").replace(/\n?```$/u, "")}
+          </pre>
+        );
+      case "rule":
+        return <hr key={key} className="dk-dx-rule" />;
+    }
+  };
+
+  if (doc.body.trim() === "") {
+    return <div className="dk-ax-pad dk-ax-oldnote">{t("This document is empty.")}</div>;
+  }
+
+  const byline = [
+    current.lineageSeq > 1 && doc.editedBy === "person"
+      ? doc.editor || t("You")
+      : doc.author || t("Agent"),
+    index === latestIndex && now - current.createdAt < 60
+      ? t("edited just now")
+      : t("written {0}", shortTime(current.createdAt)),
+    doc.basis || t("from this conversation"),
+  ].join(" · ");
+  const initial = (doc.editedBy === "person" ? doc.editor || t("You") : doc.author || "A")
+    .trim()
+    .charAt(0)
+    .toUpperCase();
+
+  return (
+    <div className={cn("dk-dx", editing && "dk-editing")}>
+      <div className="dk-dx-bar">
+        <div className="dk-dx-seg" role="group" aria-label={t("Mode")}>
+          <Button
+            variant="bare"
+            size="bare"
+            className={docModeClass(mode === "read")}
+            onClick={() => switchMode("read")}
+          >
+            {t("Read")}
+          </Button>
+          <Button
+            variant="bare"
+            size="bare"
+            className={docModeClass(mode === "edit")}
+            disabled={old}
+            onClick={() => switchMode("edit")}
+          >
+            {t("Edit")}
+          </Button>
+        </div>
+        <span className="dk-axv" ref={versionsRef}>
+          <Button
+            variant="bare"
+            size="bare"
+            className={versionTriggerClass(old)}
+            title={t("Versions")}
+            aria-expanded={versionsOpen}
+            onClick={() => setVersionsOpen((value) => !value)}
+          >
+            v{current.lineageSeq}
+            <ArtIcon name="down" size={9} stroke={2.6} />
+          </Button>
+          {versionsOpen && (
+            <div className="dk-axv-pop" role="listbox">
+              {[...versions].reverse().map((version) => {
+                const at = versions.indexOf(version);
+                const versionDoc = documentFrom(version);
+                return (
+                  <Button
+                    key={version.id}
+                    variant="bare"
+                    size="bare"
+                    role="option"
+                    aria-selected={at === index}
+                    className={VERSION_OPTION_CLASS}
+                    onClick={() => {
+                      setView(at === latestIndex ? null : at);
+                      setVersionsOpen(false);
+                      setMode("read");
+                      setSuggestion(null);
+                    }}
+                  >
+                    <b>v{version.lineageSeq}</b>
+                    <span>
+                      <em>{versionDoc.versionNote || t("First draft")}</em>
+                      <i>
+                        {versionAuthor(version)} · {shortTime(version.createdAt)}
+                        {at === latestIndex ? ` · ${t("Latest")}` : ""}
+                      </i>
+                    </span>
+                    {at === index && <ArtIcon name="check" size={12} stroke={2.4} />}
+                  </Button>
+                );
+              })}
+            </div>
+          )}
+        </span>
+        <span className="flex-1" />
+        <DocMenu label={t("Export")} icon={<ArtIcon name="dl" size={13} />}>
+          <Button
+            variant="bare"
+            size="bare"
+            className={DOC_MENU_ITEM}
+            onClick={() => {
+              downloadFromUrl(artifactDocumentUrl(threadId, current.id, "pdf"));
+              setNotice(t("Downloading PDF…"));
+            }}
+          >
+            <span className="dk-dx-fx">PDF</span>
+            {t("Download as PDF")}
+          </Button>
+          <Button
+            variant="bare"
+            size="bare"
+            className={DOC_MENU_ITEM}
+            onClick={() => {
+              downloadFromUrl(artifactDocumentUrl(threadId, current.id, "docx"));
+              setNotice(t("Downloading .docx…"));
+            }}
+          >
+            <span className="dk-dx-fx">DOC</span>
+            {t("Word document")}
+          </Button>
+          <Button
+            variant="bare"
+            size="bare"
+            className={DOC_MENU_ITEM}
+            onClick={() => void copy(`# ${current.title}\n\n${doc.body}`, t("Copied as Markdown"))}
+          >
+            <span className="dk-dx-fx">MD</span>
+            {t("Copy as Markdown")}
+          </Button>
+          <Button
+            variant="bare"
+            size="bare"
+            className={DOC_MENU_ITEM}
+            onClick={() =>
+              void copy(`${current.title}\n\n${plainText(doc.body)}`, t("Copied plain text"))
+            }
+          >
+            <ArtIcon name="copy" size={13} />
+            {t("Copy text")}
+          </Button>
+        </DocMenu>
+      </div>
+      {headings.length > 1 && (
+        <nav className="dk-dx-toc" aria-label={t("Contents")}>
+          {headings.map((heading) => (
+            <Button
+              key={heading.id}
+              variant="bare"
+              size="bare"
+              className="h-6 rounded-full bg-dsk-sunken px-2.25 text-xs text-dsk-muted hover:bg-dsk-hover hover:text-dsk-fg"
+              onClick={() => scrollTo(heading.id)}
+            >
+              {plainText(heading.text ?? "")}
+            </Button>
+          ))}
+        </nav>
+      )}
+      {old && (
+        <div className="dk-dx-oldbar">
+          <span>
+            {t("Viewing")} <b>v{current.lineageSeq}</b> · {doc.versionNote || t("First draft")}
+          </span>
+          <Button
+            variant="bare"
+            size="bare"
+            className="h-6.5 rounded-md px-2.5 text-sm font-medium text-dsk-fg hover:bg-dsk-warn/14"
+            onClick={() => setView(null)}
+          >
+            {t("Back to latest")}
+          </Button>
+          <Button
+            size="sm"
+            className="h-6.5 px-2.5"
+            disabled={restoreMutation.isPending}
+            onClick={() => restoreMutation.mutate(current.id)}
+          >
+            {t("Restore")}
+          </Button>
+        </div>
+      )}
+      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- selecting text is how a passage is chosen to rewrite; the keyboard path is the Edit mode */}
+      <article className="dk-dx-paper" ref={paperRef} onMouseUp={onMouseUp}>
+        <div className="dk-dx-kick">
+          <span>{doc.docType || t("Document")}</span>
+          <i />
+          <span>
+            {t(
+              "{0, plural, one {# word} other {# words}} · {1} min read",
+              words,
+              readMinutes(words),
+            )}
+          </span>
+        </div>
+        <h2 className="dk-dx-h">{current.title}</h2>
+        <div className="dk-dx-by">
+          <span className="dk-dx-av">{initial}</span>
+          <span>{byline}</span>
+        </div>
+        {blocks.map(renderBlock)}
+        {doc.sources.length > 0 && (
+          <section className="dk-dx-srcs">
+            <h4>{t("Sources")}</h4>
+            {doc.sources.map((source) =>
+              source.artifactId !== "" ? (
+                <Button
+                  key={source.n}
+                  variant="bare"
+                  size="bare"
+                  className="hover:bg-dsk-hover"
+                  onClick={() => onOpenArtifact(source.artifactId)}
+                >
+                  <span className="dk-dx-c">{source.n}</span>
+                  <span>
+                    <b>{source.label}</b>
+                    <code>{source.tool}</code>
+                  </span>
+                  <ArtIcon name="ext" size={11} />
+                </Button>
+              ) : (
+                <div key={source.n}>
+                  <span className="dk-dx-c">{source.n}</span>
+                  <span>
+                    <b>{source.label}</b>
+                    <code>{source.tool}</code>
+                  </span>
+                </div>
+              ),
+            )}
+          </section>
+        )}
+        {selection && (
+          // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- keeps the text selected while a choice is clicked
+          <div
+            className="dk-dx-sel"
+            style={{ left: selection.x, top: selection.y }}
+            onMouseDown={(event) => {
+              if (!(event.target instanceof HTMLInputElement)) event.preventDefault();
+            }}
+          >
+            <Button
+              variant="bare"
+              size="bare"
+              className="h-6.5 rounded-md px-2 font-medium whitespace-nowrap hover:bg-dsk-ink-fg/14"
+              onClick={() => rewrite("shorter")}
+            >
+              {t("Shorter")}
+            </Button>
+            <Button
+              variant="bare"
+              size="bare"
+              className="h-6.5 rounded-md px-2 font-medium whitespace-nowrap hover:bg-dsk-ink-fg/14"
+              onClick={() => rewrite("plain")}
+            >
+              {t("Plainer")}
+            </Button>
+            <i />
+            <input
+              value={ask}
+              onChange={(event) => setAsk(event.target.value)}
+              placeholder={t("Ask to change…")}
+              aria-label={t("Ask to change…")}
+              onKeyDown={(event) => {
+                event.stopPropagation();
+                if (event.key === "Enter" && ask.trim()) rewrite("ask", ask.trim());
+                if (event.key === "Escape") setSelection(null);
+              }}
+            />
+          </div>
+        )}
+      </article>
+      {editing && (
+        <div className="dk-dx-save">
+          <span className={dirty ? "dk-on" : undefined}>
+            {dirty ? t("Unsaved changes") : t("Click any paragraph to edit")}
+          </span>
+          <span className="flex-1" />
+          <Button variant="quiet" size="sm" onClick={discard}>
+            {dirty ? t("Discard") : t("Done")}
+          </Button>
+          {dirty && (
+            <Button size="sm" disabled={saveMutation.isPending} onClick={save}>
+              {t("Save as v{0}", versions[latestIndex].lineageSeq + 1)}
+            </Button>
+          )}
+        </div>
+      )}
+      {notice && (
+        <div className="dk-dx-toast" role="status">
+          <ArtIcon name="check" size={12} stroke={2.4} />
+          {notice}
+        </div>
+      )}
+    </div>
+  );
+}

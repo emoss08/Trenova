@@ -1,0 +1,339 @@
+package agentquerytoolservice
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/timeutils"
+)
+
+const (
+	defaultTimeOffLimit = 25
+	maxTimeOffLimit     = 50
+	// defaultTimeOffWindowDays is how far ahead an unqualified question reaches.
+	// "Who is off?" means this week and next, not the whole year of accrued
+	// leave, and a model handed a year of rows summarises the wrong ones.
+	defaultTimeOffWindowDays = 14
+	maxTimeOffWindowDays     = 365
+)
+
+// ptoLister is the read slice of the PTO service.
+type ptoLister interface {
+	List(
+		ctx context.Context,
+		req *workerports.ListPTORequest,
+	) (*pagination.CursorListResult[*worker.WorkerPTO], error)
+}
+
+// timeOffRow is one request in the words a dispatcher covering a board would
+// use. The stored entity carries the ledger balance, the search vector and
+// three user relations, none of which answer who is out on Thursday.
+type timeOffRow struct {
+	ID         string       `json:"id"`
+	WorkerID   string       `json:"workerId"`
+	WorkerName string       `json:"workerName,omitempty"`
+	Status     string       `json:"status"`
+	Type       string       `json:"type"`
+	StartDate  optionalDate `json:"startDate"`
+	EndDate    optionalDate `json:"endDate"`
+	Days       string       `json:"days"`
+	Reason     string       `json:"reason,omitempty"`
+	// Decision carries the reason attached to a rejection or a cancellation,
+	// so "why was this turned down" is answerable without a second lookup.
+	Decision string `json:"decision,omitempty"`
+}
+
+const maxOtherTimeOff = 5
+
+type listTimeOffTool struct {
+	pto ptoLister
+}
+
+func newListTimeOffTool(pto ptoLister) agentports.AgentQueryTool {
+	return &listTimeOffTool{pto: pto}
+}
+
+func (t *listTimeOffTool) Name() string { return "list_time_off" }
+
+func (t *listTimeOffTool) Description() string {
+	return "List worker (driver) time-off requests — who is out, who is asking to " +
+		"be, and who was turned down. This is the tool for any question about " +
+		"availability by date, and the one that yields the request ids the " +
+		"approve, reject and cancel tools need. Filter by status to find what is " +
+		"still awaiting a decision."
+}
+
+func (t *listTimeOffTool) SearchTerms() []string {
+	return []string{"who is off", "time off calendar", "booked time off", "out of office"}
+}
+
+func (t *listTimeOffTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			paramStatus: agenttoolschema.Enum(
+				"Requested means still awaiting a decision. Omit for every status.",
+				ptoStatuses,
+			),
+			"type": agenttoolschema.Enum(
+				"The kind of leave. Omit for every kind.",
+				agenttoolschema.PTOTypes,
+			),
+			"workerId": agenttoolschema.OfResource(map[string]any{
+				"type": "string",
+				"description": "Narrow to one worker, by id from list_workers or " +
+					"search_worker. A name is not an id.",
+			}, permission.ResourceWorker),
+			"withinDays": map[string]any{
+				"type": "integer",
+				"description": fmt.Sprintf(
+					"How far ahead to look from today, in days: leave on at any point in "+
+						"that span, including leave that began earlier and is still running. "+
+						"Defaults to %d, at most %d. Ignored when startingFrom or "+
+						"startingBefore is given.",
+					defaultTimeOffWindowDays, maxTimeOffWindowDays,
+				),
+			},
+			"startingFrom": map[string]any{
+				"type":        "integer",
+				"description": "Only leave starting on or after this Unix second.",
+			},
+			"startingBefore": map[string]any{
+				"type":        "integer",
+				"description": "Only leave starting on or before this Unix second.",
+			},
+			"limit": map[string]any{
+				"type":        "integer",
+				"description": fmt.Sprintf("How many to return, at most %d.", maxTimeOffLimit),
+			},
+		},
+		"additionalProperties": false,
+	}
+}
+
+func (t *listTimeOffTool) Policy() agentports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceWorkerPTO,
+	})
+}
+
+func (t *listTimeOffTool) Query(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+) (any, error) {
+	if err := guardQuery(params); err != nil {
+		return nil, err
+	}
+
+	limit := optionalInt(params.Params, "limit", defaultTimeOffLimit)
+	if limit <= 0 || limit > maxTimeOffLimit {
+		limit = defaultTimeOffLimit
+	}
+
+	request := &workerports.ListPTORequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  params.OrganizationID,
+				BuID:   params.BusinessUnitID,
+				UserID: params.Actor.UserID,
+			},
+			Pagination: pagination.Info{Limit: limit},
+		},
+		IncludeWorker: true,
+	}
+
+	criteria := filtercatalog.NewCriteria("time-off requests").At(clockFor(params))
+
+	status, err := timeOffEnum(params.Params, "status", worker.PTOStatusFromString)
+	if err != nil {
+		return nil, err
+	}
+	request.Status = status
+	criteria.Field("status", status)
+
+	leaveType, err := timeOffEnum(params.Params, "type", worker.PTOTypeFromString)
+	if err != nil {
+		return nil, err
+	}
+	request.Type = leaveType
+	criteria.Field("type", leaveType)
+
+	if raw := optionalString(params.Params, "workerId"); raw != "" {
+		workerID, wErr := requirePulid(params.Params, "workerId")
+		if wErr != nil {
+			return nil, wErr
+		}
+		request.WorkerID = workerID
+		criteria.Field("worker", workerID.String())
+	}
+
+	applyTimeOffWindow(params.Params, request, criteria)
+
+	result, err := t.pto.List(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	rows := make([]timeOffRow, 0, len(result.Items))
+	for _, pto := range result.Items {
+		rows = append(rows, toTimeOffRow(pto))
+	}
+
+	found := searchResult(criteria, rows, len(rows))
+	if len(rows) == 0 {
+		if note := t.otherRequests(ctx, request); note != "" {
+			found.Note = note
+		}
+	}
+
+	return found, nil
+}
+
+// otherRequests names the requests a status or leave-type filter left out, so an empty answer is not read as "nothing pending". A model that fills
+// every parameter sent type: Vacation for a personal-day request, then tried
+// each type in turn.
+func (t *listTimeOffTool) otherRequests(
+	ctx context.Context,
+	request *workerports.ListPTORequest,
+) string {
+	if request.Status == "" && request.Type == "" {
+		return ""
+	}
+	whose := "this worker's requests"
+	if request.WorkerID.IsNil() {
+		whose = "the requests"
+	}
+
+	broader := *request
+	broader.Status = ""
+	broader.Type = ""
+	broader.Filter = &pagination.QueryOptions{
+		TenantInfo: request.Filter.TenantInfo,
+		Pagination: pagination.Info{Limit: maxOtherTimeOff},
+	}
+	result, err := t.pto.List(ctx, &broader)
+	if err != nil || result == nil {
+		return ""
+	}
+	if len(result.Items) == 0 {
+		return fmt.Sprintf("There are no %s in this window of any status or type. Say so "+
+			"rather than trying each status or type in turn.", strings.TrimPrefix(whose, "the "))
+	}
+
+	described := make([]string, 0, len(result.Items))
+	for _, pto := range result.Items {
+		row := toTimeOffRow(pto)
+		who := ""
+		if row.WorkerName != "" {
+			who = row.WorkerName + ", "
+		}
+		described = append(
+			described,
+			fmt.Sprintf("%s (%s%s, %s)", pto.ID, who, pto.Type, pto.Status),
+		)
+	}
+
+	return fmt.Sprintf("None of %s matched the status or type given. In this window there "+
+		"are: %s. Answer from these rather than trying each status or type.",
+		whose, strings.Join(described, "; "))
+}
+
+// applyTimeOffWindow resolves the date window server-side.
+//
+// An explicit pair wins when the caller gives one. Otherwise the window runs
+// from now to withinDays out, which is what an unqualified "who is off" means
+// and what keeps the answer from being last year's vacations.
+func applyTimeOffWindow(
+	params map[string]any,
+	request *workerports.ListPTORequest,
+	criteria *filtercatalog.Criteria,
+) {
+	from := int64(optionalInt(params, "startingFrom", 0))
+	before := int64(optionalInt(params, "startingBefore", 0))
+
+	if from > 0 || before > 0 {
+		request.StartDateFrom = from
+		request.StartDateTo = before
+		if from > 0 {
+			criteria.Field(
+				"starting on or after",
+				timeutils.FormatUnixDateIn(from, criteria.Clock.Timezone),
+			)
+		}
+		if before > 0 {
+			criteria.Field(
+				"starting on or before",
+				timeutils.FormatUnixDateIn(before, criteria.Clock.Timezone),
+			)
+		}
+
+		return
+	}
+
+	horizon := optionalInt(params, "withinDays", defaultTimeOffWindowDays)
+	if horizon <= 0 || horizon > maxTimeOffWindowDays {
+		horizon = defaultTimeOffWindowDays
+	}
+
+	// Whole days in the organization's zone: from the start of today through
+	// the end of the horizon's last day. Leave that started this morning is
+	// still leave that is on now.
+	today := criteria.Clock.Today()
+	request.StartDateFrom = today
+	request.StartDateTo = today + int64(horizon+1)*secondsPerDay - 1
+	request.Overlapping = true
+	criteria.Field("on leave at some point within", fmt.Sprintf("%d days", horizon))
+}
+
+// timeOffEnum refuses a value outside the set rather than passing it through.
+// A status of "Pending" would match nothing, and an empty list reads to a model
+// as "nobody has asked for time off" — the exact failure this catalog exists to
+// stop.
+func timeOffEnum[T ~string](
+	params map[string]any,
+	key string,
+	parse func(string) (T, error),
+) (string, error) {
+	raw := optionalString(params, key)
+	if raw == "" {
+		return "", nil
+	}
+
+	value, err := parse(raw)
+	if err != nil {
+		return "", fmt.Errorf("parameter %q does not accept %q: %w", key, raw, err)
+	}
+
+	return string(value), nil
+}
+
+func toTimeOffRow(pto *worker.WorkerPTO) timeOffRow {
+	row := timeOffRow{
+		ID:         pto.ID.String(),
+		WorkerID:   pto.WorkerID.String(),
+		WorkerName: workerName(pto.Worker),
+		Status:     string(pto.Status),
+		Type:       string(pto.Type),
+		StartDate:  recordedDate(pto.StartDate),
+		EndDate:    recordedDate(pto.EndDate),
+		Days:       pto.Days.String(),
+		Reason:     pto.Reason,
+	}
+
+	switch {
+	case strings.TrimSpace(pto.RejectionReason) != "":
+		row.Decision = pto.RejectionReason
+	case strings.TrimSpace(pto.CancellationReason) != "":
+		row.Decision = pto.CancellationReason
+	}
+
+	return row
+}

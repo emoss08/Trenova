@@ -3,6 +3,7 @@ import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { AssistantThread } from "@/types/assistant";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useState } from "react";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
@@ -83,14 +84,16 @@ export function DeskFactsBar({ thread }: { thread: AssistantThread }) {
       {facts.map((fact) => (
         <span key={fact} className="dk-fx-c">
           {fact}
-          <button
-            type="button"
+          <Button
+            variant="bare"
+            size="bare"
+            className="size-4 justify-center rounded-full text-dsk-faint hover:bg-dsk-hover hover:text-dsk-fg"
             title={t("Unpin")}
             aria-label={t("Unpin {0}", fact)}
             onClick={() => save(unpinFact(facts, fact))}
           >
             <DeskIcon name="x" size={10} stroke={2.2} />
-          </button>
+          </Button>
         </span>
       ))}
       {adding ? (
@@ -118,15 +121,16 @@ export function DeskFactsBar({ thread }: { thread: AssistantThread }) {
         />
       ) : (
         facts.length < MAX_PINNED_FACTS && (
-          <button
-            type="button"
-            className="dk-fx-add"
+          <Button
+            variant="bare"
+            size="bare"
+            className="h-5.5 gap-1 rounded-full border border-dashed border-dsk-b-strong px-1.75 text-dsk-subtle transition-colors duration-150 hover:border-dsk-fg hover:text-dsk-fg"
             aria-label={t("Pin a fact")}
             onClick={() => setAdding(true)}
           >
             <DeskIcon name="plus" size={11} stroke={2.2} />
             {facts.length === 0 ? t("Pin a fact") : null}
-          </button>
+          </Button>
         )
       )}
     </div>

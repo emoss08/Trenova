@@ -11,10 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/workerchecklistservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -201,7 +201,7 @@ func (r *QueryResolver) WorkerChecklistTemplates(ctx context.Context, input gqlm
 	if input.Status != nil {
 		status = string(*input.Status)
 	}
-	result, err := r.WorkerChecklistService.ListTemplates(ctx, &repositories.ListChecklistTemplatesRequest{
+	result, err := r.WorkerChecklistService.ListTemplates(ctx, &workerports.ListChecklistTemplatesRequest{
 		Filter:       connection.Filter,
 		Cursor:       connection.Cursor,
 		Status:       status,
@@ -227,7 +227,7 @@ func (r *QueryResolver) WorkerChecklistTemplate(ctx context.Context, id string) 
 		return nil, err
 	}
 
-	return r.WorkerChecklistService.GetTemplate(ctx, &repositories.GetChecklistTemplateByIDRequest{
+	return r.WorkerChecklistService.GetTemplate(ctx, &workerports.GetChecklistTemplateByIDRequest{
 		ID:           templateID,
 		TenantInfo:   base.TenantInfo(authCtx),
 		IncludeItems: true,
@@ -321,8 +321,8 @@ func (r *WorkerChecklistProgressResolver) Complete(ctx context.Context, obj *wor
 }
 
 func (r *WorkerChecklistTemplateResolver) OpenChecklistCount(ctx context.Context, obj *worker.WorkerChecklistTemplate) (int, error) {
-	if l, ok := loaders.FromContext(ctx); ok && l != nil {
-		return l.WorkerChecklistTemplateOpenChecklistCount.Load(ctx, obj.ID.String())
+	if loaders.Available(ctx) {
+		return loaders.WorkerChecklistTemplateOpenChecklistCount(ctx, obj.ID.String())
 	}
 	return r.WorkerChecklistService.CountOpenChecklistsForTemplate(ctx, obj)
 }

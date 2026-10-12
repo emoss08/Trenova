@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -18,7 +18,7 @@ const subsetKeySeparator = "|"
 type SubsetLabelsLoaderFactoryParams struct {
 	fx.In
 
-	Labeler services.RecordLabeler `optional:"true"`
+	Labeler agentports.RecordLabeler `optional:"true"`
 }
 
 // SubsetLabelsLoaderFactory names the records the proposals on a page offer
@@ -27,7 +27,7 @@ type SubsetLabelsLoaderFactoryParams struct {
 // resource for each MaxRecordLabelsPerResource records, however many
 // proposals list them.
 type SubsetLabelsLoaderFactory struct {
-	labeler services.RecordLabeler
+	labeler agentports.RecordLabeler
 	wait    time.Duration
 }
 
@@ -58,9 +58,9 @@ func SubsetLabelsKey(resource permission.Resource, ids []string) string {
 	return key.String()
 }
 
-func (f *SubsetLabelsLoaderFactory) NewForTenant(
+func newSubsetLabelsLoader(f *SubsetLabelsLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, services.RecordLabels] {
+) *dataloadgen.Loader[string, agentports.RecordLabels] {
 	return dataloadgen.NewLoader(
 		f.batchFunc(tenantInfo),
 		loaderOptionsWith(batchCapacity, f.wait)...,
@@ -71,9 +71,9 @@ func (f *SubsetLabelsLoaderFactory) NewForTenant(
 // have one; a record that is gone, or an id that names no record, has none.
 func (f *SubsetLabelsLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) batchFetchFunc[services.RecordLabels] {
-	return func(ctx context.Context, keys []string) ([]services.RecordLabels, []error) {
-		values := make([]services.RecordLabels, len(keys))
+) batchFetchFunc[agentports.RecordLabels] {
+	return func(ctx context.Context, keys []string) ([]agentports.RecordLabels, []error) {
+		values := make([]agentports.RecordLabels, len(keys))
 		errs := make([]error, len(keys))
 		if f.labeler == nil {
 			return values, errs
@@ -117,13 +117,13 @@ func (f *SubsetLabelsLoaderFactory) read(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	refs map[permission.Resource][]pulid.ID,
-) (services.RecordLabels, error) {
-	labels := make(services.RecordLabels, len(refs))
-	for offset := 0; ; offset += services.MaxRecordLabelsPerResource {
+) (agentports.RecordLabels, error) {
+	labels := make(agentports.RecordLabels, len(refs))
+	for offset := 0; ; offset += agentports.MaxRecordLabelsPerResource {
 		chunk := make(map[permission.Resource][]pulid.ID, len(refs))
 		for resource, ids := range refs {
 			if offset < len(ids) {
-				chunk[resource] = ids[offset:min(offset+services.MaxRecordLabelsPerResource, len(ids))]
+				chunk[resource] = ids[offset:min(offset+agentports.MaxRecordLabelsPerResource, len(ids))]
 			}
 		}
 		if len(chunk) == 0 {

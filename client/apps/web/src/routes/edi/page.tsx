@@ -4,10 +4,11 @@ import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
 import type { EDIPageKind } from "./_components/edi-types";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const Table = lazy(() => import("./_components/edi-table"));
 
-const pageTitles: Record<EDIPageKind, string> = {
+const pageTitles: Record<EDIPageKind, string> = defineLabels({
   overview: "EDI Operations",
   partners: "EDI Partners",
   "communication-profiles": "EDI Communication Profiles",
@@ -18,9 +19,9 @@ const pageTitles: Record<EDIPageKind, string> = {
   messages: "EDI Messages",
   "inbound-files": "EDI Inbound Files",
   "test-cases": "EDI Test Cases",
-};
+});
 
-const pageDescriptions: Record<EDIPageKind, string> = {
+const pageDescriptions: Record<EDIPageKind, string> = defineLabels({
   overview: "Live health view of deliveries, inbound processing, and acknowledgment state",
   partners: "Trading partners, connection requests, and partner defaults",
   "communication-profiles": "Transport endpoints, envelope identifiers, and credentials",
@@ -31,7 +32,7 @@ const pageDescriptions: Record<EDIPageKind, string> = {
   messages: "Generated X12 documents with delivery and acknowledgment status",
   "inbound-files": "Files received from partner mailboxes and their processing state",
   "test-cases": "Certification scenarios that render payloads through partner templates",
-};
+});
 
 export function EDIOverviewPage() {
   return <EDIPage kind="overview" />;
@@ -80,7 +81,7 @@ function EDIPage({ kind }: { kind: EDIPageKind }) {
     <PageLayout
       pageHeaderProps={{
         title: t(pageTitles[kind]),
-        description: t(pageDescriptions[kind]),
+        description: pageDescriptions[kind],
       }}
     >
       <DataTableLazyComponent

@@ -6,6 +6,7 @@ import type {
   InboundReviewPolicy,
 } from "@/lib/graphql/inbox";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /** The server's floor: below it a classifier is guessing. */
 export const MIN_CONFIDENCE_FLOOR = 0.5;
@@ -23,8 +24,12 @@ export const MAILBOX_STATUSES = [
 
 export const mailboxFormSchema = z
   .object({
-    name: z.string().trim().min(1, { error: "Name is required" }).max(100),
-    address: z.email({ error: "Address must be an email address" }).max(255),
+    name: z
+      .string()
+      .trim()
+      .min(1, { error: () => translate("Name is required") })
+      .max(100),
+    address: z.email({ error: () => translate("Address must be an email address") }).max(255),
     provider: z.enum(PROVIDERS),
     purpose: z.string().max(255),
     reviewPolicy: z.enum(REVIEW_POLICIES),
@@ -35,7 +40,11 @@ export const mailboxFormSchema = z
     (value) =>
       value.reviewPolicy !== "ReviewBelowConfidence" || value.minConfidence >= MIN_CONFIDENCE_FLOOR,
     {
-      error: `A confidence bar below ${MIN_CONFIDENCE_FLOOR} is auto-handling with a number in front of it`,
+      error: () =>
+        translate(
+          "A confidence bar below {0} is auto-handling with a number in front of it",
+          MIN_CONFIDENCE_FLOOR,
+        ),
       path: ["minConfidence"],
     },
   );

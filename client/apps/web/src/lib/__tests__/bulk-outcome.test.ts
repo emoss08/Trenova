@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { notifyBulkOutcome } from "../bulk-outcome";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { notifyBulkOutcome, type BulkOutcomeMessages } from "../bulk-outcome";
 
 const { success, warning, error } = vi.hoisted(() => ({
   success: vi.fn(),
@@ -11,16 +12,40 @@ vi.mock("sonner", () => ({
   toast: { success, warning, error },
 }));
 
+function ptoMessages(verb: "Approved" | "Rejected", skipped?: number): BulkOutcomeMessages {
+  return {
+    succeeded: (count) =>
+      verb === "Approved"
+        ? translate("Approved {0, plural, one {# PTO request} other {# PTO requests}}", count)
+        : translate("Rejected {0, plural, one {# PTO request} other {# PTO requests}}", count),
+    partial: (succeeded, failed) =>
+      verb === "Approved"
+        ? translate(
+            "Approved {0, plural, one {# PTO request} other {# PTO requests}}; {1} failed",
+            succeeded,
+            failed,
+          )
+        : translate(
+            "Rejected {0, plural, one {# PTO request} other {# PTO requests}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+    allFailed: (failed) =>
+      translate(
+        "All {0, plural, one {# selected PTO request} other {# selected PTO requests}} failed",
+        failed,
+      ),
+    skipped,
+  };
+}
+
 afterEach(() => {
   vi.clearAllMocks();
 });
 
 describe("notifyBulkOutcome", () => {
   it("reports a clean success with singular/plural nouns and skipped count", () => {
-    notifyBulkOutcome(
-      { succeeded: ["a"], failed: [] },
-      { entity: "PTO request", verbPast: "Approved", skipped: 2 },
-    );
+    notifyBulkOutcome({ succeeded: ["a"], failed: [] }, ptoMessages("Approved", 2));
     expect(success).toHaveBeenCalledExactlyOnceWith(
       "Approved 1 PTO request (2 ineligible skipped)",
     );
@@ -39,7 +64,7 @@ describe("notifyBulkOutcome", () => {
           { id: "f", error: "four" },
         ],
       },
-      { entity: "PTO request", verbPast: "Rejected" },
+      ptoMessages("Rejected"),
     );
     expect(warning).toHaveBeenCalledExactlyOnceWith("Rejected 2 PTO requests; 4 failed", {
       description: "one; two; three",
@@ -49,7 +74,7 @@ describe("notifyBulkOutcome", () => {
   it("errors when nothing succeeded", () => {
     notifyBulkOutcome(
       { succeeded: [], failed: [{ id: "c", error: "PTO is rejected and cannot be approved" }] },
-      { entity: "PTO request", verbPast: "Approved" },
+      ptoMessages("Approved"),
     );
     expect(error).toHaveBeenCalledExactlyOnceWith("All 1 selected PTO request failed", {
       description: "PTO is rejected and cannot be approved",

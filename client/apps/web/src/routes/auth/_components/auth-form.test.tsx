@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AuthForm, formatSessionId } from "./auth-form";
+import { AuthForm } from "./auth-form";
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -18,7 +18,6 @@ const mocks = vi.hoisted(() => ({
   setUser: vi.fn(),
   fetchManifest: vi.fn(),
   clearPermissions: vi.fn(),
-  getVersion: vi.fn(),
 }));
 
 vi.mock("react-router", async (importActual) => {
@@ -47,10 +46,6 @@ vi.mock("@/services/api", () => ({
       currentUser: mocks.currentUser,
     },
   },
-}));
-
-vi.mock("@/services/update", () => ({
-  updateService: { getVersion: mocks.getVersion },
 }));
 
 vi.mock("@trenova/shared/stores/auth-store", () => ({
@@ -131,8 +126,8 @@ function renderAuthForm() {
 
 async function submitCredentials() {
   const user = userEvent.setup();
-  await user.type(screen.getByPlaceholderText("name@work-email.com"), "test@example.com");
-  await user.type(screen.getByLabelText(/password/i), "password123");
+  await user.type(screen.getByLabelText("Email"), "test@example.com");
+  await user.type(screen.getByLabelText("Password"), "password123");
   await user.click(screen.getByRole("button", { name: /sign in/i }));
   return user;
 }
@@ -145,7 +140,6 @@ describe("AuthForm", () => {
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockClear());
     mocks.listProviders.mockResolvedValue([]);
-    mocks.getVersion.mockResolvedValue({ version: "4.12.0", environment: "development" });
     mocks.activateSessionRoles.mockResolvedValue({});
     mocks.logout.mockResolvedValue(undefined);
     mocks.fetchManifest.mockResolvedValue(manifest());
@@ -188,12 +182,11 @@ describe("AuthForm", () => {
   it("transitions from login to a dedicated organization selection step", async () => {
     renderAuthForm();
 
-    expect(screen.getByText("Welcome back")).toBeInTheDocument();
-    expect(screen.getByText("01 / 03")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument();
     await submitCredentials();
 
     await waitFor(() => expect(screen.getByText("Select organization")).toBeInTheDocument());
-    expect(screen.queryByText("Welcome back")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Sign in" })).not.toBeInTheDocument();
     expect(screen.getByText("02 / 03")).toBeInTheDocument();
     expect(screen.getByText("Alpha Logistics")).toBeInTheDocument();
     expect(screen.getByText("Bravo Freight")).toBeInTheDocument();
@@ -231,26 +224,12 @@ describe("AuthForm", () => {
     renderAuthForm();
     await submitCredentials();
 
-    await waitFor(() => expect(screen.getByText("Entering Alpha Logistics")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Opening Alpha Logistics")).toBeInTheDocument());
+    expect(screen.getByRole("heading", { name: "Welcome back, Test." })).toBeInTheDocument();
     expect(screen.getByText("1 role · 214 permissions")).toBeInTheDocument();
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith("/", { replace: true }), {
       timeout: 4000,
     });
-  });
-
-  it("fills the credential receipt with a trimmed session id once the credential is issued", async () => {
-    mocks.getUserOrganizations.mockResolvedValue([organization("org_1", "Alpha Logistics", true)]);
-    mocks.fetchManifest.mockResolvedValue(
-      manifest({ activeRoleIds: [ADMIN_ROLE.id], activeRoles: [ADMIN_ROLE] }),
-    );
-
-    renderAuthForm();
-    await submitCredentials();
-
-    await waitFor(() => expect(screen.getByText("Issued")).toBeInTheDocument());
-    expect(screen.getByText("ses_01K5F3AB")).toBeInTheDocument();
-    expect(screen.queryByText("ses_01K5F3ABCDEFGHJKMNPQRSTVWX")).not.toBeInTheDocument();
-    expect(screen.getByText("Authorized")).toBeInTheDocument();
   });
 
   it("ends the session when the user steps back out of the organization choice", async () => {
@@ -261,20 +240,6 @@ describe("AuthForm", () => {
     await user.click(screen.getByRole("button", { name: /back/i }));
 
     await waitFor(() => expect(mocks.logout).toHaveBeenCalledTimes(1));
-    expect(screen.getByText("Welcome back")).toBeInTheDocument();
-  });
-});
-
-describe("formatSessionId", () => {
-  it("keeps the prefix and the leading identifier characters", () => {
-    expect(formatSessionId("ses_01K5F3ABCDEFGHJKMNPQRSTVWX")).toBe("ses_01K5F3AB");
-  });
-
-  it("trims an unprefixed id to the same body length", () => {
-    expect(formatSessionId("01K5F3ABCDEFGHJKMNPQRSTVWX")).toBe("01K5F3AB");
-  });
-
-  it("passes through an absent id", () => {
-    expect(formatSessionId(undefined)).toBeUndefined();
+    expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument();
   });
 });

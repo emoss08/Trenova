@@ -1,6 +1,10 @@
 package userhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"fmt"
@@ -11,14 +15,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/session"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/roleservice"
-	"github.com/emoss08/trenova/internal/core/services/userservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,11 +38,11 @@ import (
 var errNotFound = errors.New("user not found")
 
 type setupOptions struct {
-	userRepo    *mocks.MockUserRepository
-	roleRepo    *mocks.MockRoleRepository
-	sessionRepo *mocks.MockSessionRepository
-	storage     *mocks.MockClient
-	permEngine  services.PermissionEngine
+	userRepo    *tenantportsmock.MockUserRepository
+	roleRepo    *permissionportsmock.MockRoleRepository
+	sessionRepo *sessionportsmock.MockSessionRepository
+	storage     *kernelportsmock.MockClient
+	permEngine  permissionports.PermissionEngine
 	cfg         *config.Config
 }
 
@@ -46,19 +50,19 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	t.Helper()
 
 	if opts.userRepo == nil {
-		opts.userRepo = mocks.NewMockUserRepository(t)
+		opts.userRepo = tenantportsmock.NewMockUserRepository(t)
 	}
 	if opts.roleRepo == nil {
-		opts.roleRepo = mocks.NewMockRoleRepository(t)
+		opts.roleRepo = permissionportsmock.NewMockRoleRepository(t)
 	}
 	if opts.sessionRepo == nil {
-		opts.sessionRepo = mocks.NewMockSessionRepository(t)
+		opts.sessionRepo = sessionportsmock.NewMockSessionRepository(t)
 	}
 	if opts.permEngine == nil {
 		opts.permEngine = &mocks.AllowAllPermissionEngine{}
 	}
 	if opts.storage == nil {
-		opts.storage = mocks.NewMockClient(t)
+		opts.storage = kernelportsmock.NewMockClient(t)
 	}
 	if opts.cfg == nil {
 		opts.cfg = &config.Config{
@@ -92,7 +96,7 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	roleSvc := roleservice.New(roleservice.Params{
 		Logger:           logger,
 		RoleRepo:         opts.roleRepo,
-		PermissionCache:  mocks.NewMockPermissionCacheRepository(t),
+		PermissionCache:  permissionportsmock.NewMockPermissionCacheRepository(t),
 		PermissionEngine: opts.permEngine,
 		Validator:        roleservice.NewTestValidator(),
 		Registry:         permission.NewEmptyRegistry(),
@@ -122,7 +126,7 @@ func TestUserHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	userID := pulid.MustNew("usr_")
-	repo := mocks.NewMockUserRepository(t)
+	repo := tenantportsmock.NewMockUserRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*tenant.User]{
 		Items: []*tenant.User{
 			{
@@ -175,8 +179,8 @@ func TestUserHandler_List_WithPagination(t *testing.T) {
 		})
 	}
 
-	repo := mocks.NewMockUserRepository(t)
-	repo.On("List", mock.Anything, mock.MatchedBy(func(req *repositories.ListUsersRequest) bool {
+	repo := tenantportsmock.NewMockUserRepository(t)
+	repo.On("List", mock.Anything, mock.MatchedBy(func(req *tenantports.ListUsersRequest) bool {
 		return req.Filter.Pagination.Limit == requestedLimit+1
 	})).Return(&pagination.ListResult[*tenant.User]{
 		Items: items,
@@ -224,7 +228,7 @@ func TestUserHandler_List_RejectsOffset(t *testing.T) {
 func TestUserHandler_List_Error(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockUserRepository(t)
+	repo := tenantportsmock.NewMockUserRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(nil, errors.New("database error"))
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
@@ -240,15 +244,15 @@ func TestUserHandler_List_Error(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
 }
 
-func makeUserRepo(t *testing.T) *mocks.MockUserRepository {
+func makeUserRepo(t *testing.T) *tenantportsmock.MockUserRepository {
 	t.Helper()
-	repo := mocks.NewMockUserRepository(t)
+	repo := tenantportsmock.NewMockUserRepository(t)
 	return repo
 }
 
-func makeUserRepoWithGetByID(t *testing.T, user *tenant.User, err error) *mocks.MockUserRepository {
+func makeUserRepoWithGetByID(t *testing.T, user *tenant.User, err error) *tenantportsmock.MockUserRepository {
 	t.Helper()
-	repo := mocks.NewMockUserRepository(t)
+	repo := tenantportsmock.NewMockUserRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(user, err)
 	return repo
 }
@@ -307,7 +311,7 @@ func TestUserHandler_Update_Success(t *testing.T) {
 	t.Parallel()
 
 	userID := pulid.MustNew("usr_")
-	repo := mocks.NewMockUserRepository(t)
+	repo := tenantportsmock.NewMockUserRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&tenant.User{
 		ID:                    userID,
 		CurrentOrganizationID: testutil.TestOrgID,
@@ -389,7 +393,7 @@ func TestUserHandler_Update_ServiceError(t *testing.T) {
 	t.Parallel()
 
 	userID := pulid.MustNew("usr_")
-	repo := mocks.NewMockUserRepository(t)
+	repo := tenantportsmock.NewMockUserRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&tenant.User{
 		ID:                    userID,
 		CurrentOrganizationID: testutil.TestOrgID,
@@ -474,7 +478,7 @@ func TestUserHandler_GetRoleAssignments_Success(t *testing.T) {
 	t.Parallel()
 
 	userID := pulid.MustNew("usr_")
-	roleRepo := mocks.NewMockRoleRepository(t)
+	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	roleRepo.ExpectedCalls = nil
 	roleRepo.On("GetUserRoleAssignments", mock.Anything, userID, mock.Anything).
 		Return([]*permission.UserRoleAssignment{
@@ -502,7 +506,7 @@ func TestUserHandler_GetRoleAssignments_Error(t *testing.T) {
 	t.Parallel()
 
 	userID := pulid.MustNew("usr_")
-	roleRepo := mocks.NewMockRoleRepository(t)
+	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	roleRepo.ExpectedCalls = nil
 	roleRepo.On("GetUserRoleAssignments", mock.Anything, userID, mock.Anything).
 		Return(nil, errors.New("role repo error"))
@@ -557,9 +561,9 @@ func TestUserHandler_GetEffectivePermissions_EngineError(t *testing.T) {
 	t.Parallel()
 
 	userID := pulid.MustNew("usr_")
-	permEngine := mocks.NewMockPermissionEngine(t)
+	permEngine := permissionportsmock.NewMockPermissionEngine(t)
 	permEngine.On("Check", mock.Anything, mock.Anything).
-		Return(&services.PermissionCheckResult{Allowed: true}, nil)
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil)
 	permEngine.On("GetEffectivePermissions", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, errors.New("permission engine error"))
 
@@ -580,7 +584,7 @@ func TestUserHandler_Patch_Success(t *testing.T) {
 	t.Parallel()
 
 	userID := pulid.MustNew("usr_")
-	repo := mocks.NewMockUserRepository(t)
+	repo := tenantportsmock.NewMockUserRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&tenant.User{
 		ID:                    userID,
 		CurrentOrganizationID: testutil.TestOrgID,
@@ -691,7 +695,7 @@ func TestUserHandler_Patch_UpdateError(t *testing.T) {
 	t.Parallel()
 
 	userID := pulid.MustNew("usr_")
-	repo := mocks.NewMockUserRepository(t)
+	repo := tenantportsmock.NewMockUserRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&tenant.User{
 		ID:                    userID,
 		CurrentOrganizationID: testutil.TestOrgID,
@@ -898,9 +902,9 @@ func TestUserHandler_SimulatePermissions_Success(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	addRoleID := pulid.MustNew("rol_")
 
-	permEngine := mocks.NewMockPermissionEngine(t)
+	permEngine := permissionportsmock.NewMockPermissionEngine(t)
 	permEngine.On("SimulatePermissions", mock.Anything, mock.Anything).
-		Return(&services.EffectivePermissions{
+		Return(&permissionports.EffectivePermissions{
 			UserID:         userID,
 			OrganizationID: testutil.TestOrgID,
 		}, nil)
@@ -964,7 +968,7 @@ func TestUserHandler_SimulatePermissions_EngineError(t *testing.T) {
 	t.Parallel()
 
 	userID := pulid.MustNew("usr_")
-	permEngine := mocks.NewMockPermissionEngine(t)
+	permEngine := permissionportsmock.NewMockPermissionEngine(t)
 	permEngine.On("SimulatePermissions", mock.Anything, mock.Anything).
 		Return(nil, errors.New("simulate error"))
 
@@ -1042,7 +1046,7 @@ func TestUserHandler_SwitchOrganization_Success(t *testing.T) {
 	targetOrgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	sessionRepo := mocks.NewMockSessionRepository(t)
+	sessionRepo := sessionportsmock.NewMockSessionRepository(t)
 	sessionRepo.On("Get", mock.Anything, mock.Anything).Return(&session.Session{
 		ID:             sessionID,
 		UserID:         testutil.TestUserID,
@@ -1052,7 +1056,7 @@ func TestUserHandler_SwitchOrganization_Success(t *testing.T) {
 	}, nil)
 	sessionRepo.On("Update", mock.Anything, mock.Anything).Return(nil)
 
-	userRepo := mocks.NewMockUserRepository(t)
+	userRepo := tenantportsmock.NewMockUserRepository(t)
 	userRepo.On("GetOrganizations", mock.Anything, mock.Anything).
 		Return([]*tenant.OrganizationMembership{
 			{
@@ -1176,7 +1180,7 @@ func TestUserHandler_SwitchOrganization_ServiceError(t *testing.T) {
 	sessionID := pulid.MustNew("ses_")
 	targetOrgID := pulid.MustNew("org_")
 
-	sessionRepo := mocks.NewMockSessionRepository(t)
+	sessionRepo := sessionportsmock.NewMockSessionRepository(t)
 	sessionRepo.On("Get", mock.Anything, mock.Anything).Return(nil, errors.New("session not found"))
 
 	handler := setupUserHandler(t, setupOptions{sessionRepo: sessionRepo})
@@ -1209,7 +1213,7 @@ func TestUserHandler_UpdateMySettings_Success(t *testing.T) {
 		TimeFormat:            domaintypes.TimeFormat24Hour,
 	}
 
-	repo := mocks.NewMockUserRepository(t)
+	repo := tenantportsmock.NewMockUserRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(newTestUserForHandler(), nil).Twice()
 	repo.On("Update", mock.Anything, mock.Anything).Return(user, nil).Once()
 
@@ -1264,7 +1268,7 @@ func TestUserHandler_ChangeMyPassword_Success(t *testing.T) {
 	require.NoError(t, err)
 	user.Password = hashedPassword
 
-	repo := mocks.NewMockUserRepository(t)
+	repo := tenantportsmock.NewMockUserRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(user, nil).Twice()
 	repo.On("UpdatePassword", mock.Anything, mock.Anything).Return(nil).Once()
 

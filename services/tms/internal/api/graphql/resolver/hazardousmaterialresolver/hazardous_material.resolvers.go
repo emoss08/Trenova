@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) HazardousMaterials(ctx context.Context, input gqlmodel.D
 
 	result, err := r.HazardousMaterialService.ListConnection(
 		ctx,
-		&repositories.ListHazardousMaterialConnectionRequest{
+		&hazardousmaterialports.ListHazardousMaterialConnectionRequest{
 			Filter:                   tableInput.Filter,
 			Cursor:                   tableInput.Cursor,
 			HazardousMaterialColumns: hazardousMaterialColumns(ctx, "edges.node"),
@@ -53,7 +53,7 @@ func (r *QueryResolver) HazardousMaterial(ctx context.Context, id string) (*haza
 		return nil, err
 	}
 
-	return r.HazardousMaterialService.Get(ctx, repositories.GetHazardousMaterialByIDRequest{
+	return r.HazardousMaterialService.Get(ctx, hazardousmaterialports.GetHazardousMaterialByIDRequest{
 		ID:         hazardousMaterialID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

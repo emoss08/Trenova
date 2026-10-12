@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -96,11 +96,15 @@ func (r *MutationResolver) DeleteCarrierCapacityPosting(
 		return false, err
 	}
 
-	if err = r.CarrierCapacityService.Delete(ctx, &repositories.DeleteCarrierCapacityPostingRequest{
-		ID:         postingID,
-		Version:    int64(version),
-		TenantInfo: base.TenantInfo(authCtx),
-	}, actorutil.FromAuthContext(authCtx)); err != nil {
+	if err = r.CarrierCapacityService.Delete(
+		ctx,
+		&carriercapacityports.DeleteCarrierCapacityPostingRequest{
+			ID:         postingID,
+			Version:    int64(version),
+			TenantInfo: base.TenantInfo(authCtx),
+		},
+		actorutil.FromAuthContext(authCtx),
+	); err != nil {
 		return false, err
 	}
 
@@ -133,7 +137,7 @@ func (r *QueryResolver) CarrierCapacityPostings(
 		return nil, err
 	}
 
-	req := &repositories.ListCarrierCapacityPostingsRequest{
+	req := &carriercapacityports.ListCarrierCapacityPostingsRequest{
 		Filter:    tableInput.Filter,
 		Cursor:    tableInput.Cursor,
 		CarrierID: carrierFilter,
@@ -168,7 +172,7 @@ func (r *QueryResolver) CarrierCapacityPosting(
 		return nil, err
 	}
 
-	return r.CarrierCapacityService.Get(ctx, &repositories.GetCarrierCapacityPostingRequest{
+	return r.CarrierCapacityService.Get(ctx, &carriercapacityports.GetCarrierCapacityPostingRequest{
 		ID:         postingID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

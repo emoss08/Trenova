@@ -109,6 +109,28 @@ export function scopeLabel(
   }
 }
 
+/**
+ * Who a memory is kept for, as the one word a sentence names them by: "just
+ * you", the team's name, or "everyone". At the start of a line it opens with a
+ * capital: "Just you", "Everyone".
+ */
+export function scopeWord(
+  memory: { scope: string; roleName?: string | null },
+  t: TranslateFn,
+  opening = false,
+): string {
+  switch (memory.scope) {
+    case "User":
+      return opening ? t("Just you") : t("just you");
+    case "Role":
+      return memory.roleName || (opening ? t("Your team") : t("your team"));
+    case "Agent":
+      return opening ? t("Everyone") : t("everyone");
+    default:
+      return opening ? t("Organization") : t("the whole organization");
+  }
+}
+
 type WhyOf = {
   reason?: string | null;
   quotes?: readonly string[] | null;
@@ -154,4 +176,39 @@ export function memoryWhy(memory: WhyOf, t: TranslateFn): MemoryWhyLine[] {
   }
 
   return lines;
+}
+
+const STEP_NUMBER = /\s*\d+\.\s+/;
+const LEADING_STEP_NUMBER = /^\d+\.\s+/;
+
+/**
+ * A memory's steps: one per line when it is written on lines, otherwise split
+ * at its numbers ("1. Search… 2. Then…"). Text that does not split comes back
+ * as one entry, which reads as a paragraph rather than a list of one.
+ */
+export function splitSteps(content: string): string[] {
+  const text = content.trim();
+  if (text === "") {
+    return [];
+  }
+
+  const parts = text.includes("\n")
+    ? text.split(/\r?\n/).map((line) => line.trim().replace(LEADING_STEP_NUMBER, ""))
+    : text.split(STEP_NUMBER);
+
+  return parts.map((part) => part.trim()).filter((part) => part !== "");
+}
+
+/**
+ * Steps edited one per line, written back the way the memory was written:
+ * on lines when it was, numbered on one line when it was numbered, and as
+ * plain text otherwise.
+ */
+export function joinSteps(lines: readonly string[], original: string): string {
+  const steps = lines.map((line) => line.trim()).filter((line) => line !== "");
+  if (original.includes("\n") || !STEP_NUMBER.test(original)) {
+    return steps.join("\n");
+  }
+
+  return steps.map((step, index) => `${index + 1}. ${step}`).join(" ");
 }

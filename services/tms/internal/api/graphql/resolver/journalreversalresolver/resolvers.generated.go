@@ -4,7 +4,7 @@ package journalreversalresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	journalreversalservice "github.com/emoss08/trenova/internal/core/services/journalreversalservice"
+	journalreversalservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
 )
 
 type Deps struct {

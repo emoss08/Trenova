@@ -17,6 +17,7 @@ export default function CarrierBatchesTable() {
   return (
     <DataTable<CarrierSettlementBatchRow>
       name="Carrier Settlement Batch"
+      emptyTitle={t("No carrier settlement batches yet")}
       queryKey="carrier-settlement-batch-list"
       graphql={carrierSettlementBatchTableGraphQLConfig}
       resource={Resource.CarrierSettlement}

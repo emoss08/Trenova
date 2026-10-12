@@ -4,6 +4,7 @@ import {
   optionalStringSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const locationCategoryTypeSchema = z.enum([
   "Terminal",
@@ -31,7 +32,10 @@ export type FacilityType = z.infer<typeof facilityTypeSchema>;
 
 export const locationCategorySchema = z.object({
   ...tenantInfoSchema.shape,
-  name: z.string().min(1, { message: "Name is required" }).max(100),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(100),
   description: optionalStringSchema,
   type: locationCategoryTypeSchema,
   facilityType: facilityTypeSchema.optional().nullable(),

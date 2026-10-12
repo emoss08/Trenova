@@ -1,4 +1,3 @@
-"use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -120,7 +119,7 @@ export function DataTableSaveConfigDialog({
       onSaved?.(created);
 
       toast.success(t("View saved"), {
-        description: `"${created.name}" has been saved.`,
+        description: t('"{0}" has been saved.', created.name),
       });
     },
   });

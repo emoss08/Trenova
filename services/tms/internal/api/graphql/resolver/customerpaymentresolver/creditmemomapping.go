@@ -2,7 +2,7 @@ package customerpaymentresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -11,7 +11,7 @@ import (
 func applyCreditMemoRequestFromInput(
 	input *gqlmodel.ApplyCreditMemoInput,
 	tenantInfo pagination.TenantInfo,
-) (*serviceports.ApplyCreditMemoRequest, error) {
+) (*customerpaymentports.ApplyCreditMemoRequest, error) {
 	creditMemoID, err := pulid.MustParse(input.CreditMemoID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -21,7 +21,11 @@ func applyCreditMemoRequestFromInput(
 		)
 	}
 
-	applications := make([]*serviceports.CreditMemoApplicationInput, 0, len(input.Applications))
+	applications := make(
+		[]*customerpaymentports.CreditMemoApplicationInput,
+		0,
+		len(input.Applications),
+	)
 	multiErr := errortypes.NewMultiError()
 	for idx, app := range input.Applications {
 		if app == nil {
@@ -35,7 +39,7 @@ func applyCreditMemoRequestFromInput(
 				Add("invoiceId", errortypes.ErrInvalid, "Invalid invoice")
 			continue
 		}
-		applications = append(applications, &serviceports.CreditMemoApplicationInput{
+		applications = append(applications, &customerpaymentports.CreditMemoApplicationInput{
 			InvoiceID:          invoiceID,
 			AppliedAmountMinor: int64(app.AppliedAmountMinor),
 		})
@@ -44,7 +48,7 @@ func applyCreditMemoRequestFromInput(
 		return nil, multiErr
 	}
 
-	return &serviceports.ApplyCreditMemoRequest{
+	return &customerpaymentports.ApplyCreditMemoRequest{
 		CreditMemoID:   creditMemoID,
 		AccountingDate: int64(input.AccountingDate),
 		Applications:   applications,

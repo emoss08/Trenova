@@ -9,11 +9,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -25,18 +25,18 @@ import (
 // everything else, which is what a person who may use the assistant but holds
 // no administrative grant over it looks like.
 type readOnlyEngine struct {
-	services.PermissionEngine
+	permissionports.PermissionEngine
 
 	asked []permission.Operation
 }
 
 func (e *readOnlyEngine) Check(
 	_ context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	e.asked = append(e.asked, req.Operation)
 
-	return &services.PermissionCheckResult{
+	return &permissionports.PermissionCheckResult{
 		Allowed: req.Resource == permission.ResourceAssistant.String() &&
 			req.Operation == permission.OpRead,
 	}, nil
@@ -44,22 +44,44 @@ func (e *readOnlyEngine) Check(
 
 // reachedService records that a request got past the permission middleware.
 type reachedService struct {
-	services.AssistantService
+	agentports.AssistantService
 
 	reached bool
+	listed  *agentports.ListThreadsRequest
+	counted *agentports.CountThreadShelvesRequest
+}
+
+func (s *reachedService) ListThreads(
+	_ context.Context,
+	req agentports.ListThreadsRequest,
+) (*agentports.ThreadPage, error) {
+	s.reached = true
+	s.listed = &req
+
+	return &agentports.ThreadPage{}, nil
+}
+
+func (s *reachedService) CountThreadShelves(
+	_ context.Context,
+	req *agentports.CountThreadShelvesRequest,
+) (*agentports.ThreadShelfCounts, error) {
+	s.reached = true
+	s.counted = req
+
+	return &agentports.ThreadShelfCounts{}, nil
 }
 
 func (s *reachedService) UpdateThread(
 	context.Context,
-	*services.UpdateThreadRequest,
-	*services.RequestActor,
+	*agentports.UpdateThreadRequest,
+	*permissionports.RequestActor,
 ) (*conversation.Thread, error) {
 	s.reached = true
 
 	return &conversation.Thread{}, nil
 }
 
-func (s *reachedService) DeleteThread(context.Context, repositories.GetThreadRequest) error {
+func (s *reachedService) DeleteThread(context.Context, agentports.GetThreadRequest) error {
 	s.reached = true
 
 	return nil
@@ -67,24 +89,24 @@ func (s *reachedService) DeleteThread(context.Context, repositories.GetThreadReq
 
 func (s *reachedService) PinArtifact(
 	context.Context,
-	repositories.GetThreadRequest,
+	agentports.GetThreadRequest,
 	pulid.ID,
 	bool,
-) (*services.AssistantArtifact, error) {
+) (*agentports.AssistantArtifact, error) {
 	s.reached = true
 
-	return &services.AssistantArtifact{}, nil
+	return &agentports.AssistantArtifact{}, nil
 }
 
 func (s *reachedService) SaveProposalEdits(
 	context.Context,
-	repositories.GetThreadRequest,
+	agentports.GetThreadRequest,
 	pulid.ID,
 	map[string]any,
-) (*services.ProposalEdits, error) {
+) (*agentports.ProposalEdits, error) {
 	s.reached = true
 
-	return &services.ProposalEdits{}, nil
+	return &agentports.ProposalEdits{}, nil
 }
 
 func call(t *testing.T, method, path, body string) (*reachedService, int) {

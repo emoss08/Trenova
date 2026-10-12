@@ -1,8 +1,21 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import { useDeskSettingsStore } from "@/stores/desk-settings-store";
+import { stubLayout } from "@/test/layout";
 import type { AssistantThread } from "@/types/assistant";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  DeskRailShelf,
+  DeskShelfCount,
+  DeskShelfPaging,
+} from "@/components/desk-chat/rail/desk-rail-rows";
+import {
+  DESK_SHELF_KEYS,
+  deskShelfEdges,
+  groupDeskThreadsByShelf,
+  type DeskShelfKey,
+} from "@/components/desk-chat/rail/desk-threads";
 import { DeskRail, type DeskRailProps } from "../desk-rail";
 
 const DAY = 24 * 60 * 60;
@@ -25,8 +38,10 @@ const agents = new Map(
   ].map((agent) => [agent.id, agent as unknown as AgentChoice]),
 );
 
+// A conversation is made before its first message, so it is never created after its last one.
 function thread(overrides: Partial<AssistantThread> & { id: string }): AssistantThread {
   const now = Math.floor(Date.now() / 1000);
+  const lastMessageAt = overrides.lastMessageAt ?? now - 60;
   return {
     businessUnitId: "bu",
     organizationId: "org",
@@ -40,27 +55,62 @@ function thread(overrides: Partial<AssistantThread> & { id: string }): Assistant
     canContinue: true,
     title: "Blocked invoices",
     status: "Active",
-    lastMessageAt: now - 60,
+    lastMessageAt,
     version: 0,
-    createdAt: now - 120,
+    createdAt: Math.min(now - 120, lastMessageAt),
     updatedAt: now - 60,
     ...overrides,
   };
 }
 
-function renderRail(props: Partial<DeskRailProps> = {}) {
-  const handlers = {
-    onSearch: vi.fn(),
-    onSettings: vi.fn(),
-    onTogglePin: vi.fn(),
-    onDelete: vi.fn(),
-    onRename: vi.fn(),
-  };
-  const view = render(
+type RailOptions = Partial<
+  Omit<DeskRailProps, "shelves" | "today" | "noConversations" | "onLoadMore">
+> & {
+  threads?: AssistantThread[];
+  /** How each shelf is being read; every shelf read to its end by default. */
+  paging?: Partial<Record<DeskShelfKey, Partial<DeskShelfPaging>>>;
+  /** What the server counted on each shelf; what was read of it by default. */
+  counts?: Partial<Record<DeskShelfKey, DeskShelfCount>>;
+};
+
+/** When the rail is drawn: each test's conversations are timed against the moment it runs. */
+const HARNESS_NOW = Math.floor(Date.now() / 1000);
+
+const READ_TO_END: DeskShelfPaging = { loading: false, hasMore: false, failed: false };
+
+/**
+ * The rail as the Desk draws it: the conversations put on their shelves the
+ * way the shelves' own reads would hand them back, folded as the person left
+ * them, so a heading pressed in a test folds its shelf as it does on the Desk.
+ */
+function RailHarness({
+  threads = [],
+  paging = {},
+  counts = {},
+  onLoadMore,
+  ...props
+}: RailOptions & {
+  onLoadMore: DeskRailProps["onLoadMore"];
+  handlers: Pick<DeskRailProps, "onSearch" | "onSettings" | "onTogglePin" | "onDelete">;
+}) {
+  const collapsed = useDeskSettingsStore((store) => store.collapsedShelves);
+  const edges = deskShelfEdges(HARNESS_NOW, "UTC");
+  const grouped = new Map(
+    groupDeskThreadsByShelf(threads, edges, true).map((shelf) => [shelf.key, shelf.threads]),
+  );
+  const shelves: DeskRailShelf[] = DESK_SHELF_KEYS.map((key) => ({
+    key,
+    collapsed: collapsed.includes(key),
+    count: counts[key] ?? grouped.get(key)?.length ?? 0,
+    threads: grouped.get(key) ?? [],
+    paging: { ...READ_TO_END, ...paging[key] },
+  }));
+  const { handlers, ...rest } = props;
+
+  return (
     <MemoryRouter initialEntries={["/desk"]}>
       <DeskRail
         place="today"
-        threads={[]}
         agentsById={agents}
         activeThreadId={null}
         canWatch
@@ -68,21 +118,50 @@ function renderRail(props: Partial<DeskRailProps> = {}) {
         watchtowerCount={0}
         decisionsCount={0}
         decisionsWaitHere={false}
+        shelves={shelves}
+        today={edges.today}
+        noConversations={shelves.every((shelf) => shelf.threads.length === 0 && shelf.count === 0)}
+        onLoadMore={onLoadMore}
         {...handlers}
-        {...props}
+        {...rest}
       />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
-
-  return { ...view, handlers };
 }
+
+function renderRail(options: RailOptions = {}) {
+  const handlers = {
+    onSearch: vi.fn(),
+    onSettings: vi.fn(),
+    onTogglePin: vi.fn(),
+    onDelete: vi.fn(),
+  };
+  const onLoadMore = vi.fn<(shelf: DeskShelfKey) => void>();
+  const element = (next: RailOptions) => (
+    <RailHarness {...next} handlers={handlers} onLoadMore={onLoadMore} />
+  );
+  const view = render(element(options));
+
+  return {
+    ...view,
+    handlers,
+    onLoadMore,
+    /** Renders the same rail again with new props, as the Desk does on every change. */
+    update: (next: RailOptions) => view.rerender(element(next)),
+  };
+}
+
+let restoreLayout = () => {};
 
 beforeEach(() => {
   state.live = new Set();
+  useDeskSettingsStore.setState({ collapsedShelves: [] });
+  restoreLayout = stubLayout(320);
 });
 
 afterEach(() => {
   vi.useRealTimers();
+  restoreLayout();
 });
 
 /**
@@ -104,6 +183,55 @@ describe("DeskRail", () => {
     const headings = [...document.querySelectorAll(".dk-sb-gh")].map((node) => node.textContent);
     expect(headings).toEqual(["Pinned", "Today", "Previous 7 days"]);
     expect(screen.getByText("Pinned question")).toBeInTheDocument();
+  });
+
+  it("folds a shelf from its heading and opens it again", () => {
+    const now = Math.floor(Date.now() / 1000);
+    renderRail({
+      threads: [
+        thread({ id: "a", title: "Today's question" }),
+        thread({ id: "b", title: "Old question", lastMessageAt: now - 3 * DAY }),
+      ],
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Today", expanded: true }));
+
+    expect(
+      screen.getByRole("button", { name: "Today, 1 conversation", expanded: false }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Today's question")).not.toBeInTheDocument();
+    expect(screen.getByText("Old question")).toBeInTheDocument();
+    expect(useDeskSettingsStore.getState().collapsedShelves).toEqual(["today"]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Today, 1 conversation", expanded: false }));
+
+    expect(screen.getByText("Today's question")).toBeInTheDocument();
+    expect(useDeskSettingsStore.getState().collapsedShelves).toEqual([]);
+  });
+
+  it("draws a shelf folded the way it was left", () => {
+    useDeskSettingsStore.setState({ collapsedShelves: ["today"] });
+    renderRail({ threads: [thread({ id: "a", title: "Today's question" })] });
+
+    expect(
+      screen.getByRole("button", { name: "Today, 1 conversation", expanded: false }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Today's question")).not.toBeInTheDocument();
+  });
+
+  it("keeps the open conversation on a folded shelf", () => {
+    useDeskSettingsStore.setState({ collapsedShelves: ["today"] });
+    renderRail({
+      place: "thread",
+      activeThreadId: "a",
+      threads: [
+        thread({ id: "a", title: "Open question" }),
+        thread({ id: "b", title: "Other question" }),
+      ],
+    });
+
+    expect(screen.getByText("Open question")).toBeInTheDocument();
+    expect(screen.queryByText("Other question")).not.toBeInTheDocument();
   });
 
   it("says what each conversation waits on with its dot", () => {
@@ -156,6 +284,50 @@ describe("DeskRail", () => {
     const row = screen.getByText("Open one").closest(".dk-sb-c");
     expect(row).toHaveClass("dk-on");
     expect(row?.querySelector(".dk-sb-dot")).not.toHaveClass("dk-s-new");
+  });
+
+  // The same rail, drawn again as the person moves: the row must follow the
+  // conversation being opened and then read, not keep the dot it first drew.
+  it("quiets a new reply's dot once its conversation is opened, and after it is read", () => {
+    const unread = thread({
+      id: "new",
+      title: "Unread one",
+      attention: { pendingDecisions: 0, lastTurnFailed: false, unread: true },
+    });
+    const { update } = renderRail({ threads: [unread] });
+    const row = () => screen.getByText("Unread one").closest(".dk-sb-c");
+
+    expect(row()?.querySelector(".dk-sb-dot")).toHaveClass("dk-s-new");
+
+    update({ threads: [unread], place: "thread", activeThreadId: "new" });
+    expect(row()).toHaveClass("dk-on");
+    expect(row()?.querySelector(".dk-sb-dot")).not.toHaveClass("dk-s-new");
+
+    const read = {
+      ...unread,
+      attention: { pendingDecisions: 0, lastTurnFailed: false, unread: false },
+    };
+    update({ threads: [read], place: "today", activeThreadId: null });
+    expect(row()).not.toHaveClass("dk-on");
+    expect(row()?.querySelector(".dk-sb-dot")).not.toHaveClass("dk-s-new");
+  });
+
+  it("marks a reply that arrives later in a conversation already listed", () => {
+    const seen = thread({
+      id: "a",
+      title: "Seen one",
+      attention: { pendingDecisions: 0, lastTurnFailed: false, unread: false },
+    });
+    const { update } = renderRail({ threads: [seen] });
+    const dot = () => screen.getByText("Seen one").closest(".dk-sb-c")?.querySelector(".dk-sb-dot");
+
+    expect(dot()).not.toHaveClass("dk-s-new");
+    update({
+      threads: [
+        { ...seen, attention: { pendingDecisions: 0, lastTurnFailed: false, unread: true } },
+      ],
+    });
+    expect(dot()).toHaveClass("dk-s-new");
   });
 
   it("pins in one click and deletes only after asking again", () => {
@@ -212,31 +384,161 @@ describe("DeskRail", () => {
   });
 });
 
-describe("DeskRail rename", () => {
-  it("renames a conversation in place: double-click, type, Enter", () => {
-    const { handlers } = renderRail({ threads: [thread({ id: "a", title: "Old name" })] });
-    fireEvent.doubleClick(screen.getByText("Old name"));
-    const field = screen.getByRole("textbox", { name: "Conversation name" });
-    fireEvent.change(field, { target: { value: "  New name  " } });
-    fireEvent.keyDown(field, { key: "Enter" });
-    expect(handlers.onRename).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "a" }),
-      "New name",
-    );
-  });
+describe("DeskRail rows", () => {
+  // The name is changed from the top bar; a double-click on the rail is a
+  // second click on the row, not an edit.
+  it("does not turn a row into a field on double-click", () => {
+    renderRail({ threads: [thread({ id: "a", title: "Old name" })] });
 
-  it("leaves the name alone on Escape", () => {
-    const { handlers } = renderRail({ threads: [thread({ id: "a", title: "Same" })] });
-    fireEvent.doubleClick(screen.getByText("Same"));
-    fireEvent.keyDown(screen.getByRole("textbox", { name: "Conversation name" }), {
-      key: "Escape",
-    });
-    expect(handlers.onRename).not.toHaveBeenCalled();
-    expect(screen.getByText("Same")).toBeInTheDocument();
+    fireEvent.doubleClick(screen.getByText("Old name"));
+
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByText("Old name")).toBeInTheDocument();
   });
 
   it("says where chats will show up when there are none", () => {
     renderRail();
     expect(screen.getByText(/Your chats will show up here/)).toBeInTheDocument();
+  });
+});
+
+function many(count: number): AssistantThread[] {
+  return Array.from({ length: count }, (_, index) =>
+    thread({ id: `t${index}`, title: `Conversation ${index}` }),
+  );
+}
+
+/**
+ * Someone who has used the Desk for months has thousands of conversations.
+ * Only the rows near the viewport are mounted, and each open shelf's next
+ * page is read as the reader nears the place it arrives; a folded shelf reads
+ * nothing.
+ */
+describe("DeskRail paging", () => {
+  it("mounts only the conversations near the viewport", () => {
+    renderRail({ threads: many(300) });
+
+    const mounted = document.querySelectorAll(".dk-sb-c");
+    expect(mounted.length).toBeGreaterThan(0);
+    expect(mounted.length).toBeLessThan(40);
+    expect(screen.getByText("Conversation 0")).toBeInTheDocument();
+    expect(screen.queryByText("Conversation 299")).not.toBeInTheDocument();
+  });
+
+  it("asks for a shelf's next page when the reader is near where it arrives", () => {
+    const { onLoadMore } = renderRail({ threads: many(3), paging: { today: { hasMore: true } } });
+
+    expect(onLoadMore).toHaveBeenCalledWith("today");
+    expect(onLoadMore).not.toHaveBeenCalledWith("yesterday");
+  });
+
+  it("does not ask while the reader is far from where it arrives", () => {
+    const now = Math.floor(Date.now() / 1000);
+    const { onLoadMore } = renderRail({
+      threads: [...many(300), thread({ id: "y", lastMessageAt: now - DAY, createdAt: now - DAY })],
+      paging: { yesterday: { hasMore: true } },
+    });
+
+    expect(onLoadMore).not.toHaveBeenCalled();
+  });
+
+  it("does not ask again while a page is loading, and shows that it is", () => {
+    const { onLoadMore } = renderRail({
+      threads: many(3),
+      paging: { today: { hasMore: true, loading: true } },
+    });
+
+    expect(onLoadMore).not.toHaveBeenCalled();
+    expect(screen.getByRole("status", { name: "Loading more..." })).toBeInTheDocument();
+  });
+
+  it("shows a shelf's first page loading under its heading", () => {
+    renderRail({ counts: { today: 4 }, paging: { today: { loading: true } } });
+
+    expect(screen.getByRole("button", { name: "Today", expanded: true })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Loading more..." })).toBeInTheDocument();
+  });
+
+  it("does not ask when a shelf has been read to its end", () => {
+    const { onLoadMore } = renderRail({ threads: many(3) });
+
+    expect(onLoadMore).not.toHaveBeenCalled();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("reads nothing of a folded shelf, and shows nothing loading under it", () => {
+    useDeskSettingsStore.setState({ collapsedShelves: ["today"] });
+    const { onLoadMore } = renderRail({
+      counts: { today: 120 },
+      paging: { today: { hasMore: true, loading: true } },
+    });
+
+    expect(onLoadMore).not.toHaveBeenCalled();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  // A failed page is not asked for again on every render, which would hammer
+  // a server that is already struggling; the person retries it.
+  it("offers to try again when a page could not be read", () => {
+    const { onLoadMore } = renderRail({
+      threads: many(3),
+      paging: { today: { hasMore: true, failed: true } },
+    });
+
+    expect(onLoadMore).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load more conversations");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+    expect(onLoadMore).toHaveBeenCalledWith("today");
+  });
+});
+
+/**
+ * The server counts every shelf, so the rail knows which shelves hold
+ * anything without reading them, and a folded one says how much it holds.
+ */
+describe("DeskRail shelf counts", () => {
+  it("shows how many a folded shelf holds", () => {
+    useDeskSettingsStore.setState({ collapsedShelves: ["month"] });
+    renderRail({ counts: { month: 42 } });
+
+    const heading = screen.getByRole("button", {
+      name: "Previous 30 days, 42 conversations",
+      expanded: false,
+    });
+    expect(heading.querySelector(".dk-sb-ct")).toHaveTextContent("42");
+  });
+
+  it("leaves the count off an open shelf", () => {
+    renderRail({ threads: many(2), counts: { today: 2 } });
+
+    expect(
+      screen.getByRole("button", { name: "Today", expanded: true }).querySelector(".dk-sb-ct"),
+    ).toBeNull();
+  });
+
+  it("leaves out a shelf counted empty", () => {
+    renderRail({ threads: many(1), counts: { week: 0 } });
+
+    expect(screen.queryByRole("button", { name: /Previous 7 days/ })).not.toBeInTheDocument();
+  });
+
+  it("keeps the heading of a shelf that could not be counted, so it can be opened", () => {
+    useDeskSettingsStore.setState({ collapsedShelves: ["older"] });
+    renderRail({ threads: many(1), counts: { older: "unknown" } });
+
+    expect(screen.getByRole("button", { name: "Older", expanded: false })).toBeInTheDocument();
+  });
+
+  it("draws no heading for a shelf still being counted with nothing read", () => {
+    renderRail({ threads: many(1), counts: { older: "counting" } });
+
+    expect(screen.queryByRole("button", { name: /Older/ })).not.toBeInTheDocument();
+  });
+
+  it("does not say there are no chats until every shelf is counted", () => {
+    renderRail({ counts: { today: "counting" } });
+
+    expect(screen.queryByText(/Your chats will show up here/)).not.toBeInTheDocument();
   });
 });

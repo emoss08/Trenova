@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   findCoverageIssues,
+  laneEndDisplay,
   laneKeyDisplay,
   laneKeyPreview,
   laneKeyScopeIds,
@@ -396,5 +397,87 @@ describe("findCoverageIssues", () => {
     ];
 
     expect(findCoverageIssues(rules)).toEqual([]);
+  });
+});
+
+describe("laneEndDisplay", () => {
+  const names: Record<string, string> = {
+    st_ga: "GA",
+    st_tx: "TX",
+    zn_se: "Southeast",
+    loc_1: "Acme DC",
+  };
+  const resolve = (_type: RateScopeType, value: string) => names[value];
+
+  it("reads each kind of end the way a person names a place", () => {
+    const rule = lane({
+      originScopeType: "CityState",
+      originScopeValue: "st_ga",
+      originCity: "Atlanta",
+      destinationScopeType: "State",
+      destinationScopeValue: "st_tx",
+    });
+
+    expect(laneEndDisplay(rule, "origin", resolve)).toBe("Atlanta, GA");
+    expect(laneEndDisplay(rule, "destination", resolve)).toBe("TX");
+    expect(
+      laneEndDisplay(
+        lane({ originScopeType: "Zone", originScopeValue: "zn_se" }),
+        "origin",
+        resolve,
+      ),
+    ).toBe("Southeast");
+    expect(
+      laneEndDisplay(
+        lane({ originScopeType: "Location", originScopeValue: "loc_1" }),
+        "origin",
+        resolve,
+      ),
+    ).toBe("Acme DC");
+  });
+
+  it("writes postal codes, countries and anywhere as they are", () => {
+    expect(
+      laneEndDisplay(
+        lane({ originScopeType: "Zip5", originScopeValue: "30303" }),
+        "origin",
+        resolve,
+      ),
+    ).toBe("ZIP 30303");
+    expect(
+      laneEndDisplay(
+        lane({ originScopeType: "Zip3", originScopeValue: "30303" }),
+        "origin",
+        resolve,
+      ),
+    ).toBe("ZIP 303xx");
+    expect(
+      laneEndDisplay(
+        lane({ originScopeType: "Country", originScopeValue: "mx" }),
+        "origin",
+        resolve,
+      ),
+    ).toBe("MX");
+    expect(laneEndDisplay(lane(), "destination", resolve)).toBe("Anywhere");
+  });
+
+  it("reads a radius around its city in miles", () => {
+    expect(
+      laneEndDisplay(
+        lane({ originScopeType: "Radius", originCity: "Memphis", originRadiusMeters: 80467.2 }),
+        "origin",
+        resolve,
+      ),
+    ).toBe("Within 50 mi of Memphis");
+  });
+
+  it("never shows an id whose name has not come back yet", () => {
+    expect(
+      laneEndDisplay(
+        lane({ originScopeType: "State", originScopeValue: "st_unknown" }),
+        "origin",
+        resolve,
+      ),
+    ).toBe("…");
   });
 });

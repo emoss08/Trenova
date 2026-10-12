@@ -23,7 +23,6 @@ var editionPlatformModes = []PlatformMode{PlatformModeCloud}
 var editionSectionPaths = []string{
 	"platform.cloud",
 	"platform.controlPlane",
-	"system.networkPulse",
 	"aiRetraining",
 }
 

@@ -1,3 +1,4 @@
+import { defineLabels } from "@trenova/shared/i18n/labels";
 /**
  * Labels and tones for leave of absence and FMLA. The regulation's own words
  * are used where it has them, so somebody reading this beside a WH-380 sees the
@@ -6,18 +7,18 @@
 
 export type LeaveTone = "success" | "danger" | "warning" | "neutral" | "info";
 
-export const MEASUREMENT_METHOD_LABELS: Record<string, string> = {
+export const MEASUREMENT_METHOD_LABELS: Record<string, string> = defineLabels({
   CalendarYear: "Calendar year",
   HireAnniversary: "Twelve months from the hire anniversary",
   ForwardFromFirstUse: "Twelve months forward from first use",
   RollingBackward: "Rolling twelve months looking back",
-};
+});
 
 export function measurementMethodLabel(value: string): string {
   return MEASUREMENT_METHOD_LABELS[value] ?? value;
 }
 
-export const MEASUREMENT_METHOD_HINTS: Record<string, string> = {
+export const MEASUREMENT_METHOD_HINTS: Record<string, string> = defineLabels({
   CalendarYear:
     "Simple to explain, but an employee can take twelve weeks in December and twelve more in January.",
   HireAnniversary:
@@ -25,18 +26,18 @@ export const MEASUREMENT_METHOD_HINTS: Record<string, string> = {
   ForwardFromFirstUse: "The year starts the first day of leave taken, and runs twelve months on.",
   RollingBackward:
     "The only method that cannot be stacked into twenty-four weeks in a row, which is why most employers choose it.",
-};
+});
 
 export function measurementMethodHint(value: string): string {
   return MEASUREMENT_METHOD_HINTS[value] ?? "";
 }
 
-export const LEAVE_CASE_STATUS_LABELS: Record<string, string> = {
+export const LEAVE_CASE_STATUS_LABELS: Record<string, string> = defineLabels({
   Pending: "Awaiting a decision",
   Approved: "Approved",
   Denied: "Denied",
   Closed: "Closed",
-};
+});
 
 export function leaveCaseStatusLabel(value: string): string {
   return LEAVE_CASE_STATUS_LABELS[value] ?? value;
@@ -55,24 +56,24 @@ export function leaveCaseStatusTone(value: string): LeaveTone {
   }
 }
 
-export const LEAVE_FREQUENCY_LABELS: Record<string, string> = {
+export const LEAVE_FREQUENCY_LABELS: Record<string, string> = defineLabels({
   Continuous: "Continuous",
   Intermittent: "Intermittent",
   ReducedSchedule: "Reduced schedule",
-};
+});
 
 export function leaveFrequencyLabel(value: string): string {
   return LEAVE_FREQUENCY_LABELS[value] ?? value;
 }
 
-export const CERTIFICATION_STATUS_LABELS: Record<string, string> = {
+export const CERTIFICATION_STATUS_LABELS: Record<string, string> = defineLabels({
   NotRequired: "Not required",
   Requested: "Requested",
   Received: "Received",
   Insufficient: "Incomplete or insufficient",
   Overdue: "Overdue",
   Waived: "Waived",
-};
+});
 
 export function certificationStatusLabel(value: string): string {
   return CERTIFICATION_STATUS_LABELS[value] ?? value;
@@ -99,14 +100,14 @@ export function certificationOutstanding(value: string): boolean {
   return value === "Requested" || value === "Insufficient" || value === "Overdue";
 }
 
-export const LEAVE_TYPE_LABELS: Record<string, string> = {
+export const LEAVE_TYPE_LABELS: Record<string, string> = defineLabels({
   FMLA: "FMLA",
   Medical: "Medical",
   Military: "Military",
   Parental: "Parental",
   Personal: "Personal",
   Other: "Other",
-};
+});
 
 export function leaveTypeLabel(value: string): string {
   return LEAVE_TYPE_LABELS[value] ?? value;

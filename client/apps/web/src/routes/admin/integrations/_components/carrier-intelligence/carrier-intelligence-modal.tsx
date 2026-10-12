@@ -88,17 +88,18 @@ export function CarrierIntelligenceModal({
           {logo ? (
             <LazyImage
               src={logo}
-              alt={`${vendor.name} Logo`}
+              alt={t("{0} logo", vendor.name)}
               className="h-8 max-w-24 object-contain"
             />
           ) : null}
           <div className="min-w-0 space-y-0.5">
-            <DialogTitle>{t(vendor.headline)}</DialogTitle>
-            <DialogDescription className="flex flex-wrap items-center gap-1 text-xs">
-              <span>{t(vendor.blurb)}</span>
-              <ExternalLink href={vendor.docsUrl} className="text-xs">
-                {t(vendor.docsLabel)}
-              </ExternalLink>
+            <DialogTitle>{vendor.headline}</DialogTitle>
+            <DialogDescription className="text-xs">
+              {vendor.docs((label) => (
+                <ExternalLink href={vendor.docsUrl} className="text-xs">
+                  {label}
+                </ExternalLink>
+              ))}
             </DialogDescription>
           </div>
         </DialogHeader>

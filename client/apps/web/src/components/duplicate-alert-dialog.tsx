@@ -1,5 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { pluralize } from "@trenova/shared/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,13 +30,12 @@ export function DuplicateAlertDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="text-lg font-semibold">
-            {t("Duplicate {0} {1}?", rowCount, pluralize("row", rowCount))}
+            {t("{0, plural, one {Duplicate # row?} other {Duplicate # rows?}}", rowCount)}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {t(
-              "Are you sure you want to duplicate {0} {1}? This action cannot be undone.",
+              "{0, plural, one {Are you sure you want to duplicate # row? This action cannot be undone.} other {Are you sure you want to duplicate # rows? This action cannot be undone.}}",
               rowCount,
-              pluralize("row", rowCount),
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>

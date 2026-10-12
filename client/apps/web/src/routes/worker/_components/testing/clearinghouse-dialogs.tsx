@@ -38,6 +38,7 @@ import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { useTestingInvalidation } from "./use-testing-invalidation";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const TYPE_OPTIONS = clearinghouseQueryTypeSchema.options.map((value) => ({
   value,
@@ -274,8 +275,8 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
       toast.success(t("Answer recorded"), {
         description:
           saved.result === "ViolationsFound" || saved.result === "ConsentDenied"
-            ? "The driver is prohibited from safety-sensitive duty."
-            : "The twelve-month clock restarts from today.",
+            ? translate("The driver is prohibited from safety-sensitive duty.")
+            : translate("The twelve-month clock restarts from today."),
       });
       void invalidate();
       onOpenChange(false);

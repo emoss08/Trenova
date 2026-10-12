@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -128,7 +128,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListFiscalPeriodsRequest{
+				&fiscalperiodports.ListFiscalPeriodsRequest{
 					Filter: req,
 				},
 			)
@@ -158,7 +158,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetFiscalPeriodByIDRequest{
+		fiscalperiodports.GetFiscalPeriodByIDRequest{
 			ID:         fiscalPeriodID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -181,7 +181,7 @@ func (h *Handler) closeBlockers(c *gin.Context) {
 
 	result, err := h.service.GetCloseBlockers(
 		c.Request.Context(),
-		repositories.GetFiscalPeriodByIDRequest{
+		fiscalperiodports.GetFiscalPeriodByIDRequest{
 			ID:         fiscalPeriodID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -288,7 +288,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetFiscalPeriodByIDRequest{
+		fiscalperiodports.GetFiscalPeriodByIDRequest{
 			ID:         fiscalPeriodID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
@@ -332,7 +332,7 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.Delete(c.Request.Context(), repositories.DeleteFiscalPeriodRequest{
+	if err = h.service.Delete(c.Request.Context(), fiscalperiodports.DeleteFiscalPeriodRequest{
 		ID:         fiscalPeriodID,
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID); err != nil {
@@ -364,7 +364,7 @@ func (h *Handler) close(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Close(c.Request.Context(), repositories.CloseFiscalPeriodRequest{
+	entity, err := h.service.Close(c.Request.Context(), fiscalperiodports.CloseFiscalPeriodRequest{
 		ID:         fiscalPeriodID,
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID)
@@ -409,11 +409,15 @@ func (h *Handler) reopen(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Reopen(c.Request.Context(), repositories.ReopenFiscalPeriodRequest{
-		ID:           fiscalPeriodID,
-		TenantInfo:   pagination.FromAuthAsUser(authCtx),
-		ReopenReason: payload.ReopenReason,
-	}, authCtx.UserID)
+	entity, err := h.service.Reopen(
+		c.Request.Context(),
+		fiscalperiodports.ReopenFiscalPeriodRequest{
+			ID:           fiscalPeriodID,
+			TenantInfo:   pagination.FromAuthAsUser(authCtx),
+			ReopenReason: payload.ReopenReason,
+		},
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -443,7 +447,7 @@ func (h *Handler) lock(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Lock(c.Request.Context(), &repositories.LockFiscalPeriodRequest{
+	entity, err := h.service.Lock(c.Request.Context(), &fiscalperiodports.LockFiscalPeriodRequest{
 		ID:         fiscalPeriodID,
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID)
@@ -476,10 +480,14 @@ func (h *Handler) unlock(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Unlock(c.Request.Context(), repositories.UnlockFiscalPeriodRequest{
-		ID:         fiscalPeriodID,
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-	}, authCtx.UserID)
+	entity, err := h.service.Unlock(
+		c.Request.Context(),
+		fiscalperiodports.UnlockFiscalPeriodRequest{
+			ID:         fiscalPeriodID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+		},
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -509,10 +517,14 @@ func (h *Handler) activate(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Activate(c.Request.Context(), repositories.ActivateFiscalPeriodRequest{
-		ID:         fiscalPeriodID,
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-	}, authCtx.UserID)
+	entity, err := h.service.Activate(
+		c.Request.Context(),
+		fiscalperiodports.ActivateFiscalPeriodRequest{
+			ID:         fiscalPeriodID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+		},
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

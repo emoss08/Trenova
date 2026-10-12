@@ -3,7 +3,6 @@ path: /admin/api-keys
 aliases: [API tokens, bearer tokens, access tokens, developer keys, machine credentials, integration keys, service accounts]
 related:
   - /admin/integrations
-  - /admin/graphql-explorer
   - /admin/audit-logs
 ---
 

@@ -94,7 +94,7 @@ export function FuelPurchaseForm({
   );
 
   const showComputedHint = overridden && computed !== null && computed !== totalAmount;
-  const unitLabel = quantityUnit === "Litre" ? "litre" : "gallon";
+  const isLitre = quantityUnit === "Litre";
 
   return (
     <div className="flex flex-col gap-2">
@@ -237,7 +237,11 @@ export function FuelPurchaseForm({
               decimalScale={3}
               thousandSeparator
               rules={{ required: true }}
-              description={`As printed on the receipt, up to three decimals, in ${unitLabel}s.`}
+              description={
+                isLitre
+                  ? t("As printed on the receipt, up to three decimals, in litres.")
+                  : t("As printed on the receipt, up to three decimals, in gallons.")
+              }
             />
           </FormControl>
           <FormControl>
@@ -247,7 +251,7 @@ export function FuelPurchaseForm({
               thousandSeparator
               name="unitPrice"
               valueType="string"
-              label={`Price per ${unitLabel}`}
+              label={isLitre ? t("Price per litre") : t("Price per gallon")}
               placeholder="3.8990"
               description={t("Up to four decimals. Leave empty when only the total is known.")}
             />
@@ -264,8 +268,10 @@ export function FuelPurchaseForm({
               rules={{ required: true }}
               description={
                 showComputedHint
-                  ? `Differs from quantity × price (${computed}).`
-                  : "Computed from quantity and price; type over it when the receipt says otherwise."
+                  ? t("Differs from quantity × price ({0}).", computed)
+                  : t(
+                      "Computed from quantity and price; type over it when the receipt says otherwise.",
+                    )
               }
             />
             {showComputedHint ? (

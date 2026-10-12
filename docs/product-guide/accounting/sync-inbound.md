@@ -9,7 +9,7 @@ related:
 ## What it's for
 Payments from the books lists the payments someone recorded in the accounting system (QuickBooks
 Online or Xero) against invoices and settlements Trenova sent: customer payments that pay invoices, and bill payments that
-pay carrier or owner-operator settlements. Trenova reads them every few minutes, and as soon as
+pay carrier or owner-operator settlements. Trenova reads them every fifteen minutes, and as soon as
 QuickBooks Online tells it something changed. Each one says what it pays and whether it was brought into
 Trenova, so the invoice or settlement shows as paid here too.
 

@@ -15,13 +15,24 @@ const SHOTS = [
   { name: "board-dark", scenario: {} },
   { name: "board-light", scenario: {}, colorScheme: "light" },
   { name: "expanded-row", scenario: {}, act: expandFirstRow },
-  { name: "activity-tab", scenario: {}, act: (page) => page.getByRole("tab", { name: "Activity" }).click() },
+  { name: "activity-tab", scenario: {}, act: async (page) => {
+    await openPanel(page);
+    await page.getByRole("tab", { name: "Activity" }).click();
+  } },
   { name: "quick-filter-menu", scenario: {}, act: openQuickFilters },
   { name: "capacity-popover", scenario: {}, act: openFirstCapacityUnit },
   { name: "carriers-tab", scenario: {}, act: (page) => page.getByRole("tab", { name: /Carriers/ }).click() },
   { name: "timeline-view", scenario: {}, act: (page) => page.getByRole("radio", { name: "Timeline" }).click() },
   { name: "map-not-connected", scenario: {}, act: openMapView },
-  { name: "panel-closed", scenario: {}, act: closePanel },
+  { name: "panel-open", scenario: {}, act: openPanel },
+  { name: "filter-builder", scenario: {}, act: (page) => page.getByRole("button", { name: /^Filter/ }).click() },
+  { name: "quick-filter-chip", scenario: {}, act: pickQuickFilter },
+  { name: "lane-pinned", scenario: {}, act: scrollTableSideways },
+  { name: "group-collapsed", scenario: {}, act: (page) => page.getByRole("button", { name: /^Collapse / }).first().click() },
+  { name: "group-menu", scenario: {}, act: (page) => page.getByRole("button", { name: "Group by" }).click() },
+  { name: "group-delivery-date", scenario: {}, act: (page) => groupBy(page, "Delivery date") },
+  { name: "group-customer", scenario: {}, act: (page) => groupBy(page, "Customer") },
+  { name: "group-owner", scenario: {}, act: (page) => groupBy(page, "Owner") },
   { name: "asset-no-ai", scenario: { operationType: "asset", ai: false } },
   { name: "brokerage", scenario: { operationType: "brokerage" } },
   { name: "asset-no-hos", scenario: { operationType: "asset", hos: false } },
@@ -30,12 +41,18 @@ const SHOTS = [
   { name: "narrow-800", scenario: {}, viewport: { width: 800, height: 820 } },
 ];
 
+async function groupBy(page, label) {
+  await page.getByRole("button", { name: "Group by" }).click();
+  await page.getByRole("radio", { name: label }).click();
+  await page.waitForTimeout(1500);
+}
+
 async function expandFirstRow(page) {
   await page.locator("tbody tr").filter({ hasText: /S2610-/ }).first().click();
 }
 
 async function openQuickFilters(page) {
-  await page.getByRole("textbox", { name: "Search shipments" }).focus();
+  await page.getByRole("combobox", { name: "Search", exact: true }).focus();
 }
 
 async function openFirstCapacityUnit(page) {
@@ -43,12 +60,27 @@ async function openFirstCapacityUnit(page) {
 }
 
 async function openMapView(page) {
-  await closePanel(page);
   await page.getByRole("radio", { name: "Map" }).click();
 }
 
-async function closePanel(page) {
-  await page.getByRole("button", { name: "Close panel" }).click();
+async function openPanel(page) {
+  await page.getByRole("button", { name: "Toggle side panel" }).click();
+  await page.waitForTimeout(1500);
+}
+
+async function pickQuickFilter(page) {
+  await openQuickFilters(page);
+  await page.getByRole("option", { name: /Late/ }).click();
+  await page.keyboard.press("Escape");
+}
+
+async function scrollTableSideways(page) {
+  await page.evaluate(() => {
+    const scroller = [...document.querySelectorAll("table")]
+      .map((table) => table.parentElement)
+      .find((element) => element && element.scrollWidth > element.clientWidth);
+    if (scroller) scroller.scrollLeft = scroller.scrollWidth;
+  });
 }
 
 async function setScenario(overrides) {

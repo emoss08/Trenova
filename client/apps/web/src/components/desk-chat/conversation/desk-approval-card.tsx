@@ -17,11 +17,19 @@ import {
   markProposalsStatus,
 } from "@/lib/proposal-cache";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, type MutableRefObject } from "react";
 import { toast } from "sonner";
 import { DeskIcon } from "../desk-icons";
-import { approvalFacts, recordCount, refusalReasons, type ApprovalFacts } from "./approval-facts";
+import {
+  approvalFacts,
+  recordCount,
+  refusalReasons,
+  scopePhrase,
+  type ApprovalFacts,
+} from "./approval-facts";
 import type { UndoController } from "./desk-undo-bar";
 import type { UndoWindow } from "./undo-window";
 
@@ -187,6 +195,7 @@ function PlanCard({
     refused: [],
     wouldFail: null,
     changedSince: 0,
+    creates: false,
   };
   const reversible = steps.every((step) => presentProposal(step).reversible);
 
@@ -317,10 +326,21 @@ function BatchCard({
 
 /** What an approval will do when its undo window closes, e.g. "Assign biller on 11 items". */
 function approvedWhat(title: string, facts: ApprovalFacts, t: TranslateFn): string {
-  return facts.count > 0
-    ? t("{0} on {1}", title, recordCount(facts.resource, facts.count, t))
-    : title;
+  // A presenter's title is English source text from the catalog; translate it here, where
+  // it is put into the sentence.
+  const shown = t(title);
+  const scope = scopePhrase(facts, t);
+  return scope ? `${shown} ${scope}` : shown;
 }
+
+const cardButton = "rounded-lg in-[.dk-dense]:order-2";
+const leadButton = "in-[.dk-dense]:ml-auto";
+const warnButton = cn(cardButton, "text-dsk-warn-fg hover:bg-dsk-warn/18 hover:text-dsk-fg");
+const plainButton = cn(cardButton, "text-dsk-fg2 hover:bg-dsk-warn/18 hover:text-dsk-fg2");
+const approveButton = cn(
+  cardButton,
+  "gap-2 bg-dsk-ink pr-1.5 pl-3 text-dsk-ink-fg hover:bg-dsk-ink hover:opacity-90 active:bg-dsk-ink",
+);
 
 function CardRow({
   title,
@@ -350,8 +370,7 @@ function CardRow({
   onRedraft?: () => void;
 }) {
   const t = useT();
-  const scope =
-    countLabel ?? (facts.count > 0 ? recordCount(facts.resource, facts.count, t) : null);
+  const scope = countLabel ? t("on {0}", countLabel) : scopePhrase(facts, t);
 
   // Out of date: what it was drafted against has changed, so it is drafted
   // again rather than approved.
@@ -364,7 +383,7 @@ function CardRow({
         </span>
         <span className="dk-dcx-t">
           <b>
-            {title} {scope && <span className="dk-dcx-s">{t("on {0}", scope)}</span>}
+            {title} {scope && <span className="dk-dcx-s">{scope}</span>}
           </b>
           <span className="dk-dcx-d">
             {facts.changedSince > 0
@@ -375,19 +394,19 @@ function CardRow({
               : t("What it was drafted against has changed since")}
           </span>
         </span>
-        <button type="button" className="dk-bt dk-sm" onClick={onDefer}>
+        <Button variant="quiet" size="sm" className={cn(plainButton, leadButton)} onClick={onDefer}>
           {t("Not now")}
-        </button>
+        </Button>
         {onRedraft ? (
-          <button type="button" className="dk-apv-b" onClick={onRedraft}>
+          <Button size="sm" className={approveButton} onClick={onRedraft}>
             {facts.changedSince > 0 && going > 0
               ? t("Redraft with {0}", recordCount(facts.resource, going, t))
               : t("Redraft")}
-          </button>
+          </Button>
         ) : (
-          <button type="button" className="dk-apv-b" onClick={onReview}>
+          <Button size="sm" className={approveButton} onClick={onReview}>
             {t("Review")}
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -400,7 +419,7 @@ function CardRow({
     const all = facts.wouldFail !== null || refusedCount >= facts.count;
     const reasons = refusalReasons(facts.refused)
       .slice(0, 3)
-      .map(([reason, n]) => `${n} ${reason.charAt(0).toLowerCase()}${reason.slice(1)}`);
+      .map(([reason, n]) => t("{0} ({1})", reason, n));
     return (
       <div className="dk-dcx dk-ec-would" role="group" aria-label={t("Would be refused")}>
         <span className="dk-dcx-i">
@@ -416,22 +435,22 @@ function CardRow({
               : (facts.wouldFail ?? "")}
           </span>
         </span>
-        <button type="button" className="dk-bt dk-sm" onClick={onReview}>
+        <Button
+          variant="quiet"
+          size="sm"
+          className={cn(plainButton, leadButton)}
+          onClick={onReview}
+        >
           {refusedCount > 0 ? t("Review {0}", refusedCount) : t("Review")}
-        </button>
+        </Button>
         {all ? (
-          <button type="button" className="dk-bt dk-sm" onClick={onDefer}>
+          <Button variant="quiet" size="sm" className={plainButton} onClick={onDefer}>
             {t("Not now")}
-          </button>
+          </Button>
         ) : (
-          <button
-            type="button"
-            className="dk-apv-b dk-ec-fix"
-            disabled={!approvable}
-            onClick={onApprove}
-          >
+          <Button size="sm" className={approveButton} disabled={!approvable} onClick={onApprove}>
             {t("Approve {0}, skip {1}", facts.count - refusedCount, refusedCount)}
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -444,7 +463,7 @@ function CardRow({
       </span>
       <span className="dk-dcx-t">
         <b>
-          {title} {scope && <span className="dk-dcx-s">{t("on {0}", scope)}</span>}
+          {title} {scope && <span className="dk-dcx-s">{scope}</span>}
         </b>
         <span className="dk-dcx-d">
           {changed ? (
@@ -459,15 +478,15 @@ function CardRow({
           <span className="dk-dcx-m">· {reversible ? t("reversible") : t("can't be undone")}</span>
         </span>
       </span>
-      <button type="button" className="dk-bt dk-sm" onClick={onReview}>
+      <Button variant="quiet" size="sm" className={cn(warnButton, leadButton)} onClick={onReview}>
         {t("Review")}
-      </button>
-      <button type="button" className="dk-bt dk-sm" onClick={onDefer}>
+      </Button>
+      <Button variant="quiet" size="sm" className={warnButton} onClick={onDefer}>
         {t("Not now")}
-      </button>
-      <button
-        type="button"
-        className="dk-apv-b"
+      </Button>
+      <Button
+        size="sm"
+        className={cn("dk-apv-b", approveButton)}
         disabled={!approvable}
         aria-keyshortcuts="Meta+Enter"
         onClick={onApprove}
@@ -476,7 +495,7 @@ function CardRow({
         <span className="dk-kbd" aria-hidden>
           ⌘↵
         </span>
-      </button>
+      </Button>
     </div>
   );
 }

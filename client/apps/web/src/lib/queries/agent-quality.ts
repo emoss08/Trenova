@@ -3,6 +3,7 @@ import {
   fetchAgentQualityControl,
   fetchAgentQualityOverview,
   fetchAgentSuiteRun,
+  fetchSuiteRunCases,
 } from "@/lib/graphql/agent-quality";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -20,6 +21,10 @@ export const agentQuality = createQueryKeys("agentQuality", {
   suiteRun: (suiteRunId: string) => ({
     queryKey: [suiteRunId],
     queryFn: ({ signal }: Signal) => fetchAgentSuiteRun(suiteRunId, { signal }),
+  }),
+  suiteRunCases: (suiteRunId: string) => ({
+    queryKey: [suiteRunId],
+    queryFn: ({ signal }: Signal) => fetchSuiteRunCases(suiteRunId, { signal }),
   }),
   control: () => ({
     queryKey: ["control"],

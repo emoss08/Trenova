@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -284,7 +284,7 @@ func toOllamaTools(tools []ToolSpec) []ollamaTool {
 			Function: ollamaToolFunction{
 				Name:        tool.Name,
 				Description: tool.Description,
-				Parameters:  toolschema.ForModel(tool.Parameters),
+				Parameters:  toolschema.ForPortableModel(tool.Parameters),
 			},
 		})
 	}

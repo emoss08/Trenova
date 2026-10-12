@@ -13,6 +13,7 @@ import { apiService } from "@/services/api";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 type ShipmentSendEDIDialogProps = {
   open: boolean;
@@ -26,6 +27,7 @@ export function ShipmentSendEDIDialog({
   shipment,
 }: ShipmentSendEDIDialogProps) {
   const t = useT();
+  const rt = useRichT();
 
   const queryClient = useQueryClient();
   const ediPartner = shipment.customer?.ediPartner;
@@ -48,13 +50,14 @@ export function ShipmentSendEDIDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>{t("Send EDI load tender")}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t("{0} will be tendered to", shipment.proNumber ?? t("This shipment"))}
-            <span className="text-foreground font-medium">
-              {ediPartner
+            {rt(
+              "{0} will be tendered to <b>{1}</b> for approval by the receiving organization.",
+              { b: (c) => <span className="text-foreground font-medium">{c}</span> },
+              shipment.proNumber ?? t("This shipment"),
+              ediPartner
                 ? `${ediPartner.name} (${ediPartner.code})`
-                : t("the customer's EDI partner")}
-            </span>{" "}
-            {t("for approval by the receiving organization.")}
+                : t("the customer's EDI partner"),
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

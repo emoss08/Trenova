@@ -51,6 +51,12 @@ type NumericRangeConfig[T TenantedEntity] struct {
 	Max       *float64
 }
 
+type TenantedEntityValidator[T TenantedEntity] interface {
+	ValidateCreate(ctx context.Context, entity T) *errortypes.MultiError
+	ValidateUpdate(ctx context.Context, entity T) *errortypes.MultiError
+	ValidateUpdateWithOriginal(ctx context.Context, entity, original T) *errortypes.MultiError
+}
+
 type TenantedValidator[T TenantedEntity] struct {
 	modelName             string
 	uniquenessChecker     UniquenessChecker

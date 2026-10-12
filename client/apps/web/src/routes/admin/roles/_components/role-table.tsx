@@ -25,6 +25,7 @@ export default function RoleTable() {
   return (
     <DataTable<RoleRow>
       name="Role"
+      emptyTitle={t("No roles yet")}
       queryKey="role-list"
       graphql={roleTableGraphQLConfig}
       resource={Resource.Role}

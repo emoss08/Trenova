@@ -28,11 +28,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/casechecklisthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/databasesessionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/detentionhandler"
@@ -67,6 +67,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/holdreasonhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/inboxpresencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
@@ -80,6 +81,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/notificationpreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/onboardinghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
@@ -138,6 +140,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	onboardinghandler.New,
 	driverportalhandler.New,
 	pushhandler.New,
+	notificationpreferencehandler.New,
 	formulatemplatehandler.New,
 	pagefavoritehandler.New,
 	equipmenttypehandler.New,
@@ -151,13 +154,13 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	workerhandler.New,
 	permissionhandler.New,
 	realtimehandler.New,
+	inboxpresencehandler.New,
 	rolehandler.New,
 	roleassignmenthandler.New,
 	searchhandler.New,
 	usstatehandler.New,
 	equipmentmanufacturerhandler.New,
 	customfieldhandler.New,
-	databasesessionhandler.New,
 	documenthandler.New,
 	reporthandler.New,
 	documentoperationshandler.New,
@@ -239,6 +242,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	journalreversalhandler.New,
 	manualjournalhandler.New,
 	billingcontrolhandler.New,
+	casechecklisthandler.New,
 	billingqueuehandler.New,
 	dataentrycontrolhandler.New,
 	dispatchcontrolhandler.New,

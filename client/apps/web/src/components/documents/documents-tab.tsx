@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-content";
 import { ColorOptionValue } from "@/components/fields/select-components";
@@ -8,6 +8,11 @@ import { usePermission } from "@/hooks/use-permission";
 import { usePendingActions } from "@/hooks/use-pending-actions";
 import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
 import { queries } from "@/lib/queries";
+import {
+  hasPendingDocumentWork,
+  PENDING_DOCUMENTS_REFETCH_MS,
+  resourceDocumentsQuery,
+} from "@/lib/resource-documents";
 import { apiService } from "@/services/api";
 import type { Document, DocumentPacketSummary } from "@trenova/shared/types/document";
 import type { DocumentType } from "@trenova/shared/types/document-type";
@@ -69,10 +74,6 @@ function matchesFileTypeFilter(doc: Document, filter: FileTypeFilter): boolean {
   }
 }
 
-function hasTargetedProcessing(doc: Document): boolean {
-  return doc.processingProfile === "rate_confirmation_import";
-}
-
 function sortDocuments(docs: Document[], field: SortField, direction: SortDirection): Document[] {
   const sorted = [...docs].sort((a, b) => {
     let comparison = 0;
@@ -105,10 +106,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   const [inspectedDocument, setInspectedDocument] = useState<Document | null>(null);
   const [versionDocument, setVersionDocument] = useState<Document | null>(null);
   const [rejectingDocument, setRejectingDocument] = useState<Document | null>(null);
-  const { allowed: canApproveDocuments } = usePermission(
-    Resource.Document,
-    Operation.Approve,
-  );
+  const { allowed: canApproveDocuments } = usePermission(Resource.Document, Operation.Approve);
   const { allowed: canRejectDocuments } = usePermission(Resource.Document, Operation.Reject);
   const [replacementLineageId, setReplacementLineageId] = useState<string | undefined>(undefined);
 
@@ -158,8 +156,6 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     return metadata;
   }, [isShipment, replacementLineageId, selectedDocumentTypeId]);
 
-  const queryKey = ["documents", resourceType, resourceId, deferredSearchQuery];
-
   const shipmentDetailsQuery = queries.shipment.get(resourceId, {
     expandShipmentDetails: "true",
   });
@@ -188,27 +184,10 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   });
 
   const { data: documents = [], isLoading } = useQuery({
-    queryKey,
-    queryFn: () =>
-      apiService.documentService.getByResource(resourceType, resourceId, deferredSearchQuery, {
-        includeDocumentType: "true",
-      }),
+    ...resourceDocumentsQuery(resourceType, resourceId, deferredSearchQuery),
     enabled: !!resourceId,
-    refetchInterval: (query) => {
-      const docs = query.state.data;
-      if (!docs) return false;
-
-      const hasPendingWork = docs.some(
-        (doc) =>
-          doc.previewStatus === "Pending" ||
-          (hasTargetedProcessing(doc) &&
-            (doc.contentStatus === "Pending" ||
-              doc.contentStatus === "Extracting" ||
-              doc.shipmentDraftStatus === "Pending")),
-      );
-
-      return hasPendingWork ? 3000 : false;
-    },
+    refetchInterval: (query) =>
+      query.state.data?.some(hasPendingDocumentWork) ? PENDING_DOCUMENTS_REFETCH_MS : false,
   });
 
   const { data: packetSummary } = useQuery<DocumentPacketSummary>({
@@ -267,7 +246,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
         toast.success(t("Document uploaded successfully"));
       },
       onError: (error) => {
-        toast.error(`Upload failed: ${error.message}`);
+        toast.error(t("Upload failed: {0}", error.message));
       },
     });
 
@@ -289,7 +268,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
       setDeletingId(null);
     },
     onError: (error) => {
-      toast.error(`Delete failed: ${error.message}`);
+      toast.error(t("Delete failed: {0}", error.message));
       setDeletingId(null);
     },
   });
@@ -308,11 +287,13 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
           queryKey: shipmentDetailsQuery.queryKey,
         });
       }
-      toast.success(`${result.deletedCount} document(s) deleted`);
+      toast.success(
+        t("{0, plural, one {# document deleted} other {# documents deleted}}", result.deletedCount),
+      );
       setSelectedIds(new Set());
     },
     onError: (error) => {
-      toast.error(`Bulk delete failed: ${error.message}`);
+      toast.error(t("Bulk delete failed: {0}", error.message));
     },
   });
 
@@ -371,7 +352,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
       toast.success(t("Document version restored"));
     },
     onError: (error) => {
-      toast.error(`Restore failed: ${error.message}`);
+      toast.error(t("Restore failed: {0}", error.message));
     },
   });
 
@@ -412,15 +393,21 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     [disabled, uploadFiles],
   );
 
-  const handleFilesRejected = useCallback((rejectedFiles: RejectedFile[]) => {
-    rejectedFiles.forEach(({ file, reason }) => {
-      if (reason === "size") {
-        toast.error(`File too large: ${file.name}`, {
-          description: `Maximum file size is 50MB. This file is ${formatFileSize(file.size)}.`,
-        });
-      }
-    });
-  }, []);
+  const handleFilesRejected = useCallback(
+    (rejectedFiles: RejectedFile[]) => {
+      rejectedFiles.forEach(({ file, reason }) => {
+        if (reason === "size") {
+          toast.error(t("File too large: {0}", file.name), {
+            description: t(
+              "Maximum file size is 50MB. This file is {0}.",
+              formatFileSize(file.size),
+            ),
+          });
+        }
+      });
+    },
+    [t],
+  );
 
   const handlePreview = useCallback(
     async (document: Document) => {
@@ -630,16 +617,17 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
         onRemove={removeUpload}
         onClearCompleted={clearCompleted}
         disabled={disabled}
-        title={replacementLineageId ? "Upload New Version" : undefined}
+        title={replacementLineageId ? t("Upload New Version") : undefined}
         description={
           requiredUploadTypeId && billingReadiness
-            ? `This upload will be classified as ${
+            ? requiredUploadDescription(
                 billingReadiness.requirements.find(
                   (item) => item.documentTypeId === requiredUploadTypeId,
-                )?.documentTypeName ?? "the selected required document"
-              }.`
+                )?.documentTypeName,
+                t,
+              )
             : replacementLineageId
-              ? "This file will be added as a new version in the same document lineage."
+              ? t("This file will be added as a new version in the same document lineage.")
               : undefined
         }
         multiple={!replacementLineageId}
@@ -685,3 +673,9 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
 }
 
 export default DocumentsTab;
+
+function requiredUploadDescription(documentTypeName: string | undefined, t: TranslateFn): string {
+  return documentTypeName
+    ? t("This upload will be classified as {0}.", documentTypeName)
+    : t("This upload will be classified as the selected required document.");
+}

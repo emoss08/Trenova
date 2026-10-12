@@ -22,7 +22,7 @@ git status --porcelain -- internal/api/graphql/generated internal/api/graphql/gq
 go generate ./internal/infrastructure/database/seeder/...          # pkg/seedhelpers/seed_ids_gen.go
 go generate ./internal/api/graphql/projection/...                  # internal/api/graphql/projection/specs_gen.go
 go generate ./internal/infrastructure/database/reportcatalog/...   # pkg/reportcatalog/catalog_gen.go
-go generate ./internal/core/services/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md
+go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md
 go generate ./internal/api/writecoverage/...                       # ../../docs/engineering/agent-write-coverage.md
 ```
 
@@ -74,7 +74,7 @@ document**:
 
 ```bash
 cd services/tms
-go generate ./internal/core/services/agenttoolpolicy/safetydoc/...
+go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...
 git diff --exit-code -- ../../docs/engineering/ai-tool-safety.md
 ```
 
@@ -138,8 +138,8 @@ schema or policy, or adding or removing a tool means refreshing them**:
 
 ```bash
 cd services/tms
-go test -run TestPromptSnapshots ./internal/core/domain/agentdefinition/ -update
-go test -run TestToolCatalogSnapshot ./internal/core/services/agentevalgate/ -update
+go test -run TestPromptSnapshots ./internal/modules/agent/domain/agentdefinition/ -update
+go test -run TestToolCatalogSnapshot ./internal/modules/agent/app/agentevalgate/ -update
 ```
 
 A tool description, a product guide page or an eval request is also embedded, by content
@@ -199,7 +199,7 @@ named `My<Thing>`.
 `task generate-columns` regenerates `pkg/buncolgen` from the domain entities. Adding or
 removing a field on a Bun model without rerunning it leaves repositories referencing a
 column helper that no longer matches the table — and, as above, can break the projection
-generator too. Never hand-write column references; see [docs/bun/buncolgen.md](../bun/buncolgen.md).
+generator too. Never hand-write column references; see [docs/engineering/bun/buncolgen.md](bun/buncolgen.md).
 
 ## Client checks are narrower than they look
 
@@ -236,8 +236,15 @@ it. See [product-guide.md](product-guide.md).
 ## i18n
 
 - **The English source string is the catalog key.** Editing English text creates a new key
-  and orphans the old one. Run `task i18n` (extract + sync) and `task i18n-check` (the gate)
-  after any change to user-facing text.
+  and orphans the old one. Run `task i18n` (extract, sync and emit) and `task i18n-check`
+  (the gate) after any change to user-facing text, and commit the runtime catalogs it
+  rewrites. `check` fails when a file under `client/packages/shared/src/i18n/catalogs/` or
+  `shared/i18n/catalogs/` differs from what `emit` would write, or when one is left over.
+- **Client catalogs are split by bundle** (`core`, `web`, `dash`, one per web route folder)
+  and the web app loads a route folder's bundle with its code. Moving a component between
+  route folders, or into `apps/web/src/components`, moves its strings to a different bundle,
+  so it is a `task i18n` change like editing text. See "How the browser loads catalogs" in
+  [i18n/README.md](../../i18n/README.md).
 - The codemod wraps a string literal only when its object key is in `TEXT_PROPS`
   (`i18n/tools/filter.mjs`) and only **inside a function**. A module-level
   `const NAV = [{ label: "Shipments" }]` evaluates once at import, so wrapping there would
@@ -253,8 +260,52 @@ it. See [product-guide.md](product-guide.md).
   positional placeholders and plurals, and **does not resolve a placeholder nested inside a
   plural branch** — keep every `{n}` outside the branches.
 - Never fold English grammar into arguments (`"{0} shipment{1}"` with the caller passing
-  `""` or `"s"`). Spanish inflects the noun differently and Chinese does not inflect at all.
-  Use a plural: `{0, plural, one {# shipment} other {# shipments}}`.
+  `""` or `"s"`, `t("{0} {1}", n, n === 1 ? "stop" : "stops")`, `pluralize("notice", n)`).
+  Spanish inflects the noun differently and Chinese does not inflect at all. Use a plural:
+  `{0, plural, one {# shipment} other {# shipments}}`. When the count is formatted
+  (`toLocaleString`), keep it outside the plural and pluralize only the noun:
+  `"{0} settled {1, plural, one {stop} other {stops}}"` with the formatted and raw counts.
+  A word chosen by a condition (`"ends"` / `"ended"`, `"inbound"` / `"outbound"`) is one
+  whole message per case, never an argument.
+- Never split a sentence around markup (`{t("You've used")} <b>{pct}</b> {t("of …")}`): each
+  half becomes its own entry and no language can move the bold part. Write it whole with
+  `useRichT()` from `@trenova/shared/i18n/rich`:
+  `rt("You've used <b>{0}</b> of this month's AI allowance", { b: (c) => <b>{c}</b> }, pct)`.
+  Tags hold text and placeholders but no other tag, a plural cannot span a tag, and an
+  argument is never read as markup.
+  Outside a component, `translateRich` (same module) takes the same arguments.
+- Never build English in a template literal a person will read, wherever it is built — a
+  return value, a variable, a helper's result as much as a toast or a prop
+  (`` toast.success(`${name} saved`) ``, `` label={`${kind} Postal Code`} ``,
+  `` title: `Journal Entry ${n}` ``): the extractor only collects string literals passed to
+  `t`, `translate`, `rt` and `translateRich`, so the sentence never reaches a catalog and
+  renders in English in every language. Write `t("{0} saved", name)`. Text placed into raw
+  HTML (a print document) goes through the file's escaper after translation, since a
+  translation is text like any other. A template that genuinely is not interface text (a
+  value stored on a record, a log line for engineers) carries a
+  `// i18n-ignore: <reason>` comment on or above it.
+- A module-level label map (`STATUS_LABELS = { InReview: "In review" }`) never reaches a
+  catalog, and a module-level `translate()` would freeze the language active at import.
+  Declare it with `defineLabels({ … })` from `@trenova/shared/i18n/labels`: the extractor
+  collects its values and every read (`STATUS_LABELS[status]`, `Object.entries(…)`) returns
+  the current language, so a render needs no `t()`. Data built once at import — a select's
+  options array — takes `sourceLabels(MAP)[key]`, the English source, and its renderer
+  translates it, the same contract as a `label: "…"` literal. A record of copy with other
+  fields beside the text (an icon, a flag) nests a `defineLabels` for its text, or uses
+  getters that call `translate()`. A caption computed at runtime from a key or an enum value
+  (`humanizeKey`) goes through `translateLabel()`, which reads the catalog and leaves an
+  unknown caption in English.
+- Validation messages are read when the form validates, not when the module loads: a zod
+  check takes `{ error: () => translate("Name is required") }`, `ctx.addIssue` takes
+  `message: translate(…)`, and a react-hook-form rule takes `required: translate(…)`. A toast
+  is shown exactly as written, so every literal it receives — including `error.message ||
+  "…"` fallbacks and `toast.promise` options — goes through `t()` or `translate()`.
+- `task i18n-check` fails on all of these shapes (`i18n/tools/fragments.mjs`: split
+  sentences, English arguments, templates that write words anywhere outside CSS, keys,
+  paths, logs and thrown errors — module-level label maps, literal validation messages and
+  literal toast text), and
+  `i18n.mjs merge` refuses a translation whose placeholders, plurals or tags differ from
+  its source (`i18n/tools/validate.mjs`).
 - `i18n/locales.json` is the only place a language is added; `task i18n` regenerates the
   locale module from it.
 

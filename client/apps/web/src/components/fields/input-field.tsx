@@ -3,7 +3,7 @@ import type { FormControlProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import { Input, type InputProps } from "@trenova/shared/components/ui/input";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { FieldWrapper } from "./field-components";
+import { FieldWrapper, type FieldLayout } from "./field-components";
 
 type BaseInputFieldProps = Omit<InputProps, "name"> & {
   label?: React.ReactNode;
@@ -11,6 +11,7 @@ type BaseInputFieldProps = Omit<InputProps, "name"> & {
   inputClassProps?: string;
   hideLabel?: boolean;
   maxLength?: number;
+  layout?: FieldLayout;
 };
 
 export type InputFieldProps<T extends FieldValues> = BaseInputFieldProps & FormControlProps<T>;
@@ -23,6 +24,7 @@ export function InputField<T extends FieldValues>({
   description,
   className,
   inputClassProps,
+  layout,
   ...props
 }: InputFieldProps<T>) {
   const inputId = `input-${name}`;
@@ -37,11 +39,13 @@ export function InputField<T extends FieldValues>({
       render={({ field, fieldState }) => {
         return (
           <FieldWrapper
+            name={name}
             label={label}
             required={!!rules?.required}
             description={description}
             error={fieldState.error?.message}
             className={className}
+            layout={layout}
           >
             <Input
               {...field}
@@ -50,6 +54,7 @@ export function InputField<T extends FieldValues>({
               value={field.value ?? ""}
               onChange={field.onChange}
               className={inputClassProps}
+              aria-label={props["aria-label"] ?? (typeof label === "string" ? label : undefined)}
               aria-invalid={fieldState.invalid}
               aria-describedby={(description && descriptionId) || (fieldState.error && errorId)}
             />

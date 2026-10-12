@@ -1,15 +1,29 @@
 package forms
 
 import (
+	"fmt"
 	"net/url"
 	"time"
 
 	"github.com/emoss08/trenova/shared/samsara/internal/httpx"
 )
 
+const (
+	IncludeExternalIDs     = "externalIds"
+	maxListIDs             = 100
+	MaxStreamFilterEntries = 50
+)
+
 type TemplateListParams struct {
 	IDs   []string
 	After string
+}
+
+func (p TemplateListParams) Validate() error {
+	if len(p.IDs) > maxListIDs {
+		return ErrTemplateIDsTooMany
+	}
+	return nil
 }
 
 func (p TemplateListParams) Query() url.Values {
@@ -22,6 +36,16 @@ func (p TemplateListParams) Query() url.Values {
 type SubmissionListParams struct {
 	IDs     []string
 	Include []string
+}
+
+func (p SubmissionListParams) Validate() error {
+	if len(p.IDs) == 0 {
+		return ErrSubmissionIDsRequired
+	}
+	if len(p.IDs) > maxListIDs {
+		return ErrSubmissionIDsTooMany
+	}
+	return validateInclude(p.Include)
 }
 
 func (p SubmissionListParams) Query() url.Values {
@@ -46,6 +70,28 @@ type SubmissionStreamParams struct {
 func (p SubmissionStreamParams) Validate() error {
 	if p.StartTime == nil {
 		return ErrStreamStartTimeRequired
+	}
+	if p.EndTime != nil && p.EndTime.Before(*p.StartTime) {
+		return ErrStreamTimeRangeInvalid
+	}
+	for _, filter := range [][]string{
+		p.FormTemplateIDs,
+		p.UserIDs,
+		p.DriverIDs,
+		p.AssignedToRouteStopIDs,
+	} {
+		if len(filter) > MaxStreamFilterEntries {
+			return ErrStreamFilterTooMany
+		}
+	}
+	return validateInclude(p.Include)
+}
+
+func validateInclude(include []string) error {
+	for _, value := range include {
+		if value != IncludeExternalIDs {
+			return fmt.Errorf("%w: %q", ErrIncludeInvalid, value)
+		}
 	}
 	return nil
 }

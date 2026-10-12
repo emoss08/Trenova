@@ -197,7 +197,9 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
               <SensitiveField
                 name="configuration.token"
                 control={control}
-                label={`API Token ${hasToken ? "(leave blank to keep existing token)" : ""}`}
+                label={
+                  hasToken ? t("API Token (leave blank to keep existing token)") : t("API Token")
+                }
                 autoComplete="token"
                 placeholder={hasToken ? "********" : "Enter Samsara API token"}
               />
@@ -227,9 +229,11 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
               <SensitiveField
                 name="configuration.webhookSecret"
                 control={control}
-                label={`Webhook Secret ${
-                  hasWebhookSecret ? "(leave blank to keep existing secret)" : ""
-                }`}
+                label={
+                  hasWebhookSecret
+                    ? t("Webhook Secret (leave blank to keep existing secret)")
+                    : t("Webhook Secret")
+                }
                 autoComplete="off"
                 placeholder={hasWebhookSecret ? "********" : "Enter Samsara webhook signing secret"}
                 description={t(

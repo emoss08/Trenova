@@ -1,6 +1,7 @@
 package customfieldhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"context"
 	"errors"
 	"net/http"
@@ -9,10 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/customfield"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,8 +28,8 @@ var errNotFound = errors.New("custom field definition not found")
 
 func setupCustomFieldHandler(
 	t *testing.T,
-	repo *mocks.MockCustomFieldDefinitionRepository,
-	valueRepo *mocks.MockCustomFieldValueRepository,
+	repo *customfieldportsmock.MockCustomFieldDefinitionRepository,
+	valueRepo *customfieldportsmock.MockCustomFieldValueRepository,
 ) *customfieldhandler.Handler {
 	t.Helper()
 
@@ -70,7 +71,7 @@ func TestCustomFieldHandler_List_Success(t *testing.T) {
 
 	cfdID := pulid.MustNew("cfd_")
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*customfield.CustomFieldDefinition]{
 			Items: []*customfield.CustomFieldDefinition{
@@ -87,7 +88,7 @@ func TestCustomFieldHandler_List_Success(t *testing.T) {
 			Total: 1,
 		}, nil)
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -111,9 +112,9 @@ func TestCustomFieldHandler_Get_Success(t *testing.T) {
 
 	cfdID := pulid.MustNew("cfd_")
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
+		RunAndReturn(func(_ context.Context, req customfieldports.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
 			return &customfield.CustomFieldDefinition{
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
@@ -125,7 +126,7 @@ func TestCustomFieldHandler_Get_Success(t *testing.T) {
 			}, nil
 		})
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -146,8 +147,8 @@ func TestCustomFieldHandler_Get_Success(t *testing.T) {
 func TestCustomFieldHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -164,7 +165,7 @@ func TestCustomFieldHandler_Get_InvalidID(t *testing.T) {
 func TestCustomFieldHandler_Create_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.On("CountByResourceType", mock.Anything, mock.Anything).Return(0, nil)
 	repo.EXPECT().Create(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *customfield.CustomFieldDefinition) (*customfield.CustomFieldDefinition, error) {
@@ -172,7 +173,7 @@ func TestCustomFieldHandler_Create_Success(t *testing.T) {
 			return entity, nil
 		})
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -199,8 +200,8 @@ func TestCustomFieldHandler_Create_Success(t *testing.T) {
 func TestCustomFieldHandler_Create_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -220,9 +221,9 @@ func TestCustomFieldHandler_Update_Success(t *testing.T) {
 
 	cfdID := pulid.MustNew("cfd_")
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
+		RunAndReturn(func(_ context.Context, req customfieldports.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
 			return &customfield.CustomFieldDefinition{
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
@@ -238,7 +239,7 @@ func TestCustomFieldHandler_Update_Success(t *testing.T) {
 			return entity, nil
 		})
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	valueRepo.On("CountByDefinition", mock.Anything, mock.Anything).Return(0, nil)
 	valueRepo.On("CountResourcesByDefinition", mock.Anything, mock.Anything).Return(0, nil)
 
@@ -270,9 +271,9 @@ func TestCustomFieldHandler_Delete_Success(t *testing.T) {
 
 	cfdID := pulid.MustNew("cfd_")
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
+		RunAndReturn(func(_ context.Context, req customfieldports.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
 			return &customfield.CustomFieldDefinition{
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
@@ -285,7 +286,7 @@ func TestCustomFieldHandler_Delete_Success(t *testing.T) {
 		})
 	repo.On("Delete", mock.Anything, mock.Anything).Return(nil)
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	valueRepo.On("CountByDefinition", mock.Anything, mock.Anything).Return(0, nil)
 	valueRepo.On("CountResourcesByDefinition", mock.Anything, mock.Anything).Return(0, nil)
 
@@ -305,8 +306,8 @@ func TestCustomFieldHandler_Delete_Success(t *testing.T) {
 func TestCustomFieldHandler_GetResourceTypes_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -331,7 +332,7 @@ func TestCustomFieldHandler_GetByResourceType_Success(t *testing.T) {
 
 	cfdID := pulid.MustNew("cfd_")
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.On("GetActiveByResourceType", mock.Anything, mock.Anything).
 		Return([]*customfield.CustomFieldDefinition{
 			{
@@ -346,7 +347,7 @@ func TestCustomFieldHandler_GetByResourceType_Success(t *testing.T) {
 			},
 		}, nil)
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -370,9 +371,9 @@ func TestCustomFieldHandler_Patch_Success(t *testing.T) {
 
 	cfdID := pulid.MustNew("cfd_")
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
+		RunAndReturn(func(_ context.Context, req customfieldports.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
 			return &customfield.CustomFieldDefinition{
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
@@ -388,7 +389,7 @@ func TestCustomFieldHandler_Patch_Success(t *testing.T) {
 			return entity, nil
 		})
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	valueRepo.On("CountByDefinition", mock.Anything, mock.Anything).Return(0, nil)
 	valueRepo.On("CountResourcesByDefinition", mock.Anything, mock.Anything).Return(0, nil)
 
@@ -417,10 +418,10 @@ func TestCustomFieldHandler_Patch_NotFound(t *testing.T) {
 
 	cfdID := pulid.MustNew("cfd_")
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -440,8 +441,8 @@ func TestCustomFieldHandler_Patch_NotFound(t *testing.T) {
 func TestCustomFieldHandler_Patch_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -463,10 +464,10 @@ func TestCustomFieldHandler_Get_NotFound(t *testing.T) {
 
 	cfdID := pulid.MustNew("cfd_")
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -483,11 +484,11 @@ func TestCustomFieldHandler_Get_NotFound(t *testing.T) {
 func TestCustomFieldHandler_Create_ServiceError(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.On("CountByResourceType", mock.Anything, mock.Anything).Return(0, nil)
 	repo.On("Create", mock.Anything, mock.Anything).Return(nil, errors.New("service error"))
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -510,8 +511,8 @@ func TestCustomFieldHandler_Create_ServiceError(t *testing.T) {
 func TestCustomFieldHandler_Update_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -534,8 +535,8 @@ func TestCustomFieldHandler_Update_InvalidID(t *testing.T) {
 func TestCustomFieldHandler_Delete_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -554,9 +555,9 @@ func TestCustomFieldHandler_Delete_ServiceError(t *testing.T) {
 
 	cfdID := pulid.MustNew("cfd_")
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
+		RunAndReturn(func(_ context.Context, req customfieldports.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
 			return &customfield.CustomFieldDefinition{
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
@@ -569,7 +570,7 @@ func TestCustomFieldHandler_Delete_ServiceError(t *testing.T) {
 		})
 	repo.On("Delete", mock.Anything, mock.Anything).Return(errors.New("delete error"))
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	valueRepo.On("CountByDefinition", mock.Anything, mock.Anything).Return(0, nil)
 	valueRepo.On("CountResourcesByDefinition", mock.Anything, mock.Anything).Return(0, nil)
 
@@ -589,11 +590,11 @@ func TestCustomFieldHandler_Delete_ServiceError(t *testing.T) {
 func TestCustomFieldHandler_GetByResourceType_Error(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.On("GetActiveByResourceType", mock.Anything, mock.Anything).
 		Return(nil, errors.New("repo error"))
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -612,9 +613,9 @@ func TestCustomFieldHandler_Update_ServiceError(t *testing.T) {
 
 	cfdID := pulid.MustNew("cfd_")
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
+		RunAndReturn(func(_ context.Context, req customfieldports.GetCustomFieldDefinitionByIDRequest) (*customfield.CustomFieldDefinition, error) {
 			return &customfield.CustomFieldDefinition{
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
@@ -627,7 +628,7 @@ func TestCustomFieldHandler_Update_ServiceError(t *testing.T) {
 		})
 	repo.On("Update", mock.Anything, mock.Anything).Return(nil, errors.New("update error"))
 
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	valueRepo.On("CountByDefinition", mock.Anything, mock.Anything).Return(0, nil)
 	valueRepo.On("CountResourcesByDefinition", mock.Anything, mock.Anything).Return(0, nil)
 
@@ -653,8 +654,8 @@ func TestCustomFieldHandler_Update_ServiceError(t *testing.T) {
 func TestCustomFieldHandler_GetByResourceType_Unsupported(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCustomFieldDefinitionRepository(t)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
+	repo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	handler := setupCustomFieldHandler(t, repo, valueRepo)
 
 	ginCtx := testutil.NewGinTestContext().

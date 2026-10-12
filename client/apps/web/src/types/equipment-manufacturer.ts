@@ -4,11 +4,15 @@ import {
   statusSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const equipmentManufacturerSchema = z.object({
   ...tenantInfoSchema.shape,
   status: statusSchema,
-  name: z.string().min(1, { message: "Name is required" }).max(100),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(100),
   description: optionalStringSchema,
 });
 

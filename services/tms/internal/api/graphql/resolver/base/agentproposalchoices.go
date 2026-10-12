@@ -2,12 +2,13 @@ package base
 
 import (
 	"context"
+	"errors"
 	"slices"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"go.uber.org/zap"
 )
@@ -25,7 +26,7 @@ func (r *Core) SubsetChoices(
 
 	labelled := *field
 	labelled.Choices = slices.Clone(field.Choices)
-	services.LabelSubsetChoices(&labelled, r.subsetLabels(ctx, field))
+	agentports.LabelSubsetChoices(&labelled, r.subsetLabels(ctx, field))
 
 	out := make([]*toolschema.Choice, len(labelled.Choices))
 	for idx := range labelled.Choices {
@@ -42,7 +43,7 @@ func (r *Core) SubsetChoices(
 func (r *Core) subsetLabels(
 	ctx context.Context,
 	field *toolschema.Field,
-) services.RecordLabels {
+) agentports.RecordLabels {
 	if len(field.Choices) == 0 || field.Resource == "" {
 		return nil
 	}
@@ -56,16 +57,14 @@ func (r *Core) subsetLabels(
 		return nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l.SubsetLabels == nil {
-		return nil
-	}
-
 	ids := make([]string, len(field.Choices))
 	for idx := range field.Choices {
 		ids[idx] = field.Choices[idx].ID
 	}
-	labels, err := l.SubsetLabels.Load(ctx, loaders.SubsetLabelsKey(resource, ids))
+	labels, err := loaders.SubsetLabels(ctx, loaders.SubsetLabelsKey(resource, ids))
+	if errors.Is(err, loaders.ErrNotAttached) {
+		return nil
+	}
 	if err != nil {
 		r.L.Warn("could not read the labels of the records a proposal offers",
 			zap.String("resource", field.Resource),

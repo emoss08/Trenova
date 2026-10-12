@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	_ "github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,7 +45,7 @@ func (h *Handler) listHolds(c *gin.Context) {
 		func() (*pagination.ListResult[*shipment.ShipmentHold], error) {
 			return h.holdService.ListByShipmentID(
 				c.Request.Context(),
-				&repositories.ListShipmentHoldsRequest{
+				&shipmentports.ListShipmentHoldsRequest{
 					Filter:     req,
 					ShipmentID: shipmentID,
 				},
@@ -83,7 +83,7 @@ func (h *Handler) getHold(c *gin.Context) {
 
 	entity, err := h.holdService.GetByID(
 		c.Request.Context(),
-		&repositories.GetShipmentHoldByIDRequest{
+		&shipmentports.GetShipmentHoldByIDRequest{
 			HoldID:     holdID,
 			ShipmentID: shipmentID,
 			TenantInfo: pagination.FromAuth(authCtx),
@@ -119,7 +119,7 @@ func (h *Handler) createHold(c *gin.Context) {
 		return
 	}
 
-	req := new(repositories.CreateShipmentHoldRequest)
+	req := new(shipmentports.CreateShipmentHoldRequest)
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -172,7 +172,7 @@ func (h *Handler) updateHold(c *gin.Context) {
 		return
 	}
 
-	req := new(repositories.UpdateShipmentHoldRequest)
+	req := new(shipmentports.UpdateShipmentHoldRequest)
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -226,7 +226,7 @@ func (h *Handler) releaseHold(c *gin.Context) {
 
 	released, err := h.holdService.Release(
 		c.Request.Context(),
-		&repositories.ReleaseShipmentHoldRequest{
+		&shipmentports.ReleaseShipmentHoldRequest{
 			HoldID:     holdID,
 			ShipmentID: shipmentID,
 			TenantInfo: pagination.FromAuth(authCtx),

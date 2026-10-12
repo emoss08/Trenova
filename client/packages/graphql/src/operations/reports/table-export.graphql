@@ -1,0 +1,20 @@
+mutation ExportTableView($input: ExportTableViewInput!) {
+  exportTableView(input: $input) {
+    definitionId
+    skippedColumns
+    run {
+      id
+      status
+    }
+  }
+}
+
+mutation ScheduleTableView($input: ScheduleTableViewInput!) {
+  scheduleTableView(input: $input) {
+    definitionId
+    skippedColumns
+    schedule {
+      id
+    }
+  }
+}

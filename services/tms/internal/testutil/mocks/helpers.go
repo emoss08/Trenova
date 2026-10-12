@@ -3,98 +3,99 @@ package mocks
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/domain/accounttype"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/domain/commodity"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/core/domain/glaccount"
-	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/servicetype"
-	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-var _ services.AuditService = (*NoopAuditService)(nil)
+var _ auditports.AuditService = (*NoopAuditService)(nil)
 
 type NoopAuditService struct{}
 
 func (n *NoopAuditService) List(
 	_ context.Context,
-	_ *repositories.ListAuditEntriesRequest,
+	_ *auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return &pagination.ListResult[*audit.Entry]{}, nil
 }
 
 func (n *NoopAuditService) ListConnection(
 	_ context.Context,
-	_ *repositories.ListAuditEntriesConnectionRequest,
+	_ *auditports.ListAuditEntriesConnectionRequest,
 ) (*pagination.CursorListResult[*audit.Entry], error) {
 	return &pagination.CursorListResult[*audit.Entry]{}, nil
 }
 
 func (n *NoopAuditService) ListByResourceID(
 	_ context.Context,
-	_ *repositories.ListByResourceIDRequest,
+	_ *auditports.ListByResourceIDRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return &pagination.ListResult[*audit.Entry]{}, nil
 }
 
 func (n *NoopAuditService) GetByID(
 	_ context.Context,
-	_ repositories.GetAuditEntryByIDOptions,
+	_ auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	return nil, nil
 }
 
-func (n *NoopAuditService) LogAction(_ *services.LogActionParams, _ ...services.LogOption) error {
+func (n *NoopAuditService) LogAction(_ *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	return nil
 }
 
-func (n *NoopAuditService) LogActions(_ []services.BulkLogEntry) error {
+func (n *NoopAuditService) LogActions(_ []auditports.BulkLogEntry) error {
 	return nil
 }
 
 func (n *NoopAuditService) RegisterSensitiveFields(
 	_ permission.Resource,
-	_ []services.SensitiveField,
+	_ []auditports.SensitiveField,
 ) error {
 	return nil
 }
 
-var _ services.PermissionEngine = (*AllowAllPermissionEngine)(nil)
+var _ permissionports.PermissionEngine = (*AllowAllPermissionEngine)(nil)
 
 type AllowAllPermissionEngine struct{}
 
 func (a *AllowAllPermissionEngine) Check(
 	_ context.Context,
-	_ *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
-	return &services.PermissionCheckResult{Allowed: true}, nil
+	_ *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{Allowed: true}, nil
 }
 
 func (a *AllowAllPermissionEngine) CheckBatch(
 	_ context.Context,
-	_ *services.BatchPermissionCheckRequest,
-) (*services.BatchPermissionCheckResult, error) {
-	return &services.BatchPermissionCheckResult{}, nil
+	_ *permissionports.BatchPermissionCheckRequest,
+) (*permissionports.BatchPermissionCheckResult, error) {
+	return &permissionports.BatchPermissionCheckResult{}, nil
 }
 
 func (a *AllowAllPermissionEngine) GetLightManifest(
 	_ context.Context,
 	_, _ pulid.ID,
-) (*services.LightPermissionManifest, error) {
+) (*permissionports.LightPermissionManifest, error) {
 	return nil, nil
 }
 
@@ -102,7 +103,7 @@ func (a *AllowAllPermissionEngine) GetResourcePermissions(
 	_ context.Context,
 	_, _ pulid.ID,
 	_ string,
-) (*services.ResourcePermissionDetail, error) {
+) (*permissionports.ResourcePermissionDetail, error) {
 	return nil, nil
 }
 
@@ -113,22 +114,22 @@ func (a *AllowAllPermissionEngine) InvalidateUser(_ context.Context, _, _ pulid.
 func (a *AllowAllPermissionEngine) GetEffectivePermissions(
 	_ context.Context,
 	_, _ pulid.ID,
-) (*services.EffectivePermissions, error) {
+) (*permissionports.EffectivePermissions, error) {
 	registry := permission.NewRegistry()
-	resources := make(map[string]services.EffectiveResourcePermission, len(registry.All()))
+	resources := make(map[string]permissionports.EffectiveResourcePermission, len(registry.All()))
 	for _, def := range registry.All() {
 		operations := make([]permission.Operation, len(def.Operations))
 		for i, op := range def.Operations {
 			operations[i] = op.Operation
 		}
 
-		resources[def.Resource] = services.EffectiveResourcePermission{
+		resources[def.Resource] = permissionports.EffectiveResourcePermission{
 			Operations: operations,
 			DataScope:  permission.DataScopeAll,
 		}
 	}
 
-	return &services.EffectivePermissions{
+	return &permissionports.EffectivePermissions{
 		MaxSensitivity: permission.SensitivityConfidential,
 		Resources:      resources,
 	}, nil
@@ -136,22 +137,22 @@ func (a *AllowAllPermissionEngine) GetEffectivePermissions(
 
 func (a *AllowAllPermissionEngine) SimulatePermissions(
 	_ context.Context,
-	_ *services.SimulatePermissionsRequest,
-) (*services.EffectivePermissions, error) {
+	_ *permissionports.SimulatePermissionsRequest,
+) (*permissionports.EffectivePermissions, error) {
 	return nil, nil
 }
 
 func (a *AllowAllPermissionEngine) AgentsUsable(
 	_ context.Context,
-	_ *services.RequestActor,
+	_ *permissionports.RequestActor,
 	_ permission.Operation,
-) (*services.UsableAgents, error) {
-	return &services.UsableAgents{Assistant: true}, nil
+) (*permissionports.UsableAgents, error) {
+	return &permissionports.UsableAgents{Assistant: true}, nil
 }
 
 func (a *AllowAllPermissionEngine) MayUseAgent(
 	_ context.Context,
-	_ *services.RequestActor,
+	_ *permissionports.RequestActor,
 	_ *agentdefinition.Definition,
 ) (bool, error) {
 	return true, nil
@@ -159,12 +160,12 @@ func (a *AllowAllPermissionEngine) MayUseAgent(
 
 func (a *AllowAllPermissionEngine) RoleCoverage(
 	_ context.Context,
-	req *services.RoleCoverageRequest,
-) ([]services.RoleCoverage, error) {
+	req *permissionports.RoleCoverageRequest,
+) ([]permissionports.RoleCoverage, error) {
 	return permtest.FullCoverage(req), nil
 }
 
-var _ services.DataTransformer = (*NoopDataTransformer)(nil)
+var _ accessorialchargeports.DataTransformer = (*NoopDataTransformer)(nil)
 
 type NoopDataTransformer struct{}
 

@@ -5,28 +5,28 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/require"
 )
 
 type Recorder struct {
 	mu      sync.Mutex
-	changes []services.SecurityChange
+	changes []permissionports.SecurityChange
 }
 
-func (r *Recorder) RecordChange(_ context.Context, change *services.SecurityChange) {
+func (r *Recorder) RecordChange(_ context.Context, change *permissionports.SecurityChange) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.changes = append(r.changes, *change)
 }
 
-func (r *Recorder) Changes() []services.SecurityChange {
+func (r *Recorder) Changes() []permissionports.SecurityChange {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return append([]services.SecurityChange(nil), r.changes...)
+	return append([]permissionports.SecurityChange(nil), r.changes...)
 }
 
-func (r *Recorder) Only(t *testing.T) services.SecurityChange {
+func (r *Recorder) Only(t *testing.T) permissionports.SecurityChange {
 	t.Helper()
 	changes := r.Changes()
 	require.Len(t, changes, 1)

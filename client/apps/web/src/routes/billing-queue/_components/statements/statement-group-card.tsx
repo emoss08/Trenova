@@ -59,7 +59,7 @@ export function StatementGroupCard({
             checked={allIncluded}
             indeterminate={!allIncluded && included.length > 0}
             onCheckedChange={() => onToggleGroup(group)}
-            aria-label={`Include every shipment on ${group.label}`}
+            aria-label={t("Include every shipment on {0}", group.label)}
           />
         )}
         <button
@@ -126,7 +126,11 @@ export function StatementGroupCard({
                 <Checkbox
                   checked={!held}
                   onCheckedChange={() => onToggleShipment(shipment)}
-                  aria-label={`Include ${shipment.proNumber ?? "shipment"} on this invoice`}
+                  aria-label={
+                    shipment.proNumber
+                      ? t("Include {0} on this invoice", shipment.proNumber)
+                      : t("Include shipment on this invoice")
+                  }
                 />
                 <span className={cn("w-28 shrink-0 truncate font-mono", held && "line-through")}>
                   {shipment.proNumber || "—"}

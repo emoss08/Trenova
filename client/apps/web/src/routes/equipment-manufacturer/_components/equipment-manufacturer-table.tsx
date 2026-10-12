@@ -12,6 +12,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./equipment-manufacturer-columns";
 import { EquipmentManufacturerPanel } from "./equipment-manufacturer-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function EquipmentManufacturerTable() {
   const t = useT();
@@ -28,9 +29,9 @@ export default function EquipmentManufacturerTable() {
           status: status as EquipmentManufacturer["status"],
         }),
         {
-          loading: "Updating status...",
-          success: "Status updated successfully",
-          error: "Failed to update status",
+          loading: translate("Updating status..."),
+          success: translate("Status updated successfully"),
+          error: translate("Failed to update status"),
           finally: async () => {
             await queryClient.invalidateQueries({
               queryKey: ["equipment-manufacturer-list"],
@@ -62,6 +63,7 @@ export default function EquipmentManufacturerTable() {
   return (
     <DataTable<EquipmentManufacturer>
       name="Equipment Manufacturer"
+      emptyTitle={t("No equipment manufacturers yet")}
       queryKey="equipment-manufacturer-list"
       graphql={equipmentManufacturerTableGraphQLConfig}
       resource={Resource.EquipmentManufacturer}

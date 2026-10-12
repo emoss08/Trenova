@@ -39,7 +39,7 @@ export function FinancialReportSection({ section, className }: FinancialReportSe
           <tfoot className="bg-muted/30 border-t font-medium">
             <tr>
               <td colSpan={2} className="px-3 py-2 text-right text-xs">
-                {t("Total {0}", section.label)}
+                {t("Total {0}", t(section.label))}
               </td>
               <td className="px-3 py-2 text-right">
                 <AmountDisplay

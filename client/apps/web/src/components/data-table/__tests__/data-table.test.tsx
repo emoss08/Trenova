@@ -10,6 +10,7 @@ import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useTable } from "@tanstack/react-table";
 import { dataTableFeatures } from "@trenova/shared/lib/table-features";
 import { DataTablePagination } from "../_components/data-table-pagination";
+import { seedDataTableQueries } from "@/test/data-table-queries";
 
 type TestRow = { id: string; name: string };
 
@@ -39,6 +40,17 @@ const { useDataTableQueryMock, defaultQueryResult } = vi.hoisted(() => {
   };
 });
 
+const presence = vi.hoisted(() => ({ resources: [] as string[] }));
+
+vi.mock("@/components/presence/data-table-viewers", () => ({
+  DataTableViewers: ({ resource }: { resource: string }) => {
+    presence.resources.push(resource);
+    return null;
+  },
+  RecordPresence: ({ children }: { children: React.ReactNode }) => children,
+  RecordViewers: () => null,
+}));
+
 vi.mock("@/hooks/use-permission", () => ({
   // Both hooks: the config manager inside the table reaches for the
   // single-operation one, and a factory missing it throws only on the runs
@@ -54,19 +66,14 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({
+vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", () => ({
+vi.mock("@/lib/queries", async () => ({
   queries: {
-    tableConfiguration: {
-      default: () => ({ queryKey: ["tableConfig-default"], queryFn: () => null }),
-      all: () => ({
-        queryKey: ["tableConfig-all"],
-        queryFn: () => ({ results: [], count: 0 }),
-      }),
-    },
+    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
   },
 }));
 
@@ -100,9 +107,11 @@ beforeAll(async () => {
 }, 60_000);
 
 function createQueryClient() {
-  return new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  });
+  return seedDataTableQueries(
+    new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    }),
+  );
 }
 
 function renderDataTable(props?: Partial<React.ComponentProps<typeof DataTable<TestRow>>>) {
@@ -127,6 +136,20 @@ function renderDataTable(props?: Partial<React.ComponentProps<typeof DataTable<T
 describe("DataTable", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    presence.resources.length = 0;
+  });
+
+  /*
+   * The toolbar's resource is the table's name, which also titles its "New"
+   * button, and presence joined under it: "AI Audit Event" is no resource, so
+   * the audit trail asked /realtime/presence/AI Audit Event/ and was refused
+   * with a 400 on every load. Presence joins under the permission resource.
+   */
+  it("joins presence under the table's permission resource, not its name", () => {
+    renderDataTable({ name: "AI Audit Event", resource: "ai_audit_trail" });
+
+    expect(presence.resources).toContain("ai_audit_trail");
+    expect(presence.resources).not.toContain("AI Audit Event");
   });
 
   it("renders row data from the query", () => {
@@ -460,13 +483,13 @@ describe("DataTable scope filters", () => {
   it("offers the generic CSV export to someone who may export", () => {
     renderDataTable({ resource: "test_resource" });
 
-    expect(screen.getByLabelText("Export to CSV")).toBeInTheDocument();
+    expect(screen.getByLabelText("Export, print or schedule")).toBeInTheDocument();
   });
 
   it("hides the generic CSV export when the table exports another way", () => {
     renderDataTable({ resource: "test_resource", enableExport: false });
 
-    expect(screen.queryByLabelText("Export to CSV")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Export, print or schedule")).not.toBeInTheDocument();
   });
 });
 

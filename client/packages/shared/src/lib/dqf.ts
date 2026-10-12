@@ -1,4 +1,5 @@
 import { translate } from "@trenova/shared/i18n/runtime";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 /**
  * Labels and tones for the driver qualification file. The words here mirror
  * the credential and document areas the file is assembled from, so a reader who
@@ -17,12 +18,12 @@ export type DQFSectionValue = "Credentials" | "Documents" | "SafetyHistory" | "D
 
 export type DQFTone = "success" | "danger" | "warning" | "neutral";
 
-export const DQF_SECTION_LABELS: Record<DQFSectionValue, string> = {
+export const DQF_SECTION_LABELS: Record<DQFSectionValue, string> = defineLabels({
   Credentials: "Licences, medical and recurring reviews",
   Documents: "Documents on file",
   SafetyHistory: "Previous employers",
   DrugAlcohol: "Drug and alcohol",
-};
+});
 
 export function dqfSectionLabel(section: string): string {
   return DQF_SECTION_LABELS[section as DQFSectionValue] ?? section;
@@ -36,14 +37,14 @@ export const DQF_SECTION_ORDER: DQFSectionValue[] = [
   "DrugAlcohol",
 ];
 
-export const DQF_ITEM_STATUS_LABELS: Record<DQFItemStatusValue, string> = {
+export const DQF_ITEM_STATUS_LABELS: Record<DQFItemStatusValue, string> = defineLabels({
   Satisfied: "On file",
   ExpiringSoon: "Expiring soon",
   Expired: "Expired",
   Missing: "Missing",
   Outstanding: "Outstanding",
   NotApplicable: "Not applicable",
-};
+});
 
 export function dqfItemStatusLabel(status: string): string {
   return DQF_ITEM_STATUS_LABELS[status as DQFItemStatusValue] ?? status;
@@ -73,13 +74,13 @@ export function dqfItemBlocks(status: string): boolean {
   return status === "Expired" || status === "Missing" || status === "Outstanding";
 }
 
-export const VERIFICATION_STATUS_LABELS: Record<string, string> = {
+export const VERIFICATION_STATUS_LABELS: Record<string, string> = defineLabels({
   Pending: "Not yet requested",
   Requested: "Awaiting response",
   Received: "Response received",
   NoResponse: "No response after follow-up",
   NotApplicable: "Not applicable",
-};
+});
 
 export function verificationStatusLabel(status: string): string {
   return VERIFICATION_STATUS_LABELS[status] ?? status;
@@ -106,14 +107,14 @@ export function verificationSettled(status: string): boolean {
   return status === "Received" || status === "NoResponse" || status === "NotApplicable";
 }
 
-export const VERIFICATION_METHOD_LABELS: Record<string, string> = {
+export const VERIFICATION_METHOD_LABELS: Record<string, string> = defineLabels({
   Email: "Email",
   Fax: "Fax",
   Mail: "Mail",
   Phone: "Phone",
   Portal: "Portal",
   Other: "Other",
-};
+});
 
 export function verificationMethodLabel(method: string): string {
   return VERIFICATION_METHOD_LABELS[method] ?? method;
@@ -265,12 +266,12 @@ type DQFFileLike = {
   verifications: readonly (VerificationLike & { id: string; employerName: string })[];
 };
 
-const ITEM_STEP_LABELS: Record<string, string> = {
+const ITEM_STEP_LABELS: Record<string, string> = defineLabels({
   Missing: "Add",
   Expired: "Renew",
   Outstanding: "Settle",
   ExpiringSoon: "Renew soon",
-};
+});
 
 /**
  * The file's work, in the order the office should do it: gaps that stop the

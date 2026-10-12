@@ -20,10 +20,10 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
-	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,7 +45,7 @@ type Params struct {
 
 	Service      *captureservice.Service
 	Releases     *capturereleaseservice.Service
-	Gateway      services.RealtimeGateway `optional:"true"`
+	Gateway      agentports.RealtimeGateway `optional:"true"`
 	ErrorHandler *helpers.ErrorHandler
 	Config       *config.Config
 	Logger       *zap.Logger
@@ -54,7 +54,7 @@ type Params struct {
 type Handler struct {
 	service     *captureservice.Service
 	releases    *capturereleaseservice.Service
-	gateway     services.RealtimeGateway
+	gateway     agentports.RealtimeGateway
 	eh          *helpers.ErrorHandler
 	maxLifetime int64
 	l           *zap.Logger

@@ -26,6 +26,7 @@ import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { CashApplicationEditor } from "./cash-application-editor";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function ApplyUnappliedForm({
   payment,
@@ -111,8 +112,8 @@ export function ApplyUnappliedForm({
     if (totals.isOverBudget || totals.overAppliedRows.length > 0) {
       toast.error(t("Invalid application"), {
         description: totals.isOverBudget
-          ? "The applied total exceeds the unapplied cash on this payment."
-          : "One or more invoices would be over-applied.",
+          ? translate("The applied total exceeds the unapplied cash on this payment.")
+          : translate("One or more invoices would be over-applied."),
       });
       return;
     }
@@ -143,7 +144,7 @@ export function ApplyUnappliedForm({
                   control={form.control}
                   name="accountingDate"
                   label={t("Accounting date")}
-                  rules={{ required: "Accounting date is required" }}
+                  rules={{ required: translate("Accounting date is required") }}
                   placeholder={t("Select date")}
                   description={t(
                     "The GL date for this application. It must fall within an open fiscal period.",

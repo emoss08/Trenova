@@ -11,14 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *ExtractionShadowReportResolver) CostUsd(ctx context.Context, obj *services.ExtractionShadowReport) (string, error) {
+func (r *ExtractionShadowReportResolver) CostUsd(ctx context.Context, obj *extractionshadowports.ExtractionShadowReport) (string, error) {
 	return obj.CostUSD.StringFixed(6), nil
 }
 
@@ -45,7 +44,7 @@ func (r *MutationResolver) UpdateExtractionShadowSettings(ctx context.Context, i
 		return nil, err
 	}
 
-	return r.ExtractionShadowService.UpdateSettings(ctx, &services.UpdateExtractionShadowSettingsRequest{
+	return r.ExtractionShadowService.UpdateSettings(ctx, &extractionshadowports.UpdateExtractionShadowSettingsRequest{
 		TenantInfo:    base.TenantInfo(authCtx),
 		Enabled:       input.Enabled,
 		ProviderID:    providerID,
@@ -64,7 +63,7 @@ func (r *QueryResolver) ExtractionShadowSettings(ctx context.Context) (*extracti
 	return r.ExtractionShadowService.GetSettings(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*services.ExtractionShadowReport, error) {
+func (r *QueryResolver) ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*extractionshadowports.ExtractionShadowReport, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -75,7 +74,7 @@ func (r *QueryResolver) ExtractionShadowReport(ctx context.Context, windowDays *
 		return nil, err
 	}
 
-	request := &services.ExtractionShadowReportRequest{
+	request := &extractionshadowports.ExtractionShadowReportRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ProviderID: candidate,
 	}
@@ -97,7 +96,7 @@ func (r *QueryResolver) ExtractionShadowResults(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	result, err := r.ExtractionShadowService.ListResults(ctx, &repositories.ListExtractionShadowResultConnectionRequest{
+	result, err := r.ExtractionShadowService.ListResults(ctx, &extractionshadowports.ListExtractionShadowResultConnectionRequest{
 		Filter:  tableInput.Filter,
 		Cursor:  tableInput.Cursor,
 		Columns: extractionShadowResultColumns(ctx, "edges.node"),
@@ -120,7 +119,7 @@ func (r *QueryResolver) ExtractionShadowResult(ctx context.Context, id string) (
 		return nil, err
 	}
 
-	return r.ExtractionShadowService.GetResult(ctx, repositories.GetExtractionShadowResultRequest{
+	return r.ExtractionShadowService.GetResult(ctx, extractionshadowports.GetExtractionShadowResultRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         resultID,
 	})

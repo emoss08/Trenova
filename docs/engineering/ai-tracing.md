@@ -17,7 +17,7 @@ in workflow code**, and nothing below added, removed or reordered a command.
 | Assistant turn | anchored on the turn id | `invoke_agent {agent}` | `assistantjobs.FinishTurnActivity`; `CloseTurnActivity` when the save failed on every attempt |
 | A delegate's task | anchored on the turn id and the `delegate_task` call id | `invoke_agent {delegate}` | `FinishTurnActivity`, from the delegate's `delegate_started` and `delegate_finished` events |
 | Evaluation replay | anchored on the evaluation id | `invoke_agent`, `trenova.ai.purpose=evaluation` | `FinishReplayActivity`, `FailEvaluationActivity` |
-| One-shot call | a new trace per call | `trenova.ai.job {feature}` | `completionjobs.Dispatcher.await`, synchronously |
+| One-shot call | a new trace per call | `trenova.ai.job {feature}` | `completioncontract.Dispatcher.await`, synchronously |
 | Other AI work (document extraction, inbound classification, accounting mapping, insights, the daily briefing) | the workflow's own trace | none of its own | router spans carry `trenova.ai.feature` |
 | Deciding, running or expiring a proposal | the request's or the sweep's | `trenova.ai.proposal.decide` / `.execute` / `.expire` | `agentdecisionservice`, `proposalexecutor`, the expiry activities |
 
@@ -75,7 +75,7 @@ root and each delegate's root back to the turn's.
 
 `error.type` is how the loop ended when it did not finish: `cancelled`,
 `timeout`, `no_provider`, `providers_resting`, `refused`, `schema_invalid`,
-`http_{status}` or `failed` (`agentflow.FailureKind`).
+`http_{status}` or `failed` (`agentflowcontract.FailureKind`).
 
 Token and cost totals come from the loop, not from a query: the model activity
 returns what every attempt of the call used (`ModelReply.Usage`) and `Drive`
@@ -108,15 +108,26 @@ alike. `gen_ai.operation.name`, `gen_ai.provider.name` (`anthropic`, `openai`,
 attempt `trenova.ai.first_token_ms`: how long it took to stream the first text
 or thinking, also kept in the usage row's `first_token_ms` and the
 `trenova.gen_ai.client.time_to_first_token` histogram (labelled with
-`trenova.ai.task`); an attempt that streamed none has none. Events:
+`trenova.ai.task`); an attempt that streamed none has none. With
+`ai.cacheDiagnostics` on, a chat attempt on the Claude API also carries
+`trenova.ai.cache_miss.reason` (the API's `cache_miss_reason` type, or `pending`)
+and, for a changed prompt, `trenova.ai.cache_miss.missed_tokens`; see "Why a
+prompt cache missed" in agent-runtime.md. Events:
 `provider.busy_wait{wait_s}` for each wait on a provider answering 429 or 5xx,
 `provider.resting` when the attempt put the provider to rest.
 
 Input tokens on the span are the whole prompt, as the semantic conventions ask:
 Anthropic reports cached tokens beside `input_tokens`, so they are added
-(`modeladapter.CacheSeparateFromInput`); OpenAI counts them inside it. The usage
-row keeps the provider's own `input_tokens` so cost is unchanged, with the cache
-counts in their own columns.
+(`aiprovider.Kind.CachesOutsideInput`); OpenAI counts them inside it. The usage
+row keeps the provider's own `input_tokens`, with the cache counts in their own
+columns. Cost is priced from all three by `aiprovider.Provider.CostFor`, the one
+pricing function every cost path uses: fresh input at the input price, cache
+reads at `cache_read_cost_per_million` and writes at
+`cache_write_cost_per_million`. A cache price left empty takes the protocol's
+usual multiple of the input price: a tenth for a read on every protocol, one
+and a quarter times for an Anthropic write (the five-minute cache), the input
+price for a write on the others, which report none. For the OpenAI protocols the
+cached count is taken out of `input_tokens` before the fresh part is priced.
 
 ### `execute_tool {tool}` (INTERNAL)
 

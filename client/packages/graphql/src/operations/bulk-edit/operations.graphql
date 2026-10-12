@@ -1,0 +1,58 @@
+fragment BulkEditJobFields on BulkEditJob {
+  id
+  resource
+  field
+  value
+  status
+  totalCount
+  processedCount
+  changedCount
+  failedCount
+  failureMessage
+  failures {
+    id
+    message
+  }
+  canUndo
+  completedAt
+  undoneAt
+  createdAt
+}
+
+query BulkEditFields($resource: String!) {
+  bulkEditFields(resource: $resource) {
+    name
+    label
+    kind
+    record
+    options {
+      value
+      label
+    }
+  }
+}
+
+query PreviewBulkEdit($input: BulkEditInput!) {
+  previewBulkEdit(input: $input) {
+    count
+    tooMany
+  }
+}
+
+query MyBulkEdit($id: ID!) {
+  myBulkEdit(id: $id) {
+    ...BulkEditJobFields
+  }
+}
+
+mutation StartBulkEdit($input: BulkEditInput!) {
+  startBulkEdit(input: $input) {
+    ...BulkEditJobFields
+  }
+}
+
+mutation UndoMyBulkEdit($id: ID!) {
+  undoMyBulkEdit(id: $id) {
+    ...BulkEditJobFields
+  }
+}

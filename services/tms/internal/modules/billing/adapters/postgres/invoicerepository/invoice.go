@@ -1,0 +1,1158 @@
+package invoicerepository
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoiceadjustmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	DB     *postgres.Connection
+	Logger *zap.Logger
+}
+
+type repository struct {
+	db *postgres.Connection
+	l  *zap.Logger
+}
+
+func New(p Params) invoiceports.InvoiceRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.invoice-repository"),
+	}
+}
+
+func (r *repository) filterQuery(
+	q *bun.SelectQuery,
+	req *invoiceports.ListInvoicesRequest,
+) *bun.SelectQuery {
+	q = querybuilder.ApplyFilters(
+		q,
+		"inv",
+		req.Filter,
+		(*invoice.Invoice)(nil),
+	)
+
+	q = q.Relation("Customer").Relation("Shipment")
+
+	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
+		Offset(int64(req.Filter.Pagination.SafeOffset()))
+}
+
+func (r *repository) List(
+	ctx context.Context,
+	req *invoiceports.ListInvoicesRequest,
+) (*pagination.ListResult[*invoice.Invoice], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*invoice.Invoice], error) {
+			entities := make([]*invoice.Invoice, 0, req.Filter.Pagination.SafeLimit())
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterQuery(sq, req)
+				}).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			return &pagination.ListResult[*invoice.Invoice]{
+				Items: entities,
+				Total: int(total),
+			}, nil
+		},
+	)
+}
+
+func (r *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *invoiceports.ListInvoiceConnectionRequest,
+) (*bun.SelectQuery, error) {
+	return querybuilder.ApplyCursorFilters(
+		q,
+		invoicecol.InvoiceTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*invoice.Invoice)(nil),
+	)
+}
+
+func (r *repository) applyTotalCountFilters(
+	q *bun.SelectQuery,
+	req *invoiceports.ListInvoiceConnectionRequest,
+) *bun.SelectQuery {
+	return querybuilder.ApplyFiltersWithoutSort(
+		q,
+		invoicecol.InvoiceTable.Alias,
+		req.Filter,
+		(*invoice.Invoice)(nil),
+	)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *invoiceports.ListInvoiceConnectionRequest,
+) (*pagination.CursorListResult[*invoice.Invoice], error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*invoice.Invoice], error) {
+			log := r.l.With(
+				zap.String("operation", "ListConnection"),
+				zap.Any("request", req),
+			)
+
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*invoice.Invoice)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyTotalCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count invoices", zap.Error(err))
+					return nil, err
+				}
+				totalCount = new(int(total))
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*invoice.Invoice]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*invoice.Invoice) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							ColumnExpr(invoicecol.InvoiceTable.All()).
+							Relation("Customer")
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyCursorPageFilters(sq, req)
+					},
+				})
+			if err != nil {
+				log.Error("failed to scan invoices", zap.Error(err))
+				return nil, err
+			}
+
+			return result, nil
+		},
+	)
+}
+
+func (r *repository) GetByID(
+	ctx context.Context,
+	req invoiceports.GetInvoiceByIDRequest,
+) (*invoice.Invoice, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
+		entity := new(invoice.Invoice)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("inv.id = ?", req.ID).
+			Where("inv.organization_id = ?", req.TenantInfo.OrgID).
+			Where("inv.business_unit_id = ?", req.TenantInfo.BuID).
+			Relation("Customer").
+			Relation("ShipperCustomer").
+			Relation("Shipment").
+			Relation("BillingQueueItem").
+			Relation("PDFDocument").
+			Relation("PDFDocument.DocumentType").
+			Relation("Lines", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Order("invl.line_number ASC")
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Invoice")
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req invoiceports.GetInvoicesByIDsRequest,
+) ([]*invoice.Invoice, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*invoice.Invoice, error) {
+		rel := invoicecol.InvoiceRelations
+		entities := make([]*invoice.Invoice, 0, len(req.InvoiceIDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return invoicecol.InvoiceScopeTenant(sq, req.TenantInfo).
+					Where(invoicecol.InvoiceColumns.ID.In(), bun.List(req.InvoiceIDs))
+			}).
+			Relation(rel.Customer).
+			Relation(rel.ShipperCustomer).
+			Relation(rel.Shipment).
+			Relation(rel.BillingQueueItem).
+			Relation(rel.PDFDocument).
+			Relation(buncolgen.Rel(rel.PDFDocument, documentcol.DocumentRelations.DocumentType)).
+			Relation(rel.Lines, func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Order(invoicecol.InvoiceLineColumns.LineNumber.OrderAsc())
+			}).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to get invoices by ids", zap.Error(err))
+			return nil, fmt.Errorf("get invoices by ids: %w", err)
+		}
+
+		return entities, nil
+	})
+}
+
+// ListByShipmentIDs finds every invoice carrying any of the shipments, keyed by
+// shipment. An invoice that bills a shipment through its lines counts as much as
+// one that names it in the header, so grouped and consolidated invoices appear.
+func (r *repository) ListLineCharges(
+	ctx context.Context,
+	req *invoiceports.ListInvoiceLineChargesRequest,
+) ([]invoiceports.InvoiceLineCharge, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]invoiceports.InvoiceLineCharge, error) {
+			if req == nil || len(req.InvoiceIDs) == 0 {
+				return []invoiceports.InvoiceLineCharge{}, nil
+			}
+
+			invl := invoicecol.InvoiceLineColumns
+			charges := make([]invoiceports.InvoiceLineCharge, 0, len(req.InvoiceIDs))
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model((*invoice.InvoiceLine)(nil)).
+				Distinct().
+				Column(invl.AdditionalChargeID.Bare(), invl.ShipmentID.Bare()).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return invoicecol.InvoiceLineScopeTenant(sq, req.TenantInfo).
+						Where(invl.InvoiceID.In(), bun.List(req.InvoiceIDs)).
+						Where(invl.AdditionalChargeID.IsNotNull()).
+						Where(invl.ShipmentID.IsNotNull())
+				}).
+				Scan(ctx, &charges); err != nil {
+				r.l.Error("failed to list invoice line charges", zap.Error(err))
+				return nil, fmt.Errorf("list invoice line charges: %w", err)
+			}
+
+			return charges, nil
+		},
+	)
+}
+
+func (r *repository) NetBilledByCharge(
+	ctx context.Context,
+	req *invoiceports.NetBilledByChargeRequest,
+) (map[pulid.ID]decimal.Decimal, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]decimal.Decimal, error) {
+		if req == nil || len(req.ChargeIDs) == 0 {
+			return map[pulid.ID]decimal.Decimal{}, nil
+		}
+
+		invl := invoicecol.InvoiceLineColumns
+		inv := invoicecol.InvoiceColumns
+		adj := invoiceadjustmentcol.InvoiceAdjustmentColumns
+
+		var rows []struct {
+			ChargeID pulid.ID        `bun:"charge_id"`
+			Net      decimal.Decimal `bun:"net"`
+		}
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model((*invoice.InvoiceLine)(nil)).
+			ColumnExpr(invl.AdditionalChargeID.As("charge_id")).
+			ColumnExpr(buncolgen.Sum(invl.Amount, "net")).
+			Join(
+				"JOIN "+invoicecol.InvoiceTable.As(invoicecol.InvoiceTable.Alias)+" ON ?",
+				bun.Safe(inv.ID.EqColumn(invl.InvoiceID)+
+					" AND "+inv.OrganizationID.EqColumn(invl.OrganizationID)+
+					" AND "+inv.BusinessUnitID.EqColumn(invl.BusinessUnitID)),
+			).
+			Join(
+				"LEFT JOIN "+invoiceadjustmentcol.InvoiceAdjustmentTable.As(
+					invoiceadjustmentcol.InvoiceAdjustmentTable.Alias,
+				)+" ON ?",
+				bun.Safe(adj.ID.EqColumn(inv.SourceInvoiceAdjustmentID)+
+					" AND "+adj.OrganizationID.EqColumn(inv.OrganizationID)+
+					" AND "+adj.BusinessUnitID.EqColumn(inv.BusinessUnitID)),
+			).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return invoicecol.InvoiceLineScopeTenant(sq, req.TenantInfo).
+					Where(invl.AdditionalChargeID.In(), bun.List(req.ChargeIDs)).
+					Where(inv.Status.Ne(), invoice.StatusVoided)
+			}).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Where(inv.BillType.Ne(), billingqueue.BillTypeCreditMemo).
+					WhereOr(adj.Kind.In(), bun.List([]invoiceadjustment.Kind{
+						invoiceadjustment.KindCreditOnly,
+						invoiceadjustment.KindCreditRebill,
+					}))
+			}).
+			GroupExpr(invl.AdditionalChargeID.Qualified()).
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to total billed charges", zap.Error(err))
+			return nil, fmt.Errorf("total billed charges: %w", err)
+		}
+
+		net := make(map[pulid.ID]decimal.Decimal, len(rows))
+		for _, row := range rows {
+			net[row.ChargeID] = row.Net
+		}
+
+		return net, nil
+	})
+}
+
+func (r *repository) ListByShipmentIDs(
+	ctx context.Context,
+	req invoiceports.ListInvoicesByShipmentIDsRequest,
+) (map[pulid.ID][]*invoice.Invoice, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*invoice.Invoice, error) {
+			result := make(map[pulid.ID][]*invoice.Invoice, len(req.ShipmentIDs))
+			if len(req.ShipmentIDs) == 0 {
+				return result, nil
+			}
+
+			inv := invoicecol.InvoiceColumns
+			invl := invoicecol.InvoiceLineColumns
+			var pairs []struct {
+				ShipmentID pulid.ID `bun:"shipment_id"`
+				InvoiceID  pulid.ID `bun:"invoice_id"`
+			}
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model((*invoice.InvoiceLine)(nil)).
+				DistinctOn(invl.ShipmentID.Qualified()+", "+invl.InvoiceID.Qualified()).
+				Column(invl.ShipmentID.Bare(), invl.InvoiceID.Bare()).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return invoicecol.InvoiceLineScopeTenant(sq, req.TenantInfo).
+						Where(invl.ShipmentID.In(), bun.List(req.ShipmentIDs))
+				}).
+				UnionAll(r.db.DBForContext(ctx).NewSelect().
+					Model((*invoice.Invoice)(nil)).
+					Column(inv.ShipmentID.Bare()).
+					ColumnExpr(inv.ID.As("invoice_id")).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return invoicecol.InvoiceScopeTenant(sq, req.TenantInfo).
+							Where(inv.ShipmentID.In(), bun.List(req.ShipmentIDs))
+					})).
+				Scan(ctx, &pairs); err != nil {
+				r.l.Error("failed to list invoice ids by shipment", zap.Error(err))
+				return nil, fmt.Errorf("list invoices by shipment: %w", err)
+			}
+			if len(pairs) == 0 {
+				return result, nil
+			}
+
+			invoiceIDs := make([]pulid.ID, 0, len(pairs))
+			seen := make(map[pulid.ID]struct{}, len(pairs))
+			for _, pair := range pairs {
+				if _, ok := seen[pair.InvoiceID]; ok {
+					continue
+				}
+				seen[pair.InvoiceID] = struct{}{}
+				invoiceIDs = append(invoiceIDs, pair.InvoiceID)
+			}
+
+			invoices, err := r.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				InvoiceIDs: invoiceIDs,
+			})
+			if err != nil {
+				return nil, err
+			}
+			byID := make(map[pulid.ID]*invoice.Invoice, len(invoices))
+			for _, entity := range invoices {
+				byID[entity.ID] = entity
+			}
+
+			linked := make(map[pulid.ID]map[pulid.ID]struct{}, len(req.ShipmentIDs))
+			for _, pair := range pairs {
+				entity, ok := byID[pair.InvoiceID]
+				if !ok {
+					continue
+				}
+				if linked[pair.ShipmentID] == nil {
+					linked[pair.ShipmentID] = make(map[pulid.ID]struct{})
+				}
+				if _, dup := linked[pair.ShipmentID][pair.InvoiceID]; dup {
+					continue
+				}
+				linked[pair.ShipmentID][pair.InvoiceID] = struct{}{}
+				result[pair.ShipmentID] = append(result[pair.ShipmentID], entity)
+			}
+
+			return result, nil
+		},
+	)
+}
+
+// LockForUpdate reads the invoice and its lines under a row lock, so a void or
+// an application sees the balance nobody else is changing.
+func (r *repository) LockForUpdate(
+	ctx context.Context,
+	req invoiceports.GetInvoiceByIDRequest,
+) (*invoice.Invoice, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
+		entity := new(invoice.Invoice)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("inv.id = ?", req.ID).
+			Where("inv.organization_id = ?", req.TenantInfo.OrgID).
+			Where("inv.business_unit_id = ?", req.TenantInfo.BuID).
+			Relation("Lines", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Order("invl.line_number ASC")
+			}).
+			For("UPDATE OF inv").
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Invoice")
+		}
+
+		return entity, nil
+	})
+}
+
+// UpdateEDISendStatus records where the outbound 210 stands without bumping the
+// version: delivery reports arrive from the EDI pipeline, not from a user edit.
+func (r *repository) UpdateEDISendStatus(
+	ctx context.Context,
+	req invoiceports.UpdateInvoiceEDISendStatusRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		inv := invoicecol.InvoiceColumns
+		q := r.db.DBForContext(ctx).NewUpdate().
+			Model((*invoice.Invoice)(nil)).
+			Set(inv.EDISendStatus.Set(), req.Status).
+			Set(inv.LastEDIError.Set(), req.Error).
+			Set(inv.UpdatedAt.Set(), timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return invoicecol.InvoiceScopeTenantUpdate(uq, req.TenantInfo).
+					Where(inv.ID.Eq(), req.InvoiceID)
+			})
+		if req.MessageID.IsNotNil() {
+			q = q.Set(inv.LastEDIMessageID.Set(), req.MessageID)
+		}
+		if req.SentAt != nil {
+			q = q.Set(inv.EDISentAt.Set(), req.SentAt)
+		}
+		if _, err := q.Exec(ctx); err != nil {
+			return fmt.Errorf("update invoice edi send status: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func (r *repository) GetByBillingQueueItemID(
+	ctx context.Context,
+	req invoiceports.GetInvoiceByBillingQueueItemIDRequest,
+) (*invoice.Invoice, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
+		inv := invoicecol.InvoiceColumns
+
+		var entity invoice.Invoice
+		err := invoicecol.InvoiceScopeTenant(
+			r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entity).
+				Where(inv.BillingQueueItemID.Eq(), req.BillingQueueItemID).
+				Where(inv.Status.Ne(), invoice.StatusVoided),
+			req.TenantInfo,
+		).Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Invoice")
+		}
+
+		return r.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+			ID:         entity.ID,
+			TenantInfo: req.TenantInfo,
+		})
+	})
+}
+
+func (r *repository) CountPostedReconciliationDiscrepancies(
+	ctx context.Context,
+	req invoiceports.CountPostedInvoiceReconciliationDiscrepanciesRequest,
+) (int, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		return dbhelper.Count(ctx, r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*invoice.Invoice)(nil)).
+			Where("inv.organization_id = ?", req.OrgID).
+			Where("inv.business_unit_id = ?", req.BuID).
+			Where("inv.status = ?", invoice.StatusPosted).
+			Where("inv.posted_at IS NOT NULL").
+			Where("inv.posted_at >= ?", req.PeriodStartDate).
+			Where("inv.posted_at <= ?", req.PeriodEndDate).
+			Where(
+				`ABS(
+				inv.total_amount - (
+					CASE WHEN inv.bill_type = ? THEN -1 ELSE 1 END * COALESCE(
+						(
+							SELECT SUM(bqi.allocated_total_amount)
+							FROM billing_queue_items bqi
+							WHERE bqi.organization_id = inv.organization_id
+								AND bqi.business_unit_id = inv.business_unit_id
+								AND bqi.bill_to_customer_id = inv.customer_id
+								AND (bqi.invoice_id = inv.id OR bqi.id = inv.billing_queue_item_id)
+								AND inv.is_split_bill
+						),
+						(
+							SELECT SUM(leg.total_charge_amount)
+							FROM shipments leg
+							WHERE leg.organization_id = inv.organization_id
+								AND leg.business_unit_id = inv.business_unit_id
+								AND leg.id IN (
+									SELECT invl.shipment_id
+									FROM invoice_lines invl
+									WHERE invl.invoice_id = inv.id
+										AND invl.organization_id = inv.organization_id
+										AND invl.business_unit_id = inv.business_unit_id
+										AND invl.shipment_id IS NOT NULL
+								)
+						),
+						(
+							SELECT shp.total_charge_amount
+							FROM shipments shp
+							WHERE shp.id = inv.shipment_id
+								AND shp.organization_id = inv.organization_id
+								AND shp.business_unit_id = inv.business_unit_id
+						),
+						0
+					) + CASE
+						WHEN inv.order_id IS NOT NULL THEN COALESCE(
+							(
+								SELECT SUM(ordl.amount)
+								FROM invoice_lines ordl
+								WHERE ordl.invoice_id = inv.id
+									AND ordl.organization_id = inv.organization_id
+									AND ordl.business_unit_id = inv.business_unit_id
+									AND ordl.shipment_id IS NULL
+							),
+							0
+						)
+						ELSE 0
+					END
+				)
+			) > ?`,
+				billingqueue.BillTypeCreditMemo,
+				req.ToleranceAmount,
+			))
+	})
+}
+
+func (r *repository) Create(
+	ctx context.Context,
+	entity *invoice.Invoice,
+) (*invoice.Invoice, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
+		entity.SyncMinorAmounts()
+
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if _, err := r.db.DBForContext(txCtx).
+					NewInsert().
+					Model(entity).
+					Exec(txCtx); err != nil {
+					return fmt.Errorf("insert invoice: %w", err)
+				}
+
+				if len(entity.Lines) > 0 {
+					for _, line := range entity.Lines {
+						line.InvoiceID = entity.ID
+						line.OrganizationID = entity.OrganizationID
+						line.BusinessUnitID = entity.BusinessUnitID
+					}
+
+					if _, err := r.db.DBForContext(txCtx).
+						NewInsert().
+						Model(&entity.Lines).
+						Exec(txCtx); err != nil {
+						return fmt.Errorf("insert invoice lines: %w", err)
+					}
+				}
+
+				return nil
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return r.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+			ID:         entity.ID,
+			TenantInfo: tenantInfo(entity),
+		})
+	})
+}
+
+func (r *repository) Update(
+	ctx context.Context,
+	entity *invoice.Invoice,
+) (*invoice.Invoice, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
+		entity.SyncMinorAmounts()
+
+		result, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			Where("inv.id = ?", entity.ID).
+			Where("inv.organization_id = ?", entity.OrganizationID).
+			Where("inv.business_unit_id = ?", entity.BusinessUnitID).
+			Where("inv.version = ?", entity.Version).
+			Set("status = ?", entity.Status).
+			Set("posted_at = ?", entity.PostedAt).
+			Set("due_date = ?", entity.DueDate).
+			Set("applied_amount = ?", entity.AppliedAmount).
+			Set("applied_amount_minor = ?", entity.AppliedAmountMinor).
+			Set("settlement_status = ?", entity.SettlementStatus).
+			Set("dispute_status = ?", entity.DisputeStatus).
+			Set("pdf_document_id = ?", entity.PDFDocumentID).
+			Set("send_status = ?", entity.SendStatus).
+			Set("sent_at = ?", entity.SentAt).
+			Set("sent_by_id = ?", entity.SentByID).
+			Set("last_send_error = ?", entity.LastSendError).
+			Set("last_send_warning = ?", entity.LastSendWarning).
+			Set("memo = ?", entity.Memo).
+			Set("remittance_instructions = ?", entity.RemittanceInstructions).
+			Set("email_subject_snapshot = ?", entity.EmailSubjectSnapshot).
+			Set("email_body_snapshot = ?", entity.EmailBodySnapshot).
+			Set("email_to_snapshot = ?", pgdialect.Array(entity.EmailToSnapshot)).
+			Set("email_cc_snapshot = ?", pgdialect.Array(entity.EmailCCSnapshot)).
+			Set("email_bcc_snapshot = ?", pgdialect.Array(entity.EmailBCCSnapshot)).
+			Set("correction_group_id = ?", entity.CorrectionGroupID).
+			Set("supersedes_invoice_id = ?", entity.SupersedesInvoiceID).
+			Set("superseded_by_invoice_id = ?", entity.SupersededByInvoiceID).
+			Set("source_invoice_adjustment_id = ?", entity.SourceInvoiceAdjustmentID).
+			Set("is_adjustment_artifact = ?", entity.IsAdjustmentArtifact).
+			Set("voided_at = ?", entity.VoidedAt).
+			Set("voided_by_id = ?", entity.VoidedByID).
+			Set("void_reason = ?", entity.VoidReason).
+			Set("void_disposition = ?", stringutils.NilIfEmpty(entity.VoidDisposition)).
+			Set("voided_by_adjustment_id = ?", entity.VoidedByAdjustmentID).
+			Set("reference_invoice_id = ?", entity.ReferenceInvoiceID).
+			Set("memo_reason = ?", entity.MemoReason).
+			Set("memo_kind = ?", stringutils.NilIfEmpty(entity.MemoKind)).
+			Set("edi_send_status = ?", ediSendStatusOrDefault(entity.EDISendStatus)).
+			Set("last_edi_message_id = ?", entity.LastEDIMessageID).
+			Set("edi_sent_at = ?", entity.EDISentAt).
+			Set("last_edi_error = ?", entity.LastEDIError).
+			Set("version = version + 1").
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("update invoice: %w", err)
+		}
+
+		if err = dberror.CheckRowsAffected(result, "Invoice", entity.ID.String()); err != nil {
+			return nil, err
+		}
+
+		return r.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+			ID:         entity.ID,
+			TenantInfo: tenantInfo(entity),
+		})
+	})
+}
+
+func (r *repository) UpsertAttachments(
+	ctx context.Context,
+	req invoiceports.UpsertInvoiceAttachmentsRequest,
+) ([]*invoice.Attachment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*invoice.Attachment, error) {
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if _, deleteErr := r.db.DBForContext(txCtx).
+					NewDelete().
+					Model((*invoice.Attachment)(nil)).
+					Where("invoice_id = ?", req.InvoiceID).
+					Where("organization_id = ?", req.TenantInfo.OrgID).
+					Where("business_unit_id = ?", req.TenantInfo.BuID).
+					Exec(txCtx); deleteErr != nil {
+					return fmt.Errorf("delete invoice attachments: %w", deleteErr)
+				}
+
+				if len(req.DocumentIDs) == 0 {
+					return nil
+				}
+
+				entities := make([]*invoice.Attachment, 0, len(req.DocumentIDs))
+				for idx, documentID := range req.DocumentIDs {
+					entities = append(entities, &invoice.Attachment{
+						OrganizationID: req.OrganizationID,
+						BusinessUnitID: req.BusinessUnitID,
+						InvoiceID:      req.InvoiceID,
+						DocumentID:     documentID,
+						Selected:       true,
+						SortOrder:      idx + 1,
+					})
+				}
+
+				if _, insertErr := r.db.DBForContext(txCtx).
+					NewInsert().
+					Model(&entities).
+					Exec(txCtx); insertErr != nil {
+					return fmt.Errorf("insert invoice attachments: %w", insertErr)
+				}
+				return nil
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return r.ListAttachments(ctx, invoiceports.ListInvoiceEmailAttemptsRequest{
+			InvoiceID:  req.InvoiceID,
+			TenantInfo: req.TenantInfo,
+		})
+	})
+}
+
+func (r *repository) ListAttachments(
+	ctx context.Context,
+	req invoiceports.ListInvoiceEmailAttemptsRequest,
+) ([]*invoice.Attachment, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*invoice.Attachment, error) {
+		entities := make([]*invoice.Attachment, 0)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Where("inva.invoice_id = ?", req.InvoiceID).
+			Where("inva.organization_id = ?", req.TenantInfo.OrgID).
+			Where("inva.business_unit_id = ?", req.TenantInfo.BuID).
+			Relation("Document").
+			Order("inva.sort_order ASC").
+			Scan(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return entities, nil
+	})
+}
+
+func (r *repository) CreateEmailAttempt(
+	ctx context.Context,
+	attempt *invoice.EmailAttempt,
+	attachments []*invoice.EmailAttemptAttachment,
+) (*invoice.EmailAttempt, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.EmailAttempt, error) {
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if _, insertErr := r.db.DBForContext(txCtx).
+					NewInsert().
+					Model(attempt).
+					Exec(txCtx); insertErr != nil {
+					return fmt.Errorf("insert invoice email attempt: %w", insertErr)
+				}
+				if len(attachments) == 0 {
+					return nil
+				}
+				for _, attachment := range attachments {
+					attachment.AttemptID = attempt.ID
+					attachment.OrganizationID = attempt.OrganizationID
+					attachment.BusinessUnitID = attempt.BusinessUnitID
+				}
+				if _, insertErr := r.db.DBForContext(txCtx).
+					NewInsert().
+					Model(&attachments).
+					Exec(txCtx); insertErr != nil {
+					return fmt.Errorf("insert invoice email attempt attachments: %w", insertErr)
+				}
+				return nil
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		entity := new(invoice.EmailAttempt)
+		err = r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("inea.id = ?", attempt.ID).
+			Where("inea.invoice_id = ?", attempt.InvoiceID).
+			Where("inea.organization_id = ?", attempt.OrganizationID).
+			Where("inea.business_unit_id = ?", attempt.BusinessUnitID).
+			Relation("Email").
+			Relation("Attachments", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Order("ineaa.created_at ASC").Relation("Document").Relation("ShareToken")
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return entity, nil
+	})
+}
+
+func (r *repository) ListEmailAttempts(
+	ctx context.Context,
+	req invoiceports.ListInvoiceEmailAttemptsRequest,
+) (*pagination.ListResult[*invoice.EmailAttempt], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*invoice.EmailAttempt], error) {
+			limit := pagination.DefaultLimit
+			offset := pagination.DefaultOffset
+			if req.Filter != nil {
+				limit = req.Filter.Pagination.SafeLimit()
+				offset = req.Filter.Pagination.SafeOffset()
+			}
+
+			entities := make([]*invoice.EmailAttempt, 0, limit)
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Where("inea.invoice_id = ?", req.InvoiceID).
+				Where("inea.organization_id = ?", req.TenantInfo.OrgID).
+				Where("inea.business_unit_id = ?", req.TenantInfo.BuID).
+				Relation("Email").
+				Relation("Attachments", func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Order("ineaa.created_at ASC").
+						Relation("Document").
+						Relation("ShareToken")
+				}).
+				Order("inea.created_at DESC").
+				Limit(int64(limit)).
+				Offset(int64(offset)).
+				ScanAndCount(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return &pagination.ListResult[*invoice.EmailAttempt]{
+				Items: entities,
+				Total: int(total),
+			}, nil
+		},
+	)
+}
+
+func (r *repository) SyncEmailAttemptsForMessage(
+	ctx context.Context,
+	messageID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		msg := new(email.Message)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(msg).
+			Where("em.id = ?", messageID).
+			Where("em.organization_id = ?", tenantInfo.OrgID).
+			Where("em.business_unit_id = ?", tenantInfo.BuID).
+			Scan(ctx); err != nil {
+			return dberror.HandleNotFoundError(err, "EmailMessage")
+		}
+
+		attempts := make([]*invoice.EmailAttempt, 0)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&attempts).
+			Where("inea.email_message_id = ?", messageID).
+			Where("inea.organization_id = ?", tenantInfo.OrgID).
+			Where("inea.business_unit_id = ?", tenantInfo.BuID).
+			Scan(ctx); err != nil {
+			return err
+		}
+		if len(attempts) == 0 {
+			return nil
+		}
+
+		status := invoiceSendStatusForEmailMessage(msg)
+		errorMessage := invoiceEmailMessageError(msg)
+		var sentAt *int64
+		if status == invoice.SendStatusSent && msg.SentAt > 0 {
+			sentAt = &msg.SentAt
+		}
+
+		return r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if _, err := r.db.DBForContext(txCtx).
+					NewUpdate().
+					Model((*invoice.EmailAttempt)(nil)).
+					Set("status = ?", status).
+					Set("provider_message_id = ?", msg.ProviderMessageID).
+					Set("error = ?", errorMessage).
+					Set("sent_at = ?", sentAt).
+					Where("email_message_id = ?", messageID).
+					Where("organization_id = ?", tenantInfo.OrgID).
+					Where("business_unit_id = ?", tenantInfo.BuID).
+					Exec(txCtx); err != nil {
+					return fmt.Errorf("sync invoice email attempts: %w", err)
+				}
+
+				invoiceIDs := make(map[pulid.ID]struct{}, len(attempts))
+				for _, attempt := range attempts {
+					invoiceIDs[attempt.InvoiceID] = struct{}{}
+				}
+				for invoiceID := range invoiceIDs {
+					if err := r.syncInvoiceSendStatus(txCtx, invoiceID, tenantInfo); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		)
+	})
+}
+
+func (r *repository) syncInvoiceSendStatus(
+	ctx context.Context,
+	invoiceID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		attempts := make([]*invoice.EmailAttempt, 0)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&attempts).
+			Where("inea.invoice_id = ?", invoiceID).
+			Where("inea.organization_id = ?", tenantInfo.OrgID).
+			Where("inea.business_unit_id = ?", tenantInfo.BuID).
+			Scan(ctx); err != nil {
+			return err
+		}
+		if len(attempts) == 0 {
+			return nil
+		}
+
+		status, sentAt, lastError := invoiceSendStatusFromAttempts(attempts)
+		if _, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*invoice.Invoice)(nil)).
+			Set("send_status = ?", status).
+			Set("sent_at = ?", sentAt).
+			Set("last_send_error = ?", lastError).
+			Where("id = ?", invoiceID).
+			Where("organization_id = ?", tenantInfo.OrgID).
+			Where("business_unit_id = ?", tenantInfo.BuID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("sync invoice send status: %w", err)
+		}
+		return nil
+	})
+}
+
+func invoiceSendStatusForEmailMessage(msg *email.Message) invoice.SendStatus {
+	switch msg.Status {
+	case email.MessageStatusSent,
+		email.MessageStatusDelivered,
+		email.MessageStatusOpened,
+		email.MessageStatusClicked:
+		return invoice.SendStatusSent
+	case email.MessageStatusFailed,
+		email.MessageStatusBounced,
+		email.MessageStatusComplained,
+		email.MessageStatusSuppressed:
+		return invoice.SendStatusFailed
+	default:
+		return invoice.SendStatusSending
+	}
+}
+
+func invoiceEmailMessageError(msg *email.Message) string {
+	status := invoiceSendStatusForEmailMessage(msg)
+	if status != invoice.SendStatusFailed {
+		return ""
+	}
+	if strings.TrimSpace(msg.LastError) != "" {
+		return msg.LastError
+	}
+	return "Email provider reported " + string(msg.Status)
+}
+
+func invoiceSendStatusFromAttempts(
+	attempts []*invoice.EmailAttempt,
+) (invoice.SendStatus, *int64, string) {
+	failed := 0
+	sending := 0
+	var sentAt *int64
+	errors := make([]string, 0)
+	for _, attempt := range attempts {
+		switch attempt.Status {
+		case invoice.SendStatusFailed:
+			failed++
+			if strings.TrimSpace(attempt.Error) != "" {
+				errors = append(errors, attempt.Error)
+			}
+		case invoice.SendStatusSending:
+			sending++
+		case invoice.SendStatusSent:
+			if attempt.SentAt != nil && (sentAt == nil || *attempt.SentAt > *sentAt) {
+				sentAt = attempt.SentAt
+			}
+		}
+	}
+
+	lastError := strings.Join(errors, "; ")
+	switch {
+	case sending > 0:
+		return invoice.SendStatusSending, sentAt, lastError
+	case failed == 0:
+		return invoice.SendStatusSent, sentAt, ""
+	case failed < len(attempts):
+		return invoice.SendStatusPartiallySent, sentAt, lastError
+	default:
+		return invoice.SendStatusFailed, nil, lastError
+	}
+}
+
+func (r *repository) CreateDocumentShareToken(
+	ctx context.Context,
+	token *invoice.DocumentShareToken,
+) (*invoice.DocumentShareToken, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.DocumentShareToken, error) {
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(token).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("insert invoice document share token: %w", err)
+		}
+		return r.GetDocumentShareToken(ctx, invoiceports.GetInvoiceDocumentShareTokenRequest{
+			TokenHash: token.TokenHash,
+		})
+	})
+}
+
+func (r *repository) GetDocumentShareToken(
+	ctx context.Context,
+	req invoiceports.GetInvoiceDocumentShareTokenRequest,
+) (*invoice.DocumentShareToken, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"resolve a public invoice document link before its tenant is known",
+	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.DocumentShareToken, error) {
+		entity := new(invoice.DocumentShareToken)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("indst.token_hash = ?", req.TokenHash).
+			Relation("Document").
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Document share token")
+		}
+		return entity, nil
+	})
+}
+
+func (r *repository) UpdateDocumentShareToken(
+	ctx context.Context,
+	token *invoice.DocumentShareToken,
+) (*invoice.DocumentShareToken, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.DocumentShareToken, error) {
+		result, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(token).
+			Where("indst.id = ?", token.ID).
+			Where("indst.organization_id = ?", token.OrganizationID).
+			Where("indst.business_unit_id = ?", token.BusinessUnitID).
+			Set("downloaded_at = ?", token.DownloadedAt).
+			Set("revoked_at = ?", token.RevokedAt).
+			Set("updated_at = ?", timeutils.NowUnix()).
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("update invoice document share token: %w", err)
+		}
+		if err = dberror.CheckRowsAffected(
+			result,
+			"Document share token",
+			token.ID.String(),
+		); err != nil {
+			return nil, err
+		}
+		return r.GetDocumentShareToken(ctx, invoiceports.GetInvoiceDocumentShareTokenRequest{
+			TokenHash: token.TokenHash,
+		})
+	})
+}
+
+func tenantInfo(entity *invoice.Invoice) pagination.TenantInfo {
+	return pagination.TenantInfo{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	}
+}
+
+// ediSendStatusOrDefault keeps the NOT NULL column satisfied for an entity
+// built before the status was ever set.
+func ediSendStatusOrDefault(status invoice.EDISendStatus) invoice.EDISendStatus {
+	if status == "" {
+		return invoice.EDISendStatusNotSent
+	}
+
+	return status
+}
+
+func (r *repository) StampExchangeRate(
+	ctx context.Context,
+	req *kernelports.StampExchangeRateRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		inv := invoicecol.InvoiceColumns
+		result, err := r.db.DBForContext(ctx).NewUpdate().
+			Model((*invoice.Invoice)(nil)).
+			Set(inv.ExchangeRate.Set(), req.Rate).
+			Set(inv.ExchangeRateDate.Set(), req.Date).
+			Set(inv.UpdatedAt.Set(), timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return invoicecol.InvoiceScopeTenantUpdate(uq, req.TenantInfo).
+					Where(inv.ID.Eq(), req.ID)
+			}).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("stamp invoice exchange rate: %w", err)
+		}
+
+		return dberror.CheckFound(result, "Invoice")
+	})
+}

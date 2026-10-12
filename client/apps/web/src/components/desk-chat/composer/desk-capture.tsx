@@ -9,12 +9,14 @@ import {
 import { queries } from "@/lib/queries";
 import { api } from "@trenova/shared/lib/api";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { DeskIcon } from "../desk-icons";
 import type { DeskAttachment } from "./desk-attachments";
+import { deskIconClass } from "../desk-button-styles";
 
 /** What a scan into a conversation is filed against. */
 const THREAD_TARGET = "assistant_thread";
@@ -24,12 +26,27 @@ const SCAN_POLL_MS = 1500;
 
 type StartedScan = { requestId: string; device: string; startedAt: number };
 
-function scanName(startedAt: number, pages: number, index: number, of: number): string {
+type ScanNameParams = {
+  startedAt: number;
+  pages: number;
+  index: number;
+  of: number;
+  t: ReturnType<typeof useT>;
+};
+
+function scanName({ startedAt, pages, index, of, t }: ScanNameParams): string {
   const time = new Date(startedAt)
     .toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
     .replace(/\s/g, "");
-  const part = of > 1 ? ` (${index + 1} of ${of})` : "";
-  return `Scan ${time}${part} · ${pages} page${pages === 1 ? "" : "s"}.pdf`;
+  return of > 1
+    ? t(
+        "Scan {0} ({1} of {2}) · {3, plural, one {# page} other {# pages}}.pdf",
+        time,
+        index + 1,
+        of,
+        pages,
+      )
+    : t("Scan {0} · {1, plural, one {# page} other {# pages}}.pdf", time, pages);
 }
 
 /** Turns one scan's request and batch into the chips it shows on the message. */
@@ -63,14 +80,26 @@ function scanAttachments(
     items.length > 0 &&
     items.every((item) => item.status === "Filed" || item.status === "Failed");
   if (!settled) {
-    return [{ ...base, status: "uploading", scan: { device: scan.device, pages: batch?.receivedPageCount ?? 0 } }];
+    return [
+      {
+        ...base,
+        status: "uploading",
+        scan: { device: scan.device, pages: batch?.receivedPageCount ?? 0 },
+      },
+    ];
   }
   if (filed.length === 0) {
     return [{ ...base, status: "error", refused: true, error: t("No pages came through") }];
   }
   return filed.map((item, index) => ({
     id: `${scan.requestId}:${item.id}`,
-    name: scanName(scan.startedAt, item.pageCount, index, filed.length),
+    name: scanName({
+      startedAt: scan.startedAt,
+      pages: item.pageCount,
+      index,
+      of: filed.length,
+      t,
+    }),
     size: item.pageCount * 180_000,
     status: "ready",
     progress: 1,
@@ -172,7 +201,13 @@ export function useDeskScans(threadId: string | null) {
     setDropped(new Set());
   }, []);
 
-  return { items, start, remove, clear, owns: (id: string) => items.some((item) => item.id === id) };
+  return {
+    items,
+    start,
+    remove,
+    clear,
+    owns: (id: string) => items.some((item) => item.id === id),
+  };
 }
 
 type DocumentTypeOption = { id: string; name: string };
@@ -251,9 +286,16 @@ export function DeskCapturePanel({
   return (
     <div className="dk-cap">
       <div className="dk-cap-h">
-        <button type="button" className="dk-ib" title={t("Back")} aria-label={t("Back")} onClick={onBack}>
+        <Button
+          variant="quiet"
+          size="bare"
+          className={deskIconClass}
+          title={t("Back")}
+          aria-label={t("Back")}
+          onClick={onBack}
+        >
           <DeskIcon name="chevL" size={13} />
-        </button>
+        </Button>
         <span>
           <b>{t("Scan from Capture")}</b>
           <em>{t("Pages scan on your computer and attach to this message")}</em>
@@ -270,7 +312,9 @@ export function DeskCapturePanel({
           </span>
           <b>{t("No computer is set up to scan for you")}</b>
           <span>
-            {t("Install Trenova Capture, sign in from its tray icon, and approve the code it shows.")}
+            {t(
+              "Install Trenova Capture, sign in from its tray icon, and approve the code it shows.",
+            )}
           </span>
           <div className="dk-cap-acts">
             <Link className="dk-ec-btn dk-ink" to="/capture/devices">
@@ -287,10 +331,14 @@ export function DeskCapturePanel({
             <div className="dk-cap-l">{t("Computer")}</div>
             <div className="dk-cap-devs">
               {devices.map((candidate) => (
-                <button
+                <Button
                   key={candidate.id}
-                  type="button"
-                  className={cn("dk-cap-dev", device?.id === candidate.id && "dk-on")}
+                  variant="bare"
+                  size="bare"
+                  className={cn(
+                    "dk-cap-dev flex h-9 gap-2.25 border-b border-dsk-b-sub px-2.75 text-left text-sm transition-colors duration-100 last:border-b-0 hover:bg-dsk-hover",
+                    device?.id === candidate.id && "bg-dsk-hover",
+                  )}
                   onClick={() => {
                     setDeviceId(candidate.id);
                     setSource("");
@@ -300,13 +348,16 @@ export function DeskCapturePanel({
                   <b>{candidate.name}</b>
                   <em>{candidate.isOnline ? t("Connected") : t("Not connected")}</em>
                   {device?.id === candidate.id && <DeskIcon name="check" size={12} stroke={2.4} />}
-                </button>
+                </Button>
               ))}
             </div>
             {device && !device.isOnline && (
               <div className="dk-cap-warn">
                 <DeskIcon name="alert" size={12} stroke={2} />
-                {t("{0} isn't connected. The scan waits a few minutes for it to come online.", device.name)}
+                {t(
+                  "{0} isn't connected. The scan waits a few minutes for it to come online.",
+                  device.name,
+                )}
               </div>
             )}
           </div>
@@ -338,7 +389,10 @@ export function DeskCapturePanel({
             </label>
             <label className="dk-cap-sel dk-wide">
               <span>{t("Document type")}</span>
-              <select value={documentTypeId} onChange={(event) => setDocumentTypeId(event.target.value)}>
+              <select
+                value={documentTypeId}
+                onChange={(event) => setDocumentTypeId(event.target.value)}
+              >
                 <option value="">{t("Let Desk decide")}</option>
                 {(typesQuery.data ?? []).map((candidate) => (
                   <option key={candidate.id} value={candidate.id}>
@@ -357,14 +411,14 @@ export function DeskCapturePanel({
                     : t("Starts when {0} connects.", device.name)
                   : "")}
             </span>
-            <button
-              type="button"
-              className="dk-ec-btn dk-ink"
+            <Button
+              size="sm"
+              className="rounded-lg bg-dsk-ink px-2.75 text-sm text-dsk-ink-fg hover:bg-dsk-ink"
               disabled={!device || starting}
               onClick={() => void start()}
             >
               {starting ? t("Starting…") : t("Start scan")}
-            </button>
+            </Button>
           </div>
         </>
       )}

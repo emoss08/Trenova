@@ -93,8 +93,8 @@ async function announce(overrides: Partial<AnnounceReplyReadyOptions> = {}) {
 describe("announceReplyReady", () => {
   it("names the conversation from the list and offers a way to open it", async () => {
     queryClient.setQueryData(queries.assistant.threads().queryKey, {
-      items: [thread()],
-      total: 1,
+      pages: [{ items: [thread()], nextCursor: "" }],
+      pageParams: [""],
     });
 
     const { outcome, navigate } = await announce();
@@ -311,8 +311,11 @@ describe("cachedConversationTitle", () => {
     expect(cachedConversationTitle(queryClient, "athr_1")).toBe("B");
 
     queryClient.setQueryData(queries.assistant.threads().queryKey, {
-      items: [thread({ title: "A" })],
-      total: 1,
+      pages: [
+        { items: [], nextCursor: "c1" },
+        { items: [thread({ title: "A" })], nextCursor: "" },
+      ],
+      pageParams: ["", "c1"],
     });
     expect(cachedConversationTitle(queryClient, "athr_1")).toBe("A");
   });

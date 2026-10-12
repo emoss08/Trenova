@@ -3,10 +3,10 @@ import {
   DecideShipmentSuggestionDocument,
   NotifyShipmentDelayDocument,
   ShipmentBoardCapabilitiesDocument,
+  ShipmentBoardGroupsDocument,
   ShipmentBriefingDocument,
   ShipmentCapacityDocument,
   ShipmentCoverageSuggestionsDocument,
-  ShipmentFacetCountsDocument,
   ShipmentQuickFilterCountsDocument,
   ShipmentStageSummaryDocument,
   ShipmentSuggestionsDocument,
@@ -18,12 +18,12 @@ import {
   type DecideShipmentSuggestionInput,
   type NotifyShipmentDelayInput,
   type ShipmentBoardCapabilitiesQuery,
+  type ShipmentBoardGrouping,
+  type ShipmentBoardGroupsQuery,
   type ShipmentBoardScopeInput,
   type ShipmentBriefingQuery,
   type ShipmentCapacityQuery,
   type ShipmentCoverageSuggestionsQuery,
-  type ShipmentFacet,
-  type ShipmentFacetCountsQuery,
   type ShipmentQuickFilterCountsQuery,
   type ShipmentStageSummaryQuery,
   type ShipmentSuggestionsQuery,
@@ -37,9 +37,9 @@ type RequestOptions = { signal?: AbortSignal };
 
 export type ShipmentBoardCapabilities = ShipmentBoardCapabilitiesQuery["shipmentBoardCapabilities"];
 export type ShipmentStageSummary = ShipmentStageSummaryQuery["shipmentStageSummary"][number];
+export type ShipmentBoardGroup = ShipmentBoardGroupsQuery["shipmentBoardGroups"][number];
 export type ShipmentQuickFilterCount =
   ShipmentQuickFilterCountsQuery["shipmentQuickFilterCounts"][number];
-export type ShipmentFacetCounts = ShipmentFacetCountsQuery["shipmentFacetCounts"][number];
 export type ShipmentBriefing = ShipmentBriefingQuery["shipmentBriefing"];
 export type ShipmentCapacity = ShipmentCapacityQuery["shipmentCapacity"];
 export type CapacityUnit = ShipmentCapacity["units"][number];
@@ -75,6 +75,20 @@ export async function getShipmentStageSummaryGraphQL(
   return data.shipmentStageSummary;
 }
 
+export async function getShipmentBoardGroupsGraphQL(
+  input: ShipmentBoardScopeInput,
+  groupBy: ShipmentBoardGrouping,
+  options?: RequestOptions,
+) {
+  const data = await requestGraphQL({
+    document: ShipmentBoardGroupsDocument,
+    operationName: "ShipmentBoardGroups",
+    variables: { input, groupBy },
+    signal: options?.signal,
+  });
+  return data.shipmentBoardGroups;
+}
+
 export async function getShipmentQuickFilterCountsGraphQL(
   input: ShipmentBoardScopeInput,
   options?: RequestOptions,
@@ -88,20 +102,6 @@ export async function getShipmentQuickFilterCountsGraphQL(
   return data.shipmentQuickFilterCounts;
 }
 
-export async function getShipmentFacetCountsGraphQL(
-  input: ShipmentBoardScopeInput,
-  facets: ShipmentFacet[],
-  options?: RequestOptions,
-) {
-  const data = await requestGraphQL({
-    document: ShipmentFacetCountsDocument,
-    operationName: "ShipmentFacetCounts",
-    variables: { input, facets },
-    signal: options?.signal,
-  });
-  return data.shipmentFacetCounts;
-}
-
 export async function getShipmentBriefingGraphQL(timezone: string, options?: RequestOptions) {
   const data = await requestGraphQL({
     document: ShipmentBriefingDocument,
@@ -112,10 +112,7 @@ export async function getShipmentBriefingGraphQL(timezone: string, options?: Req
   return data.shipmentBriefing;
 }
 
-export async function getShipmentCapacityGraphQL(
-  kind: CapacityUnitKind,
-  options?: RequestOptions,
-) {
+export async function getShipmentCapacityGraphQL(kind: CapacityUnitKind, options?: RequestOptions) {
   const data = await requestGraphQL({
     document: ShipmentCapacityDocument,
     operationName: "ShipmentCapacity",

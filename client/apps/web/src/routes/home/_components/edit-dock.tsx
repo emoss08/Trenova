@@ -65,7 +65,9 @@ export function HomeEditDock({
         onClick={onAdd}
         disabled={addDisabled || saving}
         title={
-          addDisabled ? `This home screen has reached the ${maxWidgets}-widget limit.` : undefined
+          addDisabled
+            ? t("This home screen has reached the {0}-widget limit.", maxWidgets)
+            : undefined
         }
         className={ACTION_DOCK_SECONDARY_BUTTON}
       >

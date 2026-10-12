@@ -1,0 +1,138 @@
+package accountingcontrolpolicyservice
+
+import (
+	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+)
+
+func TestCanCreateInvoiceLedgerEntry(t *testing.T) {
+	t.Parallel()
+
+	svc := New(Params{Logger: zap.NewNop()})
+	control := &tenant.AccountingControl{
+		AccountingBasis:          tenant.AccountingBasisAccrual,
+		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
+	}
+
+	assert.True(t, svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventInvoicePosted))
+	assert.True(
+		t,
+		svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventCreditMemoPosted),
+	)
+	assert.False(
+		t,
+		svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventCustomerPaymentPosted),
+	)
+
+	control.AccountingBasis = tenant.AccountingBasisCash
+	assert.False(
+		t,
+		svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventInvoicePosted),
+	)
+
+	control.AccountingBasis = tenant.AccountingBasisAccrual
+	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnCashReceipt
+	assert.False(
+		t,
+		svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventInvoicePosted),
+	)
+}
+
+func TestCanUseAutomaticSourcePosting(t *testing.T) {
+	t.Parallel()
+
+	svc := New(Params{Logger: zap.NewNop()})
+	control := &tenant.AccountingControl{
+		AccountingBasis:          tenant.AccountingBasisAccrual,
+		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
+		JournalPostingMode:       tenant.JournalPostingModeAutomatic,
+		AutoPostSourceEvents: []tenant.JournalSourceEventType{
+			tenant.JournalSourceEventInvoicePosted,
+		},
+	}
+
+	assert.True(
+		t,
+		svc.CanUseAutomaticSourcePosting(control, tenant.JournalSourceEventInvoicePosted),
+	)
+	assert.False(
+		t,
+		svc.CanUseAutomaticSourcePosting(control, tenant.JournalSourceEventCreditMemoPosted),
+	)
+
+	control.JournalPostingMode = tenant.JournalPostingModeManual
+	assert.False(
+		t,
+		svc.CanUseAutomaticSourcePosting(control, tenant.JournalSourceEventInvoicePosted),
+	)
+}
+
+func TestValidateManualPeriodClose(t *testing.T) {
+	t.Parallel()
+
+	svc := New(Params{Logger: zap.NewNop()})
+	require.NoError(t, svc.ValidateManualPeriodClose(nil))
+	require.NoError(
+		t,
+		svc.ValidateManualPeriodClose(
+			&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeManualOnly},
+		),
+	)
+	require.Error(
+		t,
+		svc.ValidateManualPeriodClose(
+			&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeSystemScheduled},
+		),
+	)
+	require.Error(
+		t,
+		svc.ValidateManualPeriodClose(
+			&tenant.AccountingControl{
+				PeriodCloseMode:            tenant.PeriodCloseModeManualOnly,
+				RequirePeriodCloseApproval: true,
+			},
+		),
+	)
+}
+
+func TestResolveFXQuoteDate(t *testing.T) {
+	t.Parallel()
+
+	svc := New(Params{Logger: zap.NewNop()})
+
+	tests := []struct {
+		name     string
+		policy   tenant.ExchangeRateDatePolicy
+		expected int64
+	}{
+		{
+			name:     "document date policy",
+			policy:   tenant.ExchangeRateDatePolicyDocumentDate,
+			expected: 1_700_000_000,
+		},
+		{
+			name:     "accounting date policy",
+			policy:   tenant.ExchangeRateDatePolicyAccountingDate,
+			expected: 1_700_086_400,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			actual, err := svc.ResolveFXQuoteDate(ResolveFXQuoteDateRequest{
+				Policy:         tt.policy,
+				DocumentDate:   1_700_000_000,
+				AccountingDate: 1_700_086_400,
+			})
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}

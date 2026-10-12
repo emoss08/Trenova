@@ -2,7 +2,7 @@ package briefingresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -12,8 +12,8 @@ import (
 func briefingRequest(
 	tenant pagination.TenantInfo,
 	input gqlmodel.TodaysBriefingInput,
-) services.GetBriefingRequest {
-	req := services.GetBriefingRequest{TenantInfo: tenant}
+) briefingports.GetBriefingRequest {
+	req := briefingports.GetBriefingRequest{TenantInfo: tenant}
 	if input.RoleKey != nil {
 		req.RoleKey = *input.RoleKey
 	}

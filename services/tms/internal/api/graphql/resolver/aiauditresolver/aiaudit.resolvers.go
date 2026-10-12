@@ -7,25 +7,25 @@ package aiauditresolver
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func (r *AIAuditChainStatusResolver) LastVerificationStatus(ctx context.Context, obj *services.AIAuditChainStatus) (*aiaudit.VerificationStatus, error) {
+func (r *AIAuditChainStatusResolver) LastVerificationStatus(ctx context.Context, obj *aiauditports.AIAuditChainStatus) (*aiaudit.VerificationStatus, error) {
 	if !obj.LastVerificationStatus.IsValid() {
 		return nil, nil
 	}
@@ -47,12 +47,11 @@ func (r *AIAuditEventResolver) Agent(ctx context.Context, obj *aiaudit.AIAuditEv
 		return nil, nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok {
+	if !loaders.Available(ctx) {
 		return nil, nil
 	}
 
-	definition, err := l.AgentDefinitionByID.Load(ctx, obj.AgentDefinitionID.String())
+	definition, err := loaders.AgentDefinitionByID(ctx, obj.AgentDefinitionID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -97,12 +96,7 @@ func (r *AIAuditEventResolver) CostUsd(ctx context.Context, obj *aiaudit.AIAudit
 // Arguments are withheld per path at the reader's own ceiling on the tool's
 // resource, asked once per resource for the whole request.
 func (r *AIAuditEventResolver) Arguments(ctx context.Context, obj *aiaudit.AIAuditEvent) (map[string]any, error) {
-	var ceilings services.FieldCeilings
-	if l, ok := loaders.FromContext(ctx); ok && l.FieldCeilings != nil {
-		ceilings = l.FieldCeilings
-	}
-
-	return r.AiAuditService.ReaderArguments(ctx, obj, ceilings), nil
+	return r.AiAuditService.ReaderArguments(ctx, obj, loaders.FieldCeilings(ctx)), nil
 }
 
 func (r *AIAuditEventResolver) ArgumentSensitivity(ctx context.Context, obj *aiaudit.AIAuditEvent) (map[string]any, error) {
@@ -124,12 +118,10 @@ func (r *AIAuditEventResolver) AuditEntries(ctx context.Context, obj *aiaudit.AI
 		return []*audit.Entry{}, nil
 	}
 
-	l, ok := loaders.FromContext(ctx)
-	if !ok || l.AuditEntriesByAIAuditEventID == nil {
+	entries, err := loaders.AuditEntriesByAIAuditEventID(ctx, obj.ID.String())
+	if errors.Is(err, loaders.ErrNotAttached) {
 		return []*audit.Entry{}, nil
 	}
-
-	entries, err := l.AuditEntriesByAIAuditEventID.Load(ctx, obj.ID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return []*audit.Entry{}, nil
@@ -182,7 +174,7 @@ func (r *MutationResolver) RequestAIAuditExport(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	return r.AiAuditService.RequestExport(ctx, &services.RequestAIAuditExportRequest{
+	return r.AiAuditService.RequestExport(ctx, &aiauditports.RequestAIAuditExportRequest{
 		Actor:  actorutil.FromAuthContext(authCtx),
 		Format: input.Format,
 		From:   int64(input.From),
@@ -198,7 +190,7 @@ func (r *MutationResolver) RequestAIAuditExport(ctx context.Context, input gqlmo
 
 // AiAuditExportDownload hands the requester a link to their export's file,
 // good for a minute. The download is audited.
-func (r *MutationResolver) AiAuditExportDownload(ctx context.Context, id string) (*services.AIAuditExportDownload, error) {
+func (r *MutationResolver) AiAuditExportDownload(ctx context.Context, id string) (*aiauditports.AIAuditExportDownload, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIAuditTrail, permission.OpExport)
 	if err != nil {
 		return nil, err
@@ -209,7 +201,7 @@ func (r *MutationResolver) AiAuditExportDownload(ctx context.Context, id string)
 		return nil, err
 	}
 
-	return r.AiAuditService.ExportDownload(ctx, &services.GetAIAuditExportDownloadRequest{
+	return r.AiAuditService.ExportDownload(ctx, &aiauditports.GetAIAuditExportDownloadRequest{
 		Actor:    actorutil.FromAuthContext(authCtx),
 		ExportID: exportID,
 	})
@@ -217,7 +209,7 @@ func (r *MutationResolver) AiAuditExportDownload(ctx context.Context, id string)
 
 // VerifyAIAuditChain starts a check of the reader's tenant's chain now,
 // rather than at the nightly sweep.
-func (r *MutationResolver) VerifyAIAuditChain(ctx context.Context) (*services.AIAuditChainStatus, error) {
+func (r *MutationResolver) VerifyAIAuditChain(ctx context.Context) (*aiauditports.AIAuditChainStatus, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIAuditTrail, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -240,7 +232,7 @@ func (r *QueryResolver) AiAuditEvents(ctx context.Context, input gqlmodel.DataTa
 		return nil, err
 	}
 
-	result, err := r.AiAuditService.ListEvents(ctx, &services.ListAIAuditEventsRequest{
+	result, err := r.AiAuditService.ListEvents(ctx, &aiauditports.ListAIAuditEventsRequest{
 		Filter:  tableInput.Filter,
 		Cursor:  tableInput.Cursor,
 		Columns: aiAuditEventColumns(ctx, "edges.node"),
@@ -263,13 +255,13 @@ func (r *QueryResolver) AiAuditEvent(ctx context.Context, id string) (*aiaudit.A
 		return nil, err
 	}
 
-	return r.AiAuditService.GetEvent(ctx, repositories.GetAIAuditEventRequest{
+	return r.AiAuditService.GetEvent(ctx, aiauditports.GetAIAuditEventRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         eventID,
 	})
 }
 
-func (r *QueryResolver) AiAuditChainStatus(ctx context.Context) (*services.AIAuditChainStatus, error) {
+func (r *QueryResolver) AiAuditChainStatus(ctx context.Context) (*aiauditports.AIAuditChainStatus, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIAuditTrail, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -289,7 +281,7 @@ func (r *QueryResolver) AiAuditExports(ctx context.Context, input gqlmodel.DataT
 		return nil, err
 	}
 
-	result, err := r.AiAuditService.ListExports(ctx, &repositories.ListAIAuditExportsRequest{
+	result, err := r.AiAuditService.ListExports(ctx, &aiauditports.ListAIAuditExportsRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	})
@@ -311,7 +303,7 @@ func (r *QueryResolver) AiAuditExport(ctx context.Context, id string) (*aiaudit.
 		return nil, err
 	}
 
-	return r.AiAuditService.GetExport(ctx, repositories.GetAIAuditExportRequest{
+	return r.AiAuditService.GetExport(ctx, aiauditports.GetAIAuditExportRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         exportID,
 	})

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -36,14 +36,14 @@ type accessPolicyCacheRepository struct {
 
 func NewAccessPolicyCacheRepository(
 	p AccessPolicyCacheParams,
-) repositories.AccessPolicyCacheRepository {
+) iamports.AccessPolicyCacheRepository {
 	return &accessPolicyCacheRepository{
 		client: p.Client,
 		l:      p.Logger.Named("redis.access-policy-cache"),
 	}
 }
 
-func accessPolicyCacheKey(req repositories.IAMTenantPolicyLookupRequest) string {
+func accessPolicyCacheKey(req iamports.IAMTenantPolicyLookupRequest) string {
 	return fmt.Sprintf(
 		"%s:%s:%s",
 		accessPolicyKeyPrefix,
@@ -54,7 +54,7 @@ func accessPolicyCacheKey(req repositories.IAMTenantPolicyLookupRequest) string 
 
 func (r *accessPolicyCacheRepository) GetEnabled(
 	ctx context.Context,
-	req repositories.IAMTenantPolicyLookupRequest,
+	req iamports.IAMTenantPolicyLookupRequest,
 ) ([]*iam.AccessPolicy, bool, error) {
 	cached := new(cachedAccessPolicies)
 	if err := redishelpers.GetJSON(ctx, r.client, accessPolicyCacheKey(req), cached); err != nil {
@@ -73,7 +73,7 @@ func (r *accessPolicyCacheRepository) GetEnabled(
 
 func (r *accessPolicyCacheRepository) SetEnabled(
 	ctx context.Context,
-	req repositories.IAMTenantPolicyLookupRequest,
+	req iamports.IAMTenantPolicyLookupRequest,
 	policies []*iam.AccessPolicy,
 ) error {
 	if policies == nil {
@@ -96,7 +96,7 @@ func (r *accessPolicyCacheRepository) SetEnabled(
 
 func (r *accessPolicyCacheRepository) Invalidate(
 	ctx context.Context,
-	req repositories.IAMTenantPolicyLookupRequest,
+	req iamports.IAMTenantPolicyLookupRequest,
 ) error {
 	if err := r.client.Del(ctx, accessPolicyCacheKey(req)).Err(); err != nil {
 		r.l.Error("failed to invalidate access policy cache", zap.Error(err))

@@ -3,7 +3,7 @@ package gotenberg
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -16,12 +16,16 @@ import (
 var Module = fx.Module(
 	"pdf-renderer",
 	fx.Provide(
-		fx.Annotate(New, fx.As(new(services.PDFRenderer))),
+		fx.Annotate(New, fx.As(new(documenttemplateports.PDFRenderer))),
 	),
 	fx.Invoke(registerHealthProbe),
 )
 
-func registerHealthProbe(lc fx.Lifecycle, renderer services.PDFRenderer, logger *zap.Logger) {
+func registerHealthProbe(
+	lc fx.Lifecycle,
+	renderer documenttemplateports.PDFRenderer,
+	logger *zap.Logger,
+) {
 	l := logger.Named("pdfrender.gotenberg")
 
 	lc.Append(fx.Hook{

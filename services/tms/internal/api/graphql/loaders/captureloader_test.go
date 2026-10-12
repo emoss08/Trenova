@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,14 +14,14 @@ import (
 
 type stubCaptureRecordLabeler struct {
 	asked  map[string][]pulid.ID
-	labels map[string][]*repositories.CaptureRecordLabel
+	labels map[string][]*captureports.CaptureRecordLabel
 	fail   map[string]error
 }
 
 func (s *stubCaptureRecordLabeler) Labels(
 	_ context.Context,
-	req *repositories.ListCaptureRecordLabelsRequest,
-) ([]*repositories.CaptureRecordLabel, error) {
+	req *captureports.ListCaptureRecordLabelsRequest,
+) ([]*captureports.CaptureRecordLabel, error) {
 	s.asked[req.ResourceType] = req.IDs
 	if err := s.fail[req.ResourceType]; err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func TestCaptureRecordLabelsAskOncePerKindAndLeaveAGoneRecordAbsent(t *testing.T
 	worker := pulid.MustNew("wrk_")
 	repo := &stubCaptureRecordLabeler{
 		asked: map[string][]pulid.ID{},
-		labels: map[string][]*repositories.CaptureRecordLabel{
+		labels: map[string][]*captureports.CaptureRecordLabel{
 			"shipment": {{ResourceType: "shipment", ID: shipment, Title: "PRO-4471"}},
 			"worker":   {{ResourceType: "worker", ID: worker, Title: "Dana Reyes"}},
 		},
@@ -74,7 +74,7 @@ func TestCaptureRecordLabelFailureStaysWithItsKind(t *testing.T) {
 	boom := errors.New("connection reset")
 	repo := &stubCaptureRecordLabeler{
 		asked: map[string][]pulid.ID{},
-		labels: map[string][]*repositories.CaptureRecordLabel{
+		labels: map[string][]*captureports.CaptureRecordLabel{
 			"customer": {{ResourceType: "customer", ID: customer, Title: "Acme Foods"}},
 		},
 		fail: map[string]error{"tractor": boom},

@@ -228,9 +228,12 @@ function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
   }, [open, isSubmitting, handleSubmit, onSubmit]);
 
   const panelDescription = row?.updatedAt
-    ? `Last updated on ${formatToUserTimezone(row.updatedAt as number, {
-        timeFormat: TimeFormat.enum["24-hour"],
-      })}`
+    ? t(
+        "Last updated on {0}",
+        formatToUserTimezone(row.updatedAt as number, {
+          timeFormat: TimeFormat.enum["24-hour"],
+        }),
+      )
     : undefined;
 
   const isSystemRole = row?.isSystem ?? false;

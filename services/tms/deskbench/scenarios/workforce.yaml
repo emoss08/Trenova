@@ -1,0 +1,68 @@
+defaults:
+  agent: Compliance desk
+  tags: [workforce, compliance, read]
+
+scenarios:
+  - name: expired-medical-cards
+    description: The compliance question that has a real answer in the seed.
+    steps:
+      - say: "anybody driving on an expired med card?"
+        expect:
+          calls: ["list_expiring_credentials|list_worker_credentials"]
+          maxFailedCalls: 0
+          noProposals: true
+          facts:
+            - sql: >
+                select w.first_name from workers w
+                join worker_credentials c on c.worker_id = w.id
+                where c.status = 'Active' and c.expires_at < extract(epoch from now())
+                order by w.first_name
+              note: each driver holding an expired credential
+          rubric: >
+            Names the driver with the expired card, says it is unverified if the record says so,
+            and says what should happen before they are dispatched.
+
+  - name: expiring-soon
+    description: The same question a step earlier, with a window.
+    steps:
+      - say: "what creds are coming due in the next 30 days"
+        expect:
+          calls: ["list_expiring_credentials|list_worker_credentials"]
+          maxFailedCalls: 0
+          noProposals: true
+          facts:
+            - sql: >
+                select w.first_name from workers w
+                join worker_credentials c on c.worker_id = w.id
+                where c.status = 'Active'
+                  and c.expires_at between extract(epoch from now())
+                  and extract(epoch from now() + interval '30 days')
+                order by w.first_name
+              note: each driver with a credential expiring within 30 days
+              any: true
+
+  - name: open-safety-events
+    description: A safety manager's Monday.
+    steps:
+      - say: "what safety stuff is still open"
+        expect:
+          calls: ["list_worker_safety_events"]
+          maxFailedCalls: 0
+          noProposals: true
+          facts:
+            - sql: select count(*) from worker_safety_events where status = 'Open'
+              note: the number of open safety events
+          rubric: Groups them by driver and severity, with the oldest first.
+
+  - name: whos-off-this-week
+    description: Time off, asked the way people ask it.
+    agent: Workforce coordinator
+    steps:
+      - say: "whos off this week"
+        expect:
+          calls: ["list_time_off|get_worker_schedule|list_workers"]
+          maxFailedCalls: 0
+          noProposals: true
+          rubric: >
+            Lists approved time off overlapping this week by driver and dates, and keeps
+            requested (not yet approved) time off apart from it.

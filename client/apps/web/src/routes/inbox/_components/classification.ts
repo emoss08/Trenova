@@ -1,4 +1,5 @@
 import type { InboundClassification, InboundMessageStatus } from "@/lib/graphql/inbox";
+import type { InboundAttachmentKind } from "@trenova/graphql/generated/graphql";
 import type { BadgeVariant } from "@trenova/shared/types/badge";
 import {
   ClockAlertIcon,
@@ -46,6 +47,20 @@ export const CLASSIFICATION_VARIANT: Record<InboundClassification, BadgeVariant>
   StatusRequest: "accent-sky",
   DetentionDispute: "accent-rose",
   Other: "accent-slate",
+};
+
+/**
+ * The kind's dot in the rail and on a row: the same categorical accent as its
+ * badge, as a solid fill, so a tender reads violet everywhere it appears.
+ */
+export const CLASSIFICATION_DOT: Record<InboundClassification, string> = {
+  Tender: "bg-accent-violet",
+  RateConfirmation: "bg-accent-teal",
+  ProofOfDelivery: "bg-accent-emerald",
+  Invoice: "bg-accent-amber",
+  StatusRequest: "bg-accent-sky",
+  DetentionDispute: "bg-accent-rose",
+  Other: "bg-accent-slate",
 };
 
 /**
@@ -101,5 +116,25 @@ export function classificationLabel(
       return t("Detention dispute");
     case "Other":
       return t("Other");
+  }
+}
+
+/** What a file turned out to be, in the reader's words. */
+export function attachmentKindLabel(
+  t: (value: string) => string,
+  kind: InboundAttachmentKind,
+): string {
+  switch (kind) {
+    case "RateConfirmation":
+      return t("Rate confirmation");
+    case "ProofOfDelivery":
+      return t("Proof of delivery");
+    case "Invoice":
+      return t("Invoice");
+    case "BillOfLading":
+      return t("Bill of lading");
+    case "Other":
+    case "Unknown":
+      return t("Document");
   }
 }

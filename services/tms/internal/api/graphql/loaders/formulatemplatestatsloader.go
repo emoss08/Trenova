@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/vikstrous/dataloadgen"
 	"go.uber.org/fx"
@@ -12,13 +12,13 @@ import (
 type FormulaTemplateStatsLoaderFactoryParams struct {
 	fx.In
 
-	TemplateRepo repositories.FormulaTemplateRepository
+	TemplateRepo formulatemplateports.FormulaTemplateRepository
 }
 
 // FormulaTemplateStatsLoaderFactory batches the per-row usage and scenario
 // counts a list page shows, so a page of fifty templates costs one query.
 type FormulaTemplateStatsLoaderFactory struct {
-	templateRepo repositories.FormulaTemplateRepository
+	templateRepo formulatemplateports.FormulaTemplateRepository
 }
 
 func NewFormulaTemplateStatsLoaderFactory(
@@ -27,17 +27,17 @@ func NewFormulaTemplateStatsLoaderFactory(
 	return &FormulaTemplateStatsLoaderFactory{templateRepo: p.TemplateRepo}
 }
 
-func (f *FormulaTemplateStatsLoaderFactory) NewForTenant(
+func newFormulaTemplateStatsLoader(f *FormulaTemplateStatsLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, repositories.TemplateStats] {
+) *dataloadgen.Loader[string, formulatemplateports.TemplateStats] {
 	return newLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *FormulaTemplateStatsLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) batchFetchFunc[repositories.TemplateStats] {
-	return func(ctx context.Context, keys []string) ([]repositories.TemplateStats, []error) {
-		values := make([]repositories.TemplateStats, len(keys))
+) batchFetchFunc[formulatemplateports.TemplateStats] {
+	return func(ctx context.Context, keys []string) ([]formulatemplateports.TemplateStats, []error) {
+		values := make([]formulatemplateports.TemplateStats, len(keys))
 		errs := make([]error, len(keys))
 
 		ids, indexesByID := parseBatchKeys(keys, errs)
@@ -47,7 +47,7 @@ func (f *FormulaTemplateStatsLoaderFactory) batchFunc(
 
 		stats, err := f.templateRepo.CountStatsByIDs(
 			ctx,
-			&repositories.GetFormulaTemplateStatsRequest{
+			&formulatemplateports.GetFormulaTemplateStatsRequest{
 				TenantInfo:  tenantInfo,
 				TemplateIDs: ids,
 			},

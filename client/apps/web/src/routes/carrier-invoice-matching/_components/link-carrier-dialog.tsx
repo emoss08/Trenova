@@ -14,6 +14,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type LinkCarrierFormValues = {
   carrierId: string;
@@ -58,7 +59,7 @@ export function LinkCarrierDialog({
       onOpenChange(false);
       onLinked();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to link carrier"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to link carrier")),
   });
 
   return (

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const benefitPlanTypeSchema = z.enum([
   "Medical",
@@ -25,13 +26,19 @@ export type CoverageTierValue = z.infer<typeof coverageTierSchema>;
  */
 export const benefitPlanFormSchema = z
   .object({
-    code: z.string().min(1, "A code is required").max(20),
-    name: z.string().min(1, "A name is required").max(100),
+    code: z
+      .string()
+      .min(1, { error: () => translate("A code is required") })
+      .max(20),
+    name: z
+      .string()
+      .min(1, { error: () => translate("A name is required") })
+      .max(100),
     description: z.string().nullable(),
     planType: benefitPlanTypeSchema,
     carrier: z.string().max(150).nullable(),
     policyNumber: z.string().max(100).nullable(),
-    payCodeId: z.string().min(1, "A pay code is required"),
+    payCodeId: z.string().min(1, { error: () => translate("A pay code is required") }),
     planYear: z.number().int().min(2000).max(2200),
     employeeCostMinor: z.number().int().min(0),
     employerCostMinor: z.number().int().min(0),
@@ -41,7 +48,7 @@ export const benefitPlanFormSchema = z
   // A plan that costs nobody anything would produce a zero deduction on every
   // settlement forever.
   .refine((values) => values.employeeCostMinor > 0 || values.employerCostMinor > 0, {
-    message: "A plan has to cost somebody something",
+    error: () => translate("A plan has to cost somebody something"),
     path: ["employeeCostMinor"],
   });
 export type BenefitPlanFormValues = z.infer<typeof benefitPlanFormSchema>;
@@ -53,7 +60,7 @@ export type BenefitPlanFormValues = z.infer<typeof benefitPlanFormSchema>;
  */
 export const benefitEnrollmentFormSchema = z
   .object({
-    benefitPlanId: z.string().min(1, "Choose a plan"),
+    benefitPlanId: z.string().min(1, { error: () => translate("Choose a plan") }),
     coverageTier: coverageTierSchema,
     waive: z.boolean(),
     waivedReason: z.string().max(255).nullable(),
@@ -62,7 +69,7 @@ export const benefitEnrollmentFormSchema = z
     notes: z.string().nullable(),
   })
   .refine((values) => !values.waive || Boolean(values.waivedReason?.trim()), {
-    message: "Say why the cover was declined",
+    error: () => translate("Say why the cover was declined"),
     path: ["waivedReason"],
   });
 export type BenefitEnrollmentFormValues = z.infer<typeof benefitEnrollmentFormSchema>;

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -98,19 +99,24 @@ function getErrorIcon(errorType?: string) {
 }
 
 function getErrorMessage(error?: string, errorType?: string, retryCount?: number) {
-  const baseMessage = error || "Failed";
-  const retryText = retryCount && retryCount > 0 ? ` (attempt ${retryCount}/${MAX_RETRIES})` : "";
+  const attempt = retryCount && retryCount > 0 ? retryCount : 0;
 
   if (errorType === "network") {
-    return `Network error${retryText}`;
-  }
-  if (errorType === "validation") {
-    return `${baseMessage}${retryText}`;
+    return attempt
+      ? translate("Network error (attempt {0}/{1})", attempt, MAX_RETRIES)
+      : translate("Network error");
   }
   if (errorType === "server") {
-    return `Server error${retryText}`;
+    return attempt
+      ? translate("Server error (attempt {0}/{1})", attempt, MAX_RETRIES)
+      : translate("Server error");
   }
-  return `${baseMessage}${retryText}`;
+  if (!error) {
+    return attempt
+      ? translate("Failed (attempt {0}/{1})", attempt, MAX_RETRIES)
+      : translate("Failed");
+  }
+  return attempt ? translate("{0} (attempt {1}/{2})", error, attempt, MAX_RETRIES) : error;
 }
 
 function UploadItem({

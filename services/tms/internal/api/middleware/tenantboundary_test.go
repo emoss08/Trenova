@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/tenantboundary"
@@ -62,7 +62,7 @@ func TestTenantBoundaryRecordsARefusedCrossTenantRequest(t *testing.T) {
 	assert.Equal(t, orgID, change.OrganizationID)
 	assert.Equal(t, buID, change.BusinessUnitID)
 	assert.Equal(t, userID, change.Actor.UserID)
-	assert.Equal(t, services.PrincipalTypeUser, change.Actor.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeUser, change.Actor.PrincipalType)
 	assert.Equal(t, "path", change.Metadata["source"])
 	assert.Equal(t, "/organizations/:id/", change.Metadata["route"])
 	assert.Equal(t, http.StatusNotFound, change.Metadata["status"])

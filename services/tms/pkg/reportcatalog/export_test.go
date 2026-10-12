@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
 // The report compiler refuses to compile a report for export unless the user

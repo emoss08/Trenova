@@ -4,7 +4,7 @@ package workerleaveresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	workerleaveservice "github.com/emoss08/trenova/internal/core/services/workerleaveservice"
+	workerleaveservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 )
 
 type Deps struct {

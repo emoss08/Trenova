@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +24,7 @@ func TestPayProfileActiveAssignmentCountBatchFunc_MapsCountsAndDefaultsMissingTo
 	firstID := pulid.MustNew("pp_")
 	secondID := pulid.MustNew("pp_")
 	repo := &stubPayProfileRepository{
-		countByIDs: func(_ context.Context, req repositories.CountActivePayAssignmentsRequest) (map[pulid.ID]int, error) {
+		countByIDs: func(_ context.Context, req driverpayports.CountActivePayAssignmentsRequest) (map[pulid.ID]int, error) {
 			assert.Equal(t, tenantInfo, req.TenantInfo)
 			assert.Equal(t, []pulid.ID{firstID, secondID}, req.ProfileIDs)
 			return map[pulid.ID]int{firstID: 4}, nil
@@ -57,7 +57,7 @@ func TestPayProfileActiveAssignmentCountBatchFunc_RepositoryErrorFillsValidResul
 	profileID := pulid.MustNew("pp_")
 	repoErr := errors.New("repository failed")
 	repo := &stubPayProfileRepository{
-		countByIDs: func(context.Context, repositories.CountActivePayAssignmentsRequest) (map[pulid.ID]int, error) {
+		countByIDs: func(context.Context, driverpayports.CountActivePayAssignmentsRequest) (map[pulid.ID]int, error) {
 			return nil, repoErr
 		},
 	}
@@ -75,14 +75,14 @@ func TestPayProfileActiveAssignmentCountBatchFunc_RepositoryErrorFillsValidResul
 }
 
 type stubPayProfileRepository struct {
-	repositories.PayProfileRepository
+	driverpayports.PayProfileRepository
 
-	countByIDs func(context.Context, repositories.CountActivePayAssignmentsRequest) (map[pulid.ID]int, error)
+	countByIDs func(context.Context, driverpayports.CountActivePayAssignmentsRequest) (map[pulid.ID]int, error)
 }
 
 func (s *stubPayProfileRepository) CountActiveAssignmentsByIDs(
 	ctx context.Context,
-	req repositories.CountActivePayAssignmentsRequest,
+	req driverpayports.CountActivePayAssignmentsRequest,
 ) (map[pulid.ID]int, error) {
 	return s.countByIDs(ctx, req)
 }

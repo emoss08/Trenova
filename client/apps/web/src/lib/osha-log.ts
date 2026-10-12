@@ -1,3 +1,4 @@
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { classificationIsRecordable } from "@trenova/shared/lib/injury";
 
@@ -179,10 +180,6 @@ export type CertificationTrackInput = {
   formatDate: (unix: number) => string;
 };
 
-function plural(count: number, singular: string, pluralForm = `${singular}s`): string {
-  return `${count} ${count === 1 ? singular : pluralForm}`;
-}
-
 /**
  * The road from a year's log to a posted 300A, as a sequence: cases must stop
  * moving before the figures are signed for, the signature comes before the
@@ -190,6 +187,18 @@ function plural(count: number, singular: string, pluralForm = `${singular}s`): s
  * done is the one to act on; a time-gated step that cannot be acted on yet
  * still counts as active so the reader sees what they are waiting for.
  */
+function certifiedDetail(
+  summary: OshaSummaryLike | null | undefined,
+  formatDate: (unix: number) => string,
+): string {
+  const name = summary?.executiveName?.trim();
+  const certifiedAt = summary?.certifiedAt;
+  if (name && certifiedAt) return translate("{0} on {1}", name, formatDate(certifiedAt));
+  if (name) return name;
+  if (certifiedAt) return translate("Certified on {0}", formatDate(certifiedAt));
+  return translate("Certified");
+}
+
 export function certificationTrack(input: CertificationTrackInput): TrackStep[] {
   const { totals, summary, postFrom, postThrough, now, formatDate } = input;
   const closed = totals.openCases === 0;
@@ -204,27 +213,36 @@ export function certificationTrack(input: CertificationTrackInput): TrackStep[] 
       label: translate("Every case closed"),
       detail: closed
         ? totals.totalRecordableCases === 0
-          ? "Nothing recordable this year; the summary still has to be posted"
-          : "No case is still accruing days"
-        : `${plural(totals.openCases, "case")} still accruing days`,
+          ? translate("Nothing recordable this year; the summary still has to be posted")
+          : translate("No case is still accruing days")
+        : translate(
+            "{0, plural, one {# case still accruing days} other {# cases still accruing days}}",
+            totals.openCases,
+          ),
       state: closed ? "done" : "active",
     },
     {
       id: "figures",
       label: translate("Establishment figures recorded"),
       detail: figures
-        ? `${summary!.averageEmployees.toLocaleString("en-US")} employees on average over ${summary!.totalHoursWorked.toLocaleString("en-US")} hours`
+        ? translate(
+            "{0} {1, plural, one {employee} other {employees}} on average over {2} {3, plural, one {hour} other {hours}}",
+            formatNumber(summary!.averageEmployees),
+            summary!.averageEmployees,
+            formatNumber(summary!.totalHoursWorked),
+            summary!.totalHoursWorked,
+          )
         : summary
-          ? "Add the average headcount and the hours worked"
-          : "Start the summary to record headcount and hours",
+          ? translate("Add the average headcount and the hours worked")
+          : translate("Start the summary to record headcount and hours"),
       state: figures ? "done" : "pending",
     },
     {
       id: "certify",
       label: translate("Certified by an executive"),
       detail: certified
-        ? `${summary?.executiveName?.trim() || "Certified"}${summary?.certifiedAt ? ` on ${formatDate(summary.certifiedAt)}` : ""}`
-        : "A company executive signs that the summary is true",
+        ? certifiedDetail(summary, formatDate)
+        : translate("A company executive signs that the summary is true"),
       state: certified ? "done" : "pending",
     },
     {
@@ -232,18 +250,26 @@ export function certificationTrack(input: CertificationTrackInput): TrackStep[] 
       label: translate("Posted where employees can see it"),
       detail:
         posting.phase === "before"
-          ? `Window opens ${formatDate(postFrom)}, in ${plural(posting.days, "day")}`
+          ? translate(
+              "Window opens {0}, in {1, plural, one {# day} other {# days}}",
+              formatDate(postFrom),
+              posting.days,
+            )
           : posting.phase === "open"
-            ? `Window is open until ${formatDate(postThrough)}, ${plural(posting.days, "day")} left`
-            : `Window closed ${formatDate(postThrough)}`,
+            ? translate(
+                "Window is open until {0}, {1, plural, one {# day left} other {# days left}}",
+                formatDate(postThrough),
+                posting.days,
+              )
+            : translate("Window closed {0}", formatDate(postThrough)),
       state: certified && posting.phase === "closed" ? "done" : "pending",
     },
     {
       id: "submit",
       label: translate("Submitted electronically"),
       detail: submitted
-        ? `Sent ${formatDate(summary!.submittedAt!)}`
-        : "Due March 2 where the establishment is required to submit",
+        ? translate("Sent {0}", formatDate(summary!.submittedAt!))
+        : translate("Due March 2 where the establishment is required to submit"),
       state: submitted ? "done" : "pending",
     },
   ];
@@ -278,11 +304,14 @@ export function certifyBlocker(
 export function certifyBlockerMessage(blocker: CertifyBlocker, openCases: number): string {
   switch (blocker) {
     case "no-summary":
-      return "Start the summary and record its establishment figures first";
+      return translate("Start the summary and record its establishment figures first");
     case "no-figures":
-      return "Record the average headcount and hours worked first";
+      return translate("Record the average headcount and hours worked first");
     case "open-cases":
-      return `Close the ${plural(openCases, "case")} still accruing days first`;
+      return translate(
+        "{0, plural, one {Close the # case still accruing days first} other {Close the # cases still accruing days first}}",
+        openCases,
+      );
   }
 }
 

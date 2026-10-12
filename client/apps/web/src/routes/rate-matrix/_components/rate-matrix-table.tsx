@@ -14,6 +14,7 @@ export default function RateMatrixTable() {
   return (
     <DataTable<RateMatrixRow>
       name="Rate Matrix"
+      emptyTitle={t("No rate matrices yet")}
       queryKey="rate-matrix-list"
       graphql={rateMatrixTableGraphQLConfig}
       resource={Resource.RateMatrix}

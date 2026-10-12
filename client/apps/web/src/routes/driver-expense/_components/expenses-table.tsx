@@ -17,6 +17,7 @@ export default function ExpensesTable() {
   return (
     <DataTable<DriverExpenseRow>
       name="Driver Expense"
+      emptyTitle={t("No driver expenses yet")}
       queryKey="driver-expense-list"
       graphql={driverExpenseTableGraphQLConfig}
       resource={Resource.DriverExpense}

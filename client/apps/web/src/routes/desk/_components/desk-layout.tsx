@@ -4,6 +4,8 @@ import { usePermission } from "@/hooks/use-permission";
 import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
+import { findCachedThread, removeCachedThread, updateCachedThread } from "@/lib/thread-list";
+import { useDeskThreads } from "./use-desk-threads";
 import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
@@ -16,20 +18,32 @@ import {
   type AssistantThread,
 } from "@/types/assistant";
 import { hashKey, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
 import { useStartConversation } from "@/components/assistant/use-start-conversation";
-import { DeskRail, type DeskPlace } from "./desk-rail";
+import type { DeskPlace } from "./desk-rail";
+import { DeskRailThreads } from "./desk-rail-threads";
 import { DeskSearchPalette } from "./desk-search";
-import { DeskSettingsDialog, deskSettingsClasses } from "./desk-settings";
+import {
+  DeskSettingsDialog,
+  deskSettingsClasses,
+  isDeskSettingsSection,
+  type DeskSettingsSection,
+} from "./desk-settings";
 import { DeskTopBar } from "./desk-topbar";
 
 export type DeskContextValue = {
+  /**
+   * The person's most recent conversations (the list's first page), for what
+   * reads recency, such as which agents to offer first. The same array until
+   * that page changes: older pages the rail reads never touch it.
+   */
   threads: AssistantThread[];
   /**
    * The open conversation: from the list, or read on its own when the list
@@ -168,25 +182,47 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     setRailPath(pathname);
     setRailOpen(false);
   }
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  // Settings open on the section a link asks for (`/desk?settings=checklists`
+  // is where the retired case checklist page now sends people), else on the
+  // first. The request is taken off the address once it has opened them.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedSettings = searchParams.get("settings");
+  const [settingsSection, setSettingsSection] = useState<DeskSettingsSection | null>(null);
+  if (requestedSettings !== null && settingsSection === null) {
+    setSettingsSection(isDeskSettingsSection(requestedSettings) ? requestedSettings : "appearance");
+  }
+  useEffect(() => {
+    if (requestedSettings === null) return;
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete("settings");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [requestedSettings, setSearchParams]);
+  const settingsOpen = settingsSection !== null;
+  const setSettingsOpen = useCallback(
+    (open: boolean) => setSettingsSection(open ? "appearance" : null),
+    [setSettingsSection],
+  );
   const settings = useDeskSettingsStore((state) => state.settings);
 
-  const threadsQuery = useQuery(queries.assistant.threads());
+  const threadsQuery = useDeskThreads(activeThreadId);
   const agentsQuery = useQuery(queries.assistant.myAgents());
-  const threads = useMemo(() => threadsQuery.data?.items ?? [], [threadsQuery.data?.items]);
+  const { threads, listedThread } = threadsQuery;
   const agents = useMemo(() => agentsQuery.data ?? [], [agentsQuery.data]);
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
 
-  const listedThread = useMemo(
-    () => threads.find((thread) => thread.id === activeThreadId) ?? null,
-    [activeThreadId, threads],
-  );
-  // The list leaves out quick questions nobody kept, and a finished answer's
-  // notice links to one. Read on its own only once the list has said it does
-  // not have it, so a listed conversation never costs a second request.
+  // The list's first page leaves out older conversations, which the rail's
+  // shelves read on their own, and quick questions nobody kept, which a
+  // finished answer's notice links to. Read on its own only once the list has
+  // said it does not have it, drawn meanwhile from whichever shelf holds it.
   const unlistedQuery = useQuery({
     ...queries.assistant.thread(activeThreadId ?? ""),
     enabled: activeThreadId !== null && threadsQuery.isSuccess && listedThread === null,
+    placeholderData: () => findCachedThread(queryClient, activeThreadId) ?? undefined,
     retry: false,
   });
   const activeThread =
@@ -248,6 +284,9 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     mutationFn: (id: string) => apiService.assistantService.deleteThread(id),
     onSuccess: async (_result, id) => {
       toast.success(t("Conversation deleted"));
+      // Out of every page at once: a refresh reads only the pages in view, and
+      // the conversation must not linger in one that is not.
+      removeCachedThread(queryClient, id);
       await refreshThreads();
       if (activeThreadId === id) {
         void navigate("/desk");
@@ -256,10 +295,36 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     resourceName: "Conversation",
   });
 
+  // A new name moves nothing in the list, so it is written into the cached
+  // conversation as it is sent rather than read back with every page.
+  const retitleCached = useCallback(
+    (threadId: string, changes: Partial<AssistantThread>) => {
+      const retitle = (cached: AssistantThread): AssistantThread => ({ ...cached, ...changes });
+      updateCachedThread(queryClient, threadId, retitle);
+      queryClient.setQueryData<AssistantThread>(
+        queries.assistant.thread(threadId).queryKey,
+        (cached) => (cached ? retitle(cached) : cached),
+      );
+    },
+    [queryClient],
+  );
   const renameMutation = useApiMutation({
     mutationFn: ({ thread, title }: { thread: AssistantThread; title: string }) =>
       apiService.assistantService.updateThread(thread.id, { title }),
-    onSuccess: refreshThreads,
+    onMutate: ({ thread, title }) => retitleCached(thread.id, { title }),
+    onSuccess: (updated) => {
+      retitleCached(updated.id, {
+        title: updated.title,
+        version: updated.version,
+        updatedAt: updated.updatedAt,
+      });
+      // A read already under way was asked before the rename and would put
+      // the old name back; it is asked again instead.
+      if (queryClient.isFetching({ queryKey: queries.assistant.threads().queryKey }) > 0) {
+        void queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey });
+      }
+    },
+    onError: () => void refreshThreads(),
     resourceName: "Conversation",
   });
 
@@ -324,7 +389,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       return;
     }
     const cache = queryClient.getQueryCache();
-    const queryHash = hashKey(queries.assistant.artifacts(activeThreadId).queryKey);
+    const queryHash = hashKey(queries.assistant.artifacts(activeThreadId)._ctx.summary.queryKey);
     const seen = cache.get(queryHash)?.state.dataUpdateCount ?? 0;
     const settle = () => setPendingLookups(NO_PENDING_LOOKUPS);
     const timer = window.setTimeout(settle, LOOKUP_SETTLE_MS);
@@ -429,6 +494,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       openArtifact,
       pendingLookups,
       pinMutation,
+      setSettingsOpen,
       setWorkspaceOpen,
       startConversation.isStarting,
       startConversation.start,
@@ -449,9 +515,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
         data-searching={searching || undefined}
         data-settings={settingsOpen || undefined}
       >
-        <DeskRail
+        <DeskRailThreads
           place={place}
-          threads={threads}
           agentsById={agentsById}
           activeThreadId={activeThreadId}
           canWatch={canWatch}
@@ -469,12 +534,13 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           }}
           onTogglePin={(thread) => pinMutation.mutate(thread)}
           onDelete={(thread) => deleteMutation.mutate(thread.id)}
-          onRename={(thread, title) => renameMutation.mutate({ thread, title })}
+          activeThread={activeThread}
         />
         {railOpen && (
-          <button
-            type="button"
-            className="dk-rail-scrim"
+          <Button
+            variant="bare"
+            size="bare"
+            className="dk-rail-scrim fixed inset-0 z-39 hidden max-[720px]:block"
             aria-label={t("Close the menu")}
             onClick={() => setRailOpen(false)}
           />
@@ -500,6 +566,9 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             onToggleWorkspace={() => setWorkspaceOpen(!workspaceOpen)}
             onTogglePin={() => activeThread && pinMutation.mutate(activeThread)}
             onDownload={() => activeThread && downloadAssistantTranscript(activeThread.id)}
+            onRename={(title) =>
+              activeThread && renameMutation.mutate({ thread: activeThread, title })
+            }
           />
           <Outlet />
           {/* Over the main column only, as designed: the sidebar stays in view. */}
@@ -507,7 +576,11 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             <DeskSearchPalette agentsById={agentsById} onClose={() => setSearching(false)} />
           )}
           {settingsOpen && (
-            <DeskSettingsDialog agents={agents} onClose={() => setSettingsOpen(false)} />
+            <DeskSettingsDialog
+              agents={agents}
+              initialSection={settingsSection ?? "appearance"}
+              onClose={() => setSettingsOpen(false)}
+            />
           )}
         </div>
       </div>

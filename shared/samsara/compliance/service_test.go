@@ -224,17 +224,23 @@ func TestHOSLogsQueryAndPath(t *testing.T) {
 func TestDriverTachographPath(t *testing.T) {
 	t.Parallel()
 
+	start := time.Date(2026, 3, 1, 8, 0, 0, 0, time.UTC)
+	end := start.Add(24 * time.Hour)
 	svc := NewService(
 		&httpxtest.MockRequester{DoFunc: func(_ context.Context, req httpx.Request) error {
 			assert.Equal(t, http.MethodGet, req.Method)
 			assert.Equal(t, "/fleet/drivers/tachograph-files/history", req.Path)
-			assert.Equal(t, "drv-1", req.Query.Get("driverIds"))
+			assert.Equal(t, "1654973", req.Query.Get("driverIds"))
+			assert.Equal(t, start.Format(time.RFC3339), req.Query.Get("startTime"))
+			assert.Equal(t, end.Format(time.RFC3339), req.Query.Get("endTime"))
 			return nil
 		}},
 	)
 
 	_, err := svc.DriverTachographHistory(t.Context(), DriverTachographParams{
-		DriverIDs: []string{"drv-1"},
+		DriverIDs: []string{"1654973"},
+		StartTime: &start,
+		EndTime:   &end,
 	})
 	require.NoError(t, err)
 }
@@ -242,17 +248,115 @@ func TestDriverTachographPath(t *testing.T) {
 func TestVehicleTachographPath(t *testing.T) {
 	t.Parallel()
 
+	start := time.Date(2026, 3, 1, 8, 0, 0, 0, time.UTC)
+	end := start.Add(24 * time.Hour)
 	svc := NewService(
 		&httpxtest.MockRequester{DoFunc: func(_ context.Context, req httpx.Request) error {
 			assert.Equal(t, http.MethodGet, req.Method)
 			assert.Equal(t, "/fleet/vehicles/tachograph-files/history", req.Path)
-			assert.Equal(t, "veh-1", req.Query.Get("vehicleIds"))
+			assert.Equal(t, "281474977075805", req.Query.Get("vehicleIds"))
 			return nil
 		}},
 	)
 
 	_, err := svc.VehicleTachographHistory(t.Context(), VehicleTachographParams{
-		VehicleIDs: []string{"veh-1"},
+		VehicleIDs: []string{"281474977075805"},
+		StartTime:  &start,
+		EndTime:    &end,
 	})
 	require.NoError(t, err)
+}
+
+func TestTachographRequiresTimeRange(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(
+		&httpxtest.MockRequester{DoFunc: func(_ context.Context, _ httpx.Request) error {
+			t.Fatal("request must not be sent")
+			return nil
+		}},
+	)
+
+	start := time.Date(2026, 3, 1, 8, 0, 0, 0, time.UTC)
+	before := start.Add(-time.Hour)
+
+	_, err := svc.DriverTachographHistory(t.Context(), DriverTachographParams{StartTime: &start})
+	require.ErrorIs(t, err, ErrTimeRangeRequired)
+
+	_, err = svc.VehicleTachographHistory(t.Context(), VehicleTachographParams{EndTime: &start})
+	require.ErrorIs(t, err, ErrTimeRangeRequired)
+
+	_, err = svc.DriverTachographHistory(t.Context(), DriverTachographParams{
+		StartTime: &start,
+		EndTime:   &before,
+	})
+	require.ErrorIs(t, err, ErrTimeRangeInvalid)
+}
+
+func TestHOSLogsAndViolationsRejectInvertedRange(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(
+		&httpxtest.MockRequester{DoFunc: func(_ context.Context, _ httpx.Request) error {
+			t.Fatal("request must not be sent")
+			return nil
+		}},
+	)
+
+	start := time.Date(2026, 3, 1, 8, 0, 0, 0, time.UTC)
+	before := start.Add(-time.Hour)
+
+	_, err := svc.HOSLogs(t.Context(), HOSLogsParams{StartTime: &start, EndTime: &before})
+	require.ErrorIs(t, err, ErrTimeRangeInvalid)
+
+	_, err = svc.HOSViolations(
+		t.Context(),
+		HOSViolationsParams{StartTime: &start, EndTime: &before},
+	)
+	require.ErrorIs(t, err, ErrTimeRangeInvalid)
+}
+
+func TestHOSDailyLogsParamsValidate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		params  HOSDailyLogsParams
+		wantErr error
+	}{
+		{
+			name:    "bad date",
+			params:  HOSDailyLogsParams{StartDate: "03/01/2026"},
+			wantErr: ErrDateFormatInvalid,
+		},
+		{
+			name:    "inverted dates",
+			params:  HOSDailyLogsParams{StartDate: "2026-03-02", EndDate: "2026-03-01"},
+			wantErr: ErrDateRangeInvalid,
+		},
+		{
+			name:    "bad activation status",
+			params:  HOSDailyLogsParams{DriverActivationStatus: "inactive"},
+			wantErr: ErrDriverActivationStatusInvalid,
+		},
+		{
+			name:    "bad expand",
+			params:  HOSDailyLogsParams{Expand: []string{"driver"}},
+			wantErr: ErrExpandInvalid,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			require.ErrorIs(t, tt.params.Validate(), tt.wantErr)
+		})
+	}
+
+	require.NoError(t, HOSDailyLogsParams{
+		StartDate:              "2026-03-01",
+		EndDate:                "2026-03-01",
+		DriverActivationStatus: "deactivated",
+		Expand:                 []string{"vehicle"},
+	}.Validate())
 }

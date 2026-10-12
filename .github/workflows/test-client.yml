@@ -16,7 +16,7 @@ on:
       # change would never run codegen:check and the drift would land unnoticed.
       - "services/tms/pkg/errortypes/enums.go"
       - "services/tms/internal/api/helpers/problemtypes.go"
-      - "services/tms/internal/core/domain/permission/resource_gen.go"
+      - "services/tms/internal/modules/identity/domain/permission/resource_gen.go"
       # The product guide is generated from the app and these two, into a file
       # the server embeds; a guide or catalog edited alone must still be checked.
       - "docs/product-guide/**"
@@ -41,7 +41,7 @@ on:
       # change would never run codegen:check and the drift would land unnoticed.
       - "services/tms/pkg/errortypes/enums.go"
       - "services/tms/internal/api/helpers/problemtypes.go"
-      - "services/tms/internal/core/domain/permission/resource_gen.go"
+      - "services/tms/internal/modules/identity/domain/permission/resource_gen.go"
       # The product guide is generated from the app and these two, into a file
       # the server embeds; a guide or catalog edited alone must still be checked.
       - "docs/product-guide/**"

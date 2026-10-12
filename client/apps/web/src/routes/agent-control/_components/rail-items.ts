@@ -155,12 +155,9 @@ export function buildRailItems(
       children: [
         { view: "agents", label: t("Agents") },
         { view: "runs", label: t("Suite runs") },
-        ...(permissions.ratings
-          ? [{ view: "ratings" as const, label: t("Worst-rated answers") }]
-          : []),
+        ...(permissions.ratings ? [{ view: "ratings" as const, label: t("Worst rated") }] : []),
         { view: "golden", label: t("Golden set") },
         { view: "extraction", label: t("Document extraction") },
-        { view: "settings", label: t("Settings") },
       ],
     });
   }
@@ -169,7 +166,10 @@ export function buildRailItems(
     const pending = counts?.pendingProposals ?? 0;
     const children: RailItem["children"] = [{ view: "runs", label: t("Runs") }];
     if (permissions.proposals) {
-      children.push({ view: "proposals", label: t("Proposals") });
+      children.push({
+        view: "proposals",
+        label: pending > 0 ? t("Proposals · {0}", pending) : t("Proposals"),
+      });
       children.push({ view: "plans", label: t("Plans") });
     }
     children.push({ view: "evaluations", label: t("Evaluations") });
@@ -225,4 +225,36 @@ export function resolveRailView(
   return item.children.some((child) => child.view === requested)
     ? requested
     : item.children[0].view;
+}
+
+export type TabCount = { text: string; tone?: "w" | "d" };
+
+/**
+ * What each tab says beside its name: how many agents and providers are on,
+ * what is new or waiting, and whether search runs on words alone. Nothing
+ * is shown for a tab with nothing to say.
+ */
+export function tabCounts(
+  counts: RailCounts | undefined,
+  t: TranslateFn,
+): Partial<Record<AIControlTab, TabCount | null>> {
+  if (!counts) {
+    return {};
+  }
+  return {
+    agents: { text: `${counts.agentsEnabled}/${counts.agentsTotal}` },
+    providers:
+      counts.providersTotal > 0
+        ? { text: `${counts.providersEnabled}/${counts.providersTotal}` }
+        : null,
+    extensions: counts.extensionsOn > 0 ? { text: t("{0} on", counts.extensionsOn) } : null,
+    memory: counts.memoriesActive > 0 ? { text: String(counts.memoriesActive) } : null,
+    retrieval:
+      counts.retrieval && !counts.retrieval.available ? { text: t("words only"), tone: "w" } : null,
+    quality:
+      counts.qualityRegressions > 0
+        ? { text: t("{0} regressed", counts.qualityRegressions), tone: "d" }
+        : null,
+    activity: { text: t("{0} waiting", counts.pendingProposals), tone: "w" },
+  };
 }

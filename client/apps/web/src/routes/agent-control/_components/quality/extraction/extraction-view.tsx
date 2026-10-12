@@ -8,10 +8,12 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AlertCircleIcon, PlayIcon } from "@trenova/shared/components/icons";
-import { useQueryState } from "nuqs";
-import { useMemo, useState } from "react";
+import { useQueryStates } from "nuqs";
+import { useCallback, useMemo } from "react";
 import {
+  EXTRACTION_DIALOG_PARAM,
   EXTRACTION_VIEW_PARAM,
+  extractionDialogParser,
   extractionViewParser,
   type ExtractionView as ExtractionSubView,
 } from "../../../ai-control-tabs";
@@ -25,6 +27,12 @@ import { ProviderTrendsPanel } from "./provider-trends-panel";
 import { RolloutView } from "./rollout-view";
 import { RunsTable } from "./runs-table";
 import { ShadowView } from "./shadow-view";
+import { useExtractionDialog } from "./use-extraction-dialog";
+
+const viewParsers = {
+  [EXTRACTION_VIEW_PARAM]: extractionViewParser,
+  [EXTRACTION_DIALOG_PARAM]: extractionDialogParser,
+};
 
 /**
  * How well documents are read into shipment drafts. Production accuracy comes
@@ -33,8 +41,17 @@ import { ShadowView } from "./shadow-view";
  */
 export default function ExtractionView() {
   const t = useT();
-  const [view, setView] = useQueryState(EXTRACTION_VIEW_PARAM, extractionViewParser);
-  const [newRunOpen, setNewRunOpen] = useState(false);
+  const [{ [EXTRACTION_VIEW_PARAM]: view }, setParams] = useQueryStates(viewParsers);
+  const [newRunOpen, setNewRunOpen] = useExtractionDialog("newRun");
+  // A dialog belongs to the view it was opened over, so another view closes it.
+  const setView = useCallback(
+    (next: ExtractionSubView) =>
+      void setParams(
+        { [EXTRACTION_VIEW_PARAM]: next, [EXTRACTION_DIALOG_PARAM]: null },
+        { history: "replace" },
+      ),
+    [setParams],
+  );
   const { allowed: canCreate } = usePermission(Resource.AgentEvalSuite, Operation.Create);
 
   const accuracy = useQuery({
@@ -76,7 +93,7 @@ export default function ExtractionView() {
             fullWidth
             aria-label={t("Document extraction view")}
             value={view}
-            onValueChange={(value) => void setView(value as ExtractionSubView)}
+            onValueChange={(value) => setView(value as ExtractionSubView)}
             items={items}
           />
         </div>
@@ -105,10 +122,10 @@ export default function ExtractionView() {
       {view === "rollout" && <RolloutView />}
 
       <NewRunDialog
-        open={newRunOpen}
+        open={newRunOpen && canCreate}
         onOpenChange={setNewRunOpen}
         activeCases={accuracy.data?.cases.active ?? 0}
-        onStarted={() => void setView("runs")}
+        onStarted={() => setView("runs")}
       />
     </div>
   );

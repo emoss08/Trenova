@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { IftaReturnLine } from "@/lib/graphql/ifta-return";
 import {
@@ -37,12 +38,13 @@ function moneyClass(value: string): string {
 }
 
 function milesBreakdown(line: IftaReturnLine): string {
-  return [
-    `${formatIftaMeasure(line.routeMiles, IFTA_MILES_DISPLAY_SCALE)} routed`,
-    `${formatIftaMeasure(line.manualMiles, IFTA_MILES_DISPLAY_SCALE)} entered by hand`,
-    `${formatIftaMeasure(line.loadedMiles, IFTA_MILES_DISPLAY_SCALE)} loaded`,
-    `${formatIftaMeasure(line.emptyMiles, IFTA_MILES_DISPLAY_SCALE)} empty`,
-  ].join(" · ");
+  return translate(
+    "{0} routed · {1} entered by hand · {2} loaded · {3} empty",
+    formatIftaMeasure(line.routeMiles, IFTA_MILES_DISPLAY_SCALE),
+    formatIftaMeasure(line.manualMiles, IFTA_MILES_DISPLAY_SCALE),
+    formatIftaMeasure(line.loadedMiles, IFTA_MILES_DISPLAY_SCALE),
+    formatIftaMeasure(line.emptyMiles, IFTA_MILES_DISPLAY_SCALE),
+  );
 }
 
 function TotalsCells({ totals }: { totals: IftaLineTotals }) {
@@ -96,9 +98,15 @@ function LineRow({ line }: { line: IftaReturnLine }) {
           <span className="font-medium">{line.jurisdiction.code}</span>
           <span className="text-muted-foreground text-xs">{line.jurisdiction.name}</span>
           {missingRate ? <Badge variant="danger">{t("No rate")}</Badge> : null}
-          {line.isIftaMember ? null : <Badge variant="neutral" appearance="outline">{t("Non-member")}</Badge>}
+          {line.isIftaMember ? null : (
+            <Badge variant="neutral" appearance="outline">
+              {t("Non-member")}
+            </Badge>
+          )}
           {line.jurisdiction.hasSurcharge ? (
-            <Badge variant="neutral" appearance="outline">{t("Surcharge")}</Badge>
+            <Badge variant="neutral" appearance="outline">
+              {t("Surcharge")}
+            </Badge>
           ) : null}
         </div>
       </TableCell>
@@ -110,7 +118,11 @@ function LineRow({ line }: { line: IftaReturnLine }) {
       </TableCell>
       <TableCell
         className="text-right tabular-nums"
-        title={`${line.purchaseCount} purchases · ${line.taxPaidGallonsRaw} gallons before rounding`}
+        title={t(
+          "{0, plural, one {# purchase} other {# purchases}} · {1} gallons before rounding",
+          line.purchaseCount,
+          line.taxPaidGallonsRaw,
+        )}
       >
         {formatIftaMeasure(line.taxPaidGallons, IFTA_GALLONS_SCALE)}
       </TableCell>

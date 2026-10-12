@@ -73,8 +73,8 @@ export function MoveEditDialog({
               : t("Update move details, timing, and stop sequence.")}
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[65vh] p-4">
-          <div className="space-y-4">
+        <ScrollArea className="max-h-[65vh]">
+          <div className="space-y-4 p-4">
             <FormGroup cols={3} dense>
               <FormControl>
                 <SelectField

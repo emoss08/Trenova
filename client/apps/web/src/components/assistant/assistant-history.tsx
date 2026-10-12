@@ -4,10 +4,12 @@ import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { shelfHeading } from "@/components/desk-chat/rail/rail-parts";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatCompactAge } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { Fragment, useMemo, useState } from "react";
+import { AssistantIconButton } from "./assistant-icon-button";
 import { assistantShelves, type AssistantShelfKey } from "./thread-grouping";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
@@ -83,15 +85,13 @@ export function AssistantHistory({
             aria-label={t("Search conversations")}
           />
         </label>
-        <button
-          type="button"
-          className="dk-ib"
+        <AssistantIconButton
           title={t("New conversation")}
           aria-label={t("New conversation")}
           onClick={onNew}
         >
           <DeskIcon name="plus" size={15} />
-        </button>
+        </AssistantIconButton>
       </div>
       <div className="as-hlist">
         {shelves.map((shelf) => (
@@ -102,18 +102,30 @@ export function AssistantHistory({
             {shelf.threads.map((thread) => {
               const agent = agentsById.get(thread.agentDefinitionId) ?? null;
               const age = threadAge(thread, now);
+              const active = thread.id === activeThreadId;
               return (
-                <button
+                <Button
                   key={thread.id}
-                  type="button"
-                  className={cn("as-hli", thread.id === activeThreadId && "as-on")}
-                  aria-current={thread.id === activeThreadId || undefined}
+                  variant="bare"
+                  size="bare"
+                  className={cn(
+                    "group/hli flex w-full gap-2.5 rounded-lg px-2 py-1.75 text-left transition-colors duration-150 hover:bg-dsk-hover",
+                    active && "bg-dsk-hover",
+                  )}
+                  aria-current={active || undefined}
                   onClick={() => onOpen(thread)}
                 >
                   <DeskAgentTile agent={agent} size="xs" />
-                  <span>
-                    <b>{thread.title || t("Untitled conversation")}</b>
-                    <em>
+                  <span className="flex min-w-0 flex-1 flex-col gap-px">
+                    <b
+                      className={cn(
+                        "truncate text-sm font-medium text-dsk-fg2 group-hover/hli:text-dsk-fg",
+                        active && "text-dsk-fg",
+                      )}
+                    >
+                      {thread.title || t("Untitled conversation")}
+                    </b>
+                    <em className="text-xs text-dsk-subtle not-italic">
                       {age === "now"
                         ? t("{0} · just now", agentName(thread) || t("Agent unavailable"))
                         : t("{0} · {1} ago", agentName(thread) || t("Agent unavailable"), age)}
@@ -122,7 +134,7 @@ export function AssistantHistory({
                   {shelf.key === "waiting" && (
                     <i className="as-wd" title={t("Waiting on your approval")} />
                   )}
-                </button>
+                </Button>
               );
             })}
           </Fragment>

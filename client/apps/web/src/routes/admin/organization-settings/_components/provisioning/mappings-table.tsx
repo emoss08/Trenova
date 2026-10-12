@@ -65,7 +65,15 @@ function getColumns(t: TranslateFn): ColumnDef<SCIMGroupRoleMappingRow>[] {
         sortable: true,
         filterType: "text",
         defaultFilterOperator: "contains",
-        label: t("Role"),
+        label: t("Role name"),
+        extraFilters: [
+          {
+            apiField: "roleId",
+            label: t("Role"),
+            filterType: "record",
+            filterRecord: "ROLE",
+          },
+        ],
       },
     },
   ];
@@ -90,6 +98,7 @@ export default function SCIMGroupRoleMappingsTable({
   return (
     <DataTable<SCIMGroupRoleMappingRow>
       name="SCIM Group Role Mapping"
+      emptyTitle={t("No SCIM group role mappings yet")}
       queryKey={queryKey}
       graphql={graphql}
       columns={columns}

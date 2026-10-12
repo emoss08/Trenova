@@ -10,9 +10,12 @@ on:
     paths:
       - "services/**"
       - "shared/**"
+      - "dev/samsara-sim/**"
+      - "dev/edi-partner-sim/**"
       - "go.work"
       - "go.work.sum"
       - ".golangci.yml"
+      - "services/tms/.go-arch-lint.yml"
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
       - "deploy/Dockerfile.postgres"
@@ -26,9 +29,12 @@ on:
     paths:
       - "services/**"
       - "shared/**"
+      - "dev/samsara-sim/**"
+      - "dev/edi-partner-sim/**"
       - "go.work"
       - "go.work.sum"
       - ".golangci.yml"
+      - "services/tms/.go-arch-lint.yml"
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
       - "deploy/Dockerfile.postgres"
@@ -73,7 +79,7 @@ jobs:
       - name: Run unit tests
         run: |
           set -euo pipefail
-          for module in shared services/tms services/samsara-sim services/edi-partner-sim; do
+          for module in shared services/tms dev/samsara-sim dev/edi-partner-sim; do
             echo "::group::${module}"
             (cd "$module" && go test -coverprofile=coverage-unit.out -covermode=atomic ./...)
             echo "::endgroup::"
@@ -230,7 +236,7 @@ jobs:
         run: |
           set -euo pipefail
           go test -p 2 -tags=integration,nomsgpack \
-            ./internal/infrastructure/postgres/repositories/airetrievalrepository/... \
+            ./internal/modules/agent/adapters/postgres/airetrievalrepository/... \
             ./internal/infrastructure/postgres/schemalint/...
 
   lint:
@@ -268,6 +274,10 @@ jobs:
           # Typechecking the whole module is unavoidable even with
           # --new-from-rev, so the timeout has to cover a cold analysis cache.
           args: --timeout=20m --new-from-rev=${{ steps.lint-base.outputs.value }}
+
+      - name: Run go-arch-lint
+        working-directory: ./services/tms
+        run: go run ./scripts/archlint
 
   codegen-checks:
     name: Codegen Checks
@@ -364,9 +374,9 @@ jobs:
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          go generate ./internal/core/services/agenttoolpolicy/safetydoc/...
+          go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...
           if ! git diff --exit-code -- ../../docs/engineering/ai-tool-safety.md; then
-            echo "::error::docs/engineering/ai-tool-safety.md is stale - run 'go generate ./internal/core/services/agenttoolpolicy/safetydoc/...' in services/tms and commit"
+            echo "::error::docs/engineering/ai-tool-safety.md is stale - run 'go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...' in services/tms and commit"
             exit 1
           fi
 
@@ -398,7 +408,7 @@ jobs:
       - name: Build every workspace module
         run: |
           set -euo pipefail
-          for module in shared services/tms services/samsara-sim services/edi-partner-sim; do
+          for module in shared services/tms dev/samsara-sim dev/edi-partner-sim; do
             echo "::group::${module}"
             (cd "$module" && go build ./...)
             echo "::endgroup::"

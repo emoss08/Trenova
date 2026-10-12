@@ -11,12 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
-	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
-	"github.com/emoss08/trenova/internal/core/services/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -32,7 +32,7 @@ func (r *CaptureBatchResolver) Device(ctx context.Context, obj *capture.CaptureB
 	return obj.CaptureDevice, nil
 }
 
-func (r *CaptureBatchResolver) Target(ctx context.Context, obj *capture.CaptureBatch) (*repositories.CaptureRecordLabel, error) {
+func (r *CaptureBatchResolver) Target(ctx context.Context, obj *capture.CaptureBatch) (*captureports.CaptureRecordLabel, error) {
 	return r.CaptureRecord(ctx, obj.TargetType, obj.TargetID)
 }
 
@@ -60,7 +60,7 @@ func (r *CaptureBatchResolver) Items(ctx context.Context, obj *capture.CaptureBa
 	return obj.Items, nil
 }
 
-func (r *CaptureCoverSheetResolver) Target(ctx context.Context, obj *gqlmodel.CaptureCoverSheet) (*repositories.CaptureRecordLabel, error) {
+func (r *CaptureCoverSheetResolver) Target(ctx context.Context, obj *gqlmodel.CaptureCoverSheet) (*captureports.CaptureRecordLabel, error) {
 	targetID, err := optionalIDRef(obj.TargetID)
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (r *CaptureItemResolver) PageCount(ctx context.Context, obj *capture.Captur
 	return len(obj.PageIDs), nil
 }
 
-func (r *CaptureItemResolver) SuggestedRecord(ctx context.Context, obj *capture.CaptureItem) (*repositories.CaptureRecordLabel, error) {
+func (r *CaptureItemResolver) SuggestedRecord(ctx context.Context, obj *capture.CaptureItem) (*captureports.CaptureRecordLabel, error) {
 	return r.CaptureRecord(ctx, obj.SuggestedType, obj.SuggestedID)
 }
 
@@ -89,7 +89,7 @@ func (r *CaptureItemResolver) SuggestionSource(ctx context.Context, obj *capture
 	return stringutils.NilIfEmpty(obj.SuggestionSource), nil
 }
 
-func (r *CaptureItemResolver) FiledRecord(ctx context.Context, obj *capture.CaptureItem) (*repositories.CaptureRecordLabel, error) {
+func (r *CaptureItemResolver) FiledRecord(ctx context.Context, obj *capture.CaptureItem) (*captureports.CaptureRecordLabel, error) {
 	return r.CaptureRecord(ctx, obj.FiledType, obj.FiledID)
 }
 

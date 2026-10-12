@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -16,7 +16,7 @@ func (r *Deps) resolveCarrierSelectOptions(
 	if len(req.IDs) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.CarrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+			entity, err := r.CarrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 				ID:         id,
 				TenantInfo: req.TenantInfo,
 			})
@@ -31,7 +31,7 @@ func (r *Deps) resolveCarrierSelectOptions(
 
 	result, err := r.CarrierRepo.SelectOptions(
 		ctx,
-		&repositories.CarrierSelectOptionsRequest{
+		&carrierports.CarrierSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)

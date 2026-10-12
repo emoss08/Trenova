@@ -20,7 +20,7 @@ import { describe, expect, it } from "vitest";
  */
 function serverKinds(): string[] {
   return goEnumValues({
-    file: "services/tms/internal/core/domain/assistantartifact/enums.go",
+    file: "services/tms/internal/modules/agent/domain/assistantartifact/enums.go",
     typeName: "Kind",
   });
 }

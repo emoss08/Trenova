@@ -11,7 +11,9 @@ function Table({ className, containerClassName, maskHeight, ...props }: TablePro
   return (
     <ScrollArea
       data-slot="table-container"
-      className={cn("w-full", containerClassName)}
+      // Sticky heads, group headers and pinned columns stack up to z-20; the
+      // scrollbars sit above them so a stuck row never hides the thumb.
+      className={cn("w-full [&>[data-slot=scroll-area-scrollbar]]:z-30", containerClassName)}
       maskHeight={maskHeight}
     >
       <table
@@ -19,7 +21,9 @@ function Table({ className, containerClassName, maskHeight, ...props }: TablePro
         className={cn("w-full caption-bottom text-sm", className)}
         {...props}
       />
-      <ScrollBar orientation="horizontal" />
+      {/* Rendered inside the viewport, so it stacks against the sticky header and
+          footer there; it must sit above them or a totals row hides it. */}
+      <ScrollBar orientation="horizontal" className="z-30" />
     </ScrollArea>
   );
 }

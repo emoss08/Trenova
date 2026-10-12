@@ -1,9 +1,11 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type {
   RateImportBatch,
   RateImportChange,
   RateImportChangeKind,
   RateImportSummary,
 } from "../types/rate";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /**
  * Reading a staged rate import.
@@ -18,13 +20,13 @@ export function canCommit(batch: RateImportBatch | undefined): boolean {
   return batch?.status === "Parsed";
 }
 
-const KIND_LABEL: Record<RateImportChangeKind, string> = {
+const KIND_LABEL: Record<RateImportChangeKind, string> = defineLabels({
   Removed: "Stops pricing",
   Added: "New lane",
   Changed: "Rate changes",
   Duplicate: "Listed twice",
   Unchanged: "No change",
-};
+});
 
 export function changeKindLabel(kind: RateImportChangeKind): string {
   return KIND_LABEL[kind] ?? kind;
@@ -75,8 +77,8 @@ export function describeFieldChange(change: {
   before: string;
   after: string;
 }): string {
-  if (!change.before) return `${change.field} set to ${change.after}`;
-  if (!change.after) return `${change.field} removed (was ${change.before})`;
+  if (!change.before) return translate("{0} set to {1}", change.field, change.after);
+  if (!change.after) return translate("{0} removed (was {1})", change.field, change.before);
 
   return `${change.field} ${change.before} → ${change.after}`;
 }
@@ -92,28 +94,30 @@ export function importHeadline(batch: RateImportBatch | undefined): string {
   if (!batch) return "";
 
   if (batch.status === "Failed") {
-    return batch.error || "This file could not be read.";
+    return batch.error || translate("This file could not be read.");
   }
 
   if (batch.status === "Committed") {
-    return "This sheet has been applied to the agreement.";
+    return translate("This sheet has been applied to the agreement.");
   }
 
   if (batch.status === "Discarded") {
-    return "This sheet was reviewed and not applied.";
+    return translate("This sheet was reviewed and not applied.");
   }
 
   const summary = batch.summary;
   if (!summary || !changesAnything(summary)) {
-    return "This sheet would not change anything. It may be a file that has already been imported.";
+    return translate(
+      "This sheet would not change anything. It may be a file that has already been imported.",
+    );
   }
 
   const parts: string[] = [];
-  if (summary.added > 0) parts.push(`${summary.added} new`);
-  if (summary.changed > 0) parts.push(`${summary.changed} changed`);
-  if (summary.removed > 0) parts.push(`${summary.removed} would stop pricing`);
+  if (summary.added > 0) parts.push(translate("{0} new", summary.added));
+  if (summary.changed > 0) parts.push(translate("{0} changed", summary.changed));
+  if (summary.removed > 0) parts.push(translate("{0} would stop pricing", summary.removed));
 
-  return `Committing this would leave the agreement with ${parts.join(", ")}.`;
+  return translate("Committing this would leave the agreement with {0}.", parts.join(", "));
 }
 
 export function changesAnything(summary: RateImportSummary | null | undefined): boolean {
@@ -136,27 +140,37 @@ export function commitWarnings(batch: RateImportBatch | undefined): string[] {
 
   if (batch.errorCount > 0) {
     warnings.push(
-      `${batch.errorCount} of ${batch.rowCount} rows could not be read and will not be imported. ` +
-        `No lane is shown as stopping until they are fixed, because a row that would not read ` +
-        `named no lane.`,
+      translate(
+        "{0} of {1, plural, one {# row} other {# rows}} could not be read and will not be imported. No lane is shown as stopping until they are fixed, because a row that would not read named no lane.",
+        batch.errorCount,
+        batch.rowCount,
+      ),
     );
   }
 
   const unmapped = batch.unmappedHeaders ?? [];
   if (unmapped.length > 0) {
-    warnings.push(`Nothing was read from these columns: ${unmapped.join(", ")}.`);
+    warnings.push(translate("Nothing was read from these columns: {0}.", unmapped.join(", ")));
   }
 
   const duplicates = batch.summary?.duplicate ?? 0;
   if (duplicates > 0) {
     warnings.push(
-      `${duplicates} lanes are listed more than once. Only the first of each will be imported.`,
+      translate(
+        "{0, plural, one {# lane is listed more than once. Only the first will be imported.} other {# lanes are listed more than once. Only the first of each will be imported.}}",
+        duplicates,
+      ),
     );
   }
 
   const removed = batch.summary?.removed ?? 0;
   if (removed > 0) {
-    warnings.push(`${removed} lanes in the agreement are not in this sheet and will stop pricing.`);
+    warnings.push(
+      translate(
+        "{0, plural, one {# lane in the agreement is not in this sheet and will stop pricing.} other {# lanes in the agreement are not in this sheet and will stop pricing.}}",
+        removed,
+      ),
+    );
   }
 
   return warnings;

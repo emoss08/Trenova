@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,13 +14,13 @@ import (
 )
 
 type stubInboundAttachmentCounter struct {
-	asked repositories.CountInboundAttachmentsRequest
+	asked inboundmessageports.CountInboundAttachmentsRequest
 	count map[pulid.ID]int
 }
 
 func (s *stubInboundAttachmentCounter) CountAttachmentsByMessageIDs(
 	_ context.Context,
-	req repositories.CountInboundAttachmentsRequest,
+	req inboundmessageports.CountInboundAttachmentsRequest,
 ) (map[pulid.ID]int, error) {
 	s.asked = req
 
@@ -27,14 +28,14 @@ func (s *stubInboundAttachmentCounter) CountAttachmentsByMessageIDs(
 }
 
 type stubShipmentSummaryLister struct {
-	asked     *repositories.ListShipmentSummariesRequest
-	summaries []*repositories.ShipmentSummary
+	asked     *shipmentports.ListShipmentSummariesRequest
+	summaries []*shipmentports.ShipmentSummary
 }
 
 func (s *stubShipmentSummaryLister) ListSummariesByIDs(
 	_ context.Context,
-	req *repositories.ListShipmentSummariesRequest,
-) ([]*repositories.ShipmentSummary, error) {
+	req *shipmentports.ListShipmentSummariesRequest,
+) ([]*shipmentports.ShipmentSummary, error) {
 	s.asked = req
 
 	return s.summaries, nil
@@ -68,7 +69,7 @@ func TestShipmentSummaryLoaderReturnsTheSummaryAndNotFoundForAShipmentOutOfReach
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	known := pulid.MustNew("shp_")
 	gone := pulid.MustNew("shp_")
-	repo := &stubShipmentSummaryLister{summaries: []*repositories.ShipmentSummary{
+	repo := &stubShipmentSummaryLister{summaries: []*shipmentports.ShipmentSummary{
 		{ShipmentID: known, ProNumber: "PRO-4471"},
 	}}
 	factory := &ShipmentSummaryByIDLoaderFactory{shipments: repo}

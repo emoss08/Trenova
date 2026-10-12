@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cityStateLabel } from "@/lib/carrier-intelligence";
+import { cityStateLabel } from "@/lib/place";
 import {
   detectSourcingIntent,
   SOURCING_TEXT_MAX_LENGTH,

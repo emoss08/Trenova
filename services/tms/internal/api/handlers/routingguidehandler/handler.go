@@ -6,10 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/routingguideservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -100,9 +100,9 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*tender.RoutingGuide], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListRoutingGuideRequest{
+				&tenderports.ListRoutingGuideRequest{
 					Filter: req,
-					RoutingGuideFilterOptions: repositories.RoutingGuideFilterOptions{
+					RoutingGuideFilterOptions: tenderports.RoutingGuideFilterOptions{
 						IncludeEntries: helpers.QueryBool(c, "includeEntries"),
 					},
 				},
@@ -130,7 +130,7 @@ func (h *Handler) list(c *gin.Context) {
 func (h *Handler) match(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := &repositories.MatchLaneRequest{
+	req := &tenderports.MatchLaneRequest{
 		TenantInfo:       pagination.FromAuth(authCtx),
 		OriginCity:       c.Query("originCity"),
 		OriginState:      c.Query("originState"),
@@ -184,10 +184,10 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetRoutingGuideByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), tenderports.GetRoutingGuideByIDRequest{
 		ID:         guideID,
 		TenantInfo: pagination.FromAuth(authCtx),
-		RoutingGuideFilterOptions: repositories.RoutingGuideFilterOptions{
+		RoutingGuideFilterOptions: tenderports.RoutingGuideFilterOptions{
 			IncludeEntries: true,
 		},
 	})
@@ -297,7 +297,7 @@ func (h *Handler) delete(c *gin.Context) {
 	}
 
 	actor := actorutil.FromAuthContext(authCtx)
-	if err = h.service.Delete(c.Request.Context(), repositories.DeleteRoutingGuideRequest{
+	if err = h.service.Delete(c.Request.Context(), tenderports.DeleteRoutingGuideRequest{
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 		ID:         guideID,
 	}, actor); err != nil {

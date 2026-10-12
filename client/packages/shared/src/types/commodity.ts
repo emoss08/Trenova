@@ -6,6 +6,7 @@ import {
   statusSchema,
   tenantInfoSchema,
 } from "./helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const freightClassSchema = z.enum([
   "Class50",
@@ -33,8 +34,8 @@ export type FreightClass = z.infer<typeof freightClassSchema>;
 export const commoditySchema = z.object({
   ...tenantInfoSchema.shape,
   status: statusSchema,
-  name: z.string().min(1, { error: "Name is required" }),
-  description: z.string().min(1, { error: "Description is required" }),
+  name: z.string().min(1, { error: () => translate("Name is required") }),
+  description: z.string().min(1, { error: () => translate("Description is required") }),
   hazardousMaterialId: nullableStringSchema,
   minTemperature: nullableIntegerSchema,
   maxTemperature: nullableIntegerSchema,

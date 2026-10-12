@@ -1,4 +1,6 @@
 import { formatCurrency, formatFileSize } from "@trenova/shared/lib/utils";
+import { translateLabel } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export type PlanMeterUnit = "count" | "bytes" | "cents";
 export type PlanMeterWindow = "lifetime" | "month" | "item";
@@ -101,9 +103,9 @@ export const PLAN_METER_ORDER: readonly string[] = Object.keys(PLAN_METERS);
 function humanizeKey(key: string): string {
   const words = key.split(/[._]/).filter(Boolean).join(" ").trim();
   if (words === "") {
-    return "Usage";
+    return translate("Usage");
   }
-  return words.charAt(0).toUpperCase() + words.slice(1);
+  return translateLabel(words.charAt(0).toUpperCase() + words.slice(1));
 }
 
 export function planMeterDefinition(meterKey: string): PlanMeterDefinition {
@@ -170,5 +172,5 @@ export function planDisplayName(planKey: string, planName?: string): string {
   if (planName && planName.trim() !== "") {
     return planName;
   }
-  return planKey === "" ? "Current plan" : humanizeKey(planKey);
+  return planKey === "" ? translate("Current plan") : humanizeKey(planKey);
 }

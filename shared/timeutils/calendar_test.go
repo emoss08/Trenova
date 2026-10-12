@@ -82,6 +82,34 @@ func TestWeekStartUTCIsTheMondayBefore(t *testing.T) {
 	assert.Equal(t, monday-7*SecondsPerDay, WeekStartUTC(monday-1))
 }
 
+func TestWeekStartIsTheLocalMondayBefore(t *testing.T) {
+	t.Parallel()
+
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+
+	monday := time.Date(2026, time.October, 12, 0, 0, 0, 0, chicago).Unix()
+	sundayNight := time.Date(2026, time.October, 18, 23, 30, 0, 0, chicago).Unix()
+	assert.Equal(t, monday, WeekStart(sundayNight, chicago))
+	assert.Equal(t, monday, WeekStart(monday, chicago))
+	assert.Equal(t,
+		time.Date(2026, time.October, 5, 0, 0, 0, 0, chicago).Unix(),
+		WeekStart(monday-1, chicago),
+	)
+	assert.Equal(t, WeekStartUTC(sundayNight), WeekStart(sundayNight, nil))
+}
+
+func TestMinuteOfDayReadsTheLocalClock(t *testing.T) {
+	t.Parallel()
+
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+
+	at := time.Date(2026, time.October, 12, 17, 5, 0, 0, chicago).Unix()
+	assert.Equal(t, 17*60+5, MinuteOfDay(at, chicago))
+	assert.Equal(t, 22*60+5, MinuteOfDay(at, nil))
+}
+
 func TestDayBoundariesFollowTheZone(t *testing.T) {
 	t.Parallel()
 

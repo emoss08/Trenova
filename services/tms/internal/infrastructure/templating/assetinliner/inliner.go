@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/imageutils"
@@ -60,7 +60,7 @@ func (l Limits) withDefaults() Limits {
 // implement multipart uploads and presigning to inline a logo. storage.Client
 // satisfies this, so wiring is unaffected.
 type ObjectReader interface {
-	Download(ctx context.Context, key string) (*storage.DownloadResult, error)
+	Download(ctx context.Context, key string) (*kernelports.DownloadResult, error)
 }
 
 // Params are the inliner's dependencies.

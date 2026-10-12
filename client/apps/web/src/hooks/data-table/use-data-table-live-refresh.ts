@@ -1,100 +1,186 @@
-import {
-  buildDataTableQueryKey,
-  fetchDataTablePage,
-} from "@/hooks/data-table/use-data-table-query";
-import type {
-  DataTableGraphQLSource,
-  DataTableQueryOptions,
-} from "@trenova/shared/types/data-table";
-import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
-import { stableStringify } from "@/lib/stable-stringify";
-import { useQueryClient } from "@tanstack/react-query";
-import type { PaginationState } from "@tanstack/react-table";
+import { useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type UseDataTableLiveRefreshParams<TData extends Record<string, unknown>> = {
+type RowWithId = { id?: string };
+
+type UseDataTableLiveRefreshParams<TData extends RowWithId> = {
+  /** Asks the server again on this interval, on top of the changes pushed to it. */
   intervalMs: number | undefined;
   enabled: boolean;
-  queryKey: string;
-  graphql: DataTableGraphQLSource<TData>;
-  pagination: PaginationState;
-  options: DataTableQueryOptions;
-  currentResults: TData[] | undefined;
+  /** The page's own query, refetched by the interval. */
+  queryKey: QueryKey;
+  /** Names what the person is looking at: filters, sort, search and page. */
+  scopeKey: string;
+  /** The page as the server last answered it. */
+  results: TData[] | undefined;
+  /** True while the previous page stands in for one still loading. */
+  isPlaceholderData: boolean;
 };
 
-export function useDataTableLiveRefresh<TData extends Record<string, unknown>>({
+/** Rows whose values changed while on screen, and a counter that replays their glow. */
+export type DataTableRowChanges = {
+  ids: ReadonlySet<string>;
+  version: number;
+};
+
+type LiveState<TData> = {
+  scopeKey: string;
+  /** Whether this scope has had its own answer yet, rather than a stand-in. */
+  settled: boolean;
+  source: TData[] | undefined;
+  shown: TData[] | undefined;
+  pending: TData[] | null;
+  changes: DataTableRowChanges;
+};
+
+const NO_CHANGES: DataTableRowChanges = { ids: new Set(), version: 0 };
+
+function rowId(row: RowWithId): string | undefined {
+  return row.id;
+}
+
+function sameRowsInSameOrder<TData extends RowWithId>(a: TData[], b: TData[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (rowId(a[i]) !== rowId(b[i])) return false;
+  }
+  return true;
+}
+
+/**
+ * The rows that are new or whose values changed. The query keeps an unchanged row
+ * as the same object across refetches, so this is an identity check per row, not a
+ * comparison of their contents.
+ */
+function changedRowIds<TData extends RowWithId>(
+  before: TData[] | undefined,
+  after: TData[],
+): Set<string> {
+  const previous = new Map<string, TData>();
+  for (const row of before ?? []) {
+    const id = rowId(row);
+    if (id) previous.set(id, row);
+  }
+
+  const changed = new Set<string>();
+  for (const row of after) {
+    const id = rowId(row);
+    if (id && previous.get(id) !== row) changed.add(id);
+  }
+  return changed;
+}
+
+function withChanges(
+  changes: DataTableRowChanges,
+  ids: Set<string>,
+): DataTableRowChanges {
+  return ids.size === 0 ? NO_CHANGES : { ids, version: changes.version + 1 };
+}
+
+function reconcile<TData extends RowWithId>(
+  state: LiveState<TData>,
+  scopeKey: string,
+  results: TData[] | undefined,
+  isPlaceholderData: boolean,
+): LiveState<TData> {
+  const settled = results !== undefined && !isPlaceholderData;
+  if (scopeKey !== state.scopeKey || !state.settled || !settled) {
+    return {
+      scopeKey,
+      settled,
+      source: results,
+      shown: results,
+      pending: null,
+      changes: NO_CHANGES,
+    };
+  }
+
+  const shown = state.shown;
+  if (!shown || shown.length === 0) {
+    return { ...state, source: results, shown: results, pending: null };
+  }
+
+  if (sameRowsInSameOrder(shown, results)) {
+    return {
+      ...state,
+      source: results,
+      shown: results,
+      pending: null,
+      changes: withChanges(state.changes, changedRowIds(shown, results)),
+    };
+  }
+
+  return { ...state, source: results, pending: results };
+}
+
+/**
+ * Keeps a page current without moving it under the person reading it.
+ *
+ * A newer answer for the same page (pushed by another person's change, or asked for
+ * on the interval) is shown at once when it holds the same rows in the same order,
+ * and the rows whose values changed glow once. An answer that adds, removes or
+ * reorders rows waits behind the "new updates" pill instead, so a row never jumps
+ * away from the cursor or the mouse. Anything the person asks for themselves (a
+ * filter, a sort, another page) is a new scope and is shown straight away.
+ */
+export function useDataTableLiveRefresh<TData extends RowWithId>({
   intervalMs,
   enabled,
   queryKey,
-  graphql,
-  pagination,
-  options,
-  currentResults,
+  scopeKey,
+  results,
+  isPlaceholderData,
 }: UseDataTableLiveRefreshParams<TData>) {
   const queryClient = useQueryClient();
-  const [staged, setStaged] = useState<GenericLimitOffsetResponse<TData> | null>(null);
+  const [state, setState] = useState<LiveState<TData>>(() => ({
+    scopeKey,
+    settled: results !== undefined && !isPlaceholderData,
+    source: results,
+    shown: results,
+    pending: null,
+    changes: NO_CHANGES,
+  }));
 
-  const latestRef = useRef({ pagination, options, currentResults });
-  latestRef.current = { pagination, options, currentResults };
-
-  const scopeKey = stableStringify({ pagination, options });
-  const scopeKeyRef = useRef(scopeKey);
-  if (scopeKeyRef.current !== scopeKey) {
-    scopeKeyRef.current = scopeKey;
-    if (staged) setStaged(null);
+  let current = state;
+  if (state.scopeKey !== scopeKey || state.source !== results) {
+    current = reconcile(state, scopeKey, results, isPlaceholderData);
+    setState(current);
   }
+
+  const queryKeyRef = useRef(queryKey);
+  useEffect(() => {
+    queryKeyRef.current = queryKey;
+  });
 
   useEffect(() => {
     if (!enabled || !intervalMs || intervalMs <= 0) return;
-
-    let inFlight = false;
-    const tick = async () => {
-      if (inFlight || document.visibilityState !== "visible") return;
-      inFlight = true;
-      const snapshot = latestRef.current;
-      try {
-        const fresh = await fetchDataTablePage<TData>({
-          pageSize: snapshot.pagination.pageSize,
-          options: snapshot.options,
-          graphql,
-        });
-
-        const latest = latestRef.current;
-        if (stableStringify(snapshot.options) !== stableStringify(latest.options)) return;
-
-        const unchanged =
-          JSON.stringify(fresh.results) === JSON.stringify(latest.currentResults ?? []);
-        setStaged(unchanged ? null : fresh);
-      } catch {
-        // Background probe failures are non-fatal; the next tick retries.
-      } finally {
-        inFlight = false;
-      }
-    };
-
-    const timer = setInterval(() => {
-      void tick();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void queryClient.invalidateQueries({ queryKey: queryKeyRef.current, exact: true });
     }, intervalMs);
-    return () => clearInterval(timer);
-    // oxlint-disable-next-line exhaustive-deps
-  }, [enabled, intervalMs, scopeKey, graphql]);
+    return () => window.clearInterval(timer);
+  }, [enabled, intervalMs, queryClient]);
 
   const applyStaged = useCallback(() => {
-    if (!staged) return;
-    const { pagination: currentPagination, options: currentOptions } = latestRef.current;
-    queryClient.setQueryData(
-      buildDataTableQueryKey(queryKey, graphql, currentPagination, currentOptions),
-      staged,
-    );
-    setStaged(null);
-  }, [staged, queryClient, queryKey, graphql]);
+    setState((latest) => {
+      if (!latest.pending) return latest;
+      return {
+        ...latest,
+        shown: latest.pending,
+        pending: null,
+        changes: withChanges(latest.changes, changedRowIds(latest.shown, latest.pending)),
+      };
+    });
+  }, []);
 
   const dismissStaged = useCallback(() => {
-    setStaged(null);
+    setState((latest) => (latest.pending ? { ...latest, pending: null } : latest));
   }, []);
 
   return {
-    hasPendingUpdate: staged !== null,
+    results: current.shown,
+    hasPendingUpdate: current.pending !== null,
+    changes: current.changes,
     applyStaged,
     dismissStaged,
   };

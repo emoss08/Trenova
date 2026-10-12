@@ -60,7 +60,7 @@ export default function EmailProfileTable() {
     },
     onError: (error) => {
       toast.error(t("Failed to delete email profile"), {
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description: error instanceof Error ? error.message : t("An unexpected error occurred"),
       });
     },
   });
@@ -88,7 +88,7 @@ export default function EmailProfileTable() {
     },
     onError: (error) => {
       toast.error(t("Failed to queue test email"), {
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description: error instanceof Error ? error.message : t("An unexpected error occurred"),
       });
     },
   });
@@ -128,6 +128,7 @@ export default function EmailProfileTable() {
     <>
       <DataTable<EmailProfile>
         name="Email Profile"
+        emptyTitle={t("No email profiles yet")}
         queryKey={emailProfileQueryKey}
         graphql={emailProfileTableGraphQLConfig}
         resource={Resource.EmailProfile}

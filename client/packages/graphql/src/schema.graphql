@@ -6,6 +6,29 @@ schema {
 directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 """
+What one agent has done lately, for its row on the Agents tab: runs on each of
+the last 14 days and the decisions people made on its proposals over 30.
+"""
+type AIAgentRosterStat {
+  agentId: ID!
+  """
+  Approved or changed, of every decided proposal, 0 to 1. Absent until someone has decided.
+  """
+  approvalRate: Float
+  approved: Int!
+  failed: Int!
+  modified: Int!
+  rejected: Int!
+  runs: Int!
+  """
+  Runs started on each of the last 14 days, oldest first; the last is today.
+  """
+  runsByDay: [Int!]!
+  """Proposals it recorded in shadow, which nobody was offered."""
+  shadowRecorded: Int!
+}
+
+"""
 A tenant's AI audit chain: where it runs, how far it is sealed, and what its
 last verification found.
 """
@@ -286,6 +309,71 @@ enum AIAuditVerificationStatus {
   Verified
 }
 
+"""The organization's agents and what they are doing."""
+type AIControlAgentCounts {
+  on: Int!
+  """Agents on and in shadow."""
+  shadow: Int!
+  """Proposals shadow agents recorded over the last 30 days."""
+  shadowRecorded: Int!
+  total: Int!
+  """Proposals waiting on a person."""
+  waiting: Int!
+  working: Int!
+}
+
+"""What a tab's sentence may say."""
+type AIControlFacts {
+  agents: AIControlAgentCounts!
+  failing: [AIProviderFailure!]!
+  """Every agent is paused and runs in shadow."""
+  paused: Boolean!
+  providersOn: Int!
+  """Tasks no enabled provider can take."""
+  uncovered: Int!
+}
+
+"""
+One run of a sentence. A target makes it a link: watchtower, providers, routing,
+agents:shadow, agents:waiting, or provider (with providerId). Tone colours a
+link: warn or danger.
+"""
+type AIControlSegment {
+  providerId: ID
+  strong: Boolean!
+  target: String
+  text: String!
+  tone: String
+}
+
+"""
+The sentence that heads a tab. It is worked out from the records on every
+read; a model rewords it only when they say something new, and what it wrote is
+kept until they move again.
+"""
+type AIControlSummary {
+  facts: AIControlFacts!
+  factsHash: String!
+  generatedAt: Timestamp!
+  """A model wrote it; false is the sentence the facts say on their own."""
+  narrated: Boolean!
+  """A model is rewording it; read again in a few seconds."""
+  pending: Boolean!
+  segments: [AIControlSegment!]!
+  tab: AIControlTab!
+  """
+  The failing providers the reader has not put away since they last failed.
+  """
+  visibleFailures: [AIProviderFailure!]!
+}
+
+"""A tab of AI control that opens with a sentence."""
+enum AIControlTab {
+  Agents
+  Overview
+  Providers
+}
+
 """
 What an extraction predicted beside what a person confirmed when they created a record from it.
 """
@@ -495,14 +583,39 @@ type AIFeedbackTurnSnapshot {
   tools: [AIFeedbackToolLine!]!
 }
 
+"""Where a model's listed price came from."""
+enum AIModelPriceSource {
+  """
+  OpenRouter's public catalog: an estimate of the list price, not what a contract charges.
+  """
+  OpenRouter
+  """The provider's own model list."""
+  Provider
+}
+
 """
 One configured model endpoint. The credential never leaves the server; only
 whether one is stored is exposed.
 """
 type AIProvider {
   allowPrivateNetwork: Boolean!
+  """
+  The stored credential, described without the secret. Null when none is stored.
+  """
+  apiKey: AIProviderKeyInfo
   baseUrl: String!
   businessUnitId: ID!
+  """
+  USD per million prompt tokens read from the provider's cache. Null charges
+  the protocol's usual share of the input price: a tenth.
+  """
+  cacheReadCostPerMillion: Decimal
+  """
+  USD per million prompt tokens written to the provider's cache. Null charges
+  the protocol's usual multiple of the input price: one and a quarter times
+  for Anthropic Messages, the input price for the others.
+  """
+  cacheWriteCostPerMillion: Decimal
   createdAt: Timestamp!
   description: String!
   """
@@ -526,21 +639,53 @@ type AIProvider {
   inputCostPerMillion: Decimal
   kind: AIProviderKind!
   lastTest: AIProviderTestOutcome
+  """
+  Calls this provider takes at once across every server. Past it, work moves to the next provider.
+  """
+  maxConcurrent: Int!
   maxTokens: Int!
   model: String!
+  """
+  Spend so far this calendar month (UTC), over the calls that carried a price.
+  """
+  monthSpendUsd: Decimal!
+  """
+  Most this provider may spend in a calendar month, in USD. Null means no cap.
+  """
+  monthlyCapUsd: Decimal
   name: String!
+  """What happens to a task once the monthly cap is reached."""
+  onCap: AIProviderCapAction!
   organizationId: ID!
   """USD per million output tokens; null means unknown."""
   outputCostPerMillion: Decimal
+  """Where an Anthropic Messages provider reaches Claude."""
+  platform: AIProviderPlatform!
+  """
+  What the platform needs besides the credential. Null for a provider called directly.
+  """
+  platformSettings: AIProviderPlatformSettings
   priority: Int!
   reasoningEffort: AIReasoningEffort!
   structuredOutputMode: AIStructuredOutputMode!
   tasks: [AITask!]!
   """How a Claude model behind an id the system cannot read takes thinking."""
   thinkingStyle: AIThinkingStyle!
+  """
+  How long one call may take before it fails and the task moves to the next provider.
+  """
+  timeoutSeconds: Int!
   trusted: Boolean!
   updatedAt: Timestamp!
   version: Int!
+}
+
+"""What a provider does with a task once its monthly cap is reached."""
+enum AIProviderCapAction {
+  """The task goes to the next provider in line."""
+  Next
+  """The task fails rather than moving on."""
+  Stop
 }
 
 type AIProviderConnection {
@@ -549,9 +694,81 @@ type AIProviderConnection {
   totalCount: Int
 }
 
+input AIProviderDraftTestInput {
+  embeddingDimensions: Int
+  embeddingInputStyle: AIEmbeddingInputStyle
+  endpoint: AIProviderEndpointInput!
+  model: String!
+  structuredOutputMode: AIStructuredOutputMode
+  tasks: [AITask!]!
+  timeoutSeconds: Int
+}
+
+"""
+What a probe of an unsaved endpoint revealed, with a next step when it failed.
+"""
+type AIProviderDraftTestResult {
+  """The endpoint's own words, such as the transport error."""
+  detail: String!
+  """What to try next. Empty when it worked."""
+  hint: String!
+  latencyMs: Int!
+  message: String!
+  modelIdentifier: String!
+  schemaHonoured: Boolean!
+  success: Boolean!
+}
+
 type AIProviderEdge {
   cursor: String!
   node: AIProvider!
+}
+
+"""
+An endpoint as an editor holds it, before it is saved. With providerId and no
+apiKey, the provider's stored key is used.
+"""
+input AIProviderEndpointInput {
+  allowPrivateNetwork: Boolean!
+  apiKey: String
+  baseUrl: String!
+  kind: AIProviderKind!
+  """
+  Where an Anthropic Messages endpoint reaches Claude. Omitted calls the base URL directly.
+  """
+  platform: AIProviderPlatform
+  platformSettings: AIProviderPlatformSettingsInput
+  providerId: ID
+}
+
+"""
+An enabled provider whose last call failed and has not succeeded since.
+"""
+type AIProviderFailure {
+  """Failed calls over the last day."""
+  failedCalls: Int!
+  lastFailureAt: Timestamp!
+  name: String!
+  providerId: ID!
+}
+
+"""
+A stored credential, described without the secret: enough of its ends to tell
+two keys apart, who added it and when it was last used.
+"""
+type AIProviderKeyInfo {
+  addedAt: Timestamp!
+  addedBy: User
+  lastFour: String!
+  lastUsedAt: Timestamp
+  """
+  The vendor prefix the key starts with, such as sk-ant-; empty when it has none.
+  """
+  prefix: String!
+  """
+  While the key it replaced is still kept as a fallback, when that stops.
+  """
+  previousKeyExpiresAt: Timestamp
 }
 
 enum AIProviderKind {
@@ -559,6 +776,131 @@ enum AIProviderKind {
   Ollama
   OpenAIChat
   OpenAIResponses
+}
+
+"""One model an endpoint says it serves."""
+type AIProviderModelOption {
+  """Tokens of context, when the endpoint or the model id says."""
+  contextWindow: Int
+  """
+  When the provider released the model (for a local server, when it was pulled), when the endpoint says.
+  """
+  createdAt: Timestamp
+  displayName: String!
+  embedding: Boolean!
+  id: String!
+  inputCostPerMillion: Decimal
+  """A local server has it in memory now."""
+  loaded: Boolean!
+  outputCostPerMillion: Decimal
+  """Where the prices came from; null when there are none."""
+  priceSource: AIModelPriceSource
+  """Bytes on disk, for a model a local server holds."""
+  sizeBytes: Float
+}
+
+"""
+The fields of a provider that change on their own, from its row and read sheet.
+"""
+input AIProviderPatchInput {
+  allowPrivateNetwork: Boolean @goField(omittable: true)
+  """A new credential. It replaces the stored one and is never returned."""
+  apiKey: String @goField(omittable: true)
+  cacheReadCostPerMillion: Decimal @goField(omittable: true)
+  cacheWriteCostPerMillion: Decimal @goField(omittable: true)
+  enabled: Boolean @goField(omittable: true)
+  inputCostPerMillion: Decimal @goField(omittable: true)
+  outputCostPerMillion: Decimal @goField(omittable: true)
+  tasks: [AITask!] @goField(omittable: true)
+  trusted: Boolean @goField(omittable: true)
+}
+
+"""
+Where an Anthropic Messages provider reaches Claude. Direct calls the base URL
+with the API key, which every other kind always does.
+"""
+enum AIProviderPlatform {
+  """Amazon Bedrock's Messages endpoint."""
+  Bedrock
+  """
+  Claude Platform on AWS: the Claude API run by Anthropic, billed through AWS.
+  """
+  ClaudePlatformAWS
+  """Claude Platform on Google Cloud."""
+  ClaudePlatformGoogleCloud
+  Direct
+  """Microsoft Foundry."""
+  Foundry
+  """Google Vertex AI's Anthropic publisher models."""
+  VertexAI
+}
+
+"""How a request to a platform proves who sent it."""
+enum AIProviderPlatformAuth {
+  """Signed with an IAM access key; the secret access key is stored."""
+  AccessKey
+  """The stored key: an Anthropic, Bedrock or Foundry API key."""
+  ApiKey
+  """
+  Tokens from Microsoft Entra ID for an app registration; its client secret is stored.
+  """
+  EntraID
+  """
+  The cloud credentials of the server Trenova runs on, where the server allows it. Nothing is stored.
+  """
+  Server
+  """Tokens from a Google service account key, which is stored."""
+  ServiceAccount
+}
+
+"""
+What a platform needs besides its credential. None of it is secret; a setting
+the platform does not take is empty.
+"""
+type AIProviderPlatformSettings {
+  """The IAM access key that signs requests."""
+  accessKeyId: String!
+  auth: AIProviderPlatformAuth!
+  """The Entra ID app registration's client ID."""
+  clientId: String!
+  """The Google Cloud project."""
+  projectId: String!
+  """The AWS region, the Vertex AI region or the Google Cloud location."""
+  region: String!
+  """The Foundry resource name."""
+  resource: String!
+  """The Entra ID tenant."""
+  tenantId: String!
+  """
+  The Anthropic workspace, for Claude Platform on AWS and on Google Cloud.
+  """
+  workspaceId: String!
+}
+
+input AIProviderPlatformSettingsInput {
+  accessKeyId: String
+  auth: AIProviderPlatformAuth
+  clientId: String
+  projectId: String
+  region: String
+  resource: String
+  tenantId: String
+  workspaceId: String
+}
+
+"""
+A provider as its editor holds it, reduced to what decides where tasks go.
+"""
+input AIProviderRoutingDraftInput {
+  embeddingDimensions: Int
+  enabled: Boolean!
+  """The provider being edited. Absent for a new one."""
+  id: ID
+  kind: AIProviderKind!
+  name: String!
+  priority: Int!
+  tasks: [AITask!]!
+  trusted: Boolean!
 }
 
 """What the most recent live probe of the endpoint revealed."""
@@ -799,6 +1141,15 @@ enum AIRetrievalUnavailableReason {
   TooOld
 }
 
+"""
+The provider a task goes to. Draft is the provider being edited, which has no ID until it is first saved.
+"""
+type AIRouteChoice {
+  draft: Boolean!
+  name: String!
+  providerId: ID
+}
+
 enum AIStructuredOutputMode {
   JSONMode
   JSONSchema
@@ -820,6 +1171,18 @@ enum AITask {
   OperationalInsights
   QueryCompose
   ScopeClassification
+}
+
+"""
+Where one task goes now and where it would go with a draft saved. An absent
+choice is a task no provider serves. Providers resting after repeated failures
+are skipped at run time and are not reflected here.
+"""
+type AITaskRoute {
+  after: AIRouteChoice
+  before: AIRouteChoice
+  changed: Boolean!
+  task: AITask!
 }
 
 """
@@ -848,6 +1211,126 @@ type AITrainingExportHistoryEntry {
   validationExamples: Int!
 }
 
+"""A change to how AI is set up that the last 30 days of runs argue for."""
+type AITuneUp {
+  agent: AITuneUpAgent
+  computedAt: Timestamp!
+  dismissedUntil: Timestamp
+  evidence: AITuneUpEvidence!
+  id: ID!
+  kind: AITuneUpKind!
+  """The provider moved behind."""
+  otherProvider: AITuneUpProvider
+  """
+  The provider the change acts on: the one moved ahead, or the one given the task.
+  """
+  provider: AITuneUpProvider
+  status: AITuneUpStatus!
+  task: AITask
+  toolName: String
+  version: Int!
+}
+
+"""The agent a tune-up changes."""
+type AITuneUpAgent {
+  accent: String!
+  icon: String!
+  id: ID!
+  name: String!
+}
+
+"""
+What the runs showed. Each kind fills what its sentence names; the rest are
+zero.
+"""
+type AITuneUpEvidence {
+  approvals: Int!
+  approvalsPerWeek: Float!
+  """Calls the provider that catches the failures answered."""
+  calls: Int!
+  """Calls the provider first in line failed."""
+  failed: Int!
+  """The tier the tool runs at on the agent now."""
+  fromTier: AgentAutonomyTier
+  """When the agent last ran, or was created when it never has."""
+  idleSince: Timestamp!
+  lastRunAt: Timestamp
+  """
+  Share of the recorded writes people answered that matched what they did, 0 to 1.
+  """
+  matchRate: Float!
+  """The model the provider that would take the task serves."""
+  model: String!
+  """Writes the agent recorded in shadow."""
+  recorded: Int!
+  rejections: Int!
+  """Failed calls the next provider answered."""
+  rescued: Int!
+  """Approvals in a row that changed nothing."""
+  streak: Int!
+  tasks: [AITask!]!
+  """The tier it would move to."""
+  toTier: AgentAutonomyTier
+  """Tools the agent holds."""
+  tools: Int!
+  wouldFail: Int!
+}
+
+"""What a tune-up would change."""
+enum AITuneUpKind {
+  """Give a task nothing serves to a provider that can take it."""
+  AssignTask
+  """
+  Take an agent whose recorded proposals match what people did out of shadow.
+  """
+  LeaveShadow
+  """
+  Let a tool its agent's people keep approving unchanged run one tier more freely.
+  """
+  RaiseToolTier
+  """Put a provider that keeps catching a failing one ahead of it."""
+  ReorderProviders
+  """Turn off a chat agent nobody has asked anything in two weeks."""
+  TurnOffIdleAgent
+}
+
+"""A provider a tune-up names."""
+type AITuneUpProvider {
+  id: ID!
+  kind: AIProviderKind!
+  name: String!
+}
+
+enum AITuneUpStatus {
+  Applied
+  Dismissed
+  Open
+}
+
+"""The tune-ups offered now, worked out nightly."""
+type AITuneUps {
+  """When they were last worked out; null before the first time."""
+  computedAt: Timestamp
+  items: [AITuneUp!]!
+  """How many days of runs they are drawn from."""
+  windowDays: Int!
+}
+
+"""One calendar day of model usage, in the timezone it was asked for."""
+type AIUsageDay {
+  calls: Int!
+  """Sum over the calls that carried a price; see pricedCalls."""
+  costUsd: Decimal!
+  """The day, YYYY-MM-DD."""
+  day: String!
+  failed: Int!
+  inputTokens: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+  outputTokens: Int!
+  pricedCalls: Int!
+}
+
 """
 One failed model call: which provider and model, what kind of failure, and
 what the provider said. The class is one of a handful of words; the message
@@ -873,6 +1356,21 @@ enum AIUsageFeature {
   FormulaGenerate
   ShipmentImportChat
   TableQuery
+}
+
+"""
+Model usage by feature as a table: searchable by feature, filterable and
+sortable on feature, calls, failed, tokens, costUsd and latencyP50Ms.
+"""
+type AIUsageFeatureConnection {
+  edges: [AIUsageFeatureEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AIUsageFeatureEdge {
+  cursor: String!
+  node: AIUsageFeatureSlice!
 }
 
 """One feature's share of a usage window."""
@@ -2419,6 +2917,44 @@ input AgentAccessPreviewInput {
   toolNames: [String!]!
 }
 
+"""
+What the organization's agents did since a moment the reader names (the start of their day),
+for the head of Activity. Counts a reader may not see are null.
+"""
+type AgentActivitySummary {
+  """
+  The share of those approved exactly as proposed; null when none was decided or it may not be read.
+  """
+  approvedAsProposed: Float
+  """
+  Proposals people decided in the window; null without read access to agent proposals.
+  """
+  decided: Int
+  """The days the decisions below are counted over."""
+  decisionWindowDays: Int!
+  """
+  When the longest-waiting proposal was made; null when none waits or it may not be read.
+  """
+  oldestPendingAt: Timestamp
+  """
+  Exceptions open or in review; null without read access to agent exceptions.
+  """
+  openExceptions: Int
+  """
+  Proposals waiting on a person; null without read access to agent proposals.
+  """
+  pendingProposals: Int
+  """Runs started since then."""
+  runs: Int!
+  """Runs waiting on a person's decision, whenever they started."""
+  runsAwaiting: Int!
+  """Runs started since then that failed."""
+  runsFailed: Int!
+  """Runs working now, whenever they started."""
+  runsWorking: Int!
+  since: Timestamp!
+}
+
 """How much of an agent a role could use."""
 enum AgentAudienceCoverage {
   """The role grants everything the agent's tools need."""
@@ -2637,6 +3173,12 @@ input AgentControlInput {
   """Absent leaves the promotion threshold as it is; 1 to 1000 approvals."""
   promotionThreshold: Int
   shadowMode: Boolean!
+  """
+  The version the person loaded. When someone saved since, the update is
+  refused with who saved, when and what they changed. Absent applies the
+  update to whatever is there.
+  """
+  version: Int
 }
 
 """How sensitive a field an agent's tools may show."""
@@ -2826,10 +3368,78 @@ type AgentDefinitionEdge {
   node: AgentDefinition!
 }
 
+"""
+An agent as it stood after one save. Each save of an agent becomes a version,
+written with the save, so the history never names a save that did not happen.
+"""
+type AgentDefinitionVersion {
+  """
+  Who saved it. Absent for a save made by the system or by a removed user.
+  """
+  author: User
+  createdAt: Timestamp!
+  id: ID!
+  """What this save changed, in the builder's words, or Created."""
+  summary: String!
+  """The agent's version number after this save."""
+  version: Int!
+}
+
 input AgentDelegateTopicInput {
   agentId: ID!
   """Empty clears the topic."""
   topic: String!
+}
+
+"""
+An agent a model drafted from a description of its job, in the shape the
+builder saves. Nothing is saved. Its tools come from the registry, each change
+held at that tool's own maximum and the ceiling, and it runs in shadow.
+"""
+type AgentDraft {
+  """An accent the app offers, or empty."""
+  accent: String!
+  autonomyCeiling: AgentAutonomyTier!
+  cronExpression: String!
+  cronTimezone: String!
+  dataAccessCeiling: AgentDataAccessCeiling!
+  decisionTimeoutSeconds: Int!
+  description: String!
+  enabled: Boolean!
+  eventKinds: [String!]!
+  guardrails: [String!]!
+  """An icon the app offers, or empty."""
+  icon: String!
+  instructions: String!
+  intervalSeconds: Int!
+  maxConcurrentRuns: Int!
+  maxToolCalls: Int!
+  name: String!
+  """
+  What was changed or left out of the model's draft, so the builder can say so.
+  """
+  notes: [AgentDraftNote!]!
+  outputMode: AgentOutputMode!
+  runTimeoutSeconds: Int!
+  shadowMode: Boolean!
+  toolNames: [String!]!
+  """
+  Autonomy per change tool, keyed by tool name; each held at the tool's maximum and autonomyCeiling.
+  """
+  toolTiers: JSON!
+  triggerMode: AgentTriggerMode!
+}
+
+"""Something drafting changed or left out of what the model proposed."""
+type AgentDraftNote {
+  """
+  The setting, as the builder names it: toolNames, toolTiers.<tool>, eventKinds, cronExpression and so on.
+  """
+  field: String!
+  """Why it was changed or left out."""
+  reason: String!
+  """What the model proposed; empty when it proposed nothing."""
+  value: String!
 }
 
 """Where a tool's work can be seen or felt."""
@@ -2848,6 +3458,12 @@ enum AgentEgressClass {
   None
   """Changes only the caller's own records."""
   Personal
+}
+
+"""How many tools that change something reach one audience at most."""
+type AgentEgressCount {
+  count: Int!
+  egress: AgentEgressClass!
 }
 
 """
@@ -3167,6 +3783,48 @@ type AgentFingerprintChange {
 }
 
 """
+A sentence of an agent's instructions asking for something none of its tools
+can do, read from the tool registry: the record it names and the operation it
+asks for.
+"""
+type AgentInstructionFinding {
+  """Byte offset just past the sentence."""
+  end: Int!
+  excerpt: String!
+  """
+  What the sentence asks to do to it: read, create, update, cancel and so on.
+  """
+  operation: String!
+  """The record the sentence names, as the permission registry knows it."""
+  resource: String!
+  """The record's name for a person."""
+  resourceLabel: String!
+  """Byte offset of the sentence in the instructions."""
+  start: Int!
+  """The tools in the registry that would do it. Empty when none does."""
+  tools: [String!]!
+}
+
+"""
+Instructions as the builder holds them, with the tools the draft holds.
+"""
+input AgentInstructionLintInput {
+  disabledToolNames: [String!]
+  """At most 20000 characters."""
+  instructions: String!
+  toolNames: [String!]!
+}
+
+"""
+Instructions a model tightened: the same meaning, shorter, every {{placeholder}} kept.
+"""
+type AgentInstructionsTightened {
+  """False when the model returned the instructions as they were."""
+  changed: Boolean!
+  instructions: String!
+}
+
+"""
 Something the organization keeps for its agents between runs: a standing
 instruction, a fact an agent was told, or a correction learned from a
 decision on a proposal. Read into the prompt of every agent that asks for
@@ -3196,6 +3854,11 @@ type AgentMemory {
   replacedBy: AgentMemory
   retiredAt: Timestamp
   retiredByUserId: ID
+  reviewedAt: Timestamp
+  """
+  The person who read the tainted memory and kept it; from then on it taints no turn.
+  """
+  reviewedByUserId: ID
   roleId: ID
   """
   Organization reaches every agent; Agent reaches only agentDefinitionId; User only ownerUserId's conversations; Role only those of roleId's holders.
@@ -3220,9 +3883,15 @@ type AgentMemory {
   """The run whose outside content the memory carries."""
   taintRunId: ID
   """
-  Written by a run that had read content from outside the organization; an agent that reads it back is tainted by it.
+  Written by a run that had read content from outside the organization. Kept after a review, as where the memory came from.
   """
   tainted: Boolean!
+  """
+  Whether a turn that reads the memory is tainted by it: written after outside content and not
+  reviewed since. Every money, customer-visible and outside-recipient write of such a turn
+  waits for a person.
+  """
+  taints: Boolean!
   """
   Set when the memory is about one tool, such as a correction to how it was proposed.
   """
@@ -4005,6 +4674,10 @@ type AgentQualityOverview {
   suiteRuns: Int!
   sweepEnabled: Boolean!
   windowDays: Int!
+  """
+  The open regression that fell furthest below its agent's recent median; null when none is open.
+  """
+  worstRegression: AgentSuiteRun
 }
 
 """One scored suite run on an agent's quality line."""
@@ -4389,6 +5062,7 @@ enum AgentRunTrigger {
   Event
   Manual
   Scheduled
+  Wait
 }
 
 """What one agent can do without a person."""
@@ -4405,8 +5079,14 @@ type AgentSafety {
 The figures that head the safety section, counted over every tool and agent.
 """
 type AgentSafetySummary {
+  """
+  Tools that change something, counted by the widest audience their work reaches.
+  """
+  egressCounts: [AgentEgressCount!]!
   """Tools some of whose work leaves the organization."""
   leaveOrganization: Int!
+  """The agents counted in openWithSensitive."""
+  openSensitiveAgentIds: [ID!]!
   """
   Agents open to everyone that hold a tool reaching restricted data or leaving the organization.
   """
@@ -4421,6 +5101,8 @@ type AgentSafetySummary {
   runWithoutPerson: Int!
   """Every tool an agent can be given."""
   toolCount: Int!
+  """The titles of the tools counted in runWithoutPerson, alphabetically."""
+  unattendedTools: [String!]!
 }
 
 """
@@ -4461,6 +5143,10 @@ type AgentScorecard {
   """The start of the window."""
   since: Timestamp!
   toolTrust: [AgentToolTrust!]!
+  """
+  How each tool's calls ended, by tool and verdict, with the commonest reasons.
+  """
+  toolVerdicts: [AgentToolVerdict!]!
   trend: [AgentScorecardPoint!]!
   window: AgentScorecardWindow!
 }
@@ -4493,6 +5179,32 @@ enum AgentSeverity {
 }
 
 """
+How an agent in shadow compares with the people doing the same work. Each
+write it recorded instead of offering is set beside what a person did to the
+same record in the three days after.
+"""
+type AgentShadowReport {
+  """The period read, in days."""
+  days: Int!
+  """
+  Of the writes people answered, the share that matched what they did, 0 to 1. Absent until people answer one.
+  """
+  matchRate: Float
+  """
+  Writes a person then made too: the same record, and the fields the write named.
+  """
+  matched: Int!
+  """Every write the agent recorded in the period."""
+  recorded: Int!
+  """Writes whose record nobody touched afterwards."""
+  unanswered: Int!
+  """Writes that failed when they were simulated."""
+  wouldFail: Int!
+  """Writes whose record a person changed some other way."""
+  wouldReject: Int!
+}
+
+"""
 An opening question that shows what an agent is for. Each one is answerable
 with the tools the agent holds.
 """
@@ -4519,6 +5231,8 @@ enum AgentSubjectType {
   FormulaTemplate
   InboundMessage
   Insight
+  Invoice
+  InvoiceDispute
   Organization
   Report
   Shipment
@@ -4697,6 +5411,13 @@ enum AgentTemplate {
   WorkforceCoordinator
 }
 
+"""A prompt kept with an agent for trying it again after an edit."""
+type AgentTestPrompt {
+  createdAt: Timestamp!
+  id: ID!
+  prompt: String!
+}
+
 """What one tool does on one agent for a representative call."""
 type AgentToolAutonomy {
   answer: AgentAutonomyAnswer!
@@ -4727,6 +5448,12 @@ enum AgentToolEffect {
   Present
 }
 
+"""The agents that hold one tool."""
+type AgentToolHolders {
+  agentIds: [ID!]!
+  policyName: String!
+}
+
 enum AgentToolKind {
   Action
   Query
@@ -4755,6 +5482,12 @@ type AgentToolPolicy {
   """Its result can carry outside text into a later run."""
   carriesTaint: Boolean!
   conditionDescription: String
+  """
+  The most freedom the rule declared beside the tool allows; maxTier is lower when the organization holds it lower.
+  """
+  declaredMaxTier: AgentAutonomyTier!
+  """How much of its result the declared rule treats as outside text."""
+  declaredReadsExternal: AgentExternalRead!
   defaultTier: AgentAutonomyTier!
   effect: AgentToolEffect!
   egress: [AgentEgressClass!]!
@@ -4789,6 +5522,14 @@ type AgentToolPolicy {
   rationale: String!
   readsExternal: AgentExternalRead!
   reversible: Boolean!
+  """
+  The organization's own rule for the tool; null when it keeps the declared one.
+  """
+  rule: AgentToolRule
+  """
+  The version of the organization's rule an edit is made against; 0 when there is none yet.
+  """
+  ruleVersion: Int!
   """
   Whether the tool changes something and, on at least one of the
   organization's agents, can do so without a person. Read only by
@@ -4836,12 +5577,59 @@ type AgentToolPolicyEdge {
   node: AgentToolPolicy!
 }
 
+"""A tool whose clean streak has earned its agent's next tier."""
+type AgentToolPromotion {
+  agentDefinitionId: ID!
+  agentName: String!
+  from: AgentAutonomyTier!
+  streak: Int!
+  to: AgentAutonomyTier!
+  toolName: String!
+}
+
 """
 The permission a person needs of their own to use a tool through an agent.
 """
 type AgentToolRequirement {
   operation: String!
   resource: String!
+}
+
+"""An organization holding one tool lower than its declared rule."""
+type AgentToolRule {
+  """Null when it keeps the declared most freedom."""
+  maxTier: AgentAutonomyTier
+  """Null when it keeps the declared outside text setting."""
+  readsExternal: AgentExternalRead
+  reason: String!
+  updatedAt: Timestamp!
+  updatedBy: User
+}
+
+"""What one agent holding the tool does before and after a rule change."""
+type AgentToolRuleImpact {
+  after: AgentAutonomyAnswer!
+  agentId: ID!
+  agentName: String!
+  before: AgentAutonomyAnswer!
+}
+
+"""
+An organization's rule for one tool. Absent fields keep what the tool declares.
+"""
+input AgentToolRuleInput {
+  maxTier: AgentAutonomyTier
+  readsExternal: AgentExternalRead
+  """
+  Why it changed; required when the most freedom changes, and kept in the audit trail.
+  """
+  reason: String
+}
+
+type AgentToolRuleSaved {
+  """The agents whose answer moved."""
+  affected: [AgentToolRuleImpact!]!
+  tool: AgentToolPolicy!
 }
 
 """
@@ -4907,6 +5695,32 @@ type AgentToolTrust {
   """
   streak: Int!
   toolName: String!
+}
+
+"""
+How often one tool's calls ended one way over the window, counted from every
+call that reached the tool, refusals included. A call the runtime refused
+never became a proposal, so the proposal counts cannot show it.
+"""
+type AgentToolVerdict {
+  calls: Int!
+  toolName: String!
+  """
+  The reasons given most often, most frequent first. A call that ran gives none.
+  """
+  topReasons: [AgentToolVerdictReason!]!
+  """
+  ran, proposed, simulated, denied, invalid, duplicate, over_budget, failed or unknown.
+  """
+  verdict: String!
+}
+
+"""
+One reason a tool's calls were refused or failed, and how many calls gave it.
+"""
+type AgentToolVerdictReason {
+  calls: Int!
+  reason: String!
 }
 
 enum AgentTriggerMode {
@@ -5674,6 +6488,88 @@ type BulkAssignTrainingPayload {
   failedCount: Int!
   outcomes: [BulkAssignTrainingOutcome!]!
   skippedCount: Int!
+}
+
+type BulkEditFailure {
+  id: ID!
+  message: String!
+}
+
+"""A field of a table that can be changed on many rows at once."""
+type BulkEditField {
+  """record (picked from a list of records) or select (one of a fixed set)."""
+  kind: String!
+  label: String!
+  name: String!
+  options: [BulkEditOption!]!
+  """
+  For a record field, the select-option resource its values are picked from.
+  """
+  record: String
+}
+
+input BulkEditInput {
+  field: String!
+  resource: String!
+  selection: BulkEditSelectionInput!
+  value: String!
+}
+
+"""One change made to many rows at once, and how far it has got."""
+type BulkEditJob {
+  canUndo: Boolean!
+  changedCount: Int!
+  completedAt: Timestamp
+  createdAt: Timestamp!
+  failedCount: Int!
+  failureMessage: String!
+  """The first rows that could not be changed, with why."""
+  failures: [BulkEditFailure!]!
+  field: String!
+  id: ID!
+  processedCount: Int!
+  resource: String!
+  """Queued, Running, Completed, Failed, Undoing or Undone."""
+  status: String!
+  totalCount: Int!
+  undoneAt: Timestamp
+  value: String!
+}
+
+"""A value a bulk-editable field can be set to."""
+type BulkEditOption {
+  label: String!
+  value: String!
+}
+
+type BulkEditPreview {
+  """How many rows the edit would reach."""
+  count: Int!
+  """True when more rows match than one bulk edit can change."""
+  tooMany: Boolean!
+}
+
+input BulkEditSelectionInput {
+  """
+  Or every row matching the table's filters, resolved by the server when the edit runs.
+  """
+  filter: DataTableConnectionInput
+  """The rows chosen one by one."""
+  ids: [ID!]
+  """
+  The table's own list options beyond filters, such as the shipment board's quick filters.
+  """
+  options: JSON
+}
+
+input BulkReviewInboundMessagesInput {
+  note: String
+  """Actioned or Ignored."""
+  status: InboundMessageStatus!
+  """
+  Turn on a rule that does this on its own next time, for one message's kind, sender domain and source.
+  """
+  teach: TriageRuleAction
 }
 
 input BulkSettlementActionInput {
@@ -9275,6 +10171,28 @@ type DashControl {
   version: Int!
 }
 
+"""Totals of a table's filtered rows."""
+input DataTableAggregateInput {
+  fields: [String!]!
+  filter: DataTableConnectionInput
+  options: JSON
+  resource: String!
+}
+
+type DataTableAggregateValue {
+  average: Decimal
+  field: String!
+  max: Decimal
+  min: Decimal
+  sum: Decimal
+}
+
+type DataTableAggregates {
+  """Every row the filters match, on every page."""
+  count: Int!
+  values: [DataTableAggregateValue!]!
+}
+
 input DataTableConnectionInput {
   after: String
   fieldFilters: [FieldFilterInput!]
@@ -9282,6 +10200,82 @@ input DataTableConnectionInput {
   first: Int = 20
   query: String
   sort: [SortFieldInput!]
+}
+
+type DataTableFacetBucket {
+  count: Int!
+  """The field's value, or null for rows that have none."""
+  value: String
+}
+
+"""How many of a table's filtered rows hold each value of one field."""
+input DataTableFacetInput {
+  field: String!
+  filter: DataTableConnectionInput
+  limit: Int = 20
+  """
+  Options the table's own list takes beyond filters, such as the shipment board's quick filters.
+  """
+  options: JSON
+  """The table's permission resource, such as shipment."""
+  resource: String!
+}
+
+type DataTableFacets {
+  """The most common values first."""
+  buckets: [DataTableFacetBucket!]!
+  field: String!
+  """Every row the filters match, including those in values not listed."""
+  total: Int!
+}
+
+type DataTableInsightField {
+  facetable: Boolean!
+  name: String!
+  summable: Boolean!
+  """Whether the field is a date a chart can follow rows over."""
+  timeline: Boolean!
+}
+
+type DataTableSeries {
+  groups: [DataTableSeriesGroup!]!
+  """When each period starts, oldest first."""
+  periodStarts: [Timestamp!]!
+}
+
+type DataTableSeriesGroup {
+  """One value per period, oldest first."""
+  points: [Decimal!]!
+  value: String!
+}
+
+"""
+One small chart per row of another table: how many of this table's rows each one has,
+or their total, in each week or month up to now. A customer's shipments, a carrier's
+loads, a location's stops.
+"""
+input DataTableSeriesInput {
+  """The date that places each counted row in a period."""
+  dateField: String!
+  filter: DataTableConnectionInput
+  """The field naming the row each chart belongs to, such as customerId."""
+  groupField: String!
+  """The rows to chart, at most 200."""
+  groupValues: [String!]!
+  interval: DataTableSeriesInterval! = WEEK
+  """How many periods, ending with the current one."""
+  periods: Int! = 12
+  """The table counted, such as shipment."""
+  resource: String!
+  """The time zone periods start in; UTC when absent."""
+  timezone: String
+  """A field to total instead of counting rows."""
+  valueField: String
+}
+
+enum DataTableSeriesInterval {
+  MONTH
+  WEEK
 }
 
 input DecideAgentProposalsInput {
@@ -9979,6 +10973,8 @@ type DetentionScoreFactor {
 input DetentionStatsInput {
   from: Timestamp!
   limit: Int
+  """Only the stops made at this location."""
+  locationId: ID
   to: Timestamp!
 }
 
@@ -11969,6 +12965,13 @@ input EquipmentManufacturerPatchInput {
   version: Int @goField(omittable: true)
 }
 
+"""Who owns a piece of equipment."""
+enum EquipmentOwnershipType {
+  CompanyOwned
+  Leased
+  OwnerOperator
+}
+
 enum EquipmentStatus {
   AtMaintenance
   Available
@@ -12105,6 +13108,13 @@ enum EtaVerdict {
   Late
   OnTime
   Unknown
+}
+
+input ExportTableViewInput {
+  """csv, xlsx or pdf."""
+  format: String!
+  name: String!
+  view: TableExportViewInput!
 }
 
 """
@@ -12744,6 +13754,15 @@ What a bulk filing did: the documents now filing, and the ones that could not be
 type FileCaptureItemsResult {
   failures: [CaptureItemFailure!]!
   filed: [CaptureItem!]!
+}
+
+input FileInboundAttachmentInput {
+  attachmentId: ID!
+  """The document type id to file it as. Ignored when pages are given."""
+  documentTypeId: ID
+  """File page ranges as separate documents instead of the whole file."""
+  pages: [InboundAttachmentPagesInput!]
+  shipmentId: ID!
 }
 
 input FilterGroupInput {
@@ -14626,6 +15645,68 @@ input ImportSourcedCarrierInput {
   enrollMonitoring: Boolean
 }
 
+"""
+One line of a message's activity trace. Subject and detail are the names the
+line is about (a file, a shipment's PRO, a person, an address), never prose.
+"""
+type InboundActivity {
+  actor: User
+  actorKind: InboundActorKind!
+  createdAt: Timestamp!
+  detail: String!
+  fromClassification: InboundClassification
+  id: ID!
+  kind: InboundActivityKind!
+  recordId: ID
+  subject: String!
+  toClassification: InboundClassification
+  until: Timestamp
+}
+
+"""What happened to a message."""
+enum InboundActivityKind {
+  Assigned
+  ConflictReopened
+  ConflictResolved
+  Corrected
+  DueChanged
+  ExceptionLogged
+  FactFlagged
+  Filed
+  HandedOff
+  Handled
+  Ignored
+  Linked
+  LoadCreated
+  LoadDrafted
+  NovaRead
+  Reopened
+  Replied
+  ReplyDrafted
+  ReplyFailed
+  RuleApplied
+  RuleCreated
+  SenderBlocked
+  Snoozed
+  Split
+  StoppedWaiting
+  StopsDecided
+  TestReceived
+  TheyReplied
+  Unassigned
+  Unfiled
+  Unlinked
+  WaitingOnReply
+  Woken
+}
+
+"""Who did something to a message."""
+enum InboundActorKind {
+  Nova
+  Person
+  System
+}
+
 """One file that came with a message, and what became of it."""
 type InboundAttachment {
   byteSize: Int!
@@ -14636,8 +15717,24 @@ type InboundAttachment {
   """Why this file was refused or could not be read; blank when it was."""
   failureText: String!
   fileName: String!
+  """The document type it was filed as."""
+  filedAs: String
+  filedAt: Timestamp
+  filedShipment: InboundShipmentRef
+  """The shipment it was filed on, once it was."""
+  filedShipmentId: ID
   id: ID!
   kind: InboundAttachmentKind!
+  """How many pages the file has; zero when it is not paged."""
+  pageCount: Int!
+  """
+  What each page looked like to the reading, for splitting a file into documents.
+  """
+  pages: [InboundAttachmentPage!]!
+  """What the extraction read from the document, once it has."""
+  reading: InboundDocumentReading
+  """The documents a split made, one per page range."""
+  splitDocuments: [InboundSplitDocument!]!
 }
 
 """What a file that came with a message turned out to be."""
@@ -14648,6 +15745,29 @@ enum InboundAttachmentKind {
   ProofOfDelivery
   RateConfirmation
   Unknown
+}
+
+"""One page of a file, as the reading saw it."""
+type InboundAttachmentPage {
+  label: String!
+  number: Int!
+  """The document type the page looks like."""
+  suggestedType: String!
+}
+
+"""A page range of a file, filed as its own document."""
+input InboundAttachmentPagesInput {
+  """The document type id to file the range as."""
+  documentTypeId: ID!
+  fromPage: Int!
+  toPage: Int!
+}
+
+"""A message parked until the sender answers."""
+type InboundAwaitingReply {
+  since: Timestamp!
+  """When it comes back if nobody replies."""
+  until: Timestamp!
 }
 
 """What a message turned out to be, once it was read."""
@@ -14670,6 +15790,28 @@ type InboundClassificationCount {
   waiting: Int!
 }
 
+"""One field of a document, as the extraction read it."""
+type InboundDocumentField {
+  label: String!
+  tone: TriageFactTone!
+  value: String!
+}
+
+"""What Nova read from an attached document."""
+type InboundDocumentReading {
+  confidence: Float!
+  documentType: String!
+  fields: [InboundDocumentField!]!
+  pageCount: Int!
+}
+
+"""The record a message was linked to, to unlink."""
+enum InboundLinkedRecord {
+  Carrier
+  Customer
+  Shipment
+}
+
 """
 An address the system listens on.
 
@@ -14679,6 +15821,10 @@ is a row somebody can read, not an address they can post to.
 """
 type InboundMailbox {
   address: String!
+  """
+  Senders whose mail goes straight to Ignored: addresses, or domains without an @.
+  """
+  blockedSenders: [String!]!
   businessUnitId: ID!
   createdAt: Timestamp!
   """
@@ -14689,7 +15835,11 @@ type InboundMailbox {
   Whether a signing secret is set. Without one the mailbox refuses every delivery. The secret itself is never returned.
   """
   hasSigningSecret: Boolean!
+  """Whether mail is still arriving, worked out from when it last did."""
+  health: InboundSourceHealth!
   id: ID!
+  """When this address last received mail."""
+  lastReceivedAt: Timestamp
   """The bar a reading must clear before the desk acts without asking."""
   minConfidence: Float!
   name: String!
@@ -14698,6 +15848,12 @@ type InboundMailbox {
   purpose: String!
   reviewPolicy: InboundReviewPolicy!
   status: InboundMailboxStatus!
+  """
+  When the last test email arrived. Later than testSentAt means the address works.
+  """
+  testReceivedAt: Timestamp
+  """When a test email was last sent to this address."""
+  testSentAt: Timestamp
   updatedAt: Timestamp!
   version: Int!
 }
@@ -14749,21 +15905,47 @@ matched is still something a person has to look at, and a message dropped
 because it did not classify is a message its sender believes was received.
 """
 type InboundMessage {
+  """The steps it asks for."""
+  actions: [TriageAction!]!
+  """What happened to it, oldest first."""
+  activity: [InboundActivity!]!
   """How many files came with it. Read for a whole page of rows at once."""
   attachmentCount: Int!
   attachments: [InboundAttachment!]!
+  """Set while it waits on the sender to reply."""
+  awaitingReply: InboundAwaitingReply
   businessUnitId: ID!
   ccAddresses: [String!]!
   classification: InboundClassification
+  """A person corrected what kind of message it is."""
+  classificationCorrected: Boolean!
   """The reading's own confidence, between 0 and 1."""
   confidence: Float!
+  """Clashes with what is on file."""
+  conflicts: [TriageConflict!]!
   createdAt: Timestamp!
+  """
+  When the organization's response target for its kind runs out. Absent once it is settled.
+  """
+  dueAt: Timestamp
+  """What Nova read out of it."""
+  facts: [TriageFact!]!
   """Why the pipeline gave up, where it did."""
   failureCode: String!
   failureText: String!
   fromAddress: String!
   fromName: String!
+  """What Nova did when it settled it."""
+  handledAction: TriageRuleAction
+  """
+  Whether Nova settled it on its own, under a rule or the mailbox's policy.
+  """
+  handledByNova: Boolean!
+  """The rule that settled it, where one did."""
+  handledByRuleId: ID
   id: ID!
+  """The load Nova drafted, waiting for a look."""
+  loadDraft: TriageLoadDraft
   mailbox: InboundMailbox
   mailboxId: ID!
   """
@@ -14783,23 +15965,46 @@ type InboundMessage {
   matchedShipmentId: ID
   """Whether this message is waiting on a person."""
   needsReview: Boolean!
+  """Whether Nova read it. False when Nova was off when it arrived."""
+  novaRead: Boolean!
   organizationId: ID!
+  owner: User
+  """Who it is assigned to."""
+  ownerId: ID
   """
   A line or two of what the sender wrote, for a list row: whitespace folded,
   quoted replies and the lines that introduce them left out.
   """
   preview: String!
   receivedAt: Timestamp!
+  """Replies sent or drafted, oldest first."""
+  replies: [InboundReply!]!
+  """The reply still being written, where there is one."""
+  replyDraft: InboundReply
+  """The response target that set dueAt, in minutes."""
+  responseTargetMinutes: Int!
   reviewNote: String!
   reviewedAt: Timestamp
   reviewedBy: ID
+  """Who settled it."""
+  reviewer: User
   """The agent run that read it, where one did."""
   runId: ID
+  """The domain it came from."""
+  senderDomain: String!
+  """Set while it is snoozed."""
+  snooze: InboundSnooze
   spamScore: Float!
   status: InboundMessageStatus!
   subject: String!
   """The bounded plain text. The whole message is in object storage."""
   textBody: String!
+  """How many messages share its thread."""
+  threadCount: Int!
+  """
+  The conversation it belongs to, from its Message-ID, In-Reply-To and References.
+  """
+  threadKey: String!
   toAddresses: [String!]!
   updatedAt: Timestamp!
   version: Int!
@@ -14813,15 +16018,24 @@ type InboundMessageConnection {
 
 """The inbox in numbers, for the lane counts."""
 type InboundMessageCounts {
+  """Waiting, and assigned to whoever asked."""
+  assignedToMe: Int!
   """Every kind, in a stable order, including the ones with no mail."""
   byClassification: [InboundClassificationCount!]!
   """Every mailbox that has mail."""
   byMailbox: [InboundMailboxCount!]!
   handled: Int!
   ignored: Int!
+  """Waiting and past its response target."""
+  overdue: Int!
+  """Still being read."""
+  processing: Int!
   quarantined: Int!
+  snoozed: Int!
   total: Int!
+  """Waiting on a person and not parked."""
   waiting: Int!
+  waitingOnThem: Int!
 }
 
 type InboundMessageEdge {
@@ -14843,15 +16057,24 @@ enum InboundMessageStatus {
 input InboundMessagesInput {
   after: String
   classification: InboundClassification
+  """Show one row per thread: the newest message of it in the folder."""
+  collapseThreads: Boolean = false
   first: Int = 25
+  """The folder. Absent keeps the older status filter."""
+  lane: TriageLane
   mailboxId: ID
+  """Only messages assigned to this person."""
+  ownerId: ID
   """Words from the sender's name or address, or from the subject."""
   query: String
   shipmentId: ID
   """Only what arrived at or after this instant."""
   since: Timestamp
+  sort: TriageSort = Newest
   """Only these statuses; empty is every status."""
   statuses: [InboundMessageStatus!]
+  """Only one thread, newest first."""
+  threadKey: String
 }
 
 """Which provider posts this address's mail."""
@@ -14860,11 +16083,111 @@ enum InboundProvider {
   Resend
 }
 
+"""
+A reply from a monitored address, stored with what the provider said about it.
+"""
+type InboundReply {
+  """The files it carries, as they were named when it was written."""
+  attachments: [InboundReplyAttachment!]!
+  body: String!
+  ccAddresses: [String!]!
+  createdAt: Timestamp!
+  draftedByNova: Boolean!
+  """Why the provider refused it."""
+  failureText: String!
+  fromAddress: String!
+  id: ID!
+  messageId: ID!
+  sentAt: Timestamp
+  sentBy: User
+  status: InboundReplyStatus!
+  subject: String!
+  """Another address at the sender that is likely to accept it."""
+  suggestedAddress: String
+  templateId: ID
+  toAddress: String!
+  updatedAt: Timestamp!
+}
+
+"""A stored document a reply to the message can carry."""
+type InboundReplyAttachable {
+  byteSize: Int!
+  contentType: String!
+  createdAt: Timestamp!
+  """The document type's name; blank when it has none."""
+  documentType: String!
+  fileName: String!
+  """The document's id."""
+  id: ID!
+  source: InboundReplyAttachableSource!
+}
+
+"""Where a file a reply can carry is stored."""
+enum InboundReplyAttachableSource {
+  Carrier
+  Customer
+  """Came with the message, or was uploaded to it."""
+  Message
+  Shipment
+}
+
+"""
+A stored document a reply carries, kept as it was when the reply was written.
+"""
+type InboundReplyAttachment {
+  byteSize: Int!
+  contentType: String!
+  documentId: ID!
+  fileName: String!
+}
+
+"""Where a reply is."""
+enum InboundReplyStatus {
+  Draft
+  """The provider refused it; failureText says why."""
+  Failed
+  Sending
+  Sent
+}
+
 """How much an address is trusted to act without a person."""
 enum InboundReviewPolicy {
   AlwaysReview
   AutoHandle
   ReviewBelowConfidence
+}
+
+"""One kind of mail a sender sends, and how often."""
+type InboundSenderKindCount {
+  classification: InboundClassification!
+  count: Int!
+}
+
+"""
+What is known about a sender, from their mail and the records it matched.
+"""
+type InboundSenderProfile {
+  address: String!
+  domain: String!
+  kinds: [InboundSenderKindCount!]!
+  messagesLast90Days: Int!
+  name: String!
+  recent: [TriageSample!]!
+  role: InboundSenderRole!
+  rules: [TriageRule!]!
+  """When the customer or carrier they belong to was added."""
+  since: Timestamp
+  """How long it usually takes to settle their mail, in minutes."""
+  usualReplyMinutes: Int
+}
+
+"""Who a sender is to the organization."""
+enum InboundSenderRole {
+  Broker
+  Carrier
+  Customer
+  Driver
+  Unknown
 }
 
 """
@@ -14880,6 +16203,49 @@ type InboundShipmentRef {
   originState: String!
   poNumber: String!
   proNumber: String!
+}
+
+"""Why a message is out of the queue for now."""
+type InboundSnooze {
+  """The document type DocumentAttached waits for."""
+  documentTypeId: ID
+  documentTypeName: String
+  """Set for a snooze until something happens."""
+  event: InboundSnoozeEvent
+  snoozedAt: Timestamp!
+  snoozedBy: User
+  """Set for a snooze until a time."""
+  until: Timestamp
+  """The shipment the event is watched on."""
+  watchShipment: InboundShipmentRef
+}
+
+"""Something that wakes a snoozed message."""
+enum InboundSnoozeEvent {
+  """A document of a given type is attached to the shipment."""
+  DocumentAttached
+  """The shipment's invoice is paid."""
+  InvoicePaid
+  ShipmentDelivered
+}
+
+"""Whether a source is still delivering."""
+enum InboundSourceHealth {
+  Healthy
+  """Connected but has never received anything."""
+  NeverReceived
+  """Turned off."""
+  Paused
+  """Nothing has arrived for longer than a working source goes quiet."""
+  Quiet
+}
+
+"""One document a split made from a range of pages."""
+type InboundSplitDocument {
+  documentId: ID!
+  documentType: String!
+  fromPage: Int!
+  toPage: Int!
 }
 
 enum InjuryCaseStatus {
@@ -16151,7 +17517,18 @@ enum LocationGeofenceType {
 
 type LocationReference {
   id: ID!
+  """Where the location is, when it has been geocoded."""
+  latitude: Float
+  longitude: Float
   name: String!
+}
+
+input LogInboundExceptionInput {
+  kind: TriageExceptionKind!
+  note: String
+  quantity: Int!
+  """What was short, over or damaged: pallets, cases, pieces."""
+  unit: String!
 }
 
 type ManualJournal {
@@ -16289,6 +17666,8 @@ type Mutation {
   """
   amendIftaReturn(id: ID!, reason: String!): IFTAReturn!
   amendWorkerEmploymentEvent(input: AmendWorkerEmploymentEventInput!): WorkerEmploymentEvent!
+  """Makes the change a tune-up suggests."""
+  applyAITuneUp(id: ID!, version: Int!): AITuneUp!
   """
   Posts a payment recorded in the accounting system in Trenova: the customer payment and credits, or the settlement payment.
   """
@@ -16298,7 +17677,7 @@ type Mutation {
   applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
   """
-  Makes a suggested memory Active, with the text as the administrator edited it.
+  Makes a suggested memory Active, with the text as the administrator edited it. A tainted suggestion approved is reviewed.
   """
   approveAgentMemorySuggestion(id: ID!, input: ApproveAgentMemorySuggestionInput!): AgentMemory!
   """
@@ -16329,6 +17708,8 @@ type Mutation {
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
   assignDocumentTemplate(input: AssignDocumentTemplateInput!): DocumentTemplateAssignment!
   assignFuelCard(input: AssignFuelCardInput!): FuelCard!
+  """Assigns messages to a person, or unassigns them when ownerId is null."""
+  assignInboundMessages(ownerId: ID, selection: TriageSelectionInput!): TriageBulkResult!
   assignPayProfileToWorker(input: AssignPayProfileInput!): WorkerPayAssignment!
   """
   Opens every required course the worker is missing, has failed or has let
@@ -16364,6 +17745,10 @@ type Mutation {
   to size the job first.
   """
   backfillJurisdictionMiles(input: BackfillJurisdictionMilesInput!): JurisdictionMilesBackfillResult!
+  """
+  Sends the sender's future mail on this source straight to Ignored, and ignores this message.
+  """
+  blockInboundSender(messageId: ID!): InboundMessage!
   bulkAssignTraining(input: BulkAssignTrainingInput!): BulkAssignTrainingPayload!
   """
   Run one lifecycle action across many settlements; per-settlement failures don't abort the rest.
@@ -16458,6 +17843,10 @@ type Mutation {
   """Accepts a memory an agent offered in the person's conversation."""
   confirmDeskMemory(id: ID!, input: ConfirmDeskMemoryInput!): DeskMemory!
   """
+  Says what kind of message it really is. Nova reads mail from the sender that way from now on.
+  """
+  correctInboundClassification(classification: InboundClassification!, id: ID!): InboundMessage!
+  """
   Creates an item, customer or vendor in the accounting system for the mapping and confirms it.
   """
   createAccountingReferenceRecord(input: CreateAccountingReferenceRecordInput!): AccountingMapping!
@@ -16487,6 +17876,8 @@ type Mutation {
   createFuelSurchargeProgram(input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
   createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
   createIftaMileageEntry(input: IFTAMileageEntryInput!): IFTAJurisdictionMileageEntry!
+  """Creates the load from the checked draft, as a new shipment."""
+  createInboundLoad(fields: [TriageLoadFieldInput!]!, messageId: ID!): InboundMessage!
   """Creates a mailbox and returns its webhook token, once."""
   createInboundMailbox(apiKey: String, input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
   createInvoiceFromOrder(offCycleReason: String, orderId: ID!): Invoice! @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromOrder.")
@@ -16510,6 +17901,7 @@ type Mutation {
   DriverUpdate comment with Driver visibility so dispatch sees it on the shipment.
   """
   createMyLoadComment(input: CreateMyLoadCommentInput!): PortalComment!
+  createMyTriageView(name: String!, query: String!): TriageView!
   createOrder(input: OrderInput!): Order!
   createOrgHoliday(input: OrgHolidayInput!): OrgHoliday!
   createPayCode(input: CreatePayCodeInput!): PayCode!
@@ -16534,6 +17926,8 @@ type Mutation {
   createTractor(input: TractorInput!): Tractor!
   createTrailer(input: TrailerInput!): Trailer!
   createTrainingCourse(input: TrainingCourseInput!): TrainingCourse!
+  createTriageReplyTemplate(input: TriageReplyTemplateInput!): TriageReplyTemplate!
+  createTriageRule(input: TriageRuleInput!): TriageRule!
   createWorkerChecklistTemplate(input: WorkerChecklistTemplateInput!): WorkerChecklistTemplate!
   createWorkerCredential(input: WorkerCredentialInput!): WorkerCredential!
   createWorkerCredentialType(input: WorkerCredentialTypeInput!): WorkerCredentialType!
@@ -16549,6 +17943,10 @@ type Mutation {
   outcome is reported.
   """
   decideAgentProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
+  """
+  Records what to do about a detention dispute after checking the stop times, and drafts the reply.
+  """
+  decideInboundStops(decision: TriageStopsDecision!, messageId: ID!): InboundMessage!
   decideLeaveCase(input: DecideLeaveCaseInput!): WorkerLeaveCase!
   """
   Decides a plan raised in one of the caller's own conversations, by an agent
@@ -16574,6 +17972,8 @@ type Mutation {
   decideProfileChange(input: DecideProfileChangeInput!): WorkerProfileChangeRequest!
   decideShipmentSuggestion(input: DecideShipmentSuggestionInput!): Boolean!
   delegateApproval(input: DelegateApprovalInput!): ApprovalDelegation!
+  """Removes a kept prompt."""
+  deleteAgentTestPrompt(agentId: ID!, id: ID!): Boolean!
   deleteCaptureProfile(id: ID!): Boolean!
   deleteCarrierCapacityPosting(id: ID!, version: Int!): Boolean!
   deleteDetentionPolicy(id: ID!): Boolean!
@@ -16594,6 +17994,7 @@ type Mutation {
   deleteIftaReturn(id: ID!, version: Int!): Boolean!
   deleteIftaTaxRate(id: ID!, version: Int!): Boolean!
   deleteLeaveDay(id: ID!): Boolean!
+  deleteMyTriageView(id: ID!): Boolean!
   deleteOrgHoliday(id: ID!): Boolean!
   deletePerformanceReview(id: ID!): Boolean!
   deleteReportDashboard(id: ID!): Boolean!
@@ -16605,6 +18006,8 @@ type Mutation {
   deleteTableConfiguration(id: ID!): Boolean!
   deleteTelematicsFormMapping(id: ID!): Boolean!
   deleteTimeEntry(input: DeleteTimeEntryInput!): Boolean!
+  deleteTriageReplyTemplate(id: ID!): Boolean!
+  deleteTriageRule(id: ID!): Boolean!
   deleteWorkerInjury(id: ID!): Boolean!
   deleteWorkerRecognition(id: ID!): Boolean!
   deleteWorkerSafetyEvent(id: ID!): Boolean!
@@ -16623,8 +18026,18 @@ type Mutation {
   """
   discardCaptureItem(id: ID!, version: Int!): CaptureBatch!
   discardFuelPurchaseImport(id: ID!, reason: String, version: Int!): FuelPurchaseImportBatch!
+  discardInboundLoad(messageId: ID!): InboundMessage!
+  discardInboundReplyDraft(messageId: ID!): InboundMessage!
   """Disconnects the accounting system and revokes Trenova's access to it."""
   disconnectAccountingSystem(integrationType: AccountingSystem!): AccountingConnection!
+  """
+  Puts away, for the caller, the notice that a provider is failing, up to the failure they saw.
+  """
+  dismissAIProviderFailure(lastFailureAt: Timestamp!, providerId: ID!): Boolean!
+  """
+  Puts a tune-up away for some days, 30 unless given; the same change is not suggested again until then.
+  """
+  dismissAITuneUp(days: Int, id: ID!, version: Int!): AITuneUp!
   """Keeps both sides as they are, with a reason."""
   dismissAccountingDrift(input: DismissAccountingDriftInput!): AccountingDriftFinding!
   """
@@ -16643,6 +18056,19 @@ type Mutation {
   dispatchPlanAutoAssign(input: DispatchPlanInput!): DispatchPlan!
   dispatchUnassignMoves(moveIds: [ID!]!): DispatchBulkAssignResult!
   disputeDetentionOccurrence(input: DetentionDisputeInput!): DetentionOccurrence!
+  """
+  Drafts an agent from a sentence or two (at most 1000 characters) describing
+  its job. Saves nothing. Needs permission to create agents.
+  """
+  draftAgentFromDescription(description: String!): AgentDraft!
+  """Has Nova draft the load a message describes."""
+  draftInboundLoad(messageId: ID!): InboundMessage!
+  """
+  Has Nova draft replies or loads for many messages; they arrive as each is ready.
+  """
+  draftInboundMany(messageIds: [ID!]!): Int!
+  """Has Nova draft a reply. It is stored as the message's draft."""
+  draftInboundReply(messageId: ID!): InboundReply!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   """
   Changes how a stack's open pages divide into documents: split, merge, reorder, drop, rotate.
@@ -16655,6 +18081,10 @@ type Mutation {
   endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment!
   endWorkerShiftAssignment(effectiveTo: Timestamp!, id: ID!): WorkerShiftAssignment!
   enrollBenefit(input: EnrollBenefitInput!): WorkerBenefitEnrollment!
+  """
+  Saves a table's view as a report and runs it in the background, with no row limit beyond the report's own.
+  """
+  exportTableView(input: ExportTableViewInput!): TableExportResult!
   """Files one proposed document onto a record, as the caller."""
   fileCaptureItem(id: ID!, input: FileCaptureItemInput!): CaptureItem!
   """
@@ -16662,6 +18092,12 @@ type Mutation {
   One that cannot be filed does not stop the rest; it comes back with its reason.
   """
   fileCaptureItems(items: [FileCaptureItemsEntryInput!]!): FileCaptureItemsResult!
+  """Files an attachment on a shipment, whole or split into page ranges."""
+  fileInboundAttachment(input: FileInboundAttachmentInput!): InboundMessage!
+  """
+  Files every readable attachment of each message on its matched shipment.
+  """
+  fileInboundMany(messageIds: [ID!]!): TriageBulkResult!
   finalizeDotRandomDraw(id: ID!): DOTRandomDraw!
   """
   Recomputes, then locks the Draft. Refused while any member line is missing a rate.
@@ -16671,6 +18107,8 @@ type Mutation {
   Finishes connecting with what the provider returned, or offers the companies to choose between when the sign-in authorized several. Only the person who started it can finish it.
   """
   finishAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): CompleteAccountingAuthorizationPayload!
+  """Says a fact Nova read is wrong."""
+  flagInboundFact(id: ID!, key: String!): InboundMessage!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
   generateCarrierSettlementBatch(input: GenerateCarrierSettlementBatchInput!): CarrierSettlementBatch!
   generateDriverSettlement(input: GenerateDriverSettlementInput!): DriverSettlement
@@ -16683,6 +18121,8 @@ type Mutation {
   generateSettlementBatch(input: GenerateSettlementBatchInput!): SettlementBatch!
   giveWorkerRecognition(input: WorkerRecognitionInput!): WorkerRecognition!
   grantCarrierIntelOverride(input: GrantCarrierIntelOverrideInput!): CarrierIntelOverride!
+  """Assigns everything still waiting to the on-call person."""
+  handOffTriage(toUserId: ID!): TriageHandOff!
   """Hands an item to an agent, or to whoever subscribes to its event."""
   handOffWatchtowerItem(id: ID!, input: HandOffWatchtowerItemInput!): WatchtowerHandOffResult!
   """
@@ -16698,6 +18138,10 @@ type Mutation {
   inviteWorkerToPortal(input: InviteWorkerToPortalInput!): InviteWorkerToPortalResult!
   issueDisciplinaryAction(input: IssueDisciplinaryActionInput!): IssueDisciplinaryActionPayload!
   issuePayAdvance(input: IssuePayAdvanceInput!): PayAdvance!
+  """
+  Keeps a prompt with an agent. At most 2000 characters, and 20 prompts an agent.
+  """
+  keepAgentTestPrompt(agentId: ID!, prompt: String!): AgentTestPrompt!
   """Links an inbound EDI carrier invoice to a carrier in the master."""
   linkEdiCarrierInvoiceToCarrier(carrierId: ID!, invoiceId: ID!): EdiCarrierInvoice!
   """
@@ -16706,6 +18150,8 @@ type Mutation {
   linkInboundMessage(id: ID!, input: LinkInboundMessageInput!): InboundMessage!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
+  """Adds a shortage, overage or damage exception to the matched shipment."""
+  logInboundException(input: LogInboundExceptionInput!, messageId: ID!): InboundMessage!
   """
   Marks all of the signed-in driver's personally targeted notifications as read.
   """
@@ -16739,6 +18185,7 @@ type Mutation {
   openInvoiceDispute(input: OpenInvoiceDisputeInput!): InvoiceDispute!
   openLeaveCase(input: OpenLeaveCaseInput!): WorkerLeaveCase!
   overrideCarrierEquipmentVerification(id: ID!, reason: String!): CarrierEquipmentVerification!
+  patchAIProvider(id: ID!, input: AIProviderPatchInput!, version: Int!): AIProvider!
   patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
   patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
   patchTableConfiguration(id: ID!, input: TableConfigurationPatchInput!): TableConfiguration!
@@ -16778,6 +18225,10 @@ type Mutation {
   proposeMyShiftSwap(input: ProposeMyShiftSwapInput!): ShiftSwapRequest!
   proposeShiftSwap(input: ProposeShiftSwapInput!): ShiftSwapRequest!
   publishDocumentTemplateVersion(id: ID!, notes: String): DocumentTemplateVersion!
+  """
+  Starts Nova reading every message it never read, after it was turned on.
+  """
+  readUnreadInboundMessages: Int!
   recalculateCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   recalculateDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   """
@@ -16844,13 +18295,22 @@ type Mutation {
   removeCarrierSettlementAdjustment(input: RemoveCarrierSettlementAdjustmentInput!): CarrierSettlement!
   removeDriverSettlementAdjustment(input: RemoveSettlementAdjustmentInput!): DriverSettlement!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
+  renameMyTriageView(id: ID!, name: String!): TriageView!
   """
   Returns a Finalized return to Draft. The reason, at least ten characters, is audited.
   """
   reopenIftaReturn(id: ID!, reason: String!, version: Int!): IFTAReturn!
+  """Undoes a conflict's resolution."""
+  reopenInboundConflict(conflictId: String!, id: ID!): InboundMessage!
+  """Puts settled messages back in the queue."""
+  reopenInboundMessages(selection: TriageSelectionInput!): TriageBulkResult!
   reopenPerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
   reopenWorkerChecklistItem(id: ID!, version: Int): WorkerChecklist!
   reopenWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
+  """
+  Sets the routing order: the first ID takes work first. Every provider must be listed once.
+  """
+  reorderAIProviders(ids: [ID!]!): [AIProvider!]!
   """
   Replays a case against its agent as it is now, writes simulated, and scores it.
   """
@@ -16870,6 +18330,10 @@ type Mutation {
   resetCannedFork(id: ID!): ReportDefinition!
   resetHomeLayout: HomeLayout!
   """
+  Forgets the caller's arrangement of a table, so it opens as its default view.
+  """
+  resetMyTableLayout(resource: String!): Boolean!
+  """
   Fixes a difference with the accounting system: sends Trenova's document again, or changes Trenova to match.
   """
   resolveAccountingDrift(input: ResolveAccountingDriftInput!): AccountingDriftFinding!
@@ -16885,6 +18349,7 @@ type Mutation {
   left alone.
   """
   resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult!
+  resolveInboundConflict(conflictId: String!, id: ID!, resolution: TriageConflictResolution!): InboundMessage!
   resolveInvoiceDispute(input: ResolveInvoiceDisputeInput!): InvoiceDispute!
   """
   Resolves or denies a dispute, optionally applying a correcting adjustment (back office).
@@ -16898,6 +18363,10 @@ type Mutation {
   respondToMyAssignment(input: RespondToMyAssignmentInput!): Boolean!
   """The signed-in driver answering a swap, or withdrawing one they made."""
   respondToMyShiftSwap(input: RespondToMyShiftSwapInput!): ShiftSwapRequest!
+  """Brings a put-away failure notice back."""
+  restoreAIProviderFailure(providerId: ID!): Boolean!
+  """Brings a put-away tune-up back."""
+  restoreAITuneUp(id: ID!, version: Int!): AITuneUp!
   restoreMyNotifications(ids: [ID!]!): Boolean!
   restoreNotifications(ids: [ID!]!): Boolean!
   restorePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
@@ -16915,12 +18384,20 @@ type Mutation {
   retryBillingTransferRun(id: ID!): BillingTransferRun!
   reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
   """
+  Clears a tainted memory's taint once a person has read it and keeps it: it is followed as the
+  organization's own and no longer taints the turns that read it. Refused for a memory that does
+  not taint, and for one changed since the version given.
+  """
+  reviewAgentMemory(id: ID!, version: Int!): AgentMemory!
+  """
   Approves or rejects a driver expense (back office). Approval applies the
   reimbursement to the driver's open settlement immediately.
   """
   reviewDriverExpense(input: ReviewDriverExpenseInput!): DriverExpense!
   """Records a person's decision about a message and takes it off the feed."""
   reviewInboundMessage(id: ID!, input: ReviewInboundMessageInput!): InboundMessage!
+  """Settles several messages, or a whole folder, at once."""
+  reviewInboundMessages(input: BulkReviewInboundMessagesInput!, selection: TriageSelectionInput!): TriageBulkResult!
   reviewWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   reviseDeskMemory(id: ID!, input: ReviseDeskMemoryInput!): DeskMemory!
   revokeApprovalDelegation(id: ID!): ApprovalDelegation!
@@ -16950,9 +18427,29 @@ type Mutation {
   Saves the organization's own app keys after checking them with the accounting system. While a company is connected, only its app's secret and verifier token can change.
   """
   saveAccountingApp(input: SaveAccountingAppInput!): AccountingSyncStatus!
+  """
+  Holds a tool lower than its declared rule for this organization, or returns it to the declared rule.
+  """
+  saveAgentToolRule(input: AgentToolRuleInput!, name: String!, version: Int!): AgentToolRuleSaved!
+  """
+  Saves what a person wrote as the message's draft. documentIds replaces the draft's files; leaving it out keeps them.
+  """
+  saveInboundReplyDraft(body: String!, documentIds: [ID!], messageId: ID!, subject: String!): InboundReply!
+  """Keeps the caller's arrangement of a table, replacing the one before."""
+  saveMyTableLayout(input: TableLayoutInput!): TableLayout!
   saveOshaSummary(input: SaveOSHASummaryInput!): OSHAAnnualSummary!
   saveTelematicsFormMapping(input: SaveTelematicsFormMappingInput!): TelematicsFormMapping!
+  """Saves a table's view as a report and sends it on a schedule."""
+  scheduleTableView(input: ScheduleTableViewInput!): TableExportResult!
   sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
+  """
+  Sends a test email to a mailbox's address from the organization's outbound email.
+  """
+  sendInboundMailboxTest(id: ID!): InboundMailbox!
+  """
+  Sends a reply from the mailbox's address. A refusal comes back as a Failed reply, not an error.
+  """
+  sendInboundReply(input: SendInboundReplyInput!): InboundReply!
   """
   Queues the outbound EDI 210 for a posted invoice. force resends one that
   already went out.
@@ -16996,10 +18493,13 @@ type Mutation {
   setOrgDefaultTableConfiguration(enabled: Boolean!, id: ID!): TableConfiguration!
   """Replaces the agents a role is granted."""
   setRoleAgentAccess(agentIds: [ID!]!, roleId: ID!): Role!
+  setTriageRuleEnabled(enabled: Boolean!, id: ID!): TriageRule!
   setWorkerAvailabilityPreference(input: SetAvailabilityPreferenceInput!): WorkerAvailabilityPreference!
   """Marks a record as not to be sent."""
   skipAccountingSync(input: SkipAccountingSyncInput!): AccountingSyncRecord!
   skipWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
+  """Takes messages out of the queue until a time or an event."""
+  snoozeInboundMessages(input: SnoozeInboundMessagesInput!, selection: TriageSelectionInput!): TriageBulkResult!
   """
   Reads the uploaded statement and resolves every row without committing
   anything. Can be run again on the same batch with a different document or
@@ -17012,6 +18512,10 @@ type Mutation {
   startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
   startBillingTransferRun(input: StartBillingTransferRunInput!): BillingTransferRun!
   """
+  Starts changing one field on every chosen row; it runs in the background.
+  """
+  startBulkEdit(input: BulkEditInput!): BulkEditJob!
+  """
   Runs one provider's model over the active cases, within the evaluation budget.
   """
   startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
@@ -17022,6 +18526,8 @@ type Mutation {
   """Moves an open dispute into review (back office)."""
   startSettlementDisputeReview(id: ID!): SettlementDispute!
   startWorkerChecklist(input: StartWorkerChecklistInput!): WorkerChecklist!
+  """Brings a message waiting on a reply back now."""
+  stopWaitingForInboundReply(id: ID!): InboundMessage!
   submitCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   submitDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   submitMyExpense(input: SubmitMyExpenseInput!): DriverExpense!
@@ -17033,6 +18539,13 @@ type Mutation {
   """
   syncFuelCardFeed(provider: FuelCardProvider!): FuelCardSyncResult!
   tenderShipments(input: TenderShipmentsInput!): TenderShipmentsResult!
+  """Probes an unsaved endpoint once and records nothing."""
+  testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderDraftTestResult!
+  """
+  Tightens an agent's instructions (at most 20000 characters) without changing
+  what they ask for. Saves nothing. Needs permission to create or update agents.
+  """
+  tightenAgentInstructions(instructions: String!): AgentInstructionsTightened!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem! @deprecated(reason: "Returns only the primary payer's item; use transferShipmentToBillingItems.")
   """Queues the shipment for billing, one item per payer."""
@@ -17042,12 +18555,17 @@ type Mutation {
   """Takes one credit memo application back."""
   unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication!
   unassignDocumentTemplate(input: UnassignDocumentTemplateInput!): Boolean!
+  unblockInboundSender(mailboxId: ID!, sender: String!): InboundMailbox!
   uncancelShipment(id: ID!): Shipment!
   uncertifyOshaSummary(year: Int!): OSHAAnnualSummary!
   """
   Takes back how a check was settled, and puts back any charge it changed.
   """
   undoBillingQueueIssue(id: ID!, issueId: ID!): BillingQueueItem!
+  """
+  Puts back every row the caller's bulk edit changed, within a day of it finishing.
+  """
+  undoMyBulkEdit(id: ID!): BulkEditJob!
   """
   Takes back the caller's approval of a proposal (with every proposal
   approved with it in one batch) or of a plan, while it is in its undo window;
@@ -17056,6 +18574,9 @@ type Mutation {
   """
   undoMyDecision(planId: ID, proposalId: ID): Boolean!
   undoShipmentSuggestionDecision(key: String!): Boolean!
+  unfileInboundAttachment(attachmentId: ID!): InboundMessage!
+  """Removes a link a person or the reading made."""
+  unlinkInboundMessage(id: ID!, record: InboundLinkedRecord!): InboundMessage!
   unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!
@@ -17145,6 +18666,11 @@ type Mutation {
   updateTractor(id: ID!, input: TractorInput!): Tractor!
   updateTrailer(id: ID!, input: TrailerInput!): Trailer!
   updateTrainingCourse(id: ID!, input: TrainingCourseInput!): TrainingCourse!
+  updateTriageReplyTemplate(id: ID!, input: TriageReplyTemplateInput!, version: Int!): TriageReplyTemplate!
+  """Sets response targets; a null minutes goes back to the default."""
+  updateTriageResponseTargets(input: [TriageResponseTargetInput!]!): [TriageResponseTarget!]!
+  updateTriageRule(id: ID!, input: TriageRuleInput!, version: Int!): TriageRule!
+  updateTriageSettings(input: TriageSettingsInput!): TriageSettings!
   updateWorkerChecklistTemplate(id: ID!, input: WorkerChecklistTemplateInput!): WorkerChecklistTemplate!
   updateWorkerCredential(input: UpdateWorkerCredentialInput!): WorkerCredential!
   updateWorkerCredentialType(id: ID!, input: WorkerCredentialTypeInput!): WorkerCredentialType!
@@ -17172,8 +18698,14 @@ type Mutation {
   """
   voidInvoice(input: VoidInvoiceInput!): VoidInvoiceResult!
   voidPayrollExport(input: VoidPayrollExportInput!): PayrollExport!
+  """
+  Parks a message until the sender replies on its thread, or until a time.
+  """
+  waitForInboundReply(id: ID!, until: Timestamp!): InboundMessage!
   waiveDetentionOccurrence(input: DetentionWaiveInput!): DetentionOccurrence!
   waiveWorkerTraining(input: WaiveWorkerTrainingInput!): WorkerTrainingRecord!
+  """Brings a snoozed message back now."""
+  wakeInboundMessage(id: ID!): InboundMessage!
   withdrawInvoiceDispute(input: WithdrawInvoiceDisputeInput!): InvoiceDispute!
   """The signed-in driver taking back a change they asked for."""
   withdrawMyProfileChange(id: ID!): WorkerProfileChangeRequest!
@@ -18971,11 +20503,26 @@ type Query {
   and changes nothing.
   """
   agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
+  """What agents did since the moment given, at most 31 days ago."""
+  agentActivitySummary(since: Timestamp!): AgentActivitySummary!
   """What an agent can do. Anyone who may use the agent may read it."""
   agentCapabilities(agentId: ID!): AgentCapabilities!
   agentControl: AgentControl!
   agentDefinition(id: ID!): AgentDefinition
+  """
+  An earlier version of an agent as a draft of the agent as it is now: that
+  version's settings on the current version number, so saving the draft
+  replaces the agent the way any edit does. Saves nothing.
+  """
+  agentDefinitionVersionDraft(agentId: ID!, version: Int!): AgentDefinition!
+  """An agent's saves, newest first. At most 50."""
+  agentDefinitionVersions(agentId: ID!, limit: Int): [AgentDefinitionVersion!]!
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
+  """
+  Whether drafting an agent and tightening its instructions with AI are
+  offered: an enabled provider takes the AssistantChat task.
+  """
+  agentDraftingAvailable: Boolean!
   agentEvalCase(id: ID!): AgentEvalCase
   agentEvalCases(input: DataTableConnectionInput!): AgentEvalCaseConnection!
   agentEvaluation(id: ID!): AgentEvaluation
@@ -18986,6 +20533,10 @@ type Query {
   How people rated one agent over the last window days (30 by default, at most 365).
   """
   agentFeedbackSummary(agentDefinitionId: ID!, window: Int = 30): AgentFeedbackSummary!
+  """
+  What a draft's instructions ask for that none of its tools can do. Saves nothing.
+  """
+  agentInstructionLint(input: AgentInstructionLintInput!): [AgentInstructionFinding!]!
   agentMemories(input: DataTableConnectionInput!): AgentMemoryConnection!
   agentMemory(id: ID!): AgentMemory
   """How many active memories the organization keeps, against its soft cap."""
@@ -18994,6 +20545,13 @@ type Query {
   """What every pending step of a plan would do, in order."""
   agentPlanPreview(id: ID!): AgentPlanPreview!
   agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
+  """
+  The tools that would move up a tier with earned autonomy on at the threshold:
+  their clean streak has already reached it, and their agent's ceiling and the
+  tool's policy leave room above. Saving earned autonomy on, or a lower
+  threshold, promotes them. Changes nothing.
+  """
+  agentPromotionPreview(threshold: Int!): [AgentToolPromotion!]!
   agentProposal(id: ID!): AgentProposal
   """
   What a proposal's write would do, with the changes an approver has in mind
@@ -19034,6 +20592,8 @@ type Query {
   agentSafetySummary: AgentSafetySummary!
   """How one agent has been doing."""
   agentScorecard(input: AgentScorecardInput!): AgentScorecard!
+  """An agent's shadow period over the last days (default 30, at most 90)."""
+  agentShadowReport(agentId: ID!, days: Int): AgentShadowReport!
   agentSuiteRun(id: ID!): AgentSuiteRun
   """
   A suite run's cases a page at a time, in the order they were asked unless sorted.
@@ -19046,6 +20606,10 @@ type Query {
   """
   agentSuiteRunConnection(agentDefinitionId: ID, input: DataTableConnectionInput!): AgentSuiteRunConnection!
   agentSuiteRuns(input: AgentSuiteRunsInput!): AgentSuiteRunConnection! @deprecated(reason: "Use agentSuiteRunConnection, which takes the data table's filters and sort.")
+  """The prompts kept with an agent, oldest first. At most 20."""
+  agentTestPrompts(agentId: ID!): [AgentTestPrompt!]!
+  """Every tool some agent holds, with the agents that hold it."""
+  agentToolHolders: [AgentToolHolders!]!
   """Every tool's safety policy, by name."""
   agentToolPolicies: [AgentToolPolicy!]! @deprecated(reason: "Use agentToolRuleConnection, which pages, filters and sorts on the server.")
   """The tool rules a page at a time, searched and filtered on the server."""
@@ -19056,6 +20620,10 @@ type Query {
   on the same fields.
   """
   agentToolRuleConnection(input: DataTableConnectionInput!): AgentToolPolicyConnection!
+  """
+  What every agent holding the tool would do under a rule, before saving it.
+  """
+  agentToolRuleImpact(input: AgentToolRuleInput!, name: String!): [AgentToolRuleImpact!]!
   """
   Every tool the named agents hold, what each does before and after the run
   has read outside text, a page at a time. Between one and ten agents. Filters
@@ -19072,16 +20640,23 @@ type Query {
   agentWorstRatedAnswerConnection(agentDefinitionId: ID, input: DataTableConnectionInput!, window: Int = 30): AgentWorstRatedAnswerConnection!
   """The answers people liked least, a page at a time."""
   agentWorstRatedAnswers(input: AgentWorstRatedAnswersInput!): AgentWorstRatedAnswerConnection! @deprecated(reason: "Use agentWorstRatedAnswerConnection, which takes the data table's filters and sort.")
+  """
+  Every agent that has run or proposed lately; an agent with neither is left out.
+  """
+  aiAgentRoster: [AIAgentRosterStat!]!
   aiAuditChainStatus: AIAuditChainStatus!
   aiAuditEvent(id: ID!): AIAuditEvent
   aiAuditEvents(input: DataTableConnectionInput!): AIAuditEventConnection!
   aiAuditExport(id: ID!): AIAuditExport
   aiAuditExports(input: DataTableConnectionInput!): AIAuditExportConnection!
+  aiControlSummary(tab: AIControlTab!): AIControlSummary!
   aiCorrection(id: ID!): AICorrection
   aiCorrections(input: DataTableConnectionInput!): AICorrectionConnection!
   """Everyone's ratings, for administrators."""
   aiFeedback(input: DataTableConnectionInput!): AIFeedbackConnection!
   aiProvider(id: ID!): AIProvider
+  """The models an endpoint serves, asked of the endpoint itself."""
+  aiProviderModels(input: AIProviderEndpointInput!): [AIProviderModelOption!]!
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   """
   The thousand most recent sources whose indexing failed or is waiting to retry,
@@ -19097,9 +20672,25 @@ type Query {
   """
   aiRetrievalStatus: AIRetrievalStatus!
   """
+  Where each task goes now and where it would go with the draft saved. Saves nothing.
+  """
+  aiRoutePreview(draft: AIProviderRoutingDraftInput!): [AITaskRoute!]!
+  """
   Training exports that included this organization's AI corrections, newest first.
   """
   aiTrainingExportHistory: [AITrainingExportHistoryEntry!]!
+  aiTuneUps: AITuneUps!
+  """
+  Model usage day by day for the last days (default 7, at most 90), ending
+  today, oldest first. A day with no calls is listed with zeros. Days are read
+  in the IANA timezone given, UTC when absent. With providerId, only that
+  provider's calls.
+  """
+  aiUsageDaily(days: Int, providerId: ID, timezone: String): [AIUsageDay!]!
+  """
+  Model usage by feature over the last days (default 7, at most 366), as a table.
+  """
+  aiUsageFeatures(days: Int, input: DataTableConnectionInput!): AIUsageFeatureConnection!
   """
   Model usage since the given instant, defaulting to the last seven days.
   """
@@ -19146,6 +20737,7 @@ type Query {
   briefing(id: ID!): Briefing!
   """Recent mornings, newest day first."""
   briefings(input: ListBriefingsInput!): [Briefing!]!
+  bulkEditFields(resource: String!): [BulkEditField!]!
   cannedReports: [CannedReport!]!
   capacityUnitMatches(kind: CapacityUnitKind!, limit: Int = 2, unitId: ID!): [CapacityMatch!]!
   """
@@ -19226,6 +20818,13 @@ type Query {
   customers(input: DataTableConnectionInput!): CustomerConnection!
   """Dash feature toggles for this organization (back office)."""
   dashControl: DashControl!
+  dataTableAggregates(input: DataTableAggregateInput!): DataTableAggregates!
+  dataTableFacets(input: DataTableFacetInput!): DataTableFacets!
+  """
+  The fields a table can be counted by or totalled, so a screen offers only those.
+  """
+  dataTableInsightFields(resource: String!): [DataTableInsightField!]!
+  dataTableSeries(input: DataTableSeriesInput!): DataTableSeries!
   """
   Suggested points for a kind, severity and outcome, so the form starts from
   the house scale.
@@ -19390,6 +20989,15 @@ type Query {
   inboundMessageCounts: InboundMessageCounts!
   """Mail that arrived on a monitored address, newest first."""
   inboundMessages(input: InboundMessagesInput!): InboundMessageConnection!
+  """
+  Documents a reply to the message can carry: its own files and those on its shipment, customer and carrier.
+  """
+  inboundReplyAttachables(messageId: ID!): [InboundReplyAttachable!]!
+  """The most a reply's files may add up to, in bytes."""
+  inboundReplyAttachmentLimit: Int!
+  inboundSenderProfile(messageId: ID!): InboundSenderProfile!
+  """The messages in one thread, oldest first."""
+  inboundThread(threadKey: String!): [InboundMessage!]!
   invoice(id: ID!): Invoice
   invoiceAdjustment(id: ID!): InvoiceAdjustment
   """Adjustments whose policy holds them for finance approval."""
@@ -19441,6 +21049,8 @@ type Query {
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   """What the signed-in driver has said they would rather work."""
   myAvailability: [WorkerAvailabilityPreference!]!
+  myBulkEdit(id: ID!): BulkEditJob
+  myBulkEdits(limit: Int, resource: String): [BulkEditJob!]!
   """Whether capture is on here and whether the caller may use it."""
   myCaptureAccess: CaptureAccess!
   """The companions the caller has paired."""
@@ -19521,6 +21131,10 @@ type Query {
   """Every swap the signed-in driver is on either side of."""
   myShiftSwaps: [PortalShiftSwap!]!
   """
+  The caller's own layout for a table, or null when they have not changed it.
+  """
+  myTableLayout(resource: String!): TableLayout
+  """
   Everyone the signed-in user answers for, directly or through a terminal they
   run, plus anyone delegated to them.
   """
@@ -19531,6 +21145,8 @@ type Query {
   The signed-in driver's courses: open assignments first, then certifications.
   """
   myTraining: [PortalTraining!]!
+  """The folders the signed-in person saved."""
+  myTriageViews: [TriageView!]!
   """The signed-in driver's year-to-date pay summary."""
   myYtdPay(year: Int!): WorkerYTDPaySummary!
   notificationUnreadCount: Int!
@@ -19593,6 +21209,7 @@ type Query {
   performanceReview(id: ID!): PerformanceReview!
   performanceReviewTemplate(id: ID!): PerformanceReviewTemplate!
   performanceReviewTemplates(input: PerformanceReviewTemplatesInput!): PerformanceReviewTemplateConnection!
+  previewBulkEdit(input: BulkEditInput!): BulkEditPreview!
   previewDriverSettlement(periodEnd: Timestamp, periodStart: Timestamp, workerId: ID!): DriverSettlement!
   previewReport(definition: ReportIRInput!, params: JSON, supersede: Boolean): ReportPreview!
   previewWorkerPtoAccrual(asOf: Timestamp, workerId: ID!): [PlannedPTOAccrual!]!
@@ -19621,6 +21238,10 @@ type Query {
   """
   renderDocumentTemplatePreview(input: DocumentTemplatePreviewInput!): DocumentTemplatePreview!
   renderMessageTemplatePreview(input: DocumentTemplatePreviewInput!): DocumentTemplatePreview!
+  """
+  A template with its placeholders filled in from a message and its shipment.
+  """
+  renderTriageReplyTemplate(messageId: ID!, templateId: ID!): String!
   reportCatalog: ReportCatalog!
   reportDashboard(id: ID!): ReportDashboard!
   reportDashboards: [ReportDashboard!]!
@@ -19643,7 +21264,12 @@ type Query {
   serviceFailure(id: ID!): ServiceFailure
   serviceFailureReasonCode(id: ID!): ServiceFailureReasonCode
   serviceFailureReasonCodes(input: DataTableConnectionInput!): ServiceFailureReasonCodeConnection!
-  serviceFailures(input: DataTableConnectionInput!, shipmentId: ID): ServiceFailureConnection!
+  serviceFailures(
+    input: DataTableConnectionInput!
+    """Only failures at a stop made at this location."""
+    locationId: ID
+    shipmentId: ID
+  ): ServiceFailureConnection!
   serviceType(id: ID!): ServiceType
   serviceTypes(input: DataTableConnectionInput!): ServiceTypeConnection!
   settlementBatch(id: ID!): SettlementBatch
@@ -19665,6 +21291,14 @@ type Query {
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
   shipmentBillingTransferCandidateIds(input: ShipmentBillingTransferCandidateIdsInput!): ShipmentBillingTransferCandidateIds!
   shipmentBoardCapabilities: ShipmentBoardCapabilities!
+  """
+  Group headers and totals for the board grouped by something other than stage, in board order.
+  """
+  shipmentBoardGroups(groupBy: ShipmentBoardGrouping!, input: ShipmentBoardScopeInput!): [ShipmentBoardGroup!]!
+  """
+  The day's board brief. It is written for the organization's own day and
+  time zone, so the timezone argument no longer changes it.
+  """
   shipmentBriefing(timezone: String!): ShipmentBriefing!
   shipmentCapacity(kind: CapacityUnitKind!): ShipmentCapacity!
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
@@ -19674,7 +21308,6 @@ type Query {
   shipmentDetention(shipmentId: ID!): [DetentionOccurrence!]!
   shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
   shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
-  shipmentFacetCounts(facets: [ShipmentFacet!]!, input: ShipmentBoardScopeInput!): [ShipmentFacetCounts!]!
   shipmentFormSubmissions(shipmentId: ID!): [TelematicsFormSubmission!]!
   shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
   shipmentProfitability(shipmentId: ID!): ShipmentProfitability!
@@ -19716,6 +21349,27 @@ type Query {
   trailers(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TrailerConnection!
   trainingCourse(id: ID!): TrainingCourse!
   trainingCourses(input: TrainingCoursesInput!): TrainingCourseConnection!
+  """People who can be assigned messages."""
+  triageAssignees: [TriageAssignee!]!
+  triageBriefing: TriageBriefing!
+  triageCustomerPeek(customerId: ID!): TriageCustomerPeek!
+  triageReplyTemplates: [TriageReplyTemplate!]!
+  """Every kind's response target, defaults included."""
+  triageResponseTargets: [TriageResponseTarget!]!
+  """
+  What an existing rule matched, or would have, over the last thirty days.
+  """
+  triageRuleMatches(id: ID!): TriageRulePreview!
+  """
+  What a rule would have matched over the last thirty days, before it is turned on.
+  """
+  triageRulePreview(input: TriageRuleInput!): TriageRulePreview!
+  triageRules: [TriageRule!]!
+  """Domains that have sent mail, for a rule's sender."""
+  triageSenderDomains(query: String): [String!]!
+  triageSettings: TriageSettings!
+  triageShipmentPeek(shipmentId: ID!): TriageShipmentPeek!
+  triageStopTimes(messageId: ID!): TriageStopTimes
   unassignedShipments(after: String, first: Int = 20): ShipmentConnection!
   """
   A worker's accrued, unheld, unsettled pay events — the pool an instant
@@ -19730,13 +21384,25 @@ type Query {
   upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   user(id: ID!): User
   users(input: DataTableConnectionInput!): UserConnection!
-  vehicleInspections(limit: Int, since: Timestamp, tractorId: ID, workerId: ID): [VehicleInspection!]!
+  """
+  Inspections newest first. Pass the startedAt and id of the last one seen as
+  before and beforeId to read the next page.
+  """
+  vehicleInspections(before: Timestamp, beforeId: ID, limit: Int, since: Timestamp, tractorId: ID, workerId: ID): [VehicleInspection!]!
+  """
+  One tractor's latest reported position, however old; null when the tractor has never reported one.
+  """
+  vehiclePosition(tractorId: ID!): VehiclePosition
   vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
   watchtowerCounts: WatchtowerCounts!
   """
   What needs attention, newest first, filtered to what this reader may see.
   """
   watchtowerItems(input: WatchtowerItemsInput!): WatchtowerItemConnection!
+  """
+  One worker, with the profile, state, fleet, manager and license state it is asked for.
+  """
+  worker(id: ID!): Worker
   workerAvailabilityPreferences(workerId: ID!): [WorkerAvailabilityPreference!]!
   workerBenefitEnrollments(openOnly: Boolean, workerId: ID!): [WorkerBenefitEnrollment!]!
   workerChecklist(id: ID!): WorkerChecklist!
@@ -21429,6 +23095,17 @@ input SaveTelematicsFormMappingInput {
   version: Int
 }
 
+input ScheduleTableViewInput {
+  cronExpression: String!
+  emailAttach: Boolean
+  emailInline: Boolean
+  emailRecipients: [String!]
+  formats: [String!]!
+  name: String!
+  timezone: String
+  view: TableExportViewInput!
+}
+
 enum SegregationType {
   Barrier
   Distance
@@ -21457,6 +23134,7 @@ type SelectOptionEdge {
 enum SelectOptionResource {
   ACCESSORIAL_CHARGE
   ACCOUNT_TYPE
+  AI_PROVIDER
   BENEFIT_PLAN
   CAPTURE_DEVICE
   CAPTURE_PROFILE
@@ -21526,6 +23204,19 @@ input SelectOptionsInput {
   resource: SelectOptionResource!
 }
 
+input SendInboundReplyInput {
+  body: String!
+  """Documents to attach, from inboundReplyAttachables."""
+  documentIds: [ID!]
+  """The body is Nova's draft, sent as written or after edits."""
+  draftedByNova: Boolean = false
+  messageId: ID!
+  subject: String!
+  templateId: ID
+  """Another address to send to instead of the sender, after a refusal."""
+  toAddress: String
+}
+
 input SendTestMessageTemplateInput {
   content: DocumentTemplateVersionInput
   kind: String!
@@ -21537,6 +23228,8 @@ type ServiceFailure {
   actualArrival: Timestamp!
   businessUnitId: ID!
   createdAt: Timestamp!
+  """Who logged the failure by hand; null for one detected or received."""
+  createdBy: User
   detectedAt: Timestamp!
   gracePeriodMinutes: Int!
   id: ID!
@@ -21548,6 +23241,10 @@ type ServiceFailure {
   organizationId: ID!
   reasonCode: ServiceFailureReasonCode
   reasonCodeId: ID
+  resolvedAt: Timestamp
+  resolvedBy: User
+  reviewedAt: Timestamp
+  reviewedBy: User
   scheduledCutoff: Timestamp!
   shipment: ServiceFailureShipment
   shipmentId: ID!
@@ -21560,6 +23257,9 @@ type ServiceFailure {
   type: ServiceFailureType!
   updatedAt: Timestamp!
   version: Int!
+  voidReason: String!
+  voidedAt: Timestamp
+  voidedBy: User
   x12ExceptionCode: String!
   x12ReasonCodeOverride: String!
   """
@@ -21637,6 +23337,7 @@ type ServiceFailureReasonCodeEdge {
 
 type ServiceFailureShipment {
   bol: String
+  customer: Customer
   id: ID!
   proNumber: String!
 }
@@ -22450,6 +24151,31 @@ type ShipmentBoardCapabilities {
   operationType: OperationType!
 }
 
+type ShipmentBoardGroup {
+  count: Int!
+  """
+  The value rows are grouped on: a YYYY-MM-DD day, a customer id or a user id.
+  Empty for shipments with no date or no owner.
+  """
+  key: String!
+  """
+  The customer's or owner's name. Empty for days, which the client formats.
+  """
+  label: String!
+  revenue: Decimal!
+}
+
+"""
+A way to group the board other than by stage. Dates are the local day, in the
+board's time zone, of the first pickup or the last delivery.
+"""
+enum ShipmentBoardGrouping {
+  Customer
+  DeliveryDate
+  Owner
+  ShipDate
+}
+
 input ShipmentBoardScopeInput {
   fieldFilters: [FieldFilterInput!]
   filterGroups: [FilterGroupInput!]
@@ -22459,8 +24185,15 @@ input ShipmentBoardScopeInput {
   timezone: String!
 }
 
+"""
+The day's brief for the board. It is written once for the organization's
+working day, before it starts, and again when every open issue it named has
+been cleared; reading it never asks the model anything.
+"""
 type ShipmentBriefing {
   generatedAt: Timestamp!
+  """Which of the day's briefs this is, starting at 1."""
+  generation: Int!
   """The model wrote the wording; false means the deterministic sentence."""
   narrated: Boolean!
   segments: [ShipmentBriefingSegment!]!
@@ -23086,26 +24819,6 @@ input ShipmentEventsInput {
   limit: Int
   shipmentId: ID
   types: [ShipmentEventType!]
-}
-
-enum ShipmentFacet {
-  Customer
-  Equipment
-  Status
-  TenderStatus
-}
-
-type ShipmentFacetCounts {
-  facet: ShipmentFacet!
-  """The field filter the values apply to."""
-  field: String!
-  values: [ShipmentFacetValue!]!
-}
-
-type ShipmentFacetValue {
-  count: Int!
-  label: String!
-  value: String!
 }
 
 type ShipmentFormulaTemplate {
@@ -24012,6 +25725,8 @@ input ShipmentsInput {
   Only Completed or Ready to Invoice shipments that are not in the billing queue.
   """
   billingTransferEligible: Boolean = false
+  """Only shipments with a live move tendered to one of these carriers."""
+  carrierIds: [ID!]
   expandShipmentDetails: Boolean = false
   fieldFilters: [FieldFilterInput!]
   filterGroups: [FilterGroupInput!]
@@ -24024,8 +25739,18 @@ input ShipmentsInput {
   quickFilters: [ShipmentQuickFilterInput!]
   sort: [SortFieldInput!]
   status: String
+  """Only shipments with a live stop at one of these locations."""
+  stopLocationIds: [ID!]
   """IANA time zone for day and hour quick filters."""
   timezone: String
+  """Only shipments with a live move assigned to one of these tractors."""
+  tractorIds: [ID!]
+  """Only shipments with a live move assigned to one of these trailers."""
+  trailerIds: [ID!]
+  """
+  Only shipments with a live move one of these workers drives, in either seat.
+  """
+  workerIds: [ID!]
 }
 
 type SidebarActivityPreference {
@@ -24093,6 +25818,14 @@ input SkipAccountingSyncInput {
   id: ID!
   """Why the document is not sent. Required."""
   reason: String!
+}
+
+input SnoozeInboundMessagesInput {
+  """The document type DocumentAttached waits for."""
+  documentTypeId: ID
+  event: InboundSnoozeEvent
+  """Until a time. Exactly one of until and event is set."""
+  until: Timestamp
 }
 
 input SortFieldInput {
@@ -24302,6 +26035,44 @@ input TableConfigurationPatchInput {
   tableConfig: JSON @goField(omittable: true)
   """Omit to leave unchanged; null is rejected."""
   visibility: ConfigurationVisibility @goField(omittable: true)
+}
+
+input TableExportColumnInput {
+  """The field the column shows, as the table filters and sorts by it."""
+  field: String!
+  label: String!
+}
+
+type TableExportResult {
+  """The report the view was saved as; it lives in the person's reports."""
+  definitionId: ID!
+  run: ReportRun
+  schedule: ReportSchedule
+  """Columns the report could not show, by label."""
+  skippedColumns: [String!]!
+}
+
+"""What a data table is showing, to export or schedule as a report."""
+input TableExportViewInput {
+  columns: [TableExportColumnInput!]!
+  filter: DataTableConnectionInput
+  resource: String!
+}
+
+"""The arrangement of one data table a person last left it in."""
+type TableLayout {
+  """
+  Columns shown, ordered, sized and pinned, the density, colour rules and the view it was based on.
+  """
+  layout: JSON!
+  resource: String!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+input TableLayoutInput {
+  layout: JSON!
+  resource: String!
 }
 
 """One person on a manager's team."""
@@ -24675,11 +26446,24 @@ type Tractor {
   lastKnownLocation: LocationReference
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  """When the lease on a leased tractor ends."""
+  leaseEndDate: Timestamp
+  """The lessor's reference for the lease."""
+  leaseReference: String!
+  """The lessor a leased tractor is leased from."""
+  lessorName: String!
   licensePlateNumber: String!
   make: String!
   model: String!
   organization: Organization
   organizationId: ID!
+  ownerWorker: Worker
+  """The owner-operator who owns the tractor, when it is theirs."""
+  ownerWorkerId: ID
+  """
+  Who owns the tractor: the company, a lessor, or the owner-operator who drives it.
+  """
+  ownershipType: EquipmentOwnershipType!
   primaryWorker: Worker
   primaryWorkerId: ID!
   registrationExpiry: Timestamp
@@ -24791,12 +26575,23 @@ type Trailer {
   lastKnownLocation: LocationReference
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  """When the lease on a leased trailer ends."""
+  leaseEndDate: Timestamp
+  """The lessor's reference for the lease."""
+  leaseReference: String!
+  """The lessor a leased trailer is leased from."""
+  lessorName: String!
   licensePlateNumber: String!
   make: String!
   maxLoadWeight: Int
   model: String!
   organization: Organization
   organizationId: ID!
+  ownerWorker: Worker
+  """The owner-operator who owns the trailer, when it is theirs."""
+  ownerWorkerId: ID
+  """Who owns the trailer: the company, a lessor, or an owner-operator."""
+  ownershipType: EquipmentOwnershipType!
   registrationExpiry: Timestamp
   registrationNumber: String!
   registrationState: UsState
@@ -24984,6 +26779,584 @@ input TransitionTimesheetInput {
   id: ID!
   note: String
   status: TimesheetStatus!
+}
+
+"""
+One step a message asks for, in the order to do them. Worked out on the server
+from the message's state, so the reader, the action bar and the briefing agree.
+"""
+type TriageAction {
+  attachment: InboundAttachment
+  completedAt: Timestamp
+  """The shipment the step created."""
+  createdShipment: InboundShipmentRef
+  done: Boolean!
+  exceptionKind: TriageExceptionKind
+  """
+  Stable within a message: file:<attachment id>, load, reply, stops, exception, block or link.
+  """
+  id: String!
+  kind: TriageActionKind!
+  """Nova drafted the load and it waits for a look."""
+  loadDrafted: Boolean!
+  """Nova can do this step itself."""
+  novaCanDo: Boolean!
+  """For a reply asking for a file again, the file that was refused."""
+  refusedFileName: String
+  reply: InboundReply
+  replyPurpose: TriageReplyPurpose
+  """The shipment the step is about."""
+  shipment: InboundShipmentRef
+  stopsDecision: TriageStopsDecision
+}
+
+"""A step a message asks for."""
+enum TriageActionKind {
+  BlockSender
+  BuildLoad
+  CheckStops
+  File
+  Link
+  LogException
+  Reply
+}
+
+"""One hour of arrivals."""
+type TriageArrivalBucket {
+  handledByNova: Int!
+  hourStart: Timestamp!
+  leftForPerson: Int!
+}
+
+"""Someone a message can be assigned to."""
+type TriageAssignee {
+  user: User!
+  """Waiting messages already assigned to them."""
+  waiting: Int!
+}
+
+"""
+The briefing: what Nova did, what is left, and what to do first. One aggregate,
+cached per organization and refreshed on every change to the queue.
+"""
+type TriageBriefing {
+  activeSources: Int!
+  arrivals: [TriageArrivalBucket!]!
+  """At the end of the day: what carries over, soonest due first."""
+  carryOver: [TriageDeckItem!]!
+  """Settled by people today."""
+  closedByPeopleToday: Int!
+  """Snoozed or waiting on a reply."""
+  comingBack: Int!
+  corrections: TriageCorrections!
+  """The organization's local midnight the day's figures count from."""
+  dayStart: Timestamp!
+  deck: [TriageDeckCard!]!
+  estimateMinutes: Int!
+  """No source connected, or nothing has ever arrived."""
+  firstDay: Boolean!
+  generatedAt: Timestamp!
+  handledByNova: [TriageHandledGroup!]!
+  handledByNovaToday: Int!
+  """The waiting message most over its target."""
+  longestWaiting: TriageDeckItem
+  """Whether Nova reads new mail. Off when no model is set up for it."""
+  novaEnabled: Boolean!
+  """Messages Nova settled today, for the river's Nova lane."""
+  novaPoints: [TriageRiverPoint!]!
+  onCall: User
+  overdue: Int!
+  phase: TriageBriefingPhase!
+  suggestion: TriageRuleSuggestion
+  unhealthySources: [InboundMailbox!]!
+  waiting: Int!
+  """Messages left for a person today, for the river's lane."""
+  yours: [TriageRiverPoint!]!
+}
+
+"""Which part of the day the briefing is for."""
+enum TriageBriefingPhase {
+  Day
+  EndOfDay
+}
+
+"""What a bulk change did."""
+type TriageBulkResult {
+  """How many it changed, including any past the ones returned."""
+  affected: Int!
+  """The messages it changed, as they are now."""
+  messages: [InboundMessage!]!
+  """A rule it turned on, where it was asked to."""
+  ruleId: ID
+}
+
+"""Something about a message that clashes with what is already on file."""
+type TriageConflict {
+  attachmentId: ID
+  existingAmount: Decimal
+  existingDocumentId: ID
+  existingFiledAt: Timestamp
+  existingShipment: InboundShipmentRef
+  id: String!
+  kind: TriageConflictKind!
+  """Which load in the tender, counting from one."""
+  loadIndex: Int
+  newAmount: Decimal
+  """The choices that settle it, in the order to offer them."""
+  options: [TriageConflictResolution!]!
+  resolution: TriageConflictResolution
+  resolvedAt: Timestamp
+}
+
+"""What a conflict is about."""
+enum TriageConflictKind {
+  """The shipment already has a document of the same kind."""
+  DuplicateDocument
+  """A load in a tender looks like one already on the board."""
+  OverlappingLoad
+}
+
+"""How a conflict was settled."""
+enum TriageConflictResolution {
+  ConfirmNew
+  KeepBoth
+  ReplaceExisting
+  SkipDuplicate
+}
+
+"""The corrections people made to Nova's reading."""
+type TriageCorrections {
+  accuracy: Float!
+  """Reading accuracy this week against last, in percentage points."""
+  accuracyChange: Float!
+  thisWeek: Int!
+}
+
+"""A customer, as a peek shows it."""
+type TriageCustomerPeek {
+  code: String!
+  id: ID!
+  messages: [TriageSample!]!
+  name: String!
+  shipments: [TriageShipmentPeek!]!
+  shipmentsThisWeek: Int!
+  since: Timestamp!
+  waitingInTriage: Int!
+}
+
+"""One card of the briefing's deck."""
+type TriageDeckCard {
+  count: Int!
+  estimateMinutes: Int!
+  group: TriageDeckGroup!
+  """The first few, soonest due first."""
+  items: [TriageDeckItem!]!
+  """Every message in the card, for its one action."""
+  messageIds: [ID!]!
+}
+
+"""Which part of the deck a waiting message is in."""
+enum TriageDeckGroup {
+  """Needs a person's call."""
+  Decide
+  """Drafts Nova can write."""
+  Draft
+  """Documents to file on a matched shipment."""
+  File
+  """Held back as possibly unsafe."""
+  Held
+  """Without a record."""
+  Link
+}
+
+"""A waiting message, as the briefing names it."""
+type TriageDeckItem {
+  """The next step it asks for."""
+  action: TriageAction
+  classification: InboundClassification
+  dueAt: Timestamp
+  fromAddress: String!
+  fromName: String!
+  messageId: ID!
+  owner: User
+  receivedAt: Timestamp!
+  subject: String!
+}
+
+"""A shortage, overage or damage noted on a delivery."""
+enum TriageExceptionKind {
+  Damage
+  Overage
+  Shortage
+}
+
+"""Something Nova read out of a message, with the words it read it from."""
+type TriageFact {
+  """A person said it is wrong."""
+  flagged: Boolean!
+  key: String!
+  label: String!
+  """The words in the message the fact was read from."""
+  quote: String!
+  tone: TriageFactTone!
+  value: String!
+}
+
+"""How sure a fact Nova read is to need a look."""
+enum TriageFactTone {
+  Neutral
+  Warning
+}
+
+"""What handing the queue to the on-call person did."""
+type TriageHandOff {
+  affected: Int!
+  to: User!
+}
+
+"""Something Nova did on its own today, counted by what it did."""
+type TriageHandledGroup {
+  action: TriageRuleAction!
+  classification: InboundClassification
+  count: Int!
+  samples: [TriageSample!]!
+}
+
+"""A folder of the queue: a question about state rather than a filter."""
+enum TriageLane {
+  """Waiting, and assigned to whoever is asking."""
+  AssignedToMe
+  Everything
+  Handled
+  Ignored
+  Snoozed
+  """Waiting on a person and not parked."""
+  Waiting
+  """Replied to, waiting for the sender to answer."""
+  WaitingOnThem
+}
+
+"""A load Nova drafted from a message, waiting for a person to check it."""
+type TriageLoadDraft {
+  draftedAt: Timestamp!
+  draftedByNova: Boolean!
+  fields: [TriageLoadField!]!
+  """
+  The file it was read from; blank when it was read from the message text.
+  """
+  source: String!
+}
+
+type TriageLoadField {
+  key: TriageLoadFieldKey!
+  """Blank when Nova could not read it."""
+  value: String!
+}
+
+input TriageLoadFieldInput {
+  key: TriageLoadFieldKey!
+  value: String!
+}
+
+"""A field of a load Nova drafted."""
+enum TriageLoadFieldKey {
+  Commodity
+  Customer
+  Delivery
+  Destination
+  Equipment
+  Instructions
+  Loads
+  Origin
+  Pickup
+  Rate
+  Reference
+  RespondBy
+  WeekOf
+  Weight
+}
+
+"""A stop on a shipment peek."""
+type TriagePeekStop {
+  arrivedAt: Timestamp
+  city: String!
+  departedAt: Timestamp
+  done: Boolean!
+  kind: String!
+  scheduledAt: Timestamp
+  state: String!
+}
+
+"""What a reply is for."""
+enum TriageReplyPurpose {
+  AcceptTender
+  AnswerDispute
+  AskResend
+  ConfirmTender
+  ReturnSigned
+  SendEta
+}
+
+"""
+A reply people reuse, with placeholders filled in from the message and its shipment.
+"""
+type TriageReplyTemplate {
+  """
+  The text, with placeholders such as {first}, {pro}, {status}, {eta}, {lane}, {customer} and {po}.
+  """
+  body: String!
+  createdAt: Timestamp!
+  createdBy: User
+  id: ID!
+  name: String!
+  version: Int!
+}
+
+input TriageReplyTemplateInput {
+  body: String!
+  name: String!
+}
+
+"""How long a kind of message may wait before it is over target."""
+type TriageResponseTarget {
+  classification: InboundClassification!
+  """Whether this is Trenova's default rather than the organization's own."""
+  isDefault: Boolean!
+  minutes: Int!
+}
+
+input TriageResponseTargetInput {
+  classification: InboundClassification!
+  """Minutes, or null to go back to the default."""
+  minutes: Int
+}
+
+"""A message on the river."""
+type TriageRiverPoint {
+  classification: InboundClassification
+  """Settled, or parked until later."""
+  done: Boolean!
+  dueAt: Timestamp
+  fromAddress: String!
+  fromName: String!
+  messageId: ID!
+  receivedAt: Timestamp!
+  subject: String!
+}
+
+"""
+A rule, which reads as a sentence: when a kind of message arrives from someone
+on a source, Nova should do something.
+"""
+type TriageRule {
+  action: TriageRuleAction!
+  assignee: User
+  assigneeId: ID
+  classification: InboundClassification!
+  createdAt: Timestamp!
+  createdBy: User
+  enabled: Boolean!
+  id: ID!
+  """The last message it handled."""
+  lastMatch: TriageSample
+  lastMatchedAt: Timestamp
+  mailbox: InboundMailbox
+  """The source it applies to; absent is every source."""
+  mailboxId: ID
+  """Every message it ever settled."""
+  matchCount: Int!
+  """Messages it settled since the start of this month."""
+  matchesThisMonth: Int!
+  """The domain or address, for those scopes; blank otherwise."""
+  sender: String!
+  senderScope: TriageSenderScope!
+  version: Int!
+}
+
+"""What Nova may do with a message on its own."""
+enum TriageRuleAction {
+  """Assign it to a person."""
+  Assign
+  """Draft the load for a person to check."""
+  DraftLoad
+  """Draft a reply for a person to check."""
+  DraftReply
+  """File an invoice and queue it for carrier pay."""
+  FileAndQueuePay
+  """File its documents on the matched shipment."""
+  FileOnShipment
+  Ignore
+  """Link it to the customer or carrier the sender belongs to."""
+  LinkBySender
+}
+
+input TriageRuleInput {
+  action: TriageRuleAction!
+  assigneeId: ID
+  classification: InboundClassification!
+  enabled: Boolean = true
+  mailboxId: ID
+  sender: String
+  senderScope: TriageSenderScope!
+}
+
+"""A message a rule would have matched."""
+type TriageRuleMatch {
+  fromAddress: String!
+  fromName: String!
+  messageId: ID!
+  """Why it looks off; absent when it looks right."""
+  mismatch: TriageRuleMismatch
+  receivedAt: Timestamp!
+  """The PRO, PO or reference the message was about, where it was matched."""
+  reference: String!
+  subject: String!
+}
+
+"""Why a message a rule would have matched looks wrong for it."""
+enum TriageRuleMismatch {
+  """A person corrected what kind of message it was."""
+  KindCorrected
+  """It was never matched to a record, so there was nothing to act on."""
+  NoMatchedRecord
+  """A person settled it differently from what the rule would do."""
+  PersonDisagreed
+}
+
+"""What a rule would have done over the last thirty days."""
+type TriageRulePreview {
+  matched: Int!
+  """The newest matches, off ones first."""
+  matches: [TriageRuleMatch!]!
+  """How many of those look off."""
+  off: Int!
+  since: Timestamp!
+}
+
+"""A rule worth turning on, from what people keep doing by hand."""
+type TriageRuleSuggestion {
+  action: TriageRuleAction!
+  classification: InboundClassification!
+  """How many of these people settled that way by hand."""
+  handledByHand: Int!
+  mailboxId: ID
+  sender: String!
+  senderScope: TriageSenderScope!
+  """How many of these arrived in the window."""
+  total: Int!
+}
+
+"""A message, as a line in a list Nova shows."""
+type TriageSample {
+  classification: InboundClassification
+  fromAddress: String!
+  fromName: String!
+  messageId: ID!
+  receivedAt: Timestamp!
+  """The PRO, PO or file name the line is about."""
+  reference: String!
+  subject: String!
+}
+
+"""
+Which messages a bulk change applies to: named ones, or everything in a folder.
+"""
+input TriageSelectionInput {
+  """Everything in this folder, up to the server's bound."""
+  folder: InboundMessagesInput
+  ids: [ID!]
+}
+
+"""Who a rule's messages come from."""
+enum TriageSenderScope {
+  """One address."""
+  Address
+  AnyCarrier
+  AnyCustomer
+  Anyone
+  """Everyone at a domain, and its subdomains."""
+  Domain
+}
+
+"""The organization's queue settings."""
+type TriageSettings {
+  """
+  Minutes after midnight, in the organization's time zone, when the day wraps up.
+  """
+  endOfDayMinute: Int!
+  """Who the queue is handed to at the end of the day."""
+  onCallUser: User
+  onCallUserId: ID
+  timezone: String!
+  version: Int!
+}
+
+input TriageSettingsInput {
+  endOfDayMinute: Int!
+  onCallUserId: ID
+  version: Int!
+}
+
+"""A shipment, as a peek shows it."""
+type TriageShipmentPeek {
+  bol: String!
+  customerName: String!
+  deliveredAt: Timestamp
+  """Document types already on file."""
+  documentsOnFile: [String!]!
+  driverName: String!
+  equipment: String!
+  eta: Timestamp
+  id: ID!
+  late: Boolean!
+  poNumber: String!
+  proNumber: String!
+  """How far along the route it is, from 0 to 1."""
+  progress: Float!
+  status: String!
+  stops: [TriagePeekStop!]!
+}
+
+"""How a folder is ordered."""
+enum TriageSort {
+  """Soonest response target first, the overdue ones at the top."""
+  Due
+  Newest
+}
+
+"""The stop times a detention dispute turns on, read from the shipment."""
+type TriageStopTimes {
+  appointmentEnd: Timestamp
+  appointmentStart: Timestamp
+  """Where the arrival time came from: ELD, geofence or a person."""
+  arrivalSource: String!
+  arrivedAt: Timestamp
+  billedDetentionAmount: Decimal
+  billedDetentionMinutes: Int!
+  checkedInAt: Timestamp
+  departedAt: Timestamp
+  """Whether the customer's terms pay detention on a late arrival."""
+  detentionPaysWhenLate: Boolean!
+  """Minutes after the appointment window closed; zero when on time."""
+  lateMinutes: Int!
+  shipment: InboundShipmentRef!
+  stopName: String!
+}
+
+"""How a detention dispute was settled after the stop times were checked."""
+enum TriageStopsDecision {
+  StandBy
+  Waive
+}
+
+"""A folder a person saved from a search."""
+type TriageView {
+  id: ID!
+  name: String!
+  position: Int!
+  query: String!
+  """How many messages waiting on a person match it."""
+  waiting: Int!
 }
 
 input UnapplyCreditMemoApplicationInput {

@@ -15,6 +15,7 @@ import { BankReceiptService } from "./bank-receipt";
 import { BankReceiptBatchService } from "./bank-receipt-batch";
 import { BankReceiptWorkItemService } from "./bank-receipt-work-item";
 import { BillingControlService } from "./billing-control";
+import { CaseChecklistService } from "./case-checklist";
 import { BillingQueueService } from "./billing-queue";
 import { CommodityService } from "./commodity";
 import { CustomFieldService } from "./custom-field";
@@ -22,7 +23,6 @@ import { CarrierService } from "./carrier";
 import { CarrierAssignmentService } from "./carrier-assignment";
 import { CustomerService } from "./customer";
 import { DataEntryControlService } from "./data-entry-control";
-import { DatabaseSessionService } from "./database-session";
 import { DetentionAnalyticsService, DetentionPolicyService, DetentionService } from "./detention";
 import {
   RateAgreementService,
@@ -119,7 +119,6 @@ class APIService {
   public tenderService: TenderService;
   public rateConfirmationService: RateConfirmationService;
   public customerService: CustomerService;
-  public databaseSessionService: DatabaseSessionService;
   public googleMapsService: GoogleMapsService;
   public globalSearchService: GlobalSearchService;
   public accountingControlService: AccountingControlService;
@@ -134,6 +133,7 @@ class APIService {
   public shipmentEventService: ShipmentEventService;
   public shipmentService: ShipmentService;
   public billingControlService: BillingControlService;
+  public caseChecklistService: CaseChecklistService;
   public invoiceAdjustmentControlService: InvoiceAdjustmentControlService;
   public invoiceAdjustmentService: InvoiceAdjustmentService;
   public billingQueueService: BillingQueueService;
@@ -213,7 +213,6 @@ class APIService {
     this.tenderService = new TenderService();
     this.rateConfirmationService = new RateConfirmationService();
     this.customerService = new CustomerService();
-    this.databaseSessionService = new DatabaseSessionService();
     this.googleMapsService = new GoogleMapsService();
     this.globalSearchService = new GlobalSearchService();
     this.accountingControlService = new AccountingControlService();
@@ -228,6 +227,7 @@ class APIService {
     this.shipmentEventService = new ShipmentEventService();
     this.shipmentService = new ShipmentService();
     this.billingControlService = new BillingControlService();
+    this.caseChecklistService = new CaseChecklistService();
     this.invoiceAdjustmentControlService = new InvoiceAdjustmentControlService();
     this.invoiceAdjustmentService = new InvoiceAdjustmentService();
     this.billingQueueService = new BillingQueueService();

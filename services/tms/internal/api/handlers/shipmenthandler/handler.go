@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/idempotency"
@@ -26,22 +26,22 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.ShipmentService
-	CommentService       services.ShipmentCommentService
-	HoldService          services.ShipmentHoldService
-	ImportAssistant      services.ShipmentImportAssistantService
-	PermitService        services.PermitService
+	Service              shipmentports.ShipmentService
+	CommentService       shipmentports.ShipmentCommentService
+	HoldService          shipmentports.ShipmentHoldService
+	ImportAssistant      shipmentports.ShipmentImportAssistantService
+	PermitService        permitports.PermitService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
 }
 
 type Handler struct {
-	service         services.ShipmentService
-	commentService  services.ShipmentCommentService
-	holdService     services.ShipmentHoldService
-	importAssistant services.ShipmentImportAssistantService
-	permitService   services.PermitService
+	service         shipmentports.ShipmentService
+	commentService  shipmentports.ShipmentCommentService
+	holdService     shipmentports.ShipmentHoldService
+	importAssistant shipmentports.ShipmentImportAssistantService
+	permitService   permitports.PermitService
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
 	logger          *zap.Logger
@@ -276,10 +276,10 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*shipment.Shipment], error) {
-			return h.service.List(c.Request.Context(), &repositories.ListShipmentsRequest{
+			return h.service.List(c.Request.Context(), &shipmentports.ListShipmentsRequest{
 				Filter: req,
 				Cursor: cursor,
-				ShipmentOptions: repositories.ShipmentOptions{
+				ShipmentOptions: shipmentports.ShipmentOptions{
 					ExpandShipmentDetails: helpers.QueryBool(c, "expandShipmentDetails"),
 					Status:                helpers.QueryString(c, "status"),
 				},
@@ -316,10 +316,10 @@ func (h *Handler) getUnassignedShipments(c *gin.Context) {
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*shipment.Shipment], error) {
 			return h.service.GetUnassigned(
 				c.Request.Context(),
-				&repositories.GetUnassignedShipmentsRequest{
+				&shipmentports.GetUnassignedShipmentsRequest{
 					Filter: req,
 					Cursor: cursor,
-					ShipmentOptions: repositories.ShipmentOptions{
+					ShipmentOptions: shipmentports.ShipmentOptions{
 						ExpandShipmentDetails: helpers.QueryBool(c, "expandShipmentDetails"),
 					},
 				},
@@ -418,10 +418,10 @@ func (h *Handler) getPermitAssessment(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		&repositories.GetShipmentByIDRequest{
+		&shipmentports.GetShipmentByIDRequest{
 			ID:         shipmentID,
 			TenantInfo: pagination.FromAuth(authCtx),
-			ShipmentOptions: repositories.ShipmentOptions{
+			ShipmentOptions: shipmentports.ShipmentOptions{
 				ExpandShipmentDetails: true,
 			},
 		},
@@ -465,10 +465,10 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		&repositories.GetShipmentByIDRequest{
+		&shipmentports.GetShipmentByIDRequest{
 			ID:         shipmentID,
 			TenantInfo: pagination.FromAuth(authCtx),
-			ShipmentOptions: repositories.ShipmentOptions{
+			ShipmentOptions: shipmentports.ShipmentOptions{
 				ExpandShipmentDetails: helpers.QueryBool(c, "expandShipmentDetails"),
 				Status:                helpers.QueryString(c, "status"),
 			},
@@ -697,7 +697,7 @@ func (h *Handler) recalculateDistance(c *gin.Context) {
 func (h *Handler) duplicate(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(repositories.BulkDuplicateShipmentRequest)
+	req := new(shipmentports.BulkDuplicateShipmentRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -721,7 +721,7 @@ func (h *Handler) duplicate(c *gin.Context) {
 func (h *Handler) checkForDuplicateBOLs(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(repositories.DuplicateBOLCheckRequest)
+	req := new(shipmentports.DuplicateBOLCheckRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -743,7 +743,7 @@ func (h *Handler) checkForDuplicateBOLs(c *gin.Context) {
 func (h *Handler) checkHazmatSegregation(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(repositories.CheckHazmatSegregationRequest)
+	req := new(shipmentports.CheckHazmatSegregationRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -765,7 +765,7 @@ func (h *Handler) checkHazmatSegregation(c *gin.Context) {
 func (h *Handler) calculateLoadingOptimization(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(repositories.LoadingOptimizationRequest)
+	req := new(shipmentports.LoadingOptimizationRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -788,7 +788,7 @@ func (h *Handler) calculateLoadingOptimization(c *gin.Context) {
 func (h *Handler) getPreviousRates(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(repositories.GetPreviousRatesRequest)
+	req := new(shipmentports.GetPreviousRatesRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -824,7 +824,7 @@ func (h *Handler) getDelayedShipments(c *gin.Context) {
 
 	entities, err := h.service.GetDelayedShipments(
 		c.Request.Context(),
-		&repositories.GetDelayedShipmentsRequest{
+		&shipmentports.GetDelayedShipmentsRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
@@ -852,7 +852,7 @@ func (h *Handler) delayShipments(c *gin.Context) {
 
 	entities, err := h.service.DelayShipments(
 		c.Request.Context(),
-		&repositories.DelayShipmentsRequest{
+		&shipmentports.DelayShipmentsRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
@@ -881,7 +881,7 @@ func (h *Handler) getAutoCancelableShipments(c *gin.Context) {
 
 	entities, err := h.service.GetAutoCancelableShipments(
 		c.Request.Context(),
-		&repositories.GetAutoCancelableShipmentsRequest{
+		&shipmentports.GetAutoCancelableShipmentsRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
@@ -909,7 +909,7 @@ func (h *Handler) autoCancelShipments(c *gin.Context) {
 
 	entities, err := h.service.AutoCancelShipments(
 		c.Request.Context(),
-		&repositories.AutoCancelShipmentsRequest{
+		&shipmentports.AutoCancelShipmentsRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
@@ -945,7 +945,7 @@ func (h *Handler) cancel(c *gin.Context) {
 		return
 	}
 
-	req := &repositories.CancelShipmentRequest{
+	req := &shipmentports.CancelShipmentRequest{
 		ShipmentID: shipmentID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	}
@@ -992,7 +992,7 @@ func (h *Handler) autoRate(c *gin.Context) {
 		return
 	}
 
-	req := &services.AutoRateShipmentRequest{
+	req := &shipmentports.AutoRateShipmentRequest{
 		ShipmentID: shipmentID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	}
@@ -1031,7 +1031,7 @@ func (h *Handler) uncancel(c *gin.Context) {
 		return
 	}
 
-	req := &repositories.UncancelShipmentRequest{
+	req := &shipmentports.UncancelShipmentRequest{
 		ShipmentID: shipmentID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	}
@@ -1069,7 +1069,7 @@ func (h *Handler) transferOwnership(c *gin.Context) {
 		return
 	}
 
-	req := &repositories.TransferOwnershipRequest{
+	req := &shipmentports.TransferOwnershipRequest{
 		ShipmentID: shipmentID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	}
@@ -1101,7 +1101,7 @@ func (h *Handler) transferToBilling(c *gin.Context) {
 		return
 	}
 
-	req := &services.TransferShipmentToBillingRequest{
+	req := &shipmentports.TransferShipmentToBillingRequest{
 		ShipmentID: shipmentID,
 	}
 	if err = c.ShouldBindJSON(req); err != nil && !errors.Is(err, io.EOF) {
@@ -1123,7 +1123,7 @@ func (h *Handler) transferToBilling(c *gin.Context) {
 func (h *Handler) bulkTransferToBilling(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(services.BulkTransferShipmentToBillingRequest)
+	req := new(shipmentports.BulkTransferShipmentToBillingRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return

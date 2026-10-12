@@ -11,9 +11,8 @@ import {
 import type { LoginResponse } from "@trenova/shared/types/user";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { AuthCardBody } from "./auth-card";
 import { AuthErrorText, AuthSubmit, AuthTextField } from "./auth-field";
-import { StepCrumbs, StepHeading } from "./auth-primitives";
+import { AuthHeading, AuthQuietButton, StepCrumbs } from "./auth-primitives";
 
 /**
  * The second step of a password sign-in for an account with an authenticator app:
@@ -64,16 +63,16 @@ export function MFAChallengeForm({
   };
 
   return (
-    <AuthCardBody>
+    <>
       <StepCrumbs left={stepLabel} right={t("Two-factor authentication")} />
-      <StepHeading title={t("Enter your code")}>
+      <AuthHeading title={t("Enter your code")}>
         {useRecovery
           ? t("Enter one of the recovery codes you saved when you set up two-factor authentication.")
           : t("Open your authenticator app and enter the six-digit code for Trenova.")}
-      </StepHeading>
+      </AuthHeading>
 
       <form
-        className="mt-[18px] flex flex-col gap-3.5"
+        className="flex flex-col gap-4"
         noValidate
         onSubmit={form.handleSubmit((values) => void mutateAsync(values))}
       >
@@ -84,7 +83,6 @@ export function MFAChallengeForm({
             label={t("Recovery code")}
             placeholder="xxxxx-xxxxx"
             autoComplete="one-time-code"
-            required
             disabled={isPending}
           />
         ) : (
@@ -94,31 +92,20 @@ export function MFAChallengeForm({
             label={t("Authentication code")}
             placeholder="123 456"
             autoComplete="one-time-code"
-            required
             disabled={isPending}
           />
         )}
         {rootError && <AuthErrorText>{rootError}</AuthErrorText>}
-        <AuthSubmit type="submit" isLoading={isPending} loadingText={t("Verifying code")}>
+        <AuthSubmit type="submit" busy={isPending} busyLabel={t("Verifying code")}>
           {t("Verify")}
         </AuthSubmit>
-        <div className="flex items-center justify-between gap-3 text-xs">
-          <button
-            type="button"
-            onClick={toggleRecovery}
-            className="text-muted-foreground hover:text-foreground cursor-pointer bg-transparent transition-colors duration-150"
-          >
+        <div className="flex items-center justify-between gap-3">
+          <AuthQuietButton onClick={toggleRecovery}>
             {useRecovery ? t("Use your authenticator app") : t("Use a recovery code")}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-muted-foreground hover:text-foreground cursor-pointer bg-transparent transition-colors duration-150"
-          >
-            {t("Start over")}
-          </button>
+          </AuthQuietButton>
+          <AuthQuietButton onClick={onCancel}>{t("Start over")}</AuthQuietButton>
         </div>
       </form>
-    </AuthCardBody>
+    </>
   );
 }

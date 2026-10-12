@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/shared/testutil"
 	seedermocks "github.com/emoss08/trenova/shared/testutil/seeder"
 	"github.com/stretchr/testify/assert"
@@ -119,10 +120,9 @@ func TestTracker_RecordSuccess_Upsert_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	var count int
-	count, err = db.NewSelect().
+	count, err = dbhelper.Count(tc.Ctx, db.NewSelect().
 		Model((*SeedRecord)(nil)).
-		Where("name = ?", "UpsertSeed").
-		Count(tc.Ctx)
+		Where("name = ?", "UpsertSeed"))
 	require.NoError(t, err)
 	assert.Equal(t, 1, count, "should have exactly one record after upsert")
 
@@ -310,10 +310,9 @@ func TestTracker_MultipleEnvironments_Integration(t *testing.T) {
 	}
 
 	var count int
-	count, err = db.NewSelect().
+	count, err = dbhelper.Count(tc.Ctx, db.NewSelect().
 		Model((*SeedRecord)(nil)).
-		Where("name = ?", "MultiEnvSeed").
-		Count(tc.Ctx)
+		Where("name = ?", "MultiEnvSeed"))
 	require.NoError(t, err)
 	assert.Equal(t, 3, count, "should have one record per environment")
 }
@@ -341,10 +340,9 @@ func TestTracker_VersionedSeeds_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	var count int
-	count, err = db.NewSelect().
+	count, err = dbhelper.Count(tc.Ctx, db.NewSelect().
 		Model((*SeedRecord)(nil)).
-		Where("name = ?", "VersionedSeed").
-		Count(tc.Ctx)
+		Where("name = ?", "VersionedSeed"))
 	require.NoError(t, err)
 	assert.Equal(t, 2, count, "should have separate records for each version")
 }

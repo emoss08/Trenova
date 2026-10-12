@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/jsonflex"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -32,38 +32,38 @@ func TestErrorMapper_Kinds(t *testing.T) {
 	cases := []struct {
 		name   string
 		err    error
-		kind   services.CarrierIntelErrorKind
+		kind   carrierintelports.CarrierIntelErrorKind
 		status int
 		retry  time.Duration
 	}{
 		{
 			name:   "401",
 			err:    &restx.APIError{StatusCode: http.StatusUnauthorized},
-			kind:   services.CarrierIntelErrorUnauthorized,
+			kind:   carrierintelports.CarrierIntelErrorUnauthorized,
 			status: 401,
 		},
 		{
 			name:   "403",
 			err:    &restx.APIError{StatusCode: http.StatusForbidden},
-			kind:   services.CarrierIntelErrorUnauthorized,
+			kind:   carrierintelports.CarrierIntelErrorUnauthorized,
 			status: 403,
 		},
 		{
 			name:   "402",
 			err:    &restx.APIError{StatusCode: http.StatusPaymentRequired},
-			kind:   services.CarrierIntelErrorPaymentRequired,
+			kind:   carrierintelports.CarrierIntelErrorPaymentRequired,
 			status: 402,
 		},
 		{
 			name:   "404",
 			err:    &restx.APIError{StatusCode: http.StatusNotFound},
-			kind:   services.CarrierIntelErrorNotFound,
+			kind:   carrierintelports.CarrierIntelErrorNotFound,
 			status: 404,
 		},
 		{
 			name: "sentinel",
 			err:  fmt.Errorf("lookup: %w", errSentinelNotFound),
-			kind: services.CarrierIntelErrorNotFound,
+			kind: carrierintelports.CarrierIntelErrorNotFound,
 		},
 		{
 			name: "429",
@@ -71,26 +71,26 @@ func TestErrorMapper_Kinds(t *testing.T) {
 				StatusCode: http.StatusTooManyRequests,
 				RetryAfter: 5 * time.Second,
 			},
-			kind:   services.CarrierIntelErrorRateLimited,
+			kind:   carrierintelports.CarrierIntelErrorRateLimited,
 			status: 429,
 			retry:  5 * time.Second,
 		},
 		{
 			name:   "400",
 			err:    &restx.APIError{StatusCode: http.StatusBadRequest},
-			kind:   services.CarrierIntelErrorInvalidRequest,
+			kind:   carrierintelports.CarrierIntelErrorInvalidRequest,
 			status: 400,
 		},
 		{
 			name:   "422",
 			err:    &restx.APIError{StatusCode: http.StatusUnprocessableEntity},
-			kind:   services.CarrierIntelErrorInvalidRequest,
+			kind:   carrierintelports.CarrierIntelErrorInvalidRequest,
 			status: 422,
 		},
 		{
 			name:   "500",
 			err:    &restx.APIError{StatusCode: http.StatusInternalServerError},
-			kind:   services.CarrierIntelErrorUnavailable,
+			kind:   carrierintelports.CarrierIntelErrorUnavailable,
 			status: 500,
 		},
 		{
@@ -100,7 +100,7 @@ func TestErrorMapper_Kinds(t *testing.T) {
 				Path:   "/v2/profile",
 				Err:    context.DeadlineExceeded,
 			},
-			kind: services.CarrierIntelErrorUnavailable,
+			kind: carrierintelports.CarrierIntelErrorUnavailable,
 		},
 	}
 
@@ -109,7 +109,7 @@ func TestErrorMapper_Kinds(t *testing.T) {
 			t.Parallel()
 
 			mapped := testMapper().Map(tc.err)
-			var providerErr *services.CarrierIntelProviderError
+			var providerErr *carrierintelports.CarrierIntelProviderError
 			require.ErrorAs(t, mapped, &providerErr)
 			assert.Equal(t, tc.kind, providerErr.Kind)
 			assert.Equal(t, tc.status, providerErr.StatusCode)
@@ -143,7 +143,7 @@ func TestErrorMapper_MessagesNeverEchoVendorText(t *testing.T) {
 		StatusCode: http.StatusUnauthorized,
 		Message:    "key sk_live_SECRET is invalid",
 	})
-	var providerErr *services.CarrierIntelProviderError
+	var providerErr *carrierintelports.CarrierIntelProviderError
 	require.ErrorAs(t, mapped, &providerErr)
 	assert.NotContains(t, providerErr.Error(), "SECRET")
 }
@@ -151,8 +151,8 @@ func TestErrorMapper_MessagesNeverEchoVendorText(t *testing.T) {
 func TestRecorder_RecordsStatusAndUnits(t *testing.T) {
 	t.Parallel()
 
-	var calls []services.CarrierIntelCall
-	recorder := NewRecorder(func(_ context.Context, call services.CarrierIntelCall) {
+	var calls []carrierintelports.CarrierIntelCall
+	recorder := NewRecorder(func(_ context.Context, call carrierintelports.CarrierIntelCall) {
 		calls = append(calls, call)
 	})
 

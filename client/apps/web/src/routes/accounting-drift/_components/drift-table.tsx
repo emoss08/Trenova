@@ -41,6 +41,7 @@ export default function DriftTable({
   return (
     <DataTable<AccountingDriftRow>
       name="Drift finding"
+      emptyTitle={t("No drift findings yet")}
       queryKey={ACCOUNTING_DRIFT_TABLE_KEY}
       graphql={graphql}
       resource={Resource.AccountingSync}

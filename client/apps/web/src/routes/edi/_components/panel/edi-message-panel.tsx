@@ -74,8 +74,12 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title={`EDI ${detail.transactionSet} Message`}
-      description={`${detail.direction} · control number ${detail.interchangeControlNumber || "—"}`}
+      title={t("EDI {0} Message", detail.transactionSet)}
+      description={
+        detail.direction === "Inbound"
+          ? t("Inbound · control number {0}", detail.interchangeControlNumber || "—")
+          : t("Outbound · control number {0}", detail.interchangeControlNumber || "—")
+      }
       size="lg"
       footer={
         <>

@@ -1,0 +1,92 @@
+package invoiceports
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+type ShareInvoiceRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	InvoiceID  pulid.ID              `json:"-"`
+	UserIDs    []pulid.ID            `json:"userIds"`
+	Note       string                `json:"note"`
+	Tab        invoice.ShareTab      `json:"tab"`
+}
+
+type ShareCandidate struct {
+	ID            pulid.ID `json:"id"`
+	Name          string   `json:"name"`
+	Username      string   `json:"username"`
+	EmailAddress  string   `json:"emailAddress"`
+	ProfilePicURL string   `json:"profilePicUrl"`
+	ThumbnailURL  string   `json:"thumbnailUrl"`
+}
+
+type ListShareCandidatesRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	InvoiceID  pulid.ID              `json:"-"`
+	Query      string                `json:"query"`
+	Pagination pagination.Info       `json:"pagination"`
+}
+
+type GetShareCandidateRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	InvoiceID  pulid.ID              `json:"-"`
+	UserID     pulid.ID              `json:"-"`
+}
+
+type InvoiceShareEmailStatus string
+
+const InvoiceShareEmailQueued = InvoiceShareEmailStatus("Queued")
+
+const InvoiceShareEmailPartial = InvoiceShareEmailStatus("Partial")
+
+const InvoiceShareEmailFailed = InvoiceShareEmailStatus("Failed")
+
+const InvoiceShareEmailNotConfigured = InvoiceShareEmailStatus("NotConfigured")
+
+type ShareInvoiceResult struct {
+	Shares         []*invoice.InvoiceShare `json:"shares"`
+	RecipientCount int                     `json:"recipientCount"`
+	EmailsQueued   int                     `json:"emailsQueued"`
+	EmailStatus    InvoiceShareEmailStatus `json:"emailStatus"`
+}
+
+type InvoiceShareRecipientPreview struct {
+	UserID       pulid.ID
+	Name         string
+	EmailAddress string
+	Emailed      bool
+	Subject      string
+	Body         string
+}
+
+type InvoiceSharePreview struct {
+	Invoice         *invoice.Invoice
+	SharedByName    string
+	Note            string
+	Tab             invoice.ShareTab
+	EmailConfigured bool
+	Recipients      []InvoiceShareRecipientPreview
+}
+
+type InvoiceShareService interface {
+	List(
+		ctx context.Context,
+		req *ListInvoiceSharesRequest,
+	) ([]*invoice.InvoiceShare, error)
+	Share(
+		ctx context.Context,
+		req *ShareInvoiceRequest,
+		actor *permissionports.RequestActor,
+	) (*ShareInvoiceResult, error)
+	ListCandidates(
+		ctx context.Context,
+		req *ListShareCandidatesRequest,
+	) (*pagination.ListResult[*ShareCandidate], error)
+	GetCandidate(ctx context.Context, req *GetShareCandidateRequest) (*ShareCandidate, error)
+}

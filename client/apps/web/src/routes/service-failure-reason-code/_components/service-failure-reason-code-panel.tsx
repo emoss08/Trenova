@@ -161,9 +161,12 @@ function ServiceFailureReasonCodeEditPanel({
   };
 
   const panelDescription = row?.updatedAt
-    ? `Last updated on ${formatToUserTimezone(row.updatedAt, {
-        timeFormat: TimeFormat.enum["24-hour"],
-      })}`
+    ? t(
+        "Last updated on {0}",
+        formatToUserTimezone(row.updatedAt, {
+          timeFormat: TimeFormat.enum["24-hour"],
+        }),
+      )
     : undefined;
 
   return (

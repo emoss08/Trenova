@@ -24,6 +24,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./distance-override-columns";
 import { DistanceOverridePanel } from "./distance-override-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const distanceOverrideService = new DistanceOverrideService();
 
@@ -48,7 +49,8 @@ export default function DistanceOverrideTable() {
     },
     onError: (error) => {
       toast.error(t("Failed to delete distance override"), {
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description:
+          error instanceof Error ? error.message : translate("An unexpected error occurred"),
       });
     },
   });
@@ -77,6 +79,7 @@ export default function DistanceOverrideTable() {
     <>
       <DataTable<DistanceOverrideRow>
         name="Distance Override"
+        emptyTitle={t("No distance overrides yet")}
         queryKey="distance-override-list"
         graphql={distanceOverrideTableGraphQLConfig}
         resource={Resource.DistanceOverride}

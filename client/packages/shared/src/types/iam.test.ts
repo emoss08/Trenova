@@ -11,7 +11,7 @@ import {
  * be empty.
  *
  * `AuthEvent.UserID`, `RiskDecision.UserID` and their tenant columns
- * (services/tms/internal/core/domain/iam/models.go) are `pulid.ID` declared
+ * (services/tms/internal/modules/identity/domain/iam/models.go) are `pulid.ID` declared
  * without `notnull`, on purpose: a login rejected before the account is
  * identified has no user, and no organization either.
  * `ProvisioningAuditRecord.ResourceID` is the same — a provisioning action that

@@ -3,7 +3,7 @@ package base
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/stretchr/testify/assert"

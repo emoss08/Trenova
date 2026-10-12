@@ -8,7 +8,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
-	"github.com/emoss08/trenova/internal/core/domain/aitraining"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -92,7 +92,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AiTrainingExportHistory(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNAITrainingExportHistoryEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaitrainingᚐExportHistoryEntryᚄ),
+				Marshal: gqlexec.Marshal(marshalNAITrainingExportHistoryEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaitrainingᚐExportHistoryEntryᚄ),
 			},
 		}},
 	},
@@ -111,15 +111,15 @@ var (
 	errNoChild2 = errors.New("field of type Timestamp does not have child fields")
 )
 
-func marshalNAITrainingExportHistoryEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaitrainingᚐExportHistoryEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*aitraining.ExportHistoryEntry) graphql.Marshaler {
+func marshalNAITrainingExportHistoryEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaitrainingᚐExportHistoryEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*aitraining.ExportHistoryEntry) graphql.Marshaler {
 	return gqlexec.List[*aitraining.ExportHistoryEntry]{
-		Elem:        marshalNAITrainingExportHistoryEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaitrainingᚐExportHistoryEntry,
+		Elem:        marshalNAITrainingExportHistoryEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaitrainingᚐExportHistoryEntry,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAITrainingExportHistoryEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaitrainingᚐExportHistoryEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aitraining.ExportHistoryEntry) graphql.Marshaler {
+func marshalNAITrainingExportHistoryEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaitrainingᚐExportHistoryEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aitraining.ExportHistoryEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

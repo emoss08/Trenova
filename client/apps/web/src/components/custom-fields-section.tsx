@@ -38,7 +38,7 @@ function CustomFieldRenderer<T extends FieldValues>({
 
   const fieldName = `${fieldPrefix}.${definition.id}` as Path<T>;
   const rules = {
-    required: definition.isRequired ? `${definition.label} is required` : false,
+    required: definition.isRequired ? t("{0} is required", definition.label) : false,
   };
 
   switch (definition.fieldType) {

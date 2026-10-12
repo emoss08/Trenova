@@ -5,6 +5,7 @@ import {
   sortFieldSchema,
 } from "@trenova/shared/types/data-table";
 import { createLimitOffsetResponse } from "@trenova/shared/types/server";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const configurationVisibilitySchema = z.enum(["Private", "Public", "Shared"]);
 
@@ -98,6 +99,43 @@ export const tableConfigSchema = z.object({
 
 export type TableConfig = z.infer<typeof tableConfigSchema>;
 
+/**
+ * How one person last arranged a table: its columns, density and colour rules, and
+ * the saved view it was based on. Filters and sort live in the address instead.
+ */
+export const tableLayoutSchema = tableConfigSchema
+  .pick({
+    columnVisibility: true,
+    columnOrder: true,
+    columnSizing: true,
+    columnPinning: true,
+    formatRules: true,
+  })
+  .extend({
+    density: tableDensitySchema.nullish().catch(null),
+    activeViewId: z
+      .string()
+      .nullish()
+      .catch(null)
+      .transform((v) => v || null),
+    pinnedRowIds: z
+      .array(z.string())
+      .nullish()
+      .catch(null)
+      .transform((v) => v ?? []),
+    pinnedRowsCollapsed: z.boolean().nullish().catch(null).transform((v) => v ?? false),
+    lastSeenAt: z.number().nullish().catch(null).transform((v) => v ?? 0),
+    hideChangesSinceLastVisit: z
+      .boolean()
+      .nullish()
+      .catch(null)
+      .transform((v) => v ?? false),
+    hideTotals: z.boolean().nullish().catch(null).transform((v) => v ?? false),
+    virtualized: z.boolean().nullish().catch(null).transform((v) => v ?? false),
+  });
+
+export type TableLayout = z.infer<typeof tableLayoutSchema>;
+
 export type TableViewSource = {
   id: string;
   name: string;
@@ -108,9 +146,12 @@ export type ActiveTableView = TableViewSource & {
 };
 
 export const tableConfigurationFormSchema = z.object({
-  name: z.string().min(1, "Name is required").max(255),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(255),
   description: z.string().default(""),
-  resource: z.string().min(1, "Resource is required"),
+  resource: z.string().min(1, { error: () => translate("Resource is required") }),
   tableConfig: tableConfigSchema,
   visibility: configurationVisibilitySchema.default("Private"),
   isDefault: z.boolean().default(false),

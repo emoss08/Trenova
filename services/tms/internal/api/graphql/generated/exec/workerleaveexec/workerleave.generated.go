@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -44,7 +44,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.LeaveControl)
 					return obj.MeasurementMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNLeaveMeasurementMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveMeasurementMethod),
+				Marshal: gqlexec.Marshal(marshalNLeaveMeasurementMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveMeasurementMethod),
 			},
 			{
 				Name:       "entitlementWeeks",
@@ -132,7 +132,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.LeaveEntitlement)
 					return obj.Method, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNLeaveMeasurementMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveMeasurementMethod),
+				Marshal: gqlexec.Marshal(marshalNLeaveMeasurementMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveMeasurementMethod),
 			},
 			{
 				Name:      "window",
@@ -143,7 +143,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.LeaveEntitlement)
 					return obj.Window, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNLeaveWindow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveWindow),
+				Marshal: gqlexec.Marshal(marshalNLeaveWindow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveWindow),
 			},
 			{
 				Name:       "totalHours",
@@ -302,7 +302,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").OpenLeaveCase(ctx, fc.Args["input"].(gqlmodel.OpenLeaveCaseInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveCase),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCase),
 			},
 			{
 				Name:       "updateLeaveCase",
@@ -315,7 +315,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateLeaveCase(ctx, fc.Args["input"].(gqlmodel.UpdateLeaveCaseInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveCase),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCase),
 			},
 			{
 				Name:       "decideLeaveCase",
@@ -328,7 +328,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideLeaveCase(ctx, fc.Args["input"].(gqlmodel.DecideLeaveCaseInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveCase),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCase),
 			},
 			{
 				Name:       "closeLeaveCase",
@@ -341,7 +341,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CloseLeaveCase(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveCase),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCase),
 			},
 			{
 				Name:       "requestLeaveCertification",
@@ -354,7 +354,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RequestLeaveCertification(ctx, fc.Args["caseId"].(string), fc.Args["dueAt"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveCase),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCase),
 			},
 			{
 				Name:       "recordLeaveCertification",
@@ -367,7 +367,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordLeaveCertification(ctx, fc.Args["input"].(gqlmodel.RecordLeaveCertificationInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveCase),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCase),
 			},
 			{
 				Name:       "recordLeaveDay",
@@ -380,7 +380,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordLeaveDay(ctx, fc.Args["input"].(gqlmodel.RecordLeaveDayInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveEntry),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveEntry),
 			},
 			{
 				Name:       "updateLeaveDay",
@@ -393,7 +393,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateLeaveDay(ctx, fc.Args["input"].(gqlmodel.UpdateLeaveDayInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveEntry),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveEntry),
 			},
 			{
 				Name:       "deleteLeaveDay",
@@ -418,7 +418,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateLeaveControl(ctx, fc.Args["input"].(gqlmodel.UpdateLeaveControlInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNLeaveControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveControl),
+				Marshal: gqlexec.Marshal(marshalNLeaveControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveControl),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -432,7 +432,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").LeaveControl(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNLeaveControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveControl),
+				Marshal: gqlexec.Marshal(marshalNLeaveControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveControl),
 			},
 			{
 				Name:       "workerLeaveCases",
@@ -446,7 +446,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerLeaveCases(ctx, fc.Args["workerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveCaseᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCaseᚄ),
 			},
 			{
 				Name:       "workerLeaveCase",
@@ -460,7 +460,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerLeaveCase(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveCase),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCase),
 			},
 			{
 				Name:       "workerLeaveEntitlement",
@@ -474,7 +474,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerLeaveEntitlement(ctx, fc.Args["workerId"].(string), fc.Args["asOf"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNLeaveEntitlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveEntitlement),
+				Marshal: gqlexec.Marshal(marshalNLeaveEntitlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveEntitlement),
 			},
 			{
 				Name:       "leaveCertificationsOutstanding",
@@ -486,7 +486,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").LeaveCertificationsOutstanding(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveCaseᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCaseᚄ),
 			},
 		}},
 		{Object: "WorkerLeaveCase", Fields: []*gqlexec.Field{
@@ -538,7 +538,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerLeaveCase)
 					return obj.LeaveType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveType),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveType),
 			},
 			{
 				Name:     "status",
@@ -548,7 +548,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerLeaveCase)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNLeaveCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveCaseStatus),
+				Marshal: gqlexec.Marshal(marshalNLeaveCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCaseStatus),
 			},
 			{
 				Name:     "frequency",
@@ -558,7 +558,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerLeaveCase)
 					return obj.Frequency, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNLeaveFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveFrequency),
+				Marshal: gqlexec.Marshal(marshalNLeaveFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveFrequency),
 			},
 			{
 				Name:     "reason",
@@ -650,7 +650,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerLeaveCase)
 					return obj.CertificationStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveCertificationStatus),
+				Marshal: gqlexec.Marshal(marshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCertificationStatus),
 			},
 			{
 				Name:       "certificationRequestedAt",
@@ -788,7 +788,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerLeaveCase)
 					return obj.Worker, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker),
+				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 			{
 				Name:      "document",
@@ -798,7 +798,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerLeaveCase)
 					return obj.Document, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumentᚐDocument),
+				Marshal: gqlexec.Marshal(marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument),
 			},
 			{
 				Name:       "entries",
@@ -811,7 +811,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerLeaveCase)
 					return gqlexec.Resolver[resolverWorkerLeaveCase](ec, "WorkerLeaveCase").Entries(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerLeaveEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveEntryᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerLeaveEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveEntryᚄ),
 			},
 		}},
 		{Object: "WorkerLeaveEntry", Fields: []*gqlexec.Field{
@@ -1261,14 +1261,14 @@ func unmarshalInputOpenLeaveCaseInput(ctx context.Context, ec *gqlexec.Exec, obj
 			it.WorkerID = data
 		case "leaveType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("leaveType"))
-			data, err := unmarshalOWorkerLeaveType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveType(ctx, ec, v)
+			data, err := unmarshalOWorkerLeaveType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.LeaveType = data
 		case "frequency":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("frequency"))
-			data, err := unmarshalOLeaveFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveFrequency(ctx, ec, v)
+			data, err := unmarshalOLeaveFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveFrequency(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1361,7 +1361,7 @@ func unmarshalInputRecordLeaveCertificationInput(ctx context.Context, ec *gqlexe
 			it.CaseID = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveCertificationStatus(ctx, ec, v)
+			data, err := unmarshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCertificationStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1477,14 +1477,14 @@ func unmarshalInputUpdateLeaveCaseInput(ctx context.Context, ec *gqlexec.Exec, o
 			it.CaseID = data
 		case "leaveType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("leaveType"))
-			data, err := unmarshalOWorkerLeaveType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveType(ctx, ec, v)
+			data, err := unmarshalOWorkerLeaveType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.LeaveType = data
 		case "frequency":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("frequency"))
-			data, err := unmarshalOLeaveFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveFrequency(ctx, ec, v)
+			data, err := unmarshalOLeaveFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveFrequency(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1563,7 +1563,7 @@ func unmarshalInputUpdateLeaveControlInput(ctx context.Context, ec *gqlexec.Exec
 		switch k {
 		case "measurementMethod":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("measurementMethod"))
-			data, err := unmarshalOLeaveMeasurementMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveMeasurementMethod(ctx, ec, v)
+			data, err := unmarshalOLeaveMeasurementMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveMeasurementMethod(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1693,7 +1693,7 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveCertificationStatus(ctx context.Context, ec *gqlexec.Exec, v any) (worker.LeaveCertificationStatus, error) {
+func unmarshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCertificationStatus(ctx context.Context, ec *gqlexec.Exec, v any) (worker.LeaveCertificationStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := worker.LeaveCertificationStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1766,7 +1766,7 @@ func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, e
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOLeaveFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.LeaveFrequency, error) {
+func unmarshalOLeaveFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.LeaveFrequency, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1775,7 +1775,7 @@ func unmarshalOLeaveFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOLeaveMeasurementMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveMeasurementMethod(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.LeaveMeasurementMethod, error) {
+func unmarshalOLeaveMeasurementMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveMeasurementMethod(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.LeaveMeasurementMethod, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1800,7 +1800,7 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOWorkerLeaveType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveType(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.LeaveType, error) {
+func unmarshalOWorkerLeaveType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveType(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.LeaveType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1857,7 +1857,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNLeaveCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveCaseStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveCaseStatus) graphql.Marshaler {
+func marshalNLeaveCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCaseStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveCaseStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1865,7 +1865,7 @@ func marshalNLeaveCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
-func marshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveCertificationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveCertificationStatus) graphql.Marshaler {
+func marshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCertificationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveCertificationStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1873,7 +1873,7 @@ func marshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNLeaveControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.LeaveControl) graphql.Marshaler {
+func marshalNLeaveControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.LeaveControl) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1881,7 +1881,7 @@ func marshalNLeaveControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return ec.MarshalType(ctx, sel, "LeaveControl", v)
 }
 
-func marshalNLeaveEntitlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveEntitlement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.LeaveEntitlement) graphql.Marshaler {
+func marshalNLeaveEntitlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveEntitlement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.LeaveEntitlement) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1889,7 +1889,7 @@ func marshalNLeaveEntitlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return ec.MarshalType(ctx, sel, "LeaveEntitlement", v)
 }
 
-func marshalNLeaveFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveFrequency(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveFrequency) graphql.Marshaler {
+func marshalNLeaveFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveFrequency(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveFrequency) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1897,7 +1897,7 @@ func marshalNLeaveFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
-func marshalNLeaveMeasurementMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveMeasurementMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveMeasurementMethod) graphql.Marshaler {
+func marshalNLeaveMeasurementMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveMeasurementMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveMeasurementMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1905,7 +1905,7 @@ func marshalNLeaveMeasurementMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNLeaveWindow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveWindow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveWindow) graphql.Marshaler {
+func marshalNLeaveWindow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveWindow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveWindow) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "LeaveWindow", &v)
 }
 
@@ -1917,15 +1917,15 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWorkerLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveCaseᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerLeaveCase) graphql.Marshaler {
+func marshalNWorkerLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCaseᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerLeaveCase) graphql.Marshaler {
 	return gqlexec.List[*worker.WorkerLeaveCase]{
-		Elem:        marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveCase,
+		Elem:        marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCase,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveCase(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerLeaveCase) graphql.Marshaler {
+func marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCase(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerLeaveCase) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1933,15 +1933,15 @@ func marshalNWorkerLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "WorkerLeaveCase", v)
 }
 
-func marshalNWorkerLeaveEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerLeaveEntry) graphql.Marshaler {
+func marshalNWorkerLeaveEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerLeaveEntry) graphql.Marshaler {
 	return gqlexec.List[*worker.WorkerLeaveEntry]{
-		Elem:        marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveEntry,
+		Elem:        marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveEntry,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerLeaveEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerLeaveEntry) graphql.Marshaler {
+func marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerLeaveEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1949,7 +1949,7 @@ func marshalNWorkerLeaveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return ec.MarshalType(ctx, sel, "WorkerLeaveEntry", v)
 }
 
-func marshalNWorkerLeaveType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐLeaveType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveType) graphql.Marshaler {
+func marshalNWorkerLeaveType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.LeaveType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1986,14 +1986,14 @@ func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 	return res
 }
 
-func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
+func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Worker", v)
 }
 
-func marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumentᚐDocument(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *document.Document) graphql.Marshaler {
+func marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *document.Document) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

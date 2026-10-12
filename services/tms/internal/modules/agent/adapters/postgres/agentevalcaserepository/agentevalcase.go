@@ -1,0 +1,575 @@
+package agentevalcaserepository
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentqualitycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+const (
+	defaultListLimit  = 500
+	maxListLimit      = 2000
+	defaultBatchLimit = 200
+	maxBatchLimit     = 1000
+	entityName        = "AgentEvalCase"
+)
+
+type Params struct {
+	fx.In
+
+	DB     *postgres.Connection
+	Logger *zap.Logger
+}
+
+type repository struct {
+	db *postgres.Connection
+	l  *zap.Logger
+}
+
+func New(p Params) agentqualityports.AgentEvalCaseRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.agentevalcase-repository"),
+	}
+}
+
+func (r *repository) Create(
+	ctx context.Context,
+	entity *agentquality.EvalCase,
+) (*agentquality.EvalCase, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentquality.EvalCase, error) {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("create agent eval case: %w", err)
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) Update(
+	ctx context.Context,
+	entity *agentquality.EvalCase,
+) (*agentquality.EvalCase, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentquality.EvalCase, error) {
+		cols := agentqualitycol.EvalCaseColumns
+		ov := entity.Version
+		entity.Version++
+		entity.UpdatedAt = timeutils.NowUnix()
+
+		res, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return agentqualitycol.EvalCaseScopeTenantUpdate(uq, pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				}).
+					Where(cols.ID.Eq(), entity.ID).
+					Where(cols.Version.Eq(), ov)
+			}).
+			Set(cols.Title.Set(), bun.NullZero(entity.Title)).
+			Set(cols.Status.Set(), entity.Status).
+			Set(cols.Input.Set(), entity.Input).
+			Set(cols.History.Set(), entity.History).
+			Set(cols.PageContext.Set(), entity.PageContext).
+			Set(cols.Mentions.Set(), entity.Mentions).
+			Set(cols.SubjectType.Set(), bun.NullZero(entity.SubjectType)).
+			Set(cols.SubjectID.Set(), entity.SubjectID).
+			Set(cols.HeldTools.Set(), pgArray(entity.HeldTools)).
+			Set(cols.ToolFixtures.Set(), entity.ToolFixtures).
+			Set(cols.Expected.Set(), entity.Expected).
+			Set(cols.Rubric.Set(), bun.NullZero(entity.Rubric)).
+			Set(cols.Redaction.Set(), entity.Redaction).
+			Set(cols.ContentHash.Set(), entity.ContentHash).
+			Set(cols.ExpiresAt.Set(), entity.ExpiresAt).
+			Set(cols.UpdatedAt.Set(), entity.UpdatedAt).
+			Set(cols.Version.Set(), entity.Version).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("update agent eval case: %w", err)
+		}
+
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return nil, fmt.Errorf("update agent eval case rows: %w", err)
+		}
+		if rows == 0 {
+			return nil, dberror.CreateVersionMismatchError(entityName, entity.ID.String())
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) GetByID(
+	ctx context.Context,
+	req agentqualityports.GetAgentEvalCaseByIDRequest,
+) (*agentquality.EvalCase, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.EvalCase, error) {
+		entity := new(agentquality.EvalCase)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo).
+					Where(agentqualitycol.EvalCaseColumns.ID.Eq(), req.ID)
+			}).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, entityName)
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) GetByContent(
+	ctx context.Context,
+	req agentqualityports.GetAgentEvalCaseByContentRequest,
+) (*agentquality.EvalCase, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.EvalCase, error) {
+		cols := agentqualitycol.EvalCaseColumns
+		entity := new(agentquality.EvalCase)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo).
+					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
+					Where(cols.ContentHash.Eq(), req.ContentHash)
+			}).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, entityName)
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) GetByProposal(
+	ctx context.Context,
+	req agentqualityports.GetAgentEvalCaseByProposalRequest,
+) (*agentquality.EvalCase, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.EvalCase, error) {
+		entity := new(agentquality.EvalCase)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo).
+					Where(agentqualitycol.EvalCaseColumns.SourceProposalID.Eq(), req.ProposalID)
+			}).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, entityName)
+		}
+
+		return entity, nil
+	})
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *agentqualityports.ListAgentEvalCaseConnectionRequest,
+) (*pagination.CursorListResult[*agentquality.EvalCase], error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*agentquality.EvalCase], error) {
+			log := r.l.With(zap.String("operation", "ListConnection"))
+			dba := r.db.DBForContext(ctx)
+
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*agentquality.EvalCase)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						sq = querybuilder.ApplyFiltersWithoutSort(
+							sq,
+							agentqualitycol.EvalCaseTable.Alias,
+							req.Filter,
+							(*agentquality.EvalCase)(nil),
+						)
+
+						scoped := sq.Apply(
+							agentqualitycol.EvalCaseApplyTenant(req.Filter.TenantInfo),
+						)
+
+						return applyScope(scoped, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count agent eval cases", zap.Error(err))
+
+					return nil, err
+				}
+				totalCount = new(int(total))
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*agentquality.EvalCase]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*agentquality.EvalCase) *bun.SelectQuery {
+						q := dba.NewSelect().Model(entities)
+						if len(req.Columns) > 0 {
+							q = q.Column(req.Columns...)
+						}
+
+						return q
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						filtered, err := querybuilder.ApplyCursorFilters(
+							sq,
+							agentqualitycol.EvalCaseTable.Alias,
+							req.Filter,
+							req.Cursor,
+							(*agentquality.EvalCase)(nil),
+						)
+						if err != nil {
+							return nil, err
+						}
+
+						return applyScope(filtered, req), nil
+					},
+				})
+			if err != nil {
+				log.Error("failed to list agent eval cases", zap.Error(err))
+
+				return nil, err
+			}
+
+			return result, nil
+		},
+	)
+}
+
+func applyScope(
+	sq *bun.SelectQuery,
+	req *agentqualityports.ListAgentEvalCaseConnectionRequest,
+) *bun.SelectQuery {
+	cols := agentqualitycol.EvalCaseColumns
+	if req.AgentDefinitionID.IsNotNil() {
+		sq = sq.Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
+	}
+	if len(req.Statuses) > 0 {
+		sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
+	}
+	if len(req.Sources) > 0 {
+		sq = sq.Where(cols.Source.In(), bun.List(req.Sources))
+	}
+
+	return sq
+}
+
+func (r *repository) ListByAgent(
+	ctx context.Context,
+	req agentqualityports.ListAgentEvalCasesRequest,
+) ([]*agentquality.EvalCase, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentquality.EvalCase, error) {
+		cols := agentqualitycol.EvalCaseColumns
+		limit := clamp(req.Limit, defaultListLimit, maxListLimit)
+
+		entities := make([]*agentquality.EvalCase, 0, min(limit, defaultBatchLimit))
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo).
+					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
+				if len(req.Statuses) > 0 {
+					sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
+				}
+
+				return sq
+			}).
+			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
+			Limit(int64(limit)).
+			Scan(ctx); err != nil {
+			return nil, fmt.Errorf("list agent eval cases: %w", err)
+		}
+
+		return entities, nil
+	})
+}
+
+func (r *repository) ListCaptureCandidates(
+	ctx context.Context,
+	req agentqualityports.ListEvalCaseCaptureCandidatesRequest,
+) ([]agentqualityports.EvalCaseCaptureCandidate, error) {
+	ctx = dbscope.WithSystem(ctx, "list evaluation case candidates across every organization")
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]agentqualityports.EvalCaseCaptureCandidate, error) {
+			decision := agentcol.AgentDecisionColumns
+			proposal := agentcol.AgentProposalColumns
+			run := agentcol.AgentRunColumns
+			evalCase := agentqualitycol.EvalCaseColumns
+			limit := clamp(req.Limit, defaultBatchLimit, maxBatchLimit)
+
+			db := r.db.DBForContext(ctx)
+			captured := db.NewSelect().
+				Model((*agentquality.EvalCase)(nil)).
+				ColumnExpr("1").
+				Where(evalCase.OrganizationID.EqColumn(decision.OrganizationID)).
+				Where(evalCase.BusinessUnitID.EqColumn(decision.BusinessUnitID)).
+				Where(evalCase.SourceProposalID.EqColumn(decision.ProposalID))
+
+			rows := make([]agentqualityports.EvalCaseCaptureCandidate, 0, limit)
+			if err := db.NewSelect().
+				Model((*agent.AgentDecision)(nil)).
+				ColumnExpr(decision.OrganizationID.As("organization_id")).
+				ColumnExpr(decision.BusinessUnitID.As("business_unit_id")).
+				ColumnExpr(decision.ProposalID.As("proposal_id")).
+				ColumnExpr(decision.ID.As("decision_id")).
+				ColumnExpr(decision.DecidedByUserID.As("decided_by_user_id")).
+				ColumnExpr(run.AgentDefinitionID.As("agent_definition_id")).
+				ColumnExpr(decision.CreatedAt.As("decided_at")).
+				Join("JOIN "+agentcol.AgentProposalTable.As(agentcol.AgentProposalTable.Alias)+
+					" ON "+proposal.ID.EqColumn(decision.ProposalID)+
+					" AND "+proposal.OrganizationID.EqColumn(decision.OrganizationID)+
+					" AND "+proposal.BusinessUnitID.EqColumn(decision.BusinessUnitID)).
+				Join("JOIN "+agentcol.AgentRunTable.As(agentcol.AgentRunTable.Alias)+
+					" ON "+run.ID.EqColumn(proposal.RunID)+
+					" AND "+run.OrganizationID.EqColumn(proposal.OrganizationID)+
+					" AND "+run.BusinessUnitID.EqColumn(proposal.BusinessUnitID)).
+				Where(decision.ProposalID.IsNotNull()).
+				Where(decision.Decision.In(), bun.List([]agent.DecisionType{
+					agent.DecisionAccepted,
+					agent.DecisionModified,
+					agent.DecisionRejected,
+				})).
+				Where(decision.CreatedAt.Gte(), req.Since).
+				Where(run.AgentDefinitionID.IsNotNull()).
+				Where("NOT EXISTS (?)", captured).
+				Order(decision.CreatedAt.OrderAsc(), decision.ID.OrderAsc()).
+				Limit(int64(limit)).
+				Scan(ctx, &rows); err != nil {
+				return nil, fmt.Errorf("list eval case capture candidates: %w", err)
+			}
+
+			return rows, nil
+		},
+	)
+}
+
+func (r *repository) PurgeExpired(
+	ctx context.Context,
+	req agentqualityports.PurgeExpiredEvalCasesRequest,
+) (int, error) {
+	if req.AllTenants {
+		ctx = dbscope.WithSystem(ctx, "purge expired evaluation cases across every organization")
+	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := agentqualitycol.EvalCaseColumns
+		limit := clamp(req.Limit, defaultBatchLimit, maxBatchLimit)
+		db := r.db.DBForContext(ctx)
+
+		due := db.NewSelect().
+			Model((*agentquality.EvalCase)(nil)).
+			Column(cols.ID.Bare(), cols.BusinessUnitID.Bare(), cols.OrganizationID.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				if !req.AllTenants {
+					sq = agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo)
+				}
+
+				return sq.WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+					inner = inner.WhereOr(
+						cols.ExpiresAt.Expr("({} IS NOT NULL AND {} <= ?)"),
+						req.Now,
+					)
+					if req.CreatedBefore > 0 {
+						inner = inner.WhereOr(cols.CreatedAt.Lt(), req.CreatedBefore)
+					}
+
+					return inner
+				})
+			}).
+			Order(cols.CreatedAt.OrderAsc()).
+			Limit(int64(limit))
+
+		return r.deleteKeys(ctx, due)
+	})
+}
+
+func (r *repository) PurgeOrphaned(
+	ctx context.Context,
+	req agentqualityports.PurgeOrphanedEvalCasesRequest,
+) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "purge orphaned evaluation cases across every organization")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := agentqualitycol.EvalCaseColumns
+		thread := conversationcol.ThreadColumns
+		limit := clamp(req.Limit, defaultBatchLimit, maxBatchLimit)
+		db := r.db.DBForContext(ctx)
+
+		live := db.NewSelect().
+			Model((*conversation.Thread)(nil)).
+			ColumnExpr("1").
+			Where(thread.ID.EqColumn(cols.SourceThreadID)).
+			Where(thread.OrganizationID.EqColumn(cols.OrganizationID)).
+			Where(thread.BusinessUnitID.EqColumn(cols.BusinessUnitID))
+
+		orphaned := db.NewSelect().
+			Model((*agentquality.EvalCase)(nil)).
+			Column(cols.ID.Bare(), cols.BusinessUnitID.Bare(), cols.OrganizationID.Bare()).
+			Where(cols.SourceThreadID.IsNotNull()).
+			Where("NOT EXISTS (?)", live).
+			Order(cols.CreatedAt.OrderAsc()).
+			Limit(int64(limit))
+
+		return r.deleteKeys(ctx, orphaned)
+	})
+}
+
+func (r *repository) deleteKeys(ctx context.Context, keys *bun.SelectQuery) (int, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := agentqualitycol.EvalCaseColumns
+		res, err := r.db.DBForContext(ctx).
+			NewDelete().
+			Model((*agentquality.EvalCase)(nil)).
+			Where(
+				buncolgen.Expr(
+					"({0}, {1}, {2}) IN (?)",
+					cols.ID,
+					cols.BusinessUnitID,
+					cols.OrganizationID,
+				),
+				keys,
+			).
+			Exec(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("purge agent eval cases: %w", err)
+		}
+
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return 0, fmt.Errorf("purge agent eval cases rows: %w", err)
+		}
+
+		return int(affected), nil
+	})
+}
+
+func clamp(value, fallback, ceiling int) int {
+	return intutils.Clamp(intutils.WithDefault(value, fallback), 1, ceiling)
+}
+
+func pgArray(values []string) any {
+	if values == nil {
+		values = []string{}
+	}
+
+	return pgdialect.Array(values)
+}
+
+func (r *repository) ListAgentsWithActiveCases(
+	ctx context.Context,
+	req agentqualityports.ListAgentsWithActiveEvalCasesRequest,
+) ([]pulid.ID, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
+		cols := agentqualitycol.EvalCaseColumns
+
+		ids := make([]pulid.ID, 0, defaultBatchLimit)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*agentquality.EvalCase)(nil)).
+			ColumnExpr(cols.AgentDefinitionID.Qualified()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo).
+					Where(cols.Status.Eq(), agentquality.CaseStatusActive)
+			}).
+			GroupExpr(cols.AgentDefinitionID.Qualified()).
+			OrderExpr(cols.AgentDefinitionID.OrderAsc()).
+			Limit(maxListLimit).
+			Scan(ctx, &ids); err != nil {
+			return nil, fmt.Errorf("list agents with active eval cases: %w", err)
+		}
+
+		return ids, nil
+	})
+}
+
+func (r *repository) ListSamplingCases(
+	ctx context.Context,
+	req agentqualityports.ListEvalCaseSamplingRequest,
+) ([]agentquality.SamplingCase, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentquality.SamplingCase, error) {
+		cols := agentqualitycol.EvalCaseColumns
+		evals := agentcol.EvaluationColumns
+		dba := r.db.DBForContext(ctx)
+
+		lastFailure := dba.NewSelect().
+			Model((*agent.Evaluation)(nil)).
+			ColumnExpr(buncolgen.Expr(
+				"CASE WHEN {0} = ? OR ({1} ->> 'passed') = 'false' THEN COALESCE({2}, {3}) ELSE 0 END",
+				evals.Status,
+				evals.Checks,
+				evals.CompletedAt,
+				evals.UpdatedAt,
+			), agent.EvaluationStatusFailed).
+			Where(evals.EvalCaseID.EqColumn(cols.ID)).
+			Where(evals.OrganizationID.EqColumn(cols.OrganizationID)).
+			Where(evals.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
+			Where(evals.Status.In(), bun.List([]agent.EvaluationStatus{
+				agent.EvaluationStatusCompleted,
+				agent.EvaluationStatusFailed,
+			})).
+			OrderExpr(evals.CreatedAt.OrderDesc()).
+			OrderExpr(evals.ID.OrderDesc()).
+			Limit(1)
+
+		cases := make([]agentquality.SamplingCase, 0, defaultBatchLimit)
+		if err := dba.NewSelect().
+			Model((*agentquality.EvalCase)(nil)).
+			ColumnExpr(cols.ID.As("id")).
+			ColumnExpr(cols.Source.As("source")).
+			ColumnExpr(cols.Version.As("version")).
+			ColumnExpr(cols.Trigger.As("trigger")).
+			ColumnExpr(cols.SubjectType.As("subject_type")).
+			ColumnExpr(cols.SubjectID.As("subject_id")).
+			ColumnExpr("COALESCE((?), 0) AS last_failed_at", lastFailure).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo).
+					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
+					Where(cols.Status.Eq(), agentquality.CaseStatusActive)
+			}).
+			OrderExpr(cols.ID.OrderAsc()).
+			Limit(maxListLimit).
+			Scan(ctx, &cases); err != nil {
+			return nil, fmt.Errorf("list eval cases to sample: %w", err)
+		}
+
+		return cases, nil
+	})
+}

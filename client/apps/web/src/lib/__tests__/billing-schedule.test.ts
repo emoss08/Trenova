@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { registerCatalogSource, setLocale } from "@trenova/shared/i18n/runtime";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { describeBillingSchedule, type BillingSchedule } from "@/lib/billing-schedule";
 
 function schedule(overrides: Partial<BillingSchedule> = {}): BillingSchedule {
@@ -125,5 +126,43 @@ describe("describeBillingSchedule", () => {
         "as soon as a shipment is approved",
       );
     }
+  });
+});
+
+/**
+ * Every sentence is a whole message, so a translation never stitches English clauses
+ * together, and the day is a plain number the translation places ("el día 15").
+ */
+describe("describeBillingSchedule in another language", () => {
+  beforeAll(async () => {
+    await registerCatalogSource({
+      es: async () => ({
+        "Bills every month on the {0}.": "Factura cada mes el día {0}.",
+        "All of this customer's delivered shipments in the period are combined into one invoice per PO number.":
+          "Todos los envíos entregados de este cliente en el periodo se combinan en una factura por número de OC.",
+        "Lines are grouped by delivery location.": "Las líneas se agrupan por lugar de entrega.",
+        "Each invoice shows one line per shipment.": "Cada factura muestra una línea por envío.",
+      }),
+    });
+    await setLocale("es");
+  });
+
+  afterAll(async () => {
+    await setLocale("en");
+  });
+
+  it("reads as whole Spanish sentences with the day as a number", () => {
+    expect(
+      describeBillingSchedule(
+        schedule({
+          billingCycleAnchorDay: 15,
+          splitBy: "CustomerAndPONumber",
+          sectionBy: "Destination",
+          invoiceDetail: "Summary",
+        }),
+      ),
+    ).toBe(
+      "Factura cada mes el día 15. Todos los envíos entregados de este cliente en el periodo se combinan en una factura por número de OC. Las líneas se agrupan por lugar de entrega. Cada factura muestra una línea por envío.",
+    );
   });
 });

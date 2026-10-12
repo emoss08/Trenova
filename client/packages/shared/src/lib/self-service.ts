@@ -5,6 +5,7 @@
  */
 
 import type { BadgeVariant } from "@trenova/shared/types/badge";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /**
  * Whether a typed signature is the worker's own name. Case and surrounding
@@ -84,11 +85,11 @@ export function describeChanges(changes: readonly FieldChangeLike[]): string[] {
   return changes.map((change) => `${change.label}: ${shown(change.from)} → ${shown(change.to)}`);
 }
 
-const AUDIENCE_LABELS: Record<string, string> = {
+const AUDIENCE_LABELS: Record<string, string> = defineLabels({
   All: "Everyone",
   Employees: "Employees",
   Contractors: "Owner-operators",
-};
+});
 
 export function policyAudienceLabel(audience: string): string {
   return AUDIENCE_LABELS[audience] ?? audience;

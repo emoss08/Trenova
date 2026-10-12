@@ -210,7 +210,7 @@ export function ScheduleCard() {
                     if (next === "None") return;
                     saveAvailability({ dayOfWeek, preference: next });
                   }}
-                  aria-label={`${label} availability`}
+                  aria-label={t("{0} availability", label)}
                 />
               </li>
             );

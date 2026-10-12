@@ -1,5 +1,8 @@
 import { apiService } from "@/services/api";
-import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
+import type {
+  FormulaTemplate,
+  TestExpressionRequest,
+} from "@trenova/shared/types/formula-template";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 import type { QueryClient } from "@tanstack/react-query";
 
@@ -11,6 +14,10 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
   usage: (templateId: FormulaTemplate["id"]) => ({
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.getUsage(templateId),
+  }),
+  price: (request: TestExpressionRequest) => ({
+    queryKey: [request],
+    queryFn: async () => apiService.formulaTemplateService.test(request),
   }),
   schema: (schemaId: string) => ({
     queryKey: [schemaId],

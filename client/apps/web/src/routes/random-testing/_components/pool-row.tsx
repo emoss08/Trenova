@@ -97,7 +97,7 @@ export function PoolRow({
         ) : null}
       </div>
 
-      <ol aria-label={`Rounds in ${year}`} className="flex flex-wrap gap-1">
+      <ol aria-label={t("Rounds in {0}", year)} className="flex flex-wrap gap-1">
         {calendar.map((slot) => (
           <li key={slot.key}>
             <Tooltip>
@@ -149,7 +149,9 @@ export function PoolRow({
           size="xs"
           variant={selected ? "default" : "ghost"}
           aria-pressed={selected}
-          aria-label={selected ? "Show every pool's rounds" : `Show rounds for ${pool.code}`}
+          aria-label={
+            selected ? t("Show every pool's rounds") : t("Show rounds for {0}", pool.code)
+          }
           onClick={() => onSelect(selected ? null : pool.id)}
         >
           <FilterLinesIcon className="size-3" />
@@ -159,7 +161,7 @@ export function PoolRow({
           <Button
             size="xs"
             variant="outline"
-            aria-label={`Edit ${pool.code}`}
+            aria-label={t("Edit {0}", pool.code)}
             onClick={() => onEdit(pool)}
           >
             <Edit02Icon className="size-3" />

@@ -33,6 +33,7 @@ func TestAnthropicTraits(t *testing.T) {
 		{"claude-sonnet-5", anthropicModel{adaptive: true}},
 		{"claude-sonnet-4-6", anthropicModel{adaptive: true}},
 		{"claude-sonnet-4-5", anthropicModel{}},
+		{"claude-haiku-5-5", anthropicModel{adaptive: true, disableNeedsLowEffort: true}},
 		{"claude-haiku-4-5", anthropicModel{}},
 		{"claude-haiku-4-5-20251001", anthropicModel{}},
 		{"claude-fable-5-1", anthropicModel{adaptive: true, thinksAlways: true, bindsPrefix: true}},

@@ -4,12 +4,13 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
@@ -22,7 +23,7 @@ func aiCorrectionColumns(ctx context.Context, nodePathPrefix string) []string {
 		return selection.Columns
 	}
 
-	cols := buncolgen.CorrectionColumns
+	cols := aicorrectioncol.CorrectionColumns
 	columns := sliceutils.AppendIfMissing(selection.Columns, cols.CorrectCount.Bare())
 
 	return sliceutils.AppendIfMissing(columns, cols.ScoredCount.Bare())

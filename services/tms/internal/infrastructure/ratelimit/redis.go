@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -76,8 +76,8 @@ func NewRedisStore(client redis.Scripter, keyPrefix string) (*RedisStore, error)
 
 func (s *RedisStore) Check(
 	ctx context.Context,
-	requests []repositories.RateLimitRequest,
-) ([]repositories.RateLimitDecision, error) {
+	requests []kernelports.RateLimitRequest,
+) ([]kernelports.RateLimitDecision, error) {
 	if err := validateRequests(requests); err != nil {
 		return nil, err
 	}
@@ -109,10 +109,10 @@ func (s *RedisStore) Check(
 		)
 	}
 
-	decisions := make([]repositories.RateLimitDecision, len(requests))
+	decisions := make([]kernelports.RateLimitDecision, len(requests))
 	for i := range requests {
 		base := i * fieldsPerDecision
-		decisions[i] = repositories.RateLimitDecision{
+		decisions[i] = kernelports.RateLimitDecision{
 			Allowed:    raw[base] == 1,
 			Limit:      requests[i].Policy.Burst,
 			Remaining:  int(raw[base+1]),

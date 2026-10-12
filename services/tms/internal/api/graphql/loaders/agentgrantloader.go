@@ -3,9 +3,9 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,18 +15,18 @@ import (
 type agentGrantLister interface {
 	ListRolesByAgents(
 		ctx context.Context,
-		req repositories.ListGrantsByAgentsRequest,
+		req permissionports.ListGrantsByAgentsRequest,
 	) (map[pulid.ID][]*permission.Role, error)
 	ListAgentsByRoles(
 		ctx context.Context,
-		req repositories.ListGrantsByRolesRequest,
+		req permissionports.ListGrantsByRolesRequest,
 	) (map[pulid.ID][]*agentdefinition.Definition, error)
 }
 
 type AgentGrantLoaderFactoryParams struct {
 	fx.In
 
-	Grants repositories.RoleAgentGrantRepository
+	Grants permissionports.RoleAgentGrantRepository
 }
 
 // AccessRolesByAgentIDLoaderFactory reads the roles granted a page of agents
@@ -41,7 +41,7 @@ func NewAccessRolesByAgentIDLoaderFactory(
 	return &AccessRolesByAgentIDLoaderFactory{grants: p.Grants}
 }
 
-func (f *AccessRolesByAgentIDLoaderFactory) NewForTenant(
+func newAccessRolesByAgentIDLoader(f *AccessRolesByAgentIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*permission.Role] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -52,7 +52,7 @@ func (f *AccessRolesByAgentIDLoaderFactory) batchFunc(
 ) batchFetchFunc[[]*permission.Role] {
 	return batchGroupFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*permission.Role, error) {
-			return f.grants.ListRolesByAgents(ctx, repositories.ListGrantsByAgentsRequest{
+			return f.grants.ListRolesByAgents(ctx, permissionports.ListGrantsByAgentsRequest{
 				TenantInfo: tenantInfo,
 				AgentIDs:   ids,
 			})
@@ -70,7 +70,7 @@ func NewAgentsByRoleIDLoaderFactory(p AgentGrantLoaderFactoryParams) *AgentsByRo
 	return &AgentsByRoleIDLoaderFactory{grants: p.Grants}
 }
 
-func (f *AgentsByRoleIDLoaderFactory) NewForTenant(
+func newAgentsByRoleIDLoader(f *AgentsByRoleIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, []*agentdefinition.Definition] {
 	return newLoader(f.batchFunc(tenantInfo))
@@ -84,7 +84,7 @@ func (f *AgentsByRoleIDLoaderFactory) batchFunc(
 			ctx context.Context,
 			ids []pulid.ID,
 		) (map[pulid.ID][]*agentdefinition.Definition, error) {
-			return f.grants.ListAgentsByRoles(ctx, repositories.ListGrantsByRolesRequest{
+			return f.grants.ListAgentsByRoles(ctx, permissionports.ListGrantsByRolesRequest{
 				TenantInfo: tenantInfo,
 				RoleIDs:    ids,
 			})

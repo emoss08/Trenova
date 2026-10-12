@@ -13,6 +13,7 @@ import {
 } from "./helpers";
 import { invoiceDetailSchema, invoiceSectionKeySchema } from "./customer";
 import { shipmentSchema } from "./shipment";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const invoiceStatusSchema = z.enum(["Draft", "Posted", "Voided"]);
 export type InvoiceStatus = z.infer<typeof invoiceStatusSchema>;
@@ -481,8 +482,10 @@ export const voidInvoiceFormSchema = z.object({
   reason: z
     .string()
     .trim()
-    .min(1, "Say why the invoice is being voided")
-    .max(MAX_VOID_REASON_LENGTH, `Reason must be at most ${MAX_VOID_REASON_LENGTH} characters`),
+    .min(1, { error: () => translate("Say why the invoice is being voided") })
+    .max(MAX_VOID_REASON_LENGTH, {
+      error: () => translate("Reason must be at most {0} characters", MAX_VOID_REASON_LENGTH),
+    }),
   disposition: invoiceVoidDispositionSchema,
 });
 export type VoidInvoiceFormValues = z.infer<typeof voidInvoiceFormSchema>;
@@ -508,26 +511,38 @@ export function invoiceVoidBlocker(
 }
 
 export const memoLineFormSchema = z.object({
-  description: z.string().trim().min(1, "Description is required"),
-  amount: z.coerce.number().positive("Amount must be greater than zero"),
-  quantity: z.coerce.number().positive("Quantity must be greater than zero").default(1),
+  description: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Description is required") }),
+  amount: z.coerce
+    .number()
+    .positive({ error: () => translate("Amount must be greater than zero") }),
+  quantity: z.coerce
+    .number()
+    .positive({ error: () => translate("Quantity must be greater than zero") })
+    .default(1),
   accessorialChargeId: z.string().nullish(),
 });
 export type MemoLineFormValues = z.infer<typeof memoLineFormSchema>;
 
 export const memoFormSchema = z.object({
-  customerId: z.string().min(1, "Customer is required"),
+  customerId: z.string().min(1, { error: () => translate("Customer is required") }),
   billType: z.enum(["CreditMemo", "DebitMemo"]),
   referenceInvoiceId: z.string().nullish(),
   reason: z
     .string()
     .trim()
-    .min(1, "Say why the memo is being raised")
-    .max(MAX_MEMO_REASON_LENGTH, `Reason must be at most ${MAX_MEMO_REASON_LENGTH} characters`),
+    .min(1, { error: () => translate("Say why the memo is being raised") })
+    .max(MAX_MEMO_REASON_LENGTH, {
+      error: () => translate("Reason must be at most {0} characters", MAX_MEMO_REASON_LENGTH),
+    }),
   invoiceDate: z.number().int().nullish(),
   memo: z.string().optional().default(""),
   autoPost: z.boolean().default(false),
-  lines: z.array(memoLineFormSchema).min(1, "A memo needs at least one line"),
+  lines: z
+    .array(memoLineFormSchema)
+    .min(1, { error: () => translate("A memo needs at least one line") }),
 });
 export type MemoFormValues = z.infer<typeof memoFormSchema>;
 
@@ -541,10 +556,14 @@ export function memoFormTotal(lines: readonly Pick<MemoLineFormValues, "amount" 
 
 export const openDisputeFormSchema = z.object({
   reasonCode: invoiceDisputeReasonCodeSchema,
-  disputedAmount: z.coerce.number().positive("Disputed amount must be greater than zero"),
+  disputedAmount: z.coerce
+    .number()
+    .positive({ error: () => translate("Disputed amount must be greater than zero") }),
   notes: z
     .string()
-    .max(MAX_DISPUTE_NOTES_LENGTH, `Notes must be at most ${MAX_DISPUTE_NOTES_LENGTH} characters`)
+    .max(MAX_DISPUTE_NOTES_LENGTH, {
+      error: () => translate("Notes must be at most {0} characters", MAX_DISPUTE_NOTES_LENGTH),
+    })
     .optional()
     .default(""),
 });
@@ -556,7 +575,9 @@ export const resolveDisputeFormSchema = z
     resolutionAdjustmentId: z.string().nullish(),
     resolutionNotes: z
       .string()
-      .max(MAX_DISPUTE_NOTES_LENGTH, `Notes must be at most ${MAX_DISPUTE_NOTES_LENGTH} characters`)
+      .max(MAX_DISPUTE_NOTES_LENGTH, {
+        error: () => translate("Notes must be at most {0} characters", MAX_DISPUTE_NOTES_LENGTH),
+      })
       .optional()
       .default(""),
   })
@@ -568,7 +589,7 @@ export const resolveDisputeFormSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["resolutionAdjustmentId"],
-        message: "Name the executed adjustment that settled this dispute",
+        message: translate("Name the executed adjustment that settled this dispute"),
       });
     }
   });

@@ -35,7 +35,7 @@
    The product is drawn in ink. The primary action is the foreground colour,
    not a hue, so colour on screen is left to mean something: a tone is a
    severity, an accent is a category, and Geist blue marks what you can follow
-   and what you have hold of — links, focus, selection.
+   and what you have hold of — links and focus.
 
    Blue sits in the blue arc, where three other things live, so that arc is
    pinned apart the way the warm one is:
@@ -147,6 +147,8 @@
   --foreground: oklch(0.205 0 0);
   --foreground-muted: oklch(0.51 0 0);
   --foreground-subtle: oklch(0.53 0 0);
+  /* Faint: placeholder dashes and decoration beside a value, never the value itself. */
+  --foreground-faint: oklch(0.7 0 0);
   --foreground-on-solid: oklch(1 0 0);
 
   /* Borders --------------------------------------------------------------
@@ -171,7 +173,7 @@
   --ink-foreground: oklch(1 0 0);
 
   /* Brand ----------------------------------------------------------------
-     Geist blue, and spent sparingly: links, focus, selection, the first chart
+     Geist blue, and spent sparingly: links, focus, the first chart
      series. It marks affordance, never severity, never the primary button and
      never the active nav row, which is a neutral fill as it is on Vercel.
 
@@ -183,6 +185,11 @@
   --brand-subtle: oklch(0.966 0.016 var(--hue-brand));
   --brand-subtle-foreground: oklch(0.517 0.188 var(--hue-brand));
   --brand-border: oklch(0.914 0.042 var(--hue-brand));
+
+  /* Selected text is a solid amber (#ffab2e) in both themes, and the ink on it
+     stays dark in both, because near-white text on amber reads at under 2:1. */
+  --selection: oklch(0.805 0.161 71);
+  --selection-foreground: oklch(0.205 0 0);
 
   /* Tones ----------------------------------------------------------------
      Five rungs each, and the reason the raw palette was reached for before:
@@ -531,6 +538,7 @@
   --foreground: oklch(0.946 0 0);
   --foreground-muted: oklch(0.709 0 0);
   --foreground-subtle: oklch(0.65 0 0);
+  --foreground-faint: oklch(0.46 0 0);
 
   /* Dark tone fills are the LIGHT end of their ramp — success sits at 0.645 —
      so the near-white this held before drew 2.5:1 on a solid badge. The ink
@@ -553,6 +561,9 @@
   --brand-subtle: oklch(0.255 0.055 var(--hue-brand));
   --brand-subtle-foreground: oklch(0.8 0.101 var(--hue-brand));
   --brand-border: oklch(0.36 0.1 var(--hue-brand));
+
+  --selection: oklch(0.805 0.161 71);
+  --selection-foreground: oklch(0.205 0 0);
 
   --danger: oklch(0.626 0.193 23);
   --danger-hover: oklch(0.67 0.19 23);
@@ -711,10 +722,37 @@
   --subtle-fg: var(--foreground-subtle);
   --auth-ring: color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
   --auth-danger: var(--danger);
-  --auth-card-shadow: var(--elevation-modal);
 
   --invert: var(--foreground);
   --invert-foreground: var(--canvas);
+}
+
+/* The theme picker's miniature pages. Each card draws one theme whichever theme is
+   showing around it, so the values are the same in both: the light page is the
+   light canvas, panel, hairline and ink, the dark page the dark ones. */
+:root,
+.dark {
+  --theme-preview-light-canvas: oklch(0.985 0 0);
+  --theme-preview-light-panel: oklch(0.94 0 0);
+  --theme-preview-light-line: oklch(0.922 0 0);
+  --theme-preview-light-ink: oklch(0.205 0 0);
+  --theme-preview-dark-canvas: oklch(0 0 0);
+  --theme-preview-dark-panel: oklch(0.145 0 0);
+  --theme-preview-dark-line: oklch(0.26 0 0);
+  --theme-preview-dark-ink: oklch(0.946 0 0);
+}
+
+/* The sign-in screen's two grounds. The form column sits on the canvas and its
+   fields one step up; in dark the canvas is pure black, so the column moves up to
+   the card and the fields to the raised fill, keeping a field visibly a slot. */
+:root {
+  --auth-canvas: var(--canvas);
+  --auth-field: var(--card);
+}
+
+.dark {
+  --auth-canvas: var(--card);
+  --auth-field: var(--raised);
 }
 
 /* The Desk in dark: the room inverts but keeps its order. The column is a
@@ -854,6 +892,14 @@
   --text-5xl: 2.25rem; /* 36px */
   --text-5xl--line-height: 2.5rem;
   --text-5xl--letter-spacing: -0.021em;
+
+  /* The sign-in screen reads at a larger size than the dense app: a 14px body
+     and a 28px title, so the form scans as a page rather than a panel. */
+  --text-auth-body: 0.875rem; /* 14px */
+  --text-auth-body--line-height: 1.3125rem;
+  --text-auth-title: 1.75rem; /* 28px */
+  --text-auth-title--line-height: 1.925rem;
+  --text-auth-title--letter-spacing: -0.035em;
 
   /* Fonts -----------------------------------------------------------------
      --font-mono was "Inter Variable", sans-serif: a proportional sans. The
@@ -1007,6 +1053,43 @@
   --color-accent-sky-border: var(--accent-sky-border);
   --color-accent-violet: var(--accent-violet);
   --color-accent-violet-subtle: var(--accent-violet-subtle);
+  /* Desk ---------------------------------------------------------------
+     The Desk's palette as Tailwind colours, so its controls are written as
+     classes (text-dsk-muted, bg-dsk-hover) rather than one-off rules. */
+  --color-dsk-canvas: var(--dsk-canvas);
+  --color-dsk-card: var(--dsk-card);
+  --color-dsk-raised: var(--dsk-raised);
+  --color-dsk-sunken: var(--dsk-sunken);
+  --color-dsk-field: var(--dsk-field);
+  --color-dsk-hover: var(--dsk-hover);
+  --color-dsk-rail: var(--dsk-rail);
+  --color-dsk-fg: var(--dsk-fg);
+  --color-dsk-fg2: var(--dsk-fg2);
+  --color-dsk-muted: var(--dsk-muted);
+  --color-dsk-subtle: var(--dsk-subtle);
+  --color-dsk-faint: var(--dsk-faint);
+  --color-dsk-b-sub: var(--dsk-b-sub);
+  --color-dsk-b: var(--dsk-b);
+  --color-dsk-b-strong: var(--dsk-b-strong);
+  --color-dsk-ink: var(--dsk-ink);
+  --color-dsk-ink-fg: var(--dsk-ink-fg);
+  --color-dsk-ring: var(--dsk-ring);
+  --color-dsk-success: var(--dsk-success);
+  --color-dsk-success-sub: var(--dsk-success-sub);
+  --color-dsk-success-fg: var(--dsk-success-fg);
+  --color-dsk-warn: var(--dsk-warn);
+  --color-dsk-warn-sub: var(--dsk-warn-sub);
+  --color-dsk-warn-fg: var(--dsk-warn-fg);
+  --color-dsk-blue: var(--dsk-blue);
+  --color-dsk-blue-sub: var(--dsk-blue-sub);
+  --color-dsk-blue-fg: var(--dsk-blue-fg);
+  --color-dsk-agent: var(--dsk-agent);
+  --color-dsk-agent-sub: var(--dsk-agent-sub);
+  --color-dsk-agent-on: var(--dsk-agent-on);
+  --color-dsk-on-solid: var(--dsk-on-solid);
+  --color-dsk-approve: var(--dsk-approve);
+  --color-dsk-mention: var(--dsk-mention);
+  --color-dsk-error: var(--dsk-error);
   --color-accent-violet-on-subtle: var(--accent-violet-on-subtle);
   --color-accent-violet-border: var(--accent-violet-border);
   --color-accent-slate: var(--accent-slate);
@@ -1050,6 +1133,8 @@
   --color-field: var(--field);
   --color-subtle-foreground: var(--subtle-fg);
   --color-auth-danger: var(--auth-danger);
+  --color-auth-canvas: var(--auth-canvas);
+  --color-auth-field: var(--auth-field);
   --color-invert: var(--invert);
   --color-invert-foreground: var(--invert-foreground);
 
@@ -1131,6 +1216,10 @@
      streamed sentence resolves word by word. The live ping is the board's
      one loop and runs only on a marker that is live. */
   --animate-row-rise: rise 300ms var(--ease-swift) both;
+  /* A row whose values changed while it was on screen glows once and settles.
+     Two names with the same keyframes, so a second change replays it. */
+  --animate-row-changed-a: row-changed-a 1600ms var(--ease-swift);
+  --animate-row-changed-b: row-changed-b 1600ms var(--ease-swift);
   --animate-expand-in: expand-in 280ms var(--ease-settle) both;
   --animate-panel-in: panel-in 320ms var(--ease-settle) both;
   --animate-slide-in: slide-in 360ms var(--ease-settle) both;
@@ -1139,6 +1228,14 @@
   --animate-success: success 360ms var(--ease-spring) both;
   --animate-word-in: word-in 420ms var(--ease-settle) both;
   --animate-live-ping: live-ping 1.6s var(--ease-swift) infinite;
+
+  /* Triage's motion. A message that arrives while its folder is open drops
+     into the list with a small overshoot and a brand wash that fades over a
+     few seconds (opacity on an overlay, never a background transition). Nova's
+     ring turns while the pointer is on the Briefing, and stops when it leaves. */
+  --animate-arrive: arrive 700ms var(--ease-spring) both;
+  --animate-arrive-glow: arrive-glow 3.4s var(--ease-swift) both;
+  --animate-nova-spin: spin 1.1s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
 
   /* The Desk's motion vocabulary.
 
@@ -1259,6 +1356,27 @@
   --color-desk-drawer: var(--desk-drawer);
   --color-daylight-sun: var(--daylight-sun);
   --color-daylight-moon: var(--daylight-moon);
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -14px, 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes arrive-glow {
+  0%,
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes land {
@@ -1895,6 +2013,13 @@
     box-shadow: 0 0 0 var(--ring-width)
       color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
   }
+}
+
+@utility field-focus-state {
+    outline: none;
+    border-color: var(--ring);
+    box-shadow: 0 0 0 var(--ring-width)
+      color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
 }
 
 /* Focus landed on a child and the wrapper draws the ring: a field with an affix,

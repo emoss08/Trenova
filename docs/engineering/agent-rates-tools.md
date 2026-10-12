@@ -198,7 +198,13 @@ purchase, fuel card, fuel import, jurisdiction mileage and IFTA tool on this pag
 index prices it shares with the formula assistant, `get_fuel_surcharge_rates`, and the tractor,
 driver, shipment and document reads that find what a purchase or a mile belongs to. Fuel
 purchases and returns default to Internal sensitivity, so its data access is Internal. The
-formula assistant is the organization's pricing agent and holds 29.
+formula assistant is the organization's pricing agent and holds 30.
+
+`get_formula_template` reads one formula template whole: its formula, its own variables with
+their defaults, its breakdown lines, its minimum, maximum and rounding, and its status and
+version, so a formula is read before it is explained or changed. The formula assistant, the
+shipment intake desk and the import assistant hold it beside `list_formula_templates`, which
+yields its id. A person sees the template as its own card on the Desk.
 
 The report analyst holds every report administration tool on this page and the report and
 dashboard builders they sit beside, 23 tools in all. It is a chat agent acting as the person, so

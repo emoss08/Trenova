@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -16,7 +16,7 @@ func (r *Deps) resolveCustomerSelectOptions(
 	if len(req.IDs) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.CustomerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+			entity, err := r.CustomerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 				ID:         id,
 				TenantInfo: req.TenantInfo,
 			})
@@ -31,7 +31,7 @@ func (r *Deps) resolveCustomerSelectOptions(
 
 	result, err := r.CustomerRepo.SelectOptions(
 		ctx,
-		&repositories.CustomerSelectOptionsRequest{
+		&customerports.CustomerSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)

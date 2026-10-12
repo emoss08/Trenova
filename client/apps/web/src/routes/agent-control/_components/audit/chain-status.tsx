@@ -1,35 +1,39 @@
-import { KPI_STRIP_CELL_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { verifyAIAuditChain, type AIAuditChainStatus } from "@/lib/graphql/ai-audit";
 import { queries } from "@/lib/queries";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import { cn } from "@trenova/shared/lib/utils";
-import {
-  AlertCircleIcon,
-  AlertTriangleIcon,
-  ShieldTickIcon,
-} from "@trenova/shared/components/icons";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Callout } from "../edit/callout";
+import { Hero } from "../kit/hero";
+import { Ic } from "../kit/ic";
+import { Figs, type Fig } from "../kit/layout";
 import {
   VERIFY_POLL_MS,
   VERIFY_WAIT_MS,
   isVerificationPending,
+  unsealedRows,
   verificationLabel,
   verificationTone,
   type VerificationRequest,
 } from "./audit-model";
 
+const TONE_CLASS: Partial<Record<ReturnType<typeof verificationTone>, string>> = {
+  success: "t-k",
+  danger: "t-d",
+  warning: "t-w",
+};
+
 /**
- * The chain the trail is written into: whether it is signed, how far it is
- * sealed, and what its last check found, with a way to check it now. A check
- * runs in the background; the status says so until its result is stored.
+ * The head of the audit trail: Nova's sentence on the chain the trail is written into,
+ * whether it is signed, how far it is sealed and what its last check found, with a way
+ * to check it now, and the same as figures. A check runs in the background; the sentence
+ * says so until its result is stored.
  */
-export function ChainStatusStrip() {
+export function ChainStatusHeader() {
   const t = useT();
   const queryClient = useQueryClient();
   const statusQuery = queries.aiAudit.chainStatus();
@@ -63,107 +67,161 @@ export function ChainStatusStrip() {
 
   if (chain.isError) {
     return (
-      <Alert variant="destructive" size="sm">
-        <AlertCircleIcon />
-        <AlertDescription>
-          {t("The audit chain's status could not be loaded. Try again shortly.")}
-        </AlertDescription>
-      </Alert>
+      <Callout tone="d">
+        {t("The audit chain's status could not be loaded. Try again shortly.")}
+      </Callout>
     );
   }
-
   if (!chain.data) {
-    return <Skeleton className="h-16" aria-busy />;
+    return null;
   }
 
   const status = chain.data;
-  const pending = isVerificationPending(request, status);
+  const pending = isVerificationPending(request, status) || verify.isPending;
+  const busyLabel = verify.isPending ? t("Starting the check…") : t("Verifying…");
 
   return (
-    <div className="flex flex-col gap-2">
-      <KpiStrip aria-label={t("Audit chain")}>
-        <KpiStripItem
-          label={t("Chain")}
-          value={status.signed ? t("Signed") : t("Unsigned")}
-          sub={
-            status.signed
+    <>
+      <Hero
+        context={t("Audit trail")}
+        working={pending}
+        control={
+          <>
+            <Button
+              type="button"
+              size="lg"
+              isLoading={pending}
+              loadingText={busyLabel}
+              onClick={() => verify.mutate()}
+            >
+              <Ic n="shield" s={13} />
+              {t("Verify now")}
+            </Button>
+            <span>
+              {pending
+                ? t("The result appears here when the check finishes.")
+                : t("Checked every night on its own.")}
+            </span>
+          </>
+        }
+      >
+        <ChainSentence status={status} pending={pending} />
+      </Hero>
+      <Figs
+        label={t("Audit chain")}
+        items={[
+          {
+            label: t("Chain"),
+            value: status.signed ? t("Signed") : t("Unsigned"),
+            sub: status.signed
               ? t("Key {0}", status.activeKeyId ?? "—")
-              : t("Plain SHA-256; no signing key is configured")
-          }
-          tone={status.signed ? "success" : "warning"}
-        />
-        <KpiStripItem
-          label={t("Sealed through")}
-          value={status.lastSeq > 0 ? `#${status.sealedThroughSeq.toLocaleString()}` : "—"}
-          sub={
-            status.lastSeq > 0
-              ? t("of {0} recorded", status.lastSeq.toLocaleString())
-              : t("Nothing recorded yet")
-          }
-        />
-        <KpiStripItem
-          label={t("Last verified")}
-          value={verificationLabel(t, status.lastVerificationStatus)}
-          sub={lastVerifiedSub(t, status, now)}
-          tone={verificationTone(status.lastVerificationStatus)}
-        />
-        <div className={cn(KPI_STRIP_CELL_CLASS, "flex flex-col justify-center gap-1")}>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => verify.mutate()}
-            disabled={pending || verify.isPending}
-            isLoading={verify.isPending}
-            loadingText={t("Starting the check…")}
-            className="self-start"
-          >
-            <ShieldTickIcon className="size-3.5" />
-            {pending ? t("Verifying…") : t("Verify now")}
-          </Button>
-          <span className="text-foreground-muted text-xs">
-            {pending
-              ? t("The result appears here when the check finishes.")
-              : t("Checked every night on its own.")}
-          </span>
-        </div>
-      </KpiStrip>
-      {verify.isError ? (
-        <Alert variant="destructive" size="sm">
-          <AlertCircleIcon />
-          <AlertDescription>
-            {graphQLErrorMessage(verify.error, t("The check could not be started."))}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-      {status.lastVerificationStatus === "Mismatch" ? (
-        <Alert variant="destructive" size="sm">
-          <AlertTriangleIcon />
-          <AlertDescription>
-            {status.failedSeq != null
-              ? t(
-                  "The trail no longer matches its chain at #{0}: {1}. The failure is in the audit log, and everyone who reads the trail was told.",
+              : t("Plain SHA-256; no signing key is configured"),
+            tone: status.signed ? undefined : "t-w",
+          },
+          {
+            label: t("Sealed through"),
+            value: status.lastSeq > 0 ? `#${status.sealedThroughSeq.toLocaleString()}` : "—",
+            sub:
+              status.lastSeq > 0
+                ? t("of {0} recorded", status.lastSeq.toLocaleString())
+                : t("Nothing recorded yet"),
+          },
+          {
+            label: t("Last verified"),
+            value: pending ? "…" : verificationLabel(t, status.lastVerificationStatus),
+            sub: lastVerifiedSub(t, status, now),
+            tone: pending ? undefined : TONE_CLASS[verificationTone(status.lastVerificationStatus)],
+          } satisfies Fig,
+        ]}
+      />
+      {verify.isError && (
+        <Callout tone="d">
+          {graphQLErrorMessage(verify.error, t("The check could not be started."))}
+        </Callout>
+      )}
+      {status.lastVerificationStatus === "Mismatch" && (
+        <Callout tone="d">
+          {status.failedSeq != null
+            ? t(
+                "The trail no longer matches its chain at #{0}: {1}. The failure is in the audit log, and everyone who reads the trail was told.",
+                status.failedSeq.toLocaleString(),
+                status.detail ?? t("no detail was recorded"),
+              )
+            : t(
+                "The trail no longer matches its chain: {0}. The failure is in the audit log, and everyone who reads the trail was told.",
+                status.detail ?? t("no detail was recorded"),
+              )}
+        </Callout>
+      )}
+      {status.lastVerificationStatus === "KeyMissing" && (
+        <Callout tone="w">
+          {t(
+            "A row names a signing key that is no longer configured, so the chain cannot be checked past it. Put the key back, then verify again.",
+          )}
+        </Callout>
+      )}
+    </>
+  );
+}
+
+function ChainSentence({ status, pending }: { status: AIAuditChainStatus; pending: boolean }) {
+  const t = useT();
+  const rt = useRichT();
+  const strong = (children: ReactNode) => <b>{children}</b>;
+
+  if (pending) {
+    return t("Checking the chain from the last sealed row…");
+  }
+  if (status.lastSeq === 0) {
+    return t("Nothing has been written to the audit trail yet.");
+  }
+
+  const when =
+    status.lastVerifiedAt == null ? null : formatUnixDateTimeShort(status.lastVerifiedAt);
+  const unsealed = unsealedRows(status);
+
+  return (
+    <>
+      {status.signed
+        ? rt("Every agent action is written to a <b>signed chain</b>.", { b: strong })
+        : rt(
+            "Every agent action is written to a <b>chain</b>, unsigned because no signing key is configured.",
+            { b: strong },
+          )}{" "}
+      {when === null || status.lastVerificationStatus === null
+        ? t("It has not been checked yet.")
+        : status.lastVerificationStatus === "Verified"
+          ? rt(
+              "It was last checked {0} and is <k>intact</k> through #{1}.",
+              { k: (children) => <b className="t-k">{children}</b> },
+              when,
+              status.lastVerifiedSeq.toLocaleString(),
+            )
+          : status.lastVerificationStatus === "Mismatch"
+            ? status.failedSeq != null
+              ? rt(
+                  "It was last checked {0} and <d>no longer matches</d> at #{1}.",
+                  { d: (children) => <b className="t-d">{children}</b> },
+                  when,
                   status.failedSeq.toLocaleString(),
-                  status.detail ?? t("no detail was recorded"),
                 )
-              : t(
-                  "The trail no longer matches its chain: {0}. The failure is in the audit log, and everyone who reads the trail was told.",
-                  status.detail ?? t("no detail was recorded"),
-                )}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-      {status.lastVerificationStatus === "KeyMissing" ? (
-        <Alert variant="warning" size="sm">
-          <AlertTriangleIcon />
-          <AlertDescription>
-            {t(
-              "A row names a signing key that is no longer configured, so the chain cannot be checked past it. Put the key back, then verify again.",
-            )}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-    </div>
+              : rt(
+                  "It was last checked {0} and <d>no longer matches</d>.",
+                  { d: (children) => <b className="t-d">{children}</b> },
+                  when,
+                )
+            : rt(
+                "It was last checked {0} and <w>could not be checked</w> past a key that is no longer configured.",
+                { w: (children) => <b className="t-w">{children}</b> },
+                when,
+              )}{" "}
+      {unsealed > 0
+        ? t(
+            "{0, plural, one {The newest row is sealed at the next check.} other {The # newest rows are sealed at the next check.}}",
+            unsealed,
+          )
+        : t("Every row is sealed.")}
+    </>
   );
 }
 

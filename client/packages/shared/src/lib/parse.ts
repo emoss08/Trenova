@@ -10,9 +10,12 @@ export async function safeParse<T>(
   const result = await schema.safeParseAsync(data);
   if (!result.success) {
     console.error(`Failed to parse ${label ?? "response"}`, result);
-    toast.error(`Failed to parse ${label ?? "response"}`, {
-      description: translate("Contact your system administrator for assistance."),
-    });
+    toast.error(
+      label ? translate("Failed to parse {0}", label) : translate("Failed to parse response"),
+      {
+        description: translate("Contact your system administrator for assistance."),
+      },
+    );
 
     throw result.error;
   }
