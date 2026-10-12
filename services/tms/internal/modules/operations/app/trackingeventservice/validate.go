@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func validateObserved(params *trackingeventports.RecordObservedStopEventParams) *errortypes.MultiError {
+func validateObserved(
+	params *trackingeventports.RecordObservedStopEventParams,
+) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if params == nil {
 		multiErr.Add("", errortypes.ErrInvalid, "Request is required")
@@ -30,7 +32,9 @@ func validateObserved(params *trackingeventports.RecordObservedStopEventParams) 
 	return nil
 }
 
-func validateReported(params *trackingeventports.RecordReportedStopEventParams) *errortypes.MultiError {
+func validateReported(
+	params *trackingeventports.RecordReportedStopEventParams,
+) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if params == nil {
 		multiErr.Add("", errortypes.ErrInvalid, "Request is required")
@@ -45,6 +49,24 @@ func validateReported(params *trackingeventports.RecordReportedStopEventParams) 
 	}
 	if params.OccurredAt != nil {
 		addEventTime(multiErr, "occurredAt", params.OccurredAt)
+	}
+	if params.DepartedAt != nil {
+		switch {
+		case params.Action != shipmentports.StopActualActionArrive:
+			multiErr.Add(
+				"departedAt",
+				errortypes.ErrInvalid,
+				"A departure time goes with an arrival",
+			)
+		case params.OccurredAt == nil:
+			multiErr.Add(
+				"occurredAt",
+				errortypes.ErrRequired,
+				"An arrival time is required with a departure time",
+			)
+		default:
+			addEventTime(multiErr, "departedAt", params.DepartedAt)
+		}
 	}
 	if multiErr.HasErrors() {
 		return multiErr

@@ -3,16 +3,16 @@ package trackingeventservice
 import (
 	"context"
 	"strings"
-	"unicode/utf8"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -45,7 +45,7 @@ type Service struct {
 	moveService  shipmentports.ShipmentMoveService
 }
 
-func New(p Params) trackingeventports.TrackingEventService {
+func New(p Params) *Service {
 	return &Service{
 		db:           p.DB,
 		l:            p.Logger.Named("service.tracking-event"),
@@ -85,12 +85,18 @@ func (s *Service) RecordObserved(
 		ReceivedAt:     now,
 		Latitude:       params.Latitude,
 		Longitude:      params.Longitude,
-		SourceStatus:   truncate(params.SourceStatus, trackingevent.MaxSourceStatusLength),
-		RawReference:   truncate(params.RawReference, trackingevent.MaxRawReferenceLength),
-		Outcome:        trackingevent.OutcomePending,
-		OutcomeReason:  reasonNotYetApplied,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		SourceStatus: stringutils.TruncateRunes(
+			strings.TrimSpace(params.SourceStatus),
+			trackingevent.MaxSourceStatusLength,
+		),
+		RawReference: stringutils.TruncateRunes(
+			strings.TrimSpace(params.RawReference),
+			trackingevent.MaxRawReferenceLength,
+		),
+		Outcome:       trackingevent.OutcomePending,
+		OutcomeReason: reasonNotYetApplied,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}
 	if multiErr := validateEntity(entity); multiErr != nil {
 		return nil, multiErr
@@ -109,7 +115,10 @@ func (s *Service) RecordObserved(
 		if !errortypes.IsRefusal(err) {
 			return nil, err
 		}
-		reason := truncate(errortypes.Summary(err), trackingevent.MaxOutcomeReasonLength)
+		reason := stringutils.TruncateRunes(
+			strings.TrimSpace(errortypes.Summary(err)),
+			trackingevent.MaxOutcomeReasonLength,
+		)
 		if recordErr := s.repo.RecordVerdicts(ctx, params.TenantInfo, []trackingeventports.TrackingEventVerdict{{
 			ID:      stored.ID,
 			Outcome: trackingevent.OutcomeRefused,
@@ -143,7 +152,10 @@ func (s *Service) RecordReported(
 	if params.OccurredAt != nil {
 		eventAt = *params.OccurredAt
 	}
-	kind := visitForAction(params.Action)
+	sourceKey := strings.TrimSpace(params.SourceKey)
+	if sourceKey == "" {
+		sourceKey = trackingevent.NewID().String()
+	}
 
 	var result *trackingeventports.StopEventResult
 	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
@@ -152,46 +164,16 @@ func (s *Service) RecordReported(
 			return err
 		}
 
-		sourceKey := strings.TrimSpace(params.SourceKey)
-		if sourceKey == "" {
-			sourceKey = trackingevent.NewID().String()
-		}
-		entity := &trackingevent.TrackingEvent{
-			ID:             trackingevent.NewID(),
-			OrganizationID: params.TenantInfo.OrgID,
-			BusinessUnitID: params.TenantInfo.BuID,
-			ShipmentID:     move.ShipmentID,
-			ShipmentMoveID: move.ID,
-			StopID:         params.StopID,
-			Source:         params.Source,
-			SourceKey:      sourceKey,
-			Kind:           kind,
-			MatchMethod:    trackingevent.MatchDirect,
-			EventAt:        eventAt,
-			ReceivedAt:     now,
-			Latitude:       params.Latitude,
-			Longitude:      params.Longitude,
-			ReportedByID:   params.ReportedByID,
-			Outcome:        trackingevent.OutcomeApplied,
-			CreatedAt:      now,
-			UpdatedAt:      now,
-		}
-		if multiErr := validateEntity(entity); multiErr != nil {
-			return multiErr
-		}
-
-		stored, inserted, err := s.repo.Insert(txCtx, entity)
+		reports := reportedEvents(params, move, reportedEventInput{
+			sourceKey: sourceKey,
+			eventAt:   eventAt,
+			now:       now,
+		})
+		stored, inserted, err := s.insertReported(txCtx, params, reports)
 		if err != nil {
 			return err
 		}
 		if !inserted {
-			if stored.StopID != params.StopID || stored.Kind != kind {
-				return errortypes.NewValidationError(
-					"sourceKey",
-					errortypes.ErrDuplicate,
-					"This report was already recorded for a different stop or action",
-				)
-			}
 			current, getErr := s.moveRepo.GetByID(txCtx, &shipmentports.GetMoveByIDRequest{
 				MoveID:            params.MoveID,
 				TenantInfo:        params.TenantInfo,
@@ -204,13 +186,17 @@ func (s *Service) RecordReported(
 			return nil
 		}
 
-		recorded, err := s.moveService.RecordStopActual(txCtx, &shipmentports.RecordStopActualRequest{
-			TenantInfo: params.TenantInfo,
-			MoveID:     params.MoveID,
-			StopID:     params.StopID,
-			Action:     params.Action,
-			OccurredAt: &eventAt,
-		})
+		recorded, err := s.moveService.RecordStopActual(
+			txCtx,
+			&shipmentports.RecordStopActualRequest{
+				TenantInfo: params.TenantInfo,
+				MoveID:     params.MoveID,
+				StopID:     params.StopID,
+				Action:     params.Action,
+				OccurredAt: &eventAt,
+				DepartedAt: params.DepartedAt,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -231,13 +217,103 @@ func (s *Service) RecordReported(
 	return result, nil
 }
 
+type reportedEventInput struct {
+	sourceKey string
+	eventAt   int64
+	now       int64
+}
+
+func reportedEvents(
+	params *trackingeventports.RecordReportedStopEventParams,
+	move *shipment.ShipmentMove,
+	in reportedEventInput,
+) []*trackingevent.TrackingEvent {
+	build := func(kind shipment.VisitKind, key string, at int64) *trackingevent.TrackingEvent {
+		return &trackingevent.TrackingEvent{
+			ID:             trackingevent.NewID(),
+			OrganizationID: params.TenantInfo.OrgID,
+			BusinessUnitID: params.TenantInfo.BuID,
+			ShipmentID:     move.ShipmentID,
+			ShipmentMoveID: move.ID,
+			StopID:         params.StopID,
+			Source:         params.Source,
+			SourceKey:      key,
+			Kind:           kind,
+			MatchMethod:    trackingevent.MatchDirect,
+			EventAt:        at,
+			ReceivedAt:     in.now,
+			Latitude:       params.Latitude,
+			Longitude:      params.Longitude,
+			ReportedByID:   params.ReportedByID,
+			Outcome:        trackingevent.OutcomeApplied,
+			CreatedAt:      in.now,
+			UpdatedAt:      in.now,
+		}
+	}
+
+	reports := []*trackingevent.TrackingEvent{
+		build(visitForAction(params.Action), in.sourceKey, in.eventAt),
+	}
+	if params.DepartedAt != nil {
+		reports = append(reports, build(
+			shipment.VisitDeparture,
+			stringutils.TruncateRunes(
+				strings.TrimSpace(in.sourceKey),
+				trackingevent.MaxSourceKeyLength-len(departureKeySuffix),
+			)+
+				departureKeySuffix,
+			*params.DepartedAt,
+		))
+	}
+	return reports
+}
+
+const departureKeySuffix = ":departure"
+
+func (s *Service) insertReported(
+	ctx context.Context,
+	params *trackingeventports.RecordReportedStopEventParams,
+	reports []*trackingevent.TrackingEvent,
+) (*trackingevent.TrackingEvent, bool, error) {
+	var first *trackingevent.TrackingEvent
+	for idx, report := range reports {
+		if multiErr := validateEntity(report); multiErr != nil {
+			return nil, false, multiErr
+		}
+		stored, inserted, err := s.repo.Insert(ctx, report)
+		if err != nil {
+			return nil, false, err
+		}
+		if !inserted {
+			if stored.StopID != params.StopID || stored.Kind != report.Kind {
+				return nil, false, errortypes.NewValidationError(
+					"sourceKey",
+					errortypes.ErrDuplicate,
+					"This report was already recorded for a different stop or action",
+				)
+			}
+			if idx == 0 {
+				return stored, false, nil
+			}
+		}
+		if idx == 0 {
+			first = stored
+		}
+	}
+	return first, true, nil
+}
+
 func (s *Service) Reconcile(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
 ) error {
 	if tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() || moveID.IsNil() {
-		return errortypes.NewValidationError("moveId", errortypes.ErrRequired, "Move ID is required")
+		return errortypes.NewValidationError(
+			"moveId",
+			errortypes.ErrRequired,
+			"Move ID is required",
+		)
 	}
 	_, err := s.reconcile(ctx, tenantInfo, moveID)
 	return err
@@ -262,7 +338,9 @@ type reconciliation struct {
 	verdicts map[pulid.ID]trackingevent.Verdict
 }
 
-func (r reconciliation) resultFor(event *trackingevent.TrackingEvent) *trackingeventports.StopEventResult {
+func (r reconciliation) resultFor(
+	event *trackingevent.TrackingEvent,
+) *trackingeventports.StopEventResult {
 	verdict, ok := r.verdicts[event.ID]
 	if ok {
 		event.Outcome = verdict.Outcome
@@ -287,27 +365,30 @@ func (s *Service) reconcile(
 		var opts trackingevent.Options
 		loaded := false
 
-		result, err := s.moveService.ReconcileStopActuals(txCtx, &shipmentports.ReconcileStopActualsRequest{
-			TenantInfo: tenantInfo,
-			MoveID:     moveID,
-			Plan: func(planCtx context.Context, move *shipment.ShipmentMove) ([]shipment.StopActualChange, error) {
-				if !loaded {
-					var loadErr error
-					events, loadErr = s.repo.ListByMove(planCtx, tenantInfo, moveID)
-					if loadErr != nil {
-						return nil, loadErr
+		result, err := s.moveService.ReconcileStopActuals(
+			txCtx,
+			&shipmentports.ReconcileStopActualsRequest{
+				TenantInfo: tenantInfo,
+				MoveID:     moveID,
+				Plan: func(planCtx context.Context, move *shipment.ShipmentMove) ([]shipment.StopActualChange, error) {
+					if !loaded {
+						var loadErr error
+						events, loadErr = s.repo.ListByMove(planCtx, tenantInfo, moveID)
+						if loadErr != nil {
+							return nil, loadErr
+						}
+						opts, loadErr = s.projectionOptions(planCtx, tenantInfo, move.ShipmentID)
+						if loadErr != nil {
+							return nil, loadErr
+						}
+						loaded = true
 					}
-					opts, loadErr = s.projectionOptions(planCtx, tenantInfo, move.ShipmentID)
-					if loadErr != nil {
-						return nil, loadErr
-					}
-					loaded = true
-				}
-				projection := trackingevent.Project(move, events, opts)
-				out.verdicts = projection.Verdicts
-				return projection.Changes, nil
+					projection := trackingevent.Project(move, events, opts)
+					out.verdicts = projection.Verdicts
+					return projection.Changes, nil
+				},
 			},
-		})
+		)
 		if err != nil {
 			return err
 		}
@@ -418,13 +499,4 @@ func validateEntity(entity *trackingevent.TrackingEvent) *errortypes.MultiError 
 		return multiErr
 	}
 	return nil
-}
-
-func truncate(value string, limit int) string {
-	value = strings.TrimSpace(value)
-	if utf8.RuneCountInString(value) <= limit {
-		return value
-	}
-	runes := []rune(value)
-	return string(runes[:limit])
 }

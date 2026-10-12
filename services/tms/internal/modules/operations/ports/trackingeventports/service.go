@@ -31,6 +31,7 @@ type RecordReportedStopEventParams struct {
 	StopID       pulid.ID
 	Action       shipmentports.StopActualAction
 	OccurredAt   *int64
+	DepartedAt   *int64
 	Source       trackingevent.Source
 	SourceKey    string
 	ReportedByID pulid.ID

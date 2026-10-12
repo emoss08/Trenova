@@ -150,29 +150,24 @@ func (s *Service) settleStopVisit(
 ) (*telematics.StopVisitResult, bool) {
 	result := &telematics.StopVisitResult{Visit: event.visit, MoveID: move.ID}
 
-	stop, match := move.MatchObservedVisit(event.record.LocationID, event.visit)
-	switch match {
-	case shipment.VisitMatchDuplicate:
-		result.Outcome = telematics.StopOutcomeDuplicate
-		return result, true
-	case shipment.VisitMatchNoStop:
+	stop := move.StopForObservedVisit(event.record.LocationID, event.visit)
+	if stop == nil {
 		if !event.providerStop {
 			return result, false
 		}
 		result.Outcome = telematics.StopOutcomeUnmatched
 		result.Reason = unmatchedStopReason(event)
 		return result, true
-	case shipment.VisitMatchStop:
 	}
 
 	result.StopID = stop.ID
-	occurredAt := event.record.OccurredAt
-	_, err := s.shipmentMoveService.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
-		TenantInfo: event.tenantInfo,
-		MoveID:     move.ID,
-		StopID:     stop.ID,
-		Action:     stopActualAction(event.visit),
-		OccurredAt: &occurredAt,
+	verdict, err := s.stopVisits.RecordStopVisit(ctx, &telematicsports.StopVisitReport{
+		TenantInfo:   event.tenantInfo,
+		Event:        event.record,
+		MoveID:       move.ID,
+		StopID:       stop.ID,
+		Departure:    event.visit == shipment.VisitDeparture,
+		ProviderStop: event.providerStop,
 	})
 	if err != nil {
 		result.Outcome = telematics.StopOutcomeRefused
@@ -180,12 +175,21 @@ func (s *Service) settleStopVisit(
 		return result, true
 	}
 
-	result.Outcome = telematics.StopOutcomeRecorded
-	s.l.Info("auto-recorded stop actual from telematics",
-		zap.String("organizationId", event.tenantInfo.OrgID.String()),
-		zap.String("stopId", stop.ID.String()),
-		zap.String("visit", string(event.visit)),
-		zap.Int64("occurredAt", occurredAt))
+	result.Outcome = verdict.Outcome
+	switch verdict.Outcome {
+	case telematics.StopOutcomeRefused:
+		result.Reason = refusedVisitReason(event, stop, verdict.Reason)
+	case telematics.StopOutcomeRecorded:
+		s.l.Info("auto-recorded stop actual from telematics",
+			zap.String("organizationId", event.tenantInfo.OrgID.String()),
+			zap.String("stopId", stop.ID.String()),
+			zap.String("visit", string(event.visit)),
+			zap.Int64("occurredAt", event.record.OccurredAt))
+	case telematics.StopOutcomeDuplicate,
+		telematics.StopOutcomeUnmatched,
+		telematics.StopOutcomePending:
+		result.Reason = verdict.Reason
+	}
 
 	return result, true
 }
@@ -215,13 +219,6 @@ func (s *Service) projectStopVisit(
 	}
 }
 
-func stopActualAction(visit shipment.VisitKind) shipmentports.StopActualAction {
-	if visit == shipment.VisitDeparture {
-		return shipmentports.StopActualActionDepart
-	}
-	return shipmentports.StopActualActionArrive
-}
-
 func visitNoun(visit shipment.VisitKind) string {
 	if visit == shipment.VisitDeparture {
 		return "departure"
@@ -238,12 +235,15 @@ func unmatchedStopReason(event *stopEvent) string {
 		" at a location that is not a stop on the driver's current load. Check the load's stops and record the visit by hand."
 }
 
+func refusedVisitReason(event *stopEvent, stop *shipment.Stop, reason string) string {
+	return "Telematics reported the " + visitNoun(event.visit) + " at stop " +
+		strconv.FormatInt(stop.Sequence, 10) + ", but it could not be recorded: " + reason
+}
+
 func (s *Service) refusedStopReason(event *stopEvent, stop *shipment.Stop, err error) string {
 	if errortypes.IsBusinessError(err) || errortypes.IsError(err) ||
 		errortypes.IsNotFoundError(err) {
-		return "Telematics reported the " + visitNoun(event.visit) + " at stop " +
-			strconv.FormatInt(stop.Sequence, 10) + ", but it could not be recorded: " +
-			refusalMessage(err)
+		return refusedVisitReason(event, stop, refusalMessage(err))
 	}
 
 	s.l.Warn("failed to auto-record stop actual",
