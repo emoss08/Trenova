@@ -145,3 +145,130 @@ func TestOccurrence_ReleaseBillingReturnsToApprovedAndKeepsTheApprover(t *testin
 
 	require.Error(t, billableOccurrence().ReleaseBilling())
 }
+
+func TestOccurrence_FollowInvoicesMovesOnlyABillableCharge(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		status   detention.OccurrenceStatus
+		invoiced bool
+		want     detention.OccurrenceStatus
+		change   detention.InvoiceBillingChange
+	}{
+		{
+			detention.OccurrenceStatusAccruing, true,
+			detention.OccurrenceStatusAccruing, detention.InvoiceBillingUnchanged,
+		},
+		{
+			detention.OccurrenceStatusAccruing, false,
+			detention.OccurrenceStatusAccruing, detention.InvoiceBillingUnchanged,
+		},
+		{
+			detention.OccurrenceStatusPending, true,
+			detention.OccurrenceStatusBilled, detention.InvoiceBillingMarked,
+		},
+		{
+			detention.OccurrenceStatusPending, false,
+			detention.OccurrenceStatusPending, detention.InvoiceBillingUnchanged,
+		},
+		{
+			detention.OccurrenceStatusApproved, true,
+			detention.OccurrenceStatusBilled, detention.InvoiceBillingMarked,
+		},
+		{
+			detention.OccurrenceStatusApproved, false,
+			detention.OccurrenceStatusApproved, detention.InvoiceBillingUnchanged,
+		},
+		{
+			detention.OccurrenceStatusBilled, true,
+			detention.OccurrenceStatusBilled, detention.InvoiceBillingUnchanged,
+		},
+		{
+			detention.OccurrenceStatusBilled, false,
+			detention.OccurrenceStatusApproved, detention.InvoiceBillingReleased,
+		},
+		{
+			detention.OccurrenceStatusWaived, true,
+			detention.OccurrenceStatusWaived, detention.InvoiceBillingUnchanged,
+		},
+		{
+			detention.OccurrenceStatusWaived, false,
+			detention.OccurrenceStatusWaived, detention.InvoiceBillingUnchanged,
+		},
+		{
+			detention.OccurrenceStatusDisputed, true,
+			detention.OccurrenceStatusDisputed, detention.InvoiceBillingUnchanged,
+		},
+		{
+			detention.OccurrenceStatusDisputed, false,
+			detention.OccurrenceStatusDisputed, detention.InvoiceBillingUnchanged,
+		},
+		{
+			detention.OccurrenceStatusNotBillable, true,
+			detention.OccurrenceStatusNotBillable, detention.InvoiceBillingUnchanged,
+		},
+		{
+			detention.OccurrenceStatusNotBillable, false,
+			detention.OccurrenceStatusNotBillable, detention.InvoiceBillingUnchanged,
+		},
+	}
+
+	for _, tc := range cases {
+		occurrence := billableOccurrence()
+		occurrence.Status = tc.status
+		before := *occurrence
+
+		change, err := occurrence.FollowInvoices(tc.invoiced)
+		require.NoError(t, err, "%s invoiced %t", tc.status, tc.invoiced)
+		assert.Equal(t, tc.change, change, "%s invoiced %t", tc.status, tc.invoiced)
+		assert.Equal(t, tc.want, occurrence.Status, "%s invoiced %t", tc.status, tc.invoiced)
+		assert.True(t, before.BillableAmount.Equal(occurrence.BillableAmount))
+
+		again, err := occurrence.FollowInvoices(tc.invoiced)
+		require.NoError(t, err)
+		assert.Equal(t, detention.InvoiceBillingUnchanged, again,
+			"%s invoiced %t must settle in one step", tc.status, tc.invoiced)
+		assert.Equal(t, tc.want, occurrence.Status)
+	}
+}
+
+func TestOccurrence_StandingByABilledChargeKeepsTheDisputeUntilItIsWaived(t *testing.T) {
+	t.Parallel()
+
+	occurrence := billableOccurrence()
+	require.NoError(t, occurrence.MarkBilled())
+	require.NoError(t, occurrence.Dispute("Standing by the gate record", 2000))
+	assert.True(t, occurrence.IsFrozen())
+
+	for _, invoiced := range []bool{true, false, true} {
+		change, err := occurrence.FollowInvoices(invoiced)
+		require.NoError(t, err)
+		assert.Equal(t, detention.InvoiceBillingUnchanged, change)
+		assert.Equal(t, detention.OccurrenceStatusDisputed, occurrence.Status)
+		assert.Equal(t, "Standing by the gate record", occurrence.DisputeNote)
+	}
+
+	require.NoError(t, occurrence.Waive(
+		detention.WaiverReasonCustomerGoodwill, "Credited", pulid.MustNew("usr_"), 3000,
+	))
+	assert.Equal(t, detention.OccurrenceStatusWaived, occurrence.Status)
+	assert.True(t, occurrence.WaivedAmount.Equal(decimal.RequireFromString("225.00")))
+
+	change, err := occurrence.FollowInvoices(true)
+	require.NoError(t, err)
+	assert.Equal(t, detention.InvoiceBillingUnchanged, change)
+	assert.Equal(t, detention.OccurrenceStatusWaived, occurrence.Status)
+	require.Error(t, occurrence.MarkBilled())
+	require.Error(t, occurrence.Dispute("again", 4000))
+}
+
+func TestOccurrenceStatus_InvoiceSettledStatuses(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, []detention.OccurrenceStatus{
+		detention.OccurrenceStatusPending,
+		detention.OccurrenceStatusApproved,
+		detention.OccurrenceStatusBilled,
+		detention.OccurrenceStatusDisputed,
+	}, detention.InvoiceSettledStatuses())
+}

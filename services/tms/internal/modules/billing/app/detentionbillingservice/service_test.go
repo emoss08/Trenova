@@ -2,8 +2,10 @@ package detentionbillingservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"slices"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -44,7 +46,13 @@ func (f *fakeOccurrences) ListByAdditionalCharges(
 	req *detentionports.ListOccurrencesByChargesRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	f.byChargeReq = req
-	return f.byCharge, nil
+	listed := make([]*detention.DetentionOccurrence, 0, len(f.byCharge))
+	for _, occurrence := range f.byCharge {
+		if slices.Contains(req.Statuses, occurrence.Status) {
+			listed = append(listed, occurrence)
+		}
+	}
+	return listed, nil
 }
 
 func (f *fakeOccurrences) Update(
@@ -139,6 +147,17 @@ func (f *fixture) occurrence(status detention.OccurrenceStatus) *detention.Deten
 }
 
 func (f *fixture) expectCharges(net decimal.Decimal) {
+	f.expectLineCharges()
+	f.invoices.EXPECT().
+		NetBilledByCharge(mock.Anything, &invoiceports.NetBilledByChargeRequest{
+			TenantInfo: f.tenant,
+			ChargeIDs:  []pulid.ID{f.chargeID},
+		}).
+		Return(map[pulid.ID]decimal.Decimal{f.chargeID: net}, nil).
+		Once()
+}
+
+func (f *fixture) expectLineCharges() {
 	f.invoices.EXPECT().
 		ListLineCharges(mock.Anything, &invoiceports.ListInvoiceLineChargesRequest{
 			TenantInfo: f.tenant,
@@ -147,13 +166,6 @@ func (f *fixture) expectCharges(net decimal.Decimal) {
 		Return([]invoiceports.InvoiceLineCharge{
 			{AdditionalChargeID: f.chargeID, ShipmentID: f.shipmentID},
 		}, nil).
-		Once()
-	f.invoices.EXPECT().
-		NetBilledByCharge(mock.Anything, &invoiceports.NetBilledByChargeRequest{
-			TenantInfo: f.tenant,
-			ChargeIDs:  []pulid.ID{f.chargeID},
-		}).
-		Return(map[pulid.ID]decimal.Decimal{f.chargeID: net}, nil).
 		Once()
 }
 
@@ -384,4 +396,149 @@ func TestSyncInvoiceBillingWaivesADisputedChargeOnceItIsCredited(t *testing.T) {
 	require.Len(t, f.occurrences.updated, 1)
 	assert.Equal(t, detention.OccurrenceStatusWaived, disputed.Status)
 	assert.Equal(t, detention.WaiverReasonCustomerGoodwill, *disputed.WaiverReason)
+}
+
+func TestSyncInvoiceBillingKeepsADisputedChargeAnInvoiceStillBillsDisputed(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	disputed := f.occurrence(detention.OccurrenceStatusDisputed)
+	disputed.DisputeNote = "Customer says the truck arrived late"
+	f.occurrences.byCharge = []*detention.DetentionOccurrence{disputed}
+	f.expectCharges(decimal.NewFromInt(180))
+
+	hooks, ctx := f.sync(t, detentionports.DetentionBillingInvoiceAdjusted)
+	hooks.Run(ctx)
+
+	assert.Equal(t, detention.OccurrenceStatusDisputed, disputed.Status)
+	assert.Equal(t, "Customer says the truck arrived late", disputed.DisputeNote)
+	assert.True(t, disputed.BillableAmount.Equal(decimal.NewFromInt(180)))
+	assert.Empty(t, f.occurrences.updated)
+	assert.Empty(t, f.evidence.appended)
+	assert.Empty(t, f.audit.comments)
+}
+
+func TestSyncInvoiceBillingStandByThenAdjustmentThenWaive(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	billed := f.occurrence(detention.OccurrenceStatusBilled)
+	other := f.occurrence(detention.OccurrenceStatusApproved)
+	f.occurrences.byCharge = []*detention.DetentionOccurrence{billed, other}
+
+	require.NoError(t, billed.Dispute("Standing by the gate record", 1_699_999_000))
+
+	f.expectCharges(decimal.NewFromInt(360))
+	f.sync(t, detentionports.DetentionBillingInvoiceAdjusted)
+
+	assert.Equal(t, detention.OccurrenceStatusDisputed, billed.Status)
+	assert.Equal(t, detention.OccurrenceStatusBilled, other.Status)
+	require.Len(t, f.occurrences.updated, 1)
+	assert.Same(t, other, f.occurrences.updated[0])
+
+	f.expectCharges(decimal.Zero)
+	f.syncWaiving(t, detentionports.DetentionWaiver{
+		OccurrenceID: billed.ID,
+		Note:         "Waived in Triage after standing by",
+		RequestedBy:  f.userID,
+	})
+
+	assert.Equal(t, detention.OccurrenceStatusWaived, billed.Status)
+	assert.True(t, billed.WaivedAmount.Equal(decimal.NewFromInt(180)))
+	assert.True(t, billed.BillableAmount.IsZero())
+	require.NotNil(t, billed.WaiverReason)
+	assert.Equal(t, detention.WaiverReasonOther, *billed.WaiverReason)
+	assert.Equal(t, detention.OccurrenceStatusApproved, other.Status)
+
+	f.expectCharges(decimal.NewFromInt(180))
+	f.sync(t, detentionports.DetentionBillingInvoiceCreated)
+
+	assert.Equal(t, detention.OccurrenceStatusWaived, billed.Status)
+	assert.Equal(t, detention.OccurrenceStatusBilled, other.Status)
+}
+
+func TestSyncInvoiceBillingIsIdempotentForEveryStatus(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		status   detention.OccurrenceStatus
+		billed   bool
+		want     detention.OccurrenceStatus
+		recorded bool
+	}{
+		{detention.OccurrenceStatusAccruing, true, detention.OccurrenceStatusAccruing, false},
+		{detention.OccurrenceStatusAccruing, false, detention.OccurrenceStatusAccruing, false},
+		{detention.OccurrenceStatusPending, true, detention.OccurrenceStatusBilled, true},
+		{detention.OccurrenceStatusPending, false, detention.OccurrenceStatusPending, false},
+		{detention.OccurrenceStatusApproved, true, detention.OccurrenceStatusBilled, true},
+		{detention.OccurrenceStatusApproved, false, detention.OccurrenceStatusApproved, false},
+		{detention.OccurrenceStatusBilled, true, detention.OccurrenceStatusBilled, false},
+		{detention.OccurrenceStatusBilled, false, detention.OccurrenceStatusApproved, true},
+		{detention.OccurrenceStatusWaived, true, detention.OccurrenceStatusWaived, false},
+		{detention.OccurrenceStatusWaived, false, detention.OccurrenceStatusWaived, false},
+		{detention.OccurrenceStatusDisputed, true, detention.OccurrenceStatusDisputed, false},
+		{detention.OccurrenceStatusDisputed, false, detention.OccurrenceStatusDisputed, false},
+		{detention.OccurrenceStatusNotBillable, true, detention.OccurrenceStatusNotBillable, false},
+		{detention.OccurrenceStatusNotBillable, false, detention.OccurrenceStatusNotBillable, false},
+	}
+
+	for _, tc := range cases {
+		t.Run(string(tc.status)+billedName(tc.billed), func(t *testing.T) {
+			t.Parallel()
+
+			f := newFixture(t)
+			occurrence := f.occurrence(tc.status)
+			f.occurrences.byCharge = []*detention.DetentionOccurrence{occurrence}
+
+			net := decimal.Zero
+			if tc.billed {
+				net = decimal.NewFromInt(180)
+			}
+			listed := slices.Contains(detention.InvoiceSettledStatuses(), tc.status)
+			for range 2 {
+				if listed {
+					f.expectCharges(net)
+				} else {
+					f.expectLineCharges()
+				}
+				f.sync(t, detentionports.DetentionBillingInvoiceAdjusted)
+				assert.Equal(t, tc.want, occurrence.Status)
+			}
+
+			want := 0
+			if tc.recorded {
+				want = 1
+			}
+			assert.Len(t, f.occurrences.updated, want)
+			assert.Len(t, f.evidence.appended, want)
+		})
+	}
+}
+
+func billedName(billed bool) string {
+	if billed {
+		return "/invoiced"
+	}
+
+	return "/not-invoiced"
+}
+
+func TestSyncInvoiceBillingListsEveryOccurrenceAnInvoiceCanSettle(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	f.expectCharges(decimal.NewFromInt(180))
+	f.occurrences.byCharge = []*detention.DetentionOccurrence{
+		f.occurrence(detention.OccurrenceStatusPending),
+	}
+
+	f.sync(t, detentionports.DetentionBillingInvoiceCreated)
+
+	require.NotNil(t, f.occurrences.byChargeReq)
+	assert.ElementsMatch(t, []detention.OccurrenceStatus{
+		detention.OccurrenceStatusPending,
+		detention.OccurrenceStatusApproved,
+		detention.OccurrenceStatusBilled,
+		detention.OccurrenceStatusDisputed,
+	}, f.occurrences.byChargeReq.Statuses)
 }

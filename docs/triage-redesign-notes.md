@@ -139,6 +139,18 @@ _Filled in as each area lands._
   the same way twice changes nothing unless a credit is still pending. The design's "a
   corrected invoice follows" is a credit memo here; a credit-only adjustment issues no
   replacement invoice.
+- **Standing by keeps the dispute while the invoice still bills it.** `decideInboundStops(StandBy)`
+  disputes the occurrence, and a dispute is a person's decision that the invoices do not
+  override. The detention billing sync used to call `MarkBilled` on any occurrence an invoice
+  carried that was not `Billed`, so a stood-by charge failed every later sync on that invoice (a
+  credit on another line, a void, a rebill); its occurrence query also skipped `Disputed`, so
+  waiving after standing by credited the invoice but left the occurrence disputed. The domain now
+  decides it: `DetentionOccurrence.FollowInvoices(invoiced)` moves only a billable charge
+  (pending/approved to billed, billed back to approved) and leaves accruing, disputed, waived and
+  not-billable ones as they are, idempotently; the sync lists `detention.InvoiceSettledStatuses()`
+  (billable plus disputed) so a credit carrying a waiver still waives a disputed charge. Whether
+  a disputed charge is invoiced is read from the invoices (`NetBilledByCharge`), as the waiver
+  path already does, rather than stored on the occurrence.
 
 ### Queue core
 

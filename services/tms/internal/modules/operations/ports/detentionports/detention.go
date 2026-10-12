@@ -167,6 +167,7 @@ type ListOccurrencesByChargesRequest struct {
 	TenantInfo  pagination.TenantInfo
 	ShipmentIDs []pulid.ID
 	ChargeIDs   []pulid.ID
+	Statuses    []detention.OccurrenceStatus
 }
 
 type DetentionOccurrenceRepository interface {
@@ -184,8 +185,8 @@ type DetentionOccurrenceRepository interface {
 		tenantInfo pagination.TenantInfo,
 	) ([]*detention.DetentionOccurrence, error)
 
-	// ListByAdditionalCharges returns the pending, approved and billed
-	// occurrences the shipment charges bill.
+	// ListByAdditionalCharges returns the occurrences in the requested
+	// statuses that the shipment charges bill.
 	ListByAdditionalCharges(
 		ctx context.Context,
 		req *ListOccurrencesByChargesRequest,

@@ -133,6 +133,7 @@ func (s *Service) SyncInvoiceBilling(
 			TenantInfo:  req.TenantInfo,
 			ShipmentIDs: distinctIDs(shipmentIDs),
 			ChargeIDs:   chargeIDs,
+			Statuses:    detention.InvoiceSettledStatuses(),
 		},
 	)
 	if err != nil {
@@ -198,24 +199,24 @@ func (s *Service) settle(ctx context.Context, p settleParams) error {
 		summary = waivedSummary(occurrence, waiver, p.req.InvoiceNumber)
 		comment = "Detention charge waived and credited on invoice " +
 			invoiceLabel(p.req.InvoiceNumber)
-	case p.billed && occurrence.Status != detention.OccurrenceStatusBilled:
-		if err := occurrence.MarkBilled(); err != nil {
-			return errortypes.NewValidationError(
-				"status", errortypes.ErrInvalidOperation, err.Error())
-		}
-		summary = fmt.Sprintf("Billed on invoice %s at %s %s",
-			invoiceLabel(p.req.InvoiceNumber),
-			occurrence.BillableAmount.StringFixed(2), occurrence.Currency)
-		comment = "Detention charge billed on invoice " + invoiceLabel(p.req.InvoiceNumber)
-	case !p.billed && occurrence.Status == detention.OccurrenceStatusBilled:
-		if err := occurrence.ReleaseBilling(); err != nil {
-			return errortypes.NewValidationError(
-				"status", errortypes.ErrInvalidOperation, err.Error())
-		}
-		summary = releaseSummary(p.req)
-		comment = summary
 	default:
-		return nil
+		change, err := occurrence.FollowInvoices(p.billed)
+		if err != nil {
+			return errortypes.NewValidationError(
+				"status", errortypes.ErrInvalidOperation, err.Error())
+		}
+		switch change {
+		case detention.InvoiceBillingMarked:
+			summary = fmt.Sprintf("Billed on invoice %s at %s %s",
+				invoiceLabel(p.req.InvoiceNumber),
+				occurrence.BillableAmount.StringFixed(2), occurrence.Currency)
+			comment = "Detention charge billed on invoice " + invoiceLabel(p.req.InvoiceNumber)
+		case detention.InvoiceBillingReleased:
+			summary = releaseSummary(p.req)
+			comment = summary
+		case detention.InvoiceBillingUnchanged:
+			return nil
+		}
 	}
 
 	saved, err := s.occurrenceRepo.Update(ctx, occurrence)
