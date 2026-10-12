@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pgvector"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -40,27 +40,26 @@ func New(p Params) agentports.AIRetrievalRepository {
 }
 
 func (r *repository) VectorAvailability(ctx context.Context) (airetrieval.Availability, error) {
-	caps, err := r.probe.Capabilities(ctx)
+	vector, err := r.probe.VectorSupport(ctx)
 	if err != nil {
 		return airetrieval.Availability{}, fmt.Errorf("probe vector search: %w", err)
 	}
 
-	return availabilityFrom(caps), nil
+	return availabilityFrom(vector), nil
 }
 
-func availabilityFrom(caps dbdialect.Capabilities) airetrieval.Availability {
-	vector := caps.Vector()
+func availabilityFrom(vector pgvector.VectorSupport) airetrieval.Availability {
 	availability := airetrieval.Availability{
 		ExtensionInstalled: vector.ExtensionInstalled(),
 		ExtensionVersion:   vector.ExtensionVersion,
 	}
 
 	switch {
-	case caps.Supports(dbdialect.CapVectorSearch):
+	case vector.Ready():
 		availability.Available = true
-	case vector.State == dbdialect.VectorExtensionTooOld:
+	case vector.State == pgvector.VectorExtensionTooOld:
 		availability.Reason = airetrieval.UnavailableReasonTooOld
-	case vector.State == dbdialect.VectorSchemaMissing:
+	case vector.State == pgvector.VectorSchemaMissing:
 		availability.Reason = airetrieval.UnavailableReasonSchemaMissing
 	default:
 		availability.Reason = airetrieval.UnavailableReasonExtensionMissing

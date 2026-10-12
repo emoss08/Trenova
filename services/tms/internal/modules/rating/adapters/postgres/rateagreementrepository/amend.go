@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -104,7 +105,7 @@ func (r *repository) closeOutRules(
 			NewUpdate().
 			Model((*rateagreement.RateAgreementRule)(nil)).
 			Set(cols.EffectiveTo.Set(), req.EffectiveFrom).
-			Set(cols.UpdatedAt.SetExpr(r.db.NowEpoch())).
+			Set(cols.UpdatedAt.SetExpr(dbhelper.NowEpoch)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return rateagreementcol.RateAgreementRuleScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.RateAgreementID.Eq(), req.RateAgreementID).

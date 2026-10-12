@@ -396,7 +396,7 @@ func (r *repository) SetApprovalWorkflowRunID(
 			NewUpdate().
 			Model(entity).
 			Set(cols.ApprovalWorkflowRunID.Set(), req.RunID).
-			Set(cols.UpdatedAt.SetExpr(r.db.NowEpoch())).
+			Set(cols.UpdatedAt.SetExpr(dbhelper.NowEpoch)).
 			Where(cols.ID.Eq(), req.ID).
 			Where(cols.TargetOrganizationID.Eq(), req.TenantInfo.OrgID).
 			Where(cols.TargetBusinessUnitID.Eq(), req.TenantInfo.BuID).

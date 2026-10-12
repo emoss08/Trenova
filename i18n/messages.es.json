@@ -31183,7 +31183,6 @@
   "{0} is not an id": "{0} no es un id",
   "{0} is not available": "{0} no está disponible",
   "{0} is not available as a carrier intelligence provider": "{0} no está disponible como proveedor de inteligencia de transportistas",
-  "{0} is not available when running on {1}; configure database.driver=postgres to use this feature": "{0} no está disponible al ejecutarse sobre {1}; configure database.driver=postgres para usar esta función",
   "{0} is not connected": "{0} no está conectado",
   "{0} is not connected for this organization": "{0} no está conectado para esta organización",
   "{0} is not connected right now. The request waits a few minutes for it to come online.": "{0} no está conectada en este momento. La solicitud espera unos minutos a que se conecte.",

@@ -15,7 +15,7 @@ trail's only writer. How those source rows get their trace and owner links is de
 
 ## Tables
 
-Migration `20261231006750_ai_audit_ledger` (Postgres and the SQLite mirror) creates:
+Migration `20261231006750_ai_audit_ledger` creates:
 
 | Table | Holds |
 |-------|-------|
@@ -25,12 +25,12 @@ Migration `20261231006750_ai_audit_ledger` (Postgres and the SQLite mirror) crea
 | `ai_audit_exports` | Export requests and their files. |
 | `ai_audit_projector_state` | One watermark per source table. |
 
-On Postgres, a trigger (`ai_audit_events_append_only`) refuses every `UPDATE` and `TRUNCATE`
+A trigger (`ai_audit_events_append_only`) refuses every `UPDATE` and `TRUNCATE`
 on `ai_audit_events`. It refuses `DELETE` unless the session has set
 `trenova.ai_audit_prune = on`, which only the retention sweep does, or the delete cascades
 from a deleted organization. The trigger stops accidents and ordinary application code. It
 does not stop a database superuser, and neither does anything else inside the database. The
-chain is what shows that such a change happened. SQLite has no trigger.
+chain is what shows that such a change happened.
 
 ## Events
 
@@ -59,10 +59,9 @@ for it, on the step or on the event:
 A row with no verdict, from before verdicts were kept, derives as it did: a failed
 step with a reason is `Denied`, any other failed step `Failed`, and a refused event
 `Refused`. An argument contract refusal is `Refused` rather than an outcome of its
-own: a new outcome would need the `ck_ai_audit_events_outcome` check widened on
-both Postgres and the SQLite mirror, and `Refused` already means "turned away
-before it ran". Only the outcome value changes, never the canonical form, so no
-`hash_version` changes.
+own: a new outcome would need the `ck_ai_audit_events_outcome` check widened, and
+`Refused` already means "turned away before it ran". Only the outcome value changes,
+never the canonical form, so no `hash_version` changes.
 
 An automatic write of an unattended run names the system user as its executor
 (`executed_by_user_id`; see [agent-runtime.md](agent-runtime.md#who-a-run-acts-as)). Its

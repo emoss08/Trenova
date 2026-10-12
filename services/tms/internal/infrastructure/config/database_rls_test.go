@@ -13,7 +13,6 @@ import (
 
 func rlsTestConfig(mode string) *Config {
 	cfg := newValidConfig()
-	cfg.Database.Driver = "postgres"
 	cfg.Database.User = "trenova_app"
 	cfg.Database.RLS = RLSConfig{
 		Mode:       mode,
@@ -39,7 +38,6 @@ func TestValidateRLSConfig(t *testing.T) {
 			c.Database.RLS.Mode = RLSModeObserve
 			c.Database.System = DatabaseRole{}
 		}},
-		{name: "sqlite cannot enable", mutate: func(c *Config) { c.Database.Driver = "sqlite" }, want: ErrRLSRequiresPostgres},
 		{name: "bad key id", mutate: func(c *Config) { c.Database.RLS.ScopeKeyID = "has space" }, want: ErrRLSScopeKeyIDInvalid},
 		{name: "missing key", mutate: func(c *Config) { c.Database.RLS.ScopeKey = "" }, want: ErrRLSScopeKeyRequired},
 		{name: "short key", mutate: func(c *Config) {

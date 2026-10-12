@@ -288669,15 +288669,6 @@
       "go/other"
     ]
   },
-  "{0} is not available when running on {1}; configure database.driver=postgres to use this feature": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "{0} is not connected": {
     "sites": 1,
     "scope": [

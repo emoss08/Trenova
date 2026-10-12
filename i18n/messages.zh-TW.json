@@ -31183,7 +31183,6 @@
   "{0} is not an id": "{0} 不是 id",
   "{0} is not available": "{0} 無法使用",
   "{0} is not available as a carrier intelligence provider": "{0} 無法作為承運業者情報供應商使用",
-  "{0} is not available when running on {1}; configure database.driver=postgres to use this feature": "在 {1} 上執行時無法使用 {0}；請設定 database.driver=postgres 以使用此功能",
   "{0} is not connected": "{0} 尚未連線",
   "{0} is not connected for this organization": "本組織尚未連結 {0}",
   "{0} is not connected right now. The request waits a few minutes for it to come online.": "{0} 目前未連線。請求會等待幾分鐘讓它上線。",
