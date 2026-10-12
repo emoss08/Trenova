@@ -3,6 +3,7 @@ package modeladapter
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -493,13 +494,18 @@ func toAnthropicMessages(messages []Message) []anthropic.BetaMessageParam {
 		msg := &messages[i]
 		switch msg.Role {
 		case RoleTool:
-			// A tool result is a user-role message carrying a tool_result block,
-			// not a role of its own.
+			// A tool result is a tool_result block in a user-role message, not
+			// a role of its own. The results of one turn's calls share a
+			// message: sent one per message, they teach the model to stop
+			// calling tools in parallel.
+			block := anthropic.BetaContentBlockParamUnion{OfToolResult: anthropicToolResult(msg)}
+			if last, results := lastToolResults(out); last != nil {
+				last.Content = slices.Insert(last.Content, results, block)
+				continue
+			}
 			out = append(out, anthropic.BetaMessageParam{
-				Role: anthropic.BetaMessageParamRoleUser,
-				Content: []anthropic.BetaContentBlockParamUnion{{
-					OfToolResult: anthropicToolResult(msg),
-				}},
+				Role:    anthropic.BetaMessageParamRoleUser,
+				Content: []anthropic.BetaContentBlockParamUnion{block},
 			})
 		case RoleAssistant:
 			blocks := make([]anthropic.BetaContentBlockParamUnion, 0, len(msg.ToolCalls)+2)
@@ -528,16 +534,48 @@ func toAnthropicMessages(messages []Message) []anthropic.BetaMessageParam {
 				Content: blocks,
 			})
 		default:
+			block := anthropic.BetaContentBlockParamUnion{
+				OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
+			}
+			// Text that follows tool results joins their message, after them,
+			// which is the order the API asks for.
+			if last, _ := lastToolResults(out); last != nil {
+				last.Content = append(last.Content, block)
+				continue
+			}
 			out = append(out, anthropic.BetaMessageParam{
-				Role: anthropic.BetaMessageParamRoleUser,
-				Content: []anthropic.BetaContentBlockParamUnion{{
-					OfText: &anthropic.BetaTextBlockParam{Text: msg.Content},
-				}},
+				Role:    anthropic.BetaMessageParamRoleUser,
+				Content: []anthropic.BetaContentBlockParamUnion{block},
 			})
 		}
 	}
 
 	return out
+}
+
+// lastToolResults is the final message when it is a user message that opens
+// with tool results, and how many it opens with. A further result goes in after
+// them and any text after it, since the API takes every result ahead of any
+// text. A person's own message never opens with a result, so it is never the
+// message returned.
+func lastToolResults(
+	out []anthropic.BetaMessageParam,
+) (message *anthropic.BetaMessageParam, results int) {
+	if len(out) == 0 {
+		return nil, 0
+	}
+	last := &out[len(out)-1]
+	if last.Role != anthropic.BetaMessageParamRoleUser {
+		return nil, 0
+	}
+	for results < len(last.Content) && last.Content[results].OfToolResult != nil {
+		results++
+	}
+	if results == 0 {
+		return nil, 0
+	}
+
+	return last, results
 }
 
 // anthropicToolResult carries a tool's output as a text block. An empty

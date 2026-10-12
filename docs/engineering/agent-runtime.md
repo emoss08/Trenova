@@ -205,6 +205,10 @@ hand-written JSON. Trenova keeps the transport around it
   not 2xx into the shared `TransportError` (status, retryability, message,
   Retry-After) and wraps a stream in the idle guard. An error event inside a stream
   becomes the same retryable or final failure as before.
+- **One turn's results travel together.** `toAnthropicMessages` puts the results of the
+  calls one assistant turn made into a single user message, in order, with any text that
+  follows them after the last result, as the API asks. Sent one per message they read as
+  serial work and teach the model to stop calling tools in parallel.
 - **Pinned on the wire.** `anthropicwire_internal_test.go` keeps the exact method,
   path, headers and body for each family of model and thinking setting under
   `testdata/anthropic_wire`. A change to how a request is built is a diff to read
