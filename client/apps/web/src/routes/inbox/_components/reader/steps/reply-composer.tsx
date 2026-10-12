@@ -41,13 +41,7 @@ import {
   type ReplyOutcome,
 } from "../composer-state";
 import { useReaderPanel, useStepSubmit } from "../reader-panel";
-import {
-  AttachMenu,
-  RefusedFileChip,
-  ReplyFileChip,
-  ReplyFileList,
-  UploadingChip,
-} from "./reply-files";
+import { AttachMenu, ReplyFiles, type RefusedUpload } from "./reply-files";
 import { StepBody, StepError, StepFooter } from "./step-parts";
 
 /** How long typing pauses before the draft is saved for the team. */
@@ -78,71 +72,6 @@ function replySubject(t: TranslateFn, message: InboundMessageDetail): string {
 }
 
 const NO_FILES: readonly ReplyFile[] = [];
-
-type RefusedUpload = { key: string; name: string; reason: string };
-
-/** The files a reply carries, the ones on their way up, and the ones refused before upload. */
-function ReplyFiles({
-  files,
-  uploads,
-  refused,
-  limitBytes,
-  onRemove,
-  onCancelUpload,
-  onRetryUpload,
-  onDismissRefusal,
-}: {
-  files: readonly ReplyFile[];
-  limitBytes: number | null;
-  uploads: ReturnType<typeof useUploadWithProgress>["uploads"];
-  refused: readonly RefusedUpload[];
-  onRemove?: (documentId: string) => void;
-  onCancelUpload: (id: string) => void;
-  onRetryUpload: (id: string) => void;
-  onDismissRefusal: (key: string) => void;
-}) {
-  const t = useT();
-  const pending = uploads.filter((upload) => upload.status !== "success");
-  if (files.length === 0 && pending.length === 0 && refused.length === 0) {
-    return null;
-  }
-  const carried = formatFileSize(totalBytes(files));
-
-  return (
-    <ReplyFileList
-      summary={
-        files.length > 0 ? (
-          <>
-            <span>{t("{0, plural, one {# file} other {# files}}", files.length)}</span>
-            <span>
-              {limitBytes === null ? carried : t("{0} of {1}", carried, formatFileSize(limitBytes))}
-            </span>
-          </>
-        ) : undefined
-      }
-    >
-      {files.map((file) => (
-        <ReplyFileChip key={file.documentId} file={file} onRemove={onRemove} />
-      ))}
-      {pending.map((upload) => (
-        <UploadingChip
-          key={upload.id}
-          upload={upload}
-          onCancel={onCancelUpload}
-          onRetry={onRetryUpload}
-        />
-      ))}
-      {refused.map((refusal) => (
-        <RefusedFileChip
-          key={refusal.key}
-          name={refusal.name}
-          reason={refusal.reason}
-          onDismiss={() => onDismissRefusal(refusal.key)}
-        />
-      ))}
-    </ReplyFileList>
-  );
-}
 
 /** What the files still uploading will add when they land. */
 function inFlightBytes(uploads: ReturnType<typeof useUploadWithProgress>["uploads"]): number {
