@@ -1,6 +1,7 @@
 package maputils
 
 import (
+	"cmp"
 	"fmt"
 	"maps"
 	"reflect"
@@ -167,4 +168,14 @@ func WithoutKeys(input map[string]any, keys ...string) map[string]any {
 	}
 
 	return output
+}
+
+func SortedValues[K cmp.Ordered, V any](input map[K]V) []V {
+	keys := slices.Sorted(maps.Keys(input))
+	values := make([]V, 0, len(keys))
+	for _, key := range keys {
+		values = append(values, input[key])
+	}
+
+	return values
 }

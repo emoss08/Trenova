@@ -130,3 +130,10 @@ func TestWithoutKeys(t *testing.T) {
 	assert.Equal(t, untouched, WithoutKeys(untouched, "query"))
 	assert.Nil(t, WithoutKeys(nil, "query"))
 }
+
+func TestSortedValues_ReadsValuesInKeyOrder(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, []string{"a", "b", "c"}, SortedValues(map[string]string{"z": "c", "m": "b", "a": "a"}))
+	assert.Empty(t, SortedValues(map[string]int(nil)))
+}
