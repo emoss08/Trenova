@@ -91,6 +91,23 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   runs; `TestEveryActionToolValidatesBeforeFiling` lists the few that cannot,
   with the reason. All of it happens inside the activity, so no workflow
   command changes and no version gate is needed.
+- **A reply's reads run together.** Consecutive calls to tools that only look
+  something up (registered query tools whose effect is `lookup`, taken into
+  `TurnState.Reads` when the turn opens) are scheduled as activities before the
+  loop waits on any, up to `maxConcurrentReads` (8) at once, and settled in the
+  order the model asked, so the transcript, the stream and the model read the
+  calls' order whatever order they finish in (`concurrentreads.go`). Each read
+  is held to every check the loop makes before a dispatch as it joins, with the
+  waiting reads counted against the budget; anything else (a write, a refusal,
+  a call identical to a waiting one, a second call to the same `get_` tool,
+  whose card is bunched with the first by call id) settles the batch first and
+  takes the ordinary path. A read in a batch is dispatched with the taint and
+  outside-content flags the turn had when the batch started, which a query tool
+  never reads; a write after it always waits for the batch. In process
+  (`localEffects`, the red-team harness) the reads run one after another, since
+  a request's context may carry a transaction. Behind
+  `agent-loop-concurrent-reads`, asked only when a second read would join, and
+  a turn state without `Reads` runs every call on its own.
 - `find_tools` and `publish_artifact` are activities of their own. Call ids
   are minted through `workflow.SideEffect`, so a replay reads back the same id.
   An id an adapter made up from the call's position (Ollama, and an
@@ -1968,6 +1985,7 @@ before the change:
 | `agent-loop-interjections` | a turn never reads what the person said while it worked, nor checks its records for changes; a steer waits in the queue and is sent as the next message | nothing; the check itself is the only cost, and it is asked only when a steer is waiting or a check of the records is due |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
 | `agent-loop-unshown-ask` | an `ask_user` call the runtime refused is an ordinary result that counts as asked: the turn may end in silence after it, and the same question is refused as repeated | nothing; the check itself is the only cost, and it is asked only of an ask the runtime refused |
+| `agent-loop-concurrent-reads` | each read is dispatched and settled before the next call of the reply starts | nothing; the check itself is the only cost, and it is asked only when a second read would join a batch |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
 | none: the workflow is retired whole | `ImportAssistantTurnWorkflow` on `agent-chat-queue`, which no route starts any more | the workflow, its activities and registry in `importassistantjobs`, `workflow_test.go`, and the turn machinery in `shipmentimportassistantservice` (the tool loop, `toolGrants`, `persistConversationTurn`); delete them once no `ImportAssistantTurnWorkflow` execution is open |
 

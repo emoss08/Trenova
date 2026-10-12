@@ -419,6 +419,20 @@ func (fx *effects) Complete(
 	return fx.rt.StreamCompletion(fx.ctx, req, fx.Emit)
 }
 
+// DispatchReads records each read as the harness records any call, one after
+// another, so the record keeps the order the model asked in.
+func (fx *effects) DispatchReads(
+	t *agentruntime.Turn,
+	calls []agentruntime.DispatchCall,
+) []agentruntime.ToolOutcome {
+	outcomes := make([]agentruntime.ToolOutcome, 0, len(calls))
+	for idx := range calls {
+		outcomes = append(outcomes, fx.Dispatch(t, calls[idx]))
+	}
+
+	return outcomes
+}
+
 func (fx *effects) Dispatch(
 	t *agentruntime.Turn,
 	call agentruntime.DispatchCall,

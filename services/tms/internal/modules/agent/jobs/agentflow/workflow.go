@@ -162,12 +162,42 @@ func (fx *workflowEffects) Dispatch(
 	_ *agentruntime.Turn,
 	call agentruntime.DispatchCall,
 ) agentruntime.ToolOutcome {
+	return fx.settleTool(&call, fx.startTool(&call))
+}
+
+// DispatchReads schedules every read's activity before waiting on any, so
+// they run at once, and settles them in the order given: the artifacts the
+// turn keeps and the outcomes the loop reads come back in call order whatever
+// order the activities finish in.
+func (fx *workflowEffects) DispatchReads(
+	_ *agentruntime.Turn,
+	calls []agentruntime.DispatchCall,
+) []agentruntime.ToolOutcome {
+	futures := make([]workflow.Future, 0, len(calls))
+	for idx := range calls {
+		futures = append(futures, fx.startTool(&calls[idx]))
+	}
+
+	outcomes := make([]agentruntime.ToolOutcome, 0, len(calls))
+	for idx := range calls {
+		outcomes = append(outcomes, fx.settleTool(&calls[idx], futures[idx]))
+	}
+
+	return outcomes
+}
+
+func (fx *workflowEffects) startTool(call *agentruntime.DispatchCall) workflow.Future {
 	ctx := workflow.WithActivityOptions(fx.ctx, fx.toolOptions(call.Call.Name))
 
+	return workflow.ExecuteActivity(ctx, call.Call.Name, &ToolInput{Run: fx.run, Call: *call})
+}
+
+func (fx *workflowEffects) settleTool(
+	call *agentruntime.DispatchCall,
+	future workflow.Future,
+) agentruntime.ToolOutcome {
 	var result ToolResult
-	err := workflow.ExecuteActivity(ctx, call.Call.Name, &ToolInput{Run: fx.run, Call: call}).
-		Get(ctx, &result)
-	if err != nil {
+	if err := future.Get(fx.ctx, &result); err != nil {
 		// A tool that could not be run to an answer, after its retries, is
 		// still something the model can work with. Failing the turn over it
 		// would throw away everything the turn had already done.

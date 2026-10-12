@@ -60,6 +60,18 @@ func (fx *handOffEffects) Dispatch(
 	return fx.svc.runtime.DispatchStep(fx.ctx, t.Request(), call)
 }
 
+func (fx *handOffEffects) DispatchReads(
+	t *agentruntime.Turn,
+	calls []agentruntime.DispatchCall,
+) []agentruntime.ToolOutcome {
+	outcomes := make([]agentruntime.ToolOutcome, 0, len(calls))
+	for _, call := range calls {
+		outcomes = append(outcomes, fx.Dispatch(t, call))
+	}
+
+	return outcomes
+}
+
 func (*handOffEffects) Find(*agentruntime.Turn, map[string]any) agentruntime.FindAnswer {
 	return agentruntime.FindAnswer{}
 }

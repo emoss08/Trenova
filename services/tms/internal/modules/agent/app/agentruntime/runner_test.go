@@ -1294,6 +1294,15 @@ func (fx *dispatchRecorder) Dispatch(_ *Turn, call DispatchCall) ToolOutcome {
 	return ToolOutcome{Content: `{"results":[]}`}
 }
 
+func (fx *dispatchRecorder) DispatchReads(t *Turn, calls []DispatchCall) []ToolOutcome {
+	outcomes := make([]ToolOutcome, 0, len(calls))
+	for _, call := range calls {
+		outcomes = append(outcomes, fx.Dispatch(t, call))
+	}
+
+	return outcomes
+}
+
 /*
 A turn held as data is decided from the tools the agent held when it opened.
 
