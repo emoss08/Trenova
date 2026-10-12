@@ -89,7 +89,8 @@ export function Motes() {
           0,
           1 - Math.hypot((px - width / 2) / (width * 0.5), (py - height * 0.35) / (height * 0.6)),
         );
-        const twinkle = 0.45 + 0.55 * Math.abs(Math.sin(seconds * (0.8 + mote.speed * 60) + mote.phase));
+        const twinkle =
+          0.45 + 0.55 * Math.abs(Math.sin(seconds * (0.8 + mote.speed * 60) + mote.phase));
         context.globalAlpha = Math.min(1, mote.alpha * twinkle * falloff);
         context.shadowBlur = mote.radius * 2;
         context.beginPath();

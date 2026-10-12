@@ -15,7 +15,8 @@ type Suggestion = NonNullable<TriageBriefing["suggestion"]>;
 
 const PILL =
   "ui-focus-ring inline-flex h-8 items-center gap-1.75 rounded-full border px-3 text-sm transition-colors";
-const QUIET = "border-border text-foreground-muted hover:border-border-strong hover:bg-surface-hover";
+const QUIET =
+  "border-border text-foreground-muted hover:border-border-strong hover:bg-surface-hover";
 
 function Count({ children }: { children: ReactNode }) {
   return <b className="text-foreground font-mono text-xs font-semibold tabular-nums">{children}</b>;
@@ -164,9 +165,7 @@ export function FooterPills({
       {briefing.comingBack > 0 && (
         <button
           type="button"
-          onClick={() =>
-            onOpenFolder({ kind: "lane", lane: comingBackLane ? "snoozed" : "them" })
-          }
+          onClick={() => onOpenFolder({ kind: "lane", lane: comingBackLane ? "snoozed" : "them" })}
           className={cn(PILL, QUIET)}
         >
           <ClockIcon aria-hidden className="size-3" />
@@ -180,10 +179,7 @@ export function FooterPills({
           key={mailbox.id}
           type="button"
           onClick={() => onOpenFolder({ kind: "mailbox", mailboxId: mailbox.id })}
-          className={cn(
-            PILL,
-            "border-warning-border text-warning hover:bg-warning-subtle pr-1.5",
-          )}
+          className={cn(PILL, "border-warning-border text-warning hover:bg-warning-subtle pr-1.5")}
         >
           <span aria-hidden className="bg-warning size-1.75 rounded-full" />
           <span>

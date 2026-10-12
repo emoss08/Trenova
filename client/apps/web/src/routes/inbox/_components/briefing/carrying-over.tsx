@@ -71,13 +71,19 @@ export function CarryingOver({
   };
 
   return (
-    <section aria-label={t("Carrying over")} className="animate-rise flex w-full max-w-140 flex-col gap-0.5">
+    <section
+      aria-label={t("Carrying over")}
+      className="animate-rise flex w-full max-w-140 flex-col gap-0.5"
+    >
       <div className="flex items-center gap-2 pb-2.5">
         <h3 className="text-base font-semibold">{t("Carrying over")}</h3>
         <span className="text-foreground-subtle font-mono text-xs tabular-nums">{rows.length}</span>
         <span className="flex-1" />
         {done && owner !== null ? (
-          <span role="status" className="animate-confirm text-success inline-flex items-center gap-1.5 text-sm">
+          <span
+            role="status"
+            className="animate-confirm text-success inline-flex items-center gap-1.5 text-sm"
+          >
             <CheckIcon aria-hidden className="size-3" strokeWidth={2.4} />
             {t(
               "Handed to {0} · {1, plural, one {they'll see it first thing} other {they'll see them first thing}}",
@@ -94,7 +100,10 @@ export function CarryingOver({
             className="pl-1.5"
           >
             <UserMark user={onCall} size="sm" />
-            {t("Hand off to {0}", senderFirstName({ fromName: onCall.name, fromAddress: onCall.emailAddress }))}
+            {t(
+              "Hand off to {0}",
+              senderFirstName({ fromName: onCall.name, fromAddress: onCall.emailAddress }),
+            )}
           </Button>
         ) : null}
       </div>
@@ -112,7 +121,9 @@ export function CarryingOver({
         {rows.map((row, index) => {
           const due = row.dueAt === null ? null : dueSpan(row.dueAt, now);
           const next =
-            row.action === null ? row.subject : actionCopy(t, row.action, row, USER_FORMATTERS).title;
+            row.action === null
+              ? row.subject
+              : actionCopy(t, row.action, row, USER_FORMATTERS).title;
           const rowOwner = done ? owner : row.owner;
           return (
             <li key={row.messageId}>
@@ -128,7 +139,10 @@ export function CarryingOver({
               >
                 <span
                   aria-hidden
-                  className={cn("size-1.75 rounded-full", CLASSIFICATION_DOT[row.classification ?? "Other"])}
+                  className={cn(
+                    "size-1.75 rounded-full",
+                    CLASSIFICATION_DOT[row.classification ?? "Other"],
+                  )}
                 />
                 <b className="truncate font-medium">{senderName(row)}</b>
                 <span className="text-foreground-subtle truncate @max-2xl:hidden">{next}</span>

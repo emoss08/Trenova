@@ -27,10 +27,7 @@ export type DeckEntry = {
  * briefing says where they went, so `acted` holds them out; a card left with
  * nothing is not drawn. The estimate shrinks with what is left.
  */
-export function deckEntries(
-  deck: readonly DeckCard[],
-  acted: ReadonlySet<string>,
-): DeckEntry[] {
+export function deckEntries(deck: readonly DeckCard[], acted: ReadonlySet<string>): DeckEntry[] {
   const entries: DeckEntry[] = [];
   for (const group of DECK_ORDER) {
     const card = deck.find((row) => row.group === group);

@@ -23778,6 +23778,7 @@
               "formula_template",
               "fuel_purchase",
               "hazardous_material",
+              "inbound_message",
               "invoice",
               "journal_entry",
               "journal_reversal",

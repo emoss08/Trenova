@@ -550,9 +550,7 @@ function TriageWorkspace({
     if (mailboxesQuery.isSuccess && mailboxes.length === 0) {
       return (
         <ConnectFirstSource
-          onAdd={() =>
-            useTriageStore.getState().openOverlay({ kind: "connect", mailboxId: null })
-          }
+          onAdd={() => useTriageStore.getState().openOverlay({ kind: "connect", mailboxId: null })}
         />
       );
     }

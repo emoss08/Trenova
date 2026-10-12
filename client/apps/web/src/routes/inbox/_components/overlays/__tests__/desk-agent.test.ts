@@ -54,8 +54,20 @@ describe("which agent a message is handed to", () => {
   });
 
   it("falls back to the agent last asked when none fits, then to the first", () => {
-    const general: AgentLike = { id: "a_g", name: "Helper", description: "", template: null, toolNames: [] };
-    const other: AgentLike = { id: "a_o", name: "Ops", description: "", template: null, toolNames: [] };
+    const general: AgentLike = {
+      id: "a_g",
+      name: "Helper",
+      description: "",
+      template: null,
+      toolNames: [],
+    };
+    const other: AgentLike = {
+      id: "a_o",
+      name: "Ops",
+      description: "",
+      template: null,
+      toolNames: [],
+    };
     expect(pickAgentFor([general, other], "Invoice", "a_o")?.id).toBe("a_o");
     expect(pickAgentFor([general, other], "Invoice", "a_missing")?.id).toBe("a_g");
   });

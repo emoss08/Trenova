@@ -125,7 +125,8 @@ export function ConnectSource({
 }) {
   const t = useT();
   const mailboxes = useTriageMailboxes().data;
-  const existing = mailboxId === null ? null : (mailboxes?.find((row) => row.id === mailboxId) ?? null);
+  const existing =
+    mailboxId === null ? null : (mailboxes?.find((row) => row.id === mailboxId) ?? null);
   const ready = mailboxId === null || mailboxes !== undefined;
 
   return (
@@ -179,7 +180,11 @@ function ConnectBody({
       })
       .then(
         (connected) =>
-          dispatch({ type: "created", mailbox: connected.mailbox, webhookUrl: connected.webhookUrl }),
+          dispatch({
+            type: "created",
+            mailbox: connected.mailbox,
+            webhookUrl: connected.webhookUrl,
+          }),
         (error: unknown) => dispatch({ type: "failed", message: inlineErrorText(t, error) }),
       );
   };
@@ -201,7 +206,9 @@ function ConnectBody({
         <DialogDescription className="text-foreground-subtle text-sm">
           {state.step === "source"
             ? t("Anywhere freight work arrives. Nova reads all of it the same way.")
-            : t("Takes a couple of minutes. Nothing changes for the people already using this address.")}
+            : t(
+                "Takes a couple of minutes. Nothing changes for the people already using this address.",
+              )}
         </DialogDescription>
       </DialogHeader>
 
@@ -256,7 +263,8 @@ function ConnectBody({
 
 function Steps({ state }: { state: ConnectState }) {
   const t = useT();
-  const current = state.step === "done" ? NUMBERED_STEPS.length : NUMBERED_STEPS.indexOf(state.step as never);
+  const current =
+    state.step === "done" ? NUMBERED_STEPS.length : NUMBERED_STEPS.indexOf(state.step as never);
 
   return (
     <ol className="flex gap-4 px-4 pt-3">
@@ -379,7 +387,9 @@ function StepBody({
               autoComplete="off"
               placeholder="dispatch@yourcompany.com"
               value={state.watch}
-              onChange={(event) => dispatch({ type: "edit", field: "watch", value: event.target.value })}
+              onChange={(event) =>
+                dispatch({ type: "edit", field: "watch", value: event.target.value })
+              }
             />
           </Field>
           <Field id={`${ids}-name`} label={t("Name it")}>
@@ -388,7 +398,9 @@ function StepBody({
               autoComplete="off"
               placeholder={t("Dispatch")}
               value={state.name}
-              onChange={(event) => dispatch({ type: "edit", field: "name", value: event.target.value })}
+              onChange={(event) =>
+                dispatch({ type: "edit", field: "name", value: event.target.value })
+              }
             />
           </Field>
           <Field
@@ -420,7 +432,9 @@ function StepBody({
         <>
           <p className="text-foreground-muted text-sm leading-relaxed">
             {state.watch.trim() === ""
-              ? t("In your email provider, forward the shared address to this one. Keep a copy in the original inbox.")
+              ? t(
+                  "In your email provider, forward the shared address to this one. Keep a copy in the original inbox.",
+                )
               : rt(
                   "In your email provider, forward <b>{0}</b> to this address. Keep a copy in the original inbox.",
                   { b: (chunks) => <b className="text-foreground font-medium">{chunks}</b> },
@@ -453,7 +467,9 @@ function StepBody({
             ))}
           </div>
           {provider !== null && (
-            <p className="text-foreground-subtle animate-rise text-sm">{providerText(t, provider).how}</p>
+            <p className="text-foreground-subtle animate-rise text-sm">
+              {providerText(t, provider).how}
+            </p>
           )}
           {state.webhookUrl !== null && (
             <div className="border-border-subtle flex flex-col gap-1 border-t pt-3">
@@ -467,7 +483,9 @@ function StepBody({
                 <Button
                   variant="ghost"
                   size="xs"
-                  onClick={() => actions.copyText(state.webhookUrl ?? "", t("Webhook address copied"))}
+                  onClick={() =>
+                    actions.copyText(state.webhookUrl ?? "", t("Webhook address copied"))
+                  }
                 >
                   <Copy01Icon className="size-3" />
                   {t("Copy")}
@@ -479,7 +497,10 @@ function StepBody({
                     "Resend signs what it posts: add its signing secret in <a>Source settings</a> before mail is read.",
                     {
                       a: (chunks) => (
-                        <Link to={SOURCES_PATH} className="text-brand underline-offset-4 hover:underline">
+                        <Link
+                          to={SOURCES_PATH}
+                          className="text-brand underline-offset-4 hover:underline"
+                        >
                           {chunks}
                         </Link>
                       ),
@@ -532,7 +553,11 @@ function StepBody({
           <span>
             {state.watch.trim() === ""
               ? t("{0} is connected. New mail shows up in Waiting on you.", name)
-              : t("{0} is connected. New mail on {1} shows up in Waiting on you.", name, state.watch.trim())}
+              : t(
+                  "{0} is connected. New mail on {1} shows up in Waiting on you.",
+                  name,
+                  state.watch.trim(),
+                )}
           </span>
         </div>
       );
@@ -585,7 +610,9 @@ function TestStep({
     return (
       <div className="flex flex-col items-start gap-2.5">
         <TextShimmer as="p" className="text-sm" duration={1.6}>
-          {waiting.via === "test" ? t("Sent. Waiting for it to arrive…") : t("Waiting for it to arrive…")}
+          {waiting.via === "test"
+            ? t("Sent. Waiting for it to arrive…")
+            : t("Waiting for it to arrive…")}
         </TextShimmer>
         <p className="text-foreground-subtle text-xs">
           {t("It shows up here the moment it lands on {0}.", mailbox.address)}

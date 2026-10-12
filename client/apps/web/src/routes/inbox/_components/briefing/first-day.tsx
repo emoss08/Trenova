@@ -3,7 +3,11 @@ import { CheckIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { CLASSIFICATION_DOT, INBOUND_CLASSIFICATIONS, classificationLabel } from "../classification";
+import {
+  CLASSIFICATION_DOT,
+  INBOUND_CLASSIFICATIONS,
+  classificationLabel,
+} from "../classification";
 import type { FirstDayStage } from "./briefing-model";
 import { useCountUp } from "./use-briefing-motion";
 
@@ -65,7 +69,9 @@ export function FirstDay({
       : stage === "reading"
         ? t("Sorting, matching to shipments, and setting aside anything that needs a person.")
         : stage === "quiet"
-          ? t("Nothing was sitting at the address. New mail shows up here, already read, as it arrives.")
+          ? t(
+              "Nothing was sitting at the address. New mail shows up here, already read, as it arrives.",
+            )
           : t("Your first briefing is ready.");
 
   return (
@@ -79,7 +85,11 @@ export function FirstDay({
           />
           <span className="relative font-mono text-4xl font-semibold tabular-nums">
             {stage === "done" ? (
-              <CheckIcon aria-label={t("Done")} className="animate-confirm size-7" strokeWidth={2.4} />
+              <CheckIcon
+                aria-label={t("Done")}
+                className="animate-confirm size-7"
+                strokeWidth={2.4}
+              />
             ) : stage === "empty" ? (
               0
             ) : (
@@ -101,7 +111,10 @@ export function FirstDay({
             </p>
           ))}
         {stage !== "empty" && (
-          <ul aria-label={t("Read so far, by kind")} className="mt-1 flex flex-wrap justify-center gap-1.5">
+          <ul
+            aria-label={t("Read so far, by kind")}
+            className="mt-1 flex flex-wrap justify-center gap-1.5"
+          >
             {INBOUND_CLASSIFICATIONS.map((kind) => {
               const count = byKind.get(kind) ?? 0;
               return (

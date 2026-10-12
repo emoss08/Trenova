@@ -83,7 +83,8 @@ export function draftFromSeed(seed: RuleSeed | null): RuleDraft {
   return {
     classification: seed.classification ?? null,
     sender,
-    mailboxId: seed.mailboxId === undefined || seed.mailboxId === null ? null : String(seed.mailboxId),
+    mailboxId:
+      seed.mailboxId === undefined || seed.mailboxId === null ? null : String(seed.mailboxId),
     action: seed.action ?? null,
     assigneeId: null,
   };
@@ -208,4 +209,12 @@ export function senderShortName(scope: TriageSenderScope, sender: string): strin
   }
 
   return sender;
+}
+
+/**
+ * A rule to key a preview query by while there is nothing to preview; the
+ * query is disabled then, so it is never sent.
+ */
+export function idleRuleInput(): TriageRuleInput {
+  return { classification: "Other", senderScope: "Anyone", action: "Ignore" };
 }

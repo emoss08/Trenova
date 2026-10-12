@@ -10,16 +10,11 @@ const COUNT_MS = 900;
  */
 export function useCountUp(value: number, run = true, durationMs = COUNT_MS): number {
   const reduce = useReducedMotion() ?? false;
-  const [shown, setShown] = useState(reduce ? value : 0);
-  const from = useRef(reduce ? value : 0);
+  const [shown, setShown] = useState(0);
+  const from = useRef(0);
 
   useEffect(() => {
-    if (!run) {
-      return;
-    }
-    if (reduce) {
-      from.current = value;
-      setShown(value);
+    if (!run || reduce) {
       return;
     }
     const start = from.current;
@@ -39,7 +34,7 @@ export function useCountUp(value: number, run = true, durationMs = COUNT_MS): nu
     return () => cancelAnimationFrame(frame);
   }, [value, run, reduce, durationMs]);
 
-  return shown;
+  return reduce ? value : shown;
 }
 
 /**

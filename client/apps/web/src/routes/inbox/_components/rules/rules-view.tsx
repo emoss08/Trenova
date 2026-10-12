@@ -1,6 +1,7 @@
 import type { TriageRule, TriageRuleInput } from "@/lib/graphql/inbox";
 import { queries } from "@/lib/queries";
-import { useTriageStore } from "@/stores/triage-store";
+import { useNowSeconds } from "@/hooks/use-now-seconds";
+import { useTriageStore, type RuleSeed } from "@/stores/triage-store";
 import { useQuery } from "@tanstack/react-query";
 import { EyeIcon, PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -20,6 +21,7 @@ import {
   EMPTY_DRAFT,
   draftFromRule,
   draftFromSeed,
+  idleRuleInput,
   missingBlanks,
   ruleInput,
   sameRule,
@@ -29,7 +31,8 @@ import { RuleSentence } from "./rule-sentence";
 
 /** How long a deleted rule takes to leave before the list lets it go. */
 const LEAVE_MS = 280;
-const ROW = "grid grid-cols-[52px_minmax(0,1fr)_auto] gap-x-3.5 gap-y-1 @max-2xl:grid-cols-[44px_minmax(0,1fr)]";
+const ROW =
+  "grid grid-cols-[52px_minmax(0,1fr)_auto] gap-x-3.5 gap-y-1 @max-2xl:grid-cols-[44px_minmax(0,1fr)]";
 
 function openMatches(target: { ruleId: string } | { input: TriageRuleInput }) {
   useTriageStore.getState().openOverlay({ kind: "ruleMatches", target });
@@ -50,14 +53,20 @@ export function RulesView() {
   const t = useT();
   const rules = useTriageRules().data;
   const seed = useTriageStore((store) => store.ruleSeed);
-  const [draft, setDraft] = useState<RuleDraft | null>(null);
+  const now = useNowSeconds();
+  const [draft, setDraft] = useState<RuleDraft | null>(() =>
+    seed === null ? null : draftFromSeed(seed),
+  );
+  const [taken, setTaken] = useState<RuleSeed | null>(seed);
+  if (seed !== null && seed !== taken) {
+    setTaken(seed);
+    setDraft(draftFromSeed(seed));
+  }
 
   useEffect(() => {
-    if (seed === null) {
-      return;
+    if (seed !== null) {
+      useTriageStore.getState().seedRule(null);
     }
-    setDraft(draftFromSeed(seed));
-    useTriageStore.getState().seedRule(null);
   }, [seed]);
 
   const enabled = rules?.filter((rule) => rule.enabled) ?? [];
@@ -94,7 +103,7 @@ export function RulesView() {
         ) : (
           <ul aria-label={t("Rules")} className="flex flex-col">
             {rules.map((rule, index) => (
-              <RuleRow key={rule.id} rule={rule} index={index} />
+              <RuleRow key={rule.id} rule={rule} index={index} now={now} />
             ))}
           </ul>
         )}
@@ -153,7 +162,10 @@ function NewRule({
   const actions = useTriageActions();
   const input = ruleInput(draft);
   const ready = input !== null;
-  const preview = useQuery({ ...queries.inbox.rulePreview(input ?? PLACEHOLDER), enabled: ready });
+  const preview = useQuery({
+    ...queries.inbox.rulePreview(input ?? idleRuleInput()),
+    enabled: ready,
+  });
   const matched = useCountUp(preview.data?.matched ?? 0, preview.data !== undefined, 700);
   const [saving, setSaving] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
@@ -192,7 +204,9 @@ function NewRule({
           aria-hidden
           className={cn(
             "flex h-6.5 w-11 items-center justify-center rounded-full border-[1.5px] transition-colors",
-            ready ? "border-foreground text-foreground border-solid" : "border-border-strong text-foreground-subtle border-dashed",
+            ready
+              ? "border-foreground text-foreground border-solid"
+              : "border-border-strong text-foreground-subtle border-dashed",
           )}
         >
           <PlusIcon className="size-3.5" />
@@ -205,10 +219,14 @@ function NewRule({
             preview.isError ? (
               <span className="text-danger">{inlineErrorText(t, preview.error)}</span>
             ) : preview.data === undefined ? (
-              <span className="text-foreground-subtle">{t("Looking back over the last 30 days…")}</span>
+              <span className="text-foreground-subtle">
+                {t("Looking back over the last 30 days…")}
+              </span>
             ) : (
               <>
-                <b className="text-foreground font-mono text-2xl font-semibold tabular-nums">{matched}</b>
+                <b className="text-foreground font-mono text-2xl font-semibold tabular-nums">
+                  {matched}
+                </b>
                 <span>
                   {t(
                     "{0, plural, one {message last month would have matched} other {messages last month would have matched}}",
@@ -229,7 +247,12 @@ function NewRule({
                   ) : null}
                 </span>
                 {preview.data.matched > 0 && (
-                  <Button variant="link" size="sm" className="px-1" onClick={() => openMatches({ input })}>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="px-1"
+                    onClick={() => openMatches({ input })}
+                  >
                     {t("See them")}
                   </Button>
                 )}
@@ -247,7 +270,13 @@ function NewRule({
             <Button variant="ghost" size="sm" onClick={onDone}>
               {t("Cancel")}
             </Button>
-            <Button size="sm" disabled={!ready} isLoading={saving} loadingText={t("Turning on…")} onClick={turnOn}>
+            <Button
+              size="sm"
+              disabled={!ready}
+              isLoading={saving}
+              loadingText={t("Turning on…")}
+              onClick={turnOn}
+            >
               {t("Turn on")}
             </Button>
           </span>
@@ -262,18 +291,19 @@ function NewRule({
   );
 }
 
-const PLACEHOLDER: TriageRuleInput = {
-  classification: "Other",
-  senderScope: "Anyone",
-  action: "Ignore",
-};
-
 /** One rule: its switch, its sentence (each blank editable) and how often it acted. */
-const RuleRow = memo(function RuleRow({ rule, index }: { rule: TriageRule; index: number }) {
+const RuleRow = memo(function RuleRow({
+  rule,
+  index,
+  now,
+}: {
+  rule: TriageRule;
+  index: number;
+  now: number;
+}) {
   const t = useT();
   const actions = useTriageActions();
   const [leaving, setLeaving] = useState(false);
-  const now = Math.floor(Date.now() / 1000);
 
   const change = (next: RuleDraft) => {
     if (sameRule(rule, next)) {
@@ -356,7 +386,12 @@ const RuleRow = memo(function RuleRow({ rule, index }: { rule: TriageRule; index
         <Tooltip>
           <TooltipTrigger
             render={
-              <Button variant="ghost" size="icon-sm" aria-label={t("Delete rule")} onClick={remove} />
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t("Delete rule")}
+                onClick={remove}
+              />
             }
           >
             <XCloseIcon className="size-3.5" />

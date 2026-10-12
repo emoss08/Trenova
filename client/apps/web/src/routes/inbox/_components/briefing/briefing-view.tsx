@@ -107,7 +107,8 @@ export function BriefingView({ onOpenMessage, onOpenFolder }: BriefingViewProps)
     return () => clearTimeout(timer);
   }, [stage]);
 
-  const openConnect = () => useTriageStore.getState().openOverlay({ kind: "connect", mailboxId: null });
+  const openConnect = () =>
+    useTriageStore.getState().openOverlay({ kind: "connect", mailboxId: null });
 
   return (
     <div
@@ -237,9 +238,7 @@ function BriefingMain({
     useTriageStore.getState().openOverlay({ kind: "ruleMatches", target: { input } });
 
   const line =
-    briefing === undefined
-      ? null
-      : novaLine({ ...briefing, onCall: briefing.onCall ?? null });
+    briefing === undefined ? null : novaLine({ ...briefing, onCall: briefing.onCall ?? null });
   const cleared = briefing?.yours.filter((point) => point.done).length ?? 0;
   const endOfDay = briefing?.phase === "EndOfDay";
 
@@ -266,7 +265,11 @@ function BriefingMain({
         )}
       </Stage>
 
-      <Stage on={ready} delay={260} className="flex min-h-84 flex-col items-center gap-3.5 @max-2xl:min-h-0">
+      <Stage
+        on={ready}
+        delay={260}
+        className="flex min-h-84 flex-col items-center gap-3.5 @max-2xl:min-h-0"
+      >
         {briefing !== undefined &&
           (endOfDay ? (
             <CarryingOver

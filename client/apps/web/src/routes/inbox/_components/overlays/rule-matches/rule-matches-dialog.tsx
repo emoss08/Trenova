@@ -23,13 +23,13 @@ import { ruleActionPhrase } from "../../action-copy";
 import { classificationLabel } from "../../classification";
 import { mailboxName } from "../../folder-labels";
 import { inlineErrorText } from "../../inline-error";
+import { idleRuleInput } from "../../rules/rule-model";
 import { useTriageMailboxes, useTriageRules } from "../../use-triage-data";
 
 type Match = TriageRulePreview["matches"][number];
 type Mismatch = NonNullable<Match["mismatch"]>;
 
 const ROW_HEIGHT = 44;
-const NO_INPUT: TriageRuleInput = { classification: "Other", senderScope: "Anyone", action: "Ignore" };
 
 function mismatchText(t: TranslateFn, mismatch: Mismatch): string {
   switch (mismatch) {
@@ -42,9 +42,15 @@ function mismatchText(t: TranslateFn, mismatch: Mismatch): string {
   }
 }
 
-type RuleShape = Pick<TriageRuleInput, "classification" | "senderScope" | "sender" | "mailboxId" | "action">;
+type RuleShape = Pick<
+  TriageRuleInput,
+  "classification" | "senderScope" | "sender" | "mailboxId" | "action"
+>;
 
-function ruleOf(target: RuleMatchesTarget, rules: readonly TriageRule[] | undefined): RuleShape | null {
+function ruleOf(
+  target: RuleMatchesTarget,
+  rules: readonly TriageRule[] | undefined,
+): RuleShape | null {
   if ("input" in target) {
     return target.input;
   }
@@ -71,7 +77,7 @@ export function RuleMatchesDialog({
   const mailboxes = useTriageMailboxes().data;
   const drafted = "input" in target;
   const previewQuery = useQuery({
-    ...queries.inbox.rulePreview(drafted ? target.input : NO_INPUT),
+    ...queries.inbox.rulePreview(drafted ? target.input : idleRuleInput()),
     enabled: drafted,
   });
   const matchesQuery = useQuery({
@@ -131,7 +137,9 @@ export function RuleMatchesDialog({
                   data.matched,
                 )}
           </DialogTitle>
-          <DialogDescription className="text-foreground-subtle text-sm">{subtitle}</DialogDescription>
+          <DialogDescription className="text-foreground-subtle text-sm">
+            {subtitle}
+          </DialogDescription>
         </DialogHeader>
         <div className="px-2 py-1">
           {preview.isError ? (
@@ -202,7 +210,11 @@ function MatchRow({ match }: { match: Match }) {
         <em className="text-foreground-subtle truncate text-xs not-italic">{about}</em>
       </span>
       {match.mismatch === null ? (
-        <CheckIcon aria-label={t("Looks right")} className="text-success size-3" strokeWidth={2.2} />
+        <CheckIcon
+          aria-label={t("Looks right")}
+          className="text-success size-3"
+          strokeWidth={2.2}
+        />
       ) : (
         <span className="text-warning-subtle-foreground inline-flex items-center gap-1.25 text-xs whitespace-nowrap">
           <AlertTriangleIcon aria-hidden className="size-2.75" />

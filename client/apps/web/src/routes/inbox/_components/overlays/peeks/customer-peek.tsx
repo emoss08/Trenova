@@ -1,5 +1,6 @@
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { recordPath } from "@/config/record-links";
+import { useNowSeconds } from "@/hooks/use-now-seconds";
 import type { TriageCustomerPeek } from "@/lib/graphql/inbox";
 import { queries } from "@/lib/queries";
 import { useTriageStore } from "@/stores/triage-store";
@@ -93,7 +94,7 @@ function CustomerBody({
 }) {
   const t = useT();
   const navigate = useNavigate();
-  const now = Math.floor(Date.now() / 1000);
+  const now = useNowSeconds();
 
   return (
     <>

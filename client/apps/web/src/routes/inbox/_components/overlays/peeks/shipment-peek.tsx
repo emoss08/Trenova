@@ -107,7 +107,13 @@ export function ShipmentPeek({ shipmentId, onClose }: { shipmentId: string; onCl
   );
 }
 
-function ShipmentBody({ shipment, onClose }: { shipment: TriageShipmentPeek; onClose: () => void }) {
+function ShipmentBody({
+  shipment,
+  onClose,
+}: {
+  shipment: TriageShipmentPeek;
+  onClose: () => void;
+}) {
   const t = useT();
   const navigate = useNavigate();
   const actions = useTriageActions();
@@ -116,13 +122,17 @@ function ShipmentBody({ shipment, onClose }: { shipment: TriageShipmentPeek; onC
   const destination = shipment.stops.at(-1);
   const progress = Math.min(1, Math.max(0, shipment.progress));
   const path = recordPath("shipment", shipment.id);
-  const subtitle = [shipment.customerName, shipment.equipment].filter((part) => part !== "").join(" · ");
+  const subtitle = [shipment.customerName, shipment.equipment]
+    .filter((part) => part !== "")
+    .join(" · ");
 
   return (
     <>
       <header className="flex items-start gap-2.5">
         <div className="flex min-w-0 flex-1 flex-col">
-          <DialogTitle className="font-mono text-xl font-semibold">{shipment.proNumber}</DialogTitle>
+          <DialogTitle className="font-mono text-xl font-semibold">
+            {shipment.proNumber}
+          </DialogTitle>
           {subtitle !== "" && <span className="text-foreground-subtle text-sm">{subtitle}</span>}
         </div>
         <PhaseBadge phase={phase} />
@@ -188,7 +198,9 @@ function ShipmentBody({ shipment, onClose }: { shipment: TriageShipmentPeek; onC
               )}
             />
             <span>{moment.label}</span>
-            <em className="text-foreground-subtle font-mono text-2xs not-italic">{moment.detail}</em>
+            <em className="text-foreground-subtle font-mono text-2xs not-italic">
+              {moment.detail}
+            </em>
           </li>
         ))}
       </ol>
@@ -208,7 +220,10 @@ function ShipmentBody({ shipment, onClose }: { shipment: TriageShipmentPeek; onC
             {shipment.deliveredAt === null ? <DescriptionEmpty /> : when(shipment.deliveredAt)}
           </DescriptionItem>
         ) : (
-          <DescriptionItem label={t("ETA")} valueClassName={phase === "late" ? "text-warning" : undefined}>
+          <DescriptionItem
+            label={t("ETA")}
+            valueClassName={phase === "late" ? "text-warning" : undefined}
+          >
             {shipment.eta === null ? <DescriptionEmpty /> : when(shipment.eta)}
           </DescriptionItem>
         )}

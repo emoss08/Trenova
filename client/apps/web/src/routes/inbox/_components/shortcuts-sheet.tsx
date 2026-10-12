@@ -31,8 +31,16 @@ const KEY_GLYPH: Readonly<Record<string, string>> = { Enter: "↵" };
 export function ShortcutsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useT();
   const columns = [
-    { id: "move", title: t("Move"), keybinds: TRIAGE_KEYBINDS.filter((row) => MOVE_IDS.has(row.id)) },
-    { id: "act", title: t("Act"), keybinds: TRIAGE_KEYBINDS.filter((row) => !MOVE_IDS.has(row.id)) },
+    {
+      id: "move",
+      title: t("Move"),
+      keybinds: TRIAGE_KEYBINDS.filter((row) => MOVE_IDS.has(row.id)),
+    },
+    {
+      id: "act",
+      title: t("Act"),
+      keybinds: TRIAGE_KEYBINDS.filter((row) => !MOVE_IDS.has(row.id)),
+    },
   ];
 
   return (

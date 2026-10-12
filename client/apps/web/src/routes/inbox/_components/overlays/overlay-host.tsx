@@ -46,7 +46,8 @@ export function TriageOverlayHost() {
   const [, setSearchParams] = useSearchParams();
 
   const openMessage = useCallback(
-    (id: string) => (navigation.filter() === null ? navigation.openInQueue(id) : navigation.open(id)),
+    (id: string) =>
+      navigation.filter() === null ? navigation.openInQueue(id) : navigation.open(id),
     [navigation],
   );
   const openWaitingFor = useCallback(

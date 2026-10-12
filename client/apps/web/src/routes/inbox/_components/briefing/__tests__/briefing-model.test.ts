@@ -189,9 +189,13 @@ describe("Nova's line", () => {
   it("wraps up at the end of the day with what carries over and who is on call", () => {
     const onCall = { id: "u1", name: "Marcus Lee", emailAddress: "", thumbnailUrl: "" };
     const carry = [item("a"), item("b")];
-    expect(
-      novaLine({ ...base, phase: "EndOfDay", carryOver: carry, onCall, waiting: 2 }),
-    ).toEqual({ kind: "endOfDay", handled: 29, closed: 6, carry: 2, onCall });
+    expect(novaLine({ ...base, phase: "EndOfDay", carryOver: carry, onCall, waiting: 2 })).toEqual({
+      kind: "endOfDay",
+      handled: 29,
+      closed: 6,
+      carry: 2,
+      onCall,
+    });
   });
 
   it("wraps up even when nothing waits at the end of the day", () => {
@@ -216,33 +220,65 @@ describe("the first day", () => {
   const empty = { total: 0, processing: 0 };
 
   it("waits for a first source until one is connected", () => {
-    expect(firstDayStage({ firstDay: true, connectedAt: null, counts: empty, now: NOW, finished: false })).toBe("empty");
+    expect(
+      firstDayStage({
+        firstDay: true,
+        connectedAt: null,
+        counts: empty,
+        now: NOW,
+        finished: false,
+      }),
+    ).toBe("empty");
   });
 
   it("is an ordinary briefing once mail has arrived, unless the backlog is being read here", () => {
     expect(
-      firstDayStage({ firstDay: false, connectedAt: null, counts: { total: 9, processing: 2 }, now: NOW, finished: false }),
+      firstDayStage({
+        firstDay: false,
+        connectedAt: null,
+        counts: { total: 9, processing: 2 },
+        now: NOW,
+        finished: false,
+      }),
     ).toBe("briefing");
   });
 
   it("reads the backlog after a source is connected, while any of it is still being read", () => {
     const connectedAt = NOW - 5;
-    expect(firstDayStage({ firstDay: true, connectedAt, counts: empty, now: NOW, finished: false })).toBe("reading");
     expect(
-      firstDayStage({ firstDay: false, connectedAt, counts: { total: 12, processing: 4 }, now: NOW, finished: false }),
+      firstDayStage({ firstDay: true, connectedAt, counts: empty, now: NOW, finished: false }),
+    ).toBe("reading");
+    expect(
+      firstDayStage({
+        firstDay: false,
+        connectedAt,
+        counts: { total: 12, processing: 4 },
+        now: NOW,
+        finished: false,
+      }),
     ).toBe("reading");
   });
 
   it("says it is done reading, then shows the first briefing", () => {
     const connectedAt = NOW - 30;
     const read = { total: 57, processing: 0 };
-    expect(firstDayStage({ firstDay: false, connectedAt, counts: read, now: NOW, finished: false })).toBe("done");
-    expect(firstDayStage({ firstDay: false, connectedAt, counts: read, now: NOW, finished: true })).toBe("briefing");
+    expect(
+      firstDayStage({ firstDay: false, connectedAt, counts: read, now: NOW, finished: false }),
+    ).toBe("done");
+    expect(
+      firstDayStage({ firstDay: false, connectedAt, counts: read, now: NOW, finished: true }),
+    ).toBe("briefing");
   });
 
   it("stops waiting when nothing was sitting at the address", () => {
     expect(
-      firstDayStage({ firstDay: true, connectedAt: NOW - 25, counts: empty, now: NOW, finished: false }),
+      firstDayStage({
+        firstDay: true,
+        connectedAt: NOW - 25,
+        counts: empty,
+        now: NOW,
+        finished: false,
+      }),
     ).toBe("quiet");
   });
 });

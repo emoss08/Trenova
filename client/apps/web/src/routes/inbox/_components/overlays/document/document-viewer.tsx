@@ -147,7 +147,9 @@ function ViewerBody({
           {extension}
         </span>
         <div className="flex min-w-0 flex-col">
-          <DialogTitle className="truncate text-base font-semibold">{attachment.fileName}</DialogTitle>
+          <DialogTitle className="truncate text-base font-semibold">
+            {attachment.fileName}
+          </DialogTitle>
           <span className="text-foreground-subtle truncate text-sm">
             {t(
               "{0} · {1, plural, one {# page} other {# pages}} · from {2}",

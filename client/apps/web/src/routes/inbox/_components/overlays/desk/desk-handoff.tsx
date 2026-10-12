@@ -13,7 +13,12 @@ import type { AssistantEntityRef, AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { LinkExternal01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@trenova/shared/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@trenova/shared/components/ui/sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -28,10 +33,18 @@ const RECENT_AGENTS = 6;
 /** What the conversation is handed besides the words: the message, and the shipment it is about. */
 function handedOver(message: InboundMessageDetail): AssistantEntityRef[] {
   const refs: AssistantEntityRef[] = [
-    { type: "inbound_message", id: message.id, label: message.subject.trim() === "" ? message.fromAddress : message.subject },
+    {
+      type: "inbound_message",
+      id: message.id,
+      label: message.subject.trim() === "" ? message.fromAddress : message.subject,
+    },
   ];
   if (message.matchedShipment !== null) {
-    refs.push({ type: "shipment", id: message.matchedShipment.id, label: message.matchedShipment.proNumber });
+    refs.push({
+      type: "shipment",
+      id: message.matchedShipment.id,
+      label: message.matchedShipment.proNumber,
+    });
   }
 
   return refs;
@@ -135,7 +148,8 @@ function HandoffBody({ message, onClose }: { message: InboundMessageDetail; onCl
     start(picked);
   }, [picked, start]);
 
-  const agent = thread === null ? picked : (data.agentsById.get(thread.agentDefinitionId) ?? picked);
+  const agent =
+    thread === null ? picked : (data.agentsById.get(thread.agentDefinitionId) ?? picked);
 
   const dock = (desk: DeskDock) => {
     if (desk.busy || asked === null) {
@@ -221,7 +235,10 @@ function HandoffBody({ message, onClose }: { message: InboundMessageDetail; onCl
       </header>
 
       {open.length > 0 && (
-        <div aria-label={t("Handed over")} className="border-border-subtle flex shrink-0 flex-wrap gap-1 border-b px-3.5 py-2">
+        <div
+          aria-label={t("Handed over")}
+          className="border-border-subtle flex shrink-0 flex-wrap gap-1 border-b px-3.5 py-2"
+        >
           {open.map((action) => (
             <span
               key={action.id}
@@ -278,7 +295,9 @@ function HandoffBody({ message, onClose }: { message: InboundMessageDetail; onCl
               void navigate(artifactId ? `${path}?a=${encodeURIComponent(artifactId)}` : path);
             }}
             dockTop={dock}
-            disclaimer={t("Agents can make mistakes. Check important details before you act on them.")}
+            disclaimer={t(
+              "Agents can make mistakes. Check important details before you act on them.",
+            )}
           />
         )}
       </div>

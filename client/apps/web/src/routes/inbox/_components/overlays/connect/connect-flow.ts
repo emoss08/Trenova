@@ -53,14 +53,19 @@ export function isAddress(value: string): boolean {
 }
 
 /** The domain most of the organization's sources receive on. */
-export function receivingDomain(mailboxes: readonly Pick<InboundMailbox, "address">[]): string | null {
+export function receivingDomain(
+  mailboxes: readonly Pick<InboundMailbox, "address">[],
+): string | null {
   const counts = new Map<string, number>();
   for (const { address } of mailboxes) {
     const at = address.lastIndexOf("@");
     if (at <= 0) {
       continue;
     }
-    const domain = address.slice(at + 1).trim().toLowerCase();
+    const domain = address
+      .slice(at + 1)
+      .trim()
+      .toLowerCase();
     if (domain !== "") {
       counts.set(domain, (counts.get(domain) ?? 0) + 1);
     }
@@ -91,7 +96,10 @@ export function receivingAddress(name: string, domain: string | null): string {
   return `${local}@${domain}`;
 }
 
-export function initialConnect(mailbox: InboundMailbox | null, domain: string | null): ConnectState {
+export function initialConnect(
+  mailbox: InboundMailbox | null,
+  domain: string | null,
+): ConnectState {
   return {
     step: mailbox === null ? "source" : "forward",
     name: mailbox?.name ?? "",

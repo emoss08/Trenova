@@ -98,7 +98,11 @@ export function NovaLineText({
       yours =
         longest === null
           ? rt("<b>One is</b> yours.", bold)
-          : rt("<b>One is</b> yours — <ref>{0}</ref> has waited longest.", { ...bold, ref: reference }, name);
+          : rt(
+              "<b>One is</b> yours — <ref>{0}</ref> has waited longest.",
+              { ...bold, ref: reference },
+              name,
+            );
     } else {
       yours =
         longest === null

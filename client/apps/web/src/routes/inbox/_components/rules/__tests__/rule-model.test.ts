@@ -127,9 +127,11 @@ describe("what a rule sends", () => {
 
   it("carries the assignee only for an assign rule, and keeps a rule's on or off", () => {
     expect(ruleInput({ ...COMPLETE, assigneeId: USER.id })?.assigneeId).toBeNull();
-    expect(
-      ruleInput({ ...COMPLETE, action: "Assign", assigneeId: USER.id }, false),
-    ).toMatchObject({ action: "Assign", assigneeId: USER.id, enabled: false });
+    expect(ruleInput({ ...COMPLETE, action: "Assign", assigneeId: USER.id }, false)).toMatchObject({
+      action: "Assign",
+      assigneeId: USER.id,
+      enabled: false,
+    });
   });
 
   it("knows when an edit changes nothing, so nothing is saved", () => {

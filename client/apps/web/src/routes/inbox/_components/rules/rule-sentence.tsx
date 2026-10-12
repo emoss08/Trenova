@@ -8,7 +8,11 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
 import { useMemo, useState, type ReactNode } from "react";
 import { ruleActionPhrase } from "../action-copy";
-import { CLASSIFICATION_DOT, INBOUND_CLASSIFICATIONS, classificationLabel } from "../classification";
+import {
+  CLASSIFICATION_DOT,
+  INBOUND_CLASSIFICATIONS,
+  classificationLabel,
+} from "../classification";
 import { mailboxName } from "../folder-labels";
 import { useTriageAssignees, useTriageMailboxes } from "../use-triage-data";
 import { RuleBlank, type BlankOption } from "./rule-blank";
@@ -228,7 +232,13 @@ export type RuleSentenceProps = {
  * row and each saved rule draw the same sentence; what a change does (fill
  * the draft, or save the rule) is the caller's.
  */
-export function RuleSentence({ draft, onChange, quiet = false, fresh = false, className }: RuleSentenceProps) {
+export function RuleSentence({
+  draft,
+  onChange,
+  quiet = false,
+  fresh = false,
+  className,
+}: RuleSentenceProps) {
   const t = useT();
   const rt = useRichT();
   const mailboxes = useTriageMailboxes().data;
@@ -247,7 +257,10 @@ export function RuleSentence({ draft, onChange, quiet = false, fresh = false, cl
         key: kind,
         label: toSentenceFragment(classificationLabel(t, kind)),
         leading: (
-          <span aria-hidden className={cn("size-2 shrink-0 rounded-full", CLASSIFICATION_DOT[kind])} />
+          <span
+            aria-hidden
+            className={cn("size-2 shrink-0 rounded-full", CLASSIFICATION_DOT[kind])}
+          />
         ),
       })),
     [t],
