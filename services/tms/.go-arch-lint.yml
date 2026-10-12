@@ -1048,16 +1048,7 @@ deps:
       - reference-ports
       - pkg
       - infrastructure
-      - agent-domain # TODO(build-arch): upward import of agent; needs an inversion port declared in equipment (1 imports)
-      - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in equipment (1 imports)
-      - billing-domain # TODO(build-arch): upward import of billing; needs an inversion port declared in equipment (3 imports)
-      - documents-domain # TODO(build-arch): upward import of documents; needs an inversion port declared in equipment (2 imports)
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (2 imports)
-      - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in equipment (2 imports)
-      - parties-domain # TODO(build-arch): same-level import of parties (rule 2); needs a decision (2 imports)
-      - places-domain # TODO(build-arch): same-level import of places (rule 2); needs a decision (1 imports)
-      - settlement-domain # TODO(build-arch): upward import of settlement; needs an inversion port declared in equipment (2 imports)
-      - workforce-domain # TODO(build-arch): upward import of workforce; needs an inversion port declared in equipment (1 imports)
   equipment-jobs:
     mayDependOn:
       - equipment-domain

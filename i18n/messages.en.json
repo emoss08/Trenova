@@ -6999,7 +6999,7 @@
     ]
   },
   "A record that is no longer there": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -34238,8 +34238,8 @@
     ],
     "areas": [
       "apps/web/config",
+      "apps/web/lib",
       "go/other",
-      "routes/agent-control",
       "routes/billing-queue",
       "routes/invoice"
     ]
@@ -101212,8 +101212,8 @@
     ],
     "areas": [
       "apps/web/config",
+      "apps/web/lib",
       "packages/shared/types",
-      "routes/agent-control",
       "routes/hazardous-material"
     ]
   },
@@ -101942,7 +101942,7 @@
     ]
   },
   "Hidden by your data access": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -102916,7 +102916,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/lib"
     ]
   },
   "Home screen": {
@@ -263775,7 +263775,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/lib"
     ]
   },
   "Worker type": {

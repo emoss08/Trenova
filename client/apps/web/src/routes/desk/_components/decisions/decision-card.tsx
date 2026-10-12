@@ -29,6 +29,7 @@ import { Link } from "react-router";
 import {
   approvalFacts,
   OUTCOME_FIELD,
+  recordName,
   recordCount,
   refusalReasons,
   REFUSED_PREFIX,
@@ -172,7 +173,7 @@ function diffRows(preview: ProposalPreviewData, t: TranslateFn): DiffRow[] | nul
     const outcome = change.fields.find((candidate) => candidate.path === OUTCOME_FIELD);
     const text = typeof outcome?.after === "string" ? outcome.after : "";
     rows.push({
-      key: change.label || change.entityId || "",
+      key: recordName(change),
       before: valueText(field.before, field.beforeRef, t),
       after: valueText(field.after, field.afterRef, t),
       refused: text.startsWith(REFUSED_PREFIX) ? text.slice(REFUSED_PREFIX.length).trim() : null,

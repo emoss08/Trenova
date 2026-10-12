@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmentmanufacturerrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmenttyperepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/fleetcoderepository"
-	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/recordlabelrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/tractorrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/trailerrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
@@ -25,7 +24,6 @@ func SharedOptions() fx.Option {
 			fleetcoderepository.New,
 			tractorrepository.New,
 			trailerrepository.New,
-			recordlabelrepository.New,
 			equipmentmanufacturerservice.NewValidator,
 			equipmenttypeservice.NewValidator,
 			fleetcodeservice.NewValidator,
