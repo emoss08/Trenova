@@ -3,6 +3,8 @@ import { PROVIDER_ROUTES } from "./aiproviders.mjs";
 import { AI_ROUTES } from "./aicontrol.mjs";
 import { TRIAGE_ROUTES } from "./triage.mjs";
 import { DESK_CARD_ROUTES } from "./deskcards.mjs";
+import { DESK_CASE_ROUTES } from "./deskcase.mjs";
+import { DESK_THREAD_ROUTES } from "./deskthreads.mjs";
 import { ORG, permissionManifest } from "../fixtures/session.mjs";
 import { SETTINGS_ROUTES } from "./settings.mjs";
 import { PALETTE_ROUTES } from "./palette.mjs";
@@ -78,8 +80,6 @@ const ROUTES = [
   ],
   ["GET", /^\/api\/v1\/page-favorites\/check\/?$/, () => ({ favorited: false })],
   ["GET", /^\/api\/v1\/page-favorites\/?$/, () => []],
-  ["GET", /^\/api\/v1\/assistant\/threads\/?$/, () => ({ items: [], total: 0 })],
-  ["GET", /^\/api\/v1\/assistant\/turns\/active\/?$/, () => ({ items: [] })],
   ["GET", /^\/api\/v1\/documents\/uploads\/active\/?$/, () => []],
   ["GET", /^\/api\/v1\/realtime\/stream\/?$/, () => ({ __stream: true })],
   ["GET", /^\/api\/v1\/insights\/?$/, () => ({ items: [], total: 0 })],
