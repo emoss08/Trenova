@@ -57,7 +57,6 @@
   "Open billing queue": "開啟帳務佇列",
   "Open dashboard": "開啟儀表板",
   "Open dispatch board": "開啟調度看板",
-  "Open receivables": "未收應收帳款",
   "Open service failures": "未結的服務失誤",
   "Pick the queues and numbers this home screen should open on.": "選擇此首頁開啟時要顯示的佇列與數據。",
   "Pick what this home screen opens on. Everything here is already scoped to what you are allowed to see.": "選擇此首頁開啟時顯示的內容。此處所列項目皆已限縮於您有權檢視的範圍。",

@@ -9661,9 +9661,18 @@ type CustomerBillingProfile {
   consolidationPeriodDays: Int! @deprecated(reason: "Replaced by billingCycle. Statements no longer use a sweep window, so this has no effect and is always 0. Removed in a later release.")
   countLateOnlyOnAppointmentStops: Boolean!
   createdAt: Timestamp!
+  """
+  Open receivables, net of unapplied cash and credits, as of creditReviewedAt. Kept by the credit review, not entered.
+  """
   creditBalance: Decimal!
+  """
+  True when the credit review placed the current Hold or Warning; only the review lifts it.
+  """
+  creditHoldAutomatic: Boolean!
   creditHoldReason: String!
   creditLimit: Decimal
+  """When creditBalance was last recomputed from the receivables ledger."""
+  creditReviewedAt: Timestamp
   creditStatus: CustomerCreditStatus!
   customerId: ID!
   customerInvoicePrefix: String!

@@ -402,6 +402,8 @@ var CustomerBillingProfileColumns = struct {
 	EnforceCreditLimit              buncolgen.Column // "enforce_credit_limit" → qualified: "cbp.enforce_credit_limit"
 	AutoCreditHold                  buncolgen.Column // "auto_credit_hold" → qualified: "cbp.auto_credit_hold"
 	CreditHoldReason                buncolgen.Column // "credit_hold_reason" → qualified: "cbp.credit_hold_reason"
+	CreditHoldAutomatic             buncolgen.Column // "credit_hold_automatic" → qualified: "cbp.credit_hold_automatic"
+	CreditReviewedAt                buncolgen.Column // "credit_reviewed_at" → qualified: "cbp.credit_reviewed_at"
 	AutoSendInvoiceOnGeneration     buncolgen.Column // "auto_send_invoice_on_generation" → qualified: "cbp.auto_send_invoice_on_generation"
 	EmailInvoiceEnabled             buncolgen.Column // "email_invoice_enabled" → qualified: "cbp.email_invoice_enabled"
 	EDIInvoiceEnabled               buncolgen.Column // "edi_invoice_enabled" → qualified: "cbp.edi_invoice_enabled"
@@ -458,6 +460,8 @@ var CustomerBillingProfileColumns = struct {
 	EnforceCreditLimit:              buncolgen.NewColumn("enforce_credit_limit", "cbp"),
 	AutoCreditHold:                  buncolgen.NewColumn("auto_credit_hold", "cbp"),
 	CreditHoldReason:                buncolgen.NewColumn("credit_hold_reason", "cbp"),
+	CreditHoldAutomatic:             buncolgen.NewColumn("credit_hold_automatic", "cbp"),
+	CreditReviewedAt:                buncolgen.NewColumn("credit_reviewed_at", "cbp"),
 	AutoSendInvoiceOnGeneration:     buncolgen.NewColumn("auto_send_invoice_on_generation", "cbp"),
 	EmailInvoiceEnabled:             buncolgen.NewColumn("email_invoice_enabled", "cbp"),
 	EDIInvoiceEnabled:               buncolgen.NewColumn("edi_invoice_enabled", "cbp"),
@@ -520,6 +524,8 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"enforceCreditLimit":              "enforce_credit_limit",
 	"autoCreditHold":                  "auto_credit_hold",
 	"creditHoldReason":                "credit_hold_reason",
+	"creditHoldAutomatic":             "credit_hold_automatic",
+	"creditReviewedAt":                "credit_reviewed_at",
 	"autoSendInvoiceOnGeneration":     "auto_send_invoice_on_generation",
 	"emailInvoiceEnabled":             "email_invoice_enabled",
 	"ediInvoiceEnabled":               "edi_invoice_enabled",
@@ -580,6 +586,8 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"enforce_credit_limit",
 	"auto_credit_hold",
 	"credit_hold_reason",
+	"credit_hold_automatic",
+	"credit_reviewed_at",
 	"auto_send_invoice_on_generation",
 	"email_invoice_enabled",
 	"edi_invoice_enabled",
@@ -708,6 +716,8 @@ var CustomerBillingProfileFilter = struct {
 	EnforceCreditLimit              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceCreditLimit" → DB: "enforce_credit_limit"
 	AutoCreditHold                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoCreditHold" → DB: "auto_credit_hold"
 	CreditHoldReason                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditHoldReason" → DB: "credit_hold_reason"
+	CreditHoldAutomatic             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditHoldAutomatic" → DB: "credit_hold_automatic"
+	CreditReviewedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditReviewedAt" → DB: "credit_reviewed_at"
 	AutoSendInvoiceOnGeneration     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoSendInvoiceOnGeneration" → DB: "auto_send_invoice_on_generation"
 	EmailInvoiceEnabled             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailInvoiceEnabled" → DB: "email_invoice_enabled"
 	EDIInvoiceEnabled               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediInvoiceEnabled" → DB: "edi_invoice_enabled"
@@ -797,6 +807,12 @@ var CustomerBillingProfileFilter = struct {
 	},
 	CreditHoldReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("creditHoldReason", op, value)
+	},
+	CreditHoldAutomatic: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("creditHoldAutomatic", op, value)
+	},
+	CreditReviewedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("creditReviewedAt", op, value)
 	},
 	AutoSendInvoiceOnGeneration: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("autoSendInvoiceOnGeneration", op, value)

@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/creditreviewservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentionbillingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentioncreditservice"
@@ -47,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"go.uber.org/fx"
 )
 
@@ -72,7 +74,13 @@ func SharedOptions() fx.Option {
 			bankreceiptworkitemrepository.New,
 			chargeallocationrepository.New,
 			customerpaymentrepository.New,
-			customerledgerrepository.New,
+			fx.Annotate(
+				customerledgerrepository.New,
+				fx.ResultTags(creditreviewservice.LedgerStoreName),
+			),
+			creditreviewservice.New,
+			func(s *creditreviewservice.Service) customerports.CreditReviewer { return s },
+			creditreviewservice.NewLedger,
 			invoiceadjustmentrepository.New,
 			invoicerepository.New,
 			invoicedisputerepository.New,

@@ -468,6 +468,11 @@ func (r *repository) saveBillingProfile(
 
 	cbp := customercol.CustomerBillingProfileColumns
 
+	// credit_balance and credit_reviewed_at are the credit review's, not the
+	// form's: the balance is the customer's open receivables, recomputed as its
+	// ledger moves. credit_hold_automatic stays with the review unless the
+	// status itself changes here, at which point the status is a person's.
+	//
 	// Every column the profile owns is listed below except last_billed_period_end,
 	// and that omission is deliberate: the billing watermark is advanced only by
 	// AdvanceBilledPeriod inside the commit transaction. Taking it from the
@@ -483,7 +488,10 @@ func (r *repository) saveBillingProfile(
 		Set(cbp.PaymentTerm.SetExcluded()).
 		Set(cbp.HasBillingControlOverrides.SetExcluded()).
 		Set(cbp.CreditLimit.SetExcluded()).
-		Set(cbp.CreditBalance.SetExcluded()).
+		Set(cbp.CreditHoldAutomatic.SetExpr(
+			"CASE WHEN " + cbp.CreditStatus.Qualified() + " IS DISTINCT FROM EXCLUDED." +
+				cbp.CreditStatus.Bare() + " THEN FALSE ELSE " + cbp.CreditHoldAutomatic.Qualified() + " END",
+		)).
 		Set(cbp.CreditStatus.SetExcluded()).
 		Set(cbp.EnforceCreditLimit.SetExcluded()).
 		Set(cbp.AutoCreditHold.SetExcluded()).

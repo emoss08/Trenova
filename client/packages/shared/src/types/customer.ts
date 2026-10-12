@@ -107,6 +107,8 @@ export const customerBillingProfileSchema = z
     enforceCreditLimit: z.boolean().default(false),
     autoCreditHold: z.boolean().default(false),
     creditHoldReason: z.string().default(""),
+    creditHoldAutomatic: z.boolean().default(false),
+    creditReviewedAt: nullableIntegerSchema,
     autoSendInvoiceOnGeneration: z.boolean().default(true),
     emailInvoiceEnabled: z.boolean().default(true),
     ediInvoiceEnabled: z.boolean().default(false),

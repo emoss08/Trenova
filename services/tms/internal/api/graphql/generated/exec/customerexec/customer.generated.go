@@ -572,6 +572,25 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "creditHoldAutomatic",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customer.CustomerBillingProfile)
+					return obj.CreditHoldAutomatic, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "creditReviewedAt",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customer.CustomerBillingProfile)
+					return obj.CreditReviewedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
 				Name:       "invoiceMethod",
 				NonNull:    true,
 				IsResolver: true,

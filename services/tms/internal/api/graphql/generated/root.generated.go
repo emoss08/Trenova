@@ -13311,11 +13311,16 @@ type CustomerBillingProfile {
   paymentTerm: CustomerPaymentTerm!
   hasBillingControlOverrides: Boolean!
   creditLimit: Decimal
+  """Open receivables, net of unapplied cash and credits, as of creditReviewedAt. Kept by the credit review, not entered."""
   creditBalance: Decimal!
   creditStatus: CustomerCreditStatus!
   enforceCreditLimit: Boolean!
   autoCreditHold: Boolean!
   creditHoldReason: String!
+  """True when the credit review placed the current Hold or Warning; only the review lifts it."""
+  creditHoldAutomatic: Boolean!
+  """When creditBalance was last recomputed from the receivables ledger."""
+  creditReviewedAt: Timestamp
   invoiceMethod: CustomerInvoiceMethod!
     @deprecated(reason: "Split into invoiceDelivery (how many invoices) and invoiceDetail (how verbose). Removed in a later release.")
   autoSendInvoiceOnGeneration: Boolean!

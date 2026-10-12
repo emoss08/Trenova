@@ -31055,15 +31055,6 @@
       "go/other"
     ]
   },
-  "Automatically change credit status to 'Hold' when the outstanding balance exceeds the credit limit, without requiring manual intervention.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "Automatically close expired fiscal periods for tenants with auto-close enabled": {
     "sites": 1,
     "scope": [
@@ -51654,6 +51645,15 @@
       "go/other"
     ]
   },
+  "Computed from open invoices once this customer's receivables next move, or overnight.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Computed from quantity and price; type over it when the receipt says otherwise.": {
     "sites": 1,
     "scope": [
@@ -60953,15 +60953,6 @@
     ],
     "areas": [
       "packages/shared/types"
-    ]
-  },
-  "Current unpaid invoice total. Automatically updated as invoices are generated and payments received.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
     ]
   },
   "Current value": {
@@ -73756,15 +73747,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Document why this customer is on hold or suspended. This is visible to dispatch and billing staff when they attempt to create shipments.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
     ]
   },
   "Document {0}": {
@@ -104013,6 +103995,15 @@
       "go/other"
     ]
   },
+  "Held automatically: {0}. The hold lifts once the balance is paid back under the limit.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Held back": {
     "sites": 1,
     "scope": [
@@ -129555,15 +129546,6 @@
       "routes/formula-template"
     ]
   },
-  "Maximum outstanding balance allowed before shipments are blocked. Leave empty for unlimited credit.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "Maximum pay": {
     "sites": 1,
     "scope": [
@@ -142533,6 +142515,24 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "No new shipments can be booked for them until the balance is paid back under the limit. Shipments already booked are still billed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "No new shipments can be booked for them, and their invoices wait until accounts receivable lifts the hold.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "No next open fiscal period is available for reversal posting": {
@@ -156206,6 +156206,15 @@
       "template/invoice.share.email"
     ]
   },
+  "Open invoices less unapplied cash and credits, as of {0}. Kept up to date as invoices post and payments apply.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Open item totals": {
     "sites": 1,
     "scope": [
@@ -156399,11 +156408,12 @@
     ]
   },
   "Open receivables": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/customer",
       "routes/home"
     ]
   },
@@ -160200,15 +160210,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Outstanding balance": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
     ]
   },
   "Outstanding balances are recovered automatically on each settlement.": {
@@ -176543,6 +176544,15 @@
       "routes/org-structure"
     ]
   },
+  "Put the customer on hold when open receivables go over the credit limit, warn at 90% of it, and lift the hold once they are paid back under. An automatic hold stops new shipments but not billing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Put the pages in the scanner after you start.": {
     "sites": 1,
     "scope": [
@@ -185650,15 +185660,6 @@
       "routes/worker"
     ]
   },
-  "Reflects this customer's current creditworthiness. 'Hold' and 'Suspended' block new shipments from being dispatched.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "Refresh": {
     "sites": 6,
     "scope": [
@@ -194668,6 +194669,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Review every customer's open receivables against its credit limit": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Review extracted fields, resolve issues, and create the shipment.": {
@@ -234654,6 +234664,15 @@
       "routes/agent-control"
     ]
   },
+  "The most this customer may owe on open invoices. Leave empty for no limit.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "The move is uncovered again.": {
     "sites": 1,
     "scope": [
@@ -240282,6 +240301,24 @@
       "routes/worker"
     ]
   },
+  "Their credit limit isn't enforced, so nothing is blocked.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Their open receivables are back within the credit limit, so shipments can be booked for them again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Their role": {
     "sites": 1,
     "scope": [
@@ -242116,15 +242153,6 @@
       "routes/shipment"
     ]
   },
-  "This customer is approaching their credit limit. Review before dispatching.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "This customer is billed": {
     "sites": 1,
     "scope": [
@@ -242132,6 +242160,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "This customer is close to their credit limit.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "This customer is not on a statement billing schedule": {
@@ -242143,16 +242180,7 @@
       "go/other"
     ]
   },
-  "This customer's account is restricted. New shipments may not be invoiced until the hold is resolved.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "This customer's credit is under review. Shipments may be delayed pending approval.": {
+  "This customer's credit is under review.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -252700,6 +252728,15 @@
       "go/other"
     ]
   },
+  "Turns on credit control for this customer: a 'Hold' or 'Suspended' status stops new shipments from being booked for them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Twelve months forward from first use": {
     "sites": 2,
     "scope": [
@@ -262975,6 +263012,15 @@
       "routes/edi"
     ]
   },
+  "Warned automatically: {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Warning": {
     "sites": 4,
     "scope": [
@@ -266627,15 +266673,6 @@
       "routes/shipment-control"
     ]
   },
-  "When enabled, the system will prevent new shipments from being created once the outstanding balance exceeds the credit limit.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "When enabled, the system will verify that each BOL number is unique during shipment creation. This prevents accidental duplications that could lead to operational confusion, billing errors, and customer service issues. Recommended for most operations to maintain data integrity.": {
     "sites": 1,
     "scope": [
@@ -269305,6 +269342,15 @@
       "routes/agent-control"
     ]
   },
+  "Why this customer is on hold or suspended. Dispatch sees it when a shipment for them is refused.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Why this field behaves this way": {
     "sites": 1,
     "scope": [
@@ -269737,6 +269783,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "With the credit limit enforced, 'Hold' and 'Suspended' stop new shipments from being booked for this customer. A status you set here stays until someone changes it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "With your tools": {
@@ -295993,6 +296048,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "{0}% of the limit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "{0}% of the way": {

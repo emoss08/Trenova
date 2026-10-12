@@ -48,6 +48,8 @@ const DEFAULT_VALUES: Customer = {
     enforceCreditLimit: false,
     autoCreditHold: false,
     creditHoldReason: "",
+    creditHoldAutomatic: false,
+    creditReviewedAt: null,
     hasBillingControlOverrides: false,
     autoSendInvoiceOnGeneration: true,
     emailInvoiceEnabled: true,

@@ -8847,6 +8847,14 @@ func init() {
 				FieldMapKey: "creditHoldReason",
 			},
 			{
+				Name:        "creditHoldAutomatic",
+				FieldMapKey: "creditHoldAutomatic",
+			},
+			{
+				Name:        "creditReviewedAt",
+				FieldMapKey: "creditReviewedAt",
+			},
+			{
 				Name:    "invoiceMethod",
 				Special: "invoiceMethod",
 			},

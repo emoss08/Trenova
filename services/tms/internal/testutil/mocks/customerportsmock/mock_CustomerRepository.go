@@ -773,3 +773,139 @@ func (_c *MockCustomerRepository_Update_Call) RunAndReturn(run func(ctx context.
 	_c.Call.Return(run)
 	return _c
 }
+
+// ReviewCredit provides a mock function for the type MockCustomerRepository
+func (_mock *MockCustomerRepository) ReviewCredit(ctx context.Context, req *customerports.ReviewCustomerCreditRequest) (*customerports.ReviewCustomerCreditResult, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReviewCredit")
+	}
+
+	var r0 *customerports.ReviewCustomerCreditResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *customerports.ReviewCustomerCreditRequest) (*customerports.ReviewCustomerCreditResult, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *customerports.ReviewCustomerCreditRequest) *customerports.ReviewCustomerCreditResult); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*customerports.ReviewCustomerCreditResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *customerports.ReviewCustomerCreditRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerRepository_ReviewCredit_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReviewCredit'
+type MockCustomerRepository_ReviewCredit_Call struct {
+	*mock.Call
+}
+
+// ReviewCredit is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *customerports.ReviewCustomerCreditRequest
+func (_e *MockCustomerRepository_Expecter) ReviewCredit(ctx any, req any) *MockCustomerRepository_ReviewCredit_Call {
+	return &MockCustomerRepository_ReviewCredit_Call{Call: _e.mock.On("ReviewCredit", ctx, req)}
+}
+
+func (_c *MockCustomerRepository_ReviewCredit_Call) Run(run func(ctx context.Context, req *customerports.ReviewCustomerCreditRequest)) *MockCustomerRepository_ReviewCredit_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *customerports.ReviewCustomerCreditRequest
+		if args[1] != nil {
+			arg1 = args[1].(*customerports.ReviewCustomerCreditRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerRepository_ReviewCredit_Call) Return(value *customerports.ReviewCustomerCreditResult, err error) *MockCustomerRepository_ReviewCredit_Call {
+	_c.Call.Return(value, err)
+	return _c
+}
+
+func (_c *MockCustomerRepository_ReviewCredit_Call) RunAndReturn(run func(ctx context.Context, req *customerports.ReviewCustomerCreditRequest) (*customerports.ReviewCustomerCreditResult, error)) *MockCustomerRepository_ReviewCredit_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListCreditReviewCustomers provides a mock function for the type MockCustomerRepository
+func (_mock *MockCustomerRepository) ListCreditReviewCustomers(ctx context.Context, req *customerports.ListCreditReviewCustomersRequest) ([]customerports.CreditReviewCustomer, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListCreditReviewCustomers")
+	}
+
+	var r0 []customerports.CreditReviewCustomer
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *customerports.ListCreditReviewCustomersRequest) ([]customerports.CreditReviewCustomer, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *customerports.ListCreditReviewCustomersRequest) []customerports.CreditReviewCustomer); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]customerports.CreditReviewCustomer)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *customerports.ListCreditReviewCustomersRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerRepository_ListCreditReviewCustomers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListCreditReviewCustomers'
+type MockCustomerRepository_ListCreditReviewCustomers_Call struct {
+	*mock.Call
+}
+
+// ListCreditReviewCustomers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *customerports.ListCreditReviewCustomersRequest
+func (_e *MockCustomerRepository_Expecter) ListCreditReviewCustomers(ctx any, req any) *MockCustomerRepository_ListCreditReviewCustomers_Call {
+	return &MockCustomerRepository_ListCreditReviewCustomers_Call{Call: _e.mock.On("ListCreditReviewCustomers", ctx, req)}
+}
+
+func (_c *MockCustomerRepository_ListCreditReviewCustomers_Call) Run(run func(ctx context.Context, req *customerports.ListCreditReviewCustomersRequest)) *MockCustomerRepository_ListCreditReviewCustomers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *customerports.ListCreditReviewCustomersRequest
+		if args[1] != nil {
+			arg1 = args[1].(*customerports.ListCreditReviewCustomersRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerRepository_ListCreditReviewCustomers_Call) Return(value []customerports.CreditReviewCustomer, err error) *MockCustomerRepository_ListCreditReviewCustomers_Call {
+	_c.Call.Return(value, err)
+	return _c
+}
+
+func (_c *MockCustomerRepository_ListCreditReviewCustomers_Call) RunAndReturn(run func(ctx context.Context, req *customerports.ListCreditReviewCustomersRequest) ([]customerports.CreditReviewCustomer, error)) *MockCustomerRepository_ListCreditReviewCustomers_Call {
+	_c.Call.Return(run)
+	return _c
+}

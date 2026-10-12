@@ -190,6 +190,9 @@ func (s *service) planDuplicate(
 	if err = (rateCoverage{billing: s.billingRepo}).refuseUnratedCopies(ctx, plan); err != nil {
 		return nil, err
 	}
+	if err = s.refuseCreditHold(ctx, plan.Source, nil); err != nil {
+		return nil, err
+	}
 
 	return plan, nil
 }

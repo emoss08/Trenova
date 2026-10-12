@@ -167,6 +167,39 @@ describe("ShipmentBillingDetails split billing", () => {
     expect(getBillingProfile).not.toHaveBeenCalledWith("cus_intel");
   });
 
+  it("says an automatic hold stops new shipments but not billing", async () => {
+    getBillingProfile.mockImplementation(async (customerId: string) => ({
+      customerId,
+      creditStatus: customerId === "cus_amd" ? "Hold" : "Active",
+      enforceCreditLimit: true,
+      creditHoldAutomatic: true,
+      creditHoldReason:
+        "Open receivables of 15000.00 USD are over the credit limit of 10000.00 USD",
+    }));
+    render(<Harness values={SPLIT_SHIPMENT} />);
+
+    const alert = await screen.findByTestId("credit-alert-cus_amd");
+    expect(alert).toHaveTextContent(
+      "Open receivables of 15000.00 USD are over the credit limit of 10000.00 USD. No new shipments can be booked for them until the balance is paid back under the limit. Shipments already booked are still billed.",
+    );
+  });
+
+  it("says a hold a person placed also holds the payer's invoices", async () => {
+    getBillingProfile.mockImplementation(async (customerId: string) => ({
+      customerId,
+      creditStatus: customerId === "cus_amd" ? "Suspended" : "Active",
+      enforceCreditLimit: true,
+      creditHoldAutomatic: false,
+      creditHoldReason: "Bankruptcy filing",
+    }));
+    render(<Harness values={SPLIT_SHIPMENT} />);
+
+    const alert = await screen.findByTestId("credit-alert-cus_amd");
+    expect(alert).toHaveTextContent(
+      "Bankruptcy filing. No new shipments can be booked for them, and their invoices wait until accounts receivable lifts the hold.",
+    );
+  });
+
   it("shows the invoices a save would produce, one per payer", async () => {
     render(<Harness values={SPLIT_SHIPMENT} />);
 

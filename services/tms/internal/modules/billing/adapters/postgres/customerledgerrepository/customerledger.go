@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -109,5 +110,42 @@ func (r *repository) SumBalanceAsOf(
 		}
 
 		return total, nil
+	})
+}
+
+// SumCustomerBalances totals each named customer's subledger. A customer with
+// no entries is absent from the result, which reads as a zero balance.
+func (r *repository) SumCustomerBalances(
+	ctx context.Context,
+	req customerledgerports.SumCustomerBalancesRequest,
+) (map[pulid.ID]int64, error) {
+	balances := make(map[pulid.ID]int64, len(req.CustomerIDs))
+	if len(req.CustomerIDs) == 0 {
+		return balances, nil
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int64, error) {
+		type row struct {
+			CustomerID pulid.ID `bun:"customer_id"`
+			Balance    int64    `bun:"balance"`
+		}
+		rows := make([]row, 0, len(req.CustomerIDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			TableExpr("customer_ledger_entries AS cle").
+			ColumnExpr("cle.customer_id").
+			ColumnExpr("COALESCE(SUM(cle.amount_minor), 0) AS balance").
+			Where("cle.organization_id = ?", req.TenantInfo.OrgID).
+			Where("cle.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("cle.customer_id IN (?)", bun.In(req.CustomerIDs)).
+			GroupExpr("cle.customer_id").
+			Scan(ctx, &rows)
+		if err != nil {
+			r.l.Error("failed to sum customer balances", zap.Error(err))
+			return nil, err
+		}
+		for _, rec := range rows {
+			balances[rec.CustomerID] = rec.Balance
+		}
+		return balances, nil
 	})
 }
