@@ -150,7 +150,9 @@ _Filled in as each area lands._
   not-billable ones as they are, idempotently; the sync lists `detention.InvoiceSettledStatuses()`
   (billable plus disputed) so a credit carrying a waiver still waives a disputed charge. Whether
   a disputed charge is invoiced is read from the invoices (`NetBilledByCharge`), as the waiver
-  path already does, rather than stored on the occurrence.
+  path already does, rather than stored on the occurrence. A credit with no waiver that takes a
+  stood-by charge off the invoice leaves the occurrence disputed: the dispute stays open until a
+  person waives or settles it, and nothing waives it automatically (product decision).
 
 ### Queue core
 
