@@ -41,3 +41,17 @@ describe("worstFirst", () => {
     expect(worstFirst([check("x", "ok"), check("y", "ok")]).map((c) => c.key)).toEqual(["x", "y"]);
   });
 });
+
+describe("a check only worth knowing", () => {
+  it("sorts below what is close and above what holds, and asks for no look", () => {
+    const checks = worstFirst([
+      { key: "ok", state: "ok", title: "Holds", detail: "" },
+      { key: "info", state: "info", title: "Worth knowing", detail: "" },
+      { key: "warn", state: "warn", title: "Close", detail: "" },
+    ]);
+    expect(checks.map((check) => check.key)).toEqual(["warn", "info", "ok"]);
+
+    render(<CardDue title="Due" checks={[checks[1]!, checks[2]!]} />);
+    expect(screen.getByText("Nothing due")).toBeInTheDocument();
+  });
+});

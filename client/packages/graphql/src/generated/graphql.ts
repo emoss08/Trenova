@@ -6653,6 +6653,8 @@ export type ShipmentsInput = {
   after?: string | null | undefined;
   /** Only Completed or Ready to Invoice shipments that are not in the billing queue. */
   billingTransferEligible?: boolean | null | undefined;
+  /** Only shipments with a live move tendered to one of these carriers. */
+  carrierIds?: Array<string | number> | null | undefined;
   expandShipmentDetails?: boolean | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | null | undefined;
   filterGroups?: Array<FilterGroupInput> | null | undefined;
@@ -9930,6 +9932,35 @@ export type DeleteCaptureProfileMutationVariables = Exact<{
 
 
 export type DeleteCaptureProfileMutation = { deleteCaptureProfile: boolean };
+
+export type DeskCarrierCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskCarrierCardQuery = { carrier: { id: string, status: CarrierStatus, code: string, name: string, dbaName: string | null, carrierType: CarrierType, dotNumber: string | null, mcNumber: string | null, scac: string | null, complianceStatus: CarrierComplianceStatus, safetyRating: CarrierSafetyRating, qualifiedAt: number | null, disqualifiedReason: string | null, w9OnFile: boolean, paymentMethod: CarrierPaymentMethod, paymentTermDays: number, remitToName: string | null, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string | null, phone: string | null, email: string | null, externalId: string | null, notes: string | null, intelRiskLevel: string | null, intelReviewRequired: boolean, createdAt: number, state: { abbreviation: string } | null, contacts: Array<{ id: string, name: string, title: string | null, email: string | null, phone: string | null, isPrimary: boolean, receivesRateConfirmations: boolean }> | null, insurancePolicies: Array<{ id: string, policyType: CarrierInsurancePolicyType, policyNumber: string, providerName: string, coverageAmount: string, effectiveDate: number, expirationDate: number, isVerified: boolean }> | null } | null };
+
+export type DeskCarrierEligibilityQueryVariables = Exact<{
+  carrierId: string | number;
+}>;
+
+
+export type DeskCarrierEligibilityQuery = { dispatchCarrierAssignmentPreview: { blockers: Array<string>, warnings: Array<string>, advisories: Array<string>, findings: Array<{ code: string, source: string, severity: string, message: string, requiresOverride: boolean }> } };
+
+export type DeskCarrierIntelQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskCarrierIntelQuery = { carrier: { id: string, intelligence: { id: string, provider: string, notFound: boolean, riskLevel: CarrierIntelRiskLevel, fetchedAt: number, effectiveAsOf: number, profile: { authority: { totalRevocations: number | null, lastRevocationAt: number | null, common: { status: CarrierIntelAuthorityStatus, pending: boolean, revocationPending: boolean, grantedAt: number | null } | null, contract: { status: CarrierIntelAuthorityStatus, pending: boolean, revocationPending: boolean, grantedAt: number | null } | null, broker: { status: CarrierIntelAuthorityStatus, pending: boolean, revocationPending: boolean, grantedAt: number | null } | null } | null, safety: { rating: string | null, ratingDate: number | null, outOfServiceOrder: boolean | null, outOfServiceAt: number | null } | null, basics: Array<{ basic: CsaBasic, measure: number | null, percentile: number | null, threshold: number | null, alert: boolean }> | null } } | null } | null };
+
+export type DeskCarrierSettlementsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount: boolean;
+}>;
+
+
+export type DeskCarrierSettlementsQuery = { carrierSettlements: { totalCount?: number | null, edges: Array<{ node: { id: string, settlementNumber: string, status: CarrierSettlementStatus, periodStart: number, periodEnd: number, payDate: number, netPayableMinor: number, shipmentCount: number, currencyCode: string } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type CarrierIntelFindingFieldsFragment = { code: string, category: CarrierIntelSection, action: CarrierIntelRuleAction, severity: CarrierIntelSeverity, message: string, unverifiable: boolean, unconfirmed: boolean, overridden: boolean, overrideId: string | null, overrideExpiresAt: number | null } & { ' $fragmentName'?: 'CarrierIntelFindingFieldsFragment' };
 
@@ -25960,6 +25991,10 @@ export const RevokeCaptureDeviceDocument = {"__meta__":{"kind":"mutation","name"
 export const CreateCaptureProfileDocument = {"__meta__":{"kind":"mutation","name":"CreateCaptureProfile","hash":"sha256:f164652c5c381d1301d9449d1623dffe9ddba96c450c61815b9f4d71e3ec473b"}} as unknown as TypedDocumentString<CreateCaptureProfileMutation, CreateCaptureProfileMutationVariables>;
 export const UpdateCaptureProfileDocument = {"__meta__":{"kind":"mutation","name":"UpdateCaptureProfile","hash":"sha256:906331e1953ab30bbb168a6963ec72cd98e087a9c7578f438d087d7ea6e90c7b"}} as unknown as TypedDocumentString<UpdateCaptureProfileMutation, UpdateCaptureProfileMutationVariables>;
 export const DeleteCaptureProfileDocument = {"__meta__":{"kind":"mutation","name":"DeleteCaptureProfile","hash":"sha256:cb6a096217b18ad0fa8d5e532e70b09329738262494bfb7a7f348a488e1c18cb"}} as unknown as TypedDocumentString<DeleteCaptureProfileMutation, DeleteCaptureProfileMutationVariables>;
+export const DeskCarrierCardDocument = {"__meta__":{"kind":"query","name":"DeskCarrierCard","hash":"sha256:e2c9ecb82adffabead4f5fa05fffda23b2d62edf912f359397b420922b8dda63"}} as unknown as TypedDocumentString<DeskCarrierCardQuery, DeskCarrierCardQueryVariables>;
+export const DeskCarrierEligibilityDocument = {"__meta__":{"kind":"query","name":"DeskCarrierEligibility","hash":"sha256:f02d82768c013c8b18898f2d43d82798a53fc3b8f2dcb90878a35a4399adeb16"}} as unknown as TypedDocumentString<DeskCarrierEligibilityQuery, DeskCarrierEligibilityQueryVariables>;
+export const DeskCarrierIntelDocument = {"__meta__":{"kind":"query","name":"DeskCarrierIntel","hash":"sha256:4559c1ab96c04567884bc29d6dc12b76127e87db7c6aa764cfd505d390f638b5"}} as unknown as TypedDocumentString<DeskCarrierIntelQuery, DeskCarrierIntelQueryVariables>;
+export const DeskCarrierSettlementsDocument = {"__meta__":{"kind":"query","name":"DeskCarrierSettlements","hash":"sha256:2badc709e114e0a815d2f590fba2c865eadea95687dd1d680ddebb8c4084125c"}} as unknown as TypedDocumentString<DeskCarrierSettlementsQuery, DeskCarrierSettlementsQueryVariables>;
 export const CarrierIntelSettingsDocument = {"__meta__":{"kind":"query","name":"CarrierIntelSettings","hash":"sha256:4a7babaf1487c88a6bd87dffabb128a4aa3596f4588b785dc0d829fb13ae17c6"}} as unknown as TypedDocumentString<CarrierIntelSettingsQuery, CarrierIntelSettingsQueryVariables>;
 export const CarrierIntelCostEstimateDocument = {"__meta__":{"kind":"query","name":"CarrierIntelCostEstimate","hash":"sha256:bdbf9851d96a8afa735c9a57aa94a2cb1178adc0ad769eae1dcbfe566a39af79"}} as unknown as TypedDocumentString<CarrierIntelCostEstimateQuery, CarrierIntelCostEstimateQueryVariables>;
 export const CarrierIntelUsageDocument = {"__meta__":{"kind":"query","name":"CarrierIntelUsage","hash":"sha256:2781e60e21bd7c2e05802c14748eddc0b97a4f3f22d6d7dfda25f5aefd9d4d63"}} as unknown as TypedDocumentString<CarrierIntelUsageQuery, CarrierIntelUsageQueryVariables>;

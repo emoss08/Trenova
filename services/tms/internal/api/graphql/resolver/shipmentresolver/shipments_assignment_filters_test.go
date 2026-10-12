@@ -164,3 +164,33 @@ func TestShipments_RejectsAMalformedStopLocationID(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, service.requests)
 }
+
+func TestShipments_CarrierIDsReachTheListOptions(t *testing.T) {
+	t.Parallel()
+
+	service := &listCapturingShipmentService{}
+	carrierID := pulid.MustNew("car_")
+
+	_, err := newShipmentListResolver(service).Shipments(
+		shipmentListContext(t),
+		gqlmodel.ShipmentsInput{CarrierIds: []string{carrierID.String()}},
+	)
+	require.NoError(t, err)
+	require.Len(t, service.requests, 1)
+	options := service.requests[0].ShipmentOptions
+	assert.Equal(t, []pulid.ID{carrierID}, options.CarrierIDs)
+	assert.Empty(t, options.TractorIDs)
+}
+
+func TestShipments_RejectsAMalformedCarrierID(t *testing.T) {
+	t.Parallel()
+
+	service := &listCapturingShipmentService{}
+
+	_, err := newShipmentListResolver(service).Shipments(
+		shipmentListContext(t),
+		gqlmodel.ShipmentsInput{CarrierIds: []string{"acme-freight"}},
+	)
+	require.Error(t, err)
+	assert.Empty(t, service.requests)
+}

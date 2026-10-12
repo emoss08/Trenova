@@ -134,3 +134,31 @@ func TestApplyShipmentOptionFilters_TrailerIDsMatchLiveAssignments(t *testing.T)
 	assert.Contains(t, sql, "a_wrk.trailer_id IN ('"+trailerID.String()+"')")
 	assert.NotContains(t, sql, "tractor_id")
 }
+
+func TestApplyShipmentOptionFilters_CarrierIDsMatchLiveCarrierAssignments(t *testing.T) {
+	t.Parallel()
+
+	repo, _ := newCancelTestRepository(t)
+	dba := repo.db.DB()
+	carrierA := pulid.MustNew("car_")
+	carrierB := pulid.MustNew("car_")
+
+	q := dba.NewSelect().Model((*shipment.Shipment)(nil))
+	q = applyShipmentOptionFilters(q, dba, shipmentports.ShipmentOptions{
+		CarrierIDs: []pulid.ID{carrierA, carrierB},
+	})
+
+	sql := q.String()
+	assert.Contains(t, sql, "EXISTS (SELECT 1")
+	assert.Contains(t, sql, `"shipment_moves" AS "sm_car"`)
+	assert.Contains(t, sql, `JOIN "carrier_assignments" AS "ca_car"`)
+	assert.Contains(t, sql, "ca_car.status != 'Canceled'")
+	assert.Contains(t, sql, "sm_car.status != 'Canceled'")
+	assert.Contains(t, sql, "sm_car.shipment_id = sp.id")
+	assert.Contains(
+		t,
+		sql,
+		"ca_car.carrier_id IN ('"+carrierA.String()+"', '"+carrierB.String()+"')",
+	)
+	assert.NotContains(t, sql, `"assignments" AS "a_wrk"`)
+}

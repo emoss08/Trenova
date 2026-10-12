@@ -167,6 +167,11 @@ func newGetCarrierTool(
 			return repo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
+				CarrierFilterOptions: carrierports.CarrierFilterOptions{
+					IncludeState:             true,
+					IncludeContacts:          true,
+					IncludeInsurancePolicies: true,
+				},
 			})
 		},
 	}, permissions)

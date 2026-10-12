@@ -9,6 +9,7 @@ import {
   deskThread,
   deskTractors,
   deskTrailers,
+  deskCarriers,
   deskLocations,
   deskWorkers,
 } from "../fixtures/desk-cards.mjs";
@@ -59,6 +60,10 @@ function locationFixture(state, id) {
   return deskLocations(state.anchor)[id] ?? null;
 }
 
+function carrierFixture(state, id) {
+  return deskCarriers(state.anchor)[id] ?? null;
+}
+
 /** A page of a fixture's rows, read the way a connection pages them. */
 function connectionPage(rows, input, includeTotalCount) {
   const offset = input?.after ? Number(Buffer.from(input.after, "base64url").toString()) : 0;
@@ -81,7 +86,8 @@ function unitShipments(state, unitId) {
     tractorFixture(state, unitId) ??
     trailerFixture(state, unitId) ??
     workerFixture(state, unitId) ??
-    locationFixture(state, unitId);
+    locationFixture(state, unitId) ??
+    carrierFixture(state, unitId);
   if (!fixture || empty(state)) return [];
   return [...state.shipments]
     .filter((shipment) => hash(shipment.id + unitId) % 4 === 0)
@@ -98,7 +104,8 @@ function recordShipments(state, variables) {
     input.tractorIds?.[0] ??
     input.trailerIds?.[0] ??
     input.workerIds?.[0] ??
-    input.stopLocationIds?.[0];
+    input.stopLocationIds?.[0] ??
+    input.carrierIds?.[0];
   const all = unitId ? unitShipments(state, unitId) : [];
   const offset = input.after ? Number(Buffer.from(input.after, "base64url").toString()) : 0;
   const first = input.first ?? 20;
@@ -143,6 +150,7 @@ const DISPATCH_AGENT = {
     "get_trailer",
     "get_worker",
     "get_location",
+    "get_carrier",
     "list_tractors",
     "get_shipment",
   ],
@@ -245,6 +253,40 @@ export const DESK_CARD_HANDLERS = {
     const rows = fixture && !empty(state) ? fixture.failures : [];
     return {
       serviceFailures: connectionPage(rows, variables.input, variables.includeTotalCount),
+    };
+  },
+  DeskCarrierCard: (state, variables) => {
+    if (held(state)) return HOLD;
+    const fixture = carrierFixture(state, variables.id);
+    return { carrier: fixture ? fixture.carrier : null };
+  },
+  DeskCarrierEligibility: (state, variables) => {
+    if (held(state)) return HOLD;
+    const fixture = carrierFixture(state, variables.carrierId);
+    return {
+      dispatchCarrierAssignmentPreview: fixture?.eligibility ?? {
+        blockers: [],
+        warnings: [],
+        advisories: [],
+        findings: [],
+      },
+    };
+  },
+  DeskCarrierIntel: (state, variables) => {
+    if (held(state)) return HOLD;
+    const fixture = carrierFixture(state, variables.id);
+    if (!fixture) return { carrier: null };
+    return { carrier: { id: variables.id, intelligence: empty(state) ? null : fixture.intel } };
+  },
+  DeskCarrierSettlements: (state, variables) => {
+    if (held(state)) return HOLD;
+    const carrierId = variables.input?.fieldFilters?.find(
+      (filter) => filter.field === "carrierId",
+    )?.value;
+    const fixture = carrierFixture(state, carrierId);
+    const rows = fixture && !empty(state) ? fixture.settlements : [];
+    return {
+      carrierSettlements: connectionPage(rows, variables.input, variables.includeTotalCount),
     };
   },
   DeskRecordShipments: recordShipments,

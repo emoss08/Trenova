@@ -1866,6 +1866,8 @@ input ShipmentsInput {
   workerIds: [ID!]
   "Only shipments with a live stop at one of these locations."
   stopLocationIds: [ID!]
+  "Only shipments with a live move tendered to one of these carriers."
+  carrierIds: [ID!]
 }
 
 input ShipmentEventsInput {

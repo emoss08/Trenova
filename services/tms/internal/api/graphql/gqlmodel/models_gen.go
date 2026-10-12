@@ -8764,6 +8764,8 @@ type ShipmentsInput struct {
 	WorkerIds []string `json:"workerIds,omitempty"`
 	// Only shipments with a live stop at one of these locations.
 	StopLocationIds []string `json:"stopLocationIds,omitempty"`
+	// Only shipments with a live move tendered to one of these carriers.
+	CarrierIds []string `json:"carrierIds,omitempty"`
 }
 
 type SidebarActivityPreference struct {

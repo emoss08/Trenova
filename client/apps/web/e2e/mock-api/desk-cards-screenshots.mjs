@@ -48,6 +48,13 @@ const CARDS = [
     empty: "location-new",
     gone: "location-gone",
   },
+  {
+    card: "carrier",
+    loaded: "carrier-redriver",
+    attention: "carrier-lonestar",
+    empty: "carrier-new",
+    gone: "carrier-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

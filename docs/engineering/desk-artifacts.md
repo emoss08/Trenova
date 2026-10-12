@@ -52,7 +52,9 @@ artifacts/
                           record is on a small still OpenStreetMap map
                           (card-where.tsx, the map lazily in still-map.tsx from
                           map-tiles.ts, with a location's fence drawn round
-                          the dot), what falls due (card-due.tsx), a share
+                          the dot), what falls due (card-due.tsx: a check is
+                          bad, warn, info, which is worth knowing and asks
+                          for no look, or ok), a share
                           drawn as a meter (CardMeter: credit used, drive time
                           left), figures in a ruled strip (CardStats: payment
                           pace, dwell), what a
@@ -74,7 +76,7 @@ is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location).
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier).
 
 ## Lazy loading and skeletons
 
@@ -123,7 +125,8 @@ every scope a page at a time with the count on the first page only, and the next
 read on request. A new scope is a case in `scopeInput` (`lib/graphql/record-shipments.ts`)
 and, where the server cannot yet filter by it, a `ShipmentsInput` field
 (`tractorIds`, `trailerIds` and `workerIds` match loads with a live move assigned to the
-unit or the driver; `stopLocationIds` matches loads with a live stop at the location).
+unit or the driver; `stopLocationIds` matches loads with a live stop at the location;
+`carrierIds` matches loads with a move tendered to the carrier and not canceled).
 
 ## Where a record is
 

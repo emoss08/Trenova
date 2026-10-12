@@ -15587,7 +15587,7 @@
     ]
   },
   "Address": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -15598,6 +15598,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/customer",
+      "routes/desk",
       "routes/edi",
       "routes/onboarding",
       "routes/shipment",
@@ -28712,6 +28713,15 @@
       "routes/carrier-sourcing"
     ]
   },
+  "Authority and safety": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Authority revocation pending": {
     "sites": 1,
     "scope": [
@@ -30667,7 +30677,7 @@
     ]
   },
   "Back to the table": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -30694,7 +30704,7 @@
     ]
   },
   "Back to {0}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -34236,7 +34246,7 @@
     ]
   },
   "Blocked": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -35043,12 +35053,13 @@
     ]
   },
   "Broker authority": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Broker bond below requirement": {
@@ -36635,6 +36646,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Can we tender to them": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Can you take this load?": {
@@ -38551,7 +38571,7 @@
     ]
   },
   "Carrier": {
-    "sites": 42,
+    "sites": 45,
     "scope": [
       "go",
       "ts"
@@ -45864,6 +45884,15 @@
       "routes/agent-control"
     ]
   },
+  "Clear to tender": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Clear tracked run": {
     "sites": 1,
     "scope": [
@@ -48446,6 +48475,15 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other"
+    ]
+  },
+  "Common authority": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Common breaks": {
@@ -51782,13 +51820,14 @@
     ]
   },
   "Contacts": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/carrier"
+      "routes/carrier",
+      "routes/desk"
     ]
   },
   "Container": {
@@ -52265,6 +52304,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Contract authority": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Contract document": {
@@ -60288,11 +60336,13 @@
     ]
   },
   "DOT {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "routes/desk",
       "template/rateconfirmation.pdf"
     ]
   },
@@ -66919,7 +66969,7 @@
     ]
   },
   "Details": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -69527,7 +69577,7 @@
     ]
   },
   "Disqualified": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -69535,7 +69585,8 @@
     "areas": [
       "apps/web/lib",
       "go/other",
-      "packages/shared/components"
+      "packages/shared/components",
+      "routes/desk"
     ]
   },
   "Disqualified Reason": {
@@ -71468,6 +71519,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "Doing business as {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Dollar ceiling for a single stop's detention.": {
@@ -77289,7 +77349,7 @@
     ]
   },
   "Email": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -95258,6 +95318,15 @@
       "go/other"
     ]
   },
+  "From intelligence": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "From minute cannot be negative": {
     "sites": 1,
     "scope": [
@@ -97670,6 +97739,15 @@
     ]
   },
   "Get the rate confirmation for {0} confirmed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Gets rate confirmations": {
     "sites": 1,
     "scope": [
       "ts"
@@ -104878,7 +104956,7 @@
     ]
   },
   "Inactive": {
-    "sites": 42,
+    "sites": 43,
     "scope": [
       "go",
       "ts"
@@ -106677,14 +106755,15 @@
     ]
   },
   "Insurance": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Insurance cancellation pending": {
@@ -111070,6 +111149,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Its record and its intelligence are both clear": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Its runs and audit trail are kept. Open proposals are withdrawn and people can no longer pick it in Desk.": {
@@ -119453,6 +119541,15 @@
       "routes/scheduling"
     ]
   },
+  "Loading the carrier…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Loading the case": {
     "sites": 1,
     "scope": [
@@ -121130,7 +121227,7 @@
     ]
   },
   "MC {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -130962,6 +131059,15 @@
       "packages/shared/lib"
     ]
   },
+  "Needs an override": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Needs approval": {
     "sites": 2,
     "scope": [
@@ -132792,6 +132898,15 @@
       "routes/agent-control"
     ]
   },
+  "Next carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Next check": {
     "sites": 1,
     "scope": [
@@ -133334,6 +133449,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "No CSA BASIC has been measured for this carrier.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No Clearinghouse query has been run for this worker.": {
@@ -134941,6 +135065,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No contact is on file.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No contacts yet. Add dispatch, billing, and after-hours contacts so your team knows who to reach.": {
@@ -136609,6 +136742,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "No insurance policy is on file.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No integrations match your current search and filter.": {
@@ -140022,6 +140164,15 @@
       "routes/benefits"
     ]
   },
+  "No way to reach them on file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No widget matches “{0}”.": {
     "sites": 1,
     "scope": [
@@ -140462,7 +140613,7 @@
     ]
   },
   "None": {
-    "sites": 45,
+    "sites": 46,
     "scope": [
       "go",
       "ts"
@@ -140684,7 +140835,7 @@
     ]
   },
   "None on file": {
-    "sites": 12,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -141181,12 +141332,13 @@
     ]
   },
   "Not enough data": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Not enough data to score this pairing.": {
@@ -141497,7 +141649,7 @@
     ]
   },
   "Not on file": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -141612,7 +141764,7 @@
     ]
   },
   "Not rated": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -141620,6 +141772,7 @@
       "apps/web/components",
       "apps/web/lib",
       "packages/shared/components",
+      "routes/desk",
       "routes/worker"
     ]
   },
@@ -142031,21 +142184,23 @@
     ]
   },
   "Not verified": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/desk"
     ]
   },
   "Not vetted": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Not worth acting on?": {
@@ -142067,7 +142222,7 @@
     ]
   },
   "Not yet": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -143587,6 +143742,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Nothing stands in the way": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing that creates a load or moves money is ever done without a person.": {
@@ -145951,7 +146115,7 @@
     ]
   },
   "On file": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -146110,6 +146274,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "On the carrier's record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "On the case": {
@@ -149587,13 +149760,14 @@
     ]
   },
   "Open carrier": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-monitoring",
-      "routes/carrier-sourcing"
+      "routes/carrier-sourcing",
+      "routes/desk"
     ]
   },
   "Open carrier intelligence": {
@@ -153620,14 +153794,15 @@
     ]
   },
   "Out-of-service order": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Out-of-service rate above national average": {
@@ -158672,7 +158847,7 @@
     ]
   },
   "Payment": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -159327,6 +159502,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Pays {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Peak day occupancy": {
@@ -161142,7 +161326,7 @@
     ]
   },
   "Phone": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -165920,6 +166104,15 @@
       "go/other"
     ]
   },
+  "Previous carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Previous customer": {
     "sites": 1,
     "scope": [
@@ -166490,13 +166683,14 @@
     ]
   },
   "Primary": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -170037,6 +170231,15 @@
       "routes/dash-control"
     ]
   },
+  "Qualification expired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Qualification file": {
     "sites": 3,
     "scope": [
@@ -170045,6 +170248,15 @@
     "areas": [
       "apps/dash/_components",
       "routes/worker"
+    ]
+  },
+  "Qualification pending": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Qualification standing and FMCSA safety rating for this carrier.": {
@@ -170066,7 +170278,7 @@
     ]
   },
   "Qualified": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -170076,6 +170288,7 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
+      "routes/desk",
       "routes/worker"
     ]
   },
@@ -170097,6 +170310,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Qualify, vet and pay the carrier on its page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Qualifying reason": {
@@ -174111,6 +174333,15 @@
       "routes/desk"
     ]
   },
+  "Reading more settlements…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Reading more shipments…": {
     "sites": 1,
     "scope": [
@@ -175796,7 +176027,7 @@
     ]
   },
   "Recent shipments": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -180127,12 +180358,13 @@
     ]
   },
   "Remit to": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-settlement"
+      "routes/carrier-settlement",
+      "routes/desk"
     ]
   },
   "Remit-to address": {
@@ -187624,7 +187856,7 @@
     ]
   },
   "Review required": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -187632,7 +187864,8 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/billing-queue",
-      "routes/carrier-monitoring"
+      "routes/carrier-monitoring",
+      "routes/desk"
     ]
   },
   "Review required before approval": {
@@ -191111,12 +191344,13 @@
     ]
   },
   "SCAC {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/onboarding",
       "template/rateconfirmation.pdf"
     ]
@@ -191476,7 +191710,7 @@
     ]
   },
   "Safety": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -191488,6 +191722,7 @@
       "packages/shared/lib",
       "packages/shared/types",
       "routes/agent-control",
+      "routes/desk",
       "routes/worker"
     ]
   },
@@ -191610,13 +191845,14 @@
     ]
   },
   "Safety rating": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/carrier"
+      "routes/carrier",
+      "routes/desk"
     ]
   },
   "Safety rating is required": {
@@ -202955,7 +203191,7 @@
     ]
   },
   "Settlements": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -202963,6 +203199,7 @@
     "areas": [
       "go/other",
       "routes/carrier-settlement-batch",
+      "routes/desk",
       "routes/settlement-batch"
     ]
   },
@@ -206253,7 +206490,7 @@
     ]
   },
   "Show more": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -207348,7 +207585,7 @@
     ]
   },
   "Since {0}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -219202,6 +219439,15 @@
       "routes/agent-control"
     ]
   },
+  "The FMCSA has no record of this carrier's DOT number.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The FMCSA's published weight, 1 to 10.": {
     "sites": 1,
     "scope": [
@@ -220768,6 +221014,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The carrier's intelligence could not be read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The carrier's own tracking reference for this move.": {
@@ -226018,6 +226273,15 @@
       "routes/desk"
     ]
   },
+  "The next settlements could not be read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The next shipments could not be read.": {
     "sites": 1,
     "scope": [
@@ -228983,6 +229247,15 @@
     "areas": [
       "routes/carrier-settlement",
       "routes/driver-settlement"
+    ]
+  },
+  "The settlements could not be read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The shadow comparison could not be loaded. Try again shortly.": {
@@ -232209,6 +232482,24 @@
       "routes/carrier"
     ]
   },
+  "This carrier could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "This carrier has not been settled yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This carrier has not been vetted": {
     "sites": 1,
     "scope": [
@@ -232216,6 +232507,24 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "This carrier has not been vetted. Vet it on its page to read its authority and safety.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "This carrier has not hauled a load yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This carrier is no longer watched for changes.": {
@@ -236684,7 +236993,7 @@
     ]
   },
   "Through {0}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -243128,7 +243437,7 @@
     ]
   },
   "Type": {
-    "sites": 56,
+    "sites": 57,
     "scope": [
       "go",
       "ts"
@@ -251948,6 +252257,15 @@
       "packages/shared/components"
     ]
   },
+  "W-9": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "W-9 on file": {
     "sites": 1,
     "scope": [
@@ -257307,6 +257625,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Whether the carrier can be tendered could not be read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Whether the carrier is qualified to haul freight for your organization.": {
@@ -272753,6 +273080,15 @@
       "apps/web/lib"
     ]
   },
+  "{0, plural, one {# settlement} other {# settlements}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# shipment can transfer} other {# shipments can transfer}}": {
     "sites": 1,
     "scope": [
@@ -272772,7 +273108,7 @@
     ]
   },
   "{0, plural, one {# shipment} other {# shipments}}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -275923,6 +276259,15 @@
       "go/other"
     ]
   },
+  "{0} carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} carriers, about {1} per month": {
     "sites": 1,
     "scope": [
@@ -276706,7 +277051,7 @@
     ]
   },
   "{0} expired": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -276714,6 +277059,15 @@
       "apps/web/components",
       "routes/desk",
       "routes/worker"
+    ]
+  },
+  "{0} expires in {1, plural, one {# day} other {# days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} expiring": {
@@ -279710,7 +280064,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "ts"
     ],
@@ -279950,7 +280304,7 @@
     ]
   },
   "{0} of {1} shown": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -281484,7 +281838,7 @@
     ]
   },
   "{0} shown": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -281856,7 +282210,7 @@
     ]
   },
   "{0} to {1}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -282657,6 +283011,15 @@
     ]
   },
   "{0} · IFTA": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} · Needs an override": {
     "sites": 1,
     "scope": [
       "ts"
@@ -283611,6 +283974,15 @@
       "routes/agent-control"
     ]
   },
+  "{0}, net {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0}, non-preventable": {
     "sites": 1,
     "scope": [
@@ -283629,6 +284001,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "{0}, pending": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0}, preventable": {
     "sites": 1,
     "scope": [
@@ -283636,6 +284017,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "{0}, revocation pending": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0}, through #{1}": {

@@ -25120,6 +25120,8 @@ input ShipmentsInput {
   Only Completed or Ready to Invoice shipments that are not in the billing queue.
   """
   billingTransferEligible: Boolean = false
+  """Only shipments with a live move tendered to one of these carriers."""
+  carrierIds: [ID!]
   expandShipmentDetails: Boolean = false
   fieldFilters: [FieldFilterInput!]
   filterGroups: [FilterGroupInput!]

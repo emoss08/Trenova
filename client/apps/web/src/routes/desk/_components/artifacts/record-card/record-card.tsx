@@ -23,6 +23,12 @@ const CARD_PATHS = {
     </>
   ),
   x: <path d="M7 7l10 10M17 7L7 17" />,
+  info: (
+    <>
+      <path d="M12 11v6" />
+      <path d="M12 7.5v.01" />
+    </>
+  ),
   file: (
     <>
       <path d="M6 3.5h8l4 4v13H6z" />
@@ -355,7 +361,12 @@ export function CardChecks({ children }: { children: ReactNode }) {
   return <div className="dk-rec-checks">{children}</div>;
 }
 
-export type CardCheckState = "ok" | "warn" | "bad";
+export type CardCheckState = "ok" | "info" | "warn" | "bad";
+
+/** Whether a check asks for a look: what is wrong or close, not what holds or is only worth knowing. */
+export function needsLook(state: CardCheckState): boolean {
+  return state === "bad" || state === "warn";
+}
 
 /** One check: whether it holds, what it is, what it found, and anything to do about it. */
 export function CardCheck({
@@ -373,7 +384,9 @@ export function CardCheck({
     <div className={cn("dk-rec-ck", `dk-${state}`)}>
       <span className="dk-rec-ci">
         <CardIcon
-          name={state === "ok" ? "check" : state === "warn" ? "warn" : "x"}
+          name={
+            state === "ok" ? "check" : state === "info" ? "info" : state === "warn" ? "warn" : "x"
+          }
           size={state === "warn" ? 12 : 11}
           stroke={state === "warn" ? 2 : 2.8}
         />

@@ -348,7 +348,7 @@ describe("standing", () => {
     expect(["Critical", "Warning", "Info"].map((s) => concernState(s as never))).toEqual([
       "bad",
       "warn",
-      "ok",
+      "info",
     ]);
     expect(["Good", "Watch", "AtRisk", "Blocked"].map((s) => standingTone(s as never))).toEqual([
       "success",

@@ -52,6 +52,20 @@ export function deskCardArtifacts(anchor) {
     "location-tyson": artifact("location-tyson", "location", "loc_tyson", "Tyson Foods DC"),
     "location-new": artifact("location-new", "location", "loc_new", "Gate 7 overflow lot"),
     "location-gone": artifact("location-gone", "location", "loc_999", "Old Fort Worth yard"),
+    "carrier-redriver": artifact(
+      "carrier-redriver",
+      "carrier",
+      "car_redriver",
+      "Red River Freight",
+    ),
+    "carrier-lonestar": artifact(
+      "carrier-lonestar",
+      "carrier",
+      "car_lonestar",
+      "Lone Star Haulers",
+    ),
+    "carrier-new": artifact("carrier-new", "carrier", "car_new", "Northgate Transport"),
+    "carrier-gone": artifact("carrier-gone", "carrier", "car_999", "Prairie Line Carriers"),
   };
 }
 
@@ -746,6 +760,316 @@ export function deskLocations(anchor) {
   };
 }
 
+/**
+ * Three carriers between them drawing every state the card has: Red River
+ * Freight is qualified, vetted and clean with its insurance current and a run
+ * of paid settlements; Lone Star Haulers is disqualified, its cargo policy
+ * lapsed, its broker authority revoked and two BASICs past their thresholds;
+ * Northgate Transport was added this week, not yet vetted, with nothing on
+ * file.
+ */
+export function deskCarriers(anchor) {
+  const base = {
+    dbaName: null,
+    carrierType: "Common",
+    safetyRating: "Satisfactory",
+    disqualifiedReason: null,
+    w9OnFile: true,
+    paymentMethod: "ACHManual",
+    paymentTermDays: 30,
+    remitToName: null,
+    addressLine2: null,
+    externalId: null,
+    notes: null,
+    intelReviewRequired: false,
+  };
+  const policy = (id, policyType, providerName, coverageAmount, daysLeft, isVerified = true) => ({
+    id,
+    policyType,
+    policyNumber: `${policyType.slice(0, 2).toUpperCase()}-${id.slice(-4)}`,
+    providerName,
+    coverageAmount,
+    effectiveDate: anchor + (daysLeft - 365) * DAY,
+    expirationDate: anchor + daysLeft * DAY,
+    isVerified,
+  });
+  const grant = (status, flags = {}) => ({
+    status,
+    pending: false,
+    revocationPending: false,
+    grantedAt: anchor - 6 * 365 * DAY,
+    ...flags,
+  });
+  const basic = (name, percentile, threshold, alert = false) => ({
+    basic: name,
+    measure: percentile === null ? null : percentile / 18,
+    percentile,
+    threshold,
+    alert,
+  });
+  const settlement = (id, number, status, endDaysAgo, netPayableMinor, shipmentCount) => ({
+    id,
+    settlementNumber: number,
+    status,
+    periodStart: anchor - (endDaysAgo + 14) * DAY,
+    periodEnd: anchor - endDaysAgo * DAY,
+    payDate: anchor - (endDaysAgo - 10) * DAY,
+    netPayableMinor,
+    shipmentCount,
+    currencyCode: "USD",
+  });
+  return {
+    car_redriver: {
+      carrier: {
+        ...base,
+        id: "car_redriver",
+        status: "Active",
+        code: "RRF",
+        name: "Red River Freight",
+        dbaName: "Red River Logistics",
+        dotNumber: "3141592",
+        mcNumber: "MC-271828",
+        scac: "RRFT",
+        complianceStatus: "Qualified",
+        qualifiedAt: anchor - 210 * DAY,
+        addressLine1: "400 Industrial Blvd",
+        city: "Shreveport",
+        postalCode: "71101",
+        phone: "(318) 555-0190",
+        email: "dispatch@redriver.example",
+        intelRiskLevel: "Low",
+        createdAt: anchor - 3 * 365 * DAY,
+        state: { abbreviation: "LA" },
+        contacts: [
+          {
+            id: "cc_rr1",
+            name: "Marcus Bell",
+            title: "Dispatch manager",
+            email: "marcus@redriver.example",
+            phone: "(318) 555-0191",
+            isPrimary: true,
+            receivesRateConfirmations: true,
+          },
+          {
+            id: "cc_rr2",
+            name: "Tanya Okoro",
+            title: "Billing",
+            email: "billing@redriver.example",
+            phone: null,
+            isPrimary: false,
+            receivesRateConfirmations: false,
+          },
+        ],
+        insurancePolicies: [
+          policy("pol_rr_auto", "AutoLiability", "Great West Casualty", "1000000", 241),
+          policy("pol_rr_cargo", "CargoLiability", "Great West Casualty", "100000", 241),
+          policy("pol_rr_gl", "GeneralLiability", "Travelers", "2000000", 118),
+        ],
+      },
+      eligibility: { blockers: [], warnings: [], advisories: [], findings: [] },
+      intel: {
+        id: "snap_rr",
+        provider: "CarrierOK",
+        notFound: false,
+        riskLevel: "Low",
+        fetchedAt: anchor - 5 * HOUR,
+        effectiveAsOf: anchor - 5 * HOUR,
+        profile: {
+          authority: {
+            common: grant("Active"),
+            contract: grant("Active"),
+            broker: grant("None"),
+            totalRevocations: 0,
+            lastRevocationAt: null,
+          },
+          safety: {
+            rating: "Satisfactory",
+            ratingDate: anchor - 800 * DAY,
+            outOfServiceOrder: false,
+            outOfServiceAt: null,
+          },
+          basics: [
+            basic("UnsafeDriving", 22, 65),
+            basic("HOSCompliance", 38, 65),
+            basic("DriverFitness", null, 80),
+            basic("VehicleMaintenance", 47, 80),
+          ],
+        },
+      },
+      settlements: [
+        settlement("cs_rr1", "CS-2610-0042", "Approved", 1, 1_245_050, 4),
+        settlement("cs_rr2", "CS-2609-0031", "Paid", 15, 1_908_200, 6),
+        settlement("cs_rr3", "CS-2609-0017", "Paid", 29, 864_000, 3),
+      ],
+      shipments: 6,
+    },
+    car_lonestar: {
+      carrier: {
+        ...base,
+        id: "car_lonestar",
+        status: "Active",
+        code: "LSH",
+        name: "Lone Star Haulers",
+        dotNumber: "2718281",
+        mcNumber: "MC-161803",
+        scac: "LSHA",
+        complianceStatus: "Disqualified",
+        disqualifiedReason: "Cargo insurance lapsed",
+        safetyRating: "Conditional",
+        qualifiedAt: anchor - 500 * DAY,
+        addressLine1: "9100 Airline Dr",
+        city: "Houston",
+        postalCode: "77037",
+        phone: "(713) 555-0144",
+        email: null,
+        intelRiskLevel: "High",
+        intelReviewRequired: true,
+        createdAt: anchor - 2 * 365 * DAY,
+        state: { abbreviation: "TX" },
+        contacts: [
+          {
+            id: "cc_ls1",
+            name: "Ray Gutierrez",
+            title: "Owner",
+            email: null,
+            phone: "(713) 555-0145",
+            isPrimary: true,
+            receivesRateConfirmations: true,
+          },
+        ],
+        insurancePolicies: [
+          policy("pol_ls_cargo", "CargoLiability", "Prime Insurance", "100000", -3),
+          policy("pol_ls_auto", "AutoLiability", "Prime Insurance", "750000", 12),
+          policy("pol_ls_gl", "GeneralLiability", "Hiscox", "1000000", 190, false),
+        ],
+      },
+      eligibility: {
+        blockers: ["Carrier compliance status is Disqualified", "CargoLiability insurance expired"],
+        warnings: ["AutoLiability insurance expires within 30 days"],
+        advisories: ["Broker authority was revoked"],
+        findings: [
+          {
+            code: "record.compliance_status",
+            source: "Record",
+            severity: "Blocker",
+            message: "Carrier compliance status is Disqualified",
+            requiresOverride: false,
+          },
+          {
+            code: "record.insurance_expired",
+            source: "Record",
+            severity: "Blocker",
+            message: "Cargo liability insurance expired 3 days ago",
+            requiresOverride: false,
+          },
+          {
+            code: "record.insurance_expiring",
+            source: "Record",
+            severity: "Warning",
+            message: "Auto liability insurance expires in 12 days",
+            requiresOverride: true,
+          },
+          {
+            code: "intel.basic_alert",
+            source: "Intelligence",
+            severity: "Warning",
+            message: "Hours-of-Service and Vehicle Maintenance BASICs are in alert",
+            requiresOverride: true,
+          },
+          {
+            code: "intel.authority_revoked",
+            source: "Intelligence",
+            severity: "Advisory",
+            message: "Broker authority was revoked last year",
+            requiresOverride: false,
+          },
+        ],
+      },
+      intel: {
+        id: "snap_ls",
+        provider: "CarrierOK",
+        notFound: false,
+        riskLevel: "High",
+        fetchedAt: anchor - 2 * DAY,
+        effectiveAsOf: anchor - 2 * DAY,
+        profile: {
+          authority: {
+            common: grant("Active", { revocationPending: true }),
+            contract: grant("Inactive"),
+            broker: grant("Revoked"),
+            totalRevocations: 2,
+            lastRevocationAt: anchor - 300 * DAY,
+          },
+          safety: {
+            rating: "Conditional",
+            ratingDate: anchor - 120 * DAY,
+            outOfServiceOrder: false,
+            outOfServiceAt: null,
+          },
+          basics: [
+            basic("UnsafeDriving", 58, 65),
+            basic("HOSCompliance", 83, 65, true),
+            basic("VehicleMaintenance", 91, 80, true),
+            basic("CrashIndicator", 44, 65),
+          ],
+        },
+      },
+      settlements: [settlement("cs_ls1", "CS-2608-0102", "Voided", 55, 412_500, 2)],
+      shipments: 2,
+    },
+    car_new: {
+      carrier: {
+        ...base,
+        id: "car_new",
+        status: "Active",
+        code: "NGT",
+        name: "Northgate Transport",
+        dotNumber: "4012345",
+        mcNumber: null,
+        scac: null,
+        complianceStatus: "Pending",
+        safetyRating: "NotRated",
+        qualifiedAt: null,
+        w9OnFile: false,
+        addressLine1: null,
+        city: null,
+        postalCode: null,
+        phone: null,
+        email: null,
+        intelRiskLevel: null,
+        createdAt: anchor - DAY,
+        state: null,
+        contacts: [],
+        insurancePolicies: [],
+      },
+      eligibility: {
+        blockers: ["Carrier compliance status is Pending"],
+        warnings: [],
+        advisories: [],
+        findings: [
+          {
+            code: "record.compliance_status",
+            source: "Record",
+            severity: "Blocker",
+            message: "Carrier compliance status is Pending",
+            requiresOverride: false,
+          },
+          {
+            code: "record.insurance_missing",
+            source: "Record",
+            severity: "Blocker",
+            message: "No auto liability or cargo liability policy is on file",
+            requiresOverride: false,
+          },
+        ],
+      },
+      intel: null,
+      settlements: [],
+      shipments: 0,
+    },
+  };
+}
+
 /** A document filed on a tractor, as the documents API returns it. */
 export function deskDocument(resourceType, resourceId, [name, fileType, fileSize], index, anchor) {
   return {
@@ -840,6 +1164,22 @@ const TURNS = {
   "location-gone": [
     "Show me the old Fort Worth yard.",
     "The old Fort Worth yard has been removed since I looked it up. [Old Fort Worth yard](artifact:art_location-gone) is what I found then.",
+  ],
+  "carrier-redriver": [
+    "Can we tender the Shreveport load to Red River?",
+    "Yes: Red River Freight is qualified, its intelligence is clean and every policy runs past January. [Red River Freight](artifact:art_carrier-redriver) has their authority, BASICs and recent settlements.",
+  ],
+  "carrier-lonestar": [
+    "Why was Lone Star Haulers rejected?",
+    "Lone Star Haulers is disqualified: its cargo policy lapsed three days ago, its auto liability runs out in 12 days and two BASICs are in alert. [Lone Star Haulers](artifact:art_carrier-lonestar) lists everything standing in the way.",
+  ],
+  "carrier-new": [
+    "Pull up Northgate Transport.",
+    "Northgate Transport was added yesterday and is still pending qualification, with no insurance or contacts on file and no vetting yet. [Northgate Transport](artifact:art_carrier-new) shows what is there.",
+  ],
+  "carrier-gone": [
+    "Show me Prairie Line Carriers.",
+    "Prairie Line Carriers has been removed since I looked it up. [Prairie Line Carriers](artifact:art_carrier-gone) is what I found then.",
   ],
   "tractor-t-318": [
     "Pull up T-318.",

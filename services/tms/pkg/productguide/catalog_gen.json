@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f8321df10d345fefed4d297edc8731ff2d11397fe43e44a67f245cd18f20e3be",
+  "version": "sha256:bb9ea0622611bb43c04a24dbebeb339ddc01697d9ba91de638f9c9b921252c80",
   "modules": [
     {
       "id": "home",
@@ -16895,7 +16895,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "carrier_settlement",

@@ -78,6 +78,7 @@ import { worker } from "./worker";
 import { exchangeRate } from "./exchange-rate";
 import { fuelSurcharge } from "./fuel-surcharge";
 import { costControl } from "./cost-control";
+import { carrier } from "./carrier";
 import { carrierIntelSettings } from "./carrier-intel-settings";
 import { telematics } from "./telematics";
 
@@ -158,6 +159,7 @@ const workspaceQueries = mergeQueryKeys(
   agentRun,
   assistant,
   insight,
+  carrier,
   carrierIntelSettings,
   agentQuality,
   agentSafety,

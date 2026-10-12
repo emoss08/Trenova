@@ -1,0 +1,152 @@
+# The Desk's carrier card: who the carrier is, whether it is qualified, the
+# insurance it keeps on file and who to call, without the tax, EDI and tenant
+# details the edit panel loads.
+query DeskCarrierCard($id: ID!) {
+  carrier(id: $id) {
+    id
+    status
+    code
+    name
+    dbaName
+    carrierType
+    dotNumber
+    mcNumber
+    scac
+    complianceStatus
+    safetyRating
+    qualifiedAt
+    disqualifiedReason
+    w9OnFile
+    paymentMethod
+    paymentTermDays
+    remitToName
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    phone
+    email
+    externalId
+    notes
+    intelRiskLevel
+    intelReviewRequired
+    createdAt
+    state {
+      abbreviation
+    }
+    contacts {
+      id
+      name
+      title
+      email
+      phone
+      isPrimary
+      receivesRateConfirmations
+    }
+    insurancePolicies {
+      id
+      policyType
+      policyNumber
+      providerName
+      coverageAmount
+      effectiveDate
+      expirationDate
+      isVerified
+    }
+  }
+}
+
+# Whether the carrier can be tendered a load now: what blocks it, what needs an
+# override and what is worth knowing, from its record and its intelligence.
+query DeskCarrierEligibility($carrierId: ID!) {
+  dispatchCarrierAssignmentPreview(input: { carrierId: $carrierId }) {
+    blockers
+    warnings
+    advisories
+    findings {
+      code
+      source
+      severity
+      message
+      requiresOverride
+    }
+  }
+}
+
+# The carrier's authority, safety rating and CSA BASICs as its current
+# intelligence snapshot reads them.
+query DeskCarrierIntel($id: ID!) {
+  carrier(id: $id) {
+    id
+    intelligence {
+      id
+      provider
+      notFound
+      riskLevel
+      fetchedAt
+      effectiveAsOf
+      profile {
+        authority {
+          common {
+            status
+            pending
+            revocationPending
+            grantedAt
+          }
+          contract {
+            status
+            pending
+            revocationPending
+            grantedAt
+          }
+          broker {
+            status
+            pending
+            revocationPending
+            grantedAt
+          }
+          totalRevocations
+          lastRevocationAt
+        }
+        safety {
+          rating
+          ratingDate
+          outOfServiceOrder
+          outOfServiceAt
+        }
+        basics {
+          basic
+          measure
+          percentile
+          threshold
+          alert
+        }
+      }
+    }
+  }
+}
+
+# The carrier's settlements, newest first, a page at a time. The count is read
+# with the first page only.
+query DeskCarrierSettlements($input: DataTableConnectionInput!, $includeTotalCount: Boolean!) {
+  carrierSettlements(input: $input) {
+    edges {
+      node {
+        id
+        settlementNumber
+        status
+        periodStart
+        periodEnd
+        payDate
+        netPayableMinor
+        shipmentCount
+        currencyCode
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount @include(if: $includeTotalCount)
+  }
+}

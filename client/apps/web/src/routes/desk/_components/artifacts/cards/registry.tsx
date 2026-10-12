@@ -15,6 +15,7 @@ import { DeskTractorSkeleton } from "./tractor/tractor-skeleton";
 import { DeskTrailerSkeleton } from "./trailer/trailer-skeleton";
 import { DeskWorkerSkeleton } from "./worker/worker-skeleton";
 import { DeskLocationSkeleton } from "./location/location-skeleton";
+import { DeskCarrierSkeleton } from "./carrier/carrier-skeleton";
 
 /*
 The Desk's resource cards: a record drawn for what a person reads that kind of
@@ -64,6 +65,7 @@ const loadTractor = preloadable(() => import("./tractor/desk-tractor"));
 const loadTrailer = preloadable(() => import("./trailer/desk-trailer"));
 const loadWorker = preloadable(() => import("./worker/desk-worker"));
 const loadLocation = preloadable(() => import("./location/desk-location"));
+const loadCarrier = preloadable(() => import("./carrier/desk-carrier"));
 
 const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
   formula_template: {
@@ -119,6 +121,12 @@ const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
     Skeleton: DeskLocationSkeleton,
     inPlace: lazyComponent(loadLocation, (module) => module.DeskLocation),
     artifact: lazyComponent(loadLocation, (module) => module.DeskLocationArtifact),
+  },
+  carrier: {
+    resource: Resource.Carrier,
+    Skeleton: DeskCarrierSkeleton,
+    inPlace: lazyComponent(loadCarrier, (module) => module.DeskCarrier),
+    artifact: lazyComponent(loadCarrier, (module) => module.DeskCarrierArtifact),
   },
 };
 

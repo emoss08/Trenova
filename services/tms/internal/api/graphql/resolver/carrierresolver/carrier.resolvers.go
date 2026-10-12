@@ -64,13 +64,9 @@ func (r *QueryResolver) Carrier(ctx context.Context, id string) (*carrier.Carrie
 		return nil, err
 	}
 
-	return r.CarrierService.Get(ctx, carrierports.GetCarrierByIDRequest{
-		ID:         carrierID,
-		TenantInfo: base.TenantInfo(authCtx),
-		CarrierFilterOptions: carrierports.CarrierFilterOptions{
-			IncludeState:             true,
-			IncludeContacts:          true,
-			IncludeInsurancePolicies: true,
-		},
-	})
+	return r.CarrierService.Get(ctx, carrierByIDRequest(
+		func(path string) bool { return graphql.FieldRequested(ctx, path) },
+		carrierID,
+		base.TenantInfo(authCtx),
+	))
 }

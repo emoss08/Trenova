@@ -349,7 +349,7 @@ export function standingConcerns(
 export function concernState(
   severity: DeskWorkerStanding["concerns"][number]["severity"],
 ): CardCheckState {
-  return severity === "Critical" ? "bad" : severity === "Warning" ? "warn" : "ok";
+  return severity === "Critical" ? "bad" : severity === "Warning" ? "warn" : "info";
 }
 
 /** The facts the card lists about the worker, in the order the office reads them. */

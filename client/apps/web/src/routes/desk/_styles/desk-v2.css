@@ -4086,6 +4086,10 @@ button.dk-dx-c:hover {
   color: var(--dsk-ink-fg);
   background: var(--dsk-fg);
 }
+.dk-rec-ck.dk-info .dk-rec-ci {
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
 .dk-rec-ck.dk-warn,
 .dk-rec-ck.dk-bad {
   background: var(--dsk-sunken);
@@ -5524,6 +5528,9 @@ th.dk-cb .dk-ax-cb:hover {
 .dk-ax-ki.dk-k-location {
   color: var(--accent-emerald);
 }
+.dk-ax-ki.dk-k-carrier {
+  color: var(--accent-amber);
+}
 /* The shipment card */
 .dk-sh-nowsec {
   padding: 16px 16px 4px;
@@ -6900,6 +6907,66 @@ th.dk-cb .dk-ax-cb:hover {
 }
 .dk-lo-fst.dk-ok {
   color: var(--dsk-success-fg);
+}
+/* The carrier card */
+.dk-ca {
+  container: dkca / inline-size;
+}
+.dk-rec-amt .dk-ca-wait {
+  color: var(--dsk-faint);
+}
+.dk-rec-amt .dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-ca-src {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+/* the CSA BASICs, each a meter of its percentile, two to a row */
+.dk-ca-basics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 20px;
+  margin-top: 16px;
+}
+.dk-ca-nobasics {
+  margin-top: 12px;
+}
+/* the contacts, each with their role on the right */
+.dk-ca-contacts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-ca-contacts > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-ca-contacts > li:first-child {
+  border-top: 0;
+}
+.dk-ca-role {
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--dsk-subtle);
+}
+.dk-ca-amt {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+}
+@container dkca (max-width: 420px) {
+  .dk-ca-basics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-ca-contacts > li {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 /* The rate agreement card */
 .dk-ra {

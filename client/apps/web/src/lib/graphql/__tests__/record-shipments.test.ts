@@ -147,3 +147,16 @@ describe("fetchRecordShipments for a worker or a location", () => {
     expect(lastCall().variables.input).not.toHaveProperty("fieldFilters");
   });
 });
+
+describe("fetchRecordShipments for a carrier", () => {
+  it("reads the loads tendered to a carrier", async () => {
+    requestGraphQLMock.mockResolvedValue({
+      shipments: { edges: [], pageInfo: { hasNextPage: false, endCursor: null }, totalCount: 0 },
+    } as never);
+
+    await fetchRecordShipments({ kind: "carrier", id: "car_1" }, { first: 5, after: null });
+
+    expect(lastCall().variables.input).toMatchObject({ carrierIds: ["car_1"] });
+    expect(lastCall().variables.input).not.toHaveProperty("stopLocationIds");
+  });
+});
