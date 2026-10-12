@@ -3,6 +3,7 @@
 import http from "node:http";
 import { handleGraphQL } from "./handlers/graphql.mjs";
 import { handleRest } from "./handlers/rest.mjs";
+import { openStream, publish } from "./realtime.mjs";
 import { createState, SCENARIO_DEFAULTS } from "./state.mjs";
 
 const PORT = Number(process.env.MOCK_API_PORT ?? 8080);
@@ -65,13 +66,15 @@ async function handle(req, res) {
 
   if (url.pathname === "/__mock/scenario") {
     if (req.method === "POST") {
+      state.dispose();
       state = createState({ ...state.scenario, ...(body ?? {}) });
+      publish("reset", {});
     }
-    return send(res, 200, { ...state.scenario, anchor: state.anchor });
+    return send(res, 200, { ...state.scenario, anchor: state.anchor, triageAnchor: state.triageAnchor });
   }
 
   if (url.pathname.startsWith("/graphql")) {
-    const result = handleGraphQL(state, body ?? {});
+    const result = await handleGraphQL(state, body ?? {});
     if (!result.known && LOG_UNKNOWN) {
       console.log(`[mock-api] unhandled GraphQL operation ${body?.operationName}`);
     }
@@ -98,15 +101,12 @@ async function handle(req, res) {
     return undefined;
   }
   if (result.stream) {
-    res.writeHead(200, {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    });
-    res.write(": mock stream\n\n");
-    const keepAlive = setInterval(() => res.write(": ping\n\n"), 15000);
-    req.on("close", () => clearInterval(keepAlive));
+    openStream(req, res, { presenceUsers: url.searchParams.get("presence") === "users" });
     return undefined;
+  }
+  if (result.raw !== undefined) {
+    res.writeHead(200, { "Content-Type": result.contentType ?? "text/plain", "Cache-Control": "max-age=3600" });
+    return res.end(result.raw);
   }
   return send(res, result.status ?? 200, result.payload, result.headers);
 }

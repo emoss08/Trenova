@@ -1,5 +1,7 @@
 import { PROVIDER_HANDLERS } from "./aiproviders.mjs";
 import { AI_HANDLERS } from "./aicontrol.mjs";
+import { DESK_HANDLERS, TRIAGE_HANDLERS } from "./triage.mjs";
+import { TriageError } from "./triage-model.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
 
 const HOUR = 3600;
@@ -842,7 +844,6 @@ const EMPTY_CONNECTION = {
 };
 
 const SHELL_HANDLERS = {
-  MyAgents: () => ({ myAgents: EMPTY_CONNECTION }),
   AttentionSummary: () => ({
     attentionSummary: {
       billingQueue: 0,
@@ -854,6 +855,7 @@ const SHELL_HANDLERS = {
     },
   }),
   SidebarPreferences: () => ({ sidebarPreferences: null }),
+  RecentActivity: () => ({ auditEntries: { edges: [], pageInfo: { endCursor: null, hasNextPage: false } } }),
   NotificationUnreadCount: () => ({ notificationUnreadCount: 0 }),
   DefaultTableConfiguration: () => ({ defaultTableConfiguration: null }),
   TableConfigurationTable: () => ({ tableConfigurations: EMPTY_CONNECTION }),
@@ -863,6 +865,8 @@ const HANDLERS = {
   ...SHELL_HANDLERS,
   ...PROVIDER_HANDLERS,
   ...AI_HANDLERS,
+  ...DESK_HANDLERS,
+  ...TRIAGE_HANDLERS,
   ShipmentBoardTable: (state, v) => ({ shipments: shipmentConnection(state, v.input, v.includeTotalCount) }),
   ShipmentDetail: (state, v) => {
     const s = state.shipments.find((x) => x.id === v.id);
@@ -967,14 +971,30 @@ const HANDLERS = {
   },
 };
 
-export function handleGraphQL(state, body) {
+/** A domain error the way the server's error presenter returns it: code, problem type and field errors. */
+function presentedError(error, operationName) {
+  return {
+    message: error.message,
+    path: [operationName.charAt(0).toLowerCase() + operationName.slice(1)],
+    extensions: {
+      code: error.code,
+      type: `https://api.trenova.app/problems/${error.problem}`,
+      ...(error.field ? { errors: [{ field: error.field, message: error.message, code: error.code }] } : {}),
+    },
+  };
+}
+
+export async function handleGraphQL(state, body) {
   const handler = Object.hasOwn(HANDLERS, body.operationName) ? HANDLERS[body.operationName] : undefined;
   if (!handler) {
     return { known: false, payload: { data: null, errors: [{ message: `mock-api: no handler for ${body.operationName}`, extensions: { code: "MOCK_UNHANDLED" } }] } };
   }
   try {
-    return { known: true, payload: { data: handler(state, body.variables ?? {}) } };
+    return { known: true, payload: { data: await handler(state, body.variables ?? {}) } };
   } catch (error) {
+    if (error instanceof TriageError) {
+      return { known: true, payload: { data: null, errors: [presentedError(error, body.operationName)] } };
+    }
     return { known: true, payload: { data: null, errors: [{ message: String(error?.stack ?? error) }] } };
   }
 }

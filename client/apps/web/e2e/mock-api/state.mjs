@@ -1,5 +1,6 @@
 import { createAIState } from "./fixtures/aicontrol.mjs";
 import { buildShipments, CARRIERS, createDriverPool } from "./fixtures/board.mjs";
+import { createTriageState } from "./handlers/triage-model.mjs";
 
 export const SCENARIO_DEFAULTS = {
   // quiet | busy | high (480 rows)
@@ -15,7 +16,16 @@ export const SCENARIO_DEFAULTS = {
   aiProviders: process.env.MOCK_AI_PROVIDERS ?? "configured",
   // every agent paused in shadow
   aiPaused: process.env.MOCK_AI_PAUSED === "1",
+  // Triage: live (the prototype's queue, a new message every 26s) | firstDay | noMailbox | deskOff
+  triage: process.env.MOCK_TRIAGE ?? "live",
+  // Triage clock: afternoon (13:39, the prototype's NOW) | endOfDay (17:20, after the 17:00 wrap-up)
+  triageTime: process.env.MOCK_TRIAGE_TIME ?? "afternoon",
+  // how long after "Wait for reply" the sender answers on the thread (app.jsx waits 6.5s)
+  triageReplyAfterMs: Number(process.env.MOCK_TRIAGE_REPLY_MS ?? 6500),
 };
+
+const TRIAGE_SCENARIOS = new Set(["live", "firstDay", "noMailbox", "deskOff"]);
+const TRIAGE_TIMES = new Set(["afternoon", "endOfDay"]);
 
 const STAGE_RANK = { Late: 1, NeedsCoverage: 2, Moving: 3, Scheduled: 4, Delivered: 5, Canceled: 6 };
 const STAGE_OF_STATUS = {
@@ -47,8 +57,20 @@ function anchorTime() {
   return now - (now % 86400) + 11.5 * 3600;
 }
 
-export function createState(scenario) {
+/** Triage's "now": 13:39 UTC today (the prototype's NOW), or 17:20 for the end of the day. */
+function triageAnchorTime(triageTime) {
+  const now = Math.floor(Date.now() / 1000);
+  return now - (now % 86400) + (triageTime === "endOfDay" ? 17 * 3600 + 20 * 60 : 13 * 3600 + 39 * 60);
+}
+
+export function createState(requested) {
+  const scenario = {
+    ...requested,
+    triage: TRIAGE_SCENARIOS.has(requested.triage) ? requested.triage : "live",
+    triageTime: TRIAGE_TIMES.has(requested.triageTime) ? requested.triageTime : "afternoon",
+  };
   const anchor = anchorTime();
+  const triageAnchor = triageAnchorTime(scenario.triageTime);
   const startedAt = Date.now();
   const shipments = buildShipments(scenario.board, anchor);
   if (scenario.operationType === "brokerage") {
@@ -59,9 +81,13 @@ export function createState(scenario) {
     });
   }
   const pool = createDriverPool();
+  const triage = createTriageState({ anchor: triageAnchor, scenario });
   return {
     scenario,
     anchor,
+    triageAnchor,
+    triage,
+    dispose: () => triage.dispose(),
     now: () => anchor + Math.floor((Date.now() - startedAt) / 1000),
     ai: createAIState(anchor, scenario),
     shipments,
