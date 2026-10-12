@@ -23,6 +23,8 @@ func (s Source) Interactive() bool {
 	switch s {
 	case SourceDispatcher, SourceAgent, SourceDriver:
 		return true
+	case SourceTelematics, SourceEDI:
+		return false
 	default:
 		return false
 	}
@@ -82,6 +84,8 @@ func (o Outcome) NeedsReason() bool {
 	switch o {
 	case OutcomePending, OutcomeSuperseded, OutcomeRefused:
 		return true
+	case OutcomeApplied, OutcomeDuplicate:
+		return false
 	default:
 		return false
 	}

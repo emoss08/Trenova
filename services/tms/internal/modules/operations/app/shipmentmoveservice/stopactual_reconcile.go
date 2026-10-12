@@ -45,7 +45,13 @@ func (s *service) ReconcileStopActuals(
 		}
 
 		targetStatus := deriveMoveStatusFromStops(move)
-		if err = s.checkReconciledStatus(txCtx, req, move, previousStatus, targetStatus); err != nil {
+		if err = s.checkReconciledStatus(
+			txCtx,
+			req,
+			move,
+			previousStatus,
+			targetStatus,
+		); err != nil {
 			return err
 		}
 
@@ -84,7 +90,9 @@ func (s *service) ReconcileStopActuals(
 	return result, nil
 }
 
-func validateReconcileRequest(req *shipmentports.ReconcileStopActualsRequest) *errortypes.MultiError {
+func validateReconcileRequest(
+	req *shipmentports.ReconcileStopActualsRequest,
+) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("", errortypes.ErrInvalid, "Request is required")
@@ -159,7 +167,12 @@ func (s *service) checkReconciledStatus(
 			return err
 		}
 	}
-	if err := s.ensureNoDeliveryHold(ctx, move.ShipmentID, req.TenantInfo, targetStatus); err != nil {
+	if err := s.ensureNoDeliveryHold(
+		ctx,
+		move.ShipmentID,
+		req.TenantInfo,
+		targetStatus,
+	); err != nil {
 		return err
 	}
 	if !shipmentstate.CanTransitionMoveStatus(previousStatus, targetStatus) {

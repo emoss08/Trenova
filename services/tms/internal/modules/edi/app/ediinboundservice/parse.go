@@ -312,11 +312,10 @@ func parseShipmentStatusEvents(segments []edix12inspect.X12Segment) []edi.Shipme
 	loops := make([]*statusLoop, 0, 1)
 	var loop *statusLoop
 	var current *edi.ShipmentStatusEvent
-	openLoop := func() *statusLoop {
+	openLoop := func() {
 		loop = &statusLoop{}
 		loops = append(loops, loop)
 		current = nil
-		return loop
 	}
 
 	for index := range segments {

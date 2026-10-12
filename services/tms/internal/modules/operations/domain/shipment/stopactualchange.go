@@ -84,22 +84,28 @@ func validateStopTimeline(stops []*Stop, changed map[pulid.ID]struct{}) error {
 				)
 			}
 		}
-		if stop.ActualDeparture != nil {
-			if check {
-				if stop.ActualArrival == nil {
-					return errortypes.NewBusinessError("Arrive at this stop before departing")
-				}
-				if *stop.ActualArrival > *stop.ActualDeparture {
-					return errortypes.NewBusinessError(
-						"Event time predates the arrival at this stop",
-					)
-				}
-			}
-			previousDeparture = stop.ActualDeparture
-		} else {
+		if stop.ActualDeparture == nil {
 			earlierOpen = true
+			previousChanged = isChanged
+			continue
 		}
+		if check {
+			if err := validateStopDeparture(stop); err != nil {
+				return err
+			}
+		}
+		previousDeparture = stop.ActualDeparture
 		previousChanged = isChanged
+	}
+	return nil
+}
+
+func validateStopDeparture(stop *Stop) error {
+	if stop.ActualArrival == nil {
+		return errortypes.NewBusinessError("Arrive at this stop before departing")
+	}
+	if *stop.ActualArrival > *stop.ActualDeparture {
+		return errortypes.NewBusinessError("Event time predates the arrival at this stop")
 	}
 	return nil
 }

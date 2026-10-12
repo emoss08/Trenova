@@ -45,7 +45,7 @@ type Service struct {
 	moveService  shipmentports.ShipmentMoveService
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // dependency injection
 	return &Service{
 		db:           p.DB,
 		l:            p.Logger.Named("service.tracking-event"),
@@ -119,11 +119,17 @@ func (s *Service) RecordObserved(
 			strings.TrimSpace(errortypes.Summary(err)),
 			trackingevent.MaxOutcomeReasonLength,
 		)
-		if recordErr := s.repo.RecordVerdicts(ctx, params.TenantInfo, []trackingeventports.TrackingEventVerdict{{
+		refused := []trackingeventports.TrackingEventVerdict{{
 			ID:      stored.ID,
 			Outcome: trackingevent.OutcomeRefused,
 			Reason:  reason,
-		}}, timeutils.NowUnix()); recordErr != nil {
+		}}
+		if recordErr := s.repo.RecordVerdicts(
+			ctx,
+			params.TenantInfo,
+			refused,
+			timeutils.NowUnix(),
+		); recordErr != nil {
 			return nil, recordErr
 		}
 		stored.Outcome = trackingevent.OutcomeRefused

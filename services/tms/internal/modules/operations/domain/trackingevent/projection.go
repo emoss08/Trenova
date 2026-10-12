@@ -77,7 +77,7 @@ func Project(move *shipment.ShipmentMove, events []*TrackingEvent, opts Options)
 		visits := grouped[stop.ID]
 
 		arrivalBounds := bounds{lower: previousDeparture, upper: stop.ActualDeparture}
-		arrival := settle(settleInput{
+		arrival := settle(&settleInput{
 			current:    stop.ActualArrival,
 			candidates: visits[shipment.VisitArrival],
 			kind:       shipment.VisitArrival,
@@ -90,7 +90,7 @@ func Project(move *shipment.ShipmentMove, events []*TrackingEvent, opts Options)
 		if idx+1 < len(stops) {
 			nextArrival = stops[idx+1].ActualArrival
 		}
-		departure := settle(settleInput{
+		departure := settle(&settleInput{
 			current:    stop.ActualDeparture,
 			candidates: visits[shipment.VisitDeparture],
 			kind:       shipment.VisitDeparture,
@@ -177,7 +177,7 @@ type settleInput struct {
 	bounds     bounds
 }
 
-func settle(in settleInput, verdicts map[pulid.ID]Verdict) *int64 {
+func settle(in *settleInput, verdicts map[pulid.ID]Verdict) *int64 {
 	if len(in.candidates) == 0 {
 		return in.current
 	}
@@ -191,7 +191,11 @@ func settle(in settleInput, verdicts map[pulid.ID]Verdict) *int64 {
 	}
 
 	if in.current != nil && !anyAt(in.candidates, *in.current) {
-		markAll(in.candidates, Verdict{Outcome: OutcomeSuperseded, Reason: reasonEnteredOnRecord}, verdicts)
+		markAll(
+			in.candidates,
+			Verdict{Outcome: OutcomeSuperseded, Reason: reasonEnteredOnRecord},
+			verdicts,
+		)
 		return in.current
 	}
 
@@ -232,7 +236,10 @@ func settle(in settleInput, verdicts map[pulid.ID]Verdict) *int64 {
 		case candidate.EventAt == chosen.EventAt:
 			verdicts[candidate.ID] = Verdict{Outcome: OutcomeDuplicate}
 		default:
-			verdicts[candidate.ID] = Verdict{Outcome: OutcomeSuperseded, Reason: reasonOtherReportUsed}
+			verdicts[candidate.ID] = Verdict{
+				Outcome: OutcomeSuperseded,
+				Reason:  reasonOtherReportUsed,
+			}
 		}
 	}
 	at := chosen.EventAt
