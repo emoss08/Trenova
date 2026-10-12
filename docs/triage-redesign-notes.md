@@ -287,6 +287,7 @@ synthetic rows were deleted afterwards (50,000 rows and their activity lines cas
 | Total count, waiting collapsed | hash anti join over the waiting rows | 12 |
 | Total count, everything collapsed | parallel seq scan + hash anti join | 89 |
 | Total count, search | seq scan (`ILIKE` on five columns) | 133 |
+| Everything, due first (`20261231008940_triage_due_index`) | Index Only Scan `idx_inbound_messages_due`, stops at 51 | 0.07 |
 
 What changed after the first run (`20261231008890_triage_queue_indexes` and its SQLite twin):
 
@@ -307,9 +308,57 @@ What changed after the first run (`20261231008890_triage_queue_indexes` and its 
 Known linear costs, all behind the gated `totalCount` (the list itself stays index-bound):
 
 - **Collapsed "Everything" total** counts the newest message of every thread in the tenant
-  (89 ms at 50k). The client should take the folder's number from `inboundMessageCounts` and only
-  select `totalCount` on a collapsed folder when it shows it.
+  (89 ms at 50k). The client never selects `totalCount` (folder numbers come from
+  `inboundMessageCounts`), so the GraphQL layer clears `IncludeTotalCount` and this count does
+  not run from Triage.
 - **Search total** evaluates `ILIKE '%term%'` on every row of the tenant (133 ms at 50k); the page
   itself stops at the 51st match. A trigram index per searched column, or moving search to the
   stored `search_vector` with the sender's domain as its own token, would make it index-bound;
   both change `querybuilder` behaviour shared by every list, so neither is done here.
+
+### In the browser
+
+Measured with Playwright against the production build (`vite build`, served by `vite preview`)
+on the real API and worker, the same 50,055-message tenant (synthetic ids are valid PULIDs and
+point at seeded shipments and rules, so every resolver runs as it would on real mail), Chromium
+headless at 1440×900, five runs of each interaction, median and worst shown. Times run from the
+input to the second animation frame after the change is in the DOM, so they include the
+network, React's commit and a paint.
+
+| Interaction | Median | Worst | Server part (median) |
+| --- | --- | --- | --- |
+| Open "Everything" from the briefing | 182 ms | 223 ms | `InboundMessages` 28 ms |
+| Next page when the list is scrolled to its end | 92 ms | 145 ms | `InboundMessages` 28 ms |
+| J to the next message | 75 ms | 118 ms | `InboundMessage` 20 ms, `InboundThread` 15 ms (prefetched) |
+| Back to the briefing | 354 ms | 384 ms | `TriageBriefing` 33 ms; the rest is the ring and deck entering |
+| Cold load of `/triage` (whole app boot) | 1.1 s | 1.5 s | |
+
+The list is virtual: 24 rows are in the DOM whatever the folder holds. Long tasks (over 50 ms)
+were 3 to 5 per run of the whole sequence, the longest 136 to 177 ms, all on the cold load and
+the briefing's first render.
+
+What the browser run found, and what changed for it:
+
+- **Holding J signed people out.** Each step changed `?message=`, which re-ran the route
+  loaders, so every key sent `GET /users/me` and re-read the permission manifest, plus the
+  message, its thread, two neighbour prefetches and two presence posts (leave the old message,
+  join the new one). Twenty quick steps spent the per-user budget (600 a minute, burst 60), the
+  next session check got a 429, and the loader read any failed check as signed out. Now:
+  - the session check tells signed in, signed out (a 401) and could not tell apart; only a 401
+    goes to the login form, and a cold load that cannot tell shows the error page with a retry
+    (`requireSession`, `checkSession`, `ensurePermissionManifest`, web and dash);
+  - routes whose loaders check the session or permissions do not re-run them on a same-path
+    navigation (`revalidateOnPathChange`, applied to the whole tree by
+    `withPathScopedRevalidation`);
+  - presence is announced once the reader has stayed on a message for 300 ms;
+  - the reader fetches its message, and reads ahead, once it has stayed for 150 ms
+    (`useSettledValue`: a single step is answered at once, a held key only where it stops);
+  - keys pressed before the last step has opened each count (`createStepCursor`).
+  45 presses 40 ms apart now move 45 messages for 27 requests and no session check; before,
+  they moved one and were refused.
+- **Stepping stopped at a page boundary.** The next page loaded only when the list scrolled, so
+  J stopped at row 40 of a large folder. The page is fetched ten rows ahead of the reader, Next
+  stays on while the folder has more, and the position reads "46 / 80+".
+- **Everything sorted due first sorted the tenant** (parallel seq scan, ~100 ms a request). The
+  new `idx_inbound_messages_due` serves it from the index (25 ms a request, like the others).
+
