@@ -1,5 +1,10 @@
 import type { InboundMailbox } from "@/lib/graphql/inbox";
-import { AlertTriangleIcon, Copy01Icon, Inbox01Icon, Send01Icon } from "@trenova/shared/components/icons";
+import {
+  AlertTriangleIcon,
+  Copy01Icon,
+  Inbox01Icon,
+  Send01Icon,
+} from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -14,7 +19,11 @@ export function ListSkeleton() {
   const t = useT();
 
   return (
-    <div aria-busy="true" aria-label={t("Loading messages")} className="flex flex-col gap-0.5 px-1.5 py-2">
+    <div
+      aria-busy="true"
+      aria-label={t("Loading messages")}
+      className="flex flex-col gap-0.5 px-1.5 py-2"
+    >
       {SKELETON_ROWS.map((index) => (
         <div key={index} className="flex flex-col gap-2 p-3">
           <Skeleton className="h-2.5" style={{ width: 90 + ((index * 37) % 70) }} />
@@ -47,7 +56,9 @@ export function ListEmpty({
       )}
       <p className="text-foreground text-base font-semibold">{title}</p>
       <div>{description}</div>
-      {children !== undefined && <div className="mt-2 flex flex-col items-start gap-2">{children}</div>}
+      {children !== undefined && (
+        <div className="mt-2 flex flex-col items-start gap-2">{children}</div>
+      )}
     </div>
   );
 }
@@ -91,7 +102,10 @@ export function FirstMessage({ mailbox }: { mailbox: InboundMailbox }) {
     <ListEmpty
       icon={<Send01Icon className="size-4" />}
       title={t("Waiting for your first message")}
-      description={t("Forward anything to {0} and it shows up here, already read.", mailbox.address)}
+      description={t(
+        "Forward anything to {0} and it shows up here, already read.",
+        mailbox.address,
+      )}
     >
       <Button size="sm" variant="outline" onClick={() => actions.sendTestEmail(mailbox)}>
         {t("Send a test email")}
@@ -132,7 +146,10 @@ export function SourceHealthBanner({ mailbox, now }: { mailbox: InboundMailbox; 
         <span className="font-semibold">{title}</span>
       </div>
       <p className="text-foreground-muted mt-1.5 text-sm leading-relaxed">
-        {t("Ask the sender to forward to {0}, then send a test email to check it arrives.", mailbox.address)}
+        {t(
+          "Ask the sender to forward to {0}, then send a test email to check it arrives.",
+          mailbox.address,
+        )}
       </p>
       <div className="mt-2.5 flex gap-1">
         <Button size="xs" onClick={() => actions.sendTestEmail(mailbox)}>

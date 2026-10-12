@@ -16,7 +16,7 @@ func TestRenderTemplateFillsKnownPlaceholders(t *testing.T) {
 
 	out := RenderTemplate(
 		"Hi {first} — {PRO} for {customer} ({po}) is {status} on {lane}, ETA {eta}. {unknown} {sender}",
-		inboundmessageports.ReplyContext{
+		&inboundmessageports.ReplyContext{
 			SenderFirstName: "Dana",
 			SenderAddress:   "edi@partner.example",
 			ProNumber:       "S-104251",
@@ -38,7 +38,7 @@ func TestRenderTemplateFillsKnownPlaceholders(t *testing.T) {
 func TestRenderTemplateFallsBackWhenUnknown(t *testing.T) {
 	t.Parallel()
 
-	out := RenderTemplate("Hi {first}, {pro} is {status}; ETA {eta}.", inboundmessageports.ReplyContext{})
+	out := RenderTemplate("Hi {first}, {pro} is {status}; ETA {eta}.", &inboundmessageports.ReplyContext{})
 
 	assert.Equal(t, "Hi there, your load is moving; ETA to follow.", out)
 }

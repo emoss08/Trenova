@@ -96,7 +96,9 @@ export type ContextMenuTriggerProps = {
  * selection, the message as it is now. Returning null leaves the browser's
  * own menu alone.
  */
-export function useContextMenuTrigger(build: () => ContextMenuSpec | null): ContextMenuTriggerProps {
+export function useContextMenuTrigger(
+  build: () => ContextMenuSpec | null,
+): ContextMenuTriggerProps {
   const latestBuild = useLatestCallback(build);
 
   return useMemo<ContextMenuTriggerProps>(() => {
@@ -502,7 +504,13 @@ function MenuSurface({
 
   const renderEntry = (entry: ContextMenuEntry, index: number) => {
     if (entry.type === "separator") {
-      return <div key={entryKey(entry, index)} role="separator" className="bg-border-subtle mx-1 my-1 h-px" />;
+      return (
+        <div
+          key={entryKey(entry, index)}
+          role="separator"
+          className="bg-border-subtle mx-1 my-1 h-px"
+        />
+      );
     }
     if (entry.type === "header") {
       return (

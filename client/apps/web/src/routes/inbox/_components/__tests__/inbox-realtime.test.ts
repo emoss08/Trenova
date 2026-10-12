@@ -16,7 +16,10 @@ describe("inbound_message invalidation", () => {
   }
 
   it.each([
-    ["the folders", inbox.messages({ lane: "Waiting", sort: "Due", collapseThreads: true }).queryKey],
+    [
+      "the folders",
+      inbox.messages({ lane: "Waiting", sort: "Due", collapseThreads: true }).queryKey,
+    ],
     ["the counts", inbox.counts().queryKey],
     ["the reader", inbox.message("imsg_1").queryKey],
     ["the thread", inbox.thread("thread-1").queryKey],

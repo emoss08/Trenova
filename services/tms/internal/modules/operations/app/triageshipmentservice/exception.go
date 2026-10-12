@@ -52,7 +52,12 @@ func (s *Service) LogException(
 
 func holdNote(req *inboundmessageports.LogTriageExceptionRequest) string {
 	lines := []string{
-		fmt.Sprintf("%s: %d %s", exceptionLabels[req.Kind], req.Quantity, strings.TrimSpace(req.Unit)),
+		fmt.Sprintf(
+			"%s: %d %s",
+			exceptionLabels[req.Kind],
+			req.Quantity,
+			strings.TrimSpace(req.Unit),
+		),
 	}
 	if note := strings.TrimSpace(req.Note); note != "" {
 		lines = append(lines, note)

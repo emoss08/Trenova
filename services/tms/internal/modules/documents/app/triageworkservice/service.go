@@ -100,7 +100,7 @@ type Service struct {
 	now           func() int64
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{
 		l:             p.Logger.Named("service.triage-work"),
 		messages:      p.Messages,

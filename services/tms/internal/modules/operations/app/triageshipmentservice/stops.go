@@ -34,11 +34,14 @@ func (s *Service) disputedOccurrence(
 	shipmentID pulid.ID,
 	withEvidence bool,
 ) (*detention.DetentionOccurrence, error) {
-	occurrences, err := s.occurrences.GetByShipment(ctx, &detentionports.GetOccurrencesByShipmentRequest{
-		ShipmentID:      shipmentID,
-		TenantInfo:      tenantInfo,
-		IncludeEvidence: withEvidence,
-	})
+	occurrences, err := s.occurrences.GetByShipment(
+		ctx,
+		&detentionports.GetOccurrencesByShipmentRequest{
+			ShipmentID:      shipmentID,
+			TenantInfo:      tenantInfo,
+			IncludeEvidence: withEvidence,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +68,7 @@ func (s *Service) StopTimes(
 		return nil, err
 	}
 	if occurrence == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // the shipment has no detention to show
 	}
 
 	return stopTimesOf(occurrence), nil

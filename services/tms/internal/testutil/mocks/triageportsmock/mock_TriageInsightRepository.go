@@ -584,7 +584,7 @@ func (_c *MockTriageInsightRepository_RuleCandidates_Call) RunAndReturn(run func
 }
 
 // SenderDomains provides a mock function for the type MockTriageInsightRepository
-func (_mock *MockTriageInsightRepository) SenderDomains(ctx context.Context, req triageports.SenderDomainsRequest) ([]string, error) {
+func (_mock *MockTriageInsightRepository) SenderDomains(ctx context.Context, req *triageports.SenderDomainsRequest) ([]string, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -593,17 +593,17 @@ func (_mock *MockTriageInsightRepository) SenderDomains(ctx context.Context, req
 
 	var r0 []string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.SenderDomainsRequest) ([]string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.SenderDomainsRequest) ([]string, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, triageports.SenderDomainsRequest) []string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *triageports.SenderDomainsRequest) []string); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, triageports.SenderDomainsRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *triageports.SenderDomainsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -618,20 +618,20 @@ type MockTriageInsightRepository_SenderDomains_Call struct {
 
 // SenderDomains is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req triageports.SenderDomainsRequest
+//   - req *triageports.SenderDomainsRequest
 func (_e *MockTriageInsightRepository_Expecter) SenderDomains(ctx any, req any) *MockTriageInsightRepository_SenderDomains_Call {
 	return &MockTriageInsightRepository_SenderDomains_Call{Call: _e.mock.On("SenderDomains", ctx, req)}
 }
 
-func (_c *MockTriageInsightRepository_SenderDomains_Call) Run(run func(ctx context.Context, req triageports.SenderDomainsRequest)) *MockTriageInsightRepository_SenderDomains_Call {
+func (_c *MockTriageInsightRepository_SenderDomains_Call) Run(run func(ctx context.Context, req *triageports.SenderDomainsRequest)) *MockTriageInsightRepository_SenderDomains_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 triageports.SenderDomainsRequest
+		var arg1 *triageports.SenderDomainsRequest
 		if args[1] != nil {
-			arg1 = args[1].(triageports.SenderDomainsRequest)
+			arg1 = args[1].(*triageports.SenderDomainsRequest)
 		}
 		run(
 			arg0,
@@ -646,7 +646,7 @@ func (_c *MockTriageInsightRepository_SenderDomains_Call) Return(strings []strin
 	return _c
 }
 
-func (_c *MockTriageInsightRepository_SenderDomains_Call) RunAndReturn(run func(ctx context.Context, req triageports.SenderDomainsRequest) ([]string, error)) *MockTriageInsightRepository_SenderDomains_Call {
+func (_c *MockTriageInsightRepository_SenderDomains_Call) RunAndReturn(run func(ctx context.Context, req *triageports.SenderDomainsRequest) ([]string, error)) *MockTriageInsightRepository_SenderDomains_Call {
 	_c.Call.Return(run)
 	return _c
 }

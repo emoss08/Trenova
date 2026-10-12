@@ -1,4 +1,9 @@
-import type { InboundMessageFilter, InboundMessageRow, TriageAssignee, TriageRuleAction } from "@/lib/graphql/inbox";
+import type {
+  InboundMessageFilter,
+  InboundMessageRow,
+  TriageAssignee,
+  TriageRuleAction,
+} from "@/lib/graphql/inbox";
 import type { SelectOption } from "@/lib/graphql/select-options";
 import { isAwaitingReply, isSnoozed, senderName } from "@/lib/triage/message-state";
 import type {
@@ -132,7 +137,8 @@ export function rowMenu({
                 id: "delivered",
                 label: t("Until {0} delivers", option.proNumber),
                 icon: ZapIcon,
-                onSelect: () => actions.snooze(waitingIds, { kind: "event", event: "ShipmentDelivered" }),
+                onSelect: () =>
+                  actions.snooze(waitingIds, { kind: "event", event: "ShipmentDelivered" }),
               },
             ];
           case "InvoicePaid":
@@ -197,7 +203,9 @@ export function rowMenu({
   ];
 
   return {
-    title: many ? t("{0, plural, one {# selected} other {# selected}}", selection.length) : senderName(message),
+    title: many
+      ? t("{0, plural, one {# selected} other {# selected}}", selection.length)
+      : senderName(message),
     subtitle: many ? undefined : message.subject === "" ? t("(no subject)") : message.subject,
     entries: [
       single && {

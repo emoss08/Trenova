@@ -58,7 +58,9 @@ func (s *Service) LogException(
 		return nil, err
 	}
 	if message.MatchedShipmentID.IsNil() {
-		return nil, errortypes.NewBusinessError("Link the message to its shipment before logging an exception")
+		return nil, errortypes.NewBusinessError(
+			"Link the message to its shipment before logging an exception",
+		)
 	}
 
 	summary := exceptionSummary(req)
@@ -78,12 +80,17 @@ func (s *Service) LogException(
 	}
 
 	now := s.now()
-	updated, err := s.mutate(ctx, req.TenantInfo, req.MessageID, func(m *inboundmessage.InboundMessage) error {
-		m.ActionState.ExceptionKind = req.Kind
-		m.ActionState.ExceptionLoggedAt = now
+	updated, err := s.mutate(
+		ctx,
+		req.TenantInfo,
+		req.MessageID,
+		func(m *inboundmessage.InboundMessage) error {
+			m.ActionState.ExceptionKind = req.Kind
+			m.ActionState.ExceptionLoggedAt = now
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -110,10 +117,20 @@ func validateException(req *LogExceptionRequest) error {
 	case unit == "":
 		multiErr.Add("unit", errortypes.ErrRequired, "Say what was counted: pallets, cases, pieces")
 	case len([]rune(unit)) > maxExceptionUnit:
-		multiErr.Add("unit", errortypes.ErrInvalid, "Keep the unit under {0} characters", maxExceptionUnit)
+		multiErr.Add(
+			"unit",
+			errortypes.ErrInvalid,
+			"Keep the unit under {0} characters",
+			maxExceptionUnit,
+		)
 	}
 	if len([]rune(req.Note)) > maxExceptionNote {
-		multiErr.Add("note", errortypes.ErrInvalid, "Keep the note under {0} characters", maxExceptionNote)
+		multiErr.Add(
+			"note",
+			errortypes.ErrInvalid,
+			"Keep the note under {0} characters",
+			maxExceptionNote,
+		)
 	}
 	if multiErr.HasErrors() {
 		return multiErr
@@ -123,7 +140,12 @@ func validateException(req *LogExceptionRequest) error {
 }
 
 func exceptionSummary(req *LogExceptionRequest) string {
-	return fmt.Sprintf("%d %s %s", req.Quantity, strings.TrimSpace(req.Unit), exceptionWords[req.Kind])
+	return fmt.Sprintf(
+		"%d %s %s",
+		req.Quantity,
+		strings.TrimSpace(req.Unit),
+		exceptionWords[req.Kind],
+	)
 }
 
 type BlockSenderRequest struct {
@@ -149,30 +171,41 @@ func (s *Service) BlockSender(
 		return nil, errortypes.NewBusinessError("This message has no sender to block")
 	}
 
-	if _, err = s.changeBlockedSenders(ctx, req.TenantInfo, message.MailboxID, func(senders []string) []string {
-		if slices.Contains(senders, sender) {
-			return senders
-		}
+	if _, err = s.changeBlockedSenders(
+		ctx,
+		req.TenantInfo,
+		message.MailboxID,
+		func(senders []string) []string {
+			if slices.Contains(senders, sender) {
+				return senders
+			}
 
-		return append(senders, sender)
-	}); err != nil {
+			return append(senders, sender)
+		},
+	); err != nil {
 		return nil, err
 	}
 
 	now := s.now()
-	updated, err := s.mutate(ctx, req.TenantInfo, req.MessageID, func(m *inboundmessage.InboundMessage) error {
-		m.ActionState.SenderBlockedAt = now
-		if m.Status != inboundmessage.StatusIgnored && m.Status != inboundmessage.StatusActioned {
-			m.Status = inboundmessage.StatusIgnored
-			m.ReviewedBy = req.UserID
-			m.ReviewedAt = now
-			m.ReviewNote = blockedReviewNote
-			m.DueAt = 0
-			m.Unpark()
-		}
+	updated, err := s.mutate(
+		ctx,
+		req.TenantInfo,
+		req.MessageID,
+		func(m *inboundmessage.InboundMessage) error {
+			m.ActionState.SenderBlockedAt = now
+			if m.Status != inboundmessage.StatusIgnored &&
+				m.Status != inboundmessage.StatusActioned {
+				m.Status = inboundmessage.StatusIgnored
+				m.ReviewedBy = req.UserID
+				m.ReviewedAt = now
+				m.ReviewNote = blockedReviewNote
+				m.DueAt = 0
+				m.Unpark()
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -199,12 +232,24 @@ func (s *Service) UnblockSender(
 ) (*inboundmessage.Mailbox, error) {
 	sender := strings.ToLower(strings.TrimSpace(req.Sender))
 	if sender == "" {
-		return nil, errortypes.NewValidationError("sender", errortypes.ErrRequired, "Say which sender to unblock")
+		return nil, errortypes.NewValidationError(
+			"sender",
+			errortypes.ErrRequired,
+			"Say which sender to unblock",
+		)
 	}
 
-	return s.changeBlockedSenders(ctx, req.TenantInfo, req.MailboxID, func(senders []string) []string {
-		return slices.DeleteFunc(senders, func(blocked string) bool { return blocked == sender })
-	})
+	return s.changeBlockedSenders(
+		ctx,
+		req.TenantInfo,
+		req.MailboxID,
+		func(senders []string) []string {
+			return slices.DeleteFunc(
+				senders,
+				func(blocked string) bool { return blocked == sender },
+			)
+		},
+	)
 }
 
 func (s *Service) changeBlockedSenders(
@@ -259,7 +304,11 @@ func (s *Service) DecideStops(
 	req *DecideStopsRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	if !req.Decision.IsValid() {
-		return nil, errortypes.NewValidationError("decision", errortypes.ErrInvalid, "Choose waive or stand by")
+		return nil, errortypes.NewValidationError(
+			"decision",
+			errortypes.ErrInvalid,
+			"Choose waive or stand by",
+		)
 	}
 
 	message, err := s.message(ctx, req.TenantInfo, req.MessageID)
@@ -267,7 +316,9 @@ func (s *Service) DecideStops(
 		return nil, err
 	}
 	if message.Classification != inboundmessage.ClassificationDetentionDispute {
-		return nil, errortypes.NewBusinessError("Stop times are checked only for detention disputes")
+		return nil, errortypes.NewBusinessError(
+			"Stop times are checked only for detention disputes",
+		)
 	}
 	if message.MatchedShipmentID.IsNil() {
 		return nil, errortypes.NewBusinessError("Link the message to its shipment first")
@@ -275,13 +326,19 @@ func (s *Service) DecideStops(
 
 	detail := ""
 	if s.detention != nil {
-		settled, settleErr := s.detention.SettleDetention(ctx, &inboundmessageports.SettleTriageDetentionRequest{
-			TenantInfo: req.TenantInfo,
-			ShipmentID: message.MatchedShipmentID,
-			Decision:   req.Decision,
-			Note:       fmt.Sprintf("Decided in Triage after checking stop times (%s)", message.Subject),
-			UserID:     req.UserID,
-		})
+		settled, settleErr := s.detention.SettleDetention(
+			ctx,
+			&inboundmessageports.SettleTriageDetentionRequest{
+				TenantInfo: req.TenantInfo,
+				ShipmentID: message.MatchedShipmentID,
+				Decision:   req.Decision,
+				Note: fmt.Sprintf(
+					"Decided in Triage after checking stop times (%s)",
+					message.Subject,
+				),
+				UserID: req.UserID,
+			},
+		)
 		if settleErr != nil {
 			return nil, settleErr
 		}
@@ -291,12 +348,17 @@ func (s *Service) DecideStops(
 	}
 
 	now := s.now()
-	updated, err := s.mutate(ctx, req.TenantInfo, req.MessageID, func(m *inboundmessage.InboundMessage) error {
-		m.ActionState.StopsDecision = req.Decision
-		m.ActionState.StopsDecidedAt = now
+	updated, err := s.mutate(
+		ctx,
+		req.TenantInfo,
+		req.MessageID,
+		func(m *inboundmessage.InboundMessage) error {
+			m.ActionState.StopsDecision = req.Decision
+			m.ActionState.StopsDecidedAt = now
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

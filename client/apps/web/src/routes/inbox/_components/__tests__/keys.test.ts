@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { TRIAGE_KEYMAP, nextAfterLeaving, resolveTriageKey, stepFrom, type KeyContext } from "../keys";
+import {
+  TRIAGE_KEYMAP,
+  nextAfterLeaving,
+  resolveTriageKey,
+  stepFrom,
+  type KeyContext,
+} from "../keys";
 
-const press = (key: string, extra: Partial<{ metaKey: boolean; ctrlKey: boolean; altKey: boolean; editable: boolean }> = {}) => ({
+const press = (
+  key: string,
+  extra: Partial<{ metaKey: boolean; ctrlKey: boolean; altKey: boolean; editable: boolean }> = {},
+) => ({
   key,
   metaKey: false,
   ctrlKey: false,
@@ -33,7 +42,11 @@ describe("the triage keymap", () => {
 
 describe("resolveTriageKey", () => {
   it("acts on the open message", () => {
-    expect(["e", "#", "r", "s", "m", "x", "l", "a", "i", "Enter"].map((key) => resolveTriageKey(press(key), open))).toEqual([
+    expect(
+      ["e", "#", "r", "s", "m", "x", "l", "a", "i", "Enter"].map((key) =>
+        resolveTriageKey(press(key), open),
+      ),
+    ).toEqual([
       "handle",
       "ignore",
       "reply",

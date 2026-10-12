@@ -208,7 +208,9 @@ export function TriageList({
             empty={<div className="min-h-0 flex-1 overflow-y-auto">{empty}</div>}
             footer={
               isFetchingNextPage ? (
-                <p className="text-foreground-subtle py-3 text-center text-xs">{t("Loading more…")}</p>
+                <p className="text-foreground-subtle py-3 text-center text-xs">
+                  {t("Loading more…")}
+                </p>
               ) : undefined
             }
           />

@@ -107,7 +107,10 @@ func (s *Service) writeReply(
 		)
 	}
 
-	return stringutils.TruncateRunes(strings.TrimSpace(payload.Body), triage.MaxReplyBodyLength), nil
+	return stringutils.TruncateRunes(
+		strings.TrimSpace(payload.Body),
+		triage.MaxReplyBodyLength,
+	), nil
 }
 
 func replyContextSections(mc *messageContext) agentports.DelimitedContext {
@@ -127,7 +130,8 @@ func replyContextSections(mc *messageContext) agentports.DelimitedContext {
 		})
 	}
 
-	return agentports.DelimitedContext{Sections: append(sections,
+	return agentports.DelimitedContext{Sections: append(
+		sections,
 		agentports.ContextSection{
 			Title:   "Sender",
 			Content: strings.TrimSpace(message.FromName + " <" + message.FromAddress + ">"),
@@ -140,14 +144,18 @@ func replyContextSections(mc *messageContext) agentports.DelimitedContext {
 			Title:   "Message",
 			Content: stringutils.TruncateRunes(message.TextBody, mailBodyMaxRunes),
 		},
-		agentports.ContextSection{Title: "What the reading pulled out", Content: factLines(message)},
+		agentports.ContextSection{
+			Title:   "What the reading pulled out",
+			Content: factLines(message),
+		},
 	)}
 }
 
 func taskFor(mc *messageContext) string {
 	lines := make([]string, 0, 3)
 	actions := triage.Actions(triage.ActionInput{Message: mc.message})
-	for _, action := range actions {
+	for i := range actions {
+		action := &actions[i]
 		if action.Kind != triage.ActionReply {
 			continue
 		}
@@ -234,7 +242,10 @@ func stopFacts(mc *messageContext) string {
 		add("Late by", stringutils.CountNoun(stops.LateMinutes, "minute", "minutes"))
 	}
 	if stops.BilledDetentionMinutes > 0 {
-		add("Billed detention", stringutils.CountNoun(stops.BilledDetentionMinutes, "minute", "minutes"))
+		add(
+			"Billed detention",
+			stringutils.CountNoun(stops.BilledDetentionMinutes, "minute", "minutes"),
+		)
 	}
 	if stops.BilledDetentionAmount != nil {
 		add("Billed amount", *stops.BilledDetentionAmount)

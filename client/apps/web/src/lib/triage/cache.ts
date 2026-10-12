@@ -226,7 +226,9 @@ export function insertIntoPages(
 
   return {
     ...current,
-    pages: pages.map((p, i) => (i === lastIndex ? { ...p, messages: [...p.messages, message] } : p)),
+    pages: pages.map((p, i) =>
+      i === lastIndex ? { ...p, messages: [...p.messages, message] } : p,
+    ),
   };
 }
 
@@ -315,7 +317,10 @@ function addTo(
             : row,
         )
       : sign === 1
-        ? [...counts.byMailbox, { mailboxId: message.mailboxId, total: 1, waiting: waiting ? 1 : 0 }]
+        ? [
+            ...counts.byMailbox,
+            { mailboxId: message.mailboxId, total: 1, waiting: waiting ? 1 : 0 },
+          ]
         : counts.byMailbox,
   };
 }

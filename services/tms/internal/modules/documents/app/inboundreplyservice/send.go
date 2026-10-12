@@ -48,10 +48,13 @@ type SendRequest struct {
 
 func (s *Service) Send(ctx context.Context, req *SendRequest) (*triage.Reply, error) {
 	if req.IdempotencyKey != "" {
-		existing, err := s.replies.GetByIdempotencyKey(ctx, inboundmessageports.GetInboundReplyByKeyRequest{
-			TenantInfo:     req.TenantInfo,
-			IdempotencyKey: req.IdempotencyKey,
-		})
+		existing, err := s.replies.GetByIdempotencyKey(
+			ctx,
+			inboundmessageports.GetInboundReplyByKeyRequest{
+				TenantInfo:     req.TenantInfo,
+				IdempotencyKey: req.IdempotencyKey,
+			},
+		)
 		switch {
 		case err == nil:
 			return existing, nil
@@ -76,10 +79,13 @@ func (s *Service) Send(ctx context.Context, req *SendRequest) (*triage.Reply, er
 	created, err := s.replies.Create(ctx, reply)
 	if err != nil {
 		if req.IdempotencyKey != "" && dberror.IsUniqueConstraintViolation(err) {
-			return s.replies.GetByIdempotencyKey(ctx, inboundmessageports.GetInboundReplyByKeyRequest{
-				TenantInfo:     req.TenantInfo,
-				IdempotencyKey: req.IdempotencyKey,
-			})
+			return s.replies.GetByIdempotencyKey(
+				ctx,
+				inboundmessageports.GetInboundReplyByKeyRequest{
+					TenantInfo:     req.TenantInfo,
+					IdempotencyKey: req.IdempotencyKey,
+				},
+			)
 		}
 
 		return nil, err

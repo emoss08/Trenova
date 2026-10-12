@@ -51,7 +51,7 @@ func (r *MutationResolver) CreateTriageRule(ctx context.Context, input gqlmodel.
 		return nil, err
 	}
 
-	rule, err := ruleFromInput(input)
+	rule, err := ruleFromInput(&input)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (r *MutationResolver) UpdateTriageRule(ctx context.Context, id string, vers
 	if err != nil {
 		return nil, err
 	}
-	rule, err := ruleFromInput(input)
+	rule, err := ruleFromInput(&input)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +229,7 @@ func (r *QueryResolver) TriageRulePreview(ctx context.Context, input gqlmodel.Tr
 		return nil, err
 	}
 
-	rule, err := ruleFromInput(input)
+	rule, err := ruleFromInput(&input)
 	if err != nil {
 		return nil, err
 	}

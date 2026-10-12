@@ -257,61 +257,65 @@ func (r *repository) CustomerTriage(
 	ctx context.Context,
 	req *inboundmessageports.CustomerTriageRequest,
 ) (*inboundmessageports.CustomerTriage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessageports.CustomerTriage, error) {
-		db := r.db.DBForContext(ctx)
-		cols := inboundmessagecol.InboundMessageColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*inboundmessageports.CustomerTriage, error) {
+			db := r.db.DBForContext(ctx)
+			cols := inboundmessagecol.InboundMessageColumns
 
-		waiting, err := db.NewSelect().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			Where(cols.MatchedCustomerID.Eq(), req.CustomerID).
-			Where(cols.Status.In(), bun.List([]inboundmessage.Status{
-				inboundmessage.StatusInReview,
-				inboundmessage.StatusQuarantined,
-			})).
-			Where(cols.Parked.IsNull()).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Count(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		messages := make([]*inboundmessage.InboundMessage, 0, req.Limit)
-		if req.Limit > 0 {
-			if err = db.NewSelect().
-				Model(&messages).
-				Column(
-					cols.ID.Bare(),
-					cols.FromName.Bare(),
-					cols.FromAddress.Bare(),
-					cols.Subject.Bare(),
-					cols.Classification.Bare(),
-					cols.ReceivedAt.Bare(),
-				).
+			waiting, err := db.NewSelect().
+				Model((*inboundmessage.InboundMessage)(nil)).
 				Where(cols.MatchedCustomerID.Eq(), req.CustomerID).
+				Where(cols.Status.In(), bun.List([]inboundmessage.Status{
+					inboundmessage.StatusInReview,
+					inboundmessage.StatusQuarantined,
+				})).
+				Where(cols.Parked.IsNull()).
 				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-				Order(cols.ReceivedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Limit(int64(req.Limit)).
-				Scan(ctx); err != nil {
+				Count(ctx)
+			if err != nil {
 				return nil, err
 			}
-		}
 
-		recent := make([]*inboundmessageports.Sample, 0, len(messages))
-		for _, message := range messages {
-			sample := &inboundmessageports.Sample{
-				MessageID:   message.ID,
-				FromName:    message.FromName,
-				FromAddress: message.FromAddress,
-				Subject:     message.Subject,
-				ReceivedAt:  message.ReceivedAt,
+			messages := make([]*inboundmessage.InboundMessage, 0, req.Limit)
+			if req.Limit > 0 {
+				if err = db.NewSelect().
+					Model(&messages).
+					Column(
+						cols.ID.Bare(),
+						cols.FromName.Bare(),
+						cols.FromAddress.Bare(),
+						cols.Subject.Bare(),
+						cols.Classification.Bare(),
+						cols.ReceivedAt.Bare(),
+					).
+					Where(cols.MatchedCustomerID.Eq(), req.CustomerID).
+					Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
+					Order(cols.ReceivedAt.OrderDesc(), cols.ID.OrderDesc()).
+					Limit(int64(req.Limit)).
+					Scan(ctx); err != nil {
+					return nil, err
+				}
 			}
-			if message.Classification != "" {
-				class := message.Classification
-				sample.Classification = &class
-			}
-			recent = append(recent, sample)
-		}
 
-		return &inboundmessageports.CustomerTriage{Waiting: int(waiting), Recent: recent}, nil
-	})
+			recent := make([]*inboundmessageports.Sample, 0, len(messages))
+			for _, message := range messages {
+				sample := &inboundmessageports.Sample{
+					MessageID:   message.ID,
+					FromName:    message.FromName,
+					FromAddress: message.FromAddress,
+					Subject:     message.Subject,
+					ReceivedAt:  message.ReceivedAt,
+				}
+				if message.Classification != "" {
+					class := message.Classification
+					sample.Classification = &class
+				}
+				recent = append(recent, sample)
+			}
+
+			return &inboundmessageports.CustomerTriage{Waiting: int(waiting), Recent: recent}, nil
+		},
+	)
 }

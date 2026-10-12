@@ -26,7 +26,9 @@ describe("due", () => {
       { id: "later", dueAt: NOW + 2 * 3600, waiting: true },
       { id: "none", dueAt: null, waiting: true },
     ];
-    expect(groupByDue(rows, NOW).map((group) => [group.group, group.items.map((row) => row.id)])).toEqual([
+    expect(
+      groupByDue(rows, NOW).map((group) => [group.group, group.items.map((row) => row.id)]),
+    ).toEqual([
       ["over", ["over"]],
       ["hour", ["soon"]],
       ["later", ["parked", "later", "none"]],

@@ -37,10 +37,13 @@ func (s *Service) ShipmentPeeks(
 		return nil, err
 	}
 
-	summaries, err := s.summaries.ListSummariesByIDs(ctx, &shipmentports.ListShipmentSummariesRequest{
-		TenantInfo:  tenantInfo,
-		ShipmentIDs: shipmentIDs,
-	})
+	summaries, err := s.summaries.ListSummariesByIDs(
+		ctx,
+		&shipmentports.ListShipmentSummariesRequest{
+			TenantInfo:  tenantInfo,
+			ShipmentIDs: shipmentIDs,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +92,8 @@ func buildPeek(
 	}
 
 	done, total := 0, 0
-	for _, move := range snapshot.Moves {
+	for m := range snapshot.Moves {
+		move := &snapshot.Moves[m]
 		if peek.DriverName == "" && move.Driver != "" {
 			peek.DriverName = move.Driver
 		}
@@ -169,12 +173,15 @@ func (s *Service) CustomerShipments(
 	ctx context.Context,
 	req *inboundmessageports.TriageCustomerShipmentsRequest,
 ) (*inboundmessageports.TriageCustomerShipments, error) {
-	ids, thisWeek, err := s.lookup.CustomerShipments(ctx, &shipmentports.TriageCustomerShipmentsQuery{
-		TenantInfo: req.TenantInfo,
-		CustomerID: req.CustomerID,
-		WeekStart:  req.WeekStart,
-		Limit:      req.Limit,
-	})
+	ids, thisWeek, err := s.lookup.CustomerShipments(
+		ctx,
+		&shipmentports.TriageCustomerShipmentsQuery{
+			TenantInfo: req.TenantInfo,
+			CustomerID: req.CustomerID,
+			WeekStart:  req.WeekStart,
+			Limit:      req.Limit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

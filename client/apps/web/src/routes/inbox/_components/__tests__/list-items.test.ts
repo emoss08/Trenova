@@ -23,7 +23,14 @@ describe("buildListItems", () => {
       "Due",
       NOW,
     );
-    expect(shape(items)).toEqual(["# Over target", "a", "# Due within the hour", "b", "# Later", "c"]);
+    expect(shape(items)).toEqual([
+      "# Over target",
+      "a",
+      "# Due within the hour",
+      "b",
+      "# Later",
+      "c",
+    ]);
     expect(items[0]).toMatchObject({ tone: "danger" });
   });
 
@@ -31,7 +38,10 @@ describe("buildListItems", () => {
     const day = (seconds: number) => Math.floor(seconds / 86_400) * 86_400;
     const items = buildListItems(
       translate,
-      [messageRow({ id: "today", receivedAt: NOW - 60 }), messageRow({ id: "yesterday", receivedAt: NOW - 86_400 })],
+      [
+        messageRow({ id: "today", receivedAt: NOW - 60 }),
+        messageRow({ id: "yesterday", receivedAt: NOW - 86_400 }),
+      ],
       "Newest",
       NOW,
       day,

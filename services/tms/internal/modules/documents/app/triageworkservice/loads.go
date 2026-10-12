@@ -47,14 +47,41 @@ var loadFieldOrder = []inboundmessage.LoadFieldKey{
 }
 
 var findingKeys = map[inboundmessage.LoadFieldKey][]string{
-	inboundmessage.LoadFieldCustomer:     {"customer", "customer_name", "shipper", "broker", "bill_to"},
-	inboundmessage.LoadFieldEquipment:    {"equipment", "equipment_type", "trailer_type", "trailer"},
-	inboundmessage.LoadFieldWeight:       {"weight", "total_weight", "gross_weight"},
-	inboundmessage.LoadFieldRate:         {"rate", "total_rate", "linehaul", "total", "all_in_rate"},
-	inboundmessage.LoadFieldLoads:        {"loads", "load_count", "number_of_loads"},
-	inboundmessage.LoadFieldWeekOf:       {"week_of", "week"},
-	inboundmessage.LoadFieldRespondBy:    {"respond_by", "response_due", "reply_by"},
-	inboundmessage.LoadFieldReference:    {"reference", "load_number", "tender_number", "po_number", "order_number"},
+	inboundmessage.LoadFieldOrigin:      nil,
+	inboundmessage.LoadFieldDestination: nil,
+	inboundmessage.LoadFieldPickup:      nil,
+	inboundmessage.LoadFieldDelivery:    nil,
+	inboundmessage.LoadFieldCustomer: {
+		"customer",
+		"customer_name",
+		"shipper",
+		"broker",
+		"bill_to",
+	},
+	inboundmessage.LoadFieldEquipment: {
+		"equipment",
+		"equipment_type",
+		"trailer_type",
+		"trailer",
+	},
+	inboundmessage.LoadFieldWeight: {"weight", "total_weight", "gross_weight"},
+	inboundmessage.LoadFieldRate: {
+		"rate",
+		"total_rate",
+		"linehaul",
+		"total",
+		"all_in_rate",
+	},
+	inboundmessage.LoadFieldLoads:     {"loads", "load_count", "number_of_loads"},
+	inboundmessage.LoadFieldWeekOf:    {"week_of", "week"},
+	inboundmessage.LoadFieldRespondBy: {"respond_by", "response_due", "reply_by"},
+	inboundmessage.LoadFieldReference: {
+		"reference",
+		"load_number",
+		"tender_number",
+		"po_number",
+		"order_number",
+	},
 	inboundmessage.LoadFieldCommodity:    {"commodity", "commodity_description"},
 	inboundmessage.LoadFieldInstructions: {"instructions", "special_instructions", "notes"},
 }
@@ -88,7 +115,10 @@ type CreateLoadRequest struct {
 	IdempotencyKey string
 }
 
-func (s *Service) DraftLoad(ctx context.Context, req *LoadRequest) (*inboundmessage.InboundMessage, error) {
+func (s *Service) DraftLoad(
+	ctx context.Context,
+	req *LoadRequest,
+) (*inboundmessage.InboundMessage, error) {
 	message, err := s.message(ctx, req.TenantInfo, req.MessageID)
 	if err != nil {
 		return nil, err
@@ -112,14 +142,19 @@ func (s *Service) draftLoad(
 	}
 	draft.DraftedAt = s.now()
 
-	updated, err := s.mutate(ctx, tenantOf(message), message.ID, func(m *inboundmessage.InboundMessage) error {
-		if m.ActionState.CreatedShipmentID.IsNotNil() {
-			return errortypes.NewBusinessError("The load was already created from this message")
-		}
-		m.LoadDraft = draft
+	updated, err := s.mutate(
+		ctx,
+		tenantOf(message),
+		message.ID,
+		func(m *inboundmessage.InboundMessage) error {
+			if m.ActionState.CreatedShipmentID.IsNotNil() {
+				return errortypes.NewBusinessError("The load was already created from this message")
+			}
+			m.LoadDraft = draft
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -199,8 +234,8 @@ func loadFromFindings(findings *documentcontent.Findings) *inboundmessage.LoadDr
 	}
 
 	if len(findings.Stops) > 0 {
-		first := findings.Stops[0]
-		last := findings.Stops[len(findings.Stops)-1]
+		first := &findings.Stops[0]
+		last := &findings.Stops[len(findings.Stops)-1]
 		values[inboundmessage.LoadFieldOrigin] = stopPlace(first)
 		values[inboundmessage.LoadFieldPickup] = stopWhen(first)
 		if len(findings.Stops) > 1 {
@@ -212,7 +247,7 @@ func loadFromFindings(findings *documentcontent.Findings) *inboundmessage.LoadDr
 	return orderedDraft(values)
 }
 
-func stopPlace(stop documentcontent.FoundStop) string {
+func stopPlace(stop *documentcontent.FoundStop) string {
 	place := strings.TrimSpace(stop.City)
 	if state := strings.TrimSpace(stop.State); state != "" {
 		place = strings.TrimSpace(place + ", " + state)
@@ -227,12 +262,16 @@ func stopPlace(stop documentcontent.FoundStop) string {
 	return place
 }
 
-func stopWhen(stop documentcontent.FoundStop) string {
-	return strings.TrimSpace(strings.TrimSpace(stop.Date) + " " + strings.TrimSpace(stop.TimeWindow))
+func stopWhen(stop *documentcontent.FoundStop) string {
+	return strings.TrimSpace(
+		strings.TrimSpace(stop.Date) + " " + strings.TrimSpace(stop.TimeWindow),
+	)
 }
 
 func orderedDraft(values map[inboundmessage.LoadFieldKey]string) *inboundmessage.LoadDraft {
-	draft := &inboundmessage.LoadDraft{Fields: make([]inboundmessage.LoadDraftField, 0, len(loadFieldOrder))}
+	draft := &inboundmessage.LoadDraft{
+		Fields: make([]inboundmessage.LoadDraftField, 0, len(loadFieldOrder)),
+	}
 	for _, key := range loadFieldOrder {
 		draft.Fields = append(draft.Fields, inboundmessage.LoadDraftField{
 			Key:   key,
@@ -280,8 +319,14 @@ func (s *Service) readLoadWithNova(
 		System:     loadSystemPrompt,
 		Context: agentports.DelimitedContext{Sections: []agentports.ContextSection{
 			{Title: "Sender", Content: message.FromName + " <" + message.FromAddress + ">"},
-			{Title: "Subject", Content: stringutils.TruncateRunes(message.Subject, loadSubjectMaxRunes)},
-			{Title: "Message", Content: stringutils.TruncateRunes(message.TextBody, loadBodyMaxRunes)},
+			{
+				Title:   "Subject",
+				Content: stringutils.TruncateRunes(message.Subject, loadSubjectMaxRunes),
+			},
+			{
+				Title:   "Message",
+				Content: stringutils.TruncateRunes(message.TextBody, loadBodyMaxRunes),
+			},
 		}},
 		OutputSchema: loadSchema(),
 		SchemaName:   loadSchemaName,
@@ -319,15 +364,23 @@ func (s *Service) readLoadWithNova(
 	return draft, nil
 }
 
-func (s *Service) DiscardLoad(ctx context.Context, req *LoadRequest) (*inboundmessage.InboundMessage, error) {
-	updated, err := s.mutate(ctx, req.TenantInfo, req.MessageID, func(m *inboundmessage.InboundMessage) error {
-		if m.ActionState.CreatedShipmentID.IsNotNil() {
-			return errortypes.NewBusinessError("The load was already created from this message")
-		}
-		m.LoadDraft = nil
+func (s *Service) DiscardLoad(
+	ctx context.Context,
+	req *LoadRequest,
+) (*inboundmessage.InboundMessage, error) {
+	updated, err := s.mutate(
+		ctx,
+		req.TenantInfo,
+		req.MessageID,
+		func(m *inboundmessage.InboundMessage) error {
+			if m.ActionState.CreatedShipmentID.IsNotNil() {
+				return errortypes.NewBusinessError("The load was already created from this message")
+			}
+			m.LoadDraft = nil
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -336,9 +389,14 @@ func (s *Service) DiscardLoad(ctx context.Context, req *LoadRequest) (*inboundme
 	return updated, nil
 }
 
-func (s *Service) CreateLoad(ctx context.Context, req *CreateLoadRequest) (*inboundmessage.InboundMessage, error) {
+func (s *Service) CreateLoad(
+	ctx context.Context,
+	req *CreateLoadRequest,
+) (*inboundmessage.InboundMessage, error) {
 	if s.loads == nil {
-		return nil, errortypes.NewBusinessError("Loads cannot be created from messages on this installation")
+		return nil, errortypes.NewBusinessError(
+			"Loads cannot be created from messages on this installation",
+		)
 	}
 
 	fields, err := validateLoadFields(req.Fields)
@@ -369,19 +427,24 @@ func (s *Service) CreateLoad(ctx context.Context, req *CreateLoadRequest) (*inbo
 	}
 
 	now := s.now()
-	updated, err := s.mutate(ctx, req.TenantInfo, req.MessageID, func(m *inboundmessage.InboundMessage) error {
-		m.ActionState.CreatedShipmentID = created.ShipmentID
-		m.ActionState.CreatedShipmentAt = now
-		draft := orderedDraft(fieldValues(fields))
-		if m.LoadDraft != nil {
-			draft.Source = m.LoadDraft.Source
-			draft.DraftedAt = m.LoadDraft.DraftedAt
-			draft.DraftedByNova = m.LoadDraft.DraftedByNova
-		}
-		m.LoadDraft = draft
+	updated, err := s.mutate(
+		ctx,
+		req.TenantInfo,
+		req.MessageID,
+		func(m *inboundmessage.InboundMessage) error {
+			m.ActionState.CreatedShipmentID = created.ShipmentID
+			m.ActionState.CreatedShipmentAt = now
+			draft := orderedDraft(fieldValues(fields))
+			if m.LoadDraft != nil {
+				draft.Source = m.LoadDraft.Source
+				draft.DraftedAt = m.LoadDraft.DraftedAt
+				draft.DraftedByNova = m.LoadDraft.DraftedByNova
+			}
+			m.LoadDraft = draft
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +458,9 @@ func (s *Service) CreateLoad(ctx context.Context, req *CreateLoadRequest) (*inbo
 	return updated, nil
 }
 
-func validateLoadFields(input []LoadFieldInput) ([]inboundmessageports.TriageLoadFieldValue, error) {
+func validateLoadFields(
+	input []LoadFieldInput,
+) ([]inboundmessageports.TriageLoadFieldValue, error) {
 	multiErr := errortypes.NewMultiError()
 	seen := make(map[inboundmessage.LoadFieldKey]struct{}, len(input))
 	fields := make([]inboundmessageports.TriageLoadFieldValue, 0, len(input))
@@ -407,7 +472,12 @@ func validateLoadFields(input []LoadFieldInput) ([]inboundmessageports.TriageLoa
 			continue
 		}
 		if _, dup := seen[field.Key]; dup {
-			multiErr.Add(path+".key", errortypes.ErrDuplicate, "{0} is given twice", string(field.Key))
+			multiErr.Add(
+				path+".key",
+				errortypes.ErrDuplicate,
+				"{0} is given twice",
+				string(field.Key),
+			)
 
 			continue
 		}
@@ -433,7 +503,9 @@ func validateLoadFields(input []LoadFieldInput) ([]inboundmessageports.TriageLoa
 	return fields, nil
 }
 
-func fieldValues(fields []inboundmessageports.TriageLoadFieldValue) map[inboundmessage.LoadFieldKey]string {
+func fieldValues(
+	fields []inboundmessageports.TriageLoadFieldValue,
+) map[inboundmessage.LoadFieldKey]string {
 	values := make(map[inboundmessage.LoadFieldKey]string, len(fields))
 	for _, field := range fields {
 		values[field.Key] = field.Value

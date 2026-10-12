@@ -1,4 +1,8 @@
-import type { InboundClassification, InboundMessageRow, InboundSnoozeEvent } from "@/lib/graphql/inbox";
+import type {
+  InboundClassification,
+  InboundMessageRow,
+  InboundSnoozeEvent,
+} from "@/lib/graphql/inbox";
 import { fromUserWallClock, toUserWallClock } from "@trenova/shared/lib/date";
 
 /**
@@ -20,7 +24,14 @@ const MONDAY = 1;
 const DAYS_PER_WEEK = 7;
 
 function wallClockAt(base: Date, dayOffset: number, hour: number, timeZone: string): number {
-  const wall = new Date(base.getFullYear(), base.getMonth(), base.getDate() + dayOffset, hour, 0, 0);
+  const wall = new Date(
+    base.getFullYear(),
+    base.getMonth(),
+    base.getDate() + dayOffset,
+    hour,
+    0,
+    0,
+  );
 
   return fromUserWallClock(wall, timeZone) ?? 0;
 }

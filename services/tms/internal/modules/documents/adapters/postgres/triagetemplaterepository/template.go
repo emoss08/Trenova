@@ -143,7 +143,11 @@ func (r *repository) Update(
 
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(results, templateEntity, entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			templateEntity,
+			entity.ID.String(),
+		); err != nil {
 			entity.Version = previous
 
 			return nil, err

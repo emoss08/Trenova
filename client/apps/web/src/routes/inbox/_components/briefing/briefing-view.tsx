@@ -31,7 +31,10 @@ function deckTitle(t: ReturnType<typeof useT>, card: DeckCard): string {
     case "File":
       return t("{0, plural, one {# document to file} other {# documents to file}}", card.count);
     case "Draft":
-      return t("{0, plural, one {# draft Nova can write} other {# drafts Nova can write}}", card.count);
+      return t(
+        "{0, plural, one {# draft Nova can write} other {# drafts Nova can write}}",
+        card.count,
+      );
     case "Decide":
       return t("{0, plural, one {# needs your call} other {# need your call}}", card.count);
     case "Link":

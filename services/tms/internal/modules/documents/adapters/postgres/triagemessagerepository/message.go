@@ -88,7 +88,7 @@ func (r *repository) CorrectClassification(
 		if req.TargetSeconds > 0 {
 			query = query.Set(
 				cols.DueAt.SetExpr("CASE WHEN status IN (?) THEN received_at + ? ELSE {} END"),
-				bun.In([]inboundmessage.Status{
+				bun.List([]inboundmessage.Status{
 					inboundmessage.StatusInReview,
 					inboundmessage.StatusQuarantined,
 				}),

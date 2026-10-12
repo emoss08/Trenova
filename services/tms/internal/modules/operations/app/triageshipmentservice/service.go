@@ -66,8 +66,14 @@ type occurrenceReader interface {
 }
 
 type detentionDecider interface {
-	Waive(ctx context.Context, p detentionservice.WaiveParams) (*detention.DetentionOccurrence, error)
-	Dispute(ctx context.Context, p detentionservice.DisputeParams) (*detention.DetentionOccurrence, error)
+	Waive(
+		ctx context.Context,
+		p detentionservice.WaiveParams,
+	) (*detention.DetentionOccurrence, error)
+	Dispute(
+		ctx context.Context,
+		p detentionservice.DisputeParams,
+	) (*detention.DetentionOccurrence, error)
 }
 
 type Params struct {
@@ -97,7 +103,7 @@ type Service struct {
 	now         func() int64
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{
 		l:           p.Logger.Named("service.triage-shipment"),
 		tracking:    p.Tracking,

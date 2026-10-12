@@ -169,7 +169,7 @@ func TestManualOutcomesCountPeopleOnly(t *testing.T) {
 func TestSenderDomainsEscapeTheSearch(t *testing.T) {
 	t.Parallel()
 
-	sqlText := senderDomainsQuery(renderDB(), triageports.SenderDomainsRequest{
+	sqlText := senderDomainsQuery(renderDB(), &triageports.SenderDomainsRequest{
 		TenantInfo: tenantInfo,
 		Query:      "Dri_%",
 		Since:      1,

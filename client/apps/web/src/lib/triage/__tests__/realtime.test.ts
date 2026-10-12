@@ -77,7 +77,8 @@ describe("the inbound_message patcher", () => {
       queryClient: client,
       meId: "usr_me",
       onArrival,
-      fetchMessage: async (id) => detail({ id, threadKey: id, receivedAt: NOW - 60, dueAt: NOW + 60 }),
+      fetchMessage: async (id) =>
+        detail({ id, threadKey: id, receivedAt: NOW - 60, dueAt: NOW + 60 }),
       now: () => NOW,
     });
 
@@ -137,7 +138,12 @@ describe("the inbound_message patcher", () => {
     const fetchMessage = vi.fn();
     const patcher = createInboundMessagePatcher({ queryClient: client, meId: null, fetchMessage });
 
-    patcher.handle({ organizationId: "org", businessUnitId: "bu", resource: "inbound_message", action: "bulk_updated" });
+    patcher.handle({
+      organizationId: "org",
+      businessUnitId: "bu",
+      resource: "inbound_message",
+      action: "bulk_updated",
+    });
 
     expect(fetchMessage).not.toHaveBeenCalled();
     expect(invalidate).toHaveBeenCalledWith(

@@ -63,12 +63,7 @@ import {
 } from "@/lib/graphql/inbox";
 import { queries } from "@/lib/queries";
 import { inbox } from "@/lib/queries/inbox";
-import {
-  applyRows,
-  folderMembership,
-  knownRow,
-  type MembershipContext,
-} from "@/lib/triage/cache";
+import { applyRows, folderMembership, knownRow, type MembershipContext } from "@/lib/triage/cache";
 import { apiService } from "@/services/api";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useTriageStore } from "@/stores/triage-store";
@@ -92,7 +87,12 @@ const UNDO_TOAST_MS = 5000;
 /** A snooze until a time, or until something happens on the message's shipment. */
 export type SnoozeChoice =
   | { kind: "until"; until: number }
-  | { kind: "event"; event: InboundSnoozeEvent; documentTypeId?: string; documentTypeName?: string };
+  | {
+      kind: "event";
+      event: InboundSnoozeEvent;
+      documentTypeId?: string;
+      documentTypeName?: string;
+    };
 
 /**
  * Everything a person does to one message or many, in one place. The
@@ -174,9 +174,10 @@ type OptimisticRun<TResult> = {
   rowsOf: (result: TResult) => readonly InboundMessageRow[];
   label: string;
   /** Puts it back on the server. Absent, the toast offers no Undo. */
-  undo?: (result: TResult, before: ReadonlyMap<string, InboundMessageRow | undefined>) => Promise<
-    readonly InboundMessageRow[]
-  >;
+  undo?: (
+    result: TResult,
+    before: ReadonlyMap<string, InboundMessageRow | undefined>,
+  ) => Promise<readonly InboundMessageRow[]>;
 };
 
 function delay(ms: number): Promise<void> {
@@ -190,7 +191,10 @@ function settle(row: InboundMessageRow, status: "Actioned" | "Ignored"): Inbound
 function refreshSummaries(queryClient: QueryClient) {
   void queryClient.invalidateQueries({ queryKey: inbox.counts().queryKey });
   void queryClient.invalidateQueries({ queryKey: inbox.views().queryKey });
-  void queryClient.invalidateQueries({ queryKey: inbox.briefing().queryKey, refetchType: "active" });
+  void queryClient.invalidateQueries({
+    queryKey: inbox.briefing().queryKey,
+    refetchType: "active",
+  });
 }
 
 function messageUrl(id: string): string {
@@ -270,8 +274,14 @@ export function useTriageActionsController(): TriageActions {
       const leaving =
         filter === null
           ? []
-          : after.filter((row) => folderMembership(row, filter, ctx) === false).map((row) => row.id);
-      const nextOpen = nextAfterLeaving(navigation.orderedIds(), new Set(leaving), navigation.openId());
+          : after
+              .filter((row) => folderMembership(row, filter, ctx) === false)
+              .map((row) => row.id);
+      const nextOpen = nextAfterLeaving(
+        navigation.orderedIds(),
+        new Set(leaving),
+        navigation.openId(),
+      );
 
       const pending = run();
       pending.catch(() => undefined);
@@ -285,7 +295,9 @@ export function useTriageActionsController(): TriageActions {
       if (leaving.length > 0) {
         const selection = useTriageStore.getState().selected;
         if (leaving.some((id) => selection.has(id))) {
-          useTriageStore.getState().setSelected([...selection].filter((id) => !leaving.includes(id)));
+          useTriageStore
+            .getState()
+            .setSelected([...selection].filter((id) => !leaving.includes(id)));
         }
       }
       if (nextOpen !== navigation.openId()) {
@@ -307,7 +319,9 @@ export function useTriageActionsController(): TriageActions {
                 try {
                   const result = await pending;
                   const rows = await undo(result, before);
-                  const known = new Map(rows.map((row) => [row.id, knownRow(queryClient, row.id)] as const));
+                  const known = new Map(
+                    rows.map((row) => [row.id, knownRow(queryClient, row.id)] as const),
+                  );
                   applyRows(queryClient, rows, known, context());
                 } catch (error) {
                   fail(error);
@@ -325,7 +339,9 @@ export function useTriageActionsController(): TriageActions {
         applyRows(
           queryClient,
           rows,
-          new Map(rows.map((row) => [row.id, afterById.get(row.id) ?? knownRow(queryClient, row.id)])),
+          new Map(
+            rows.map((row) => [row.id, afterById.get(row.id) ?? knownRow(queryClient, row.id)]),
+          ),
           context(),
         );
         refreshSummaries(queryClient);
@@ -478,18 +494,21 @@ export function useTriageActionsController(): TriageActions {
     };
 
     const updateReply = (messageId: string, reply: InboundReply) => {
-      queryClient.setQueryData<InboundMessageDetail>(inbox.message(messageId).queryKey, (detail) => {
-        if (detail === undefined) {
-          return detail;
-        }
-        if (reply.status === "Draft") {
-          return { ...detail, replyDraft: reply };
-        }
-        const replies = detail.replies.some((row) => row.id === reply.id)
-          ? detail.replies.map((row) => (row.id === reply.id ? reply : row))
-          : [...detail.replies, reply];
-        return { ...detail, replies, replyDraft: null };
-      });
+      queryClient.setQueryData<InboundMessageDetail>(
+        inbox.message(messageId).queryKey,
+        (detail) => {
+          if (detail === undefined) {
+            return detail;
+          }
+          if (reply.status === "Draft") {
+            return { ...detail, replyDraft: reply };
+          }
+          const replies = detail.replies.some((row) => row.id === reply.id)
+            ? detail.replies.map((row) => (row.id === reply.id ? reply : row))
+            : [...detail.replies, reply];
+          return { ...detail, replies, replyDraft: null };
+        },
+      );
       void queryClient.invalidateQueries({ queryKey: inbox.message(messageId).queryKey });
     };
 
@@ -545,7 +564,10 @@ export function useTriageActionsController(): TriageActions {
               ),
             ),
           (count) =>
-            t("{0, plural, one {Marked # message handled} other {Marked # messages handled}}", count),
+            t(
+              "{0, plural, one {Marked # message handled} other {Marked # messages handled}}",
+              count,
+            ),
           async (ids) => (await reopenInboundMessages({ ids })).messages,
         ),
       snoozeFolder: (filter, choice) =>
@@ -628,20 +650,22 @@ export function useTriageActionsController(): TriageActions {
           ),
         ),
       link: (id, input) => detailMutation(() => linkInboundMessage(id, input), t("Linked"), false),
-      unlink: (id, record) => quiet(detailMutation(() => unlinkInboundMessage(id, record), t("Unlinked"))),
+      unlink: (id, record) =>
+        quiet(detailMutation(() => unlinkInboundMessage(id, record), t("Unlinked"))),
       file: (_, input) => detailMutation(() => fileInboundAttachment(input), t("Filed"), false),
       unfile: (_, attachmentId) =>
         quiet(detailMutation(() => unfileInboundAttachment(attachmentId), t("Unfiled"))),
       fileMany: (ids) =>
-        void fileInboundMany(ids).then(
-          (result) => {
-            const known = new Map(result.messages.map((row) => [row.id, knownRow(queryClient, row.id)] as const));
-            applyRows(queryClient, result.messages, known, context());
-            refreshSummaries(queryClient);
-            announce(t("{0, plural, one {Filed # message} other {Filed # messages}}", result.affected));
-          },
-          fail,
-        ),
+        void fileInboundMany(ids).then((result) => {
+          const known = new Map(
+            result.messages.map((row) => [row.id, knownRow(queryClient, row.id)] as const),
+          );
+          applyRows(queryClient, result.messages, known, context());
+          refreshSummaries(queryClient);
+          announce(
+            t("{0, plural, one {Filed # message} other {Filed # messages}}", result.affected),
+          );
+        }, fail),
       draftReply: (id) =>
         draftInboundReply(id).then(
           (reply) => {
@@ -680,14 +704,22 @@ export function useTriageActionsController(): TriageActions {
       draftMany: (ids) =>
         void draftInboundMany(ids).then(
           (count) =>
-            announce(t("{0, plural, one {Nova is drafting # message} other {Nova is drafting # messages}}", count)),
+            announce(
+              t(
+                "{0, plural, one {Nova is drafting # message} other {Nova is drafting # messages}}",
+                count,
+              ),
+            ),
           fail,
         ),
       draftLoad: (id) => detailMutation(() => draftInboundLoad(id), undefined, false),
       discardLoad: (id) => quiet(detailMutation(() => discardInboundLoad(id))),
       createLoad: (id, fields) =>
         detailMutation(
-          () => loadKey({ id, fields }, (idempotencyKey) => createInboundLoad(id, fields, { idempotencyKey })),
+          () =>
+            loadKey({ id, fields }, (idempotencyKey) =>
+              createInboundLoad(id, fields, { idempotencyKey }),
+            ),
           t("Load created as a draft"),
           false,
         ),
@@ -708,18 +740,15 @@ export function useTriageActionsController(): TriageActions {
       reopenConflict: (id, conflictId) =>
         quiet(detailMutation(() => reopenInboundConflict(id, conflictId))),
       draftRule: (input) =>
-        void createTriageRule({ ...input, enabled: false }).then(
-          (rule) => {
-            void queryClient.invalidateQueries({ queryKey: inbox.rules().queryKey });
-            announce(t("Rule drafted — paused until you turn it on"), () => {
-              void deleteTriageRule(rule.id).then(
-                () => queryClient.invalidateQueries({ queryKey: inbox.rules().queryKey }),
-                fail,
-              );
-            });
-          },
-          fail,
-        ),
+        void createTriageRule({ ...input, enabled: false }).then((rule) => {
+          void queryClient.invalidateQueries({ queryKey: inbox.rules().queryKey });
+          announce(t("Rule drafted — paused until you turn it on"), () => {
+            void deleteTriageRule(rule.id).then(
+              () => queryClient.invalidateQueries({ queryKey: inbox.rules().queryKey }),
+              fail,
+            );
+          });
+        }, fail),
       setRuleEnabled: (rule, enabled) => {
         const key = inbox.rules().queryKey;
         queryClient.setQueryData<TriageRule[]>(key, (rules) =>
@@ -743,7 +772,9 @@ export function useTriageActionsController(): TriageActions {
       deleteRule: (rule) => {
         const key = inbox.rules().queryKey;
         const previous = queryClient.getQueryData<TriageRule[]>(key);
-        queryClient.setQueryData<TriageRule[]>(key, (rules) => rules?.filter((row) => row.id !== rule.id));
+        queryClient.setQueryData<TriageRule[]>(key, (rules) =>
+          rules?.filter((row) => row.id !== rule.id),
+        );
         const pending = deleteTriageRule(rule.id);
         pending.catch((error: unknown) => {
           queryClient.setQueryData(key, previous);
@@ -766,27 +797,26 @@ export function useTriageActionsController(): TriageActions {
         });
       },
       handOff: (to) =>
-        void handOffTriage(to.id).then(
-          (result) => {
-            void queryClient.invalidateQueries({ queryKey: inbox._def });
-            announce(
-              t(
-                "{0, plural, one {Handed # message} other {Handed # messages}} to {1}",
-                result.affected,
-                result.to.name,
-              ),
-            );
-          },
-          fail,
-        ),
+        void handOffTriage(to.id).then((result) => {
+          void queryClient.invalidateQueries({ queryKey: inbox._def });
+          announce(
+            t(
+              "{0, plural, one {Handed # message} other {Handed # messages}} to {1}",
+              result.affected,
+              result.to.name,
+            ),
+          );
+        }, fail),
       readUnread: () =>
-        void readUnreadInboundMessages().then(
-          (count) => {
-            void queryClient.invalidateQueries({ queryKey: inbox._def });
-            announce(t("{0, plural, one {Nova is reading # message} other {Nova is reading # messages}}", count));
-          },
-          fail,
-        ),
+        void readUnreadInboundMessages().then((count) => {
+          void queryClient.invalidateQueries({ queryKey: inbox._def });
+          announce(
+            t(
+              "{0, plural, one {Nova is reading # message} other {Nova is reading # messages}}",
+              count,
+            ),
+          );
+        }, fail),
       sendTestEmail: (mailbox) => {
         announce(t("Sending a test to {0}…", mailbox.address));
         void sendInboundMailboxTest(mailbox.id).then((updated) => {

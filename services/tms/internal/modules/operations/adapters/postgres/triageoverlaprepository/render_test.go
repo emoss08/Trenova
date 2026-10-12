@@ -11,8 +11,8 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-func load() triageports.TenderLoad {
-	return triageports.TenderLoad{
+func load() *triageports.TenderLoad {
+	return &triageports.TenderLoad{
 		Index:            0,
 		OriginCity:       " Dallas ",
 		OriginState:      "tx",

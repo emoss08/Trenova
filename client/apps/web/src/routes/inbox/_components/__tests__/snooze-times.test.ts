@@ -41,7 +41,9 @@ describe("snooze times", () => {
   it("keeps eight in the morning across a clock change", () => {
     const beforeFallBack = at("2026-10-31T12:00:00Z");
     expect(tomorrowMorning(beforeFallBack, "Europe/London")).toBe(at("2026-11-01T08:00:00Z"));
-    expect(tomorrowMorning(at("2026-10-24T12:00:00Z"), "Europe/London")).toBe(at("2026-10-25T08:00:00Z"));
+    expect(tomorrowMorning(at("2026-10-24T12:00:00Z"), "Europe/London")).toBe(
+      at("2026-10-25T08:00:00Z"),
+    );
   });
 });
 
@@ -51,12 +53,15 @@ describe("event snoozes", () => {
   });
 
   it("offers delivery before it has happened and payment after", () => {
-    expect(eventSnoozeOptions(messageRow({ classification: "Tender", matchedShipment: SHIPMENT })).map((o) => o.event)).toEqual([
-      "ShipmentDelivered",
-      "DocumentAttached",
-    ]);
     expect(
-      eventSnoozeOptions(messageRow({ classification: "DetentionDispute", matchedShipment: SHIPMENT })).map((o) => o.event),
+      eventSnoozeOptions(messageRow({ classification: "Tender", matchedShipment: SHIPMENT })).map(
+        (o) => o.event,
+      ),
+    ).toEqual(["ShipmentDelivered", "DocumentAttached"]);
+    expect(
+      eventSnoozeOptions(
+        messageRow({ classification: "DetentionDispute", matchedShipment: SHIPMENT }),
+      ).map((o) => o.event),
     ).toEqual(["DocumentAttached", "InvoicePaid"]);
   });
 });

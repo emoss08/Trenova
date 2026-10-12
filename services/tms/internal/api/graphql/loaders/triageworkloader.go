@@ -68,10 +68,13 @@ func newInboundAttachmentByIDLoader(
 ) *dataloadgen.Loader[string, *inboundmessage.InboundAttachment] {
 	return newLoader(batchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*inboundmessage.InboundAttachment, error) {
-			return f.messages.GetAttachmentsByIDs(ctx, inboundmessageports.GetInboundAttachmentsRequest{
-				IDs:        ids,
-				TenantInfo: tenantInfo,
-			})
+			return f.messages.GetAttachmentsByIDs(
+				ctx,
+				inboundmessageports.GetInboundAttachmentsRequest{
+					IDs:        ids,
+					TenantInfo: tenantInfo,
+				},
+			)
 		},
 		"Attachment not found",
 	))
@@ -108,10 +111,13 @@ func newInboundReplyDraftByMessageIDLoader(
 ) *dataloadgen.Loader[string, *triage.Reply] {
 	return newLoader(batchValueFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*triage.Reply, error) {
-			return f.replies.DraftsByMessageIDs(ctx, inboundmessageports.InboundRepliesByMessagesRequest{
-				TenantInfo: tenantInfo,
-				MessageIDs: ids,
-			})
+			return f.replies.DraftsByMessageIDs(
+				ctx,
+				inboundmessageports.InboundRepliesByMessagesRequest{
+					TenantInfo: tenantInfo,
+					MessageIDs: ids,
+				},
+			)
 		},
 	))
 }
@@ -122,10 +128,13 @@ func newInboundRepliesByMessageIDLoader(
 ) *dataloadgen.Loader[string, []*triage.Reply] {
 	return newLoader(batchGroupFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*triage.Reply, error) {
-			return f.replies.ListByMessageIDs(ctx, inboundmessageports.InboundRepliesByMessagesRequest{
-				TenantInfo: tenantInfo,
-				MessageIDs: ids,
-			})
+			return f.replies.ListByMessageIDs(
+				ctx,
+				inboundmessageports.InboundRepliesByMessagesRequest{
+					TenantInfo: tenantInfo,
+					MessageIDs: ids,
+				},
+			)
 		},
 	))
 }

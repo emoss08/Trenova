@@ -350,7 +350,7 @@ func (r *repository) ThreadKeyForMessageKeys(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	messageKeys []string,
-) (string, bool, error) {
+) (threadKey string, found bool, err error) {
 	if len(messageKeys) == 0 {
 		return "", false, nil
 	}
@@ -366,15 +366,15 @@ func (r *repository) ThreadKeyForMessageKeys(
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (string, bool, error) {
 		cols := triagecol.ReplyColumns
 		rows := make([]threadRow, 0, len(messageKeys))
-		if err := r.db.DBForContext(ctx).
+		if scanErr := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*triage.Reply)(nil)).
 			Column(cols.MessageKey.Bare(), cols.ThreadKey.Bare()).
 			Where(cols.MessageKey.In(), bun.List(messageKeys)).
 			Where(cols.ThreadKey.Ne(), "").
 			Apply(triagecol.ReplyApplyTenant(tenantInfo)).
-			Scan(ctx, &rows); err != nil {
-			return "", false, err
+			Scan(ctx, &rows); scanErr != nil {
+			return "", false, scanErr
 		}
 		if len(rows) == 0 {
 			return "", false, nil
@@ -385,8 +385,8 @@ func (r *repository) ThreadKeyForMessageKeys(
 			byKey[row.MessageKey] = row.ThreadKey
 		}
 		for _, key := range messageKeys {
-			if threadKey, ok := byKey[key]; ok {
-				return threadKey, true, nil
+			if known, ok := byKey[key]; ok {
+				return known, true, nil
 			}
 		}
 

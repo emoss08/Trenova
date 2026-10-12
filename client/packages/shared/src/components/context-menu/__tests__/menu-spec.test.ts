@@ -10,9 +10,9 @@ function labels(entries: ContextMenuEntry[]): string[] {
 describe("normalizeEntries", () => {
   it("drops the rows a condition turned off", () => {
     const busy = false;
-    expect(labels(normalizeEntries([{ label: "Open" }, busy && { label: "Wait" }, null, undefined]))).toEqual([
-      "Open",
-    ]);
+    expect(
+      labels(normalizeEntries([{ label: "Open" }, busy && { label: "Wait" }, null, undefined])),
+    ).toEqual(["Open"]);
   });
 
   it("moves destructive rows to the foot, after a separator, keeping their order", () => {

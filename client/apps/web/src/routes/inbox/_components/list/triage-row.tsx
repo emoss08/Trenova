@@ -9,12 +9,7 @@ import {
 } from "@/stores/triage-store";
 import { useContextMenuTrigger } from "@trenova/shared/components/context-menu/context-menu-host";
 import type { ContextMenuSpec } from "@trenova/shared/components/context-menu/menu-spec";
-import {
-  CheckIcon,
-  ClockIcon,
-  PaperclipIcon,
-  Send01Icon,
-} from "@trenova/shared/components/icons";
+import { CheckIcon, ClockIcon, PaperclipIcon, Send01Icon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -109,7 +104,9 @@ function TimeCell({ message, now }: { message: InboundMessageRow; now: number })
     return <ClockIcon aria-label={t("Snoozed")} className="text-foreground-subtle size-3" />;
   }
   if (isAwaitingReply(message)) {
-    return <Send01Icon aria-label={t("Waiting on them")} className="text-foreground-subtle size-3" />;
+    return (
+      <Send01Icon aria-label={t("Waiting on them")} className="text-foreground-subtle size-3" />
+    );
   }
   if (isWaiting(message) && message.dueAt !== null) {
     const span = dueSpan(message.dueAt, now);
@@ -251,7 +248,9 @@ export const TriageRow = memo(function TriageRow({
             aria-hidden
             className={cn(
               "absolute inset-y-0 left-0 flex w-1/2 items-center gap-1.5 px-4.5 text-sm font-medium",
-              outcome === "snooze" ? "bg-warning text-warning-on-solid" : "bg-sunken text-foreground-subtle",
+              outcome === "snooze"
+                ? "bg-warning text-warning-on-solid"
+                : "bg-sunken text-foreground-subtle",
             )}
           >
             <ClockIcon className="size-3.5" />
@@ -261,7 +260,9 @@ export const TriageRow = memo(function TriageRow({
             aria-hidden
             className={cn(
               "absolute inset-y-0 right-0 flex w-1/2 items-center justify-end gap-1.5 px-4.5 text-sm font-medium",
-              outcome === "handle" ? "bg-success text-foreground-on-solid" : "bg-sunken text-foreground-subtle",
+              outcome === "handle"
+                ? "bg-success text-foreground-on-solid"
+                : "bg-sunken text-foreground-subtle",
             )}
           >
             {t("Handled")}
@@ -352,7 +353,10 @@ export const TriageRow = memo(function TriageRow({
           )}
           {message.attachmentCount > 0 && (
             <PaperclipIcon
-              aria-label={t("{0, plural, one {# attachment} other {# attachments}}", message.attachmentCount)}
+              aria-label={t(
+                "{0, plural, one {# attachment} other {# attachments}}",
+                message.attachmentCount,
+              )}
               className="text-foreground-subtle size-3 shrink-0"
             />
           )}

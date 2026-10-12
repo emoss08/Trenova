@@ -3,6 +3,7 @@ package inboundmessagerepository
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -44,6 +45,11 @@ func New(p Params) inboundmessageports.InboundMessageRepository {
 var needsReviewStatuses = []inboundmessage.Status{
 	inboundmessage.StatusInReview,
 	inboundmessage.StatusQuarantined,
+}
+
+var settledStatuses = []inboundmessage.Status{
+	inboundmessage.StatusActioned,
+	inboundmessage.StatusIgnored,
 }
 
 type folderColumns struct {
@@ -494,36 +500,96 @@ func countBreakdownQuery(
 	db bun.IDB,
 	req inboundmessageports.CountInboundMessagesRequest,
 ) *bun.SelectQuery {
+	open, settled := censusStatuses(req.Statuses)
+	if len(settled) == 0 {
+		return openCensusQuery(db, req, open)
+	}
+	if len(open) == 0 {
+		return settledCensusQuery(db, req, settled)
+	}
+
+	return openCensusQuery(db, req, open).UnionAll(settledCensusQuery(db, req, settled))
+}
+
+func censusStatuses(
+	requested []inboundmessage.Status,
+) (open, settled []inboundmessage.Status) {
+	if len(requested) == 0 {
+		requested = inboundmessage.AllStatuses()
+	}
+	open = make([]inboundmessage.Status, 0, len(requested))
+	settled = make([]inboundmessage.Status, 0, len(settledStatuses))
+	for _, status := range requested {
+		if slices.Contains(settledStatuses, status) {
+			settled = append(settled, status)
+
+			continue
+		}
+		open = append(open, status)
+	}
+
+	return open, settled
+}
+
+func censusBase(
+	db bun.IDB,
+	req inboundmessageports.CountInboundMessagesRequest,
+	statuses []inboundmessage.Status,
+) *bun.SelectQuery {
+	cols := inboundmessagecol.InboundMessageColumns
+	query := db.NewSelect().
+		Model((*inboundmessage.InboundMessage)(nil)).
+		ColumnExpr(cols.Status.Qualified()).
+		ColumnExpr(cols.Classification.Expr("COALESCE({}, '')")+" AS classification").
+		ColumnExpr(cols.MailboxID.Qualified()).
+		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
+		Where(cols.Status.In(), bun.List(statuses))
+	if req.Since > 0 {
+		query = query.Where(cols.ReceivedAt.Gte(), req.Since)
+	}
+
+	return query
+}
+
+func openCensusQuery(
+	db bun.IDB,
+	req inboundmessageports.CountInboundMessagesRequest,
+	statuses []inboundmessage.Status,
+) *bun.SelectQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 	classification := cols.Classification.Expr("COALESCE({}, '')")
 	parked := cols.Parked.Expr("COALESCE({}, '')")
 	mine := cols.OwnerID.Expr("COALESCE({} = ?, FALSE)")
 	overdue := cols.DueAt.Expr("COALESCE({} < ?, FALSE)")
 
-	query := db.NewSelect().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		ColumnExpr(cols.Status.Qualified()).
-		ColumnExpr(classification+" AS classification").
-		ColumnExpr(cols.MailboxID.Qualified()).
+	return censusBase(db, req, statuses).
 		ColumnExpr(parked+" AS parked").
 		ColumnExpr(mine+" AS mine", req.ViewerID.String()).
 		ColumnExpr(overdue+" AS overdue", req.Now).
 		ColumnExpr(buncolgen.Count("count")).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo))
-	if len(req.Statuses) > 0 {
-		query = query.Where(cols.Status.In(), bun.List(req.Statuses))
-	}
-	if req.Since > 0 {
-		query = query.Where(cols.ReceivedAt.Gte(), req.Since)
-	}
-
-	return query.
 		GroupExpr(cols.Status.Qualified()).
 		GroupExpr(classification).
 		GroupExpr(cols.MailboxID.Qualified()).
 		GroupExpr(parked).
 		GroupExpr(mine, req.ViewerID.String()).
 		GroupExpr(overdue, req.Now)
+}
+
+func settledCensusQuery(
+	db bun.IDB,
+	req inboundmessageports.CountInboundMessagesRequest,
+	statuses []inboundmessage.Status,
+) *bun.SelectQuery {
+	cols := inboundmessagecol.InboundMessageColumns
+
+	return censusBase(db, req, statuses).
+		ColumnExpr("'' AS parked").
+		ColumnExpr("FALSE AS mine").
+		ColumnExpr("FALSE AS overdue").
+		ColumnExpr(buncolgen.Count("count")).
+		GroupExpr(cols.Status.Qualified()).
+		GroupExpr(cols.Classification.Qualified()).
+		GroupExpr(cols.MailboxID.Qualified())
 }
 
 // CountAttachmentsByMessageIDs answers the paperclip on a page of list rows in

@@ -183,7 +183,10 @@ export function VirtualRows({
               key={item.key}
               data-index={item.index}
               ref={virtualizer.measureElement}
-              className={cn(pinned ? "sticky top-0 z-10" : "absolute inset-x-0 top-0", rowClassName)}
+              className={cn(
+                pinned ? "sticky top-0 z-10" : "absolute inset-x-0 top-0",
+                rowClassName,
+              )}
               style={pinned ? undefined : { transform: `translateY(${item.start}px)` }}
             >
               {rows[item.index].render()}

@@ -113,13 +113,16 @@ func (s *Service) Correct(
 	changed := false
 	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
 		var txErr error
-		changed, txErr = s.store.CorrectClassification(ctx, &triageports.CorrectClassificationRequest{
-			TenantInfo:     req.TenantInfo,
-			MessageID:      message.ID,
-			Classification: req.Classification,
-			TargetSeconds:  int64(minutes) * 60,
-			At:             at,
-		})
+		changed, txErr = s.store.CorrectClassification(
+			ctx,
+			&triageports.CorrectClassificationRequest{
+				TenantInfo:     req.TenantInfo,
+				MessageID:      message.ID,
+				Classification: req.Classification,
+				TargetSeconds:  int64(minutes) * 60,
+				At:             at,
+			},
+		)
 		if txErr != nil || !changed {
 			return txErr
 		}
@@ -272,8 +275,11 @@ func (s *Service) predicted(
 	}
 
 	original, found, err := s.store.OriginalClassification(ctx, triageports.FirstCorrectionRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: message.OrganizationID, BuID: message.BusinessUnitID},
-		MessageID:  message.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: message.OrganizationID,
+			BuID:  message.BusinessUnitID,
+		},
+		MessageID: message.ID,
 	})
 	if err != nil {
 		return "", err

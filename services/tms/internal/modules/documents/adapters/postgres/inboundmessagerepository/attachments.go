@@ -56,40 +56,48 @@ func (r *repository) GetAttachmentByID(
 	ctx context.Context,
 	req inboundmessageports.GetInboundAttachmentRequest,
 ) (*inboundmessage.InboundAttachment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundAttachment, error) {
-		entity := new(inboundmessage.InboundAttachment)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(inboundmessagecol.InboundAttachmentColumns.ID.Eq(), req.ID).
-			Apply(inboundmessagecol.InboundAttachmentApplyTenant(req.TenantInfo)).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "InboundAttachment")
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*inboundmessage.InboundAttachment, error) {
+			entity := new(inboundmessage.InboundAttachment)
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where(inboundmessagecol.InboundAttachmentColumns.ID.Eq(), req.ID).
+				Apply(inboundmessagecol.InboundAttachmentApplyTenant(req.TenantInfo)).
+				Scan(ctx); err != nil {
+				return nil, dberror.HandleNotFoundError(err, "InboundAttachment")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) GetAttachmentsByIDs(
 	ctx context.Context,
 	req inboundmessageports.GetInboundAttachmentsRequest,
 ) ([]*inboundmessage.InboundAttachment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessage.InboundAttachment, error) {
-		entities := make([]*inboundmessage.InboundAttachment, 0, len(req.IDs))
-		if len(req.IDs) == 0 {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessage.InboundAttachment, error) {
+			entities := make([]*inboundmessage.InboundAttachment, 0, len(req.IDs))
+			if len(req.IDs) == 0 {
+				return entities, nil
+			}
+
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Where(inboundmessagecol.InboundAttachmentColumns.ID.In(), bun.List(req.IDs)).
+				Apply(inboundmessagecol.InboundAttachmentApplyTenant(req.TenantInfo)).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+
 			return entities, nil
-		}
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(inboundmessagecol.InboundAttachmentColumns.ID.In(), bun.List(req.IDs)).
-			Apply(inboundmessagecol.InboundAttachmentApplyTenant(req.TenantInfo)).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-
-		return entities, nil
-	})
+		},
+	)
 }

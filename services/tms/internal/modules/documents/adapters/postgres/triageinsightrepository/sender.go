@@ -101,7 +101,7 @@ func senderSummaryQuery(db bun.IDB, req *triageports.SenderStatsRequest) *bun.Se
 				cols.ReceivedAt.Qualified()+") FILTER (WHERE "+settledByPerson()+" AND "+
 				cols.ReviewedAt.Qualified()+" >= "+cols.ReceivedAt.Qualified()+
 				") AS usual_settle_seconds",
-			bun.In(settled),
+			bun.List(settled),
 		).
 		ColumnExpr(cols.MatchedCustomerID.Expr("MODE() WITHIN GROUP (ORDER BY {}) AS customer_id")).
 		ColumnExpr(cols.MatchedCarrierID.Expr("MODE() WITHIN GROUP (ORDER BY {}) AS carrier_id")).

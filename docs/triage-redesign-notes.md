@@ -107,6 +107,126 @@ _Filled in as each area lands._
   to "Waiting on them" automatically; the queue core parks a message only when asked, so the
   client sends the park after a successful send if the reply asks a question.
 
+### Queue core
+
+- **Teaching a rule from a bulk handle needs `inbound_message:manage`.** The design offers "always
+  do this for this sender" beside Handle; a rule changes what Nova does for everyone, so the
+  `teach` half of `reviewInboundMessages` is refused without manage while the handle itself only
+  needs update.
+- **A snooze keeps the message's due time.** Waking (by time, event or a person) returns the
+  message with its original `dueAt`, so something snoozed past its target comes back overdue.
+  `responseTargetMinutes` is the organization's target for the kind; a settled message has no
+  `dueAt`.
+- **Search is a substring match** on subject, sender address and sender name (the existing
+  `querybuilder` behaviour), not the body: "S-10" or "acme" match inside a PRO or a domain, which
+  the stored `search_vector` (word tokens; an address is one token) would not.
+- **Seeded dev data.** The prototype's Claims dispute arrives on Claims within the day while
+  Claims has "received nothing in 7 days"; the seed puts the FreshHaul dispute on Intake and
+  leaves Claims' last message 7 days 2 hours old. Seeded attachments carry metadata only (no
+  document bytes in object storage), so an unfiled seeded attachment is not readable and offers no
+  "File" action; filed ones show as filed. The prototype's shipments and customers are mapped onto
+  the seeded ones (`SEED-PAY-*`, `SEED-SHP-*`; Acme, FreshHaul, GlobalTrade, Peak, Range), and
+  the second saved view searches "SEED-" rather than "S-10".
+
+### Intelligence
+
+- **Rules act once, when a message is first read.** The evaluator runs inside the settle step
+  (`ProcessMessage` → `applyRules`) for a message Nova read and left waiting on a person; it does
+  not sweep the existing queue when a rule is created or enabled. "Matches" on a new rule are a
+  preview of the last 30 days, not work it will do retroactively.
+- **One rule per message.** The most specific enabled rule that matches (an address over a
+  domain over a party over anyone; the oldest on a tie) is the one that acts, and it
+  claims the message (`handled_by_rule_id`). When its action cannot complete (no shipment to file
+  on, a reply already drafted, an assignee without access) the message waits on a person; later
+  rules are not tried and the rule's match count does not move.
+- **A rule never auto-files over an open duplicate.** While the message carries an unresolved
+  `DuplicateDocument` conflict, a filing rule leaves it for a person; the conflict card decides.
+- **Rule preview is bounded.** `triageRulePreview` reads the last 30 days and returns at most 50
+  samples (rejected ones first), with `total`/`matched` counted over the whole window. The design
+  implies every past match.
+- **Suggestions need five handlings at 90%.** A rule is suggested from a sender domain + kind that
+  people filed or ignored at least five times in 30 days with one outcome at least 90% of the
+  time, and only when no existing rule already covers it. "Handled" outcomes (replies, loads) are
+  not suggested: the action depends on the message.
+- **Accuracy is a percentage of corrections.** The briefing's "Nova read N, people corrected M"
+  is computed per local week (Monday start in the organization's time zone); the change is shown
+  only when both weeks had mail read.
+- **Who a sender is.** Customer is a customer whose email or domain matches; one with broker
+  vetting enabled is shown as Broker. Carrier is a carrier whose email or domain matches. Driver
+  is a worker whose email matches, or whose email domain matches when no customer or carrier
+  does. The design's "Shipper/Consignee" roles are not modelled.
+- **Facts are quoted, or dropped.** Nova's facts (`InboundMessage.facts`) are kept only when their
+  quote appears in the subject or body (case and whitespace ignored), at most 12, and only
+  `Warning` or `Neutral` tone. Flagging a fact marks it and records an AI correction; it does not
+  remove it.
+- **Corrections teach by sender domain.** Correcting a kind records a sender hint (domain + kind)
+  that the classifier is shown, as trusted context, for that sender's next three-most-corrected
+  kinds; there is no per-address hint.
+- **Conflicts are checked after reading, not live.** Duplicate documents (a rate con, POD, BOL or
+  invoice whose type is already on the matched shipment, with both amounts when the shipment has a
+  rate) and overlapping loads (a tender's lane and pickup day against the customer's open
+  shipments) are found by an activity after the message settles, and again whenever a person
+  re-checks it. A tender's multiple loads come from its draft's `loads[n]` fields.
+- **Resolving a duplicate as Replace swaps the document at filing time.** `ReplaceExisting` is
+  read by the filer, which replaces the existing document instead of adding one; `KeepBoth` files
+  normally. A conflict whose attachment is already filed cannot be changed.
+
 ## Performance
 
-_Filled in after profiling with a seeded tenant of 50,000 messages._
+Measured on the development database with 50,055 messages in one tenant (50,000 synthetic across
+three mailboxes over 120 days: 7% waiting on a person, 0.5% snoozed, 0.5% waiting on them, 70%
+handled, 22% ignored; ~3 messages per thread; 100,000 activity lines), PostgreSQL as superuser
+(so without the RLS predicates, which are equalities on the same leading columns),
+`EXPLAIN (ANALYZE, BUFFERS)`, page size 50 (`LIMIT 51`), three runs each, median shown. The
+synthetic rows were deleted afterwards (50,000 rows and their activity lines cascade in ~2 s).
+
+| Query | Plan | ms |
+| --- | --- | --- |
+| Waiting, by due, page 1 | Index Scan `idx_inbound_messages_waiting_queue`, stops at 51 | 0.4 |
+| Waiting, by due, page 2 (keyset) | same index, cursor predicate in the scan | 0.3 |
+| Waiting, threads collapsed | `waiting_queue` + `NOT EXISTS` probe on `idx_inbound_messages_thread_key` | 1.1 |
+| Everything, newest | Index Scan `idx_inbound_messages_received` | 0.4 |
+| Everything, newest, collapsed | `received` + thread-key probe | 1.0 |
+| Handled, newest | Index Scan `idx_inbound_messages_lane` | 0.3 |
+| Assigned to me, by due | Index Scan `idx_inbound_messages_owner` | 1.6 |
+| Snoozed, newest | Index Scan `idx_inbound_messages_parked` | 0.3 |
+| Kind folder (Invoice), waiting by due | `waiting_queue` with a kind filter | 0.4 |
+| Mailbox folder (Billing), everything | `received` with a mailbox filter | 0.4 |
+| Search "invoice", everything newest | `received`, filter until 51 match | 1.3 |
+| One thread / thread reader | Index Scan `idx_inbound_messages_thread_key` | 0.2 |
+| Thread counts for a page (50 keys) | Index Only Scan `thread_key` | 0.5 |
+| Activity for a page (50 messages) | Index Scan `idx_inbound_message_activities_message` | 1.1 |
+| Census (`CountBreakdown`) | open lanes: Bitmap on `idx_inbound_messages_census`; settled: Index Only Scan `census` | 21 |
+| Saved views' waiting counts (2 views) | Bitmap on `census`, waiting rows only | 22 |
+| Wake reconcile (all tenants) | `snoozed_until` + `awaiting_until` partial indexes | 0.6 |
+| Total count, waiting | Index Only Scan `waiting_queue` | 0.9 |
+| Total count, everything / handled / mailbox | Index Only Scan `census` | 7 / 4 / 3 |
+| Total count, waiting collapsed | hash anti join over the waiting rows | 12 |
+| Total count, everything collapsed | parallel seq scan + hash anti join | 89 |
+| Total count, search | seq scan (`ILIKE` on five columns) | 133 |
+
+What changed after the first run (`20261231008890_triage_queue_indexes` and its SQLite twin):
+
+- **Waiting by due was a sort of every waiting row** (bitmap scan of `idx_inbound_messages_lane`,
+  top-N heapsort of 3,508 rows, 14 ms; `idx_inbound_messages_waiting_due` leads with `status`, so
+  two statuses cannot give one due order). It is now
+  `idx_inbound_messages_waiting_queue (org, bu, due_at ASC NULLS LAST, received_at DESC, id DESC)
+  WHERE status IN ('InReview','Quarantined') AND parked IS NULL`, which matches the sort exactly:
+  0.4 ms and constant in the size of the queue. It replaces `waiting_due`. The collapsed waiting
+  folder went from a parallel seq scan (32 ms) to the same index plus a probe (1.1 ms).
+- **The census was a seq scan of the tenant** (47 ms) grouping every row by six expressions. It is
+  now two branches under `UNION ALL`: open statuses grouped by lane, owner and lateness (bitmap on
+  the small open set), and Actioned/Ignored grouped by status, kind and mailbox only, read from
+  `idx_inbound_messages_census (org, bu, status, classification, mailbox_id)` without touching the
+  heap (0 heap fetches). 21 ms, of which ~14 ms is aggregating the 46,000 settled index entries.
+  The same index answers the gated `totalCount` of the settled folders.
+
+Known linear costs, all behind the gated `totalCount` (the list itself stays index-bound):
+
+- **Collapsed "Everything" total** counts the newest message of every thread in the tenant
+  (89 ms at 50k). The client should take the folder's number from `inboundMessageCounts` and only
+  select `totalCount` on a collapsed folder when it shows it.
+- **Search total** evaluates `ILIKE '%term%'` on every row of the tenant (133 ms at 50k); the page
+  itself stops at the 51st match. A trigram index per searched column, or moving search to the
+  stored `search_vector` with the sender's domain as its own token, would make it index-bound;
+  both change `querybuilder` behaviour shared by every list, so neither is done here.

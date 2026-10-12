@@ -48,7 +48,9 @@ func (s *Service) Resolve(
 		apply: func(message *inboundmessage.InboundMessage, conflict *inboundmessage.Conflict) error {
 			if !req.Resolution.FitsKind(conflict.Kind) {
 				return errortypes.NewValidationError(
-					"resolution", errortypes.ErrInvalid, "That does not settle this kind of conflict",
+					"resolution",
+					errortypes.ErrInvalid,
+					"That does not settle this kind of conflict",
 				)
 			}
 			if conflict.Kind == inboundmessage.ConflictDuplicateDocument &&

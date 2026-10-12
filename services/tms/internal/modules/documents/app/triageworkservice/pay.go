@@ -70,7 +70,7 @@ func (s *Service) invoiceFields(
 	ctx context.Context,
 	f *matchedFiling,
 	documentID pulid.ID,
-) (string, int64) {
+) (number string, totalMinor int64) {
 	contents, err := s.work.ContentsByDocumentIDs(ctx, f.tenantInfo, []pulid.ID{documentID})
 	if err != nil {
 		s.l.Warn("could not read what the invoice says",
@@ -88,7 +88,7 @@ func (s *Service) invoiceFields(
 		return "", 0
 	}
 
-	number := fieldValue(findings, invoiceNumberKeys)
+	number = fieldValue(findings, invoiceNumberKeys)
 	total, parseErr := decimalutils.ParseMoneyText(fieldValue(findings, invoiceTotalKeys))
 	if parseErr != nil || !total.Valid {
 		return number, 0

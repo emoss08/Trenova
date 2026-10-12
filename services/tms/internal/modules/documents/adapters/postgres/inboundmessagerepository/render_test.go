@@ -348,3 +348,27 @@ func TestMarkingAMailboxReceivedNeverMovesItBackwards(t *testing.T) {
 		"last_received_at = GREATEST(COALESCE(last_received_at, 0), 1700000000::bigint)", sqlText)
 	assert.Contains(t, sqlText, "imbx.id = 'imbx_1'", sqlText)
 }
+
+func TestTheCensusCountsSettledMailWithoutTheOpenLanesWork(t *testing.T) {
+	t.Parallel()
+
+	sqlText := countBreakdownQuery(renderDB(), inboundmessageports.CountInboundMessagesRequest{
+		ViewerID: "usr_01J00000000000000000000VW",
+		Now:      1_700_000_000,
+	}).String()
+
+	assert.Contains(t, sqlText, "UNION ALL", sqlText)
+	assert.Contains(t, sqlText, "imsg.status IN ('Actioned', 'Ignored')", sqlText)
+	assert.Contains(t, sqlText, "'' AS parked, FALSE AS mine, FALSE AS overdue", sqlText)
+	assert.Contains(t, sqlText,
+		"GROUP BY imsg.status, imsg.classification, imsg.mailbox_id", sqlText)
+	assert.Contains(t, sqlText,
+		"imsg.status IN ('Received', 'Processing', 'Classified', 'InReview', 'Quarantined')",
+		sqlText)
+
+	settledOnly := countBreakdownQuery(renderDB(), inboundmessageports.CountInboundMessagesRequest{
+		Statuses: []inboundmessage.Status{inboundmessage.StatusActioned},
+	}).String()
+	assert.NotContains(t, settledOnly, "UNION ALL", settledOnly)
+	assert.Contains(t, settledOnly, "FALSE AS mine", settledOnly)
+}

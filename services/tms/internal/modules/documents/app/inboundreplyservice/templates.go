@@ -129,7 +129,7 @@ func (s *Service) RenderTemplate(ctx context.Context, req *RenderTemplateRequest
 		return "", err
 	}
 
-	return RenderTemplate(template.Body, s.messageContext(ctx, message).reply), nil
+	return RenderTemplate(template.Body, &s.messageContext(ctx, message).reply), nil
 }
 
 func (s *Service) validateTemplate(

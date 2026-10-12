@@ -103,7 +103,7 @@ func (r *repository) FindBySentence(
 			return nil, err
 		}
 		if len(rules) == 0 {
-			return nil, nil //nolint:nilnil // an absent rule is an answer, not a failure
+			return nil, nil
 		}
 
 		return rules[0], nil
@@ -136,34 +136,41 @@ func (r *repository) Create(
 	limit int,
 ) (*triage.Rule, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*triage.Rule, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-			tenantInfo := pagination.TenantInfo{OrgID: rule.OrganizationID, BuID: rule.BusinessUnitID}
-			if _, err := tx.NewRaw(
-				"SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
-				"triage-rules:"+rule.OrganizationID.String()+":"+rule.BusinessUnitID.String(),
-			).Exec(ctx); err != nil {
-				return fmt.Errorf("hold the organization's rules: %w", err)
-			}
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(ctx context.Context, tx bun.Tx) error {
+				tenantInfo := pagination.TenantInfo{
+					OrgID: rule.OrganizationID,
+					BuID:  rule.BusinessUnitID,
+				}
+				if _, err := tx.NewRaw(
+					"SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
+					"triage-rules:"+rule.OrganizationID.String()+":"+rule.BusinessUnitID.String(),
+				).Exec(ctx); err != nil {
+					return fmt.Errorf("hold the organization's rules: %w", err)
+				}
 
-			count, err := tx.NewSelect().
-				Model((*triage.Rule)(nil)).
-				Apply(triagecol.RuleApplyTenant(tenantInfo)).
-				Count(ctx)
-			if err != nil {
-				return fmt.Errorf("count the organization's rules: %w", err)
-			}
-			if count >= int64(limit) {
-				return triageports.ErrTooManyRules
-			}
+				count, err := tx.NewSelect().
+					Model((*triage.Rule)(nil)).
+					Apply(triagecol.RuleApplyTenant(tenantInfo)).
+					Count(ctx)
+				if err != nil {
+					return fmt.Errorf("count the organization's rules: %w", err)
+				}
+				if count >= int64(limit) {
+					return triageports.ErrTooManyRules
+				}
 
-			if _, err = tx.NewInsert().Model(rule).Returning("*").Exec(ctx); err != nil {
-				r.l.Error("failed to create a triage rule", zap.Error(err))
+				if _, err = tx.NewInsert().Model(rule).Returning("*").Exec(ctx); err != nil {
+					r.l.Error("failed to create a triage rule", zap.Error(err))
 
-				return err
-			}
+					return err
+				}
 
-			return nil
-		})
+				return nil
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -304,7 +311,7 @@ func (r *repository) CountSettledSince(
 			ColumnExpr(cols.HandledByRuleID.As("rule_id")).
 			ColumnExpr("COUNT(*) AS count").
 			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Where(cols.HandledByRuleID.In(), bun.In(req.RuleIDs)).
+			Where(cols.HandledByRuleID.In(), bun.List(req.RuleIDs)).
 			Where(cols.ReceivedAt.Gte(), req.Since).
 			GroupExpr(cols.HandledByRuleID.Qualified()).
 			Scan(ctx, &rows); err != nil {

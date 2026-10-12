@@ -232,7 +232,7 @@ type TriageInsightRepository interface {
 	RuleCandidates(ctx context.Context, req *RuleCandidatesRequest) (*RuleCandidates, error)
 	ManualOutcomes(ctx context.Context, req *ManualOutcomesRequest) ([]*ManualOutcomeRow, error)
 	MessageRows(ctx context.Context, req *MessageRowsRequest) ([]*MessageRow, error)
-	SenderDomains(ctx context.Context, req SenderDomainsRequest) ([]string, error)
+	SenderDomains(ctx context.Context, req *SenderDomainsRequest) ([]string, error)
 	BriefingCounts(ctx context.Context, req BriefingWindow) (*BriefingCounts, error)
 	HandledByNova(ctx context.Context, req BriefingWindow) ([]*HandledRow, error)
 	Arrivals(ctx context.Context, req BriefingWindow) ([]*ArrivalRow, error)

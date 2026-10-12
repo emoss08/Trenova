@@ -54,7 +54,12 @@ export function buildListItems(
   startOfDay?: StartOfDay,
 ): ListItem[] {
   const items: ListItem[] = [];
-  const push = (key: string, label: string, tone: ListHeading["tone"], rows: readonly InboundMessageRow[]) => {
+  const push = (
+    key: string,
+    label: string,
+    tone: ListHeading["tone"],
+    rows: readonly InboundMessageRow[],
+  ) => {
     items.push({ type: "heading", key: `heading:${key}`, label, tone });
     for (const message of rows) {
       items.push({ type: "message", key: message.id, message });

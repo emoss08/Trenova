@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-func ruleFromInput(input gqlmodel.TriageRuleInput) (*triage.Rule, error) {
+func ruleFromInput(input *gqlmodel.TriageRuleInput) (*triage.Rule, error) {
 	rule := &triage.Rule{
 		Classification: input.Classification,
 		SenderScope:    input.SenderScope,

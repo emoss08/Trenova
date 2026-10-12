@@ -44,7 +44,7 @@ type loadBuild struct {
 	now      time.Time
 }
 
-func (b *loadBuild) value(key inboundmessage.LoadFieldKey) (string, string, bool) {
+func (b *loadBuild) value(key inboundmessage.LoadFieldKey) (value, path string, ok bool) {
 	field, ok := b.fields[key]
 	if !ok || strings.TrimSpace(field.Value) == "" {
 		return "", "", false
@@ -53,7 +53,12 @@ func (b *loadBuild) value(key inboundmessage.LoadFieldKey) (string, string, bool
 	return strings.TrimSpace(field.Value), fmt.Sprintf("fields[%d].value", field.Index), true
 }
 
-func (b *loadBuild) fail(key inboundmessage.LoadFieldKey, code errortypes.ErrorCode, message string, args ...any) {
+func (b *loadBuild) fail(
+	key inboundmessage.LoadFieldKey,
+	code errortypes.ErrorCode,
+	message string,
+	args ...any,
+) {
 	path := "fields"
 	if field, ok := b.fields[key]; ok {
 		path = fmt.Sprintf("fields[%d].value", field.Index)
@@ -66,8 +71,11 @@ func (s *Service) CreateLoad(
 	req *inboundmessageports.CreateTriageLoadRequest,
 ) (*inboundmessageports.CreatedTriageLoad, error) {
 	build := &loadBuild{
-		req:      req,
-		fields:   make(map[inboundmessage.LoadFieldKey]inboundmessageports.TriageLoadFieldValue, len(req.Fields)),
+		req: req,
+		fields: make(
+			map[inboundmessage.LoadFieldKey]inboundmessageports.TriageLoadFieldValue,
+			len(req.Fields),
+		),
 		multiErr: errortypes.NewMultiError(),
 		now:      time.Unix(s.now(), 0),
 	}
@@ -89,19 +97,25 @@ func (s *Service) CreateLoad(
 	}
 
 	if instructions, _, ok := build.value(inboundmessage.LoadFieldInstructions); ok {
-		if _, commentErr := s.comments.CreateSystem(ctx, &shipmentports.CreateSystemShipmentCommentRequest{
-			TenantInfo: req.TenantInfo,
-			ShipmentID: created.ID,
-			Comment:    stringutils.TruncateRunes(instructions, instructionsMaxRunes),
-			Type:       shipment.CommentTypePickupInstruction,
-			Visibility: shipment.CommentVisibilityOperations,
-		}); commentErr != nil {
+		if _, commentErr := s.comments.CreateSystem(
+			ctx,
+			&shipmentports.CreateSystemShipmentCommentRequest{
+				TenantInfo: req.TenantInfo,
+				ShipmentID: created.ID,
+				Comment:    stringutils.TruncateRunes(instructions, instructionsMaxRunes),
+				Type:       shipment.CommentTypePickupInstruction,
+				Visibility: shipment.CommentVisibilityOperations,
+			},
+		); commentErr != nil {
 			s.l.Warn("created a load from Triage but could not add its instructions",
 				zap.String("shipmentId", created.ID.String()), zap.Error(commentErr))
 		}
 	}
 
-	return &inboundmessageports.CreatedTriageLoad{ShipmentID: created.ID, ProNumber: created.ProNumber}, nil
+	return &inboundmessageports.CreatedTriageLoad{
+		ShipmentID: created.ID,
+		ProNumber:  created.ProNumber,
+	}, nil
 }
 
 func (s *Service) buildShipment(ctx context.Context, b *loadBuild) (*shipment.Shipment, error) {
@@ -136,7 +150,12 @@ func (s *Service) buildShipment(ctx context.Context, b *loadBuild) (*shipment.Sh
 	if err != nil {
 		return nil, err
 	}
-	destination, err := s.resolvePlace(ctx, b, inboundmessage.LoadFieldDestination, "Say where it delivers")
+	destination, err := s.resolvePlace(
+		ctx,
+		b,
+		inboundmessage.LoadFieldDestination,
+		"Say where it delivers",
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +244,11 @@ func (s *Service) resolveCustomer(ctx context.Context, b *loadBuild) (pulid.ID, 
 
 	match, ok := pickRecord(matches)
 	if !ok {
-		b.fail(inboundmessage.LoadFieldCustomer, errortypes.ErrInvalid, unresolved("customer", text, matches))
+		b.fail(
+			inboundmessage.LoadFieldCustomer,
+			errortypes.ErrInvalid,
+			unresolved("customer", text, matches),
+		)
 
 		return pulid.Nil, nil
 	}
@@ -248,7 +271,11 @@ func pickRecord(matches []shipmentports.TriageRecordMatch) (shipmentports.Triage
 
 func unresolved(kind, text string, matches []shipmentports.TriageRecordMatch) string {
 	if len(matches) == 0 {
-		return fmt.Sprintf("No %s matches %q. Add it first, or write it as it is on file.", kind, text)
+		return fmt.Sprintf(
+			"No %s matches %q. Add it first, or write it as it is on file.",
+			kind,
+			text,
+		)
 	}
 
 	labels := make([]string, 0, len(matches))
@@ -259,7 +286,11 @@ func unresolved(kind, text string, matches []shipmentports.TriageRecordMatch) st
 	return fmt.Sprintf("%q could be %s. Write the one you mean.", text, strings.Join(labels, ", "))
 }
 
-func (s *Service) applyDefaults(ctx context.Context, b *loadBuild, entity *shipment.Shipment) error {
+func (s *Service) applyDefaults(
+	ctx context.Context,
+	b *loadBuild,
+	entity *shipment.Shipment,
+) error {
 	defaults, err := s.lookup.CustomerDefaults(ctx, b.req.TenantInfo, entity.CustomerID)
 	if err != nil {
 		return err
@@ -399,7 +430,11 @@ func (b *loadBuild) window(
 	return &window
 }
 
-func (s *Service) applyEquipment(ctx context.Context, b *loadBuild, entity *shipment.Shipment) error {
+func (s *Service) applyEquipment(
+	ctx context.Context,
+	b *loadBuild,
+	entity *shipment.Shipment,
+) error {
 	text, _, ok := b.value(inboundmessage.LoadFieldEquipment)
 	if !ok {
 		return nil
@@ -434,7 +469,11 @@ func (b *loadBuild) applyWeight(entity *shipment.Shipment) {
 
 	pounds, ok := parsePounds(text)
 	if !ok {
-		b.fail(inboundmessage.LoadFieldWeight, errortypes.ErrInvalid, "Write the weight in pounds, such as 42,000 lb")
+		b.fail(
+			inboundmessage.LoadFieldWeight,
+			errortypes.ErrInvalid,
+			"Write the weight in pounds, such as 42,000 lb",
+		)
 
 		return
 	}
@@ -471,7 +510,11 @@ func (b *loadBuild) applyRate(entity *shipment.Shipment) {
 
 	rate, err := decimalutils.ParseMoneyText(firstAmount(text))
 	if err != nil || !rate.Valid || rate.Decimal.IsNegative() {
-		b.fail(inboundmessage.LoadFieldRate, errortypes.ErrInvalid, "Write the rate as an amount, such as $1,240.00")
+		b.fail(
+			inboundmessage.LoadFieldRate,
+			errortypes.ErrInvalid,
+			"Write the rate as an amount, such as $1,240.00",
+		)
 
 		return
 	}
@@ -502,7 +545,11 @@ func (b *loadBuild) applyReference(entity *shipment.Shipment) {
 	entity.ExternalReference = text
 }
 
-func (s *Service) applyCommodity(ctx context.Context, b *loadBuild, entity *shipment.Shipment) error {
+func (s *Service) applyCommodity(
+	ctx context.Context,
+	b *loadBuild,
+	entity *shipment.Shipment,
+) error {
 	text, _, ok := b.value(inboundmessage.LoadFieldCommodity)
 	if !ok {
 		return nil
@@ -519,7 +566,11 @@ func (s *Service) applyCommodity(ctx context.Context, b *loadBuild, entity *ship
 
 	match, ok := pickRecord(matches)
 	if !ok {
-		b.fail(inboundmessage.LoadFieldCommodity, errortypes.ErrInvalid, unresolved("commodity", text, matches))
+		b.fail(
+			inboundmessage.LoadFieldCommodity,
+			errortypes.ErrInvalid,
+			unresolved("commodity", text, matches),
+		)
 
 		return nil
 	}

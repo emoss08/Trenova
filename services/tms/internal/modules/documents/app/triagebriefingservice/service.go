@@ -146,11 +146,14 @@ func (s *Service) gather(
 	}
 
 	weekStart := timeutils.WeekStart(now, loc)
-	if inputs.Corrections, err = s.insights.CorrectionTotals(ctx, triageports.CorrectionTotalsRequest{
-		TenantInfo:    tenantInfo,
-		LastWeekStart: timeutils.WeekStart(weekStart-weekSeconds/2, loc),
-		WeekStart:     weekStart,
-	}); err != nil {
+	if inputs.Corrections, err = s.insights.CorrectionTotals(
+		ctx,
+		triageports.CorrectionTotalsRequest{
+			TenantInfo:    tenantInfo,
+			LastWeekStart: timeutils.WeekStart(weekStart-weekSeconds/2, loc),
+			WeekStart:     weekStart,
+		},
+	); err != nil {
 		return nil, fmt.Errorf("count the week's corrections: %w", err)
 	}
 	if inputs.Suggestion, err = s.rules.Suggest(ctx, tenantInfo); err != nil {

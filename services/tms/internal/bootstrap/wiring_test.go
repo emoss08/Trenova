@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -147,6 +149,15 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						agentports.AgentTrustService,
 						agentports.AgentProposalNotifier,
 						agentports.AgentActivityPublisher,
+						inboundmessageports.TriageRuleEvaluator,
+						inboundmessageports.TriageRuleTeacher,
+						inboundmessageports.SenderHintProvider,
+						inboundmessageports.TriageBriefingInvalidator,
+						triageports.TriageCache,
+						triageports.TriageConflictChecker,
+						triageports.InboundCorrectionRecorder,
+						triageports.InboundModelAvailability,
+						triageports.TenderOverlapFinder,
 					) {
 					},
 				),

@@ -63,7 +63,7 @@ func (s *Service) SenderDomains(
 	tenantInfo pagination.TenantInfo,
 	query string,
 ) ([]string, error) {
-	return s.insights.SenderDomains(ctx, triageports.SenderDomainsRequest{
+	return s.insights.SenderDomains(ctx, &triageports.SenderDomainsRequest{
 		TenantInfo: tenantInfo,
 		Query:      query,
 		Since:      s.clock.DaysAgo(triagesupport.ProfileWindowDays),

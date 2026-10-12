@@ -1,4 +1,8 @@
-import type { InboundMessageCounts, InboundMessageFilter, InboundMessageRow } from "@/lib/graphql/inbox";
+import type {
+  InboundMessageCounts,
+  InboundMessageFilter,
+  InboundMessageRow,
+} from "@/lib/graphql/inbox";
 import { inbox, type InboxFolderPages } from "@/lib/queries/inbox";
 import {
   adjustCounts,
@@ -73,7 +77,9 @@ describe("folderMembership", () => {
     expect(folderMembership(awaiting, { lane: "Waiting" }, me)).toBe(false);
     expect(folderMembership(awaiting, { lane: "WaitingOnThem" }, me)).toBe(true);
     expect(folderMembership(mine, { lane: "AssignedToMe" }, me)).toBe(true);
-    expect(folderMembership(mine, { lane: "AssignedToMe" }, { ...me, meId: "usr_else" })).toBe(false);
+    expect(folderMembership(mine, { lane: "AssignedToMe" }, { ...me, meId: "usr_else" })).toBe(
+      false,
+    );
     expect(folderMembership(handled, { lane: "Handled" }, me)).toBe(true);
     expect(folderMembership(handled, { lane: "Waiting" }, me)).toBe(false);
     expect(folderMembership(handled, { lane: "Everything" }, me)).toBe(true);
@@ -83,9 +89,9 @@ describe("folderMembership", () => {
     const row = messageRow();
     expect(folderMembership(row, { lane: "Waiting", query: "acme" }, me)).toBe("unknown");
     expect(folderMembership(row, { lane: "Handled", query: "acme" }, me)).toBe(false);
-    expect(folderMembership(row, { lane: "Waiting", classification: "Invoice", query: "x" }, me)).toBe(
-      false,
-    );
+    expect(
+      folderMembership(row, { lane: "Waiting", classification: "Invoice", query: "x" }, me),
+    ).toBe(false);
     expect(folderMembership(row, { lane: "Waiting", query: "   " }, me)).toBe(true);
   });
 });
@@ -93,7 +99,10 @@ describe("folderMembership", () => {
 describe("insertIntoPages", () => {
   it("puts a message where the due-first order puts it, the overdue first", () => {
     const data = pages({
-      rows: [messageRow({ id: "a", dueAt: 100 }), messageRow({ id: "b", dueAt: 300, threadKey: "b" })],
+      rows: [
+        messageRow({ id: "a", dueAt: 100 }),
+        messageRow({ id: "b", dueAt: 300, threadKey: "b" }),
+      ],
     });
     const arriving = messageRow({ id: "n", dueAt: 200, threadKey: "n" });
 
@@ -125,9 +134,12 @@ describe("insertIntoPages", () => {
   });
 
   it("orders newest first when the folder is read newest first", () => {
-    const data = pages({ rows: [messageRow({ id: "b", receivedAt: 30, threadKey: "b" })] }, {
-      rows: [messageRow({ id: "a", receivedAt: 10, threadKey: "a" })],
-    });
+    const data = pages(
+      { rows: [messageRow({ id: "b", receivedAt: 30, threadKey: "b" })] },
+      {
+        rows: [messageRow({ id: "a", receivedAt: 10, threadKey: "a" })],
+      },
+    );
     const middle = messageRow({ id: "m", receivedAt: 20, threadKey: "m" });
 
     expect(ids(insertIntoPages(data, middle, newest))).toEqual([["b"], ["m", "a"]]);
@@ -143,7 +155,12 @@ describe("placeInFolder", () => {
     expect(updated.data.pages[0].messages[0].subject).toBe("Changed");
     expect(updated.inserted).toBe(false);
 
-    const handled = placeInFolder(data, { ...row, status: "Actioned", needsReview: false }, waiting, me);
+    const handled = placeInFolder(
+      data,
+      { ...row, status: "Actioned", needsReview: false },
+      waiting,
+      me,
+    );
     expect(ids(handled.data)).toEqual([[]]);
     expect(handled.removed).toBe(true);
 
@@ -206,7 +223,11 @@ describe("applyRows", () => {
     const client = new QueryClient();
     const row = messageRow({ id: "a" });
     const waitingKey = inbox.messages(waiting).queryKey;
-    const handledKey = inbox.messages({ lane: "Handled", sort: "Newest", collapseThreads: true }).queryKey;
+    const handledKey = inbox.messages({
+      lane: "Handled",
+      sort: "Newest",
+      collapseThreads: true,
+    }).queryKey;
     client.setQueryData(waitingKey, pages({ rows: [row] }));
     client.setQueryData(handledKey, pages({ rows: [] }));
     client.setQueryData(inbox.counts().queryKey, counts({ waiting: 1, total: 1 }));

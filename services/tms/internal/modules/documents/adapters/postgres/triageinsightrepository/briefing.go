@@ -39,15 +39,15 @@ func briefingCountsQuery(db bun.IDB, req triageports.BriefingWindow) *bun.Select
 	}
 
 	waiting := count(func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where(cols.Status.In(), bun.In(needsReview)).Where(cols.Parked.IsNull())
+		return sq.Where(cols.Status.In(), bun.List(needsReview)).Where(cols.Parked.IsNull())
 	})
 	overdue := count(func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where(cols.Status.In(), bun.In(needsReview)).
+		return sq.Where(cols.Status.In(), bun.List(needsReview)).
 			Where(cols.Parked.IsNull()).
 			Where(cols.DueAt.Lt(), req.Now)
 	})
 	closed := count(func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where(cols.Status.In(), bun.In(settled)).
+		return sq.Where(cols.Status.In(), bun.List(settled)).
 			Where(cols.ReviewedAt.Gte(), req.DayStart).
 			Where(cols.ReviewedBy.IsNotNull())
 	})
@@ -56,7 +56,7 @@ func briefingCountsQuery(db bun.IDB, req triageports.BriefingWindow) *bun.Select
 			Where(cols.ReceivedAt.Gte(), req.DayStart)
 	})
 	comingBack := count(func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where(cols.Status.In(), bun.In(needsReview)).Where(cols.Parked.IsNotNull())
+		return sq.Where(cols.Status.In(), bun.List(needsReview)).Where(cols.Parked.IsNotNull())
 	})
 	anyMessage := messages(db).ColumnExpr("1").Apply(tenant).Limit(1)
 
@@ -126,9 +126,9 @@ func arrivalsQuery(db bun.IDB, req triageports.BriefingWindow) *bun.SelectQuery 
 
 	return messages(db).
 		ColumnExpr(cols.ReceivedAt.Expr("FLOOR(({} - ?) / 3600)::int AS hour"), req.DayStart).
-		ColumnExpr("COUNT(*) FILTER (WHERE "+settledByRule()+") AS handled_by_nova", bun.In(settled)).
+		ColumnExpr("COUNT(*) FILTER (WHERE "+settledByRule()+") AS handled_by_nova", bun.List(settled)).
 		ColumnExpr("COUNT(*) FILTER (WHERE NOT "+settledByRule()+") AS left_for_person",
-			bun.In(settled)).
+			bun.List(settled)).
 		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
 		Where(cols.ReceivedAt.Gte(), req.DayStart).
 		Where(cols.ReceivedAt.Lte(), req.Now).
@@ -155,18 +155,18 @@ func riverQuery(db bun.IDB, req triageports.BriefingWindow) *bun.SelectQuery {
 
 	inner := messages(db).
 		Apply(messageRowColumns).
-		ColumnExpr(settledByRule()+" AS nova", bun.In(settled)).
+		ColumnExpr(settledByRule()+" AS nova", bun.List(settled)).
 		ColumnExpr("ROW_NUMBER() OVER (PARTITION BY "+settledByRule()+" ORDER BY "+
 			cols.ReceivedAt.OrderDesc()+", "+cols.ID.OrderDesc()+") AS lane_rank",
-			bun.In(settled)).
+			bun.List(settled)).
 		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
 		Where(cols.ReceivedAt.Gte(), req.DayStart).
 		Where(cols.ReceivedAt.Lte(), req.Now).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.
-				Where(settledByRule(), bun.In(settled)).
-				WhereOr(cols.Status.In(), bun.In(needsReview)).
-				WhereOr(settledByPerson(), bun.In(settled))
+				Where(settledByRule(), bun.List(settled)).
+				WhereOr(cols.Status.In(), bun.List(needsReview)).
+				WhereOr(settledByPerson(), bun.List(settled))
 		})
 
 	return db.NewSelect().
@@ -182,14 +182,18 @@ func (r *repository) Waiting(
 	ctx context.Context,
 	req triageports.WaitingRequest,
 ) ([]*inboundmessage.InboundMessage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
-		entities := make([]*inboundmessage.InboundMessage, 0, req.Limit)
-		if err := waitingQuery(r.db.DBForContext(ctx), req, &entities).Scan(ctx); err != nil {
-			return nil, err
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
+			entities := make([]*inboundmessage.InboundMessage, 0, req.Limit)
+			if err := waitingQuery(r.db.DBForContext(ctx), req, &entities).Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func waitingQuery(
@@ -203,7 +207,7 @@ func waitingQuery(
 		Model(entities).
 		ExcludeColumn(cols.TextBody.Bare(), cols.HTMLKey.Bare()).
 		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.Status.In(), bun.In(needsReview)).
+		Where(cols.Status.In(), bun.List(needsReview)).
 		Where(cols.Parked.IsNull()).
 		OrderExpr(cols.DueAt.Qualified()+" ASC NULLS LAST").
 		Order(cols.ReceivedAt.OrderAsc(), cols.ID.OrderAsc()).
@@ -232,7 +236,7 @@ func correctionTotalsQuery(db bun.IDB, req triageports.CorrectionTotalsRequest) 
 		Model((*triage.Activity)(nil)).
 		ColumnExpr("COUNT(*)").
 		Apply(triagecol.ActivityApplyTenant(req.TenantInfo)).
-		Where(act.Kind.In(), bun.In([]triage.ActivityKind{
+		Where(act.Kind.In(), bun.List([]triage.ActivityKind{
 			triage.ActivityCorrected,
 			triage.ActivityFactFlagged,
 		})).

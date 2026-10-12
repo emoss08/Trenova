@@ -130,7 +130,13 @@ func (c *cache) SetEnabledRules(
 	tenantInfo pagination.TenantInfo,
 	rules []*triage.Rule,
 ) error {
-	if err := redishelpers.SetStringJSON(ctx, c.client, RulesKey(tenantInfo), rules, RulesTTL); err != nil {
+	if err := redishelpers.SetStringJSON(
+		ctx,
+		c.client,
+		RulesKey(tenantInfo),
+		rules,
+		RulesTTL,
+	); err != nil {
 		return fmt.Errorf("write the enabled triage rules: %w", err)
 	}
 

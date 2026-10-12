@@ -47,7 +47,10 @@ type splitRequest struct {
 	pages      []PageRange
 }
 
-func (s *Service) split(ctx context.Context, req *splitRequest) (*inboundmessage.InboundMessage, error) {
+func (s *Service) split(
+	ctx context.Context,
+	req *splitRequest,
+) (*inboundmessage.InboundMessage, error) {
 	if !strings.EqualFold(req.attachment.ContentType, pdfContentType) &&
 		!strings.EqualFold(filepath.Ext(req.attachment.FileName), ".pdf") {
 		return nil, errortypes.NewValidationError(
@@ -389,12 +392,18 @@ func (s *Service) completeInline(
 	return s.RecordSplit(ctx, record)
 }
 
-func (s *Service) RecordSplit(ctx context.Context, payload *triageworkcontract.RecordSplitPayload) error {
+func (s *Service) RecordSplit(
+	ctx context.Context,
+	payload *triageworkcontract.RecordSplitPayload,
+) error {
 	tenantInfo := pagination.TenantInfo{OrgID: payload.OrganizationID, BuID: payload.BusinessUnitID}
-	attachment, err := s.messages.GetAttachmentByID(ctx, inboundmessageports.GetInboundAttachmentRequest{
-		ID:         payload.AttachmentID,
-		TenantInfo: tenantInfo,
-	})
+	attachment, err := s.messages.GetAttachmentByID(
+		ctx,
+		inboundmessageports.GetInboundAttachmentRequest{
+			ID:         payload.AttachmentID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return err
 	}

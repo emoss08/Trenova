@@ -405,8 +405,20 @@ describe("RealtimeClient", () => {
     apiPost.mockResolvedValue({
       scope,
       members: [
-        { userId: "usr_2", connectionId: "rtc_9", name: "Dana", messageId: "imsg_1", activity: "viewing" },
-        { userId: "usr_3", connectionId: "rtc_8", name: "Priya", messageId: "", activity: "staring" },
+        {
+          userId: "usr_2",
+          connectionId: "rtc_9",
+          name: "Dana",
+          messageId: "imsg_1",
+          activity: "viewing",
+        },
+        {
+          userId: "usr_3",
+          connectionId: "rtc_8",
+          name: "Priya",
+          messageId: "",
+          activity: "staring",
+        },
       ],
     });
 

@@ -49,7 +49,11 @@ export function placeMenu(
   const x = clamp(fitsRight ? point.x : point.x - width, margin, viewport.width - margin - width);
 
   const fitsBelow = point.y + height <= viewport.height - margin;
-  const y = clamp(fitsBelow ? point.y : point.y - height, margin, viewport.height - margin - height);
+  const y = clamp(
+    fitsBelow ? point.y : point.y - height,
+    margin,
+    viewport.height - margin - height,
+  );
 
   return { x, y, maxHeight };
 }

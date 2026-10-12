@@ -142,7 +142,7 @@ func manualOutcomesQuery(db bun.IDB, req *triageports.ManualOutcomesRequest) *bu
 		).
 		Apply(triagecol.ActivityApplyTenant(req.TenantInfo)).
 		Where(act.ActorKind.Eq(), triage.ActorPerson).
-		Where(act.Kind.In(), bun.In([]triage.ActivityKind{
+		Where(act.Kind.In(), bun.List([]triage.ActivityKind{
 			triage.ActivityFiled,
 			triage.ActivityHandled,
 			triage.ActivityIgnored,
@@ -209,12 +209,12 @@ func messageRowsQuery(db bun.IDB, req *triageports.MessageRowsRequest) *bun.Sele
 	return messages(db).
 		Apply(messageRowColumns).
 		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(inboundmessagecol.InboundMessageColumns.ID.In(), bun.In(req.IDs))
+		Where(inboundmessagecol.InboundMessageColumns.ID.In(), bun.List(req.IDs))
 }
 
 func (r *repository) SenderDomains(
 	ctx context.Context,
-	req triageports.SenderDomainsRequest,
+	req *triageports.SenderDomainsRequest,
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
 		domains := make([]string, 0, req.Limit)
@@ -226,7 +226,7 @@ func (r *repository) SenderDomains(
 	})
 }
 
-func senderDomainsQuery(db bun.IDB, req triageports.SenderDomainsRequest) *bun.SelectQuery {
+func senderDomainsQuery(db bun.IDB, req *triageports.SenderDomainsRequest) *bun.SelectQuery {
 	cols := inboundmessagecol.InboundMessageColumns
 
 	query := messages(db).

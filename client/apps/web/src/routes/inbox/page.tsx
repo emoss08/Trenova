@@ -126,7 +126,8 @@ export const prefetch: RoutePrefetch = ({ request }) => {
   } else if (folder.kind === "rules") {
     entries.push(queries.inbox.rules());
   } else if (folder.kind !== "view") {
-    const settled = folder.kind === "lane" && (folder.lane === "handled" || folder.lane === "ignored");
+    const settled =
+      folder.kind === "lane" && (folder.lane === "handled" || folder.lane === "ignored");
     const filter = folderFilter(folder, {
       search: location.search,
       sort: resolveSort(location.sort, !settled),
@@ -189,6 +190,10 @@ export function TriagePage() {
     [setSearchParams],
   );
 
+  const publish = useCallback((next: WorkspaceState) => {
+    state.current = next;
+  }, []);
+
   const railCollapsed = useTriageStore((store) => store.railCollapsed);
   const toggleRail = useTriageStore((store) => store.toggleRail);
 
@@ -227,7 +232,7 @@ export function TriagePage() {
           <TriageWorkspace
             location={location}
             wide={wide}
-            state={state}
+            publish={publish}
             setSearchParams={setSearchParams}
           />
         </ActionsScope>
@@ -255,12 +260,13 @@ const NO_VIEWS: readonly TriageView[] = [];
 function TriageWorkspace({
   location,
   wide,
-  state,
+  publish,
   setSearchParams,
 }: {
   location: ReturnType<typeof parseTriageLocation>;
   wide: boolean;
-  state: { current: WorkspaceState };
+  /** Hands the page what navigation reads: the open message, the order, the filter. */
+  publish: (state: WorkspaceState) => void;
   setSearchParams: ReturnType<typeof useSearchParams>[1];
 }) {
   const t = useT();
@@ -305,8 +311,11 @@ function TriageWorkspace({
     [items],
   );
 
+  const state = useRef<WorkspaceState>({ openId, orderedIds, filter, wide });
   useLayoutEffect(() => {
-    state.current = { openId, orderedIds, filter, wide };
+    const snapshot = { openId, orderedIds, filter, wide };
+    state.current = snapshot;
+    publish(snapshot);
   });
 
   const update = useCallback(
@@ -315,7 +324,8 @@ function TriageWorkspace({
     [setSearchParams],
   );
   const openMessage = useCallback(
-    (id: string | null, replace = false) => update((current) => messageParams(current, id), replace),
+    (id: string | null, replace = false) =>
+      update((current) => messageParams(current, id), replace),
     [update],
   );
   const selectFolder = useCallback(
@@ -418,7 +428,8 @@ function TriageWorkspace({
     (command: TriageCommand) => {
       const store = useTriageStore.getState();
       const current = state.current.openId;
-      const targets = store.selected.size > 0 ? [...store.selected] : current === null ? [] : [current];
+      const targets =
+        store.selected.size > 0 ? [...store.selected] : current === null ? [] : [current];
       const thenClear = () => store.clearSelection();
       switch (command) {
         case "briefing":
@@ -521,7 +532,9 @@ function TriageWorkspace({
     const name = query.charAt(0).toLocaleUpperCase() + query.slice(1);
     void actions.createView(name, query).then(
       (view) => {
-        update((current) => searchParamsWith(folderParams(current, { kind: "view", viewId: view.id }), ""));
+        update((current) =>
+          searchParamsWith(folderParams(current, { kind: "view", viewId: view.id }), ""),
+        );
       },
       (error: unknown) => handleMutationError({ error, resourceName: "View" }),
     );
@@ -532,7 +545,9 @@ function TriageWorkspace({
       return (
         <ListEmpty
           title={t("Nothing matches “{0}”", search.trim())}
-          description={t("Search covers the sender, subject, customer and PRO across every source.")}
+          description={t(
+            "Search covers the sender, subject, customer and PRO across every source.",
+          )}
         />
       );
     }
@@ -551,7 +566,10 @@ function TriageWorkspace({
       return (
         <ListEmpty
           title={t("All caught up")}
-          description={t("{0, plural, one {Nova handled # on its own.} other {Nova handled # on its own.}}", briefing?.handledByNovaToday ?? counts?.handled ?? 0)}
+          description={t(
+            "{0, plural, one {Nova handled # on its own.} other {Nova handled # on its own.}}",
+            briefing?.handledByNovaToday ?? counts?.handled ?? 0,
+          )}
         >
           {back}
         </ListEmpty>
@@ -583,7 +601,10 @@ function TriageWorkspace({
     <>
       {mailbox !== undefined && <SourceHealthBanner mailbox={mailbox} now={now} />}
       {briefing !== undefined && !briefing.novaEnabled && (
-        <NovaOffBanner onTurnOn={actions.readUnread} onOpenControl={() => navigate(AI_CONTROL_PATH)} />
+        <NovaOffBanner
+          onTurnOn={actions.readUnread}
+          onOpenControl={() => navigate(AI_CONTROL_PATH)}
+        />
       )}
     </>
   );
@@ -661,7 +682,10 @@ function TriageWorkspace({
             </div>
             <section
               aria-label={t("Message")}
-              className={cn("min-w-0 flex-1 flex-col", openId === null && !wide ? "hidden" : "flex")}
+              className={cn(
+                "min-w-0 flex-1 flex-col",
+                openId === null && !wide ? "hidden" : "flex",
+              )}
             >
               {openId === null ? (
                 <NothingOpen
@@ -770,4 +794,3 @@ function NothingOpen({
     </div>
   );
 }
-

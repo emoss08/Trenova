@@ -28,14 +28,7 @@ func Organization(
 	if err != nil {
 		return nil, time.UTC, err
 	}
-	if !timeutils.IsValidLocation(org.Timezone) {
-		return org, time.UTC, nil
-	}
-
-	location, err := time.LoadLocation(org.Timezone)
-	if err != nil {
-		return org, time.UTC, nil
-	}
+	location, _ := timeutils.ResolveZone(org.Timezone)
 
 	return org, location, nil
 }

@@ -40,8 +40,14 @@ describe("triage folders in the address", () => {
     expect(parseFolder(params("lane=mine"))).toEqual({ kind: "lane", lane: "mine" });
     expect(parseFolder(params("lane=snoozed"))).toEqual({ kind: "lane", lane: "snoozed" });
     expect(parseFolder(params("lane=all"))).toEqual({ kind: "lane", lane: "all" });
-    expect(parseFolder(params("kind=Tender"))).toEqual({ kind: "classification", classification: "Tender" });
-    expect(parseFolder(params("mailbox=imbx_01"))).toEqual({ kind: "mailbox", mailboxId: "imbx_01" });
+    expect(parseFolder(params("kind=Tender"))).toEqual({
+      kind: "classification",
+      classification: "Tender",
+    });
+    expect(parseFolder(params("mailbox=imbx_01"))).toEqual({
+      kind: "mailbox",
+      mailboxId: "imbx_01",
+    });
     expect(parseFolder(params("view=tv_1"))).toEqual({ kind: "view", viewId: "tv_1" });
   });
 
@@ -73,7 +79,9 @@ describe("triage folders in the address", () => {
       expect(parseFolder(next)).toEqual(folder);
       expect(next.has("message")).toBe(false);
       expect(next.get("sort")).toBe("newest");
-      expect(next.get("q")).toBe(folder.kind === "rules" || folder.kind === "briefing" ? null : "pod");
+      expect(next.get("q")).toBe(
+        folder.kind === "rules" || folder.kind === "briefing" ? null : "pod",
+      );
     }
   });
 
@@ -111,7 +119,12 @@ describe("folderFilter", () => {
   });
 
   it("reads a kind as what is waiting of that kind, and a source as all of its mail", () => {
-    expect(folderFilter({ kind: "classification", classification: "Invoice" }, { ...base, search: "  acme " })).toEqual({
+    expect(
+      folderFilter(
+        { kind: "classification", classification: "Invoice" },
+        { ...base, search: "  acme " },
+      ),
+    ).toEqual({
       sort: "Due",
       collapseThreads: true,
       lane: "Waiting",
@@ -125,10 +138,12 @@ describe("folderFilter", () => {
   });
 
   it("searches a view's words and the typed words together, and asks nothing for a view that is gone", () => {
-    expect(folderFilter({ kind: "view", viewId: "tv_1" }, { ...base, search: "PO" })).toMatchObject({
-      lane: "Everything",
-      query: "acme PO",
-    });
+    expect(folderFilter({ kind: "view", viewId: "tv_1" }, { ...base, search: "PO" })).toMatchObject(
+      {
+        lane: "Everything",
+        query: "acme PO",
+      },
+    );
     expect(folderFilter({ kind: "view", viewId: "tv_gone" }, base)).toBeNull();
   });
 
@@ -162,7 +177,9 @@ describe("sorting a folder", () => {
     expect(folderHasWaiting({ kind: "lane", lane: "them" }, counts, [view])).toBe(false);
     expect(folderHasWaiting({ kind: "lane", lane: "handled" }, counts, [view])).toBe(false);
     expect(folderHasWaiting({ kind: "lane", lane: "all" }, counts, [view])).toBe(true);
-    expect(folderHasWaiting({ kind: "classification", classification: "Invoice" }, counts, [view])).toBe(false);
+    expect(
+      folderHasWaiting({ kind: "classification", classification: "Invoice" }, counts, [view]),
+    ).toBe(false);
     expect(folderHasWaiting({ kind: "mailbox", mailboxId: "imbx_1" }, counts, [view])).toBe(false);
     expect(folderHasWaiting({ kind: "view", viewId: "tv_1" }, counts, [view])).toBe(true);
   });

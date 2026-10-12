@@ -150,7 +150,7 @@ func suggestionFor(
 }
 
 func actionFor(outcome triage.ActivityKind) (inboundmessage.NovaAction, bool) {
-	switch outcome {
+	switch outcome { //nolint:exhaustive // only filing and ignoring settle a message a rule can repeat
 	case triage.ActivityFiled:
 		return inboundmessage.NovaActionFileOnShipment, true
 	case triage.ActivityIgnored:

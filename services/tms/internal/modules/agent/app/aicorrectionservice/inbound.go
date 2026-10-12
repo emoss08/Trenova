@@ -83,7 +83,8 @@ func InboundCorrectionEntity(correction *triageports.InboundCorrection) *aicorre
 		Confidence: correction.PredictedConfidence,
 	})
 
-	for _, fact := range correction.Facts {
+	for i := range correction.Facts {
+		fact := &correction.Facts[i]
 		key := inboundFactFieldPrefix + fact.Key
 		predicted.Fields[key] = fact.Value
 		results = append(results, factResult(key, fact))
@@ -125,7 +126,7 @@ func classificationOutcome(correction *triageports.InboundCorrection) aicorrecti
 	return aicorrection.OutcomeCorrected
 }
 
-func factResult(key string, fact inboundmessage.Fact) aicorrection.FieldResult {
+func factResult(key string, fact *inboundmessage.Fact) aicorrection.FieldResult {
 	result := aicorrection.FieldResult{
 		Key:       key,
 		Predicted: fact.Value,

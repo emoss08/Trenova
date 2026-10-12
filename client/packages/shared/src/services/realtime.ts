@@ -229,11 +229,7 @@ export class RealtimeClient {
    * counted, so two components on one scope share one membership, and they are
    * replayed on every reconnect because a new stream is a new connection.
    */
-  public joinScope(
-    scope: string,
-    joinPath: string,
-    presence?: RealtimePresenceState,
-  ): () => void {
+  public joinScope(scope: string, joinPath: string, presence?: RealtimePresenceState): () => void {
     const state = this.scopeState(scope);
     state.joins += 1;
     state.joinPath = joinPath;
@@ -521,9 +517,7 @@ export class RealtimeClient {
   private replaceMembers(scope: string, members: RealtimePresenceMember[]): void {
     const state = this.scopes.get(scope);
     if (!state) return;
-    state.members = new Map(
-      members.map((member) => [member.connectionId, this.toMember(member)]),
-    );
+    state.members = new Map(members.map((member) => [member.connectionId, this.toMember(member)]));
     this.notifyScope(scope);
   }
 

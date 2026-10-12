@@ -38,11 +38,17 @@ type FileRequest struct {
 	Pages          []PageRange
 }
 
-func (s *Service) File(ctx context.Context, req *FileRequest) (*inboundmessage.InboundMessage, error) {
-	attachment, err := s.messages.GetAttachmentByID(ctx, inboundmessageports.GetInboundAttachmentRequest{
-		ID:         req.AttachmentID,
-		TenantInfo: req.TenantInfo,
-	})
+func (s *Service) File(
+	ctx context.Context,
+	req *FileRequest,
+) (*inboundmessage.InboundMessage, error) {
+	attachment, err := s.messages.GetAttachmentByID(
+		ctx,
+		inboundmessageports.GetInboundAttachmentRequest{
+			ID:         req.AttachmentID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +223,12 @@ func (s *Service) replaceExisting(ctx context.Context, f *wholeFiling, filedID p
 
 	existing := []pulid.ID{conflict.ExistingDocumentID}
 	if conflict.ExistingDocumentID.IsNil() {
-		current, err := s.work.CurrentShipmentDocuments(ctx, f.tenantInfo, f.shipmentID, f.docType.ID)
+		current, err := s.work.CurrentShipmentDocuments(
+			ctx,
+			f.tenantInfo,
+			f.shipmentID,
+			f.docType.ID,
+		)
 		if err != nil {
 			s.l.Warn("could not find the document a filing replaces",
 				zap.String("attachmentId", f.attachment.ID.String()), zap.Error(err))
@@ -248,11 +259,12 @@ func replacingConflict(
 	message *inboundmessage.InboundMessage,
 	attachmentID pulid.ID,
 ) (inboundmessage.Conflict, bool) {
-	for _, conflict := range message.Conflicts {
+	for i := range message.Conflicts {
+		conflict := &message.Conflicts[i]
 		if conflict.Kind == inboundmessage.ConflictDuplicateDocument &&
 			conflict.AttachmentID == attachmentID &&
 			conflict.Resolution == inboundmessage.ConflictReplaceExisting {
-			return conflict, true
+			return *conflict, true
 		}
 	}
 
@@ -318,10 +330,13 @@ func (s *Service) Unfile(
 	ctx context.Context,
 	req *UnfileRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	attachment, err := s.messages.GetAttachmentByID(ctx, inboundmessageports.GetInboundAttachmentRequest{
-		ID:         req.AttachmentID,
-		TenantInfo: req.TenantInfo,
-	})
+	attachment, err := s.messages.GetAttachmentByID(
+		ctx,
+		inboundmessageports.GetInboundAttachmentRequest{
+			ID:         req.AttachmentID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +395,12 @@ func (s *Service) restoreReplaced(
 	if !ok || conflict.ExistingDocumentID.IsNil() {
 		return
 	}
-	if err := s.setDocumentStatus(ctx, tenantInfo, conflict.ExistingDocumentID, document.StatusActive); err != nil {
+	if err := s.setDocumentStatus(
+		ctx,
+		tenantInfo,
+		conflict.ExistingDocumentID,
+		document.StatusActive,
+	); err != nil {
 		s.l.Warn("could not restore the document an undone filing had replaced",
 			zap.String("documentId", conflict.ExistingDocumentID.String()), zap.Error(err))
 	}
@@ -545,7 +565,7 @@ func (s *Service) typeForKind(
 	if !ok {
 		cache[kind] = nil
 
-		return nil, nil
+		return nil, nil //nolint:nilnil // this kind has no document type to file as
 	}
 
 	docType, err := s.documentTypes.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
@@ -556,7 +576,7 @@ func (s *Service) typeForKind(
 		if errortypes.IsNotFoundError(err) {
 			cache[kind] = nil
 
-			return nil, nil
+			return nil, nil //nolint:nilnil // the tenant has no document type with this code
 		}
 
 		return nil, err

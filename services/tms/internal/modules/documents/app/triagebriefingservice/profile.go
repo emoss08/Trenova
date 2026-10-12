@@ -31,7 +31,10 @@ func (s *Service) SenderProfile(
 		return nil, err
 	}
 
-	domain := stringutils.FirstNonEmpty(message.SenderDomain, emailutils.Domain(message.FromAddress))
+	domain := stringutils.FirstNonEmpty(
+		message.SenderDomain,
+		emailutils.Domain(message.FromAddress),
+	)
 	stats, err := s.insights.SenderStats(ctx, &triageports.SenderStatsRequest{
 		TenantInfo:   req.TenantInfo,
 		SenderDomain: domain,

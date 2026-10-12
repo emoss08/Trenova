@@ -65,7 +65,10 @@ export function createInboundMessagePatcher({
   let disposed = false;
 
   const refreshSummaries = (threadKey: string | null) => {
-    void queryClient.invalidateQueries({ queryKey: inbox.counts().queryKey, refetchType: "active" });
+    void queryClient.invalidateQueries({
+      queryKey: inbox.counts().queryKey,
+      refetchType: "active",
+    });
     void queryClient.invalidateQueries({ queryKey: inbox.views().queryKey, refetchType: "active" });
     void queryClient.invalidateQueries({
       queryKey: inbox.briefing().queryKey,

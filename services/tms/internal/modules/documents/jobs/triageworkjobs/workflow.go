@@ -142,5 +142,6 @@ func SplitFilingWorkflow(
 
 	recordCtx := workflow.WithActivityOptions(ctx, recordOptions)
 
-	return workflow.ExecuteActivity(recordCtx, a.RecordTriageSplitActivity, record).Get(recordCtx, nil)
+	return workflow.ExecuteActivity(recordCtx, a.RecordTriageSplitActivity, record).
+		Get(recordCtx, nil)
 }

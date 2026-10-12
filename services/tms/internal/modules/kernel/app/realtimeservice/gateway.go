@@ -231,7 +231,10 @@ func validateScopeRequest(req *agentports.RealtimeScopeRequest) error {
 	return nil
 }
 
-func validatePresenceState(state agentports.RealtimePresenceState, multiErr *errortypes.MultiError) {
+func validatePresenceState(
+	state agentports.RealtimePresenceState,
+	multiErr *errortypes.MultiError,
+) {
 	if state.MessageID != "" && !pulid.LooksLike(state.MessageID) {
 		multiErr.Add("messageId", errortypes.ErrInvalid, "Message ID is invalid")
 	}
@@ -240,7 +243,11 @@ func validatePresenceState(state agentports.RealtimePresenceState, multiErr *err
 	case "":
 	case agentports.RealtimeActivityViewing, agentports.RealtimeActivityWriting:
 		if state.MessageID == "" {
-			multiErr.Add("activity", errortypes.ErrInvalid, "An activity needs the message it is on")
+			multiErr.Add(
+				"activity",
+				errortypes.ErrInvalid,
+				"An activity needs the message it is on",
+			)
 		}
 	default:
 		multiErr.Add("activity", errortypes.ErrInvalid, "Activity must be viewing or writing")

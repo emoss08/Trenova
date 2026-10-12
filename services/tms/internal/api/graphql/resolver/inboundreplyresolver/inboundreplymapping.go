@@ -18,7 +18,7 @@ func (r *TriageActionResolver) visibleShipment(
 	shipmentID pulid.ID,
 ) (*shipmentports.ShipmentSummary, error) {
 	if shipmentID.IsNil() {
-		return nil, nil
+		return nil, nil //nolint:nilnil // no shipment is linked
 	}
 
 	authCtx, err := r.RequireAuth(ctx)
@@ -26,7 +26,7 @@ func (r *TriageActionResolver) visibleShipment(
 		return nil, err
 	}
 	if !r.HasPermission(ctx, authCtx, permission.ResourceShipment, permission.OpRead) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // the viewer cannot read shipments, so none is shown
 	}
 	if err = base.RequireLoaders(ctx); err != nil {
 		return nil, err
@@ -51,7 +51,9 @@ func loadFieldInputs(fields []*gqlmodel.TriageLoadFieldInput) []triageworkservic
 	return out
 }
 
-func fileRequest(input gqlmodel.FileInboundAttachmentInput) (*triageworkservice.FileRequest, error) {
+func fileRequest(
+	input gqlmodel.FileInboundAttachmentInput,
+) (*triageworkservice.FileRequest, error) {
 	attachmentID, err := pulid.MustParse(input.AttachmentID)
 	if err != nil {
 		return nil, err

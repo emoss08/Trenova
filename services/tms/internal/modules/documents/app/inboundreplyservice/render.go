@@ -31,7 +31,7 @@ var placeholderFallbacks = map[string]string{
 	placeholderSender:   "you",
 }
 
-func RenderTemplate(body string, values inboundmessageports.ReplyContext) string {
+func RenderTemplate(body string, values *inboundmessageports.ReplyContext) string {
 	known := map[string]string{
 		placeholderFirst:    values.SenderFirstName,
 		placeholderPro:      values.ProNumber,

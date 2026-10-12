@@ -1,4 +1,5 @@
 import type { InboundMessageDetail, TriageAction } from "@/lib/graphql/inbox";
+import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { queries } from "@/lib/queries";
 import { isSnoozed, senderName } from "@/lib/triage/message-state";
 import { useTriageStore } from "@/stores/triage-store";
@@ -119,6 +120,7 @@ export function Reader({ messageId, position, onClose, onStep }: ReaderProps) {
   const query = useQuery(queries.inbox.message(messageId));
   const message = query.data;
   const [showQuoted, setShowQuoted] = useState(false);
+  const now = useNowSeconds();
   useAnnouncePresence(messageId, "viewing");
 
   const body = useMemo(() => splitQuotedBody(message?.textBody ?? ""), [message?.textBody]);
@@ -140,7 +142,10 @@ export function Reader({ messageId, position, onClose, onStep }: ReaderProps) {
           case "File":
             if (next.attachment !== null && next.shipment !== null) {
               void actions
-                .file(message.id, { attachmentId: next.attachment.id, shipmentId: next.shipment.id })
+                .file(message.id, {
+                  attachmentId: next.attachment.id,
+                  shipmentId: next.shipment.id,
+                })
                 .catch(() => undefined);
             }
             return;
@@ -215,14 +220,16 @@ export function Reader({ messageId, position, onClose, onStep }: ReaderProps) {
             <span className="flex min-w-0 flex-1 items-baseline gap-2">
               <span className="truncate text-base font-medium">{senderName(message)}</span>
               {message.fromName.trim() !== "" && (
-                <span className="text-foreground-subtle truncate text-sm">{message.fromAddress}</span>
+                <span className="text-foreground-subtle truncate text-sm">
+                  {message.fromAddress}
+                </span>
               )}
             </span>
             <span className="text-foreground-subtle shrink-0 font-mono text-xs tabular-nums">
               {t(
                 "{0} · {1}",
                 formatUnixTime(message.receivedAt),
-                formatSecondsAgo(Math.floor(Date.now() / 1000) - message.receivedAt),
+                formatSecondsAgo(now - message.receivedAt),
               )}
             </span>
           </div>
@@ -266,13 +273,20 @@ export function Reader({ messageId, position, onClose, onStep }: ReaderProps) {
               </div>
               <ol className="mt-1">
                 {message.actions.map((action, index) => (
-                  <ActionLine key={action.id} message={message} action={action} number={index + 1} />
+                  <ActionLine
+                    key={action.id}
+                    message={message}
+                    action={action}
+                    number={index + 1}
+                  />
                 ))}
               </ol>
             </section>
           )}
 
-          <div className="text-base leading-relaxed wrap-anywhere whitespace-pre-wrap">{body.own}</div>
+          <div className="text-base leading-relaxed wrap-anywhere whitespace-pre-wrap">
+            {body.own}
+          </div>
           {body.quoted !== "" && (
             <div>
               <Button size="xs" variant="ghost" onClick={() => setShowQuoted((value) => !value)}>

@@ -257,6 +257,9 @@ func existingOfKind(
 
 func standing(status document.Status) bool {
 	switch status {
+	case document.StatusDraft, document.StatusActive, document.StatusPending,
+		document.StatusPendingApproval:
+		return true
 	case document.StatusArchived, document.StatusExpired, document.StatusRejected:
 		return false
 	default:

@@ -44,10 +44,11 @@ func (r *repository) FindOverlappingLoads(
 		}
 
 		db := r.db.DBForContext(ctx)
-		for i, load := range req.Loads {
+		for i := range req.Loads {
 			if i >= maxLoadsChecked {
 				break
 			}
+			load := &req.Loads[i]
 			if !checkable(load) {
 				continue
 			}
@@ -69,7 +70,7 @@ func (r *repository) FindOverlappingLoads(
 	})
 }
 
-func checkable(load triageports.TenderLoad) bool {
+func checkable(load *triageports.TenderLoad) bool {
 	return load.OriginCity != "" && load.OriginState != "" &&
 		load.DestinationCity != "" && load.DestinationState != "" &&
 		load.PickupFrom > 0 && load.PickupTo > load.PickupFrom
@@ -79,7 +80,7 @@ func overlapQuery(
 	db bun.IDB,
 	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
-	load triageports.TenderLoad,
+	load *triageports.TenderLoad,
 ) *bun.SelectQuery {
 	cols := shipmentcol.ShipmentColumns
 
@@ -143,7 +144,7 @@ func stopAt(
 		Where(move.ShipmentID.EqColumn(ship.ID)).
 		Where(move.OrganizationID.Eq(), tenantInfo.OrgID).
 		Where(move.BusinessUnitID.Eq(), tenantInfo.BuID).
-		Where(stop.Type.In(), bun.In(req.types)).
+		Where(stop.Type.In(), bun.List(req.types)).
 		Where(stop.Status.NotEq(), shipment.StopStatusCanceled).
 		Where(loc.City.Expr("LOWER(BTRIM({})) = ?"), strings.ToLower(strings.TrimSpace(req.city))).
 		Where(state.Abbreviation.Expr("UPPER({}) = ?"), strings.ToUpper(req.state))

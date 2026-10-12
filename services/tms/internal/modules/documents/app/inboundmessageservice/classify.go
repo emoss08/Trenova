@@ -316,10 +316,10 @@ func groundedFacts(
 		return nil
 	}
 
-	corpus := comparable(message.Subject + "\n" + message.TextBody)
+	corpus := matchable(message.Subject + "\n" + message.TextBody)
 	grounded := make([]inboundmessage.Fact, 0, len(facts))
 	for _, fact := range facts {
-		if strings.Contains(corpus, comparable(fact.Quote)) {
+		if strings.Contains(corpus, matchable(fact.Quote)) {
 			grounded = append(grounded, fact)
 		}
 	}
@@ -330,7 +330,7 @@ func groundedFacts(
 	return grounded
 }
 
-func comparable(text string) string {
+func matchable(text string) string {
 	return strings.ToLower(stringutils.CollapseWhitespace(text))
 }
 

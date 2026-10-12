@@ -215,6 +215,11 @@ app and Dash reach the stream. It reads the stream with `fetch` (not
   the socket says.
 - Joins are reference-counted per scope and re-sent on every new connection;
   subscribers receive the full member list on each change.
+- A scope that carries state (Triage) is joined with `joinScope(scope, path, state)`;
+  `setScopeState(scope, state)` posts the join again at once with the new
+  `messageId`/`activity`, and the latest state is what every rejoin after a
+  reconnect sends. In the web app, `useAnnouncePresence(messageId, activity)` sets it
+  (writing outranks viewing) and `useTriagePresence()` reads the others by message.
 - `connect({ identity, joinUsers })` reopens the stream when the identity changes,
   such as another user or a tenant switch, and forgets the previous session's
   cursor and presence. `disconnect()` runs on logout.

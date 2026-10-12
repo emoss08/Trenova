@@ -63,7 +63,10 @@ func (s *Service) DraftMany(ctx context.Context, req *DraftManyRequest) (int, er
 	return len(ids), nil
 }
 
-func (s *Service) DraftOne(ctx context.Context, payload *triageworkcontract.DraftOnePayload) (bool, error) {
+func (s *Service) DraftOne(
+	ctx context.Context,
+	payload *triageworkcontract.DraftOnePayload,
+) (bool, error) {
 	tenantInfo := pagination.TenantInfo{OrgID: payload.OrganizationID, BuID: payload.BusinessUnitID}
 	message, err := s.message(ctx, tenantInfo, payload.MessageID)
 	if err != nil {
@@ -83,7 +86,9 @@ func (s *Service) DraftOne(ctx context.Context, payload *triageworkcontract.Draf
 	}
 
 	drafted := false
-	for _, action := range triage.Actions(triage.ActionInput{Message: message, Reply: latest}) {
+	actions := triage.Actions(triage.ActionInput{Message: message, Reply: latest})
+	for i := range actions {
+		action := &actions[i]
 		if !action.NovaCanDo || action.Done {
 			continue
 		}

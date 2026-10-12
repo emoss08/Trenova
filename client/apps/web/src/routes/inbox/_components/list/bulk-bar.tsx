@@ -100,7 +100,12 @@ export function BulkBar({ messages }: { messages: readonly InboundMessageRow[] }
           disabled={none}
           onClick={run(actions.assignToMe)}
         />
-        <BarIcon label={t("Ignore")} icon={ArchiveIcon} disabled={none} onClick={run(actions.ignore)} />
+        <BarIcon
+          label={t("Ignore")}
+          icon={ArchiveIcon}
+          disabled={none}
+          onClick={run(actions.ignore)}
+        />
         <Button size="sm" disabled={none} onClick={run(actions.handle)}>
           <CheckIcon aria-hidden className="size-3.5" strokeWidth={2.4} />
           {t("Handled")}

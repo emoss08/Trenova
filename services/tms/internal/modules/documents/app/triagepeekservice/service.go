@@ -48,7 +48,7 @@ type Service struct {
 	now       func() int64
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{
 		messages:  p.Messages,
 		work:      p.Work,
@@ -157,12 +157,15 @@ func (s *Service) CustomerPeek(
 		return nil, err
 	}
 
-	recent, err := s.peeks.CustomerShipments(ctx, &inboundmessageports.TriageCustomerShipmentsRequest{
-		TenantInfo: req.TenantInfo,
-		CustomerID: req.CustomerID,
-		WeekStart:  timeutils.WeekStart(s.now(), location),
-		Limit:      customerPeekShipments,
-	})
+	recent, err := s.peeks.CustomerShipments(
+		ctx,
+		&inboundmessageports.TriageCustomerShipmentsRequest{
+			TenantInfo: req.TenantInfo,
+			CustomerID: req.CustomerID,
+			WeekStart:  timeutils.WeekStart(s.now(), location),
+			Limit:      customerPeekShipments,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +197,7 @@ func (s *Service) StopTimes(
 		return nil, err
 	}
 	if message.MatchedShipmentID.IsNil() || s.stops == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // no shipment is linked, so there are no stop times
 	}
 
 	return s.stops.StopTimes(ctx, tenantInfo, message.MatchedShipmentID)
@@ -221,7 +224,8 @@ func (s *Service) Readings(
 }
 
 func ReadingOf(content *documentcontent.Content) *inboundmessageports.DocumentReading {
-	if content == nil || !content.Status.Settled() || content.Status == documentcontent.StatusFailed {
+	if content == nil || !content.Status.Settled() ||
+		content.Status == documentcontent.StatusFailed {
 		return nil
 	}
 

@@ -9,9 +9,7 @@ export type TriageRowMode = "next" | "preview";
  * `openOverlay` by whatever asked for it — a key, a button, a menu item — and
  * rendered by the page, so the same dialog opens the same way from anywhere.
  */
-export type TriageOverlay =
-  | { kind: "link"; messageId: string }
-  | { kind: "shortcuts" };
+export type TriageOverlay = { kind: "link"; messageId: string } | { kind: "shortcuts" };
 
 /**
  * What the open reader can do that a key asks for. The reader registers these

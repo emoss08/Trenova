@@ -526,9 +526,7 @@ export async function reviewInboundMessages(
   return unmask(data.reviewInboundMessages);
 }
 
-export async function reopenInboundMessages(
-  selection: TriageSelection,
-): Promise<TriageBulkResult> {
+export async function reopenInboundMessages(selection: TriageSelection): Promise<TriageBulkResult> {
   const data = await requestGraphQL({
     document: ReopenInboundMessagesDocument,
     operationName: "ReopenInboundMessages",
@@ -953,9 +951,7 @@ export async function fileInboundMany(messageIds: readonly string[]): Promise<Tr
   return unmask(data.fileInboundMany);
 }
 
-export async function unfileInboundAttachment(
-  attachmentId: string,
-): Promise<InboundMessageDetail> {
+export async function unfileInboundAttachment(attachmentId: string): Promise<InboundMessageDetail> {
   const data = await requestGraphQL({
     document: UnfileInboundAttachmentDocument,
     operationName: "UnfileInboundAttachment",

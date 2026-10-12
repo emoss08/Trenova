@@ -1,9 +1,7 @@
 import type { InboundClassification, InboundMailbox, TriageView } from "@/lib/graphql/inbox";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
-import {
-  useContextMenuTrigger,
-} from "@trenova/shared/components/context-menu/context-menu-host";
+import { useContextMenuTrigger } from "@trenova/shared/components/context-menu/context-menu-host";
 import type { ContextMenuSpec } from "@trenova/shared/components/context-menu/menu-spec";
 import {
   Edit05Icon,
@@ -36,7 +34,12 @@ import {
 } from "../folders";
 import { laneCount, visibleLanes, type LaneKey } from "../lanes";
 import { folderMenu } from "../menus";
-import { useTriageCounts, useTriageMailboxes, useTriageRules, useTriageViews } from "../use-triage-data";
+import {
+  useTriageCounts,
+  useTriageMailboxes,
+  useTriageRules,
+  useTriageViews,
+} from "../use-triage-data";
 import { useTriageActions } from "../use-triage-actions";
 
 /** Where a source's settings and a new source live until Triage has its own flow for them. */
@@ -73,7 +76,12 @@ export function TriageSidebar({ folder, onSelect, onShortcuts }: TriageSidebarPr
   const enabledRules = rules.filter((rule) => rule.enabled).length;
   const time = { now, timeZone, format: USER_FORMATTERS };
 
-  const menuFor = (target: QueueFolder, title: string, waiting: number, extra: ContextMenuSpec["entries"]) =>
+  const menuFor = (
+    target: QueueFolder,
+    title: string,
+    waiting: number,
+    extra: ContextMenuSpec["entries"],
+  ) =>
     folderMenu({
       t,
       actions,
@@ -106,7 +114,10 @@ export function TriageSidebar({ folder, onSelect, onShortcuts }: TriageSidebarPr
 
         {kinds.length > 0 && <RailHeading>{t("Waiting")}</RailHeading>}
         {kinds.map((row) => {
-          const target: QueueFolder = { kind: "classification", classification: row.classification };
+          const target: QueueFolder = {
+            kind: "classification",
+            classification: row.classification,
+          };
           const title = classificationLabel(t, row.classification);
           return (
             <RailRow
@@ -153,7 +164,12 @@ export function TriageSidebar({ folder, onSelect, onShortcuts }: TriageSidebarPr
               }}
               menu={() =>
                 menuFor(target, view.name, view.waiting, [
-                  { id: "rename", label: t("Rename"), icon: Edit05Icon, onSelect: () => setRenaming(view.id) },
+                  {
+                    id: "rename",
+                    label: t("Rename"),
+                    icon: Edit05Icon,
+                    onSelect: () => setRenaming(view.id),
+                  },
                   {
                     id: "delete",
                     label: t("Delete view"),
@@ -313,7 +329,10 @@ function RailRow({
         (Icon === undefined ? null : (
           <Icon
             aria-hidden
-            className={cn("size-3.5 shrink-0", active ? "text-foreground" : "text-foreground-subtle")}
+            className={cn(
+              "size-3.5 shrink-0",
+              active ? "text-foreground" : "text-foreground-subtle",
+            )}
           />
         ))}
       <span className="min-w-0 flex-1 truncate">{label}</span>

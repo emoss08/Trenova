@@ -28,7 +28,10 @@ type TriageCache interface {
 	BumpQueueEpoch(ctx context.Context, tenantInfo pagination.TenantInfo) error
 	Get(ctx context.Context, key *CacheKey, dest any) (bool, error)
 	Set(ctx context.Context, key *CacheKey, value any, ttl time.Duration) error
-	EnabledRules(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*triage.Rule, bool, error)
+	EnabledRules(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*triage.Rule, bool, error)
 	SetEnabledRules(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

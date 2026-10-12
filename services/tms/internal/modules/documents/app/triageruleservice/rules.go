@@ -195,9 +195,9 @@ func (s *Service) Delete(ctx context.Context, req *DeleteRequest) error {
 	return nil
 }
 
-func (s *Service) Teach( //nolint:gocritic // the TriageRuleTeacher port takes its request by value
+func (s *Service) Teach(
 	ctx context.Context,
-	req inboundmessageports.TeachRequest,
+	req inboundmessageports.TeachRequest, //nolint:gocritic // the TriageRuleTeacher port takes its request by value
 ) (*triage.Rule, error) {
 	if req.SenderDomain == "" {
 		return nil, errortypes.NewValidationError(
