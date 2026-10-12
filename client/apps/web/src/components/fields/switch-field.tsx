@@ -22,6 +22,8 @@ type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   readOnly?: boolean;
   warning?: WarningProps;
   tooltip?: React.ReactNode;
+  /** Marks after the label, such as an "Urgent" or "Required" badge. */
+  badges?: React.ReactNode;
 };
 
 export type SwitchFieldProps<T extends FieldValues> = BaseSwitchFieldProps & FormControlProps<T>;
@@ -38,6 +40,7 @@ export function SwitchField<T extends FieldValues>({
   position = "right",
   warning,
   tooltip,
+  badges,
   className,
   "aria-describedby": ariaDescribedBy,
   ...props
@@ -89,6 +92,7 @@ export function SwitchField<T extends FieldValues>({
           <div className={cn("grid grow gap-1", position === "left" ? "order-1" : "order-0")}>
             <div className="flex items-center gap-2">
               <Label htmlFor={inputId}>{label}</Label>
+              {badges}
               {recommended && <RecommendedBadge size="sm" variant="warning" tooltip={tooltip} />}
               {!recommended && tooltip && (
                 <Tooltip>

@@ -334,3 +334,134 @@ func (_c *MockSessionRepository_Update_Call) RunAndReturn(run func(ctx context.C
 	_c.Call.Return(run)
 	return _c
 }
+
+// ListForUser provides a mock function for the type MockSessionRepository
+func (_mock *MockSessionRepository) ListForUser(ctx context.Context, userID pulid.ID) ([]*session.Session, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListForUser")
+	}
+
+	var r0 []*session.Session
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) ([]*session.Session, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) []*session.Session); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*session.Session)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockSessionRepository_ListForUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListForUser'
+type MockSessionRepository_ListForUser_Call struct {
+	*mock.Call
+}
+
+// ListForUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID pulid.ID
+func (_e *MockSessionRepository_Expecter) ListForUser(ctx any, userID any) *MockSessionRepository_ListForUser_Call {
+	return &MockSessionRepository_ListForUser_Call{Call: _e.mock.On("ListForUser", ctx, userID)}
+}
+
+func (_c *MockSessionRepository_ListForUser_Call) Run(run func(ctx context.Context, userID pulid.ID)) *MockSessionRepository_ListForUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSessionRepository_ListForUser_Call) Return(sessions []*session.Session, err error) *MockSessionRepository_ListForUser_Call {
+	_c.Call.Return(sessions, err)
+	return _c
+}
+
+func (_c *MockSessionRepository_ListForUser_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID) ([]*session.Session, error)) *MockSessionRepository_ListForUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Touch provides a mock function for the type MockSessionRepository
+func (_mock *MockSessionRepository) Touch(ctx context.Context, sessionID pulid.ID, at int64) error {
+	ret := _mock.Called(ctx, sessionID, at)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Touch")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, int64) error); ok {
+		r0 = returnFunc(ctx, sessionID, at)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockSessionRepository_Touch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Touch'
+type MockSessionRepository_Touch_Call struct {
+	*mock.Call
+}
+
+// Touch is a helper method to define mock.On call
+//   - ctx context.Context
+//   - sessionID pulid.ID
+//   - at int64
+func (_e *MockSessionRepository_Expecter) Touch(ctx any, sessionID any, at any) *MockSessionRepository_Touch_Call {
+	return &MockSessionRepository_Touch_Call{Call: _e.mock.On("Touch", ctx, sessionID, at)}
+}
+
+func (_c *MockSessionRepository_Touch_Call) Run(run func(ctx context.Context, sessionID pulid.ID, at int64)) *MockSessionRepository_Touch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSessionRepository_Touch_Call) Return(err error) *MockSessionRepository_Touch_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockSessionRepository_Touch_Call) RunAndReturn(run func(ctx context.Context, sessionID pulid.ID, at int64) error) *MockSessionRepository_Touch_Call {
+	_c.Call.Return(run)
+	return _c
+}

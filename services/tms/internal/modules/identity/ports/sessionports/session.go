@@ -16,4 +16,6 @@ type SessionRepository interface {
 	// reach the sessions somebody else may already be holding, or the reset does not
 	// actually take the account back.
 	DeleteAllForUser(ctx context.Context, userID pulid.ID) error
+	ListForUser(ctx context.Context, userID pulid.ID) ([]*session.Session, error)
+	Touch(ctx context.Context, sessionID pulid.ID, at int64) error
 }

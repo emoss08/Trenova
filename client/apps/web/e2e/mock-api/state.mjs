@@ -1,5 +1,6 @@
 import { createAIState } from "./fixtures/aicontrol.mjs";
 import { buildShipments, CARRIERS, createDriverPool } from "./fixtures/board.mjs";
+import { createSettingsState } from "./fixtures/settings.mjs";
 
 export const SCENARIO_DEFAULTS = {
   // quiet | busy | high (480 rows)
@@ -64,6 +65,7 @@ export function createState(scenario) {
     anchor,
     now: () => anchor + Math.floor((Date.now() - startedAt) / 1000),
     ai: createAIState(anchor, scenario),
+    settings: createSettingsState(anchor),
     shipments,
     drivers: scenario.board === "quiet" ? pool.slice(0, 4) : scenario.board === "high" ? pool : pool.slice(0, 9),
     carriers: CARRIERS.map((carrier) => ({ ...carrier })),

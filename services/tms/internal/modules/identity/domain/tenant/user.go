@@ -91,6 +91,15 @@ type User struct {
 	CreatedAt             int64                  `json:"createdAt"             bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt             int64                  `json:"updatedAt"             bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	LastLoginAt           *int64                 `json:"lastLoginAt,omitzero"  bun:"last_login_at,nullzero"`
+	JobTitle              string                 `json:"jobTitle"              bun:"job_title,type:VARCHAR(100),notnull"`
+	PhoneNumber           string                 `json:"phoneNumber"           bun:"phone_number,type:VARCHAR(30),notnull"`
+	AvatarStyle           AvatarStyle            `json:"avatarStyle"           bun:"avatar_style,type:VARCHAR(20),notnull,default:'auto'"`
+	AvailabilityStatus    AvailabilityStatus     `json:"availabilityStatus"    bun:"availability_status,type:VARCHAR(20),notnull,default:'available'"`
+	FocusUntil            *int64                 `json:"focusUntil"            bun:"focus_until,nullzero"`
+	AwayBackOn            *int64                 `json:"awayBackOn"            bun:"away_back_on,nullzero"`
+	AwayDelegateUserID    *pulid.ID              `json:"awayDelegateUserId"    bun:"away_delegate_user_id,type:VARCHAR(100),nullzero"`
+	AwayNote              string                 `json:"awayNote"              bun:"away_note,type:VARCHAR(280),notnull"`
+	PasswordChangedAt     *int64                 `json:"passwordChangedAt"     bun:"password_changed_at,nullzero"`
 
 	BusinessUnit        *BusinessUnit                    `json:"-"                     bun:"rel:belongs-to,join:business_unit_id=id"`
 	CurrentOrganization *Organization                    `json:"-"                     bun:"rel:belongs-to,join:current_organization_id=id"`

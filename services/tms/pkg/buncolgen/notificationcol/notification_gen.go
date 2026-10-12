@@ -327,6 +327,252 @@ var NotificationFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// Preference — table "user_notification_preferences", alias "unp"
+// ---------------------------------------------------------------------------
+
+// PreferenceTable holds the table name, alias, and primary key columns
+// for the "user_notification_preferences" table. The alias "unp" is used in all generated
+// SQL fragments (e.g. "unp.id = ?").
+var PreferenceTable = buncolgen.TableInfo{
+	Name:       "user_notification_preferences",
+	Alias:      "unp",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// PreferenceColumns provides type-safe column references for the "user_notification_preferences" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(PreferenceColumns.ID.String())
+//	// SELECT unp.id FROM user_notification_preferences AS unp
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(PreferenceColumns.ID.Eq(), id)           // WHERE unp.id = ?
+//	q.Order(PreferenceColumns.CreatedAt.OrderDesc())  // ORDER BY unp.created_at DESC
+var PreferenceColumns = struct {
+	ID                    buncolgen.Column // "id" → qualified: "unp.id"
+	OrganizationID        buncolgen.Column // "organization_id" → qualified: "unp.organization_id"
+	BusinessUnitID        buncolgen.Column // "business_unit_id" → qualified: "unp.business_unit_id"
+	UserID                buncolgen.Column // "user_id" → qualified: "unp.user_id"
+	DisabledEventTypes    buncolgen.Column // "disabled_event_types" → qualified: "unp.disabled_event_types"
+	DesktopMode           buncolgen.Column // "desktop_mode" → qualified: "unp.desktop_mode"
+	EmailMode             buncolgen.Column // "email_mode" → qualified: "unp.email_mode"
+	EmailDigest           buncolgen.Column // "email_digest" → qualified: "unp.email_digest"
+	Sound                 buncolgen.Column // "sound" → qualified: "unp.sound"
+	QuietHoursEnabled     buncolgen.Column // "quiet_hours_enabled" → qualified: "unp.quiet_hours_enabled"
+	QuietHoursStart       buncolgen.Column // "quiet_hours_start" → qualified: "unp.quiet_hours_start"
+	QuietHoursEnd         buncolgen.Column // "quiet_hours_end" → qualified: "unp.quiet_hours_end"
+	QuietHoursDays        buncolgen.Column // "quiet_hours_days" → qualified: "unp.quiet_hours_days"
+	QuietHoursAllowUrgent buncolgen.Column // "quiet_hours_allow_urgent" → qualified: "unp.quiet_hours_allow_urgent"
+	PausedUntil           buncolgen.Column // "paused_until" → qualified: "unp.paused_until"
+	LastDigestAt          buncolgen.Column // "last_digest_at" → qualified: "unp.last_digest_at"
+	Version               buncolgen.Column // "version" → qualified: "unp.version"
+	CreatedAt             buncolgen.Column // "created_at" → qualified: "unp.created_at"
+	UpdatedAt             buncolgen.Column // "updated_at" → qualified: "unp.updated_at"
+}{
+	ID:                    buncolgen.NewColumn("id", "unp"),
+	OrganizationID:        buncolgen.NewColumn("organization_id", "unp"),
+	BusinessUnitID:        buncolgen.NewColumn("business_unit_id", "unp"),
+	UserID:                buncolgen.NewColumn("user_id", "unp"),
+	DisabledEventTypes:    buncolgen.NewColumn("disabled_event_types", "unp"),
+	DesktopMode:           buncolgen.NewColumn("desktop_mode", "unp"),
+	EmailMode:             buncolgen.NewColumn("email_mode", "unp"),
+	EmailDigest:           buncolgen.NewColumn("email_digest", "unp"),
+	Sound:                 buncolgen.NewColumn("sound", "unp"),
+	QuietHoursEnabled:     buncolgen.NewColumn("quiet_hours_enabled", "unp"),
+	QuietHoursStart:       buncolgen.NewColumn("quiet_hours_start", "unp"),
+	QuietHoursEnd:         buncolgen.NewColumn("quiet_hours_end", "unp"),
+	QuietHoursDays:        buncolgen.NewColumn("quiet_hours_days", "unp"),
+	QuietHoursAllowUrgent: buncolgen.NewColumn("quiet_hours_allow_urgent", "unp"),
+	PausedUntil:           buncolgen.NewColumn("paused_until", "unp"),
+	LastDigestAt:          buncolgen.NewColumn("last_digest_at", "unp"),
+	Version:               buncolgen.NewColumn("version", "unp"),
+	CreatedAt:             buncolgen.NewColumn("created_at", "unp"),
+	UpdatedAt:             buncolgen.NewColumn("updated_at", "unp"),
+}
+
+// PreferenceFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Preference.GetStaticFieldMap().
+var PreferenceFieldMap = map[string]string{
+	"id":                    "id",
+	"organizationId":        "organization_id",
+	"businessUnitId":        "business_unit_id",
+	"userId":                "user_id",
+	"disabledEventTypes":    "disabled_event_types",
+	"desktopMode":           "desktop_mode",
+	"emailMode":             "email_mode",
+	"emailDigest":           "email_digest",
+	"sound":                 "sound",
+	"quietHoursEnabled":     "quiet_hours_enabled",
+	"quietHoursStart":       "quiet_hours_start",
+	"quietHoursEnd":         "quiet_hours_end",
+	"quietHoursDays":        "quiet_hours_days",
+	"quietHoursAllowUrgent": "quiet_hours_allow_urgent",
+	"pausedUntil":           "paused_until",
+	"lastDigestAt":          "last_digest_at",
+	"version":               "version",
+	"createdAt":             "created_at",
+	"updatedAt":             "updated_at",
+}
+
+// PreferenceInsertableColumns lists column names suitable for INSERT statements on the "user_notification_preferences" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var PreferenceInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"user_id",
+	"disabled_event_types",
+	"desktop_mode",
+	"email_mode",
+	"email_digest",
+	"sound",
+	"quiet_hours_enabled",
+	"quiet_hours_start",
+	"quiet_hours_end",
+	"quiet_hours_days",
+	"quiet_hours_allow_urgent",
+	"paused_until",
+	"last_digest_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// PreferenceScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE unp.organization_id = ? AND unp.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	notificationcol.PreferenceScopeTenant(sq, ti).
+//		Where(notificationcol.PreferenceColumns.ID.Eq(), id)
+func PreferenceScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, PreferenceColumns.OrganizationID, PreferenceColumns.BusinessUnitID, ti)
+}
+
+// PreferenceScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return notificationcol.PreferenceScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(notificationcol.PreferenceColumns.ID.In(), bun.List(ids))
+//	})
+func PreferenceScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, PreferenceColumns.OrganizationID, PreferenceColumns.BusinessUnitID, ti)
+}
+
+// PreferenceScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return notificationcol.PreferenceScopeTenantDelete(dq, req.TenantInfo).
+//			Where(notificationcol.PreferenceColumns.ID.Eq(), id)
+//	})
+func PreferenceScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, PreferenceColumns.OrganizationID, PreferenceColumns.BusinessUnitID, ti)
+}
+
+// PreferenceApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(notificationcol.PreferenceApplyTenant(tenantInfo))
+func PreferenceApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(PreferenceColumns.OrganizationID, PreferenceColumns.BusinessUnitID, ti)
+}
+
+// PreferenceFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "user_notification_preferences" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	PreferenceFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var PreferenceFilter = struct {
+	ID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	UserID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	DisabledEventTypes    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disabledEventTypes" → DB: "disabled_event_types"
+	DesktopMode           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "desktopMode" → DB: "desktop_mode"
+	EmailMode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailMode" → DB: "email_mode"
+	EmailDigest           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailDigest" → DB: "email_digest"
+	Sound                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sound" → DB: "sound"
+	QuietHoursEnabled     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "quietHoursEnabled" → DB: "quiet_hours_enabled"
+	QuietHoursStart       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "quietHoursStart" → DB: "quiet_hours_start"
+	QuietHoursEnd         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "quietHoursEnd" → DB: "quiet_hours_end"
+	QuietHoursDays        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "quietHoursDays" → DB: "quiet_hours_days"
+	QuietHoursAllowUrgent func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "quietHoursAllowUrgent" → DB: "quiet_hours_allow_urgent"
+	PausedUntil           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pausedUntil" → DB: "paused_until"
+	LastDigestAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastDigestAt" → DB: "last_digest_at"
+	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("userId", op, value)
+	},
+	DisabledEventTypes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("disabledEventTypes", op, value)
+	},
+	DesktopMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("desktopMode", op, value)
+	},
+	EmailMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("emailMode", op, value)
+	},
+	EmailDigest: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("emailDigest", op, value)
+	},
+	Sound: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sound", op, value)
+	},
+	QuietHoursEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("quietHoursEnabled", op, value)
+	},
+	QuietHoursStart: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("quietHoursStart", op, value)
+	},
+	QuietHoursEnd: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("quietHoursEnd", op, value)
+	},
+	QuietHoursDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("quietHoursDays", op, value)
+	},
+	QuietHoursAllowUrgent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("quietHoursAllowUrgent", op, value)
+	},
+	PausedUntil: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("pausedUntil", op, value)
+	},
+	LastDigestAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("lastDigestAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // PushSubscription — table "user_push_subscriptions", alias "ups"
 // ---------------------------------------------------------------------------
 

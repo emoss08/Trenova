@@ -8,6 +8,7 @@ import {
 } from "@/lib/ai-audit-exports";
 import { invoicePanelPath } from "@/lib/invoice-links";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 import type { Notification } from "@trenova/shared/types/notification";
 import {
   AlertOctagonIcon,
@@ -98,6 +99,8 @@ export interface NotificationAvatar {
 }
 
 export interface NotificationDescriptor {
+  /** What happened, as a person turning it off reads it: "A carrier accepts a tender". */
+  label?: string;
   category: string;
   icon: IconComponent;
   iconClass: string;
@@ -158,6 +161,7 @@ const aiControlLink = (notification: Notification) =>
  * again, while a completed or refused one is simply news.
  */
 const ASSISTANT_REPLY_DESCRIPTOR: NotificationDescriptor = {
+  label: "A reply you left is ready",
   category: "Assistant",
   icon: AssistMark,
   iconClass: "text-muted-foreground",
@@ -172,6 +176,7 @@ const ASSISTANT_REPLY_DESCRIPTOR: NotificationDescriptor = {
 const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
   [ASSISTANT_REPLY_READY]: ASSISTANT_REPLY_DESCRIPTOR,
   "agent.proposals_pending": {
+    label: "Agent proposals wait for you",
     category: "AI Control",
     icon: ListChecksIcon,
     iconClass: "text-brand",
@@ -179,6 +184,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: aiControlLink,
   },
   "agent.proposals_reminder": {
+    label: "A reminder about waiting proposals",
     category: "AI Control",
     icon: ClockAlertIcon,
     iconClass: "text-warning",
@@ -186,6 +192,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: aiControlLink,
   },
   "agent.tool_promoted": {
+    label: "A tool earns more trust",
     category: "AI Control",
     icon: TrendUp01Icon,
     iconClass: "text-success",
@@ -193,6 +200,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: aiControlLink,
   },
   "agent.tool_demoted": {
+    label: "A tool loses trust",
     category: "AI Control",
     icon: TrendDown01Icon,
     iconClass: "text-warning",
@@ -200,6 +208,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: aiControlLink,
   },
   "agent.quality_regression": {
+    label: "An agent’s quality drops",
     category: "AI Control",
     icon: TrendDown01Icon,
     iconClass: "text-warning",
@@ -211,6 +220,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
         : null,
   },
   [AI_AUDIT_EXPORT_READY_EVENT]: {
+    label: "An audit export is ready",
     category: "AI Control",
     icon: FileDownload02Icon,
     iconClass: "text-success",
@@ -218,6 +228,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: (n) => aiAuditExportNotice(n)?.link ?? null,
   },
   [AI_AUDIT_EXPORT_FAILED_EVENT]: {
+    label: "An audit export fails",
     category: "AI Control",
     icon: FileX02Icon,
     iconClass: "text-destructive",
@@ -225,6 +236,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: (n) => aiAuditExportNotice(n)?.link ?? null,
   },
   [AI_AUDIT_CHAIN_MISMATCH_EVENT]: {
+    label: "The audit chain doesn’t verify",
     category: "AI Control",
     icon: FileLock02Icon,
     iconClass: "text-destructive",
@@ -232,6 +244,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: () => AI_AUDIT_TRAIL_PATH,
   },
   "dash.pto_requested": {
+    label: "A worker requests time off",
     category: "Workers",
     icon: CalendarClockIcon,
     iconClass: "text-brand",
@@ -239,6 +252,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: () => "/hr/workers?pageTab=pto",
   },
   "dash.credential_expiring": {
+    label: "A worker’s credential is about to expire",
     category: "Workers",
     icon: IdCardIcon,
     iconClass: "text-warning",
@@ -246,6 +260,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: workerCredentialsLink,
   },
   credential_expiring: {
+    label: "A credential is about to expire",
     category: "Workers",
     icon: IdCardIcon,
     iconClass: "text-warning",
@@ -253,6 +268,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: workerCredentialsLink,
   },
   credential_expired: {
+    label: "A credential expired",
     category: "Workers",
     icon: ShieldAlertIcon,
     iconClass: "text-destructive",
@@ -260,15 +276,22 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: workerCredentialsLink,
   },
   credential_document_uploaded: {
+    label: "A credential document is uploaded",
     category: "Workers",
     icon: FileCheck02Icon,
     iconClass: "text-brand",
     tileClass: "bg-brand/10",
     getLink: workerCredentialsLink,
   },
-  report_run_completed: REPORT_READY,
-  report_run_delivered: { ...REPORT_READY, iconClass: "text-brand", tileClass: "bg-brand/10" },
+  report_run_completed: { ...REPORT_READY, label: "A report finishes" },
+  report_run_delivered: {
+    ...REPORT_READY,
+    label: "A scheduled report is delivered",
+    iconClass: "text-brand",
+    tileClass: "bg-brand/10",
+  },
   report_run_failed: {
+    label: "A report fails",
     category: "Reports",
     icon: FileX02Icon,
     iconClass: "text-destructive",
@@ -276,6 +299,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: reportRunsLink,
   },
   report_run_canceled: {
+    label: "A report run is canceled",
     category: "Reports",
     icon: SlashCircle01Icon,
     iconClass: "text-muted-foreground",
@@ -283,6 +307,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: reportRunsLink,
   },
   report_schedule_skipped: {
+    label: "A schedule is skipped",
     category: "Reports",
     icon: CalendarMinus01Icon,
     iconClass: "text-warning",
@@ -290,6 +315,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: () => "/reports",
   },
   report_delivery_email_failed: {
+    label: "A report email bounces",
     category: "Reports",
     icon: MailAlertIcon,
     iconClass: "text-warning",
@@ -297,6 +323,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: reportRunsLink,
   },
   invoice_reconciliation_warning: {
+    label: "An invoice won’t reconcile",
     category: "Billing",
     icon: ReceiptTextIcon,
     iconClass: "text-warning",
@@ -304,6 +331,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: invoiceLink,
   },
   invoice_shared: {
+    label: "Someone shares an invoice with you",
     category: "Billing",
     icon: Share07Icon,
     iconClass: "text-brand",
@@ -316,6 +344,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: (n) => notificationDataString(n, "link") ?? invoiceLink(n),
   },
   billing_exception_recorded: {
+    label: "A billing exception is recorded",
     category: "Billing",
     icon: CurrencyDollarCircleIcon,
     iconClass: "text-warning",
@@ -324,6 +353,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
       entityPanelLink("/shipment-management/shipments", notificationRelatedId(n, "shipmentId")),
   },
   bank_receipt_reconciliation_exception: {
+    label: "A bank receipt doesn’t match",
     category: "Accounting",
     icon: Building08Icon,
     iconClass: "text-warning",
@@ -335,6 +365,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
       ),
   },
   shipment_comment_mention: {
+    label: "Someone @mentions you on a shipment",
     category: "Mentions",
     icon: AtSignIcon,
     iconClass: "text-brand",
@@ -352,6 +383,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
       }),
   },
   "edi.message.dead_lettered": {
+    label: "An EDI message can’t be processed",
     category: "EDI",
     icon: SwitchHorizontal01Icon,
     iconClass: "text-destructive",
@@ -359,6 +391,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: (n) => notificationDataString(n, "link") ?? "/edi/messages",
   },
   "edi.inbound_file.quarantined": {
+    label: "An inbound file is quarantined",
     category: "EDI",
     icon: FileAlertIcon,
     iconClass: "text-destructive",
@@ -366,6 +399,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: (n) => notificationDataString(n, "link") ?? "/edi/inbound-files",
   },
   carrier_intel_block: {
+    label: "A carrier is blocked",
     category: "Carrier Intelligence",
     icon: ShieldBanIcon,
     iconClass: "text-destructive",
@@ -373,6 +407,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: carrierIntelLink,
   },
   carrier_intel_change: {
+    label: "A monitored carrier changes",
     category: "Carrier Intelligence",
     icon: ShieldQuestionIcon,
     iconClass: "text-warning",
@@ -380,6 +415,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: carrierIntelLink,
   },
   carrier_intel_digest: {
+    label: "The weekly monitoring digest",
     category: "Carrier Intelligence",
     icon: ListChecksIcon,
     iconClass: "text-brand",
@@ -387,6 +423,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: (n) => notificationDataString(n, "link") ?? CARRIER_MONITORING_PATH,
   },
   carrier_intel_provider_paused: {
+    label: "A data provider pauses",
     category: "Carrier Intelligence",
     icon: PauseCircleIcon,
     iconClass: "text-destructive",
@@ -395,6 +432,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
       notificationDataString(n, "link") ?? "/admin/integrations?category=CarrierCompliance",
   },
   carrier_equipment_mismatch: {
+    label: "Equipment doesn’t match the load",
     category: "Carrier Intelligence",
     icon: Truck01Icon,
     iconClass: "text-destructive",
@@ -402,6 +440,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: carrierIntelLink,
   },
   carrier_intel_spend_soft_cap: {
+    label: "Lookup spend nears its cap",
     category: "Carrier Intelligence",
     icon: Coins01Icon,
     iconClass: "text-warning",
@@ -409,6 +448,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: carrierIntelUsageLink,
   },
   carrier_intel_spend_cap: {
+    label: "Lookup spend reaches its cap",
     category: "Carrier Intelligence",
     icon: Coins01Icon,
     iconClass: "text-destructive",
@@ -416,6 +456,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: carrierIntelUsageLink,
   },
   tender_accepted: {
+    label: "A carrier accepts a tender",
     category: "Dispatch",
     icon: CheckCircleIcon,
     iconClass: "text-success",
@@ -423,6 +464,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: dispatchConsoleLink,
   },
   tender_needs_review: {
+    label: "A tender needs your review",
     category: "Dispatch",
     icon: AlertTriangleIcon,
     iconClass: "text-warning",
@@ -430,6 +472,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: dispatchConsoleLink,
   },
   tender_waterfall_exhausted: {
+    label: "A waterfall runs out of carriers",
     category: "Dispatch",
     icon: AlertOctagonIcon,
     iconClass: "text-destructive",
@@ -437,6 +480,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: dispatchConsoleLink,
   },
   rate_confirmation_issue_failed: {
+    label: "A rate confirmation fails to issue",
     category: "Dispatch",
     icon: FileAlertIcon,
     iconClass: "text-destructive",
@@ -444,6 +488,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: dispatchConsoleLink,
   },
   tender_delivery_failed: {
+    label: "A tender can’t be delivered",
     category: "Dispatch",
     icon: MailAlertIcon,
     iconClass: "text-destructive",
@@ -451,6 +496,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: dispatchConsoleLink,
   },
   tender_entries_skipped: {
+    label: "Carriers are skipped in a waterfall",
     category: "Dispatch",
     icon: FilterFunnelXIcon,
     iconClass: "text-warning",
@@ -460,6 +506,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
 };
 
 const TCA_DESCRIPTOR: NotificationDescriptor = {
+  label: "A table you watch changes",
   category: "Data alert",
   icon: Database02Icon,
   iconClass: "text-info",
@@ -468,6 +515,7 @@ const TCA_DESCRIPTOR: NotificationDescriptor = {
 };
 
 const FALLBACK_DESCRIPTOR: NotificationDescriptor = {
+  label: "Account and product notices",
   category: "System",
   icon: Bell01Icon,
   iconClass: "text-muted-foreground",
@@ -499,4 +547,209 @@ export function resolveNotificationDescriptor(notification: Notification): Notif
 
 export function getNotificationLink(notification: Notification): string | null {
   return resolveNotificationDescriptor(notification).getLink?.(notification) ?? null;
+}
+
+/** The preference key that turns every table change alert off at once. */
+export const TCA_PREFERENCE_KEY = "tca.*";
+/** The preference key for notices no producer registers: account and product news. */
+export const SYSTEM_PREFERENCE_KEY = "system";
+
+/**
+ * Kinds an organization requires its people to receive. The bell always shows them and
+ * their switch stays on; the reason is shown where the switch would be.
+ */
+export const REQUIRED_NOTIFICATION_TYPES = defineLabels({
+  [AI_AUDIT_CHAIN_MISMATCH_EVENT]: "Your organization requires this for admins",
+  [SYSTEM_PREFERENCE_KEY]: "Security notices always reach you in Trenova",
+});
+
+function requiredReason(key: string): string | null {
+  return Object.hasOwn(REQUIRED_NOTIFICATION_TYPES, key)
+    ? (REQUIRED_NOTIFICATION_TYPES as Readonly<Record<string, string>>)[key]
+    : null;
+}
+
+interface CategoryLook {
+  /** The registry's category, which the look is matched by. */
+  name: string;
+  /** The category as a person reads it; its renderer translates it. */
+  label: string;
+  /** One line on what the category covers; its renderer translates it. */
+  description: string;
+  icon: IconComponent;
+  iconClass: string;
+  tileClass: string;
+}
+
+const CATEGORY_LOOKS: readonly CategoryLook[] = [
+  {
+    name: "Mentions",
+    label: "Mentions",
+    description: "When a teammate @mentions you",
+    icon: AtSignIcon,
+    iconClass: "text-brand",
+    tileClass: "bg-brand-subtle",
+  },
+  {
+    name: "Assistant",
+    label: "Assistant",
+    description: "Replies you walked away from",
+    icon: AssistMark,
+    iconClass: "text-muted-foreground",
+    tileClass: "bg-muted",
+  },
+  {
+    name: "Dispatch",
+    label: "Dispatch",
+    description: "Tenders, waterfalls and rate confirmations",
+    icon: Truck01Icon,
+    iconClass: "text-brand",
+    tileClass: "bg-brand-subtle",
+  },
+  {
+    name: "Billing",
+    label: "Billing",
+    description: "Invoices and billing exceptions",
+    icon: ReceiptTextIcon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning-subtle",
+  },
+  {
+    name: "Accounting",
+    label: "Accounting",
+    description: "Bank receipt reconciliation",
+    icon: Building08Icon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning-subtle",
+  },
+  {
+    name: "Carrier Intelligence",
+    label: "Carrier intelligence",
+    description: "Monitoring, blocks and spend caps",
+    icon: ShieldQuestionIcon,
+    iconClass: "text-destructive",
+    tileClass: "bg-danger-subtle",
+  },
+  {
+    name: "Workers",
+    label: "Workers",
+    description: "Time off and driver credentials",
+    icon: IdCardIcon,
+    iconClass: "text-brand",
+    tileClass: "bg-brand-subtle",
+  },
+  {
+    name: "Reports",
+    label: "Reports",
+    description: "Runs and scheduled deliveries",
+    icon: FileDownload02Icon,
+    iconClass: "text-success",
+    tileClass: "bg-success-subtle",
+  },
+  {
+    name: "EDI",
+    label: "EDI",
+    description: "Messages and inbound files",
+    icon: SwitchHorizontal01Icon,
+    iconClass: "text-destructive",
+    tileClass: "bg-danger-subtle",
+  },
+  {
+    name: "AI Control",
+    label: "AI Control",
+    description: "Proposals, tool trust and audit exports",
+    icon: ListChecksIcon,
+    iconClass: "text-brand",
+    tileClass: "bg-brand-subtle",
+  },
+  {
+    name: "Data alert",
+    label: "Data alerts",
+    description: "Table change alerts you subscribed to",
+    icon: Database02Icon,
+    iconClass: "text-info",
+    tileClass: "bg-info-subtle",
+  },
+  {
+    name: "System",
+    label: "System",
+    description: "Product and account notices",
+    icon: Bell01Icon,
+    iconClass: "text-muted-foreground",
+    tileClass: "bg-muted",
+  },
+];
+
+export interface NotificationCatalogType {
+  /** The key a preference stores: the event type, or a wildcard for a family of them. */
+  key: string;
+  /** English source; translate at render. */
+  label: string;
+  urgent: boolean;
+  /** Why the type cannot be turned off, when it cannot, in the language on screen. */
+  requiredReason: string | null;
+}
+
+export interface NotificationCatalogCategory {
+  /** The registry's category. */
+  name: string;
+  /** English source; translate at render. */
+  label: string;
+  /** English source; translate at render. */
+  description: string;
+  icon: IconComponent;
+  iconClass: string;
+  tileClass: string;
+  types: NotificationCatalogType[];
+}
+
+/** A kind is urgent when its descriptor is drawn in the danger tone. */
+export function isUrgentDescriptor(descriptor: Pick<NotificationDescriptor, "iconClass">): boolean {
+  return descriptor.iconClass === "text-destructive";
+}
+
+function catalogType(key: string, descriptor: NotificationDescriptor): NotificationCatalogType {
+  return {
+    key,
+    label: descriptor.label ?? key,
+    urgent: isUrgentDescriptor(descriptor),
+    requiredReason: requiredReason(key),
+  };
+}
+
+/**
+ * Every kind of notification Trenova sends, grouped by the registry's category in the
+ * order a person reads them: what needs them first, news last. A category the looks
+ * above do not name yet takes the look of its first kind and sorts last.
+ */
+export function buildNotificationCatalog(): NotificationCatalogCategory[] {
+  const entries: Array<[string, NotificationDescriptor]> = [
+    ...Object.entries(EXACT_REGISTRY),
+    [TCA_PREFERENCE_KEY, TCA_DESCRIPTOR],
+    [SYSTEM_PREFERENCE_KEY, FALLBACK_DESCRIPTOR],
+  ];
+  const looks = new Map(CATEGORY_LOOKS.map((look, index) => [look.name, { look, index }]));
+  const byCategory = new Map<string, NotificationCatalogCategory & { order: number }>();
+  for (const [key, descriptor] of entries) {
+    let category = byCategory.get(descriptor.category);
+    if (!category) {
+      const known = looks.get(descriptor.category);
+      category = {
+        name: descriptor.category,
+        label: known?.look.label ?? descriptor.category,
+        description: known?.look.description ?? "",
+        icon: known?.look.icon ?? descriptor.icon,
+        iconClass: known?.look.iconClass ?? descriptor.iconClass,
+        tileClass: known?.look.tileClass ?? descriptor.tileClass,
+        types: [],
+        order: known?.index ?? CATEGORY_LOOKS.length,
+      };
+      byCategory.set(descriptor.category, category);
+    }
+    category.types.push(catalogType(key, descriptor));
+  }
+
+  return [...byCategory.values()]
+    .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
+    .map(({ order: _order, ...category }) => category);
 }

@@ -8,6 +8,15 @@ import {
   type UserOrganization,
 } from "@trenova/shared/types/organization";
 import {
+  avatarSummariesSchema,
+  revokeSessionsResponseSchema,
+  sessionSummariesSchema,
+  signInSummariesSchema,
+  type AvatarSummary,
+  type SessionSummary,
+  type SignInSummary,
+  type UpdateMyAvailability,
+  type UpdateMyProfile,
   bulkUpdateUserStatusResponseSchema,
   userOrganizationMembershipsResponseSchema,
   profilePictureUrlResponseSchema,
@@ -110,6 +119,43 @@ export class UserService {
   public async changeMyPassword(data: ChangeMyPassword) {
     const response = await api.post<User>(`${this.base_url}/me/change-password/`, data);
     return safeParse(userSchema, response, "Change Password");
+  }
+
+  public async updateMyProfile(data: UpdateMyProfile) {
+    const response = await api.patch<User>(`${this.base_url}/me/profile/`, data);
+    return safeParse(userSchema, response, "User Profile");
+  }
+
+  public async updateMyAvailability(data: UpdateMyAvailability) {
+    const response = await api.put<User>(`${this.base_url}/me/availability/`, data);
+    return safeParse(userSchema, response, "User Availability");
+  }
+
+  public async listMySessions() {
+    const response = await api.get<SessionSummary[]>(`${this.base_url}/me/sessions/`);
+    return safeParse(sessionSummariesSchema, response, "Sessions");
+  }
+
+  public async revokeMySession(sessionId: string) {
+    await api.delete(`${this.base_url}/me/sessions/${encodeURIComponent(sessionId)}/`);
+  }
+
+  public async revokeMyOtherSessions() {
+    const response = await api.post<{ revoked: number }>(
+      `${this.base_url}/me/sessions/revoke-others/`,
+    );
+    return safeParse(revokeSessionsResponseSchema, response, "Sessions");
+  }
+
+  public async listMySignIns(limit = 5) {
+    const response = await api.get<SignInSummary[]>(`${this.base_url}/me/sign-ins/?limit=${limit}`);
+    return safeParse(signInSummariesSchema, response, "Sign-ins");
+  }
+
+  public async listAvatars(ids: readonly string[]) {
+    const params = new URLSearchParams({ ids: ids.join(",") });
+    const response = await api.get<AvatarSummary[]>(`${this.base_url}/avatars/?${params}`);
+    return safeParse(avatarSummariesSchema, response, "Avatars");
   }
 
   public async uploadMyProfilePicture(file: File) {

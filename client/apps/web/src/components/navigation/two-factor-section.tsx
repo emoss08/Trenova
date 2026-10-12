@@ -29,7 +29,33 @@ import { toast } from "sonner";
 
 export const MFA_STATUS_QUERY_KEY = ["mfa", "status"] as const;
 
-type Dialogs = "setup" | "disable" | "regenerate" | null;
+export type TwoFactorDialog = "setup" | "disable" | "regenerate" | null;
+type Dialogs = TwoFactorDialog;
+
+/** The person's second-factor status, shared by every place that shows or changes it. */
+export function useMFAStatus() {
+  return useQuery({
+    queryKey: MFA_STATUS_QUERY_KEY,
+    queryFn: () => mfaService.status(),
+  });
+}
+
+/** The dialogs that turn the second factor on, off, or replace its recovery codes. */
+export function TwoFactorDialogs({
+  open,
+  onClose,
+}: {
+  open: TwoFactorDialog;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <SetupDialog open={open === "setup"} onClose={onClose} />
+      <DisableDialog open={open === "disable"} onClose={onClose} />
+      <RegenerateDialog open={open === "regenerate"} onClose={onClose} />
+    </>
+  );
+}
 
 /**
  * The person's authenticator-app second factor: whether it is on, how many recovery
@@ -38,10 +64,7 @@ type Dialogs = "setup" | "disable" | "regenerate" | null;
 export function TwoFactorSection() {
   const t = useT();
   const [open, setOpen] = useState<Dialogs>(null);
-  const statusQuery = useQuery({
-    queryKey: MFA_STATUS_QUERY_KEY,
-    queryFn: () => mfaService.status(),
-  });
+  const statusQuery = useMFAStatus();
   const status = statusQuery.data;
 
   return (
@@ -65,9 +88,7 @@ export function TwoFactorSection() {
         </Alert>
       ) : null}
 
-      <SetupDialog open={open === "setup"} onClose={() => setOpen(null)} />
-      <DisableDialog open={open === "disable"} onClose={() => setOpen(null)} />
-      <RegenerateDialog open={open === "regenerate"} onClose={() => setOpen(null)} />
+      <TwoFactorDialogs open={open} onClose={() => setOpen(null)} />
     </div>
   );
 }
