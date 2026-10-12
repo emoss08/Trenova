@@ -30862,6 +30862,15 @@
       "go/other"
     ]
   },
+  "Automatic transfers are started by billing control, not by hand": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Automatic weekly DOE/EIA on-highway diesel price ingestion (U.S. average, PADD regions, California) that drives fuel surcharge programs and billing.": {
     "sites": 1,
     "scope": [
@@ -133496,6 +133505,15 @@
       "go/other"
     ]
   },
+  "Move ready freight into billing for organizations that transfer automatically": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Move removal is blocked by the {0} profile": {
     "sites": 1,
     "scope": [
@@ -218136,6 +218154,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Start automatic billing transfers for organizations whose schedule is due": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Start backfill": {
