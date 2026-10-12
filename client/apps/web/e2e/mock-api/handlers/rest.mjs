@@ -52,10 +52,10 @@ const ROUTES = [
   ["GET", /^\/api\/v1\/tables\/?$/, () => ({ results: [], count: 0 })],
 ];
 
-export function handleRest(state, { method, path, body }) {
+export function handleRest(state, { method, path, query, body }) {
   for (const [routeMethod, pattern, handler] of ROUTES) {
     if (routeMethod === method && pattern.test(path)) {
-      const payload = handler(state, path, body);
+      const payload = handler(state, path, body, query);
       if (payload && payload.__stream) return { known: true, stream: true };
       if (payload && payload.__hold) return { known: true, hold: true };
       if (payload && payload.__sse) return { known: true, sse: payload.__sse };

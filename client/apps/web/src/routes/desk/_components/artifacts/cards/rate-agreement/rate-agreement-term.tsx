@@ -49,8 +49,9 @@ export function TermPanel({ agreement, now }: { agreement: TermAgreement; now: n
   const state = termState(agreement, now);
   const span = termSpan(agreement, now);
   const end = agreement.effectiveTo ?? null;
-  const today = span?.today ?? OPEN_TODAY;
-  const showsToday = span === null || span.when === "during";
+  const begun = agreement.effectiveFrom <= now;
+  const today = span?.today ?? (begun ? OPEN_TODAY : 0);
+  const showsToday = span === null ? begun : span.when === "during";
 
   return (
     <div className={cn("dk-ra-now", `dk-ra-${state}`)}>
@@ -79,7 +80,7 @@ export function TermPanel({ agreement, now }: { agreement: TermAgreement; now: n
         <i className="dk-ra-done" style={{ width: `${today * 100}%` }} />
         {span && span.notice > 0 && (
           <i
-            className={cn("dk-ra-notice", agreement.autoRenew && "dk-renews")}
+            className={cn("dk-ra-notice-zone", agreement.autoRenew && "dk-renews")}
             style={{ width: `${span.notice * 100}%` }}
           />
         )}

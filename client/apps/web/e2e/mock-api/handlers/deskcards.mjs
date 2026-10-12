@@ -3,7 +3,10 @@
 // field picks what the cards read: "full" (the fixture), "empty" (every
 // section empty) or "hold" (every card request left open, for the skeleton).
 import {
+  DESK_RECORD_NAMES,
   DESK_THREAD_ID,
+  deskRateAgreements,
+  laneSummary,
   deskCardArtifacts,
   deskDocument,
   deskThread,
@@ -67,6 +70,24 @@ function carrierFixture(state, id) {
 
 function orderFixture(state, id) {
   return deskOrders(state.anchor)[id] ?? null;
+}
+
+function agreementFixture(state, id) {
+  return deskRateAgreements(state.anchor)[id] ?? null;
+}
+
+/** The agreement a rate agreement route names, or the 404 the API answers for one that is gone. */
+function agreementRoute(state, path) {
+  const id = path.match(/rate-agreements\/([a-z0-9_]+)/)?.[1] ?? "";
+  const fixture = agreementFixture(state, id);
+  return fixture
+    ? { fixture }
+    : {
+        missing: {
+          __status: 404,
+          body: { title: "Not Found", status: 404, detail: "Rate agreement not found" },
+        },
+      };
 }
 
 /** A page of a fixture's rows, read the way a connection pages them. */
@@ -302,9 +323,42 @@ export const DESK_CARD_HANDLERS = {
     const fixture = orderFixture(state, variables.id);
     return { order: fixture ? fixture.order : null };
   },
+  DeskRateAgreementPricing: (state, variables) => {
+    if (held(state)) return HOLD;
+    const agreementId = variables.input?.fieldFilters?.find(
+      (filter) => filter.field === "rateAgreementId",
+    )?.value;
+    const pricing = agreementFixture(state, agreementId)?.pricing;
+    const loads = pricing && !empty(state) ? pricing.loads : 0;
+    return {
+      rateQuotes: {
+        edges: loads ? [{ node: { id: "rq_latest", ratedAt: pricing.lastRatedAt } }] : [],
+        totalCount: loads,
+      },
+    };
+  },
+  SelectOptions: (state, variables) => {
+    const ids = variables.input?.ids ?? [];
+    const nodes = ids
+      .filter((id) => DESK_RECORD_NAMES[id])
+      .map((id) => ({
+        id,
+        label: DESK_RECORD_NAMES[id].label,
+        description: null,
+        meta: DESK_RECORD_NAMES[id].meta ?? null,
+      }));
+    return {
+      selectOptions: {
+        edges: nodes.map((node) => ({ node, cursor: node.id })),
+        pageInfo: { hasNextPage: false, endCursor: null },
+        totalCount: nodes.length,
+      },
+    };
+  },
   DeskRecordActivity: (state, variables) => {
     if (held(state)) return HOLD;
-    const fixture = orderFixture(state, variables.resourceId);
+    const fixture =
+      orderFixture(state, variables.resourceId) ?? agreementFixture(state, variables.resourceId);
     const rows = fixture && !empty(state) ? fixture.activity : [];
     return {
       auditEntriesByResourceId: connectionPage(rows, variables.input, variables.includeTotalCount),
@@ -319,6 +373,54 @@ function threadSlug(state) {
 }
 
 export const DESK_CARD_ROUTES = [
+  [
+    "GET",
+    /^\/api\/v1\/rate-agreements\/[a-z0-9_]+\/lanes\/summary\/?$/,
+    (state, path) => {
+      if (held(state)) return HOLD;
+      const { fixture, missing } = agreementRoute(state, path);
+      if (missing) return missing;
+      return laneSummary(empty(state) ? [] : fixture.lanes);
+    },
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/rate-agreements\/[a-z0-9_]+\/lanes\/?$/,
+    (state, path, _body, query) => {
+      if (held(state)) return HOLD;
+      const { fixture, missing } = agreementRoute(state, path);
+      if (missing) return missing;
+      const lanes = empty(state) ? [] : fixture.lanes;
+      const limit = Number(query?.get("limit") ?? 20);
+      const offset = Number(query?.get("offset") ?? 0);
+      return {
+        results: lanes.slice(offset, offset + limit),
+        count: lanes.length,
+        retired: empty(state) ? 0 : fixture.retired,
+        limit,
+        offset,
+      };
+    },
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/rate-agreements\/[a-z0-9_]+\/versions\/?$/,
+    (state, path) => {
+      if (held(state)) return HOLD;
+      const { fixture, missing } = agreementRoute(state, path);
+      if (missing) return missing;
+      return { results: empty(state) ? [] : fixture.versions };
+    },
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/rate-agreements\/[a-z0-9_]+\/?$/,
+    (state, path) => {
+      if (held(state)) return HOLD;
+      const { fixture, missing } = agreementRoute(state, path);
+      return missing ?? fixture.agreement;
+    },
+  ],
   [
     "GET",
     /^\/api\/v1\/assistant\/providers\/?$/,

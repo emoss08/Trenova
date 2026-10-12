@@ -3952,6 +3952,9 @@ button.dk-dx-c:hover {
   flex-direction: column;
   gap: 3px;
 }
+.dk-rec-who.dk-alone {
+  align-self: flex-start;
+}
 .dk-rec-who h2 {
   margin: 0;
   font-size: 20px;
@@ -4278,10 +4281,7 @@ button.dk-dx-c:hover {
 .dk-rec-log {
   list-style: none;
   margin: 0;
-  padding: 0 0 12px;
-}
-.dk-rec-log:has(+ .dk-rec-more) {
-  padding-bottom: 0;
+  padding: 0;
 }
 .dk-rec-log li {
   position: relative;
@@ -4299,6 +4299,9 @@ button.dk-dx-c:hover {
   bottom: 0;
   width: 1px;
   background: var(--dsk-b);
+}
+.dk-rec-log li:last-child {
+  padding-bottom: 0;
 }
 .dk-rec-log li:last-child::before {
   display: none;
@@ -4491,7 +4494,7 @@ button.dk-dx-c:hover {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 2px 0 12px;
+  padding: 2px 0 0;
 }
 .dk-rec-sk-log > div {
   display: grid;
@@ -7096,6 +7099,12 @@ th.dk-cb .dk-ax-cb:hover {
   line-height: 1.5;
   color: var(--dsk-subtle);
 }
+/* the rate structure: each way the agreement prices, as a share of its live lanes */
+.dk-ra-mix {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 .dk-rec-q .dk-ra-ok {
   color: var(--dsk-fg2);
 }
@@ -7199,7 +7208,7 @@ th.dk-cb .dk-ax-cb:hover {
   transform-origin: left center;
   animation: dk-cu-grow 700ms var(--dk-settle) both;
 }
-.dk-ra-notice {
+.dk-ra-notice-zone {
   position: absolute;
   right: 0;
   top: 50%;
@@ -7212,7 +7221,7 @@ th.dk-cb .dk-ax-cb:hover {
     transparent 3px 6px
   );
 }
-.dk-ra-notice.dk-renews {
+.dk-ra-notice-zone.dk-renews {
   background: repeating-linear-gradient(
     -45deg,
     color-mix(in srgb, var(--dsk-success) 45%, transparent) 0 3px,
@@ -7452,6 +7461,11 @@ th.dk-cb .dk-ax-cb:hover {
   font-size: 12px;
   white-space: nowrap;
   color: var(--dsk-fg2);
+}
+.dk-ra-price > span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
 }
 .dk-ra-price b {
   font: 600 12.5px var(--dk-plex);

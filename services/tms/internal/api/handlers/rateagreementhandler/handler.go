@@ -59,6 +59,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.listLanes,
 	)
+	api.GET(
+		"/:rateAgreementID/lanes/summary/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.summarizeLanes,
+	)
 	api.POST(
 		"/:rateAgreementID/rules/amend/",
 		h.pm.RequirePermission(resource, permission.OpUpdate),
@@ -358,6 +363,39 @@ func (h *Handler) listLanes(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, page)
+}
+
+// @Summary Summarize a rate agreement's lanes
+// @Description Groups the agreement's live lanes by the formula template or rate matrix that prices them, with how many lanes each prices and the range of their rates.
+// @ID summarizeRateAgreementLanes
+// @Tags Rate Agreements
+// @Produce json
+// @Param rateAgreementID path string true "Rate agreement ID"
+// @Success 200 {object} rateagreementports.RateAgreementLaneSummary
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Router /rate-agreements/{rateAgreementID}/lanes/summary/ [get]
+func (h *Handler) summarizeLanes(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	agreementID, err := h.agreementID(c)
+	if err != nil {
+		return
+	}
+
+	summary, err := h.service.SummarizeLanes(
+		c.Request.Context(),
+		&rateagreementports.ListRateAgreementLanesRequest{
+			TenantInfo:      tenantOf(authCtx),
+			RateAgreementID: agreementID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, summary)
 }
 
 type amendRulesRequest struct {

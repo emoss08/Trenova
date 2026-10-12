@@ -3,8 +3,10 @@ import { useCardAccess } from "../../record-card/card-access";
 import {
   CardBarSkeleton,
   CardHeadSkeleton,
+  CardMeterSkeleton,
   CardRowsSkeleton,
   CardSectionSkeleton,
+  CardTimelineSkeleton,
   RecordCardSkeleton,
   SkeletonBar,
 } from "../../skeletons/record-card-skeleton";
@@ -13,6 +15,8 @@ import { RATE_AGREEMENT_SECTIONS } from "./rate-agreement-sections";
 const STEPS = 3;
 const LIMIT_CELLS = 4;
 const PARTY_ROWS = [[34, 22]] as const;
+const PRICING_GROUPS = 2;
+const ACTIVITY_ENTRIES = [58, 46, 52] as const;
 const LANE_ROWS = [
   [30, 54],
   [26, 62],
@@ -73,6 +77,14 @@ export function DeskRateAgreementSkeleton({ stepper = false }: { stepper?: boole
       <CardSectionSkeleton title={64}>
         <CardRowsSkeleton rows={PARTY_ROWS} />
       </CardSectionSkeleton>
+      <CardSectionSkeleton title={88}>
+        <div className="dk-ra-mix">
+          {Array.from({ length: PRICING_GROUPS }, (_, index) => (
+            // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
+            <CardMeterSkeleton key={index} />
+          ))}
+        </div>
+      </CardSectionSkeleton>
       <CardSectionSkeleton title={44} aside={72}>
         <CardRowsSkeleton rows={LANE_ROWS} trailing={104} />
       </CardSectionSkeleton>
@@ -87,6 +99,11 @@ export function DeskRateAgreementSkeleton({ stepper = false }: { stepper?: boole
           ))}
         </div>
       </CardSectionSkeleton>
+      {access.activity && (
+        <CardSectionSkeleton title={56} aside={64}>
+          <CardTimelineSkeleton entries={ACTIVITY_ENTRIES} />
+        </CardSectionSkeleton>
+      )}
       <CardBarSkeleton actions={[132]} />
     </RecordCardSkeleton>
   );

@@ -913,6 +913,74 @@ func (_c *MockRateAgreementRepository_SelectOptions_Call) RunAndReturn(run func(
 	return _c
 }
 
+// SummarizeLanes provides a mock function for the type MockRateAgreementRepository
+func (_mock *MockRateAgreementRepository) SummarizeLanes(ctx context.Context, req *rateagreementports.ListRateAgreementLanesRequest) (*rateagreementports.RateAgreementLaneSummary, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SummarizeLanes")
+	}
+
+	var r0 *rateagreementports.RateAgreementLaneSummary
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *rateagreementports.ListRateAgreementLanesRequest) (*rateagreementports.RateAgreementLaneSummary, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *rateagreementports.ListRateAgreementLanesRequest) *rateagreementports.RateAgreementLaneSummary); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*rateagreementports.RateAgreementLaneSummary)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *rateagreementports.ListRateAgreementLanesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRateAgreementRepository_SummarizeLanes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SummarizeLanes'
+type MockRateAgreementRepository_SummarizeLanes_Call struct {
+	*mock.Call
+}
+
+// SummarizeLanes is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *rateagreementports.ListRateAgreementLanesRequest
+func (_e *MockRateAgreementRepository_Expecter) SummarizeLanes(ctx interface{}, req interface{}) *MockRateAgreementRepository_SummarizeLanes_Call {
+	return &MockRateAgreementRepository_SummarizeLanes_Call{Call: _e.mock.On("SummarizeLanes", ctx, req)}
+}
+
+func (_c *MockRateAgreementRepository_SummarizeLanes_Call) Run(run func(ctx context.Context, req *rateagreementports.ListRateAgreementLanesRequest)) *MockRateAgreementRepository_SummarizeLanes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *rateagreementports.ListRateAgreementLanesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*rateagreementports.ListRateAgreementLanesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRateAgreementRepository_SummarizeLanes_Call) Return(rateAgreementLaneSummary *rateagreementports.RateAgreementLaneSummary, err error) *MockRateAgreementRepository_SummarizeLanes_Call {
+	_c.Call.Return(rateAgreementLaneSummary, err)
+	return _c
+}
+
+func (_c *MockRateAgreementRepository_SummarizeLanes_Call) RunAndReturn(run func(ctx context.Context, req *rateagreementports.ListRateAgreementLanesRequest) (*rateagreementports.RateAgreementLaneSummary, error)) *MockRateAgreementRepository_SummarizeLanes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function for the type MockRateAgreementRepository
 func (_mock *MockRateAgreementRepository) Update(ctx context.Context, entity *rateagreement.RateAgreement) (*rateagreement.RateAgreement, error) {
 	ret := _mock.Called(ctx, entity)

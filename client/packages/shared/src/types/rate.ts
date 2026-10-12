@@ -358,6 +358,24 @@ export const rateAgreementLanePageSchema = z.object({
 });
 export type RateAgreementLanePage = z.infer<typeof rateAgreementLanePageSchema>;
 
+export const lanePricingGroupSchema = z.object({
+  formulaTemplateId: z.string().nullable().default(null),
+  formulaTemplateName: z.string().default(""),
+  rateMatrixId: z.string().nullable().default(null),
+  rateMatrixName: z.string().default(""),
+  currency: z.string().default(""),
+  lanes: z.number().int().min(0),
+  minRate: z.string().nullable().default(null),
+  maxRate: z.string().nullable().default(null),
+});
+export type LanePricingGroup = z.infer<typeof lanePricingGroupSchema>;
+
+export const rateAgreementLaneSummarySchema = z.object({
+  groups: z.array(lanePricingGroupSchema).default([]),
+  count: z.number().int().min(0),
+});
+export type RateAgreementLaneSummary = z.infer<typeof rateAgreementLaneSummarySchema>;
+
 export const rateAgreementAccessorialSchema = z.object({
   ...tenantInfoSchema.shape,
 

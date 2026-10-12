@@ -62,6 +62,13 @@ const CARDS = [
     empty: "order-draft",
     gone: "order-gone",
   },
+  {
+    card: "rate-agreement",
+    loaded: "agreement-acme",
+    attention: "agreement-lonestar",
+    empty: "agreement-globex",
+    gone: "agreement-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

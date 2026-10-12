@@ -151,7 +151,7 @@ export function CardHead({
         {stepper}
       </div>
       <div className="dk-rec-hrow">
-        <div className="dk-rec-who">
+        <div className={cn("dk-rec-who", subtitle === undefined && "dk-alone")}>
           <h2>{title}</h2>
           {subtitle !== undefined && <span>{subtitle}</span>}
         </div>

@@ -70,6 +70,25 @@ export function deskCardArtifacts(anchor) {
     "order-tyson": artifact("order-tyson", "order", "ord_tyson", "Order ORD-2609-0977"),
     "order-draft": artifact("order-draft", "order", "ord_draft", "Order ORD-2610-0131"),
     "order-gone": artifact("order-gone", "order", "ord_999", "Order ORD-2608-0001"),
+    "agreement-acme": artifact(
+      "agreement-acme",
+      "rate_agreement",
+      "ra_acme",
+      "Acme dry van contract",
+    ),
+    "agreement-lonestar": artifact(
+      "agreement-lonestar",
+      "rate_agreement",
+      "ra_lonestar",
+      "Lone Star carrier rates",
+    ),
+    "agreement-globex": artifact(
+      "agreement-globex",
+      "rate_agreement",
+      "ra_globex",
+      "Globex spot rates 2027",
+    ),
+    "agreement-gone": artifact("agreement-gone", "rate_agreement", "ra_999", "Plains reefer rates"),
   };
 }
 
@@ -1188,6 +1207,361 @@ export function deskOrders(anchor) {
   };
 }
 
+/** The names the select-options lookup answers with for the rate agreement cards, by id. */
+export const DESK_RECORD_NAMES = {
+  cus_acme: { label: "Acme Foods", meta: { code: "ACME" } },
+  cus_globex: { label: "Globex Corporation", meta: { code: "GLOBEX" } },
+  car_lonestar: { label: "Lone Star Haulers", meta: { code: "LSH" } },
+  ft_mile: { label: "Per mile" },
+  ft_flat: { label: "Flat rate" },
+  rm_se: { label: "Southeast zones" },
+  acc_det: { label: "Detention" },
+  acc_lump: { label: "Lumper" },
+  acc_stop: { label: "Extra stop" },
+  fsp_doe: { label: "DOE national average" },
+  usr_mia: { label: "Mia Chen" },
+  usr_omar: { label: "Omar Haddad" },
+  usr_ray: { label: "Ray Gutierrez" },
+  st_tx: { label: "Texas", meta: { abbreviation: "TX" } },
+  st_ok: { label: "Oklahoma", meta: { abbreviation: "OK" } },
+  st_la: { label: "Louisiana", meta: { abbreviation: "LA" } },
+  st_ar: { label: "Arkansas", meta: { abbreviation: "AR" } },
+  st_ga: { label: "Georgia", meta: { abbreviation: "GA" } },
+  st_tn: { label: "Tennessee", meta: { abbreviation: "TN" } },
+};
+
+const STATES = ["st_tx", "st_ok", "st_la", "st_ar", "st_ga", "st_tn"];
+const CITIES = { st_tx: "Dallas", st_ok: "Tulsa", st_la: "Shreveport", st_ar: "Little Rock" };
+
+/**
+ * Lanes for an agreement, each priced the way `plan` says: a formula template
+ * and its rates (evenly spread from low to high), or a rate table.
+ */
+function agreementLanes(agreementId, anchor, plan) {
+  const lanes = [];
+  for (const {
+    templateId = null,
+    matrixId = null,
+    count,
+    low = 0,
+    high = 0,
+    currency = null,
+  } of plan) {
+    for (let index = 0; index < count; index += 1) {
+      const n = lanes.length;
+      const origin = STATES[n % STATES.length];
+      const destination = STATES[(n * 5 + 1) % STATES.length];
+      const city = n % 3 === 0 ? CITIES[origin] : undefined;
+      const rate = templateId
+        ? (low + ((high - low) * index) / Math.max(1, count - 1)).toFixed(4)
+        : null;
+      lanes.push({
+        id: `${agreementId}_rule_${n + 1}`,
+        rateAgreementId: agreementId,
+        label: "",
+        status: "Active",
+        originScopeType: city ? "CityState" : "State",
+        originScopeValue: origin,
+        originCity: city ?? "",
+        destinationScopeType: "State",
+        destinationScopeValue: destination === origin ? "st_tn" : destination,
+        destinationCity: "",
+        direction: n % 4 === 0 ? "Bidirectional" : "Directional",
+        formulaTemplateId: templateId,
+        rateMatrixId: matrixId,
+        rate,
+        currency,
+        minCharge: templateId === "ft_mile" ? "350" : null,
+        freightClassSource: "Commodity",
+        allowDeficitRating: true,
+        daysOfWeek: 0,
+        hazmatOnly: n % 7 === 3,
+        tempControlOnly: false,
+        priority: 0,
+        effectiveFrom: anchor - 90 * DAY,
+        breaks:
+          templateId === "ft_flat" && index === 0
+            ? [
+                { id: `${agreementId}_brk_1`, fromWeight: "0", toWeight: "10000", rate: "850" },
+                {
+                  id: `${agreementId}_brk_2`,
+                  fromWeight: "10000",
+                  toWeight: "30000",
+                  rate: "1100",
+                },
+                { id: `${agreementId}_brk_3`, fromWeight: "30000", toWeight: null, rate: "1400" },
+              ]
+            : [],
+      });
+    }
+  }
+  return lanes;
+}
+
+/**
+ * The lane summary GET /rate-agreements/{id}/lanes/summary/ answers with,
+ * worked out from the fixture's own lanes so the two always agree.
+ */
+export function laneSummary(lanes, names = DESK_RECORD_NAMES) {
+  const groups = new Map();
+  for (const lane of lanes) {
+    const key = [lane.formulaTemplateId ?? "", lane.rateMatrixId ?? "", lane.currency ?? ""].join(
+      ":",
+    );
+    const group = groups.get(key) ?? {
+      formulaTemplateId: lane.formulaTemplateId ?? null,
+      formulaTemplateName: lane.formulaTemplateId
+        ? (names[lane.formulaTemplateId]?.label ?? "")
+        : "",
+      rateMatrixId: lane.rateMatrixId ?? null,
+      rateMatrixName: lane.rateMatrixId ? (names[lane.rateMatrixId]?.label ?? "") : "",
+      currency: lane.currency ?? "",
+      lanes: 0,
+      minRate: null,
+      maxRate: null,
+    };
+    group.lanes += 1;
+    if (lane.rate !== null) {
+      const rate = Number(lane.rate);
+      group.minRate =
+        group.minRate === null
+          ? lane.rate
+          : Number(group.minRate) <= rate
+            ? group.minRate
+            : lane.rate;
+      group.maxRate =
+        group.maxRate === null
+          ? lane.rate
+          : Number(group.maxRate) >= rate
+            ? group.maxRate
+            : lane.rate;
+    }
+    groups.set(key, group);
+  }
+  return {
+    groups: [...groups.values()].sort((a, b) => b.lanes - a.lanes),
+    count: lanes.length,
+  };
+}
+
+/**
+ * Three rate agreements that between them draw every state the card has:
+ * Acme's contract prices freight across a mix of per-mile, flat and zone-table
+ * lanes; Lone Star's carrier rates are inside their renewal notice with lanes
+ * in two currencies; Globex's spot rates are a draft with nothing on them yet.
+ */
+export function deskRateAgreements(anchor) {
+  const entry = (id, operation, hoursAgo, name, changes = null, comment = null) => ({
+    id,
+    operation,
+    timestamp: anchor - hoursAgo * HOUR,
+    changes,
+    comment,
+    principalType: name ? "session_user" : "system",
+    user: name ? { id: `usr_${id}`, name } : null,
+  });
+  const base = (id, overrides) => ({
+    id,
+    organizationId: "org_mock",
+    businessUnitId: "bu_mock",
+    partyType: "Customer",
+    customerId: null,
+    carrierId: null,
+    description: "",
+    agreementType: "Contract",
+    contractRef: "",
+    priority: 0,
+    autoRenew: false,
+    renewalNoticeDays: 30,
+    currency: "USD",
+    defaultMinCharge: "200",
+    defaultMaxCharge: null,
+    roundingMode: "HalfUp",
+    roundingPrecision: 2,
+    billToCustomerId: null,
+    marginFloorPercent: null,
+    maxPayPercentOfSell: null,
+    submittedById: null,
+    submittedAt: null,
+    approvedById: null,
+    approvedAt: null,
+    reviewComment: "",
+    currentVersionNumber: 1,
+    rules: [],
+    accessorials: [],
+    fuelBinding: null,
+    versions: [],
+    createdAt: anchor - 120 * DAY,
+    ...overrides,
+  });
+  const acmeLanes = agreementLanes("ra_acme", anchor, [
+    { templateId: "ft_mile", count: 30, low: 2.1, high: 3.45 },
+    { templateId: "ft_flat", count: 10, low: 850, high: 1400 },
+    { matrixId: "rm_se", count: 6 },
+  ]);
+  const lonestarLanes = agreementLanes("ra_lonestar", anchor, [
+    { templateId: "ft_mile", count: 5, low: 1.85, high: 2.4 },
+    { templateId: "ft_flat", count: 2, low: 2200, high: 2650, currency: "CAD" },
+  ]);
+  return {
+    ra_acme: {
+      agreement: base("ra_acme", {
+        customerId: "cus_acme",
+        code: "ACME-2026",
+        name: "Acme dry van contract",
+        description: "Dry van freight out of the Dallas and Atlanta DCs",
+        status: "Active",
+        contractRef: "MSA-114",
+        effectiveFrom: anchor - 100 * DAY,
+        effectiveTo: anchor + 265 * DAY,
+        autoRenew: true,
+        marginFloorPercent: "12",
+        submittedById: "usr_mia",
+        submittedAt: anchor - 108 * DAY,
+        approvedById: "usr_omar",
+        approvedAt: anchor - 104 * DAY,
+        currentVersionNumber: 3,
+        accessorials: [
+          {
+            id: "raa_det",
+            accessorialChargeId: "acc_det",
+            method: "PerUnit",
+            rateUnit: "Hour",
+            amount: "45",
+            freeUnits: 2,
+            waived: false,
+            autoApply: true,
+            applyCondition: "",
+          },
+          {
+            id: "raa_lump",
+            accessorialChargeId: "acc_lump",
+            method: "Flat",
+            rateUnit: null,
+            amount: "85",
+            waived: false,
+            autoApply: false,
+            applyCondition: "",
+          },
+        ],
+        fuelBinding: { fuelSurchargeProgramId: "fsp_doe", waived: false, capAmount: "0.6" },
+      }),
+      lanes: acmeLanes,
+      retired: 3,
+      versions: [
+        {
+          id: "rav_a1",
+          versionNumber: 1,
+          changeMessage: "First cut",
+          createdById: "usr_mia",
+          createdAt: anchor - 110 * DAY,
+          effectiveFrom: anchor - 100 * DAY,
+        },
+        {
+          id: "rav_a2",
+          versionNumber: 2,
+          changeMessage: "Raised the margin floor to 12%",
+          createdById: "usr_omar",
+          createdAt: anchor - 60 * DAY,
+          effectiveFrom: anchor - 60 * DAY,
+        },
+        {
+          id: "rav_a3",
+          versionNumber: 3,
+          changeMessage: "Added the Southeast zone lanes",
+          createdById: "usr_mia",
+          createdAt: anchor - 12 * DAY,
+          effectiveFrom: anchor - 12 * DAY,
+        },
+      ],
+      activity: [
+        entry("ae_ra1", "update", 6, "Mia Chen", { rules: { from: 40, to: 46 } }),
+        entry("ae_ra2", "update", 290, "Omar Haddad", {
+          marginFloorPercent: { from: "10", to: "12" },
+        }),
+        entry("ae_ra3", "approve", 2496, "Omar Haddad", null, "Matches the signed MSA"),
+        entry("ae_ra4", "update", 2592, "Mia Chen", { status: { from: "Draft", to: "InReview" } }),
+        entry("ae_ra5", "create", 2880, "Mia Chen"),
+      ],
+      pricing: { loads: 412, lastRatedAt: anchor - 2 * HOUR },
+    },
+    ra_lonestar: {
+      agreement: base("ra_lonestar", {
+        partyType: "Carrier",
+        carrierId: "car_lonestar",
+        code: "LSH-SPOT",
+        name: "Lone Star carrier rates",
+        description: "Linehaul pay for Lone Star Haulers, including the Toronto run",
+        agreementType: "Spot",
+        status: "Active",
+        effectiveFrom: anchor - 170 * DAY,
+        effectiveTo: anchor + 12 * DAY,
+        maxPayPercentOfSell: "88",
+        submittedById: "usr_ray",
+        submittedAt: anchor - 175 * DAY,
+        approvedById: "usr_omar",
+        approvedAt: anchor - 172 * DAY,
+        currentVersionNumber: 2,
+        createdAt: anchor - 180 * DAY,
+        accessorials: [
+          {
+            id: "raa_stop",
+            accessorialChargeId: "acc_stop",
+            method: "Flat",
+            rateUnit: null,
+            amount: "75",
+            waived: true,
+            autoApply: false,
+            applyCondition: "",
+          },
+        ],
+      }),
+      lanes: lonestarLanes,
+      retired: 0,
+      versions: [
+        {
+          id: "rav_l1",
+          versionNumber: 1,
+          changeMessage: "",
+          createdById: "usr_ray",
+          createdAt: anchor - 176 * DAY,
+          effectiveFrom: anchor - 170 * DAY,
+        },
+        {
+          id: "rav_l2",
+          versionNumber: 2,
+          changeMessage: "Added the Toronto lanes in CAD",
+          createdById: "usr_ray",
+          createdAt: anchor - 40 * DAY,
+          effectiveFrom: anchor - 40 * DAY,
+        },
+      ],
+      activity: [
+        entry("ae_rl1", "update", 960, "Ray Gutierrez", { currency: { from: null, to: "CAD" } }),
+        entry("ae_rl2", "create", 4224, "Ray Gutierrez"),
+      ],
+      pricing: { loads: 38, lastRatedAt: anchor - 9 * DAY },
+    },
+    ra_globex: {
+      agreement: base("ra_globex", {
+        customerId: "cus_globex",
+        code: "GLOBEX-27",
+        name: "Globex spot rates 2027",
+        agreementType: "Spot",
+        status: "Draft",
+        effectiveFrom: anchor + 14 * DAY,
+        effectiveTo: null,
+        createdAt: anchor - 3 * HOUR,
+      }),
+      lanes: [],
+      retired: 0,
+      versions: [],
+      activity: [],
+      pricing: { loads: 0, lastRatedAt: null },
+    },
+  };
+}
+
 /** A document filed on a tractor, as the documents API returns it. */
 export function deskDocument(resourceType, resourceId, [name, fileType, fileSize], index, anchor) {
   return {
@@ -1310,6 +1684,22 @@ const TURNS = {
   "order-draft": [
     "Pull up the Globex order from this morning.",
     "ORD-2610-0131 for Globex is still a draft, not priced and with no legs yet. [Order ORD-2610-0131](artifact:art_order-draft) shows what is there.",
+  ],
+  "agreement-acme": [
+    "How is Acme's contract priced?",
+    "Acme's dry van contract is active through next summer and renews on its own. Most of its 46 lanes are per mile between $2.10 and $3.45; ten are flat rates and six read the Southeast zone table. [Acme dry van contract](artifact:art_agreement-acme) has the lanes and their terms.",
+  ],
+  "agreement-lonestar": [
+    "When do Lone Star's rates run out?",
+    "In 12 days, and it does not renew on its own, so someone needs to extend or replace it. Two of its lanes pay in Canadian dollars. [Lone Star carrier rates](artifact:art_agreement-lonestar) lays it out.",
+  ],
+  "agreement-globex": [
+    "Has the Globex agreement been set up?",
+    "Only as a draft: it starts in two weeks but has no lanes, charges or fuel terms yet. [Globex spot rates 2027](artifact:art_agreement-globex) shows what is there.",
+  ],
+  "agreement-gone": [
+    "Show me the Plains reefer rates.",
+    "That agreement has been removed since I looked it up. [Plains reefer rates](artifact:art_agreement-gone) is what I found then.",
   ],
   "order-gone": [
     "Show me ORD-2608-0001.",

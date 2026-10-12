@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -77,6 +79,80 @@ func (r *repository) ListLanes(
 			}
 
 			return page, nil
+		},
+	)
+}
+
+func (r *repository) SummarizeLanes(
+	ctx context.Context,
+	req *rateagreementports.ListRateAgreementLanesRequest,
+) (*rateagreementports.RateAgreementLaneSummary, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*rateagreementports.RateAgreementLaneSummary, error) {
+			log := r.l.With(
+				zap.String("operation", "SummarizeLanes"),
+				zap.String("agreementId", req.RateAgreementID.String()),
+			)
+
+			if err := r.requireAgreement(ctx, req); err != nil {
+				log.Error("failed to find rate agreement", zap.Error(err))
+				return nil, err
+			}
+
+			cols := rateagreementcol.RateAgreementRuleColumns
+			ftCols := formulatemplatecol.FormulaTemplateColumns
+			rmCols := ratematrixcol.RateMatrixColumns
+			groups := make([]*rateagreementports.LanePricingGroup, 0, 8)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*rateagreement.RateAgreementRule)(nil)).
+				ColumnExpr(cols.FormulaTemplateID.As("formula_template_id")).
+				ColumnExpr("COALESCE(?, '') AS formula_template_name", bun.Safe(ftCols.Name.Qualified())).
+				ColumnExpr(cols.RateMatrixID.As("rate_matrix_id")).
+				ColumnExpr("COALESCE(?, '') AS rate_matrix_name", bun.Safe(rmCols.Name.Qualified())).
+				ColumnExpr("COALESCE(?, '') AS currency", bun.Safe(cols.Currency.Qualified())).
+				ColumnExpr(buncolgen.Count("lanes")).
+				ColumnExpr("MIN(?) AS min_rate", bun.Safe(cols.Rate.Qualified())).
+				ColumnExpr("MAX(?) AS max_rate", bun.Safe(cols.Rate.Qualified())).
+				Join(
+					"LEFT JOIN ? AS ? ON ?",
+					bun.Safe(formulatemplatecol.FormulaTemplateTable.Name),
+					bun.Safe(formulatemplatecol.FormulaTemplateTable.Alias),
+					bun.Safe(ftCols.ID.EqColumn(cols.FormulaTemplateID)+
+						" AND "+ftCols.OrganizationID.EqColumn(cols.OrganizationID)+
+						" AND "+ftCols.BusinessUnitID.EqColumn(cols.BusinessUnitID)),
+				).
+				Join(
+					"LEFT JOIN ? AS ? ON ?",
+					bun.Safe(ratematrixcol.RateMatrixTable.Name),
+					bun.Safe(ratematrixcol.RateMatrixTable.Alias),
+					bun.Safe(rmCols.ID.EqColumn(cols.RateMatrixID)+
+						" AND "+rmCols.OrganizationID.EqColumn(cols.OrganizationID)+
+						" AND "+rmCols.BusinessUnitID.EqColumn(cols.BusinessUnitID)),
+				).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return applyLiveLanes(scopeAgreementRules(sq, req), timeutils.NowUnix())
+				}).
+				GroupExpr(cols.FormulaTemplateID.Qualified()).
+				GroupExpr(ftCols.Name.Qualified()).
+				GroupExpr(cols.RateMatrixID.Qualified()).
+				GroupExpr(rmCols.Name.Qualified()).
+				GroupExpr(cols.Currency.Qualified()).
+				OrderExpr("lanes DESC").
+				Scan(ctx, &groups)
+			if err != nil {
+				log.Error("failed to summarize rate agreement lanes", zap.Error(err))
+				return nil, err
+			}
+
+			summary := &rateagreementports.RateAgreementLaneSummary{Groups: groups}
+			for _, group := range groups {
+				summary.Count += group.Lanes
+			}
+
+			return summary, nil
 		},
 	)
 }

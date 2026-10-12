@@ -138,6 +138,11 @@ request. A card's activity is `CardActivity` over `useRecordActivity`: what was 
 record from its audit trail, newest first and without reads, each entry a sentence with who
 did it and when, shown only to someone who may read the audit log.
 
+`CardHead` sets the title level with the foot of the figure beside it. A title with no
+subtitle is marked `dk-alone` and holds the top of the row instead, so a card whose record
+has no description or trade name does not leave a gap under its kicker; there is no need
+to invent a subtitle for it.
+
 ## Where a record is
 
 `CardWhere` draws a place as a 112px still map of OpenStreetMap's tiles with a dot on it,
@@ -225,7 +230,12 @@ registry entry like any other.
    Never read a list that can grow without bound along with the record: read its
    count and its first page, and the next page on request (the rate agreement card
    reads its lanes from `GET /rate-agreements/:id/lanes/` with `useInfiniteQuery`,
-   and the agreement itself with `includeRules=false`).
+   and the agreement itself with `includeRules=false`). When the card needs the shape of
+   the whole list rather than its rows, ask the server for the aggregate: the rate
+   agreement's rate structure reads `GET /rate-agreements/:id/lanes/summary/`, its live
+   lanes grouped by formula template or rate table with each group's count and rate
+   range, and draws each group as a `CardMeter` of its share, folding the groups past
+   the first few into one.
 3. Add the entry to `cards/registry.tsx`, and the card's mark to `desk-art-kinds.tsx`
    when it should not read as a plain record. Run `pnpm --filter @trenova/web
    guide:generate`, which marks the kind as having a card for the server.

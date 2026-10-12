@@ -102898,6 +102898,15 @@
       "routes/worker"
     ]
   },
+  "How the lanes are priced could not be read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "How the linehaul is rated: Flat or Per mile.": {
     "sites": 1,
     "scope": [
@@ -141807,7 +141816,7 @@
     ]
   },
   "Not priced": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -142907,6 +142916,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Nothing has been done to this agreement yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing has been done to this order yet.": {
@@ -146727,6 +146745,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Once a lane prices freight, how each is priced shows here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Once your carrier issues a settlement, your statement will show up here.": {
@@ -172740,8 +172767,17 @@
       "go/other"
     ]
   },
-  "Rate table {0}": {
+  "Rate structure": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Rate table {0}": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -272203,6 +272239,15 @@
       "packages/shared/lib"
     ]
   },
+  "{0, plural, one {# lane} other {# lanes}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# legacy exact match} other {# legacy exact matches}}": {
     "sites": 1,
     "scope": [
@@ -272602,6 +272647,15 @@
     ]
   },
   "{0, plural, one {# other use} other {# other uses}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# other way} other {# other ways}}": {
     "sites": 1,
     "scope": [
       "ts"

@@ -8,9 +8,11 @@ import {
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import type {
+  LanePricingGroup,
   RateAgreement,
   RateAgreementAccessorial,
   RateAgreementFuelBinding,
+  RateAgreementLaneSummary,
   RateAgreementRule,
   RateAgreementRuleBreak,
 } from "@trenova/shared/types/rate";
@@ -385,4 +387,71 @@ export function agreementReferences(
     carriers: sortedIds([agreement.carrierId]),
     users: sortedIds([agreement.submittedById, agreement.approvedById, ...versionAuthors]),
   };
+}
+
+/** One way the agreement prices its live lanes, as the rate structure draws it. */
+export type PricingGroup = {
+  key: string;
+  label: string;
+  lanes: number;
+  /** The group's share of the live lanes, 0 to 1. */
+  share: number;
+  /** The rates its lanes quote, low to high, or nothing when they quote none. */
+  range: string | null;
+};
+
+function groupLabel(group: LanePricingGroup, currency: string, t: TranslateFn): string {
+  const name = group.rateMatrixId
+    ? t("Rate table {0}", group.rateMatrixName || "…")
+    : group.formulaTemplateId
+      ? group.formulaTemplateName || "…"
+      : t("Not priced");
+  return group.currency && group.currency !== currency
+    ? t("{0} · {1}", name, group.currency)
+    : name;
+}
+
+function rateRange(group: LanePricingGroup): string | null {
+  const low = decimal(group.minRate);
+  const high = decimal(group.maxRate);
+  if (low === null || high === null) return null;
+  return low === high ? figure(low) : `${figure(low)} – ${figure(high)}`;
+}
+
+/**
+ * How the agreement prices its live lanes: each formula template or rate table
+ * with the lanes it prices and the range of rates they quote, most lanes
+ * first. A group in another currency than the agreement's says which. Past
+ * `rows` groups, the rest are folded into one so the section stays its size
+ * however many ways an agreement prices.
+ */
+export function pricingGroups(
+  summary: RateAgreementLaneSummary,
+  { rows, currency }: { rows: number; currency: string },
+  t: TranslateFn,
+): PricingGroup[] {
+  const total = summary.count;
+  const share = (lanes: number) => (total > 0 ? lanes / total : 0);
+  const sorted = [...summary.groups].sort((a, b) => b.lanes - a.lanes);
+  const shown = sorted.length > rows ? sorted.slice(0, rows - 1) : sorted;
+  const groups = shown.map((group) => ({
+    key: [group.formulaTemplateId ?? "", group.rateMatrixId ?? "", group.currency].join(":"),
+    label: groupLabel(group, currency, t),
+    lanes: group.lanes,
+    share: share(group.lanes),
+    range: rateRange(group),
+  }));
+  const rest = sorted.slice(shown.length);
+  if (rest.length === 0) return groups;
+  const lanes = rest.reduce((sum, group) => sum + group.lanes, 0);
+  return [
+    ...groups,
+    {
+      key: "rest",
+      label: t("{0, plural, one {# other way} other {# other ways}}", rest.length),
+      lanes,
+      share: share(lanes),
+      range: null,
+    },
+  ];
 }
