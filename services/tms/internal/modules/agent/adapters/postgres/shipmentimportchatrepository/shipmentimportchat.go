@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -179,7 +180,7 @@ func (r *repository) UpdateActiveConversationStatusByDocument(
 			Model((*shipmentimportchat.Conversation)(nil)).
 			Set("status = ?", status).
 			Set("status_reason = ?", reason).
-			Set("updated_at = "+r.db.NowEpoch()).
+			Set("updated_at = "+dbhelper.NowEpoch).
 			Where("document_id = ?", documentID).
 			Where("organization_id = ?", tenantInfo.OrgID).
 			Where("business_unit_id = ?", tenantInfo.BuID).

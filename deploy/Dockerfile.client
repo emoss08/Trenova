@@ -1,4 +1,6 @@
-FROM node:22-alpine AS builder
+# The bundle is static files, the same on every platform: build it once on the
+# runner's own architecture instead of again under QEMU for each target.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS builder
 
 RUN corepack enable && corepack prepare pnpm@12.3.4 --activate
 

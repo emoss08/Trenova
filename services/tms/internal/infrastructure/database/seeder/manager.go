@@ -14,13 +14,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
-	"github.com/uptrace/bun/schema"
 	"go.uber.org/fx"
-
-	_ "modernc.org/sqlite"
 )
 
 type Manager struct {
@@ -87,12 +83,10 @@ func NewManagerFromConfig(cfg ManagerConfig) (*Manager, error) {
 }
 
 func createDB(cfg *config.Config) (*bun.DB, error) {
-	sqldb, bunDialect, err := openSQLDB(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	db := bun.NewDB(sqldb, bunDialect)
+	db := bun.NewDB(
+		sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(cfg.GetMigrationDSN()))),
+		pgdialect.New(),
+	)
 
 	if cfg.App.Debug {
 		db.AddQueryHook(bundebug.NewQueryHook(
@@ -104,21 +98,6 @@ func createDB(cfg *config.Config) (*bun.DB, error) {
 	db.RegisterModel(domainregistry.RegisterEntities()...)
 
 	return db, nil
-}
-
-func openSQLDB(cfg *config.Config) (*sql.DB, schema.Dialect, error) {
-	dsn := cfg.GetMigrationDSN()
-
-	if cfg.Database.GetDialect().IsSQLite() {
-		sqldb, err := sql.Open("sqlite", dsn)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to open sqlite database: %w", err)
-		}
-
-		return sqldb, sqlitedialect.New(), nil
-	}
-
-	return sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn))), pgdialect.New(), nil
 }
 
 func createDBConfig(db *bun.DB, cfg *config.Config) *common.DatabaseConfig {
@@ -182,7 +161,7 @@ func (m *Manager) Migrate(ctx context.Context, opts common.OperationOptions) err
 }
 
 func (m *Manager) provisionRLS(ctx context.Context, opts common.OperationOptions) error {
-	if opts.DryRun || m.cfg == nil || !m.cfg.Database.GetDialect().IsPostgres() {
+	if opts.DryRun || m.cfg == nil {
 		return nil
 	}
 

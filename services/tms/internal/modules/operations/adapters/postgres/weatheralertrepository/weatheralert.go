@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
-	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -412,10 +411,6 @@ func (r *repository) insertAlert(
 	db bun.IDB,
 	alert *weatheralert.WeatherAlert,
 ) error {
-	if err := dbdialect.RequireFromBun(db, dbdialect.CapPostGIS); err != nil {
-		return err
-	}
-
 	geometryJSON, err := alert.Geometry.GeoJSONString()
 	if err != nil {
 		return err
@@ -435,10 +430,6 @@ func (r *repository) updateAlert(
 	alert *weatheralert.WeatherAlert,
 	previousVersion int64,
 ) error {
-	if err := dbdialect.RequireFromBun(db, dbdialect.CapPostGIS); err != nil {
-		return err
-	}
-
 	geometryJSON, err := alert.Geometry.GeoJSONString()
 	if err != nil {
 		return err

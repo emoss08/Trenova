@@ -514,3 +514,21 @@ func (_c *MockShipmentMoveService_PreviewSplitMove_Call) RunAndReturn(run func(c
 	_c.Call.Return(run)
 	return _c
 }
+
+// ReconcileStopActuals provides a mock function for the type MockShipmentMoveService
+func (_mock *MockShipmentMoveService) ReconcileStopActuals(ctx context.Context, req *shipmentports.ReconcileStopActualsRequest) (*shipmentports.ReconcileStopActualsResult, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReconcileStopActuals")
+	}
+
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentports.ReconcileStopActualsRequest) (*shipmentports.ReconcileStopActualsResult, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	var r0 *shipmentports.ReconcileStopActualsResult
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*shipmentports.ReconcileStopActualsResult)
+	}
+	return r0, ret.Error(1)
+}

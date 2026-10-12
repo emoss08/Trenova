@@ -49,7 +49,7 @@ type rlsRuntime struct {
 }
 
 func rlsConfigured(cfg *config.Config) bool {
-	return cfg != nil && cfg.Database.GetDialect().IsPostgres() && cfg.Database.RLS.Enabled()
+	return cfg != nil && cfg.Database.RLS.Enabled()
 }
 
 func newRLSRuntime(

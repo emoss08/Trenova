@@ -224,7 +224,7 @@ func (r *batchRepository) RecalculateAggregates(
 			settlement_count = agg.settlement_count,
 			total_gross_minor = agg.total_gross_minor,
 			total_net_minor = agg.total_net_minor,
-			updated_at = `+r.db.NowEpoch()+`
+			updated_at = `+dbhelper.NowEpoch+`
 		FROM (
 			SELECT
 				COUNT(*) FILTER (WHERE s.status != 'Voided') AS settlement_count,

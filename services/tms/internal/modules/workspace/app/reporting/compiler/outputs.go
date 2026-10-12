@@ -1,4 +1,3 @@
-// dialect:postgres-only — report date bucketing compiles to date_trunc.
 package compiler
 
 import (

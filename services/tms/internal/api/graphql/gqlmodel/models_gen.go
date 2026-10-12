@@ -5960,6 +5960,10 @@ type RecordMyStopActionInput struct {
 	MoveID string                         `json:"moveId"`
 	StopID string                         `json:"stopId"`
 	Action shipmentports.StopActualAction `json:"action"`
+	// When it happened on the device. Omitted means when the server receives it.
+	OccurredAt *int `json:"occurredAt,omitempty"`
+	// An id the device makes once per tap, so a resend after a dropped connection is recorded once.
+	ClientEventID *string `json:"clientEventId,omitempty"`
 }
 
 type RecordSafetyViolationInput struct {

@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/driverportalports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -50,7 +51,7 @@ type Params struct {
 	EmailService        emailports.EmailService
 	Templates           documenttemplateports.DocumentTemplateResolver
 	CommentService      shipmentports.ShipmentCommentService
-	MoveService         shipmentports.ShipmentMoveService
+	StopReporter        driverportalports.StopReporter
 	WorkerService       *workerservice.Service
 	DocumentService     *documentservice.Service
 	PTOService          workerports.WorkerPTOService
@@ -83,7 +84,7 @@ type Service struct {
 	emailService        emailports.EmailService
 	templates           documenttemplateports.DocumentTemplateResolver
 	commentService      shipmentports.ShipmentCommentService
-	moveService         shipmentports.ShipmentMoveService
+	stopReporter        driverportalports.StopReporter
 	workerService       *workerservice.Service
 	documentService     *documentservice.Service
 	ptoService          workerports.WorkerPTOService
@@ -117,7 +118,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		emailService:        p.EmailService,
 		templates:           p.Templates,
 		commentService:      p.CommentService,
-		moveService:         p.MoveService,
+		stopReporter:        p.StopReporter,
 		workerService:       p.WorkerService,
 		documentService:     p.DocumentService,
 		ptoService:          p.PTOService,

@@ -68,29 +68,40 @@ func (s *service) RecordStopActual(
 		return nil, err
 	}
 
-	if updatedMove != nil && previousStatus != updatedMove.Status {
-		s.recordMoveEvent(ctx, shipmenteventservice.BuildMoveStatusChanged(
-			tenantRefForMoveTenant(req.TenantInfo),
-			updatedMove,
-			previousStatus,
-			actorForMoveTenant(req.TenantInfo),
-		))
-		s.evaluateServiceFailuresAfterMoveStatus(ctx, updatedMove.ShipmentID, req.TenantInfo)
-		s.notifyMoveObservers(ctx, req.TenantInfo, updatedMove, previousStatus)
+	recorded := []*shipmentports.RecordStopActualRequest{req}
+	if departure := req.Departure(); departure != nil {
+		recorded = append(recorded, departure)
 	}
-	departure := req.Departure()
-	switch {
-	case req.Action == shipmentports.StopActualActionDepart && updatedMove != nil:
-		s.flagDetentionCandidate(ctx, req, updatedMove)
-	case departure != nil && updatedMove != nil:
-		s.flagDetentionCandidate(ctx, departure, updatedMove)
-	}
-	s.publishStopActualEvent(ctx, req)
-	if departure != nil {
-		s.publishStopActualEvent(ctx, departure)
-	}
+	s.announceStopActuals(ctx, req.TenantInfo, updatedMove, previousStatus, recorded)
 
 	return updatedMove, nil
+}
+
+func (s *service) announceStopActuals(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	move *shipment.ShipmentMove,
+	previousStatus shipment.MoveStatus,
+	recorded []*shipmentports.RecordStopActualRequest,
+) {
+	kernelports.AfterCommit(ctx, func(committed context.Context) {
+		if move != nil && previousStatus != move.Status {
+			s.recordMoveEvent(committed, shipmenteventservice.BuildMoveStatusChanged(
+				tenantRefForMoveTenant(tenantInfo),
+				move,
+				previousStatus,
+				actorForMoveTenant(tenantInfo),
+			))
+			s.evaluateServiceFailuresAfterMoveStatus(committed, move.ShipmentID, tenantInfo)
+			s.notifyMoveObservers(committed, tenantInfo, move, previousStatus)
+		}
+		for _, action := range recorded {
+			if action.Action == shipmentports.StopActualActionDepart && move != nil {
+				s.flagDetentionCandidate(committed, action, move)
+			}
+			s.publishStopActualEvent(committed, action)
+		}
+	})
 }
 
 // defaultDetentionAlertThresholdMinutes is the fallback dwell time beyond

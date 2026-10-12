@@ -1,4 +1,5 @@
 import { api } from "@trenova/shared/lib/api";
+import { withIdempotencyKeyHeader } from "@trenova/shared/lib/idempotency";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   assignmentPayloadSchema,
@@ -56,10 +57,16 @@ export class AssignmentService {
     return api.post<SplitMoveResponse>(`/shipment-moves/${moveId}/split/`, payload);
   }
 
-  public async recordStopActual(moveId: string, stopId: string, payload: RecordStopActualPayload) {
+  public async recordStopActual(
+    moveId: string,
+    stopId: string,
+    payload: RecordStopActualPayload,
+    options: { idempotencyKey?: string } = {},
+  ) {
     const response = await api.post<ShipmentMove>(
       `/shipment-moves/${moveId}/stops/${stopId}/record-actual/`,
       payload,
+      { headers: withIdempotencyKeyHeader({}, options.idempotencyKey) },
     );
 
     return safeParse(shipmentMoveSchema, response, "ShipmentMove");

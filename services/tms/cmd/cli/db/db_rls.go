@@ -16,12 +16,9 @@ import (
 
 const rlsGeneratedKeyBytes = 48
 
-var (
-	errRLSPostgresOnly = errors.New("row-level security is only available on PostgreSQL")
-	errRLSMigratorRole = errors.New(
-		"database.migrator must name a different role from database.user so the application role " +
-			"does not own the tables it is isolated from",
-	)
+var errRLSMigratorRole = errors.New(
+	"database.migrator must name a different role from database.user so the application role " +
+		"does not own the tables it is isolated from",
 )
 
 var dbRLSCmd = &cobra.Command{
@@ -86,10 +83,6 @@ func runRLSGenerateKey(_ *cobra.Command, _ []string) error {
 }
 
 func runRLSProvisionRoles(_ *cobra.Command, _ []string) error {
-	if !cfg.Database.GetDialect().IsPostgres() {
-		return errRLSPostgresOnly
-	}
-
 	if !cfg.Database.Migrator.Configured() ||
 		strings.EqualFold(strings.TrimSpace(cfg.Database.Migrator.User), strings.TrimSpace(cfg.Database.User)) {
 		return errRLSMigratorRole
@@ -123,10 +116,6 @@ func runRLSProvisionRoles(_ *cobra.Command, _ []string) error {
 }
 
 func runRLSRetireKey(_ *cobra.Command, args []string) error {
-	if !cfg.Database.GetDialect().IsPostgres() {
-		return errRLSPostgresOnly
-	}
-
 	keyID := strings.TrimSpace(args[0])
 	if strings.EqualFold(keyID, strings.TrimSpace(cfg.Database.RLS.ScopeKeyID)) && !force {
 		return fmt.Errorf(
@@ -156,10 +145,6 @@ func runRLSRetireKey(_ *cobra.Command, args []string) error {
 }
 
 func runRLSStatus(_ *cobra.Command, _ []string) error {
-	if !cfg.Database.GetDialect().IsPostgres() {
-		return errRLSPostgresOnly
-	}
-
 	manager, err := createManager()
 	if err != nil {
 		return fmt.Errorf("failed to create database manager: %w", err)
