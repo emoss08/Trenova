@@ -3518,10 +3518,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingWebhookSubscriptionSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AccountingSyncStatus)
+					obj := o.(*accountingsyncports.AccountingSyncStatus)
 					return obj.WebhookSubscriptions, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingWebhookSubscriptionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingWebhookSubscriptionSummary),
+				Marshal: gqlexec.Marshal(marshalOAccountingWebhookSubscriptionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingWebhookSubscriptionSummary),
 			},
 		}},
 		{Object: "AccountingSyncStatusCount", Fields: []*gqlexec.Field{
@@ -3616,7 +3616,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AccountingWebhookSubscriptionSummary)
+					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
 					return obj.Configured, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -3626,7 +3626,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AccountingWebhookSubscriptionSummary)
+					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
 					return obj.Active, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -3636,7 +3636,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AccountingWebhookSubscriptionSummary)
+					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
 					return obj.Pending, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -3646,7 +3646,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AccountingWebhookSubscriptionSummary)
+					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
 					return obj.Failed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -3655,7 +3655,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "nextExpiryAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AccountingWebhookSubscriptionSummary)
+					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
 					return obj.NextExpiryAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -3664,7 +3664,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastError",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AccountingWebhookSubscriptionSummary)
+					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
 					return obj.LastError, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -7422,7 +7422,7 @@ func marshalOAccountingSyncOperation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res
 }
 
-func marshalOAccountingWebhookSubscriptionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingWebhookSubscriptionSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AccountingWebhookSubscriptionSummary) graphql.Marshaler {
+func marshalOAccountingWebhookSubscriptionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingWebhookSubscriptionSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingWebhookSubscriptionSummary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
