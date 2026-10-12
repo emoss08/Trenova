@@ -82,10 +82,13 @@ func (s *Service) currentDraftAttachments(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 ) ([]triage.ReplyAttachment, error) {
-	drafts, err := s.replies.DraftsByMessageIDs(ctx, inboundmessageports.InboundRepliesByMessagesRequest{
-		TenantInfo: tenantOf(message),
-		MessageIDs: []pulid.ID{message.ID},
-	})
+	drafts, err := s.replies.DraftsByMessageIDs(
+		ctx,
+		inboundmessageports.InboundRepliesByMessagesRequest{
+			TenantInfo: tenantOf(message),
+			MessageIDs: []pulid.ID{message.ID},
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -156,10 +159,13 @@ func (s *Service) detentionEvidence(
 	}
 
 	log := s.l.With(zap.String("messageId", message.ID.String()))
-	evidence, err := s.evidence.DetentionEvidence(ctx, &inboundmessageports.TriageDetentionEvidenceRequest{
-		TenantInfo: tenantOf(message),
-		ShipmentID: message.MatchedShipmentID,
-	})
+	evidence, err := s.evidence.DetentionEvidence(
+		ctx,
+		&inboundmessageports.TriageDetentionEvidenceRequest{
+			TenantInfo: tenantOf(message),
+			ShipmentID: message.MatchedShipmentID,
+		},
+	)
 	if err != nil {
 		log.Warn("could not find the detention record to attach to a reply", zap.Error(err))
 

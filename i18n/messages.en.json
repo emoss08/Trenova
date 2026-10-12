@@ -7820,6 +7820,15 @@
       "go/other"
     ]
   },
+  "A sealed attachment must reference a stored object, not carry content": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A search cannot be exported as a report; use filters instead, or export from the browser": {
     "sites": 1,
     "scope": [
@@ -21094,6 +21103,15 @@
       "packages/shared/types"
     ]
   },
+  "An email can carry at most {0} files": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An email draft is a view over a proposal": {
     "sites": 1,
     "scope": [
@@ -28582,6 +28600,15 @@
       "routes/shipment"
     ]
   },
+  "Attach": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Attach Derived Permit and Escort Charges": {
     "sites": 1,
     "scope": [
@@ -28629,12 +28656,13 @@
     ]
   },
   "Attach files": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/inbox",
       "routes/shipment"
     ]
   },
@@ -28804,13 +28832,24 @@
       "go/other"
     ]
   },
-  "Attachments": {
+  "Attachment seal is not recognized": {
     "sites": 1,
     "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Attachments": {
+    "sites": 2,
+    "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other"
     ]
   },
   "Attachments & content": {
@@ -37822,12 +37861,13 @@
     ]
   },
   "Cancel upload": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "routes/inbox",
       "routes/shipment"
     ]
   },
@@ -55878,6 +55918,15 @@
       "routes/desk"
     ]
   },
+  "Couldn't load the files: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Couldn't load who this invoice is shared with.": {
     "sites": 1,
     "scope": [
@@ -68314,7 +68363,7 @@
     ]
   },
   "Detention occurrence is required": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -68366,6 +68415,15 @@
     ],
     "areas": [
       "template/detention.notice.email"
+    ]
+  },
+  "Detention records cannot be rendered on this deployment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Detention shorter than this bills nothing — filters out trivially small charges.": {
@@ -92489,7 +92547,7 @@
     ]
   },
   "Files": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -92505,6 +92563,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Files cannot be attached to replies on this installation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Files go with a queued message; a message that steers the reply carries words only": {
@@ -112142,6 +112209,15 @@
       "routes/intake"
     ]
   },
+  "It is {0}. A reply can carry {1} in all, and {2} is left.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "It may have been deleted by another administrator.": {
     "sites": 2,
     "scope": [
@@ -121456,7 +121532,7 @@
     ]
   },
   "Loading…": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -144763,6 +144839,15 @@
       "routes/admin"
     ]
   },
+  "Nothing is stored on this message or its records yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Nothing is waiting to be filed": {
     "sites": 1,
     "scope": [
@@ -148236,6 +148321,15 @@
       "routes/scheduling"
     ]
   },
+  "On the carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "On the case": {
     "sites": 1,
     "scope": [
@@ -148272,6 +148366,15 @@
       "routes/desk"
     ]
   },
+  "On the customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "On the job": {
     "sites": 1,
     "scope": [
@@ -148290,6 +148393,15 @@
       "apps/web/lib"
     ]
   },
+  "On the shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "On this dashboard": {
     "sites": 1,
     "scope": [
@@ -148297,6 +148409,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "On this message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "On time": {
@@ -183217,7 +183338,7 @@
     ]
   },
   "Remove {0}": {
-    "sites": 15,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -183227,6 +183348,7 @@
       "routes/agent-control",
       "routes/desk",
       "routes/holiday",
+      "routes/inbox",
       "routes/order",
       "routes/recurring-shipment",
       "routes/shipment",
@@ -209681,6 +209803,15 @@
       "apps/dash/routes"
     ]
   },
+  "Sign in to attach files to an email": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Sign in to your Trenova account": {
     "sites": 1,
     "scope": [
@@ -226869,6 +227000,15 @@
       "packages/shared/components"
     ]
   },
+  "The file could not be uploaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "The file couldn't be read": {
     "sites": 1,
     "scope": [
@@ -234680,6 +234820,24 @@
       "routes/detention-intelligence"
     ]
   },
+  "These files add up to {0}. A reply can carry {1} in all, so remove one to send it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
+  "These files add up to {0}; an email can carry at most {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "These follow rules kept elsewhere. You can move them with Reorder, but not turn them off.": {
     "sites": 1,
     "scope": [
@@ -236694,6 +236852,15 @@
   },
   "This file is too large to import; the limit is 32 MiB": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This file no longer exists": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -245706,7 +245873,7 @@
     ]
   },
   "Try again": {
-    "sites": 51,
+    "sites": 52,
     "scope": [
       "ts"
     ],
@@ -250208,12 +250375,13 @@
     ]
   },
   "Upload from computer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/inbox"
     ]
   },
   "Upload logo": {
@@ -250452,6 +250620,15 @@
       "apps/web/components"
     ]
   },
+  "Uploading {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "Uploading {0}…": {
     "sites": 2,
     "scope": [
@@ -250478,6 +250655,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Uploading — Send waits for the files": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "Uploading...": {
@@ -265717,6 +265903,15 @@
       "routes/capture"
     ]
   },
+  "You do not have permission to read documents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "You do not have permission to read {0}": {
     "sites": 1,
     "scope": [
@@ -265751,6 +265946,15 @@
     ],
     "areas": [
       "routes/capture"
+    ]
+  },
+  "You do not have permission to send {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "You do not have permission to transfer ownership of this shipment": {
@@ -280357,6 +280561,15 @@
       "go/other"
     ]
   },
+  "{0} cannot be sent from here": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} cannot be set that way: {1}": {
     "sites": 1,
     "scope": [
@@ -281680,6 +281893,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} has expired and cannot be sent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} has finished \"{1}\".": {
     "sites": 1,
     "scope": [
@@ -282315,6 +282537,15 @@
     ]
   },
   "{0} is already the primary carrier intelligence provider. Disable it, or switch the primary provider from Carrier Monitoring, before enabling {1} as primary": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} is archived and cannot be sent": {
     "sites": 1,
     "scope": [
       "go"
@@ -284486,7 +284717,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "ts"
     ],
@@ -284499,6 +284730,7 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/dispatch-console",
+      "routes/inbox",
       "routes/intake",
       "routes/onboarding",
       "routes/random-testing",
@@ -285779,6 +286011,15 @@
       "routes/inbox"
     ]
   },
+  "{0} replied from {1} with {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
+    ]
+  },
   "{0} replied to your comment": {
     "sites": 1,
     "scope": [
@@ -285795,6 +286036,15 @@
     ],
     "areas": [
       "template/notification.shipment_comment_reply"
+    ]
+  },
+  "{0} replied with {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} replies": {
@@ -287197,6 +287447,15 @@
       "go/other"
     ]
   },
+  "{0} was rejected and cannot be sent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} was removed.": {
     "sites": 1,
     "scope": [
@@ -287800,6 +288059,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} · over the {1} a reply can carry": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/inbox"
     ]
   },
   "{0} · paused": {

@@ -108,6 +108,7 @@ export function UploadingChip({
         ) : (
           <Progress
             size="sm"
+            showLabel
             value={upload.progress}
             aria-label={t("Uploading {0}", upload.file.name)}
           />
@@ -158,12 +159,7 @@ export function RefusedFileChip({
         <span className="truncate text-base font-medium">{name}</span>
         <span className="text-danger line-clamp-2 text-xs">{reason}</span>
       </span>
-      <Button
-        size="icon-xs"
-        variant="ghost"
-        aria-label={t("Remove {0}", name)}
-        onClick={onDismiss}
-      >
+      <Button size="icon-xs" variant="ghost" aria-label={t("Remove {0}", name)} onClick={onDismiss}>
         <XCloseIcon aria-hidden className="size-3" />
       </Button>
     </span>

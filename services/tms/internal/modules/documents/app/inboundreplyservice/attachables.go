@@ -52,11 +52,18 @@ func (s *Service) Attachables(
 			return
 		}
 		sources = append(sources, attachableSource{
-			source: documentports.MailDocumentSource{ResourceType: resourceType, ResourceID: id.String()},
-			kind:   kind,
+			source: documentports.MailDocumentSource{
+				ResourceType: resourceType,
+				ResourceID:   id.String(),
+			},
+			kind: kind,
 		})
 	}
-	add(inboundmessageports.DocumentResourceType, message.MatchedShipmentID, triage.AttachableFromShipment)
+	add(
+		inboundmessageports.DocumentResourceType,
+		message.MatchedShipmentID,
+		triage.AttachableFromShipment,
+	)
 	add(customerResourceType, message.MatchedCustomerID, triage.AttachableFromCustomer)
 	add(carrierResourceType, message.MatchedCarrierID, triage.AttachableFromCarrier)
 
@@ -90,7 +97,10 @@ func (s *Service) Attachables(
 	return out, nil
 }
 
-func attachableOf(doc *document.Document, kind triage.AttachableSource) *inboundmessageports.ReplyAttachable {
+func attachableOf(
+	doc *document.Document,
+	kind triage.AttachableSource,
+) *inboundmessageports.ReplyAttachable {
 	attachable := &inboundmessageports.ReplyAttachable{
 		ID:          doc.ID,
 		FileName:    doc.MailFileName(),

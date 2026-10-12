@@ -47,7 +47,7 @@ type Service struct {
 
 var _ documentports.DocumentMailAttachments = (*Service)(nil)
 
-func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
+func New(p Params) *Service {
 	return &Service{
 		l:           p.Logger.Named("service.document-mail"),
 		repo:        p.Repo,
@@ -211,8 +211,7 @@ func (s *Service) documents(
 			multiErr.WithIndex(field, want.index).
 				Add("", errortypes.ErrInvalid, "This file no longer exists")
 		case !doc.Mailable():
-			multiErr.WithIndex(field, want.index).
-				Add("", errortypes.ErrInvalid, unmailableMessage(doc), doc.MailFileName())
+			refuseUnmailable(multiErr.WithIndex(field, want.index), doc)
 		default:
 			docs = append(docs, doc)
 		}
@@ -224,19 +223,20 @@ func (s *Service) documents(
 	return docs, nil
 }
 
-func unmailableMessage(doc *document.Document) string {
+func refuseUnmailable(multiErr *errortypes.MultiError, doc *document.Document) {
+	name := doc.MailFileName()
 	switch doc.Status {
 	case document.StatusArchived:
-		return "{0} is archived and cannot be sent"
+		multiErr.Add("", errortypes.ErrInvalid, "{0} is archived and cannot be sent", name)
 	case document.StatusExpired:
-		return "{0} has expired and cannot be sent"
+		multiErr.Add("", errortypes.ErrInvalid, "{0} has expired and cannot be sent", name)
 	case document.StatusRejected:
-		return "{0} was rejected and cannot be sent"
+		multiErr.Add("", errortypes.ErrInvalid, "{0} was rejected and cannot be sent", name)
 	case document.StatusDraft, document.StatusActive, document.StatusPending,
 		document.StatusPendingApproval:
-		return "{0} cannot be sent from here"
+		multiErr.Add("", errortypes.ErrInvalid, "{0} cannot be sent from here", name)
 	default:
-		return "{0} cannot be sent from here"
+		multiErr.Add("", errortypes.ErrInvalid, "{0} cannot be sent from here", name)
 	}
 }
 
@@ -289,7 +289,8 @@ func (s *Service) readableResources(
 ) (map[permission.Resource]bool, error) {
 	resources := make([]permission.Resource, 0, len(owners)+1)
 	resources = append(resources, permission.ResourceDocument)
-	seen := map[permission.Resource]struct{}{permission.ResourceDocument: {}}
+	seen := make(map[permission.Resource]struct{}, len(owners)+1)
+	seen[permission.ResourceDocument] = struct{}{}
 	for _, owner := range owners {
 		if _, dup := seen[owner]; dup {
 			continue

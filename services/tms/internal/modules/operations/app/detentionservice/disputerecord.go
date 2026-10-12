@@ -150,10 +150,13 @@ func (s *Service) storeDisputeRecord(
 		return nil, err
 	}
 
-	docType, err := s.documentTypeRepo.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
-		Code:       documenttype.CodeDetentionNotice,
-		TenantInfo: p.TenantInfo,
-	})
+	docType, err := s.documentTypeRepo.GetByCode(
+		ctx,
+		documenttypeports.GetDocumentTypeByCodeRequest{
+			Code:       documenttype.CodeDetentionNotice,
+			TenantInfo: p.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

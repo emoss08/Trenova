@@ -83,15 +83,8 @@ describe("reply files", () => {
       attachable("doc_pod", "Shipment"),
     ]);
 
-    expect(sections.map((section) => section.source)).toEqual([
-      "Message",
-      "Shipment",
-      "Customer",
-    ]);
-    expect(sections[1]?.documents.map((document) => document.id)).toEqual([
-      "doc_bol",
-      "doc_pod",
-    ]);
+    expect(sections.map((section) => section.source)).toEqual(["Message", "Shipment", "Customer"]);
+    expect(sections[1]?.documents.map((document) => document.id)).toEqual(["doc_bol", "doc_pod"]);
   });
 
   it("reads a file from an attachable and from an uploaded document", () => {

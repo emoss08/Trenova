@@ -95,7 +95,14 @@ Things worth knowing when clicking through:
   `ops@partnercarrier.example`; a resend there goes. "Wait for reply" parks the message and the
   sender answers on its thread after `triageReplyAfterMs`.
 - **Stops.** Deciding the Harborline dispute records the decision and has Nova draft the matching
-  reply (waive the $185, or stand by it with the ELD log).
+  reply (waive the $185, or stand by it with `ELD_SEED-PAY-002_Oct3.pdf` attached).
+- **Attachments.** `InboundReplyAttachables` lists the message's readable files, the shipments'
+  BOL, POD, rate con and invoice (plus the ELD record and gate log on SEED-PAY-002) and a
+  document on Harborline and Crestline, against the server's 7,852,032-byte budget. A reply or a
+  draft save takes `documentIds` (unknown ids, more than 20 files or more than the budget are
+  refused as the server refuses them), and the `Replied` line names the files.
+  `POST /api/v1/documents/upload/` stores a multipart upload as a document on the
+  `resourceType`/`resourceId` it names, and it becomes attachable.
 - **Loads.** Creating a load from a draft makes `S-104260`, then `S-104261`, …
 - **Sources.** "Send a test email" on Claims lands a test message after about 1.5s and the source
   turns healthy. Creating a source when nothing has arrived (`firstDay`, `noMailbox`) reads the

@@ -672,9 +672,9 @@ func (s *Service) providerAttachments(
 	}
 	result := make([]ProviderAttachment, 0, len(attachments))
 	for _, attachment := range attachments {
-		content, err := s.attachmentContent(ctx, attachment)
-		if err != nil {
-			return nil, err
+		content, contentErr := s.attachmentContent(ctx, attachment)
+		if contentErr != nil {
+			return nil, contentErr
 		}
 		result = append(result, ProviderAttachment{
 			FileName:    attachment.FileName,

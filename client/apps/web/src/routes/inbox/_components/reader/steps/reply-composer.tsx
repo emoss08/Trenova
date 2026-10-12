@@ -41,12 +41,7 @@ import {
   type ReplyOutcome,
 } from "../composer-state";
 import { useReaderPanel, useStepSubmit } from "../reader-panel";
-import {
-  AttachMenu,
-  RefusedFileChip,
-  ReplyFileChip,
-  UploadingChip,
-} from "./reply-files";
+import { AttachMenu, RefusedFileChip, ReplyFileChip, UploadingChip } from "./reply-files";
 import { StepBody, StepError, StepFooter } from "./step-parts";
 
 /** How long typing pauses before the draft is saved for the team. */
@@ -85,12 +80,14 @@ function ReplyFiles({
   files,
   uploads,
   refused,
+  limitBytes,
   onRemove,
   onCancelUpload,
   onRetryUpload,
   onDismissRefusal,
 }: {
   files: readonly ReplyFile[];
+  limitBytes: number | null;
   uploads: ReturnType<typeof useUploadWithProgress>["uploads"];
   refused: readonly RefusedUpload[];
   onRemove?: (documentId: string) => void;
@@ -125,6 +122,11 @@ function ReplyFiles({
           onDismiss={() => onDismissRefusal(refusal.key)}
         />
       ))}
+      {files.length > 0 && limitBytes !== null && (
+        <span className="text-foreground-subtle self-center text-xs tabular-nums">
+          {t("{0} of {1}", formatFileSize(totalBytes(files)), formatFileSize(limitBytes))}
+        </span>
+      )}
     </div>
   );
 }
@@ -426,8 +428,7 @@ export function ReplyComposer({
           key: `${file.name}:${file.size}:${file.lastModified}`,
           name: file.name,
           reason: t(
-            "{0} is {1}. A reply can carry {2} in all, and {3} is left.",
-            file.name,
+            "It is {0}. A reply can carry {1} in all, and {2} is left.",
             formatFileSize(file.size),
             formatFileSize(limitBytes),
             formatFileSize(left),
@@ -594,6 +595,7 @@ export function ReplyComposer({
         files={files}
         uploads={upload.uploads}
         refused={refusedUploads}
+        limitBytes={limitBytes}
         onRemove={sending ? undefined : removeFile}
         onCancelUpload={upload.cancelUpload}
         onRetryUpload={upload.retryUpload}
@@ -631,16 +633,9 @@ export function ReplyComposer({
                 ? t("Couldn't save the draft — it is still here")
                 : uploading
                   ? t("Uploading — Send waits for the files")
-                  : files.length > 0 && limitBytes !== null
-                    ? t(
-                        "{0, plural, one {# file} other {# files}} · {1} of {2}",
-                        files.length,
-                        formatFileSize(totalBytes(files)),
-                        formatFileSize(limitBytes),
-                      )
-                    : mailbox === ""
-                      ? t("To {0}", to)
-                      : t("From {0} to {1}", mailbox, to)
+                  : mailbox === ""
+                    ? t("To {0}", to)
+                    : t("From {0} to {1}", mailbox, to)
           }
         >
           {state.phase === "writing" && (

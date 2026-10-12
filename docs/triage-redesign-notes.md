@@ -72,10 +72,31 @@ _Filled in as each area lands._
 
 ### Replies and work
 
-- **Replies carry no attachments.** The prototype's "stand by" reply attaches the gate and ELD
-  record. `sendInboundReply` sends text only (the email port has no attachment path for a reply
-  that must thread under the sender's Message-ID), so Nova's stand-by draft cites the arrival,
-  check-in and departure times and their source instead, and offers to send the record.
+- **Replies carry stored documents, not loose files.** A reply attaches documents:
+  `inboundReplyAttachables(messageId)` lists the message's own files and the documents on its
+  shipment, customer and carrier, grouped by `source`, and "Upload from computer" goes
+  through the documents upload route first (onto the matched shipment, or the message itself
+  when nothing is matched), so every file a reply sends is also on file.
+  `sendInboundReply(input.documentIds)` and `saveInboundReplyDraft(documentIds)` resolve them
+  through `documentports.DocumentMailAttachments` (tenant, sendable status, the person's
+  read access to each document's record, at most 20 files and `emailports.MaxAttachmentBytes`
+  in all, which `inboundReplyAttachmentLimit` returns for the composer's total), and the
+  email goes out with the files by storage key beside the threading headers. The reply keeps
+  a snapshot (`inbound_replies.attachments`: document, name, type, size) so a later rename
+  does not change what it says it sent, the `Replied` activity's detail lists the file names,
+  and a retry to another address sends the same documents (the composer keeps them and
+  sends them again). Leaving `documentIds` out of a draft save keeps the draft's files.
+- **Nova attaches the detention record when standing by.** `decideInboundStops(StandBy)` asks
+  operations for the dispute's record (`TriageDetentionEvidenceSource`): the PDF of a
+  detention notice that was sent (a Final one first), else a record stored earlier, else the
+  Final notice rendered from the organization's `detention.notice.pdf` template and stored on
+  the shipment as a `DETNOTICE` document, then attaches it to the draft. Its prompt lists
+  exactly what is attached and says nothing is when nothing is, so the text never claims a
+  file that is not there; without a record it offers to send the times instead. There is no
+  separate gate log or ELD file in Trenova, so the record is the notice, which carries the
+  arrival (with its source), departure, free time and billed time. Other drafts attach
+  nothing: "Return it signed" is left to a person, because the file on the message is the
+  unsigned rate confirmation.
 - **Send status arrives later.** Email goes out through the email workflow, so the mutation
   returns the reply as `Sending` unless the provider answered at once. `Sent` or `Failed` (a
   bounce, complaint or suppression included) lands through an email observer
