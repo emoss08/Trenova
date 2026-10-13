@@ -44,7 +44,10 @@ const (
 )
 
 type permittedNotifier interface {
-	NotifyPermitted(ctx context.Context, req notificationservice.NotifyPermittedRequest) (int, error)
+	NotifyPermitted(
+		ctx context.Context,
+		req notificationservice.NotifyPermittedRequest,
+	) (int, error)
 }
 
 type ledgerBalances interface {
@@ -70,8 +73,8 @@ type Params struct {
 
 	Ledger        customerledgerports.CustomerLedgerProjectionRepository `name:"customerLedgerStore"`
 	Customers     customerports.CustomerRepository
-	Notifications *notificationservice.Service `optional:"true"`
-	Realtime      agentports.RealtimeService   `optional:"true"`
+	Notifications *notificationservice.Service `                           optional:"true"`
+	Realtime      agentports.RealtimeService   `                           optional:"true"`
 	Logger        *zap.Logger
 }
 
@@ -109,10 +112,13 @@ func (s *Service) Review(
 		return nil
 	}
 
-	balances, err := s.ledger.SumCustomerBalances(ctx, customerledgerports.SumCustomerBalancesRequest{
-		TenantInfo:  tenant,
-		CustomerIDs: ids,
-	})
+	balances, err := s.ledger.SumCustomerBalances(
+		ctx,
+		customerledgerports.SumCustomerBalancesRequest{
+			TenantInfo:  tenant,
+			CustomerIDs: ids,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("sum customer balances for credit review: %w", err)
 	}
@@ -120,12 +126,15 @@ func (s *Service) Review(
 	now := timeutils.NowUnix()
 	var failed []pulid.ID
 	for _, id := range ids {
-		result, reviewErr := s.customers.ReviewCredit(ctx, &customerports.ReviewCustomerCreditRequest{
-			TenantInfo:    tenant,
-			CustomerID:    id,
-			ExposureMinor: max(balances[id], 0),
-			Now:           now,
-		})
+		result, reviewErr := s.customers.ReviewCredit(
+			ctx,
+			&customerports.ReviewCustomerCreditRequest{
+				TenantInfo:    tenant,
+				CustomerID:    id,
+				ExposureMinor: max(balances[id], 0),
+				Now:           now,
+			},
+		)
 		if reviewErr != nil {
 			s.l.Error("failed to review customer credit",
 				zap.String("customerId", id.String()), zap.Error(reviewErr))
@@ -152,10 +161,13 @@ func (s *Service) Sweep(ctx context.Context, heartbeat func(string)) (*SweepResu
 	result := new(SweepResult)
 	var after *customerports.CreditReviewCustomer
 	for {
-		page, err := s.customers.ListCreditReviewCustomers(ctx, &customerports.ListCreditReviewCustomersRequest{
-			After: after,
-			Limit: SweepPageSize,
-		})
+		page, err := s.customers.ListCreditReviewCustomers(
+			ctx,
+			&customerports.ListCreditReviewCustomersRequest{
+				After: after,
+				Limit: SweepPageSize,
+			},
+		)
 		if err != nil {
 			return result, err
 		}
@@ -251,7 +263,7 @@ func creditNotice(
 	if name == "" {
 		name = result.CustomerCode
 	}
-	switch result.Outcome {
+	switch result.Outcome { //nolint:exhaustive // only a hold or a release is announced
 	case customer.CreditReviewHeld:
 		return notification.Notification{
 			EventType: eventCreditHeld,

@@ -19,7 +19,7 @@ func refuseDeliveryUpdate(
 	entity *invoice.Invoice,
 	req *invoiceports.UpdateInvoiceDraftRequest,
 ) error {
-	switch entity.Status {
+	switch entity.Status { //nolint:exhaustive // every status that is neither draft nor posted is refused
 	case invoice.StatusDraft:
 		return nil
 	case invoice.StatusPosted:

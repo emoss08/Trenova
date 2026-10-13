@@ -142,7 +142,7 @@ func (s *Service) DiscardDraftForReview(
 		if err != nil {
 			return err
 		}
-		switch entity.Status {
+		switch entity.Status { //nolint:exhaustive // only a draft can be voided back to review
 		case invoice.StatusVoided:
 			return nil
 		case invoice.StatusDraft:
@@ -242,7 +242,11 @@ func (s *Service) voidPosted(
 		}
 
 		var txErr error
-		adjustment, txErr = s.adjustmentService.Submit(txCtx, voidReversalRequest(entity, req), actor)
+		adjustment, txErr = s.adjustmentService.Submit(
+			txCtx,
+			voidReversalRequest(entity, req),
+			actor,
+		)
 		if txErr != nil {
 			return txErr
 		}

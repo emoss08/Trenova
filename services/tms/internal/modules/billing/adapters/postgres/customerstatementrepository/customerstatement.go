@@ -66,6 +66,7 @@ func (r *repository) ListStatementCustomers(
 	})
 }
 
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
 func (r *repository) ListMonthlySent(
 	ctx context.Context,
 	req customerstatementports.ListMonthlySentRequest,
@@ -86,7 +87,7 @@ func (r *repository) ListMonthlySent(
 		).
 			Where(cols.Monthly.IsTrue()).
 			Where(cols.PeriodEnd.Eq(), req.PeriodEnd).
-			Where(cols.CustomerID.In(), bun.In(req.CustomerIDs)).
+			Where(cols.CustomerID.In(), bun.List(req.CustomerIDs)).
 			Scan(ctx, &ids); err != nil {
 			return nil, fmt.Errorf("list monthly statements sent: %w", err)
 		}
@@ -141,19 +142,23 @@ func (r *repository) ListSent(
 	ctx context.Context,
 	req customerstatementports.ListSentRequest,
 ) ([]*customerstatementports.SentStatement, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customerstatementports.SentStatement, error) {
-		rows := make([]*customerstatementports.SentStatement, 0, 12)
-		if err := r.db.DBForContext(ctx).
-			NewRaw(
-				sentStatementsSQL,
-				req.TenantInfo.OrgID,
-				req.TenantInfo.BuID,
-				req.CustomerID,
-				customerstatementports.MaxHistory,
-			).
-			Scan(ctx, &rows); err != nil {
-			return nil, fmt.Errorf("list sent customer statements: %w", err)
-		}
-		return rows, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*customerstatementports.SentStatement, error) {
+			rows := make([]*customerstatementports.SentStatement, 0, 12)
+			if err := r.db.DBForContext(ctx).
+				NewRaw(
+					sentStatementsSQL,
+					req.TenantInfo.OrgID,
+					req.TenantInfo.BuID,
+					req.CustomerID,
+					customerstatementports.MaxHistory,
+				).
+				Scan(ctx, &rows); err != nil {
+				return nil, fmt.Errorf("list sent customer statements: %w", err)
+			}
+			return rows, nil
+		},
+	)
 }

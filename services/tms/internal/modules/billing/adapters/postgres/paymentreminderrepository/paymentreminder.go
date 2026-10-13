@@ -74,41 +74,47 @@ type overdueRecord struct {
 // ListOverdueInvoices reads every posted invoice past due with money open,
 // oldest first within each customer, with the scheduled step it last drew.
 // Invoices assigned to a factor are left out: the factor collects them.
+//
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
 func (r *repository) ListOverdueInvoices(
 	ctx context.Context,
 	req paymentreminderports.ListOverdueInvoicesRequest,
 ) ([]*paymentreminderports.OverdueInvoice, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*paymentreminderports.OverdueInvoice, error) {
-		args := []any{req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOf}
-		filter := ""
-		if len(req.CustomerIDs) > 0 {
-			filter = "AND inv.customer_id IN (?)"
-			args = append(args, bun.In(req.CustomerIDs))
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*paymentreminderports.OverdueInvoice, error) {
+			args := []any{req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOf}
+			filter := ""
+			if len(req.CustomerIDs) > 0 {
+				filter = "AND inv.customer_id IN (?)"
+				args = append(args, bun.List(req.CustomerIDs))
+			}
 
-		records := make([]*overdueRecord, 0, 64)
-		if err := r.db.DBForContext(ctx).
-			NewRaw(fmt.Sprintf(overdueInvoicesSQL, filter), args...).
-			Scan(ctx, &records); err != nil {
-			return nil, fmt.Errorf("list overdue invoices: %w", err)
-		}
+			records := make([]*overdueRecord, 0, 64)
+			if err := r.db.DBForContext(ctx).
+				NewRaw(fmt.Sprintf(overdueInvoicesSQL, filter), args...).
+				Scan(ctx, &records); err != nil {
+				return nil, fmt.Errorf("list overdue invoices: %w", err)
+			}
 
-		invoices := make([]*paymentreminderports.OverdueInvoice, 0, len(records))
-		for _, rec := range records {
-			invoices = append(invoices, &paymentreminderports.OverdueInvoice{
-				InvoiceID:     rec.InvoiceID,
-				InvoiceNumber: rec.InvoiceNumber,
-				CustomerID:    rec.CustomerID,
-				CurrencyCode:  rec.CurrencyCode,
-				InvoiceDate:   rec.InvoiceDate,
-				DueDate:       rec.DueDate,
-				OpenMinor:     rec.OpenMinor,
-				LastStep:      rec.LastStep,
-				Disputed:      rec.Disputed,
-			})
-		}
-		return invoices, nil
-	})
+			invoices := make([]*paymentreminderports.OverdueInvoice, 0, len(records))
+			for _, rec := range records {
+				invoices = append(invoices, &paymentreminderports.OverdueInvoice{
+					InvoiceID:     rec.InvoiceID,
+					InvoiceNumber: rec.InvoiceNumber,
+					CustomerID:    rec.CustomerID,
+					CurrencyCode:  rec.CurrencyCode,
+					InvoiceDate:   rec.InvoiceDate,
+					DueDate:       rec.DueDate,
+					OpenMinor:     rec.OpenMinor,
+					LastStep:      rec.LastStep,
+					Disputed:      rec.Disputed,
+				})
+			}
+			return invoices, nil
+		},
+	)
 }
 
 // InsertReminders records the invoices a reminder listed. A scheduled step

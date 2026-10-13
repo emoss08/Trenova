@@ -167,15 +167,20 @@ func (s *Service) Assess(
 	}
 
 	minimumMinor := money.MinorUnits(control.LateChargeMinimumAmount)
-	err = s.eachCustomerPage(ctx, req, asOf, func(candidates []*latechargeports.LateChargeCandidate) {
-		s.assessPage(ctx, &pageRun{
-			req:     req,
-			control: control,
-			plans:   buildPlans(candidates, asOf, minimumMinor, actor),
-			actor:   actor,
-			result:  result,
-		})
-	})
+	err = s.eachCustomerPage(
+		ctx,
+		req,
+		asOf,
+		func(candidates []*latechargeports.LateChargeCandidate) {
+			s.assessPage(ctx, &pageRun{
+				req:     req,
+				control: control,
+				plans:   buildPlans(candidates, asOf, minimumMinor, actor),
+				actor:   actor,
+				result:  result,
+			})
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -203,13 +208,16 @@ func (s *Service) eachCustomerPage(
 ) error {
 	after := pulid.Nil
 	for {
-		customerIDs, err := s.repo.ListCandidateCustomers(ctx, &latechargeports.ListLateChargeCustomersRequest{
-			TenantInfo:      req.TenantInfo,
-			CustomerIDs:     req.CustomerIDs,
-			AsOfDate:        asOf,
-			AfterCustomerID: after,
-			Limit:           customerPageSize,
-		})
+		customerIDs, err := s.repo.ListCandidateCustomers(
+			ctx,
+			&latechargeports.ListLateChargeCustomersRequest{
+				TenantInfo:      req.TenantInfo,
+				CustomerIDs:     req.CustomerIDs,
+				AsOfDate:        asOf,
+				AfterCustomerID: after,
+				Limit:           customerPageSize,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -217,11 +225,14 @@ func (s *Service) eachCustomerPage(
 			return nil
 		}
 
-		candidates, err := s.repo.ListCandidates(ctx, &latechargeports.ListLateChargeCandidatesRequest{
-			TenantInfo:  req.TenantInfo,
-			CustomerIDs: customerIDs,
-			AsOfDate:    asOf,
-		})
+		candidates, err := s.repo.ListCandidates(
+			ctx,
+			&latechargeports.ListLateChargeCandidatesRequest{
+				TenantInfo:  req.TenantInfo,
+				CustomerIDs: customerIDs,
+				AsOfDate:    asOf,
+			},
+		)
 		if err != nil {
 			return err
 		}

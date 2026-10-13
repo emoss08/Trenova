@@ -8,6 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 )
 
+const (
+	metaKeyCode   = "code"
+	metaKeyStatus = "status"
+)
+
 func (r *Deps) resolveFactoringCompanySelectOptions(
 	ctx context.Context,
 	req *SelectOptionsRequest,
@@ -61,8 +66,8 @@ func factoringCompanySelectOptionItem(
 			Label:       entity.Name,
 			Description: &description,
 			Meta: map[string]any{
-				"code":   entity.Code,
-				"status": string(entity.Status),
+				metaKeyCode:   entity.Code,
+				metaKeyStatus: string(entity.Status),
 			},
 		},
 		entity.CreatedAt,

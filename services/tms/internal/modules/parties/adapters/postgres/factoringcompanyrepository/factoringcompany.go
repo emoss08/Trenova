@@ -68,7 +68,11 @@ func (r *repository) List(
 				zap.Any("request", req),
 			)
 
-			entities := make([]*factoringcompany.FactoringCompany, 0, req.Filter.Pagination.SafeLimit())
+			entities := make(
+				[]*factoringcompany.FactoringCompany,
+				0,
+				req.Filter.Pagination.SafeLimit(),
+			)
 			total, err := r.db.DBForContext(ctx).
 				NewSelect().
 				Model(&entities).
@@ -183,88 +187,104 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	req factoringcompanyports.GetFactoringCompanyByIDRequest,
 ) (*factoringcompany.FactoringCompany, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoringcompany.FactoringCompany, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ID.String()),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*factoringcompany.FactoringCompany, error) {
+			log := r.l.With(
+				zap.String("operation", "GetByID"),
+				zap.String("id", req.ID.String()),
+			)
 
-		entity := new(factoringcompany.FactoringCompany)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = factoringcompanycol.FactoringCompanyScopeTenant(sq, req.TenantInfo).
-					Where(factoringcompanycol.FactoringCompanyColumns.ID.Eq(), req.ID)
-				if req.IncludeState {
-					sq = sq.Relation("State")
-				}
-				return sq
-			}).
-			Scan(ctx)
-		if err != nil {
-			log.Error("failed to get factoring company", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "FactoringCompany")
-		}
+			entity := new(factoringcompany.FactoringCompany)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = factoringcompanycol.FactoringCompanyScopeTenant(sq, req.TenantInfo).
+						Where(factoringcompanycol.FactoringCompanyColumns.ID.Eq(), req.ID)
+					if req.IncludeState {
+						sq = sq.Relation("State")
+					}
+					return sq
+				}).
+				Scan(ctx)
+			if err != nil {
+				log.Error("failed to get factoring company", zap.Error(err))
+				return nil, dberror.HandleNotFoundError(err, "FactoringCompany")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *factoringcompany.FactoringCompany,
 ) (*factoringcompany.FactoringCompany, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoringcompany.FactoringCompany, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*factoringcompany.FactoringCompany, error) {
+			log := r.l.With(
+				zap.String("operation", "Create"),
+			)
 
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create factoring company", zap.Error(err))
-			return nil, err
-		}
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); err != nil {
+				log.Error("failed to create factoring company", zap.Error(err))
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *factoringcompany.FactoringCompany,
 ) (*factoringcompany.FactoringCompany, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoringcompany.FactoringCompany, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*factoringcompany.FactoringCompany, error) {
+			log := r.l.With(
+				zap.String("operation", "Update"),
+				zap.String("id", entity.ID.String()),
+			)
 
-		ov := entity.Version
-		entity.Version++
+			ov := entity.Version
+			entity.Version++
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update factoring company", zap.Error(err))
-			return nil, err
-		}
+			results, err := r.db.DBForContext(ctx).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where("version = ?", ov).
+				OmitZero().
+				Returning("*").
+				Exec(ctx)
+			if err != nil {
+				log.Error("failed to update factoring company", zap.Error(err))
+				return nil, err
+			}
 
-		if err = dberror.CheckRowsAffected(results, "FactoringCompany", entity.ID.String()); err != nil {
-			return nil, err
-		}
+			if err = dberror.CheckRowsAffected(
+				results,
+				"FactoringCompany",
+				entity.ID.String(),
+			); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) SelectOptions(

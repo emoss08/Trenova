@@ -57,7 +57,7 @@ func (b *CustomerBillingProfile) BlocksBilling() bool {
 // A hold is placed when receivables cross the limit, not whenever they are
 // over it: once a person lifts a hold on a customer still over its limit,
 // that release stands until the balance falls back under and crosses again.
-func (b *CustomerBillingProfile) ReviewCredit(exposureMinor int64, now int64) CreditReviewOutcome {
+func (b *CustomerBillingProfile) ReviewCredit(exposureMinor, now int64) CreditReviewOutcome {
 	previousMinor := money.MinorUnits(b.CreditBalance)
 	firstReview := b.CreditReviewedAt == nil
 	b.CreditBalance = money.DecimalFromMinor(exposureMinor)
@@ -125,7 +125,7 @@ func (b *CustomerBillingProfile) liftAutomaticStanding() CreditReviewOutcome {
 	b.CreditHoldAutomatic = false
 	b.CreditHoldReason = ""
 
-	switch previous {
+	switch previous { //nolint:exhaustive // an automatic standing other than a hold is a warning
 	case CreditStatusActive:
 		return CreditReviewUnchanged
 	case CreditStatusHold:

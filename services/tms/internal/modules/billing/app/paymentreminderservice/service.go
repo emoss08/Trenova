@@ -69,6 +69,7 @@ type Service struct {
 
 var _ paymentreminderports.Service = (*Service)(nil)
 
+//nolint:gocritic // dependency injection
 func New(p Params) *Service {
 	return &Service{
 		db:              p.DB,
@@ -335,7 +336,12 @@ func (s *Service) send(ctx context.Context, from *sender, rem *reminder) ([]stri
 
 // logActivity writes the reminder into the customer's collections history,
 // so a collector sees what the customer was already told.
-func (s *Service) logActivity(ctx context.Context, from *sender, rem *reminder, sentTo string) error {
+func (s *Service) logActivity(
+	ctx context.Context,
+	from *sender,
+	rem *reminder,
+	sentTo string,
+) error {
 	createdBy := rem.sentBy
 	if createdBy.IsNil() {
 		createdBy = from.activityBy
@@ -375,11 +381,19 @@ func (s *Service) senderFor(
 	control *tenant.BillingControl,
 	actorID pulid.ID,
 ) (*sender, error) {
-	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{TenantInfo: tenantInfo})
+	org, err := s.organizations.GetByID(
+		ctx,
+		tenantports.GetOrganizationByIDRequest{TenantInfo: tenantInfo},
+	)
 	if err != nil {
 		return nil, err
 	}
-	from := &sender{tenant: tenantInfo, companyName: org.Name, timezone: org.Timezone, activityBy: actorID}
+	from := &sender{
+		tenant:      tenantInfo,
+		companyName: org.Name,
+		timezone:    org.Timezone,
+		activityBy:  actorID,
+	}
 	if control != nil {
 		from.remittance = strings.TrimSpace(control.DefaultInvoiceTerms)
 	}
@@ -434,9 +448,18 @@ func scheduledReminders(
 	slices.Sort(codes)
 	for _, code := range codes {
 		listed := currencies[code]
-		rem := &reminder{customer: cus, currency: code, listed: listed, steps: map[pulid.ID]int{}, asOf: now}
+		rem := &reminder{
+			customer: cus,
+			currency: code,
+			listed:   listed,
+			steps:    map[pulid.ID]int{},
+			asOf:     now,
+		}
 		for _, inv := range listed {
-			step := paymentreminder.StepReached(paymentreminder.DaysPastDue(inv.DueDate, now), schedule)
+			step := paymentreminder.StepReached(
+				paymentreminder.DaysPastDue(inv.DueDate, now),
+				schedule,
+			)
 			if step <= inv.LastStep {
 				continue
 			}
@@ -455,7 +478,10 @@ func scheduledReminders(
 
 func hasNewStep(invoices []*paymentreminderports.OverdueInvoice, schedule []int32, now int64) bool {
 	for _, inv := range invoices {
-		if paymentreminder.StepReached(paymentreminder.DaysPastDue(inv.DueDate, now), schedule) > inv.LastStep {
+		if paymentreminder.StepReached(
+			paymentreminder.DaysPastDue(inv.DueDate, now),
+			schedule,
+		) > inv.LastStep {
 			return true
 		}
 	}
@@ -479,7 +505,7 @@ func records(from *sender, rem *reminder, sentTo string) []*paymentreminder.Remi
 			BusinessUnitID:  from.tenant.BuID,
 			InvoiceID:       inv.InvoiceID,
 			CustomerID:      rem.customer.ID,
-			Step:            int16(step), //nolint:gosec // bounded by MaxPaymentReminderSteps
+			Step:            int16(step),
 			DaysPastDue:     paymentreminder.DaysPastDue(inv.DueDate, rem.asOf),
 			OpenAmountMinor: inv.OpenMinor,
 			CurrencyCode:    rem.currency,
@@ -532,7 +558,9 @@ func idempotencyKey(rem *reminder) string {
 	return "payment-reminder-" + hex.EncodeToString(sum[:16])
 }
 
-func withoutDisputed(invoices []*paymentreminderports.OverdueInvoice) []*paymentreminderports.OverdueInvoice {
+func withoutDisputed(
+	invoices []*paymentreminderports.OverdueInvoice,
+) []*paymentreminderports.OverdueInvoice {
 	kept := make([]*paymentreminderports.OverdueInvoice, 0, len(invoices))
 	for _, inv := range invoices {
 		if !inv.Disputed {
@@ -562,7 +590,10 @@ func byCurrency(
 	}
 	for _, list := range grouped {
 		slices.SortStableFunc(list, func(a, b *paymentreminderports.OverdueInvoice) int {
-			return cmp.Or(cmp.Compare(a.DueDate, b.DueDate), strings.Compare(a.InvoiceNumber, b.InvoiceNumber))
+			return cmp.Or(
+				cmp.Compare(a.DueDate, b.DueDate),
+				strings.Compare(a.InvoiceNumber, b.InvoiceNumber),
+			)
 		})
 	}
 	return grouped

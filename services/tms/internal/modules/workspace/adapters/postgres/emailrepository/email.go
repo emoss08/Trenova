@@ -608,6 +608,7 @@ func (r *repository) CreateEvent(ctx context.Context, entity *email.Event) (bool
 	})
 }
 
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
 func (r *repository) ListEventRecipients(
 	ctx context.Context,
 	req emailports.ListEmailEventRecipientsRequest,

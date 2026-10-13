@@ -7,13 +7,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"io"
 	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -1137,7 +1138,10 @@ func (s *Service) profileSenderOrigin(ctx context.Context, msg *email.Message) s
 		}
 		return ""
 	}
-	if !strings.EqualFold(strings.TrimSpace(profile.SenderEmail), strings.TrimSpace(msg.FromEmail)) {
+	if !strings.EqualFold(
+		strings.TrimSpace(profile.SenderEmail),
+		strings.TrimSpace(msg.FromEmail),
+	) {
 		return ""
 	}
 	return fmt.Sprintf(

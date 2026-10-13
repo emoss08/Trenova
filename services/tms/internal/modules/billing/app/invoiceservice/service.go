@@ -540,7 +540,12 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 			return planErr
 		}
 		if !alreadyPosted {
-			if guardErr := s.guardMemoPoster(txCtx, entity, actor, req.TenantInfo); guardErr != nil {
+			if guardErr := s.guardMemoPoster(
+				txCtx,
+				entity,
+				actor,
+				req.TenantInfo,
+			); guardErr != nil {
 				return guardErr
 			}
 		}

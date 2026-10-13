@@ -33,11 +33,11 @@ func (s CollectorScope) IsValid() bool {
 // has scheduled a follow-up for yet.
 type WorklistRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
-	Scope      CollectorScope        `json:"scope"      form:"scope"`
-	DueOnly    bool                  `json:"dueOnly"    form:"dueOnly"`
-	Search     string                `json:"search"     form:"search"`
-	Limit      int                   `json:"limit"      form:"limit"`
-	Offset     int                   `json:"offset"     form:"offset"`
+	Scope      CollectorScope        `json:"scope"   form:"scope"`
+	DueOnly    bool                  `json:"dueOnly" form:"dueOnly"`
+	Search     string                `json:"search"  form:"search"`
+	Limit      int                   `json:"limit"   form:"limit"`
+	Offset     int                   `json:"offset"  form:"offset"`
 	AsOf       int64                 `json:"-"`
 }
 
@@ -184,7 +184,11 @@ type ScheduleFollowUpRequest struct {
 
 type Service interface {
 	Worklist(ctx context.Context, req *WorklistRequest) (*WorklistPage, error)
-	GetAccount(ctx context.Context, req GetAccountRequest, before *ActivityCursor) (*AccountView, error)
+	GetAccount(
+		ctx context.Context,
+		req GetAccountRequest,
+		before *ActivityCursor,
+	) (*AccountView, error)
 	LogActivity(
 		ctx context.Context,
 		req *LogActivityRequest,

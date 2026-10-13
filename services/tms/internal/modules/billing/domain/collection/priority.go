@@ -76,7 +76,7 @@ func PriorityOf(f PriorityFacts) Priority {
 
 // Rank is the sort weight of a priority, lowest first.
 func (p Priority) Rank() int {
-	switch p {
+	switch p { //nolint:exhaustive // low and any unknown priority sort last
 	case PriorityCritical:
 		return 0
 	case PriorityHigh:

@@ -127,7 +127,9 @@ func remitTo(from *issuer, p *prepared) documenttemplate.AddressBlock {
 		return documenttemplate.AddressBlock{Name: p.factor.Name, Lines: p.factor.RemitLines()}
 	}
 	lines := from.org.MailingAddress().Lines()
-	lines = append(lines, stringutils.FilterEmpty(strings.Split(remittanceInstructions(from.control), "\n"))...)
+	lines = append(
+		lines,
+		stringutils.FilterEmpty(strings.Split(remittanceInstructions(from.control), "\n"))...)
 	return documenttemplate.AddressBlock{Name: from.org.Name, Lines: lines}
 }
 
