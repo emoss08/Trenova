@@ -1,5 +1,5 @@
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
-import { windowsRequirement } from "@/lib/capture-release";
+import { CAPTURE_RELEASES_URL, windowsRequirement } from "@/lib/capture-release";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -10,7 +10,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { APP_ENV } from "@trenova/shared/lib/constants";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { formatFileSize } from "@trenova/shared/lib/utils";
-import { Download01Icon } from "@trenova/shared/components/icons";
+import { Download01Icon, LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { CaptureDevelopmentInstallPanel } from "./development-install-panel";
 
 type CaptureDownloadPanelProps = {
@@ -71,7 +71,30 @@ export function CaptureDownloadPanel({
     if (development) {
       return <CaptureDevelopmentInstallPanel />;
     }
-    return whenMissing ? <>{whenMissing}</> : null;
+    return (
+      <SectionPanel
+        title={t("Install Trenova Capture")}
+        icon={<Download01Icon aria-hidden />}
+        action={
+          <Button
+            size="sm"
+            variant="outline"
+            nativeButton={false}
+            render={<a href={CAPTURE_RELEASES_URL} target="_blank" rel="noreferrer" />}
+          >
+            {t("Get it from GitHub")}
+            <LinkExternal01Icon className="size-3.5" aria-hidden />
+          </Button>
+        }
+      >
+        {whenMissing ? <div className="px-3 py-3">{whenMissing}</div> : null}
+        <SectionPanelQuiet>
+          {t(
+            "Every release is published on GitHub with its installer and a signed manifest. Install it with administrator rights, then sign in from the Trenova Capture icon in the notification area.",
+          )}
+        </SectionPanelQuiet>
+      </SectionPanel>
+    );
   }
 
   const requirement = windowsRequirement(release.minimumWindowsBuild);

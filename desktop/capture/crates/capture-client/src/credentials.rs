@@ -9,9 +9,32 @@ use serde::{Deserialize, Serialize};
 pub struct Credential {
     /// The server it was paired with, as [`crate::Server::as_str`] writes it.
     pub server: String,
+    /// Where that server's API answers, as [`crate::Server::api_base`] writes
+    /// it; empty in a credential saved before discovery existed, which means
+    /// the server address itself.
+    #[serde(default)]
+    pub api_base: String,
     /// The web app, for links a person opens.
     pub web_base: String,
+    /// What the server called itself when it was found (Trenova Cloud,
+    /// Trenova); empty when it was not asked.
+    #[serde(default)]
+    pub server_name: String,
+    /// Many organizations share the server, as on Trenova Cloud.
+    #[serde(default)]
+    pub shared_tenancy: bool,
     pub tokens: TokenPair,
+}
+
+impl Credential {
+    /// The connection this credential was saved for.
+    pub fn server(&self) -> Result<crate::Server, crate::ServerUrlError> {
+        let server = crate::Server::parse(&self.server)?;
+        if self.api_base.trim().is_empty() {
+            return Ok(server);
+        }
+        server.with_api_base(&self.api_base)
+    }
 }
 
 /// Where a credential lives between runs. On Windows this is Credential

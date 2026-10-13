@@ -29,6 +29,12 @@ export function windowsRequirement(build: number): WindowsRequirement {
 export const CAPTURE_DEVELOPMENT_BUILDS_URL =
   "https://github.com/emoss08/Trenova/actions/workflows/native-capture.yml?query=branch%3Amaster";
 
+/**
+ * Where every Trenova Capture release is published, for a server that mirrors
+ * none: no release key configured, or the manifest not reachable from it.
+ */
+export const CAPTURE_RELEASES_URL = "https://github.com/emoss08/Trenova/releases?q=capture";
+
 /** The name of the development installer's build artifact. */
 export const CAPTURE_DEVELOPMENT_ARTIFACT = "trenova-capture-msi";
 
