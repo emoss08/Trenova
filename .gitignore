@@ -45,3 +45,5 @@ services/tms/cmd/worker/edition_cloud.go
 client/packages/cloud/
 
 *:Zone.Identifier
+
+.cloudflare
