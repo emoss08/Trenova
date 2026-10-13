@@ -110,6 +110,12 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  CustomerEmailProfile:
+    - fromEmail
+  LogCheckCallPayload:
+    - checkCall
+    - outcome
+    - outcomeReason
   AICorrection:
     - accuracy
   AITuneUp:
@@ -167,6 +173,7 @@ virtuals:
   InboundMailbox:
     - hasSigningSecret
     - hasApiKey
+    - health
   InboundMessage:
     - needsReview
     - mailbox
@@ -175,6 +182,37 @@ virtuals:
     - preview
     - matchedShipment
     - matchedCustomer
+    - threadCount
+    - owner
+    - responseTargetMinutes
+    - snooze
+    - awaitingReply
+    - handledByNova
+    - reviewer
+    - activity
+    - actions
+    - replies
+    - replyDraft
+  InboundActivity:
+    - actor
+  InboundAttachment:
+    - filedShipment
+    - reading
+  InboundReply:
+    - sentBy
+  TriageReplyTemplate:
+    - createdBy
+  TriageSettings:
+    - onCallUser
+    - timezone
+  TriageView:
+    - waiting
+  TriageRule:
+    - mailbox
+    - assignee
+    - createdBy
+    - matchesThisMonth
+    - lastMatch
   AgentDefinition:
     - pendingProposals
     - openRuns

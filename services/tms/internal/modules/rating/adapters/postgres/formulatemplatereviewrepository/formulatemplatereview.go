@@ -77,6 +77,7 @@ func (r *repository) ListByTemplate(
 			NewSelect().
 			Model(&reviews).
 			Relation(buncolgen.Rel(formulatemplatecol.ReviewRelations.Actor)).
+			Relation(buncolgen.Rel(formulatemplatecol.ReviewRelations.RequestedReviewer)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return formulatemplatecol.ReviewScopeTenant(sq, req.TenantInfo).
 					Where(cols.TemplateID.Eq(), req.TemplateID)

@@ -59,6 +59,7 @@ export const RecordKindIDPrefix = {
   equipment_manufacturer: "em_",
   equipment_type: "et_",
   escrow_account: "escr_",
+  factoring_company: "fac_",
   fiscal_period: "fp_",
   fleet_code: "fc_",
   formula_template: "ft_",

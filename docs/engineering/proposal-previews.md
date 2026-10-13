@@ -108,7 +108,9 @@ repeatable-read transaction of its own (`toolsimulation.InSnapshot`).
 
 1. Refuses a reader outside the proposal's tenant (`ErrTenantMismatch`).
 2. A decided proposal returns the preview recorded when it was decided, filtered again for
-   this reader (`Recorded: true`); without one, its parameters.
+   this reader (`Recorded: true`); without one, its parameters. A record the recorded
+   preview names without a label (recorded before its kind could be labelled) is labelled
+   on read, before the filter; the recorded row and its digest are left as they were.
 3. A self-scoped tool's proposal is previewed only for its owner.
 4. Settles the parameters: changes are checked the way a decision checks them
    (`CheckModifications`, which refuses a change pointing the write at another record);
@@ -420,10 +422,10 @@ unstable digest shows itself.
 | Ports | `internal/modules/agent/ports/agentports/agenttool.go`, `internal/modules/agent/ports/agentports/proposalpreview.go`, `internal/modules/agent/ports/agentports/agentproposalbaseline.go` |
 | Builder | `internal/modules/agent/app/toolpreview/` |
 | Service | `internal/modules/agent/app/proposalpreviewservice/` |
-| Labels, baselines | `internal/infrastructure/postgres/repositories/{recordlabelrepository,agentproposalbaselinerepository}/` |
+| Labels, baselines | `internal/modules/agent/adapters/postgres/{recordlabelrepository,agentproposalbaselinerepository}/` |
 | Filing | `internal/modules/agent/app/agentruntime/baseline.go` |
 | Decisions | `agentdecisionservice/preview.go`, `agentplanservice/preview.go`, `proposalexecutor` |
-| Migration | `20261231006790_agent_proposal_previews` (Postgres and the SQLite mirror) |
+| Migration | `20261231006790_agent_proposal_previews` |
 
 ## Known limits
 
@@ -431,9 +433,17 @@ unstable digest shows itself.
   `TestEveryActionToolPreviewsWhatItWouldDo` (`agenttoolpolicy/preview_contract_test.go`)
   holds every registered action tool to a previewer, with no exemptions, so a new action
   tool without one fails CI.
-- **Labels cover the records previews name most.** A record of a resource the labeler has
-  no table for is shown without a name; people (`user`) are never labelled, since a user
-  is not scoped to one tenant.
+- **Labels cover every record a preview or subset points at.** `recordlabelrepository`
+  (`internal/modules/agent/adapters/postgres`) names each resource a tool's `WithRefs` map or
+  `toolschema.RecordSubset` names, and `TestLabelSources_NameEveryRecordAPreviewOrSubsetPointsAt`
+  fails for one it cannot read, so a new reference must come with a label. A record that
+  belongs to another is named through its owner (a leave case as "Jane Doe · Medical", a
+  tender offer by its carrier). People (`user`) are named only when they hold, or held, a
+  membership in the tenant's organization and business unit, or work in it now, since a user
+  is not scoped to one tenant. A record of a resource changed but never referenced (a
+  change's own resource) may still have no label; the client then names its kind, never its
+  id. A reference field is labelled for the record it names ("Assigned biller", not
+  "Assigned biller ID").
 - **A digest is per reader.** Two people with different access see different digests for
   the same proposal; each approves what they saw.
 - **Calls outside the database are guarded by the read-only mark and by tests.** The

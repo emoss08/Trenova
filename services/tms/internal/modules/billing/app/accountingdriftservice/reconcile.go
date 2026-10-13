@@ -227,7 +227,14 @@ func (s *Service) compareRecords(
 		objectIDs = append(objectIDs, c.record.ObjectID)
 		obs := c.observation(base)
 		if obs != nil && sess.writer != nil {
-			obs.ExternalURL = sess.writer.DocumentURL(sess.auth, obs.ObjectType, obs.ExternalID)
+			obs.ExternalURL = sess.writer.DocumentURL(
+				sess.auth,
+				accountingsyncports.AccountingDocumentLink{
+					Kind:       obs.ObjectType,
+					ExternalID: obs.ExternalID,
+					DocNumber:  c.record.ExternalDocNumber,
+				},
+			)
 		}
 		observed[c.record.ObjectID] = obs
 	}

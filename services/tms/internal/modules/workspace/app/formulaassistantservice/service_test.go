@@ -2,18 +2,19 @@ package formulaassistantservice
 
 import (
 	"context"
+	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -230,6 +231,71 @@ func TestTest_PricesALoadWhoseValuesAreAllOnTheLoad(t *testing.T) {
 	assert.Equal(t, "270", outcome.Scenarios[0].Amount)
 }
 
+func TestTest_PricesUnderThePageDraftsChargePolicy(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+	minCharge, maxCharge, precision := "300", "2000.00", 0
+
+	outcome, err := svc.Test(t.Context(), &TestRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * baseRate",
+		Variables:  map[string]any{"totalDistance": 100, "baseRate": 2.555},
+		Scenarios: []Scenario{
+			{Name: "Short", Variables: map[string]any{"totalDistance": 10}},
+			{Name: "Long", Variables: map[string]any{"totalDistance": 1000}},
+		},
+		Policy: &pagedraft.FormulaPolicy{
+			MinCharge:         &minCharge,
+			MaxCharge:         &maxCharge,
+			RoundingMode:      "Up",
+			RoundingPrecision: &precision,
+		},
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, pagedraft.FormulaCheck{Valid: true, Result: "300"}, outcome.Check,
+		"255.5 is lifted to the minimum")
+	require.Len(t, outcome.Scenarios, 2)
+	assert.Equal(t, "300", outcome.Scenarios[0].Amount)
+	assert.Equal(t, "2000", outcome.Scenarios[1].Amount, "2555 is held to the maximum")
+	require.NotNil(t, outcome.Policy)
+	assert.Equal(t, "300", *outcome.Policy.MinCharge)
+	assert.Equal(t, "2000", *outcome.Policy.MaxCharge)
+	assert.Equal(t, "Up", outcome.Policy.RoundingMode)
+	assert.Equal(t, 0, *outcome.Policy.RoundingPrecision)
+
+	outcome, err = svc.Test(t.Context(), &TestRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * baseRate",
+		Variables:  map[string]any{"totalDistance": 100, "baseRate": 2.555},
+		Policy:     &pagedraft.FormulaPolicy{RoundingMode: "Up", RoundingPrecision: &precision},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "256", outcome.Check.Result, "rounded up to whole dollars")
+
+	outcome, err = svc.Test(t.Context(), &TestRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * baseRate",
+		Variables:  map[string]any{"totalDistance": 100, "baseRate": 2.555},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "255.5", outcome.Check.Result, "no policy is the default rounding")
+	assert.Equal(t, "HalfUp", outcome.Policy.RoundingMode)
+	assert.Equal(t, 2, *outcome.Policy.RoundingPrecision)
+
+	bad := "lots"
+	_, err = svc.Test(t.Context(), &TestRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance",
+		Policy:     &pagedraft.FormulaPolicy{MinCharge: &bad},
+	})
+	require.Error(t, err)
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	assert.Equal(t, "policy.minCharge", multiErr.Errors[0].Field)
+}
+
 func TestTest_ReportsAnExpressionThatWillNotEvaluate(t *testing.T) {
 	t.Parallel()
 
@@ -345,6 +411,146 @@ func TestPropose_RefusesADraftTheStudioCouldNotHold(t *testing.T) {
 	assert.Contains(t, fields, "explanation")
 	assert.Contains(t, fields, "formula.variables[0].type")
 	assert.Contains(t, fields, "formula.variables[1].name")
+}
+
+func TestPropose_CarriesTheTemplateDetailsAndPricesTheBreakdown(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+
+	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * perMile + handling",
+		Variables: []pagedraft.FormulaVariable{
+			{Name: "perMile", Type: pagedraft.VariableNumber, DefaultValue: 2},
+			{Name: "handling", Type: pagedraft.VariableNumber, DefaultValue: 50},
+		},
+		Details: pagedraft.FormulaDetails{
+			Name:         "  Per mile with handling ",
+			Description:  "Linehaul by the mile plus a handling fee.",
+			TemplateType: pagedraft.TemplateTypeFreightCharge,
+			Breakdown: []pagedraft.BreakdownLine{
+				{Name: "linehaul", Label: "Linehaul", Expression: "totalDistance * perMile"},
+				{Name: "handlingFee", Label: "Handling", Expression: "handling"},
+			},
+		},
+		Explanation: "Per mile plus handling.",
+	})
+	require.NoError(t, err)
+
+	assert.True(t, proposal.Check.Valid, proposal.Check.Error)
+	assert.Equal(t, "Per mile with handling", proposal.Name)
+	assert.Equal(t, pagedraft.TemplateTypeFreightCharge, proposal.TemplateType)
+	require.Len(t, proposal.Breakdown, 2)
+	assert.Equal(t, "handlingFee", proposal.Breakdown[1].Name)
+	assert.Nil(t, proposal.Policy, "no policy proposed leaves the editor's alone")
+}
+
+func TestPropose_PricesTheSampleLoadsUnderTheProposedPolicy(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+	minCharge, precision := " 350 ", 1
+
+	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * perMile",
+		Variables: []pagedraft.FormulaVariable{
+			{Name: "perMile", Type: pagedraft.VariableNumber, DefaultValue: 2.85},
+		},
+		Details: pagedraft.FormulaDetails{
+			Breakdown: []pagedraft.BreakdownLine{
+				{Name: "linehaul", Label: "Linehaul", Expression: "totalDistance * perMile"},
+			},
+			Policy: &pagedraft.FormulaPolicy{
+				MinCharge:         &minCharge,
+				RoundingMode:      "HalfEven",
+				RoundingPrecision: &precision,
+			},
+		},
+		Explanation: "Per mile, never less than the minimum.",
+		Scenarios: []Scenario{
+			{Name: "Short run", Variables: map[string]any{"totalDistance": 10}},
+			{Name: "Long run", Variables: map[string]any{"totalDistance": 1001}},
+		},
+	})
+	require.NoError(t, err)
+
+	assert.True(t, proposal.Check.Valid, proposal.Check.Error)
+	require.Len(t, proposal.Scenarios, 2)
+	assert.Equal(t, "350", proposal.Scenarios[0].Amount, "the policy's minimum holds")
+	assert.Equal(t, "2852.8", proposal.Scenarios[1].Amount, "2852.85 rounded half even to 1 place")
+	require.NotNil(t, proposal.Policy)
+	assert.Equal(t, "350", *proposal.Policy.MinCharge, "the proposal carries the policy, trimmed")
+	assert.Equal(t, "HalfEven", proposal.Policy.RoundingMode)
+
+	bad := "-1"
+	_, err = svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo:  tenant(),
+		Expression:  "totalDistance",
+		Details:     pagedraft.FormulaDetails{Policy: &pagedraft.FormulaPolicy{MaxCharge: &bad}},
+		Explanation: "Distance.",
+	})
+	require.Error(t, err)
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	assert.Equal(t, "policy.maxCharge", multiErr.Errors[0].Field)
+}
+
+func TestPropose_ABreakdownLineThatFailsFailsTheCheck(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+
+	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * 2",
+		Details: pagedraft.FormulaDetails{
+			Breakdown: []pagedraft.BreakdownLine{
+				{Name: "fuel", Label: "Fuel surcharge", Expression: "unknownThing * 2"},
+			},
+		},
+		Explanation: "Two per mile.",
+	})
+	require.NoError(t, err)
+
+	assert.False(t, proposal.Check.Valid)
+	assert.Contains(t, proposal.Check.Error, `"Fuel surcharge" (fuel)`)
+}
+
+func TestPropose_RefusesDetailsTheStudioCouldNotHold(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+
+	_, err := svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance",
+		Details: pagedraft.FormulaDetails{
+			Name:         strings.Repeat("n", pagedraft.MaxTemplateNameLength+1),
+			TemplateType: "Discount",
+			Breakdown: []pagedraft.BreakdownLine{
+				{Name: "_hidden", Label: "", Expression: "1"},
+				{Name: "line", Label: "Line", Expression: ""},
+				{Name: "line", Label: "Again", Expression: "2"},
+			},
+		},
+		Explanation: "Distance.",
+	})
+	require.Error(t, err)
+
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	fields := make(map[string]bool, len(multiErr.Errors))
+	for _, fieldErr := range multiErr.Errors {
+		fields[fieldErr.Field] = true
+	}
+	assert.True(t, fields["name"])
+	assert.True(t, fields["templateType"])
+	assert.True(t, fields["breakdown[0].name"])
+	assert.True(t, fields["breakdown[0].label"])
+	assert.True(t, fields["breakdown[1].expression"])
+	assert.True(t, fields["breakdown[2].name"])
 }
 
 func TestAmountOf(t *testing.T) {

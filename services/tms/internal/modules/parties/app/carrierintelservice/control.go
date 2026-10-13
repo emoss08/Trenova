@@ -53,6 +53,10 @@ type ControlPatch struct {
 	ExpectedVersion         *int64
 }
 
+func applyPatch[T any](field *T, opt optional.Value[T]) bool {
+	return opt.Apply(field)
+}
+
 func (s *Service) UpdateControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -73,39 +77,39 @@ func (s *Service) UpdateControl(
 	entity.Rules = maps.Clone(original.Rules)
 	entity.AutoSyncFields = slices.Clone(original.AutoSyncFields)
 
-	patch.EnrollmentPolicy.Apply(&entity.EnrollmentPolicy)
-	patch.RecentUsageDays.Apply(&entity.RecentUsageDays)
-	patch.IncludeOpenTenders.Apply(&entity.IncludeOpenTenders)
-	patch.AutoEnrollOnCreate.Apply(&entity.AutoEnrollOnCreate)
-	patch.AutoUnenrollOnInactive.Apply(&entity.AutoUnenrollOnInactive)
-	patch.ExclusiveWatchlist.Apply(&entity.ExclusiveWatchlist)
-	patch.PollIntervalMinutes.Apply(&entity.PollIntervalMinutes)
-	patch.SnapshotTTLHours.Apply(&entity.SnapshotTTLHours)
-	patch.FullProfileTTLDays.Apply(&entity.FullProfileTTLDays)
-	patch.PreTenderRefreshEnabled.Apply(&entity.PreTenderRefreshEnabled)
-	patch.PreTenderMaxAgeHours.Apply(&entity.PreTenderMaxAgeHours)
-	patch.HardMaxAgeHours.Apply(&entity.HardMaxAgeHours)
-	patch.ConfirmBlockingChanges.Apply(&entity.ConfirmBlockingChanges)
-	patch.OutagePolicy.Apply(&entity.OutagePolicy)
-	patch.AutoDisqualifyOnBlock.Apply(&entity.AutoDisqualifyOnBlock)
-	patch.MonthlySpendCap.Apply(&entity.MonthlySpendCap)
-	patch.SoftCapPercent.Apply(&entity.SoftCapPercent)
-	patch.DailyFullProfileCap.Apply(&entity.DailyFullProfileCap)
-	patch.RawRetentionDays.Apply(&entity.RawRetentionDays)
-	patch.SnapshotHistoryLimit.Apply(&entity.SnapshotHistoryLimit)
-	patch.SelfMonitoringEnabled.Apply(&entity.SelfMonitoringEnabled)
+	applyPatch(&entity.EnrollmentPolicy, patch.EnrollmentPolicy)
+	applyPatch(&entity.RecentUsageDays, patch.RecentUsageDays)
+	applyPatch(&entity.IncludeOpenTenders, patch.IncludeOpenTenders)
+	applyPatch(&entity.AutoEnrollOnCreate, patch.AutoEnrollOnCreate)
+	applyPatch(&entity.AutoUnenrollOnInactive, patch.AutoUnenrollOnInactive)
+	applyPatch(&entity.ExclusiveWatchlist, patch.ExclusiveWatchlist)
+	applyPatch(&entity.PollIntervalMinutes, patch.PollIntervalMinutes)
+	applyPatch(&entity.SnapshotTTLHours, patch.SnapshotTTLHours)
+	applyPatch(&entity.FullProfileTTLDays, patch.FullProfileTTLDays)
+	applyPatch(&entity.PreTenderRefreshEnabled, patch.PreTenderRefreshEnabled)
+	applyPatch(&entity.PreTenderMaxAgeHours, patch.PreTenderMaxAgeHours)
+	applyPatch(&entity.HardMaxAgeHours, patch.HardMaxAgeHours)
+	applyPatch(&entity.ConfirmBlockingChanges, patch.ConfirmBlockingChanges)
+	applyPatch(&entity.OutagePolicy, patch.OutagePolicy)
+	applyPatch(&entity.AutoDisqualifyOnBlock, patch.AutoDisqualifyOnBlock)
+	applyPatch(&entity.MonthlySpendCap, patch.MonthlySpendCap)
+	applyPatch(&entity.SoftCapPercent, patch.SoftCapPercent)
+	applyPatch(&entity.DailyFullProfileCap, patch.DailyFullProfileCap)
+	applyPatch(&entity.RawRetentionDays, patch.RawRetentionDays)
+	applyPatch(&entity.SnapshotHistoryLimit, patch.SnapshotHistoryLimit)
+	applyPatch(&entity.SelfMonitoringEnabled, patch.SelfMonitoringEnabled)
 
 	policyChanged := false
-	if patch.Rules.Apply(&entity.Rules) {
+	if applyPatch(&entity.Rules, patch.Rules) {
 		if entity.Rules == nil {
 			entity.Rules = carrierintel.RuleSettings{}
 		}
 		policyChanged = !rulesEqual(original.Rules, entity.Rules)
 	}
-	if patch.AutoSyncFields.Apply(&entity.AutoSyncFields) && entity.AutoSyncFields == nil {
+	if applyPatch(&entity.AutoSyncFields, patch.AutoSyncFields) && entity.AutoSyncFields == nil {
 		entity.AutoSyncFields = []carrierintel.SyncField{}
 	}
-	if patch.AutoApplySafetyRating.Apply(&entity.AutoApplySafetyRating) &&
+	if applyPatch(&entity.AutoApplySafetyRating, patch.AutoApplySafetyRating) &&
 		entity.AutoApplySafetyRating != original.AutoApplySafetyRating {
 		policyChanged = true
 	}

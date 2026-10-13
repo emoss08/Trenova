@@ -4,9 +4,11 @@ package invoiceservice
 
 import (
 	"context"
-	"testing"
-
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"testing"
+	"time"
+
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
@@ -148,7 +150,13 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
-	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	now := time.Now().UTC()
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -415,7 +423,13 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
-	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	now := time.Now().UTC()
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -514,13 +528,13 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 		Where("reference_id = ?", entity.ID.String()).
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 0, entryCount)
+	assert.Equal(t, int64(0), entryCount)
 	sourceCount, err := db.NewSelect().
 		Table("journal_sources").
 		Where("source_object_id = ?", entity.ID.String()).
 		Count(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 0, sourceCount)
+	assert.Equal(t, int64(0), sourceCount)
 }
 
 func lookupInvoiceGLAccount(

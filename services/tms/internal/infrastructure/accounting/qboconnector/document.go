@@ -38,11 +38,11 @@ func (c *Connector) DocumentLimits() accountingsyncports.AccountingDocumentLimit
 
 func (c *Connector) DocumentURL(
 	_ accountingsyncports.AccountingDocumentAuth,
-	kind accountingsync.SyncObjectType,
-	externalID string,
+	link accountingsyncports.AccountingDocumentLink,
 ) string {
+	externalID := link.ExternalID
 	var path string
-	switch kind {
+	switch link.Kind { //nolint:exhaustive // drift-only kinds have no QuickBooks page to link to
 	case accountingsync.SyncObjectCustomer:
 		path = quickbooks.CustomerAppPath()
 	case accountingsync.SyncObjectCarrierVendor, accountingsync.SyncObjectDriverVendor:

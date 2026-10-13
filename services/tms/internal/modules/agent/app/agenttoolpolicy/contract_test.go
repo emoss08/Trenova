@@ -3,11 +3,11 @@ package agenttoolpolicy_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -200,6 +200,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"fork_report":                    {agent.EgressInternal},
 		"assign_move":                    {agent.EgressInternal},
 		"record_stop_actual":             {agent.EgressInternal},
+		"log_check_call":                 {agent.EgressInternal},
 		"attach_document_to_shipment":    {agent.EgressInternal},
 		"place_shipment_hold":            {agent.EgressInternal},
 		"release_shipment_hold":          {agent.EgressInternal},

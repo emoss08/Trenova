@@ -153,6 +153,18 @@ export function formatCurrency(num: number, currency: string = "USD"): string {
   }).format(num);
 }
 
+/** Money without cents when it has none ("$1,180", "$185.50"), for a sentence or a button. */
+export function formatCurrencyWhole(num: number, currency: string = "USD"): string {
+  const whole = Number.isInteger(num);
+
+  return numberFormatter({
+    style: "currency",
+    currency: currency,
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  }).format(num);
+}
+
 export function formatCompactCurrency(num: number, currency: string = "USD"): string {
   return numberFormatter({
     style: "currency",
@@ -348,6 +360,26 @@ export function downloadBlob(blob: Blob, fileName: string): void {
   const url = URL.createObjectURL(blob);
   downloadFromUrl(url, fileName);
   URL.revokeObjectURL(url);
+}
+
+/**
+ * The file name a Content-Disposition header gives, or the fallback. The
+ * RFC 5987 form (`filename*=UTF-8''...`) wins over the plain one, because a
+ * server sends it exactly when the name is not plain ASCII.
+ */
+export function filenameFromDisposition(header: string | null, fallback: string): string {
+  if (!header) return fallback;
+  const extended = header.match(/filename\*\s*=\s*(?:[\w-]+)?'[^']*'([^;]+)/i);
+  if (extended?.[1]) {
+    try {
+      return decodeURIComponent(extended[1].trim());
+    } catch {
+      // A malformed escape falls through to the plain name.
+    }
+  }
+  const plain = header.match(/filename\s*=\s*"([^"]*)"|filename\s*=\s*([^;]+)/i);
+  const name = (plain?.[1] ?? plain?.[2])?.trim();
+  return name || fallback;
 }
 
 /**

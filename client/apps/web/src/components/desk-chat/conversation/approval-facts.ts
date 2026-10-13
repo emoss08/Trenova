@@ -1,4 +1,5 @@
 import type { ProposalPreview } from "@/lib/graphql/agent-preview";
+import { resourceLabel } from "@/lib/resource-label";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 
 /** One field the change sets, said once for every record it touches. */
@@ -30,15 +31,24 @@ export type ApprovalFacts = {
 export const OUTCOME_FIELD = "outcome";
 export const REFUSED_PREFIX = "Refused:";
 
-type PreviewField = ProposalPreview["changes"][number]["fields"][number];
+type PreviewChange = ProposalPreview["changes"][number];
+type PreviewField = PreviewChange["fields"][number];
 
+/**
+ * A value as one line of text. A value that points at another record reads
+ * as that record's name; the id it holds is never shown, so a record the
+ * reader may not see says so, and one with no name left says it is gone.
+ */
 export function valueText(
   value: unknown,
   ref: PreviewField["beforeRef"] | PreviewField["afterRef"] | undefined,
   t: TranslateFn,
 ): string {
-  if (ref?.label) {
-    return ref.label;
+  if (ref) {
+    if (ref.withheld) {
+      return t("Hidden by your data access");
+    }
+    return ref.label || t("A record that is no longer there");
   }
   if (value === null || value === undefined || value === "") {
     return t("None");
@@ -48,6 +58,11 @@ export function valueText(
   }
 
   return JSON.stringify(value);
+}
+
+/** The record a change is for, by its name, or by its kind when it has none: never its id. */
+export function recordName(change: Pick<PreviewChange, "label" | "resource">): string {
+  return change.label || resourceLabel(change.resource);
 }
 
 /**
@@ -79,7 +94,7 @@ export function approvalFacts(preview: ProposalPreview | undefined, t: Translate
     return text.startsWith(REFUSED_PREFIX)
       ? [
           {
-            label: change.label || change.entityId || "",
+            label: recordName(change),
             reason: text.slice(REFUSED_PREFIX.length).trim(),
           },
         ]

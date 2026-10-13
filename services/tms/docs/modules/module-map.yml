@@ -260,7 +260,6 @@ modules:
       - equipmentmanufacturerrepository
       - equipmenttyperepository
       - fleetcoderepository
-      - recordlabelrepository
       - tractorrepository
       - trailerrepository
   parties:
@@ -270,11 +269,13 @@ modules:
       - carriercapacity
       - carrierintel
       - customer
+      - factoringcompany
     service:
       - carriercapacityservice
       - carrierintelservice
       - carrierservice
       - customerservice
+      - factoringcompanyservice
     job:
       - carrierintelligencejobs
     repository:
@@ -282,6 +283,7 @@ modules:
       - carrierintelrepository
       - carrierrepository
       - customerrepository
+      - factoringcompanyrepository
   workforce:
     level: 5
     domain:
@@ -356,10 +358,12 @@ modules:
       - extractionrollout
       - extractionshadow
       - inboundmessage
+      - triage
     service:
       - capturereleaseservice
       - captureservice
       - documentintelligenceservice
+      - documentmailservice
       - documentoperationsservice
       - documentpacketruleservice
       - documentparsingruleservice
@@ -372,6 +376,11 @@ modules:
       - extractionshadowservice
       - inboundmessageservice
       - thumbnailservice
+      - triagebriefingservice
+      - triageconflictservice
+      - triagecorrectionservice
+      - triageruleservice
+      - triagesupport
     job:
       - capturejobs
       - documentintelligencejobs
@@ -380,6 +389,7 @@ modules:
       - extractionshadowjobs
       - inboundjobs
       - thumbnailjobs
+      - triagewakejobs
     repository:
       - capturerepository
       - documentaiextractionrepository
@@ -395,6 +405,9 @@ modules:
       - extractionshadowrepository
       - inboundmessagerepository
       - retrievalsourcerepository
+      - triageinsightrepository
+      - triagemessagerepository
+      - triagerulerepository
   rating:
     level: 6
     domain:
@@ -451,6 +464,8 @@ modules:
       - shipmentstate
       - shipmentsuggestion
       - tender
+      - trackingevent
+      - checkcall
       - weatheralert
     service:
       - allocationcheck
@@ -492,8 +507,12 @@ modules:
       - shipmenttracking
       - shipmentwatchlistservice
       - tenderservice
+      - trackingeventservice
+      - checkcallservice
+      - triagedeliveryrelay
       - weatheralertservice
     job:
+      - checkcalljobs
       - detentionjobs
       - recurringshipmentjobs
       - shipmentjobs
@@ -523,6 +542,9 @@ modules:
       - shipmentsuggestionrepository
       - shipmenttrackingrepository
       - tenderrepository
+      - trackingeventrepository
+      - checkcallrepository
+      - triageoverlaprepository
       - weatheralertrepository
   edi:
     level: 8
@@ -616,13 +638,16 @@ modules:
       - billingqueue
       - billingqueuefilterpreset
       - billingtransfer
+      - collection
       - costingcontrol
       - customerledger
       - customerpayment
+      - customerstatement
       - invoice
       - invoiceadjustment
       - invoicerun
       - latecharge
+      - paymentreminder
     service:
       - accountingdriftservice
       - accountsreceivableservice
@@ -630,13 +655,18 @@ modules:
       - bankreceiptservice
       - bankreceiptworkitemservice
       - billingcontrolpolicyservice
+      - billingnumber
       - billingqueueapprovalservice
       - billingqueueservice
       - billingtransfercriteria
       - billingtransferservice
+      - collectionservice
       - costingservice
+      - creditreviewservice
       - customerpaymentservice
+      - customerstatementservice
       - detentionbillingservice
+      - detentioncreditservice
       - invoiceadjustmentservice
       - invoicedisputeservice
       - invoiceledger
@@ -646,10 +676,14 @@ modules:
       - invoiceshareservice
       - invoicevoid
       - latechargeservice
+      - paymentreminderservice
     job:
       - billingqueuejobs
       - billingtransferjobs
+      - creditreviewjobs
+      - customerstatementjobs
       - invoiceadjustmentjobs
+      - paymentreminderjobs
     repository:
       - accountsreceivablerepository
       - bankreceiptbatchrepository
@@ -660,9 +694,11 @@ modules:
       - billingqueuereviewrepository
       - billingtransferrepository
       - chargeallocationrepository
+      - collectionrepository
       - costingrepository
       - customerledgerrepository
       - customerpaymentrepository
+      - customerstatementrepository
       - invoiceadjustmentrepository
       - invoicedisputerepository
       - invoicerepository
@@ -670,6 +706,7 @@ modules:
       - invoicesharerepository
       - journalrepairrepository
       - latechargerepository
+      - paymentreminderrepository
       - recordversionrepository
   settlement:
     level: 9
@@ -881,6 +918,7 @@ modules:
       - conversationrepository
       - conversationschedulerepository
       - insightrepository
+      - recordlabelrepository
       - roleagentgrantrepository
       - shipmentbriefrepository
       - shipmentimportchatrepository

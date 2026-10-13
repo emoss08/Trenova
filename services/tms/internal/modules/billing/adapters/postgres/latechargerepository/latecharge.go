@@ -100,6 +100,34 @@ const listCandidatesSQL = `
 		  AND idsp.status = 'Open'
 	  )`
 
+func (r *repository) ListCandidateCustomers(
+	ctx context.Context,
+	req *latechargeports.ListLateChargeCustomersRequest,
+) ([]pulid.ID, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
+		query := "SELECT DISTINCT candidate.customer_id FROM (" + listCandidatesSQL
+		args := []any{req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate}
+		if len(req.CustomerIDs) > 0 {
+			query += "\n\t  AND inv.customer_id IN (?)"
+			args = append(args, bun.List(req.CustomerIDs))
+		}
+		query += "\n) AS candidate"
+		if req.AfterCustomerID.IsNotNil() {
+			query += "\nWHERE candidate.customer_id > ?"
+			args = append(args, req.AfterCustomerID)
+		}
+		query += "\nORDER BY candidate.customer_id ASC\nLIMIT ?"
+		args = append(args, req.Limit)
+
+		ids := make([]pulid.ID, 0, req.Limit)
+		if err := r.db.DBForContext(ctx).NewRaw(query, args...).Scan(ctx, &ids); err != nil {
+			return nil, fmt.Errorf("list late charge customers: %w", err)
+		}
+
+		return ids, nil
+	})
+}
+
 func (r *repository) ListCandidates(
 	ctx context.Context,
 	req *latechargeports.ListLateChargeCandidatesRequest,
@@ -112,7 +140,7 @@ func (r *repository) ListCandidates(
 			args := []any{req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate}
 			if len(req.CustomerIDs) > 0 {
 				query += "\n\t  AND inv.customer_id IN (?)"
-				args = append(args, bun.In(req.CustomerIDs))
+				args = append(args, bun.List(req.CustomerIDs))
 			}
 			query += "\n\tORDER BY cus.name ASC, inv.due_date ASC, inv.number ASC"
 

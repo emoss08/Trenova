@@ -32,6 +32,79 @@ export const reasoningEffortSchema = z.enum(["Off", "None", "Minimal", "Low", "M
 export const thinkingStyleSchema = z.enum(["Auto", "Effort", "Budget"]);
 
 /**
+ * Where an Anthropic Messages provider reaches Claude. Direct calls the base
+ * URL with the API key, which every other kind always does.
+ */
+export const aiProviderPlatformSchema = z.enum([
+  "Direct",
+  "Bedrock",
+  "VertexAI",
+  "ClaudePlatformAWS",
+  "ClaudePlatformGoogleCloud",
+  "Foundry",
+]);
+
+/**
+ * How a request to a platform proves who sent it. Server uses the cloud
+ * credentials of the server Trenova runs on, where its operator allows it,
+ * and stores nothing.
+ */
+export const aiProviderPlatformAuthSchema = z.enum([
+  "ApiKey",
+  "AccessKey",
+  "ServiceAccount",
+  "EntraID",
+  "Server",
+]);
+
+/** A platform setting the editor asks for. */
+export const aiProviderPlatformSettingSchema = z.enum([
+  "region",
+  "projectId",
+  "workspaceId",
+  "resource",
+  "accessKeyId",
+  "tenantId",
+  "clientId",
+]);
+
+/**
+ * What a platform needs besides its credential. None of it is secret; a
+ * setting the platform does not take is empty.
+ */
+export const aiProviderPlatformSettingsSchema = z.object({
+  auth: aiProviderPlatformAuthSchema,
+  region: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  projectId: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  workspaceId: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  accessKeyId: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  resource: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  tenantId: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  clientId: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+});
+
+/**
  * Vendor request fields the endpoint takes that the protocol does not
  * define. The server stores JSONB and sends null when there are none; an
  * absent object and an empty one mean the same thing here, so both become
@@ -122,6 +195,8 @@ export const aiProviderSchema = z.object({
   structuredOutputMode: structuredOutputModeSchema,
   reasoningEffort: reasoningEffortSchema.default("Off"),
   thinkingStyle: thinkingStyleSchema.default("Auto"),
+  platform: aiProviderPlatformSchema.default("Direct"),
+  platformSettings: aiProviderPlatformSettingsSchema.nullable().optional().default(null),
   extraBody: extraBodySchema,
   inputCostPerMillion: pricePerMillionSchema,
   outputCostPerMillion: pricePerMillionSchema,
@@ -167,6 +242,8 @@ export const saveAIProviderRequestSchema = z.object({
   structuredOutputMode: structuredOutputModeSchema,
   reasoningEffort: reasoningEffortSchema.default("Off"),
   thinkingStyle: thinkingStyleSchema.default("Auto"),
+  platform: aiProviderPlatformSchema.default("Direct"),
+  platformSettings: aiProviderPlatformSettingsSchema.nullable().default(null),
   extraBody: extraBodySchema,
   inputCostPerMillion: z.number().min(0).nullable().default(null),
   outputCostPerMillion: z.number().min(0).nullable().default(null),
@@ -247,6 +324,25 @@ export const aiProviderPresetSchema = z.object({
   tasks: z.preprocess((value) => value ?? [], z.array(aiTaskSchema)),
   embeddingDimensions: z.number().optional().default(0),
   embeddingInputStyle: embeddingInputStyleSchema.optional(),
+  /** Where an Anthropic Messages preset reaches Claude. */
+  platform: aiProviderPlatformSchema.optional().default("Direct"),
+});
+
+export const aiProviderPlatformAuthDescriptorSchema = z.object({
+  auth: aiProviderPlatformAuthSchema,
+  requiresCredential: z.boolean(),
+  settings: z.preprocess((value) => value ?? [], z.array(aiProviderPlatformSettingSchema)),
+});
+
+/**
+ * The shape of a platform: the settings it needs, the ways it signs in (the
+ * first being its default), and whether it lists its models.
+ */
+export const aiProviderPlatformDescriptorSchema = z.object({
+  platform: aiProviderPlatformSchema,
+  settings: z.preprocess((value) => value ?? [], z.array(aiProviderPlatformSettingSchema)),
+  auths: z.preprocess((value) => value ?? [], z.array(aiProviderPlatformAuthDescriptorSchema)),
+  listsModels: z.boolean().default(true),
 });
 
 export const aiTaskDescriptorSchema = z.object({
@@ -272,6 +368,9 @@ export const aiProviderCatalogSchema = z.object({
     (value) => value ?? [],
     z.array(embeddingInputStyleDescriptorSchema),
   ),
+  platforms: z.preprocess((value) => value ?? [], z.array(aiProviderPlatformDescriptorSchema)),
+  /** Whether a platform provider may sign in with the server's own cloud identity. */
+  serverCloudCredentials: z.boolean().default(false),
 });
 
 export type AIProvider = z.infer<typeof aiProviderSchema>;
@@ -282,6 +381,11 @@ export type CapAction = z.infer<typeof capActionSchema>;
 export type StructuredOutputMode = z.infer<typeof structuredOutputModeSchema>;
 export type ReasoningEffort = z.infer<typeof reasoningEffortSchema>;
 export type ThinkingStyle = z.infer<typeof thinkingStyleSchema>;
+export type AIProviderPlatform = z.infer<typeof aiProviderPlatformSchema>;
+export type AIProviderPlatformAuth = z.infer<typeof aiProviderPlatformAuthSchema>;
+export type AIProviderPlatformSetting = z.infer<typeof aiProviderPlatformSettingSchema>;
+export type AIProviderPlatformSettings = z.infer<typeof aiProviderPlatformSettingsSchema>;
+export type AIProviderPlatformDescriptor = z.infer<typeof aiProviderPlatformDescriptorSchema>;
 export type SaveAIProviderRequest = z.infer<typeof saveAIProviderRequestSchema>;
 export type TestAIProviderResult = z.infer<typeof testAIProviderResultSchema>;
 export type AIProviderCatalog = z.infer<typeof aiProviderCatalogSchema>;

@@ -68,6 +68,10 @@ func (s *service) prepareCreate(
 		return nil, multiErr
 	}
 
+	if err = s.refuseCreditHold(ctx, entity, nil); err != nil {
+		return nil, err
+	}
+
 	s.dropSystemGeneratedAdditionalChargesForCreate(entity)
 
 	if err = s.hydrateShipmentCommodityDetails(ctx, entity); err != nil {

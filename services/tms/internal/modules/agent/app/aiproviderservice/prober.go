@@ -111,9 +111,10 @@ func (p *Prober) Probe(
 
 	schema := probeSchema()
 	call := &modeladapter.Call{
-		Provider: provider,
-		APIKey:   apiKey,
-		Client:   p.clientFor(provider),
+		Provider:                 provider,
+		APIKey:                   apiKey,
+		Client:                   p.clientFor(provider),
+		ServerCredentialsAllowed: p.cfg.ServerCloudCredentialsAllowed(),
 		Request: &modeladapter.Request{
 			System: modeladapter.WithSchemaInstruction(
 				probeSystemPrompt,
@@ -438,9 +439,10 @@ func (p *Prober) ListModels(
 	defer cancel()
 
 	models, err := modeladapter.ListModels(ctx, &modeladapter.ModelsCall{
-		Provider: provider,
-		APIKey:   apiKey,
-		Client:   p.clientFor(provider),
+		Provider:                 provider,
+		APIKey:                   apiKey,
+		Client:                   p.clientFor(provider),
+		ServerCredentialsAllowed: p.cfg.ServerCloudCredentialsAllowed(),
 	})
 	if err != nil {
 		return nil, modelListError(err)
@@ -529,6 +531,9 @@ func modelListError(err error) error {
 func modelListMessage(err error) string {
 	if isTimeout(err) {
 		return "The endpoint did not list its models in time"
+	}
+	if errors.Is(err, modeladapter.ErrModelsNotListed) {
+		return "This endpoint does not list its models; type the model ID instead"
 	}
 
 	var failure agentports.ProviderFailure

@@ -1,0 +1,1 @@
+{{ t "Statement of account from {0} as of {1}" .CompanyName .StatementDate }}

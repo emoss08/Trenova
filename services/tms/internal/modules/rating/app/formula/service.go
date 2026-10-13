@@ -429,6 +429,59 @@ func (s *Service) EvaluateExpression(
 	}, nil
 }
 
+type TraceStatementsRequest struct {
+	Expression string
+	SchemaID   string
+	Entity     any
+	Variables  map[string]any
+	Env        map[string]any
+	Lookup     formulatemplatetypes.RateTableLookup
+	TenantInfo pagination.TenantInfo
+}
+
+func (s *Service) TraceStatements(
+	ctx context.Context,
+	req *TraceStatementsRequest,
+) ([]formulatemplatetypes.Statement, error) {
+	if req.Env != nil {
+		return s.engine.TraceStatements(ctx, &engine.TraceRequest{
+			Expression: req.Expression,
+			Env:        req.Env,
+			Lookup:     req.Lookup,
+		})
+	}
+
+	env, resolveFailures, err := s.engine.GetEnvironmentBuilder().BuildWithProvided(
+		req.Entity,
+		req.SchemaID,
+		s.ContextVariables(ctx, req.TenantInfo),
+		req.Variables,
+	)
+	if err != nil {
+		return nil, formulaerrors.NewSchemaError(req.SchemaID, "build environment", err)
+	}
+
+	lookup := req.Lookup
+	if lookup == nil && !req.TenantInfo.OrgID.IsNil() {
+		lookup, err = s.BuildLookup(ctx, req.TenantInfo)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return s.engine.TraceStatements(ctx, &engine.TraceRequest{
+		Expression:      req.Expression,
+		Env:             env,
+		SchemaID:        req.SchemaID,
+		Lookup:          lookup,
+		ResolveFailures: resolveFailures,
+	})
+}
+
+func SplitStatements(expression string) ([]formulatemplatetypes.Statement, error) {
+	return engine.SplitStatements(expression)
+}
+
 // EvaluatePredicate answers a yes-or-no question about an entity.
 //
 // The expression language has no boolean result type of its own — every

@@ -85,20 +85,31 @@ func (s *Session) loadFormula(
 	draft *pagedraft.Formula,
 ) (pulid.ID, error) {
 	type row struct {
-		id         string
-		kind       string
-		schema     string
-		expression string
-		variables  []byte
+		id          string
+		name        string
+		description string
+		kind        string
+		schema      string
+		expression  string
+		variables   []byte
+		breakdown   []byte
+		minCharge   sql.NullString
+		maxCharge   sql.NullString
+		rounding    string
+		precision   int
 	}
 
 	found, err := dbtx.Read(ctx, s.bench.DB, func(ctx context.Context) (*row, error) {
 		r := &row{}
 		scanErr := s.bench.DB.DBForContext(ctx).QueryRowContext(ctx,
-			`SELECT id, type, schema_id, expression, COALESCE(variable_definitions, '[]'::jsonb)
+			`SELECT id, name, COALESCE(description, ''), type, schema_id, expression,
+			        COALESCE(variable_definitions, '[]'::jsonb),
+			        COALESCE(breakdown_definitions, '[]'::jsonb),
+			        min_charge::text, max_charge::text, rounding_mode::text, rounding_precision
 			 FROM formula_templates WHERE name ILIKE ? ORDER BY updated_at DESC LIMIT 1`,
 			name,
-		).Scan(&r.id, &r.kind, &r.schema, &r.expression, &r.variables)
+		).Scan(&r.id, &r.name, &r.description, &r.kind, &r.schema, &r.expression,
+			&r.variables, &r.breakdown, &r.minCharge, &r.maxCharge, &r.rounding, &r.precision)
 		if errors.Is(scanErr, sql.ErrNoRows) {
 			return nil, errTemplateNotFound
 		}
@@ -120,19 +131,46 @@ func (s *Session) loadFormula(
 			return pulid.Nil, fmt.Errorf("read its variables: %w", err)
 		}
 	}
+	var breakdown []pagedraft.BreakdownLine
+	if len(found.breakdown) > 0 {
+		if err = sonic.Unmarshal(found.breakdown, &breakdown); err != nil {
+			return pulid.Nil, fmt.Errorf("read its breakdown lines: %w", err)
+		}
+	}
 
 	draft.TemplateID = templateID.String()
 	draft.SchemaID = found.schema
 	draft.TemplateType = found.kind
+	draft.Name = found.name
+	draft.Description = found.description
 	draft.Expression = found.expression
 	draft.Variables = variables
+	draft.Breakdown = breakdown
+	draft.Policy = &pagedraft.FormulaPolicy{
+		MinCharge:         nullString(found.minCharge),
+		MaxCharge:         nullString(found.maxCharge),
+		RoundingMode:      found.rounding,
+		RoundingPrecision: &found.precision,
+	}
 
 	return templateID, nil
+}
+
+func nullString(value sql.NullString) *string {
+	if !value.Valid {
+		return nil
+	}
+
+	return &value.String
 }
 
 func (f *formulaState) page() *agent.PageContext {
 	draft := f.draft
 	draft.Variables = append([]pagedraft.FormulaVariable(nil), f.draft.Variables...)
+	draft.Breakdown = append([]pagedraft.BreakdownLine(nil), f.draft.Breakdown...)
+	if f.draft.Policy != nil {
+		draft.Policy = f.draft.Policy.Resolved()
+	}
 
 	return &agent.PageContext{
 		Path:  formulaPagePath,
@@ -157,6 +195,21 @@ func (f *formulaState) apply(artifacts []agentports.AssistantArtifact) {
 		}
 		f.draft.Expression = edit.Formula.Expression
 		f.draft.Variables = append([]pagedraft.FormulaVariable(nil), edit.Formula.Variables...)
+		if edit.Formula.Name != "" {
+			f.draft.Name = edit.Formula.Name
+		}
+		if edit.Formula.Description != "" {
+			f.draft.Description = edit.Formula.Description
+		}
+		if edit.Formula.TemplateType != "" {
+			f.draft.TemplateType = edit.Formula.TemplateType
+		}
+		if edit.Formula.Breakdown != nil {
+			f.draft.Breakdown = append([]pagedraft.BreakdownLine(nil), edit.Formula.Breakdown...)
+		}
+		if edit.Formula.Policy != nil {
+			f.draft.Policy = edit.Formula.Policy.Resolved()
+		}
 	}
 }
 

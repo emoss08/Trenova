@@ -24,6 +24,7 @@ type Scenario struct {
 	User        string       `yaml:"user"        json:"user,omitempty"`
 	Provider    string       `yaml:"provider"    json:"provider,omitempty"`
 	Formula     *FormulaPage `yaml:"formula"     json:"formula,omitempty"`
+	Palette     bool         `yaml:"palette"     json:"palette,omitempty"`
 	Exclusive   string       `yaml:"exclusive"   json:"exclusive,omitempty"`
 	Setup       []string     `yaml:"setup"       json:"setup,omitempty"`
 	Steps       []Step       `yaml:"steps"       json:"steps"`
@@ -60,6 +61,35 @@ func (s *Step) Utterance() (Utterance, error) {
 	}
 
 	return utterance, nil
+}
+
+func (s *Step) mentionFinds() map[int]string {
+	finds := make(map[int]string, len(s.Mentions))
+	for idx, mention := range s.Mentions {
+		if query, ok := mention["find"].(string); ok {
+			finds[idx] = query
+		}
+	}
+
+	return finds
+}
+
+func (s *Step) validateMentionFinds(where string) error {
+	for idx, query := range s.mentionFinds() {
+		mention := s.Mentions[idx]
+		if _, hasID := mention["id"]; hasID {
+			return fmt.Errorf("%s mention %d: give an id or a find query, not both", where, idx+1)
+		}
+		if kind, _ := mention["type"].(string); strings.TrimSpace(kind) == "" {
+			return fmt.Errorf("%s mention %d: a found mention still names its type", where, idx+1)
+		}
+		fact := Fact{SQL: query}
+		if err := fact.validate(); err != nil {
+			return fmt.Errorf("%s mention %d: %w", where, idx+1, err)
+		}
+	}
+
+	return nil
 }
 
 func (s *Step) validateAttach(where string, decides bool) error {
@@ -269,6 +299,9 @@ func (s *Scenario) Validate() error {
 			return fmt.Errorf("%s setup %d: %w", s.Name, idx+1, err)
 		}
 	}
+	if err := s.validatePalette(); err != nil {
+		return err
+	}
 
 	for idx := range s.Steps {
 		step := &s.Steps[idx]
@@ -300,6 +333,9 @@ func (s *Scenario) Validate() error {
 			if _, err := step.Utterance(); err != nil {
 				return fmt.Errorf("%s: %w", where, err)
 			}
+			if err := step.validateMentionFinds(where); err != nil {
+				return err
+			}
 		}
 		for _, check := range step.Expect.DB {
 			fact := Fact{SQL: check.SQL}
@@ -311,6 +347,30 @@ func (s *Scenario) Validate() error {
 			if err := fact.validate(); err != nil {
 				return fmt.Errorf("%s: %w", where, err)
 			}
+		}
+	}
+
+	return nil
+}
+
+func (s *Scenario) validatePalette() error {
+	if !s.Palette {
+		return nil
+	}
+	switch {
+	case s.Formula != nil:
+		return fmt.Errorf("%s: a scenario asks from the palette or the formula studio, not both",
+			s.Name)
+	case s.Agent != "":
+		return fmt.Errorf("%s: the palette picks who answers; leave agent out", s.Name)
+	}
+	for idx := range s.Steps {
+		step := &s.Steps[idx]
+		if step.Agent != "" || (step.Surface != "" && step.Surface != agent.SurfacePalette) {
+			return fmt.Errorf(
+				"%s step %d: every message in a palette scenario is asked from the palette",
+				s.Name, idx+1,
+			)
 		}
 	}
 

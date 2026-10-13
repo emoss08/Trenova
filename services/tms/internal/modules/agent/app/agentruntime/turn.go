@@ -50,7 +50,11 @@ type Turn struct {
 	// workflow code that decision has to replay the same way: working it out
 	// again from the catalog would give a different answer to a replay run
 	// by a release whose catalog or core tools changed.
-	held      []string
+	held []string
+	// reads are the held tools that only look something up, taken with
+	// held, which the loop may run beside each other. Nil for a turn opened
+	// before they were kept, which runs every call on its own.
+	reads     map[string]struct{}
 	repeats   *repeatGuard
 	counts    *ordinals
 	questions map[string]struct{}
@@ -93,6 +97,9 @@ type TurnEffects interface {
 	Complete(t *Turn, req *agentports.ChatCompletionRequest) (ModelReply, error)
 	// Dispatch runs one tool call the loop has decided to make.
 	Dispatch(t *Turn, call DispatchCall) ToolOutcome
+	// DispatchReads runs reads the loop has decided to make, which may run
+	// at the same time, and returns their outcomes in the order given.
+	DispatchReads(t *Turn, calls []DispatchCall) []ToolOutcome
 	// Find answers find_tools and loads what it found into the turn.
 	Find(t *Turn, arguments map[string]any) FindAnswer
 	Emit(event kernelports.StreamEvent)
@@ -255,7 +262,10 @@ type TurnState struct {
 	Tools    ToolSetState `json:"tools"`
 	// Held is every tool the agent holds, as the turn opened. A state from
 	// before it was kept has none, and the turn works it out again.
-	Held      []string             `json:"held,omitempty"`
+	Held []string `json:"held,omitempty"`
+	// Reads are the held tools that only look something up. A state from
+	// before they were kept has none, and its calls run one at a time.
+	Reads     []string             `json:"reads,omitempty"`
 	Failures  map[string]string    `json:"failures,omitempty"`
 	Ordinals  map[string]int       `json:"ordinals,omitempty"`
 	Questions []string             `json:"questions,omitempty"`
@@ -311,6 +321,7 @@ func (t *Turn) State() TurnState {
 		Evidence:        slices.Clone(t.evidence),
 		Tools:           t.tools.state(),
 		Held:            slices.Clone(t.held),
+		Reads:           readsState(t.reads),
 		Failures:        maps.Clone(t.repeats.failures),
 		Ordinals:        maps.Clone(t.counts.seen),
 		Questions:       questions,
@@ -377,6 +388,7 @@ func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn
 		evidence:     state.Evidence,
 		tools:        restoreToolSet(state.Tools),
 		held:         held,
+		reads:        restoreReads(state.Reads),
 		repeats:      &repeatGuard{failures: failures, reads: make(map[string]bool, 4)},
 		counts:       &ordinals{seen: seen},
 		questions:    questions,
@@ -532,10 +544,12 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 	messages, shortened := replayHistoryWithFiles(history, req.Proposals, req.FileTexts)
 	now := turnNow(&runtimeContext)
 	input := req.Input
+	var attached agentdefinition.RenderedAttachments
 	if req.Delegation == nil {
-		input = agentdefinition.DescribeAttachments(
+		attached = agentdefinition.RenderAttachments(
 			runtimeContext.Attachments, agentdefinition.AttachmentTextBudget,
-		) + input
+		)
+		input = attached.Block + input
 		input = outOfViewDecisions(history, req.Proposals) + input
 		input = agentdefinition.DescribeAnchors(
 			runtimeContext.Anchors, now, runtimeContext.Timezone,
@@ -547,6 +561,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 	messages = append(messages, agentports.Message{
 		Role:    agentports.RoleUser,
 		Content: input,
+		Files:   messageFiles(input, runtimeContext.Attachments, &attached),
 	})
 	taint, opened := openTaint(req, &runtimeContext, now)
 
@@ -562,6 +577,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 		evidence:     figuresOf(append(shortened, maputils.SortedValues(req.FileTexts)...)),
 		tools:        tools,
 		held:         held,
+		reads:        s.concurrentReads(held),
 		repeats:      repeats,
 		counts:       counts,
 		questions:    askedQuestions(history),
@@ -788,6 +804,17 @@ func (s *Service) KnowsTool(name string) bool { return s.toolNamed(name) != nil 
 
 func (fx *localEffects) Dispatch(t *Turn, call DispatchCall) ToolOutcome {
 	return fx.s.DispatchStep(fx.ctx, t.req, call)
+}
+
+// DispatchReads runs the reads one after another in process. Its context may
+// carry a transaction, which concurrent queries must not share.
+func (fx *localEffects) DispatchReads(t *Turn, calls []DispatchCall) []ToolOutcome {
+	outcomes := make([]ToolOutcome, 0, len(calls))
+	for idx := range calls {
+		outcomes = append(outcomes, fx.Dispatch(t, calls[idx]))
+	}
+
+	return outcomes
 }
 
 func (fx *localEffects) Find(t *Turn, arguments map[string]any) FindAnswer {

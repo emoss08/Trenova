@@ -5,6 +5,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/uptrace/bun"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
@@ -36,6 +39,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
+	DB                  kernelports.DBConnection
 	Repo                bankreceiptports.BankReceiptRepository
 	WorkItemRepo        bankreceiptworkitemports.BankReceiptWorkItemRepository
 	PaymentRepo         customerpaymentports.CustomerPaymentRepository
@@ -50,6 +54,7 @@ type Params struct {
 
 type Service struct {
 	l                   *zap.Logger
+	db                  kernelports.DBConnection
 	repo                bankreceiptports.BankReceiptRepository
 	workItemRepo        bankreceiptworkitemports.BankReceiptWorkItemRepository
 	paymentRepo         customerpaymentports.CustomerPaymentRepository
@@ -63,6 +68,7 @@ type Service struct {
 func New(p Params) *Service {
 	return &Service{
 		l:                   p.Logger.Named("service.bank-receipt"),
+		db:                  p.DB,
 		repo:                p.Repo,
 		workItemRepo:        p.WorkItemRepo,
 		paymentRepo:         p.PaymentRepo,
@@ -182,16 +188,28 @@ func (s *Service) Match(
 	req *bankreceiptports.MatchBankReceiptRequest,
 	actor *permissionports.RequestActor,
 ) (*bankreceipt.BankReceipt, error) {
-	plan, err := s.planStoredMatch(ctx, req, actor)
+	var (
+		plan    *MatchPreview
+		updated *bankreceipt.BankReceipt
+	)
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var txErr error
+		plan, txErr = s.planStoredMatch(txCtx, req, actor, s.repo.LockForUpdate)
+		if txErr != nil {
+			return txErr
+		}
+		if updated, txErr = s.repo.Update(txCtx, plan.ReceiptAfter); txErr != nil {
+			return txErr
+		}
+		if plan.WorkItemAfter != nil {
+			if _, txErr = s.workItemRepo.Update(txCtx, plan.WorkItemAfter); txErr != nil {
+				return txErr
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-	updated, err := s.repo.Update(ctx, plan.ReceiptAfter)
-	if err != nil {
-		return nil, err
-	}
-	if plan.WorkItemAfter != nil {
-		_, _ = s.workItemRepo.Update(ctx, plan.WorkItemAfter)
 	}
 	if !req.SkipAudit {
 		s.logAudit(
@@ -203,6 +221,53 @@ func (s *Service) Match(
 		)
 	}
 	return updated, nil
+}
+
+// ReleasePaymentMatch returns the deposits matched to a payment that is being
+// reversed to the reconciliation queue. The money is still in the bank, but
+// the payment it was reconciled against no longer stands, so the receipt needs
+// a person to decide what it was for. It runs inside the caller's transaction.
+func (s *Service) ReleasePaymentMatch(
+	ctx context.Context,
+	req *bankreceiptports.ReleasePaymentMatchRequest,
+	actor *permissionports.RequestActor,
+) ([]*bankreceipt.BankReceipt, error) {
+	matched, err := s.repo.ListMatchedToPayment(
+		ctx,
+		bankreceiptports.ListBankReceiptsMatchedToPaymentRequest{
+			PaymentID:  req.PaymentID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	released := make([]*bankreceipt.BankReceipt, 0, len(matched))
+	for _, receipt := range matched {
+		if receipt == nil {
+			continue
+		}
+		receipt.MatchedCustomerPaymentID = pulid.Nil
+		receipt.MatchedAt = nil
+		receipt.MatchedByID = pulid.Nil
+		updated, markErr := s.markException(ctx, receipt, actor, releasedMatchReason(req), false)
+		if markErr != nil {
+			return nil, markErr
+		}
+		released = append(released, updated)
+	}
+
+	return released, nil
+}
+
+func releasedMatchReason(req *bankreceiptports.ReleasePaymentMatchRequest) string {
+	reason := "The customer payment " + req.PaymentReference + " matched to this deposit was reversed"
+	if req.Reason != "" {
+		reason += ": " + req.Reason
+	}
+
+	return reason
 }
 
 func (s *Service) applyReconciliationPolicy(

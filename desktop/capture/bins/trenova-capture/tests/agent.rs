@@ -169,6 +169,26 @@ impl ServerSetting for FixedServer {
     }
 }
 
+/// A server address nobody has set yet, remembered once one is saved.
+#[derive(Default)]
+struct RememberedServer(Mutex<Option<String>>);
+
+impl ServerSetting for RememberedServer {
+    fn load(&self) -> Option<String> {
+        self.0
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
+    }
+    fn save(&self, url: &str) -> std::io::Result<()> {
+        *self.0.lock().unwrap_or_else(PoisonError::into_inner) = Some(url.to_owned());
+        Ok(())
+    }
+    fn locked(&self) -> bool {
+        false
+    }
+}
+
 /// One scripted scan: pages, then how it ends.
 struct Script {
     pages: u32,
@@ -272,7 +292,10 @@ fn fastrand_like(index: u32) -> u128 {
 fn credential(server: &str) -> Credential {
     Credential {
         server: Server::parse(server).expect("server").as_str().to_owned(),
+        api_base: String::new(),
         web_base: "https://app.acme.test".into(),
+        server_name: "Trenova".into(),
+        shared_tenancy: false,
         tokens: TokenPair {
             token_type: "Bearer".into(),
             access_token: "tcd_at_1".into(),
@@ -420,8 +443,37 @@ fn start_with(
     printer_missing: bool,
     hold: bool,
 ) -> Running {
-    let dir = tempfile::tempdir().expect("dir");
     let store: Arc<dyn SecretStore> = Arc::new(MemoryStore::with(credential(&server.uri())));
+    start_from(Setup {
+        scripts,
+        printer_missing,
+        hold,
+        store,
+        server_setting: Arc::new(FixedServer(server.uri())),
+        browser: Arc::new(|_| {}),
+    })
+}
+
+/// Everything a start may vary.
+struct Setup {
+    scripts: Vec<Script>,
+    printer_missing: bool,
+    hold: bool,
+    store: Arc<dyn SecretStore>,
+    server_setting: Arc<dyn ServerSetting>,
+    browser: Arc<agent::Browser>,
+}
+
+fn start_from(setup: Setup) -> Running {
+    let Setup {
+        scripts,
+        printer_missing,
+        hold,
+        store,
+        server_setting,
+        browser,
+    } = setup;
+    let dir = tempfile::tempdir().expect("dir");
     let scanner = Arc::new(FakeScanner {
         scripts: Mutex::new(scripts.into()),
         jobs: Mutex::new(Vec::new()),
@@ -450,8 +502,8 @@ fn start_with(
         scanners: Arc::clone(&scanner) as Arc<dyn ScannerHost>,
         secrets: Arc::new(move |_| Arc::clone(&store)),
         protector: Arc::new(Plain),
-        server_setting: Arc::new(FixedServer(server.uri())),
-        browser: Arc::new(|_| {}),
+        server_setting,
+        browser,
         reveal: Arc::new(move |path: &Path| {
             reveal_into
                 .lock()
@@ -1035,6 +1087,184 @@ async fn ready(running: &Running) {
 
 /// A server that refuses the first batch opened on it, as it would one it
 /// cannot take, and accepts the rest.
+/// A web app at `web` whose API is at `api`, where pairing is approved on
+/// the second poll.
+async fn mount_pairing(web: &MockServer, api: &MockServer) {
+    Mock::given(method("GET"))
+        .and(path("/.well-known/trenova-capture.json"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "product": "trenova", "apiBaseUrl": api.uri()
+        })))
+        .mount(web)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/api/v1/capture/discovery/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "product": "trenova", "edition": "cloud", "sharedTenancy": true,
+            "name": "Trenova Cloud", "version": "0.10.5",
+            "webBaseUrl": web.uri(), "pairing": true
+        })))
+        .mount(api)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/api/v1/capture/pair/"))
+        .and(body_partial_json(
+            json!({"machineName": "DISPATCH-07", "windowsUser": "jdoe"}),
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "deviceCode": "dc_1", "userCode": "BCDF-GHJK",
+            "verificationUri": format!("{}/capture/pair", web.uri()),
+            "verificationUriComplete": format!("{}/capture/pair?code=BCDF-GHJK", web.uri()),
+            "expiresIn": 600, "interval": 1
+        })))
+        .mount(api)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/api/v1/capture/pair/token/"))
+        .respond_with(
+            ResponseTemplate::new(400).set_body_json(json!({"error": "authorization_pending"})),
+        )
+        .up_to_n_times(1)
+        .mount(api)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/api/v1/capture/pair/token/"))
+        .and(body_partial_json(json!({"deviceCode": "dc_1"})))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "tokenType": "Bearer", "accessToken": "tcd_at_new",
+            "accessTokenExpiresAt": i64::try_from(
+                SystemTime::now().duration_since(UNIX_EPOCH).expect("clock").as_secs()
+            ).expect("secs") + 900,
+            "refreshToken": "tcd_rt_new", "deviceId": "cdev_1", "deviceName": "DISPATCH-07",
+            "userId": "usr_1", "organizationId": "org_1", "businessUnitId": "bu_1"
+        })))
+        .mount(api)
+        .await;
+}
+
+#[tokio::test]
+async fn a_first_run_finds_the_server_and_pairs_through_the_browser() {
+    let web = MockServer::start().await;
+    let api = server(json!([])).await;
+    mount_pairing(&web, &api).await;
+
+    let store = Arc::new(MemoryStore::default());
+    let setting = Arc::new(RememberedServer::default());
+    let opened = Arc::new(Mutex::new(Vec::<String>::new()));
+    let opened_into = Arc::clone(&opened);
+    let running = start_from(Setup {
+        scripts: Vec::new(),
+        printer_missing: false,
+        hold: false,
+        store: Arc::clone(&store) as Arc<dyn SecretStore>,
+        server_setting: Arc::clone(&setting) as Arc<dyn ServerSetting>,
+        browser: Arc::new(move |url: &str| {
+            opened_into
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .push(url.to_owned());
+        }),
+    });
+    let ui = Arc::clone(&running.ui);
+    until(&running, "the first run to ask for an address", |s, _| {
+        s.connection == Connection::NeedsServer
+            && s.server.is_none()
+            && ui.attention().contains(&Attention::SetUp)
+    })
+    .await;
+
+    running
+        .commands
+        .send(Command::Connect(web.uri()))
+        .expect("send");
+    until(
+        &running,
+        "the pairing code",
+        |s, _| matches!(&s.connection, Connection::Pairing { code, .. } if code == "BCDF-GHJK"),
+    )
+    .await;
+    let snapshot = running.shared.snapshot();
+    assert_eq!(snapshot.server.as_deref(), Some(web.uri().as_str()));
+    assert_eq!(snapshot.server_name.as_deref(), Some("Trenova Cloud"));
+    assert!(snapshot.server_shared);
+    assert_eq!(snapshot.server_api.as_deref(), Some(api.uri().as_str()));
+    assert_eq!(snapshot.web_base.as_deref(), Some(web.uri().as_str()));
+    assert_eq!(setting.load().as_deref(), Some(web.uri().as_str()));
+    assert_eq!(
+        opened
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .as_slice(),
+        [format!("{}/capture/pair?code=BCDF-GHJK", web.uri())]
+    );
+    assert!(running.ui.attention().contains(&Attention::SignIn));
+
+    until(&running, "the computer to be signed in", |s, _| {
+        s.connection == Connection::Online && s.person.as_deref() == Some("Jordan Doe")
+    })
+    .await;
+    let saved = store.load().expect("store").expect("a credential");
+    assert_eq!(saved.server, web.uri());
+    assert_eq!(saved.api_base, api.uri());
+    assert_eq!(saved.web_base, web.uri());
+    assert_eq!(saved.tokens.access_token, "tcd_at_new");
+    assert_eq!(
+        running.shared.snapshot().device_id.as_deref(),
+        Some("cdev_1")
+    );
+    assert!(
+        running
+            .ui
+            .titles()
+            .contains(&"This computer is signed in to Trenova".to_owned())
+    );
+    stop(running).await;
+}
+
+#[tokio::test]
+async fn an_address_nothing_answers_at_is_said_so_and_kept_for_another_try() {
+    let store = Arc::new(MemoryStore::default());
+    let setting = Arc::new(RememberedServer::default());
+    let running = start_from(Setup {
+        scripts: Vec::new(),
+        printer_missing: false,
+        hold: false,
+        store: Arc::clone(&store) as Arc<dyn SecretStore>,
+        server_setting: Arc::clone(&setting) as Arc<dyn ServerSetting>,
+        browser: Arc::new(|_| {}),
+    });
+    until(&running, "the first run", |s, _| {
+        s.connection == Connection::NeedsServer
+    })
+    .await;
+
+    running
+        .commands
+        .send(Command::Connect("http://127.0.0.1:9".into()))
+        .expect("send");
+    until(&running, "the address to be refused", |s, _| {
+        s.connection == Connection::NeedsServer && s.server_problem.is_some()
+    })
+    .await;
+    let snapshot = running.shared.snapshot();
+    assert_eq!(snapshot.server.as_deref(), Some("http://127.0.0.1:9"));
+    assert!(
+        snapshot
+            .server_problem
+            .as_deref()
+            .is_some_and(|problem| problem.starts_with("nothing answered at http://127.0.0.1:9")),
+        "{:?}",
+        snapshot.server_problem
+    );
+    assert_eq!(
+        setting.load(),
+        None,
+        "an address that never answered is not kept"
+    );
+    assert!(store.load().expect("store").is_none());
+    stop(running).await;
+}
+
 async fn refusing_server() -> MockServer {
     let server = server(json!([])).await;
     Mock::given(method("POST"))

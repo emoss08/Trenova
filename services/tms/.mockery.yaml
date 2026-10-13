@@ -180,6 +180,9 @@ packages:
   github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/documents/ports/triageports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/edi/ports/ediports:
     config:
       all: true
@@ -270,6 +273,9 @@ packages:
   github.com/emoss08/trenova/internal/modules/operations/ports/tenderports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports:
+    interfaces:
+      TrackingEventService: {}
   github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports:
     config:
       all: true

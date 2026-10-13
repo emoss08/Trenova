@@ -8,7 +8,10 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 type Surface string
@@ -42,6 +45,9 @@ const (
 	MaxFormulaVariables   = 50
 	MaxVariableNameLength = 64
 	MaxVariableTextLength = 500
+	MaxTemplateNameLength = 100
+	MaxBreakdownLines     = 20
+	MaxBreakdownLabel     = 100
 	maxSchemaIDLength     = 100
 	maxTemplateTypeLength = 50
 )
@@ -191,8 +197,146 @@ type Formula struct {
 	TemplateID   string            `json:"templateId,omitempty"`
 	SchemaID     string            `json:"schemaId"`
 	TemplateType string            `json:"templateType"`
+	Name         string            `json:"name,omitempty"`
+	Description  string            `json:"description,omitempty"`
 	Expression   string            `json:"expression"`
 	Variables    []FormulaVariable `json:"variables"`
+	Breakdown    []BreakdownLine   `json:"breakdown,omitempty"`
+	Policy       *FormulaPolicy    `json:"policy,omitempty"`
+}
+
+// FormulaPolicy is the charge policy applied after the expression: the bounds and
+// the rounding. A nil bound means none. Amounts are decimal strings, as the engine
+// takes them.
+type FormulaPolicy struct {
+	MinCharge         *string `json:"minCharge,omitempty"`
+	MaxCharge         *string `json:"maxCharge,omitempty"`
+	RoundingMode      string  `json:"roundingMode,omitempty"`
+	RoundingPrecision *int    `json:"roundingPrecision,omitempty"`
+}
+
+// Resolved is the policy as the engine applies it: bounds as canonical decimal
+// strings, and the default rounding filled in where none was chosen. A nil
+// policy resolves to the default policy alone.
+func (p *FormulaPolicy) Resolved() *FormulaPolicy {
+	charge := p.ChargePolicy()
+	precision := int(charge.RoundingPrecision)
+	out := &FormulaPolicy{
+		RoundingMode:      string(charge.RoundingMode),
+		RoundingPrecision: &precision,
+	}
+	if charge.MinCharge.Valid {
+		minCharge := charge.MinCharge.Decimal.String()
+		out.MinCharge = &minCharge
+	}
+	if charge.MaxCharge.Valid {
+		maxCharge := charge.MaxCharge.Decimal.String()
+		out.MaxCharge = &maxCharge
+	}
+
+	return out
+}
+
+// ChargePolicy is the engine's form of a validated policy, normalized. A bound
+// that does not parse as a decimal counts as none; validate refuses one first.
+func (p *FormulaPolicy) ChargePolicy() formulatypes.ChargePolicy {
+	if p == nil {
+		return formulatypes.ChargePolicy{}.Normalized()
+	}
+
+	policy := formulatypes.ChargePolicy{
+		MinCharge:    parseBound(p.MinCharge),
+		MaxCharge:    parseBound(p.MaxCharge),
+		RoundingMode: ratetypes.RoundingMode(strings.TrimSpace(p.RoundingMode)),
+	}
+	if p.RoundingPrecision != nil {
+		policy.RoundingPrecision = int32(*p.RoundingPrecision) //nolint:gosec // validated 0..4
+	}
+
+	return policy.Normalized()
+}
+
+func parseBound(value *string) decimal.NullDecimal {
+	if value == nil {
+		return decimal.NullDecimal{}
+	}
+	amount, err := decimal.NewFromString(strings.TrimSpace(*value))
+	if err != nil {
+		return decimal.NullDecimal{}
+	}
+
+	return decimal.NewNullDecimal(amount)
+}
+
+func (p *FormulaPolicy) normalized() *FormulaPolicy {
+	if p == nil {
+		return nil
+	}
+
+	out := &FormulaPolicy{RoundingMode: strings.TrimSpace(p.RoundingMode)}
+	if p.MinCharge != nil {
+		minCharge := strings.TrimSpace(*p.MinCharge)
+		out.MinCharge = &minCharge
+	}
+	if p.MaxCharge != nil {
+		maxCharge := strings.TrimSpace(*p.MaxCharge)
+		out.MaxCharge = &maxCharge
+	}
+	if p.RoundingPrecision != nil {
+		precision := *p.RoundingPrecision
+		out.RoundingPrecision = &precision
+	}
+
+	return out
+}
+
+func (p *FormulaPolicy) Validate(prefix string, multiErr *errortypes.MultiError) {
+	if p == nil {
+		return
+	}
+	field := fieldNamer(prefix)
+
+	minCharge, minOK := checkBound(multiErr, field("minCharge"), p.MinCharge)
+	maxCharge, maxOK := checkBound(multiErr, field("maxCharge"), p.MaxCharge)
+	if minOK && maxOK && minCharge.Valid && maxCharge.Valid &&
+		minCharge.Decimal.GreaterThan(maxCharge.Decimal) {
+		multiErr.Add(field("minCharge"), errortypes.ErrInvalid,
+			"The minimum charge cannot exceed the maximum charge")
+	}
+
+	mode := ratetypes.RoundingMode(strings.TrimSpace(p.RoundingMode))
+	if mode != "" && !mode.IsValid() {
+		multiErr.Add(field("roundingMode"), errortypes.ErrInvalid, "Rounding mode is invalid")
+	}
+	if p.RoundingPrecision != nil && !validPrecision(*p.RoundingPrecision) {
+		multiErr.Add(field("roundingPrecision"), errortypes.ErrInvalid,
+			"Rounding precision must be between 0 and {0}", formulatypes.MaxRoundingPrecision)
+	}
+}
+
+func validPrecision(places int) bool {
+	return places >= 0 && places <= int(formulatypes.MaxRoundingPrecision)
+}
+
+func checkBound(
+	multiErr *errortypes.MultiError,
+	field string,
+	value *string,
+) (decimal.NullDecimal, bool) {
+	if value == nil {
+		return decimal.NullDecimal{}, true
+	}
+	amount, err := decimal.NewFromString(strings.TrimSpace(*value))
+	if err != nil {
+		multiErr.Add(field, errortypes.ErrInvalid, "A charge bound must be a decimal amount")
+		return decimal.NullDecimal{}, false
+	}
+	if amount.IsNegative() {
+		multiErr.Add(field, errortypes.ErrInvalid, "A charge bound cannot be negative")
+		return decimal.NullDecimal{}, false
+	}
+
+	return decimal.NewNullDecimal(amount), true
 }
 
 type VariableType string
@@ -324,7 +468,11 @@ func (f *Formula) validate(prefix string, multiErr *errortypes.MultiError) {
 		(!validKey(f.TemplateType) || len(f.TemplateType) > maxTemplateTypeLength) {
 		multiErr.Add(field("templateType"), errortypes.ErrInvalid, "Template type is invalid")
 	}
+	checkLength(multiErr, field("name"), f.Name, MaxTemplateNameLength)
+	checkLength(multiErr, field("description"), f.Description, MaxVariableTextLength)
 	checkLength(multiErr, field("expression"), f.Expression, MaxExpressionLength)
+	f.Policy.Validate(field("policy"), multiErr)
+	validateBreakdown(field("breakdown"), f.Breakdown, multiErr)
 
 	if len(f.Variables) > MaxFormulaVariables {
 		multiErr.Add(field("variables"), errortypes.ErrInvalid, "Too many variables")
@@ -350,6 +498,89 @@ func (f *Formula) validate(prefix string, multiErr *errortypes.MultiError) {
 				"Default value must be a number, text or true/false")
 		}
 	}
+}
+
+const (
+	TemplateTypeFreightCharge     = "FreightCharge"
+	TemplateTypeAccessorialCharge = "AccessorialCharge"
+)
+
+func (d *FormulaDetails) Validate(prefix string, multiErr *errortypes.MultiError) {
+	field := fieldNamer(prefix)
+
+	checkLength(multiErr, field("name"), d.Name, MaxTemplateNameLength)
+	checkLength(multiErr, field("description"), d.Description, MaxVariableTextLength)
+	if d.TemplateType != "" && d.TemplateType != TemplateTypeFreightCharge &&
+		d.TemplateType != TemplateTypeAccessorialCharge {
+		multiErr.Add(field("templateType"), errortypes.ErrInvalid,
+			"Template type must be FreightCharge or AccessorialCharge")
+	}
+	d.Policy.Validate(field("policy"), multiErr)
+	validateBreakdown(field("breakdown"), d.Breakdown, multiErr)
+}
+
+func validateBreakdown(prefix string, lines []BreakdownLine, multiErr *errortypes.MultiError) {
+	if len(lines) > MaxBreakdownLines {
+		multiErr.Add(prefix, errortypes.ErrInvalid,
+			"A formula has at most {0} breakdown lines", MaxBreakdownLines)
+		return
+	}
+	seen := make(map[string]struct{}, len(lines))
+	for i := range lines {
+		line := &lines[i]
+		lineField := indexed(prefix, i)
+		if !ValidBreakdownName(line.Name) {
+			multiErr.Add(lineField+".name", errortypes.ErrInvalid,
+				"A breakdown line's name is a camelCase identifier, such as fuelSurcharge")
+		} else if _, dup := seen[line.Name]; dup {
+			multiErr.Add(lineField+".name", errortypes.ErrDuplicate, "Breakdown line is repeated")
+		}
+		seen[line.Name] = struct{}{}
+		if strings.TrimSpace(line.Label) == "" {
+			multiErr.Add(
+				lineField+".label",
+				errortypes.ErrRequired,
+				"A breakdown line needs a label",
+			)
+		}
+		checkLength(multiErr, lineField+".label", line.Label, MaxBreakdownLabel)
+		if strings.TrimSpace(line.Expression) == "" {
+			multiErr.Add(lineField+".expression", errortypes.ErrRequired,
+				"A breakdown line needs an expression")
+		}
+		checkLength(multiErr, lineField+".expression", line.Expression, MaxExpressionLength)
+	}
+}
+
+func (d *FormulaDetails) Normalized() FormulaDetails {
+	return FormulaDetails{
+		Name:         strings.TrimSpace(d.Name),
+		Description:  strings.TrimSpace(d.Description),
+		TemplateType: strings.TrimSpace(d.TemplateType),
+		Breakdown:    normalizedBreakdown(d.Breakdown),
+		Policy:       d.Policy.normalized(),
+	}
+}
+
+func normalizedBreakdown(lines []BreakdownLine) []BreakdownLine {
+	if len(lines) == 0 {
+		return nil
+	}
+
+	out := make([]BreakdownLine, 0, len(lines))
+	for _, line := range lines {
+		out = append(out, BreakdownLine{
+			Name:       strings.TrimSpace(line.Name),
+			Label:      strings.TrimSpace(line.Label),
+			Expression: strings.TrimSpace(line.Expression),
+		})
+	}
+
+	return out
+}
+
+func ValidBreakdownName(name string) bool {
+	return ValidVariableName(name) && name[0] != '_'
 }
 
 func (d *Draft) Normalized() *Draft {
@@ -411,8 +642,12 @@ func (f *Formula) normalized() *Formula {
 		TemplateID:   strings.TrimSpace(f.TemplateID),
 		SchemaID:     strings.TrimSpace(f.SchemaID),
 		TemplateType: strings.TrimSpace(f.TemplateType),
+		Name:         strings.TrimSpace(f.Name),
+		Description:  strings.TrimSpace(f.Description),
 		Expression:   strings.TrimSpace(f.Expression),
 		Variables:    make([]FormulaVariable, 0, len(f.Variables)),
+		Breakdown:    normalizedBreakdown(f.Breakdown),
+		Policy:       f.Policy.normalized(),
 	}
 	for _, variable := range f.Variables {
 		out.Variables = append(out.Variables, FormulaVariable{

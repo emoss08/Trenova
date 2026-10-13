@@ -40,6 +40,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentpacketruleservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triagecorrectionservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triagepeekservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triageruleservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
@@ -70,16 +77,20 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/factoringcompanyservice"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/internal/modules/places/app/distanceoverrideservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/distanceprofileservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
@@ -157,6 +168,8 @@ type Params struct {
 	ShipmentService              shipmentports.ShipmentService
 	ShipmentCommentService       shipmentports.ShipmentCommentService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
+	TrackingEventService         trackingeventports.TrackingEventService
+	CheckCallService             checkcallports.CheckCallService
 	CarrierCapacityService       *carriercapacityservice.Service
 	CustomerUpdateService        *customerupdateservice.Service
 	BoardCapacity                shipmentports.ShipmentCapacityReader
@@ -196,6 +209,8 @@ type Params struct {
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HazmatSegregationRuleService *hazmatsegregationruleservice.Service
 	HoldReasonService            *holdreasonservice.Service
+	FactoringCompanyService      *factoringcompanyservice.Service
+	FactoringCompanyRepo         factoringcompanyports.FactoringCompanyRepository
 	JurisdictionRuleService      jurisdictionruleports.JurisdictionRuleService
 	JurisdictionRuleRepo         permitports.JurisdictionRuleRepository
 	RecurringShipmentService     *recurringshipmentservice.Service
@@ -308,6 +323,13 @@ type Params struct {
 	AgentToolRuleService         agentports.AgentToolRuleService
 	WatchtowerService            watchtowerports.WatchtowerService
 	InboundMessageService        *inboundmessageservice.Service
+	InboundReplyService          *inboundreplyservice.Service
+	TriageWorkService            *triageworkservice.Service
+	TriagePeekService            *triagepeekservice.Service
+	TriageRuleService            *triageruleservice.Service
+	TriageBriefingService        *triagebriefingservice.Service
+	TriageCorrectionService      *triagecorrectionservice.Service
+	TriageConflictService        *triageconflictservice.Service
 	CaptureService               *captureservice.Service
 	CaptureReleaseService        *capturereleaseservice.Service
 	AgentScorecardService        agentports.AgentScorecardService
@@ -363,6 +385,8 @@ type Services struct {
 	ShipmentService              shipmentports.ShipmentService
 	ShipmentCommentService       shipmentports.ShipmentCommentService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
+	TrackingEventService         trackingeventports.TrackingEventService
+	CheckCallService             checkcallports.CheckCallService
 	CarrierCapacityService       *carriercapacityservice.Service
 	CustomerUpdateService        *customerupdateservice.Service
 	BoardCapacity                shipmentports.ShipmentCapacityReader
@@ -401,6 +425,8 @@ type Services struct {
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HazmatSegregationRuleService *hazmatsegregationruleservice.Service
 	HoldReasonService            *holdreasonservice.Service
+	FactoringCompanyService      *factoringcompanyservice.Service
+	FactoringCompanyRepo         factoringcompanyports.FactoringCompanyRepository
 	JurisdictionRuleService      jurisdictionruleports.JurisdictionRuleService
 	JurisdictionRuleRepo         permitports.JurisdictionRuleRepository
 	RecurringShipmentService     *recurringshipmentservice.Service
@@ -512,6 +538,13 @@ type Services struct {
 	AgentToolRuleService         agentports.AgentToolRuleService
 	WatchtowerService            watchtowerports.WatchtowerService
 	InboundMessageService        *inboundmessageservice.Service
+	InboundReplyService          *inboundreplyservice.Service
+	TriageWorkService            *triageworkservice.Service
+	TriagePeekService            *triagepeekservice.Service
+	TriageRuleService            *triageruleservice.Service
+	TriageBriefingService        *triagebriefingservice.Service
+	TriageCorrectionService      *triagecorrectionservice.Service
+	TriageConflictService        *triageconflictservice.Service
 	CaptureService               *captureservice.Service
 	CaptureReleaseService        *capturereleaseservice.Service
 	AgentScorecardService        agentports.AgentScorecardService
@@ -573,6 +606,8 @@ func newServices(p *Params) *Services {
 		ShipmentService:              p.ShipmentService,
 		ShipmentCommentService:       p.ShipmentCommentService,
 		ShipmentEventService:         p.ShipmentEventService,
+		TrackingEventService:         p.TrackingEventService,
+		CheckCallService:             p.CheckCallService,
 		CarrierCapacityService:       p.CarrierCapacityService,
 		CustomerUpdateService:        p.CustomerUpdateService,
 		BoardCapacity:                p.BoardCapacity,
@@ -611,6 +646,8 @@ func newServices(p *Params) *Services {
 		HazardousMaterialService:     p.HazardousMaterialService,
 		HazmatSegregationRuleService: p.HazmatSegregationRuleService,
 		HoldReasonService:            p.HoldReasonService,
+		FactoringCompanyService:      p.FactoringCompanyService,
+		FactoringCompanyRepo:         p.FactoringCompanyRepo,
 		JurisdictionRuleService:      p.JurisdictionRuleService,
 		JurisdictionRuleRepo:         p.JurisdictionRuleRepo,
 		RecurringShipmentService:     p.RecurringShipmentService,
@@ -722,6 +759,13 @@ func newServices(p *Params) *Services {
 		AgentToolRuleService:         p.AgentToolRuleService,
 		WatchtowerService:            p.WatchtowerService,
 		InboundMessageService:        p.InboundMessageService,
+		InboundReplyService:          p.InboundReplyService,
+		TriageWorkService:            p.TriageWorkService,
+		TriagePeekService:            p.TriagePeekService,
+		TriageRuleService:            p.TriageRuleService,
+		TriageBriefingService:        p.TriageBriefingService,
+		TriageCorrectionService:      p.TriageCorrectionService,
+		TriageConflictService:        p.TriageConflictService,
 		CaptureService:               p.CaptureService,
 		CaptureReleaseService:        p.CaptureReleaseService,
 		AgentScorecardService:        p.AgentScorecardService,

@@ -1,0 +1,7 @@
+{
+  "value": [
+    {"aadTenantId": "6E1F2A3B-4C5D-4E6F-8A9B-0C1D2E3F4A5B", "applicationFamily": "BusinessCentral", "type": "Production", "name": "Production", "countryCode": "US", "webServiceUrl": "https://api.businesscentral.dynamics.com/v2.0/6e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b/Production", "webClientLoginUrl": "https://businesscentral.dynamics.com/6e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b/Production"},
+    {"aadTenantId": "6e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b", "applicationFamily": "BusinessCentral", "type": "Sandbox", "name": "uat_sandbox-2", "countryCode": "US", "webServiceUrl": "https://api.businesscentral.dynamics.com/v2.0/6e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b/uat_sandbox-2", "webClientLoginUrl": "https://businesscentral.dynamics.com/6e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b/uat_sandbox-2"},
+    {"aadTenantId": "6e1f2a3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b", "applicationFamily": "ContosoRetail", "type": "Production", "name": "Retail", "countryCode": "US", "webServiceUrl": "", "webClientLoginUrl": ""}
+  ]
+}

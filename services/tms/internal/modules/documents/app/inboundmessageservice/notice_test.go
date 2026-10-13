@@ -4,13 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type recordingNotifier struct {
@@ -45,6 +46,7 @@ func noticed(repo *settleRepo, reply string) (*Service, *recordingNotifier, *rec
 	svc := settler(repo, reply)
 	svc.notifier = notifier
 	svc.realtime = realtime
+	svc.notify = newNotifier(notifierDeps{logger: zap.NewNop(), realtime: realtime})
 
 	return svc, notifier, realtime
 }

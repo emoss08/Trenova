@@ -10,6 +10,8 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { apiService } from "@/services/api";
+import { BULK_CONCURRENCY, notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
+import type { BillingQueueTarget } from "./billing-queue-assign-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -17,27 +19,49 @@ import { toast } from "sonner";
 export function BillingQueueCancelDialog({
   open,
   onOpenChange,
-  itemId,
+  targets,
+  onDone,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  itemId: string;
+  targets: readonly BillingQueueTarget[];
+  onDone?: () => void;
 }) {
   const t = useT();
 
   const [reason, setReason] = useState("");
   const queryClient = useQueryClient();
 
+  const single = targets.length === 1;
   const { mutate, isPending } = useMutation({
     mutationFn: () =>
-      apiService.billingQueueService.updateStatus(itemId, {
-        status: "Canceled",
-        cancelReason: reason,
-      }),
-    onSuccess: () => {
+      settleAll(
+        targets,
+        (target) =>
+          apiService.billingQueueService.updateStatus(target.id, {
+            status: "Canceled",
+            cancelReason: reason.trim(),
+          }),
+        { concurrency: BULK_CONCURRENCY, label: (target) => target.label },
+      ),
+    onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-      toast.success(t("Billing queue item canceled"));
+      notifyBulkOutcome(result, {
+        succeeded: (count) =>
+          single
+            ? t("Billing queue item canceled")
+            : t("{0, plural, one {# item} other {# items}} canceled", count),
+        partial: (succeeded, failed) =>
+          t("{0} canceled; {1} could not be canceled", succeeded, failed),
+        allFailed: (failed) =>
+          single
+            ? t("Failed to cancel item")
+            : t("{0, plural, one {# item} other {# items}} could not be canceled", failed),
+      });
+      if (result.failed.length === 0) {
+        onDone?.();
+      }
       handleClose();
     },
     onError: () => {
@@ -54,9 +78,15 @@ export function BillingQueueCancelDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Cancel billing queue item")}</DialogTitle>
+          <DialogTitle>
+            {single
+              ? t("Cancel billing queue item")
+              : t("Cancel {0} billing queue items", targets.length)}
+          </DialogTitle>
           <DialogDescription>
-            {t("This item will be removed from the billing queue.")}
+            {single
+              ? t("This item will be removed from the billing queue.")
+              : t("These items will be removed from the billing queue.")}
           </DialogDescription>
         </DialogHeader>
         <Textarea
@@ -76,7 +106,7 @@ export function BillingQueueCancelDialog({
             isLoading={isPending}
             loadingText={t("Canceling...")}
           >
-            {t("Cancel item")}
+            {single ? t("Cancel item") : t("Cancel items")}
           </Button>
         </DialogFooter>
       </DialogContent>

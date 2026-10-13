@@ -1,5 +1,5 @@
 {
-  "version": "sha256:8183c4609cb64b04701f2af56dec57498cf3e133d8471cb00d6c36e3fdfa469b",
+  "version": "sha256:a9b12433bfb42b1764da846ac8a908cc506e8ff70dcfcd49f328f7615898c1c0",
   "modules": [
     {
       "id": "home",
@@ -13,8 +13,8 @@
     },
     {
       "id": "inbox",
-      "label": "Inbox",
-      "description": "Mail that arrived on a monitored address, and what was made of it"
+      "label": "Triage",
+      "description": "Messages from connected sources, what Nova did with them, and what is left for you"
     },
     {
       "id": "intake",
@@ -347,6 +347,125 @@
         "/accounting/ar/customer-ledger",
         "/accounting/ar/open-items",
         "/accounting"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/accounting/ar/collections",
+      "name": "Collections",
+      "module": "accounting",
+      "breadcrumb": [
+        "Accounting management",
+        "Accounts receivable",
+        "Collections"
+      ],
+      "description": "Customers with overdue receivables, ranked by who to call first. Open one to log a call, record a promise to pay, or schedule the next follow-up.",
+      "summary": "Collections lists every customer with an overdue invoice, ranked so the first row is the account to call next: a broken promise to pay or anything sixty days late comes first, an account waiting on an open promise or on a follow-up that has not come round yet comes last. Each row shows what is **Overdue**, the **Oldest** invoice's days past due, the **Promise** standing against the balance, the next **Follow-up**, the **Collector** and the **Last contact**.\n\nThe figures above the table give the total **Overdue**, **Follow-ups due**, **Broken promises** and **Unassigned** accounts. Select **Follow-ups due** or **Unassigned** to narrow the list to them.",
+      "requires": [
+        {
+          "resource": "accounts_receivable",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "collections worklist",
+        "dunning list",
+        "past due accounts",
+        "overdue customers",
+        "promise to pay",
+        "collector"
+      ],
+      "tasks": [
+        {
+          "title": "Chase today's overdue accounts",
+          "keywords": [
+            "who to call",
+            "follow-ups due",
+            "dunning"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections).",
+            "Choose **Mine** to see the accounts you collect, and turn on **Due today only**.",
+            "Select a customer to open their account."
+          ]
+        },
+        {
+          "title": "Log a call or email",
+          "keywords": [
+            "record call",
+            "collection note",
+            "contact log"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Under **Log a contact**, choose **Call**, **Email** or **Note**.",
+            "Fill in **Spoke with** and **What happened**, and optionally **Follow up on**.",
+            "Select **Log it**."
+          ]
+        },
+        {
+          "title": "Record a promise to pay",
+          "keywords": [
+            "promise to pay",
+            "payment commitment",
+            "PTP"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Under **Log a contact**, choose **Promise to pay**.",
+            "Fill in **Promised amount** and **Will pay by**, then select **Record promise**.",
+            "The account waits on the promise and comes back the day after the promised date. Payments posted since the promise count toward it: it shows **Kept** once paid in full and **Broken** if the date passes short."
+          ]
+        },
+        {
+          "title": "Send a payment reminder now",
+          "keywords": [
+            "email reminder",
+            "dunning letter",
+            "past due notice"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Select **Send reminder**.",
+            "Optionally write a **Note to the customer**, then select **Send reminder**.",
+            "The reminder lists every overdue invoice not in dispute and goes to the invoice recipients on the customer's email profile. It is recorded in the account's **History**."
+          ]
+        },
+        {
+          "title": "Send a customer its statement",
+          "keywords": [
+            "statement of account",
+            "account statement email",
+            "balance summary"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Under **Receivables**, select **Statement**.",
+            "Select **Email statement**, optionally write a **Note to the customer**, then select **Send statement**."
+          ]
+        },
+        {
+          "title": "Assign a collector or set the next follow-up",
+          "keywords": [
+            "assign collector",
+            "owner",
+            "next follow-up"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Under **Collector and follow-up**, choose the **Collector**. They are notified.",
+            "Choose the **Next follow-up** date and select **Save follow-up**, or clear the date and select **Clear follow-up**."
+          ]
+        }
+      ],
+      "notes": "Opening the page needs read access to accounts receivable; logging contacts, recording promises, assigning collectors and setting follow-ups needs permission to update accounts receivable. History is kept as it was recorded and cannot be edited.",
+      "related": [
+        "/accounting/ar/open-items",
+        "/accounting/ar/customer-ledger",
+        "/accounting/ar/aging"
       ],
       "covers": [],
       "createAction": null,
@@ -714,9 +833,24 @@
             "Open [Open items](/accounting/ar/open-items).",
             "Select the customer's name in the **Customer** column. Their customer statement opens."
           ]
+        },
+        {
+          "title": "Download or email a customer's statement",
+          "keywords": [
+            "statement PDF",
+            "send statement",
+            "statement of account email",
+            "account summary"
+          ],
+          "steps": [
+            "Open [Open items](/accounting/ar/open-items) and select the customer's name in the **Customer** column.",
+            "Optionally set the **Statement date** and **Start date**.",
+            "Select **Download PDF**, or select **Email statement**.",
+            "To email it, optionally write a **Note to the customer**, then select **Send statement**."
+          ]
         }
       ],
-      "notes": "Opening the page needs read access to accounts receivable. **Record payment** and **Apply payment** only appear for people who can create customer payments.",
+      "notes": "Opening the page needs read access to accounts receivable. **Record payment** and **Apply payment** only appear for people who can create customer payments.\n\nThe statement PDF shows the opening balance, every invoice, payment and credit in the period, the balance due, the open invoices and how late they are. **Email statement** sends it to the invoice recipients on the customer's email profile, needs permission to update accounts receivable, and is recorded in the customer's collections history and under **Statements sent** on the statement page. The statement uses your organization's customer statement template, which can be changed in document templates.",
       "related": [
         "/accounting/ar/payments",
         "/accounting/ar/aging",
@@ -1685,7 +1819,7 @@
         "Sync ledger"
       ],
       "description": "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.",
-      "summary": "The sync ledger lists every document Trenova sends to the accounting system (QuickBooks Online or Xero) and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer changes, and on the payables side carrier settlements, owner-operator settlements, their payments, and changes to carriers and drivers. Documents are sent on their own as they are posted; the ledger is where you see what went through, what is waiting, and fix what did not.\n\nThe strip at the top counts **Synced**, **In progress**, **Waiting for release** and **Needs attention** records; selecting a figure filters the table to it. Records held or failed for the same reason are grouped under **Needs attention**, so one fix clears them all.\n\nA posted carrier settlement is sent as a bill to the carrier's vendor, or as a vendor credit when it nets below zero; its lines follow the settlement's journal entry, one per GL account. Marking it paid sends a bill payment from the cash account. Voiding a posted settlement removes its bill. Owner-operator settlements work the same way once **Send owner-operator settlements** is on for the connection, each driver becoming a 1099 vendor; company driver pay is never sent.\n\nWhen a QuickBooks Online connection sends journal entries instead of documents, the ledger lists one record for each posted journal entry, or one **Daily summary** per day, and the **Opening balances** entry when it was sent. A day's summary is sent again whenever an entry is posted to that day later, and a day whose entries net to nothing removes its summary from QuickBooks.",
+      "summary": "The sync ledger lists every document Trenova sends to the accounting system (QuickBooks Online, Xero or Business Central) and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer changes, and on the payables side carrier settlements, owner-operator settlements, their payments, and changes to carriers and drivers. Documents are sent on their own as they are posted; the ledger is where you see what went through, what is waiting, and fix what did not.\n\nThe strip at the top counts **Synced**, **In progress**, **Waiting for release** and **Needs attention** records; selecting a figure filters the table to it. Records held or failed for the same reason are grouped under **Needs attention**, so one fix clears them all.\n\nA posted carrier settlement is sent as a bill to the carrier's vendor, or as a vendor credit when it nets below zero; its lines follow the settlement's journal entry, one per GL account. Marking it paid sends a bill payment from the cash account. Voiding a posted settlement removes its bill. Owner-operator settlements work the same way once **Send owner-operator settlements** is on for the connection, each driver becoming a 1099 vendor; company driver pay is never sent.\n\nWhen a QuickBooks Online connection sends journal entries instead of documents, the ledger lists one record for each posted journal entry, or one **Daily summary** per day, and the **Opening balances** entry when it was sent. A day's summary is sent again whenever an entry is posted to that day later, and a day whose entries net to nothing removes its summary from QuickBooks.",
       "requires": [
         {
           "resource": "accounting_sync",
@@ -1712,7 +1846,10 @@
         "opening balances entry",
         "Xero sync",
         "invoice not in Xero",
-        "Xero not updating"
+        "Xero not updating",
+        "Business Central sync",
+        "invoice not in Business Central",
+        "Business Central not posting"
       ],
       "tasks": [
         {
@@ -1769,7 +1906,7 @@
           ],
           "steps": [
             "Open [Sync ledger](/accounting/sync) and open the record held for a closed period.",
-            "Select **Send on first open day**. The document goes out dated on the day after the closing date in the books (the lock date in Xero), and its note there keeps Trenova's date. This is offered only while Trenova's closed-period policy is to post to the next open period; otherwise reopen the period in the accounting system, then select **Retry now**."
+            "Select **Send on first open day**. The document goes out dated on the day after the closing date in the books (the lock date in Xero, the start of the allowed posting dates in Business Central), and its note there keeps Trenova's date. This is offered only while Trenova's closed-period policy is to post to the next open period; otherwise reopen the period in the accounting system, then select **Retry now**."
           ]
         },
         {
@@ -1857,8 +1994,8 @@
         "Accounting sync",
         "Drift findings"
       ],
-      "description": "Drift findings lists the documents Trenova sent to the accounting system (QuickBooks Online or Xero) that differ there now: a total someone edited, a document deleted or voided in the books, a document voided in Trenova but still live in the books, or a customer's open balance that no longer adds up to the same figure on both sides.",
-      "summary": "Drift findings lists the documents Trenova sent to the accounting system (QuickBooks Online or Xero) that differ there now: a total someone edited, a document deleted or voided in the books, a document voided in Trenova but still live in the books, or a customer's open balance that no longer adds up to the same figure on both sides. Each finding shows both values, when the document was changed in the books and, for QuickBooks Online, who changed it, and whether an amount difference is within the reconciliation tolerance.\n\nTrenova compares every synced document dated in an open or locked period each night, and compares a document again within minutes when the accounting system reports it changed. A finding closes on its own once both sides agree again. A document with a change still on its way to the books is left out until that change is sent.\n\nWhen a QuickBooks Online connection sends journal entries, the check also compares each QuickBooks account's balance with the Trenova accounts mapped to it. A **Different account balance** finding lists those Trenova accounts and their balances. It cannot be pushed or adjusted as a whole: find the entry made in QuickBooks by hand, or the one missing from it, and correct that entry. Accounts are not compared while journal entries are still waiting to be sent, or when Trenova and QuickBooks keep different home currencies.\n\nThe strip at the top counts **Open differences**, **Different amounts**, documents **Deleted or voided** in the books, and those **Settled** in the last seven days; selecting a figure filters the table to it.",
+      "description": "Drift findings lists the documents Trenova sent to the accounting system (QuickBooks Online, Xero or Business Central) that differ there now: a total someone edited, a document deleted or voided in the books, a document voided in Trenova but still live in the books, or a customer's open balance that no longer adds up to the same figure on both sides.",
+      "summary": "Drift findings lists the documents Trenova sent to the accounting system (QuickBooks Online, Xero or Business Central) that differ there now: a total someone edited, a document deleted or voided in the books, a document voided in Trenova but still live in the books, or a customer's open balance that no longer adds up to the same figure on both sides. Each finding shows both values, when the document was changed in the books and, for QuickBooks Online, who changed it, and whether an amount difference is within the reconciliation tolerance.\n\nTrenova compares every synced document dated in an open or locked period each night, and compares a document again within minutes when the accounting system reports it changed. A finding closes on its own once both sides agree again. A document with a change still on its way to the books is left out until that change is sent.\n\nWhen a QuickBooks Online connection sends journal entries, the check also compares each QuickBooks account's balance with the Trenova accounts mapped to it. A **Different account balance** finding lists those Trenova accounts and their balances. It cannot be pushed or adjusted as a whole: find the entry made in QuickBooks by hand, or the one missing from it, and correct that entry. Accounts are not compared while journal entries are still waiting to be sent, or when Trenova and QuickBooks keep different home currencies.\n\nThe strip at the top counts **Open differences**, **Different amounts**, documents **Deleted or voided** in the books, and those **Settled** in the last seven days; selecting a figure filters the table to it.",
       "requires": [
         {
           "resource": "accounting_sync",
@@ -1882,7 +2019,10 @@
         "Xero drift",
         "invoice changed in Xero",
         "invoice voided in Xero",
-        "Xero does not match"
+        "Xero does not match",
+        "Business Central drift",
+        "invoice paid in Business Central",
+        "Business Central does not match"
       ],
       "tasks": [
         {
@@ -1961,7 +2101,7 @@
         "Payments from the books"
       ],
       "description": "Payments recorded in {0} against invoices and settlements Trenova sent, and whether each was brought into Trenova.",
-      "summary": "Payments from the books lists the payments someone recorded in the accounting system (QuickBooks Online or Xero) against invoices and settlements Trenova sent: customer payments that pay invoices, and bill payments that pay carrier or owner-operator settlements. Trenova reads them every fifteen minutes, and as soon as QuickBooks Online tells it something changed. Each one says what it pays and whether it was brought into Trenova, so the invoice or settlement shows as paid here too.\n\nPayments Trenova sent itself are never read back. A payment waits for a person when it does not match cleanly, such as one that pays more than is open, pays documents Trenova did not send, pays a settlement only in part, or falls in a period that is not open; its reason says which. What happens to the rest follows the choice for payments recorded in the books in the integration's sync settings.\n\nThe strip at the top counts payments **Waiting for you**, **Just read**, and those **Applied** or **Ignored** in the last seven days; selecting a figure filters the table to it.",
+      "summary": "Payments from the books lists the payments someone recorded in the accounting system (QuickBooks Online or Xero) against invoices and settlements Trenova sent: customer payments that pay invoices, and bill payments that pay carrier or owner-operator settlements. Trenova reads them every fifteen minutes, and as soon as QuickBooks Online tells it something changed. Each one says what it pays and whether it was brought into Trenova, so the invoice or settlement shows as paid here too. Business Central is the exception: its API does not say which invoices a payment paid, so payments recorded there are not brought in; an invoice paid in Business Central shows as a balance difference on [Drift findings](/accounting/sync/drift) instead.\n\nPayments Trenova sent itself are never read back. A payment waits for a person when it does not match cleanly, such as one that pays more than is open, pays documents Trenova did not send, pays a settlement only in part, or falls in a period that is not open; its reason says which. What happens to the rest follows the choice for payments recorded in the books in the integration's sync settings.\n\nThe strip at the top counts payments **Waiting for you**, **Just read**, and those **Applied** or **Ignored** in the last seven days; selecting a figure filters the table to it.",
       "requires": [
         {
           "resource": "accounting_sync",
@@ -1983,7 +2123,9 @@
         "Xero payments",
         "payment entered in Xero",
         "customer paid in Xero",
-        "bill paid in Xero"
+        "bill paid in Xero",
+        "Business Central payments",
+        "payment entered in Business Central"
       ],
       "tasks": [
         {
@@ -2048,7 +2190,7 @@
         "Mappings"
       ],
       "description": "Accounting mappings say which account, item, customer and vendor in the accounting system each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods.",
-      "summary": "Accounting mappings say which account, item, customer and vendor in the accounting system each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods. Xero invoice lines carry an account, so for Xero, line types, accessorial charges and the write-off are mapped to accounts; Xero has no payment terms or payment methods to map, and only the deposit account and the freight line's account are required. When a QuickBooks Online connection sends journal entries, every active GL account can be mapped, and each account that carries posted entries needs a QuickBooks account before its entries are sent; an account without its own mapping falls back to the account role it plays.\n\nTrenova reads the connected company's records and proposes a match where it is sure enough. A proposal is only a suggestion: nothing is used when syncing until a person confirms it. The strip at the top counts **Required confirmed**, **Proposed**, **Unmatched** and **Confirmed** mappings; selecting a figure filters the list to it.",
+      "summary": "Accounting mappings say which account, item, customer and vendor in the accounting system each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods. Xero invoice lines carry an account, so for Xero, line types, accessorial charges and the write-off are mapped to accounts; Xero has no payment terms or payment methods to map, and only the deposit account and the freight line's account are required. Business Central invoice lines are items, as in QuickBooks Online; it has no payment methods to map, and the deposit account and the freight line's item are required. When a QuickBooks Online connection sends journal entries, every active GL account can be mapped, and each account that carries posted entries needs a QuickBooks account before its entries are sent; an account without its own mapping falls back to the account role it plays.\n\nTrenova reads the connected company's records and proposes a match where it is sure enough. A proposal is only a suggestion: nothing is used when syncing until a person confirms it. The strip at the top counts **Required confirmed**, **Proposed**, **Unmatched** and **Confirmed** mappings; selecting a figure filters the list to it.",
       "requires": [
         {
           "resource": "accounting_integration",
@@ -2067,7 +2209,10 @@
         "accounting sync setup",
         "Xero mappings",
         "Xero account codes",
-        "map customers to Xero contacts"
+        "map customers to Xero contacts",
+        "Business Central mappings",
+        "Business Central items",
+        "map customers to Business Central"
       ],
       "tasks": [
         {
@@ -2355,6 +2500,35 @@
             "Paste the **Key** under **API key** when the provider needs one.",
             "Under **What it handles**, choose the tasks. **When you save** lists every task whose provider changes.",
             "Select **Test draft**, then **Save & close**. A provider whose test connected is saved turned on; one that has not passed a test is saved off until it does."
+          ]
+        },
+        {
+          "title": "Reach Claude through your cloud account",
+          "keywords": [
+            "Amazon Bedrock",
+            "AWS Bedrock",
+            "Google Vertex AI",
+            "Vertex",
+            "Microsoft Foundry",
+            "Azure",
+            "Claude Platform on AWS",
+            "Claude Platform on Google Cloud",
+            "cloud marketplace",
+            "IAM role",
+            "service account",
+            "Entra ID",
+            "workload identity",
+            "bill through AWS",
+            "bill through Google Cloud"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Providers**, then **New provider**.",
+            "Under **Provider**, choose Claude on Amazon Bedrock, Claude on Google Vertex AI, Claude Platform on AWS, Claude Platform on Google Cloud or Claude on Microsoft Foundry. Choosing Anthropic and then a **Platform** does the same.",
+            "Under **Sign in with**, choose how Trenova proves who it is: an **IAM access key** or an **API key** on AWS, a **Service account key** on Google Cloud, or an **API key** or **Microsoft Entra ID** on Foundry. **This server's credentials** appears only where the server's operator allows it, and uses the server's own identity, such as its IAM role, so nothing is stored.",
+            "Fill in the settings the platform asks for, such as **Region**, **Project ID**, **Workspace ID**, **Resource name**, **Access key ID**, **Tenant ID** or **Client ID**. Leave **Base URL** empty to use the platform's own address for those settings.",
+            "Under **Sign-in credential**, paste the **Secret access key**, the **Client secret**, the key, or the whole JSON file under **Service account key (JSON)**.",
+            "Type the **Model ID** the platform gives Claude. Amazon Bedrock, Google Vertex AI and Microsoft Foundry do not list their models; the Claude Platforms do, so **Fetch models** works there.",
+            "Select **Test draft**, then **Save & close**."
           ]
         },
         {
@@ -2878,7 +3052,7 @@
           ]
         }
       ],
-      "notes": "An embedding provider turns memories, documents and mail into vectors so agents can find them by what they mean rather than by the exact words; until one is set up, agents search by keywords only. Social security, card and bank account numbers are masked before a document is sent. Changing the embedding model or its size re-indexes everything that was embedded. Providers with the same model and size back each other up; a provider with a different model is never used in their place.\n\nRetrieval is read with read access to AI providers; changing its settings or re-indexing needs update access to AI providers. Only chunks whose text changed are embedded again on a re-index, so the cost shown before one is the most it could cost, and a re-index when nothing changed costs nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is spent indexing pauses, and it resumes on its own the next month or as soon as the budget is raised. What agents' searches cost counts against each agent's own monthly budget. When the Embedding task is routed to a different model, every source is indexed under the new model beside the old one, and searches move to it only when all of it is done; **Sources** shows how far that has come.\n\nAn agent that has read content written outside the organization (an inbound email, an extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a run wrote) never sends anything to a customer, driver or outside address, or moves money, on its own: that change waits for a person's approval whatever tier the tool has, and the proposal is marked as having read outside content. A memory such a run wrote stops counting once a person reviews it or approves it as a suggestion; the review is recorded in the audit log, and **Where it came from** still shows that it came from outside content. A suggested memory drawn from ratings of one agent is kept for that agent alone once approved.\n\nAn agent looks back over a conversation once it has been quiet for ten minutes (or after an hour of steady back and forth), and over a background run once every proposal it raised is decided. It does so only when something in the work is worth learning from, so most conversations cost nothing. A lesson is a **Procedure** (the steps that worked, naming the tools), a **Fact** no record holds, or, from a person's own words, an **Instruction** that was not already saved. It is kept for the person in the conversation unless they may create agent memories, follows their saving preference, and replaces an older memory rather than contradicting it. A lesson for a team or the whole organization, and anything learned from work that read outside content, is only ever offered. Retiring or editing a learned memory works like any other.\n\nA memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is recorded about the record the conversation is about. When the organization keeps close to 5,000 active memories, the Memory section warns that fewer of them reach each prompt; retire what no longer holds.\n\nOpening the page needs read access to AI control. Each section in the rail appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a section someone cannot open is left out. **Safety** appears for people who may read agents, and **Quality** for people who may read the evaluation suite. **Worst rated** and satisfaction need read access to agent feedback, **Run suite now** and **Add to golden set** need create access to the evaluation suite, and changing **Sweep settings** needs update access to both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data, or whose work leaves the organization, shows a warning there as soon as the form says so, before it is saved; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles; someone without update access to roles can still save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nEvery night, at the hour chosen in **Sweep settings** (in the organization's timezone unless another is chosen there), each agent with active cases is replayed against a sample of its golden set with every write simulated. The sample always includes the cases the agent failed most recently and is otherwise spread across where the cases came from; it is the same sample for the same run. An agent is skipped when nothing about it (its instructions, tools, model or provider) or its cases changed since its last run, unless that run is older than the rerun limit. A run stops when the nightly or monthly budget is spent, and says so. When an agent's score falls below the median of its recent runs by more than the threshold, the run is marked **Regressed**, a Watchtower item is raised (critical when a case failed a hard check), and the people who can update AI control are told once, with what changed.\n\nThe **Audit trail** section appears for people with read access to the AI audit trail; reading agent runs does not grant it. **Verify now** needs the same read access. **Export trail** and **Download** need export access to the AI audit trail, and only the person who asked for an export can download it; the file can be downloaded until it expires, seven days after it was written unless the organization's configuration says otherwise. Requesting and downloading an export are written to the audit log. The audit log entries shown with an event appear only for people who may read the audit log. Arguments show only what the reader may see on that record; anything above it reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a minute of happening. How long they are kept is set on [Data retention](/organization/data-retention).\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
+      "notes": "An embedding provider turns memories, documents and mail into vectors so agents can find them by what they mean rather than by the exact words; until one is set up, agents search by keywords only. Social security, card and bank account numbers are masked before a document is sent. Changing the embedding model or its size re-indexes everything that was embedded. Providers with the same model and size back each other up; a provider with a different model is never used in their place.\n\nRetrieval is read with read access to AI providers; changing its settings or re-indexing needs update access to AI providers. Only chunks whose text changed are embedded again on a re-index, so the cost shown before one is the most it could cost, and a re-index when nothing changed costs nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is spent indexing pauses, and it resumes on its own the next month or as soon as the budget is raised. What agents' searches cost counts against each agent's own monthly budget. When the Embedding task is routed to a different model, every source is indexed under the new model beside the old one, and searches move to it only when all of it is done; **Sources** shows how far that has come.\n\nAn agent that has read content written outside the organization (an inbound email, an extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a run wrote) never sends anything to a customer, driver or outside address, or moves money, on its own: that change waits for a person's approval whatever tier the tool has, and the proposal is marked as having read outside content. A memory such a run wrote stops counting once a person reviews it or approves it as a suggestion; the review is recorded in the audit log, and **Where it came from** still shows that it came from outside content. A suggested memory drawn from ratings of one agent is kept for that agent alone once approved.\n\nAn agent looks back over a conversation once it has been quiet for ten minutes (or after an hour of steady back and forth), and over a background run once every proposal it raised is decided. It does so only when something in the work is worth learning from, so most conversations cost nothing. A lesson is a **Procedure** (the steps that worked, naming the tools), a **Fact** no record holds, or, from a person's own words, an **Instruction** that was not already saved. It is kept for the person in the conversation unless they may create agent memories, follows their saving preference, and replaces an older memory rather than contradicting it. A lesson for a team or the whole organization, and anything learned from work that read outside content, is only ever offered. Retiring or editing a learned memory works like any other.\n\nA memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is recorded about the record the conversation is about. When the organization keeps close to 5,000 active memories, the Memory section warns that fewer of them reach each prompt; retire what no longer holds.\n\nA provider on a cloud platform keeps its credential for the region, project, workspace and identity it was entered for. Change any of them, or the platform, and the editor asks for the credential again; the saved one is never sent somewhere it was not entered for. Signing in with the server's own credentials is off unless the server's operator turns it on, because on a server shared by several organizations it would spend the operator's cloud account; choosing it removes any credential the provider had saved.\n\nOpening the page needs read access to AI control. Each section in the rail appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a section someone cannot open is left out. **Safety** appears for people who may read agents, and **Quality** for people who may read the evaluation suite. **Worst rated** and satisfaction need read access to agent feedback, **Run suite now** and **Add to golden set** need create access to the evaluation suite, and changing **Sweep settings** needs update access to both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data, or whose work leaves the organization, shows a warning there as soon as the form says so, before it is saved; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles; someone without update access to roles can still save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nEvery night, at the hour chosen in **Sweep settings** (in the organization's timezone unless another is chosen there), each agent with active cases is replayed against a sample of its golden set with every write simulated. The sample always includes the cases the agent failed most recently and is otherwise spread across where the cases came from; it is the same sample for the same run. An agent is skipped when nothing about it (its instructions, tools, model or provider) or its cases changed since its last run, unless that run is older than the rerun limit. A run stops when the nightly or monthly budget is spent, and says so. When an agent's score falls below the median of its recent runs by more than the threshold, the run is marked **Regressed**, a Watchtower item is raised (critical when a case failed a hard check), and the people who can update AI control are told once, with what changed.\n\nThe **Audit trail** section appears for people with read access to the AI audit trail; reading agent runs does not grant it. **Verify now** needs the same read access. **Export trail** and **Download** need export access to the AI audit trail, and only the person who asked for an export can download it; the file can be downloaded until it expires, seven days after it was written unless the organization's configuration says otherwise. Requesting and downloading an export are written to the audit log. The audit log entries shown with an event appear only for people who may read the audit log. Arguments show only what the reader may see on that record; anything above it reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a minute of happening. How long they are kept is set on [Data retention](/organization/data-retention).\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
       "related": [
         "/admin/document-intelligence",
         "/admin/inbound-mailboxes",
@@ -3178,9 +3352,39 @@
             "Set the **Minimum late charge**; customers whose charges for a run add up to less are skipped.",
             "Select **Save changes**."
           ]
+        },
+        {
+          "title": "Email customers payment reminders",
+          "keywords": [
+            "dunning",
+            "overdue reminder",
+            "past due email",
+            "collection letter"
+          ],
+          "steps": [
+            "Open [Billing controls](/admin/billing-controls).",
+            "In **Payment reminders**, turn on **Send payment reminders**.",
+            "In **Remind on days past due**, list the days to send on, such as 1, 15, 30. The last one is sent as the final reminder.",
+            "Select **Save changes**."
+          ]
+        },
+        {
+          "title": "Email customers a monthly statement",
+          "keywords": [
+            "monthly statement",
+            "statement of account",
+            "account summary email",
+            "AR statement"
+          ],
+          "steps": [
+            "Open [Billing controls](/admin/billing-controls).",
+            "In **Monthly statements**, turn on **Send monthly statements**.",
+            "Set the **Day of the month to send**, from 1 to 28.",
+            "Select **Save changes**."
+          ]
         }
       ],
-      "notes": "Opening the page needs read access to billing control; saving needs update access. Late charge rates and grace periods are set on each customer's billing profile, not here. In **Preview only** the nightly run writes nothing, and memos are raised by hand on [Late charges](/accounting/ar/late-charges).",
+      "notes": "Opening the page needs read access to billing control; saving needs update access. Late charge rates and grace periods are set on each customer's billing profile, not here. In **Preview only** the nightly run writes nothing, and memos are raised by hand on [Late charges](/accounting/ar/late-charges).\n\nPayment reminders go out each morning: a customer with an invoice newly reaching one of the **Remind on days past due** days is emailed one reminder listing every overdue invoice it has. Disputed invoices are left off, and a customer waiting on an open promise to pay recorded in [Collections](/accounting/ar/collections) is not reminded until the promised date passes. Turn off **Send payment reminders** on a customer's billing profile to leave that customer out.\n\nMonthly statements cover the calendar month before the **Day of the month to send** and are sent once per customer and month. Customers with a balance, or with any invoice or payment in the month, receive one; a customer whose account was settled and quiet all month does not. Turn off **Send monthly statements** on a customer's billing profile to leave that customer out. Customers with no invoice email recipient are reported to the people who record customer payments.",
       "related": [
         "/billing/queue",
         "/billing/invoices",
@@ -3262,9 +3466,9 @@
           ],
           "steps": [
             "Open [Scanning and printing](/admin/capture) and select **Computers**.",
-            "Select **Download Trenova Capture** to get the current installer. The panel shows its version, size and SHA-256, so a deployment tool can check the file it got.",
-            "Install it on each computer with administrator rights, or deploy it silently: `msiexec /i TrenovaCapture.msi /qn TRENOVAURL=https://your-trenova-server AUTOUPDATE=0` presets the server address and leaves updates to your deployment tool; without `AUTOUPDATE=0`, computers update themselves to each release.",
-            "Each person then signs in from the Trenova Capture icon in the notification area and approves their computer on [My scanners](/capture/devices)."
+            "Select **Download Trenova Capture** to get the current installer. The panel shows its version, size and SHA-256, so a deployment tool can check the file it got. A server that does not mirror releases shows **Get it from GitHub** instead, which opens the same installers on GitHub.",
+            "Install it on each computer with administrator rights, or deploy it silently: `msiexec /i TrenovaCapture.msi /qn TRENOVAURL=https://your-trenova-server AUTOUPDATE=0` presets the server address (the one people open Trenova at; Trenova Capture finds the API from it) and leaves updates to your deployment tool; without `AUTOUPDATE=0`, computers update themselves to each release.",
+            "Each person then signs in from the Trenova Capture icon in the notification area and approves their computer on [My scanners](/capture/devices). Without a preset address, the first run offers Trenova Cloud or a self-hosted address."
           ]
         },
         {
@@ -4601,7 +4805,7 @@
         "Inbound mailboxes"
       ],
       "description": "Addresses the system listens on, where each provider posts, and how much each is trusted to do without a person",
-      "summary": "Inbound mailboxes are the email addresses Trenova listens on, such as one for tenders, one for PODs and one for carrier invoices. Each mailbox has an **Address**, the **Provider** that receives the mail and posts it to Trenova (Resend or Postmark), a webhook URL the provider posts to, a signing secret that proves each delivery really came from the provider, and a trust level saying how much the desk may do with its mail without a person. Resend sends only a message's sender, recipients and subject to the webhook, so a Resend mailbox also needs an API key: the body and attachments are read from Resend with it after the message arrives.\n\nEach mailbox card shows whether it is **Listening** or **Not listening**, what it is **Trusted to** do, its **Purpose** and when it was **Created**. A mailbox without a signing secret refuses every delivery, and a Resend mailbox without an API key accepts mail but cannot read its body or attachments, so each message waits for a person saying why. Resend forwards everything its account receives to every webhook, so a Resend mailbox only keeps mail addressed to its own **Address** (including Cc and Bcc). Administrators set mailboxes up here; the mail itself is read in the [Inbox](/inbox).",
+      "summary": "Inbound mailboxes are the email addresses Trenova listens on, such as one for tenders, one for PODs and one for carrier invoices. Each mailbox has an **Address**, the **Provider** that receives the mail and posts it to Trenova (Resend or Postmark), a webhook URL the provider posts to, a signing secret that proves each delivery really came from the provider, and a trust level saying how much the desk may do with its mail without a person. Resend sends only a message's sender, recipients and subject to the webhook, so a Resend mailbox also needs an API key: the body and attachments are read from Resend with it after the message arrives.\n\nEach mailbox card shows whether it is **Listening** or **Not listening**, what it is **Trusted to** do, its **Purpose** and when it was **Created**. A mailbox without a signing secret refuses every delivery, and a Resend mailbox without an API key accepts mail but cannot read its body or attachments, so each message waits for a person saying why. Resend forwards everything its account receives to every webhook, so a Resend mailbox only keeps mail addressed to its own **Address** (including Cc and Bcc). Administrators set mailboxes up here; the mail itself is read in the [Triage](/triage).",
       "requires": [
         {
           "resource": "inbound_mailbox",
@@ -4702,13 +4906,13 @@
           ],
           "steps": [
             "Open [Inbound mailboxes](/admin/inbound-mailboxes).",
-            "Select **Open its mail** on the mailbox to open the [Inbox](/inbox) filtered to it."
+            "Select **Open its mail** on the mailbox to open the [Triage](/triage) filtered to it."
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to inbound mailboxes. **New mailbox** needs create access, and **Edit**, **Rotate URL**, the secret buttons and the API key buttons need update access. The webhook URL carries the mailbox's token, which is stored only as a hash; if it is lost, rotate for a new one. The signing secret and the API key are stored encrypted and never shown again.\n\nIf mail sent to a mailbox never appears in the [Inbox](/inbox), check the webhook's delivery log in the provider: a 404 means the URL's token is wrong or the mailbox is **Not listening**, a 401 means the signing secret does not match, and a 200 marked ignored means the message was not addressed to the mailbox's **Address**.",
+      "notes": "Viewing the page needs read access to inbound mailboxes. **New mailbox** needs create access, and **Edit**, **Rotate URL**, the secret buttons and the API key buttons need update access. The webhook URL carries the mailbox's token, which is stored only as a hash; if it is lost, rotate for a new one. The signing secret and the API key are stored encrypted and never shown again.\n\nIf mail sent to a mailbox never appears in the [Triage](/triage), check the webhook's delivery log in the provider: a 404 means the URL's token is wrong or the mailbox is **Not listening**, a 401 means the signing secret does not match, and a 200 marked ignored means the message was not addressed to the mailbox's **Address**.",
       "related": [
-        "/inbox",
+        "/triage",
         "/admin/integrations",
         "/admin/agent-control"
       ],
@@ -4726,7 +4930,7 @@
         "Integrations"
       ],
       "description": "Connect the outside services Trenova works with: mileage, telematics, email, fuel prices and carrier data.",
-      "summary": "Integrations is where administrators connect the outside services Trenova works with. Each service is a card grouped by category (such as Email, Telematics, Mapping & Routing, Weather, Financial Data, Fuel Cards, Carrier Compliance and Accounting) with its description, links to its docs, a button to open its settings and a switch showing whether it is connected. Services include Resend and Postmark (email), Samsara (telematics), Google Maps and PC*Miler (mileage and routing), OpenWeatherMap, OANDA Exchange Rates, EIA Fuel Prices, the WEX, Comdata and Ramp fuel card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), and QuickBooks Online and Xero (accounting). Some cards describe planned providers that cannot be configured yet. An organization keeps its books in one accounting system at a time.",
+      "summary": "Integrations is where administrators connect the outside services Trenova works with. Each service is a card grouped by category (such as Email, Telematics, Mapping & Routing, Weather, Financial Data, Fuel Cards, Carrier Compliance and Accounting) with its description, links to its docs, a button to open its settings and a switch showing whether it is connected. Services include Resend and Postmark (email), Samsara (telematics), Google Maps and PC*Miler (mileage and routing), OpenWeatherMap, OANDA Exchange Rates, EIA Fuel Prices, the WEX, Comdata and Ramp fuel card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), QuickBooks Online, Xero and Business Central (accounting). Some cards describe planned providers that cannot be configured yet. An organization keeps its books in one accounting system at a time.",
       "requires": [
         {
           "resource": "integration",
@@ -4758,7 +4962,13 @@
         "Xero organisation",
         "Xero app",
         "Xero webhook key",
-        "choose organisation"
+        "choose organisation",
+        "Business Central",
+        "Dynamics 365 Business Central",
+        "Microsoft Entra app",
+        "Business Central environment",
+        "Business Central company",
+        "webhook subscriptions"
       ],
       "tasks": [
         {
@@ -4948,6 +5158,65 @@
           ]
         },
         {
+          "title": "Connect Business Central",
+          "keywords": [
+            "Business Central setup",
+            "connect Business Central",
+            "Dynamics 365 Business Central",
+            "Microsoft sign in",
+            "choose company",
+            "Business Central environment",
+            "sandbox"
+          ],
+          "steps": [
+            "Open [Integrations](/admin/integrations) and open the Business Central card. When another accounting system is still connected, disconnect it first: an organization sends to one accounting system at a time.",
+            "Select the connect button. Trenova sends you to Microsoft's sign-in page; sign in with a work account that can use Business Central and allow access. Trenova never sees the password.",
+            "Microsoft sends you back to Trenova. Trenova lists every company in every Business Central environment the account can open, each named with its environment and marked (Sandbox) when it is a sandbox. When there is more than one, select the company whose books this Trenova organization keeps, then connect it. The choice has to be made within a few minutes; after that, start the connection again.",
+            "Trenova shows the company it connected: its name, legal name, country, **Home currency**, **Multicurrency** and **Books closed through** (the day before Business Central's allowed posting dates begin, or the end of the last closed accounting period). Check it is the right one, then select **Continue**.",
+            "On **What is sent**, keep **Send documents**. Business Central cannot receive Trenova's journal entries, because its journal lines cannot post to a customer or vendor or apply to an invoice, so the journal entry option is shown as unavailable with that reason. Select **Continue**.",
+            "On **Match records**, Trenova reads the company's accounts, items, customers, vendors and payment terms and proposes a match for each Trenova record. Invoice lines are items, so each charge type is matched to a Business Central item; the freight line's item and the deposit account are required. Business Central has no payment methods on payments to match.",
+            "Select **Finish setup**, choose the **Start date**, then select **Start sending**, as for QuickBooks Online. Trenova posts every invoice, credit memo, bill and payment it sends. Payments go through a payment journal Trenova creates for each deposit or bank account, named with TRN and a short code.",
+            "Payments recorded in Business Central are not brought into Trenova: its API does not say which invoices a payment paid. An invoice paid in Business Central shows as a balance difference on the drift page, where it can be settled in Trenova. The sync settings say this in place of the payment setting."
+          ]
+        },
+        {
+          "title": "Use your own Microsoft Entra app",
+          "keywords": [
+            "Business Central app keys",
+            "Entra app registration",
+            "Azure app registration",
+            "client ID",
+            "client secret",
+            "redirect URI",
+            "self-hosted Business Central"
+          ],
+          "steps": [
+            "In Microsoft Entra, register a multitenant web app. Under API permissions, add the delegated Dynamics 365 Business Central permission Financials.ReadWrite.All.",
+            "Open [Integrations](/admin/integrations) and open the Business Central card. When this server has no Entra app of its own the keys form is already open; otherwise select **Use your own app**.",
+            "Under the app's **Authentication**, add a web platform with the **Redirect URI** Trenova shows, exactly as written.",
+            "Enter the **Client ID** (the application ID) and a **Client secret** from Certificates & secrets, then select **Save keys**. Trenova checks the keys with Microsoft before saving them. Business Central has no webhook key: once a company is connected, Trenova subscribes to its changes itself and renews the subscriptions every few days.",
+            "To go back to the server's app select **Remove**. While a company is connected, only the client secret can change. Entra client secrets expire; enter the new one here before the old one does."
+          ]
+        },
+        {
+          "title": "Check or disconnect Business Central",
+          "keywords": [
+            "Business Central not syncing",
+            "Business Central connection failing",
+            "reconnect Business Central",
+            "disconnect Business Central",
+            "change subscriptions",
+            "webhook renewal"
+          ],
+          "steps": [
+            "Open [Integrations](/admin/integrations) and open the Business Central card to see the connection's status, when it was **Last checked**, its **Last successful call**, how many **Change subscriptions** are active and when the **Next renewal due** is.",
+            "When the server has no public https address, the card says so and Trenova reads changes every five minutes instead of being told about them. When a subscription cannot be kept, the card shows why; Trenova retries within the hour.",
+            "Select **Check now** to test the connection immediately.",
+            "When Business Central no longer accepts Trenova's access, select **Reconnect** and approve the same company. Microsoft keeps the sign-in alive as long as Trenova uses it at least every 90 days, which it does while connected.",
+            "To stop, select **Disconnect** and confirm. Trenova deletes its sign-in and its change subscriptions; nothing already in Business Central is changed. Microsoft gives no way to withdraw the consent from Trenova's side, so to remove it an administrator removes the app from Enterprise applications in Microsoft Entra."
+          ]
+        },
+        {
           "title": "Check or disconnect QuickBooks Online",
           "keywords": [
             "QuickBooks not syncing",
@@ -4963,7 +5232,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person, as do saving or removing the Intuit app keys, choosing what is sent, choosing the start date and changing the sync settings. Seeing, connecting and disconnecting Xero need the same access as QuickBooks Online. A QuickBooks company or Xero organisation can be connected to only one Trenova organization at a time, and a Trenova organization sends to only one accounting system at a time: disconnect one before connecting the other. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
+      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person, as do saving or removing the Intuit app keys, choosing what is sent, choosing the start date and changing the sync settings. Seeing, connecting and disconnecting Xero or Business Central need the same access as QuickBooks Online. A QuickBooks company, Xero organisation or Business Central company can be connected to only one Trenova organization at a time, and a Trenova organization sends to only one accounting system at a time: disconnect one before connecting the other. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
       "related": [
         "/accounting/sync",
         "/admin/inbound-mailboxes",
@@ -4975,7 +5244,8 @@
       ],
       "covers": [
         "/admin/integrations/quickbooks/callback",
-        "/admin/integrations/xero/callback"
+        "/admin/integrations/xero/callback",
+        "/admin/integrations/business-central/callback"
       ],
       "createAction": null,
       "inNavigation": true
@@ -6601,6 +6871,88 @@
       "inNavigation": true
     },
     {
+      "path": "/billing/configuration-files/factoring-companies",
+      "name": "Factoring companies",
+      "module": "billing",
+      "breadcrumb": [
+        "Billing management",
+        "Configuration files",
+        "Factoring companies"
+      ],
+      "description": "The factors your receivables are sold to. Customers assigned to one are invoiced with its remit-to and notice of assignment.",
+      "summary": "Factoring companies lists the factors you sell receivables to. Each one holds the factor's **Code**, **Name** and remit-to address, how customers pay it (**Remittance instructions**) and the **Notice of assignment** printed on every invoice assigned to it.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.",
+      "requires": [
+        {
+          "resource": "factoring_company",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "factor",
+        "factoring",
+        "factored invoices",
+        "notice of assignment",
+        "remit to factor",
+        "invoice factoring"
+      ],
+      "tasks": [
+        {
+          "title": "Add a factoring company",
+          "keywords": [
+            "new factor",
+            "add factor",
+            "factoring agreement"
+          ],
+          "steps": [
+            "Open [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "Select **New factoring company**.",
+            "Fill in **Code**, **Name** and the remit-to address (**Address line 1**, **City**, **State**, **Postal code**), and optionally **Email** and **Phone**.",
+            "Fill in **Remittance instructions** with the factor's bank, lockbox or ACH details.",
+            "Optionally enter the **Notice of assignment** your agreement requires, then select **Save**."
+          ]
+        },
+        {
+          "title": "Factor a customer's invoices",
+          "keywords": [
+            "assign customer to factor",
+            "factored customer",
+            "notice of assignment"
+          ],
+          "steps": [
+            "Open [Customers](/billing/configuration-files/customers) and select the customer's row.",
+            "Open the **Billing profile** tab.",
+            "Under **Factoring**, choose the **Factoring company**, then select **Save**."
+          ]
+        },
+        {
+          "title": "Stop factoring a customer",
+          "keywords": [
+            "unassign factor",
+            "end factoring"
+          ],
+          "steps": [
+            "Open [Customers](/billing/configuration-files/customers) and select the customer's row.",
+            "Open the **Billing profile** tab.",
+            "Clear the **Factoring company**, then select **Save**."
+          ]
+        }
+      ],
+      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.",
+      "related": [
+        "/billing/configuration-files/customers",
+        "/billing/invoices"
+      ],
+      "covers": [],
+      "createAction": {
+        "label": "New factoring company",
+        "query": {
+          "panelType": "create"
+        }
+      },
+      "inNavigation": true
+    },
+    {
       "path": "/billing/configuration-files/formula-templates",
       "name": "Formula templates",
       "module": "billing",
@@ -6610,7 +6962,7 @@
         "Formula templates"
       ],
       "description": "Manage and configure formula templates for your organization",
-      "summary": "Formula templates are the rating methods that turn shipment facts (distance, weight, stops, hazmat and so on) into a charge, for example a per-mile rate or a per-hundredweight rate. Each template is a formula (its **Expression**), plus a charge policy (minimum, maximum and rounding) and an optional charge breakdown. Rate agreement lanes and rate matrices name a template as their **Rating method**.\n\nPricing staff build and test templates in the Formula Studio, which opens when you create a template or select one in the list. The studio shows a **Live preview** of the charge as you type, pinned test **Scenarios**, and a **Reference** of the variables and functions you can use. Templates go through review before they can rate shipments.\n\nThe table shows each template's **Name**, **Status**, **Type**, **Version**, **In use**, **Scenarios**, **Approved** and **Updated**.",
+      "summary": "Formula templates are the rating methods that turn shipment facts (distance, weight, stops, hazmat and so on) into a charge, for example a per-mile rate or a per-hundredweight rate. Each template is a formula (its **Expression**), plus a charge policy (minimum, maximum and rounding) and an optional charge breakdown. Rate agreement lanes and rate matrices name a template as their **Rating method**.\n\nPricing staff build and test templates in the Formula Studio, which opens when you create a template or select one in the list. The bar across the top shows the template's name, where it is in review (**Draft**, **In review**, **Active**) and its version. On the left, the **Rate trace** follows one load through the template: the values it reads, what the **Formula** comes to, what the **Charge policy** does to it, the **Breakdown**, and what is **Billed**, with the scenarios and what review still needs below it. On the right, **Preview**, **Scenarios**, **Reference** and **Nova** sit in tabs. Templates go through review before they can rate shipments.\n\nThe table shows each template's **Name**, **Status**, **Type**, **Version**, **In use**, **Scenarios**, **Approved** and **Updated**.",
       "requires": [
         {
           "resource": "formula_template",
@@ -6638,25 +6990,42 @@
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates).",
             "Select **New formula template**, then **New formula template** in the menu. The Formula Studio opens.",
-            "Under **Template details**, enter a **Name**, choose the **Type** (**Freight charge** or **Accessorial charge**) and add a **Description**.",
-            "Write the **Expression**, or pick a template under **Start from a standard** or **Or copy an existing template**. You can also select **Formula assistant**, describe the charge, then select **Insert into editor** on the **Proposed formula**.",
-            "Set the **Charge policy** (**Minimum charge**, **Maximum charge**, **Rounding mode**, **Rounding precision**) and check the result in **Live preview**.",
+            "Type the name over **Untitled rating method**, add a description under it, and choose **Freight** or **Accessorial** beside **Charges**.",
+            "Under **Expression**, describe the method and select **Draft it** to have Nova write it, or pick one from **Standard library** or **Your templates**, or write the expression yourself.",
+            "Add any **Inputs** the formula needs, set the **Charge policy** (**Minimum charge**, **Maximum charge**, **Rounding**, **Decimal places**) and check the amount in **Preview**.",
+            "Optionally add **Scenarios**; they are saved with the template.",
             "Select **Create template**. The template is saved as a draft."
           ]
         },
         {
-          "title": "Get help from the formula assistant",
+          "title": "Get help from Nova",
           "keywords": [
             "AI formula",
             "generate formula",
             "explain formula",
-            "ask about a formula"
+            "ask about a formula",
+            "fix formula"
           ],
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template, or start a new one.",
-            "Select **Formula assistant** beside **Expression** and describe how the template should price a shipment, or ask about the formula in the editor. To have the current expression explained, select **Explain formula** instead.",
-            "The assistant reads the expression and variables in the editor and prices sample loads with the formula engine. When it writes a formula, the **Proposed formula** shows the expression, its variables, how it works and what the engine charged for each sample.",
-            "Select **Insert into editor** to put it in the editor, or **Add** (or **Add all**) to save a priced sample as a scenario on a saved template. Nothing is saved until you save the template."
+            "Select **Ask Nova** beside **Expression**, or the **Nova** tab, and describe how the template should price a shipment, what to change, or ask about the formula in the editor.",
+            "Select **Explain** to have each line of the formula explained, priced on the preview load. Select **Fix with Nova** beside a problem to have Nova fix it. The Nova button under **Inputs** fills in descriptions the inputs are missing.",
+            "Ask for any change in words — add a fee, set a minimum, change an input's default, itemize the invoice — and Nova makes it in the editor the moment it answers. The card under the reply shows what it added and removed, the inputs it declared, the charge policy it moved, and what the formula engine bills the sample load and recent shipments; select **Undo** to put the editor back. A change the engine cannot run stays in the thread with **Apply to editor** instead. Nothing is saved until you save the template."
+          ]
+        },
+        {
+          "title": "Read what the editor says about a formula",
+          "keywords": [
+            "formula error",
+            "unknown variable",
+            "declare input",
+            "inline values",
+            "hover"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. The editor underlines anything wrong — a name it does not know, a function given the wrong number of arguments, a flag multiplied like a number, a field that can be empty — and lists each problem under the editor with its line and a fix beside it: declare the name as an input, change it to the field it meant, or give an empty field a fallback. Select a row to jump to it; a long list folds to its first rows and can be narrowed to errors or warnings.",
+            "Hover a name to see what it is, whether it can be empty, and what it was worth on the preview load; type inside a function's parentheses to see its signature. Each line shows what it came to on the preview load at its end; the eye button under the editor hides these values.",
+            "Press Ctrl+Space for suggestions."
           ]
         },
         {
@@ -6665,13 +7034,14 @@
             "test formula",
             "expected charge",
             "backtest",
-            "pin scenario"
+            "pin scenario",
+            "edge cases"
           ],
           "steps": [
-            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a saved template.",
-            "In **Scenarios**, select **Add**, enter a **Name**, the **Input values** and the **Expected charge ($)**, then **Save scenario**. From **Live preview**, **Pin as scenario** saves the current inputs and result as one.",
-            "Select **Run all** to check every scenario against the current formula.",
-            "To compare the formula against real freight, open **More actions** and choose **Backtest**, then **Run backtest**."
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.",
+            "In **Preview**, select **Pin as scenario** to save the load and its amount, or in **Scenarios** select **Add** and name it. **Suggest edge cases** asks Nova for loads to test, priced by the engine.",
+            "Scenarios re-run as you edit. On a failing scenario, select **Why?** to see what changed since it was recorded, then accept the new amount or select **Fix with Nova**.",
+            "To compare the formula against real freight, open **More actions** and choose **Backtest**."
           ]
         },
         {
@@ -6679,12 +7049,14 @@
           "keywords": [
             "approve formula",
             "activate template",
-            "submit template"
+            "submit template",
+            "reviewer note"
           ],
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select the template.",
             "Save any changes, then select **Submit for review**.",
-            "A reviewer selects **Approve** to activate it, **Request changes** to send it back to the author with a comment, or **Reject** to archive it."
+            "Check the readiness list, choose a reviewer, edit the note Nova drafts (or select **Rewrite**), and select **Submit**.",
+            "A reviewer selects **Approve** to activate it or **Request changes** to send it back to the author with a comment. **Reject and archive** is under **More actions**."
           ]
         },
         {
@@ -6694,9 +7066,9 @@
             "update rating method"
           ],
           "steps": [
-            "Open [Formula templates](/billing/configuration-files/formula-templates) and select the template. The header shows where it is used.",
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select the template. Hover the count of places it is in use to see them.",
             "Make your changes and select **Save changes**.",
-            "If the change alters what the template computes, confirm with **Save and return to Draft**; the template stops rating shipments until it is approved again. Name and description edits do not need this."
+            "If the change alters what the template computes, confirm with **Save and return to Draft**; the approved version keeps rating shipments until the new one is approved. Name and description edits do not need this."
           ]
         },
         {
@@ -6729,7 +7101,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it.\n\nThe formula assistant needs permission to start assistant conversations and access to the Formula assistant agent, on top of formula template access; without them the panel says which is missing.\n\nOnly an active template rates shipments. Rejecting archives the template; use **Request changes** to send it back for more work instead. **Scenarios** can only be added after the template is saved, and a scenario keeps gating approval until it is deleted.",
+      "notes": "Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it.\n\nNova needs permission to start assistant conversations and access to the Formula assistant agent, on top of formula template access; without them the Nova tab says which is missing. Every amount Nova shows comes from the formula engine.\n\nOnly an active template rates shipments. Rejecting archives the template; use **Request changes** to send it back for more work instead. Submitting needs a name, a description, a valid expression and at least one passing scenario. A scenario keeps gating approval until it is deleted.",
       "related": [
         "/billing/rate-agreements",
         "/billing/configuration-files/rate-matrices",
@@ -7505,12 +7877,15 @@
             "set up scanner",
             "connect Trenova Capture",
             "sign in the companion",
-            "approve code"
+            "approve code",
+            "Trenova Cloud",
+            "server address"
           ],
           "steps": [
-            "On the computer your scanner is plugged into, open [My scanners](/capture/devices), select **Download Trenova Capture** and run the installer (it needs administrator rights). Then open Trenova Capture from the Start menu, or select its icon in the notification area, and choose Sign in. It shows an eight-letter code and opens the pairing page.",
+            "On the computer your scanner is plugged into, open [My scanners](/capture/devices), select **Download Trenova Capture** (or **Get it from GitHub**) and run the installer (it needs administrator rights). Then open Trenova Capture from the Start menu, or select its icon in the notification area.",
+            "On its first run, choose Trenova Cloud, or choose Self-hosted Trenova and enter the address you open Trenova at in your browser. Trenova Capture finds the server, then choose Sign in. It shows an eight-letter code and opens the pairing page.",
             "If the page did not open, open [My scanners](/capture/devices), select **Enter a pairing code**, type the code and select **Look up**.",
-            "Check that **The computer asking** is the one in front of you, change **Name it** if you like, and select **Approve**."
+            "Check that **The computer asking** is the one in front of you and that **Joins** names the organization you want it to scan into (switch organizations first if not), change **Name it** if you like, and select **Approve**."
           ]
         },
         {
@@ -7588,7 +7963,7 @@
           ]
         }
       ],
-      "notes": "Pages wait on the computer, encrypted, until Trenova has them, so scanning works while the network is down and nothing is lost if the computer restarts; the Trenova Capture window shows what is waiting and why. A notification you missed is kept under Messages in the window. Choosing Sign out from the icon revokes the computer, as **Revoke** does here. Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. The Trenova printer is added when Trenova Capture is installed, and only the person who printed a document can send it: another person signed in to the same computer never sees it. Only approve a computer you are using: once paired it uploads documents as you.",
+      "notes": "A paired computer scans into the organization you approved it from; to scan into another of your organizations, sign out of Trenova Capture and sign in again from that one. Pages wait on the computer, encrypted, until Trenova has them, so scanning works while the network is down and nothing is lost if the computer restarts; the Trenova Capture window shows what is waiting and why. A notification you missed is kept under Messages in the window. Choosing Sign out from the icon revokes the computer, as **Revoke** does here. Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. The Trenova printer is added when Trenova Capture is installed, and only the person who printed a document can send it: another person signed in to the same computer never sees it. Only approve a computer you are using: once paired it uploads documents as you.",
       "related": [
         "/intake"
       ],
@@ -7999,7 +8374,7 @@
         "Desk"
       ],
       "description": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app.",
-      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you), and below it the box you ask in. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. The rail down the left holds **New conversation**, search, links to **Today**, **Watchtower** and **Decisions**, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Desk settings** and **Back to Trenova**. On a phone the rail slides over the page from the menu button at the top left.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).\n\nWhile an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.",
+      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you), and below it the box you ask in. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. The rail down the left holds **New conversation**, search, links to **Today**, **Watchtower** and **Decisions**, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Desk settings** and **Back to Trenova**. Select a group's heading to fold it away or open it again; a folded group shows how many conversations it holds, and the rail remembers which groups you folded. On a phone the rail slides over the page from the menu button at the top left.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).\n\nWhile an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.",
       "requires": [
         {
           "resource": "assistant",
@@ -8264,7 +8639,8 @@
           "steps": [
             "Select **Attach files** (the plus at the bottom left of the box), then **Upload from computer**. You can also press ⌘U (Ctrl+U), or drag files anywhere onto the Desk and drop them on the box.",
             "Each file shows above the text while it uploads. Select **Remove** to take one off, or **Try again** if an upload failed.",
-            "Type your question and send it. If you send files with no text, the agent is asked what is in them."
+            "Type your question and send it. If you send files with no text, the agent is asked what is in them.",
+            "When the agent answers through Claude, it reads a PDF or a photo (JPEG, PNG, GIF or WebP) as the file itself, so its layout, tables, stamps, signatures and handwriting count, not only the text read from it. A PDF of up to 600 pages (100 on Claude Haiku 4.5) goes this way. Other files, and any agent answering through another provider, read the text Trenova read from the file."
           ]
         },
         {
@@ -8884,11 +9260,11 @@
           ]
         }
       ],
-      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to **⌘ Enter** instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card, in its menu and beside the conversation in the rail. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. **Snoozed**: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. Snoozed and settled cases sit on their own **Snoozed** and **Settled** shelves in the rail; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, their order, and whether each is required or optional, are set in **Settings** › **Case checklists** on the Desk; a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings and chapters are kept in this browser; they do not follow you to another browser or computer. - Changing what an agent can do needs permission to manage agents.",
+      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to **⌘ Enter** instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card and in its menu. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. Snoozed: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. In the rail a case stays with the other conversations, grouped by when it was last used; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, their order, and whether each is required or optional, are set in **Settings** › **Case checklists** on the Desk; a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings and chapters are kept in this browser; they do not follow you to another browser or computer. - Changing what an agent can do needs permission to manage agents.",
       "related": [
         "/desk/decisions",
         "/desk/watchtower",
-        "/inbox",
+        "/triage",
         "/admin/agent-control"
       ],
       "covers": [
@@ -9437,7 +9813,7 @@
       "related": [
         "/desk",
         "/desk/decisions",
-        "/inbox",
+        "/triage",
         "/shipment-management/service-failures"
       ],
       "covers": [],
@@ -13910,96 +14286,6 @@
       "inNavigation": true
     },
     {
-      "path": "/inbox",
-      "name": "Inbox",
-      "module": "inbox",
-      "breadcrumb": [
-        "Inbox"
-      ],
-      "description": "Mail that arrived on a monitored address, what the desk made of each message, and what is still waiting on a person",
-      "summary": "The inbox shows mail that arrived on your organization's monitored addresses and what the desk (the AI assistant) made of each message: what kind of mail it is (tender, rate confirmation, proof of delivery, invoice, status request, detention dispute or other), which shipment or customer it is about, how sure it was, and a suggested next step. Customer service, dispatch and billing staff use it to work through the mail the desk could not settle on its own.\n\nIt reads like a mail client: folders on the left (**Waiting on you**, **Handled**, **Ignored**, **Everything**, then **By kind** and **Mailboxes**), the message list in the middle, and the open message on the right with its attachments, **What the desk made of it**, and **How it got here**.",
-      "requires": [
-        {
-          "resource": "inbound_message",
-          "operation": "read"
-        }
-      ],
-      "capabilities": [],
-      "aliases": [
-        "email",
-        "mail",
-        "inbound email",
-        "monitored mailbox",
-        "shared inbox",
-        "customer emails",
-        "tenders by email"
-      ],
-      "tasks": [
-        {
-          "title": "Work through mail waiting on you",
-          "keywords": [
-            "triage email",
-            "review inbound messages",
-            "clear inbox"
-          ],
-          "steps": [
-            "Open [Inbox](/inbox) and select **Waiting on you**.",
-            "Select a message, or press j to open the first one and keep pressing j to go down the list (k goes back).",
-            "Read **What the desk made of it** and follow the **Suggested next** step if it fits, such as attaching a document to the shipment it names or opening that shipment.",
-            "Optionally note what you did in the box at the bottom, then select **Mark handled** (e) or **Ignore** (#). The next waiting message opens."
-          ]
-        },
-        {
-          "title": "Link a message to the right shipment or customer",
-          "keywords": [
-            "wrong shipment",
-            "match email",
-            "the desk could not tell",
-            "attach email to load"
-          ],
-          "steps": [
-            "Open the message in [Inbox](/inbox).",
-            "Select **Link by hand** (or press l).",
-            "Choose the **Shipment** or **Customer**, fill in **Why this is the right record**, and select **Link**."
-          ]
-        },
-        {
-          "title": "Ask the desk to handle a message",
-          "keywords": [
-            "draft reply",
-            "build load from email",
-            "answer status request"
-          ],
-          "steps": [
-            "Open the message in [Inbox](/inbox).",
-            "Select **Ask the desk** (or press a), or the suggested **Ask the desk to answer** / **Ask the desk to build it** button. A desk conversation opens about that message, where you can review what it drafts."
-          ]
-        },
-        {
-          "title": "Find a message",
-          "keywords": [
-            "search email",
-            "find by sender",
-            "find by subject"
-          ],
-          "steps": [
-            "Open [Inbox](/inbox) and pick a folder, a kind under **By kind**, or a mailbox under **Mailboxes**.",
-            "Type in **Search sender or subject** (or press / to jump there). Search looks at the sender's name and address and the subject."
-          ]
-        }
-      ],
-      "notes": "Needs read access to inbound messages. Messages the desk could not make sense of are held back and also land in **Waiting on you**.\n\nMonitored addresses are set up under [Inbound mailboxes](/admin/inbound-mailboxes); people who can manage them see a **Manage** link beside **Mailboxes**.\n\nThe folder, search and open message are kept in the page address, so a link to a message opens exactly that message.",
-      "related": [
-        "/desk",
-        "/desk/watchtower",
-        "/shipment-management/shipments",
-        "/admin/inbound-mailboxes"
-      ],
-      "covers": [],
-      "createAction": null,
-      "inNavigation": false
-    },
-    {
       "path": "/insights",
       "name": "Insights",
       "module": "reports",
@@ -14203,7 +14489,7 @@
       ],
       "notes": "Needs read access to capture batches to see the queue; filing needs update access and the permission to add documents to the record, and discarding needs delete access. A person whose access is limited to their own records sees only the stacks they captured.\n\nPages that are not filed are deleted when the stack's retention runs out, set in the organization's document settings. A stack within a week of that says so on its row and when it is opened.",
       "related": [
-        "/inbox",
+        "/triage",
         "/shipment-management/shipments"
       ],
       "covers": [],
@@ -16803,6 +17089,160 @@
       "covers": [],
       "createAction": null,
       "inNavigation": false
+    },
+    {
+      "path": "/triage",
+      "name": "Triage",
+      "module": "inbox",
+      "breadcrumb": [
+        "Triage"
+      ],
+      "description": "Messages from connected sources, what Nova did with them on its own, and what is left for a person, each with its next step",
+      "summary": "Triage is where messages from your connected sources arrive. Today a source is an inbound email address; Nova reads every message, works out what kind it is (tender, rate confirmation, proof of delivery, invoice, status request, detention dispute or other) and which shipment or customer it is about, and handles whatever a rule allows. Anything left over waits for a person with its next step already worked out. Customer service, dispatch and billing staff use it to clear the queue.\n\nTriage opens on the **Briefing**: a ring with how many messages are left for you, Nova's line about the day (who has waited longest and roughly how long the rest will take), a timeline of today with what Nova handled on one lane and what was yours on the other, and a deck of cards that each clear a group at once (**File all**, **Draft all**, **Start**, **Link**, **Review**). Under the deck sit what Nova handled on its own (**Spot-check**), corrections this week, sources that stopped receiving mail (**Fix**) and a rule Nova suggests (**Hand it to Nova**). At the end of the day the deck becomes **Carrying over**, with a button to hand what is left to the person on call.\n\nThe rail on the left holds the **Briefing**, the lanes (**Waiting on you**, **Assigned to me**, **Waiting on them**, **Snoozed**, **Handled**, **Ignored**, **Everything**), the kinds still **Waiting**, saved **Views**, your **Sources** and **Rules**. Hide or show it with the sidebar button at the left of the header, or ⌘B / Ctrl+B. On a phone the lanes run along the top and the rest of the rail opens from the menu button beside them. Each message's response target counts down beside it: what is past its target is listed under **Over target**.\n\nAn open message shows its subject, sender and thread, the kind Nova read it as, the words, its files and what happened to it. Beside it (above it on a narrow screen, in a sheet on a phone) are its **Actions**, a numbered list of steps each finished in place, and its **Information**: the shipment and customer it is about and the facts Nova read from it. A bar along the foot of the message always holds the next step.",
+      "requires": [
+        {
+          "resource": "inbound_message",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "inbox",
+        "email",
+        "mail",
+        "inbound email",
+        "monitored mailbox",
+        "shared inbox",
+        "customer emails",
+        "tenders by email",
+        "queue",
+        "nova"
+      ],
+      "tasks": [
+        {
+          "title": "Clear a group from the Briefing",
+          "keywords": [
+            "briefing",
+            "file all",
+            "draft all",
+            "deck",
+            "what is left"
+          ],
+          "steps": [
+            "Open [Triage](/triage). The **Briefing** is the first thing you see.",
+            "Read the front card in the deck: who is in the group, the time left on each, and roughly how long it takes.",
+            "Select its button (**File all**, **Draft all**, **Start**, **Link** or **Review**). A finished card turns into a chip, and the next card comes forward.",
+            "Select a name in Nova's line or a dot on the timeline to open that message."
+          ]
+        },
+        {
+          "title": "Work through what is waiting on you",
+          "keywords": [
+            "triage email",
+            "review inbound messages",
+            "clear the queue",
+            "next message"
+          ],
+          "steps": [
+            "Open [Triage](/triage) and select **Waiting on you**.",
+            "The first message opens. Press j to go to the next one and k to go back.",
+            "The bar at the foot of the message shows the next step: select **Do it**, **Have Nova do it** or **Review reply** (or press Enter), and finish each step under **Actions**.",
+            "When every step is done, select **Mark handled** (e). Tick **Do this on its own next time** to have Nova handle messages like it from now on. **Wait for reply** parks it under **Waiting on them** until they answer, and **Ignore** (#) sets it aside. The next waiting message opens, and **Undo** in the notice puts it back."
+          ]
+        },
+        {
+          "title": "Hand a message to an agent in Desk",
+          "keywords": [
+            "desk agent",
+            "ask an agent",
+            "help with a message"
+          ],
+          "steps": [
+            "Open the message in [Triage](/triage).",
+            "Select **Work on it in Desk** at the foot of the actions, choose an agent and send.",
+            "When the agent answers, select **Yes, do it** to start its next step in Triage."
+          ]
+        },
+        {
+          "title": "Snooze, assign or act on several messages at once",
+          "keywords": [
+            "snooze email",
+            "assign email",
+            "bulk handle",
+            "select messages"
+          ],
+          "steps": [
+            "In [Triage](/triage), right-click a message (or press and hold it on a touch screen) to open its menu: **Mark handled**, **Ignore**, **Snooze**, **Assign**, **Correct the kind**, **Copy link** and more.",
+            "To act on several, select them with x, or ⌘/Ctrl-click, or Shift-click for a range, then use the bar at the foot of the list: **Snooze until tomorrow**, **Assign to me**, **Ignore** or **Handled**."
+          ]
+        },
+        {
+          "title": "Link a message to the right shipment or customer",
+          "keywords": [
+            "wrong shipment",
+            "match email",
+            "Nova could not tell",
+            "attach email to load"
+          ],
+          "steps": [
+            "Open the message in [Triage](/triage) and press l, or right-click it and select **Link to a record…**.",
+            "Choose the **Shipment** or **Customer**, fill in **Why this is the right record**, and select **Link**."
+          ]
+        },
+        {
+          "title": "Let Nova handle a kind of message on its own",
+          "keywords": [
+            "rule",
+            "automation",
+            "auto file",
+            "let nova handle"
+          ],
+          "steps": [
+            "In [Triage](/triage), select **Rules** in the rail.",
+            "Select **New rule** and fill in the blanks of the sentence: which kind of message, from whom, on which source, and what Nova should do.",
+            "Check how many messages from the last 30 days it would have matched and how many look off, then select **Turn on**.",
+            "Hover a rule and select **See what it matched** to spot-check it; the switch beside a rule pauses it."
+          ]
+        },
+        {
+          "title": "Connect a source",
+          "keywords": [
+            "connect mailbox",
+            "add email address",
+            "forward email",
+            "new source"
+          ],
+          "steps": [
+            "In [Triage](/triage), select **Add** beside **Sources** (or **Add a source** when there is none yet).",
+            "Choose the kind of source and the address Nova should watch, then follow the steps to forward mail to the address Trenova gives you.",
+            "Select **Send a test email** to see a message arrive."
+          ]
+        },
+        {
+          "title": "Find a message and keep the search",
+          "keywords": [
+            "search email",
+            "find by sender",
+            "find by subject",
+            "saved search"
+          ],
+          "steps": [
+            "Open a folder in [Triage](/triage) and type in the search box at the top of the list (press / to jump there).",
+            "Choose **Due first** or **Newest** to change the order.",
+            "Select **Save** to keep the search as a view under **Views**."
+          ]
+        }
+      ],
+      "notes": "Needs read access to inbound messages. Messages that look like phishing are held back and also land in **Waiting on you**; the bar offers **Ignore** and **Not phishing**.\n\nSources are set up under [Inbound mailboxes](/admin/inbound-mailboxes). A source that has stopped receiving mail shows a dot in the rail, and its folder offers **Send a test email**. Press ? in Triage for the **Keyboard shortcuts**.\n\nThe folder, search and open message are kept in the page address, so a link to a message opens exactly that message. Old links to the inbox open Triage.",
+      "related": [
+        "/desk",
+        "/desk/watchtower",
+        "/shipment-management/shipments",
+        "/admin/inbound-mailboxes"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": false
     }
   ],
   "records": [
@@ -16990,6 +17430,14 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
+      }
+    },
+    {
+      "entity": "inbound_message",
+      "label": "Message",
+      "path": "/triage",
+      "params": {
+        "message": "{id}"
       }
     },
     {

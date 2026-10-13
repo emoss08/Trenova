@@ -171,6 +171,9 @@ export type AiProviderEndpointInput = {
   apiKey?: string | null | undefined;
   baseUrl: string;
   kind: AiProviderKind;
+  /** Where an Anthropic Messages endpoint reaches Claude. Omitted calls the base URL directly. */
+  platform?: AiProviderPlatform | null | undefined;
+  platformSettings?: AiProviderPlatformSettingsInput | null | undefined;
   providerId?: string | number | null | undefined;
 };
 
@@ -192,6 +195,47 @@ export type AiProviderPatchInput = {
   outputCostPerMillion?: string | null | undefined;
   tasks?: Array<AiTask> | null | undefined;
   trusted?: boolean | null | undefined;
+};
+
+/**
+ * Where an Anthropic Messages provider reaches Claude. Direct calls the base URL
+ * with the API key, which every other kind always does.
+ */
+export type AiProviderPlatform =
+  /** Amazon Bedrock's Messages endpoint. */
+  | 'Bedrock'
+  /** Claude Platform on AWS: the Claude API run by Anthropic, billed through AWS. */
+  | 'ClaudePlatformAWS'
+  /** Claude Platform on Google Cloud. */
+  | 'ClaudePlatformGoogleCloud'
+  | 'Direct'
+  /** Microsoft Foundry. */
+  | 'Foundry'
+  /** Google Vertex AI's Anthropic publisher models. */
+  | 'VertexAI';
+
+/** How a request to a platform proves who sent it. */
+export type AiProviderPlatformAuth =
+  /** Signed with an IAM access key; the secret access key is stored. */
+  | 'AccessKey'
+  /** The stored key: an Anthropic, Bedrock or Foundry API key. */
+  | 'ApiKey'
+  /** Tokens from Microsoft Entra ID for an app registration; its client secret is stored. */
+  | 'EntraID'
+  /** The cloud credentials of the server Trenova runs on, where the server allows it. Nothing is stored. */
+  | 'Server'
+  /** Tokens from a Google service account key, which is stored. */
+  | 'ServiceAccount';
+
+export type AiProviderPlatformSettingsInput = {
+  accessKeyId?: string | null | undefined;
+  auth?: AiProviderPlatformAuth | null | undefined;
+  clientId?: string | null | undefined;
+  projectId?: string | null | undefined;
+  region?: string | null | undefined;
+  resource?: string | null | undefined;
+  tenantId?: string | null | undefined;
+  workspaceId?: string | null | undefined;
 };
 
 /** A provider as its editor holds it, reduced to what decides where tasks go. */
@@ -699,6 +743,7 @@ export type AccountingSyncSourceEvent =
 
 /** An accounting system Trenova keeps its books in step with. */
 export type AccountingSystem =
+  | 'BusinessCentral'
   | 'QuickBooksOnline'
   | 'Xero';
 
@@ -1570,6 +1615,8 @@ export type BillingTransferRunItemsFilterInput = {
 export type BillingTransferRunScope =
   /** Everything matching a search, resolved when the run starts. */
   | 'AllMatching'
+  /** Started by billing control on its own schedule, for shipments ready to bill. */
+  | 'Automatic'
   /** A second attempt at an earlier transfer. */
   | 'Retry'
   /** The shipments were picked one by one. */
@@ -1629,6 +1676,14 @@ export type BulkEditSelectionInput = {
   ids?: Array<string | number> | null | undefined;
   /** The table's own list options beyond filters, such as the shipment board's quick filters. */
   options?: unknown;
+};
+
+export type BulkReviewInboundMessagesInput = {
+  note?: string | null | undefined;
+  /** Actioned or Ignored. */
+  status: InboundMessageStatus;
+  /** Turn on a rule that does this on its own next time, for one message's kind, sender domain and source. */
+  teach?: TriageRuleAction | null | undefined;
 };
 
 export type BulkSettlementActionInput = {
@@ -2242,6 +2297,18 @@ export type ChargeAllocationKind =
 export type ChargeAllocationMethod =
   | 'Amount'
   | 'Percent';
+
+/** What a check call reports: a position update, or reaching or leaving a stop. */
+export type CheckCallKind =
+  | 'Arrival'
+  | 'Departure'
+  | 'Update';
+
+/** Who logged a check call. */
+export type CheckCallSource =
+  | 'Agent'
+  | 'Carrier'
+  | 'Dispatcher';
 
 export type ChooseAccountingCompanyInput = {
   /** The token finishAccountingAuthorization returned. */
@@ -3600,6 +3667,15 @@ export type FileCaptureItemsEntryInput = {
   version: number;
 };
 
+export type FileInboundAttachmentInput = {
+  attachmentId: string | number;
+  /** The document type id to file it as. Ignored when pages are given. */
+  documentTypeId?: string | number | null | undefined;
+  /** File page ranges as separate documents instead of the whole file. */
+  pages?: Array<InboundAttachmentPagesInput> | null | undefined;
+  shipmentId: string | number;
+};
+
 export type FilterGroupInput = {
   filters: Array<FieldFilterInput>;
 };
@@ -4194,6 +4270,48 @@ export type ImportSourcedCarrierInput = {
   enrollMonitoring?: boolean | null | undefined;
 };
 
+/** What happened to a message. */
+export type InboundActivityKind =
+  | 'Assigned'
+  | 'ConflictReopened'
+  | 'ConflictResolved'
+  | 'Corrected'
+  | 'DueChanged'
+  | 'ExceptionLogged'
+  | 'FactFlagged'
+  | 'Filed'
+  | 'HandedOff'
+  | 'Handled'
+  | 'Ignored'
+  | 'Linked'
+  | 'LoadCreated'
+  | 'LoadDrafted'
+  | 'NovaRead'
+  | 'Reopened'
+  | 'Replied'
+  | 'ReplyDrafted'
+  | 'ReplyFailed'
+  | 'RuleApplied'
+  | 'RuleCreated'
+  | 'SenderBlocked'
+  | 'Snoozed'
+  | 'Split'
+  | 'StoppedWaiting'
+  | 'StopsDecided'
+  | 'TestReceived'
+  | 'TheyReplied'
+  | 'Unassigned'
+  | 'Unfiled'
+  | 'Unlinked'
+  | 'WaitingOnReply'
+  | 'Woken';
+
+/** Who did something to a message. */
+export type InboundActorKind =
+  | 'Nova'
+  | 'Person'
+  | 'System';
+
 /** What a file that came with a message turned out to be. */
 export type InboundAttachmentKind =
   | 'BillOfLading'
@@ -4202,6 +4320,14 @@ export type InboundAttachmentKind =
   | 'ProofOfDelivery'
   | 'RateConfirmation'
   | 'Unknown';
+
+/** A page range of a file, filed as its own document. */
+export type InboundAttachmentPagesInput = {
+  /** The document type id to file the range as. */
+  documentTypeId: string | number;
+  fromPage: number;
+  toPage: number;
+};
 
 /** What a message turned out to be, once it was read. */
 export type InboundClassification =
@@ -4212,6 +4338,12 @@ export type InboundClassification =
   | 'RateConfirmation'
   | 'StatusRequest'
   | 'Tender';
+
+/** The record a message was linked to, to unlink. */
+export type InboundLinkedRecord =
+  | 'Carrier'
+  | 'Customer'
+  | 'Shipment';
 
 export type InboundMailboxInput = {
   address: string;
@@ -4242,15 +4374,24 @@ export type InboundMessageStatus =
 export type InboundMessagesInput = {
   after?: string | null | undefined;
   classification?: InboundClassification | null | undefined;
+  /** Show one row per thread: the newest message of it in the folder. */
+  collapseThreads?: boolean | null | undefined;
   first?: number | null | undefined;
+  /** The folder. Absent keeps the older status filter. */
+  lane?: TriageLane | null | undefined;
   mailboxId?: string | number | null | undefined;
+  /** Only messages assigned to this person. */
+  ownerId?: string | number | null | undefined;
   /** Words from the sender's name or address, or from the subject. */
   query?: string | null | undefined;
   shipmentId?: string | number | null | undefined;
   /** Only what arrived at or after this instant. */
   since?: number | null | undefined;
+  sort?: TriageSort | null | undefined;
   /** Only these statuses; empty is every status. */
   statuses?: Array<InboundMessageStatus> | null | undefined;
+  /** Only one thread, newest first. */
+  threadKey?: string | null | undefined;
 };
 
 /** Which provider posts this address's mail. */
@@ -4258,11 +4399,53 @@ export type InboundProvider =
   | 'Postmark'
   | 'Resend';
 
+/** Where a file a reply can carry is stored. */
+export type InboundReplyAttachableSource =
+  | 'Carrier'
+  | 'Customer'
+  /** Came with the message, or was uploaded to it. */
+  | 'Message'
+  | 'Shipment';
+
+/** Where a reply is. */
+export type InboundReplyStatus =
+  | 'Draft'
+  /** The provider refused it; failureText says why. */
+  | 'Failed'
+  | 'Sending'
+  | 'Sent';
+
 /** How much an address is trusted to act without a person. */
 export type InboundReviewPolicy =
   | 'AlwaysReview'
   | 'AutoHandle'
   | 'ReviewBelowConfidence';
+
+/** Who a sender is to the organization. */
+export type InboundSenderRole =
+  | 'Broker'
+  | 'Carrier'
+  | 'Customer'
+  | 'Driver'
+  | 'Unknown';
+
+/** Something that wakes a snoozed message. */
+export type InboundSnoozeEvent =
+  /** A document of a given type is attached to the shipment. */
+  | 'DocumentAttached'
+  /** The shipment's invoice is paid. */
+  | 'InvoicePaid'
+  | 'ShipmentDelivered';
+
+/** Whether a source is still delivering. */
+export type InboundSourceHealth =
+  | 'Healthy'
+  /** Connected but has never received anything. */
+  | 'NeverReceived'
+  /** Turned off. */
+  | 'Paused'
+  /** Nothing has arrived for longer than a working source goes quiet. */
+  | 'Quiet';
 
 export type InjuryCaseStatus =
   | 'Closed'
@@ -4444,6 +4627,12 @@ export type InvoiceVoidDisposition =
   /** The billing queue items go back to Approved with a fresh number, ready to bill again. */
   | 'Rebill';
 
+export type IssueCarrierTrackingLinkInput = {
+  /** Where to email the link. Leave empty to copy it instead. */
+  recipientEmail?: string | null | undefined;
+  shipmentMoveId: string | number;
+};
+
 export type IssueDisciplinaryActionInput = {
   details?: string | null | undefined;
   documentId?: string | number | null | undefined;
@@ -4585,6 +4774,32 @@ export type LocationGeofenceType =
   | 'circle'
   | 'draw'
   | 'rectangle';
+
+export type LogCheckCallInput = {
+  city?: string | null | undefined;
+  contactName?: string | null | undefined;
+  delayReason?: string | null | undefined;
+  delayed?: boolean | null | undefined;
+  estimatedArrival?: number | null | undefined;
+  kind: CheckCallKind;
+  latitude?: number | null | undefined;
+  longitude?: number | null | undefined;
+  note?: string | null | undefined;
+  /** Defaults to now. A time in the future is refused. */
+  reportedAt?: number | null | undefined;
+  shipmentMoveId: string | number;
+  stateCode?: string | null | undefined;
+  /** Required for an arrival or departure. */
+  stopId?: string | number | null | undefined;
+};
+
+export type LogInboundExceptionInput = {
+  kind: TriageExceptionKind;
+  note?: string | null | undefined;
+  quantity: number;
+  /** What was short, over or damaged: pallets, cases, pieces. */
+  unit: string;
+};
 
 export type ManualJournalStatus =
   | 'Approved'
@@ -5345,7 +5560,11 @@ export type RecordLeaveDayInput = {
 
 export type RecordMyStopActionInput = {
   action: PortalStopAction;
+  /** An id the device makes once per tap, so a resend after a dropped connection is recorded once. */
+  clientEventId?: string | null | undefined;
   moveId: string | number;
+  /** When it happened on the device. Omitted means when the server receives it. */
+  occurredAt?: number | null | undefined;
   stopId: string | number;
 };
 
@@ -6002,6 +6221,7 @@ export type SelectOptionResource =
   | 'EMAIL_PROFILE'
   | 'EQUIPMENT_MANUFACTURER'
   | 'EQUIPMENT_TYPE'
+  | 'FACTORING_COMPANY'
   | 'FISCAL_PERIOD'
   | 'FISCAL_YEAR'
   | 'FLEET_CODE'
@@ -6047,6 +6267,19 @@ export type SelectOptionsInput = {
   offset?: number | null | undefined;
   query?: string | null | undefined;
   resource: SelectOptionResource;
+};
+
+export type SendInboundReplyInput = {
+  body: string;
+  /** Documents to attach, from inboundReplyAttachables. */
+  documentIds?: Array<string | number> | null | undefined;
+  /** The body is Nova's draft, sent as written or after edits. */
+  draftedByNova?: boolean | null | undefined;
+  messageId: string | number;
+  subject: string;
+  templateId?: string | number | null | undefined;
+  /** Another address to send to instead of the sender, after a refusal. */
+  toAddress?: string | null | undefined;
 };
 
 export type ServiceFailureReasonCategory =
@@ -6701,6 +6934,14 @@ export type SkipAccountingSyncInput = {
   reason: string;
 };
 
+export type SnoozeInboundMessagesInput = {
+  /** The document type DocumentAttached waits for. */
+  documentTypeId?: string | number | null | undefined;
+  event?: InboundSnoozeEvent | null | undefined;
+  /** Until a time. Exactly one of until and event is set. */
+  until?: number | null | undefined;
+};
+
 export type SortFieldInput = {
   direction: string;
   field: string;
@@ -6756,6 +6997,10 @@ export type StopType =
   | 'Pickup'
   | 'SplitDelivery'
   | 'SplitPickup';
+
+export type StopVisitKind =
+  | 'Arrival'
+  | 'Departure';
 
 export type SubmitMyExpenseInput = {
   amountMinor: number;
@@ -6878,6 +7123,31 @@ export type TodaysBriefingInput = {
   roleKey?: BriefingRoleKey | null | undefined;
 };
 
+/** What became of a reported visit when the stop's times were settled. */
+export type TrackingEventOutcome =
+  | 'Applied'
+  | 'Duplicate'
+  | 'Pending'
+  | 'Refused'
+  | 'Superseded';
+
+/** Who reported a stop arrival or departure. */
+export type TrackingEventSource =
+  | 'Agent'
+  | 'Carrier'
+  | 'Dispatcher'
+  | 'Driver'
+  | 'EDI'
+  | 'Telematics';
+
+/** How a reported visit was tied to its stop. */
+export type TrackingMatchMethod =
+  | 'Direct'
+  | 'Inferred'
+  | 'Location'
+  | 'StopReference'
+  | 'StopRole';
+
 export type TrainingCategory =
   | 'Compliance'
   | 'Equipment'
@@ -6939,6 +7209,183 @@ export type TransitionTimesheetInput = {
   note?: string | null | undefined;
   status: TimesheetStatus;
 };
+
+/** A step a message asks for. */
+export type TriageActionKind =
+  | 'BlockSender'
+  | 'BuildLoad'
+  | 'CheckStops'
+  | 'File'
+  | 'Link'
+  | 'LogException'
+  | 'Reply';
+
+/** Which part of the day the briefing is for. */
+export type TriageBriefingPhase =
+  | 'Day'
+  | 'EndOfDay';
+
+/** What a conflict is about. */
+export type TriageConflictKind =
+  /** The shipment already has a document of the same kind. */
+  | 'DuplicateDocument'
+  /** A load in a tender looks like one already on the board. */
+  | 'OverlappingLoad';
+
+/** How a conflict was settled. */
+export type TriageConflictResolution =
+  | 'ConfirmNew'
+  | 'KeepBoth'
+  | 'ReplaceExisting'
+  | 'SkipDuplicate';
+
+/** Which part of the deck a waiting message is in. */
+export type TriageDeckGroup =
+  /** Needs a person's call. */
+  | 'Decide'
+  /** Drafts Nova can write. */
+  | 'Draft'
+  /** Documents to file on a matched shipment. */
+  | 'File'
+  /** Held back as possibly unsafe. */
+  | 'Held'
+  /** Without a record. */
+  | 'Link';
+
+/** A shortage, overage or damage noted on a delivery. */
+export type TriageExceptionKind =
+  | 'Damage'
+  | 'Overage'
+  | 'Shortage';
+
+/** How sure a fact Nova read is to need a look. */
+export type TriageFactTone =
+  | 'Neutral'
+  | 'Warning';
+
+/** A folder of the queue: a question about state rather than a filter. */
+export type TriageLane =
+  /** Waiting, and assigned to whoever is asking. */
+  | 'AssignedToMe'
+  | 'Everything'
+  | 'Handled'
+  | 'Ignored'
+  | 'Snoozed'
+  /** Waiting on a person and not parked. */
+  | 'Waiting'
+  /** Replied to, waiting for the sender to answer. */
+  | 'WaitingOnThem';
+
+export type TriageLoadFieldInput = {
+  key: TriageLoadFieldKey;
+  value: string;
+};
+
+/** A field of a load Nova drafted. */
+export type TriageLoadFieldKey =
+  | 'Commodity'
+  | 'Customer'
+  | 'Delivery'
+  | 'Destination'
+  | 'Equipment'
+  | 'Instructions'
+  | 'Loads'
+  | 'Origin'
+  | 'Pickup'
+  | 'Rate'
+  | 'Reference'
+  | 'RespondBy'
+  | 'WeekOf'
+  | 'Weight';
+
+/** What a reply is for. */
+export type TriageReplyPurpose =
+  | 'AcceptTender'
+  | 'AnswerDispute'
+  | 'AskResend'
+  | 'ConfirmTender'
+  | 'ReturnSigned'
+  | 'SendEta';
+
+export type TriageReplyTemplateInput = {
+  body: string;
+  name: string;
+};
+
+export type TriageResponseTargetInput = {
+  classification: InboundClassification;
+  /** Minutes, or null to go back to the default. */
+  minutes?: number | null | undefined;
+};
+
+/** What Nova may do with a message on its own. */
+export type TriageRuleAction =
+  /** Assign it to a person. */
+  | 'Assign'
+  /** Draft the load for a person to check. */
+  | 'DraftLoad'
+  /** Draft a reply for a person to check. */
+  | 'DraftReply'
+  /** File an invoice and queue it for carrier pay. */
+  | 'FileAndQueuePay'
+  /** File its documents on the matched shipment. */
+  | 'FileOnShipment'
+  | 'Ignore'
+  /** Link it to the customer or carrier the sender belongs to. */
+  | 'LinkBySender';
+
+export type TriageRuleInput = {
+  action: TriageRuleAction;
+  assigneeId?: string | number | null | undefined;
+  classification: InboundClassification;
+  enabled?: boolean | null | undefined;
+  mailboxId?: string | number | null | undefined;
+  sender?: string | null | undefined;
+  senderScope: TriageSenderScope;
+};
+
+/** Why a message a rule would have matched looks wrong for it. */
+export type TriageRuleMismatch =
+  /** A person corrected what kind of message it was. */
+  | 'KindCorrected'
+  /** It was never matched to a record, so there was nothing to act on. */
+  | 'NoMatchedRecord'
+  /** A person settled it differently from what the rule would do. */
+  | 'PersonDisagreed';
+
+/** Which messages a bulk change applies to: named ones, or everything in a folder. */
+export type TriageSelectionInput = {
+  /** Everything in this folder, up to the server's bound. */
+  folder?: InboundMessagesInput | null | undefined;
+  ids?: Array<string | number> | null | undefined;
+};
+
+/** Who a rule's messages come from. */
+export type TriageSenderScope =
+  /** One address. */
+  | 'Address'
+  | 'AnyCarrier'
+  | 'AnyCustomer'
+  | 'Anyone'
+  /** Everyone at a domain, and its subdomains. */
+  | 'Domain';
+
+export type TriageSettingsInput = {
+  endOfDayMinute: number;
+  onCallUserId?: string | number | null | undefined;
+  version: number;
+};
+
+/** How a folder is ordered. */
+export type TriageSort =
+  /** Soonest response target first, the overdue ones at the top. */
+  | 'Due'
+  | 'Newest';
+
+/** How a detention dispute was settled after the stop times were checked. */
+export type TriageStopsDecision =
+  | 'StandBy'
+  | 'Waive';
 
 export type UnapplyCreditMemoApplicationInput = {
   applicationId: string | number;
@@ -7505,6 +7952,7 @@ export type WatchtowerSourceKind =
   | 'InboundMessage'
   | 'Insight'
   | 'MoveCoverage'
+  | 'NoCheckCall'
   | 'ServiceFailure'
   | 'TelematicsStopVisit'
   | 'WeatherAlert'
@@ -7964,9 +8412,11 @@ export type AccountingReferenceObjectFieldsFragment = { id: string, kind: Accoun
 
 export type AccountingAppSettingsFieldsFragment = { activeSource: AccountingAppSource | null, instanceAppAvailable: boolean, instanceEnvironment: AccountingAppEnvironment | null, redirectUrl: string, webhookPath: string, tenantApp: { id: string, integrationType: AccountingSystem, environment: AccountingAppEnvironment, clientId: string, hasWebhookVerifier: boolean, version: number, updatedAt: number } | null } & { ' $fragmentName'?: 'AccountingAppSettingsFieldsFragment' };
 
-export type AccountingProviderProfileFieldsFragment = { appName: string, webhookKeyLabel: string, environments: Array<AccountingAppEnvironment>, ledgerAvailable: boolean, ledgerUnavailableReason: string | null, callbackCarriesCompany: boolean, callbackPath: string, lineKind: AccountingReferenceKind, referenceKinds: Array<AccountingReferenceKind> } & { ' $fragmentName'?: 'AccountingProviderProfileFieldsFragment' };
+export type AccountingProviderProfileFieldsFragment = { appName: string, webhookKeyLabel: string, environments: Array<AccountingAppEnvironment>, ledgerAvailable: boolean, ledgerUnavailableReason: string | null, callbackCarriesCompany: boolean, callbackPath: string, lineKind: AccountingReferenceKind, referenceKinds: Array<AccountingReferenceKind>, inboundPaymentsAvailable: boolean, inboundUnavailableReason: string | null, webhookSubscriptions: boolean, revokesTokens: boolean } & { ' $fragmentName'?: 'AccountingProviderProfileFieldsFragment' };
 
-export type AccountingSyncStatusFieldsFragment = { integrationType: AccountingSystem, providerName: string, available: boolean, profile: { ' $fragmentRefs'?: { 'AccountingProviderProfileFieldsFragment': AccountingProviderProfileFieldsFragment } }, app: { ' $fragmentRefs'?: { 'AccountingAppSettingsFieldsFragment': AccountingAppSettingsFieldsFragment } }, connection: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } | null } & { ' $fragmentName'?: 'AccountingSyncStatusFieldsFragment' };
+export type AccountingWebhookSubscriptionSummaryFieldsFragment = { configured: boolean, active: number, pending: number, failed: number, nextExpiryAt: number | null, lastError: string | null } & { ' $fragmentName'?: 'AccountingWebhookSubscriptionSummaryFieldsFragment' };
+
+export type AccountingSyncStatusFieldsFragment = { integrationType: AccountingSystem, providerName: string, available: boolean, profile: { ' $fragmentRefs'?: { 'AccountingProviderProfileFieldsFragment': AccountingProviderProfileFieldsFragment } }, app: { ' $fragmentRefs'?: { 'AccountingAppSettingsFieldsFragment': AccountingAppSettingsFieldsFragment } }, connection: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } | null, webhookSubscriptions: { ' $fragmentRefs'?: { 'AccountingWebhookSubscriptionSummaryFieldsFragment': AccountingWebhookSubscriptionSummaryFieldsFragment } } | null } & { ' $fragmentName'?: 'AccountingSyncStatusFieldsFragment' };
 
 export type AccountingSyncStatusQueryVariables = Exact<{
   integrationType: AccountingSystem;
@@ -8281,7 +8731,7 @@ export type ArCustomerStatementQueryVariables = Exact<{
 }>;
 
 
-export type ArCustomerStatementQuery = { arCustomerStatement: { customerId: string, customerName: string, statementDate: number, startDate: number, openingBalanceMinor: number, totalChargesMinor: number, totalPaymentsMinor: number, endingBalanceMinor: number, aging: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, transactions: Array<{ transactionDate: number, eventType: string, documentNumber: string, sourceObjectId: string, amountMinor: number, chargeMinor: number, paymentMinor: number, runningBalanceMinor: number }>, openItems: Array<{ invoiceId: string, customerId: string, customerName: string, invoiceNumber: string, billType: string, invoiceDate: number, dueDate: number, currencyCode: string, shipmentProNumber: string, shipmentBol: string, totalAmountMinor: number, appliedAmountMinor: number, openAmountMinor: number, daysPastDue: number, settlementStatus: string, disputeStatus: string, hasShortPay: boolean }> } };
+export type ArCustomerStatementQuery = { arCustomerStatement: { customerId: string, customerName: string, statementDate: number, startDate: number, openingBalanceMinor: number, totalChargesMinor: number, totalPaymentsMinor: number, endingBalanceMinor: number, aging: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, transactions: Array<{ transactionDate: number, eventType: string, description: string, documentNumber: string, sourceObjectId: string, amountMinor: number, chargeMinor: number, paymentMinor: number, runningBalanceMinor: number }>, openItems: Array<{ invoiceId: string, customerId: string, customerName: string, invoiceNumber: string, billType: string, invoiceDate: number, dueDate: number, currencyCode: string, shipmentProNumber: string, shipmentBol: string, totalAmountMinor: number, appliedAmountMinor: number, openAmountMinor: number, daysPastDue: number, settlementStatus: string, disputeStatus: string, hasShortPay: boolean }> } };
 
 export type ArDashboardKpisQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -9395,7 +9845,7 @@ export type AgentFeedbackSummaryQueryVariables = Exact<{
 
 export type AgentFeedbackSummaryQuery = { agentFeedbackSummary: { agentDefinitionId: string, windowDays: number, since: number, positive: number, negative: number, satisfaction: number | null, days: Array<{ day: string, positive: number, negative: number, satisfaction: number | null }>, worstRated: Array<{ targetType: AiFeedbackTargetType, targetId: string, targetPart: string, positive: number, negative: number, lastRatedAt: number, sample: { ' $fragmentRefs'?: { 'AiFeedbackTableRowFieldsFragment': AiFeedbackTableRowFieldsFragment } } | null }> } };
 
-export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, cacheReadCostPerMillion: string | null, cacheWriteCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
+export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, platform: AiProviderPlatform, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, cacheReadCostPerMillion: string | null, cacheWriteCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, platformSettings: { auth: AiProviderPlatformAuth, region: string, projectId: string, workspaceId: string, accessKeyId: string, resource: string, tenantId: string, clientId: string } | null, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
 
 export type AiProviderLimitFieldsFragment = { id: string, timeoutSeconds: number, maxConcurrent: number, monthlyCapUsd: string | null, onCap: AiProviderCapAction, monthSpendUsd: string, apiKey: { prefix: string, lastFour: string, addedAt: number, lastUsedAt: number | null, previousKeyExpiresAt: number | null, addedBy: { id: string, name: string } | null } | null } & { ' $fragmentName'?: 'AiProviderLimitFieldsFragment' };
 
@@ -10486,7 +10936,7 @@ export type CommandPaletteCustomerPreviewQueryVariables = Exact<{
 }>;
 
 
-export type CommandPaletteCustomerPreviewQuery = { customer: { id: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, city: string | null, postalCode: string, updatedAt: number, state: { abbreviation: string } | null, billingProfile: { paymentTerm: CustomerPaymentTerm, creditStatus: CustomerCreditStatus, creditLimit: string | null, creditBalance: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle } | null } | null };
+export type CommandPaletteCustomerPreviewQuery = { customer: { id: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, city: string | null, postalCode: string, updatedAt: number, state: { abbreviation: string } | null, billingProfile: { paymentTerm: CustomerPaymentTerm, creditStatus: CustomerCreditStatus, creditLimit: string | null, creditBalance: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle } | null, emailProfile: { toRecipients: string } | null } | null };
 
 export type CommodityTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: FreightClass | null, loadingInstructions: string | null, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CommodityTableRowFieldsFragment' };
 
@@ -10584,9 +11034,9 @@ export type DeskCustomerRateAgreementsQueryVariables = Exact<{
 
 export type DeskCustomerRateAgreementsQuery = { rateAgreements: { totalCount: number | null, edges: Array<{ node: { id: string, code: string, name: string, status: RateAgreementStatus, agreementType: RateAgreementType, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number } }> } };
 
-export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle, billingCycleAnchorDay: number, billingCycleTimezone: string, lastBilledPeriodEnd: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, autoSendInvoiceOnGeneration: boolean, emailInvoiceEnabled: boolean, ediInvoiceEnabled: boolean, splitBy: InvoiceSplitKey, sectionBy: InvoiceSectionKey, invoiceDetail: InvoiceDetail, minConsolidatedAmount: string | null, maxShipmentsPerInvoice: number, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoApprove: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
+export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle, billingCycleAnchorDay: number, billingCycleTimezone: string, lastBilledPeriodEnd: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, autoSendInvoiceOnGeneration: boolean, sendPaymentReminders: boolean, sendStatements: boolean, factoringCompanyId: string | null, creditHoldAutomatic: boolean, creditReviewedAt: number | null, emailInvoiceEnabled: boolean, ediInvoiceEnabled: boolean, splitBy: InvoiceSplitKey, sectionBy: InvoiceSectionKey, invoiceDetail: InvoiceDetail, minConsolidatedAmount: string | null, maxShipmentsPerInvoice: number, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoApprove: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
 
-export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, fromEmail: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
+export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
 
 export type CustomerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string | null, externalId: string | null, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number, billingProfile: { ' $fragmentRefs'?: { 'CustomerBillingProfileFieldsFragment': CustomerBillingProfileFieldsFragment } } | null, emailProfile: { ' $fragmentRefs'?: { 'CustomerEmailProfileFieldsFragment': CustomerEmailProfileFieldsFragment } } | null } & { ' $fragmentName'?: 'CustomerTableRowFieldsFragment' };
 
@@ -12152,6 +12602,16 @@ export type UpdateExtractionShadowSettingsMutationVariables = Exact<{
 
 export type UpdateExtractionShadowSettingsMutation = { updateExtractionShadowSettings: { ' $fragmentRefs'?: { 'ExtractionShadowSettingsFieldsFragment': ExtractionShadowSettingsFieldsFragment } } };
 
+export type FactoringCompanyTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string | null, city: string, stateId: string, postalCode: string, email: string | null, phoneNumber: string | null, remittanceInstructions: string | null, noticeOfAssignment: string | null, notes: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FactoringCompanyTableRowFieldsFragment' };
+
+export type FactoringCompanyTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type FactoringCompanyTableQuery = { factoringCompanies: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringCompanyTableRowFieldsFragment': FactoringCompanyTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type FiscalPeriodFieldsFragment = { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, closedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FiscalPeriodFieldsFragment' };
 
 export type FiscalYearTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number, periods: Array<{ ' $fragmentRefs'?: { 'FiscalPeriodFieldsFragment': FiscalPeriodFieldsFragment } }> } & { ' $fragmentName'?: 'FiscalYearTableRowFieldsFragment' };
@@ -12791,18 +13251,20 @@ export type DeleteIftaTaxRateMutationVariables = Exact<{
 
 export type DeleteIftaTaxRateMutation = { deleteIftaTaxRate: boolean };
 
-export type InboundAttachmentFieldsFragment = { id: string, fileName: string, contentType: string, byteSize: number, kind: InboundAttachmentKind, documentId: string | null, failureText: string, createdAt: number } & { ' $fragmentName'?: 'InboundAttachmentFieldsFragment' };
+export type TriageUserFieldsFragment = { id: string, name: string, emailAddress: string, thumbnailUrl: string } & { ' $fragmentName'?: 'TriageUserFieldsFragment' };
+
+export type InboundAttachmentFieldsFragment = { id: string, fileName: string, contentType: string, byteSize: number, kind: InboundAttachmentKind, documentId: string | null, failureText: string, filedShipmentId: string | null, filedAs: string | null, filedAt: number | null, pageCount: number, createdAt: number } & { ' $fragmentName'?: 'InboundAttachmentFieldsFragment' };
 
 export type InboundShipmentRefFieldsFragment = { id: string, proNumber: string, bol: string, poNumber: string, originCity: string, originState: string, destinationCity: string, destinationState: string } & { ' $fragmentName'?: 'InboundShipmentRefFieldsFragment' };
 
-export type InboundMailboxFieldsFragment = { id: string, name: string, address: string, provider: InboundProvider, purpose: string, reviewPolicy: InboundReviewPolicy, minConfidence: number, status: InboundMailboxStatus, hasSigningSecret: boolean, hasApiKey: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'InboundMailboxFieldsFragment' };
+export type InboundMailboxFieldsFragment = { id: string, name: string, address: string, provider: InboundProvider, purpose: string, reviewPolicy: InboundReviewPolicy, minConfidence: number, status: InboundMailboxStatus, hasSigningSecret: boolean, hasApiKey: boolean, lastReceivedAt: number | null, health: InboundSourceHealth, testSentAt: number | null, testReceivedAt: number | null, blockedSenders: Array<string>, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'InboundMailboxFieldsFragment' };
 
 export type InboundMailboxCredentialsFieldsFragment = { token: string, webhookPath: string, mailbox: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } } & { ' $fragmentName'?: 'InboundMailboxCredentialsFieldsFragment' };
 
-export type InboundMessageListFieldsFragment = { id: string, mailboxId: string, fromAddress: string, fromName: string, subject: string, receivedAt: number, classification: InboundClassification | null, confidence: number, status: InboundMessageStatus, matchedShipmentId: string | null, matchedCustomerId: string | null, matchReason: string, needsReview: boolean, failureText: string, preview: string, attachmentCount: number, matchedShipment: { ' $fragmentRefs'?: { 'InboundShipmentRefFieldsFragment': InboundShipmentRefFieldsFragment } } | null, matchedCustomer: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'InboundMessageListFieldsFragment' };
+export type InboundMessageListFieldsFragment = { id: string, mailboxId: string, fromAddress: string, fromName: string, subject: string, receivedAt: number, classification: InboundClassification | null, confidence: number, status: InboundMessageStatus, matchedShipmentId: string | null, matchedCustomerId: string | null, matchReason: string, needsReview: boolean, failureText: string, preview: string, attachmentCount: number, threadKey: string, threadCount: number, senderDomain: string, ownerId: string | null, dueAt: number | null, responseTargetMinutes: number, novaRead: boolean, handledByNova: boolean, version: number, matchedShipment: { ' $fragmentRefs'?: { 'InboundShipmentRefFieldsFragment': InboundShipmentRefFieldsFragment } } | null, matchedCustomer: { id: string, code: string, name: string } | null, owner: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null, snooze: { ' $fragmentRefs'?: { 'InboundSnoozeFieldsFragment': InboundSnoozeFieldsFragment } } | null, awaitingReply: { since: number, until: number } | null, actions: Array<{ ' $fragmentRefs'?: { 'TriageActionFieldsFragment': TriageActionFieldsFragment } }> } & { ' $fragmentName'?: 'InboundMessageListFieldsFragment' };
 
 export type InboundMessageDetailFieldsFragment = (
-  { toAddresses: Array<string>, ccAddresses: Array<string>, textBody: string, spamScore: number, matchedCarrierId: string | null, runId: string | null, reviewedBy: string | null, reviewedAt: number | null, reviewNote: string, failureCode: string, version: number, createdAt: number, updatedAt: number, mailbox: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } | null, attachments: Array<{ ' $fragmentRefs'?: { 'InboundAttachmentFieldsFragment': InboundAttachmentFieldsFragment } }> }
+  { toAddresses: Array<string>, ccAddresses: Array<string>, textBody: string, spamScore: number, matchedCarrierId: string | null, runId: string | null, reviewedBy: string | null, reviewedAt: number | null, reviewNote: string, failureCode: string, createdAt: number, updatedAt: number, handledByRuleId: string | null, handledAction: TriageRuleAction | null, classificationCorrected: boolean, reviewer: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null, mailbox: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } | null, attachments: Array<{ ' $fragmentRefs'?: { 'InboundAttachmentDetailFieldsFragment': InboundAttachmentDetailFieldsFragment } }>, facts: Array<{ ' $fragmentRefs'?: { 'TriageFactFieldsFragment': TriageFactFieldsFragment } }>, conflicts: Array<{ ' $fragmentRefs'?: { 'TriageConflictFieldsFragment': TriageConflictFieldsFragment } }>, activity: Array<{ ' $fragmentRefs'?: { 'InboundActivityFieldsFragment': InboundActivityFieldsFragment } }>, replies: Array<{ ' $fragmentRefs'?: { 'InboundReplyFieldsFragment': InboundReplyFieldsFragment } }>, replyDraft: { ' $fragmentRefs'?: { 'InboundReplyFieldsFragment': InboundReplyFieldsFragment } } | null, loadDraft: { ' $fragmentRefs'?: { 'TriageLoadDraftFieldsFragment': TriageLoadDraftFieldsFragment } } | null }
   & { ' $fragmentRefs'?: { 'InboundMessageListFieldsFragment': InboundMessageListFieldsFragment } }
 ) & { ' $fragmentName'?: 'InboundMessageDetailFieldsFragment' };
 
@@ -12823,7 +13285,7 @@ export type InboundMessageQuery = { inboundMessage: { ' $fragmentRefs'?: { 'Inbo
 export type InboundMessageCountsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type InboundMessageCountsQuery = { inboundMessageCounts: { waiting: number, handled: number, ignored: number, quarantined: number, total: number, byClassification: Array<{ classification: InboundClassification, total: number, waiting: number }>, byMailbox: Array<{ mailboxId: string, total: number, waiting: number }> } };
+export type InboundMessageCountsQuery = { inboundMessageCounts: { waiting: number, waitingOnThem: number, snoozed: number, assignedToMe: number, overdue: number, processing: number, handled: number, ignored: number, quarantined: number, total: number, byClassification: Array<{ classification: InboundClassification, total: number, waiting: number }>, byMailbox: Array<{ mailboxId: string, total: number, waiting: number }> } };
 
 export type InboundMailboxesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -12886,6 +13348,472 @@ export type SetInboundMailboxApiKeyMutationVariables = Exact<{
 
 
 export type SetInboundMailboxApiKeyMutation = { setInboundMailboxApiKey: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } };
+
+export type InboundSnoozeFieldsFragment = { until: number | null, event: InboundSnoozeEvent | null, documentTypeId: string | null, documentTypeName: string | null, snoozedAt: number, watchShipment: { ' $fragmentRefs'?: { 'InboundShipmentRefFieldsFragment': InboundShipmentRefFieldsFragment } } | null, snoozedBy: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null } & { ' $fragmentName'?: 'InboundSnoozeFieldsFragment' };
+
+export type InboundReplyFieldsFragment = { id: string, messageId: string, status: InboundReplyStatus, fromAddress: string, toAddress: string, ccAddresses: Array<string>, subject: string, body: string, draftedByNova: boolean, templateId: string | null, failureText: string, suggestedAddress: string | null, sentAt: number | null, createdAt: number, updatedAt: number, sentBy: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null, attachments: Array<{ ' $fragmentRefs'?: { 'InboundReplyAttachmentFieldsFragment': InboundReplyAttachmentFieldsFragment } }> } & { ' $fragmentName'?: 'InboundReplyFieldsFragment' };
+
+export type InboundReplyAttachmentFieldsFragment = { documentId: string, fileName: string, contentType: string, byteSize: number } & { ' $fragmentName'?: 'InboundReplyAttachmentFieldsFragment' };
+
+export type InboundReplyAttachableFieldsFragment = { id: string, fileName: string, contentType: string, documentType: string, byteSize: number, createdAt: number, source: InboundReplyAttachableSource } & { ' $fragmentName'?: 'InboundReplyAttachableFieldsFragment' };
+
+export type TriageActionFieldsFragment = { id: string, kind: TriageActionKind, done: boolean, novaCanDo: boolean, replyPurpose: TriageReplyPurpose | null, refusedFileName: string | null, loadDrafted: boolean, stopsDecision: TriageStopsDecision | null, exceptionKind: TriageExceptionKind | null, completedAt: number | null, attachment: { id: string, fileName: string, kind: InboundAttachmentKind, documentId: string | null, filedShipmentId: string | null, filedAs: string | null, pageCount: number } | null, shipment: { ' $fragmentRefs'?: { 'InboundShipmentRefFieldsFragment': InboundShipmentRefFieldsFragment } } | null, reply: { id: string, status: InboundReplyStatus, sentAt: number | null, draftedByNova: boolean } | null, createdShipment: { ' $fragmentRefs'?: { 'InboundShipmentRefFieldsFragment': InboundShipmentRefFieldsFragment } } | null } & { ' $fragmentName'?: 'TriageActionFieldsFragment' };
+
+export type TriageFactFieldsFragment = { key: string, label: string, value: string, quote: string, tone: TriageFactTone, flagged: boolean } & { ' $fragmentName'?: 'TriageFactFieldsFragment' };
+
+export type TriageConflictFieldsFragment = { id: string, kind: TriageConflictKind, attachmentId: string | null, existingDocumentId: string | null, existingFiledAt: number | null, existingAmount: string | null, newAmount: string | null, loadIndex: number | null, resolution: TriageConflictResolution | null, resolvedAt: number | null, options: Array<TriageConflictResolution>, existingShipment: { ' $fragmentRefs'?: { 'InboundShipmentRefFieldsFragment': InboundShipmentRefFieldsFragment } } | null } & { ' $fragmentName'?: 'TriageConflictFieldsFragment' };
+
+export type InboundActivityFieldsFragment = { id: string, kind: InboundActivityKind, actorKind: InboundActorKind, subject: string, detail: string, until: number | null, fromClassification: InboundClassification | null, toClassification: InboundClassification | null, recordId: string | null, createdAt: number, actor: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null } & { ' $fragmentName'?: 'InboundActivityFieldsFragment' };
+
+export type TriageLoadDraftFieldsFragment = { source: string, draftedAt: number, draftedByNova: boolean, fields: Array<{ key: TriageLoadFieldKey, value: string }> } & { ' $fragmentName'?: 'TriageLoadDraftFieldsFragment' };
+
+export type InboundAttachmentDetailFieldsFragment = (
+  { filedShipment: { ' $fragmentRefs'?: { 'InboundShipmentRefFieldsFragment': InboundShipmentRefFieldsFragment } } | null, pages: Array<{ number: number, label: string, suggestedType: string }>, splitDocuments: Array<{ fromPage: number, toPage: number, documentId: string, documentType: string }>, reading: { documentType: string, confidence: number, pageCount: number, fields: Array<{ label: string, value: string, tone: TriageFactTone }> } | null }
+  & { ' $fragmentRefs'?: { 'InboundAttachmentFieldsFragment': InboundAttachmentFieldsFragment } }
+) & { ' $fragmentName'?: 'InboundAttachmentDetailFieldsFragment' };
+
+export type TriageSampleFieldsFragment = { messageId: string, fromName: string, fromAddress: string, subject: string, classification: InboundClassification | null, receivedAt: number, reference: string } & { ' $fragmentName'?: 'TriageSampleFieldsFragment' };
+
+export type TriageRuleFieldsFragment = { id: string, classification: InboundClassification, senderScope: TriageSenderScope, sender: string, mailboxId: string | null, action: TriageRuleAction, assigneeId: string | null, enabled: boolean, matchesThisMonth: number, matchCount: number, lastMatchedAt: number | null, version: number, createdAt: number, assignee: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null, createdBy: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null, lastMatch: { ' $fragmentRefs'?: { 'TriageSampleFieldsFragment': TriageSampleFieldsFragment } } | null } & { ' $fragmentName'?: 'TriageRuleFieldsFragment' };
+
+export type TriageRulePreviewFieldsFragment = { matched: number, off: number, since: number, matches: Array<{ messageId: string, fromName: string, fromAddress: string, subject: string, receivedAt: number, reference: string, mismatch: TriageRuleMismatch | null }> } & { ' $fragmentName'?: 'TriageRulePreviewFieldsFragment' };
+
+export type TriageDeckItemFieldsFragment = { messageId: string, fromName: string, fromAddress: string, subject: string, classification: InboundClassification | null, receivedAt: number, dueAt: number | null, action: { ' $fragmentRefs'?: { 'TriageActionFieldsFragment': TriageActionFieldsFragment } } | null, owner: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null } & { ' $fragmentName'?: 'TriageDeckItemFieldsFragment' };
+
+export type TriageRiverPointFieldsFragment = { messageId: string, fromName: string, fromAddress: string, subject: string, classification: InboundClassification | null, receivedAt: number, dueAt: number | null, done: boolean } & { ' $fragmentName'?: 'TriageRiverPointFieldsFragment' };
+
+export type TriageViewFieldsFragment = { id: string, name: string, query: string, position: number, waiting: number } & { ' $fragmentName'?: 'TriageViewFieldsFragment' };
+
+export type TriageReplyTemplateFieldsFragment = { id: string, name: string, body: string, version: number, createdAt: number, createdBy: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null } & { ' $fragmentName'?: 'TriageReplyTemplateFieldsFragment' };
+
+export type TriageShipmentPeekFieldsFragment = { id: string, proNumber: string, bol: string, poNumber: string, status: string, customerName: string, equipment: string, driverName: string, progress: number, late: boolean, eta: number | null, deliveredAt: number | null, documentsOnFile: Array<string>, stops: Array<{ kind: string, city: string, state: string, scheduledAt: number | null, arrivedAt: number | null, departedAt: number | null, done: boolean }> } & { ' $fragmentName'?: 'TriageShipmentPeekFieldsFragment' };
+
+export type TriageBulkResultFieldsFragment = { affected: number, ruleId: string | null, messages: Array<{ ' $fragmentRefs'?: { 'InboundMessageListFieldsFragment': InboundMessageListFieldsFragment } }> } & { ' $fragmentName'?: 'TriageBulkResultFieldsFragment' };
+
+export type InboundThreadQueryVariables = Exact<{
+  threadKey: string;
+}>;
+
+
+export type InboundThreadQuery = { inboundThread: Array<(
+    { textBody: string, reviewNote: string, reviewer: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null }
+    & { ' $fragmentRefs'?: { 'InboundMessageListFieldsFragment': InboundMessageListFieldsFragment } }
+  )> };
+
+export type TriageBriefingQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TriageBriefingQuery = { triageBriefing: { generatedAt: number, dayStart: number, phase: TriageBriefingPhase, firstDay: boolean, novaEnabled: boolean, activeSources: number, waiting: number, overdue: number, closedByPeopleToday: number, handledByNovaToday: number, estimateMinutes: number, comingBack: number, handledByNova: Array<{ action: TriageRuleAction, classification: InboundClassification | null, count: number, samples: Array<{ ' $fragmentRefs'?: { 'TriageSampleFieldsFragment': TriageSampleFieldsFragment } }> }>, arrivals: Array<{ hourStart: number, handledByNova: number, leftForPerson: number }>, novaPoints: Array<{ ' $fragmentRefs'?: { 'TriageRiverPointFieldsFragment': TriageRiverPointFieldsFragment } }>, yours: Array<{ ' $fragmentRefs'?: { 'TriageRiverPointFieldsFragment': TriageRiverPointFieldsFragment } }>, deck: Array<{ group: TriageDeckGroup, count: number, estimateMinutes: number, messageIds: Array<string>, items: Array<{ ' $fragmentRefs'?: { 'TriageDeckItemFieldsFragment': TriageDeckItemFieldsFragment } }> }>, longestWaiting: { ' $fragmentRefs'?: { 'TriageDeckItemFieldsFragment': TriageDeckItemFieldsFragment } } | null, corrections: { thisWeek: number, accuracyChange: number, accuracy: number }, unhealthySources: Array<{ ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } }>, suggestion: { classification: InboundClassification, senderScope: TriageSenderScope, sender: string, mailboxId: string | null, action: TriageRuleAction, handledByHand: number, total: number } | null, onCall: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null, carryOver: Array<{ ' $fragmentRefs'?: { 'TriageDeckItemFieldsFragment': TriageDeckItemFieldsFragment } }> } };
+
+export type MyTriageViewsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyTriageViewsQuery = { myTriageViews: Array<{ ' $fragmentRefs'?: { 'TriageViewFieldsFragment': TriageViewFieldsFragment } }> };
+
+export type TriageResponseTargetsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TriageResponseTargetsQuery = { triageResponseTargets: Array<{ classification: InboundClassification, minutes: number, isDefault: boolean }> };
+
+export type TriageSettingsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TriageSettingsQuery = { triageSettings: { onCallUserId: string | null, endOfDayMinute: number, timezone: string, version: number, onCallUser: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null } };
+
+export type TriageAssigneesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TriageAssigneesQuery = { triageAssignees: Array<{ waiting: number, user: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } }> };
+
+export type TriageRulesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TriageRulesQuery = { triageRules: Array<{ ' $fragmentRefs'?: { 'TriageRuleFieldsFragment': TriageRuleFieldsFragment } }> };
+
+export type TriageRulePreviewQueryVariables = Exact<{
+  input: TriageRuleInput;
+}>;
+
+
+export type TriageRulePreviewQuery = { triageRulePreview: { ' $fragmentRefs'?: { 'TriageRulePreviewFieldsFragment': TriageRulePreviewFieldsFragment } } };
+
+export type TriageRuleMatchesQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type TriageRuleMatchesQuery = { triageRuleMatches: { ' $fragmentRefs'?: { 'TriageRulePreviewFieldsFragment': TriageRulePreviewFieldsFragment } } };
+
+export type TriageSenderDomainsQueryVariables = Exact<{
+  query?: string | null | undefined;
+}>;
+
+
+export type TriageSenderDomainsQuery = { triageSenderDomains: Array<string> };
+
+export type InboundSenderProfileQueryVariables = Exact<{
+  messageId: string | number;
+}>;
+
+
+export type InboundSenderProfileQuery = { inboundSenderProfile: { address: string, name: string, domain: string, role: InboundSenderRole, since: number | null, messagesLast90Days: number, usualReplyMinutes: number | null, kinds: Array<{ classification: InboundClassification, count: number }>, rules: Array<{ ' $fragmentRefs'?: { 'TriageRuleFieldsFragment': TriageRuleFieldsFragment } }>, recent: Array<{ ' $fragmentRefs'?: { 'TriageSampleFieldsFragment': TriageSampleFieldsFragment } }> } };
+
+export type TriageReplyTemplatesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TriageReplyTemplatesQuery = { triageReplyTemplates: Array<{ ' $fragmentRefs'?: { 'TriageReplyTemplateFieldsFragment': TriageReplyTemplateFieldsFragment } }> };
+
+export type InboundReplyAttachablesQueryVariables = Exact<{
+  messageId: string | number;
+}>;
+
+
+export type InboundReplyAttachablesQuery = { inboundReplyAttachmentLimit: number, inboundReplyAttachables: Array<{ ' $fragmentRefs'?: { 'InboundReplyAttachableFieldsFragment': InboundReplyAttachableFieldsFragment } }> };
+
+export type RenderTriageReplyTemplateQueryVariables = Exact<{
+  templateId: string | number;
+  messageId: string | number;
+}>;
+
+
+export type RenderTriageReplyTemplateQuery = { renderTriageReplyTemplate: string };
+
+export type TriageStopTimesQueryVariables = Exact<{
+  messageId: string | number;
+}>;
+
+
+export type TriageStopTimesQuery = { triageStopTimes: { stopName: string, appointmentStart: number | null, appointmentEnd: number | null, arrivedAt: number | null, checkedInAt: number | null, departedAt: number | null, lateMinutes: number, billedDetentionMinutes: number, billedDetentionAmount: string | null, detentionPaysWhenLate: boolean, arrivalSource: string, shipment: { ' $fragmentRefs'?: { 'InboundShipmentRefFieldsFragment': InboundShipmentRefFieldsFragment } } } | null };
+
+export type TriageShipmentPeekQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type TriageShipmentPeekQuery = { triageShipmentPeek: { ' $fragmentRefs'?: { 'TriageShipmentPeekFieldsFragment': TriageShipmentPeekFieldsFragment } } };
+
+export type TriageCustomerPeekQueryVariables = Exact<{
+  customerId: string | number;
+}>;
+
+
+export type TriageCustomerPeekQuery = { triageCustomerPeek: { id: string, code: string, name: string, since: number, shipmentsThisWeek: number, waitingInTriage: number, shipments: Array<{ ' $fragmentRefs'?: { 'TriageShipmentPeekFieldsFragment': TriageShipmentPeekFieldsFragment } }>, messages: Array<{ ' $fragmentRefs'?: { 'TriageSampleFieldsFragment': TriageSampleFieldsFragment } }> } };
+
+export type ReviewInboundMessagesMutationVariables = Exact<{
+  selection: TriageSelectionInput;
+  input: BulkReviewInboundMessagesInput;
+}>;
+
+
+export type ReviewInboundMessagesMutation = { reviewInboundMessages: { ' $fragmentRefs'?: { 'TriageBulkResultFieldsFragment': TriageBulkResultFieldsFragment } } };
+
+export type ReopenInboundMessagesMutationVariables = Exact<{
+  selection: TriageSelectionInput;
+}>;
+
+
+export type ReopenInboundMessagesMutation = { reopenInboundMessages: { ' $fragmentRefs'?: { 'TriageBulkResultFieldsFragment': TriageBulkResultFieldsFragment } } };
+
+export type AssignInboundMessagesMutationVariables = Exact<{
+  selection: TriageSelectionInput;
+  ownerId?: string | number | null | undefined;
+}>;
+
+
+export type AssignInboundMessagesMutation = { assignInboundMessages: { ' $fragmentRefs'?: { 'TriageBulkResultFieldsFragment': TriageBulkResultFieldsFragment } } };
+
+export type SnoozeInboundMessagesMutationVariables = Exact<{
+  selection: TriageSelectionInput;
+  input: SnoozeInboundMessagesInput;
+}>;
+
+
+export type SnoozeInboundMessagesMutation = { snoozeInboundMessages: { ' $fragmentRefs'?: { 'TriageBulkResultFieldsFragment': TriageBulkResultFieldsFragment } } };
+
+export type WakeInboundMessageMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type WakeInboundMessageMutation = { wakeInboundMessage: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type WaitForInboundReplyMutationVariables = Exact<{
+  id: string | number;
+  until: number;
+}>;
+
+
+export type WaitForInboundReplyMutation = { waitForInboundReply: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type StopWaitingForInboundReplyMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type StopWaitingForInboundReplyMutation = { stopWaitingForInboundReply: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type UnlinkInboundMessageMutationVariables = Exact<{
+  id: string | number;
+  record: InboundLinkedRecord;
+}>;
+
+
+export type UnlinkInboundMessageMutation = { unlinkInboundMessage: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type SendInboundMailboxTestMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type SendInboundMailboxTestMutation = { sendInboundMailboxTest: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } };
+
+export type HandOffTriageMutationVariables = Exact<{
+  toUserId: string | number;
+}>;
+
+
+export type HandOffTriageMutation = { handOffTriage: { affected: number, to: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } } };
+
+export type ReadUnreadInboundMessagesMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ReadUnreadInboundMessagesMutation = { readUnreadInboundMessages: number };
+
+export type CreateMyTriageViewMutationVariables = Exact<{
+  name: string;
+  query: string;
+}>;
+
+
+export type CreateMyTriageViewMutation = { createMyTriageView: { ' $fragmentRefs'?: { 'TriageViewFieldsFragment': TriageViewFieldsFragment } } };
+
+export type RenameMyTriageViewMutationVariables = Exact<{
+  id: string | number;
+  name: string;
+}>;
+
+
+export type RenameMyTriageViewMutation = { renameMyTriageView: { ' $fragmentRefs'?: { 'TriageViewFieldsFragment': TriageViewFieldsFragment } } };
+
+export type DeleteMyTriageViewMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteMyTriageViewMutation = { deleteMyTriageView: boolean };
+
+export type UpdateTriageResponseTargetsMutationVariables = Exact<{
+  input: Array<TriageResponseTargetInput> | TriageResponseTargetInput;
+}>;
+
+
+export type UpdateTriageResponseTargetsMutation = { updateTriageResponseTargets: Array<{ classification: InboundClassification, minutes: number, isDefault: boolean }> };
+
+export type UpdateTriageSettingsMutationVariables = Exact<{
+  input: TriageSettingsInput;
+}>;
+
+
+export type UpdateTriageSettingsMutation = { updateTriageSettings: { onCallUserId: string | null, endOfDayMinute: number, timezone: string, version: number, onCallUser: { ' $fragmentRefs'?: { 'TriageUserFieldsFragment': TriageUserFieldsFragment } } | null } };
+
+export type CreateTriageRuleMutationVariables = Exact<{
+  input: TriageRuleInput;
+}>;
+
+
+export type CreateTriageRuleMutation = { createTriageRule: { ' $fragmentRefs'?: { 'TriageRuleFieldsFragment': TriageRuleFieldsFragment } } };
+
+export type UpdateTriageRuleMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+  input: TriageRuleInput;
+}>;
+
+
+export type UpdateTriageRuleMutation = { updateTriageRule: { ' $fragmentRefs'?: { 'TriageRuleFieldsFragment': TriageRuleFieldsFragment } } };
+
+export type SetTriageRuleEnabledMutationVariables = Exact<{
+  id: string | number;
+  enabled: boolean;
+}>;
+
+
+export type SetTriageRuleEnabledMutation = { setTriageRuleEnabled: { ' $fragmentRefs'?: { 'TriageRuleFieldsFragment': TriageRuleFieldsFragment } } };
+
+export type DeleteTriageRuleMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteTriageRuleMutation = { deleteTriageRule: boolean };
+
+export type CorrectInboundClassificationMutationVariables = Exact<{
+  id: string | number;
+  classification: InboundClassification;
+}>;
+
+
+export type CorrectInboundClassificationMutation = { correctInboundClassification: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type FlagInboundFactMutationVariables = Exact<{
+  id: string | number;
+  key: string;
+}>;
+
+
+export type FlagInboundFactMutation = { flagInboundFact: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type ResolveInboundConflictMutationVariables = Exact<{
+  id: string | number;
+  conflictId: string;
+  resolution: TriageConflictResolution;
+}>;
+
+
+export type ResolveInboundConflictMutation = { resolveInboundConflict: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type ReopenInboundConflictMutationVariables = Exact<{
+  id: string | number;
+  conflictId: string;
+}>;
+
+
+export type ReopenInboundConflictMutation = { reopenInboundConflict: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type DraftInboundReplyMutationVariables = Exact<{
+  messageId: string | number;
+}>;
+
+
+export type DraftInboundReplyMutation = { draftInboundReply: { ' $fragmentRefs'?: { 'InboundReplyFieldsFragment': InboundReplyFieldsFragment } } };
+
+export type SaveInboundReplyDraftMutationVariables = Exact<{
+  messageId: string | number;
+  subject: string;
+  body: string;
+  documentIds?: Array<string | number> | string | number | null | undefined;
+}>;
+
+
+export type SaveInboundReplyDraftMutation = { saveInboundReplyDraft: { ' $fragmentRefs'?: { 'InboundReplyFieldsFragment': InboundReplyFieldsFragment } } };
+
+export type DiscardInboundReplyDraftMutationVariables = Exact<{
+  messageId: string | number;
+}>;
+
+
+export type DiscardInboundReplyDraftMutation = { discardInboundReplyDraft: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type SendInboundReplyMutationVariables = Exact<{
+  input: SendInboundReplyInput;
+}>;
+
+
+export type SendInboundReplyMutation = { sendInboundReply: { ' $fragmentRefs'?: { 'InboundReplyFieldsFragment': InboundReplyFieldsFragment } } };
+
+export type DraftInboundManyMutationVariables = Exact<{
+  messageIds: Array<string | number> | string | number;
+}>;
+
+
+export type DraftInboundManyMutation = { draftInboundMany: number };
+
+export type CreateTriageReplyTemplateMutationVariables = Exact<{
+  input: TriageReplyTemplateInput;
+}>;
+
+
+export type CreateTriageReplyTemplateMutation = { createTriageReplyTemplate: { ' $fragmentRefs'?: { 'TriageReplyTemplateFieldsFragment': TriageReplyTemplateFieldsFragment } } };
+
+export type UpdateTriageReplyTemplateMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+  input: TriageReplyTemplateInput;
+}>;
+
+
+export type UpdateTriageReplyTemplateMutation = { updateTriageReplyTemplate: { ' $fragmentRefs'?: { 'TriageReplyTemplateFieldsFragment': TriageReplyTemplateFieldsFragment } } };
+
+export type DeleteTriageReplyTemplateMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteTriageReplyTemplateMutation = { deleteTriageReplyTemplate: boolean };
+
+export type DraftInboundLoadMutationVariables = Exact<{
+  messageId: string | number;
+}>;
+
+
+export type DraftInboundLoadMutation = { draftInboundLoad: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type DiscardInboundLoadMutationVariables = Exact<{
+  messageId: string | number;
+}>;
+
+
+export type DiscardInboundLoadMutation = { discardInboundLoad: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type CreateInboundLoadMutationVariables = Exact<{
+  messageId: string | number;
+  fields: Array<TriageLoadFieldInput> | TriageLoadFieldInput;
+}>;
+
+
+export type CreateInboundLoadMutation = { createInboundLoad: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type FileInboundAttachmentMutationVariables = Exact<{
+  input: FileInboundAttachmentInput;
+}>;
+
+
+export type FileInboundAttachmentMutation = { fileInboundAttachment: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type FileInboundManyMutationVariables = Exact<{
+  messageIds: Array<string | number> | string | number;
+}>;
+
+
+export type FileInboundManyMutation = { fileInboundMany: { ' $fragmentRefs'?: { 'TriageBulkResultFieldsFragment': TriageBulkResultFieldsFragment } } };
+
+export type UnfileInboundAttachmentMutationVariables = Exact<{
+  attachmentId: string | number;
+}>;
+
+
+export type UnfileInboundAttachmentMutation = { unfileInboundAttachment: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type LogInboundExceptionMutationVariables = Exact<{
+  messageId: string | number;
+  input: LogInboundExceptionInput;
+}>;
+
+
+export type LogInboundExceptionMutation = { logInboundException: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type BlockInboundSenderMutationVariables = Exact<{
+  messageId: string | number;
+}>;
+
+
+export type BlockInboundSenderMutation = { blockInboundSender: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
+
+export type UnblockInboundSenderMutationVariables = Exact<{
+  mailboxId: string | number;
+  sender: string;
+}>;
+
+
+export type UnblockInboundSenderMutation = { unblockInboundSender: { ' $fragmentRefs'?: { 'InboundMailboxFieldsFragment': InboundMailboxFieldsFragment } } };
+
+export type DecideInboundStopsMutationVariables = Exact<{
+  messageId: string | number;
+  decision: TriageStopsDecision;
+}>;
+
+
+export type DecideInboundStopsMutation = { decideInboundStops: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
 
 export type InvoiceApprovalQueueItemFieldsFragment = { adjustmentId: string, originalInvoiceId: string, originalInvoiceNumber: string, originalInvoiceStatus: string, customerName: string, kind: InvoiceAdjustmentKind, reason: string, policyReason: string, policySource: string, creditTotalAmount: string, rebillTotalAmount: string, netDeltaAmount: string, wouldCreateUnappliedCredit: boolean, requiresReconciliationException: boolean, requiresReplacementInvoiceReview: boolean, submittedByName: string, submittedAt: number | null, creditMemoInvoiceId: string | null, replacementInvoiceId: string | null, rebillQueueItemId: string | null, batchId: string | null } & { ' $fragmentName'?: 'InvoiceApprovalQueueItemFieldsFragment' };
 
@@ -14402,6 +15330,45 @@ export type NotifyShipmentDelayMutationVariables = Exact<{
 
 export type NotifyShipmentDelayMutation = { notifyShipmentDelay: boolean };
 
+export type CheckCallFieldsFragment = { id: string, shipmentId: string, shipmentMoveId: string, stopId: string | null, source: CheckCallSource, kind: CheckCallKind, reportedAt: number, receivedAt: number, latitude: number | null, longitude: number | null, city: string | null, stateCode: string | null, delayed: boolean, delayReason: string | null, estimatedArrival: number | null, note: string | null, contactName: string | null, reportedById: string | null, trackingEventId: string | null } & { ' $fragmentName'?: 'CheckCallFieldsFragment' };
+
+export type CarrierTrackingLinkFieldsFragment = { id: string, shipmentMoveId: string, carrierId: string, recipientEmail: string | null, expiresAt: number, lastUsedAt: number | null, createdById: string | null, createdAt: number } & { ' $fragmentName'?: 'CarrierTrackingLinkFieldsFragment' };
+
+export type ShipmentCheckCallsQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type ShipmentCheckCallsQuery = { shipmentCheckCalls: Array<{ ' $fragmentRefs'?: { 'CheckCallFieldsFragment': CheckCallFieldsFragment } }> };
+
+export type CarrierTrackingLinkQueryVariables = Exact<{
+  shipmentMoveId: string | number;
+}>;
+
+
+export type CarrierTrackingLinkQuery = { carrierTrackingLink: { ' $fragmentRefs'?: { 'CarrierTrackingLinkFieldsFragment': CarrierTrackingLinkFieldsFragment } } | null };
+
+export type LogCheckCallMutationVariables = Exact<{
+  input: LogCheckCallInput;
+}>;
+
+
+export type LogCheckCallMutation = { logCheckCall: { outcome: TrackingEventOutcome | null, outcomeReason: string | null, checkCall: { ' $fragmentRefs'?: { 'CheckCallFieldsFragment': CheckCallFieldsFragment } } } };
+
+export type IssueCarrierTrackingLinkMutationVariables = Exact<{
+  input: IssueCarrierTrackingLinkInput;
+}>;
+
+
+export type IssueCarrierTrackingLinkMutation = { issueCarrierTrackingLink: { url: string, emailed: boolean, emailError: string | null, link: { ' $fragmentRefs'?: { 'CarrierTrackingLinkFieldsFragment': CarrierTrackingLinkFieldsFragment } } } };
+
+export type RevokeCarrierTrackingLinkMutationVariables = Exact<{
+  shipmentMoveId: string | number;
+}>;
+
+
+export type RevokeCarrierTrackingLinkMutation = { revokeCarrierTrackingLink: boolean };
+
 export type DeskRecordShipmentsQueryVariables = Exact<{
   input: ShipmentsInput;
   includeTotalCount: boolean;
@@ -14571,6 +15538,13 @@ export type ShipmentEventsQuery = { shipmentEvents: Array<
     | { ' $fragmentRefs'?: { 'ShipmentEventFields_ShipmentOwnershipEvent_Fragment': ShipmentEventFields_ShipmentOwnershipEvent_Fragment } }
     | { ' $fragmentRefs'?: { 'ShipmentEventFields_ShipmentTenderEvent_Fragment': ShipmentEventFields_ShipmentTenderEvent_Fragment } }
   > };
+
+export type ShipmentTrackingEventsQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type ShipmentTrackingEventsQuery = { shipmentTrackingEvents: Array<{ id: string, shipmentMoveId: string, stopId: string, source: TrackingEventSource, kind: StopVisitKind, matchMethod: TrackingMatchMethod, eventAt: number, receivedAt: number, sourceStatus: string | null, outcome: TrackingEventOutcome, outcomeReason: string | null }> };
 
 export type ShipmentBillingReadinessQueryVariables = Exact<{
   shipmentId: string | number;
@@ -16365,6 +17339,10 @@ export const AccountingProviderProfileFieldsFragmentDoc = new TypedDocumentStrin
   callbackPath
   lineKind
   referenceKinds
+  inboundPaymentsAvailable
+  inboundUnavailableReason
+  webhookSubscriptions
+  revokesTokens
 }
     `, {"fragmentName":"AccountingProviderProfileFields"}) as unknown as TypedDocumentString<AccountingProviderProfileFieldsFragment, unknown>;
 export const AccountingAppSettingsFieldsFragmentDoc = new TypedDocumentString(`
@@ -16434,6 +17412,16 @@ export const AccountingConnectionFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AccountingConnectionFields"}) as unknown as TypedDocumentString<AccountingConnectionFieldsFragment, unknown>;
+export const AccountingWebhookSubscriptionSummaryFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AccountingWebhookSubscriptionSummaryFields on AccountingWebhookSubscriptionSummary {
+  configured
+  active
+  pending
+  failed
+  nextExpiryAt
+  lastError
+}
+    `, {"fragmentName":"AccountingWebhookSubscriptionSummaryFields"}) as unknown as TypedDocumentString<AccountingWebhookSubscriptionSummaryFieldsFragment, unknown>;
 export const AccountingSyncStatusFieldsFragmentDoc = new TypedDocumentString(`
     fragment AccountingSyncStatusFields on AccountingSyncStatus {
   integrationType
@@ -16447,6 +17435,9 @@ export const AccountingSyncStatusFieldsFragmentDoc = new TypedDocumentString(`
   }
   connection {
     ...AccountingConnectionFields
+  }
+  webhookSubscriptions {
+    ...AccountingWebhookSubscriptionSummaryFields
   }
 }
     fragment AccountingConnectionFields on AccountingConnection {
@@ -16522,6 +17513,18 @@ fragment AccountingProviderProfileFields on AccountingProviderProfile {
   callbackPath
   lineKind
   referenceKinds
+  inboundPaymentsAvailable
+  inboundUnavailableReason
+  webhookSubscriptions
+  revokesTokens
+}
+fragment AccountingWebhookSubscriptionSummaryFields on AccountingWebhookSubscriptionSummary {
+  configured
+  active
+  pending
+  failed
+  nextExpiryAt
+  lastError
 }`, {"fragmentName":"AccountingSyncStatusFields"}) as unknown as TypedDocumentString<AccountingSyncStatusFieldsFragment, unknown>;
 export const AccountingSyncRecordFieldsFragmentDoc = new TypedDocumentString(`
     fragment AccountingSyncRecordFields on AccountingSyncRecord {
@@ -18346,6 +19349,17 @@ export const AiProviderCardFieldsFragmentDoc = new TypedDocumentString(`
   structuredOutputMode
   reasoningEffort
   thinkingStyle
+  platform
+  platformSettings {
+    auth
+    region
+    projectId
+    workspaceId
+    accessKeyId
+    resource
+    tenantId
+    clientId
+  }
   extraBody
   inputCostPerMillion
   outputCostPerMillion
@@ -19794,6 +20808,11 @@ export const CustomerBillingProfileFieldsFragmentDoc = new TypedDocumentString(`
   autoCreditHold
   creditHoldReason
   autoSendInvoiceOnGeneration
+  sendPaymentReminders
+  sendStatements
+  factoringCompanyId
+  creditHoldAutomatic
+  creditReviewedAt
   emailInvoiceEnabled
   ediInvoiceEnabled
   splitBy
@@ -19848,7 +20867,6 @@ export const CustomerEmailProfileFieldsFragmentDoc = new TypedDocumentString(`
   customerId
   subject
   comment
-  fromEmail
   toRecipients
   ccRecipients
   bccRecipients
@@ -19910,6 +20928,11 @@ export const CustomerTableRowFieldsFragmentDoc = new TypedDocumentString(`
   autoCreditHold
   creditHoldReason
   autoSendInvoiceOnGeneration
+  sendPaymentReminders
+  sendStatements
+  factoringCompanyId
+  creditHoldAutomatic
+  creditReviewedAt
   emailInvoiceEnabled
   ediInvoiceEnabled
   splitBy
@@ -19962,7 +20985,6 @@ fragment CustomerEmailProfileFields on CustomerEmailProfile {
   customerId
   subject
   comment
-  fromEmail
   toRecipients
   ccRecipients
   bccRecipients
@@ -21197,6 +22219,29 @@ fragment ExtractionShadowResultTableRowFields on ExtractionShadowResult {
   createdAt
   updatedAt
 }`, {"fragmentName":"ExtractionShadowResultDetailFields"}) as unknown as TypedDocumentString<ExtractionShadowResultDetailFieldsFragment, unknown>;
+export const FactoringCompanyTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment FactoringCompanyTableRowFields on FactoringCompany {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  name
+  addressLine1
+  addressLine2
+  city
+  stateId
+  postalCode
+  email
+  phoneNumber
+  remittanceInstructions
+  noticeOfAssignment
+  notes
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"FactoringCompanyTableRowFields"}) as unknown as TypedDocumentString<FactoringCompanyTableRowFieldsFragment, unknown>;
 export const FiscalPeriodFieldsFragmentDoc = new TypedDocumentString(`
     fragment FiscalPeriodFields on FiscalPeriod {
   id
@@ -21974,6 +23019,11 @@ export const InboundMailboxFieldsFragmentDoc = new TypedDocumentString(`
   status
   hasSigningSecret
   hasApiKey
+  lastReceivedAt
+  health
+  testSentAt
+  testReceivedAt
+  blockedSenders
   version
   createdAt
   updatedAt
@@ -21998,6 +23048,11 @@ export const InboundMailboxCredentialsFieldsFragmentDoc = new TypedDocumentStrin
   status
   hasSigningSecret
   hasApiKey
+  lastReceivedAt
+  health
+  testSentAt
+  testReceivedAt
+  blockedSenders
   version
   createdAt
   updatedAt
@@ -22014,6 +23069,88 @@ export const InboundShipmentRefFieldsFragmentDoc = new TypedDocumentString(`
   destinationState
 }
     `, {"fragmentName":"InboundShipmentRefFields"}) as unknown as TypedDocumentString<InboundShipmentRefFieldsFragment, unknown>;
+export const TriageUserFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageUserFields on User {
+  id
+  name
+  emailAddress
+  thumbnailUrl
+}
+    `, {"fragmentName":"TriageUserFields"}) as unknown as TypedDocumentString<TriageUserFieldsFragment, unknown>;
+export const InboundSnoozeFieldsFragmentDoc = new TypedDocumentString(`
+    fragment InboundSnoozeFields on InboundSnooze {
+  until
+  event
+  watchShipment {
+    ...InboundShipmentRefFields
+  }
+  documentTypeId
+  documentTypeName
+  snoozedAt
+  snoozedBy {
+    ...TriageUserFields
+  }
+}
+    fragment TriageUserFields on User {
+  id
+  name
+  emailAddress
+  thumbnailUrl
+}
+fragment InboundShipmentRefFields on InboundShipmentRef {
+  id
+  proNumber
+  bol
+  poNumber
+  originCity
+  originState
+  destinationCity
+  destinationState
+}`, {"fragmentName":"InboundSnoozeFields"}) as unknown as TypedDocumentString<InboundSnoozeFieldsFragment, unknown>;
+export const TriageActionFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageActionFields on TriageAction {
+  id
+  kind
+  done
+  novaCanDo
+  attachment {
+    id
+    fileName
+    kind
+    documentId
+    filedShipmentId
+    filedAs
+    pageCount
+  }
+  shipment {
+    ...InboundShipmentRefFields
+  }
+  replyPurpose
+  refusedFileName
+  reply {
+    id
+    status
+    sentAt
+    draftedByNova
+  }
+  loadDrafted
+  createdShipment {
+    ...InboundShipmentRefFields
+  }
+  stopsDecision
+  exceptionKind
+  completedAt
+}
+    fragment InboundShipmentRefFields on InboundShipmentRef {
+  id
+  proNumber
+  bol
+  poNumber
+  originCity
+  originState
+  destinationCity
+  destinationState
+}`, {"fragmentName":"TriageActionFields"}) as unknown as TypedDocumentString<TriageActionFieldsFragment, unknown>;
 export const InboundMessageListFieldsFragmentDoc = new TypedDocumentString(`
     fragment InboundMessageListFields on InboundMessage {
   id
@@ -22040,8 +23177,36 @@ export const InboundMessageListFieldsFragmentDoc = new TypedDocumentString(`
     code
     name
   }
+  threadKey
+  threadCount
+  senderDomain
+  ownerId
+  owner {
+    ...TriageUserFields
+  }
+  dueAt
+  responseTargetMinutes
+  snooze {
+    ...InboundSnoozeFields
+  }
+  awaitingReply {
+    since
+    until
+  }
+  novaRead
+  handledByNova
+  actions {
+    ...TriageActionFields
+  }
+  version
 }
-    fragment InboundShipmentRefFields on InboundShipmentRef {
+    fragment TriageUserFields on User {
+  id
+  name
+  emailAddress
+  thumbnailUrl
+}
+fragment InboundShipmentRefFields on InboundShipmentRef {
   id
   proNumber
   bol
@@ -22050,6 +23215,52 @@ export const InboundMessageListFieldsFragmentDoc = new TypedDocumentString(`
   originState
   destinationCity
   destinationState
+}
+fragment InboundSnoozeFields on InboundSnooze {
+  until
+  event
+  watchShipment {
+    ...InboundShipmentRefFields
+  }
+  documentTypeId
+  documentTypeName
+  snoozedAt
+  snoozedBy {
+    ...TriageUserFields
+  }
+}
+fragment TriageActionFields on TriageAction {
+  id
+  kind
+  done
+  novaCanDo
+  attachment {
+    id
+    fileName
+    kind
+    documentId
+    filedShipmentId
+    filedAs
+    pageCount
+  }
+  shipment {
+    ...InboundShipmentRefFields
+  }
+  replyPurpose
+  refusedFileName
+  reply {
+    id
+    status
+    sentAt
+    draftedByNova
+  }
+  loadDrafted
+  createdShipment {
+    ...InboundShipmentRefFields
+  }
+  stopsDecision
+  exceptionKind
+  completedAt
 }`, {"fragmentName":"InboundMessageListFields"}) as unknown as TypedDocumentString<InboundMessageListFieldsFragment, unknown>;
 export const InboundAttachmentFieldsFragmentDoc = new TypedDocumentString(`
     fragment InboundAttachmentFields on InboundAttachment {
@@ -22060,9 +23271,179 @@ export const InboundAttachmentFieldsFragmentDoc = new TypedDocumentString(`
   kind
   documentId
   failureText
+  filedShipmentId
+  filedAs
+  filedAt
+  pageCount
   createdAt
 }
     `, {"fragmentName":"InboundAttachmentFields"}) as unknown as TypedDocumentString<InboundAttachmentFieldsFragment, unknown>;
+export const InboundAttachmentDetailFieldsFragmentDoc = new TypedDocumentString(`
+    fragment InboundAttachmentDetailFields on InboundAttachment {
+  ...InboundAttachmentFields
+  filedShipment {
+    ...InboundShipmentRefFields
+  }
+  pages {
+    number
+    label
+    suggestedType
+  }
+  splitDocuments {
+    fromPage
+    toPage
+    documentId
+    documentType
+  }
+  reading {
+    documentType
+    confidence
+    pageCount
+    fields {
+      label
+      value
+      tone
+    }
+  }
+}
+    fragment InboundAttachmentFields on InboundAttachment {
+  id
+  fileName
+  contentType
+  byteSize
+  kind
+  documentId
+  failureText
+  filedShipmentId
+  filedAs
+  filedAt
+  pageCount
+  createdAt
+}
+fragment InboundShipmentRefFields on InboundShipmentRef {
+  id
+  proNumber
+  bol
+  poNumber
+  originCity
+  originState
+  destinationCity
+  destinationState
+}`, {"fragmentName":"InboundAttachmentDetailFields"}) as unknown as TypedDocumentString<InboundAttachmentDetailFieldsFragment, unknown>;
+export const TriageFactFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageFactFields on TriageFact {
+  key
+  label
+  value
+  quote
+  tone
+  flagged
+}
+    `, {"fragmentName":"TriageFactFields"}) as unknown as TypedDocumentString<TriageFactFieldsFragment, unknown>;
+export const TriageConflictFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageConflictFields on TriageConflict {
+  id
+  kind
+  attachmentId
+  existingDocumentId
+  existingShipment {
+    ...InboundShipmentRefFields
+  }
+  existingFiledAt
+  existingAmount
+  newAmount
+  loadIndex
+  resolution
+  resolvedAt
+  options
+}
+    fragment InboundShipmentRefFields on InboundShipmentRef {
+  id
+  proNumber
+  bol
+  poNumber
+  originCity
+  originState
+  destinationCity
+  destinationState
+}`, {"fragmentName":"TriageConflictFields"}) as unknown as TypedDocumentString<TriageConflictFieldsFragment, unknown>;
+export const InboundActivityFieldsFragmentDoc = new TypedDocumentString(`
+    fragment InboundActivityFields on InboundActivity {
+  id
+  kind
+  actorKind
+  actor {
+    ...TriageUserFields
+  }
+  subject
+  detail
+  until
+  fromClassification
+  toClassification
+  recordId
+  createdAt
+}
+    fragment TriageUserFields on User {
+  id
+  name
+  emailAddress
+  thumbnailUrl
+}`, {"fragmentName":"InboundActivityFields"}) as unknown as TypedDocumentString<InboundActivityFieldsFragment, unknown>;
+export const InboundReplyAttachmentFieldsFragmentDoc = new TypedDocumentString(`
+    fragment InboundReplyAttachmentFields on InboundReplyAttachment {
+  documentId
+  fileName
+  contentType
+  byteSize
+}
+    `, {"fragmentName":"InboundReplyAttachmentFields"}) as unknown as TypedDocumentString<InboundReplyAttachmentFieldsFragment, unknown>;
+export const InboundReplyFieldsFragmentDoc = new TypedDocumentString(`
+    fragment InboundReplyFields on InboundReply {
+  id
+  messageId
+  status
+  fromAddress
+  toAddress
+  ccAddresses
+  subject
+  body
+  draftedByNova
+  templateId
+  failureText
+  suggestedAddress
+  sentBy {
+    ...TriageUserFields
+  }
+  sentAt
+  attachments {
+    ...InboundReplyAttachmentFields
+  }
+  createdAt
+  updatedAt
+}
+    fragment TriageUserFields on User {
+  id
+  name
+  emailAddress
+  thumbnailUrl
+}
+fragment InboundReplyAttachmentFields on InboundReplyAttachment {
+  documentId
+  fileName
+  contentType
+  byteSize
+}`, {"fragmentName":"InboundReplyFields"}) as unknown as TypedDocumentString<InboundReplyFieldsFragment, unknown>;
+export const TriageLoadDraftFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageLoadDraftFields on TriageLoadDraft {
+  source
+  draftedAt
+  draftedByNova
+  fields {
+    key
+    value
+  }
+}
+    `, {"fragmentName":"TriageLoadDraftFields"}) as unknown as TypedDocumentString<TriageLoadDraftFieldsFragment, unknown>;
 export const InboundMessageDetailFieldsFragmentDoc = new TypedDocumentString(`
     fragment InboundMessageDetailFields on InboundMessage {
   ...InboundMessageListFields
@@ -22076,17 +23457,46 @@ export const InboundMessageDetailFieldsFragmentDoc = new TypedDocumentString(`
   reviewedAt
   reviewNote
   failureCode
-  version
   createdAt
   updatedAt
+  handledByRuleId
+  handledAction
+  classificationCorrected
+  reviewer {
+    ...TriageUserFields
+  }
   mailbox {
     ...InboundMailboxFields
   }
   attachments {
-    ...InboundAttachmentFields
+    ...InboundAttachmentDetailFields
+  }
+  facts {
+    ...TriageFactFields
+  }
+  conflicts {
+    ...TriageConflictFields
+  }
+  activity {
+    ...InboundActivityFields
+  }
+  replies {
+    ...InboundReplyFields
+  }
+  replyDraft {
+    ...InboundReplyFields
+  }
+  loadDraft {
+    ...TriageLoadDraftFields
   }
 }
-    fragment InboundAttachmentFields on InboundAttachment {
+    fragment TriageUserFields on User {
+  id
+  name
+  emailAddress
+  thumbnailUrl
+}
+fragment InboundAttachmentFields on InboundAttachment {
   id
   fileName
   contentType
@@ -22094,6 +23504,10 @@ export const InboundMessageDetailFieldsFragmentDoc = new TypedDocumentString(`
   kind
   documentId
   failureText
+  filedShipmentId
+  filedAs
+  filedAt
+  pageCount
   createdAt
 }
 fragment InboundShipmentRefFields on InboundShipmentRef {
@@ -22117,6 +23531,11 @@ fragment InboundMailboxFields on InboundMailbox {
   status
   hasSigningSecret
   hasApiKey
+  lastReceivedAt
+  health
+  testSentAt
+  testReceivedAt
+  blockedSenders
   version
   createdAt
   updatedAt
@@ -22146,7 +23565,504 @@ fragment InboundMessageListFields on InboundMessage {
     code
     name
   }
+  threadKey
+  threadCount
+  senderDomain
+  ownerId
+  owner {
+    ...TriageUserFields
+  }
+  dueAt
+  responseTargetMinutes
+  snooze {
+    ...InboundSnoozeFields
+  }
+  awaitingReply {
+    since
+    until
+  }
+  novaRead
+  handledByNova
+  actions {
+    ...TriageActionFields
+  }
+  version
+}
+fragment InboundSnoozeFields on InboundSnooze {
+  until
+  event
+  watchShipment {
+    ...InboundShipmentRefFields
+  }
+  documentTypeId
+  documentTypeName
+  snoozedAt
+  snoozedBy {
+    ...TriageUserFields
+  }
+}
+fragment InboundReplyFields on InboundReply {
+  id
+  messageId
+  status
+  fromAddress
+  toAddress
+  ccAddresses
+  subject
+  body
+  draftedByNova
+  templateId
+  failureText
+  suggestedAddress
+  sentBy {
+    ...TriageUserFields
+  }
+  sentAt
+  attachments {
+    ...InboundReplyAttachmentFields
+  }
+  createdAt
+  updatedAt
+}
+fragment InboundReplyAttachmentFields on InboundReplyAttachment {
+  documentId
+  fileName
+  contentType
+  byteSize
+}
+fragment TriageActionFields on TriageAction {
+  id
+  kind
+  done
+  novaCanDo
+  attachment {
+    id
+    fileName
+    kind
+    documentId
+    filedShipmentId
+    filedAs
+    pageCount
+  }
+  shipment {
+    ...InboundShipmentRefFields
+  }
+  replyPurpose
+  refusedFileName
+  reply {
+    id
+    status
+    sentAt
+    draftedByNova
+  }
+  loadDrafted
+  createdShipment {
+    ...InboundShipmentRefFields
+  }
+  stopsDecision
+  exceptionKind
+  completedAt
+}
+fragment TriageFactFields on TriageFact {
+  key
+  label
+  value
+  quote
+  tone
+  flagged
+}
+fragment TriageConflictFields on TriageConflict {
+  id
+  kind
+  attachmentId
+  existingDocumentId
+  existingShipment {
+    ...InboundShipmentRefFields
+  }
+  existingFiledAt
+  existingAmount
+  newAmount
+  loadIndex
+  resolution
+  resolvedAt
+  options
+}
+fragment InboundActivityFields on InboundActivity {
+  id
+  kind
+  actorKind
+  actor {
+    ...TriageUserFields
+  }
+  subject
+  detail
+  until
+  fromClassification
+  toClassification
+  recordId
+  createdAt
+}
+fragment TriageLoadDraftFields on TriageLoadDraft {
+  source
+  draftedAt
+  draftedByNova
+  fields {
+    key
+    value
+  }
+}
+fragment InboundAttachmentDetailFields on InboundAttachment {
+  ...InboundAttachmentFields
+  filedShipment {
+    ...InboundShipmentRefFields
+  }
+  pages {
+    number
+    label
+    suggestedType
+  }
+  splitDocuments {
+    fromPage
+    toPage
+    documentId
+    documentType
+  }
+  reading {
+    documentType
+    confidence
+    pageCount
+    fields {
+      label
+      value
+      tone
+    }
+  }
 }`, {"fragmentName":"InboundMessageDetailFields"}) as unknown as TypedDocumentString<InboundMessageDetailFieldsFragment, unknown>;
+export const InboundReplyAttachableFieldsFragmentDoc = new TypedDocumentString(`
+    fragment InboundReplyAttachableFields on InboundReplyAttachable {
+  id
+  fileName
+  contentType
+  documentType
+  byteSize
+  createdAt
+  source
+}
+    `, {"fragmentName":"InboundReplyAttachableFields"}) as unknown as TypedDocumentString<InboundReplyAttachableFieldsFragment, unknown>;
+export const TriageSampleFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageSampleFields on TriageSample {
+  messageId
+  fromName
+  fromAddress
+  subject
+  classification
+  receivedAt
+  reference
+}
+    `, {"fragmentName":"TriageSampleFields"}) as unknown as TypedDocumentString<TriageSampleFieldsFragment, unknown>;
+export const TriageRuleFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageRuleFields on TriageRule {
+  id
+  classification
+  senderScope
+  sender
+  mailboxId
+  action
+  assigneeId
+  assignee {
+    ...TriageUserFields
+  }
+  enabled
+  createdBy {
+    ...TriageUserFields
+  }
+  matchesThisMonth
+  matchCount
+  lastMatchedAt
+  lastMatch {
+    ...TriageSampleFields
+  }
+  version
+  createdAt
+}
+    fragment TriageUserFields on User {
+  id
+  name
+  emailAddress
+  thumbnailUrl
+}
+fragment TriageSampleFields on TriageSample {
+  messageId
+  fromName
+  fromAddress
+  subject
+  classification
+  receivedAt
+  reference
+}`, {"fragmentName":"TriageRuleFields"}) as unknown as TypedDocumentString<TriageRuleFieldsFragment, unknown>;
+export const TriageRulePreviewFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageRulePreviewFields on TriageRulePreview {
+  matched
+  off
+  since
+  matches {
+    messageId
+    fromName
+    fromAddress
+    subject
+    receivedAt
+    reference
+    mismatch
+  }
+}
+    `, {"fragmentName":"TriageRulePreviewFields"}) as unknown as TypedDocumentString<TriageRulePreviewFieldsFragment, unknown>;
+export const TriageDeckItemFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageDeckItemFields on TriageDeckItem {
+  messageId
+  fromName
+  fromAddress
+  subject
+  classification
+  receivedAt
+  dueAt
+  action {
+    ...TriageActionFields
+  }
+  owner {
+    ...TriageUserFields
+  }
+}
+    fragment TriageUserFields on User {
+  id
+  name
+  emailAddress
+  thumbnailUrl
+}
+fragment InboundShipmentRefFields on InboundShipmentRef {
+  id
+  proNumber
+  bol
+  poNumber
+  originCity
+  originState
+  destinationCity
+  destinationState
+}
+fragment TriageActionFields on TriageAction {
+  id
+  kind
+  done
+  novaCanDo
+  attachment {
+    id
+    fileName
+    kind
+    documentId
+    filedShipmentId
+    filedAs
+    pageCount
+  }
+  shipment {
+    ...InboundShipmentRefFields
+  }
+  replyPurpose
+  refusedFileName
+  reply {
+    id
+    status
+    sentAt
+    draftedByNova
+  }
+  loadDrafted
+  createdShipment {
+    ...InboundShipmentRefFields
+  }
+  stopsDecision
+  exceptionKind
+  completedAt
+}`, {"fragmentName":"TriageDeckItemFields"}) as unknown as TypedDocumentString<TriageDeckItemFieldsFragment, unknown>;
+export const TriageRiverPointFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageRiverPointFields on TriageRiverPoint {
+  messageId
+  fromName
+  fromAddress
+  subject
+  classification
+  receivedAt
+  dueAt
+  done
+}
+    `, {"fragmentName":"TriageRiverPointFields"}) as unknown as TypedDocumentString<TriageRiverPointFieldsFragment, unknown>;
+export const TriageViewFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageViewFields on TriageView {
+  id
+  name
+  query
+  position
+  waiting
+}
+    `, {"fragmentName":"TriageViewFields"}) as unknown as TypedDocumentString<TriageViewFieldsFragment, unknown>;
+export const TriageReplyTemplateFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageReplyTemplateFields on TriageReplyTemplate {
+  id
+  name
+  body
+  version
+  createdAt
+  createdBy {
+    ...TriageUserFields
+  }
+}
+    fragment TriageUserFields on User {
+  id
+  name
+  emailAddress
+  thumbnailUrl
+}`, {"fragmentName":"TriageReplyTemplateFields"}) as unknown as TypedDocumentString<TriageReplyTemplateFieldsFragment, unknown>;
+export const TriageShipmentPeekFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageShipmentPeekFields on TriageShipmentPeek {
+  id
+  proNumber
+  bol
+  poNumber
+  status
+  customerName
+  equipment
+  driverName
+  progress
+  late
+  eta
+  deliveredAt
+  stops {
+    kind
+    city
+    state
+    scheduledAt
+    arrivedAt
+    departedAt
+    done
+  }
+  documentsOnFile
+}
+    `, {"fragmentName":"TriageShipmentPeekFields"}) as unknown as TypedDocumentString<TriageShipmentPeekFieldsFragment, unknown>;
+export const TriageBulkResultFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TriageBulkResultFields on TriageBulkResult {
+  affected
+  ruleId
+  messages {
+    ...InboundMessageListFields
+  }
+}
+    fragment TriageUserFields on User {
+  id
+  name
+  emailAddress
+  thumbnailUrl
+}
+fragment InboundShipmentRefFields on InboundShipmentRef {
+  id
+  proNumber
+  bol
+  poNumber
+  originCity
+  originState
+  destinationCity
+  destinationState
+}
+fragment InboundMessageListFields on InboundMessage {
+  id
+  mailboxId
+  fromAddress
+  fromName
+  subject
+  receivedAt
+  classification
+  confidence
+  status
+  matchedShipmentId
+  matchedCustomerId
+  matchReason
+  needsReview
+  failureText
+  preview
+  attachmentCount
+  matchedShipment {
+    ...InboundShipmentRefFields
+  }
+  matchedCustomer {
+    id
+    code
+    name
+  }
+  threadKey
+  threadCount
+  senderDomain
+  ownerId
+  owner {
+    ...TriageUserFields
+  }
+  dueAt
+  responseTargetMinutes
+  snooze {
+    ...InboundSnoozeFields
+  }
+  awaitingReply {
+    since
+    until
+  }
+  novaRead
+  handledByNova
+  actions {
+    ...TriageActionFields
+  }
+  version
+}
+fragment InboundSnoozeFields on InboundSnooze {
+  until
+  event
+  watchShipment {
+    ...InboundShipmentRefFields
+  }
+  documentTypeId
+  documentTypeName
+  snoozedAt
+  snoozedBy {
+    ...TriageUserFields
+  }
+}
+fragment TriageActionFields on TriageAction {
+  id
+  kind
+  done
+  novaCanDo
+  attachment {
+    id
+    fileName
+    kind
+    documentId
+    filedShipmentId
+    filedAs
+    pageCount
+  }
+  shipment {
+    ...InboundShipmentRefFields
+  }
+  replyPurpose
+  refusedFileName
+  reply {
+    id
+    status
+    sentAt
+    draftedByNova
+  }
+  loadDrafted
+  createdShipment {
+    ...InboundShipmentRefFields
+  }
+  stopsDecision
+  exceptionKind
+  completedAt
+}`, {"fragmentName":"TriageBulkResultFields"}) as unknown as TypedDocumentString<TriageBulkResultFieldsFragment, unknown>;
 export const InvoiceApprovalQueueItemFieldsFragmentDoc = new TypedDocumentString(`
     fragment InvoiceApprovalQueueItemFields on InvoiceAdjustmentApprovalQueueItem {
   adjustmentId
@@ -23505,6 +25421,41 @@ export const ShipmentTypeTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"ShipmentTypeTableRowFields"}) as unknown as TypedDocumentString<ShipmentTypeTableRowFieldsFragment, unknown>;
+export const CheckCallFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CheckCallFields on CheckCall {
+  id
+  shipmentId
+  shipmentMoveId
+  stopId
+  source
+  kind
+  reportedAt
+  receivedAt
+  latitude
+  longitude
+  city
+  stateCode
+  delayed
+  delayReason
+  estimatedArrival
+  note
+  contactName
+  reportedById
+  trackingEventId
+}
+    `, {"fragmentName":"CheckCallFields"}) as unknown as TypedDocumentString<CheckCallFieldsFragment, unknown>;
+export const CarrierTrackingLinkFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierTrackingLinkFields on CarrierTrackingLink {
+  id
+  shipmentMoveId
+  carrierId
+  recipientEmail
+  expiresAt
+  lastUsedAt
+  createdById
+  createdAt
+}
+    `, {"fragmentName":"CarrierTrackingLinkFields"}) as unknown as TypedDocumentString<CarrierTrackingLinkFieldsFragment, unknown>;
 export const ShipmentRatingDetailFieldsFragmentDoc = new TypedDocumentString(`
     fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -25770,9 +27721,9 @@ export const AccountingInboundApplyPreviewDocument = {"__meta__":{"kind":"query"
 export const ApplyAccountingInboundChangeDocument = {"__meta__":{"kind":"mutation","name":"ApplyAccountingInboundChange","hash":"sha256:998987f54ccaba499d06da50b47015ac79463c6804e5c90a1599d125501dd4f0"}} as unknown as TypedDocumentString<ApplyAccountingInboundChangeMutation, ApplyAccountingInboundChangeMutationVariables>;
 export const IgnoreAccountingInboundChangeDocument = {"__meta__":{"kind":"mutation","name":"IgnoreAccountingInboundChange","hash":"sha256:ba2b021de77e38f27e93b81f449efc57a03a86668dda0c1c2450962a35e1aaa4"}} as unknown as TypedDocumentString<IgnoreAccountingInboundChangeMutation, IgnoreAccountingInboundChangeMutationVariables>;
 export const AccountingInboundChangeTableDocument = {"__meta__":{"kind":"query","name":"AccountingInboundChangeTable","hash":"sha256:bf09f86e030cab8ce591a9c5dd176db8959c4449aed757a8914c87ab5659f680"}} as unknown as TypedDocumentString<AccountingInboundChangeTableQuery, AccountingInboundChangeTableQueryVariables>;
-export const AccountingSyncStatusDocument = {"__meta__":{"kind":"query","name":"AccountingSyncStatus","hash":"sha256:a1c9468712282840e44dcad38eb7ddf8aa2df61074cc12646af55a49d7426e65"}} as unknown as TypedDocumentString<AccountingSyncStatusQuery, AccountingSyncStatusQueryVariables>;
-export const SaveAccountingAppDocument = {"__meta__":{"kind":"mutation","name":"SaveAccountingApp","hash":"sha256:9780c97705557c32c19b3e5c910b03ef6e544d6f9766b82dea07d1cd5674ad12"}} as unknown as TypedDocumentString<SaveAccountingAppMutation, SaveAccountingAppMutationVariables>;
-export const RemoveAccountingAppDocument = {"__meta__":{"kind":"mutation","name":"RemoveAccountingApp","hash":"sha256:ed1cfb1db9cc5620238cd7eb88ae7e15a694f67f5bbcf776b4f0cc600bc5797f"}} as unknown as TypedDocumentString<RemoveAccountingAppMutation, RemoveAccountingAppMutationVariables>;
+export const AccountingSyncStatusDocument = {"__meta__":{"kind":"query","name":"AccountingSyncStatus","hash":"sha256:de1d8411eb5d00eceba01d6e63fa915dbd162d65dbd61856c1235646b02a0ccb"}} as unknown as TypedDocumentString<AccountingSyncStatusQuery, AccountingSyncStatusQueryVariables>;
+export const SaveAccountingAppDocument = {"__meta__":{"kind":"mutation","name":"SaveAccountingApp","hash":"sha256:0fc992cda75280fa73e5bf5145f1db9afcdc4f27d697a15d6fd9c21c6047b9e5"}} as unknown as TypedDocumentString<SaveAccountingAppMutation, SaveAccountingAppMutationVariables>;
+export const RemoveAccountingAppDocument = {"__meta__":{"kind":"mutation","name":"RemoveAccountingApp","hash":"sha256:be9084d55c1073dc01e24f86929e17b091bb35057ce3aadd179f9ca3a3976e51"}} as unknown as TypedDocumentString<RemoveAccountingAppMutation, RemoveAccountingAppMutationVariables>;
 export const AccountingMappingSummaryDocument = {"__meta__":{"kind":"query","name":"AccountingMappingSummary","hash":"sha256:622a5265a51d6ed7f1e44e88e5b49132a8d8cad5f1d55d1cf23cc4e0f61e2599"}} as unknown as TypedDocumentString<AccountingMappingSummaryQuery, AccountingMappingSummaryQueryVariables>;
 export const AccountingMappingsDocument = {"__meta__":{"kind":"query","name":"AccountingMappings","hash":"sha256:ec5c15fcda7c5480585a4bceed9ee0a06b51a918213489948873b69815602e21"}} as unknown as TypedDocumentString<AccountingMappingsQuery, AccountingMappingsQueryVariables>;
 export const AccountingReferenceObjectsDocument = {"__meta__":{"kind":"query","name":"AccountingReferenceObjects","hash":"sha256:c17d6f7e89eb758f813e16f3f368e0e9ff1fa4675322e6635e0b404634c26497"}} as unknown as TypedDocumentString<AccountingReferenceObjectsQuery, AccountingReferenceObjectsQueryVariables>;
@@ -25811,7 +27762,7 @@ export const AssessLateChargesDocument = {"__meta__":{"kind":"mutation","name":"
 export const ArAgingSummaryDocument = {"__meta__":{"kind":"query","name":"ArAgingSummary","hash":"sha256:6e0cbca355dfb7e59c403efe34be542aee4f26ff779d480e08e077574626daf9"}} as unknown as TypedDocumentString<ArAgingSummaryQuery, ArAgingSummaryQueryVariables>;
 export const ArOpenItemsDocument = {"__meta__":{"kind":"query","name":"ArOpenItems","hash":"sha256:7d695f3c3b6eacc1f00c10b1905a5d1d33969269106ffe2ef5c30e81146fc7d3"}} as unknown as TypedDocumentString<ArOpenItemsQuery, ArOpenItemsQueryVariables>;
 export const ArCustomerLedgerDocument = {"__meta__":{"kind":"query","name":"ArCustomerLedger","hash":"sha256:d9554d04015d108ca655b857f923eae260ae36f143a509025f79717a4fdf65c4"}} as unknown as TypedDocumentString<ArCustomerLedgerQuery, ArCustomerLedgerQueryVariables>;
-export const ArCustomerStatementDocument = {"__meta__":{"kind":"query","name":"ArCustomerStatement","hash":"sha256:716ca016b568a28b37004384395e0071a31d5fb8334f818d3a1a1aa5a403c21b"}} as unknown as TypedDocumentString<ArCustomerStatementQuery, ArCustomerStatementQueryVariables>;
+export const ArCustomerStatementDocument = {"__meta__":{"kind":"query","name":"ArCustomerStatement","hash":"sha256:37786f0d0781649a4cfcd0ece0f6dd76640072c127bafb5cdb3b1e810d50a4bd"}} as unknown as TypedDocumentString<ArCustomerStatementQuery, ArCustomerStatementQueryVariables>;
 export const ArDashboardKpisDocument = {"__meta__":{"kind":"query","name":"ArDashboardKpis","hash":"sha256:a05fd02645fddb941d688972550b27be3ce6665510aecb4170c44dd11c491452"}} as unknown as TypedDocumentString<ArDashboardKpisQuery, ArDashboardKpisQueryVariables>;
 export const ArDsoTrendDocument = {"__meta__":{"kind":"query","name":"ArDsoTrend","hash":"sha256:031255e1f9c64413b438a2b3825d9dd8c2101fb1705a6c0e6e66175243334571"}} as unknown as TypedDocumentString<ArDsoTrendQuery, ArDsoTrendQueryVariables>;
 export const ArAgingTrendDocument = {"__meta__":{"kind":"query","name":"ArAgingTrend","hash":"sha256:ef0336444abe3d8b2ab3101645e9f24367fbb81bda8e4c66f902a2fbfedda191"}} as unknown as TypedDocumentString<ArAgingTrendQuery, ArAgingTrendQueryVariables>;
@@ -25947,15 +27898,15 @@ export const SetMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"Se
 export const ClearMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"ClearMyAIFeedback","hash":"sha256:fe3ab8a659e88516571a342f231d0e575d1a136d9c5a9655bcca2fd93613510a"}} as unknown as TypedDocumentString<ClearMyAiFeedbackMutation, ClearMyAiFeedbackMutationVariables>;
 export const AiFeedbackTableDocument = {"__meta__":{"kind":"query","name":"AIFeedbackTable","hash":"sha256:340427dceb61302fa430510e09fb15618155e62a07eda870abd25d331ae9ee8f"}} as unknown as TypedDocumentString<AiFeedbackTableQuery, AiFeedbackTableQueryVariables>;
 export const AgentFeedbackSummaryDocument = {"__meta__":{"kind":"query","name":"AgentFeedbackSummary","hash":"sha256:0a99eeca389833697ab85daf88747a577c77f96c073a0fdc51df38e67aad7e1b"}} as unknown as TypedDocumentString<AgentFeedbackSummaryQuery, AgentFeedbackSummaryQueryVariables>;
-export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:aa7e5fcf10cffb88fc73ca79e65fc40b8abb83d0445f690879a5e590bc8f5002"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
-export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:44f5f4c79d366a5f219e6c04c2c7cadf9494f7f55199b9e684c74173ed45559b"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
+export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:7f7eed984338fd8eb75579fcf75d46f6c7e117c959c7c1f6a8cdce2a6c19f756"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
+export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:9c6071d54bc7d03c5f3312717974b9817ef1db2c94600eb77eb1fce5861d994d"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
 export const AiProviderLimitsDocument = {"__meta__":{"kind":"query","name":"AIProviderLimits","hash":"sha256:41e9cec44006dcb45c576a25475ad11a1107a228ba463a0683edae4fabf22d6c"}} as unknown as TypedDocumentString<AiProviderLimitsQuery, AiProviderLimitsQueryVariables>;
 export const AiRoutePreviewDocument = {"__meta__":{"kind":"query","name":"AIRoutePreview","hash":"sha256:0502a524401b35341763abf9b0ff03589358c9ea9f199ca7e9017b44eda92b65"}} as unknown as TypedDocumentString<AiRoutePreviewQuery, AiRoutePreviewQueryVariables>;
 export const AiProviderModelsDocument = {"__meta__":{"kind":"query","name":"AIProviderModels","hash":"sha256:b0861434a19296d912bfa020fac1d1021646451ab6f9decd2bc00fd076ebe90f"}} as unknown as TypedDocumentString<AiProviderModelsQuery, AiProviderModelsQueryVariables>;
 export const AiProviderUsageDailyDocument = {"__meta__":{"kind":"query","name":"AIProviderUsageDaily","hash":"sha256:8c15d40d351e26f4e0e74838332e965bdfa69be1aa66452482fc3399dad511c7"}} as unknown as TypedDocumentString<AiProviderUsageDailyQuery, AiProviderUsageDailyQueryVariables>;
 export const TestAiProviderDraftDocument = {"__meta__":{"kind":"mutation","name":"TestAIProviderDraft","hash":"sha256:5cd1d34923e16b5189644e35108d85429a67b9f2554cd7b3aa90add20ba6f689"}} as unknown as TypedDocumentString<TestAiProviderDraftMutation, TestAiProviderDraftMutationVariables>;
-export const ReorderAiProvidersDocument = {"__meta__":{"kind":"mutation","name":"ReorderAIProviders","hash":"sha256:acf530599a10e0b39829dcd3d9106360fb75df652a66196b368524e0710dd056"}} as unknown as TypedDocumentString<ReorderAiProvidersMutation, ReorderAiProvidersMutationVariables>;
-export const PatchAiProviderDocument = {"__meta__":{"kind":"mutation","name":"PatchAIProvider","hash":"sha256:a0cbf889b12b4fe33ea45a1051db07e9d4977c50e18264badc166d92ff496803"}} as unknown as TypedDocumentString<PatchAiProviderMutation, PatchAiProviderMutationVariables>;
+export const ReorderAiProvidersDocument = {"__meta__":{"kind":"mutation","name":"ReorderAIProviders","hash":"sha256:8c5f0b5b6c0a865d76a8af40e3b4bd1c9afdef713e83ce39e0f81eee1a1e21e4"}} as unknown as TypedDocumentString<ReorderAiProvidersMutation, ReorderAiProvidersMutationVariables>;
+export const PatchAiProviderDocument = {"__meta__":{"kind":"mutation","name":"PatchAIProvider","hash":"sha256:f202ef551268112c0d484ec7f02f1b9dfdbe0fd1105b86e91a3359bd861c84bf"}} as unknown as TypedDocumentString<PatchAiProviderMutation, PatchAiProviderMutationVariables>;
 export const AiUsageSummaryDocument = {"__meta__":{"kind":"query","name":"AIUsageSummary","hash":"sha256:22b752f36ea7369cb330c482bae62e65443c496110818dff32d26d4405302d17"}} as unknown as TypedDocumentString<AiUsageSummaryQuery, AiUsageSummaryQueryVariables>;
 export const ApiKeyTableDocument = {"__meta__":{"kind":"query","name":"ApiKeyTable","hash":"sha256:aeacf34d9ae14863db97c29a2ea928d83c46bba47f49ecd6a05ccdf7d4a33951"}} as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
 export const AttentionSummaryDocument = {"__meta__":{"kind":"query","name":"AttentionSummary","hash":"sha256:f5497f5bda3b38c5a3875db4677a9a034d1bcc1c4866b6c698351fc2198b1322"}} as unknown as TypedDocumentString<AttentionSummaryQuery, AttentionSummaryQueryVariables>;
@@ -26085,7 +28036,7 @@ export const AcceptCarrierInvoiceMatchDocument = {"__meta__":{"kind":"mutation",
 export const AcceptCarrierInvoiceMatchWithVarianceDocument = {"__meta__":{"kind":"mutation","name":"AcceptCarrierInvoiceMatchWithVariance","hash":"sha256:060f67125969b0df8bd23b2d406141579141403904677fcf383e944aae0c9349"}} as unknown as TypedDocumentString<AcceptCarrierInvoiceMatchWithVarianceMutation, AcceptCarrierInvoiceMatchWithVarianceMutationVariables>;
 export const RejectCarrierInvoiceMatchDocument = {"__meta__":{"kind":"mutation","name":"RejectCarrierInvoiceMatch","hash":"sha256:9afe5a46af162af1d29113765c8b1107deee2246b7294f54301c3b2884169ea1"}} as unknown as TypedDocumentString<RejectCarrierInvoiceMatchMutation, RejectCarrierInvoiceMatchMutationVariables>;
 export const CarrierTableDocument = {"__meta__":{"kind":"query","name":"CarrierTable","hash":"sha256:24890c58a1d854d5479367fa1e4b5e19d0421b6863081f334b23aef9c9ab6f78"}} as unknown as TypedDocumentString<CarrierTableQuery, CarrierTableQueryVariables>;
-export const CommandPaletteCustomerPreviewDocument = {"__meta__":{"kind":"query","name":"CommandPaletteCustomerPreview","hash":"sha256:bdefd0fd98381bfc42a929513d00ea1308ca1b99a27624f99d86c9b6089828b2"}} as unknown as TypedDocumentString<CommandPaletteCustomerPreviewQuery, CommandPaletteCustomerPreviewQueryVariables>;
+export const CommandPaletteCustomerPreviewDocument = {"__meta__":{"kind":"query","name":"CommandPaletteCustomerPreview","hash":"sha256:8a6f28abb25b5e4e6400e35f2a1f1bfd0b61d633e2963b47ca7c0188e85f757e"}} as unknown as TypedDocumentString<CommandPaletteCustomerPreviewQuery, CommandPaletteCustomerPreviewQueryVariables>;
 export const CommodityTableDocument = {"__meta__":{"kind":"query","name":"CommodityTable","hash":"sha256:02239b2db6c74085ddc074c2c20f287e0c6b1e42c2eeb5efdc2a731076b2a042"}} as unknown as TypedDocumentString<CommodityTableQuery, CommodityTableQueryVariables>;
 export const CostingControlPageDocument = {"__meta__":{"kind":"query","name":"CostingControlPage","hash":"sha256:a85cccb870b7669eca888497e484d84fee24b403957e9d3bbf4ff03b337551ea"}} as unknown as TypedDocumentString<CostingControlPageQuery, CostingControlPageQueryVariables>;
 export const ResolvedCostProfilePageDocument = {"__meta__":{"kind":"query","name":"ResolvedCostProfilePage","hash":"sha256:0b2352614b5935706f571748ef919218386d7f44cee104d0a0382467511caf67"}} as unknown as TypedDocumentString<ResolvedCostProfilePageQuery, ResolvedCostProfilePageQueryVariables>;
@@ -26099,7 +28050,7 @@ export const ApplyUnappliedCustomerPaymentDocument = {"__meta__":{"kind":"mutati
 export const ReverseCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ReverseCustomerPayment","hash":"sha256:fe84be95798f92734cec53df3348b8593909fafde378deb329d583affe25145f"}} as unknown as TypedDocumentString<ReverseCustomerPaymentMutation, ReverseCustomerPaymentMutationVariables>;
 export const DeskCustomerCardDocument = {"__meta__":{"kind":"query","name":"DeskCustomerCard","hash":"sha256:f9392e6e7b40d6562977857131ff16dbaf3bfcbc0d21b2512c1acec7fbd6176f"}} as unknown as TypedDocumentString<DeskCustomerCardQuery, DeskCustomerCardQueryVariables>;
 export const DeskCustomerRateAgreementsDocument = {"__meta__":{"kind":"query","name":"DeskCustomerRateAgreements","hash":"sha256:1ba242b68d29998af524f262662b0017f695a8e36d48900f2a6969c1b19bce2e"}} as unknown as TypedDocumentString<DeskCustomerRateAgreementsQuery, DeskCustomerRateAgreementsQueryVariables>;
-export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:5ac4908d539bd6bee48049a6729a62ad4ac0e1a6a6c7e4ddf366f208b533ef1b"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
+export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:b03bdf83cbfd113e6933f80dbe8d2689721f4abd1057e18d8b5b0510ff57f510"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
 export const DataTableInsightFieldsDocument = {"__meta__":{"kind":"query","name":"DataTableInsightFields","hash":"sha256:22fecf32b7271231ed11fa6894b1067fa462fe7647a51aec3ce2573a6dead073"}} as unknown as TypedDocumentString<DataTableInsightFieldsQuery, DataTableInsightFieldsQueryVariables>;
 export const DataTableFacetsDocument = {"__meta__":{"kind":"query","name":"DataTableFacets","hash":"sha256:65addc4be5159ffbc133b39c9fdd7f1fc5052ee694ffe223537fa75fb3351f6f"}} as unknown as TypedDocumentString<DataTableFacetsQuery, DataTableFacetsQueryVariables>;
 export const DataTableAggregatesDocument = {"__meta__":{"kind":"query","name":"DataTableAggregates","hash":"sha256:0bce5400a204835b85f3b9246d4a61cd213afb549e8ad2121531b270af0cee00"}} as unknown as TypedDocumentString<DataTableAggregatesQuery, DataTableAggregatesQueryVariables>;
@@ -26306,6 +28257,7 @@ export const ExtractionShadowReportDocument = {"__meta__":{"kind":"query","name"
 export const ExtractionShadowResultTableDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowResultTable","hash":"sha256:0f8c34e7b121c16ddc8ab00931306ec12ff556d65f7e01d96d8b3e4a9c713e06"}} as unknown as TypedDocumentString<ExtractionShadowResultTableQuery, ExtractionShadowResultTableQueryVariables>;
 export const ExtractionShadowResultDetailDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowResultDetail","hash":"sha256:f8ab396ade746603c58d63653a216371ce02b7632d660ff73ffee7a5059cbad3"}} as unknown as TypedDocumentString<ExtractionShadowResultDetailQuery, ExtractionShadowResultDetailQueryVariables>;
 export const UpdateExtractionShadowSettingsDocument = {"__meta__":{"kind":"mutation","name":"UpdateExtractionShadowSettings","hash":"sha256:557a7473030ad51dbabe9d39f6b844ccd2f4d64917eda8cff73c2eb6c7de4f51"}} as unknown as TypedDocumentString<UpdateExtractionShadowSettingsMutation, UpdateExtractionShadowSettingsMutationVariables>;
+export const FactoringCompanyTableDocument = {"__meta__":{"kind":"query","name":"FactoringCompanyTable","hash":"sha256:0e23148b59caf9e99f3b13e6ff1466760d462dfdccd38f7dd96e1bdd8c5cb5be"}} as unknown as TypedDocumentString<FactoringCompanyTableQuery, FactoringCompanyTableQueryVariables>;
 export const FiscalYearTableDocument = {"__meta__":{"kind":"query","name":"FiscalYearTable","hash":"sha256:b71efb13dab593e5639accbcbd43154e83864413588b315ef028c1029087a5b7"}} as unknown as TypedDocumentString<FiscalYearTableQuery, FiscalYearTableQueryVariables>;
 export const FleetCodeTableDocument = {"__meta__":{"kind":"query","name":"FleetCodeTable","hash":"sha256:aa2917e7de6d4a5981909b298d418eeaa9d673b8eef470e6ed424667aa344b43"}} as unknown as TypedDocumentString<FleetCodeTableQuery, FleetCodeTableQueryVariables>;
 export const FleetSafetyDocument = {"__meta__":{"kind":"query","name":"FleetSafety","hash":"sha256:6e9a229e80256b02928afbbb05c93d141f6955ef63bf3b19a4bfb228954c1334"}} as unknown as TypedDocumentString<FleetSafetyQuery, FleetSafetyQueryVariables>;
@@ -26387,17 +28339,76 @@ export const BackfillJurisdictionMilesDocument = {"__meta__":{"kind":"mutation",
 export const IftaTaxRateTableDocument = {"__meta__":{"kind":"query","name":"IftaTaxRateTable","hash":"sha256:75d9876e1746a57e7069435584d0c2968945fa0273152ed0c5b0d4ac7c2ca8c3"}} as unknown as TypedDocumentString<IftaTaxRateTableQuery, IftaTaxRateTableQueryVariables>;
 export const UpsertIftaTaxRatesDocument = {"__meta__":{"kind":"mutation","name":"UpsertIftaTaxRates","hash":"sha256:40687ccd074f12591f177689ac65f9ebc0c02b96ee78cbd3a20c61f549c6f28b"}} as unknown as TypedDocumentString<UpsertIftaTaxRatesMutation, UpsertIftaTaxRatesMutationVariables>;
 export const DeleteIftaTaxRateDocument = {"__meta__":{"kind":"mutation","name":"DeleteIftaTaxRate","hash":"sha256:3ea06bea9c4fe480fb22642ac0608f800ac5ce37559751b23103bc25274b2755"}} as unknown as TypedDocumentString<DeleteIftaTaxRateMutation, DeleteIftaTaxRateMutationVariables>;
-export const InboundMessagesDocument = {"__meta__":{"kind":"query","name":"InboundMessages","hash":"sha256:f7683dd61b03d3635e618ae7dc12b17ce1aa52d3cf345b63b894169d986e9070"}} as unknown as TypedDocumentString<InboundMessagesQuery, InboundMessagesQueryVariables>;
-export const InboundMessageDocument = {"__meta__":{"kind":"query","name":"InboundMessage","hash":"sha256:52e99ea8e8401eb17750af9ecb45f3757ec34b1ed369393b857575b10e9c5bf6"}} as unknown as TypedDocumentString<InboundMessageQuery, InboundMessageQueryVariables>;
-export const InboundMessageCountsDocument = {"__meta__":{"kind":"query","name":"InboundMessageCounts","hash":"sha256:0186e33cceac728a75529ebc6acbce0f61c96012f25f0b3cf1326efab11c6418"}} as unknown as TypedDocumentString<InboundMessageCountsQuery, InboundMessageCountsQueryVariables>;
-export const InboundMailboxesDocument = {"__meta__":{"kind":"query","name":"InboundMailboxes","hash":"sha256:f22b9b487f648767351231e30f3e2bae37b0efd215fac150db14ee4de447253f"}} as unknown as TypedDocumentString<InboundMailboxesQuery, InboundMailboxesQueryVariables>;
-export const ReviewInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"ReviewInboundMessage","hash":"sha256:86fb1437a2cfb82f25357a4c7c564c4c35f48a0355c0d9241b2a14919c418a11"}} as unknown as TypedDocumentString<ReviewInboundMessageMutation, ReviewInboundMessageMutationVariables>;
-export const LinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"LinkInboundMessage","hash":"sha256:97dae53cf391479bc0c7d92d9e72620b50ed0cc92d44b445799096ede3960b75"}} as unknown as TypedDocumentString<LinkInboundMessageMutation, LinkInboundMessageMutationVariables>;
-export const CreateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"CreateInboundMailbox","hash":"sha256:e59756e9c0630027ba9a4de428789b4ce0e1be7d2335d5ef174085423be19d85"}} as unknown as TypedDocumentString<CreateInboundMailboxMutation, CreateInboundMailboxMutationVariables>;
-export const UpdateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"UpdateInboundMailbox","hash":"sha256:8af2c7cf19e13659909e9d90e2924497177d9bedd65b71819d432175d0bb86c7"}} as unknown as TypedDocumentString<UpdateInboundMailboxMutation, UpdateInboundMailboxMutationVariables>;
-export const RotateInboundMailboxTokenDocument = {"__meta__":{"kind":"mutation","name":"RotateInboundMailboxToken","hash":"sha256:fc75bed906a1b0701c4bf19c5bd2b5ef538910793a17fa3d81ad4949d04642b8"}} as unknown as TypedDocumentString<RotateInboundMailboxTokenMutation, RotateInboundMailboxTokenMutationVariables>;
-export const SetInboundMailboxSigningSecretDocument = {"__meta__":{"kind":"mutation","name":"SetInboundMailboxSigningSecret","hash":"sha256:691872fd0420b45cca9d6d4e74693fe60eefa63ed4996452d34f3404b1b05689"}} as unknown as TypedDocumentString<SetInboundMailboxSigningSecretMutation, SetInboundMailboxSigningSecretMutationVariables>;
-export const SetInboundMailboxApiKeyDocument = {"__meta__":{"kind":"mutation","name":"SetInboundMailboxApiKey","hash":"sha256:d7a705d50c81f9c93ebdab0d1943cff882e20232b53451d5d6b9f6077ef65593"}} as unknown as TypedDocumentString<SetInboundMailboxApiKeyMutation, SetInboundMailboxApiKeyMutationVariables>;
+export const InboundMessagesDocument = {"__meta__":{"kind":"query","name":"InboundMessages","hash":"sha256:93ebb7cbf43f65a76daa8b35f8dd788a25a4e218072b1c2c20ec9062d306bdf3"}} as unknown as TypedDocumentString<InboundMessagesQuery, InboundMessagesQueryVariables>;
+export const InboundMessageDocument = {"__meta__":{"kind":"query","name":"InboundMessage","hash":"sha256:948e57e4108a4bd7948ff202aa16eedf5cb038a8146b53736a1c8c61144ec6f3"}} as unknown as TypedDocumentString<InboundMessageQuery, InboundMessageQueryVariables>;
+export const InboundMessageCountsDocument = {"__meta__":{"kind":"query","name":"InboundMessageCounts","hash":"sha256:50f8b7f7bd7f58102ef6370f1afc91df114a4c5f1888afdb5dbcdf790bca86de"}} as unknown as TypedDocumentString<InboundMessageCountsQuery, InboundMessageCountsQueryVariables>;
+export const InboundMailboxesDocument = {"__meta__":{"kind":"query","name":"InboundMailboxes","hash":"sha256:fa0972d727a0251c04e7eaaa1a8a268d05dc8ff652b0d5c947e77c6f1c1ae3ca"}} as unknown as TypedDocumentString<InboundMailboxesQuery, InboundMailboxesQueryVariables>;
+export const ReviewInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"ReviewInboundMessage","hash":"sha256:7b0d940c08a7a72fd3ead51f8769b91402d412a130e85e482527d2361b26a88a"}} as unknown as TypedDocumentString<ReviewInboundMessageMutation, ReviewInboundMessageMutationVariables>;
+export const LinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"LinkInboundMessage","hash":"sha256:b2c92a2b39fb8f57579f84cb877b184d96cc20b413271b67082d5300470c0fbb"}} as unknown as TypedDocumentString<LinkInboundMessageMutation, LinkInboundMessageMutationVariables>;
+export const CreateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"CreateInboundMailbox","hash":"sha256:d250da4c3ff90fc46f694611385a6d9f2fb14970a26927bcab1163fd8e8151fb"}} as unknown as TypedDocumentString<CreateInboundMailboxMutation, CreateInboundMailboxMutationVariables>;
+export const UpdateInboundMailboxDocument = {"__meta__":{"kind":"mutation","name":"UpdateInboundMailbox","hash":"sha256:dc6dfb33051be08a6e6f56cbc8574e68b599a848c0452cb73558dd7a9aa5e4e0"}} as unknown as TypedDocumentString<UpdateInboundMailboxMutation, UpdateInboundMailboxMutationVariables>;
+export const RotateInboundMailboxTokenDocument = {"__meta__":{"kind":"mutation","name":"RotateInboundMailboxToken","hash":"sha256:c096e0f35cda70fa030394788b2c38641d8e178c9c06c2415736b7b570446880"}} as unknown as TypedDocumentString<RotateInboundMailboxTokenMutation, RotateInboundMailboxTokenMutationVariables>;
+export const SetInboundMailboxSigningSecretDocument = {"__meta__":{"kind":"mutation","name":"SetInboundMailboxSigningSecret","hash":"sha256:f3abea9d5dccfd53d05fd6d3eb7f6d65b5fd401db098a3d860cc11d324c8e75f"}} as unknown as TypedDocumentString<SetInboundMailboxSigningSecretMutation, SetInboundMailboxSigningSecretMutationVariables>;
+export const SetInboundMailboxApiKeyDocument = {"__meta__":{"kind":"mutation","name":"SetInboundMailboxApiKey","hash":"sha256:04ea7091ddc6a91e8b6bc4bd195fdf18f390ea1a02a636f11a00c59a406c84ea"}} as unknown as TypedDocumentString<SetInboundMailboxApiKeyMutation, SetInboundMailboxApiKeyMutationVariables>;
+export const InboundThreadDocument = {"__meta__":{"kind":"query","name":"InboundThread","hash":"sha256:3d13863b8075388187491f6c5a70458abc3a68fa46f9dd65856ae77669b06993"}} as unknown as TypedDocumentString<InboundThreadQuery, InboundThreadQueryVariables>;
+export const TriageBriefingDocument = {"__meta__":{"kind":"query","name":"TriageBriefing","hash":"sha256:117adf04c3c1bb9546d43ef706330169849d88a3103793dc0a2fe2a36aa446bf"}} as unknown as TypedDocumentString<TriageBriefingQuery, TriageBriefingQueryVariables>;
+export const MyTriageViewsDocument = {"__meta__":{"kind":"query","name":"MyTriageViews","hash":"sha256:bfe8ae5b35cd10278a6b8f94c47820ff2401982d0b59c88dac815e0c1e293291"}} as unknown as TypedDocumentString<MyTriageViewsQuery, MyTriageViewsQueryVariables>;
+export const TriageResponseTargetsDocument = {"__meta__":{"kind":"query","name":"TriageResponseTargets","hash":"sha256:557ee734503fa74e461f97c0222331a7870c0eed83450d7f9e517c192837e2d9"}} as unknown as TypedDocumentString<TriageResponseTargetsQuery, TriageResponseTargetsQueryVariables>;
+export const TriageSettingsDocument = {"__meta__":{"kind":"query","name":"TriageSettings","hash":"sha256:f9cb90ab0413cef709eee8bf175bdef25af93972991d48df3546f3235e387d85"}} as unknown as TypedDocumentString<TriageSettingsQuery, TriageSettingsQueryVariables>;
+export const TriageAssigneesDocument = {"__meta__":{"kind":"query","name":"TriageAssignees","hash":"sha256:5840cd214dacce11617d8e3b11b546eb491b9493f4d9a89f51344748531d3122"}} as unknown as TypedDocumentString<TriageAssigneesQuery, TriageAssigneesQueryVariables>;
+export const TriageRulesDocument = {"__meta__":{"kind":"query","name":"TriageRules","hash":"sha256:ace45f2e8a4287be351dab6ace44640da857270010c6b16d43c33c3f0ec7e6f5"}} as unknown as TypedDocumentString<TriageRulesQuery, TriageRulesQueryVariables>;
+export const TriageRulePreviewDocument = {"__meta__":{"kind":"query","name":"TriageRulePreview","hash":"sha256:98cdd065b26afdb42a74315d05b6c6f501b9126fd2f3abc91c586cf65dac693a"}} as unknown as TypedDocumentString<TriageRulePreviewQuery, TriageRulePreviewQueryVariables>;
+export const TriageRuleMatchesDocument = {"__meta__":{"kind":"query","name":"TriageRuleMatches","hash":"sha256:ba3920dd94fe1e5128d0201c21bdf5333c9d7f63eadd17e27f446ff6c22720c1"}} as unknown as TypedDocumentString<TriageRuleMatchesQuery, TriageRuleMatchesQueryVariables>;
+export const TriageSenderDomainsDocument = {"__meta__":{"kind":"query","name":"TriageSenderDomains","hash":"sha256:e7ec26fcf178d10b45c491e6f834192e408a7506451308ee6c165fbc8fff67de"}} as unknown as TypedDocumentString<TriageSenderDomainsQuery, TriageSenderDomainsQueryVariables>;
+export const InboundSenderProfileDocument = {"__meta__":{"kind":"query","name":"InboundSenderProfile","hash":"sha256:b266228c2579290b0c7e2bf96037e66214c2f1fcf22c431c105e5b8f337ba14b"}} as unknown as TypedDocumentString<InboundSenderProfileQuery, InboundSenderProfileQueryVariables>;
+export const TriageReplyTemplatesDocument = {"__meta__":{"kind":"query","name":"TriageReplyTemplates","hash":"sha256:85b0a0c0c1651ee98fd9759c57df5a96ac93d93d4dabf8ace084c01cc8a1bbad"}} as unknown as TypedDocumentString<TriageReplyTemplatesQuery, TriageReplyTemplatesQueryVariables>;
+export const InboundReplyAttachablesDocument = {"__meta__":{"kind":"query","name":"InboundReplyAttachables","hash":"sha256:350e858931fb464608ee5c1d890af89a66c95cb5f8af662346f43c62f3a1fb7c"}} as unknown as TypedDocumentString<InboundReplyAttachablesQuery, InboundReplyAttachablesQueryVariables>;
+export const RenderTriageReplyTemplateDocument = {"__meta__":{"kind":"query","name":"RenderTriageReplyTemplate","hash":"sha256:494e3e71eac537fb78a5ce2c185bac873942924f9e5565e60a6a57b653467ecc"}} as unknown as TypedDocumentString<RenderTriageReplyTemplateQuery, RenderTriageReplyTemplateQueryVariables>;
+export const TriageStopTimesDocument = {"__meta__":{"kind":"query","name":"TriageStopTimes","hash":"sha256:e90ea024a33c5d9a0ee1eafcadb6b17974f13f06e47c8ac25dc3def271292755"}} as unknown as TypedDocumentString<TriageStopTimesQuery, TriageStopTimesQueryVariables>;
+export const TriageShipmentPeekDocument = {"__meta__":{"kind":"query","name":"TriageShipmentPeek","hash":"sha256:d8b836dbc02ae0cd2530f08084c2264a930e5a319a20b69f492fa853812e69a2"}} as unknown as TypedDocumentString<TriageShipmentPeekQuery, TriageShipmentPeekQueryVariables>;
+export const TriageCustomerPeekDocument = {"__meta__":{"kind":"query","name":"TriageCustomerPeek","hash":"sha256:71d3f63dec5ce751b20d7048999aabd59d6f7ff416b30149c942bbc6659379d3"}} as unknown as TypedDocumentString<TriageCustomerPeekQuery, TriageCustomerPeekQueryVariables>;
+export const ReviewInboundMessagesDocument = {"__meta__":{"kind":"mutation","name":"ReviewInboundMessages","hash":"sha256:27c015993d05bd2c7760d8adfc69bc5b08451c54f7c75cdffd786edc19ed9f1c"}} as unknown as TypedDocumentString<ReviewInboundMessagesMutation, ReviewInboundMessagesMutationVariables>;
+export const ReopenInboundMessagesDocument = {"__meta__":{"kind":"mutation","name":"ReopenInboundMessages","hash":"sha256:8056a2a3adf6d38988d8a9d00135fe9081c9e4543946d96d761c6efc344223b4"}} as unknown as TypedDocumentString<ReopenInboundMessagesMutation, ReopenInboundMessagesMutationVariables>;
+export const AssignInboundMessagesDocument = {"__meta__":{"kind":"mutation","name":"AssignInboundMessages","hash":"sha256:7dd00f8f75d29999869f21641c16303cf8c4dfce9eb7eeaea32d1c7410623c4e"}} as unknown as TypedDocumentString<AssignInboundMessagesMutation, AssignInboundMessagesMutationVariables>;
+export const SnoozeInboundMessagesDocument = {"__meta__":{"kind":"mutation","name":"SnoozeInboundMessages","hash":"sha256:0e28ee7b8bc9be9ec3b57c5ac142f47950d019863375818d1dba03eefc1e8398"}} as unknown as TypedDocumentString<SnoozeInboundMessagesMutation, SnoozeInboundMessagesMutationVariables>;
+export const WakeInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"WakeInboundMessage","hash":"sha256:15c209c702ea07d6ce41bdc3b970cbbfa0b70ee38f779a7a5e80a9b46bec19be"}} as unknown as TypedDocumentString<WakeInboundMessageMutation, WakeInboundMessageMutationVariables>;
+export const WaitForInboundReplyDocument = {"__meta__":{"kind":"mutation","name":"WaitForInboundReply","hash":"sha256:9dd5ed2394551512f518f03c9f1b72f78a383193553595cce7e80325c16b03b4"}} as unknown as TypedDocumentString<WaitForInboundReplyMutation, WaitForInboundReplyMutationVariables>;
+export const StopWaitingForInboundReplyDocument = {"__meta__":{"kind":"mutation","name":"StopWaitingForInboundReply","hash":"sha256:bb60455e66cc7782020b0523459b912946f7de7655df98066c5fe5434c97d471"}} as unknown as TypedDocumentString<StopWaitingForInboundReplyMutation, StopWaitingForInboundReplyMutationVariables>;
+export const UnlinkInboundMessageDocument = {"__meta__":{"kind":"mutation","name":"UnlinkInboundMessage","hash":"sha256:5ddadab1bf6009e7bde0b1f44f0a835255f2c6c736ab8a9e185bce284a472ae0"}} as unknown as TypedDocumentString<UnlinkInboundMessageMutation, UnlinkInboundMessageMutationVariables>;
+export const SendInboundMailboxTestDocument = {"__meta__":{"kind":"mutation","name":"SendInboundMailboxTest","hash":"sha256:c41b55d3dd180898dc3ad9f957cf83f87bbc2b68e4e58d98a2ced9dd96cf4ac7"}} as unknown as TypedDocumentString<SendInboundMailboxTestMutation, SendInboundMailboxTestMutationVariables>;
+export const HandOffTriageDocument = {"__meta__":{"kind":"mutation","name":"HandOffTriage","hash":"sha256:1b403916b079aff0670afaedbd21ce4394bf01e1be50b519d2168829a435cf08"}} as unknown as TypedDocumentString<HandOffTriageMutation, HandOffTriageMutationVariables>;
+export const ReadUnreadInboundMessagesDocument = {"__meta__":{"kind":"mutation","name":"ReadUnreadInboundMessages","hash":"sha256:5a1bf84f9012b1dfefd929360562c92c8c37430f229869b12dba0a04a073d572"}} as unknown as TypedDocumentString<ReadUnreadInboundMessagesMutation, ReadUnreadInboundMessagesMutationVariables>;
+export const CreateMyTriageViewDocument = {"__meta__":{"kind":"mutation","name":"CreateMyTriageView","hash":"sha256:8c93082776f8b79a850f86d32d359841d9202a6bf54f8851dbe03020543a334a"}} as unknown as TypedDocumentString<CreateMyTriageViewMutation, CreateMyTriageViewMutationVariables>;
+export const RenameMyTriageViewDocument = {"__meta__":{"kind":"mutation","name":"RenameMyTriageView","hash":"sha256:91f22a8dd2880f91d5b327fc4dc53699b66f666fde5bc70249187dfda8ee16a1"}} as unknown as TypedDocumentString<RenameMyTriageViewMutation, RenameMyTriageViewMutationVariables>;
+export const DeleteMyTriageViewDocument = {"__meta__":{"kind":"mutation","name":"DeleteMyTriageView","hash":"sha256:6491cce5d678362436e62ba6bceb24d119fc9aae5b7219c164d2ce1044cfa739"}} as unknown as TypedDocumentString<DeleteMyTriageViewMutation, DeleteMyTriageViewMutationVariables>;
+export const UpdateTriageResponseTargetsDocument = {"__meta__":{"kind":"mutation","name":"UpdateTriageResponseTargets","hash":"sha256:706ce5768d8ef843d4ad190b84f454ec06fecbe8dcc2fc77cd84471a0c3e9f30"}} as unknown as TypedDocumentString<UpdateTriageResponseTargetsMutation, UpdateTriageResponseTargetsMutationVariables>;
+export const UpdateTriageSettingsDocument = {"__meta__":{"kind":"mutation","name":"UpdateTriageSettings","hash":"sha256:7caa5c0190e830126ae9d4af3314e1e994ee36f291ac2ca8d50ee3107ddad3f2"}} as unknown as TypedDocumentString<UpdateTriageSettingsMutation, UpdateTriageSettingsMutationVariables>;
+export const CreateTriageRuleDocument = {"__meta__":{"kind":"mutation","name":"CreateTriageRule","hash":"sha256:ae019a058636d052a20b835dcd8bb45ca2e28bf3c3b2b15ec2d3762ead9f71de"}} as unknown as TypedDocumentString<CreateTriageRuleMutation, CreateTriageRuleMutationVariables>;
+export const UpdateTriageRuleDocument = {"__meta__":{"kind":"mutation","name":"UpdateTriageRule","hash":"sha256:f16a22e1698b224384531f0c13a700e0b896fa1639f1b2d3bbf6950aa094d4ac"}} as unknown as TypedDocumentString<UpdateTriageRuleMutation, UpdateTriageRuleMutationVariables>;
+export const SetTriageRuleEnabledDocument = {"__meta__":{"kind":"mutation","name":"SetTriageRuleEnabled","hash":"sha256:daf8410331e6237fbb24b936815cf0d82b93ff416374c8cbdd8aabd7e1b7da1a"}} as unknown as TypedDocumentString<SetTriageRuleEnabledMutation, SetTriageRuleEnabledMutationVariables>;
+export const DeleteTriageRuleDocument = {"__meta__":{"kind":"mutation","name":"DeleteTriageRule","hash":"sha256:440b391d3924e20e21ccfb8d42f28d47db7e4511166903f8613e21b6a17da253"}} as unknown as TypedDocumentString<DeleteTriageRuleMutation, DeleteTriageRuleMutationVariables>;
+export const CorrectInboundClassificationDocument = {"__meta__":{"kind":"mutation","name":"CorrectInboundClassification","hash":"sha256:6e8bc87add67ef350ebcc0336a1102b0b9962daa928a48c41d4719b15b592438"}} as unknown as TypedDocumentString<CorrectInboundClassificationMutation, CorrectInboundClassificationMutationVariables>;
+export const FlagInboundFactDocument = {"__meta__":{"kind":"mutation","name":"FlagInboundFact","hash":"sha256:6fe6b2b1c3dd984cb20cd7a69331c4d8909d853116d00e49e6184a0cd1657a6a"}} as unknown as TypedDocumentString<FlagInboundFactMutation, FlagInboundFactMutationVariables>;
+export const ResolveInboundConflictDocument = {"__meta__":{"kind":"mutation","name":"ResolveInboundConflict","hash":"sha256:0f647c0a5598679f910558aab9bb7e2fbaf9e6dbf19f2406284d60662368ed47"}} as unknown as TypedDocumentString<ResolveInboundConflictMutation, ResolveInboundConflictMutationVariables>;
+export const ReopenInboundConflictDocument = {"__meta__":{"kind":"mutation","name":"ReopenInboundConflict","hash":"sha256:5699c6430361aaa70d039639bdefda54309929ad6c9d213f2e63508f571cf696"}} as unknown as TypedDocumentString<ReopenInboundConflictMutation, ReopenInboundConflictMutationVariables>;
+export const DraftInboundReplyDocument = {"__meta__":{"kind":"mutation","name":"DraftInboundReply","hash":"sha256:29e6355c57fa5cec8a2afa8cf1eaa95ad2c909d6aca7f96011aa0e1f8fac48b5"}} as unknown as TypedDocumentString<DraftInboundReplyMutation, DraftInboundReplyMutationVariables>;
+export const SaveInboundReplyDraftDocument = {"__meta__":{"kind":"mutation","name":"SaveInboundReplyDraft","hash":"sha256:58bbd0aaa17ce522c3fbcf2d2a823e1dceaa791c5f529e7338afd1747d226476"}} as unknown as TypedDocumentString<SaveInboundReplyDraftMutation, SaveInboundReplyDraftMutationVariables>;
+export const DiscardInboundReplyDraftDocument = {"__meta__":{"kind":"mutation","name":"DiscardInboundReplyDraft","hash":"sha256:a1fbe82e9927d0a2e4c2971174812b429fd6d8510549c3091fb9718ae71a2125"}} as unknown as TypedDocumentString<DiscardInboundReplyDraftMutation, DiscardInboundReplyDraftMutationVariables>;
+export const SendInboundReplyDocument = {"__meta__":{"kind":"mutation","name":"SendInboundReply","hash":"sha256:916395255355e121052285ff31188c1190656999f0f6412fe11434b0e4f024d5"}} as unknown as TypedDocumentString<SendInboundReplyMutation, SendInboundReplyMutationVariables>;
+export const DraftInboundManyDocument = {"__meta__":{"kind":"mutation","name":"DraftInboundMany","hash":"sha256:771c056480fc8747b44dedde3fad4cf8f973c7e4f1aac854039a5a2aedd3cadf"}} as unknown as TypedDocumentString<DraftInboundManyMutation, DraftInboundManyMutationVariables>;
+export const CreateTriageReplyTemplateDocument = {"__meta__":{"kind":"mutation","name":"CreateTriageReplyTemplate","hash":"sha256:44a6fa659a2c4b3c631acad9901f6c0b86d0b0ce3cd7f69eedb07038a353afb9"}} as unknown as TypedDocumentString<CreateTriageReplyTemplateMutation, CreateTriageReplyTemplateMutationVariables>;
+export const UpdateTriageReplyTemplateDocument = {"__meta__":{"kind":"mutation","name":"UpdateTriageReplyTemplate","hash":"sha256:d68e259cf34318a91e689bfee60fb89f4721da16e4c028c9c3913235669ff3c5"}} as unknown as TypedDocumentString<UpdateTriageReplyTemplateMutation, UpdateTriageReplyTemplateMutationVariables>;
+export const DeleteTriageReplyTemplateDocument = {"__meta__":{"kind":"mutation","name":"DeleteTriageReplyTemplate","hash":"sha256:724edb0f7deabe0935f7380739230cfd8b24d0e6a68962c68f8119afc26f5ec1"}} as unknown as TypedDocumentString<DeleteTriageReplyTemplateMutation, DeleteTriageReplyTemplateMutationVariables>;
+export const DraftInboundLoadDocument = {"__meta__":{"kind":"mutation","name":"DraftInboundLoad","hash":"sha256:14ddb958f5b8683025b1b528d7696d0f3ce6ee34e2c3bd5f3548ec6fb57ee166"}} as unknown as TypedDocumentString<DraftInboundLoadMutation, DraftInboundLoadMutationVariables>;
+export const DiscardInboundLoadDocument = {"__meta__":{"kind":"mutation","name":"DiscardInboundLoad","hash":"sha256:2a6086b071664ba53ab865c0c631eb506a624ded589e1c93759a3aa162aae523"}} as unknown as TypedDocumentString<DiscardInboundLoadMutation, DiscardInboundLoadMutationVariables>;
+export const CreateInboundLoadDocument = {"__meta__":{"kind":"mutation","name":"CreateInboundLoad","hash":"sha256:9b9c2f31db528ba67f47bf76bb9e4b6ae5b92396e4e4e10efddfa2fcb0588c6b"}} as unknown as TypedDocumentString<CreateInboundLoadMutation, CreateInboundLoadMutationVariables>;
+export const FileInboundAttachmentDocument = {"__meta__":{"kind":"mutation","name":"FileInboundAttachment","hash":"sha256:dc63c6ecaa97fe8891c9a717e23e98a8d4decb8c5165b5b85c8a72fa3d3dc673"}} as unknown as TypedDocumentString<FileInboundAttachmentMutation, FileInboundAttachmentMutationVariables>;
+export const FileInboundManyDocument = {"__meta__":{"kind":"mutation","name":"FileInboundMany","hash":"sha256:2eb0902ed25ef92aa91902a9516fc5b41d53ef08aa307cd23a9508373a30441e"}} as unknown as TypedDocumentString<FileInboundManyMutation, FileInboundManyMutationVariables>;
+export const UnfileInboundAttachmentDocument = {"__meta__":{"kind":"mutation","name":"UnfileInboundAttachment","hash":"sha256:41a2ae56d962908e968ed1c83e7ce92016b2f708539bcd25c398bf8f1c67b275"}} as unknown as TypedDocumentString<UnfileInboundAttachmentMutation, UnfileInboundAttachmentMutationVariables>;
+export const LogInboundExceptionDocument = {"__meta__":{"kind":"mutation","name":"LogInboundException","hash":"sha256:ac91766d0741ec6f5cf525a4afcde922cf560ce8861cd97c73013fff6f685a68"}} as unknown as TypedDocumentString<LogInboundExceptionMutation, LogInboundExceptionMutationVariables>;
+export const BlockInboundSenderDocument = {"__meta__":{"kind":"mutation","name":"BlockInboundSender","hash":"sha256:40ee4f998d8d19bac52fd36c0a274f077fdc7bc155b00afcf75e344565782347"}} as unknown as TypedDocumentString<BlockInboundSenderMutation, BlockInboundSenderMutationVariables>;
+export const UnblockInboundSenderDocument = {"__meta__":{"kind":"mutation","name":"UnblockInboundSender","hash":"sha256:cd43b9c477092a1c7b177001cf57579f37d1312fef626f81404deb6262757f63"}} as unknown as TypedDocumentString<UnblockInboundSenderMutation, UnblockInboundSenderMutationVariables>;
+export const DecideInboundStopsDocument = {"__meta__":{"kind":"mutation","name":"DecideInboundStops","hash":"sha256:900da0757fc1cad10f874fcaee8e3594a52f1f511efd9d13a47879b60a68b10a"}} as unknown as TypedDocumentString<DecideInboundStopsMutation, DecideInboundStopsMutationVariables>;
 export const InvoiceAdjustmentApprovalsDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentApprovals","hash":"sha256:051cda2df75986990c40b1ec9cbcaa20d4a398519581fbf58098f79859a2b0f8"}} as unknown as TypedDocumentString<InvoiceAdjustmentApprovalsQuery, InvoiceAdjustmentApprovalsQueryVariables>;
 export const InvoiceAdjustmentApprovalDetailDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentApprovalDetail","hash":"sha256:3faee37cd372092eca2df737c1d885af871a825933f88250bc9c91dc0cb6e59b"}} as unknown as TypedDocumentString<InvoiceAdjustmentApprovalDetailQuery, InvoiceAdjustmentApprovalDetailQueryVariables>;
 export const InvoiceAdjustmentOperationsSummaryDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentOperationsSummary","hash":"sha256:441d3f879bd0cfc9f9aa4483469fc03a694dbdf70ec8831621691b0c8121b5e3"}} as unknown as TypedDocumentString<InvoiceAdjustmentOperationsSummaryQuery, InvoiceAdjustmentOperationsSummaryQueryVariables>;
@@ -26591,6 +28602,11 @@ export const TenderShipmentsDocument = {"__meta__":{"kind":"mutation","name":"Te
 export const DecideShipmentSuggestionDocument = {"__meta__":{"kind":"mutation","name":"DecideShipmentSuggestion","hash":"sha256:c58d215bd70ddacae5cb7bb1db402fe00f516e3b02750be051dba50a8fb157a8"}} as unknown as TypedDocumentString<DecideShipmentSuggestionMutation, DecideShipmentSuggestionMutationVariables>;
 export const UndoShipmentSuggestionDecisionDocument = {"__meta__":{"kind":"mutation","name":"UndoShipmentSuggestionDecision","hash":"sha256:70cabba6bbcd1f39dd47f1d0d7c1458757280bef6239eab04b33a90166f9ad16"}} as unknown as TypedDocumentString<UndoShipmentSuggestionDecisionMutation, UndoShipmentSuggestionDecisionMutationVariables>;
 export const NotifyShipmentDelayDocument = {"__meta__":{"kind":"mutation","name":"NotifyShipmentDelay","hash":"sha256:ac9e4fcb73800c23f82a4b48d988a24a084b6aca45e5d9747b7a7c04a0ad7183"}} as unknown as TypedDocumentString<NotifyShipmentDelayMutation, NotifyShipmentDelayMutationVariables>;
+export const ShipmentCheckCallsDocument = {"__meta__":{"kind":"query","name":"ShipmentCheckCalls","hash":"sha256:8fbfd73531976ff3ead45515fdd5656c6da356f8edb2ab6c326fe7227f5e2f8a"}} as unknown as TypedDocumentString<ShipmentCheckCallsQuery, ShipmentCheckCallsQueryVariables>;
+export const CarrierTrackingLinkDocument = {"__meta__":{"kind":"query","name":"CarrierTrackingLink","hash":"sha256:32904c616b34e4353756f6d323e062b63bb64a82c66e060759275f9dd49e444a"}} as unknown as TypedDocumentString<CarrierTrackingLinkQuery, CarrierTrackingLinkQueryVariables>;
+export const LogCheckCallDocument = {"__meta__":{"kind":"mutation","name":"LogCheckCall","hash":"sha256:933544372402cc8ecb0066d1c6768169bbc61bc7b657e00868ae04cc38086dbe"}} as unknown as TypedDocumentString<LogCheckCallMutation, LogCheckCallMutationVariables>;
+export const IssueCarrierTrackingLinkDocument = {"__meta__":{"kind":"mutation","name":"IssueCarrierTrackingLink","hash":"sha256:e93db8bd28cd6aee6a91517080f37c161fe87948bd053d7bb7a0bdb8eb923cbb"}} as unknown as TypedDocumentString<IssueCarrierTrackingLinkMutation, IssueCarrierTrackingLinkMutationVariables>;
+export const RevokeCarrierTrackingLinkDocument = {"__meta__":{"kind":"mutation","name":"RevokeCarrierTrackingLink","hash":"sha256:68ec2fe6c553e49640e573d542e7ac05240aeb18ec2b800fd6e21f0b7bd170ca"}} as unknown as TypedDocumentString<RevokeCarrierTrackingLinkMutation, RevokeCarrierTrackingLinkMutationVariables>;
 export const DeskRecordShipmentsDocument = {"__meta__":{"kind":"query","name":"DeskRecordShipments","hash":"sha256:a9cf9b623392f2f14bab6db16dee4c7dd368b5429c28393ac5e79f0d133fc4d1"}} as unknown as TypedDocumentString<DeskRecordShipmentsQuery, DeskRecordShipmentsQueryVariables>;
 export const ShipmentBoardTableDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardTable","hash":"sha256:173bd6b0bd2951dbc6f0f2c7e7b37f107eacaac97bad99d7c9164a18742d58e6"}} as unknown as TypedDocumentString<ShipmentBoardTableQuery, ShipmentBoardTableQueryVariables>;
 export const ShipmentDetailDocument = {"__meta__":{"kind":"query","name":"ShipmentDetail","hash":"sha256:e4cea406adc9fa670c66e4b1e33216c5ba72cea42a2c3e84de2b8692b14a02f3"}} as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
@@ -26603,6 +28619,7 @@ export const ShipmentCommentsDocument = {"__meta__":{"kind":"query","name":"Ship
 export const ShipmentCommentRepliesDocument = {"__meta__":{"kind":"query","name":"ShipmentCommentReplies","hash":"sha256:c3d7d09953b6ceb3ea38fbc547d409fea336121d2b3bcacefce4b894f29bd3c6"}} as unknown as TypedDocumentString<ShipmentCommentRepliesQuery, ShipmentCommentRepliesQueryVariables>;
 export const ShipmentCommentCountDocument = {"__meta__":{"kind":"query","name":"ShipmentCommentCount","hash":"sha256:1f62df3579f042a9c8914aa2b124bb976b08c30fdb27dc1fa25926487e7d877e"}} as unknown as TypedDocumentString<ShipmentCommentCountQuery, ShipmentCommentCountQueryVariables>;
 export const ShipmentEventsDocument = {"__meta__":{"kind":"query","name":"ShipmentEvents","hash":"sha256:78c0855d984d37ab5e0f0b5cb23b5bdb5d86ba194c21d403a3339edf336821f5"}} as unknown as TypedDocumentString<ShipmentEventsQuery, ShipmentEventsQueryVariables>;
+export const ShipmentTrackingEventsDocument = {"__meta__":{"kind":"query","name":"ShipmentTrackingEvents","hash":"sha256:1497c22d6748842aa931cc8d2c072d89d1104555fb3abb53d5beda73d72fe040"}} as unknown as TypedDocumentString<ShipmentTrackingEventsQuery, ShipmentTrackingEventsQueryVariables>;
 export const ShipmentBillingReadinessDocument = {"__meta__":{"kind":"query","name":"ShipmentBillingReadiness","hash":"sha256:98a2cd4d00d91a045e742b52e3c9a318781d5eb12903f63fe4d141f0aefe449c"}} as unknown as TypedDocumentString<ShipmentBillingReadinessQuery, ShipmentBillingReadinessQueryVariables>;
 export const ShipmentUiPolicyDocument = {"__meta__":{"kind":"query","name":"ShipmentUIPolicy","hash":"sha256:31816c9ef557fefb9f366f7c6de4a496827f84f1ce406e42f21e1444ddefb7a1"}} as unknown as TypedDocumentString<ShipmentUiPolicyQuery, ShipmentUiPolicyQueryVariables>;
 export const ShipmentPreviousRatesDocument = {"__meta__":{"kind":"query","name":"ShipmentPreviousRates","hash":"sha256:fb9ce636f0cfa91106dfcc559e31eb59e1e6cfa4d229668dbc2208e7a3730f9b"}} as unknown as TypedDocumentString<ShipmentPreviousRatesQuery, ShipmentPreviousRatesQueryVariables>;

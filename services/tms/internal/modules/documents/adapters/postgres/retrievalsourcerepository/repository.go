@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,7 +38,6 @@ const (
 	defaultSearchLimit = 20
 	maxSearchLimit     = 200
 	maxQueryChars      = 500
-	maxFallbackWords   = 8
 	rankColumn         = "rank"
 	sourceIDColumn     = "source_id"
 )
@@ -387,25 +385,6 @@ func rankAnyWord(vector *buncolgen.Column, config string) string {
 	return vector.Expr("ts_rank_cd({}, " + anyWordQuery(config) + ")")
 }
 
-func likeAnyWord(query string, columns ...*buncolgen.Column) (clause string, args []any) {
-	words := strings.Fields(strings.ToLower(query))
-	if len(words) > maxFallbackWords {
-		words = words[:maxFallbackWords]
-	}
-
-	clauses := make([]string, 0, len(words)*len(columns))
-	args = make([]any, 0, len(words)*len(columns))
-	for _, word := range words {
-		pattern := "%" + stringutils.EscapeLikePattern(word) + "%"
-		for _, column := range columns {
-			clauses = append(clauses, column.Expr("LOWER({}) LIKE ? ESCAPE '\\'"))
-			args = append(args, pattern)
-		}
-	}
-
-	return "(" + strings.Join(clauses, " OR ") + ")", args
-}
-
 func (r *repository) SearchDocuments(
 	ctx context.Context,
 	req agentports.RetrievalKeywordSearchRequest,
@@ -421,9 +400,7 @@ func (r *repository) SearchDocuments(
 
 			docs := documentcol.DocumentColumns
 			content := documentcontentcol.ContentColumns
-			dba := r.db.DBForContext(ctx)
-
-			q := dba.NewSelect().
+			q := r.db.DBForContext(ctx).NewSelect().
 				Model((*document.Document)(nil)).
 				ColumnExpr(docs.ID.As(sourceIDColumn)).
 				Join("LEFT JOIN "+documentcontentcol.ContentTable.As(documentcontentcol.ContentTable.Alias)).
@@ -432,29 +409,18 @@ func (r *repository) SearchDocuments(
 				JoinOn(content.BusinessUnitID.EqColumn(docs.BusinessUnitID)).
 				Apply(documentcol.DocumentApplyTenant(req.TenantInfo)).
 				Where(docs.IsCurrentVersion.IsTrue()).
-				Where(docs.Status.NotIn(), bun.List(document.UnsearchableStatuses()))
-
-			if dbdialect.FromBun(dba).Supports(dbdialect.CapFullTextSearch) {
-				q = q.
-					ColumnExpr(
-						"GREATEST("+rankAnyWord(&docs.SearchVector, "simple")+", COALESCE("+
-							rankAnyWord(&content.SearchVector, "english")+", 0)) AS "+rankColumn,
-						plan.query, plan.query,
-					).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return sq.
-							Where(matchesAnyWord(&docs.SearchVector, "simple"), plan.query).
-							WhereOr(matchesAnyWord(&content.SearchVector, "english"), plan.query)
-					}).
-					OrderExpr(rankColumn + " DESC")
-			} else {
-				clause, args := likeAnyWord(plan.query,
-					&docs.OriginalName, &docs.Description, &content.ContentText)
-				q = q.
-					ColumnExpr("1.0 AS "+rankColumn).
-					Where(clause, args...).
-					OrderExpr(docs.UpdatedAt.OrderDesc())
-			}
+				Where(docs.Status.NotIn(), bun.List(document.UnsearchableStatuses())).
+				ColumnExpr(
+					"GREATEST("+rankAnyWord(&docs.SearchVector, "simple")+", COALESCE("+
+						rankAnyWord(&content.SearchVector, "english")+", 0)) AS "+rankColumn,
+					plan.query, plan.query,
+				).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.
+						Where(matchesAnyWord(&docs.SearchVector, "simple"), plan.query).
+						WhereOr(matchesAnyWord(&content.SearchVector, "english"), plan.query)
+				}).
+				OrderExpr(rankColumn + " DESC")
 
 			hits := make([]agentports.RetrievalKeywordHit, 0, plan.limit)
 			if err = q.OrderExpr(docs.ID.OrderAsc()).
@@ -482,30 +448,17 @@ func (r *repository) SearchInboundMessages(
 			}
 
 			cols := inboundmessagecol.InboundMessageColumns
-			dba := r.db.DBForContext(ctx)
-
-			q := dba.NewSelect().
+			q := r.db.DBForContext(ctx).NewSelect().
 				Model((*inboundmessage.InboundMessage)(nil)).
 				ColumnExpr(cols.ID.As(sourceIDColumn)).
-				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo))
-
-			if dbdialect.FromBun(dba).Supports(dbdialect.CapFullTextSearch) {
-				q = q.
-					ColumnExpr(
-						rankAnyWord(&cols.SearchVector, "english")+" AS "+rankColumn,
-						plan.query,
-					).
-					Where(matchesAnyWord(&cols.SearchVector, "english"), plan.query).
-					OrderExpr(rankColumn + " DESC").
-					OrderExpr(cols.ReceivedAt.OrderDesc())
-			} else {
-				clause, args := likeAnyWord(plan.query,
-					&cols.Subject, &cols.FromName, &cols.FromAddress, &cols.TextBody)
-				q = q.
-					ColumnExpr("1.0 AS "+rankColumn).
-					Where(clause, args...).
-					OrderExpr(cols.ReceivedAt.OrderDesc())
-			}
+				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
+				ColumnExpr(
+					rankAnyWord(&cols.SearchVector, "english")+" AS "+rankColumn,
+					plan.query,
+				).
+				Where(matchesAnyWord(&cols.SearchVector, "english"), plan.query).
+				OrderExpr(rankColumn + " DESC").
+				OrderExpr(cols.ReceivedAt.OrderDesc())
 
 			hits := make([]agentports.RetrievalKeywordHit, 0, plan.limit)
 			if err = q.OrderExpr(cols.ID.OrderAsc()).

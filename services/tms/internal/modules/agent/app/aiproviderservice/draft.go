@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/httpsafe"
 )
 
 func (s *Service) ListModels(
@@ -145,17 +144,25 @@ func (s *Service) seal(
 
 	sealed := agentports.SealedAIProviderEndpoint{
 		Kind:                endpoint.Kind,
+		Platform:            endpoint.Platform,
+		PlatformSettings:    clonePlatformSettings(endpoint.PlatformSettings),
 		BaseURL:             strings.TrimSpace(endpoint.BaseURL),
 		AllowPrivateNetwork: endpoint.AllowPrivateNetwork,
 	}
+	draft := endpointProvider(&sealed)
+	draft.NormalizePlatformSettings()
+	sealed.Platform = draft.Platform
+	sealed.PlatformSettings = draft.PlatformSettings
+	if err := s.checkServerCredentials(draft); err != nil {
+		return agentports.SealedAIProviderEndpoint{}, err
+	}
 
-	key, err := s.sealedKey(ctx, tenantInfo, endpoint, &sealed)
+	key, err := s.sealedKey(ctx, tenantInfo, endpoint, draft)
 	if err != nil {
 		return agentports.SealedAIProviderEndpoint{}, err
 	}
 	sealed.SealedAPIKey = key
 
-	draft := endpointProvider(&sealed)
 	draft.APIKey = key
 	multiErr := errortypes.NewMultiError()
 	draft.ValidateEndpoint(multiErr)
@@ -170,10 +177,15 @@ func (s *Service) sealedKey(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	endpoint *agentports.AIProviderEndpoint,
-	sealed *agentports.SealedAIProviderEndpoint,
+	draft *aiprovider.Provider,
 ) (string, error) {
 	if endpoint.APIKey != nil {
 		if typed := strings.TrimSpace(*endpoint.APIKey); typed != "" {
+			multiErr := errortypes.NewMultiError()
+			draft.ValidateCredential(typed, multiErr)
+			if multiErr.HasErrors() {
+				return "", multiErr
+			}
 			encrypted, err := s.encryption.EncryptString(typed)
 			if err != nil {
 				return "", errortypes.NewBusinessError(
@@ -195,9 +207,7 @@ func (s *Service) sealedKey(
 	if err != nil {
 		return "", err
 	}
-	draft := endpointProvider(sealed)
-	if stored.Kind != sealed.Kind ||
-		!httpsafe.SameOrigin(stored.ResolvedBaseURL(), draft.ResolvedBaseURL()) {
+	if !aiprovider.SameCredentialTarget(stored, draft) {
 		return "", nil
 	}
 
@@ -222,6 +232,8 @@ func (s *Service) unseal(endpoint *agentports.SealedAIProviderEndpoint) (string,
 func endpointProvider(endpoint *agentports.SealedAIProviderEndpoint) *aiprovider.Provider {
 	return &aiprovider.Provider{
 		Kind:                endpoint.Kind,
+		Platform:            endpoint.Platform,
+		PlatformSettings:    clonePlatformSettings(endpoint.PlatformSettings),
 		BaseURL:             endpoint.BaseURL,
 		AllowPrivateNetwork: endpoint.AllowPrivateNetwork,
 		TimeoutSeconds:      aiprovider.DefaultTimeoutSeconds,

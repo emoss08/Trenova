@@ -293,3 +293,33 @@ func TestPreviewOccurrenceNotice_IsTheNoticeSendOccurrenceNoticeSends(t *testing
 	assert.Equal(t, updated.NoticeSentAt, preview.After.NoticeSentAt)
 	assert.Equal(t, detention.NotificationStatusPending, preview.Before.NotificationStatus)
 }
+
+func TestWaiveUninvoiced_ReleasesAStaleBilledCharge(t *testing.T) {
+	t.Parallel()
+
+	stored := pendingCharge()
+	stored.Status = detention.OccurrenceStatusBilled
+	stored.RequiresApproval = false
+	repo := &previewOccurrenceRepo{stored: stored}
+	svc := previewService(repo)
+	params := WaiveParams{
+		OccurrenceID: stored.ID,
+		TenantInfo:   tenantOfOccurrence(&stored),
+		Reason:       detention.WaiverReasonOther,
+		Note:         "Decided in Triage",
+		UserID:       pulid.MustNew("usr_"),
+	}
+
+	_, err := svc.Waive(t.Context(), params)
+	require.Error(t, err, "a billed charge is never waived without asking billing")
+
+	saved, err := svc.WaiveUninvoiced(t.Context(), &params)
+	require.NoError(t, err)
+	assert.Equal(t, detention.OccurrenceStatusWaived, saved.Status)
+	assert.True(t, saved.WaivedAmount.Equal(decimal.NewFromInt(425)))
+	require.NotNil(t, saved.WaivedByID)
+	assert.Equal(t, params.UserID, *saved.WaivedByID)
+
+	_, err = svc.WaiveUninvoiced(t.Context(), &WaiveParams{OccurrenceID: stored.ID})
+	require.Error(t, err, "a coded reason is still required")
+}

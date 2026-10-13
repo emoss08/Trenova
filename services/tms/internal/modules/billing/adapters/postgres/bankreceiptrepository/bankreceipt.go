@@ -3,6 +3,7 @@ package bankreceiptrepository
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/pkg/buncolgen/bankreceiptcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -68,6 +69,53 @@ func (r *repository) GetByID(
 			return nil, dberror.HandleNotFoundError(err, "BankReceipt")
 		}
 		return entity, nil
+	})
+}
+
+func (r *repository) LockForUpdate(
+	ctx context.Context,
+	req bankreceiptports.GetBankReceiptByIDRequest,
+) (*bankreceipt.BankReceipt, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*bankreceipt.BankReceipt, error) {
+		cols := bankreceiptcol.BankReceiptColumns
+		entity := new(bankreceipt.BankReceipt)
+		err := bankreceiptcol.BankReceiptScopeTenant(
+			r.db.DBForContext(ctx).
+				NewSelect().
+				Model(entity).
+				Where(cols.ID.Eq(), req.ID),
+			req.TenantInfo,
+		).
+			For("UPDATE").
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "BankReceipt")
+		}
+		return entity, nil
+	})
+}
+
+func (r *repository) ListMatchedToPayment(
+	ctx context.Context,
+	req bankreceiptports.ListBankReceiptsMatchedToPaymentRequest,
+) ([]*bankreceipt.BankReceipt, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*bankreceipt.BankReceipt, error) {
+		cols := bankreceiptcol.BankReceiptColumns
+		items := make([]*bankreceipt.BankReceipt, 0, 1)
+		err := bankreceiptcol.BankReceiptScopeTenant(
+			r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&items).
+				Where(cols.MatchedCustomerPaymentID.Eq(), req.PaymentID),
+			req.TenantInfo,
+		).
+			Order(cols.CreatedAt.OrderAsc()).
+			For("UPDATE").
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list bank receipts matched to payment: %w", err)
+		}
+		return items, nil
 	})
 }
 

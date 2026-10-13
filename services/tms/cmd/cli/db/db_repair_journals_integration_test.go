@@ -6,6 +6,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -80,7 +81,12 @@ func TestRepairJournalsWritesTheMissingDriverPaymentJournal(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 
-	seedtest.OpenFiscalPeriod(t, ctx, db, settlement.OrganizationID, settlement.BusinessUnitID)
+	fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: settlement.OrganizationID,
+		BusinessUnitID: settlement.BusinessUnitID,
+		At:             settlement.PaidAt,
+	})
 
 	report, err := repairJournals(ctx, conn, settlement.OrganizationID, false)
 	require.NoError(t, err)

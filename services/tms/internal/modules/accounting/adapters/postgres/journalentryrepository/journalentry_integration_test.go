@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -94,7 +95,12 @@ func TestListJournalEntries(t *testing.T) {
 			Scan(ctx, &user),
 	)
 	nowTime := time.Now().UTC()
-	fy, fp := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	fy, fp := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             nowTime.Unix(),
+	})
 
 	batchID := pulid.MustNew("jb_")
 	now := nowTime.Unix()

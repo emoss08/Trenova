@@ -21,6 +21,10 @@ export const unknownVariableTag = Tag.define();
 
 type ExprState = {
   inBlockComment: boolean;
+  /** Names bound with `let` so far; they read as the expression's own from then on. */
+  bindings: Set<string>;
+  /** The last word was `let`, so the next one is a name being bound. */
+  binding: boolean;
 };
 
 export function createExprLanguage(known: KnownIdentifiers) {
@@ -75,8 +79,19 @@ export function createExprLanguage(known: KnownIdentifiers) {
       if (stream.match(/[a-zA-Z_#][a-zA-Z0-9_]*/)) {
         const word = stream.current();
 
+        if (state.binding) {
+          state.binding = false;
+          state.bindings.add(word);
+          return "localVariable";
+        }
+
         if (EXPR_KEYWORDS.has(word) || word === "#" || isOperatorWord(known, word)) {
+          state.binding = word === "let";
           return "keyword";
+        }
+
+        if (state.bindings.has(word)) {
+          return "localVariable";
         }
 
         if (isKnownFunction(known, word) && stream.peek() === "(") {
@@ -95,16 +110,21 @@ export function createExprLanguage(known: KnownIdentifiers) {
     },
 
     startState() {
-      return { inBlockComment: false };
+      return { inBlockComment: false, bindings: new Set<string>(), binding: false };
     },
 
     copyState(state: ExprState): ExprState {
-      return { inBlockComment: state.inBlockComment };
+      return {
+        inBlockComment: state.inBlockComment,
+        bindings: new Set(state.bindings),
+        binding: state.binding,
+      };
     },
 
     tokenTable: {
       exprFunction: t.function(t.variableName),
       knownVariable: t.special(t.variableName),
+      localVariable: t.local(t.variableName),
       unknownVariable: unknownVariableTag,
     },
 

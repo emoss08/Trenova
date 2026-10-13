@@ -42,12 +42,14 @@ func linker(repo *linkStubMessageRepo, existing ...pulid.ID) *Service {
 		known[id] = true
 	}
 
-	return &Service{
+	svc, _ := withQueue(&Service{
 		l:           zap.NewNop(),
 		messageRepo: repo,
 		shipments:   &stubShipments{existing: known},
 		parties:     &stubParties{existing: known},
-	}
+	})
+
+	return svc
 }
 
 func linkRequest() LinkRequest {
@@ -116,7 +118,7 @@ func TestLink_RefusesRatherThanTrustsWhenItCannotCheck(t *testing.T) {
 	t.Parallel()
 
 	repo := &linkStubMessageRepo{message: &inboundmessage.InboundMessage{}}
-	svc := &Service{l: zap.NewNop(), messageRepo: repo}
+	svc, _ := withQueue(&Service{l: zap.NewNop(), messageRepo: repo})
 	req := linkRequest()
 	req.ShipmentID = pulid.MustNew("shp_")
 

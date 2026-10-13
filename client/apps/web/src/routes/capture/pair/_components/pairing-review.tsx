@@ -40,11 +40,18 @@ function orEmpty(value: string) {
 export function PairingReview({
   code,
   preview,
+  organization,
   disabled,
   onDecided,
 }: {
   code: string;
   preview: CapturePairingPreview;
+  /**
+   * The organization the computer joins on approval: the one the person is
+   * signed in to here. `switchable` says they belong to others too, so a
+   * wrong one is worth a word before they approve.
+   */
+  organization?: { name: string; switchable: boolean };
   disabled: boolean;
   onDecided: (outcome: PairingOutcome) => void;
 }) {
@@ -112,7 +119,23 @@ export function PairingReview({
               <DescriptionItem label={t("Code expires")} numeric>
                 {formatUnixTime(preview.expiresAt)}
               </DescriptionItem>
+              {organization !== undefined && (
+                <DescriptionItem label={t("Joins")} span="full">
+                  {organization.name}
+                </DescriptionItem>
+              )}
             </DescriptionList>
+
+            {organization?.switchable && (
+              <Alert size="sm">
+                <AlertDescription>
+                  {t(
+                    "Approving pairs this computer into {0}. To scan into another of your organizations, switch to it first, then approve.",
+                    organization.name,
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
 
             <Alert variant="warning" size="sm">
               <ShieldAlertIcon />

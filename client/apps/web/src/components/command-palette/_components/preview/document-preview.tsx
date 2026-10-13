@@ -1,115 +1,166 @@
 import { DocumentFileTypeIcon } from "@/components/documents/document-file-type-icon";
 import { documentContentUrl } from "@/services/document";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import {
-  DescriptionEmpty,
-  DescriptionItem,
-  DescriptionList,
-} from "@trenova/shared/components/ui/description-list";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { formatFileSize } from "@trenova/shared/lib/utils";
+import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
+import type { Document, DocumentShipmentDraft } from "@trenova/shared/types/document";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { PALETTE_ENTITIES } from "../../palette-entities";
-import type { PaletteAction, PaletteIntent, PaletteRecord } from "../../palette-model";
-import { PreviewError, PreviewFrame, PreviewSection, PreviewSkeleton } from "./preview-frame";
-import { documentPreviewQuery } from "./preview-queries";
+import { PALETTE_ENTITY_ICONS } from "../../palette-entities";
+import { documentKind } from "../../palette-fields";
+import {
+  PreviewError,
+  PreviewFields,
+  PreviewHead,
+  PreviewSection,
+  PreviewSkeleton,
+  PreviewSource,
+  RelatedRow,
+  type PreviewFieldRow,
+} from "./preview-frame";
+import { documentExtractionQuery, documentPreviewQuery } from "./preview-queries";
+import type { RecordPreviewProps } from "./record-preview-props";
 
-function Thumbnail({ documentId, alt }: { documentId: string; alt: string }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return null;
+const EXTRACTED_FIELDS_SHOWN = 6;
+
+const INTAKE_LABELS = defineLabels({
+  none: "Uploaded by hand",
+  rate_confirmation_import: "Rate confirmation import",
+  assistant_attachment: "A conversation with Nova",
+  inbound_attachment: "A monitored mailbox",
+  capture: "Scanning and printing",
+});
+
+function readable(value: unknown): string | null {
+  if (typeof value === "string") {
+    return value.trim() === "" ? null : value.trim();
   }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value.toLocaleString();
+  }
+  if (typeof value === "boolean") {
+    return value ? "✓" : "—";
+  }
+  return null;
+}
+
+/** The fields Nova read, as rows: the label it gave each, what it read, and a dot where it asked for review. */
+function extractedRows(draft: DocumentShipmentDraft): PreviewFieldRow[] {
+  return Object.entries(draft.draftData.fields)
+    .flatMap(([key, field]): PreviewFieldRow[] => {
+      const value = readable(field.value);
+      if (value === null) {
+        return [];
+      }
+      return [
+        {
+          label: field.label?.trim() || key,
+          value,
+          state: field.conflict ? "bad" : field.reviewRequired ? "warn" : undefined,
+        },
+      ];
+    })
+    .slice(0, EXTRACTED_FIELDS_SHOWN);
+}
+
+function confidenceOf(draft: DocumentShipmentDraft): number | null {
+  const confidence = draft.draftData.overallConfidence ?? draft.confidence;
+  return Number.isFinite(confidence) && confidence > 0 ? Math.round(confidence * 100) : null;
+}
+
+function FirstPage({ document, name }: { document: Document; name: string }) {
+  const [failed, setFailed] = useState(false);
+  const ready = document.previewStatus === "Ready" && !failed;
   return (
-    <div className="rounded-surface bg-sunken ring-border-subtle flex h-44 items-center justify-center overflow-hidden ring-1">
-      <img
-        src={documentContentUrl(documentId, "preview")}
-        alt={alt}
-        loading="lazy"
-        onError={() => setFailed(true)}
-        className="max-h-full max-w-full object-contain"
-      />
+    <div className="bg-sunken rounded-surface ring-border-subtle flex h-45 items-center justify-center overflow-hidden ring-1">
+      {ready ? (
+        <img
+          src={documentContentUrl(document.id, "preview")}
+          alt={name}
+          loading="lazy"
+          onError={() => setFailed(true)}
+          className="max-h-full max-w-full object-contain"
+        />
+      ) : (
+        <DocumentFileTypeIcon fileType={document.fileType} fileName={name} size="lg" />
+      )}
     </div>
   );
 }
 
-export function DocumentPreview({
+function DocumentBody({
+  document,
   record,
-  actions,
-  onRun,
+  onNavigate,
 }: {
-  record: PaletteRecord;
-  actions: readonly PaletteAction[];
-  onRun: (intent: PaletteIntent) => void;
+  document: Document;
+  record: RecordPreviewProps["record"];
+  onNavigate: (href: string) => void;
 }) {
   const t = useT();
-  const { data: document, isLoading, isError } = useQuery(documentPreviewQuery(record.id));
-  const entity = PALETTE_ENTITIES.document;
+  const extracting = document.shipmentDraftStatus === "Ready";
+  const extraction = useQuery({
+    ...documentExtractionQuery(document.id),
+    enabled: extracting,
+  });
+  const name = document.originalName || document.fileName;
+  const kind = document.documentType?.name || documentKind(record);
+  const draft = extraction.data;
+  const rows = draft ? extractedRows(draft) : [];
+  const confidence = draft ? confidenceOf(draft) : null;
+  const attached = record.metadata.attachedLabel;
+  const intake = Object.hasOwn(INTAKE_LABELS, document.processingProfile)
+    ? INTAKE_LABELS[document.processingProfile as keyof typeof INTAKE_LABELS]
+    : null;
+
+  return (
+    <>
+      <PreviewSource
+        kind="document"
+        facts={[kind, confidence !== null ? t("{0}% read", confidence) : null]}
+      />
+      <PreviewHead
+        title={name}
+        mono
+        subtitle={[kind, formatUnixDateTimeShort(document.createdAt)].filter(Boolean).join(" · ")}
+      />
+      <FirstPage key={document.id} document={document} name={name} />
+      {rows.length > 0 && (
+        <PreviewSection
+          label={t("Read by Nova")}
+          aside={confidence !== null ? t("{0}% confidence", confidence) : undefined}
+        >
+          <PreviewFields rows={rows} />
+        </PreviewSection>
+      )}
+      <PreviewSection label={t("Attached to")}>
+        <RelatedRow
+          icon={
+            document.resourceType === "shipment" ||
+            document.resourceType === "customer" ||
+            document.resourceType === "worker"
+              ? PALETTE_ENTITY_ICONS[document.resourceType]
+              : PALETTE_ENTITY_ICONS.document
+          }
+          title={attached || t("Open the record it's attached to")}
+          mono={document.resourceType === "shipment"}
+          sub={document.resourceType}
+          onOpen={() => onNavigate(record.href)}
+        />
+      </PreviewSection>
+      <PreviewFields rows={[intake ? { label: t("Came in through"), value: intake } : null]} />
+    </>
+  );
+}
+
+export function DocumentPreview({ record, onNavigate }: RecordPreviewProps) {
+  const { data, isLoading, isError } = useQuery(documentPreviewQuery(record.id));
 
   if (isLoading) {
     return <PreviewSkeleton />;
   }
-  if (isError || !document) {
+  if (isError || !data) {
     return <PreviewError />;
   }
-
-  const name = document.originalName || document.fileName;
-
-  return (
-    <PreviewFrame
-      icon={entity.icon}
-      tileClass={entity.tileClass}
-      title={name}
-      subtitle={[document.documentType?.name, document.resourceType].filter(Boolean).join(" · ")}
-      badge={<Badge variant="neutral">{document.status}</Badge>}
-      actions={actions}
-      onRun={onRun}
-    >
-      {document.previewStatus === "Ready" ? (
-        <Thumbnail key={document.id} documentId={document.id} alt={name} />
-      ) : (
-        <div className="rounded-surface bg-sunken ring-border-subtle flex h-28 items-center justify-center ring-1">
-          <DocumentFileTypeIcon fileType={document.fileType} fileName={name} size="lg" />
-        </div>
-      )}
-      <PreviewSection title={t("File")}>
-        <DescriptionList columns={2}>
-          <DescriptionItem label={t("Type")}>
-            {document.fileType || <DescriptionEmpty />}
-          </DescriptionItem>
-          <DescriptionItem label={t("Size")} numeric>
-            {formatFileSize(document.fileSize)}
-          </DescriptionItem>
-          <DescriptionItem label={t("Version")} numeric>
-            {document.versionNumber}
-          </DescriptionItem>
-          <DescriptionItem label={t("Uploaded")}>
-            {formatUnixDateMedium(document.createdAt)}
-          </DescriptionItem>
-          {document.expirationDate ? (
-            <DescriptionItem label={t("Expires")}>
-              {formatUnixDateMedium(document.expirationDate)}
-            </DescriptionItem>
-          ) : null}
-          {document.description ? (
-            <DescriptionItem label={t("Description")} span="full">
-              {document.description}
-            </DescriptionItem>
-          ) : null}
-        </DescriptionList>
-      </PreviewSection>
-      {document.tags && document.tags.length > 0 && (
-        <PreviewSection title={t("Tags")}>
-          <div className="flex flex-wrap gap-1">
-            {document.tags.map((tag) => (
-              <Badge key={tag} variant="accent-slate">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        </PreviewSection>
-      )}
-    </PreviewFrame>
-  );
+  return <DocumentBody document={data} record={record} onNavigate={onNavigate} />;
 }

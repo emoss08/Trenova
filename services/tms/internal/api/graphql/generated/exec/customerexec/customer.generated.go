@@ -572,6 +572,25 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "creditHoldAutomatic",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customer.CustomerBillingProfile)
+					return obj.CreditHoldAutomatic, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "creditReviewedAt",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customer.CustomerBillingProfile)
+					return obj.CreditReviewedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
 				Name:       "invoiceMethod",
 				NonNull:    true,
 				IsResolver: true,
@@ -590,6 +609,26 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.AutoSendInvoiceOnGeneration, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "sendPaymentReminders",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customer.CustomerBillingProfile)
+					return obj.SendPaymentReminders, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "sendStatements",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customer.CustomerBillingProfile)
+					return obj.SendStatements, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -923,6 +962,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
+				Name:     "factoringCompanyId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customer.CustomerBillingProfile)
+					return obj.FactoringCompanyID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
 				Name:      "documentTypes",
 				HasChild:  true,
 				ChildType: "DocumentType",
@@ -1081,12 +1129,14 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "fromEmail",
-				NonNull:  true,
-				ChildErr: errNoChild2,
+				Name:       "fromEmail",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerEmailProfile)
-					return obj.FromEmail, nil
+					return gqlexec.Resolver[resolverCustomerEmailProfile](ec, "CustomerEmailProfile").FromEmail(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1213,6 +1263,7 @@ var Shard = &gqlexec.Shard{
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "CustomerBillingProfile", Check: func(r any) bool { _, ok := r.(resolverCustomerBillingProfile); return ok }},
+		{Root: "CustomerEmailProfile", Check: func(r any) bool { _, ok := r.(resolverCustomerEmailProfile); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
@@ -1232,6 +1283,10 @@ type resolverCustomerBillingProfile interface {
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	InvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy, error)
+}
+
+type resolverCustomerEmailProfile interface {
+	FromEmail(ctx context.Context, obj *customer.CustomerEmailProfile) (string, error)
 }
 
 type resolverQuery interface {

@@ -33,6 +33,23 @@ type InvoiceDocumentService interface {
 	) (*DocumentContent, error)
 }
 
+// ConversationFileReader reads a file a person attached to a conversation so
+// the system can process it, as document intelligence reads an upload: it is
+// not a person viewing the file, so no view is recorded. Any other document is
+// not found.
+type ConversationFileReader interface {
+	ReadConversationFile(
+		ctx context.Context,
+		req GetDocumentByIDRequest,
+	) (*ConversationFile, error)
+}
+
+// ConversationFile is an attached file's document and its bytes, decrypted.
+type ConversationFile struct {
+	Document *document.Document
+	Data     []byte
+}
+
 type UploadRequest struct {
 	TenantInfo        pagination.TenantInfo
 	Actor             permissionports.RequestActor

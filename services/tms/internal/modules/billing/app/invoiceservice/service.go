@@ -6,8 +6,10 @@ import (
 	"fmt"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingcontrolpolicyservice"
@@ -37,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -70,10 +73,12 @@ type Params struct {
 	OrderRepo            orderports.OrderRepository
 	CustomerRepo         customerports.CustomerRepository
 	OrganizationRepo     tenantports.OrganizationRepository
+	FactoringRepo        factoringcompanyports.FactoringCompanyRepository
 	DocumentTypeRepo     documenttypeports.DocumentTypeRepository
 	CustomerLedgerRepo   customerledgerports.CustomerLedgerProjectionRepository
 	BillingRepo          tenantports.BillingControlRepository
 	AccountingRepo       tenantports.AccountingControlRepository
+	AdjustmentCtrlRepo   tenantports.InvoiceAdjustmentControlRepository `optional:"true"`
 	Stamper              *exchangeratestamp.Stamper
 	JournalRepo          journalentryports.JournalPostingRepository
 	AdjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
@@ -102,6 +107,9 @@ type Params struct {
 	EDICommunicationProfileRepo ediports.EDICommunicationProfileRepository   `optional:"true"`
 	LateChargeRepo              latechargeports.LateChargeRepository         `optional:"true"`
 	AccountingSync              accountingsyncports.AccountingSyncEnqueuer   `optional:"true"`
+	EmailSenders                emailports.EmailSenderResolver               `optional:"true"`
+	GLAccounts                  glaccountports.GLAccountRepository           `optional:"true"`
+	Config                      *config.Config                               `optional:"true"`
 }
 
 type Service struct {
@@ -113,10 +121,12 @@ type Service struct {
 	orderRepo            orderports.OrderRepository
 	customerRepo         customerports.CustomerRepository
 	organizationRepo     tenantports.OrganizationRepository
+	factoringRepo        factoringcompanyports.FactoringCompanyRepository
 	documentTypeRepo     documenttypeports.DocumentTypeRepository
 	customerLedgerRepo   customerledgerports.CustomerLedgerProjectionRepository
 	billingRepo          tenantports.BillingControlRepository
 	accountingRepo       tenantports.AccountingControlRepository
+	adjustmentCtrlRepo   tenantports.InvoiceAdjustmentControlRepository
 	stamper              *exchangeratestamp.Stamper
 	journalRepo          journalentryports.JournalPostingRepository
 	adjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
@@ -145,6 +155,9 @@ type Service struct {
 	ediCommunicationProfileRepo ediports.EDICommunicationProfileRepository
 	lateChargeRepo              latechargeports.LateChargeRepository
 	accountingSync              accountingsyncports.AccountingSyncEnqueuer
+	emailSenders                emailports.EmailSenderResolver
+	glAccounts                  glaccountports.GLAccountRepository
+	webBaseURL                  string
 }
 
 type existingInvoiceLookupResult struct {
@@ -188,10 +201,12 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		orderRepo:                   p.OrderRepo,
 		customerRepo:                p.CustomerRepo,
 		organizationRepo:            p.OrganizationRepo,
+		factoringRepo:               p.FactoringRepo,
 		documentTypeRepo:            p.DocumentTypeRepo,
 		customerLedgerRepo:          p.CustomerLedgerRepo,
 		billingRepo:                 p.BillingRepo,
 		accountingRepo:              p.AccountingRepo,
+		adjustmentCtrlRepo:          p.AdjustmentCtrlRepo,
 		stamper:                     p.Stamper,
 		journalRepo:                 p.JournalRepo,
 		adjustmentRepo:              p.AdjustmentRepo,
@@ -219,7 +234,17 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		ediCommunicationProfileRepo: p.EDICommunicationProfileRepo,
 		lateChargeRepo:              p.LateChargeRepo,
 		accountingSync:              p.AccountingSync,
+		emailSenders:                p.EmailSenders,
+		glAccounts:                  p.GLAccounts,
+		webBaseURL:                  webBaseURL(p.Config),
 	}
+}
+
+func webBaseURL(cfg *config.Config) string {
+	if cfg == nil {
+		return ""
+	}
+	return cfg.App.GetWebBaseURL()
 }
 
 func (s *Service) List(
@@ -496,6 +521,7 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 	}
 
 	var posted *invoice.Invoice
+	newlyPosted := false
 	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, getErr := s.repo.GetByID(txCtx, invoiceports.GetInvoiceByIDRequest{
 			ID:         req.InvoiceID,
@@ -513,6 +539,16 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 		if planErr != nil {
 			return planErr
 		}
+		if !alreadyPosted {
+			if guardErr := s.guardMemoPoster(
+				txCtx,
+				entity,
+				actor,
+				req.TenantInfo,
+			); guardErr != nil {
+				return guardErr
+			}
+		}
 
 		if alreadyPosted {
 			queueUpdate, err := s.markBillingQueueItemPosted(txCtx, entity, req.TenantInfo)
@@ -527,10 +563,13 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 			return nil
 		}
 
+		entity.PDFDocumentID = pulid.Nil
+		entity.PDFDocument = nil
 		updated, updateErr := s.repo.Update(txCtx, entity)
 		if updateErr != nil {
 			return updateErr
 		}
+		newlyPosted = true
 
 		legs, shipErr := s.markInvoicedLegs(txCtx, entity, now, req.TenantInfo)
 		if shipErr != nil {
@@ -580,8 +619,32 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 		return nil, err
 	}
 	s.enqueueEDIAfterPost(ctx, posted, req.TenantInfo, actor)
+	if newlyPosted {
+		s.generatePDFAfterPost(ctx, posted, req.TenantInfo, actor)
+	}
 
 	return posted, nil
+}
+
+func (s *Service) generatePDFAfterPost(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	tenantInfo pagination.TenantInfo,
+	actor *permissionports.RequestActor,
+) {
+	if entity == nil || s.workflowStarter == nil || !s.workflowStarter.Enabled() {
+		return
+	}
+	if _, err := s.GeneratePDF(ctx, &invoiceports.InvoicePreviewRequest{
+		InvoiceID:  entity.ID,
+		TenantInfo: tenantInfo,
+	}, actor); err != nil {
+		s.l.Warn(
+			"failed to start invoice PDF generation after post",
+			zap.String("invoiceId", entity.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (s *Service) notifyReconciliationWarning(
@@ -1577,6 +1640,24 @@ func (s *Service) publishInvalidation(
 	}); err != nil {
 		s.l.Warn("failed to publish invoice invalidation", zap.Error(err))
 	}
+}
+
+func (s *Service) publishInvoiceChange(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	actor kernelports.AuditActor,
+	action string,
+) {
+	if entity == nil {
+		return
+	}
+	realtimeinvalidation.PublishAfterCommit(ctx, s.realtime, s.l, realtimeinvalidation.ChangeOf(
+		permission.ResourceInvoice.String(),
+		entity,
+		action,
+		actor,
+		invoice.NewRealtimeSnapshot(entity),
+	))
 }
 
 func (s *Service) logBillingQueuePosted(

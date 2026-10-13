@@ -17,6 +17,8 @@ import { ArrowLeftIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { SentStatementsPanel } from "./_components/sent-statements-panel";
+import { StatementActions } from "./_components/statement-actions";
 
 const STATEMENT_COLUMNS = [
   { label: "Date" },
@@ -161,13 +163,26 @@ export function CustomerStatementPage() {
 
   const aging = statement.aging;
   const agingTotal = aging.totalOpenMinor || 1;
+  const rangeLabel = statement.startDate
+    ? t("from {0} to {1}", formatDate(statement.startDate), formatDate(statement.statementDate))
+    : t("as of {0}", formatDate(statement.statementDate));
 
   return (
     <PageLayout
       pageHeaderProps={{
         title: statement.customerName,
         description: t("Statement as of {0}", formatDate(statement.statementDate)),
-        actions: backButton,
+        actions: (
+          <>
+            {backButton}
+            <StatementActions
+              customerId={customerId}
+              customerName={statement.customerName}
+              range={queryOptions}
+              rangeLabel={rangeLabel}
+            />
+          </>
+        ),
       }}
     >
       <div className="flex flex-wrap items-end gap-3">
@@ -288,7 +303,7 @@ export function CustomerStatementPage() {
                     <td className="px-4 py-2.5 font-mono text-xs font-medium">
                       {txn.documentNumber}
                     </td>
-                    <td className="text-muted-foreground px-4 py-2.5 text-xs">{txn.eventType}</td>
+                    <td className="text-muted-foreground px-4 py-2.5 text-xs">{txn.description}</td>
                     <td className="px-4 py-2.5 text-right">
                       {txn.chargeMinor > 0 ? (
                         <AmountDisplay value={txn.chargeMinor} className="text-xs" />
@@ -383,6 +398,8 @@ export function CustomerStatementPage() {
           </div>
         </SectionPanel>
       ) : null}
+
+      <SentStatementsPanel customerId={customerId} />
     </PageLayout>
   );
 }

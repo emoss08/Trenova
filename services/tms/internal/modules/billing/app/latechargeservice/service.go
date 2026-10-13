@@ -3,6 +3,8 @@ package latechargeservice
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -14,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -25,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -33,6 +37,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
+	DB                  kernelports.DBConnection
 	Repo                latechargeports.LateChargeRepository
 	BillingControlRepo  tenantports.BillingControlRepository
 	InvoiceService      invoiceports.InvoiceService
@@ -45,6 +50,7 @@ type Params struct {
 // first so a concurrent run cannot charge the same period twice.
 type Service struct {
 	l                   *zap.Logger
+	db                  kernelports.DBConnection
 	repo                latechargeports.LateChargeRepository
 	billingRepo         tenantports.BillingControlRepository
 	invoiceService      invoiceports.InvoiceService
@@ -55,6 +61,7 @@ type Service struct {
 func New(p Params) latechargeports.LateChargeService {
 	return &Service{
 		l:                   p.Logger.Named("service.late-charge"),
+		db:                  p.DB,
 		repo:                p.Repo,
 		billingRepo:         p.BillingControlRepo,
 		invoiceService:      p.InvoiceService,
@@ -62,6 +69,9 @@ func New(p Params) latechargeports.LateChargeService {
 		notificationService: p.NotificationService,
 	}
 }
+
+// customerPageSize is how many customers' candidates one page reads.
+const customerPageSize = 200
 
 func refuseDisabled(mode tenant.LateChargeAssessmentMode) error {
 	if mode != tenant.LateChargeAssessmentModeDisabled {
@@ -156,18 +166,88 @@ func (s *Service) Assess(
 		}
 	}
 
-	candidates, err := s.repo.ListCandidates(ctx, &latechargeports.ListLateChargeCandidatesRequest{
-		TenantInfo:  req.TenantInfo,
-		CustomerIDs: req.CustomerIDs,
-		AsOfDate:    asOf,
-	})
+	minimumMinor := money.MinorUnits(control.LateChargeMinimumAmount)
+	err = s.eachCustomerPage(
+		ctx,
+		req,
+		asOf,
+		func(candidates []*latechargeports.LateChargeCandidate) {
+			s.assessPage(ctx, &pageRun{
+				req:     req,
+				control: control,
+				plans:   buildPlans(candidates, asOf, minimumMinor, actor),
+				actor:   actor,
+				result:  result,
+			})
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
+	sortCustomerResults(result.Customers)
 
-	minimumMinor := money.MinorUnits(control.LateChargeMinimumAmount)
-	plans := buildPlans(candidates, asOf, minimumMinor, actor)
-	for _, plan := range plans {
+	return result, nil
+}
+
+type pageRun struct {
+	req     *latechargeports.LateChargeAssessmentRequest
+	control *tenant.BillingControl
+	plans   []*customerPlan
+	actor   *permissionports.RequestActor
+	result  *latechargeports.LateChargeAssessmentResult
+}
+
+// eachCustomerPage reads the candidates a page of customers at a time, so an
+// organization with years of overdue invoices is assessed in bounded slices
+// rather than loaded whole.
+func (s *Service) eachCustomerPage(
+	ctx context.Context,
+	req *latechargeports.LateChargeAssessmentRequest,
+	asOf int64,
+	visit func([]*latechargeports.LateChargeCandidate),
+) error {
+	after := pulid.Nil
+	for {
+		customerIDs, err := s.repo.ListCandidateCustomers(
+			ctx,
+			&latechargeports.ListLateChargeCustomersRequest{
+				TenantInfo:      req.TenantInfo,
+				CustomerIDs:     req.CustomerIDs,
+				AsOfDate:        asOf,
+				AfterCustomerID: after,
+				Limit:           customerPageSize,
+			},
+		)
+		if err != nil {
+			return err
+		}
+		if len(customerIDs) == 0 {
+			return nil
+		}
+
+		candidates, err := s.repo.ListCandidates(
+			ctx,
+			&latechargeports.ListLateChargeCandidatesRequest{
+				TenantInfo:  req.TenantInfo,
+				CustomerIDs: customerIDs,
+				AsOfDate:    asOf,
+			},
+		)
+		if err != nil {
+			return err
+		}
+		visit(candidates)
+
+		if len(customerIDs) < customerPageSize {
+			return nil
+		}
+		after = customerIDs[len(customerIDs)-1]
+	}
+}
+
+func (s *Service) assessPage(ctx context.Context, run *pageRun) {
+	req, control, result, actor := run.req, run.control, run.result, run.actor
+	for _, plan := range run.plans {
 		result.Customers = append(result.Customers, plan.result)
 		if plan.result.Skipped {
 			result.CustomersSkipped++
@@ -177,7 +257,7 @@ func (s *Service) Assess(
 			result.TotalChargeMinor += plan.result.TotalChargeMinor
 			continue
 		}
-		if err = s.raiseMemo(ctx, req.TenantInfo, control, plan, actor); err != nil {
+		if err := s.raiseMemo(ctx, req.TenantInfo, control, plan, actor); err != nil {
 			s.l.Error(
 				"late charge memo failed",
 				zap.String("customerId", plan.result.CustomerID.String()),
@@ -198,22 +278,38 @@ func (s *Service) Assess(
 		}
 		result.TotalChargeMinor += plan.result.TotalChargeMinor
 	}
-
-	return result, nil
 }
 
-// buildPlans turns candidates into one plan per customer, in candidate order,
-// with every unassessed period that has begun by asOf.
+func sortCustomerResults(customers []*latechargeports.LateChargeCustomerResult) {
+	slices.SortStableFunc(customers, func(a, b *latechargeports.LateChargeCustomerResult) int {
+		if byName := strings.Compare(a.CustomerName, b.CustomerName); byName != 0 {
+			return byName
+		}
+		return strings.Compare(a.CurrencyCode, b.CurrencyCode)
+	})
+}
+
+// planKey is one memo's worth of charges: a customer's overdue invoices in one
+// currency. A customer billed in two currencies gets a memo in each, because
+// a charge on a CAD invoice is owed in CAD.
+type planKey struct {
+	customerID pulid.ID
+	currency   string
+}
+
+// buildPlans turns candidates into one plan per customer and currency, in
+// candidate order, with every unassessed period that has begun by asOf.
 func buildPlans(
 	candidates []*latechargeports.LateChargeCandidate,
 	asOf int64,
 	minimumMinor int64,
 	actor *permissionports.RequestActor,
 ) []*customerPlan {
-	byCustomer := make(map[pulid.ID]*customerPlan, len(candidates))
+	byCustomer := make(map[planKey]*customerPlan, len(candidates))
 	ordered := make([]*customerPlan, 0, len(candidates))
 	for _, candidate := range candidates {
-		plan, ok := byCustomer[candidate.CustomerID]
+		key := planKey{customerID: candidate.CustomerID, currency: candidate.CurrencyCode}
+		plan, ok := byCustomer[key]
 		if !ok {
 			plan = &customerPlan{
 				result: &latechargeports.LateChargeCustomerResult{
@@ -223,7 +319,7 @@ func buildPlans(
 					Lines:        make([]*latechargeports.LateChargeLine, 0, 4),
 				},
 			}
-			byCustomer[candidate.CustomerID] = plan
+			byCustomer[key] = plan
 			ordered = append(ordered, plan)
 		}
 		overdueStart := latecharge.OverdueStart(candidate.DueDate, candidate.GracePeriodDays)
@@ -297,7 +393,45 @@ func (s *Service) raiseMemo(
 		assessment.RunKey = runKey
 	}
 
-	inserted, err := s.repo.InsertAssessments(ctx, plan.assessments)
+	var (
+		memo     *invoice.Invoice
+		inserted []*latecharge.LateChargeAssessment
+	)
+	// The assessment rows and the memo they add up to stand or fall together:
+	// a memo that fails leaves no assessment claiming a period was charged.
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var txErr error
+		if inserted, txErr = s.repo.InsertAssessments(txCtx, plan.assessments); txErr != nil {
+			return txErr
+		}
+		if len(inserted) == 0 {
+			return nil
+		}
+		plan.result.Lines, plan.result.TotalChargeMinor = linesFromAssessments(
+			inserted,
+			plan.result.Lines,
+		)
+
+		memo, txErr = s.invoiceService.CreateMemo(txCtx, &invoiceports.CreateMemoRequest{
+			ID:           memoID,
+			TenantInfo:   tenantInfo,
+			CustomerID:   plan.result.CustomerID,
+			BillType:     billingqueue.BillTypeDebitMemo,
+			Lines:        memoLines(plan.result.Lines),
+			Reason:       "Late charges assessed as of " + formatDate(inserted[0].AsOfDate),
+			InvoiceDate:  inserted[0].AsOfDate,
+			Memo:         "Late charge run " + runKey,
+			MemoKind:     invoice.MemoKindLateCharge,
+			AutoPost:     memosAutoPost(control),
+			CurrencyCode: plan.result.CurrencyCode,
+		}, actor)
+		if txErr != nil {
+			return txErr
+		}
+
+		stampMemoLines(inserted, memo)
+		return s.repo.SetDebitMemoLines(txCtx, inserted)
+	})
 	if err != nil {
 		return err
 	}
@@ -307,42 +441,6 @@ func (s *Service) raiseMemo(
 		plan.result.Lines = plan.result.Lines[:0]
 		plan.result.TotalChargeMinor = 0
 		return nil
-	}
-	plan.result.Lines, plan.result.TotalChargeMinor = linesFromAssessments(
-		inserted,
-		plan.result.Lines,
-	)
-
-	memo, err := s.invoiceService.CreateMemo(ctx, &invoiceports.CreateMemoRequest{
-		ID:          memoID,
-		TenantInfo:  tenantInfo,
-		CustomerID:  plan.result.CustomerID,
-		BillType:    billingqueue.BillTypeDebitMemo,
-		Lines:       memoLines(plan.result.Lines),
-		Reason:      "Late charges assessed as of " + formatDate(inserted[0].AsOfDate),
-		InvoiceDate: inserted[0].AsOfDate,
-		Memo:        "Late charge run " + runKey,
-		MemoKind:    invoice.MemoKindLateCharge,
-		AutoPost:    memosAutoPost(control),
-	}, actor)
-	if err != nil {
-		if _, delErr := s.repo.DeleteByRunKey(ctx, tenantInfo, runKey); delErr != nil {
-			s.l.Error(
-				"failed to roll back late charge assessments",
-				zap.String("runKey", runKey),
-				zap.Error(delErr),
-			)
-		}
-		return err
-	}
-
-	stampMemoLines(inserted, memo)
-	if err = s.repo.SetDebitMemoLines(ctx, inserted); err != nil {
-		s.l.Warn(
-			"failed to stamp late charge memo lines",
-			zap.String("runKey", runKey),
-			zap.Error(err),
-		)
 	}
 
 	plan.result.DebitMemoID = memo.ID

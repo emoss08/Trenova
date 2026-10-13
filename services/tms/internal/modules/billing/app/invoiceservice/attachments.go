@@ -107,7 +107,7 @@ func (s *Service) materializePartLinks(
 		if err != nil {
 			return body, linked, err
 		}
-		link.URL = signedDocumentURL(req.BaseURL, rawToken)
+		link.URL = signedDocumentURL(s.linkBaseURL(req.BaseURL), rawToken)
 		body += "\n\nSupporting document link: " + link.FileName + "\n" + link.URL
 		linked = append(linked, &invoice.EmailAttemptAttachment{
 			DocumentID:   link.DocumentID,
@@ -179,8 +179,8 @@ func planAttachment(
 }
 
 func providerLimit(profile *email.Profile) int64 {
-	if profile != nil && profile.Provider == email.ProviderResend {
-		return resendMessageLimitBytes
+	if profile == nil {
+		return emailports.PostmarkMessageLimitBytes
 	}
-	return postmarkMessageLimitBytes
+	return emailports.MessageLimitBytes(profile.Provider)
 }

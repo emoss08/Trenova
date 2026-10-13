@@ -108,7 +108,11 @@ alike. `gen_ai.operation.name`, `gen_ai.provider.name` (`anthropic`, `openai`,
 attempt `trenova.ai.first_token_ms`: how long it took to stream the first text
 or thinking, also kept in the usage row's `first_token_ms` and the
 `trenova.gen_ai.client.time_to_first_token` histogram (labelled with
-`trenova.ai.task`); an attempt that streamed none has none. Events:
+`trenova.ai.task`); an attempt that streamed none has none. With
+`ai.cacheDiagnostics` on, a chat attempt on the Claude API also carries
+`trenova.ai.cache_miss.reason` (the API's `cache_miss_reason` type, or `pending`)
+and, for a changed prompt, `trenova.ai.cache_miss.missed_tokens`; see "Why a
+prompt cache missed" in agent-runtime.md. Events:
 `provider.busy_wait{wait_s}` for each wait on a provider answering 429 or 5xx,
 `provider.resting` when the attempt put the provider to rest.
 

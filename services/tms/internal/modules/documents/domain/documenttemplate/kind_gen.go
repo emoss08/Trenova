@@ -20,6 +20,13 @@ const (
 	// KindInvoiceEmail is the message that delivers an invoice.
 	KindInvoiceEmail      Kind = "invoice.email"
 	KindInvoiceShareEmail Kind = "invoice.share.email"
+	// KindPaymentReminderEmail reminds a customer that invoices are past due.
+	KindPaymentReminderEmail Kind = "invoice.reminder.email"
+	// KindCustomerStatementPDF is a customer's account statement: what it was
+	// billed and paid over a period and what is still open.
+	KindCustomerStatementPDF Kind = "customer.statement.pdf"
+	// KindCustomerStatementEmail is the message that delivers a statement.
+	KindCustomerStatementEmail Kind = "customer.statement.email"
 
 	// Detention.
 
@@ -47,6 +54,12 @@ const (
 	// KindTenderOfferEmail offers a brokered load to a carrier with accept and
 	// decline links.
 	KindTenderOfferEmail Kind = "tender.offer.email"
+
+	// Tracking.
+
+	// KindCarrierTrackingLinkEmail sends a carrier the link it posts check calls,
+	// arrivals and departures through for one brokered load.
+	KindCarrierTrackingLinkEmail Kind = "carriertracking.link.email"
 
 	// Portal.
 
@@ -156,6 +169,9 @@ func AllKinds() []Kind {
 		KindInvoicePDF,
 		KindInvoiceEmail,
 		KindInvoiceShareEmail,
+		KindPaymentReminderEmail,
+		KindCustomerStatementPDF,
+		KindCustomerStatementEmail,
 		KindDetentionNoticeEmail,
 		KindDetentionNoticePDF,
 		KindRateConfirmationPDF,
@@ -163,6 +179,7 @@ func AllKinds() []Kind {
 		KindReportPDF,
 		KindReportDeliveryEmail,
 		KindTenderOfferEmail,
+		KindCarrierTrackingLinkEmail,
 		KindDriverPortalInvitationEmail,
 		KindPasswordResetEmail,
 		KindAgentRequestMissingDocsEmail,

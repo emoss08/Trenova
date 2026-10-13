@@ -1,61 +1,113 @@
+import { adminLinks, navigationConfig } from "@/config/navigation.config";
 import type { GlobalSearchGroup } from "@/services/global-search";
 import { describe, expect, it } from "vitest";
+import type { PaletteItem, PalettePage, PaletteSection } from "../palette-model";
 import {
   buildHomeSections,
   buildSearchSections,
+  buildSubjectSections,
   flattenSections,
+  MAX_ASK_MENTIONS,
+  rankLocal,
   recordsFromGroups,
+  recordsNamedIn,
+  scopeCounts,
   type HomeInput,
   type RemoteState,
   type SearchInput,
 } from "../palette-sections";
+import { buildRouteCommandGroups } from "../route-command-data";
 import { command, page, record, t } from "./palette-test-fixtures";
 
 const IDLE_REMOTE: RemoteState = { groups: [], loading: false, error: false, ready: false };
+
+function settled(groups: GlobalSearchGroup[]): RemoteState {
+  return { groups, loading: false, error: false, ready: true };
+}
 
 function home(overrides: Partial<HomeInput> = {}): HomeInput {
   return {
     recentRecords: [],
     attention: { rows: [], loading: false },
-    notifications: { items: [], unread: 0, loading: false },
     pinnedPages: { pages: [], loading: false },
-    recentPages: [],
-    suggested: [],
+    quickActions: [],
     ...overrides,
   };
 }
 
-function search(overrides: Partial<SearchInput> = {}): SearchInput {
+function search(
+  overrides: Partial<Omit<SearchInput, "ranking">> & {
+    pages?: PalettePage[];
+    commands?: ReturnType<typeof command>[];
+  } = {},
+): SearchInput {
+  const { pages = [], commands = [], ...rest } = overrides;
+  const query = rest.query ?? "";
   return {
-    query: "",
+    query,
+    recordQuery: rest.recordQuery ?? query,
     scope: "all",
     question: null,
     remote: IDLE_REMOTE,
-    pages: [],
-    commands: [],
     recentRecords: [],
-    ...overrides,
+    ranking: rankLocal(query, pages, commands, t),
+    ...rest,
   };
 }
 
-// Shaped like the Go handler's JSON: `subtitle` and `metadata` are omitempty,
-// so a hit may carry neither, and a group only exists when it has hits.
+function ids(sections: readonly PaletteSection[]): string[] {
+  return sections.map((entry) => entry.id);
+}
+
+function keys(items: readonly PaletteItem[]): string[] {
+  return items.map((item) => item.key);
+}
+
+function sectionOf(sections: readonly PaletteSection[], id: string): PaletteSection | undefined {
+  return sections.find((entry) => entry.id === id);
+}
+
+// Shaped like the Go handler's JSON: `subtitle`, `metadata` and `total` are
+// omitempty, so a hit may carry neither, and a group only exists when it has hits.
 const SHIPMENT_GROUP: GlobalSearchGroup = {
   entityType: "shipment",
   label: "Shipments",
+  total: 7,
   hits: [
     {
       id: "shp_1",
       entityType: "shipment",
       title: "BOL-77",
       href: "/shipment-management/shipments?expanded=shp_1",
-      metadata: { proNumber: "PRO-1001", status: "InTransit", bol: "BOL-77" },
+      metadata: {
+        proNumber: "S-1001",
+        status: "InTransit",
+        bol: "77",
+        customerName: "Acme Foods",
+        origin: "Dallas, TX",
+        destination: "Atlanta, GA",
+      },
     },
     {
       id: "shp_2",
       entityType: "shipment",
-      title: "PRO-1002",
+      title: "S-1002",
       href: "/shipment-management/shipments?expanded=shp_2",
+      metadata: { customerName: "Acme Foods" },
+    },
+    {
+      id: "shp_3",
+      entityType: "shipment",
+      title: "S-1003",
+      href: "/shipment-management/shipments?expanded=shp_3",
+      metadata: { customerName: "Acme Foods" },
+    },
+    {
+      id: "shp_4",
+      entityType: "shipment",
+      title: "S-1004",
+      href: "/shipment-management/shipments?expanded=shp_4",
+      metadata: { customerName: "Acme Foods" },
     },
   ],
 };
@@ -67,22 +119,92 @@ const CUSTOMER_GROUP: GlobalSearchGroup = {
     {
       id: "cus_1",
       entityType: "customer",
-      title: "Acme Freight",
+      title: "Acme Foods",
       subtitle: "ACME",
       href: "/billing/configuration-files/customers?panelEntityId=cus_1",
-      metadata: { status: "Active" },
+      metadata: { status: "Active", code: "ACME" },
     },
   ],
 };
 
+describe("recordsNamedIn", () => {
+  it("hands Nova the records the question names, and not the looser matches beside them", () => {
+    expect(
+      recordsNamedIn("Why is S-1001 running late for Acme Foods?", [
+        SHIPMENT_GROUP,
+        CUSTOMER_GROUP,
+      ]),
+    ).toEqual([
+      { type: "shipment", id: "shp_1", label: "S-1001" },
+      { type: "customer", id: "cus_1", label: "Acme Foods" },
+    ]);
+  });
+
+  it("reads a name in any case and with a possessive, but never inside a longer word", () => {
+    expect(recordsNamedIn("what is acme foods's balance?", [CUSTOMER_GROUP])).toEqual([
+      { type: "customer", id: "cus_1", label: "Acme Foods" },
+    ]);
+    expect(recordsNamedIn("Tell me about Acme Foodservice", [CUSTOMER_GROUP])).toEqual([]);
+    expect(recordsNamedIn("Tell me about S-10011", [SHIPMENT_GROUP])).toEqual([]);
+  });
+
+  it("names each record once even when two groups return it", () => {
+    expect(
+      recordsNamedIn("Acme Foods?", [CUSTOMER_GROUP, { ...CUSTOMER_GROUP, label: "Again" }]),
+    ).toEqual([{ type: "customer", id: "cus_1", label: "Acme Foods" }]);
+  });
+
+  it("sends no more records than the server takes for one question", () => {
+    const many: GlobalSearchGroup = {
+      entityType: "shipment",
+      label: "Shipments",
+      hits: Array.from({ length: MAX_ASK_MENTIONS + 2 }, (_, index) => ({
+        id: `shp_${index}`,
+        entityType: "shipment",
+        title: `S-20${String(index).padStart(2, "0")}`,
+        href: `/shipments/shp_${index}`,
+      })),
+    };
+    const question = many.hits.map((hit) => hit.title).join(", ");
+
+    expect(recordsNamedIn(question, [many])).toHaveLength(MAX_ASK_MENTIONS);
+  });
+
+  it("skips a title too short to be told from an ordinary word", () => {
+    const short: GlobalSearchGroup = {
+      entityType: "worker",
+      label: "Workers",
+      hits: [{ id: "wrk_1", entityType: "worker", title: "Al", href: "/workers/wrk_1" }],
+    };
+
+    expect(recordsNamedIn("Can Al take a load today?", [short])).toEqual([]);
+  });
+});
+
 describe("recordsFromGroups", () => {
   it("prefers the enriched PRO number over the indexed title, and survives absent metadata", () => {
-    const byType = recordsFromGroups([SHIPMENT_GROUP]);
-    const shipments = byType.get("shipment") ?? [];
+    const shipments = recordsFromGroups([
+      {
+        entityType: "shipment",
+        label: "Shipments",
+        hits: [
+          SHIPMENT_GROUP.hits[0]!,
+          { id: "shp_9", entityType: "shipment", title: "S-9", href: "/x" },
+        ],
+      },
+    ]).get("shipment");
 
-    expect(shipments.map((entry) => entry.title)).toEqual(["PRO-1001", "PRO-1002"]);
-    expect(shipments[1]?.metadata).toEqual({});
-    expect(shipments[1]?.subtitle).toBeUndefined();
+    expect(shipments?.records.map((entry) => entry.title)).toEqual(["S-1001", "S-9"]);
+    expect(shipments?.records[1]?.metadata).toEqual({});
+    expect(shipments?.records[1]?.subtitle).toBeUndefined();
+  });
+
+  it("takes the index's total when it is larger than the hits it returned", () => {
+    expect(recordsFromGroups([SHIPMENT_GROUP]).get("shipment")?.total).toBe(7);
+  });
+
+  it("counts the hits themselves when the server sent no total", () => {
+    expect(recordsFromGroups([CUSTOMER_GROUP]).get("customer")?.total).toBe(1);
   });
 
   it("drops a group whose type the palette does not know rather than guessing", () => {
@@ -99,223 +221,377 @@ describe("recordsFromGroups", () => {
 });
 
 describe("buildHomeSections", () => {
-  it("shows nothing but the sections that have something, in a fixed order", () => {
+  it("draws Jump back in, Needs you, Pinned and Quick actions in that order, skipping empty ones", () => {
     const sections = buildHomeSections(
       home({
-        recentRecords: [record()],
-        suggested: [command()],
+        recentRecords: [{ record: record(), visitedAt: 100 }],
+        pinnedPages: { pages: [page()], loading: false },
+        quickActions: [command()],
       }),
       t,
     );
 
-    expect(sections.map((section) => section.id)).toEqual(["recent-records", "suggested"]);
+    expect(ids(sections)).toEqual(["recent-records", "pinned", "quick-actions"]);
+    expect(sections.map((entry) => entry.heading)).toEqual([
+      "Jump back in",
+      "Pinned",
+      "Quick actions",
+    ]);
+  });
+
+  it("carries when each record was opened, for the relative time on its row", () => {
+    const [jump] = buildHomeSections(
+      home({ recentRecords: [{ record: record(), visitedAt: 1_700_000_000_000 }] }),
+      t,
+    );
+
+    expect(jump?.items[0]).toMatchObject({
+      kind: "record",
+      key: "recent-record:shipment:shp_1",
+      visitedAt: 1_700_000_000_000,
+    });
+  });
+
+  it("shows only the five records opened last", () => {
+    const recent = Array.from({ length: 7 }, (_, index) => ({
+      record: record({ id: `shp_${index}` }),
+      visitedAt: index,
+    }));
+
+    const [jump] = buildHomeSections(home({ recentRecords: recent }), t);
+
+    expect(jump?.items).toHaveLength(5);
   });
 
   it("keeps a loading section with placeholder rows until its data lands", () => {
     const sections = buildHomeSections(home({ attention: { rows: [], loading: true } }), t);
 
-    expect(sections).toHaveLength(1);
-    expect(sections[0]).toMatchObject({ id: "attention", loading: true, placeholderRows: 2 });
+    expect(sections).toEqual([
+      expect.objectContaining({ id: "attention", loading: true, placeholderRows: 2, items: [] }),
+    ]);
   });
 
-  it("does not list a pinned page again under recently visited", () => {
-    const pinned = page({ href: "/billing/invoices" });
-    const other = page({ id: "hr", title: "Workers", href: "/hr/workers" });
+  it("lists what is waiting on the person as attention rows", () => {
     const sections = buildHomeSections(
       home({
-        pinnedPages: { pages: [pinned], loading: false },
-        recentPages: [pinned, other],
-      }),
-      t,
-    );
-
-    const recent = sections.find((section) => section.id === "recent-pages");
-    expect(recent?.items.map((item) => item.key)).toEqual(["recent-page:/hr/workers"]);
-  });
-
-  it("reports every unread notification in the count even when it shows only a few", () => {
-    const sections = buildHomeSections(
-      home({
-        notifications: {
-          items: [
+        attention: {
+          rows: [
             {
-              href: null,
-              notification: {
-                id: "ntf_1",
-                organizationId: "org",
-                businessUnitId: null,
-                targetUserId: null,
-                eventType: "x",
-                priority: "medium",
-                channel: "user",
-                title: "Hello",
-                message: "",
-                data: null,
-                relatedEntities: null,
-                source: "system",
-                readAt: null,
-                dismissedAt: null,
-                createdAt: 1,
-              },
+              key: "billing",
+              label: "Billing queue",
+              module: "Billing",
+              count: 6,
+              href: "/billing/queue",
+              tone: "warning",
+              reason: "",
             },
           ],
-          unread: 14,
           loading: false,
         },
       }),
       t,
     );
 
-    expect(sections[0]).toMatchObject({ id: "notifications", count: 14 });
-    expect(sections[0]?.items).toHaveLength(1);
+    expect(sections[0]).toMatchObject({ id: "attention", heading: "Needs you" });
+    expect(keys(sections[0]!.items)).toEqual(["attention:billing"]);
   });
 });
 
 describe("buildSearchSections", () => {
-  const pages = [
-    page(),
-    page({
-      id: "shipments",
-      title: "Shipments",
-      trail: "Shipments > Shipments",
-      href: "/shipment-management/shipments",
-      module: "Shipments",
-      keywords: ["Shipments"],
-    }),
-  ];
-  const commands = [command()];
+  const shipments = page({
+    id: "shipments",
+    title: "Shipments",
+    trail: ["Shipment management"],
+    href: "/shipment-management/shipments",
+    keywords: ["loads"],
+  });
+  const invoices = page();
 
-  it("puts an obvious page first as the top hit and does not repeat it under pages", () => {
-    const sections = buildSearchSections(search({ query: "invoices", pages, commands }), t);
+  it("puts a record that is clearly the answer first as the top hit, not again in its group", () => {
+    const { sections } = buildSearchSections(
+      search({ query: "acme", remote: settled([SHIPMENT_GROUP, CUSTOMER_GROUP]) }),
+      t,
+    );
 
-    expect(sections[0]?.id).toBe("top-hit");
-    expect(sections[0]?.items[0]?.key).toBe("page:/billing/invoices");
-    const pagesSection = sections.find((section) => section.id === "pages");
-    expect(pagesSection?.items.some((item) => item.key === "page:/billing/invoices")).toBeFalsy();
+    expect(ids(sections)).toEqual(["top-hit", "records:shipment", "ask-fallback"]);
+    expect(keys(sectionOf(sections, "top-hit")!.items)).toEqual(["record:customer:cus_1"]);
+    expect(sectionOf(sections, "records:customer")).toBeUndefined();
   });
 
-  it("orders ask, top hit, records, pages, commands", () => {
-    const sections = buildSearchSections(
+  it("caps a record group at three and offers the rest through See all", () => {
+    const { sections } = buildSearchSections(
+      search({ query: "acme", remote: settled([SHIPMENT_GROUP, CUSTOMER_GROUP]) }),
+      t,
+    );
+    const group = sectionOf(sections, "records:shipment")!;
+
+    expect(group.items).toHaveLength(3);
+    expect(group).toMatchObject({ count: 7, seeAll: "shipment" });
+  });
+
+  it("names the field a record matched on so the row can mark it", () => {
+    const { sections } = buildSearchSections(
+      search({ query: "acme", remote: settled([SHIPMENT_GROUP, CUSTOMER_GROUP]) }),
+      t,
+    );
+    const first = sectionOf(sections, "records:shipment")!.items[0];
+
+    expect(first?.kind === "record" && first.match?.highlights).toEqual({ customer: [[0, 4]] });
+  });
+
+  it("matches a page through its keyword and tags the keyword as the source", () => {
+    const { sections } = buildSearchSections(search({ query: "loads", pages: [shipments] }), t);
+    const hit = flattenSections(sections).find((item) => item.kind === "page");
+
+    expect(hit?.kind === "page" && hit.match?.via).toEqual({
+      label: "Keyword",
+      text: "loads",
+      ranges: [[0, 5]],
+    });
+  });
+
+  it("always ends a search with a way to ask Nova", () => {
+    const { sections } = buildSearchSections(search({ query: "invoices", pages: [invoices] }), t);
+
+    expect(sections.at(-1)).toMatchObject({ id: "ask-fallback", heading: "Nova" });
+    expect(sections.at(-1)?.items[0]).toMatchObject({ kind: "ask", question: "invoices" });
+  });
+
+  it("asks Nova first, and only once, when the query reads as a question", () => {
+    const { sections } = buildSearchSections(
+      search({ query: "why is S-1001 late?", question: "why is S-1001 late?" }),
+      t,
+    );
+
+    expect(sections[0]).toMatchObject({ id: "nova" });
+    expect(flattenSections(sections).filter((item) => item.kind === "ask")).toHaveLength(1);
+  });
+
+  it("lists the records a question's search words found under Nova, ranked by those words", () => {
+    const { sections } = buildSearchSections(
       search({
-        query: "ship",
-        question: "ship?",
-        pages,
-        commands,
-        remote: { groups: [SHIPMENT_GROUP], loading: false, error: false, ready: true },
+        query: "Tell me about S-1002?",
+        recordQuery: "S-1002",
+        question: "Tell me about S-1002?",
+        remote: settled([SHIPMENT_GROUP]),
       }),
       t,
     );
 
-    expect(sections.map((section) => section.id)).toEqual([
-      "ask",
-      "top-hit",
-      "records:shipment",
-      "commands",
+    expect(sections[0]).toMatchObject({ id: "nova" });
+    expect(sections[1]).toMatchObject({ id: "top-hit" });
+    expect(sections[1]?.items[0]).toMatchObject({ kind: "record", record: { id: "shp_2" } });
+    expect(flattenSections(sections).filter((item) => item.kind === "ask")).toHaveLength(1);
+  });
+
+  it("reports nothing found only once the search has settled", () => {
+    const loading = buildSearchSections(
+      search({ query: "zzqx", remote: { groups: [], loading: true, error: false, ready: true } }),
+      t,
+    );
+    const done = buildSearchSections(search({ query: "zzqx", remote: settled([]) }), t);
+
+    expect(loading.empty).toBe(false);
+    expect(done.empty).toBe(true);
+    expect(sectionOf(done.sections, "ask-fallback")?.heading).toBe("Try asking instead");
+  });
+
+  it("shows placeholder rows while records load and an error row when they fail", () => {
+    const loading = buildSearchSections(
+      search({ query: "ac", remote: { groups: [], loading: true, error: false, ready: true } }),
+      t,
+    );
+    const failed = buildSearchSections(
+      search({ query: "ac", remote: { groups: [], loading: false, error: true, ready: true } }),
+      t,
+    );
+
+    expect(sectionOf(loading.sections, "records-loading")).toMatchObject({ loading: true });
+    expect(sectionOf(failed.sections, "records-error")).toMatchObject({ error: true });
+  });
+
+  it("browses a scope with nothing typed: the ones opened last, then the rest", () => {
+    const recent = recordsFromGroups([SHIPMENT_GROUP]).get("shipment")!.records[1]!;
+    const { sections } = buildSearchSections(
+      search({
+        scope: "shipment",
+        remote: settled([SHIPMENT_GROUP]),
+        recentRecords: [{ record: recent, visitedAt: 5 }],
+      }),
+      t,
+    );
+
+    expect(ids(sections)).toEqual(["recent-records", "records:shipment"]);
+    expect(keys(sections[0]!.items)).toEqual(["recent-record:shipment:shp_2"]);
+    expect(keys(sections[1]!.items)).toEqual([
+      "record:shipment:shp_1",
+      "record:shipment:shp_3",
+      "record:shipment:shp_4",
     ]);
+    expect(sections[1]?.count).toBe(6);
   });
 
-  it("shows one loading block while the first results are on their way", () => {
-    const sections = buildSearchSections(
-      search({ query: "acme", remote: { groups: [], loading: true, error: false, ready: true } }),
+  it("offers to search everywhere when a scope finds nothing", () => {
+    const { sections, empty } = buildSearchSections(
+      search({ query: "zzqx", scope: "customer", remote: settled([]) }),
       t,
     );
 
-    expect(sections).toEqual([expect.objectContaining({ id: "records-loading", loading: true })]);
+    expect(empty).toBe(true);
+    expect(sections.at(-1)?.items[0]).toMatchObject({ kind: "widen", query: "zzqx" });
   });
 
-  it("keeps the last results on screen while the next query is in flight", () => {
-    const sections = buildSearchSections(
+  it("browses commands grouped when the commands scope has nothing typed", () => {
+    const { sections } = buildSearchSections(
       search({
-        query: "acme",
-        remote: { groups: [CUSTOMER_GROUP], loading: true, error: false, ready: true },
-      }),
-      t,
-    );
-
-    expect(flattenSections(sections).map((item) => item.key)).toEqual(["record:customer:cus_1"]);
-  });
-
-  it("reports a failed search inside its own section and leaves the rest alone", () => {
-    const sections = buildSearchSections(
-      search({
-        query: "invoices",
-        pages,
-        remote: { groups: [], loading: false, error: true, ready: true },
-      }),
-      t,
-    );
-
-    expect(sections.map((section) => section.id)).toEqual(["top-hit", "records-error"]);
-  });
-
-  it("does not surface a page because its breadcrumb happens to hold the letters in order", () => {
-    const sections = buildSearchSections(
-      search({
-        query: "acme",
-        pages: [
-          page({ title: "Console", trail: "Dispatch management > Console", keywords: ["Console"] }),
+        scope: "commands",
+        commands: [
+          command(),
+          command({ id: "app:theme-dark", label: "Use dark theme", group: "appearance" }),
         ],
       }),
       t,
     );
 
-    expect(sections).toEqual([]);
+    expect(ids(sections)).toEqual(["commands:create", "commands:appearance"]);
+  });
+});
+
+describe("matching 'ai' against the real navigation", () => {
+  const pages: PalettePage[] = buildRouteCommandGroups(
+    navigationConfig.modules,
+    adminLinks,
+  ).flatMap((group) =>
+    group.items.map((item) => ({
+      id: item.id,
+      title: item.title,
+      trail: item.trail,
+      href: item.href,
+      icon: item.icon,
+      keywords: item.keywords,
+      module: group.label,
+    })),
+  );
+  const ranked = rankLocal("ai", pages, [], t).pages;
+  const titles = ranked.map(({ entry }) => entry.title);
+
+  it("does not find 'ai' inside a word", () => {
+    expect(titles).not.toContain("Service failures");
+    expect(titles).not.toContain("Trailers");
+    expect(titles).not.toContain("Email logs");
   });
 
-  it("does not search records for a single character", () => {
-    const sections = buildSearchSections(search({ query: "a", remote: IDLE_REMOTE }), t);
-
-    expect(sections.some((section) => section.id.startsWith("records"))).toBe(false);
+  it("finds AI control by its title, ahead of anything matched another way", () => {
+    expect(ranked[0]?.entry.title).toBe("AI control");
+    expect(ranked[0]?.match.highlights).toEqual({ title: [[0, 2]] });
   });
 
-  it("offers recent records of the scoped type before a query is long enough to send", () => {
-    const sections = buildSearchSections(
+  it("finds Document intelligence through its keyword and says so", () => {
+    const hit = ranked.find(({ entry }) => entry.title === "Document intelligence");
+
+    expect(hit?.match.via).toEqual({ label: "Keyword", text: "ai", ranges: [[0, 2]] });
+  });
+});
+
+describe("matching a worker by name", () => {
+  it("finds Aisha Grant for 'ai' at the start of her name", () => {
+    const { sections } = buildSearchSections(
       search({
-        query: "",
-        scope: "customer",
-        recentRecords: [record(), record({ entityType: "customer", id: "cus_9", title: "Globex" })],
+        query: "ai",
+        remote: settled([
+          {
+            entityType: "worker",
+            label: "Workers",
+            hits: [
+              { id: "wrk_1", entityType: "worker", title: "Aisha Grant", href: "/hr/workers" },
+              { id: "wrk_2", entityType: "worker", title: "Blaine Ortiz", href: "/hr/workers" },
+            ],
+          },
+        ]),
       }),
       t,
     );
+    const top = sectionOf(sections, "top-hit")?.items[0];
 
-    expect(flattenSections(sections).map((item) => item.key)).toEqual([
-      "recent-record:customer:cus_9",
-    ]);
+    expect(top?.key).toBe("record:worker:wrk_1");
+    expect(top?.kind === "record" && top.match?.highlights).toEqual({ title: [[0, 2]] });
+  });
+});
+
+describe("buildSubjectSections", () => {
+  const subject = { type: "shipment", id: "shp_1", label: "S-1001" };
+
+  it("offers three starter questions about the record before anything is typed", () => {
+    const [ask] = buildSubjectSections(subject, "", null, t);
+
+    expect(ask?.heading).toBe("Ask Nova about {0}|S-1001");
+    expect(ask?.items).toHaveLength(3);
+    expect(ask?.items.every((item) => item.kind === "ask" && item.subject === subject)).toBe(true);
   });
 
-  it("limits a record scope to that type", () => {
-    const sections = buildSearchSections(
-      search({
-        query: "acme",
-        scope: "customer",
-        remote: {
-          groups: [SHIPMENT_GROUP, CUSTOMER_GROUP],
-          loading: false,
-          error: false,
-          ready: true,
-        },
-      }),
+  it("drops the answered question and offers the rest under Ask something else", () => {
+    const [first] = buildSubjectSections(subject, "", null, t);
+    const answered = first!.items[0]!.kind === "ask" ? first!.items[0]!.question : "";
+
+    const [rest] = buildSubjectSections(subject, "", answered, t);
+
+    expect(rest?.heading).toBe("Ask something else");
+    expect(rest?.items).toHaveLength(2);
+  });
+
+  it("asks exactly what was typed", () => {
+    const [ask] = buildSubjectSections(subject, "who signed the POD?", null, t);
+
+    expect(ask?.items).toEqual([expect.objectContaining({ question: "who signed the POD?" })]);
+  });
+});
+
+describe("scopeCounts", () => {
+  const ranking = rankLocal("acme", [], [], t);
+
+  it("counts each record type from the index's totals once the search settles", () => {
+    expect(scopeCounts(ranking, settled([SHIPMENT_GROUP, CUSTOMER_GROUP]))).toEqual({
+      all: 8,
+      shipment: 7,
+      customer: 1,
+      worker: 0,
+      document: 0,
+      pages: 0,
+      commands: 0,
+    });
+  });
+
+  it("leaves record types uncounted while the search is still running", () => {
+    const counts = scopeCounts(ranking, {
+      groups: [SHIPMENT_GROUP],
+      loading: true,
+      error: false,
+      ready: true,
+    });
+
+    expect(counts.shipment).toBeUndefined();
+  });
+
+  it("reads zero for the scopes command mode never searched", () => {
+    const theme = rankLocal(
+      "theme",
+      [page({ title: "Theme settings" })],
+      [command({ id: "app:theme-dark", label: "Use dark theme", keywords: ["theme"] })],
       t,
     );
 
-    expect(sections.map((section) => section.id)).toEqual(["records:customer"]);
+    expect(scopeCounts(theme, IDLE_REMOTE, "commands")).toEqual({
+      all: 1,
+      pages: 0,
+      commands: 1,
+      shipment: 0,
+      customer: 0,
+      worker: 0,
+      document: 0,
+    });
   });
 
-  it("groups every page by module when the pages scope has no query", () => {
-    const sections = buildSearchSections(search({ scope: "pages", pages }), t);
-
-    expect(sections.map((section) => section.heading)).toEqual(["Billing", "Shipments"]);
-  });
-
-  it("groups commands in the fixed group order", () => {
-    const sections = buildSearchSections(
-      search({
-        scope: "commands",
-        commands: [command({ id: "app:sign-out", label: "Log out", group: "account" }), command()],
-      }),
-      t,
-    );
-
-    expect(sections.map((section) => section.id)).toEqual(["commands:create", "commands:account"]);
+  it("counts the records a question's search words found", () => {
+    expect(scopeCounts(ranking, settled([SHIPMENT_GROUP])).shipment).toBe(7);
   });
 });

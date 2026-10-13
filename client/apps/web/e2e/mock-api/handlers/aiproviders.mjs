@@ -117,7 +117,8 @@ function providerDays(state, provider) {
 function draftTest(state, input) {
   const { endpoint, model } = input;
   const stored = endpoint.providerId ? nodeOf(state, endpoint.providerId).node : null;
-  const local = !KEYED_KINDS.has(endpoint.kind);
+  // A platform provider signing in as the server stores no key.
+  const local = !KEYED_KINDS.has(endpoint.kind) || endpoint.platformSettings?.auth === "Server";
   const base = endpoint.baseUrl || (endpoint.kind === "Ollama" ? "http://localhost:11434" : "");
   const fail = (message, detail, hint) => ({
     success: false,
@@ -167,7 +168,9 @@ function saveRequestToNode(state, body, existing) {
     node.apiKey = keyInfo(state, key);
     if (previous && body.keepPreviousKey) node.apiKey.previousKeyExpiresAt = state.now() + DAY;
     node.hasApiKey = true;
-  } else if (key === "" && !existing) {
+  } else if (key === "") {
+    // The server clears the stored key on an empty one, as a switch to the
+    // server's own credentials sends.
     node.hasApiKey = false;
     node.apiKey = null;
   }
@@ -175,6 +178,8 @@ function saveRequestToNode(state, body, existing) {
     name: body.name,
     description: body.description ?? "",
     kind: body.kind,
+    platform: body.platform ?? "Direct",
+    platformSettings: body.platformSettings ?? null,
     baseUrl: body.baseUrl ?? "",
     model: body.model,
     allowPrivateNetwork: !!body.allowPrivateNetwork,

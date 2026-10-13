@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -28,24 +29,36 @@ const (
 type CustomerBillingProfile struct {
 	bun.BaseModel `bun:"table:customer_billing_profiles,alias:cbp" json:"-"`
 
-	ID                          pulid.ID            `json:"id"                          bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID              pulid.ID            `json:"businessUnitId"              bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID              pulid.ID            `json:"organizationId"              bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	CustomerID                  pulid.ID            `json:"customerId"                  bun:"customer_id,pk,notnull,type:VARCHAR(100)"`
-	InvoiceDelivery             InvoiceDelivery     `json:"invoiceDelivery"             bun:"invoice_delivery,type:customer_invoice_delivery_enum,notnull,default:'PerShipment'"`
-	BillingCycle                BillingCycle        `json:"billingCycle"                bun:"billing_cycle,type:customer_billing_cycle_enum,notnull,default:'Immediate'"`
-	BillingCycleAnchorDay       int16               `json:"billingCycleAnchorDay"       bun:"billing_cycle_anchor_day,type:SMALLINT,notnull,default:1"`
-	BillingCycleTimezone        string              `json:"billingCycleTimezone"        bun:"billing_cycle_timezone,type:VARCHAR(64),notnull,default:'UTC'"`
-	LastBilledPeriodEnd         *int64              `json:"lastBilledPeriodEnd"         bun:"last_billed_period_end,type:BIGINT,nullzero"`
-	PaymentTerm                 PaymentTerm         `json:"paymentTerm"                 bun:"payment_term,type:payment_term_enum,nullzero,default:'Net30'"`
-	HasBillingControlOverrides  bool                `json:"hasBillingControlOverrides"  bun:"has_billing_control_overrides,type:BOOLEAN,notnull"`
-	CreditLimit                 decimal.NullDecimal `json:"creditLimit"                 bun:"credit_limit,type:NUMERIC(12,2),nullzero"`
-	CreditBalance               decimal.Decimal     `json:"creditBalance"               bun:"credit_balance,type:NUMERIC(12,2),notnull,default:0"`
-	CreditStatus                CreditStatus        `json:"creditStatus"                bun:"credit_status,type:credit_status_enum,notnull,default:'Active'"`
-	EnforceCreditLimit          bool                `json:"enforceCreditLimit"          bun:"enforce_credit_limit,type:BOOLEAN,notnull"`
-	AutoCreditHold              bool                `json:"autoCreditHold"              bun:"auto_credit_hold,type:BOOLEAN,notnull"`
-	CreditHoldReason            string              `json:"creditHoldReason"            bun:"credit_hold_reason,type:TEXT,nullzero"`
-	AutoSendInvoiceOnGeneration bool                `json:"autoSendInvoiceOnGeneration" bun:"auto_send_invoice_on_generation,type:BOOLEAN,notnull"`
+	ID                         pulid.ID            `json:"id"                         bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID             pulid.ID            `json:"businessUnitId"             bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
+	OrganizationID             pulid.ID            `json:"organizationId"             bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	CustomerID                 pulid.ID            `json:"customerId"                 bun:"customer_id,pk,notnull,type:VARCHAR(100)"`
+	InvoiceDelivery            InvoiceDelivery     `json:"invoiceDelivery"            bun:"invoice_delivery,type:customer_invoice_delivery_enum,notnull,default:'PerShipment'"`
+	BillingCycle               BillingCycle        `json:"billingCycle"               bun:"billing_cycle,type:customer_billing_cycle_enum,notnull,default:'Immediate'"`
+	BillingCycleAnchorDay      int16               `json:"billingCycleAnchorDay"      bun:"billing_cycle_anchor_day,type:SMALLINT,notnull,default:1"`
+	BillingCycleTimezone       string              `json:"billingCycleTimezone"       bun:"billing_cycle_timezone,type:VARCHAR(64),notnull,default:'UTC'"`
+	LastBilledPeriodEnd        *int64              `json:"lastBilledPeriodEnd"        bun:"last_billed_period_end,type:BIGINT,nullzero"`
+	PaymentTerm                PaymentTerm         `json:"paymentTerm"                bun:"payment_term,type:payment_term_enum,nullzero,default:'Net30'"`
+	HasBillingControlOverrides bool                `json:"hasBillingControlOverrides" bun:"has_billing_control_overrides,type:BOOLEAN,notnull"`
+	CreditLimit                decimal.NullDecimal `json:"creditLimit"                bun:"credit_limit,type:NUMERIC(12,2),nullzero"`
+	CreditBalance              decimal.Decimal     `json:"creditBalance"              bun:"credit_balance,type:NUMERIC(12,2),notnull,default:0"`
+	CreditStatus               CreditStatus        `json:"creditStatus"               bun:"credit_status,type:credit_status_enum,notnull,default:'Active'"`
+	EnforceCreditLimit         bool                `json:"enforceCreditLimit"         bun:"enforce_credit_limit,type:BOOLEAN,notnull"`
+	AutoCreditHold             bool                `json:"autoCreditHold"             bun:"auto_credit_hold,type:BOOLEAN,notnull"`
+	CreditHoldReason           string              `json:"creditHoldReason"           bun:"credit_hold_reason,type:TEXT,nullzero"`
+	// CreditHoldAutomatic marks a Hold or Warning the credit review placed
+	// against open receivables; only the review lifts it.
+	CreditHoldAutomatic bool `json:"creditHoldAutomatic" bun:"credit_hold_automatic,type:BOOLEAN,notnull,default:false"`
+	// CreditReviewedAt is when CreditBalance, the open receivables, was last
+	// computed by the credit review.
+	CreditReviewedAt            *int64 `json:"creditReviewedAt"            bun:"credit_reviewed_at,type:BIGINT,nullzero"`
+	AutoSendInvoiceOnGeneration bool   `json:"autoSendInvoiceOnGeneration" bun:"auto_send_invoice_on_generation,type:BOOLEAN,notnull"`
+	// SendPaymentReminders lets the organization's payment reminders reach
+	// this customer; off for a customer who must never be dunned by email.
+	SendPaymentReminders bool `json:"sendPaymentReminders" bun:"send_payment_reminders,type:BOOLEAN,notnull"`
+	// SendStatements lets the organization's monthly statements reach this
+	// customer.
+	SendStatements bool `json:"sendStatements" bun:"send_statements,type:BOOLEAN,notnull"`
 	// EmailInvoiceEnabled and EDIInvoiceEnabled are the delivery channels an
 	// invoice may leave through. Auto-send after posting honours both.
 	EmailInvoiceEnabled        bool                `json:"emailInvoiceEnabled"        bun:"email_invoice_enabled,type:BOOLEAN,notnull"`
@@ -88,8 +101,9 @@ type CustomerBillingProfile struct {
 	BillingNotes                    string            `json:"billingNotes"                    bun:"billing_notes,type:TEXT,nullzero"`
 	FuelSurchargeMode               FuelSurchargeMode `json:"fuelSurchargeMode"               bun:"fuel_surcharge_mode,type:customer_fuel_surcharge_mode_enum,notnull,default:'None'"`
 	FuelSurchargeProgramID          *pulid.ID         `json:"fuelSurchargeProgramId"          bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero"`
-	// UseFactoring                bool                 `json:"useFactoring"                bun:"use_factoring,type:BOOLEAN,notnull,default:false"`
-	// FactoringCompanyID          *pulid.ID            `json:"factoringCompanyId"          bun:"factoring_company_id,type:VARCHAR(100),nullzero"`
+	// FactoringCompanyID names the factor this customer's invoices are
+	// assigned to: they post remitted to it, with its notice of assignment.
+	FactoringCompanyID *pulid.ID `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -103,7 +117,7 @@ type CustomerBillingProfile struct {
 	ARAccount            *glaccount.GLAccount                `json:"arAccount"                      bun:"rel:belongs-to,join:ar_account_id=id"`
 	DocumentTypes        []*documenttype.DocumentType        `json:"documentTypes"                  bun:"m2m:customer_billing_profile_document_types,join:BillingProfile=DocumentType"`
 	FuelSurchargeProgram *fuelsurcharge.FuelSurchargeProgram `json:"fuelSurchargeProgram,omitempty" bun:"rel:belongs-to,join:fuel_surcharge_program_id=id"`
-	// FactoringCompany     *FactoringCompany            `json:"factoringCompany" bun:"rel:belongs-to,join:factoring_company_id=id"`
+	FactoringCompany     *factoringcompany.FactoringCompany  `json:"factoringCompany,omitempty"     bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }
 
 func (b *CustomerBillingProfile) GetID() string {
@@ -271,6 +285,8 @@ func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBilling
 		BusinessUnitID:              buID,
 		CustomerID:                  customerID,
 		AutoSendInvoiceOnGeneration: true,
+		SendPaymentReminders:        true,
+		SendStatements:              true,
 		EmailInvoiceEnabled:         true,
 		EnforceCustomerBillingReq:   true,
 		ValidateCustomerRates:       true,

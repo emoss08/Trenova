@@ -42,7 +42,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
@@ -54,18 +56,21 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
@@ -221,11 +226,14 @@ type AIProviderEdge struct {
 // An endpoint as an editor holds it, before it is saved. With providerId and no
 // apiKey, the provider's stored key is used.
 type AIProviderEndpointInput struct {
-	ProviderID          *string         `json:"providerId,omitempty"`
-	Kind                aiprovider.Kind `json:"kind"`
-	BaseURL             string          `json:"baseUrl"`
-	APIKey              *string         `json:"apiKey,omitempty"`
-	AllowPrivateNetwork bool            `json:"allowPrivateNetwork"`
+	ProviderID *string         `json:"providerId,omitempty"`
+	Kind       aiprovider.Kind `json:"kind"`
+	// Where an Anthropic Messages endpoint reaches Claude. Omitted calls the base URL directly.
+	Platform            *aiprovider.Platform             `json:"platform,omitempty"`
+	PlatformSettings    *AIProviderPlatformSettingsInput `json:"platformSettings,omitempty"`
+	BaseURL             string                           `json:"baseUrl"`
+	APIKey              *string                          `json:"apiKey,omitempty"`
+	AllowPrivateNetwork bool                             `json:"allowPrivateNetwork"`
 }
 
 // One model an endpoint says it serves.
@@ -259,6 +267,17 @@ type AIProviderPatchInput struct {
 	OutputCostPerMillion     graphql.Omittable[*string] `json:"outputCostPerMillion,omitempty"`
 	CacheReadCostPerMillion  graphql.Omittable[*string] `json:"cacheReadCostPerMillion,omitempty"`
 	CacheWriteCostPerMillion graphql.Omittable[*string] `json:"cacheWriteCostPerMillion,omitempty"`
+}
+
+type AIProviderPlatformSettingsInput struct {
+	Auth        *aiprovider.PlatformAuth `json:"auth,omitempty"`
+	Region      *string                  `json:"region,omitempty"`
+	ProjectID   *string                  `json:"projectId,omitempty"`
+	WorkspaceID *string                  `json:"workspaceId,omitempty"`
+	AccessKeyID *string                  `json:"accessKeyId,omitempty"`
+	Resource    *string                  `json:"resource,omitempty"`
+	TenantID    *string                  `json:"tenantId,omitempty"`
+	ClientID    *string                  `json:"clientId,omitempty"`
 }
 
 // A provider as its editor holds it, reduced to what decides where tasks go.
@@ -1416,6 +1435,14 @@ type BulkEditSelectionInput struct {
 	Filter *DataTableConnectionInput `json:"filter,omitempty"`
 	// The table's own list options beyond filters, such as the shipment board's quick filters.
 	Options map[string]any `json:"options,omitempty"`
+}
+
+type BulkReviewInboundMessagesInput struct {
+	// Actioned or Ignored.
+	Status inboundmessage.Status `json:"status"`
+	Note   *string               `json:"note,omitempty"`
+	// Turn on a rule that does this on its own next time, for one message's kind, sender domain and source.
+	Teach *inboundmessage.NovaAction `json:"teach,omitempty"`
 }
 
 type BulkSettlementActionInput struct {
@@ -4016,6 +4043,17 @@ type FacilityDetentionStat struct {
 	SuppressedCount    int     `json:"suppressedCount"`
 }
 
+type FactoringCompanyConnection struct {
+	Edges      []*FactoringCompanyEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+}
+
+type FactoringCompanyEdge struct {
+	Node   *factoringcompany.FactoringCompany `json:"node"`
+	Cursor string                             `json:"cursor"`
+}
+
 type FieldFilterInput struct {
 	Field    string `json:"field"`
 	Operator string `json:"operator"`
@@ -4037,6 +4075,15 @@ type FileCaptureItemsEntryInput struct {
 	DocumentTypeID *string `json:"documentTypeId,omitempty"`
 	// The item version the person was looking at.
 	Version int `json:"version"`
+}
+
+type FileInboundAttachmentInput struct {
+	AttachmentID string `json:"attachmentId"`
+	ShipmentID   string `json:"shipmentId"`
+	// The document type id to file it as. Ignored when pages are given.
+	DocumentTypeID *string `json:"documentTypeId,omitempty"`
+	// File page ranges as separate documents instead of the whole file.
+	Pages []*InboundAttachmentPagesInput `json:"pages,omitempty"`
 }
 
 type FilterGroupInput struct {
@@ -4841,6 +4888,14 @@ type ImportSourcedCarrierInput struct {
 	EnrollMonitoring *bool   `json:"enrollMonitoring,omitempty"`
 }
 
+// A page range of a file, filed as its own document.
+type InboundAttachmentPagesInput struct {
+	FromPage int `json:"fromPage"`
+	ToPage   int `json:"toPage"`
+	// The document type id to file the range as.
+	DocumentTypeID string `json:"documentTypeId"`
+}
+
 type InboundMailboxInput struct {
 	Name         string                      `json:"name"`
 	Address      string                      `json:"address"`
@@ -4866,6 +4921,15 @@ type InboundMessageEdge struct {
 type InboundMessagesInput struct {
 	First *int    `json:"first,omitempty"`
 	After *string `json:"after,omitempty"`
+	// The folder. Absent keeps the older status filter.
+	Lane *inboundmessageports.Lane `json:"lane,omitempty"`
+	Sort *inboundmessageports.Sort `json:"sort,omitempty"`
+	// Show one row per thread: the newest message of it in the folder.
+	CollapseThreads *bool `json:"collapseThreads,omitempty"`
+	// Only one thread, newest first.
+	ThreadKey *string `json:"threadKey,omitempty"`
+	// Only messages assigned to this person.
+	OwnerID *string `json:"ownerId,omitempty"`
 	// Only these statuses; empty is every status.
 	Statuses       []inboundmessage.Status        `json:"statuses,omitempty"`
 	Classification *inboundmessage.Classification `json:"classification,omitempty"`
@@ -4913,6 +4977,21 @@ type InvoiceConnection struct {
 type InvoiceEdge struct {
 	Node   *invoice.Invoice `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+type IssueCarrierTrackingLinkInput struct {
+	ShipmentMoveID string `json:"shipmentMoveId"`
+	// Where to email the link. Leave empty to copy it instead.
+	RecipientEmail *string `json:"recipientEmail,omitempty"`
+}
+
+type IssueCarrierTrackingLinkPayload struct {
+	Link *checkcall.TrackingLink `json:"link"`
+	// The link to share. It is not stored and cannot be shown again.
+	URL     string `json:"url"`
+	Emailed bool   `json:"emailed"`
+	// Why the email could not be sent, when one was asked for. The link still works.
+	EmailError *string `json:"emailError,omitempty"`
 }
 
 type IssueDisciplinaryActionInput struct {
@@ -5080,6 +5159,39 @@ type LocationReference struct {
 	// Where the location is, when it has been geocoded.
 	Latitude  *float64 `json:"latitude,omitempty"`
 	Longitude *float64 `json:"longitude,omitempty"`
+}
+
+type LogCheckCallInput struct {
+	ShipmentMoveID string         `json:"shipmentMoveId"`
+	Kind           checkcall.Kind `json:"kind"`
+	// Required for an arrival or departure.
+	StopID *string `json:"stopId,omitempty"`
+	// Defaults to now. A time in the future is refused.
+	ReportedAt       *int     `json:"reportedAt,omitempty"`
+	Latitude         *float64 `json:"latitude,omitempty"`
+	Longitude        *float64 `json:"longitude,omitempty"`
+	City             *string  `json:"city,omitempty"`
+	StateCode        *string  `json:"stateCode,omitempty"`
+	Delayed          *bool    `json:"delayed,omitempty"`
+	DelayReason      *string  `json:"delayReason,omitempty"`
+	EstimatedArrival *int     `json:"estimatedArrival,omitempty"`
+	Note             *string  `json:"note,omitempty"`
+	ContactName      *string  `json:"contactName,omitempty"`
+}
+
+type LogCheckCallPayload struct {
+	CheckCall *checkcall.CheckCall `json:"checkCall"`
+	// What became of an arrival or departure when the stop's times were settled.
+	Outcome       *trackingevent.Outcome `json:"outcome,omitempty"`
+	OutcomeReason *string                `json:"outcomeReason,omitempty"`
+}
+
+type LogInboundExceptionInput struct {
+	Kind     inboundmessage.ExceptionKind `json:"kind"`
+	Quantity int                          `json:"quantity"`
+	// What was short, over or damaged: pallets, cases, pieces.
+	Unit string  `json:"unit"`
+	Note *string `json:"note,omitempty"`
 }
 
 type ManualJournalConnection struct {
@@ -5902,6 +6014,10 @@ type RecordMyStopActionInput struct {
 	MoveID string                         `json:"moveId"`
 	StopID string                         `json:"stopId"`
 	Action shipmentports.StopActualAction `json:"action"`
+	// When it happened on the device. Omitted means when the server receives it.
+	OccurredAt *int `json:"occurredAt,omitempty"`
+	// An id the device makes once per tap, so a resend after a dropped connection is recorded once.
+	ClientEventID *string `json:"clientEventId,omitempty"`
 }
 
 type RecordSafetyViolationInput struct {
@@ -6837,6 +6953,19 @@ type SelectOptionsInput struct {
 	Offset   *int                 `json:"offset,omitempty"`
 	Ids      []string             `json:"ids,omitempty"`
 	Filters  map[string]any       `json:"filters,omitempty"`
+}
+
+type SendInboundReplyInput struct {
+	MessageID string `json:"messageId"`
+	Subject   string `json:"subject"`
+	Body      string `json:"body"`
+	// Another address to send to instead of the sender, after a refusal.
+	ToAddress  *string `json:"toAddress,omitempty"`
+	TemplateID *string `json:"templateId,omitempty"`
+	// The body is Nova's draft, sent as written or after edits.
+	DraftedByNova *bool `json:"draftedByNova,omitempty"`
+	// Documents to attach, from inboundReplyAttachables.
+	DocumentIds []string `json:"documentIds,omitempty"`
 }
 
 type SendTestMessageTemplateInput struct {
@@ -8835,6 +8964,14 @@ type SkipAccountingSyncInput struct {
 	Reason string `json:"reason"`
 }
 
+type SnoozeInboundMessagesInput struct {
+	// Until a time. Exactly one of until and event is set.
+	Until *int                        `json:"until,omitempty"`
+	Event *inboundmessage.SnoozeEvent `json:"event,omitempty"`
+	// The document type DocumentAttached waits for.
+	DocumentTypeID *string `json:"documentTypeId,omitempty"`
+}
+
 type SortFieldInput struct {
 	Field     string `json:"field"`
 	Direction string `json:"direction"`
@@ -9306,6 +9443,45 @@ type TransitionTimesheetInput struct {
 	ID     string                 `json:"id"`
 	Status worker.TimesheetStatus `json:"status"`
 	Note   *string                `json:"note,omitempty"`
+}
+
+type TriageLoadFieldInput struct {
+	Key   inboundmessage.LoadFieldKey `json:"key"`
+	Value string                      `json:"value"`
+}
+
+type TriageReplyTemplateInput struct {
+	Name string `json:"name"`
+	Body string `json:"body"`
+}
+
+type TriageResponseTargetInput struct {
+	Classification inboundmessage.Classification `json:"classification"`
+	// Minutes, or null to go back to the default.
+	Minutes *int `json:"minutes,omitempty"`
+}
+
+type TriageRuleInput struct {
+	Classification inboundmessage.Classification `json:"classification"`
+	SenderScope    triage.SenderScope            `json:"senderScope"`
+	Sender         *string                       `json:"sender,omitempty"`
+	MailboxID      *string                       `json:"mailboxId,omitempty"`
+	Action         inboundmessage.NovaAction     `json:"action"`
+	AssigneeID     *string                       `json:"assigneeId,omitempty"`
+	Enabled        *bool                         `json:"enabled,omitempty"`
+}
+
+// Which messages a bulk change applies to: named ones, or everything in a folder.
+type TriageSelectionInput struct {
+	Ids []string `json:"ids,omitempty"`
+	// Everything in this folder, up to the server's bound.
+	Folder *InboundMessagesInput `json:"folder,omitempty"`
+}
+
+type TriageSettingsInput struct {
+	OnCallUserID   *string `json:"onCallUserId,omitempty"`
+	EndOfDayMinute int     `json:"endOfDayMinute"`
+	Version        int     `json:"version"`
 }
 
 type UnapplyCreditMemoApplicationInput struct {
@@ -11392,6 +11568,64 @@ func (e HomeLayoutSource) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// The record a message was linked to, to unlink.
+type InboundLinkedRecord string
+
+const (
+	InboundLinkedRecordShipment InboundLinkedRecord = "Shipment"
+	InboundLinkedRecordCustomer InboundLinkedRecord = "Customer"
+	InboundLinkedRecordCarrier  InboundLinkedRecord = "Carrier"
+)
+
+var AllInboundLinkedRecord = []InboundLinkedRecord{
+	InboundLinkedRecordShipment,
+	InboundLinkedRecordCustomer,
+	InboundLinkedRecordCarrier,
+}
+
+func (e InboundLinkedRecord) IsValid() bool {
+	switch e {
+	case InboundLinkedRecordShipment, InboundLinkedRecordCustomer, InboundLinkedRecordCarrier:
+		return true
+	}
+	return false
+}
+
+func (e InboundLinkedRecord) String() string {
+	return string(e)
+}
+
+func (e *InboundLinkedRecord) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = InboundLinkedRecord(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid InboundLinkedRecord", str)
+	}
+	return nil
+}
+
+func (e InboundLinkedRecord) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *InboundLinkedRecord) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e InboundLinkedRecord) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type MoveStatus string
 
 const (
@@ -12002,6 +12236,7 @@ const (
 	SelectOptionResourceEDITransfer               SelectOptionResource = "EDI_TRANSFER"
 	SelectOptionResourceEquipmentManufacturer     SelectOptionResource = "EQUIPMENT_MANUFACTURER"
 	SelectOptionResourceEquipmentType             SelectOptionResource = "EQUIPMENT_TYPE"
+	SelectOptionResourceFactoringCompany          SelectOptionResource = "FACTORING_COMPANY"
 	SelectOptionResourceFleetCode                 SelectOptionResource = "FLEET_CODE"
 	SelectOptionResourceFormulaTemplate           SelectOptionResource = "FORMULA_TEMPLATE"
 	SelectOptionResourceFiscalPeriod              SelectOptionResource = "FISCAL_PERIOD"
@@ -12066,6 +12301,7 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceEDITransfer,
 	SelectOptionResourceEquipmentManufacturer,
 	SelectOptionResourceEquipmentType,
+	SelectOptionResourceFactoringCompany,
 	SelectOptionResourceFleetCode,
 	SelectOptionResourceFormulaTemplate,
 	SelectOptionResourceFiscalPeriod,
@@ -12116,7 +12352,7 @@ var AllSelectOptionResource = []SelectOptionResource{
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceAiProvider, SelectOptionResourceCaptureDevice, SelectOptionResourceCaptureProfile, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceIFTAFuelType, SelectOptionResourceHazardousMaterial, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDIPartnerDocumentProfile, SelectOptionResourceEDITemplate, SelectOptionResourceEDITransactionSet, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition, SelectOptionResourceFuelCard, SelectOptionResourceBenefitPlan, SelectOptionResourceIFTAJurisdiction, SelectOptionResourcePayCode, SelectOptionResourcePayProfile, SelectOptionResourcePerformanceReviewTemplate, SelectOptionResourcePTOPolicy, SelectOptionResourceTrainingCourse, SelectOptionResourceWorkerCredentialType:
+	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceAiProvider, SelectOptionResourceCaptureDevice, SelectOptionResourceCaptureProfile, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFactoringCompany, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceIFTAFuelType, SelectOptionResourceHazardousMaterial, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDIPartnerDocumentProfile, SelectOptionResourceEDITemplate, SelectOptionResourceEDITransactionSet, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition, SelectOptionResourceFuelCard, SelectOptionResourceBenefitPlan, SelectOptionResourceIFTAJurisdiction, SelectOptionResourcePayCode, SelectOptionResourcePayProfile, SelectOptionResourcePerformanceReviewTemplate, SelectOptionResourcePTOPolicy, SelectOptionResourceTrainingCourse, SelectOptionResourceWorkerCredentialType:
 		return true
 	}
 	return false

@@ -1,9 +1,9 @@
 package invoiceadjustmentservice
 
 import (
+	"context"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
-	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -128,5 +128,5 @@ func TestPreviewDecisionRefusesAnAdjustmentNotPendingApproval(t *testing.T) {
 		TenantInfo:   tenantInfo,
 	})
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "pending approval")
+	assert.Contains(t, err.Error(), "awaiting approval or whose execution failed")
 }

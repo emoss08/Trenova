@@ -1,9 +1,9 @@
+import { resourceLabel } from "@/lib/resource-label";
 import type { ToolCatalogEntry } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import {
   effectiveTier,
   groupToolsByResource,
-  resourceLabel,
   impliedReads,
   splitCoreTools,
   summarizeSelection,

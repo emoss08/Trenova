@@ -8,7 +8,16 @@ import (
 
 const (
 	ReconcileZombieRunsWorkflowName = "ReconcileZombieBillingTransferRunsWorkflow"
+	AutomaticTransferWorkflowName   = "AutomaticBillingTransferSweepWorkflow"
 )
+
+// AutomaticTransferSweepResult is what one pass of the automatic transfer
+// sweep did.
+type AutomaticTransferSweepResult struct {
+	Organizations int `json:"organizations"`
+	RunsStarted   int `json:"runsStarted"`
+	Failed        int `json:"failed"`
+}
 
 const (
 	// BatchSize is how many shipments one activity claims. It stays under the

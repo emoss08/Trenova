@@ -15,8 +15,10 @@ import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { getProfile, getRule, RULE_KEYS } from "@trenova/shared/lib/capability";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { CarrierAssignmentCancelDialog } from "@/components/carrier-assignment/carrier-assignment-cancel-dialog";
+import { CarrierTrackingLink } from "@/components/carrier-assignment/carrier-tracking-link";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
 import { CarrierAssignmentStatusBadge } from "@trenova/shared/components/status-badge";
+import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
@@ -146,6 +148,7 @@ export function MoveCard({
     },
   });
 
+  const withIdempotencyKey = useIdempotencyKey();
   const recordStopActualMutation = useMutation({
     mutationFn: ({
       stopId,
@@ -155,11 +158,14 @@ export function MoveCard({
       stopId: string;
       action: StopActualAction;
       occurredAt?: number;
-    }) =>
-      apiService.assignmentService.recordStopActual(move.id!, stopId, {
-        action,
-        ...(occurredAt !== undefined ? { occurredAt } : {}),
-      }),
+    }) => {
+      const payload = { action, ...(occurredAt !== undefined ? { occurredAt } : {}) };
+      return withIdempotencyKey({ moveId: move.id, stopId, ...payload }, (idempotencyKey) =>
+        apiService.assignmentService.recordStopActual(move.id!, stopId, payload, {
+          idempotencyKey,
+        }),
+      );
+    },
     onSuccess: (updatedMove: ShipmentMove, variables) => {
       setValue(`moves.${moveIndex}.status`, updatedMove.status);
       setValue(`moves.${moveIndex}.stops`, updatedMove.stops);
@@ -167,6 +173,9 @@ export function MoveCard({
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       if (move?.shipmentId) {
         void queryClient.invalidateQueries({ queryKey: ["shipment", move.shipmentId] });
+        void queryClient.invalidateQueries({
+          queryKey: queries.shipment.trackingEvents(move.shipmentId).queryKey,
+        });
       }
       toast.success(
         variables.action === "Arrive"
@@ -348,6 +357,7 @@ export function MoveCard({
           carrierAssignment={carrierAssignment}
           moveId={move?.id}
           canCancel={canCancelCarrier}
+          canTrack={hasId && !isTerminal}
           onCancel={() => setCancelCarrierOpen(true)}
         />
       ) : (
@@ -696,11 +706,13 @@ function CarrierAssignmentDetails({
   carrierAssignment,
   moveId,
   canCancel,
+  canTrack,
   onCancel,
 }: {
   carrierAssignment: CarrierAssignment;
   moveId?: string;
   canCancel: boolean;
+  canTrack: boolean;
   onCancel: () => void;
 }) {
   const t = useT();
@@ -779,6 +791,12 @@ function CarrierAssignmentDetails({
       {moveId && carrierAssignment.id && (
         <div className="mt-2 border-t pt-2">
           <RateConfirmationActions moveId={moveId} carrierAssignmentId={carrierAssignment.id} />
+        </div>
+      )}
+
+      {moveId && canTrack && (
+        <div className="mt-2 border-t pt-2">
+          <CarrierTrackingLink moveId={moveId} carrierName={carrierAssignment.carrier?.name} />
         </div>
       )}
     </div>

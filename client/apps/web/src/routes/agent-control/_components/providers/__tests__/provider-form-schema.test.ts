@@ -37,6 +37,7 @@ const VOYAGE: AIProviderPreset = {
   tasks: ["Embedding"],
   embeddingDimensions: 1024,
   embeddingInputStyle: "VoyageInputType",
+  platform: "Direct",
 };
 
 function embeddingForm(overrides: Partial<ProviderEditorValues> = {}): ProviderEditorValues {
@@ -174,7 +175,11 @@ describe("providerEditorSchema with embeddings", () => {
 
 describe("toSaveRequest with embeddings", () => {
   it("sends the size as a number with the input style", () => {
-    const payload = toSaveRequest(embeddingForm(), { editing: false, enable: true });
+    const payload = toSaveRequest(embeddingForm(), {
+      editing: false,
+      enable: true,
+      catalog: { platforms: [], serverCloudCredentials: false },
+    });
 
     expect(payload.tasks).toEqual(["Embedding"]);
     expect(payload.embeddingDimensions).toBe(1024);
@@ -185,7 +190,7 @@ describe("toSaveRequest with embeddings", () => {
   it("sends neither for a provider that does not embed", () => {
     const payload = toSaveRequest(
       embeddingForm({ tasks: ["General"], embeddingDimensionsChoice: "1024" }),
-      { editing: false, enable: true },
+      { editing: false, enable: true, catalog: { platforms: [], serverCloudCredentials: false } },
     );
 
     expect(payload.embeddingDimensions).toBeNull();

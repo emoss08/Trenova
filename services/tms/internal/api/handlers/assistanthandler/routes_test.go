@@ -9,10 +9,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -47,6 +47,28 @@ type reachedService struct {
 	agentports.AssistantService
 
 	reached bool
+	listed  *agentports.ListThreadsRequest
+	counted *agentports.CountThreadShelvesRequest
+}
+
+func (s *reachedService) ListThreads(
+	_ context.Context,
+	req agentports.ListThreadsRequest,
+) (*agentports.ThreadPage, error) {
+	s.reached = true
+	s.listed = &req
+
+	return &agentports.ThreadPage{}, nil
+}
+
+func (s *reachedService) CountThreadShelves(
+	_ context.Context,
+	req *agentports.CountThreadShelvesRequest,
+) (*agentports.ThreadShelfCounts, error) {
+	s.reached = true
+	s.counted = req
+
+	return &agentports.ThreadShelfCounts{}, nil
 }
 
 func (s *reachedService) UpdateThread(

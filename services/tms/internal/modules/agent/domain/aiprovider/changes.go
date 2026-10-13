@@ -20,7 +20,11 @@ var ChangeRules = []editchange.Rule[Provider]{
 	},
 	{
 		Field: "baseUrl", Label: "Connection",
-		Same: func(a, b *Provider) bool { return a.Kind == b.Kind && a.BaseURL == b.BaseURL },
+		Same: func(a, b *Provider) bool {
+			return a.Kind == b.Kind && a.BaseURL == b.BaseURL &&
+				a.ResolvedPlatform() == b.ResolvedPlatform() &&
+				a.ResolvedSettings() == b.ResolvedSettings()
+		},
 	},
 	{
 		Field: "model", Label: "Model",

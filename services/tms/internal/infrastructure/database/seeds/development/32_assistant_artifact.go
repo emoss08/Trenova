@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect"
 )
 
 type AssistantArtifactSeed struct {
@@ -36,10 +35,6 @@ type AssistantArtifactSeed struct {
 // Every payload is written in the shape the pane's readers expect, because a
 // payload that parses to nothing renders as an empty card and would teach a
 // developer the wrong thing about what the kind looks like.
-//
-// run_diff is seeded on Postgres only. The SQLite schema's kind CHECK
-// predates that kind — the dialect converter never emits a CHECK alteration —
-// so a run_diff row there would fail the whole seed run.
 //
 // Depends on:
 //   - AssistantConversation: the threads the artifacts hang off
@@ -71,9 +66,6 @@ type artifactSeedRefs struct {
 	// tied to the decision it belongs to is a second copy of that decision.
 	draft *agent.AgentProposal
 	now   int64
-	// includeRunDiff is whether the schema accepts a run_diff row. SQLite's
-	// kind CHECK predates the kind, so it is seeded on Postgres only.
-	includeRunDiff bool
 }
 
 func (s *AssistantArtifactSeed) Run(ctx context.Context, tx bun.Tx) error {
@@ -119,10 +111,6 @@ func (s *AssistantArtifactSeed) backfillRunDiff(
 	tx bun.Tx,
 	refs *artifactSeedRefs,
 ) error {
-	if !refs.includeRunDiff {
-		return nil
-	}
-
 	cols := assistantartifactcol.ArtifactColumns
 	exists, err := tx.NewSelect().
 		Model((*assistantartifact.Artifact)(nil)).
@@ -160,9 +148,8 @@ func (s *AssistantArtifactSeed) loadRefs(
 	}
 
 	refs := &artifactSeedRefs{
-		org:            org,
-		now:            timeutils.NowUnix(),
-		includeRunDiff: tx.Dialect().Name() == dialect.PG,
+		org: org,
+		now: timeutils.NowUnix(),
 	}
 
 	threadCols := conversationcol.ThreadColumns
@@ -440,12 +427,9 @@ func (s *AssistantArtifactSeed) artifacts(
 					"The detention hours came from the dwell clock, not from a signed bill.",
 				},
 			}, 6*activitySeedHour),
-	}
-
-	if refs.includeRunDiff {
-		artifacts = append(artifacts, build(refs.thread(0), assistantartifact.KindRunDiff,
+		build(refs.thread(0), assistantartifact.KindRunDiff,
 			"Revenue by customer — what changed",
-			runDiffPayload(refs), 2*activitySeedHour))
+			runDiffPayload(refs), 2*activitySeedHour),
 	}
 
 	return artifacts

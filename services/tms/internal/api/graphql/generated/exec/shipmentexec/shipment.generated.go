@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -121,6 +122,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ShipmentUIPolicy", Implementors: []string{"ShipmentUIPolicy"}},
 		{Name: "ShipmentUnassignedAnalytics", Implementors: []string{"ShipmentUnassignedAnalytics"}},
 		{Name: "ShipmentValidationResponse", Implementors: []string{"ShipmentValidationResponse"}},
+		{Name: "TrackingEvent", Implementors: []string{"TrackingEvent"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "BillingQueueItem", Fields: []*gqlexec.Field{
@@ -1408,6 +1410,20 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverQuery](ec, "Query").Shipments(ctx, fc.Args["input"].(gqlmodel.ShipmentsInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNShipmentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentConnection),
+			},
+			{
+				Name:       "shipmentTrackingEvents",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "TrackingEvent",
+				Args:       field_Query_shipmentTrackingEvents_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentTrackingEvents(ctx, fc.Args["shipmentId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNTrackingEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtrackingeventᚐTrackingEventᚄ),
 			},
 			{
 				Name:       "shipment",
@@ -9577,6 +9593,162 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
+		{Object: "TrackingEvent", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "shipmentId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.ShipmentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "shipmentMoveId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.ShipmentMoveID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "stopId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.StopID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "source",
+				NonNull:  true,
+				ChildErr: errNoChild41,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.Source, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTrackingEventSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtrackingeventᚐSource),
+			},
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild42,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNStopVisitKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐVisitKind),
+			},
+			{
+				Name:     "matchMethod",
+				NonNull:  true,
+				ChildErr: errNoChild43,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.MatchMethod, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTrackingMatchMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtrackingeventᚐMatchMethod),
+			},
+			{
+				Name:     "eventAt",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.EventAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "receivedAt",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.ReceivedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "latitude",
+				ChildErr: errNoChild26,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.Latitude, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "longitude",
+				ChildErr: errNoChild26,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.Longitude, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "sourceStatus",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.SourceStatus, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "rawReference",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.RawReference, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "reportedById",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.ReportedByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "outcome",
+				NonNull:  true,
+				ChildErr: errNoChild44,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.Outcome, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTrackingEventOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtrackingeventᚐOutcome),
+			},
+			{
+				Name:     "outcomeReason",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*trackingevent.TrackingEvent)
+					return obj.OutcomeReason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+		}},
 	},
 	Abstracts: []gqlexec.Abstract{
 		{Name: "ShipmentEvent", Marshal: marshalAbstractShipmentEvent},
@@ -9667,6 +9839,7 @@ type resolverMutation interface {
 
 type resolverQuery interface {
 	Shipments(ctx context.Context, input gqlmodel.ShipmentsInput) (*gqlmodel.ShipmentConnection, error)
+	ShipmentTrackingEvents(ctx context.Context, shipmentID string) ([]*trackingevent.TrackingEvent, error)
 	Shipment(ctx context.Context, id string, expandShipmentDetails *bool, status *string) (*gqlmodel.Shipment, error)
 	UnassignedShipments(ctx context.Context, first *int, after *string) (*gqlmodel.ShipmentConnection, error)
 	ShipmentComments(ctx context.Context, shipmentID string, first *int, after *string, filter *gqlmodel.ShipmentCommentsFilterInput) (*gqlmodel.ShipmentCommentConnection, error)
@@ -9743,6 +9916,10 @@ var (
 	errNoChild38 = errors.New("field of type StopStatus does not have child fields")
 	errNoChild39 = errors.New("field of type StopType does not have child fields")
 	errNoChild40 = errors.New("field of type StopScheduleType does not have child fields")
+	errNoChild41 = errors.New("field of type TrackingEventSource does not have child fields")
+	errNoChild42 = errors.New("field of type StopVisitKind does not have child fields")
+	errNoChild43 = errors.New("field of type TrackingMatchMethod does not have child fields")
+	errNoChild44 = errors.New("field of type TrackingEventOutcome does not have child fields")
 )
 
 func marshalAbstractShipmentEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v any) graphql.Marshaler {
@@ -10244,6 +10421,19 @@ func field_Query_shipments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs m
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_shipmentTrackingEvents_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
 	return args, nil
 }
 
@@ -13939,6 +14129,14 @@ func marshalNStopType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphq
 	return v
 }
 
+func marshalNStopVisitKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐVisitKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.VisitKind) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
@@ -13966,6 +14164,46 @@ func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNTrackingEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtrackingeventᚐTrackingEventᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*trackingevent.TrackingEvent) graphql.Marshaler {
+	return gqlexec.List[*trackingevent.TrackingEvent]{
+		Elem:        marshalNTrackingEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtrackingeventᚐTrackingEvent,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNTrackingEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtrackingeventᚐTrackingEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *trackingevent.TrackingEvent) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TrackingEvent", v)
+}
+
+func marshalNTrackingEventOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtrackingeventᚐOutcome(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v trackingevent.Outcome) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNTrackingEventSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtrackingeventᚐSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v trackingevent.Source) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNTrackingMatchMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtrackingeventᚐMatchMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v trackingevent.MatchMethod) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}

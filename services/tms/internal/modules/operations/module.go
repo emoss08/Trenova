@@ -3,8 +3,10 @@ package operations
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/assignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/carrierassignmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/checkcallrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/detentionrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchconsolerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchcontrolrepository"
@@ -26,8 +28,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentsuggestionrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmenttrackingrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/tenderrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/trackingeventrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/triagelookuprepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/triageoverlaprepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/weatheralertrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/app/assignmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/checkcallservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
@@ -55,14 +61,22 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentsuggestionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwatchlistservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/trackingeventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/triagedeliveryrelay"
+	"github.com/emoss08/trenova/internal/modules/operations/app/triageshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/weatheralertservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/driverportalports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"go.uber.org/fx"
 )
 
@@ -96,6 +110,8 @@ func SharedOptions() fx.Option {
 			weatheralertrepository.New,
 			dispatchcontrolrepository.New,
 			documentshipmentdraftrepository.New,
+			triageoverlaprepository.New,
+			triagelookuprepository.New,
 			assignmentrepository.New,
 			orderrepository.New,
 			servicefailurereasoncoderepository.New,
@@ -107,6 +123,7 @@ func SharedOptions() fx.Option {
 			shipmentholdrepository.New,
 			shipmentmoverepository.New,
 			shipmentrepository.New,
+			shipmentrepository.NewSearchCardReader,
 			shipmentboardrepository.New,
 			shipmentboardrepository.NewBoardRepository,
 			shipmentboardrepository.NewWatchlistRepository,
@@ -118,6 +135,9 @@ func SharedOptions() fx.Option {
 			carrierassignmentrepository.New,
 			routingguiderepository.New,
 			tenderrepository.New,
+			trackingeventrepository.New,
+			checkcallrepository.New,
+			checkcallrepository.NewTrackingLinks,
 			shipmentmovejurisdictionmilerepository.New,
 			detentionrepository.NewPolicyRepository,
 			detentionrepository.NewOccurrenceRepository,
@@ -136,6 +156,24 @@ func SharedOptions() fx.Option {
 			),
 			orderservice.New,
 			shipmenteventservice.New,
+			triagedeliveryrelay.New,
+			triageshipmentservice.New,
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageShipmentPeeker { return s },
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageStopTimesReader { return s },
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageLoadCreator { return s },
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageExceptionLogger { return s },
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageDetentionSettler { return s },
+			func(s *triageshipmentservice.Service) inboundmessageports.TriageDetentionEvidenceSource {
+				return s
+			},
+			fx.Annotate(
+				func(r *triagedeliveryrelay.Relay) shipmenteventports.ShipmentEventObserver { return r },
+				fx.ResultTags(`group:"shipment_event_observers"`),
+			),
+			fx.Annotate(
+				func(r *triagedeliveryrelay.Relay) shipmentports.MoveStatusObserver { return r },
+				fx.ResultTags(`group:"move_status_observers"`),
+			),
 			fx.Annotate(
 				orderderivation.New,
 				fx.As(new(orderports.OrderDerivationService)),
@@ -147,6 +185,16 @@ func SharedOptions() fx.Option {
 				fx.As(new(servicefailureports.ServiceFailureEvaluator)),
 			),
 			shipmentmoveservice.New,
+			fx.Annotate(
+				checkcallservice.New,
+				fx.As(new(checkcallports.CheckCallService)),
+			),
+			fx.Annotate(
+				trackingeventservice.New,
+				fx.As(new(trackingeventports.TrackingEventService)),
+				fx.As(new(telematicsports.StopVisitRecorder)),
+				fx.As(new(driverportalports.StopReporter)),
+			),
 			fx.Annotate(
 				shipmentservice.New,
 				fx.As(new(shipmentports.ShipmentService)),

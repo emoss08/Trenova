@@ -87,13 +87,28 @@ type PricedScenario struct {
 	Error       string         `json:"error,omitempty"`
 }
 
+type BreakdownLine struct {
+	Name       string `json:"name"`
+	Label      string `json:"label"`
+	Expression string `json:"expression"`
+}
+
+type FormulaDetails struct {
+	Name         string          `json:"name,omitempty"`
+	Description  string          `json:"description,omitempty"`
+	TemplateType string          `json:"templateType,omitempty"`
+	Breakdown    []BreakdownLine `json:"breakdown,omitempty"`
+	Policy       *FormulaPolicy  `json:"policy,omitempty"`
+}
+
 type FormulaProposal struct {
-	SchemaID    string            `json:"schemaId"`
-	Expression  string            `json:"expression"`
-	Variables   []FormulaVariable `json:"variables"`
-	Explanation string            `json:"explanation"`
-	Check       FormulaCheck      `json:"check"`
-	Scenarios   []PricedScenario  `json:"scenarios"`
+	SchemaID   string            `json:"schemaId"`
+	Expression string            `json:"expression"`
+	Variables  []FormulaVariable `json:"variables"`
+	FormulaDetails
+	Explanation string           `json:"explanation"`
+	Check       FormulaCheck     `json:"check"`
+	Scenarios   []PricedScenario `json:"scenarios"`
 }
 
 type EditResult struct {

@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 567.
+Tools listed: 568.
 
 ## The model
 
@@ -61,7 +61,7 @@ and Confidential fields never reach a model at all.
 | --- | --- | --- | --- | --- |
 | Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 196 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 8 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 226 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 227 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 24 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 34 |
@@ -250,7 +250,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Open page (`open_page`) | Reads only | Automatic | — | — | Opens a page in the caller's own browser; nothing changes and nothing is sent. |
 | Plan dispatch (`plan_dispatch`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Preview report (`preview_report`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Propose formula (`propose_formula`) | Reads only | Automatic | — | — | Hands a formula to the person's own editor for them to insert, test and save; nothing is saved and nothing is sent. |
+| Propose formula (`propose_formula`) | Reads only | Automatic | — | — | Changes the person's own editor, which they can undo; nothing is saved and nothing is sent. |
 | Quote shipment (`quote_shipment`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Rank move candidates (`rank_move_candidates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Read attachment (`read_attachment`) | Reads only | Automatic | — | Always, from attachment | Reads text from a file the person attached to their own conversation; nothing changes and nothing is sent. |
@@ -393,6 +393,7 @@ Changes records only people inside the organization see.
 | Link EDI carrier invoice to carrier (`link_edi_carrier_invoice_to_carrier`) | Inside the organization | Automatic | — | — | Names which carrier an inbound invoice belongs to inside Trenova; nothing is paid and it is relinked the same way. |
 | Link inbound message (`link_inbound_message`) | Inside the organization | Automatic | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Links an inbound message to a record inside Trenova; the mailbox decides how far it may run. |
 | Locate tractor (`locate_tractor`) | Inside the organization | Ask first | — | — | Moves where Trenova thinks a tractor is; nothing is sent and locating it again moves it back. |
+| Log check call (`log_check_call`) | Inside the organization | Automatic | — | — | Records a check call, and for an arrival or departure the stop's actual time; nothing leaves the organization. |
 | Log employment verification request (`log_employment_verification_request`) | Inside the organization | Ask first | — | — | Stamps the request date or counts a follow-up inside Trenova; nothing is sent to the employer. |
 | Manage billing transfer run (`manage_billing_transfer_run`) | Inside the organization | Ask first | — | — | Stops or reruns a transfer inside Trenova; nothing is invoiced or sent, and a stopped run is retried the same way. |
 | Mark carrier intel reviewed (`mark_carrier_intel_reviewed`) | Inside the organization | Propose | — | — | Puts a person's name on a carrier risk review; only that person can say they reviewed it. |

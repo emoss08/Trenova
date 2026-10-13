@@ -13,6 +13,8 @@
 {{ .Memo }}
 {{ end }}{{ if .RemittanceInstructions }}
 {{ .RemittanceInstructions }}
+{{ end }}{{ if .NoticeOfAssignment }}
+{{ .NoticeOfAssignment }}
 {{ end }}
 {{ t "Reply to this message if any detail needs review." }}
 {{ .CompanyName }}

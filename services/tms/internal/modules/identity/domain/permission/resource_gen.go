@@ -138,8 +138,9 @@ const (
 	ResourceBriefing        Resource = "briefing"
 
 	// Customers
-	ResourceCustomer        Resource = "customer"
-	ResourceCustomerContact Resource = "customer_contact"
+	ResourceCustomer         Resource = "customer"
+	ResourceCustomerContact  Resource = "customer_contact"
+	ResourceFactoringCompany Resource = "factoring_company"
 
 	// Carriers
 	ResourceCarrier                  Resource = "carrier"

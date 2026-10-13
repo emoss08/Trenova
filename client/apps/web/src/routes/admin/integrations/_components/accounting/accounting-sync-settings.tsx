@@ -8,7 +8,10 @@ import {
 } from "@/lib/accounting-sync";
 import type { AccountingInboundPaymentPolicy } from "@trenova/graphql/generated/graphql";
 import { SectionPanel } from "@/components/section-panel";
-import type { AccountingConnection } from "@/lib/graphql/accounting-sync";
+import type {
+  AccountingConnection,
+  AccountingProviderProfile,
+} from "@/lib/graphql/accounting-sync";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -27,12 +30,14 @@ import { useAccountingSyncSettingsAction } from "./use-accounting-connection";
 
 type AccountingSyncSettingsProps = {
   vendor: AccountingVendor;
+  profile: AccountingProviderProfile;
   connection: AccountingConnection;
   canManage: boolean;
 };
 
 export function AccountingSyncSettings({
   vendor,
+  profile,
   connection,
   canManage,
 }: AccountingSyncSettingsProps) {
@@ -112,17 +117,27 @@ export function AccountingSyncSettings({
                 />
               </FormControl>
               <FormControl>
-                <SelectField
-                  name="inboundPayments"
-                  control={control}
-                  label={t("Payments recorded in {0}", vendor.name)}
-                  description={policyHelp[inboundPayments]}
-                  options={ACCOUNTING_INBOUND_POLICIES.map((value) => ({
-                    value,
-                    label: inboundLabels.policy[value],
-                  }))}
-                  isReadOnly={!canManage}
-                />
+                {profile.inboundPaymentsAvailable ? (
+                  <SelectField
+                    name="inboundPayments"
+                    control={control}
+                    label={t("Payments recorded in {0}", vendor.name)}
+                    description={policyHelp[inboundPayments]}
+                    options={ACCOUNTING_INBOUND_POLICIES.map((value) => ({
+                      value,
+                      label: inboundLabels.policy[value],
+                    }))}
+                    isReadOnly={!canManage}
+                  />
+                ) : (
+                  <Alert size="sm" variant="info">
+                    <AlertDescription>
+                      {profile.inboundUnavailableReason
+                        ? t(profile.inboundUnavailableReason)
+                        : t("Payments recorded in {0} are not brought in.", vendor.name)}
+                    </AlertDescription>
+                  </Alert>
+                )}
               </FormControl>
             </>
           )}

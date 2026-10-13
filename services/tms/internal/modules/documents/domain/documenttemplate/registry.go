@@ -138,10 +138,13 @@ func NewRegistry() *Registry {
 func (r *Registry) registerAll() {
 	r.registerBillingKinds()
 	r.registerInvoiceShareKinds()
+	r.registerPaymentReminderKinds()
+	r.registerCustomerStatementKinds()
 	r.registerDetentionKinds()
 	r.registerRateConfirmationKinds()
 	r.registerReportingKinds()
 	r.registerTenderKinds()
+	r.registerCarrierTrackingKinds()
 	r.registerPortalKinds()
 	r.registerAccountKinds()
 	r.registerAgentKinds()

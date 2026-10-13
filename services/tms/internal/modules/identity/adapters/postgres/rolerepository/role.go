@@ -551,7 +551,8 @@ WITH RECURSIVE held AS (
     FROM held h
     JOIN roles p ON p.id = ANY(h.parent_role_ids)
 )
-SELECT DISTINCT u.id AS user_id, u.name, u.email_address, u.locale
+SELECT DISTINCT u.id AS user_id, u.name, u.username, u.email_address,
+    COALESCE(u.profile_pic_url, '') AS profile_pic_url, u.locale
 FROM held h
 JOIN resource_permissions rp ON rp.role_id = h.role_id
 JOIN users u ON u.id = h.user_id

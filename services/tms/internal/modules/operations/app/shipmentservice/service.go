@@ -493,6 +493,9 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	shipment.FollowCustomerChange(original, entity)
 	entity.NormalizeBillTo()
 	entity.PreviousCustomerID = original.CustomerID
+	if err = s.refuseCreditHold(ctx, entity, original); err != nil {
+		return nil, err
+	}
 	s.restoreAssignmentsForExistingMoves(original, entity)
 	s.restoreSystemOwnedAdditionalChargeFields(original, entity)
 	shipment.RestoreRateOwnedFields(original, entity)

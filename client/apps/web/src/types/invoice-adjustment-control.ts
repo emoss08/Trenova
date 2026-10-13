@@ -79,6 +79,7 @@ export const invoiceAdjustmentControlSchema = z.object({
   standardAdjustmentApprovalThreshold: decimalNumberSchema,
   writeOffApprovalPolicy: writeOffApprovalPolicySchema,
   writeOffApprovalThreshold: decimalNumberSchema,
+  requireSeparateApprover: z.boolean().default(false),
   rerateVarianceTolerancePercent: decimalNumberSchema,
   replacementInvoiceReviewPolicy: replacementInvoiceReviewPolicySchema,
   customerCreditBalancePolicy: customerCreditBalancePolicySchema,

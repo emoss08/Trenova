@@ -1,5 +1,6 @@
 import {
   AlertTriangleIcon,
+  BankNote01Icon,
   Beaker02Icon,
   BoxesIcon,
   Building07Icon,
@@ -42,6 +43,7 @@ export const QUICK_ACTION_ICONS: Record<string, IconComponent> = {
   "create-commodity": PackageIcon,
   "create-accessorial-charge": ReceiptIcon,
   "create-customer": Building07Icon,
+  "create-factoring-company": BankNote01Icon,
   "create-document-type": File06Icon,
   "create-formula-template": SigmaIcon,
   "create-detention-policy": ClockStopwatchIcon,

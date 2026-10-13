@@ -39,6 +39,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Fill a watchtower from what the sources report open",
 		},
 		{
+			Name:        NoCheckCallSweepWorkflowName,
+			Fn:          NoCheckCallSweepWorkflow,
+			TaskQueue:   temporaltype.TaskQueueSystem.String(),
+			Description: "Raise and clear watchtower items for brokered loads overdue a check call",
+		},
+		{
 			Name:        WatchtowerRetentionWorkflowName,
 			Fn:          WatchtowerRetentionWorkflow,
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
@@ -87,6 +93,21 @@ func WatchtowerRetentionWorkflow(ctx workflow.Context) (*WatchtowerRetentionResu
 	if err := workflow.ExecuteActivity(ctx, a.WatchtowerRetentionActivity).
 		Get(ctx, result); err != nil {
 		workflow.GetLogger(ctx).Error("Watchtower retention workflow failed", "error", err)
+
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func NoCheckCallSweepWorkflow(ctx workflow.Context) (*WatchtowerSweepResult, error) {
+	ctx = workflow.WithActivityOptions(ctx, watchtowerActivityOptions)
+
+	var a *Activities
+	result := new(WatchtowerSweepResult)
+	if err := workflow.ExecuteActivity(ctx, a.NoCheckCallSweepActivity).
+		Get(ctx, result); err != nil {
+		workflow.GetLogger(ctx).Error("No check call sweep workflow failed", "error", err)
 
 		return nil, err
 	}

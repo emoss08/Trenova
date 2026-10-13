@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -149,7 +150,12 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -246,6 +252,7 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 	svc := New(
 		Params{
 			Logger:       logger,
+			DB:           conn,
 			Repo:         receiptRepo,
 			PaymentRepo:  paymentRepo,
 			AuditService: &mocks.NoopAuditService{},

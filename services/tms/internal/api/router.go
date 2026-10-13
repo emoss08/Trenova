@@ -31,10 +31,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/carriertrackingpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/casechecklisthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/collectionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/customerstatementhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
@@ -58,6 +61,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/exchangeratehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/factoringcompanyhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcodehandler"
@@ -70,6 +74,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/holdreasonhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/inboxpresencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
@@ -137,7 +142,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/requestid"
-
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -184,6 +188,7 @@ type RouterParams struct {
 	WorkerHandler                   *workerhandler.Handler
 	PermissionHandler               *permissionhandler.Handler
 	RealtimeHandler                 *realtimehandler.Handler
+	InboxPresenceHandler            *inboxpresencehandler.Handler
 	RoleHandler                     *rolehandler.Handler
 	RoleAssignmentHandler           *roleassignmenthandler.Handler
 	SearchHandler                   *searchhandler.Handler
@@ -235,11 +240,14 @@ type RouterParams struct {
 	CarrierHandler                  *carrierhandler.Handler
 	RateConfirmationHandler         *rateconfirmationhandler.Handler
 	RateConfirmationPublicHandler   *rateconfirmationpublichandler.Handler
+	CarrierTrackingPublicHandler    *carriertrackingpublichandler.Handler
 	CustomerHandler                 *customerhandler.Handler
 	CustomerPaymentHandler          *customerpaymenthandler.Handler
 	GoogleMapsHandler               *googlemapshandler.Handler
 	AccountingControlHandler        *accountingcontrolhandler.Handler
 	AccountsReceivableHandler       *accountsreceivablehandler.Handler
+	CollectionHandler               *collectionhandler.Handler
+	CustomerStatementHandler        *customerstatementhandler.Handler
 	AccountTypeHandler              *accounttypehandler.Handler
 	AssignmentHandler               *assignmenthandler.Handler
 	GLAccountHandler                *glaccounthandler.Handler
@@ -250,6 +258,7 @@ type RouterParams struct {
 	LocationHandler                 *locationhandler.Handler
 	DocumentTypeHandler             *documenttypehandler.Handler
 	HoldReasonHandler               *holdreasonhandler.Handler
+	FactoringCompanyHandler         *factoringcompanyhandler.Handler
 	RecurringShipmentHandler        *recurringshipmenthandler.Handler
 	RateAgreementHandler            *rateagreementhandler.Handler
 	RateZoneHandler                 *ratezonehandler.Handler
@@ -335,6 +344,7 @@ type Router struct {
 	workerHandler                   *workerhandler.Handler
 	permissionHandler               *permissionhandler.Handler
 	realtimeHandler                 *realtimehandler.Handler
+	inboxPresenceHandler            *inboxpresencehandler.Handler
 	roleHandler                     *rolehandler.Handler
 	roleAssignmentHandler           *roleassignmenthandler.Handler
 	searchHandler                   *searchhandler.Handler
@@ -375,11 +385,14 @@ type Router struct {
 	carrierHandler                  *carrierhandler.Handler
 	rateConfirmationHandler         *rateconfirmationhandler.Handler
 	rateConfirmationPublicHandler   *rateconfirmationpublichandler.Handler
+	carrierTrackingPublicHandler    *carriertrackingpublichandler.Handler
 	customerHandler                 *customerhandler.Handler
 	customerPaymentHandler          *customerpaymenthandler.Handler
 	googleMapsHandler               *googlemapshandler.Handler
 	accountingControlHandler        *accountingcontrolhandler.Handler
 	accountsReceivableHandler       *accountsreceivablehandler.Handler
+	collectionHandler               *collectionhandler.Handler
+	customerStatementHandler        *customerstatementhandler.Handler
 	accountTypeHandler              *accounttypehandler.Handler
 	assignmentHandler               *assignmenthandler.Handler
 	glAccountHandler                *glaccounthandler.Handler
@@ -390,6 +403,7 @@ type Router struct {
 	locationHandler                 *locationhandler.Handler
 	documentTypeHandler             *documenttypehandler.Handler
 	holdReasonHandler               *holdreasonhandler.Handler
+	factoringCompanyHandler         *factoringcompanyhandler.Handler
 	recurringShipmentHandler        *recurringshipmenthandler.Handler
 	rateAgreementHandler            *rateagreementhandler.Handler
 	rateZoneHandler                 *ratezonehandler.Handler
@@ -477,6 +491,7 @@ func NewRouter(p RouterParams) *Router {
 		workerHandler:                   p.WorkerHandler,
 		permissionHandler:               p.PermissionHandler,
 		realtimeHandler:                 p.RealtimeHandler,
+		inboxPresenceHandler:            p.InboxPresenceHandler,
 		roleHandler:                     p.RoleHandler,
 		roleAssignmentHandler:           p.RoleAssignmentHandler,
 		searchHandler:                   p.SearchHandler,
@@ -517,11 +532,14 @@ func NewRouter(p RouterParams) *Router {
 		carrierHandler:                  p.CarrierHandler,
 		rateConfirmationHandler:         p.RateConfirmationHandler,
 		rateConfirmationPublicHandler:   p.RateConfirmationPublicHandler,
+		carrierTrackingPublicHandler:    p.CarrierTrackingPublicHandler,
 		customerHandler:                 p.CustomerHandler,
 		customerPaymentHandler:          p.CustomerPaymentHandler,
 		googleMapsHandler:               p.GoogleMapsHandler,
 		accountingControlHandler:        p.AccountingControlHandler,
 		accountsReceivableHandler:       p.AccountsReceivableHandler,
+		collectionHandler:               p.CollectionHandler,
+		customerStatementHandler:        p.CustomerStatementHandler,
 		accountTypeHandler:              p.AccountTypeHandler,
 		assignmentHandler:               p.AssignmentHandler,
 		glAccountHandler:                p.GLAccountHandler,
@@ -532,6 +550,7 @@ func NewRouter(p RouterParams) *Router {
 		locationHandler:                 p.LocationHandler,
 		documentTypeHandler:             p.DocumentTypeHandler,
 		holdReasonHandler:               p.HoldReasonHandler,
+		factoringCompanyHandler:         p.FactoringCompanyHandler,
 		recurringShipmentHandler:        p.RecurringShipmentHandler,
 		rateAgreementHandler:            p.RateAgreementHandler,
 		rateZoneHandler:                 p.RateZoneHandler,
@@ -646,6 +665,7 @@ func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	r.captureHandler.RegisterDeviceRoutes(r.captureDeviceGroup(parent))
 	r.tenderPublicHandler.RegisterPublicRoutes(rg)
 	r.rateConfirmationPublicHandler.RegisterPublicRoutes(rg)
+	r.carrierTrackingPublicHandler.RegisterPublicRoutes(rg)
 	r.editionRoutes.RegisterPublic(rg)
 }
 
@@ -674,6 +694,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.workerHandler.RegisterRoutes(protected)
 	r.permissionHandler.RegisterRoutes(protected)
 	r.realtimeHandler.RegisterRoutes(protected)
+	r.inboxPresenceHandler.RegisterRoutes(protected)
 	r.roleHandler.RegisterRoutes(protected)
 	r.roleAssignmentHandler.RegisterRoutes(protected)
 	r.searchHandler.RegisterRoutes(protected)
@@ -723,6 +744,8 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.weatherAlertHandler.RegisterRoutes(protected)
 	r.accountingControlHandler.RegisterRoutes(protected)
 	r.accountsReceivableHandler.RegisterRoutes(protected)
+	r.collectionHandler.RegisterRoutes(protected)
+	r.customerStatementHandler.RegisterRoutes(protected)
 	r.accountTypeHandler.RegisterRoutes(protected)
 	r.assignmentHandler.RegisterRoutes(protected)
 	r.glAccountHandler.RegisterRoutes(protected)
@@ -733,6 +756,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.locationHandler.RegisterRoutes(protected)
 	r.documentTypeHandler.RegisterRoutes(protected)
 	r.holdReasonHandler.RegisterRoutes(protected)
+	r.factoringCompanyHandler.RegisterRoutes(protected)
 	r.recurringShipmentHandler.RegisterRoutes(protected)
 	r.rateAgreementHandler.RegisterRoutes(protected)
 	r.rateZoneHandler.RegisterRoutes(protected)

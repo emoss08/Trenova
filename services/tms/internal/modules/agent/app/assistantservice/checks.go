@@ -138,14 +138,24 @@ func (s *Service) checkTurn(
 }
 
 // usableDefinition is the thread's agent, refused when it is switched off,
-// is not a chat agent, or is not one the person may use.
+// is not a chat agent, or is not one the person may use. On a quick question's
+// conversation it also holds every read, narrowed to the person's as any
+// tool is.
 func (s *Service) usableDefinition(
 	ctx context.Context,
 	thread *conversation.Thread,
 	actor *permissionports.RequestActor,
 	req *agentports.SendMessageRequest,
 ) (*agentdefinition.Definition, error) {
-	return s.usableAgent(ctx, thread.AgentDefinitionID, actor, req.TenantInfo)
+	definition, err := s.usableAgent(ctx, thread.AgentDefinitionID, actor, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if thread.Origin.ReadsEverything() {
+		return definition.HoldingReads(s.everyRead()), nil
+	}
+
+	return definition, nil
 }
 
 // usableAgent is an agent the person may talk to: enabled, a chat agent,

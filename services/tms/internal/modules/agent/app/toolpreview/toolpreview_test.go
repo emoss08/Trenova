@@ -141,6 +141,7 @@ func TestUpdate_DiffsWhatThePlanFunctionChanges(t *testing.T) {
 	assert.Equal(t, permission.ResourceCustomer, customer.AfterRef.Resource)
 	assert.Equal(t, newCustomer, customer.AfterRef.ID)
 	assert.Equal(t, before.CustomerID, customer.BeforeRef.ID)
+	assert.Equal(t, "Customer", customer.Label, "a reference is named for the record, not its id")
 
 	notes := fieldByPath(t, change, "notes")
 	assert.Nil(t, notes.Before, "an empty value is nothing, not an empty string")

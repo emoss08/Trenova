@@ -107,7 +107,12 @@ export const customerBillingProfileSchema = z
     enforceCreditLimit: z.boolean().default(false),
     autoCreditHold: z.boolean().default(false),
     creditHoldReason: z.string().default(""),
+    creditHoldAutomatic: z.boolean().default(false),
+    creditReviewedAt: nullableIntegerSchema,
     autoSendInvoiceOnGeneration: z.boolean().default(true),
+    sendPaymentReminders: z.boolean().default(true),
+    sendStatements: z.boolean().default(true),
+    factoringCompanyId: nullableStringSchema,
     emailInvoiceEnabled: z.boolean().default(true),
     ediInvoiceEnabled: z.boolean().default(false),
     splitBy: invoiceSplitKeySchema.default("Customer"),
@@ -165,7 +170,6 @@ export const customerEmailProfileSchema = z.object({
   customerId: z.string().optional(),
   subject: z.string().default(""),
   comment: z.string().default(""),
-  fromEmail: z.string().default(""),
   toRecipients: z.string().default(""),
   ccRecipients: z.string().default(""),
   bccRecipients: z.string().default(""),
@@ -232,6 +236,12 @@ export const customerSchema = z
       error: () => translate("MC number must contain only digits (12 max)"),
     }),
     brokerVettingEnabled: z.boolean().default(false),
+    checkCallIntervalHours: z
+      .number()
+      .int()
+      .min(1, { error: () => translate("Check call interval must be at least 1 hour") })
+      .max(72, { error: () => translate("Check call interval cannot exceed 72 hours") })
+      .nullish(),
     allowConsolidation: z.boolean().default(true),
     exclusiveConsolidation: z.boolean().default(false),
     consolidationPriority: z.number().int().min(1).default(1),

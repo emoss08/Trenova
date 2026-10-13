@@ -19,7 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "tender-stalled-sweep",
 			Description:   "Nudge or recover live tenders whose offers are overdue",
-			Spec:          schedule.Every(5 * time.Minute),
+			Spec:          schedule.Every(15 * time.Minute),
 			Workflow:      TenderSweepWorkflow,
 			TaskQueue:     temporaltype.TaskQueueDispatch.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
@@ -30,7 +30,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "rate-confirmation-issue-sweep",
 			Description:   "Issue rate confirmations for accepted tenders whose paperwork never landed",
-			Spec:          schedule.Every(30 * time.Minute),
+			Spec:          schedule.Every(time.Hour),
 			Workflow:      RateConfirmationIssueSweepWorkflow,
 			TaskQueue:     temporaltype.TaskQueueDispatch.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

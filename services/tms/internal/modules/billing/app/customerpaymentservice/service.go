@@ -4,6 +4,8 @@ package customerpaymentservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
@@ -17,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -52,6 +55,8 @@ type Params struct {
 	AuditService       auditports.AuditService
 	AccountingSync     accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 	Realtime           agentports.RealtimeService                 `optional:"true"`
+	Triage             inboundmessageports.TriageEventSink        `optional:"true"`
+	ReceiptMatches     bankreceiptports.BankReceiptService        `optional:"true"`
 }
 
 type Service struct {
@@ -68,10 +73,22 @@ type Service struct {
 	auditService       auditports.AuditService
 	accountingSync     accountingsyncports.AccountingSyncEnqueuer
 	realtime           agentports.RealtimeService
+	triage             inboundmessageports.TriageEventSink
+	receiptMatches     receiptMatchReleaser
+}
+
+// receiptMatchReleaser hands back the deposits a reversed payment was
+// reconciled against.
+type receiptMatchReleaser interface {
+	ReleasePaymentMatch(
+		ctx context.Context,
+		req *bankreceiptports.ReleasePaymentMatchRequest,
+		actor *permissionports.RequestActor,
+	) ([]*bankreceipt.BankReceipt, error)
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
-	return &Service{
+	svc := &Service{
 		l:                  p.Logger.Named("service.customer-payment"),
 		db:                 p.DB,
 		repo:               p.Repo,
@@ -85,7 +102,13 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		auditService:       p.AuditService,
 		accountingSync:     p.AccountingSync,
 		realtime:           p.Realtime,
+		triage:             p.Triage,
 	}
+	if p.ReceiptMatches != nil {
+		svc.receiptMatches = p.ReceiptMatches
+	}
+
+	return svc
 }
 
 func (s *Service) List(
@@ -434,7 +457,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 				SourceID:             pulid.MustNew("jsrc_"),
 				SourceObjectType:     "CustomerPayment",
 				SourceObjectID:       payment.ID.String(),
-				SourceEventType:      "CustomerPaymentApplied",
+				SourceEventType:      customerledger.EventPaymentApplied,
 				SourceStatus:         entryStatus,
 				SourceDocumentNumber: payment.ReferenceNumber,
 				SourceIdempotencyKey: "customer-payment-applied:" + payment.ID.String() + ":" + strconv.FormatInt(
@@ -452,7 +475,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 				applicationLedgerEntries(&applicationLedgerParams{
 					payment:         payment,
 					applications:    applications,
-					appliedEvent:    "CustomerPaymentApplied",
+					appliedEvent:    customerledger.EventPaymentApplied,
 					transactionDate: req.AccountingDate,
 					actorID:         actor.UserID,
 				}),
@@ -530,7 +553,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 			if app == nil {
 				continue
 			}
-			invoices[idx].RemovePaymentMinor(app.AppliedAmountMinor)
+			invoices[idx].RemovePaymentMinor(app.SettledAmountMinor())
 			updatedInvoice, txErr := s.invoiceRepo.Update(txCtx, invoices[idx])
 			if txErr != nil {
 				return txErr
@@ -587,13 +610,22 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 		); txErr != nil {
 			return txErr
 		}
-		if s.customerLedgerRepo != nil {
-			reverseAmount := payment.AppliedAmountMinor
-			for _, app := range payment.Applications {
-				if app != nil {
-					reverseAmount += app.ShortPayAmountMinor
-				}
+		if s.receiptMatches != nil {
+			if _, txErr := s.receiptMatches.ReleasePaymentMatch(
+				txCtx,
+				&bankreceiptports.ReleasePaymentMatchRequest{
+					PaymentID:        payment.ID,
+					PaymentReference: payment.DocumentLabel(),
+					Reason:           req.Reason,
+					TenantInfo:       req.TenantInfo,
+				},
+				actor,
+			); txErr != nil {
+				return txErr
 			}
+		}
+		if s.customerLedgerRepo != nil {
+			reverseAmount := payment.AppliedAmountMinor + payment.ShortPayAmountMinor()
 			if txErr := s.customerLedgerRepo.AppendEntries(
 				txCtx,
 				[]*customerledger.CustomerLedgerEntry{
@@ -736,7 +768,11 @@ func (s *Service) announceInvoice(
 	inv *invoice.Invoice,
 	actor *permissionports.RequestActor,
 ) {
-	if inv == nil || s.realtime == nil {
+	if inv == nil {
+		return
+	}
+	s.wakeTriageOnPaid(ctx, inv)
+	if s.realtime == nil {
 		return
 	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
@@ -831,4 +867,15 @@ func applicationLedgerEntries(
 		}
 	}
 	return entries
+}
+
+func (s *Service) wakeTriageOnPaid(ctx context.Context, inv *invoice.Invoice) {
+	if s.triage == nil || inv.SettlementStatus != invoice.SettlementStatusPaid {
+		return
+	}
+
+	tenantInfo := pagination.TenantInfo{OrgID: inv.OrganizationID, BuID: inv.BusinessUnitID}
+	for _, shipmentID := range inv.LegShipmentIDs() {
+		s.triage.InvoicePaid(ctx, tenantInfo, shipmentID)
+	}
 }

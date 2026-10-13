@@ -15,6 +15,7 @@ const (
 	notificationSource = "formula_template_service"
 
 	eventTemplateSubmitted         = "formula_template.submitted"
+	eventTemplateReviewRequested   = "formula_template.review_requested"
 	eventTemplateApproved          = "formula_template.approved"
 	eventTemplateRejected          = "formula_template.rejected"
 	eventTemplateChangesRequested  = "formula_template.changes_requested"
@@ -62,6 +63,40 @@ func (s *Service) notifySubmitted(
 
 	if _, err := s.notifications.Create(ctx, entity); err != nil {
 		s.l.Warn("failed to create submission notification",
+			zap.Error(err), zap.String("templateID", template.ID.String()))
+	}
+}
+
+func (s *Service) notifyRequestedReviewer(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	template *formulatemplate.FormulaTemplate,
+	reviewerID pulid.ID,
+) {
+	if s.notifications == nil || reviewerID.IsNil() || reviewerID == tenantInfo.UserID {
+		return
+	}
+
+	buID := tenantInfo.BuID
+	target := reviewerID
+	entity := &notification.Notification{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: &buID,
+		TargetUserID:   &target,
+		EventType:      eventTemplateReviewRequested,
+		Priority:       notification.PriorityHigh,
+		Channel:        notification.ChannelUser,
+		Title:          "Your review is requested",
+		Message: fmt.Sprintf(
+			"%q was submitted for review and you were asked to approve it.",
+			template.Name,
+		),
+		Source: notificationSource,
+		Data:   map[string]any{"link": templateReviewLink(template.ID)},
+	}
+
+	if _, err := s.notifications.Create(ctx, entity); err != nil {
+		s.l.Warn("failed to notify the requested reviewer",
 			zap.Error(err), zap.String("templateID", template.ID.String()))
 	}
 }

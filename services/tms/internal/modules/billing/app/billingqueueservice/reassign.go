@@ -429,8 +429,8 @@ func (s *service) applyReassignment(
 		number, numberErr := s.generateBillingNumber(
 			ctx,
 			billingqueue.BillTypeInvoice,
-			req.TenantInfo.OrgID,
-			req.TenantInfo.BuID,
+			req.TenantInfo,
+			share.PayerID,
 		)
 		if numberErr != nil {
 			return nil, nil, numberErr

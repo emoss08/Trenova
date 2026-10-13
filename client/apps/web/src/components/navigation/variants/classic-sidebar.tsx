@@ -12,6 +12,9 @@ import { type SidebarSectionKey } from "@/lib/graphql/sidebar-preferences";
 import { cn } from "@trenova/shared/lib/utils";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useNavigationStore } from "@/stores/navigation-store";
+import { useSidebarFold } from "@/components/navigation/sidebar-fold";
+import { Sheet, SheetContent, SheetTitle } from "@trenova/shared/components/ui/sheet";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { ComponentType } from "react";
 
 const SECTION_COMPONENTS: Record<SidebarSectionKey, ComponentType> = {
@@ -22,12 +25,7 @@ const SECTION_COMPONENTS: Record<SidebarSectionKey, ComponentType> = {
   browse: BrowseSection,
 };
 
-/**
- * The sidebar as it shipped before the layout review: every section stacked
- * in the order the person arranged them.
- */
-export function ClassicSidebar() {
-  const collapsed = useNavigationStore((state) => state.sidebarCollapsed);
+function ClassicSidebarBody() {
   const { data: preferences } = useSidebarPreferences();
 
   const sections = (preferences?.sections ?? [])
@@ -39,12 +37,7 @@ export function ClassicSidebar() {
     .filter((entry) => entry.Section != null);
 
   return (
-    <aside
-      className={cn(
-        "border-border bg-sidebar flex h-full min-h-0 flex-col border-r transition-[width] duration-200",
-        collapsed ? "w-0 overflow-hidden border-r-0" : "w-64",
-      )}
-    >
+    <>
       <div className="flex w-64 flex-col gap-2 px-2 pt-2 pb-1">
         <OrgSwitcher />
         <div className="flex items-center gap-1.5">
@@ -64,6 +57,44 @@ export function ClassicSidebar() {
       <div className="border-border w-64 border-t p-1.5">
         <UserMenu />
       </div>
+    </>
+  );
+}
+
+/**
+ * The sidebar as it shipped before the layout review: every section stacked
+ * in the order the person arranged them. On a phone it slides over the page
+ * as a sheet instead of sitting beside it.
+ */
+export function ClassicSidebar() {
+  const t = useT();
+  const { compact, shown } = useSidebarFold();
+  const setCompactSidebarOpen = useNavigationStore((state) => state.setCompactSidebarOpen);
+
+  if (compact) {
+    return (
+      <Sheet open={shown} onOpenChange={setCompactSidebarOpen}>
+        <SheetContent
+          side="left"
+          showCloseButton={false}
+          className="bg-sidebar w-auto gap-0 rounded-none border-y-0 border-l-0 p-0"
+        >
+          <SheetTitle className="sr-only">{t("Sidebar")}</SheetTitle>
+          <ClassicSidebarBody />
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <aside
+      inert={!shown || undefined}
+      className={cn(
+        "border-border bg-sidebar flex h-full min-h-0 flex-col border-r transition-[width] duration-200 max-md:hidden",
+        shown ? "w-64" : "w-0 overflow-hidden border-r-0",
+      )}
+    >
+      <ClassicSidebarBody />
     </aside>
   );
 }

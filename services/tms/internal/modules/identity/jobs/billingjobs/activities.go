@@ -14,17 +14,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
-	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -42,7 +39,6 @@ type ActivitiesParams struct {
 	DocumentService   documentports.InvoiceDocumentService
 	UploadService     documentuploadports.DocumentUploadService
 	DocumentTypeRepo  documenttypeports.DocumentTypeRepository
-	AuditService      auditports.AuditService
 	InvoiceRunSweeper invoicerunports.InvoiceRunSweeper
 	Logger            *zap.Logger
 
@@ -59,7 +55,6 @@ type Activities struct {
 	documentService   documentports.InvoiceDocumentService
 	uploadService     documentuploadports.DocumentUploadService
 	documentTypeRepo  documenttypeports.DocumentTypeRepository
-	auditService      auditports.AuditService
 	invoiceRunSweeper invoicerunports.InvoiceRunSweeper
 	logger            *zap.Logger
 
@@ -77,7 +72,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 		documentService:   p.DocumentService,
 		uploadService:     p.UploadService,
 		documentTypeRepo:  p.DocumentTypeRepo,
-		auditService:      p.AuditService,
 		invoiceRunSweeper: p.InvoiceRunSweeper,
 
 		lateChargeService:  p.LateChargeService,
@@ -103,7 +97,7 @@ func (a *Activities) AutoPostInvoiceActivity(
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
-		return nil, err
+		return nil, temporaltype.ToDomainRefusal(err)
 	}
 
 	if current.Status == invoice.StatusPosted || current.Status == invoice.StatusVoided {
@@ -129,7 +123,7 @@ func (a *Activities) AutoPostInvoiceActivity(
 		OrganizationID: payload.OrganizationID,
 	})
 	if err != nil {
-		return nil, err
+		return nil, temporaltype.ToDomainRefusal(err)
 	}
 
 	return &AutoPostInvoiceResult{
@@ -149,10 +143,14 @@ func (a *Activities) SendInvoiceEmailActivity(
 		UserID: payload.UserID,
 	}
 
+	stopHeartbeat := temporaltype.HeartbeatEvery(ctx, invoiceSendHeartbeatInterval)
+	defer stopHeartbeat()
+
 	result, err := a.invoiceService.SendFromWorkflow(ctx, &invoiceports.InvoiceSendRequest{
 		InvoiceID:  payload.InvoiceID,
 		TenantInfo: tenantInfo,
 		BaseURL:    payload.BaseURL,
+		StartedAt:  payload.Timestamp,
 	}, &permissionports.RequestActor{
 		PrincipalType:  payload.PrincipalType,
 		PrincipalID:    payload.PrincipalID,
@@ -268,46 +266,29 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 		BuID:   payload.BusinessUnitID,
 		UserID: payload.UserID,
 	}
-	current, err := a.invoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
-		ID:         payload.InvoiceID,
+	if _, err := a.invoiceService.AttachGeneratedPDF(ctx, &invoiceports.AttachGeneratedPDFRequest{
+		InvoiceID:  payload.InvoiceID,
+		DocumentID: documentID,
 		TenantInfo: tenantInfo,
-	})
-	if err != nil {
+		Actor: kernelports.AuditActor{
+			PrincipalType: payload.PrincipalType,
+			PrincipalID:   payload.PrincipalID,
+			UserID:        payload.UserID,
+			APIKeyID:      payload.APIKeyID,
+		},
+	}); err != nil {
 		return nil, err
 	}
 
-	previous := *current
-	current.PDFDocumentID = documentID
-	updated, err := a.invoiceRepo.Update(ctx, current)
-	if err != nil {
-		return nil, err
-	}
-
-	if auditErr := a.auditService.LogAction(&auditports.LogActionParams{
-		Resource:       permission.ResourceInvoice,
-		ResourceID:     updated.ID.String(),
-		Operation:      permission.OpUpdate,
-		UserID:         payload.UserID,
-		PrincipalType:  payload.PrincipalType,
-		PrincipalID:    payload.PrincipalID,
-		APIKeyID:       payload.APIKeyID,
-		PreviousState:  jsonutils.MustToJSON(&previous),
-		CurrentState:   jsonutils.MustToJSON(updated),
-		OrganizationID: updated.OrganizationID,
-		BusinessUnitID: updated.BusinessUnitID,
-	}, auditservice.WithComment("Invoice PDF generated")); auditErr != nil {
-		a.logger.Error("failed to log invoice PDF generation audit action",
-			zap.String("invoiceId", updated.ID.String()),
-			zap.Error(auditErr),
-		)
-	}
-
-	if _, err = a.invoiceService.AutoSendInvoiceAfterPDFGeneration(
+	stopHeartbeat := temporaltype.HeartbeatEvery(ctx, invoiceSendHeartbeatInterval)
+	defer stopHeartbeat()
+	if _, err := a.invoiceService.AutoSendInvoiceAfterPDFGeneration(
 		ctx,
 		&invoiceports.AutoSendInvoiceAfterPDFGenerationRequest{
 			InvoiceID:  payload.InvoiceID,
 			TenantInfo: tenantInfo,
 			BaseURL:    payload.BaseURL,
+			StartedAt:  payload.Timestamp,
 		},
 		&permissionports.RequestActor{
 			PrincipalType:  payload.PrincipalType,

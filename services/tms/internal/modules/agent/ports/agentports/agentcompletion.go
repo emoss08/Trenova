@@ -153,6 +153,9 @@ type ChatCompletionResult struct {
 	OutputTokens    int
 	ProviderID      pulid.ID
 	ProviderKind    aiprovider.Kind
+	// ProviderMessageID is the provider's own id for the reply, kept so the
+	// next call can name it when the operator asks why a cache missed.
+	ProviderMessageID string
 	// Truncated reports that the provider stopped partway through the reply.
 	// Text holds what arrived, which is worth keeping: a reader who watched
 	// half an answer appear should not be left with nothing, and the half that

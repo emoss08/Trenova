@@ -2,6 +2,7 @@ package ediservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -19,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -59,10 +61,10 @@ type Params struct {
 	ShipmentCommentRepo shipmentports.ShipmentCommentRepository
 	UserRepo            tenantports.UserRepository
 	ShipmentRepo        shipmentports.ShipmentRepository
-	TenderRepo          tenderports.TenderRepository         `optional:"true"`
-	CarrierRepo         carrierports.CarrierRepository       `optional:"true"`
-	ShipmentMoveRepo    shipmentports.ShipmentMoveRepository `optional:"true"`
-	ShipmentMoves       shipmentports.ShipmentMoveService    `optional:"true"`
+	TenderRepo          tenderports.TenderRepository            `optional:"true"`
+	CarrierRepo         carrierports.CarrierRepository          `optional:"true"`
+	ShipmentMoveRepo    shipmentports.ShipmentMoveRepository    `optional:"true"`
+	TrackingEvents      trackingeventports.TrackingEventService `optional:"true"`
 	ShipmentSvc         shipmentports.ShipmentService
 	WorkflowStarter     kernelports.WorkflowStarter
 	AuditService        auditports.AuditService
@@ -75,6 +77,7 @@ type Params struct {
 	OrderDerivation     orderports.OrderDerivationService
 	Metrics             *metrics.Registry             `optional:"true"`
 	Plans               platformplanports.PlanService `optional:"true"`
+	Realtime            agentports.RealtimeService    `optional:"true"`
 }
 
 type Service struct {
@@ -96,6 +99,7 @@ type Service struct {
 	carrierInvoiceRepo  ediports.EDICarrierInvoiceRepository
 	inboundFileRepo     ediports.EDIInboundFileRepository
 	invoiceRepo         invoiceports.InvoiceRepository
+	realtime            agentports.RealtimeService
 	shipmentEventRepo   shipmenteventports.ShipmentEventRepository
 	serviceFailureRepo  servicefailureports.ServiceFailureRepository
 	shipmentLinkRepo    ediports.EDIShipmentLinkRepository
@@ -108,7 +112,7 @@ type Service struct {
 	tenderRepo          tenderports.TenderRepository
 	carrierRepo         carrierports.CarrierRepository
 	shipmentMoveRepo    shipmentports.ShipmentMoveRepository
-	shipmentMoves       shipmentports.ShipmentMoveService
+	trackingEvents      trackingeventports.TrackingEventService
 	shipmentSvc         shipmentports.ShipmentService
 	workflowStarter     kernelports.WorkflowStarter
 	auditService        auditports.AuditService
@@ -149,6 +153,7 @@ func New(p Params) *Service {
 		carrierInvoiceRepo:  p.CarrierInvoiceRepo,
 		inboundFileRepo:     p.InboundFileRepo,
 		invoiceRepo:         p.InvoiceRepo,
+		realtime:            p.Realtime,
 		shipmentEventRepo:   p.ShipmentEventRepo,
 		serviceFailureRepo:  p.ServiceFailureRepo,
 		shipmentLinkRepo:    p.ShipmentLinkRepo,
@@ -161,7 +166,7 @@ func New(p Params) *Service {
 		tenderRepo:          p.TenderRepo,
 		carrierRepo:         p.CarrierRepo,
 		shipmentMoveRepo:    p.ShipmentMoveRepo,
-		shipmentMoves:       p.ShipmentMoves,
+		trackingEvents:      p.TrackingEvents,
 		shipmentSvc:         p.ShipmentSvc,
 		workflowStarter:     p.WorkflowStarter,
 		auditService:        p.AuditService,

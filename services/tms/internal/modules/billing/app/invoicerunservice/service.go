@@ -2,6 +2,7 @@ package invoicerunservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
@@ -40,6 +41,7 @@ type Params struct {
 	AuditService      auditports.AuditService
 	DetentionBilling  detentionports.DetentionBillingService
 	Validator         *Validator
+	Notifications     *notificationservice.Service `optional:"true"`
 }
 
 type Service struct {
@@ -53,10 +55,11 @@ type Service struct {
 	auditService      auditports.AuditService
 	detentionBilling  detentionports.DetentionBillingService
 	validator         *Validator
+	notifier          permittedNotifier
 }
 
 func New(p Params) *Service {
-	return &Service{
+	svc := &Service{
 		l:                 p.Logger.Named("invoice-run-service"),
 		repo:              p.Repo,
 		billingQueueRepo:  p.BillingQueueRepo,
@@ -68,6 +71,11 @@ func New(p Params) *Service {
 		detentionBilling:  p.DetentionBilling,
 		validator:         p.Validator,
 	}
+	if p.Notifications != nil {
+		svc.notifier = p.Notifications
+	}
+
+	return svc
 }
 
 func (s *Service) List(

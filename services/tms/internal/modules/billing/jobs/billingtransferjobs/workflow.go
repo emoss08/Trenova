@@ -66,6 +66,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Move a run's shipments into the billing queue, batch by batch",
 		},
 		{
+			Name:        AutomaticTransferWorkflowName,
+			Fn:          AutomaticBillingTransferSweepWorkflow,
+			TaskQueue:   temporaltype.TaskQueueBilling.String(),
+			Description: "Start automatic billing transfers for organizations whose schedule is due",
+		},
+		{
 			Name:        ReconcileZombieRunsWorkflowName,
 			Fn:          ReconcileZombieBillingTransferRunsWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
@@ -216,6 +222,25 @@ func ReconcileZombieBillingTransferRunsWorkflow(
 	var result *ReconcileZombieRunsResult
 	if err := workflow.ExecuteActivity(
 		ctx, a.ReconcileZombieRunsActivity,
+	).Get(ctx, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// AutomaticBillingTransferSweepWorkflow starts the automatic transfers that are
+// due. Each organization's own schedule decides whether its turn has come; the
+// sweep only gives every one of them the chance.
+func AutomaticBillingTransferSweepWorkflow(
+	ctx workflow.Context,
+) (*AutomaticTransferSweepResult, error) {
+	ctx = workflow.WithActivityOptions(ctx, reconcileActivityOptions)
+
+	var a *Activities
+	var result *AutomaticTransferSweepResult
+	if err := workflow.ExecuteActivity(
+		ctx, a.AutomaticTransferSweepActivity,
 	).Get(ctx, &result); err != nil {
 		return nil, err
 	}

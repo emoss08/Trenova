@@ -74,7 +74,10 @@ fn signed_in(uri: &str, expires_in: i64) -> Device {
     let base = Server::parse(uri).expect("server");
     let store = Arc::new(MemoryStore::with(Credential {
         server: base.as_str().to_owned(),
+        api_base: base.api_base().to_owned(),
         web_base: "https://app.trenova.test".into(),
+        server_name: String::new(),
+        shared_tenancy: false,
         tokens: tokens("tcd_at_old", "tcd_rt_old", expires_in),
     }));
     let api = Api::new(base, agent(), Arc::clone(&store) as Arc<dyn SecretStore>).expect("api");

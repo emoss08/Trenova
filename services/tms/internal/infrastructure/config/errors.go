@@ -5,7 +5,6 @@ import "errors"
 var InsecureDefaultValues = []string{"change", "secret", "example"}
 
 var (
-	ErrRLSRequiresPostgres  = errors.New("database.rls requires the postgres driver")
 	ErrRLSScopeKeyIDInvalid = errors.New(
 		"database.rls.scopeKeyId must be 1-32 characters of letters, digits, '_' or '-'",
 	)

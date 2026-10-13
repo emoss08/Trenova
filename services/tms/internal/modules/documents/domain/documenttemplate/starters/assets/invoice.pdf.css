@@ -242,3 +242,21 @@ h2 {
   font-size: 8.5pt;
   text-align: center;
 }
+
+/* Notice of assignment: a factored invoice must say, unmissably, who it is
+   payable to. It sits under the remit-to block and never splits a page. */
+
+.assignment {
+  margin-top: 14px;
+  padding: 8px 10px;
+  border: 1.5px solid #111827;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.assignment p {
+  margin: 0;
+  font-size: 8.5pt;
+  font-weight: 600;
+  white-space: pre-line;
+}

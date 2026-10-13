@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/addressutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -53,6 +54,7 @@ type Customer struct {
 	StatusUpdatePreference StatusUpdatePreference `json:"statusUpdatePreference" bun:"status_update_preference,type:VARCHAR(30),notnull,default:'None'"`
 	StatusUpdateRecipients string                 `json:"statusUpdateRecipients" bun:"status_update_recipients,type:TEXT,nullzero"`
 	BrokerVettingEnabled   bool                   `json:"brokerVettingEnabled"   bun:"broker_vetting_enabled,type:BOOLEAN,notnull"`
+	CheckCallIntervalHours *int16                 `json:"checkCallIntervalHours" bun:"check_call_interval_hours,type:SMALLINT,nullzero"`
 	Geom                   *postgis.Point         `json:"-"                      bun:"geom,type:geography,scanonly"`
 	AllowConsolidation     bool                   `json:"allowConsolidation"     bun:"allow_consolidation,type:BOOLEAN"`
 	ExclusiveConsolidation bool                   `json:"exclusiveConsolidation" bun:"exclusive_consolidation,type:BOOLEAN"`
@@ -140,6 +142,15 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(0, 12).Error("MC number must be at most 12 characters"),
 			validation.Match(digitsPattern).Error("MC number must contain only digits"),
 		),
+		validation.Field(&c.CheckCallIntervalHours,
+			validation.When(
+				c.CheckCallIntervalHours != nil,
+				validation.Min(int16(1)).
+					Error("Check call interval must be between 1 and 72 hours"),
+				validation.Max(int16(72)).
+					Error("Check call interval must be between 1 and 72 hours"),
+			),
+		),
 	))
 
 	if c.BillingProfile != nil {
@@ -147,7 +158,10 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 	}
 
 	if c.EmailProfile != nil {
-		c.EmailProfile.Validate(multiErr.WithPrefix("emailProfile"))
+		c.EmailProfile.ValidateForDelivery(
+			multiErr.WithPrefix("emailProfile"),
+			c.BillingProfile == nil || c.BillingProfile.EmailInvoiceEnabled,
+		)
 	}
 }
 
@@ -182,6 +196,36 @@ func (c *Customer) BillingCurrencyCode() string {
 	}
 
 	return c.BillingProfile.BillingCurrency
+}
+
+// DisplayName is how a message to a person names the customer: its name, or
+// its code when it has none.
+func (c *Customer) DisplayName() string {
+	if c == nil {
+		return ""
+	}
+	if name := strings.TrimSpace(c.Name); name != "" {
+		return name
+	}
+	return c.Code
+}
+
+// MailingAddress is the customer's address as a document prints it.
+func (c *Customer) MailingAddress() addressutils.Mailing {
+	if c == nil {
+		return addressutils.Mailing{}
+	}
+	m := addressutils.Mailing{
+		Line1:      c.AddressLine1,
+		Line2:      c.AddressLine2,
+		City:       c.City,
+		PostalCode: c.PostalCode,
+	}
+	if c.State != nil {
+		m.State = c.State.Abbreviation
+		m.Country = c.State.CountryName
+	}
+	return m
 }
 
 func (c *Customer) HasEmailProfile() bool {

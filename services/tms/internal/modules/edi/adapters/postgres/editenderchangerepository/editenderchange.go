@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
@@ -181,7 +182,7 @@ func (r *repository) SupersedeActionableTenderChanges(
 			NewUpdate().
 			Model((*edi.TenderChange)(nil)).
 			Set("status = ?", edi.TenderChangeStatusSuperseded).
-			Set("updated_at = "+r.db.NowEpoch()).
+			Set("updated_at = "+dbhelper.NowEpoch).
 			Where("recipient_id = ?", req.RecipientID).
 			Where("status IN (?)", bun.List(req.Statuses))
 		if req.ExcludeChangeID.IsNotNil() {

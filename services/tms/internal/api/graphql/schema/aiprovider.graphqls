@@ -39,6 +39,71 @@ enum AIThinkingStyle {
 }
 
 """
+Where an Anthropic Messages provider reaches Claude. Direct calls the base URL
+with the API key, which every other kind always does.
+"""
+enum AIProviderPlatform {
+  Direct
+  "Amazon Bedrock's Messages endpoint."
+  Bedrock
+  "Google Vertex AI's Anthropic publisher models."
+  VertexAI
+  "Claude Platform on AWS: the Claude API run by Anthropic, billed through AWS."
+  ClaudePlatformAWS
+  "Claude Platform on Google Cloud."
+  ClaudePlatformGoogleCloud
+  "Microsoft Foundry."
+  Foundry
+}
+
+"How a request to a platform proves who sent it."
+enum AIProviderPlatformAuth {
+  "The stored key: an Anthropic, Bedrock or Foundry API key."
+  ApiKey
+  "Signed with an IAM access key; the secret access key is stored."
+  AccessKey
+  "Tokens from a Google service account key, which is stored."
+  ServiceAccount
+  "Tokens from Microsoft Entra ID for an app registration; its client secret is stored."
+  EntraID
+  "The cloud credentials of the server Trenova runs on, where the server allows it. Nothing is stored."
+  Server
+}
+
+"""
+What a platform needs besides its credential. None of it is secret; a setting
+the platform does not take is empty.
+"""
+type AIProviderPlatformSettings {
+  auth: AIProviderPlatformAuth!
+  "The AWS region, the Vertex AI region or the Google Cloud location."
+  region: String!
+  "The Google Cloud project."
+  projectId: String!
+  "The Anthropic workspace, for Claude Platform on AWS and on Google Cloud."
+  workspaceId: String!
+  "The IAM access key that signs requests."
+  accessKeyId: String!
+  "The Foundry resource name."
+  resource: String!
+  "The Entra ID tenant."
+  tenantId: String!
+  "The Entra ID app registration's client ID."
+  clientId: String!
+}
+
+input AIProviderPlatformSettingsInput {
+  auth: AIProviderPlatformAuth
+  region: String
+  projectId: String
+  workspaceId: String
+  accessKeyId: String
+  resource: String
+  tenantId: String
+  clientId: String
+}
+
+"""
 How an embedding endpoint is told whether a text is a stored document or a
 search query. None sends both the same way; VoyageInputType sends Voyage's
 input_type field; NomicPrefix adds the search_document and search_query
@@ -97,6 +162,10 @@ type AIProvider {
   reasoningEffort: AIReasoningEffort!
   "How a Claude model behind an id the system cannot read takes thinking."
   thinkingStyle: AIThinkingStyle!
+  "Where an Anthropic Messages provider reaches Claude."
+  platform: AIProviderPlatform!
+  "What the platform needs besides the credential. Null for a provider called directly."
+  platformSettings: AIProviderPlatformSettings
   """
   Vendor request fields this endpoint takes that the protocol does not
   define, merged under the fields this system sets. Null when the endpoint
@@ -218,6 +287,9 @@ apiKey, the provider's stored key is used.
 input AIProviderEndpointInput {
   providerId: ID
   kind: AIProviderKind!
+  "Where an Anthropic Messages endpoint reaches Claude. Omitted calls the base URL directly."
+  platform: AIProviderPlatform
+  platformSettings: AIProviderPlatformSettingsInput
   baseUrl: String!
   apiKey: String
   allowPrivateNetwork: Boolean!

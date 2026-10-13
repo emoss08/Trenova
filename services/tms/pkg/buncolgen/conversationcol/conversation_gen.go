@@ -339,6 +339,7 @@ var MessageColumns = struct {
 	ProviderID        buncolgen.Column // "provider_id" → qualified: "amsg.provider_id"
 	InputTokens       buncolgen.Column // "input_tokens" → qualified: "amsg.input_tokens"
 	OutputTokens      buncolgen.Column // "output_tokens" → qualified: "amsg.output_tokens"
+	ProviderMessageID buncolgen.Column // "provider_message_id" → qualified: "amsg.provider_message_id"
 	LatencyMs         buncolgen.Column // "latency_ms" → qualified: "amsg.latency_ms"
 	CostUSD           buncolgen.Column // "cost_usd" → qualified: "amsg.cost_usd"
 	UsedMemoryIDs     buncolgen.Column // "used_memory_ids" → qualified: "amsg.used_memory_ids"
@@ -383,6 +384,7 @@ var MessageColumns = struct {
 	ProviderID:        buncolgen.NewColumn("provider_id", "amsg"),
 	InputTokens:       buncolgen.NewColumn("input_tokens", "amsg"),
 	OutputTokens:      buncolgen.NewColumn("output_tokens", "amsg"),
+	ProviderMessageID: buncolgen.NewColumn("provider_message_id", "amsg"),
 	LatencyMs:         buncolgen.NewColumn("latency_ms", "amsg"),
 	CostUSD:           buncolgen.NewColumn("cost_usd", "amsg"),
 	UsedMemoryIDs:     buncolgen.NewColumn("used_memory_ids", "amsg"),
@@ -395,49 +397,50 @@ var MessageColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Message.GetStaticFieldMap().
 var MessageFieldMap = map[string]string{
-	"id":             "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"threadId":       "thread_id",
-	"sequence":       "sequence",
-	"role":           "role",
-	"kind":           "kind",
-	"agentId":        "agent_definition_id",
-	"delegateCallId": "delegate_call_id",
-	"delegateReport": "delegate_report",
-	"scheduleId":     "schedule_id",
-	"handoff":        "handoff",
-	"content":        "content",
-	"worldChanges":   "world_changes",
-	"compaction":     "compaction",
-	"toolCalls":      "tool_calls",
-	"toolCallId":     "tool_call_id",
-	"toolName":       "tool_name",
-	"toolFailed":     "tool_failed",
-	"toolVerdict":    "tool_verdict",
-	"summary":        "tool_summary",
-	"foundTools":     "found_tools",
-	"handOffAgents":  "hand_off_agents",
-	"scopeStage":     "scope_stage",
-	"scopeCategory":  "scope_category",
-	"scopeReason":    "scope_reason",
-	"refused":        "refused",
-	"pageContext":    "page_context",
-	"attachments":    "attachments",
-	"mentions":       "mentions",
-	"reasoning":      "reasoning",
-	"model":          "model",
-	"truncated":      "truncated",
-	"fallbackFrom":   "fallback_from",
-	"failure":        "failure",
-	"providerId":     "provider_id",
-	"inputTokens":    "input_tokens",
-	"outputTokens":   "output_tokens",
-	"latencyMs":      "latency_ms",
-	"costUsd":        "cost_usd",
-	"usedMemoryIds":  "used_memory_ids",
-	"savedMemories":  "saved_memories",
-	"createdAt":      "created_at",
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"threadId":          "thread_id",
+	"sequence":          "sequence",
+	"role":              "role",
+	"kind":              "kind",
+	"agentId":           "agent_definition_id",
+	"delegateCallId":    "delegate_call_id",
+	"delegateReport":    "delegate_report",
+	"scheduleId":        "schedule_id",
+	"handoff":           "handoff",
+	"content":           "content",
+	"worldChanges":      "world_changes",
+	"compaction":        "compaction",
+	"toolCalls":         "tool_calls",
+	"toolCallId":        "tool_call_id",
+	"toolName":          "tool_name",
+	"toolFailed":        "tool_failed",
+	"toolVerdict":       "tool_verdict",
+	"summary":           "tool_summary",
+	"foundTools":        "found_tools",
+	"handOffAgents":     "hand_off_agents",
+	"scopeStage":        "scope_stage",
+	"scopeCategory":     "scope_category",
+	"scopeReason":       "scope_reason",
+	"refused":           "refused",
+	"pageContext":       "page_context",
+	"attachments":       "attachments",
+	"mentions":          "mentions",
+	"reasoning":         "reasoning",
+	"model":             "model",
+	"truncated":         "truncated",
+	"fallbackFrom":      "fallback_from",
+	"failure":           "failure",
+	"providerId":        "provider_id",
+	"inputTokens":       "input_tokens",
+	"outputTokens":      "output_tokens",
+	"providerMessageId": "provider_message_id",
+	"latencyMs":         "latency_ms",
+	"costUsd":           "cost_usd",
+	"usedMemoryIds":     "used_memory_ids",
+	"savedMemories":     "saved_memories",
+	"createdAt":         "created_at",
 }
 
 // MessageInsertableColumns lists column names suitable for INSERT statements on the "assistant_messages" table.
@@ -481,6 +484,7 @@ var MessageInsertableColumns = []string{
 	"provider_id",
 	"input_tokens",
 	"output_tokens",
+	"provider_message_id",
 	"latency_ms",
 	"cost_usd",
 	"used_memory_ids",
@@ -587,6 +591,7 @@ var MessageFilter = struct {
 	ProviderID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
 	InputTokens       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
 	OutputTokens      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
+	ProviderMessageID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerMessageId" → DB: "provider_message_id"
 	LatencyMs         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latencyMs" → DB: "latency_ms"
 	CostUSD           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
 	UsedMemoryIDs     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "usedMemoryIds" → DB: "used_memory_ids"
@@ -706,6 +711,9 @@ var MessageFilter = struct {
 	},
 	OutputTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("outputTokens", op, value)
+	},
+	ProviderMessageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("providerMessageId", op, value)
 	},
 	LatencyMs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("latencyMs", op, value)

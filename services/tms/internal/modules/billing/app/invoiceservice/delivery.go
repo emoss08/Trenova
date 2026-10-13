@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -26,6 +27,10 @@ type invoiceDeliveryProfile struct {
 	Shipments []*shipmentports.ShipmentSummary
 
 	BillingControl *tenant.BillingControl
+
+	// Factor is the factoring company the invoice is remitted to, nil when
+	// it is not factored.
+	Factor *factoringcompany.FactoringCompany
 }
 
 type resolveDeliveryProfileParams struct {

@@ -80,14 +80,15 @@ describe("isModuleActive", () => {
   });
 
   it("marks a module active on its base path and anything beneath it", () => {
+    expect(isModuleActive(moduleById("inbox"), "/triage")).toBe(true);
+    expect(isModuleActive(moduleById("inbox"), "/triage/msg_01")).toBe(true);
     expect(isModuleActive(moduleById("inbox"), "/inbox")).toBe(true);
-    expect(isModuleActive(moduleById("inbox"), "/inbox/msg_01")).toBe(true);
     expect(isModuleActive(moduleById("desk"), "/desk/")).toBe(true);
   });
 
   it("does not match a sibling that merely shares a leading string", () => {
     expect(isModuleActive(moduleById("intake"), "/intakes")).toBe(false);
-    expect(isModuleActive(moduleById("desk"), "/inbox")).toBe(false);
+    expect(isModuleActive(moduleById("desk"), "/triage")).toBe(false);
   });
 });
 

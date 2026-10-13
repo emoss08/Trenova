@@ -1,47 +1,58 @@
 import { useAsk } from "@/components/assistant/use-ask";
 import { usePageContext } from "@/components/assistant/use-page-context";
+import { isRecordEntityType, recordPath } from "@/config/record-links";
 import { conversationPath } from "@/lib/conversation-path";
+import { isGlobalSearchEntityType } from "@/services/global-search";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useRecentRecordsStore } from "@/stores/recent-records-store";
 import type { AssistantEntityRef } from "@/types/assistant";
-import { CommandDialog, CommandList } from "@trenova/shared/components/ui/command";
+import { CommandDialog } from "@trenova/shared/components/ui/command";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { rankByFuzzyScore } from "@trenova/shared/lib/fuzzy-score";
-import { cn } from "@trenova/shared/lib/utils";
+import { getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
-import { SearchXIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PalettePreview, type PreviewContext } from "./_components/preview/palette-preview";
 import { prefetchRecordPreview } from "./_components/preview/preview-queries";
-import { PalettePreview } from "./_components/preview/palette-preview";
-import { AskAnswerCard } from "./ask-answer-card";
-import { askQuestion } from "./ask-question";
+import { answerSources, AskAnswerCard, plainAnswer } from "./ask-answer-card";
+import { askQuestion, commandModeQuery, questionSearchText } from "./ask-question";
+import "./command-palette.css";
+import { PALETTE_ENTITY_ICONS } from "./palette-entities";
 import {
+  ACTION_ASK,
   ACTION_COPY_ID,
   ACTION_COPY_LINK,
   ACTION_NEW_TAB,
+  ACTION_PIN,
   buildItemActions,
   findAction,
+  modKey,
 } from "./palette-actions";
-import { actionItemKey, PaletteActionsView } from "./palette-actions-view";
-import { PaletteFooter, type FooterHint } from "./palette-footer";
+import { PaletteActionsMenu } from "./palette-actions-menu";
+import { PaletteFooter, type FooterAside, type FooterHint } from "./palette-footer";
 import { PaletteInput } from "./palette-input";
 import { PaletteList } from "./palette-list";
 import {
   intentKeepsPaletteOpen,
-  isRecordScope,
+  itemTitle,
   type PaletteAction,
+  type PaletteIcon,
+  type PaletteIntent,
   type PaletteItem,
+  type PaletteRecord,
   type PaletteScope,
   type PaletteSection,
 } from "./palette-model";
-import { nextScope, PaletteScopeTabs } from "./palette-scope-tabs";
+import { nextScope, PaletteScopeTabs, scopePresentation } from "./palette-scope-tabs";
 import {
   buildHomeSections,
   buildSearchSections,
+  buildSubjectSections,
   flattenSections,
-  recordsFromGroups,
+  rankLocal,
+  recordsNamedIn,
+  scopeCounts,
 } from "./palette-sections";
 import {
   filterMentionOptions,
@@ -51,6 +62,8 @@ import {
   type SearchEntityOption,
 } from "./search-entity-filter";
 import {
+  isRemoteSearchable,
+  paletteSearchQuery,
   usePaletteCatalog,
   usePaletteHome,
   usePaletteRemoteSearch,
@@ -61,13 +74,7 @@ import { usePaletteIntentRunner } from "./use-palette-intents";
 
 const SEARCH_DEBOUNCE_MS = 200;
 const PREVIEW_SETTLE_MS = 90;
-
-interface ActionsView {
-  item: PaletteItem;
-  title: string;
-  /** What was typed before the actions opened, given back on the way out. */
-  savedQuery: string;
-}
+const CONFIRMATION_MS = 1800;
 
 interface MentionState {
   open: boolean;
@@ -77,31 +84,49 @@ interface MentionState {
 
 const CLOSED_MENTION: MentionState = { open: false, text: "", index: 0 };
 
-function itemTitle(item: PaletteItem): string {
-  switch (item.kind) {
-    case "record":
-      return item.record.title;
-    case "page":
-      return item.page.title;
-    case "command":
-      return item.command.label;
-    case "attention":
-      return item.attention.label;
-    case "notification":
-      return item.notification.title;
-    case "ask":
-      return item.question;
-  }
+/** The question Nova is answering, and the record it is about, if any. */
+interface AskedQuestion {
+  question: string;
+  subject: AssistantEntityRef | null;
 }
 
 function caretAtEnd(input: HTMLInputElement): boolean {
   return input.selectionStart === input.value.length && input.selectionEnd === input.value.length;
 }
 
+function sameSubject(a: AssistantEntityRef | null, b: AssistantEntityRef | null): boolean {
+  return a === b || (a !== null && b !== null && a.type === b.type && a.id === b.id);
+}
+
+/** A record an answer cited, as a palette record, when the palette can draw and open it. */
+function recordFromRef(ref: AssistantEntityRef): PaletteRecord | null {
+  if (!isGlobalSearchEntityType(ref.type)) {
+    return null;
+  }
+  const href = isRecordEntityType(ref.type) ? recordPath(ref.type, ref.id) : "";
+  return { entityType: ref.type, id: ref.id, title: ref.label, href, metadata: {} };
+}
+
+function itemTile(item: PaletteItem): { icon?: PaletteIcon; initials?: string } {
+  switch (item.kind) {
+    case "record":
+      return item.record.entityType === "worker"
+        ? { initials: getNameInitials(item.record.title) }
+        : { icon: PALETTE_ENTITY_ICONS[item.record.entityType] };
+    case "page":
+      return { icon: item.page.icon };
+    case "command":
+      return { icon: item.command.icon };
+    default:
+      return {};
+  }
+}
+
 /**
- * The command palette. It answers three questions from one box — where is
- * it, what can I do, and what is waiting on me — and keeps a live look at
- * whatever is selected beside the list. Nothing is fetched until it opens.
+ * The command palette. It answers four questions from one box — where is it,
+ * what can I do, what is waiting on me, and what does Nova make of it — and
+ * keeps a live look at whatever is selected beside the list. Nothing is
+ * fetched until it opens.
  */
 export function CommandPalette() {
   const t = useT();
@@ -114,40 +139,74 @@ export function CommandPalette() {
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<PaletteScope>("all");
   const [mention, setMention] = useState<MentionState>(CLOSED_MENTION);
-  const [actionsView, setActionsView] = useState<ActionsView | null>(null);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const [selected, setSelected] = useState("");
   const [askSubject, setAskSubject] = useState<AssistantEntityRef | null>(null);
+  const [asked, setAsked] = useState<AskedQuestion | null>(null);
+  const [peek, setPeek] = useState<AssistantEntityRef | null>(null);
+  const [confirmation, setConfirmation] = useState<string | null>(null);
+  const confirmationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const unread = useUnreadCount();
   const catalog = usePaletteCatalog(unread);
   const pinned = usePinnedPages(open, catalog.pageIndex);
-  const home = usePaletteHome({ open, catalog, pinned, unread });
-  const debouncedQuery = useDebounce(query, SEARCH_DEBOUNCE_MS);
+  const home = usePaletteHome({ catalog, pinned });
+
+  const commandText = askSubject === null && scope === "all" ? commandModeQuery(query) : null;
+  const effectiveScope: PaletteScope = commandText !== null ? "commands" : scope;
+  const searchQuery = commandText ?? (mention.open ? stripMentionToken(query) : query);
+  const trimmedQuery = searchQuery.trim();
   const question =
-    actionsView !== null
+    askSubject !== null
       ? null
-      : askSubject !== null
-        ? query.trim() || null
-        : scope === "all"
-          ? askQuestion(query)
-          : null;
+      : effectiveScope === "commands" || effectiveScope === "pages"
+        ? null
+        : askQuestion(searchQuery);
+
+  const recordQuery = question !== null ? questionSearchText(question) : searchQuery;
+  const debouncedRecordQuery = useDebounce(recordQuery, SEARCH_DEBOUNCE_MS);
   const remote = usePaletteRemoteSearch({
-    enabled: open && actionsView === null && askSubject === null && question === null,
-    query: debouncedQuery,
-    scope,
+    enabled: open && askSubject === null,
+    query: debouncedRecordQuery,
+    scope: effectiveScope,
   });
 
   const getPageContext = usePageContext();
   const { turn, ask, stop: stopAsk, reset: resetAsk, keep: keepAsk } = useAsk();
 
+  const confirm = useCallback((message: string) => {
+    if (confirmationTimer.current) {
+      clearTimeout(confirmationTimer.current);
+    }
+    setConfirmation(message);
+    confirmationTimer.current = setTimeout(() => setConfirmation(null), CONFIRMATION_MS);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (confirmationTimer.current) {
+        clearTimeout(confirmationTimer.current);
+      }
+    },
+    [],
+  );
+
+  const clearAnswer = useCallback(() => {
+    setAsked(null);
+    setPeek(null);
+    resetAsk();
+  }, [resetAsk]);
+
   const reset = useCallback(() => {
     setQuery("");
     setScope("all");
     setMention(CLOSED_MENTION);
-    setActionsView(null);
+    setActionsOpen(false);
     setSelected("");
     setAskSubject(null);
+    setAsked(null);
+    setPeek(null);
     resetAsk();
   }, [resetAsk]);
 
@@ -156,93 +215,133 @@ export function CommandPalette() {
     reset();
   }, [reset, setOpen]);
 
-  const askAbout = useCallback((subject: AssistantEntityRef) => {
-    setAskSubject(subject);
-    setActionsView(null);
-    setScope("all");
-    setQuery("");
-    setSelected("");
-    inputRef.current?.focus();
+  const focusInput = useCallback(() => {
+    requestAnimationFrame(() => inputRef.current?.focus());
   }, []);
 
-  const runIntent = usePaletteIntentRunner({ close, askAbout });
+  const askAbout = useCallback(
+    (subject: AssistantEntityRef) => {
+      setAskSubject(subject);
+      setActionsOpen(false);
+      setScope("all");
+      setQuery("");
+      setSelected("");
+      setMention(CLOSED_MENTION);
+      clearAnswer();
+      focusInput();
+    },
+    [clearAnswer, focusInput],
+  );
+
+  const runIntent = usePaletteIntentRunner({ close, askAbout, confirm });
 
   const actionContext = useMemo(
     () => ({ ...catalog.actionContext, pinnedUrls: pinned.pinnedUrls }),
     [catalog.actionContext, pinned.pinnedUrls],
   );
 
-  const sections = useMemo((): PaletteSection[] => {
-    if (actionsView !== null) {
-      return [];
-    }
+  const ranking = useMemo(
+    () => rankLocal(searchQuery, catalog.pages, catalog.commands, t),
+    [catalog.commands, catalog.pages, searchQuery, t],
+  );
+
+  const answerVisible =
+    turn !== null &&
+    asked !== null &&
+    sameSubject(asked.subject, askSubject) &&
+    (askSubject !== null
+      ? query.trim() === "" || query.trim() === asked.question
+      : question === asked.question);
+
+  const { sections, empty } = useMemo((): { sections: PaletteSection[]; empty: boolean } => {
     if (askSubject !== null) {
-      return question === null
-        ? []
-        : [{ id: "ask", heading: t("Assistant"), items: [{ kind: "ask", key: "ask", question }] }];
+      return {
+        sections: buildSubjectSections(
+          askSubject,
+          query,
+          answerVisible && asked ? asked.question : null,
+          t,
+        ),
+        empty: false,
+      };
     }
-    if (query.trim() === "" && scope === "all") {
-      return buildHomeSections(home, t);
+    if (trimmedQuery === "" && effectiveScope === "all") {
+      return { sections: buildHomeSections(home, t), empty: false };
     }
-    return buildSearchSections(
+    const results = buildSearchSections(
       {
-        query,
-        scope,
+        query: searchQuery,
+        recordQuery,
+        scope: effectiveScope,
         question,
         remote,
-        pages: catalog.pages,
-        commands: catalog.commands,
+        ranking,
         recentRecords: home.recentRecords,
       },
       t,
     );
+    return answerVisible
+      ? { sections: results.sections.filter((entry) => entry.id !== "nova"), empty: false }
+      : results;
   }, [
-    actionsView,
+    answerVisible,
     askSubject,
-    catalog.commands,
-    catalog.pages,
+    asked,
+    effectiveScope,
     home,
     query,
     question,
+    ranking,
+    recordQuery,
     remote,
-    scope,
+    searchQuery,
     t,
+    trimmedQuery,
   ]);
+
+  const counts = useMemo(
+    () =>
+      askSubject === null && trimmedQuery !== ""
+        ? scopeCounts(ranking, remote, commandText !== null ? "commands" : "search")
+        : null,
+    [askSubject, commandText, ranking, remote, trimmedQuery],
+  );
 
   const items = useMemo(() => flattenSections(sections), [sections]);
   const itemsByKey = useMemo(() => new Map(items.map((item) => [item.key, item])), [items]);
-
-  const viewActions = useMemo(() => {
-    if (actionsView === null) {
-      return [];
-    }
-    const all = buildItemActions(actionsView.item, actionContext, t);
-    return rankByFuzzyScore(query, all, (action) => [{ text: action.label }]);
-  }, [actionContext, actionsView, query, t]);
-
-  const visibleKeys = useMemo(
-    () => (actionsView !== null ? viewActions.map(actionItemKey) : items.map((item) => item.key)),
-    [actionsView, items, viewActions],
-  );
-  const selectedKey = visibleKeys.includes(selected) ? selected : (visibleKeys[0] ?? "");
-  const selectedItem =
-    actionsView !== null ? actionsView.item : (itemsByKey.get(selectedKey) ?? null);
+  const selectedKey = itemsByKey.has(selected) ? selected : (items[0]?.key ?? "");
+  const selectedItem = itemsByKey.get(selectedKey) ?? null;
   const selectedActions = useMemo(
     () => (selectedItem ? buildItemActions(selectedItem, actionContext, t) : []),
     [actionContext, selectedItem, t],
   );
 
-  const settledKey = useDebounce(
-    actionsView !== null ? `view:${actionsView.item.key}` : selectedKey,
-    PREVIEW_SETTLE_MS,
-  );
-  const previewItem =
-    actionsView !== null
-      ? actionsView.item
-      : (itemsByKey.get(settledKey) ?? (settledKey === "" ? null : selectedItem));
+  const settledKey = useDebounce(selectedKey, PREVIEW_SETTLE_MS);
+  const settledItem = itemsByKey.get(settledKey) ?? (settledKey === "" ? null : selectedItem);
+  const previewItem = useMemo((): PaletteItem | null => {
+    const peekRecord = peek ? recordFromRef(peek) : null;
+    return peekRecord
+      ? {
+          kind: "record",
+          key: `peek:${peekRecord.entityType}:${peekRecord.id}`,
+          record: peekRecord,
+        }
+      : settledItem;
+  }, [peek, settledItem]);
   const previewActions = useMemo(
     () => (previewItem ? buildItemActions(previewItem, actionContext, t) : []),
     [actionContext, previewItem, t],
+  );
+  const answerDone = answerVisible && turn?.status === "done";
+  const sources = useMemo(
+    () =>
+      answerDone && items.length === 0
+        ? answerSources(turn).flatMap((ref) => {
+            const record = recordFromRef(ref);
+            return record ? [record] : [];
+          })
+        : [],
+    [answerDone, items.length, turn],
   );
 
   const firstRecord = useMemo(() => items.find((item) => item.kind === "record"), [items]);
@@ -252,28 +351,63 @@ export function CommandPalette() {
     }
   }, [firstRecord, open, queryClient]);
 
-  const relatedCommands = useCallback(
-    (href: string) =>
-      catalog.commands.filter(
-        (command) =>
-          command.group === "create" &&
-          command.intent.type === "navigate" &&
-          command.intent.href.split("?")[0] === href,
-      ),
-    [catalog.commands],
+  const openRecord = useCallback(
+    (record: PaletteRecord) => {
+      if (record.entityType === "document") {
+        recordOpen(organizationId, record);
+        runIntent({ type: "open-document", documentId: record.id, disposition: "view" });
+        return;
+      }
+      if (record.href === "") {
+        return;
+      }
+      recordOpen(organizationId, record);
+      runIntent({ type: "navigate", href: record.href });
+    },
+    [organizationId, recordOpen, runIntent],
   );
 
-  const handleAsk = useCallback(() => {
-    if (question === null) {
-      return;
-    }
-    void ask(question, {
-      context: getPageContext(),
-      mentions: askSubject ? [askSubject] : undefined,
-    });
-  }, [ask, askSubject, getPageContext, question]);
+  const openCited = useCallback(
+    (ref: AssistantEntityRef) => {
+      const record = recordFromRef(ref);
+      if (record) {
+        openRecord(record);
+      } else if (isRecordEntityType(ref.type)) {
+        runIntent({ type: "navigate", href: recordPath(ref.type, ref.id) });
+      }
+    },
+    [openRecord, runIntent],
+  );
 
-  const handleOpenInDesk = useCallback(() => {
+  const namedRecords = useCallback(
+    async (question: string): Promise<AssistantEntityRef[]> => {
+      const text = questionSearchText(question);
+      if (text === "" || !isRemoteSearchable(text, effectiveScope)) {
+        return [];
+      }
+      const found = await queryClient.fetchQuery(paletteSearchQuery(text, effectiveScope));
+      return recordsNamedIn(question, found.groups);
+    },
+    [effectiveScope, queryClient],
+  );
+
+  const startAsk = useCallback(
+    (item: Extract<PaletteItem, { kind: "ask" }>) => {
+      setActionsOpen(false);
+      setPeek(null);
+      setAsked({ question: item.question, subject: item.subject });
+      const context = getPageContext();
+      void ask(
+        item.question,
+        item.subject
+          ? { context, mentions: [item.subject] }
+          : { context, findMentions: () => namedRecords(item.question) },
+      );
+    },
+    [ask, getPageContext, namedRecords],
+  );
+
+  const continueInDesk = useCallback(() => {
     void keepAsk().then((threadId) => {
       if (threadId !== null) {
         runIntent({ type: "navigate", href: conversationPath(threadId) });
@@ -281,28 +415,53 @@ export function CommandPalette() {
     });
   }, [keepAsk, runIntent]);
 
+  const followUp = useCallback(() => {
+    clearAnswer();
+    setQuery("");
+    setSelected("");
+    focusInput();
+  }, [clearAnswer, focusInput]);
+
   const runAction = useCallback(
     (item: PaletteItem, action: PaletteAction) => {
       const intent = action.intent;
       if (
         item.kind === "record" &&
-        (intent.type === "navigate" || intent.type === "new-tab" || intent.type === "open-document")
+        (intent.type === "navigate" ||
+          intent.type === "new-tab" ||
+          intent.type === "open-document") &&
+        action.id !== "open-customer" &&
+        action.id !== "open-current-load"
       ) {
         recordOpen(organizationId, item.record);
       }
-      if (intentKeepsPaletteOpen(intent) && actionsView !== null) {
-        setActionsView(null);
-        setQuery(actionsView.savedQuery);
+      if (intentKeepsPaletteOpen(intent)) {
+        setActionsOpen(false);
+        focusInput();
       }
       runIntent(intent);
     },
-    [actionsView, organizationId, recordOpen, runIntent],
+    [focusInput, organizationId, recordOpen, runIntent],
+  );
+
+  const changeScope = useCallback(
+    (next: PaletteScope) => {
+      setScope(next);
+      setSelected("");
+      setActionsOpen(false);
+      focusInput();
+    },
+    [focusInput],
   );
 
   const handleSelect = useCallback(
     (item: PaletteItem) => {
       if (item.kind === "ask") {
-        handleAsk();
+        startAsk(item);
+        return;
+      }
+      if (item.kind === "widen") {
+        changeScope("all");
         return;
       }
       const primary = buildItemActions(item, actionContext, t)[0];
@@ -310,42 +469,70 @@ export function CommandPalette() {
         runAction(item, primary);
       }
     },
-    [actionContext, handleAsk, runAction, t],
+    [actionContext, changeScope, runAction, startAsk, t],
   );
 
-  const openActions = useCallback(() => {
-    if (!selectedItem || selectedActions.length === 0 || selectedItem.kind === "ask") {
-      return;
-    }
-    setActionsView({ item: selectedItem, title: itemTitle(selectedItem), savedQuery: query });
-    setQuery("");
-    setSelected("");
-  }, [query, selectedActions.length, selectedItem]);
-
-  const closeActions = useCallback(() => {
-    if (actionsView === null) {
-      return;
-    }
-    setQuery(actionsView.savedQuery);
-    setSelected(actionsView.item.key);
-    setActionsView(null);
-  }, [actionsView]);
+  const previewContext = useMemo(
+    (): PreviewContext => ({
+      onRun: (intent: PaletteIntent) => {
+        if (previewItem) {
+          const action = previewActions.find((candidate) => candidate.intent === intent);
+          if (action) {
+            runAction(previewItem, action);
+            return;
+          }
+        }
+        runIntent(intent);
+      },
+      onNavigate: (href: string) => runIntent({ type: "navigate", href }),
+      onOpenRecord: openRecord,
+      onMore: () => {
+        if (selectedActions.length > 1) {
+          setActionsOpen(true);
+        }
+      },
+      recentRecords: home.recentRecords,
+      relatedCommands: actionContext.relatedCommands,
+      pinnedUrls: pinned.pinnedUrls,
+    }),
+    [
+      actionContext.relatedCommands,
+      home.recentRecords,
+      openRecord,
+      pinned.pinnedUrls,
+      previewActions,
+      previewItem,
+      runAction,
+      runIntent,
+      selectedActions.length,
+    ],
+  );
 
   const mentionOptions = useMemo(() => filterMentionOptions(mention.text), [mention.text]);
 
-  const pickMention = useCallback((option: SearchEntityOption) => {
-    setScope(option.key);
-    setQuery((current) => stripMentionToken(current));
-    setMention(CLOSED_MENTION);
-  }, []);
+  const pickMention = useCallback(
+    (option: SearchEntityOption) => {
+      setScope(option.key);
+      setQuery((current) => stripMentionToken(current));
+      setMention(CLOSED_MENTION);
+      setSelected("");
+      focusInput();
+    },
+    [focusInput],
+  );
 
   const handleQueryChange = useCallback(
     (value: string) => {
-      if (actionsView !== null || askSubject !== null) {
+      setActionsOpen(false);
+      setPeek(null);
+      if (asked !== null) {
+        clearAnswer();
+      }
+      if (askSubject !== null) {
         setQuery(value);
         return;
       }
-      const committed = value.match(/@([a-zA-Z]+)\s$/);
+      const committed = value.match(/(?:^|\s)@([a-zA-Z]+)\s$/);
       if (committed) {
         const entity = resolveMentionCommit(committed[1] ?? "");
         if (entity) {
@@ -355,11 +542,15 @@ export function CommandPalette() {
           return;
         }
       }
-      const state = getMentionState(value);
-      setMention({ open: state.mentionOpen, text: state.mentionText, index: 0 });
+      const state = value.startsWith(">") ? null : getMentionState(value);
+      setMention(
+        state && state.mentionOpen
+          ? { open: true, text: state.mentionText, index: 0 }
+          : CLOSED_MENTION,
+      );
       setQuery(value);
     },
-    [actionsView, askSubject],
+    [askSubject, asked, clearAnswer],
   );
 
   const runShortcut = useCallback(
@@ -374,6 +565,18 @@ export function CommandPalette() {
     },
     [runAction, selectedActions, selectedItem],
   );
+
+  const openActions = useCallback(() => {
+    if (selectedItem && selectedActions.length > 1) {
+      setMention(CLOSED_MENTION);
+      setActionsOpen(true);
+    }
+  }, [selectedActions.length, selectedItem]);
+
+  const closeActions = useCallback(() => {
+    setActionsOpen(false);
+    focusInput();
+  }, [focusInput]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     const mod = event.metaKey || event.ctrlKey;
@@ -390,7 +593,7 @@ export function CommandPalette() {
         return;
       }
       if (event.key === "Enter" || event.key === "Tab") {
-        const option = mentionOptions[mention.index];
+        const option = mentionOptions[Math.min(mention.index, mentionOptions.length - 1)];
         if (option) {
           event.preventDefault();
           pickMention(option);
@@ -401,27 +604,18 @@ export function CommandPalette() {
 
     if (event.key === "Tab") {
       event.preventDefault();
-      if (actionsView === null && askSubject === null) {
-        setScope((current) => nextScope(current, event.shiftKey ? -1 : 1));
-        setSelected("");
+      if (askSubject === null) {
+        changeScope(nextScope(scope, event.shiftKey ? -1 : 1));
       }
       return;
     }
 
     if (mod && key === "k") {
       event.preventDefault();
-      if (actionsView !== null) {
+      if (actionsOpen) {
         closeActions();
       } else {
         openActions();
-      }
-      return;
-    }
-
-    if (actionsView !== null) {
-      if ((event.key === "Backspace" || event.key === "ArrowLeft") && query === "") {
-        event.preventDefault();
-        closeActions();
       }
       return;
     }
@@ -436,10 +630,23 @@ export function CommandPalette() {
       return;
     }
 
-    if (mod && event.key === "Enter" && runShortcut(event, ACTION_NEW_TAB)) {
+    if (mod && event.key === "Enter") {
+      if (answerDone) {
+        event.preventDefault();
+        continueInDesk();
+        return;
+      }
+      if (runShortcut(event, ACTION_NEW_TAB)) {
+        return;
+      }
+    }
+    if (mod && !event.shiftKey && key === "i" && runShortcut(event, ACTION_ASK)) {
       return;
     }
     if (mod && !event.shiftKey && key === "l" && runShortcut(event, ACTION_COPY_LINK)) {
+      return;
+    }
+    if (mod && !event.shiftKey && key === "p" && runShortcut(event, ACTION_PIN)) {
       return;
     }
     if (event.altKey && !mod && event.code === "KeyC" && runShortcut(event, ACTION_COPY_ID)) {
@@ -450,76 +657,125 @@ export function CommandPalette() {
       if (askSubject !== null) {
         event.preventDefault();
         setAskSubject(null);
-        resetAsk();
+        clearAnswer();
       } else if (scope !== "all") {
         event.preventDefault();
-        setScope("all");
+        changeScope("all");
       }
     }
   };
 
-  const recordCounts = useMemo(() => {
-    const counts: Partial<Record<PaletteScope, number>> = {};
-    if (!remote.ready || remote.loading) {
-      return counts;
+  /** Esc steps back one layer at a time, and closes only when there is nothing left to undo. */
+  const stepBack = (): boolean => {
+    if (mention.open) {
+      setMention(CLOSED_MENTION);
+      return true;
     }
-    for (const [type, records] of recordsFromGroups(remote.groups)) {
-      counts[type as PaletteScope] = records.length;
+    if (actionsOpen) {
+      closeActions();
+      return true;
     }
-    return counts;
-  }, [remote.groups, remote.loading, remote.ready]);
+    if (answerVisible) {
+      clearAnswer();
+      return true;
+    }
+    if (askSubject !== null) {
+      setAskSubject(null);
+      setQuery("");
+      clearAnswer();
+      return true;
+    }
+    if (query !== "") {
+      handleQueryChange("");
+      return true;
+    }
+    if (scope !== "all") {
+      changeScope("all");
+      return true;
+    }
+    return false;
+  };
 
-  const primaryAction = selectedActions[0];
-  const hints: FooterHint[] =
-    actionsView !== null
-      ? [
-          { keys: ["↑", "↓"], label: t("Navigate") },
-          { keys: ["↵"], label: t("Run") },
-          { keys: ["←"], label: t("Back") },
-        ]
-      : [
-          { keys: ["↑", "↓"], label: t("Navigate") },
-          ...(selectedItem?.kind === "ask"
-            ? [{ keys: ["↵"], label: t("Ask") }]
-            : selectedItem?.kind === "command"
-              ? [{ keys: ["↵"], label: t("Run") }]
-              : primaryAction
-                ? [{ keys: ["↵"], label: t("Open") }]
-                : []),
-          ...(findAction(selectedActions, ACTION_NEW_TAB)
-            ? [{ keys: [actionContext.mac ? "⌘" : "Ctrl", "↵"], label: t("New tab") }]
+  const mod = modKey(actionContext);
+  const primaryLabel =
+    selectedItem?.kind === "ask"
+      ? t("Ask")
+      : selectedItem?.kind === "command"
+        ? t("Run")
+        : t("Open");
+  const hints: FooterHint[] = actionsOpen
+    ? [
+        { keys: ["↑", "↓"], label: t("Choose") },
+        { keys: ["↵"], label: t("Run") },
+        { keys: ["Esc"], label: t("Back") },
+      ]
+    : [
+        { keys: ["↑", "↓"], label: t("Navigate") },
+        ...(selectedItem ? [{ keys: ["↵"], label: primaryLabel }] : []),
+        ...(answerDone
+          ? [{ keys: [mod, "↵"], label: t("Continue in Desk") }]
+          : findAction(selectedActions, ACTION_NEW_TAB)
+            ? [{ keys: [mod, "↵"], label: t("New tab") }]
             : []),
-          ...(selectedActions.length > 1 ? [{ keys: ["→"], label: t("Actions") }] : []),
-          ...(askSubject === null ? [{ keys: ["Tab"], label: t("Scope") }] : []),
-          { keys: ["Esc"], label: t("Close") },
-        ];
+        ...(selectedActions.length > 1 ? [{ keys: [mod, "K"], label: t("Actions") }] : []),
+        ...(askSubject === null ? [{ keys: ["Tab"], label: t("Scope") }] : []),
+      ];
+  const aside: FooterAside =
+    askSubject !== null
+      ? { kind: "subject", title: askSubject.label }
+      : question !== null
+        ? { kind: "question" }
+        : effectiveScope === "commands" || effectiveScope === "pages"
+          ? null
+          : { kind: "ask" };
 
-  const showAnswer = turn !== null && question !== null;
-  const hasRows = actionsView !== null ? viewActions.length > 0 : items.length > 0;
-  const stillLoading = sections.some((section) => section.loading);
-  const hasErrorSection = sections.some((section) => section.error);
-  const showEmpty =
-    !hasRows &&
-    !stillLoading &&
-    !hasErrorSection &&
-    !showAnswer &&
-    (query.trim() !== "" || scope !== "all" || actionsView !== null);
+  const scopeLabel = scope !== "all" ? scopePresentation(scope, t).label : null;
+  const showEmpty = empty && !answerVisible;
+  const actionTile = selectedItem ? itemTile(selectedItem) : {};
+
+  const head = (
+    <>
+      {answerVisible && turn && asked && (
+        <AskAnswerCard
+          question={asked.question}
+          turn={turn}
+          subject={asked.subject?.label ?? null}
+          onAsk={() => startAsk({ kind: "ask", key: "retry", ...asked })}
+          onStop={stopAsk}
+          onContinue={continueInDesk}
+          onCopy={() => runIntent({ type: "copy", text: plainAnswer(turn), what: "answer" })}
+          onFollowUp={followUp}
+          onPeek={setPeek}
+          onOpenRecord={openCited}
+          mac={actionContext.mac}
+        />
+      )}
+      {showEmpty && (
+        <div className="px-2.5 pt-6 pb-3">
+          <p className="text-foreground text-base font-medium">
+            {scopeLabel
+              ? t("Nothing called “{0}” in {1}", trimmedQuery, scopeLabel.toLowerCase())
+              : t("Nothing called “{0}”", trimmedQuery)}
+          </p>
+          <p className="text-foreground-subtle mt-1 max-w-md text-sm">
+            {scope !== "all"
+              ? t(
+                  "Try everything instead, or ask Nova — it reads records the search index doesn't, like stop notes and email.",
+                )
+              : t("Check the spelling, try a PRO or BOL number, or ask Nova.")}
+          </p>
+        </div>
+      )}
+    </>
+  );
 
   return (
     <CommandDialog
       open={open}
       onOpenChange={(next, eventDetails) => {
-        if (!next && eventDetails.reason === "escape-key") {
-          if (mention.open) {
-            eventDetails.cancel();
-            setMention(CLOSED_MENTION);
-            return;
-          }
-          if (actionsView !== null) {
-            eventDetails.cancel();
-            closeActions();
-            return;
-          }
+        if (!next && eventDetails.reason === "escape-key" && stepBack()) {
+          eventDetails.cancel();
+          return;
         }
         if (next) {
           setOpen(true);
@@ -528,17 +784,17 @@ export function CommandPalette() {
         }
       }}
       title={t("Command palette")}
-      description={t("Search records, jump to pages, run commands and ask the assistant")}
+      description={t("Search records, jump to pages, run commands and ask Nova")}
       showCloseButton={false}
-      className={cn(
-        "top-[12vh] flex h-[min(40rem,calc(100dvh-16vh))] w-full translate-y-0 flex-col gap-0 overflow-hidden p-0",
-        "rounded-surface bg-overlay ui-lift-float sm:max-w-4xl",
-      )}
+      className="cp-dialog bg-card rounded-surface ui-lift-float top-[8vh] flex h-[min(680px,calc(100dvh-12vh))] w-full max-w-[min(1080px,calc(100%-2rem))] translate-y-0 flex-col gap-0 overflow-hidden p-0 sm:max-w-[min(1080px,calc(100%-2rem))]"
       commandProps={{
         shouldFilter: false,
         loop: true,
         value: selectedKey,
-        onValueChange: setSelected,
+        onValueChange: (value) => {
+          setSelected(value);
+          setPeek(null);
+        },
         className: "flex h-full min-h-0 flex-col rounded-none bg-transparent",
       }}
     >
@@ -547,106 +803,66 @@ export function CommandPalette() {
         value={query}
         onValueChange={handleQueryChange}
         onKeyDown={handleKeyDown}
+        onClear={() => {
+          handleQueryChange("");
+          focusInput();
+        }}
         scope={scope}
-        onClearScope={() => setScope("all")}
-        actionsFor={actionsView?.title ?? null}
-        onBack={closeActions}
+        onClearScope={() => changeScope("all")}
+        commandMode={commandText !== null}
         askSubject={askSubject?.label ?? null}
         onClearAskSubject={() => {
           setAskSubject(null);
-          resetAsk();
+          clearAnswer();
+          focusInput();
         }}
-        busy={remote.loading}
         mention={{
           open: mention.open,
           options: mentionOptions,
-          index: mention.index,
+          index: Math.min(mention.index, Math.max(0, mentionOptions.length - 1)),
           onPick: pickMention,
         }}
       />
-      {actionsView === null && askSubject === null ? (
-        <PaletteScopeTabs
-          scope={scope}
-          onScopeChange={(next) => {
-            setScope(next);
-            setSelected("");
-            inputRef.current?.focus();
-          }}
-          counts={recordCounts}
-        />
+      {askSubject === null ? (
+        <PaletteScopeTabs scope={scope} onScopeChange={changeScope} counts={counts} />
       ) : (
         <div aria-hidden className="border-border-subtle border-b" />
       )}
-      <div className="grid min-h-0 flex-1 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+      <div className="relative grid min-h-0 flex-1 grid-cols-1 min-[780px]:grid-cols-[minmax(0,1fr)_340px] min-[900px]:grid-cols-[minmax(0,1fr)_420px]">
         <div className="flex min-h-0 flex-col">
-          {showAnswer && (
-            <AskAnswerCard
-              question={question}
-              turn={turn}
-              onAsk={handleAsk}
-              onStop={stopAsk}
-              onOpenInDesk={handleOpenInDesk}
-              className="mx-3 mt-3"
-            />
-          )}
-          <CommandList className="max-h-none min-h-0 flex-1 scroll-py-2 pb-2">
-            {actionsView !== null ? (
-              <PaletteActionsView
-                title={actionsView.title}
-                actions={viewActions}
-                query={query}
-                onRun={(action) => runAction(actionsView.item, action)}
-              />
-            ) : (
-              <PaletteList
-                sections={sections}
-                query={query}
-                onSelect={handleSelect}
-                onRetry={remote.retry}
-              />
-            )}
-            {showEmpty && (
-              <div className="flex flex-col items-center gap-2 px-6 py-14 text-center">
-                <SearchXIcon className="text-foreground-subtle size-5" />
-                <p className="text-foreground text-sm font-medium">
-                  {actionsView !== null ? t("No matching actions") : t("Nothing matches that")}
-                </p>
-                <p className="text-foreground-subtle max-w-72 text-xs">
-                  {isRecordScope(scope)
-                    ? t("Try a different spelling, or press Backspace to search everything.")
-                    : t("Try fewer words, or end with a question mark to ask the assistant.")}
-                </p>
-              </div>
-            )}
-          </CommandList>
+          <PaletteList
+            sections={sections}
+            selectedKey={selectedKey}
+            onSelect={handleSelect}
+            onRetry={remote.retry}
+            onSeeAll={changeScope}
+            head={head}
+          />
         </div>
         <aside
           aria-label={t("Preview")}
-          className="border-border-subtle bg-card hidden min-h-0 border-l md:block"
+          className="border-border-subtle bg-card hidden min-h-0 border-l min-[780px]:block"
         >
           <PalettePreview
             item={previewItem}
+            sources={sources}
             actions={previewActions}
-            onRun={(intent) => {
-              if (previewItem) {
-                const action = previewActions.find((candidate) => candidate.intent === intent);
-                if (action) {
-                  runAction(previewItem, action);
-                  return;
-                }
-              }
-              runIntent(intent);
-            }}
-            relatedCommands={relatedCommands}
+            context={previewContext}
+            mac={actionContext.mac}
           />
         </aside>
+        {actionsOpen && selectedItem && (
+          <PaletteActionsMenu
+            title={itemTitle(selectedItem)}
+            icon={actionTile.icon}
+            initials={actionTile.initials}
+            actions={selectedActions}
+            onRun={(action) => runAction(selectedItem, action)}
+            onClose={closeActions}
+          />
+        )}
       </div>
-      <PaletteFooter
-        hints={hints}
-        showAskHint={
-          actionsView === null && askSubject === null && question === null && scope === "all"
-        }
-      />
+      <PaletteFooter hints={hints} aside={aside} confirmation={confirmation} />
     </CommandDialog>
   );
 }

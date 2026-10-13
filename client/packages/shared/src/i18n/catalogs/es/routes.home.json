@@ -57,7 +57,6 @@
   "Open billing queue": "Abrir la cola de facturación",
   "Open dashboard": "Abrir el panel",
   "Open dispatch board": "Abrir el tablero de despacho",
-  "Open receivables": "Cuentas por cobrar abiertas",
   "Open service failures": "Fallos de servicio abiertos",
   "Pick the queues and numbers this home screen should open on.": "Elija las colas y las cifras con las que debe abrirse esta pantalla de inicio.",
   "Pick what this home screen opens on. Everything here is already scoped to what you are allowed to see.": "Elija con qué se abre esta pantalla de inicio. Todo lo que hay aquí ya está limitado a lo que tiene permiso de ver.",

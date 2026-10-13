@@ -4,7 +4,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
-import { removeCachedThread, updateCachedThread } from "@/lib/thread-list";
+import { findCachedThread, removeCachedThread, updateCachedThread } from "@/lib/thread-list";
 import { useDeskThreads } from "./use-desk-threads";
 import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
@@ -215,12 +215,14 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const agents = useMemo(() => agentsQuery.data ?? [], [agentsQuery.data]);
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
 
-  // The list leaves out quick questions nobody kept, and a finished answer's
-  // notice links to one. Read on its own only once the list has said it does
-  // not have it, so a listed conversation never costs a second request.
+  // The list's first page leaves out older conversations, which the rail's
+  // shelves read on their own, and quick questions nobody kept, which a
+  // finished answer's notice links to. Read on its own only once the list has
+  // said it does not have it, drawn meanwhile from whichever shelf holds it.
   const unlistedQuery = useQuery({
     ...queries.assistant.thread(activeThreadId ?? ""),
     enabled: activeThreadId !== null && threadsQuery.isSuccess && listedThread === null,
+    placeholderData: () => findCachedThread(queryClient, activeThreadId) ?? undefined,
     retry: false,
   });
   const activeThread =
@@ -532,7 +534,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           }}
           onTogglePin={(thread) => pinMutation.mutate(thread)}
           onDelete={(thread) => deleteMutation.mutate(thread.id)}
-          onCaseWake={refreshThreads}
+          activeThread={activeThread}
         />
         {railOpen && (
           <Button

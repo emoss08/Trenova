@@ -4,16 +4,14 @@ import (
 	"embed"
 	"fmt"
 	"strings"
-
-	"github.com/emoss08/trenova/pkg/dbdialect"
 )
 
 // The seed bookkeeping tables are created by the seeder rather than by a
 // migration, so their DDL lives here rather than in the migration corpus. It is
-// kept in .sql files per dialect so the SQL stays reviewable and diffable
-// instead of being buried in Go string literals.
+// kept in .sql files so the SQL stays reviewable and diffable instead of being
+// buried in Go string literals.
 //
-//go:embed schema/*/*.sql
+//go:embed schema/*.sql
 var schemaFS embed.FS
 
 const schemaSplitMarker = "--bun:split"
@@ -23,11 +21,10 @@ const (
 	seedRollbacksSchema = "seed_rollbacks"
 )
 
-// loadSchema returns the DDL statements for a bookkeeping table in the given
-// dialect. Statements are returned individually because SQLite drivers execute
-// one statement per call, and because a failure can then name what broke.
-func loadSchema(kind dbdialect.Kind, name string) ([]string, error) {
-	path := fmt.Sprintf("schema/%s/%s.sql", kind, name)
+// loadSchema returns the DDL statements for a bookkeeping table. Statements are
+// returned individually so a failure can name what broke.
+func loadSchema(name string) ([]string, error) {
+	path := "schema/" + name + ".sql"
 
 	contents, err := schemaFS.ReadFile(path)
 	if err != nil {

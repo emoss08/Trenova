@@ -3,7 +3,9 @@ import {
   chunk,
   downloadJsonFile,
   downloadTextFile,
+  filenameFromDisposition,
   formatCurrency,
+  formatCurrencyWhole,
   formatFileSize,
   formatLocation,
   getNameInitials,
@@ -369,5 +371,43 @@ describe("formatFileSize", () => {
     expect(formatFileSize(512)).toBe("512 B");
     expect(formatFileSize(1536)).toBe("1.5 KB");
     expect(formatFileSize(150 * 1024 * 1024)).toBe("150 MB");
+  });
+});
+
+describe("formatCurrencyWhole", () => {
+  it("drops the cents when there are none, and keeps both digits when there are", () => {
+    expect(formatCurrencyWhole(185)).toBe("$185");
+    expect(formatCurrencyWhole(1180)).toBe("$1,180");
+    expect(formatCurrencyWhole(185.5)).toBe("$185.50");
+    expect(formatCurrencyWhole(0)).toBe("$0");
+  });
+});
+
+describe("filenameFromDisposition", () => {
+  it("reads a quoted file name", () => {
+    expect(
+      filenameFromDisposition('attachment; filename="Statement-ACME-2026-08-31.pdf"', "x.pdf"),
+    ).toBe("Statement-ACME-2026-08-31.pdf");
+  });
+
+  it("reads an unquoted file name", () => {
+    expect(filenameFromDisposition("attachment; filename=report.xlsx", "x.xlsx")).toBe(
+      "report.xlsx",
+    );
+  });
+
+  it("prefers the encoded name a server sends for non-ASCII names", () => {
+    expect(
+      filenameFromDisposition(
+        "attachment; filename*=utf-8''Statement-%C3%89lan-2026-08-31.pdf",
+        "x.pdf",
+      ),
+    ).toBe("Statement-Élan-2026-08-31.pdf");
+  });
+
+  it("falls back when there is no header or no name", () => {
+    expect(filenameFromDisposition(null, "fallback.pdf")).toBe("fallback.pdf");
+    expect(filenameFromDisposition("attachment", "fallback.pdf")).toBe("fallback.pdf");
+    expect(filenameFromDisposition("attachment; filename*=utf-8''%E0%A4%A", "f.pdf")).toBe("f.pdf");
   });
 });

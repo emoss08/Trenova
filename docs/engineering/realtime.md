@@ -168,12 +168,25 @@ authorization. Today that is the shipment comment thread:
 | `DELETE /api/v1/realtime/presence/:resource/?connectionId=` | leave a table |
 | `POST /api/v1/realtime/presence/:resource/:recordID/` | join a record (`record:{resource}:{id}`) |
 | `DELETE /api/v1/realtime/presence/:resource/:recordID/?connectionId=` | leave a record |
+| `POST /api/v1/inbox/presence/` | join Triage (`inbox:messages`) or move within it, returns the snapshot |
+| `DELETE /api/v1/inbox/presence/?connectionId=` | leave Triage |
 
 The table and record routes take the permission resource from the path and check
 read access on it (`PermissionMiddleware.RequireParamPermission`), so anyone who can
 see a table can see who else is on it, and no one else can. Every data table joins
 its own scope from the toolbar (`DataTableViewers`), and its edit panel joins the
 open record's (`RecordPresence`), so the panel header shows who else has it open.
+
+Triage keeps one scope for the whole inbox rather than one per message, because the
+list shows who is on every row at once. The join body carries the member's state as
+well as `connectionId`: `messageId` (the message they have open) and `activity`
+(`viewing` or `writing`, which needs a `messageId`). Posting again with a new state
+moves the member without leaving: the broker rewrites the member's entry and
+announces another `enter` carrying the new state, which clients treat as a move. Members in the snapshot and in
+`presence` events carry `messageId` and `activity` when set, and a departure carries
+the state the member last held, so a client can clear that message's row. The
+route requires `inbound_message:read`. `Broker.JoinPresence` takes the state as its
+last argument; every other scope passes the zero `RealtimePresenceState`.
 
 Each takes the caller's `connectionId`, and the gateway checks that the
 connection belongs to the caller in the caller's current tenant. The scope is
@@ -202,6 +215,11 @@ app and Dash reach the stream. It reads the stream with `fetch` (not
   the socket says.
 - Joins are reference-counted per scope and re-sent on every new connection;
   subscribers receive the full member list on each change.
+- A scope that carries state (Triage) is joined with `joinScope(scope, path, state)`;
+  `setScopeState(scope, state)` posts the join again at once with the new
+  `messageId`/`activity`, and the latest state is what every rejoin after a
+  reconnect sends. In the web app, `useAnnouncePresence(messageId, activity)` sets it
+  (writing outranks viewing) and `useTriagePresence()` reads the others by message.
 - `connect({ identity, joinUsers })` reopens the stream when the identity changes,
   such as another user or a tenant switch, and forgets the previous session's
   cursor and presence. `disconnect()` runs on logout.
@@ -209,6 +227,33 @@ app and Dash reach the stream. It reads the stream with `fetch` (not
 The web app handles events in `hooks/use-realtime-connection.ts`
 (`RESOURCE_QUERY_KEY_MAP` decides what each resource invalidates) and refetches
 its core keys on `reset`.
+
+`ACTIVE_ONLY_RESOURCES` marks resources whose events refetch only the queries a
+screen is showing; the rest are marked stale and refetch when next opened.
+`RESOURCE_ACTIVE_QUERY_KEY_MAP` names extra caches a resource reaches that way,
+such as the open billing queue when a shipment's or order's charges change.
+
+## Invoices and the billing queue
+
+Every write that changes an invoice publishes resource `invoice` through
+`realtimeinvalidation.PublishInvoice` (or `PublishInvoiceAfterCommit` inside a
+transaction), with a small snapshot as the entity: `id`, `number`, `status`,
+`sendStatus`, `lastSendError`, `pdfDocumentId`, `ediSendStatus`. The action says
+what changed:
+
+| Action | Published by |
+|---|---|
+| `created`, `updated` | the invoice service (create, post, void, memo, consolidation), executed adjustments |
+| `pdf.generated` | the billing worker when a PDF finishes |
+| `send.updated` | `Send`, `SendFromWorkflow`, a failed send, and the email worker syncing the provider's answer |
+| `edi.updated` | EDI 210 delivery status |
+| `balance.updated` | payment application, unapplication and credit memos |
+
+In the web app an `invoice` event reaches the invoice page, the invoice list and
+register, adjustments, the billing queue, receivables and customer payments,
+refetching only what is on screen. The open invoice also toasts the outcomes its
+viewer is waiting on (PDF ready, emailed, partly emailed, failed) through
+`useInvoiceDeliveryToasts`, announcing each change of status once.
 
 ## Operating it
 

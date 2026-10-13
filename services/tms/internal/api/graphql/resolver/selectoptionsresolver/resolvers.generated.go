@@ -26,6 +26,7 @@ import (
 	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	carrierports "github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	customerports "github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	factoringcompanyports "github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	distanceprofileservice "github.com/emoss08/trenova/internal/modules/places/app/distanceprofileservice"
 	locationcategoryservice "github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
 	locationservice "github.com/emoss08/trenova/internal/modules/places/app/locationservice"
@@ -68,6 +69,7 @@ type Deps struct {
 	CommodityService             *commodityservice.Service
 	FleetCodeService             *fleetcodeservice.Service
 	HazardousMaterialService     *hazardousmaterialservice.Service
+	FactoringCompanyRepo         factoringcompanyports.FactoringCompanyRepository
 	LocationService              *locationservice.Service
 	LocationCategoryService      *locationcategoryservice.Service
 	DocumentTypeService          *documenttypeservice.Service

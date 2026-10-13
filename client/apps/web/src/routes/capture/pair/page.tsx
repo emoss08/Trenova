@@ -99,6 +99,15 @@ export function CapturePairPage() {
   const [outcome, setOutcome] = useState<PairingOutcome | null>(null);
 
   const accessQuery = useQuery(queries.capture.access());
+  const organizationsQuery = useQuery(queries.userOrganization.all());
+  const currentOrganization = organizationsQuery.data?.find((org) => org.isCurrent);
+  const organization =
+    currentOrganization === undefined
+      ? undefined
+      : {
+          name: currentOrganization.name,
+          switchable: (organizationsQuery.data?.length ?? 0) > 1,
+        };
   const previewQuery = useQuery({
     ...queries.capture.pairing(submitted ?? ""),
     enabled: submitted !== null && outcome === null,
@@ -186,6 +195,7 @@ export function CapturePairPage() {
               <PairingReview
                 code={submitted}
                 preview={preview}
+                organization={organization}
                 disabled={disabled}
                 onDecided={setOutcome}
               />

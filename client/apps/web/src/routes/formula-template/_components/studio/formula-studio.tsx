@@ -1,34 +1,23 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import {
-  ActiveEditorProvider,
-  useActiveEditorInsert,
-} from "@/components/formula-editor/active-editor";
+import { ActiveEditorProvider } from "@/components/formula-editor/active-editor";
 import { PreviewValuesProvider } from "@/components/formula-editor/preview-values";
 import { useStudioShortcuts } from "@/components/formula-editor/studio-shortcuts";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
-import { useKnownIdentifiers } from "@/hooks/use-formula-schema";
-import { formulaTemplateRoutes, importLandingRoute } from "@/lib/formula-template-routes";
-import { apiService } from "@/services/api";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { useNavigationStore } from "@/stores/navigation-store";
 import {
   buildTemplateExport,
   downloadJson,
   getExportFilename,
 } from "@/lib/formula-template-export";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@trenova/shared/components/ui/resizable";
-import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import type {
-  FormulaTemplate,
-  FormulaTemplateFormValues,
-  VariableDefinition,
-} from "@trenova/shared/types/formula-template";
-import type { PageRequest } from "@/components/assistant/use-thread-model";
-import { nanoid } from "nanoid";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { formulaTemplateRoutes, importLandingRoute } from "@/lib/formula-template-routes";
+import { apiService } from "@/services/api";
+import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
+import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -36,102 +25,198 @@ import { ApprovalActionDialog, type ApprovalAction } from "../approval-action-di
 import { ForkLineageDialog } from "../fork-lineage-dialog";
 import { ForkTemplateDialog } from "../fork-template-dialog";
 import { VersionHistoryPanel } from "../version/version-history-panel";
-import { FormulaAssistantSheet } from "./ai/formula-assistant-sheet";
-import { formulaDraftFromEditor } from "./ai/formula-draft";
 import { BacktestSheet } from "./backtest-sheet";
+import { BacktestDialog } from "./dialogs/backtest-dialog";
+import { SubmitReviewDialog } from "./dialogs/submit-review-dialog";
+import "./formula-studio.css";
 import { ImportTemplateDialog } from "./import-template-dialog";
-import { StudioEditorPane } from "./studio-editor-pane";
-import { StudioHeader } from "./studio-header";
-import { StudioPreviewPane } from "./studio-preview-pane";
-import { StudioReferencePane } from "./studio-reference-pane";
-import { StudioScenariosPane } from "./studio-scenarios-pane";
-import type { ScenarioPrefill } from "./scenario-dialog";
-import { useLivePreview } from "./use-live-preview";
-import { useLiveScenarios } from "./use-live-scenarios";
-import { Button } from "@trenova/shared/components/ui/button";
-import { cn } from "@trenova/shared/lib/utils";
-import { defineLabels } from "@trenova/shared/i18n/labels";
+import { RateTrace } from "./rate-trace";
+import { NovaPane } from "./rail/nova-pane";
+import { PreviewPane } from "./rail/preview-pane";
+import { REFERENCE_SEARCH_ID, ReferencePane } from "./rail/reference-pane";
+import { ScenariosPane } from "./rail/scenarios-pane";
+import { BreakdownSection } from "./sections/breakdown-section";
+import { DetailsHero } from "./sections/details-hero";
+import { ExpressionSection } from "./sections/expression-section";
+import { InputsSection } from "./sections/inputs-section";
+import { PolicySection } from "./sections/policy-section";
+import {
+  STUDIO_SECTIONS,
+  StudioProvider,
+  sectionDomId,
+  useStudio,
+  type StudioProps,
+  type StudioTab,
+} from "./studio-context";
+import { StudioTopBar } from "./studio-top-bar";
 
-const REFERENCE_SEARCH_ID = "formula-reference-search";
+export type { StudioSaveExtras } from "./studio-context";
 
-const TAB_LABELS = defineLabels({
-  preview: "Live Preview",
-  scenarios: "Scenarios",
-  reference: "Reference",
-} as const);
+const SPY_OFFSET = 140;
 
-type FormulaStudioProps = {
-  mode: "create" | "edit";
-  template: FormulaTemplate | null;
-  isSubmitting: boolean;
-  onSave: () => void;
-  onTemplateChanged?: (template: FormulaTemplate) => void;
-};
-
-export function FormulaStudio(props: FormulaStudioProps) {
+/**
+ * The formula template's create and edit form: a top bar over the rate
+ * trace, the form, and a rail of preview, scenarios, reference and Nova.
+ */
+export function FormulaStudio(props: StudioProps) {
   return (
     <ActiveEditorProvider>
-      <FormulaStudioBody {...props} />
+      <StudioProvider {...props}>
+        <StudioLayout />
+      </StudioProvider>
     </ActiveEditorProvider>
   );
 }
 
-function FormulaStudioBody({
-  mode,
-  template,
-  isSubmitting,
-  onSave,
-  onTemplateChanged,
-}: FormulaStudioProps) {
+function RailTabs() {
   const t = useT();
+  const { tab, setTab, scenarios, novaBusy } = useStudio();
+  const tabs: { value: StudioTab; label: string }[] = [
+    { value: "preview", label: t("Preview") },
+    { value: "scenarios", label: t("Scenarios") },
+    { value: "reference", label: t("Reference") },
+  ];
+  const allPass = scenarios.total > 0 && scenarios.passed === scenarios.total;
 
-  const form = useFormContext<FormulaTemplateFormValues>();
+  const tabClass = (active: boolean) =>
+    cn(
+      "ui-focus-ring relative flex h-10 items-center gap-1.5 rounded-sm px-2 text-sm transition-colors",
+      active
+        ? "text-foreground after:bg-foreground font-medium after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:rounded-full"
+        : "text-foreground-muted hover:text-foreground",
+    );
+
+  return (
+    <div
+      role="tablist"
+      aria-label={t("Studio panes")}
+      className="flex shrink-0 items-center gap-1 border-b px-2"
+    >
+      {tabs.map((item) => (
+        <button
+          key={item.value}
+          type="button"
+          role="tab"
+          aria-selected={tab === item.value}
+          onClick={() => setTab(item.value)}
+          className={tabClass(tab === item.value)}
+        >
+          {item.label}
+          {item.value === "scenarios" && scenarios.total > 0 && (
+            <span
+              className={cn(
+                "rounded-full px-1.5 font-mono text-2xs tabular-nums",
+                allPass
+                  ? "bg-success-subtle text-success-subtle-foreground"
+                  : "bg-danger-subtle text-danger-subtle-foreground",
+              )}
+            >
+              {scenarios.passed}/{scenarios.total}
+            </span>
+          )}
+        </button>
+      ))}
+      <span className="flex-1" />
+      <button
+        type="button"
+        role="tab"
+        aria-selected={tab === "nova"}
+        onClick={() => setTab("nova")}
+        className={cn(tabClass(tab === "nova"), "fs-nova-tab")}
+      >
+        <NovaMark className="fs-nova-ring size-3" />
+        {t("Nova")}
+        {novaBusy && <Spinner className="size-3" />}
+      </button>
+    </div>
+  );
+}
+
+function RailBody() {
+  const { tab } = useStudio();
+  if (tab === "nova") {
+    return <NovaPane />;
+  }
+  return (
+    <ScrollArea maskVariant="card" className="min-h-0 flex-1">
+      {tab === "preview" && <PreviewPane />}
+      {tab === "scenarios" && <ScenariosPane />}
+      {tab === "reference" && <ReferencePane />}
+    </ScrollArea>
+  );
+}
+
+function FormColumn() {
+  return (
+    <div className="mx-auto flex w-full max-w-200 flex-col gap-7 px-8 pt-5 pb-32 max-[900px]:px-4">
+      <DetailsHero />
+      <ExpressionSection />
+      <InputsSection />
+      <PolicySection />
+      <BreakdownSection />
+    </div>
+  );
+}
+
+function useSectionSpy() {
+  const { formViewport, setActiveSection } = useStudio();
+  useEffect(() => {
+    const viewport = formViewport.current;
+    if (!viewport) return;
+    const update = () => {
+      const top = viewport.getBoundingClientRect().top;
+      let current = STUDIO_SECTIONS[0];
+      for (const section of STUDIO_SECTIONS) {
+        const element = document.getElementById(sectionDomId(section));
+        if (element && element.getBoundingClientRect().top - top <= SPY_OFFSET) {
+          current = section;
+        }
+      }
+      setActiveSection(current);
+    };
+    update();
+    viewport.addEventListener("scroll", update, { passive: true });
+    return () => viewport.removeEventListener("scroll", update);
+  }, [formViewport, setActiveSection]);
+}
+
+function StudioLayout() {
+  const t = useT();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const editorRef = useRef<ReactCodeMirrorRef>(null);
+  const studio = useStudio();
+  const {
+    mode,
+    template,
+    dirty,
+    isSubmitting,
+    save,
+    setTab,
+    preview,
+    formViewport,
+    onTemplateChanged,
+  } = studio;
+  const form = useFormContext<FormulaTemplateFormValues>();
+  const expression = useWatch({ control: form.control, name: "expression" }) ?? "";
+  const stacked = useMediaQuery("(max-width: 899px)");
+  // The studio is a room: the rate trace stands where the sidebar would and
+  // folds with the header's toggle and ⌘B, like Triage's folder rail.
+  const traceFolded = useNavigationStore((state) => state.sidebarCollapsed);
 
   const [approvalAction, setApprovalAction] = useState<ApprovalAction | null>(null);
+  const [submitOpen, setSubmitOpen] = useState(false);
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
-  const [forkDialogOpen, setForkDialogOpen] = useState(false);
-  const [lineageDialogOpen, setLineageDialogOpen] = useState(false);
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [forkOpen, setForkOpen] = useState(false);
+  const [lineageOpen, setLineageOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [backtestOpen, setBacktestOpen] = useState(false);
-  const [assistantOpen, setAssistantOpen] = useState(false);
-  const [assistantRequest, setAssistantRequest] = useState<PageRequest | null>(null);
-  const [rightTab, setRightTab] = useState<"preview" | "scenarios" | "reference">("preview");
-  const isNarrow = useMediaQuery("(max-width: 1100px)");
+  const [backtestDetailsOpen, setBacktestDetailsOpen] = useState(false);
 
-  const templateName = useWatch({ control: form.control, name: "name" });
-  const schemaId = useWatch({ control: form.control, name: "schemaId" });
-  const customVariables = useWatch({ control: form.control, name: "variableDefinitions" });
-
-  const known = useKnownIdentifiers(schemaId || "shipment", customVariables ?? []);
-  const preview = useLivePreview();
-  const liveScenarios = useLiveScenarios(template?.id ?? null);
-  const [pinDraft, setPinDraft] = useState<ScenarioPrefill | null>(null);
-
-  const scenarioSummary = liveScenarios.results
-    ? {
-        passed: liveScenarios.results.passed,
-        total: liveScenarios.results.total,
-        isStale: liveScenarios.isStale,
-        isPending: liveScenarios.isPending,
-      }
-    : null;
-
-  const handlePinScenario = useCallback(
-    (sample: { variables: Record<string, unknown>; result: number }) => {
-      setPinDraft({ variables: sample.variables, result: sample.result });
-      setRightTab("scenarios");
-    },
-    [],
-  );
-
-  const insertIntoActiveEditor = useActiveEditorInsert();
+  useSectionSpy();
 
   // A reviewer following a notification lands on the decision, not the
-  // editor: the approve dialog opens itself, then the marker is dropped from
-  // the URL so a refresh does not reopen it.
+  // editor: the approve dialog opens itself, then the marker leaves the URL so
+  // a refresh does not reopen it.
   const reviewStep = searchParams.get("review");
   useEffect(() => {
     if (reviewStep === "approve" && template?.status === "InReview") {
@@ -146,68 +231,24 @@ function FormulaStudioBody({
     }
   }, [reviewStep, template?.status, setSearchParams]);
 
-  const isDirty = form.formState.isDirty;
-  const shortcutHandlers = useMemo(
+  const shortcuts = useMemo(
     () => ({
       save: () => {
         if (isSubmitting) return;
-        if (mode === "create" || isDirty) onSave();
+        if (mode === "create" || dirty) save();
       },
       run: preview.runNow,
-      search: () => document.getElementById(REFERENCE_SEARCH_ID)?.focus(),
-      preview: () => setRightTab("preview"),
-      scenarios: () => setRightTab("scenarios"),
+      search: () => {
+        setTab("reference");
+        window.setTimeout(() => document.getElementById(REFERENCE_SEARCH_ID)?.focus(), 30);
+      },
+      preview: () => setTab("preview"),
+      scenarios: () => setTab("scenarios"),
+      nova: () => setTab(studio.tab === "nova" ? "preview" : "nova"),
     }),
-    [isSubmitting, isDirty, mode, onSave, preview.runNow],
+    [isSubmitting, mode, dirty, save, preview.runNow, setTab, studio.tab],
   );
-  useStudioShortcuts(shortcutHandlers);
-  const handleInsert = useCallback(
-    (text: string, cursorOffset?: number) => {
-      insertIntoActiveEditor(text, cursorOffset);
-    },
-    [insertIntoActiveEditor],
-  );
-
-  // The assistant reads the editor as it is when a question is sent, saved or
-  // not.
-  const readAssistantDraft = useCallback(() => {
-    const values = form.getValues();
-    return formulaDraftFromEditor({
-      templateId: template?.id ?? null,
-      schemaId: values.schemaId || "shipment",
-      templateType: values.type ?? "FreightCharge",
-      expression: values.expression ?? "",
-      variables: values.variableDefinitions ?? [],
-    });
-  }, [form, template?.id]);
-
-  const handleExplain = useCallback(() => {
-    setAssistantRequest({
-      key: nanoid(),
-      text: t("Explain what this formula charges, term by term."),
-    });
-    setAssistantOpen(true);
-  }, [t]);
-
-  const handleAiInsert = useCallback(
-    (result: { expression: string; variableDefinitions: VariableDefinition[] }) => {
-      form.setValue("expression", result.expression, { shouldDirty: true, shouldValidate: true });
-
-      if (result.variableDefinitions.length > 0) {
-        const existing = form.getValues("variableDefinitions") ?? [];
-        const existingNames = new Set(existing.map((variable) => variable.name));
-        const additions = result.variableDefinitions.filter(
-          (variable) => !existingNames.has(variable.name),
-        );
-        if (additions.length > 0) {
-          form.setValue("variableDefinitions", [...existing, ...additions], {
-            shouldDirty: true,
-          });
-        }
-      }
-    },
-    [form],
-  );
+  useStudioShortcuts(shortcuts);
 
   const handleExport = useCallback(async () => {
     if (!template) return;
@@ -216,7 +257,7 @@ function FormulaStudioBody({
       const exportData = buildTemplateExport(template, { testCases });
       const filename = getExportFilename(template, false);
       downloadJson(exportData, filename);
-      toast.success(t("Template exported"), { description: filename });
+      toast(t("Template exported"), { description: filename });
     } catch {
       toast.error(t("Export failed"), {
         description: t("Could not export the template. Please try again."),
@@ -224,112 +265,53 @@ function FormulaStudioBody({
     }
   }, [template, t]);
 
-  const previewPane = (
-    <StudioPreviewPane preview={preview} onPinScenario={template ? handlePinScenario : undefined} />
-  );
-  const scenariosPane = (
-    <StudioScenariosPane
-      templateId={template?.id ?? null}
-      preview={preview}
-      live={liveScenarios}
-      pinDraft={pinDraft}
-      onPinConsumed={() => setPinDraft(null)}
-    />
-  );
-  const referencePane = (
-    <StudioReferencePane known={known} schemaId={schemaId || "shipment"} onInsert={handleInsert} />
-  );
-  const rightPane =
-    rightTab === "preview" ? previewPane : rightTab === "scenarios" ? scenariosPane : referencePane;
-
-  const tabStrip = (tabs: Array<typeof rightTab>) => (
-    <div className="flex gap-1 border-b px-2 pt-1.5 pb-1" role="tablist">
-      {tabs.map((tab) => (
-        <Button
-          key={tab}
-          type="button"
-          role="tab"
-          aria-selected={rightTab === tab}
-          variant={rightTab === tab ? "secondary" : "ghost"}
-          size="xs"
-          onClick={() => setRightTab(tab)}
-          className={cn("h-6 text-xs capitalize", rightTab !== tab && "text-muted-foreground")}
-        >
-          {TAB_LABELS[tab]}
-        </Button>
-      ))}
-    </div>
+  const rail = (
+    <aside
+      aria-label={t("Studio rail")}
+      className={cn("bg-card flex min-h-0 flex-col", stacked ? "h-[720px] border-t" : "border-l")}
+    >
+      <RailTabs />
+      <RailBody />
+    </aside>
   );
 
   return (
     <PreviewValuesProvider receipt={preview.result?.receipt}>
-      <div className="flex h-full flex-col overflow-hidden">
-        <UnsavedChangesGuard when={form.formState.isDirty} />
-        <StudioHeader
-          mode={mode}
-          template={template}
-          templateName={templateName ?? ""}
-          isSubmitting={isSubmitting}
-          isDirty={form.formState.isDirty}
-          scenarios={scenarioSummary}
-          onSave={onSave}
+      <div className="fs-studio bg-canvas flex h-full flex-col overflow-hidden">
+        <UnsavedChangesGuard when={dirty} />
+        <StudioTopBar
           onApprovalAction={setApprovalAction}
+          onSubmitForReview={() => setSubmitOpen(true)}
           onVersionHistory={() => setVersionHistoryOpen(true)}
-          onFork={() => setForkDialogOpen(true)}
-          onLineage={() => setLineageDialogOpen(true)}
-          onExport={() => void handleExport()}
-          onImport={() => setImportDialogOpen(true)}
           onBacktest={() => setBacktestOpen(true)}
+          onFork={() => setForkOpen(true)}
+          onLineage={() => setLineageOpen(true)}
+          onExport={() => void handleExport()}
+          onImport={() => setImportOpen(true)}
         />
 
-        {isNarrow ? (
-          <ResizablePanelGroup orientation="vertical" className="min-h-0 flex-1">
-            <ResizablePanel defaultSize={60} minSize={30}>
-              <StudioEditorPane
-                mode={mode}
-                known={known}
-                editorRef={editorRef}
-                onOpenAssistant={() => setAssistantOpen(true)}
-                onExplain={handleExplain}
-              />
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={40} minSize={20}>
-              <div className="flex h-full flex-col">
-                {tabStrip(["preview", "scenarios", "reference"])}
-                <div className="min-h-0 flex-1">{rightPane}</div>
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+        {stacked ? (
+          <ScrollArea
+            maskVariant="background"
+            viewportRef={formViewport}
+            className="min-h-0 flex-1"
+          >
+            <FormColumn />
+            {rail}
+          </ScrollArea>
         ) : (
-          <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
-            <ResizablePanel defaultSize={55} minSize={40}>
-              <StudioEditorPane
-                mode={mode}
-                known={known}
-                editorRef={editorRef}
-                onOpenAssistant={() => setAssistantOpen(true)}
-                onExplain={handleExplain}
-              />
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={45} minSize={28}>
-              <ResizablePanelGroup orientation="vertical">
-                <ResizablePanel defaultSize={55} minSize={30}>
-                  <div className="flex h-full flex-col">
-                    {tabStrip(["preview", "scenarios"])}
-                    <div className="min-h-0 flex-1">
-                      {rightTab === "reference" ? previewPane : rightPane}
-                    </div>
-                  </div>
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={45} minSize={20}>
-                  {referencePane}
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+          <div
+            className={cn(
+              "grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(360px,420px)]",
+              !traceFolded && "min-[1180px]:grid-cols-[248px_minmax(0,1fr)_minmax(360px,420px)]",
+            )}
+          >
+            {!traceFolded && <RateTrace className="hidden min-h-0 border-r min-[1180px]:flex" />}
+            <ScrollArea maskVariant="background" viewportRef={formViewport} className="min-h-0">
+              <FormColumn />
+            </ScrollArea>
+            {rail}
+          </div>
         )}
 
         {approvalAction && (
@@ -343,58 +325,62 @@ function FormulaStudioBody({
           />
         )}
 
+        {template && (
+          <SubmitReviewDialog open={submitOpen} onOpenChange={setSubmitOpen} template={template} />
+        )}
+
+        {template && (
+          <BacktestDialog
+            open={backtestOpen}
+            onOpenChange={setBacktestOpen}
+            template={template}
+            expression={expression}
+            onOpenDetails={() => setBacktestDetailsOpen(true)}
+          />
+        )}
+
+        <BacktestSheet
+          open={backtestDetailsOpen}
+          onOpenChange={setBacktestDetailsOpen}
+          form={form}
+          template={template}
+        />
+
         <VersionHistoryPanel
           open={versionHistoryOpen}
           onOpenChange={setVersionHistoryOpen}
           template={template}
-          onRollback={(updatedTemplate) => {
-            form.reset(updatedTemplate as unknown as FormulaTemplateFormValues);
-            onTemplateChanged?.(updatedTemplate);
+          onRollback={(updated) => {
+            form.reset(updated as unknown as FormulaTemplateFormValues);
+            onTemplateChanged?.(updated);
           }}
         />
 
         <ForkTemplateDialog
-          open={forkDialogOpen}
-          onOpenChange={setForkDialogOpen}
+          open={forkOpen}
+          onOpenChange={setForkOpen}
           template={template}
           onForkSuccess={(forked) => {
-            setForkDialogOpen(false);
+            setForkOpen(false);
             if (forked.id) void navigate(formulaTemplateRoutes.edit(forked.id));
           }}
         />
 
         <ForkLineageDialog
-          open={lineageDialogOpen}
-          onOpenChange={setLineageDialogOpen}
+          open={lineageOpen}
+          onOpenChange={setLineageOpen}
           templateId={template?.id}
           currentTemplateId={template?.id}
           onNavigateToTemplate={(templateId) => {
-            setLineageDialogOpen(false);
+            setLineageOpen(false);
             if (templateId) void navigate(formulaTemplateRoutes.edit(templateId));
           }}
         />
 
         <ImportTemplateDialog
-          open={importDialogOpen}
-          onOpenChange={setImportDialogOpen}
+          open={importOpen}
+          onOpenChange={setImportOpen}
           onImported={(response) => void navigate(importLandingRoute(response))}
-        />
-
-        <BacktestSheet
-          open={backtestOpen}
-          onOpenChange={setBacktestOpen}
-          form={form}
-          template={template}
-        />
-
-        <FormulaAssistantSheet
-          open={assistantOpen}
-          onOpenChange={setAssistantOpen}
-          templateId={template?.id ?? null}
-          readDraft={readAssistantDraft}
-          onInsert={handleAiInsert}
-          request={assistantRequest}
-          onRequestSent={() => setAssistantRequest(null)}
         />
       </div>
     </PreviewValuesProvider>

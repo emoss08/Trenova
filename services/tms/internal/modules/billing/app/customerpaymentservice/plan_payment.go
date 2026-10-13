@@ -240,8 +240,9 @@ func reversalJournal(
 		description = fmt.Sprintf("Customer cash receipt reversal %s", payment.DocumentLabel())
 	}
 
-	lines := make([]journalentryports.JournalPostingLine, 0, 3)
+	lines := make([]journalentryports.JournalPostingLine, 0, 5)
 	lineNumber := int16(1)
+	shortPay := payment.ShortPayAmountMinor()
 	if payment.AppliedAmountMinor > 0 {
 		lines = append(lines, journalentryports.JournalPostingLine{
 			ID:          pulid.MustNew("jel_"),
@@ -275,8 +276,37 @@ func reversalJournal(
 		NetAmount:    -payment.AmountMinor,
 		CustomerID:   payment.CustomerID,
 	})
+	lineNumber++
+	// The short pay was written off against the receivable when the payment
+	// posted; reversing the payment puts that receivable back.
+	if shortPay > 0 {
+		lines = append(lines,
+			journalentryports.JournalPostingLine{
+				ID:          pulid.MustNew("jel_"),
+				GLAccountID: control.DefaultARAccountID,
+				LineNumber:  lineNumber,
+				Description: description,
+				DebitAmount: shortPay,
+				NetAmount:   shortPay,
+				CustomerID:  payment.CustomerID,
+			},
+			journalentryports.JournalPostingLine{
+				ID:           pulid.MustNew("jel_"),
+				GLAccountID:  control.DefaultWriteOffAccountID,
+				LineNumber:   lineNumber + 1,
+				Description:  description,
+				CreditAmount: shortPay,
+				NetAmount:    -shortPay,
+				CustomerID:   payment.CustomerID,
+			},
+		)
+	}
 
-	return paymentJournal{description: description, lines: lines, total: payment.AmountMinor}
+	return paymentJournal{
+		description: description,
+		lines:       lines,
+		total:       payment.AmountMinor + shortPay,
+	}
 }
 
 func (j paymentJournal) preview(
@@ -385,7 +415,7 @@ func (s *Service) PreviewReverse(
 		if app == nil || idx >= len(invoicesAfter) || invoicesAfter[idx] == nil {
 			continue
 		}
-		invoicesAfter[idx].RemovePaymentMinor(app.AppliedAmountMinor)
+		invoicesAfter[idx].RemovePaymentMinor(app.SettledAmountMinor())
 	}
 
 	journal := reversalJournal(plan.control, plan.payment)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -11,11 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
@@ -36,11 +39,12 @@ func (s *Service) PlanSend(
 		return nil, err
 	}
 	deliveryProfile, err := s.resolveDeliveryProfile(ctx, resolveDeliveryProfileParams{
-		Entity:                      entity,
-		TenantInfo:                  req.TenantInfo,
-		IncludeShipmentDetails:      true,
-		IncludeCustomer:             true,
-		IncludeCustomerEmailProfile: true,
+		Entity:                        entity,
+		TenantInfo:                    req.TenantInfo,
+		IncludeShipmentDetails:        true,
+		IncludeCustomer:               true,
+		IncludeCustomerEmailProfile:   true,
+		IncludeCustomerBillingProfile: true,
 	})
 	if err != nil {
 		return nil, err
@@ -68,10 +72,11 @@ func (s *Service) PlanSend(
 	}
 
 	body := wording.Body.Value
-	if deliveryProfile.Email != nil && deliveryProfile.Email.IncludeShipmentDetail {
+	shipmentDetail := includedShipmentDetail(entity, deliveryProfile)
+	if shipmentDetail != "" {
 		body = appendShipmentDetail(body, entity, deliveryProfile.Shipment)
 	}
-	fromEmail, fromErr := resolveFromEmail(profile, deliveryProfile.Email)
+	fromEmail := billingSenderEmail(profile)
 	headers := resolveDeliveryHeaders(fromEmail, deliveryProfile.Email)
 
 	plan := &invoiceports.InvoiceSendPlan{
@@ -80,7 +85,7 @@ func (s *Service) PlanSend(
 		ProviderLimitBytes: providerLimit(profile),
 		EstimatedBodyBytes: int64(
 			len(wording.Subject.Value)+len(body),
-		) + defaultBodyOverheadBytes,
+		) + emailports.BodyAllowanceBytes,
 		Parts:                make([]*invoiceports.InvoiceSendPlanPart, 0),
 		Warnings:             make([]string, 0),
 		Errors:               make([]string, 0),
@@ -93,13 +98,14 @@ func (s *Service) PlanSend(
 		InvoicePDFDocumentID: entity.PDFDocumentID,
 		// Only the template tier produces HTML. A draft or a profile comment is
 		// free text, and the send path wraps it the way it always has.
-		BodyHTML:     wording.HTML,
+		BodyHTML:     withShipmentDetailHTML(wording.HTML, shipmentDetail),
 		FromTemplate: wording.FromTemplate,
 	}
 	plan.Warnings = append(plan.Warnings, templateWarnings("subject", wording.Subject.Unknown)...)
 	plan.Warnings = append(plan.Warnings, templateWarnings("body", wording.Body.Unknown)...)
-	if fromErr != nil {
-		plan.Errors = append(plan.Errors, fromErr.Error())
+	plan.Errors = append(plan.Errors, sendEligibilityErrors(entity, deliveryProfile.Customer)...)
+	if err = s.checkSuppressedRecipients(ctx, plan, profile, req.TenantInfo); err != nil {
+		return nil, err
 	}
 	if profile == nil {
 		plan.Errors = append(
@@ -187,6 +193,8 @@ func (s *Service) PlanSend(
 	return plan, nil
 }
 
+const sendInFlightTimeout = 15 * time.Minute
+
 func (s *Service) Send(
 	ctx context.Context,
 	req *invoiceports.InvoiceSendRequest,
@@ -224,6 +232,9 @@ func (s *Service) Send(
 	}
 
 	now := timeutils.NowUnix()
+	if err = refuseSendInFlight(entity, now); err != nil {
+		return nil, err
+	}
 	previous := *entity
 	applySendSnapshot(entity, plan)
 	entity.SentByID = actorUserID(actor, req.TenantInfo)
@@ -247,6 +258,7 @@ func (s *Service) Send(
 		updated,
 		"Invoice email delivery queued",
 	)
+	s.publishInvoiceChange(ctx, updated, actor.AuditActor(), invoice.RealtimeActionSendUpdated)
 	return &invoiceports.InvoiceSendResult{Invoice: updated, Plan: plan}, nil
 }
 
@@ -297,6 +309,10 @@ func (s *Service) SendFromWorkflow(
 	}
 
 	now := timeutils.NowUnix()
+	startedAt := req.StartedAt
+	if startedAt <= 0 {
+		startedAt = now
+	}
 	previous := *entity
 	applySendSnapshot(entity, plan)
 	if _, err = s.repo.Update(ctx, entity); err != nil {
@@ -352,7 +368,7 @@ func (s *Service) SendFromWorkflow(
 					"invoice-%s-part-%d-%d",
 					entity.ID,
 					part.PartNumber,
-					now,
+					startedAt,
 				),
 			})
 		} else if attachmentErr != nil {
@@ -409,10 +425,10 @@ func (s *Service) SendFromWorkflow(
 		entity.SendStatus = invoice.SendStatusSending
 	} else if len(sendErrors) < len(plan.Parts) {
 		entity.SendStatus = invoice.SendStatusSending
-		entity.LastSendError = strings.Join(sendErrors, "; ")
+		entity.LastSendError = strings.Join(sliceutils.DedupeStrings(sendErrors), "; ")
 	} else {
 		entity.SendStatus = invoice.SendStatusFailed
-		entity.LastSendError = strings.Join(sendErrors, "; ")
+		entity.LastSendError = strings.Join(sliceutils.DedupeStrings(sendErrors), "; ")
 	}
 	entity.LastSendWarning = strings.Join(plan.Warnings, "; ")
 	updated, err := s.repo.Update(ctx, entity)
@@ -427,6 +443,7 @@ func (s *Service) SendFromWorkflow(
 		updated,
 		"Invoice email delivery attempted",
 	)
+	s.publishInvoiceChange(ctx, updated, actor.AuditActor(), invoice.RealtimeActionSendUpdated)
 	return &invoiceports.InvoiceSendResult{Invoice: updated, Plan: plan, Attempts: attempts}, nil
 }
 
@@ -505,6 +522,7 @@ func (s *Service) markInvoiceSendFailed(
 		updated,
 		"Invoice email delivery failed",
 	)
+	s.publishInvoiceChange(ctx, updated, actor.AuditActor(), invoice.RealtimeActionSendUpdated)
 }
 
 // applySendSnapshot freezes what was sent onto the invoice.
@@ -515,17 +533,77 @@ func (s *Service) markInvoiceSendFailed(
 // frozen copy would come back through the ad-hoc {number} engine rather than
 // html/template, losing the layout with it. What was actually sent is still
 // recoverable from the email message and the send attempts.
+func (s *Service) checkSuppressedRecipients(
+	ctx context.Context,
+	plan *invoiceports.InvoiceSendPlan,
+	profile *email.Profile,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if s.emailSenders == nil || profile == nil || len(plan.Recipients.To) == 0 {
+		return nil
+	}
+	sender, err := s.emailSenders.ResolveSender(ctx, &emailports.SendEmailRequest{
+		TenantInfo: tenantInfo,
+		ProfileID:  profile.ID,
+		Purpose:    email.PurposeBilling,
+		To:         plan.Recipients.To,
+		CC:         plan.Recipients.CC,
+		BCC:        plan.Recipients.BCC,
+	})
+	if err != nil {
+		return err
+	}
+	if sender == nil || len(sender.Suppressed) == 0 {
+		return nil
+	}
+	listed := strings.Join(sender.Suppressed, ", ")
+	if sender.Refused {
+		plan.Errors = append(
+			plan.Errors,
+			"Every To recipient is on the suppression list after a hard bounce or complaint: "+listed+
+				". Remove them from the suppression list or change the recipients.",
+		)
+		return nil
+	}
+	plan.Warnings = append(
+		plan.Warnings,
+		listed+" is on the suppression list after a hard bounce or complaint and will be skipped.",
+	)
+	return nil
+}
+
+func sendEligibilityErrors(entity *invoice.Invoice, cus *customer.Customer) []string {
+	errs := make([]string, 0, 2)
+	if entity.Status != invoice.StatusPosted {
+		errs = append(errs, "Post the invoice before sending it. Draft invoices are never emailed.")
+	}
+	if cus != nil && cus.BillingProfile != nil && !cus.BillingProfile.EmailInvoiceEnabled {
+		errs = append(
+			errs,
+			"Email delivery is turned off for this customer. Turn on Email invoice in the customer's billing profile to send it.",
+		)
+	}
+	return errs
+}
+
+func refuseSendInFlight(entity *invoice.Invoice, now int64) error {
+	if entity.SendStatus != invoice.SendStatusSending {
+		return nil
+	}
+	if now-entity.UpdatedAt >= int64(sendInFlightTimeout/time.Second) {
+		return nil
+	}
+	return errortypes.NewBusinessError(
+		"Invoice {0} is already being sent. Wait for that send to finish; if it has not finished within {1} minutes, you can send it again.",
+		entity.Number,
+		int(sendInFlightTimeout/time.Minute),
+	)
+}
+
 func applySendSnapshot(entity *invoice.Invoice, plan *invoiceports.InvoiceSendPlan) {
 	entity.SendStatus = invoice.SendStatusSending
 	entity.LastSendError = ""
 	entity.LastSendWarning = strings.Join(plan.Warnings, "; ")
-	if !plan.FromTemplate {
-		entity.EmailSubjectSnapshot = plan.Subject
-		entity.EmailBodySnapshot = plan.Body
-	}
-	entity.EmailToSnapshot = plan.Recipients.To
-	entity.EmailCCSnapshot = plan.Recipients.CC
-	entity.EmailBCCSnapshot = plan.Recipients.BCC
 }
 
 // partBodyHTML picks the HTML for one message of a send.

@@ -39,12 +39,13 @@ use wry::raw_window_handle::{
 use wry::{NewWindowResponse, WebContext, WebView, WebViewBuilder};
 
 const CLASS_NAME: PCWSTR = w!("TrenovaCaptureWindow");
-/// The window's size, in 96-dpi pixels.
-const WIDTH: i32 = 440;
-const HEIGHT: i32 = 720;
-const MIN_WIDTH: i32 = 380;
-const MIN_HEIGHT: i32 = 460;
-/// How far from the screen's edge, near the notification area.
+/// The window's size, in 96-dpi pixels: room for a rail beside the page and
+/// a row of page pictures, on a laptop screen with the taskbar showing.
+const WIDTH: i32 = 900;
+const HEIGHT: i32 = 640;
+const MIN_WIDTH: i32 = 640;
+const MIN_HEIGHT: i32 = 480;
+/// How far from the screen's edge the window stays.
 const MARGIN: i32 = 16;
 /// How long a window that opened for a scan stays after it, untouched.
 const AUTO_HIDE_MS: u32 = 8000;
@@ -106,7 +107,7 @@ fn scale(value: i32, dpi: u32) -> i32 {
     value.saturating_mul(i32::try_from(dpi).unwrap_or(96)) / 96
 }
 
-/// Near the notification area: the bottom-right of the work area.
+/// Centred in the work area, no larger than it leaves room for.
 fn placement(dpi: u32) -> (i32, i32, i32, i32) {
     let mut area = RECT::default();
     // SAFETY: fills a RECT this function owns.
@@ -120,13 +121,17 @@ fn placement(dpi: u32) -> (i32, i32, i32, i32) {
     }
     .is_ok();
     let margin = scale(MARGIN, dpi);
-    let width = scale(WIDTH, dpi);
     if !found {
-        return (margin, margin, width, scale(HEIGHT, dpi));
+        return (margin, margin, scale(WIDTH, dpi), scale(HEIGHT, dpi));
     }
-    let height = scale(HEIGHT, dpi).min(area.bottom - area.top - 2 * margin);
-    let x = (area.right - width - margin).max(area.left);
-    let y = (area.bottom - height - margin).max(area.top);
+    let width = scale(WIDTH, dpi)
+        .min(area.right - area.left - 2 * margin)
+        .max(scale(MIN_WIDTH, dpi));
+    let height = scale(HEIGHT, dpi)
+        .min(area.bottom - area.top - 2 * margin)
+        .max(scale(MIN_HEIGHT, dpi));
+    let x = (area.left + (area.right - area.left - width) / 2).max(area.left);
+    let y = (area.top + (area.bottom - area.top - height) / 2).max(area.top);
     (x, y, width, height)
 }
 
@@ -203,7 +208,7 @@ fn create(context: &WindowContext) -> Result<CaptureWindow, String> {
     let first_load = Cell::new(true);
     let built = WebViewBuilder::new_with_web_context(&mut web_context)
         .with_html(page::html())
-        .with_background_color((244, 245, 248, 255))
+        .with_background_color((250, 250, 250, 255))
         .with_devtools(false)
         .with_navigation_handler(move |_| first_load.replace(false))
         .with_new_window_req_handler(|_, _| NewWindowResponse::Deny)

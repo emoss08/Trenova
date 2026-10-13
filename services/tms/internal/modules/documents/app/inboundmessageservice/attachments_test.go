@@ -75,7 +75,7 @@ func (u *uploads) UploadPart(
 }
 
 func attachmentService(repo *attachmentRepo, up *uploads, docs *docRepo) *Service {
-	svc := &Service{l: zap.NewNop(), messageRepo: repo}
+	svc, _ := withQueue(&Service{l: zap.NewNop(), messageRepo: repo})
 	if up != nil {
 		svc.uploads = up
 	}

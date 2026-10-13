@@ -243,6 +243,7 @@ Settings you are likely to change:
 | Rate limits | `security.rateLimit` |
 | External S3-compatible storage | `TRENOVA_STORAGE_*` and `STORAGE_ORIGIN` in `.env` (see the comments there) |
 | Release notices in the app | `update` |
+| Trenova Capture, the Windows scanning companion | `app.webBaseUrl` must be the address people open Trenova at (the compose file sets it from `DOMAIN`), or no computer can be paired. To offer the installer from **My scanners** and keep computers updating themselves, set `update.capturePublicKey` to the key the releases are signed with; without it the app points at the [GitHub releases](https://github.com/emoss08/Trenova/releases?q=capture) instead. The client image publishes `/.well-known/trenova-capture.json`, which the companion reads to find the API; nothing to configure when the API is served beside the app as here. |
 
 ### Tuning
 

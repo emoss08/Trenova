@@ -21,4 +21,13 @@ type BillingControlRepository interface {
 		ctx context.Context,
 		bc *tenant.BillingControl,
 	) (*tenant.BillingControl, error)
+	// ListAutomaticTransfer lists, across every organization, the billing
+	// controls that move ready freight into billing on their own.
+	ListAutomaticTransfer(ctx context.Context) ([]*tenant.BillingControl, error)
+	// ListPaymentReminders lists, across every organization, the billing
+	// controls that email customers about overdue invoices.
+	ListPaymentReminders(ctx context.Context) ([]*tenant.BillingControl, error)
+	// ListMonthlyStatements lists, across every organization, the billing
+	// controls that email customers a statement each month.
+	ListMonthlyStatements(ctx context.Context) ([]*tenant.BillingControl, error)
 }

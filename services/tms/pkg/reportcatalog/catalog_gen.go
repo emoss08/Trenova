@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:716bbe2888c392c9666760e126e6350bf1739d0a130d110c6f522db0d288643c"
+const Version = "sha256:9f9653fb217ea2c70f8cc30baf7244f5620cdf512befd037a5d2b2fc502151a7"
 
 var Default = indexed(defaultCatalog)
 
@@ -3310,6 +3310,16 @@ var defaultCatalog = Catalog{
 					Label:        "Broker Vetting Enabled",
 					Type:         FieldBool,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "checkCallIntervalHours",
+					Column:       buncolgen.NewColumn("check_call_interval_hours", "cus"),
+					Label:        "Check Call Interval Hours",
+					Type:         FieldInt,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
 				},
@@ -9304,6 +9314,16 @@ var defaultCatalog = Catalog{
 					Key:          "shipperCustomerId",
 					Column:       buncolgen.NewColumn("shipper_customer_id", "inv"),
 					Label:        "Shipper Customer ID",
+					Type:         FieldRef,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "factoringCompanyId",
+					Column:       buncolgen.NewColumn("factoring_company_id", "inv"),
+					Label:        "Factoring Company ID",
 					Type:         FieldRef,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},

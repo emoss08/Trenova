@@ -7,25 +7,26 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
-	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
-	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -139,7 +140,12 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -364,7 +370,12 @@ func TestAccountsReceivableRepositoryReturnsOpenItems(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -558,7 +569,12 @@ func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,

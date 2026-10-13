@@ -202,6 +202,10 @@ const fuelSurchargeProgramSelectOptionsGraphQL = {
   resource: "FUEL_SURCHARGE_PROGRAM",
 } satisfies GraphQLSelectOptionsConfig;
 
+const factoringCompanySelectOptionsGraphQL = {
+  resource: "FACTORING_COMPANY",
+} satisfies GraphQLSelectOptionsConfig;
+
 const ediConnectionSelectOptionsGraphQL = {
   resource: "EDI_CONNECTION",
 } satisfies GraphQLSelectOptionsConfig;
@@ -812,6 +816,46 @@ export function ShipmentAutocompleteField<T extends FieldValues>({
         </div>
       )}
       {...props}
+    />
+  );
+}
+
+type ShipmentAutocompleteProps = {
+  label: string;
+  /** The chosen shipment's id; empty for none. */
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  triggerClassName?: string;
+};
+
+/** A shipment searched by PRO, BOL or lane, outside a form. Clearing it leaves the value empty. */
+export function ShipmentAutocomplete({
+  label,
+  value,
+  onValueChange,
+  placeholder,
+  disabled,
+  triggerClassName,
+}: ShipmentAutocompleteProps) {
+  return (
+    <Autocomplete<GraphQLSelectOption, FieldValues>
+      graphql={shipmentSelectOptionsGraphQL}
+      label={label}
+      value={value || null}
+      onChange={(nextValue: string | number | null | undefined) =>
+        onValueChange(nextValue ? String(nextValue) : "")
+      }
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <EDIOptionStack primary={option.label} secondary={option.description || ""} />
+      )}
+      placeholder={placeholder}
+      disabled={!!disabled}
+      clearable
+      triggerClassName={triggerClassName}
     />
   );
 }
@@ -2075,6 +2119,31 @@ export function FuelSurchargeProgramAutocompleteField<T extends FieldValues>({
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function FactoringCompanyAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/factoring-companies/select-options/"
+      graphql={factoringCompanySelectOptionsGraphQL}
+      popoutLink="/billing/configuration-files/factoring-companies"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.label}</span>
+          {option?.description && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {option.description}
             </span>
           )}
         </div>

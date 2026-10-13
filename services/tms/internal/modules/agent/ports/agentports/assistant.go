@@ -105,7 +105,6 @@ type SendMessageRequest struct {
 type AskRequest struct {
 	Content    string
 	Page       *agent.PageContext
-	Surface    agent.Surface
 	Mentions   []agent.EntityRef
 	TenantInfo pagination.TenantInfo
 }
@@ -773,6 +772,9 @@ type AssistantToolFinishedEvent struct {
 	// tool message keeps, so a reader can offer the hand-off while the turn
 	// is still running.
 	HandOffAgents []pulid.ID `json:"handOffAgents,omitempty"`
+	// Records are the records the call's result described, for a reader to
+	// show as what the answer was built from.
+	Records []agent.EntityRef `json:"records,omitempty"`
 	// AgentID and DelegateCallID are set on another agent's call, on a task
 	// this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`
@@ -843,6 +845,10 @@ type AssistantService interface {
 		ctx context.Context,
 		req ListThreadsRequest,
 	) (*ThreadPage, error)
+	CountThreadShelves(
+		ctx context.Context,
+		req *CountThreadShelvesRequest,
+	) (*ThreadShelfCounts, error)
 	GetThread(
 		ctx context.Context,
 		req GetThreadRequest,

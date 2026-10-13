@@ -4,10 +4,12 @@ package invoiceservice
 
 import (
 	"context"
-	"testing"
-
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"testing"
+	"time"
+
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
@@ -134,7 +136,13 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
-	seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	now := time.Now().UTC()
+	fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	// Create the order and attach the two legs to it.
 	ord, err := orderRepo.Create(ctx, &order.Order{

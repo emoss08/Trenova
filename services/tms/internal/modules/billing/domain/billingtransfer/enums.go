@@ -29,11 +29,14 @@ const (
 	RunScopeSelected    = RunScope("Selected")
 	RunScopeAllMatching = RunScope("AllMatching")
 	RunScopeRetry       = RunScope("Retry")
+	// RunScopeAutomatic is a run billing control started on its own schedule.
+	// Like a Selected run it names its shipments up front.
+	RunScopeAutomatic = RunScope("Automatic")
 )
 
 func (v RunScope) IsValid() bool {
 	switch v {
-	case RunScopeSelected, RunScopeAllMatching, RunScopeRetry:
+	case RunScopeSelected, RunScopeAllMatching, RunScopeRetry, RunScopeAutomatic:
 		return true
 	default:
 		return false

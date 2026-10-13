@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	notificationdomain "github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	notificationdomain "github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -65,6 +65,7 @@ func TestSubmit_OpensARoundAgainstTheApprovedBase(t *testing.T) {
 	reviews := primeReviews(deps, nil)
 
 	template := newTestTemplate()
+	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	template.Status = formulatemplate.StatusDraft
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -73,11 +74,14 @@ func TestSubmit_OpensARoundAgainstTheApprovedBase(t *testing.T) {
 		Return(&formulatemplate.FormulaTemplateVersion{VersionNumber: 3}, nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	_, err := deps.svc.Submit(t.Context(), &ApprovalActionRequest{
-		TenantInfo: newTenantInfo(),
-		EntityID:   template.ID,
-		Comment:    "please review",
-	})
+	_, err := deps.svc.Submit(
+		t.Context(),
+		&SubmitRequest{ApprovalActionRequest: ApprovalActionRequest{
+			TenantInfo: newTenantInfo(),
+			EntityID:   template.ID,
+			Comment:    "please review",
+		}},
+	)
 	require.NoError(t, err)
 
 	require.Len(t, reviews.created, 1)
@@ -97,6 +101,7 @@ func TestSubmit_AfterChangesRequestedStaysInTheSameRound(t *testing.T) {
 	})
 
 	template := newTestTemplate()
+	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	template.Status = formulatemplate.StatusDraft
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -104,10 +109,13 @@ func TestSubmit_AfterChangesRequestedStaysInTheSameRound(t *testing.T) {
 	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	_, err := deps.svc.Submit(t.Context(), &ApprovalActionRequest{
-		TenantInfo: newTenantInfo(),
-		EntityID:   template.ID,
-	})
+	_, err := deps.svc.Submit(
+		t.Context(),
+		&SubmitRequest{ApprovalActionRequest: ApprovalActionRequest{
+			TenantInfo: newTenantInfo(),
+			EntityID:   template.ID,
+		}},
+	)
 	require.NoError(t, err)
 
 	require.Len(t, reviews.created, 1)

@@ -30,4 +30,5 @@ type DispatchControlRepository interface {
 		orgID, buID pulid.ID,
 	) (*dispatchcontrol.DispatchControl, error)
 	ListHorizonPlanningTenants(ctx context.Context) ([]pagination.TenantInfo, error)
+	ListCheckCallMonitoringTenants(ctx context.Context) ([]pagination.TenantInfo, error)
 }

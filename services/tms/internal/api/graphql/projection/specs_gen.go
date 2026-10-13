@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/checkcallcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
 	"github.com/emoss08/trenova/pkg/buncolgen/costingcontrolcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
@@ -45,6 +46,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/extractionevalcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/extractionrolloutcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/extractionshadowcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
@@ -90,8 +92,10 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/telematicscol"
 	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/trackingeventcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/watchtowercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
@@ -245,7 +249,11 @@ var CarrierSettlementControlSpec TypeSpec
 
 var CarrierSettlementLineSpec TypeSpec
 
+var CarrierTrackingLinkSpec TypeSpec
+
 var ChargeAllocationSpec TypeSpec
+
+var CheckCallSpec TypeSpec
 
 var CommoditySpec TypeSpec
 
@@ -363,6 +371,8 @@ var ExtractionShadowResultSpec TypeSpec
 
 var ExtractionShadowSettingsSpec TypeSpec
 
+var FactoringCompanySpec TypeSpec
+
 var FiscalPeriodSpec TypeSpec
 
 var FiscalYearSpec TypeSpec
@@ -405,11 +415,15 @@ var IFTAReturnLineSpec TypeSpec
 
 var IFTATaxRateSpec TypeSpec
 
+var InboundActivitySpec TypeSpec
+
 var InboundAttachmentSpec TypeSpec
 
 var InboundMailboxSpec TypeSpec
 
 var InboundMessageSpec TypeSpec
+
+var InboundReplySpec TypeSpec
 
 var InvoiceSpec TypeSpec
 
@@ -440,6 +454,8 @@ var LeaveControlSpec TypeSpec
 var LocationSpec TypeSpec
 
 var LocationCategorySpec TypeSpec
+
+var LogCheckCallPayloadSpec TypeSpec
 
 var ManualJournalSpec TypeSpec
 
@@ -603,11 +619,21 @@ var TimeClockEntrySpec TypeSpec
 
 var TimesheetSpec TypeSpec
 
+var TrackingEventSpec TypeSpec
+
 var TractorSpec TypeSpec
 
 var TrailerSpec TypeSpec
 
 var TrainingCourseSpec TypeSpec
+
+var TriageReplyTemplateSpec TypeSpec
+
+var TriageRuleSpec TypeSpec
+
+var TriageSettingsSpec TypeSpec
+
+var TriageViewSpec TypeSpec
 
 var UsStateSpec TypeSpec
 
@@ -1434,6 +1460,14 @@ func init() {
 			{
 				Name:        "thinkingStyle",
 				FieldMapKey: "thinkingStyle",
+			},
+			{
+				Name:        "platform",
+				FieldMapKey: "platform",
+			},
+			{
+				Name:        "platformSettings",
+				FieldMapKey: "platformSettings",
 			},
 			{
 				Name:        "extraBody",
@@ -8070,6 +8104,49 @@ func init() {
 		},
 	}
 
+	CarrierTrackingLinkSpec = TypeSpec{
+		TypeName: "CarrierTrackingLink",
+		FieldMap: checkcallcol.TrackingLinkFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "recipientEmail",
+				FieldMapKey: "recipientEmail",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "lastUsedAt",
+				FieldMapKey: "lastUsedAt",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
 	ChargeAllocationSpec = TypeSpec{
 		TypeName: "ChargeAllocation",
 		FieldMap: shipmentcol.ChargeAllocationFieldMap,
@@ -8152,6 +8229,93 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
+			},
+		},
+	}
+
+	CheckCallSpec = TypeSpec{
+		TypeName: "CheckCall",
+		FieldMap: checkcallcol.CheckCallFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "stopId",
+				FieldMapKey: "stopId",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "reportedAt",
+				FieldMapKey: "reportedAt",
+			},
+			{
+				Name:        "receivedAt",
+				FieldMapKey: "receivedAt",
+			},
+			{
+				Name:        "latitude",
+				FieldMapKey: "latitude",
+			},
+			{
+				Name:        "longitude",
+				FieldMapKey: "longitude",
+			},
+			{
+				Name:        "city",
+				FieldMapKey: "city",
+			},
+			{
+				Name:        "stateCode",
+				FieldMapKey: "stateCode",
+			},
+			{
+				Name:        "delayed",
+				FieldMapKey: "delayed",
+			},
+			{
+				Name:        "delayReason",
+				FieldMapKey: "delayReason",
+			},
+			{
+				Name:        "estimatedArrival",
+				FieldMapKey: "estimatedArrival",
+			},
+			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
+				Name:        "contactName",
+				FieldMapKey: "contactName",
+			},
+			{
+				Name:        "reportedById",
+				FieldMapKey: "reportedById",
+			},
+			{
+				Name:        "trackingEventId",
+				FieldMapKey: "trackingEventId",
 			},
 		},
 	}
@@ -8823,12 +8987,28 @@ func init() {
 				FieldMapKey: "creditHoldReason",
 			},
 			{
+				Name:        "creditHoldAutomatic",
+				FieldMapKey: "creditHoldAutomatic",
+			},
+			{
+				Name:        "creditReviewedAt",
+				FieldMapKey: "creditReviewedAt",
+			},
+			{
 				Name:    "invoiceMethod",
 				Special: "invoiceMethod",
 			},
 			{
 				Name:        "autoSendInvoiceOnGeneration",
 				FieldMapKey: "autoSendInvoiceOnGeneration",
+			},
+			{
+				Name:        "sendPaymentReminders",
+				FieldMapKey: "sendPaymentReminders",
+			},
+			{
+				Name:        "sendStatements",
+				FieldMapKey: "sendStatements",
 			},
 			{
 				Name:        "emailInvoiceEnabled",
@@ -8959,6 +9139,10 @@ func init() {
 				FieldMapKey: "fuelSurchargeProgramId",
 			},
 			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
 				Name:    "documentTypes",
 				Special: "documentTypes",
 			},
@@ -9010,8 +9194,8 @@ func init() {
 				FieldMapKey: "comment",
 			},
 			{
-				Name:        "fromEmail",
-				FieldMapKey: "fromEmail",
+				Name:    "fromEmail",
+				Special: "fromEmail",
 			},
 			{
 				Name:        "toRecipients",
@@ -13434,6 +13618,100 @@ func init() {
 		},
 	}
 
+	FactoringCompanySpec = TypeSpec{
+		TypeName: "FactoringCompany",
+		FieldMap: factoringcompanycol.FactoringCompanyFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "addressLine1",
+				FieldMapKey: "addressLine1",
+			},
+			{
+				Name:        "addressLine2",
+				FieldMapKey: "addressLine2",
+			},
+			{
+				Name:        "city",
+				FieldMapKey: "city",
+			},
+			{
+				Name:        "stateId",
+				FieldMapKey: "stateId",
+			},
+			{
+				Name:        "postalCode",
+				FieldMapKey: "postalCode",
+			},
+			{
+				Name:        "email",
+				FieldMapKey: "email",
+			},
+			{
+				Name:        "phoneNumber",
+				FieldMapKey: "phoneNumber",
+			},
+			{
+				Name:        "remittanceInstructions",
+				FieldMapKey: "remittanceInstructions",
+			},
+			{
+				Name:        "noticeOfAssignment",
+				FieldMapKey: "noticeOfAssignment",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "state",
+				FieldMapKey: "stateId",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
+			},
+		},
+	}
+
 	FiscalPeriodSpec = TypeSpec{
 		TypeName: "FiscalPeriod",
 		FieldMap: fiscalperiodcol.FiscalPeriodFieldMap,
@@ -15572,6 +15850,61 @@ func init() {
 		},
 	}
 
+	InboundActivitySpec = TypeSpec{
+		TypeName: "InboundActivity",
+		FieldMap: map[string]string{"actorId": "actor_id", "actorKind": "actor_kind", "businessUnitId": "business_unit_id", "createdAt": "created_at", "detail": "detail", "fromClassification": "from_classification", "id": "id", "kind": "kind", "messageId": "message_id", "organizationId": "organization_id", "recordId": "record_id", "subject": "subject", "toClassification": "to_classification", "until": "until"},
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "actorKind",
+				FieldMapKey: "actorKind",
+			},
+			{
+				Name:    "actor",
+				Special: "actor",
+			},
+			{
+				Name:        "subject",
+				FieldMapKey: "subject",
+			},
+			{
+				Name:        "detail",
+				FieldMapKey: "detail",
+			},
+			{
+				Name:        "until",
+				FieldMapKey: "until",
+			},
+			{
+				Name:        "fromClassification",
+				FieldMapKey: "fromClassification",
+			},
+			{
+				Name:        "toClassification",
+				FieldMapKey: "toClassification",
+			},
+			{
+				Name:        "recordId",
+				FieldMapKey: "recordId",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
 	InboundAttachmentSpec = TypeSpec{
 		TypeName: "InboundAttachment",
 		FieldMap: inboundmessagecol.InboundAttachmentFieldMap,
@@ -15609,8 +15942,40 @@ func init() {
 				FieldMapKey: "failureText",
 			},
 			{
+				Name:        "filedShipmentId",
+				FieldMapKey: "filedShipmentId",
+			},
+			{
+				Name:    "filedShipment",
+				Special: "filedShipment",
+			},
+			{
+				Name:        "filedAs",
+				FieldMapKey: "filedAs",
+			},
+			{
+				Name:        "filedAt",
+				FieldMapKey: "filedAt",
+			},
+			{
+				Name:        "pageCount",
+				FieldMapKey: "pageCount",
+			},
+			{
+				Name:        "pages",
+				FieldMapKey: "pages",
+			},
+			{
+				Name:        "splitDocuments",
+				FieldMapKey: "splitDocuments",
+			},
+			{
 				Name:        "createdAt",
 				FieldMapKey: "createdAt",
+			},
+			{
+				Name:    "reading",
+				Special: "reading",
 			},
 		},
 	}
@@ -15670,6 +16035,26 @@ func init() {
 			{
 				Name:    "hasApiKey",
 				Special: "hasApiKey",
+			},
+			{
+				Name:        "lastReceivedAt",
+				FieldMapKey: "lastReceivedAt",
+			},
+			{
+				Name:    "health",
+				Special: "health",
+			},
+			{
+				Name:        "testSentAt",
+				FieldMapKey: "testSentAt",
+			},
+			{
+				Name:        "testReceivedAt",
+				FieldMapKey: "testReceivedAt",
+			},
+			{
+				Name:        "blockedSenders",
+				FieldMapKey: "blockedSenders",
 			},
 			{
 				Name:        "version",
@@ -15823,8 +16208,175 @@ func init() {
 				Special: "needsReview",
 			},
 			{
+				Name:        "threadKey",
+				FieldMapKey: "threadKey",
+			},
+			{
+				Name:    "threadCount",
+				Special: "threadCount",
+			},
+			{
+				Name:        "senderDomain",
+				FieldMapKey: "senderDomain",
+			},
+			{
+				Name:        "ownerId",
+				FieldMapKey: "ownerId",
+			},
+			{
+				Name:    "owner",
+				Special: "owner",
+			},
+			{
+				Name:        "dueAt",
+				FieldMapKey: "dueAt",
+			},
+			{
+				Name:    "responseTargetMinutes",
+				Special: "responseTargetMinutes",
+			},
+			{
+				Name:    "snooze",
+				Special: "snooze",
+			},
+			{
+				Name:    "awaitingReply",
+				Special: "awaitingReply",
+			},
+			{
+				Name:        "novaRead",
+				FieldMapKey: "novaRead",
+			},
+			{
+				Name:    "handledByNova",
+				Special: "handledByNova",
+			},
+			{
+				Name:        "handledByRuleId",
+				FieldMapKey: "handledByRuleId",
+			},
+			{
+				Name:        "handledAction",
+				FieldMapKey: "handledAction",
+			},
+			{
+				Name:    "reviewer",
+				Special: "reviewer",
+			},
+			{
+				Name:    "activity",
+				Special: "activity",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "actions",
+				Special: "actions",
+			},
+			{
+				Name:    "replies",
+				Special: "replies",
+			},
+			{
+				Name:    "replyDraft",
+				Special: "replyDraft",
+			},
+			{
+				Name:        "loadDraft",
+				FieldMapKey: "loadDraft",
+			},
+			{
+				Name:        "facts",
+				FieldMapKey: "facts",
+			},
+			{
+				Name:        "conflicts",
+				FieldMapKey: "conflicts",
+			},
+			{
+				Name:        "classificationCorrected",
+				FieldMapKey: "classificationCorrected",
+			},
+		},
+	}
+
+	InboundReplySpec = TypeSpec{
+		TypeName: "InboundReply",
+		FieldMap: triagecol.ReplyFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "messageId",
+				FieldMapKey: "messageId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "fromAddress",
+				FieldMapKey: "fromAddress",
+			},
+			{
+				Name:        "toAddress",
+				FieldMapKey: "toAddress",
+			},
+			{
+				Name:        "ccAddresses",
+				FieldMapKey: "ccAddresses",
+			},
+			{
+				Name:        "subject",
+				FieldMapKey: "subject",
+			},
+			{
+				Name:        "body",
+				FieldMapKey: "body",
+			},
+			{
+				Name:        "draftedByNova",
+				FieldMapKey: "draftedByNova",
+			},
+			{
+				Name:        "templateId",
+				FieldMapKey: "templateId",
+			},
+			{
+				Name:        "failureText",
+				FieldMapKey: "failureText",
+			},
+			{
+				Name:        "suggestedAddress",
+				FieldMapKey: "suggestedAddress",
+			},
+			{
+				Name:    "sentBy",
+				Special: "sentBy",
+			},
+			{
+				Name:        "sentAt",
+				FieldMapKey: "sentAt",
+			},
+			{
+				Name:        "attachments",
+				FieldMapKey: "attachments",
 			},
 			{
 				Name:        "createdAt",
@@ -15992,6 +16544,10 @@ func init() {
 			{
 				Name:        "shipperCustomerId",
 				FieldMapKey: "shipperCustomerId",
+			},
+			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
 			},
 			{
 				Name:    "shipperCustomer",
@@ -17387,6 +17943,29 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
+			},
+		},
+	}
+
+	LogCheckCallPayloadSpec = TypeSpec{
+		TypeName: "LogCheckCallPayload",
+		FieldMap: trackingeventcol.TrackingEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:    "checkCall",
+				Special: "checkCall",
+			},
+			{
+				Name:    "outcome",
+				Special: "outcome",
+			},
+			{
+				Name:    "outcomeReason",
+				Special: "outcomeReason",
 			},
 		},
 	}
@@ -24255,6 +24834,81 @@ func init() {
 		},
 	}
 
+	TrackingEventSpec = TypeSpec{
+		TypeName: "TrackingEvent",
+		FieldMap: trackingeventcol.TrackingEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "stopId",
+				FieldMapKey: "stopId",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "matchMethod",
+				FieldMapKey: "matchMethod",
+			},
+			{
+				Name:        "eventAt",
+				FieldMapKey: "eventAt",
+			},
+			{
+				Name:        "receivedAt",
+				FieldMapKey: "receivedAt",
+			},
+			{
+				Name:        "latitude",
+				FieldMapKey: "latitude",
+			},
+			{
+				Name:        "longitude",
+				FieldMapKey: "longitude",
+			},
+			{
+				Name:        "sourceStatus",
+				FieldMapKey: "sourceStatus",
+			},
+			{
+				Name:        "rawReference",
+				FieldMapKey: "rawReference",
+			},
+			{
+				Name:        "reportedById",
+				FieldMapKey: "reportedById",
+			},
+			{
+				Name:        "outcome",
+				FieldMapKey: "outcome",
+			},
+			{
+				Name:        "outcomeReason",
+				FieldMapKey: "outcomeReason",
+			},
+		},
+	}
+
 	TractorSpec = TypeSpec{
 		TypeName: "Tractor",
 		FieldMap: tractorcol.TractorFieldMap,
@@ -24760,6 +25414,181 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	TriageReplyTemplateSpec = TypeSpec{
+		TypeName: "TriageReplyTemplate",
+		FieldMap: triagecol.ReplyTemplateFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "body",
+				FieldMapKey: "body",
+			},
+			{
+				Name:    "createdBy",
+				Special: "createdBy",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	TriageRuleSpec = TypeSpec{
+		TypeName: "TriageRule",
+		FieldMap: triagecol.RuleFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "classification",
+				FieldMapKey: "classification",
+			},
+			{
+				Name:        "senderScope",
+				FieldMapKey: "senderScope",
+			},
+			{
+				Name:        "sender",
+				FieldMapKey: "sender",
+			},
+			{
+				Name:        "mailboxId",
+				FieldMapKey: "mailboxId",
+			},
+			{
+				Name:    "mailbox",
+				Special: "mailbox",
+			},
+			{
+				Name:        "action",
+				FieldMapKey: "action",
+			},
+			{
+				Name:        "assigneeId",
+				FieldMapKey: "assigneeId",
+			},
+			{
+				Name:    "assignee",
+				Special: "assignee",
+			},
+			{
+				Name:        "enabled",
+				FieldMapKey: "enabled",
+			},
+			{
+				Name:    "createdBy",
+				Special: "createdBy",
+			},
+			{
+				Name:    "matchesThisMonth",
+				Special: "matchesThisMonth",
+			},
+			{
+				Name:        "matchCount",
+				FieldMapKey: "matchCount",
+			},
+			{
+				Name:        "lastMatchedAt",
+				FieldMapKey: "lastMatchedAt",
+			},
+			{
+				Name:    "lastMatch",
+				Special: "lastMatch",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	TriageSettingsSpec = TypeSpec{
+		TypeName: "TriageSettings",
+		FieldMap: triagecol.SettingsFieldMap,
+		AlwaysColumns: []string{
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:    "onCallUser",
+				Special: "onCallUser",
+			},
+			{
+				Name:        "onCallUserId",
+				FieldMapKey: "onCallUserId",
+			},
+			{
+				Name:        "endOfDayMinute",
+				FieldMapKey: "endOfDayMinute",
+			},
+			{
+				Name:    "timezone",
+				Special: "timezone",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+		},
+	}
+
+	TriageViewSpec = TypeSpec{
+		TypeName: "TriageView",
+		FieldMap: triagecol.ViewFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "query",
+				FieldMapKey: "query",
+			},
+			{
+				Name:        "position",
+				FieldMapKey: "position",
+			},
+			{
+				Name:    "waiting",
+				Special: "waiting",
 			},
 		},
 	}

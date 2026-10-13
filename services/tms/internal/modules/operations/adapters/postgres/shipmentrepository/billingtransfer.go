@@ -65,11 +65,18 @@ func (r *repository) ListBillingTransferCandidateIDs(
 				Apply(scope)
 			candidate := sp.ID.WithAlias(billingTransferCandidateAlias)
 			candidateCreatedAt := sp.CreatedAt.WithAlias(billingTransferCandidateAlias)
+			order := []string{candidateCreatedAt.OrderAsc(), candidate.OrderAsc()}
+			if req.RecentFirst {
+				order = []string{
+					sp.UpdatedAt.WithAlias(billingTransferCandidateAlias).OrderDesc(),
+					candidate.OrderDesc(),
+				}
+			}
 
 			if err = dba.NewSelect().
 				TableExpr("(?) AS ?", matched, bun.Ident(billingTransferCandidateAlias)).
 				ColumnExpr(candidate.Qualified()).
-				Order(candidateCreatedAt.OrderAsc(), candidate.OrderAsc()).
+				Order(order...).
 				Limit(int64(req.Limit)).
 				Scan(ctx, &result.IDs); err != nil {
 				return nil, err

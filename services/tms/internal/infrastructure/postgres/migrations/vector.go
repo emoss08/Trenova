@@ -6,14 +6,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/dbdialect"
+	"github.com/emoss08/trenova/pkg/pgvector"
 	"github.com/uptrace/bun"
 )
 
 const vectorSchemaMigration = "20261231006110_ai_retrieval_vector.tx.up.sql"
 
 var (
-	ErrVectorNotPostgres     = errors.New("pgvector needs a PostgreSQL database")
 	ErrVectorExtensionTooOld = errors.New("the installed pgvector is older than 0.8")
 	ErrVectorSchemaNotReady  = errors.New("the vector schema is still missing after installing it")
 )
@@ -28,21 +27,17 @@ func VectorSchemaSQL() (string, error) {
 }
 
 type EnableVectorResult struct {
-	Before dbdialect.VectorSupport
-	After  dbdialect.VectorSupport
+	Before pgvector.VectorSupport
+	After  pgvector.VectorSupport
 }
 
 func EnableVector(ctx context.Context, db *bun.DB) (EnableVectorResult, error) {
-	if dbdialect.FromBun(db).IsSQLite() {
-		return EnableVectorResult{}, ErrVectorNotPostgres
-	}
-
 	schema, err := VectorSchemaSQL()
 	if err != nil {
 		return EnableVectorResult{}, err
 	}
 
-	before, err := dbdialect.ProbeVector(ctx, db)
+	before, err := pgvector.ProbeVector(ctx, db)
 	if err != nil {
 		return EnableVectorResult{}, err
 	}
@@ -54,7 +49,7 @@ func EnableVector(ctx context.Context, db *bun.DB) (EnableVectorResult, error) {
 		return EnableVectorResult{Before: before}, err
 	}
 
-	after, err := dbdialect.ProbeVector(ctx, db)
+	after, err := pgvector.ProbeVector(ctx, db)
 	if err != nil {
 		return EnableVectorResult{Before: before}, err
 	}
@@ -72,21 +67,21 @@ func installVector(ctx context.Context, tx bun.Tx, schema string) error {
 		return fmt.Errorf("create extension vector: %w", err)
 	}
 
-	support, err := dbdialect.ProbeVector(ctx, tx)
+	support, err := pgvector.ProbeVector(ctx, tx)
 	if err != nil {
 		return err
 	}
 
-	if support.State == dbdialect.VectorExtensionTooOld {
+	if support.State == pgvector.VectorExtensionTooOld {
 		if _, err = tx.ExecContext(ctx, "ALTER EXTENSION vector UPDATE"); err != nil {
 			return fmt.Errorf("update extension vector: %w", err)
 		}
 
-		if support, err = dbdialect.ProbeVector(ctx, tx); err != nil {
+		if support, err = pgvector.ProbeVector(ctx, tx); err != nil {
 			return err
 		}
 
-		if support.State == dbdialect.VectorExtensionTooOld {
+		if support.State == pgvector.VectorExtensionTooOld {
 			return fmt.Errorf(
 				"%w: %s is installed and no newer version is available on the server",
 				ErrVectorExtensionTooOld,

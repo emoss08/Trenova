@@ -93,6 +93,25 @@ fn user_agent(agent: &AgentInfo) -> String {
     format!("TrenovaCapture/{} ({})", agent.version, agent.os_version)
 }
 
+/// An HTTP client as every call to a Trenova server makes it: named, with a
+/// bounded connect, never following a redirect, and refusing to leave HTTPS
+/// unless the server is this machine.
+pub(crate) fn http_client(
+    agent: &AgentInfo,
+    https_only: bool,
+    timeout: Option<Duration>,
+) -> reqwest::Result<reqwest::Client> {
+    let mut builder = reqwest::Client::builder()
+        .user_agent(user_agent(agent))
+        .connect_timeout(CONNECT_TIMEOUT)
+        .https_only(https_only)
+        .redirect(reqwest::redirect::Policy::none());
+    if let Some(timeout) = timeout {
+        builder = builder.timeout(timeout);
+    }
+    builder.build()
+}
+
 impl Api {
     /// A client for `server`, signed in if `store` holds a credential for it.
     pub fn new(
@@ -100,19 +119,8 @@ impl Api {
         agent: AgentInfo,
         store: Arc<dyn SecretStore>,
     ) -> Result<Self, ApiError> {
-        let build = |timeout: Option<Duration>| {
-            let mut builder = reqwest::Client::builder()
-                .user_agent(user_agent(&agent))
-                .connect_timeout(CONNECT_TIMEOUT)
-                .https_only(server.as_str().starts_with("https://"))
-                .redirect(reqwest::redirect::Policy::none());
-            if let Some(timeout) = timeout {
-                builder = builder.timeout(timeout);
-            }
-            builder.build()
-        };
-        let http = build(Some(UPLOAD_TIMEOUT))?;
-        let stream_http = build(None)?;
+        let http = http_client(&agent, server.api_is_https(), Some(UPLOAD_TIMEOUT))?;
+        let stream_http = http_client(&agent, server.api_is_https(), None)?;
 
         let credential = store
             .load()
@@ -287,7 +295,10 @@ impl Api {
         let tokens: TokenPair = decode(response).await?;
         let renewed = Credential {
             server: credential.server.clone(),
+            api_base: credential.api_base.clone(),
             web_base: credential.web_base.clone(),
+            server_name: credential.server_name.clone(),
+            shared_tenancy: credential.shared_tenancy,
             tokens,
         };
         if let Err(err) = self.store.save(&renewed) {

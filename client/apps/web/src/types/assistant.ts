@@ -1330,6 +1330,16 @@ export const assistantThreadPageSchema = z.object({
 });
 
 /**
+ * How many conversations each shelf of the rail holds: the pinned ones, then
+ * one count per band between the edges asked for, newest band first and the
+ * band below the last edge at the end.
+ */
+export const assistantThreadShelfCountsSchema = z.object({
+  pinned: z.number().int().nonnegative(),
+  bands: z.array(z.number().int().nonnegative()),
+});
+
+/**
  * What started a turn: the person, the application reporting a decision, a
  * request the person scheduled coming round, or the conversation being
  * compacted.
@@ -1777,6 +1787,8 @@ export const assistantToolFinishedEventSchema = z.object({
   verdict: optionalToolVerdict,
   /** The person's other agents a find_tools answer named as holding what this agent lacks. */
   handOffAgents: z.array(z.string()).nullish().catch(null),
+  /** The records the call's result described, in the order the result named them. */
+  records: z.array(entityRefSchema).nullish().catch(null),
   ...delegateScopeShape,
 });
 
@@ -2061,6 +2073,7 @@ export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;
 export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionRequestSchema>;
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;
 export type AssistantThreadPage = z.infer<typeof assistantThreadPageSchema>;
+export type AssistantThreadShelfCounts = z.infer<typeof assistantThreadShelfCountsSchema>;
 export type CannotContinueReason = z.infer<typeof cannotContinueReasonSchema>;
 export type ThreadOrigin = z.infer<typeof threadOriginSchema>;
 export type TurnOrigin = z.infer<typeof turnOriginSchema>;

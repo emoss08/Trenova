@@ -16,7 +16,7 @@ export const quickBooksVendor: AccountingVendor = {
   system: "QuickBooksOnline",
   name: "QuickBooks Online",
   logoLight: "/integrations/logos/quickbooks-light.svg",
-  logoDark: "/integrations/logos/quickbooks-dark.svg",
+  logoDark: "/integrations/logos/intuit-dark.svg",
   docsUrl: "https://quickbooks.intuit.com/learn-support/",
   appName: "Intuit app",
   developer: "Intuit",
@@ -37,9 +37,24 @@ export const xeroVendor: AccountingVendor = {
   appKeysHelpUrl: "https://developer.xero.com/documentation/guides/oauth2/auth-flow/",
 };
 
+export const businessCentralVendor: AccountingVendor = {
+  system: "BusinessCentral",
+  name: "Business Central",
+  logoLight: "/integrations/logos/microsoft.svg",
+  logoDark: "/integrations/logos/microsoft.svg",
+  docsUrl: "https://learn.microsoft.com/en-us/dynamics365/business-central/",
+  appName: "Microsoft Entra app",
+  developer: "Microsoft Entra",
+  developerPortalUrl:
+    "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade",
+  appKeysHelpUrl:
+    "https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-develop-connect-apps",
+};
+
 const ACCOUNTING_VENDORS: Record<AccountingSystem, AccountingVendor> = {
   QuickBooksOnline: quickBooksVendor,
   Xero: xeroVendor,
+  BusinessCentral: businessCentralVendor,
 };
 
 export const accountingVendors: readonly AccountingVendor[] = Object.values(ACCOUNTING_VENDORS);

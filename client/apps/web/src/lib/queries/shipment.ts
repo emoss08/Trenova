@@ -1,4 +1,8 @@
-import { getShipmentProfitabilityGraphQL } from "@/lib/graphql/shipment";
+import { getCarrierTrackingLink, listShipmentCheckCalls } from "@/lib/graphql/check-calls";
+import {
+  getShipmentProfitabilityGraphQL,
+  listShipmentTrackingEventsGraphQL,
+} from "@/lib/graphql/shipment";
 import { apiService } from "@/services/api";
 import type { PaginationInfo } from "@trenova/shared/types/server";
 import type { Shipment } from "@trenova/shared/types/shipment";
@@ -46,6 +50,23 @@ export const shipment = createQueryKeys("shipment", {
   events: (shipmentId: NonNullable<Shipment["id"]>, limit: number) => ({
     queryKey: ["events", shipmentId, limit],
     queryFn: async () => apiService.shipmentEventService.list({ shipmentId, limit }),
+  }),
+  // Every reported arrival and departure on the shipment's stops, newest first,
+  // with what became of each when the stop times were settled.
+  trackingEvents: (shipmentId: NonNullable<Shipment["id"]>) => ({
+    queryKey: ["tracking-events", shipmentId],
+    queryFn: async ({ signal }) => listShipmentTrackingEventsGraphQL(shipmentId, { signal }),
+  }),
+  // Every check call on the shipment's moves, newest first: dispatcher calls,
+  // carrier posts through the tracking link, and agent reports.
+  checkCalls: (shipmentId: NonNullable<Shipment["id"]>) => ({
+    queryKey: ["check-calls", shipmentId],
+    queryFn: async ({ signal }) => listShipmentCheckCalls(shipmentId, { signal }),
+  }),
+  // The live carrier tracking link on one move, or null when none is out.
+  trackingLink: (moveId: string) => ({
+    queryKey: ["tracking-link", moveId],
+    queryFn: async ({ signal }) => getCarrierTrackingLink(moveId, { signal }),
   }),
   listComments: (req: PaginationInfo & { shipmentId: Shipment["id"] }) => ({
     queryKey: ["comments", req.shipmentId, req],

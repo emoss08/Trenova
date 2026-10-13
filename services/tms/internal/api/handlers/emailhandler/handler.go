@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonflex"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/webhooksig"
@@ -385,9 +386,12 @@ func (h *Handler) deleteSuppression(c *gin.Context) {
 type resendWebhookPayload struct {
 	Type string `json:"type"`
 	Data struct {
-		ID      string `json:"id"`
-		EmailID string `json:"email_id"`
-		To      string `json:"to"`
+		ID      string              `json:"id"`
+		EmailID string              `json:"email_id"`
+		To      jsonflex.StringList `json:"to"`
+		Bounce  struct {
+			Type string `json:"type"`
+		} `json:"bounce"`
 	} `json:"data"`
 	CreatedAt string `json:"created_at"`
 }
@@ -435,17 +439,22 @@ func (h *Handler) handleResendWebhook(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	providerEventID := payload.Data.ID
+	eventType, known := resendEventType(&payload)
+	if !known {
+		c.Status(http.StatusNoContent)
+		return
+	}
+	providerEventID := c.GetHeader("svix-id")
 	if providerEventID == "" {
-		providerEventID = c.GetHeader("svix-id")
+		providerEventID = payload.Data.ID
 	}
 	event := &email.Event{
 		BusinessUnitID:  tenantInfo.BuID,
 		OrganizationID:  tenantInfo.OrgID,
 		Provider:        email.ProviderResend,
 		ProviderEventID: providerEventID,
-		Type:            resendEventType(payload.Type),
-		Recipient:       payload.Data.To,
+		Type:            eventType,
+		Recipient:       resendRecipient(&payload),
 		OccurredAt:      timeutils.NowUnix(),
 		Raw:             map[string]any{},
 	}
@@ -466,21 +475,35 @@ func (h *Handler) handleResendWebhook(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func resendEventType(value string) email.EventType {
-	switch value {
+func resendEventType(payload *resendWebhookPayload) (email.EventType, bool) {
+	switch payload.Type {
+	case "email.sent":
+		return email.EventTypeSent, true
 	case "email.delivered":
-		return email.EventTypeDelivered
+		return email.EventTypeDelivered, true
 	case "email.opened":
-		return email.EventTypeOpened
+		return email.EventTypeOpened, true
 	case "email.clicked":
-		return email.EventTypeClicked
+		return email.EventTypeClicked, true
 	case "email.bounced":
-		return email.EventTypeBounced
+		if strings.EqualFold(payload.Data.Bounce.Type, "Transient") {
+			return "", false
+		}
+		return email.EventTypeBounced, true
 	case "email.complained":
-		return email.EventTypeComplained
+		return email.EventTypeComplained, true
+	case "email.failed":
+		return email.EventTypeFailed, true
 	default:
-		return email.EventTypeFailed
+		return "", false
 	}
+}
+
+func resendRecipient(payload *resendWebhookPayload) string {
+	if len(payload.Data.To) != 1 {
+		return ""
+	}
+	return payload.Data.To.First()
 }
 
 func (h *Handler) handlePostmarkWebhook(c *gin.Context) {
@@ -505,13 +528,18 @@ func (h *Handler) handlePostmarkWebhook(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
+	eventType, known := postmarkEventType(&payload)
+	if !known {
+		c.Status(http.StatusNoContent)
+		return
+	}
 	event := &email.Event{
 		BusinessUnitID:  tenantInfo.BuID,
 		OrganizationID:  tenantInfo.OrgID,
 		Provider:        email.ProviderPostmark,
-		ProviderEventID: postmarkProviderEventID(payload),
-		Type:            postmarkEventType(payload.RecordType),
-		Recipient:       postmarkRecipient(payload),
+		ProviderEventID: postmarkProviderEventID(&payload),
+		Type:            eventType,
+		Recipient:       postmarkRecipient(&payload),
 		OccurredAt:      timeutils.NowUnix(),
 		Raw:             map[string]any{},
 	}
@@ -523,7 +551,7 @@ func (h *Handler) handlePostmarkWebhook(c *gin.Context) {
 		TenantInfo:        tenantInfo,
 		Event:             event,
 		ProviderMessageID: payload.MessageID,
-		SuppressionReason: postmarkSuppressionReason(payload),
+		SuppressionReason: postmarkSuppressionReason(&payload),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -532,20 +560,35 @@ func (h *Handler) handlePostmarkWebhook(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func postmarkEventType(value string) email.EventType {
-	switch value {
+var postmarkHardBounceTypes = map[string]struct{}{
+	"HardBounce":          {},
+	"BadEmailAddress":     {},
+	"ManuallyDeactivated": {},
+	"SpamNotification":    {},
+}
+
+func postmarkIsHardBounce(payload *postmarkWebhookPayload) bool {
+	_, ok := postmarkHardBounceTypes[payload.Type]
+	return ok
+}
+
+func postmarkEventType(payload *postmarkWebhookPayload) (email.EventType, bool) {
+	switch payload.RecordType {
 	case "Delivery":
-		return email.EventTypeDelivered
+		return email.EventTypeDelivered, true
 	case "Open":
-		return email.EventTypeOpened
+		return email.EventTypeOpened, true
 	case "Click":
-		return email.EventTypeClicked
+		return email.EventTypeClicked, true
 	case "Bounce":
-		return email.EventTypeBounced
+		if !postmarkIsHardBounce(payload) {
+			return "", false
+		}
+		return email.EventTypeBounced, true
 	case "SpamComplaint":
-		return email.EventTypeComplained
+		return email.EventTypeComplained, true
 	default:
-		return email.EventTypeFailed
+		return "", false
 	}
 }
 
@@ -560,9 +603,9 @@ func resendSuppressionReason(eventType email.EventType) email.SuppressionReason 
 	}
 }
 
-func postmarkSuppressionReason(payload postmarkWebhookPayload) email.SuppressionReason {
+func postmarkSuppressionReason(payload *postmarkWebhookPayload) email.SuppressionReason {
 	switch {
-	case payload.RecordType == "Bounce" && payload.Type == "HardBounce":
+	case payload.RecordType == "Bounce" && postmarkIsHardBounce(payload):
 		return email.SuppressionReasonHardBounce
 	case payload.RecordType == "SpamComplaint":
 		return email.SuppressionReasonComplaint
@@ -571,7 +614,7 @@ func postmarkSuppressionReason(payload postmarkWebhookPayload) email.Suppression
 	}
 }
 
-func postmarkProviderEventID(payload postmarkWebhookPayload) string {
+func postmarkProviderEventID(payload *postmarkWebhookPayload) string {
 	if id := postmarkStringValue(payload.ID); id != "" {
 		return id
 	}
@@ -588,7 +631,7 @@ func postmarkProviderEventID(payload postmarkWebhookPayload) string {
 	)
 }
 
-func postmarkRecipient(payload postmarkWebhookPayload) string {
+func postmarkRecipient(payload *postmarkWebhookPayload) string {
 	if payload.Recipient != "" {
 		return payload.Recipient
 	}

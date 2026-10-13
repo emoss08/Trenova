@@ -215,6 +215,8 @@ var ProviderColumns = struct {
 	ContextWindowTokens      buncolgen.Column // "context_window" → qualified: "aiprv.context_window"
 	ReasoningEffort          buncolgen.Column // "reasoning_effort" → qualified: "aiprv.reasoning_effort"
 	ThinkingStyle            buncolgen.Column // "thinking_style" → qualified: "aiprv.thinking_style"
+	Platform                 buncolgen.Column // "platform" → qualified: "aiprv.platform"
+	PlatformSettings         buncolgen.Column // "platform_settings" → qualified: "aiprv.platform_settings"
 	ExtraBody                buncolgen.Column // "extra_body" → qualified: "aiprv.extra_body"
 	InputCostPerMillion      buncolgen.Column // "input_cost_per_million" → qualified: "aiprv.input_cost_per_million"
 	OutputCostPerMillion     buncolgen.Column // "output_cost_per_million" → qualified: "aiprv.output_cost_per_million"
@@ -257,6 +259,8 @@ var ProviderColumns = struct {
 	ContextWindowTokens:      buncolgen.NewColumn("context_window", "aiprv"),
 	ReasoningEffort:          buncolgen.NewColumn("reasoning_effort", "aiprv"),
 	ThinkingStyle:            buncolgen.NewColumn("thinking_style", "aiprv"),
+	Platform:                 buncolgen.NewColumn("platform", "aiprv"),
+	PlatformSettings:         buncolgen.NewColumn("platform_settings", "aiprv"),
 	ExtraBody:                buncolgen.NewColumn("extra_body", "aiprv"),
 	InputCostPerMillion:      buncolgen.NewColumn("input_cost_per_million", "aiprv"),
 	OutputCostPerMillion:     buncolgen.NewColumn("output_cost_per_million", "aiprv"),
@@ -304,6 +308,8 @@ var ProviderFieldMap = map[string]string{
 	"contextWindow":            "context_window",
 	"reasoningEffort":          "reasoning_effort",
 	"thinkingStyle":            "thinking_style",
+	"platform":                 "platform",
+	"platformSettings":         "platform_settings",
 	"extraBody":                "extra_body",
 	"inputCostPerMillion":      "input_cost_per_million",
 	"outputCostPerMillion":     "output_cost_per_million",
@@ -349,6 +355,8 @@ var ProviderInsertableColumns = []string{
 	"context_window",
 	"reasoning_effort",
 	"thinking_style",
+	"platform",
+	"platform_settings",
 	"extra_body",
 	"input_cost_per_million",
 	"output_cost_per_million",
@@ -454,6 +462,8 @@ var ProviderFilter = struct {
 	ContextWindowTokens      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextWindow" → DB: "context_window"
 	ReasoningEffort          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoningEffort" → DB: "reasoning_effort"
 	ThinkingStyle            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "thinkingStyle" → DB: "thinking_style"
+	Platform                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "platform" → DB: "platform"
+	PlatformSettings         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "platformSettings" → DB: "platform_settings"
 	ExtraBody                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extraBody" → DB: "extra_body"
 	InputCostPerMillion      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputCostPerMillion" → DB: "input_cost_per_million"
 	OutputCostPerMillion     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputCostPerMillion" → DB: "output_cost_per_million"
@@ -521,6 +531,12 @@ var ProviderFilter = struct {
 	},
 	ThinkingStyle: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("thinkingStyle", op, value)
+	},
+	Platform: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("platform", op, value)
+	},
+	PlatformSettings: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("platformSettings", op, value)
 	},
 	ExtraBody: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("extraBody", op, value)

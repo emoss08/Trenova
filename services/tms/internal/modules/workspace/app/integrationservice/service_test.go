@@ -20,7 +20,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const expectedCatalogItems = 18
+const expectedCatalogItems = 19
 
 type stubIntegrationRepo struct {
 	listByTenantResult []*integration.Integration
@@ -201,6 +201,7 @@ func TestListCatalogSortedBySortOrderThenName(t *testing.T) {
 	require.Equal(t, integration.TypeMailgun, resp.Items[13].Type)
 	require.Equal(t, integration.TypeQuickBooksOnline, resp.Items[16].Type)
 	require.Equal(t, integration.TypeXero, resp.Items[17].Type)
+	require.Equal(t, integration.TypeBusinessCentral, resp.Items[18].Type)
 }
 
 func TestListCatalogIncludesQuickBooksUnderAccounting(t *testing.T) {
@@ -222,7 +223,7 @@ func TestListCatalogIncludesQuickBooksUnderAccounting(t *testing.T) {
 	require.Equal(t, integration.CategoryAccounting, quickBooks.Category)
 	require.Equal(t, "Accounting", quickBooks.CategoryLabel)
 	require.Equal(t, "/integrations/logos/quickbooks-light.svg", quickBooks.LogoLightURL)
-	require.Equal(t, "/integrations/logos/quickbooks-dark.svg", quickBooks.LogoDarkURL)
+	require.Equal(t, "/integrations/logos/intuit-dark.svg", quickBooks.LogoDarkURL)
 	require.Equal(t, "Connect", quickBooks.PrimaryActionLabel)
 	require.True(t, quickBooks.Enabled)
 }

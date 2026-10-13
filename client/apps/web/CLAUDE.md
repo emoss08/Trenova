@@ -12,15 +12,14 @@ Effect v4 (beta). Your training data is predominantly v3 and will be wrong.
 
 ## Tests
 
-Every behavior change ships with a test, and the test must be DEMONSTRATED RED
-against the pre-change code: revert or stash the source change, run the test, show
-it fail, restore. A test written after a fix, that has only ever run against the
-fixed code, proves nothing. This codebase has already shipped a green suite that
-pinned a bug as its specification — the GraphQL transport discarded populated
-response documents while every fixture asserted a throw, because the fixtures were
-written from the implementation instead of the contract.
+Every behavior change ships with a test that asserts the behavior a caller relies
+on, not how the code happens to produce it. Name the test for that behavior, and
+assert the exact output, so the test fails when the behavior changes.
 
-Write fixtures from the contract: the GraphQL spec, the Go source, the schema.
+Write fixtures from the contract: the GraphQL spec, the Go source, the schema —
+never from the implementation's current output. A suite written from the
+implementation once pinned a bug as its specification: the GraphQL transport
+discarded populated response documents while every fixture asserted a throw.
 Before writing a fixture, ask what the contract permits that no existing fixture
 constructs — absent vs null vs empty, N>1 where every fixture uses one element,
 fields whose values disagree with each other.

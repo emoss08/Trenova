@@ -121,6 +121,19 @@ fragment AccountingProviderProfileFields on AccountingProviderProfile {
   callbackPath
   lineKind
   referenceKinds
+  inboundPaymentsAvailable
+  inboundUnavailableReason
+  webhookSubscriptions
+  revokesTokens
+}
+
+fragment AccountingWebhookSubscriptionSummaryFields on AccountingWebhookSubscriptionSummary {
+  configured
+  active
+  pending
+  failed
+  nextExpiryAt
+  lastError
 }
 
 fragment AccountingSyncStatusFields on AccountingSyncStatus {
@@ -135,6 +148,9 @@ fragment AccountingSyncStatusFields on AccountingSyncStatus {
   }
   connection {
     ...AccountingConnectionFields
+  }
+  webhookSubscriptions {
+    ...AccountingWebhookSubscriptionSummaryFields
   }
 }
 

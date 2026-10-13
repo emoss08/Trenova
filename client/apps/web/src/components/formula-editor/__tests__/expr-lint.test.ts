@@ -46,10 +46,10 @@ describe("lintExpression", () => {
     expect(lintExpression("baseRate * (1 + fuelPct / 100)", known)).toEqual([]);
   });
 
-  it("warns on an unknown variable with a suggestion", () => {
+  it("flags an unknown variable with a suggestion", () => {
     const diagnostics = lintExpression("baseRaet * 2", known);
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0].severity).toBe("warning");
+    expect(diagnostics[0].severity).toBe("error");
     expect(diagnostics[0].message).toContain("baseRaet");
     expect(diagnostics[0].message).toContain("baseRate");
   });
@@ -67,23 +67,23 @@ describe("lintExpression", () => {
 
   it("flags unbalanced brackets", () => {
     const diagnostics = lintExpression("round(baseRate", known);
-    expect(diagnostics.some((d) => d.message.includes("Unclosed"))).toBe(true);
+    expect(diagnostics.some((d) => d.message.includes("never closed"))).toBe(true);
   });
 
   it("flags a trailing operator", () => {
     const diagnostics = lintExpression("baseRate * ", known);
-    expect(diagnostics.some((d) => d.message.includes("ends with an operator"))).toBe(true);
+    expect(diagnostics.some((d) => d.message.includes("needs a value on its right"))).toBe(true);
   });
 
   it("does not treat keywords as unknown variables", () => {
-    expect(lintExpression("hasHazmat and true", known)).toEqual([]);
+    expect(lintExpression("(hasHazmat and true) ? 1 : 0", known)).toEqual([]);
   });
 });
 
 describe("lintExpression with expr string operators", () => {
   it("does not flag startsWith, endsWith, contains, or matches as unknown names", () => {
     const diagnostics = lintExpression(
-      'origin.state startsWith "T" and customer.name contains "Acme" and origin.zip matches "^7" and destination.state endsWith "X"',
+      '(origin.state startsWith "T" and customer.name contains "Acme" and origin.zip matches "^7" and destination.state endsWith "X") ? 1 : 0',
       known,
     );
     expect(diagnostics).toEqual([]);
@@ -113,6 +113,23 @@ describe("lintExpression with expr string operators", () => {
         },
       ],
     });
-    expect(lintExpression('code soundsLike "abc"', serverKnown)).toEqual([]);
+    expect(lintExpression('code soundsLike "abc" ? 1 : 0', serverKnown)).toEqual([]);
+  });
+});
+
+describe("let bindings", () => {
+  it("treats a name the expression binds with let as known wherever it is read", () => {
+    const known = buildKnownIdentifiers(undefined, []);
+    const diagnostics = lintExpression(
+      "let linehaul = baseRate * totalDistance;\nlet fuel = linehaul * 0.18;\nlinehaul + fuel",
+      known,
+    );
+    expect(diagnostics).toEqual([]);
+  });
+
+  it("still flags a name nothing binds", () => {
+    const known = buildKnownIdentifiers(undefined, []);
+    const diagnostics = lintExpression("let linehaul = baseRate;\nlinehaul + weekendFee", known);
+    expect(diagnostics.map((d) => d.message)).toEqual([expect.stringContaining("weekendFee")]);
   });
 });

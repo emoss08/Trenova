@@ -399,6 +399,11 @@ C["Split"] = paths(
     "M5 12V7h5M14 7h5v5",
 )
 
+# Nova's mark: one ring, drawn heavy so its gradient reads at fourteen pixels.
+# It appears in three places only (the Briefing item, "Drafted by Nova", Nova's
+# card in the deck) and the NovaMark component strokes it with the gradient.
+C["NovaRing"] = paths(circ(12, 12, 8.5))
+
 ASSIST = (
     '<path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/>'
     '<circle cx="12" cy="12" r="2" fill="currentColor"/>'

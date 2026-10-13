@@ -8,6 +8,7 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { parseAmountToMinor } from "@trenova/shared/lib/money";
 
 export type ReceiptLineValues = {
   receiptDate: string;
@@ -29,10 +30,6 @@ export const EMPTY_LINE: ReceiptLineValues = {
   memo: "",
 };
 
-function toCents(dollarStr: string): number {
-  return Math.round(parseFloat(dollarStr) * 100);
-}
-
 export function ImportBatchForm() {
   const t = useT();
 
@@ -46,7 +43,7 @@ export function ImportBatchForm() {
   const watchedReceipts = useWatch({ control, name: "receipts" });
 
   const totalCents = (watchedReceipts ?? []).reduce(
-    (sum, line) => sum + (line?.amount ? toCents(line.amount) || 0 : 0),
+    (sum, line) => sum + (line?.amount ? (parseAmountToMinor(line.amount) ?? 0) : 0),
     0,
   );
 
@@ -125,9 +122,10 @@ export function ImportBatchForm() {
                       rules={{
                         required: translate("Required"),
                         validate: (v) => {
-                          const num = parseFloat(v);
-                          if (Number.isNaN(num) || num <= 0)
-                            return translate("Must be greater than 0");
+                          const minor = parseAmountToMinor(v);
+                          if (minor === null)
+                            return translate("Enter an amount with at most two decimal places");
+                          if (minor <= 0) return translate("Must be greater than 0");
                           return true;
                         },
                       }}

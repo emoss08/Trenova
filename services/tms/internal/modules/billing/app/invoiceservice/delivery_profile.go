@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,6 +26,7 @@ type deliveryProfileRepos struct {
 	shipmentRepo     shipmentports.ShipmentRepository
 	billingRepo      tenantports.BillingControlRepository
 	organizationRepo tenantports.OrganizationRepository
+	factoringRepo    factoringcompanyports.FactoringCompanyRepository
 }
 
 func (s *Service) resolveDeliveryProfile(
@@ -36,6 +38,7 @@ func (s *Service) resolveDeliveryProfile(
 		shipmentRepo:     s.shipmentRepo,
 		billingRepo:      s.billingRepo,
 		organizationRepo: s.organizationRepo,
+		factoringRepo:    s.factoringRepo,
 	}, params)
 }
 
@@ -152,6 +155,17 @@ func resolveDeliveryProfileWith(
 			result.BillingControl = control
 		}
 	}
+	factor, err := resolveFactor(
+		ctx,
+		repos.factoringRepo,
+		entity,
+		result.Customer,
+		params.TenantInfo,
+	)
+	if err != nil {
+		return nil, err
+	}
+	result.Factor = factor
 	return result, nil
 }
 

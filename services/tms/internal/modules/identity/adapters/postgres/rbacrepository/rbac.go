@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -175,7 +176,7 @@ func (r *repository) GetAuthorizedRoles(
 			Where("ura.organization_id = ?", orgID).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.Where("ura.expires_at IS NULL").
-					WhereOr("ura.expires_at > " + r.db.NowEpoch())
+					WhereOr("ura.expires_at > " + dbhelper.NowEpoch)
 			}).
 			Order("r.name ASC").
 			Scan(ctx)

@@ -7,28 +7,29 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptbatchrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/bankreceiptworkitemrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
-	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
-	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
-	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -151,7 +152,7 @@ func TestImportBatchPersistsMixedOutcomesAndSupportsReads(t *testing.T) {
 		Where("business_unit_id = ?", env.org.BusinessUnitID).
 		Count(env.ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 2, count)
+	assert.Equal(t, int64(2), count)
 }
 
 func TestImportBatchRollsBackOnNilReceiptLine(t *testing.T) {
@@ -190,7 +191,7 @@ func TestImportBatchRollsBackOnNilReceiptLine(t *testing.T) {
 		Where("business_unit_id = ?", env.org.BusinessUnitID).
 		Count(env.ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 0, batchCount)
+	assert.Equal(t, int64(0), batchCount)
 
 	receiptCount, err := env.db.NewSelect().
 		Table("bank_receipts").
@@ -199,7 +200,7 @@ func TestImportBatchRollsBackOnNilReceiptLine(t *testing.T) {
 		Where("business_unit_id = ?", env.org.BusinessUnitID).
 		Count(env.ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 0, receiptCount)
+	assert.Equal(t, int64(0), receiptCount)
 }
 
 func setupBatchIntegrationEnv(t *testing.T) *batchIntegrationEnv {
@@ -297,6 +298,7 @@ func setupBatchIntegrationEnv(t *testing.T) *batchIntegrationEnv {
 	receiptSvc := bankreceiptservice.New(
 		bankreceiptservice.Params{
 			Logger:         logger,
+			DB:             conn,
 			Repo:           receiptRepo,
 			WorkItemRepo:   workItemRepo,
 			PaymentRepo:    paymentRepo,
@@ -357,7 +359,12 @@ func createPostedCustomerPayment(
 	)
 
 	now := env.now
-	_, period := seedtest.OpenFiscalPeriod(t, env.ctx, env.db, env.org.ID, env.org.BusinessUnitID)
+	_, period := fiscaltest.OpenPeriod(t, env.ctx, fiscaltest.OpenPeriodParams{
+		DB:             env.db,
+		OrganizationID: env.org.ID,
+		BusinessUnitID: env.org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   env.org.ID,

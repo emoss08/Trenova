@@ -42,6 +42,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationschedulerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/insightrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordlabelrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/roleagentgrantrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentbriefrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentimportchatrepository"
@@ -108,8 +109,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/casechecklistservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchautoassignservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/formulastudioservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/narrator"
+	"github.com/emoss08/trenova/internal/modules/agent/app/messagefileservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/productguideservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalpreviewservice"
@@ -159,6 +162,7 @@ func SharedOptions() fx.Option {
 		)),
 		fx.Provide(
 			assistantcaserepository.New,
+			messagefileservice.New,
 			casechecklistrepository.New,
 			roleagentgrantrepository.New,
 			agentmemorysubjectrepository.New,
@@ -197,6 +201,7 @@ func SharedOptions() fx.Option {
 				fx.As(new(agentports.AIRetrievalSettingsRepository)),
 			),
 			agentproposalbaselinerepository.New,
+			recordlabelrepository.New,
 			aiusagerepository.New,
 			aiauditrepository.New,
 			aiauditrepository.NewSource,
@@ -298,6 +303,8 @@ func SharedOptions() fx.Option {
 			agentmemoryservice.New,
 			agentreflectionservice.New,
 			aicorrectionservice.New,
+			aicorrectionservice.NewInboundRecorder,
+			aiproviderservice.NewInboundReadiness,
 			aifeedbackservice.New,
 			aifeedbackservice.AsService,
 			aifeedbackservice.AsMaintenance,
@@ -345,5 +352,10 @@ func SharedOptions() fx.Option {
 }
 
 func APIOptions() fx.Option {
-	return fx.Options()
+	return fx.Options(
+		fx.Provide(fx.Annotate(
+			formulastudioservice.New,
+			fx.As(new(agentports.FormulaStudioAssist)),
+		)),
+	)
 }

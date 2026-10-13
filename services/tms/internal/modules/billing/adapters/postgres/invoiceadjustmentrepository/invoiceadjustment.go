@@ -396,6 +396,7 @@ func (r *repository) UpdateAdjustment(
 				Set("rejected_at = ?", adjustment.RejectedAt).
 				Set("rejection_reason = ?", adjustment.RejectionReason).
 				Set("execution_error = ?", adjustment.ExecutionError).
+				Set("idempotency_key = ?", adjustment.IdempotencyKey).
 				Set("metadata = ?", adjustment.Metadata).
 				Set("version = version + 1").
 				Exec(ctx)
@@ -693,7 +694,7 @@ func (r *repository) UpdateBatchItem(
 				Set("error_message = ?", item.ErrorMessage).
 				Set("request_payload = ?", item.RequestPayload).
 				Set("result_payload = ?", item.ResultPayload).
-				Set("updated_at = " + r.db.NowEpoch()).
+				Set("updated_at = " + dbhelper.NowEpoch).
 				Exec(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("update batch item: %w", err)

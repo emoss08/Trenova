@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDescribeAttachments_CarriesEachFilesText(t *testing.T) {
@@ -94,4 +95,59 @@ func TestDescribeAttachments_NoFilesIsNothing(t *testing.T) {
 	t.Parallel()
 
 	assert.Empty(t, agentdefinition.DescribeAttachments(nil, agentdefinition.AttachmentTextBudget))
+}
+
+/*
+Each file's entry is a part of the block, in order, so it can be found where it
+stands; the entry that replaces it when the file itself is sent keeps what names
+the file and drops what reading it came to, its text included.
+*/
+func TestRenderAttachments_GivesEachFileItsEntryAndTheEntryThatReplacesIt(t *testing.T) {
+	t.Parallel()
+
+	rendered := agentdefinition.RenderAttachments([]agentdefinition.RuntimeAttachment{
+		{
+			DocumentID:  "doc_1",
+			FileName:    "ratecon.pdf",
+			ContentType: "application/pdf",
+			PageCount:   2,
+			Kind:        "Rate confirmation",
+			Reading:     agentdefinition.AttachmentReadingDone,
+			Text:        "Linehaul $2,400.",
+		},
+		{
+			DocumentID:  "doc_2",
+			FileName:    "seal.png",
+			ContentType: "image/png",
+			Reading:     agentdefinition.AttachmentReadingFailed,
+			PoorlyRead:  true,
+		},
+	}, agentdefinition.AttachmentTextBudget)
+
+	require.Len(t, rendered.Entries, 2)
+	require.Len(t, rendered.NativeEntries, 2)
+	first := strings.Index(rendered.Block, rendered.Entries[0])
+	second := strings.Index(rendered.Block, rendered.Entries[1])
+	require.GreaterOrEqual(t, first, 0)
+	assert.Greater(t, second, first)
+	assert.True(t, strings.HasPrefix(rendered.Entries[0], agentdefinition.AttachmentEntryLead("doc_1")))
+	assert.Equal(t, rendered.Block, agentdefinition.DescribeAttachments([]agentdefinition.RuntimeAttachment{
+		{DocumentID: "doc_1", FileName: "ratecon.pdf", ContentType: "application/pdf", PageCount: 2,
+			Kind: "Rate confirmation", Reading: agentdefinition.AttachmentReadingDone, Text: "Linehaul $2,400."},
+		{DocumentID: "doc_2", FileName: "seal.png", ContentType: "image/png",
+			Reading: agentdefinition.AttachmentReadingFailed, PoorlyRead: true},
+	}, agentdefinition.AttachmentTextBudget))
+
+	assert.Contains(t, rendered.Entries[0], "Linehaul $2,400.")
+	native := rendered.NativeEntries[0]
+	assert.True(t, strings.HasPrefix(native, agentdefinition.AttachmentEntryLead("doc_1")))
+	assert.Contains(t, native, "ratecon.pdf")
+	assert.Contains(t, native, "2 pages")
+	assert.Contains(t, native, "Rate confirmation")
+	assert.Contains(t, native, "the file itself is attached to this message")
+	assert.NotContains(t, native, "Linehaul $2,400.")
+
+	assert.Contains(t, rendered.Entries[1], "could not be read")
+	assert.NotContains(t, rendered.NativeEntries[1], "could not be read")
+	assert.NotContains(t, rendered.NativeEntries[1], "legibility")
 }

@@ -40,7 +40,7 @@ export function commandGroupLabel(group: PaletteCommandGroup, t: TranslateFn): s
     case "create":
       return t("Create");
     case "assistant":
-      return t("Assistant");
+      return t("Nova");
     case "navigation":
       return t("Go to");
     case "notifications":
@@ -114,10 +114,10 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
     commands.push({
       id: "app:assistant-new",
       label: t("New conversation"),
-      description: t("Start a fresh conversation with the assistant"),
+      description: t("Start a fresh thread with Nova in the Desk"),
       group: "assistant",
       icon: MessagePlusSquareIcon,
-      keywords: ["assistant", "chat", "ai", "new", "thread", "conversation"],
+      keywords: ["nova", "assistant", "chat", "ai", "new", "thread", "conversation"],
       intent: { type: "assistant", mode: "new-chat" },
       shortcut: [mod, "J"],
     });
@@ -191,7 +191,10 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
     commands.push({
       id: `app:theme-${option.theme}`,
       label: option.label,
-      description: t("Change how Trenova looks on this device"),
+      description:
+        option.theme === "system"
+          ? t("Follow your operating system")
+          : t("Change how Trenova looks on this device"),
       group: "appearance",
       icon: option.icon,
       keywords: ["theme", "appearance", "mode", option.theme],

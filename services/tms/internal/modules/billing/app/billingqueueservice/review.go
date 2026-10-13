@@ -701,11 +701,8 @@ func creditHoldOf(cus *customer.Customer) (bool, string) {
 		return false, ""
 	}
 	profile := cus.BillingProfile
-	held := profile.EnforceCreditLimit &&
-		(profile.CreditStatus == customer.CreditStatusHold ||
-			profile.CreditStatus == customer.CreditStatusSuspended)
 
-	return held, profile.CreditHoldReason
+	return profile.BlocksBilling(), profile.CreditHoldReason
 }
 
 func (s *service) shipmentDocuments(

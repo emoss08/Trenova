@@ -1,5 +1,7 @@
 import {
+  DOCK_EDGE_INSET,
   isLeftDock,
+  isTopDock,
   nearestDock,
   dockPositionClass,
   type AssistantDock,
@@ -12,6 +14,7 @@ import { m, useMotionValue, useReducedMotion, type PanInfo } from "motion/react"
 import { useEffect, useRef, useState } from "react";
 import { AssistantDockTargets } from "./assistant-dock-targets";
 import { AssistantOrb } from "./assistant-orb";
+import { beaconBottom, useLauncherReach } from "./launcher-clearance";
 import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
 import { cappedCount, launcherLabel, type BeaconState } from "./beacon-state";
 
@@ -55,6 +58,8 @@ export function AssistantLauncher({
   const y = useMotionValue(0);
   const movable = onMove !== undefined;
   const side = isLeftDock(dock) ? "left" : "right";
+  const reach = useLauncherReach();
+  const bottom = isTopDock(dock) ? undefined : beaconBottom(DOCK_EDGE_INSET, reach);
 
   const pointerDock = (info: PanInfo): AssistantDock =>
     nearestDock(
@@ -82,7 +87,7 @@ export function AssistantLauncher({
       layout
       drag={movable}
       dragMomentum={false}
-      style={{ x, y }}
+      style={{ x, y, bottom }}
       onPointerDown={() => {
         dragged.current = false;
       }}

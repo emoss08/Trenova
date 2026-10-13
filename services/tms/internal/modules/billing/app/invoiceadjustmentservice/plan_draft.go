@@ -214,11 +214,11 @@ func (s *Service) PreviewDecision(
 	if err != nil {
 		return nil, err
 	}
-	if adjustment.Status != invoiceadjustment.StatusPendingApproval {
+	if !adjustment.Status.CanBeRejected() {
 		return nil, errortypes.NewValidationError(
 			"adjustmentId",
 			errortypes.ErrInvalidOperation,
-			"Only an adjustment pending approval can be approved or rejected; this one is {0}",
+			"Only an adjustment awaiting approval or whose execution failed can be approved or rejected; this one is {0}",
 			string(adjustment.Status),
 		)
 	}

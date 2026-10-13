@@ -77,6 +77,7 @@ export default function DispatchControlForm() {
             <ScoringWeightForm />
           </CapabilityGate>
           <ServiceFailureForm />
+          <CheckCallMonitoringForm />
           <CapabilityGate capability={OrganizationCapability.AssetOperations}>
             <ComplianceForm />
           </CapabilityGate>
@@ -246,6 +247,61 @@ function ServiceFailureForm() {
                 />
               </FormControl>
             </div>
+          )}
+        </FormGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CheckCallMonitoringForm() {
+  const t = useT();
+
+  const { control } = useFormContext<DispatchControl>();
+
+  const enableCheckCallMonitoring = useWatch({
+    control,
+    name: "enableCheckCallMonitoring",
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("Check call monitoring")}</CardTitle>
+        <CardDescription>
+          {t(
+            "Watch brokered loads in transit for carriers that stop reporting. A load with no check call, tracking update or stop time inside the window is raised to the watchtower.",
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-prose">
+        <FormGroup cols={1}>
+          <FormControl className="min-h-[3em]">
+            <SwitchField
+              control={control}
+              name="enableCheckCallMonitoring"
+              label={t("Monitor brokered loads for check calls")}
+              description={t(
+                "When enabled, a carrier-covered load that goes quiet raises a No check call item, and one silent for twice the window is critical.",
+              )}
+              position="left"
+            />
+          </FormControl>
+          {enableCheckCallMonitoring && (
+            <FormControl className="min-h-[3em] max-w-[400px] pl-10">
+              <NumberField
+                control={control}
+                name="checkCallIntervalHours"
+                label={t("Check call window")}
+                description={t(
+                  "How long a load may go without word from the carrier, from 1 to 72 hours. A customer can set its own window.",
+                )}
+                placeholder="4"
+                sideText="hours"
+                min={1}
+                max={72}
+              />
+            </FormControl>
           )}
         </FormGroup>
       </CardContent>

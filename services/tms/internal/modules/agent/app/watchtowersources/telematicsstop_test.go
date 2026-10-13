@@ -3,10 +3,10 @@ package watchtowersources_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -14,7 +14,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func stopReview(moveID, stopID pulid.ID, occurredAt int64, reason string) *telematicsports.StopReview {
+func stopReview(
+	moveID, stopID pulid.ID,
+	occurredAt int64,
+	reason string,
+) *telematicsports.StopReview {
 	return &telematicsports.StopReview{
 		ShipmentID: pulid.MustNew("shp_"),
 		Event: &telematics.TelematicsEvent{

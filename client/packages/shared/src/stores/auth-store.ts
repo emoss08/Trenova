@@ -1,5 +1,6 @@
-import { ApiRequestError, clearCsrfToken } from "@trenova/shared/lib/api";
+import { clearCsrfToken } from "@trenova/shared/lib/api";
 import { setUserDatePreferences } from "@trenova/shared/lib/date";
+import { isSessionExpiry } from "@trenova/shared/lib/error-presentation";
 import { realtimeClient } from "@trenova/shared/services/realtime";
 import { userService } from "@trenova/shared/services/user";
 import { authService } from "@trenova/shared/services/auth";
@@ -17,6 +18,16 @@ export type LoginOutcome =
   | { status: "signed_in" }
   | { status: "mfa_required"; challenge: MFAChallenge };
 
+/**
+ * What a session check learned. Only a 401 proves the session is gone; a rate limit, a
+ * server error or a dropped connection says nothing about it, and `unreachable` carries
+ * that failure so a caller can present it instead of treating it as a sign-out.
+ */
+export type SessionCheck =
+  | { status: "signed_in" }
+  | { status: "signed_out" }
+  | { status: "unreachable"; error: unknown };
+
 interface AuthState {
   user: User | null;
   isLoading: boolean;
@@ -25,6 +36,7 @@ interface AuthState {
   login: (credentials: LoginRequest) => Promise<LoginOutcome>;
   verifyMFA: (request: VerifyMFAChallengeRequest) => Promise<void>;
   logout: () => Promise<void>;
+  checkSession: () => Promise<SessionCheck>;
   checkAuth: () => Promise<boolean>;
   setUser: (user: User | null) => void;
   clearAuth: () => void;
@@ -32,7 +44,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       isLoading: false,
       isAuthenticated: false,
@@ -85,7 +97,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      checkAuth: async () => {
+      checkSession: async () => {
         try {
           const freshUser = await userService.currentUser();
           set({ user: freshUser, isAuthenticated: true });
@@ -93,16 +105,19 @@ export const useAuthStore = create<AuthState>()(
             .getState()
             .checkForUpdates(freshUser.currentOrganizationId)
             .catch(console.error);
-          return true;
+          return { status: "signed_in" };
         } catch (error) {
-          if (error instanceof ApiRequestError && error.status === 401) {
-            set({ user: null, isAuthenticated: false });
-            clearCsrfToken();
-            usePermissionStore.getState().clearPermissions();
+          if (!isSessionExpiry(error)) {
+            return { status: "unreachable", error };
           }
-          return false;
+          set({ user: null, isAuthenticated: false });
+          clearCsrfToken();
+          usePermissionStore.getState().clearPermissions();
+          return { status: "signed_out" };
         }
       },
+
+      checkAuth: async () => (await get().checkSession()).status === "signed_in",
 
       setUser: (user: User | null) => {
         set({ user, isAuthenticated: !!user });

@@ -49,7 +49,7 @@ const RECORD_CHANGE_KEYS: Record<string, QueryKeyRoot[]> = {
   carrier_settlement: ["carrier-settlement-list", "carrier-settlement-batch-list"],
   commodity: ["commodity-list"],
   custom_field_definition: ["custom-field-definition-list"],
-  customer_payment: ["customer-payment-list"],
+  customer_payment: ["customer-payment-list", "collection"],
   detention_policy: ["detention-policy-list"],
   distance_override: ["distance-override-list"],
   distance_profile: ["distance-profile-list"],
@@ -73,7 +73,6 @@ const RECORD_CHANGE_KEYS: Record<string, QueryKeyRoot[]> = {
   hazardous_material: ["hazardous-material-list"],
   hazmat_segregation_rule: ["hazmat-segregation-rule-list"],
   hold_reason: ["hold-reason-list"],
-  invoice: ["invoice-register"],
   journal_reversal: ["journal-reversal-list"],
   jurisdiction_rule: ["jurisdiction-rule-list"],
   jurisdiction_rule_override: ["jurisdiction-rule-override-list"],
@@ -169,12 +168,18 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   // list and every filtered variant of it.
   watchtower: ["watchtower", "attention"],
   briefings: ["briefing"],
-  // Every inbox write: the lanes, their counts and the open message move
-  // together. Mailbox administration is not a message and is left alone.
+  // Every Triage write: the folders, their counts, the open message, its
+  // thread, the saved views' waiting numbers and the briefing move together.
+  // The web app patches a named message in place (lib/triage/realtime.ts);
+  // these roots are what a bulk notice or a reset refreshes. Mailbox
+  // administration is not a message and is left alone.
   inbound_message: [
     ["inbox", "messages"],
     ["inbox", "counts"],
     ["inbox", "message"],
+    ["inbox", "thread"],
+    ["inbox", "views"],
+    ["inbox", "briefing"],
   ],
   // A batch moving is the intake queue, the open batch and, since a request's
   // progress is announced under the same resource, the requests a record's
@@ -206,7 +211,7 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   ],
   orders: ["order-list", "order-detail"],
   users: ["user-list"],
-  customers: ["customer-list"],
+  customers: ["customer-list", "collection"],
   tractors: ["tractor-list"],
   trailers: ["trailer-list"],
   workers: ["worker-list", "dispatch-board", "shipmentBoard"],
@@ -214,6 +219,25 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   billing_queue: ["billing-queue-list", "billingQueue"],
   // A bulk approval's progress: the run and the items it is approving.
   "billing-queue-approval-run": ["billingQueue", "billing-queue-list"],
+  // Every change to an invoice: its own page (detail, send plan, email
+  // attempts), the lists and register that show it, the billing queue item it
+  // came from, and the receivables read from its balance.
+  invoice: [
+    "invoice",
+    "invoice-list",
+    "invoice-register",
+    "invoice-register-list",
+    "invoice-adjustment",
+    "billingQueue",
+    "billing-queue-list",
+    "ar",
+    "collection",
+    "customerPayment",
+    "customer-payment-list",
+  ],
+  // A collector, follow-up, note or promise logged against a customer's
+  // overdue receivables: the collections worklist and that account's panel.
+  "collection-account": ["collection"],
   "billing-transfer-run": [
     "billing-transfer-run",
     "billing-transfer-active-run",
@@ -289,6 +313,16 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   telematicsEvent: ["telematics"],
 };
 
+/**
+ * Caches a resource also reaches, but only where they are on screen. A
+ * shipment's or order's charges feed the allocated totals on its open billing
+ * queue items, which are rewritten without a billing queue event of their own.
+ */
+export const RESOURCE_ACTIVE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
+  shipments: ["billing-queue-list", "billingQueue"],
+  orders: ["billing-queue-list", "billingQueue"],
+};
+
 export const PATCHABLE_FIELDS_BY_RESOURCE: Record<string, Set<string>> = {
   shipments: new Set(["status", "proNumber", "moves", "updatedAt"]),
   users: new Set([
@@ -356,6 +390,8 @@ export interface Invalidation {
   roots: QueryKeyRoot[];
   /** Refetch only queries a screen is showing; the rest refetch when shown. */
   activeOnly: boolean;
+  /** Further roots that refetch only where they are on screen. */
+  activeRoots: QueryKeyRoot[];
 }
 
 /**
@@ -366,6 +402,10 @@ export interface Invalidation {
  * open Desk ~360 requests a minute until the API answered 429.
  */
 const ON_SCREEN_RESOURCES = new Set([
+  // A billing team sends, posts and applies payments all day; an invoice or
+  // queue event refetches the lists on screen and leaves the rest stale.
+  "invoice",
+  "billing_queue",
   "agent_proposal",
   "agent_plan",
   "agent_waits",
@@ -398,7 +438,7 @@ export function invalidationFor(event: ResourceInvalidationEvent): Invalidation 
   if (event.resource === "assistant_artifact") {
     const threadId = event.entity?.threadId;
     if (typeof threadId === "string" && threadId !== "") {
-      return { roots: [[...ARTIFACT_THREAD_PREFIX, threadId]], activeOnly: true };
+      return { roots: [[...ARTIFACT_THREAD_PREFIX, threadId]], activeOnly: true, activeRoots: [] };
     }
   }
   if (event.resource === "capture_batch" && event.action === "page.received") {
@@ -410,11 +450,12 @@ export function invalidationFor(event: ResourceInvalidationEvent): Invalidation 
     if (batchId) {
       roots.push(["capture", "batch", batchId]);
     }
-    return { roots, activeOnly: true };
+    return { roots, activeOnly: true, activeRoots: [] };
   }
   return {
     roots: RESOURCE_QUERY_KEY_MAP[event.resource] ?? [],
     activeOnly: ON_SCREEN_RESOURCES.has(event.resource),
+    activeRoots: RESOURCE_ACTIVE_QUERY_KEY_MAP[event.resource] ?? [],
   };
 }
 

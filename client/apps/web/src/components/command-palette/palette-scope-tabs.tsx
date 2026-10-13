@@ -1,12 +1,13 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   Grid01Icon,
   LayersThree01Icon,
   TerminalSquareIcon,
 } from "@trenova/shared/components/icons";
-import { PALETTE_ENTITIES } from "./palette-entities";
+import { PALETTE_ENTITY_ICONS, paletteEntityText } from "./palette-entities";
 import type { PaletteIcon, PaletteScope } from "./palette-model";
+import { isRecordScope } from "./palette-model";
 
 export const PALETTE_SCOPES: readonly PaletteScope[] = [
   "all",
@@ -24,23 +25,28 @@ export function nextScope(current: PaletteScope, step: 1 | -1): PaletteScope {
   return PALETTE_SCOPES[next] ?? "all";
 }
 
-function scopePresentation(scope: PaletteScope): { label: string; icon: PaletteIcon } {
+export function scopePresentation(
+  scope: PaletteScope,
+  t: TranslateFn,
+): { label: string; icon: PaletteIcon } {
+  if (isRecordScope(scope)) {
+    return { label: paletteEntityText(scope, t).plural, icon: PALETTE_ENTITY_ICONS[scope] };
+  }
   switch (scope) {
-    case "all":
-      return { label: "All", icon: LayersThree01Icon };
     case "pages":
-      return { label: "Pages", icon: Grid01Icon };
+      return { label: t("Pages"), icon: Grid01Icon };
     case "commands":
-      return { label: "Commands", icon: TerminalSquareIcon };
+      return { label: t("Commands"), icon: TerminalSquareIcon };
     default:
-      return { label: PALETTE_ENTITIES[scope].pluralLabel, icon: PALETTE_ENTITIES[scope].icon };
+      return { label: t("All"), icon: LayersThree01Icon };
   }
 }
 
 /**
  * The strip under the search box. Focus never leaves the box for it: Tab and
  * Shift+Tab move between scopes from the keyboard, and a click does the same
- * without taking the caret away.
+ * without taking the caret away. With a query, each tab says how many it
+ * holds, and a tab with none fades but stays reachable.
  */
 export function PaletteScopeTabs({
   scope,
@@ -49,8 +55,8 @@ export function PaletteScopeTabs({
 }: {
   scope: PaletteScope;
   onScopeChange: (scope: PaletteScope) => void;
-  /** Hits per record scope for the current query, once known. */
-  counts: Partial<Record<PaletteScope, number>>;
+  /** Results per scope for the current query; absent before anything is typed. */
+  counts: Partial<Record<PaletteScope, number>> | null;
 }) {
   const t = useT();
 
@@ -58,12 +64,13 @@ export function PaletteScopeTabs({
     <div
       role="tablist"
       aria-label={t("Search scope")}
-      className="border-border-subtle flex [scrollbar-width:none] items-center gap-0.5 overflow-x-auto border-b px-3"
+      className="border-border-subtle flex [scrollbar-width:none] items-center gap-0.5 overflow-x-auto border-b px-3 pb-2"
     >
       {PALETTE_SCOPES.map((option) => {
-        const { label, icon: Icon } = scopePresentation(option);
+        const { label } = scopePresentation(option, t);
         const active = option === scope;
-        const count = counts[option];
+        const count = counts?.[option];
+        const zero = counts !== null && option !== "all" && count === 0;
         return (
           <button
             key={option}
@@ -74,18 +81,17 @@ export function PaletteScopeTabs({
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onScopeChange(option)}
             className={cn(
-              "relative flex h-9 shrink-0 items-center gap-1.5 px-2.5 text-xs font-medium transition-colors",
-              "after:bg-brand after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:opacity-0 after:transition-opacity",
+              "rounded-control flex h-6.5 shrink-0 items-center gap-1.5 px-2 text-sm font-medium transition-[color,background-color,opacity]",
               active
-                ? "text-foreground after:opacity-100"
-                : "text-foreground-subtle hover:text-foreground",
+                ? "bg-surface-hover text-foreground"
+                : "text-foreground-muted hover:text-foreground",
+              zero && "opacity-50",
             )}
           >
-            <Icon className="size-3.5" strokeWidth={1.75} />
-            {t(label)}
-            {count !== undefined && count > 0 && (
-              <span className="bg-sunken text-2xs text-foreground-muted rounded-full px-1.5 tabular-nums">
-                {count}
+            {label}
+            {counts !== null && count !== undefined && (
+              <span className="text-foreground-faint font-mono text-2xs font-normal tabular-nums">
+                {count.toLocaleString()}
               </span>
             )}
           </button>

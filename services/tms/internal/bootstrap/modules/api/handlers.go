@@ -28,10 +28,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/carriertrackingpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/casechecklisthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/collectionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/customerstatementhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
@@ -55,6 +58,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/exchangeratehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/factoringcompanyhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcodehandler"
@@ -67,6 +71,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/holdreasonhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/inboxpresencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
@@ -153,6 +158,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	workerhandler.New,
 	permissionhandler.New,
 	realtimehandler.New,
+	inboxpresencehandler.New,
 	rolehandler.New,
 	roleassignmenthandler.New,
 	searchhandler.New,
@@ -178,6 +184,8 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	agentrunhandler.New,
 	assignmenthandler.New,
 	accountsreceivablehandler.New,
+	collectionhandler.New,
+	customerstatementhandler.New,
 	bankreceiptbatchhandler.New,
 	bankreceipthandler.New,
 	bankreceiptworkitemhandler.New,
@@ -211,6 +219,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	carrierhandler.New,
 	rateconfirmationhandler.New,
 	rateconfirmationpublichandler.New,
+	carriertrackingpublichandler.New,
 	customerhandler.New,
 	customerpaymenthandler.New,
 	googlemapshandler.New,
@@ -225,6 +234,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	locationhandler.New,
 	documenttypehandler.New,
 	holdreasonhandler.New,
+	factoringcompanyhandler.New,
 	recurringshipmenthandler.New,
 	detentionpolicyhandler.New,
 	rateagreementhandler.New,

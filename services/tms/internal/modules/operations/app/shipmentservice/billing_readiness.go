@@ -625,9 +625,7 @@ func applyPayerReadiness(
 		}
 		if profile != nil {
 			entry.CreditStatus = profile.CreditStatus
-			entry.CreditHold = profile.EnforceCreditLimit &&
-				(profile.CreditStatus == customer.CreditStatusHold ||
-					profile.CreditStatus == customer.CreditStatusSuspended)
+			entry.CreditHold = profile.BlocksBilling()
 		}
 
 		if !entry.IsPrimary && profile != nil {

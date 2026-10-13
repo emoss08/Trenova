@@ -5,7 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -14,7 +16,8 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB *postgres.Connection
+	DB      *postgres.Connection
+	Factors factoringcompanyports.FactoringCompanyRepository `optional:"true"`
 }
 
 type Validator struct {
@@ -40,7 +43,57 @@ func NewValidator(p ValidatorParams) *Validator {
 				func(c *customer.Customer) pulid.ID { return c.StateID },
 				validationframework.NewUSStateReferenceCheck(p.DB),
 			).
+			WithCustomRule(
+				validationframework.
+					NewTenantedRule[*customer.Customer]("active_factoring_company").
+					OnBoth().
+					WithValidation(requireActiveFactor(p.Factors)),
+			).
 			Build(),
+	}
+}
+
+// requireActiveFactor accepts a customer assigned to a factoring company
+// only when that factor exists and is active: its invoices would otherwise
+// name a payee that cannot be used.
+func requireActiveFactor(
+	factors factoringcompanyports.FactoringCompanyRepository,
+) func(
+	context.Context,
+	*customer.Customer,
+	*validationframework.TenantedValidationContext,
+	*errortypes.MultiError,
+) error {
+	return func(
+		ctx context.Context,
+		entity *customer.Customer,
+		_ *validationframework.TenantedValidationContext,
+		multiErr *errortypes.MultiError,
+	) error {
+		if factors == nil || entity.BillingProfile == nil ||
+			entity.BillingProfile.FactoringCompanyID == nil ||
+			entity.BillingProfile.FactoringCompanyID.IsNil() {
+			return nil
+		}
+		factor, err := factors.GetByID(ctx, factoringcompanyports.GetFactoringCompanyByIDRequest{
+			ID: *entity.BillingProfile.FactoringCompanyID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+		})
+		switch {
+		case errortypes.IsNotFoundError(err):
+			multiErr.Add("billingProfile.factoringCompanyId", errortypes.ErrInvalid,
+				"That factoring company does not exist")
+			return nil
+		case err != nil:
+			return err
+		case !factor.IsActive():
+			multiErr.Add("billingProfile.factoringCompanyId", errortypes.ErrInvalid,
+				"That factoring company is inactive. Choose an active one")
+		}
+		return nil
 	}
 }
 

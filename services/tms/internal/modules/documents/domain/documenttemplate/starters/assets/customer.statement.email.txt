@@ -1,0 +1,17 @@
+{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
+
+{{ if .IsMonthly }}{{ t "Your monthly statement of account is attached." }}{{ else }}{{ t "Your statement of account is attached." }}{{ end }}
+{{ if .Note }}
+{{ .Note }}
+{{ end }}
+{{ t "Statement date" }}: {{ .StatementDate }}
+{{ if .PeriodStart }}{{ t "Period" }}: {{ t "{0} to {1}" .PeriodStart .StatementDate }}
+{{ end }}{{ t "Balance due" }}: {{ .EndingBalance }}
+{{ if .PastDue }}{{ t "Past due" }}: {{ .PastDue }}
+{{ end }}{{ if .OpenItemCount }}{{ t "Open invoices" }}: {{ .OpenItemCount }}
+{{ end }}{{ if .AttachmentName }}{{ t "Attached" }}: {{ .AttachmentName }}
+{{ end }}{{ if .RemittanceInstructions }}
+{{ .RemittanceInstructions }}
+{{ end }}
+{{ t "If your records differ from this statement, reply to this message and we will reconcile it with you." }}
+{{ .CompanyName }}

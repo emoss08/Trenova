@@ -1,85 +1,96 @@
+import { containsWholePhrase, foldPhrase } from "@/lib/whole-phrase";
 import type { GlobalSearchGroup } from "@/services/global-search";
-import { isGlobalSearchEntityType } from "@/services/global-search";
+import { isGlobalSearchEntityType, type GlobalSearchEntityType } from "@/services/global-search";
+import type { AssistantEntityRef } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { fuzzyScore, rankByFuzzyScore, type ScoredField } from "@trenova/shared/lib/fuzzy-score";
-import type { Notification } from "@trenova/shared/types/notification";
+import { rankMatches, type RankedMatch } from "@trenova/shared/lib/fuzzy-score";
 import { COMMAND_GROUP_ORDER, commandGroupLabel } from "./palette-commands";
-import { PALETTE_ENTITIES } from "./palette-entities";
+import { paletteEntityText, PALETTE_RECORD_TYPES } from "./palette-entities";
+import { commandFields, matchRecord, pageFields } from "./palette-fields";
 import {
   isRecordScope,
   recordItemKey,
   type PaletteAttention,
   type PaletteCommand,
   type PaletteItem,
+  type PaletteMatch,
   type PalettePage,
   type PaletteRecord,
   type PaletteScope,
   type PaletteSection,
 } from "./palette-model";
+import { subjectQuestions } from "./subject-questions";
 
 export const MIN_REMOTE_QUERY_LENGTH = 2;
 export const TOP_HIT_THRESHOLD = 0.9;
+export const HOME_RECENT_RECORDS = 5;
+export const RECORD_SECTION_CAP = 3;
+export const PAGE_SECTION_CAP = 4;
+export const COMMAND_SECTION_CAP = 3;
+export const SCOPED_LIMIT = 50;
 
-const HOME_RECENT_RECORDS = 5;
-const HOME_RECENT_PAGES = 4;
-const HOME_SUGGESTED = 6;
-const SEARCH_PAGES = 6;
-const SEARCH_COMMANDS = 6;
-const SCOPED_LIMIT = 50;
-
-export function pageFields(page: PalettePage): ScoredField[] {
-  return [
-    { text: page.title },
-    { text: page.keywords.join(" "), weight: 0.8, subsequence: false },
-    { text: page.trail, weight: 0.6, subsequence: false },
-  ];
+export interface RecentPaletteRecord {
+  record: PaletteRecord;
+  visitedAt: number;
 }
 
-export function commandFields(command: PaletteCommand): ScoredField[] {
-  return [
-    { text: command.label },
-    { text: command.keywords.join(" "), weight: 0.8, subsequence: false },
-    { text: command.description, weight: 0.5, subsequence: false },
-  ];
+export interface HomeInput {
+  recentRecords: readonly RecentPaletteRecord[];
+  attention: { rows: readonly PaletteAttention[]; loading: boolean };
+  pinnedPages: { pages: readonly PalettePage[]; loading: boolean };
+  quickActions: readonly PaletteCommand[];
 }
 
-function pageItem(page: PalettePage, extra?: { pinned?: boolean; recent?: boolean }): PaletteItem {
-  const prefix = extra?.pinned ? "pinned" : extra?.recent ? "recent-page" : "page";
-  return { kind: "page", key: `${prefix}:${page.href}`, page, ...extra };
+export interface RemoteState {
+  groups: readonly GlobalSearchGroup[];
+  loading: boolean;
+  error: boolean;
+  /** The request is one worth sending: a long enough query, or a scope to browse. */
+  ready: boolean;
 }
 
-function commandItem(command: PaletteCommand): PaletteItem {
-  return { kind: "command", key: `command:${command.id}`, command };
+export interface LocalRanking {
+  pages: RankedMatch<PalettePage>[];
+  commands: RankedMatch<PaletteCommand>[];
 }
 
-export function recordItem(record: PaletteRecord, recent = false): PaletteItem {
+export interface SearchInput {
+  query: string;
+  /** What the records were searched for: the query, or a question's search words. */
+  recordQuery: string;
+  scope: PaletteScope;
+  question: string | null;
+  remote: RemoteState;
+  ranking: LocalRanking;
+  recentRecords: readonly RecentPaletteRecord[];
+}
+
+export interface SearchResults {
+  sections: PaletteSection[];
+  /** Nothing matched the query anywhere it was looked for. */
+  empty: boolean;
+}
+
+function pageItem(page: PalettePage, extra?: { pinned?: boolean; match?: PaletteMatch }) {
+  const prefix = extra?.pinned ? "pinned" : "page";
+  return { kind: "page", key: `${prefix}:${page.href}`, page, ...extra } satisfies PaletteItem;
+}
+
+function commandItem(command: PaletteCommand, match?: PaletteMatch): PaletteItem {
+  return { kind: "command", key: `command:${command.id}`, command, match };
+}
+
+export function recordItem(
+  record: PaletteRecord,
+  extra?: { recent?: boolean; visitedAt?: number; match?: PaletteMatch },
+): PaletteItem {
   const key = recordItemKey(record.entityType, record.id);
-  return { kind: "record", key: recent ? `recent-${key}` : key, record, recent };
+  return { kind: "record", key: extra?.recent ? `recent-${key}` : key, record, ...extra };
 }
 
-/** Search hits as palette records; a type the palette does not know is dropped, not guessed at. */
-export function recordsFromGroups(
-  groups: readonly GlobalSearchGroup[],
-): Map<string, PaletteRecord[]> {
-  const byType = new Map<string, PaletteRecord[]>();
-  for (const group of groups) {
-    if (!isGlobalSearchEntityType(group.entityType)) {
-      continue;
-    }
-    const entityType = group.entityType;
-    byType.set(
-      entityType,
-      group.hits.map((hit) => ({
-        entityType,
-        id: hit.id,
-        title: hit.metadata?.proNumber || hit.title,
-        subtitle: hit.subtitle,
-        href: hit.href,
-        metadata: hit.metadata ?? {},
-      })),
-    );
-  }
-  return byType;
+export function askItem(question: string, subject: AssistantEntityRef | null = null): PaletteItem {
+  const scope = subject ? `${subject.type}:${subject.id}:` : "";
+  return { kind: "ask", key: `ask:${scope}${question}`, question, subject };
 }
 
 function section(
@@ -95,60 +106,136 @@ function nonEmpty(sections: PaletteSection[]): PaletteSection[] {
   return sections.filter((entry) => entry.items.length > 0 || entry.loading || entry.error);
 }
 
-export interface HomeInput {
-  recentRecords: readonly PaletteRecord[];
-  attention: { rows: readonly PaletteAttention[]; loading: boolean };
-  notifications: {
-    items: readonly { notification: Notification; href: string | null }[];
-    unread: number;
-    loading: boolean;
+export interface FoundRecords {
+  records: PaletteRecord[];
+  /** How many match in all, which the index can know beyond what it returned. */
+  total: number;
+}
+
+/** Search hits as palette records; a type the palette does not know is dropped, not guessed at. */
+export function recordsFromGroups(
+  groups: readonly GlobalSearchGroup[],
+): Map<GlobalSearchEntityType, FoundRecords> {
+  const byType = new Map<GlobalSearchEntityType, FoundRecords>();
+  for (const group of groups) {
+    if (!isGlobalSearchEntityType(group.entityType)) {
+      continue;
+    }
+    const entityType = group.entityType;
+    const records = group.hits.map((hit): PaletteRecord => ({
+      entityType,
+      id: hit.id,
+      title: hit.metadata?.proNumber || hit.title,
+      subtitle: hit.subtitle,
+      href: hit.href,
+      metadata: hit.metadata ?? {},
+    }));
+    byType.set(entityType, { records, total: Math.max(group.total ?? 0, records.length) });
+  }
+  return byType;
+}
+
+/** Records a question carries to Nova at most, as the server takes them. */
+export const MAX_ASK_MENTIONS = 10;
+const MIN_NAMED_TITLE_LENGTH = 3;
+
+/**
+ * The records a search found that a question names outright: a PRO number, a
+ * customer's or a driver's name, written in the question as the record carries
+ * it. Only those go to Nova as records the person named. A record the index
+ * found by a looser match, SEED-PAY-005 for "SEED-PAY-002", is left to Nova's
+ * own lookups rather than handed over as though it had been asked about.
+ */
+export function recordsNamedIn(
+  question: string,
+  groups: readonly GlobalSearchGroup[],
+): AssistantEntityRef[] {
+  const named: AssistantEntityRef[] = [];
+  const seen = new Set<string>();
+  for (const [, found] of recordsFromGroups(groups)) {
+    for (const record of found.records) {
+      const key = recordItemKey(record.entityType, record.id);
+      if (
+        foldPhrase(record.title).length < MIN_NAMED_TITLE_LENGTH ||
+        seen.has(key) ||
+        !containsWholePhrase(question, record.title)
+      ) {
+        continue;
+      }
+      seen.add(key);
+      named.push({ type: record.entityType, id: record.id, label: record.title });
+      if (named.length === MAX_ASK_MENTIONS) {
+        return named;
+      }
+    }
+  }
+  return named;
+}
+
+/**
+ * Pages and commands ranked against the query. They are matched in the
+ * browser, so they answer on the first key, and the same ranking feeds both
+ * the list and the scope tabs' counts.
+ */
+export function rankLocal(
+  query: string,
+  pages: readonly PalettePage[],
+  commands: readonly PaletteCommand[],
+  t: TranslateFn,
+): LocalRanking {
+  const translate = (text: string) => t(text);
+  return {
+    pages: rankMatches(query, pages, (page) => pageFields(page, translate)),
+    commands: rankMatches(query, commands, commandFields),
   };
-  pinnedPages: { pages: readonly PalettePage[]; loading: boolean };
-  recentPages: readonly PalettePage[];
-  suggested: readonly PaletteCommand[];
+}
+
+interface RankedRecord {
+  record: PaletteRecord;
+  match: PaletteMatch | null;
+  score: number;
+}
+
+/**
+ * The index found these; the palette's matcher says which characters to mark
+ * and orders them by the same rules as pages and commands. A hit the matcher
+ * cannot place (the index forgives a typo) keeps its place after the ones it
+ * can, and is shown without marks rather than dropped.
+ */
+function rankRecords(query: string, records: readonly PaletteRecord[]): RankedRecord[] {
+  return records
+    .map((record, index) => {
+      const match = matchRecord(query, record);
+      return { record, match, score: match?.score ?? 0, index };
+    })
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map(({ record, match, score }) => ({ record, match, score }));
 }
 
 /**
  * What the palette shows before anything is typed: where the person just
- * was, what is waiting on them, and the few things they most often start.
- * Each section loads on its own, so a slow count never holds up the rest.
+ * was, what is waiting on them, the pages they keep, and the few things they
+ * most often start. Each section loads on its own, so a slow count never
+ * holds up the rest.
  */
 export function buildHomeSections(input: HomeInput, t: TranslateFn): PaletteSection[] {
-  const pinnedHrefs = new Set(input.pinnedPages.pages.map((page) => page.href));
-  const recentPages = input.recentPages
-    .filter((page) => !pinnedHrefs.has(page.href))
-    .slice(0, HOME_RECENT_PAGES);
-
   return nonEmpty([
     section(
       "recent-records",
-      t("Recent records"),
-      input.recentRecords.slice(0, HOME_RECENT_RECORDS).map((record) => recordItem(record, true)),
+      t("Jump back in"),
+      input.recentRecords
+        .slice(0, HOME_RECENT_RECORDS)
+        .map(({ record, visitedAt }) => recordItem(record, { recent: true, visitedAt })),
     ),
     section(
       "attention",
-      t("Needs attention"),
+      t("Needs you"),
       input.attention.rows.map((attention) => ({
         kind: "attention",
         key: `attention:${attention.key}`,
         attention,
       })),
       { loading: input.attention.loading && input.attention.rows.length === 0, placeholderRows: 2 },
-    ),
-    section(
-      "notifications",
-      t("Unread notifications"),
-      input.notifications.items.map(({ notification, href }) => ({
-        kind: "notification",
-        key: `notification:${notification.id}`,
-        notification,
-        href,
-      })),
-      {
-        count: input.notifications.unread,
-        loading: input.notifications.loading && input.notifications.items.length === 0,
-        placeholderRows: 2,
-      },
     ),
     section(
       "pinned",
@@ -160,176 +247,322 @@ export function buildHomeSections(input: HomeInput, t: TranslateFn): PaletteSect
       },
     ),
     section(
-      "recent-pages",
-      t("Recently visited"),
-      recentPages.map((page) => pageItem(page, { recent: true })),
-    ),
-    section(
-      "suggested",
+      "quick-actions",
       t("Quick actions"),
-      input.suggested.slice(0, HOME_SUGGESTED).map(commandItem),
+      input.quickActions.map((command) => commandItem(command)),
     ),
   ]);
 }
 
-export interface RemoteState {
-  groups: readonly GlobalSearchGroup[];
-  loading: boolean;
-  error: boolean;
-  /** The query is long enough to have been sent. */
-  ready: boolean;
-}
-
-export interface SearchInput {
-  query: string;
-  scope: PaletteScope;
-  question: string | null;
-  remote: RemoteState;
-  pages: readonly PalettePage[];
-  commands: readonly PaletteCommand[];
-  recentRecords: readonly PaletteRecord[];
-}
-
-function groupPagesByModule(pages: readonly PalettePage[]): PaletteSection[] {
-  const byModule = new Map<string, PalettePage[]>();
-  for (const page of pages) {
-    const list = byModule.get(page.module) ?? [];
-    list.push(page);
-    byModule.set(page.module, list);
-  }
-  return Array.from(byModule, ([module, modulePages]) =>
-    section(
-      `module:${module}`,
-      module,
-      modulePages.map((page) => pageItem(page)),
-    ),
-  );
-}
-
-function groupCommands(commands: readonly PaletteCommand[], t: TranslateFn): PaletteSection[] {
+function groupCommands(
+  ranked: readonly RankedMatch<PaletteCommand>[],
+  t: TranslateFn,
+): PaletteSection[] {
   return COMMAND_GROUP_ORDER.map((group) =>
     section(
       `commands:${group}`,
       commandGroupLabel(group, t),
-      commands.filter((command) => command.group === group).map(commandItem),
+      ranked
+        .filter(({ entry }) => entry.group === group)
+        .map(({ entry, match }) => commandItem(entry, match)),
     ),
   );
 }
 
-function recordSections(
-  remote: RemoteState,
-  scope: PaletteScope,
-  t: TranslateFn,
-): PaletteSection[] {
-  if (!remote.ready) {
-    return [];
-  }
-  const types = isRecordScope(scope)
-    ? [scope]
-    : (Object.keys(PALETTE_ENTITIES) as (keyof typeof PALETTE_ENTITIES)[]);
+function remoteStatusSections(remote: RemoteState, t: TranslateFn): PaletteSection[] | null {
   if (remote.error) {
     return [section("records-error", t("Records"), [], { error: true })];
   }
   if (remote.loading && remote.groups.length === 0) {
     return [section("records-loading", t("Records"), [], { loading: true, placeholderRows: 3 })];
   }
+  return null;
+}
 
-  const byType = recordsFromGroups(remote.groups);
-  return types.map((type) =>
+/** One kind of record with nothing typed: what was opened last, then the rest of them. */
+function browseRecordScope(
+  scope: GlobalSearchEntityType,
+  input: SearchInput,
+  t: TranslateFn,
+): PaletteSection[] {
+  const recent = input.recentRecords.filter(({ record }) => record.entityType === scope);
+  const recentIds = new Set(recent.map(({ record }) => record.id));
+  const found = recordsFromGroups(input.remote.groups).get(scope);
+  const rest = (found?.records ?? []).filter((record) => !recentIds.has(record.id));
+
+  return nonEmpty([
     section(
-      `records:${type}`,
-      t(PALETTE_ENTITIES[type].pluralLabel),
-      (byType.get(type) ?? []).map((record) => recordItem(record)),
+      "recent-records",
+      t("Recent"),
+      recent.map(({ record, visitedAt }) => recordItem(record, { recent: true, visitedAt })),
     ),
-  );
+    ...(remoteStatusSections(input.remote, t) ??
+      (input.remote.ready
+        ? [
+            section(
+              `records:${scope}`,
+              paletteEntityText(scope, t).all,
+              rest.map((record) => recordItem(record)),
+              { count: found ? Math.max(found.total - recent.length, rest.length) : undefined },
+            ),
+          ]
+        : [])),
+  ]);
+}
+
+function fallbackAsk(query: string, empty: boolean, t: TranslateFn): PaletteSection {
+  return section("ask-fallback", empty ? t("Try asking instead") : t("Nova"), [askItem(query)]);
+}
+
+function widenSection(query: string, t: TranslateFn): PaletteSection {
+  return section("widen", t("Or"), [{ kind: "widen", key: "widen:all", query }]);
 }
 
 /**
  * What the palette shows for a query, in a fixed order a person can learn:
- * the one obvious answer first when there is one, then records, pages and
- * commands. The palette does its own ranking so the order never shifts
- * under the cursor the way a DOM-sorting filter does.
+ * Nova first when it is a question, the one obvious answer when there is one,
+ * then records, pages and commands, and always a way to ask instead. The
+ * palette does its own ranking so the order never shifts under the cursor
+ * the way a DOM-sorting filter does.
  */
-export function buildSearchSections(input: SearchInput, t: TranslateFn): PaletteSection[] {
-  const { query, scope } = input;
-  const trimmed = query.trim();
-
-  if (scope === "pages") {
-    const ranked = rankByFuzzyScore(trimmed, input.pages, pageFields);
-    return nonEmpty(
-      trimmed === ""
-        ? groupPagesByModule(ranked)
-        : [
-            section(
-              "pages",
-              t("Pages"),
-              ranked.slice(0, SCOPED_LIMIT).map((page) => pageItem(page)),
-            ),
-          ],
-    );
-  }
+export function buildSearchSections(input: SearchInput, t: TranslateFn): SearchResults {
+  const { scope, ranking } = input;
+  const query = input.query.trim();
 
   if (scope === "commands") {
-    return nonEmpty(groupCommands(rankByFuzzyScore(trimmed, input.commands, commandFields), t));
+    const sections = nonEmpty(groupCommands(ranking.commands, t));
+    return { sections, empty: query !== "" && sections.length === 0 };
   }
 
-  if (isRecordScope(scope)) {
-    if (trimmed.length < MIN_REMOTE_QUERY_LENGTH) {
-      return nonEmpty([
-        section(
-          "recent-records",
-          t("Recent"),
-          input.recentRecords
-            .filter((record) => record.entityType === scope)
-            .map((record) => recordItem(record, true)),
-        ),
-      ]);
+  if (scope === "pages") {
+    if (query === "") {
+      return {
+        sections: nonEmpty([
+          section(
+            "pages",
+            t("All pages"),
+            ranking.pages.map(({ entry }) => pageItem(entry)),
+          ),
+        ]),
+        empty: false,
+      };
     }
-    return nonEmpty(recordSections(input.remote, scope, t));
+    const items = ranking.pages
+      .slice(0, SCOPED_LIMIT)
+      .map(({ entry, match }) => pageItem(entry, { match }));
+    const empty = items.length === 0;
+    return {
+      sections: nonEmpty([
+        section("pages", t("Pages"), items, { count: ranking.pages.length }),
+        ...(empty ? [widenSection(query, t)] : []),
+      ]),
+      empty,
+    };
+  }
+
+  if (isRecordScope(scope) && query === "") {
+    return { sections: browseRecordScope(scope, input, t), empty: false };
   }
 
   const sections: PaletteSection[] = [];
   if (input.question !== null) {
+    sections.push(section("nova", t("Nova"), [askItem(input.question)]));
+  }
+
+  if (isRecordScope(scope)) {
+    const status = remoteStatusSections(input.remote, t);
+    if (status) {
+      return { sections: [...sections, ...status], empty: false };
+    }
+    const found = recordsFromGroups(input.remote.groups).get(scope);
+    const ranked = rankRecords(input.recordQuery, found?.records ?? []);
+    const empty = input.remote.ready && !input.remote.loading && ranked.length === 0;
     sections.push(
-      section("ask", t("Assistant"), [{ kind: "ask", key: "ask", question: input.question }]),
+      section(
+        `records:${scope}`,
+        paletteEntityText(scope, t).plural,
+        ranked
+          .slice(0, SCOPED_LIMIT)
+          .map(({ record, match }) => recordItem(record, { match: match ?? undefined })),
+        { count: found?.total },
+      ),
     );
+    if (input.question === null) {
+      sections.push(fallbackAsk(query, empty, t));
+    }
+    if (empty) {
+      sections.push(widenSection(query, t));
+    }
+    return { sections: nonEmpty(sections), empty: empty && input.question === null };
   }
 
-  const pages = rankByFuzzyScore(trimmed, input.pages, pageFields);
-  const commands = rankByFuzzyScore(trimmed, input.commands, commandFields);
-
-  const topPage = pages[0];
-  const topCommand = commands[0];
-  const topPageScore = topPage ? fuzzyScore(trimmed, pageFields(topPage)) : 0;
-  const topCommandScore = topCommand ? fuzzyScore(trimmed, commandFields(topCommand)) : 0;
-  let topHit: PaletteItem | null = null;
-  if (Math.max(topPageScore, topCommandScore) >= TOP_HIT_THRESHOLD) {
-    topHit =
-      topPageScore >= topCommandScore && topPage ? pageItem(topPage) : commandItem(topCommand!);
-    sections.push(section("top-hit", t("Top hit"), [topHit]));
-  }
-
-  sections.push(...recordSections(input.remote, scope, t));
-  sections.push(
-    section(
-      "pages",
-      t("Pages"),
-      pages
-        .map((page) => pageItem(page))
-        .filter((item) => item.key !== topHit?.key)
-        .slice(0, SEARCH_PAGES),
-    ),
-    section(
-      "commands",
-      t("Commands"),
-      commands
-        .map(commandItem)
-        .filter((item) => item.key !== topHit?.key)
-        .slice(0, SEARCH_COMMANDS),
-    ),
+  const found = recordsFromGroups(input.remote.groups);
+  const recordsByType = new Map(
+    PALETTE_RECORD_TYPES.map((type) => [
+      type,
+      rankRecords(input.recordQuery, found.get(type)?.records ?? []),
+    ]),
   );
 
-  return nonEmpty(sections);
+  type Candidate = { item: PaletteItem; score: number };
+  const candidates: Candidate[] = [];
+  for (const type of PALETTE_RECORD_TYPES) {
+    const best = recordsByType.get(type)?.[0];
+    if (best?.match) {
+      candidates.push({
+        item: recordItem(best.record, { match: best.match }),
+        score: best.score,
+      });
+    }
+  }
+  const topPage = ranking.pages[0];
+  if (topPage) {
+    candidates.push({
+      item: pageItem(topPage.entry, { match: topPage.match }),
+      score: topPage.match.score,
+    });
+  }
+  const topCommand = ranking.commands[0];
+  if (topCommand) {
+    candidates.push({
+      item: commandItem(topCommand.entry, topCommand.match),
+      score: topCommand.match.score,
+    });
+  }
+  const top = candidates.reduce<Candidate | null>(
+    (best, candidate) => (best === null || candidate.score > best.score ? candidate : best),
+    null,
+  );
+  const topHit = top && top.score >= TOP_HIT_THRESHOLD ? top.item : null;
+  if (topHit) {
+    sections.push(section("top-hit", t("Top hit"), [topHit]));
+  }
+  const notTop = (item: PaletteItem) => item.key !== topHit?.key;
+  const countWithTop = (items: number, kind: (item: PaletteItem) => boolean) =>
+    items + (topHit && kind(topHit) ? 1 : 0);
+
+  const status = remoteStatusSections(input.remote, t);
+  if (status) {
+    sections.push(...status);
+  } else {
+    for (const type of PALETTE_RECORD_TYPES) {
+      const items = (recordsByType.get(type) ?? [])
+        .map(({ record, match }) => recordItem(record, { match: match ?? undefined }))
+        .filter(notTop);
+      const total = Math.max(found.get(type)?.total ?? 0, items.length);
+      const count = countWithTop(
+        total,
+        (item) => item.kind === "record" && item.record.entityType === type,
+      );
+      sections.push(
+        section(
+          `records:${type}`,
+          paletteEntityText(type, t).plural,
+          items.slice(0, RECORD_SECTION_CAP),
+          {
+            count,
+            seeAll: total > RECORD_SECTION_CAP ? type : undefined,
+          },
+        ),
+      );
+    }
+  }
+
+  const pageItems = ranking.pages
+    .map(({ entry, match }) => pageItem(entry, { match }))
+    .filter(notTop);
+  sections.push(
+    section("pages", t("Pages"), pageItems.slice(0, PAGE_SECTION_CAP), {
+      count: countWithTop(pageItems.length, (item) => item.kind === "page"),
+      seeAll: pageItems.length > PAGE_SECTION_CAP ? "pages" : undefined,
+    }),
+  );
+
+  const commandItems = ranking.commands
+    .map(({ entry, match }) => commandItem(entry, match))
+    .filter(notTop);
+  sections.push(
+    section("commands", t("Commands"), commandItems.slice(0, COMMAND_SECTION_CAP), {
+      count: countWithTop(commandItems.length, (item) => item.kind === "command"),
+      seeAll: commandItems.length > COMMAND_SECTION_CAP ? "commands" : undefined,
+    }),
+  );
+
+  const matchedSomething =
+    topHit !== null ||
+    pageItems.length > 0 ||
+    commandItems.length > 0 ||
+    [...recordsByType.values()].some((records) => records.length > 0);
+  const settled = !input.remote.loading && !input.remote.error;
+  const empty = settled && !matchedSomething && input.question === null;
+
+  if (input.question === null && query !== "") {
+    sections.push(fallbackAsk(query, empty, t));
+  }
+
+  return { sections: nonEmpty(sections), empty };
+}
+
+/**
+ * Asking about one record: the questions worth asking about that kind of
+ * record before anything is typed, and once one is answered the ones left
+ * under "Ask something else". A typed question is the only row.
+ */
+export function buildSubjectSections(
+  subject: AssistantEntityRef,
+  query: string,
+  answered: string | null,
+  t: TranslateFn,
+): PaletteSection[] {
+  const typed = query.trim();
+  if (typed !== "") {
+    return answered === typed
+      ? []
+      : [section("ask", t("Ask Nova about {0}", subject.label), [askItem(typed, subject)])];
+  }
+  const questions = subjectQuestions(subject.type, t).filter((question) => question !== answered);
+  return nonEmpty([
+    section(
+      "ask",
+      answered === null ? t("Ask Nova about {0}", subject.label) : t("Ask something else"),
+      questions.map((question) => askItem(question, subject)),
+    ),
+  ]);
+}
+
+export type ScopeCountMode = "search" | "commands";
+
+/**
+ * What each scope tab counts for the query. A record type's count waits for
+ * its search to settle, so a tab never shows a figure about to change. Command
+ * mode searched only commands, so the tabs it skipped read zero rather than a
+ * count it never ran. A question searches records by its search words, so its
+ * tabs count what that found.
+ */
+export function scopeCounts(
+  ranking: LocalRanking,
+  remote: RemoteState,
+  mode: ScopeCountMode = "search",
+): Partial<Record<PaletteScope, number>> {
+  const counts: Partial<Record<PaletteScope, number>> = {
+    pages: mode === "commands" ? 0 : ranking.pages.length,
+    commands: ranking.commands.length,
+  };
+  let all = (counts.pages ?? 0) + ranking.commands.length;
+  if (mode === "commands") {
+    for (const type of PALETTE_RECORD_TYPES) {
+      counts[type] = 0;
+    }
+  } else if (remote.ready && !remote.loading && !remote.error) {
+    const found = recordsFromGroups(remote.groups);
+    for (const type of PALETTE_RECORD_TYPES) {
+      const total = found.get(type)?.total ?? 0;
+      counts[type] = total;
+      all += total;
+    }
+  }
+  counts.all = all;
+  return counts;
 }
 
 /** Every item in the order it is drawn, for keyboard shortcuts and the preview. */

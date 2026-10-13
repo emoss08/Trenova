@@ -34,15 +34,18 @@ describe("AssignmentService.recordStopActual", () => {
     });
 
     const service = new AssignmentService();
-    const move = await service.recordStopActual("sm_1", "stp_1", {
-      action: "Arrive",
-      occurredAt: 1767787200,
-    });
+    const move = await service.recordStopActual(
+      "sm_1",
+      "stp_1",
+      { action: "Arrive", occurredAt: 1767787200 },
+      { idempotencyKey: "key-1" },
+    );
 
-    expect(api.post).toHaveBeenCalledWith("/shipment-moves/sm_1/stops/stp_1/record-actual/", {
-      action: "Arrive",
-      occurredAt: 1767787200,
-    });
+    expect(api.post).toHaveBeenCalledWith(
+      "/shipment-moves/sm_1/stops/stp_1/record-actual/",
+      { action: "Arrive", occurredAt: 1767787200 },
+      { headers: { "Idempotency-Key": "key-1" } },
+    );
     expect(move.status).toBe("InTransit");
     expect(move.stops[0]?.actualArrival).toBe(1767787200);
   });
@@ -58,8 +61,10 @@ describe("AssignmentService.recordStopActual", () => {
     const service = new AssignmentService();
     await service.recordStopActual("sm_1", "stp_2", { action: "Depart" });
 
-    expect(api.post).toHaveBeenCalledWith("/shipment-moves/sm_1/stops/stp_2/record-actual/", {
-      action: "Depart",
-    });
+    expect(api.post).toHaveBeenCalledWith(
+      "/shipment-moves/sm_1/stops/stp_2/record-actual/",
+      { action: "Depart" },
+      { headers: {} },
+    );
   });
 });

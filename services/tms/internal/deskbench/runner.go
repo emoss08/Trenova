@@ -179,7 +179,7 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 	result.Model = providerModel(provider)
 
 	b.tidied.Do(func() {
-		if tidyErr := b.runStatements(ctx, session, benchLeftovers); tidyErr != nil {
+		if tidyErr := b.runStatements(ctx, session, benchLeftovers()); tidyErr != nil {
 			b.live.Line("bench", "could not cancel what earlier bench runs left open: %v", tidyErr)
 		}
 	})
@@ -238,6 +238,20 @@ func (b *Bench) openCase(
 ) (*Conversation, error) {
 	if planned.scenario.Formula != nil {
 		conv, err := session.OpenFormula(ctx, planned.label(), planned.scenario.Formula)
+		if err != nil {
+			return nil, err
+		}
+		conv.Provider = provider
+
+		return conv, nil
+	}
+	if planned.scenario.Palette {
+		conv, err := session.OpenPalette(
+			ctx,
+			planned.label(),
+			fmt.Sprintf("%s #%d", planned.scenario.Name, planned.repeat),
+			planned.scenario.Steps[0].Say,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -313,6 +327,9 @@ func (b *Bench) runStep(
 	} else {
 		result.Kind = "say"
 		utterance, err := step.Utterance()
+		if err == nil {
+			err = b.findMentions(ctx, session, step, &utterance)
+		}
 		if err == nil && step.Agent != "" {
 			utterance.Directed, err = conv.directedAgent(ctx, step.Agent)
 		}

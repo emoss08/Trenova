@@ -242,6 +242,38 @@ func (o *DetentionOccurrence) ReleaseBilling() error {
 	return nil
 }
 
+type InvoiceBillingChange uint8
+
+const (
+	InvoiceBillingUnchanged InvoiceBillingChange = iota
+	InvoiceBillingMarked
+	InvoiceBillingReleased
+)
+
+func InvoiceSettledStatuses() []OccurrenceStatus {
+	return []OccurrenceStatus{
+		OccurrenceStatusPending,
+		OccurrenceStatusApproved,
+		OccurrenceStatusBilled,
+		OccurrenceStatusDisputed,
+	}
+}
+
+func (o *DetentionOccurrence) FollowInvoices(invoiced bool) (InvoiceBillingChange, error) {
+	if !o.Status.IsBillable() {
+		return InvoiceBillingUnchanged, nil
+	}
+
+	switch {
+	case invoiced && o.Status != OccurrenceStatusBilled:
+		return InvoiceBillingMarked, o.MarkBilled()
+	case !invoiced && o.Status == OccurrenceStatusBilled:
+		return InvoiceBillingReleased, o.ReleaseBilling()
+	default:
+		return InvoiceBillingUnchanged, nil
+	}
+}
+
 // Dispute records a customer rejection so the claim can be worked without
 // losing the original computation.
 func (o *DetentionOccurrence) Dispute(note string, now int64) error {

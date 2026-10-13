@@ -500,6 +500,10 @@ type ListBillingTransferCandidateIDsQuery struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 	Status shipment.Status          `json:"status"`
 	Limit  int                      `json:"limit"`
+	// RecentFirst orders by last change rather than age, so a scan bounded to
+	// a window reaches the shipments that just became billable before the ones
+	// that have been sitting unbillable for weeks.
+	RecentFirst bool `json:"recentFirst"`
 }
 
 type BillingTransferCandidateIDsResult struct {

@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -217,5 +218,152 @@ func TestClassify_BoundsWhatItSends(t *testing.T) {
 		if section.Title == "Body" {
 			assert.LessOrEqual(t, len([]rune(section.Content)), maxClassifierBodyRunes)
 		}
+	}
+}
+
+type stubHints struct {
+	hints  []*triage.SenderHint
+	domain string
+}
+
+func (s *stubHints) HintsFor(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	domain string,
+) ([]*triage.SenderHint, error) {
+	s.domain = domain
+
+	return s.hints, nil
+}
+
+func podMessage() *inboundmessage.InboundMessage {
+	return &inboundmessage.InboundMessage{
+		ID:           pulid.MustNew("imsg_"),
+		FromAddress:  "luis@drivers.trenova.example",
+		SenderDomain: "drivers.trenova.example",
+		Subject:      "POD for BOL 77120",
+		TextBody:     "Delivered Oct 6, 15:12. Received by R. Patel.\n2 pallets  short on the second drop.",
+	}
+}
+
+func TestClassify_ReadsGroundedFacts(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := classifierFor(`{
+		"classification": "ProofOfDelivery",
+		"confidence": 0.93,
+		"reasoning": "A signed delivery receipt.",
+		"facts": [
+			{"key": "bol", "label": "BOL", "value": "77120", "quote": "BOL 77120", "tone": "Neutral"},
+			{"key": "receivedBy", "label": "Received by", "value": "R. Patel", "quote": "received by r. patel", "tone": "Neutral"},
+			{"key": "exceptions", "label": "Exceptions", "value": "2 pallets short", "quote": "2 pallets short on the second drop", "tone": "Warning"},
+			{"key": "seal", "label": "Seal", "value": "SL-998", "quote": "Seal SL-998", "tone": "Neutral"},
+			{"key": "bol", "label": "BOL again", "value": "77120", "quote": "BOL 77120", "tone": "Neutral"},
+			{"key": "", "label": "Blank", "value": "x", "quote": "Delivered", "tone": "Neutral"},
+			{"key": "delivered", "label": "Delivered", "value": "Oct 6, 15:12", "quote": "Delivered Oct 6, 15:12", "tone": "Urgent"}
+		]
+	}`, nil)
+
+	got := svc.Classify(t.Context(), podMessage(), pagination.TenantInfo{})
+
+	require.True(t, got.Narrated)
+	keys := make([]string, 0, len(got.Facts))
+	for _, fact := range got.Facts {
+		keys = append(keys, fact.Key)
+	}
+	assert.Equal(t, []string{"bol", "receivedBy", "exceptions", "delivered"}, keys,
+		"a fact not in the mail, a repeated key and a blank key are all dropped")
+	assert.Equal(t, inboundmessage.FactToneWarning, got.Facts[2].Tone)
+	assert.Equal(t, inboundmessage.FactToneNeutral, got.Facts[3].Tone,
+		"a tone the reader does not know is read as neutral")
+}
+
+func TestClassify_AReplyWithoutFactsStillClassifies(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := classifierFor(
+		`{"classification":"Tender","confidence":0.91,"reasoning":"Offers a load."}`, nil,
+	)
+
+	got := svc.Classify(t.Context(), tenderMessage(), pagination.TenantInfo{})
+
+	assert.True(t, got.Narrated)
+	assert.Empty(t, got.Facts)
+}
+
+func TestFactsFrom_KeepsAtMostTwelve(t *testing.T) {
+	t.Parallel()
+
+	raw := make([]factPayload, 0, MaxFacts+5)
+	for i := range MaxFacts + 5 {
+		raw = append(raw, factPayload{
+			Key:   "fact" + string(rune('a'+i)),
+			Label: "Fact",
+			Value: "v",
+			Quote: "q",
+			Tone:  "Neutral",
+		})
+	}
+
+	assert.Len(t, factsFrom(raw), MaxFacts)
+}
+
+func TestClassifierSchema_AsksForFacts(t *testing.T) {
+	t.Parallel()
+
+	schema := classifierSchema()
+	required, ok := schema["required"].([]string)
+	require.True(t, ok)
+	assert.Contains(t, required, "facts")
+
+	properties, ok := schema["properties"].(map[string]any)
+	require.True(t, ok)
+	facts, ok := properties["facts"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, MaxFacts, facts["maxItems"])
+}
+
+/*
+The organization's own corrections are the one thing the classifier is told to
+trust, and they say only a domain and a kind, so nothing the sender wrote reaches
+a trusted section.
+*/
+func TestClassify_PassesTheSendersHintsAsTrustedContext(t *testing.T) {
+	t.Parallel()
+
+	svc, completion := classifierFor(
+		`{"classification":"Invoice","confidence":0.8,"reasoning":"x","facts":[]}`, nil,
+	)
+	hints := &stubHints{hints: []*triage.SenderHint{
+		{SenderDomain: "drivers.trenova.example", Classification: inboundmessage.ClassificationInvoice, Corrections: 3},
+		{SenderDomain: "drivers.trenova.example", Classification: inboundmessage.Classification("Bogus"), Corrections: 9},
+	}}
+	svc.hints = hints
+
+	svc.Classify(t.Context(), podMessage(), pagination.TenantInfo{})
+
+	assert.Equal(t, "drivers.trenova.example", hints.domain)
+	trusted := make([]string, 0, 1)
+	for _, section := range completion.got.Context.Sections {
+		if section.Trusted {
+			trusted = append(trusted, section.Content)
+		}
+	}
+	require.Len(t, trusted, 1)
+	assert.Equal(t, "People corrected mail from drivers.trenova.example to Invoice 3 times.", trusted[0])
+}
+
+func TestClassify_NoHintsNoTrustedSection(t *testing.T) {
+	t.Parallel()
+
+	svc, completion := classifierFor(
+		`{"classification":"Invoice","confidence":0.8,"reasoning":"x","facts":[]}`, nil,
+	)
+	svc.hints = &stubHints{}
+
+	svc.Classify(t.Context(), podMessage(), pagination.TenantInfo{})
+
+	for _, section := range completion.got.Context.Sections {
+		assert.False(t, section.Trusted)
 	}
 }

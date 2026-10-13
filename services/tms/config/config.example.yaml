@@ -97,11 +97,6 @@ monitoring:
 
 # PostgreSQL database configuration
 database:
-  # PostgreSQL is the reference database for Trenova and the only supported
-  # production target. "sqlite" is a development-only convenience for
-  # contributors without a Postgres/PostGIS toolchain; see https://github.com/emoss08/trenova-documentation/blob/main/docs/databases.md
-  # for the feature gaps it implies.
-  driver: postgres # postgres | sqlite
   host: localhost # Database host
   port: 5432 # Database port
   name: trenova_go_db # Database name
@@ -133,14 +128,6 @@ database:
   migrator:
     user: ""
     password: ""
-  # Only read when driver is "sqlite".
-  sqlite:
-    path: trenova.db # Database file path
-    journalMode: WAL # WAL keeps readers concurrent with the single writer
-    synchronous: NORMAL # NORMAL is the right durability trade for a dev database
-    busyTimeout: 5s # How long a blocked writer waits before failing
-    foreignKeys: true # SQLite enforces foreign keys only when asked
-    cacheSizeKb: 64000 # Page cache size in KiB
 
 # Search configuration
 search:
@@ -148,7 +135,7 @@ search:
   defaultLimit: 8 # Default number of hits returned per entity group
   meilisearch:
     url: http://localhost:7700 # Meilisearch base URL
-    apiKey: "" # Optional API key
+    apiKey: CErP8m5HUQUTaporAjiCsNNazOoACqS2bw3IGRsi94I # Matches MEILI_MASTER_KEY in dev/compose.yml
     timeout: 3s # Request timeout
     indexes:
       shipments: shipments
@@ -206,6 +193,8 @@ ai:
   completionTimeout: 5m # One blocking call to a model, including the wait before it answers
   streamIdleTimeout: 5m # How long a streamed reply may go silent; reasoning models think for minutes before their first token
   privateNetworkProviders: true # Let organizations point a provider at a private or loopback address (self-hosted models). Set false when many organizations share this server
+  serverCloudCredentials: false # Let a Bedrock, Vertex AI or Claude Platform provider sign in with this server's own cloud identity (IAM role, application default credentials). Leave false when many organizations share this server
+  cacheDiagnostics: false # Ask the Claude API where each agent turn's prompt stopped matching the call before it, and log and trace why the cache missed. Claude API providers only
   maxRetries: 2 # Retries for transient failures
   modelPriceReference: true # Estimate a model's price from OpenRouter's public catalog when its provider lists none; set false to make no outside call
   modelPriceReferenceTtl: 24h # How long that catalog is kept before it is read again
@@ -392,3 +381,12 @@ accounting:
   # and TRENOVA_XERO_WEBHOOK_KEY rather than this file.
   xero:
     redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/xero/callback
+  # Business Central signs in through a Microsoft Entra app: register a multitenant web app in
+  # entra.microsoft.com, add the redirect URI <webBaseUrl>/admin/integrations/business-central/callback,
+  # grant the delegated Dynamics 365 Business Central permission Financials.ReadWrite.All and
+  # create a client secret. Trenova subscribes to Business Central's webhooks itself and renews
+  # them every few days; the notification address must be public https. Instance secrets come
+  # from TRENOVA_BUSINESSCENTRAL_CLIENT_ID and TRENOVA_BUSINESSCENTRAL_CLIENT_SECRET.
+  businessCentral:
+    redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/business-central/callback
+    webhookBaseUrl: "" # Public https API origin with /api/v1; defaults to app.webBaseUrl + /api/v1

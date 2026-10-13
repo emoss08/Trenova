@@ -490,8 +490,10 @@
   --sidebar-border: oklch(0.94 0 0);
   --sidebar-ring: var(--ring);
 
-  --highlight: oklch(0.909 0.104 87);
+  /* Trenova's yellow, #ffa31a. A search match is marked with a fill mixed from it. */
+  --highlight: oklch(0.79 0.168 68.5);
   --highlight-foreground: oklch(0.205 0 0);
+  --highlight-fill: color-mix(in oklch, var(--highlight) 32%, transparent);
 
   /* Density ---------------------------------------------------------------
      Row rhythm, named once. Table rows were sized by whatever padding the
@@ -675,8 +677,9 @@
   --sidebar-border: oklch(0.218 0 0);
   --sidebar-ring: var(--ring);
 
-  --highlight: oklch(0.82 0.14 87);
+  --highlight: oklch(0.79 0.168 68.5);
   --highlight-foreground: oklch(0 0 0);
+  --highlight-fill: color-mix(in oklch, var(--highlight) 26%, transparent);
 }
 
 /* ---------------------------------------------------------------------------
@@ -934,6 +937,7 @@
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
   --color-foreground-subtle: var(--foreground-subtle);
+  --color-foreground-faint: var(--foreground-faint);
   --color-foreground-on-solid: var(--foreground-on-solid);
 
   /* Borders */
@@ -1111,6 +1115,7 @@
 
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
+  --color-highlight-fill: var(--highlight-fill);
 
   /* Compatibility colour aliases */
   --color-background: var(--background);
@@ -1228,6 +1233,15 @@
   --animate-success: success 360ms var(--ease-spring) both;
   --animate-word-in: word-in 420ms var(--ease-settle) both;
   --animate-live-ping: live-ping 1.6s var(--ease-swift) infinite;
+
+  /* Triage's motion. A message that arrives while its folder is open drops
+     into the list with a small overshoot and a brand wash that fades over a
+     few seconds (opacity on an overlay, never a background transition). Nova's
+     colours run round its ring while the pointer is on the Briefing or while
+     Nova works, and stop when that ends; the ring itself never moves. */
+  --animate-arrive: arrive 700ms var(--ease-spring) both;
+  --animate-arrive-glow: arrive-glow 3.4s var(--ease-swift) both;
+  --animate-nova-spin: nova-turn 1.6s linear infinite;
 
   /* The Desk's motion vocabulary.
 
@@ -1348,6 +1362,39 @@
   --color-desk-drawer: var(--desk-drawer);
   --color-daylight-sun: var(--daylight-sun);
   --color-daylight-moon: var(--daylight-moon);
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -14px, 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@property --nova-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes nova-turn {
+  to {
+    --nova-angle: 360deg;
+  }
+}
+
+@keyframes arrive-glow {
+  0%,
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes land {
@@ -1977,6 +2024,28 @@
    @utility declared here reaches the compiled stylesheet. */
 
 /* Focus landed on the element itself. */
+/* Nova's mark: a ring painted with a conic sweep of three categorical accents,
+   so it reads as Nova's own and never as a tone. The sweep starts from
+   --nova-angle, which nova-turn animates, so the colours travel round a ring
+   that stays where it is. */
+@utility nova-ring {
+  border-radius: 9999px;
+  background: conic-gradient(
+    from calc(200deg + var(--nova-angle)),
+    var(--accent-indigo),
+    var(--accent-violet),
+    var(--accent-rose),
+    var(--accent-indigo)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent 53.5%,
+    black 55%,
+    black 86.5%,
+    transparent 88%
+  );
+}
+
 @utility ui-focus-ring {
   &:focus-visible {
     outline: none;
@@ -2175,6 +2244,7 @@
 
   [class*="animate-breathe"],
   [class*="animate-desk-"],
+  [class*="animate-nova-spin"],
   .ui-stream-caret::after {
     animation: none !important;
   }

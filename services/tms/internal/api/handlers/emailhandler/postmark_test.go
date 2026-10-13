@@ -11,23 +11,27 @@ func TestPostmarkEventTypeMapsSupportedRecordTypes(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name       string
-		recordType string
-		expected   email.EventType
+		name     string
+		payload  postmarkWebhookPayload
+		expected email.EventType
+		known    bool
 	}{
-		{name: "delivery", recordType: "Delivery", expected: email.EventTypeDelivered},
-		{name: "bounce", recordType: "Bounce", expected: email.EventTypeBounced},
-		{name: "spam complaint", recordType: "SpamComplaint", expected: email.EventTypeComplained},
-		{name: "open", recordType: "Open", expected: email.EventTypeOpened},
-		{name: "click", recordType: "Click", expected: email.EventTypeClicked},
-		{name: "unknown", recordType: "SubscriptionChange", expected: email.EventTypeFailed},
+		{name: "delivery", payload: postmarkWebhookPayload{RecordType: "Delivery"}, expected: email.EventTypeDelivered, known: true},
+		{name: "hard bounce", payload: postmarkWebhookPayload{RecordType: "Bounce", Type: "HardBounce"}, expected: email.EventTypeBounced, known: true},
+		{name: "soft bounce is not a failure", payload: postmarkWebhookPayload{RecordType: "Bounce", Type: "SoftBounce"}},
+		{name: "spam complaint", payload: postmarkWebhookPayload{RecordType: "SpamComplaint"}, expected: email.EventTypeComplained, known: true},
+		{name: "open", payload: postmarkWebhookPayload{RecordType: "Open"}, expected: email.EventTypeOpened, known: true},
+		{name: "click", payload: postmarkWebhookPayload{RecordType: "Click"}, expected: email.EventTypeClicked, known: true},
+		{name: "unknown is ignored", payload: postmarkWebhookPayload{RecordType: "SubscriptionChange"}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, tt.expected, postmarkEventType(tt.recordType))
+			got, known := postmarkEventType(&tt.payload)
+			require.Equal(t, tt.known, known)
+			require.Equal(t, tt.expected, got)
 		})
 	}
 }
@@ -45,14 +49,14 @@ func TestPostmarkProviderEventIDFallsBackToDeterministicFields(t *testing.T) {
 	require.Equal(
 		t,
 		"Delivery:message-id:ops@example.com:2026-05-29T12:00:00Z",
-		postmarkProviderEventID(payload),
+		postmarkProviderEventID(&payload),
 	)
 }
 
 func TestPostmarkProviderEventIDUsesProviderIDWhenPresent(t *testing.T) {
 	t.Parallel()
 
-	require.Equal(t, "12345", postmarkProviderEventID(postmarkWebhookPayload{ID: float64(12345)}))
+	require.Equal(t, "12345", postmarkProviderEventID(&postmarkWebhookPayload{ID: float64(12345)}))
 }
 
 func TestPostmarkSuppressionReason(t *testing.T) {
@@ -99,7 +103,7 @@ func TestPostmarkSuppressionReason(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, tt.expected, postmarkSuppressionReason(tt.payload))
+			require.Equal(t, tt.expected, postmarkSuppressionReason(&tt.payload))
 		})
 	}
 }

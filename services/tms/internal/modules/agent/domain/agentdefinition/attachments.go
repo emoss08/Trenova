@@ -39,6 +39,7 @@ type RuntimeAttachment struct {
 	DocumentID  string
 	FileName    string
 	ContentType string
+	FileSize    int64
 	PageCount   int
 	Kind        string
 	Reading     AttachmentReading
@@ -46,11 +47,38 @@ type RuntimeAttachment struct {
 	PoorlyRead  bool
 }
 
+// RenderedAttachments is the attachments block and, for each file, its entry
+// in the block and the entry that stands in for it when the file itself is
+// sent with the message. A model that reads the file is not also sent the
+// text read from it, nor told that the file could not be read.
+type RenderedAttachments struct {
+	Block         string
+	Entries       []string
+	NativeEntries []string
+}
+
+const nativeFileLine = "\n  attached: the file itself is attached to this message, so read it " +
+	"directly. " + CoreToolReadAttachment + " returns the text read from it."
+
+// AttachmentEntryLead is how a file's entry in the attachments block opens,
+// which names the file by its document.
+func AttachmentEntryLead(documentID string) string {
+	return "\n- id: " + documentID
+}
+
 func DescribeAttachments(attachments []RuntimeAttachment, budget int) string {
+	return RenderAttachments(attachments, budget).Block
+}
+
+func RenderAttachments(attachments []RuntimeAttachment, budget int) RenderedAttachments {
 	if len(attachments) == 0 {
-		return ""
+		return RenderedAttachments{}
 	}
 
+	rendered := RenderedAttachments{
+		Entries:       make([]string, len(attachments)),
+		NativeEntries: make([]string, len(attachments)),
+	}
 	var b strings.Builder
 	b.WriteString(attachmentsOpenTag)
 	b.WriteString("\n")
@@ -61,18 +89,26 @@ func DescribeAttachments(attachments []RuntimeAttachment, budget int) string {
 		b.WriteString(earlierLead)
 	}
 	for idx := range attachments {
-		writeAttachment(&b, &attachments[idx], shares[idx])
+		var head strings.Builder
+		writeAttachmentHead(&head, &attachments[idx])
+		var tail strings.Builder
+		writeAttachmentReading(&tail, &attachments[idx], shares[idx])
+		rendered.Entries[idx] = head.String() + tail.String()
+		rendered.NativeEntries[idx] = head.String() + nativeFileLine
+		b.WriteString(rendered.Entries[idx])
 	}
 	b.WriteString("\n")
 	b.WriteString(attachmentsCloseTag)
 	b.WriteString("\n\n")
+	rendered.Block = b.String()
 
-	return b.String()
+	return rendered
 }
 
-func writeAttachment(b *strings.Builder, attachment *RuntimeAttachment, share int) {
-	b.WriteString("\n- id: ")
-	b.WriteString(attachment.DocumentID)
+// writeAttachmentHead is what names a file: its id, name, type, pages and
+// what it looks like.
+func writeAttachmentHead(b *strings.Builder, attachment *RuntimeAttachment) {
+	b.WriteString(AttachmentEntryLead(attachment.DocumentID))
 	b.WriteString("\n  file: ")
 	b.WriteString(fenced(stringutils.OneLine(attachment.FileName, maxAnchorValueLen)))
 	if attachment.ContentType != "" {
@@ -88,6 +124,11 @@ func writeAttachment(b *strings.Builder, attachment *RuntimeAttachment, share in
 		b.WriteString("\n  looks like: ")
 		b.WriteString(fenced(attachment.Kind))
 	}
+}
+
+// writeAttachmentReading is what reading the file came to: whether it is
+// done, whether it was legible, and the text read from it.
+func writeAttachmentReading(b *strings.Builder, attachment *RuntimeAttachment, share int) {
 	if reading := describeReading(attachment.Reading); reading != "" {
 		b.WriteString("\n  reading: ")
 		b.WriteString(reading)

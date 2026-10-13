@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -158,7 +159,12 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -395,7 +401,12 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -621,7 +632,12 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue1 := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -915,7 +931,12 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -1180,7 +1201,12 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,
@@ -1400,7 +1426,12 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
-	_, period := seedtest.OpenFiscalPeriod(t, ctx, db, org.ID, org.BusinessUnitID)
+	_, period := fiscaltest.OpenPeriod(t, ctx, fiscaltest.OpenPeriodParams{
+		DB:             db,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		At:             now.Unix(),
+	})
 
 	queue := &billingqueue.BillingQueueItem{
 		OrganizationID:   org.ID,

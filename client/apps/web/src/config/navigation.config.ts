@@ -46,23 +46,26 @@ const deskModule: NavModule = {
   description:
     "Your conversations with the agents, what they produced, and what they ask you to decide",
   basePath: "/desk",
+  keywords: ["nova", "assistant", "ai", "chat", "conversations"],
   routePrefixes: ["/desk"],
   hideSecondarySidebar: true,
   resource: Resource.Assistant,
   navigation: [],
 };
 
-// The inbox is its own module rather than a page under the Desk. What arrives
-// by email is work coming in from outside, which is a different thing from the
-// conversations and decisions the Desk holds, and a dispatcher opens one
-// without wanting the other.
+// Triage (once the inbox) is its own module rather than a page under the Desk.
+// What arrives from a connected source is work coming in from outside, which
+// is a different thing from the conversations and decisions the Desk holds,
+// and a dispatcher opens one without wanting the other. The old address still
+// belongs to it while it redirects.
 const inboxModule: NavModule = {
   id: "inbox",
-  label: "Inbox",
+  label: "Triage",
   icon: Inbox01Icon,
-  description: "Mail that arrived on a monitored address, and what was made of it",
-  basePath: "/inbox",
-  routePrefixes: ["/inbox"],
+  description: "Messages from connected sources, what Nova did with them, and what is left for you",
+  basePath: "/triage",
+  keywords: ["inbox", "email", "mail", "messages"],
+  routePrefixes: ["/triage", "/inbox"],
   hideSecondarySidebar: true,
   resource: Resource.InboundMessage,
   navigation: [],
@@ -109,6 +112,7 @@ const shipmentManagementModule: NavModule = {
       id: "shipments",
       label: "Shipments",
       path: "/shipment-management/shipments",
+      keywords: ["loads", "orders", "dispatch", "board"],
       icon: PackageIcon,
       resource: Resource.Shipment,
     },
@@ -128,6 +132,7 @@ const shipmentManagementModule: NavModule = {
       id: "service-failures",
       label: "Service failures",
       path: "/shipment-management/service-failures",
+      keywords: ["late", "missed", "exceptions", "otd"],
       resource: Resource.ServiceFailure,
     },
     {
@@ -256,6 +261,7 @@ const humanResourcesModule: NavModule = {
       id: "workers",
       label: "Workers",
       path: "/hr/workers",
+      keywords: ["drivers", "employees", "staff"],
       resource: Resource.Worker,
       capability: OrganizationCapability.AssetOperations,
     },
@@ -394,6 +400,7 @@ const equipmentModule: NavModule = {
       id: "tractors",
       label: "Tractors",
       path: "/equipment/tractors",
+      keywords: ["power units", "trucks", "fleet"],
       resource: Resource.Tractor,
       capability: OrganizationCapability.AssetOperations,
     },
@@ -401,6 +408,7 @@ const equipmentModule: NavModule = {
       id: "trailers",
       label: "Trailers",
       path: "/equipment/trailers",
+      keywords: ["vans", "reefers", "flatbeds", "fleet"],
       resource: Resource.Trailer,
       capability: OrganizationCapability.AssetOperations,
     },
@@ -513,12 +521,14 @@ const billingModule: NavModule = {
       id: "billing-queue",
       label: "Billing queue",
       path: "/billing/queue",
+      keywords: ["invoice", "ready to bill", "bill"],
       resource: Resource.BillingQueue,
     },
     {
       id: "invoices",
       label: "Invoices",
       path: "/billing/invoices",
+      keywords: ["bills", "statements", "receivables"],
       resource: Resource.Invoice,
     },
     {
@@ -562,6 +572,7 @@ const billingModule: NavModule = {
           id: "formula-templates",
           label: "Formula templates",
           path: "/billing/configuration-files/formula-templates",
+          keywords: ["rating", "rates", "pricing", "formula studio"],
           resource: Resource.FormulaTemplate,
         },
         {
@@ -582,7 +593,15 @@ const billingModule: NavModule = {
           id: "customers",
           label: "Customers",
           path: "/billing/configuration-files/customers",
+          keywords: ["accounts", "shippers", "clients"],
           resource: Resource.Customer,
+        },
+        {
+          id: "factoring-companies",
+          label: "Factoring companies",
+          path: "/billing/configuration-files/factoring-companies",
+          keywords: ["factor", "factoring", "notice of assignment", "remit to"],
+          resource: Resource.FactoringCompany,
         },
         {
           id: "document-types",
@@ -929,6 +948,12 @@ const accountingModule: NavModule = {
           path: "/accounting/ar/open-items",
         },
         {
+          id: "collections",
+          label: "Collections",
+          path: "/accounting/ar/collections",
+          resource: Resource.AccountsReceivable,
+        },
+        {
           id: "invoice-register",
           label: "Invoice register",
           path: "/accounting/ar/invoices",
@@ -1151,6 +1176,16 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["customer"],
+    },
+    {
+      id: "create-factoring-company",
+      label: "New factoring company",
+      description: "Add a factor your receivables are sold to",
+      path: "/billing/configuration-files/factoring-companies",
+      resource: Resource.FactoringCompany,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["factor", "factoring"],
     },
     {
       id: "create-document-type",
@@ -1598,6 +1633,7 @@ export const adminLinks: SidebarLink[] = [
   },
   {
     href: "/admin/agent-control",
+    keywords: ["agents", "providers", "models", "ai", "automation"],
     title: "AI control",
     group: "AI & Automation",
     resource: Resource.AgentControl,
@@ -1606,6 +1642,7 @@ export const adminLinks: SidebarLink[] = [
   },
   {
     href: "/admin/document-intelligence",
+    keywords: ["ocr", "extraction", "capture", "ai", "scanning"],
     title: "Document intelligence",
     group: "AI & Automation",
     resource: Resource.DocumentControl,

@@ -331,7 +331,7 @@ func (r *repository) UpsertAssignments(
 					Model(assignment).
 					On("CONFLICT (organization_id, business_unit_id, purpose) DO UPDATE").
 					Set("profile_id = EXCLUDED.profile_id").
-					Set("updated_at = " + r.db.NowEpoch()).
+					Set("updated_at = " + dbhelper.NowEpoch).
 					Returning("*").
 					Exec(ctx)
 				if err != nil {
@@ -605,6 +605,26 @@ func (r *repository) CreateEvent(ctx context.Context, entity *email.Event) (bool
 		}
 		rows, err := result.RowsAffected()
 		return rows > 0, err
+	})
+}
+
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
+func (r *repository) ListEventRecipients(
+	ctx context.Context,
+	req emailports.ListEmailEventRecipientsRequest,
+) ([]string, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
+		recipients := make([]string, 0)
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model((*email.Event)(nil)).
+			ColumnExpr("DISTINCT lower(ee.recipient)").
+			Where("ee.organization_id = ?", req.TenantInfo.OrgID).
+			Where("ee.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("ee.message_id = ?", req.MessageID).
+			Where("ee.type = ?", req.Type).
+			Where("ee.recipient IS NOT NULL").
+			Scan(ctx, &recipients)
+		return recipients, err
 	})
 }
 

@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -77,6 +78,7 @@ type ActivitiesParams struct {
 	Rollout             extractionrolloutports.ExtractionRolloutRouter `optional:"true"`
 	PDFReader           kernelports.PDFReader
 	OfficeReader        kernelports.OfficeDocumentReader
+	Triage              inboundmessageports.TriageEventSink `optional:"true"`
 }
 
 type Activities struct {
@@ -101,6 +103,7 @@ type Activities struct {
 	rollout             extractionrolloutports.ExtractionRolloutRouter
 	pdfReader           kernelports.PDFReader
 	officeReader        kernelports.OfficeDocumentReader
+	triage              inboundmessageports.TriageEventSink
 }
 
 //nolint:gocritic // dependency injection param
@@ -145,6 +148,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		agentEvents:         p.AgentEvents,
 		shadowSampler:       p.ShadowSampler,
 		rollout:             p.Rollout,
+		triage:              p.Triage,
 		pdfReader:           p.PDFReader,
 		officeReader:        p.OfficeReader,
 	}
@@ -331,6 +335,7 @@ func (a *Activities) finalizeProcessDocumentIntelligence(
 		indexedText = ""
 	}
 	a.syncSearchProjection(ctx, p.Document, indexedText)
+	inboundmessageports.AnnounceDocumentAttached(ctx, a.triage, p.Document)
 
 	return a.maybeApplyAsyncAIEnqueueFailure(ctx, p)
 }

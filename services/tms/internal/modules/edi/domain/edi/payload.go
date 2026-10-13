@@ -3,6 +3,7 @@ package edi
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -84,41 +85,65 @@ type FreightInvoiceCharge struct {
 }
 
 type ShipmentStatusPayload struct {
-	ShipmentID                 pulid.ID          `json:"shipmentId,omitempty"`
-	BOL                        string            `json:"bol,omitempty"`
-	ProNumber                  string            `json:"proNumber,omitempty"`
-	StatusCode                 string            `json:"statusCode,omitempty"`
-	StatusReasonCode           string            `json:"statusReasonCode,omitempty"`
-	EventDate                  int64             `json:"eventDate,omitempty"`
-	EventTime                  int64             `json:"eventTime,omitempty"`
-	EventTimeCode              string            `json:"eventTimeCode,omitempty"`
-	StopID                     pulid.ID          `json:"stopId,omitempty"`
-	StopType                   string            `json:"stopType,omitempty"`
-	StopSequence               int64             `json:"stopSequence,omitempty"`
-	LocationID                 pulid.ID          `json:"locationId,omitempty"`
-	LocationName               string            `json:"locationName,omitempty"`
-	LocationCode               string            `json:"locationCode,omitempty"`
-	AddressLine                string            `json:"addressLine,omitempty"`
-	City                       string            `json:"city,omitempty"`
-	StateCode                  string            `json:"stateCode,omitempty"`
-	PostalCode                 string            `json:"postalCode,omitempty"`
-	CountryCode                string            `json:"countryCode,omitempty"`
-	AppointmentNumber          string            `json:"appointmentNumber,omitempty"`
-	ScheduledWindowStart       int64             `json:"scheduledWindowStart,omitempty"`
-	ScheduledWindowEnd         *int64            `json:"scheduledWindowEnd,omitempty"`
-	ActualArrival              *int64            `json:"actualArrival,omitempty"`
-	ActualDeparture            *int64            `json:"actualDeparture,omitempty"`
-	EquipmentNumber            string            `json:"equipmentNumber,omitempty"`
-	EquipmentType              string            `json:"equipmentType,omitempty"`
-	ExceptionCode              string            `json:"exceptionCode,omitempty"`
-	ReasonCode                 string            `json:"reasonCode,omitempty"`
-	ReasonDescription          string            `json:"reasonDescription,omitempty"`
-	LateMinutes                *int64            `json:"lateMinutes,omitempty"`
-	ServiceFailureID           *pulid.ID         `json:"serviceFailureId,omitempty"`
-	ServiceFailureNumber       string            `json:"serviceFailureNumber,omitempty"`
-	ServiceFailureReasonCodeID *pulid.ID         `json:"serviceFailureReasonCodeId,omitempty"`
-	ServiceFailureReasonCode   string            `json:"serviceFailureReasonCode,omitempty"`
-	References                 map[string]string `json:"references,omitempty"`
+	ShipmentID                 pulid.ID              `json:"shipmentId,omitempty"`
+	BOL                        string                `json:"bol,omitempty"`
+	ProNumber                  string                `json:"proNumber,omitempty"`
+	StatusCode                 string                `json:"statusCode,omitempty"`
+	StatusReasonCode           string                `json:"statusReasonCode,omitempty"`
+	EventDate                  int64                 `json:"eventDate,omitempty"`
+	EventTime                  int64                 `json:"eventTime,omitempty"`
+	EventTimeCode              string                `json:"eventTimeCode,omitempty"`
+	StopID                     pulid.ID              `json:"stopId,omitempty"`
+	StopType                   string                `json:"stopType,omitempty"`
+	StopSequence               int64                 `json:"stopSequence,omitempty"`
+	LocationID                 pulid.ID              `json:"locationId,omitempty"`
+	LocationName               string                `json:"locationName,omitempty"`
+	LocationCode               string                `json:"locationCode,omitempty"`
+	AddressLine                string                `json:"addressLine,omitempty"`
+	City                       string                `json:"city,omitempty"`
+	StateCode                  string                `json:"stateCode,omitempty"`
+	PostalCode                 string                `json:"postalCode,omitempty"`
+	CountryCode                string                `json:"countryCode,omitempty"`
+	AppointmentNumber          string                `json:"appointmentNumber,omitempty"`
+	ScheduledWindowStart       int64                 `json:"scheduledWindowStart,omitempty"`
+	ScheduledWindowEnd         *int64                `json:"scheduledWindowEnd,omitempty"`
+	ActualArrival              *int64                `json:"actualArrival,omitempty"`
+	ActualDeparture            *int64                `json:"actualDeparture,omitempty"`
+	EquipmentNumber            string                `json:"equipmentNumber,omitempty"`
+	EquipmentType              string                `json:"equipmentType,omitempty"`
+	ExceptionCode              string                `json:"exceptionCode,omitempty"`
+	ReasonCode                 string                `json:"reasonCode,omitempty"`
+	ReasonDescription          string                `json:"reasonDescription,omitempty"`
+	LateMinutes                *int64                `json:"lateMinutes,omitempty"`
+	ServiceFailureID           *pulid.ID             `json:"serviceFailureId,omitempty"`
+	ServiceFailureNumber       string                `json:"serviceFailureNumber,omitempty"`
+	ServiceFailureReasonCodeID *pulid.ID             `json:"serviceFailureReasonCodeId,omitempty"`
+	ServiceFailureReasonCode   string                `json:"serviceFailureReasonCode,omitempty"`
+	References                 map[string]string     `json:"references,omitempty"`
+	Events                     []ShipmentStatusEvent `json:"events,omitempty"`
+}
+
+type ShipmentStatusEvent struct {
+	Index                 int         `json:"index"`
+	StatusCode            string      `json:"statusCode,omitempty"`
+	ReasonCode            string      `json:"reasonCode,omitempty"`
+	AppointmentCode       string      `json:"appointmentCode,omitempty"`
+	AppointmentReasonCode string      `json:"appointmentReasonCode,omitempty"`
+	EventAt               int64       `json:"eventAt,omitempty"`
+	DateTime              X12DateTime `json:"dateTime"`
+	StopSequence          *int64      `json:"stopSequence,omitempty"`
+	City                  string      `json:"city,omitempty"`
+	StateCode             string      `json:"stateCode,omitempty"`
+	CountryCode           string      `json:"countryCode,omitempty"`
+	Latitude              *float64    `json:"latitude,omitempty"`
+	Longitude             *float64    `json:"longitude,omitempty"`
+	EquipmentOwner        string      `json:"equipmentOwner,omitempty"`
+	EquipmentNumber       string      `json:"equipmentNumber,omitempty"`
+	EquipmentType         string      `json:"equipmentType,omitempty"`
+}
+
+func (e *ShipmentStatusEvent) HasPlace() bool {
+	return strings.TrimSpace(e.City) != "" && strings.TrimSpace(e.StateCode) != ""
 }
 
 type TenderResponsePayload struct {

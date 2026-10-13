@@ -175,3 +175,45 @@ describe("fetchRecordShipments for an order", () => {
     expect(lastCall().variables.input).not.toHaveProperty("carrierIds");
   });
 });
+
+describe("fetchRecordShipments with openOnly", () => {
+  beforeEach(() => {
+    requestGraphQLMock.mockResolvedValue({
+      shipments: { edges: [], pageInfo: { hasNextPage: false, endCursor: null }, totalCount: 0 },
+    } as never);
+  });
+
+  it("keeps a customer's own filter and adds the open statuses after it", async () => {
+    await fetchRecordShipments(
+      { kind: "customer", id: "cus_1" },
+      { first: 3, after: null, openOnly: true },
+    );
+
+    expect(lastCall().variables.input.fieldFilters).toEqual([
+      { field: "customerId", operator: "eq", value: "cus_1" },
+      {
+        field: "status",
+        operator: "notin",
+        value: ["Completed", "ReadyToInvoice", "Invoiced", "Canceled"],
+      },
+    ]);
+  });
+
+  it("filters a worker's loads to the open ones alongside the assignment scope", async () => {
+    await fetchRecordShipments(
+      { kind: "worker", id: "wrk_1" },
+      { first: 1, after: null, openOnly: true },
+    );
+
+    expect(lastCall().variables.input).toMatchObject({
+      workerIds: ["wrk_1"],
+      fieldFilters: [
+        {
+          field: "status",
+          operator: "notin",
+          value: ["Completed", "ReadyToInvoice", "Invoiced", "Canceled"],
+        },
+      ],
+    });
+  });
+});

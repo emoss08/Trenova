@@ -12,6 +12,38 @@ import { runTurn, stopTurnQuietly, turnFailureDetail } from "./follow-turn";
 import { registerTurnReader } from "./turn-readers";
 import { initialTurnState, isTurnActive, advanceTurn, type TurnState } from "./turn-stream";
 
+type FindMentions = (signal: AbortSignal) => Promise<readonly AssistantEntityRef[]>;
+
+/**
+ * The records a question is about: named outright, or found while it is on
+ * its way. Finding them is part of asking, so only Stop cancels it, and a
+ * search that fails sends the question without them rather than losing it.
+ */
+export type AskQuestionOptions = { context?: AssistantPageContext | null } & (
+  | { mentions?: readonly AssistantEntityRef[]; findMentions?: never }
+  | { mentions?: never; findMentions: FindMentions }
+);
+
+async function questionMentions(
+  options: AskQuestionOptions,
+  signal: AbortSignal,
+): Promise<readonly AssistantEntityRef[]> {
+  if (!options.findMentions) {
+    return options.mentions ?? [];
+  }
+  let found: readonly AssistantEntityRef[];
+  try {
+    found = await options.findMentions(signal);
+  } catch (error) {
+    if (signal.aborted) {
+      throw error;
+    }
+    found = [];
+  }
+  signal.throwIfAborted();
+  return found;
+}
+
 /**
  * One quick question at a time, from anywhere. The answer streams into a
  * TurnState like a thread's turn does, and the thread it was answered on is
@@ -44,10 +76,7 @@ export function useAsk() {
   );
 
   const ask = useCallback(
-    async (
-      content: string,
-      options: { context?: AssistantPageContext | null; mentions?: AssistantEntityRef[] } = {},
-    ) => {
+    async (content: string, options: AskQuestionOptions = {}) => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
@@ -55,7 +84,11 @@ export function useAsk() {
       withdrawRef.current = withdraw;
       const unregister = registerTurnReader(controller);
 
-      setTurn(initialTurnState(content, options.context ?? null, { mentions: options.mentions }));
+      setTurn(
+        initialTurnState(content, options.context ?? null, {
+          mentions: options.mentions ? [...options.mentions] : undefined,
+        }),
+      );
 
       let terminal = false;
       const onEvent = (event: AssistantStreamEvent) => {
@@ -69,9 +102,15 @@ export function useAsk() {
       try {
         await runTurn(
           async (signal) => {
-            const started = await apiService.assistantService.startAsk(content, options, {
-              signal,
-            });
+            const mentions = await questionMentions(options, signal);
+            if (options.findMentions) {
+              setTurn((state) => (state ? { ...state, mentions: [...mentions] } : state));
+            }
+            const started = await apiService.assistantService.startAsk(
+              content,
+              { context: options.context, mentions },
+              { signal },
+            );
             // Counted as under way even when the palette has already closed
             // on it: the launcher is then the only place that says so.
             refreshActiveTurns();

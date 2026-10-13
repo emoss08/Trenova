@@ -56,6 +56,7 @@ function signIn(capabilities: OrganizationCapabilities) {
     isAuthenticated: true,
     // protectedLoader asks the store, not the network.
     checkAuth: async () => true,
+    checkSession: async () => ({ status: "signed_in" }),
   } as unknown as Parameters<typeof useAuthStore.setState>[0]);
 
   usePermissionStore.setState({ manifest: manifest(), lastFetched: Date.now(), isLoading: false });

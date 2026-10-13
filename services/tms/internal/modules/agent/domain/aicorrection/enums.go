@@ -4,11 +4,12 @@ type Task string
 
 const (
 	TaskShipmentDraftExtraction = Task("ShipmentDraftExtraction")
+	TaskInboundClassification   = Task("InboundClassification")
 )
 
 func (t Task) IsValid() bool {
 	switch t {
-	case TaskShipmentDraftExtraction:
+	case TaskShipmentDraftExtraction, TaskInboundClassification:
 		return true
 	default:
 		return false
@@ -18,18 +19,19 @@ func (t Task) IsValid() bool {
 func (t Task) String() string { return string(t) }
 
 func AllTasks() []Task {
-	return []Task{TaskShipmentDraftExtraction}
+	return []Task{TaskShipmentDraftExtraction, TaskInboundClassification}
 }
 
 type SourceType string
 
 const (
 	SourceDocumentShipmentDraft = SourceType("DocumentShipmentDraft")
+	SourceInboundMessage        = SourceType("InboundMessage")
 )
 
 func (s SourceType) IsValid() bool {
 	switch s {
-	case SourceDocumentShipmentDraft:
+	case SourceDocumentShipmentDraft, SourceInboundMessage:
 		return true
 	default:
 		return false
@@ -39,18 +41,19 @@ func (s SourceType) IsValid() bool {
 func (s SourceType) String() string { return string(s) }
 
 func AllSourceTypes() []SourceType {
-	return []SourceType{SourceDocumentShipmentDraft}
+	return []SourceType{SourceDocumentShipmentDraft, SourceInboundMessage}
 }
 
 type SubjectType string
 
 const (
-	SubjectShipment = SubjectType("Shipment")
+	SubjectShipment       = SubjectType("Shipment")
+	SubjectInboundMessage = SubjectType("InboundMessage")
 )
 
 func (s SubjectType) IsValid() bool {
 	switch s {
-	case SubjectShipment:
+	case SubjectShipment, SubjectInboundMessage:
 		return true
 	default:
 		return false
@@ -60,7 +63,7 @@ func (s SubjectType) IsValid() bool {
 func (s SubjectType) String() string { return string(s) }
 
 func AllSubjectTypes() []SubjectType {
-	return []SubjectType{SubjectShipment}
+	return []SubjectType{SubjectShipment, SubjectInboundMessage}
 }
 
 type Outcome string

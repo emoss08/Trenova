@@ -66,6 +66,12 @@ var Bindings = []Binding{
 		},
 	},
 	{
+		Tool:      "log_check_call",
+		Input:     "LogCheckCallInput",
+		Defaulted: map[string]string{"shipmentMoveId": namedID("moveId")},
+		Extra:     map[string]string{"moveId": namedID("moveId")},
+	},
+	{
 		Tool:  "add_shipment_comment",
 		Input: "ShipmentCommentInput",
 		Extra: map[string]string{"shipmentId": shipmentIDArg},
@@ -421,6 +427,9 @@ var Unbound = map[string]string{
 	"remove_driver_settlement_adjustment":  pendingBinding,
 	"remove_home_widget":                   layoutPart,
 	"remove_order_charge":                  pendingBinding,
+	"reply_to_inbound_message": "answers the sender under the original subject in the " +
+		"organization's letterhead and settles the message; it takes the body and an email " +
+		"profile, never the subject, address or template sendInboundReply's input lets a person set",
 	"reschedule_stop": "moves one stop's window through the shipment service's update; it " +
 		"takes the stop and its new window, never the whole ShipmentInput",
 	"resolve_accounting_drift":           pendingBinding,

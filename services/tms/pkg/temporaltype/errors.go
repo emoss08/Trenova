@@ -209,6 +209,42 @@ func ToPlanRefusal(err error) error {
 	return err
 }
 
+// ToDomainRefusal marks an error the domain raised on purpose as final. A
+// validation failure, a business rule, a missing record or a refused permission
+// answers the same way on every attempt, so retrying only delays the failure
+// reaching the person who has to act on it. A stale version is a race, not a
+// refusal, and stays retryable, as does anything the domain did not raise.
+func ToDomainRefusal(err error) error {
+	if err == nil {
+		return nil
+	}
+	if refusal, ok := NewPlanRefusalError(err); ok {
+		return refusal.ToTemporalError()
+	}
+
+	errType, refused := domainRefusalType(err)
+	if !refused {
+		return err
+	}
+
+	return temporal.NewNonRetryableApplicationError(err.Error(), errType.String(), err)
+}
+
+func domainRefusalType(err error) (ErrorType, bool) {
+	switch {
+	case errortypes.IsVersionMismatchError(err):
+		return "", false
+	case errortypes.IsAuthorizationError(err):
+		return ErrorTypePermissionDenied, true
+	case errortypes.IsNotFoundError(err):
+		return ErrorTypeResourceNotFound, true
+	case errortypes.IsError(err), errortypes.IsBusinessError(err):
+		return ErrorTypeInvalidInput, true
+	default:
+		return "", false
+	}
+}
+
 func planRefusalDetails(params map[string]string) map[string]any {
 	details := make(map[string]any, len(params))
 	for key, value := range params {

@@ -13,6 +13,15 @@ const SCRIPT: &str = include_str!("../ui/app.js");
 
 /// Where the script expects the suggested server address, inside a string.
 const SUGGESTED_SERVER_SLOT: &str = "/*SUGGESTED_SERVER*/";
+/// Where the script expects Trenova Cloud's address, inside a string.
+const CLOUD_SERVER_SLOT: &str = "/*CLOUD_SERVER*/";
+
+/// Trenova Cloud, the hosted service, which the first run offers beside a
+/// self-hosted address so nobody has to know an address to use it. A build
+/// sets `TRENOVA_CAPTURE_CLOUD_SERVER` to another address, or to nothing to
+/// offer no hosted service at all.
+const DEFAULT_CLOUD_SERVER: &str = "https://cloud.trenova.app";
+const BUILD_CLOUD_SERVER: Option<&str> = option_env!("TRENOVA_CAPTURE_CLOUD_SERVER");
 
 /// The server address a build suggests in the server field. Public builds
 /// set none, so a person always enters the address of their own Trenova; a
@@ -42,13 +51,25 @@ fn suggested_server(raw: Option<&str>) -> String {
         .unwrap_or_default()
 }
 
+/// Trenova Cloud's address as it may appear inside the script, under the
+/// same rules as a suggested address. Unset means the default; set to
+/// nothing means no hosted service is offered.
+fn cloud_server(raw: Option<&str>) -> String {
+    match raw {
+        None => suggested_server(Some(DEFAULT_CLOUD_SERVER)),
+        Some(raw) => suggested_server(Some(raw)),
+    }
+}
+
 /// The page, ready to load.
 pub fn html() -> String {
-    let script = SCRIPT.replacen(
-        SUGGESTED_SERVER_SLOT,
-        &suggested_server(BUILD_SUGGESTED_SERVER),
-        1,
-    );
+    let script = SCRIPT
+        .replacen(
+            SUGGESTED_SERVER_SLOT,
+            &suggested_server(BUILD_SUGGESTED_SERVER),
+            1,
+        )
+        .replacen(CLOUD_SERVER_SLOT, &cloud_server(BUILD_CLOUD_SERVER), 1);
     TEMPLATE
         .replacen("/*STYLE*/", STYLE, 1)
         .replacen("/*SCRIPT*/", &script, 1)
@@ -66,6 +87,7 @@ mod tests {
         assert!(!page.contains("/*SCRIPT*/"));
         assert!(!page.contains("/*LOGO*/"));
         assert!(!page.contains(SUGGESTED_SERVER_SLOT));
+        assert!(!page.contains(CLOUD_SERVER_SLOT));
         assert!(page.contains(
             "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:"
         ));
@@ -81,11 +103,12 @@ mod tests {
             "the stylesheet cannot end early"
         );
         let suggested = format!("\"{}\"", suggested_server(BUILD_SUGGESTED_SERVER));
-        let addresses_removed = ADDRESSES
-            .iter()
-            .fold(page.replacen(&suggested, "\"\"", 1), |page, address| {
-                page.replace(address, "")
-            });
+        let cloud = format!("\"{}\"", cloud_server(BUILD_CLOUD_SERVER));
+        let addresses_removed = ADDRESSES.iter().fold(
+            page.replacen(&suggested, "\"\"", 1)
+                .replacen(&cloud, "\"\"", 1),
+            |page, address| page.replace(address, ""),
+        );
         for outside in ["http://", "https://", "src=\"//", "@import", "url("] {
             assert!(
                 !addresses_removed.contains(outside),
@@ -111,6 +134,21 @@ mod tests {
     fn a_public_build_suggests_no_server() {
         assert_eq!(suggested_server(None), "");
         assert_eq!(suggested_server(Some("")), "");
+    }
+
+    #[test]
+    fn trenova_cloud_is_offered_unless_a_build_says_otherwise() {
+        assert_eq!(cloud_server(None), "https://cloud.trenova.app");
+        assert_eq!(
+            cloud_server(Some("")),
+            "",
+            "a build may offer no hosted service"
+        );
+        assert_eq!(
+            cloud_server(Some("cloud.acme-hosting.example")),
+            "https://cloud.acme-hosting.example"
+        );
+        assert_eq!(cloud_server(Some("http://cloud.acme.example")), "");
     }
 
     #[test]

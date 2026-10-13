@@ -27,6 +27,7 @@ import {
   CheckIcon,
   ChevronDownIcon,
   LinkExternal01Icon,
+  RefreshCw01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
@@ -185,6 +186,7 @@ function InvoiceAdjustmentLatestCard({
   const t = useT();
 
   const queryClient = useQueryClient();
+  const isRetry = latestAdjustment.status === "ExecutionFailed";
   const [showRejectForm, setShowRejectForm] = useState(false);
   const approvalForm = useForm({
     defaultValues: {
@@ -195,10 +197,16 @@ function InvoiceAdjustmentLatestCard({
   const approveMutation = useMutation({
     mutationFn: async (adjustmentId: InvoiceAdjustment["id"]) =>
       apiService.invoiceAdjustmentService.approve(adjustmentId),
-    onSuccess: () => {
+    onSuccess: (adjustment) => {
       void queryClient.invalidateQueries({ queryKey: ["invoice"] });
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });
-      toast.success(t("Adjustment approved"));
+      if (adjustment.status === "ExecutionFailed") {
+        toast.error(t("The adjustment still cannot run"), {
+          description: adjustment.executionError || undefined,
+        });
+        return;
+      }
+      toast.success(isRetry ? t("Adjustment ran") : t("Adjustment approved"));
     },
     onError: () => toast.error(t("Failed to approve invoice adjustment")),
   });
@@ -214,8 +222,9 @@ function InvoiceAdjustmentLatestCard({
       rejectReason: InvoiceAdjustment["rejectionReason"];
     }) => apiService.invoiceAdjustmentService.reject(adjustmentId, rejectReason),
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["invoice"] });
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });
-      toast.success(t("Adjustment rejected"));
+      toast.success(isRetry ? t("Adjustment closed without changes") : t("Adjustment rejected"));
       approvalForm.reset();
       setShowRejectForm(false);
     },
@@ -323,20 +332,31 @@ function InvoiceAdjustmentLatestCard({
         </Collapsible>
       ) : null}
 
-      {latestAdjustment.status === "PendingApproval" ? (
+      {latestAdjustment.status === "PendingApproval" || isRetry ? (
         <>
           <Separator className="my-3" />
+          {isRetry && !showRejectForm ? (
+            <p className="text-2xs text-muted-foreground mb-2">
+              {t("Fix what stopped it and run it again, or close it without changing the invoice.")}
+            </p>
+          ) : null}
           {!showRejectForm ? (
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
                 type="button"
-                className="bg-success text-foreground-on-solid hover:bg-success"
+                className={
+                  isRetry ? undefined : "bg-success text-foreground-on-solid hover:bg-success"
+                }
                 onClick={() => approveMutation.mutate(latestAdjustment.id)}
                 disabled={approveMutation.isPending}
               >
-                <CheckIcon className="size-3.5" />
-                {t("Approve")}
+                {isRetry ? (
+                  <RefreshCw01Icon className="size-3.5" />
+                ) : (
+                  <CheckIcon className="size-3.5" />
+                )}
+                {isRetry ? t("Run again") : t("Approve")}
               </Button>
               <Button
                 size="sm"
@@ -345,7 +365,7 @@ function InvoiceAdjustmentLatestCard({
                 onClick={() => setShowRejectForm(true)}
               >
                 <XCloseIcon className="size-3.5" />
-                {t("Reject")}
+                {isRetry ? t("Close without changes") : t("Reject")}
               </Button>
             </div>
           ) : (
@@ -354,8 +374,10 @@ function InvoiceAdjustmentLatestCard({
                 <InputField
                   control={approvalForm.control}
                   name="rejectReason"
-                  label={t("Rejection reason")}
-                  placeholder={t("Why is this being rejected?")}
+                  label={isRetry ? t("Reason for closing") : t("Rejection reason")}
+                  placeholder={
+                    isRetry ? t("Why is this being closed?") : t("Why is this being rejected?")
+                  }
                 />
                 <div className="flex items-center gap-2">
                   <Button
@@ -364,7 +386,7 @@ function InvoiceAdjustmentLatestCard({
                     type="submit"
                     disabled={rejectMutation.isPending}
                   >
-                    {t("Confirm rejection")}
+                    {isRetry ? t("Confirm closing") : t("Confirm rejection")}
                   </Button>
                   <Button
                     size="sm"
@@ -408,7 +430,7 @@ function ExecutionFailureCollapsible({
 
   const errorText = executionError?.trim().length
     ? upperFirst(executionError)
-    : "Execution failed, but no detailed reason was recorded.";
+    : t("Execution failed, but no detailed reason was recorded.");
 
   return (
     <Collapsible>

@@ -3,7 +3,7 @@ import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import type { VariableDefinitionInput } from "@trenova/shared/types/formula-template";
-import type { EditorView } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import CodeMirror, {
   type ReactCodeMirrorProps,
   type ReactCodeMirrorRef,
@@ -11,9 +11,12 @@ import CodeMirror, {
 import { useCallback, useEffect, useMemo, useRef, type Ref } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { useActiveEditorRegistration } from "./active-editor";
-import { usePreviewValues } from "./preview-values";
-import { darkTheme, lightTheme } from "./editor-theme";
+import { darkTheme, languageServiceTheme, lightTheme } from "./editor-theme";
+import { inlineValuesExtension, setInlineValues, type InlineValue } from "./expr-inline-values";
 import { buildKnownIdentifiers, type KnownIdentifiers } from "./expr-language";
+import type { DeclareInput } from "./expr-lint";
+import { highlightRangeExtension, setHighlightRange, type EditorRange } from "./highlight-range";
+import { usePreviewValues } from "./preview-values";
 import { useExprExtensions } from "./use-expr-extensions";
 
 type ExpressionEditorProps<T extends FieldValues> = FormControlProps<T> &
@@ -27,6 +30,16 @@ type ExpressionEditorProps<T extends FieldValues> = FormControlProps<T> &
     editorRef?: Ref<ReactCodeMirrorRef>;
     /** The editor reference-pane inserts fall back to when nothing else was focused. */
     primary?: boolean;
+    /** Drawn inside a card that owns the frame: no border of its own. */
+    embedded?: boolean;
+    /** A range of the expression to light, such as the statement an explanation row is about. */
+    highlight?: EditorRange | null;
+    /** Told where the cursor is, one-based, as it moves. */
+    onCursorChange?: (position: { line: number; column: number }) => void;
+    /** Declares an unknown name as an input, from a quick fix in the editor. */
+    declareInput?: DeclareInput;
+    /** What each statement came to on the preview load, drawn at the end of its line. */
+    inlineValues?: readonly InlineValue[] | null;
   };
 
 function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
@@ -36,6 +49,18 @@ function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
   } else {
     (ref as { current: T | null }).current = value;
   }
+}
+
+/** Moves the cursor onto a span, scrolls it into view and focuses the editor. */
+export function selectEditorRange(view: EditorView, range: EditorRange) {
+  const length = view.state.doc.length;
+  const from = Math.max(0, Math.min(range.from, length));
+  const to = Math.max(from, Math.min(range.to, length));
+  view.dispatch({
+    selection: { anchor: from, head: to },
+    effects: EditorView.scrollIntoView(from, { y: "center" }),
+  });
+  view.focus();
 }
 
 export function ExpressionEditor<T extends FieldValues>({
@@ -48,12 +73,18 @@ export function ExpressionEditor<T extends FieldValues>({
   lint = true,
   editorRef,
   primary = false,
+  embedded = false,
+  highlight = null,
+  onCursorChange,
+  declareInput,
+  inlineValues = null,
   control,
   rules,
   ...props
 }: ExpressionEditorProps<T>) {
   const resolvedTheme = useResolvedTheme();
   const { setActive, setPrimary } = useActiveEditorRegistration();
+  const isMini = variant === "mini";
 
   const known = useMemo(
     () => knownIdentifiers ?? buildKnownIdentifiers(undefined, customVariables),
@@ -62,7 +93,31 @@ export function ExpressionEditor<T extends FieldValues>({
 
   const viewRef = useRef<EditorView | null>(null);
   const previewValues = usePreviewValues();
-  const extensions = useExprExtensions(known, lint, viewRef, previewValues);
+  const exprExtensions = useExprExtensions(known, lint, viewRef, {
+    hoverValues: previewValues,
+    declareInput,
+    gutter: !isMini,
+  });
+  const extensions = useMemo(
+    () => [
+      ...exprExtensions,
+      highlightRangeExtension(),
+      inlineValuesExtension(),
+      languageServiceTheme,
+    ],
+    [exprExtensions],
+  );
+
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: setHighlightRange.of(highlight) });
+  }, [highlight]);
+
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: setInlineValues.of(inlineValues ?? []) });
+  }, [inlineValues]);
+
+  const cursorRef = useRef(onCursorChange);
+  cursorRef.current = onCursorChange;
 
   const handleRef = useCallback(
     (instance: ReactCodeMirrorRef | null) => {
@@ -83,8 +138,6 @@ export function ExpressionEditor<T extends FieldValues>({
     }
   });
 
-  const isMini = variant === "mini";
-
   return (
     <Controller<T>
       name={name}
@@ -100,16 +153,23 @@ export function ExpressionEditor<T extends FieldValues>({
           <div
             onFocusCapture={() => setActive?.(viewRef.current)}
             className={cn(
-              "border-input overflow-hidden rounded-md border transition-all duration-200",
-"ui-container-focus-ring",
+              "overflow-hidden transition-all duration-200",
+              embedded ? "rounded-none" : "border-input ui-container-focus-ring rounded-md border",
               fieldState.invalid &&
-"ui-container-focus-ring [--ring:var(--ring-danger)] border-destructive",
+                !embedded &&
+                "ui-container-focus-ring border-destructive [--ring:var(--ring-danger)]",
             )}
           >
             <CodeMirror
               ref={handleRef}
               value={field.value || ""}
               onChange={(value) => field.onChange(value)}
+              onUpdate={(update) => {
+                if (!cursorRef.current || (!update.selectionSet && !update.docChanged)) return;
+                const head = update.state.selection.main.head;
+                const line = update.state.doc.lineAt(head);
+                cursorRef.current({ line: line.number, column: head - line.from + 1 });
+              }}
               extensions={extensions}
               aria-invalid={fieldState.invalid ? "true" : "false"}
               minHeight={isMini ? "60px" : undefined}

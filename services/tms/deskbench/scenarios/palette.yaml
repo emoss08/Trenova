@@ -1,0 +1,56 @@
+defaults:
+  tags: [palette]
+
+scenarios:
+  - name: palette-shipment-by-pro-number
+    description: >
+      A quick question from the command palette that names a shipment by its PRO number and
+      nothing else. The palette once sent every question to the first chat agent by name, which
+      held only the agent run tools, and it searched agent runs for the PRO number. The palette's
+      search finds the shipment and the question names it, so it arrives as a mention.
+    palette: true
+    steps:
+      - say: "Tell me about SEED-PAY-002?"
+        page: { path: /, title: Home }
+        mentions:
+          - type: shipment
+            label: SEED-PAY-002
+            find: select id from shipments where pro_number = 'SEED-PAY-002'
+        expect:
+          calls: ["get_shipment|search_shipments|list_shipments|get_shipment_tracking"]
+          noCalls: [list_agent_runs, get_agent_run]
+          noProposals: true
+          noRecordIds: true
+          replyIncludes: ["SEED-PAY-002"]
+          facts:
+            - sql: >
+                select c.name from shipments s join customers c on c.id = s.customer_id
+                where s.pro_number = 'SEED-PAY-002'
+              note: the shipment's customer
+          rubric: >
+            Says what the shipment is: its customer, status and lane, read from the shipment,
+            without searching agent runs or saying it cannot see records.
+
+  - name: palette-customer-by-name
+    description: >
+      A quick question from the command palette about a customer, named the way a person types
+      it. The same misrouting answered this from agent runs with "no runs mention" the customer.
+      The palette's search finds the customer and the question names it, so it arrives as a
+      mention.
+    palette: true
+    steps:
+      - say: "whats going on with peak distributing?"
+        page: { path: /, title: Home }
+        mentions:
+          - type: customer
+            label: Peak Distributing
+            find: select id from customers where code = 'PEAK'
+        expect:
+          calls: ["get_customer|list_customers|search_customers"]
+          noCalls: [list_agent_runs, get_agent_run]
+          noProposals: true
+          noRecordIds: true
+          replyIncludes: ["Peak"]
+          rubric: >
+            Answers about the customer itself: its standing, open shipments or what is owed,
+            from its records, not from agent activity.

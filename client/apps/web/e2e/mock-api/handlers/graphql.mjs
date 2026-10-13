@@ -1,7 +1,10 @@
-import { userSelectOptions } from "./settings.mjs";
 import { PROVIDER_HANDLERS } from "./aiproviders.mjs";
 import { AI_HANDLERS } from "./aicontrol.mjs";
+import { DESK_HANDLERS, TRIAGE_HANDLERS } from "./triage.mjs";
+import { TriageError } from "./triage-model.mjs";
 import { DESK_CARD_HANDLERS } from "./deskcards.mjs";
+import { paletteHandlers } from "./palette.mjs";
+import { FORMULA_HANDLERS, formulaSelectRows } from "./formula.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
 
 const HOUR = 3600;
@@ -36,7 +39,11 @@ function quickFilterMatches(state, s, token) {
     case "Moving":
       return stage === "Moving";
     case "DeliveringToday":
-      return startOfDay(projectedArrival(s)) === startOfDay(now) && stage !== "NeedsCoverage" && stage !== "Canceled";
+      return (
+        startOfDay(projectedArrival(s)) === startOfDay(now) &&
+        stage !== "NeedsCoverage" &&
+        stage !== "Canceled"
+      );
     case "Reefer":
       return s.board.reefer;
     case "LowMargin":
@@ -50,10 +57,15 @@ function quickFilterMatches(state, s, token) {
     case "PickupWindow": {
       if (!isUncovered(s)) return false;
       const minutes = (s.board.pickupAt - now) / 60;
-      return minutes >= token.windowStartMinutes && (token.windowEndMinutes == null || minutes < token.windowEndMinutes);
+      return (
+        minutes >= token.windowStartMinutes &&
+        (token.windowEndMinutes == null || minutes < token.windowEndMinutes)
+      );
     }
     case "Detention":
-      return !!s.board.detentionMinutes && stage !== "Delivered" && !state.billedDetention.has(s.id);
+      return (
+        !!s.board.detentionMinutes && stage !== "Delivered" && !state.billedDetention.has(s.id)
+      );
     case "ReadyToBill":
       return stage === "Delivered" && !s.billingTransferStatus;
     default:
@@ -61,23 +73,25 @@ function quickFilterMatches(state, s, token) {
   }
 }
 
-const FIELD_GETTERS = new Map(Object.entries({
-  stageRank: (s) => stageRankOf(s),
-  status: (s) => s.status,
-  tenderStatus: (s) => s.tenderStatus,
-  customerId: (s) => s.customerId,
-  equipmentClass: (s) => (s.board.reefer ? "Reefer" : "DryVan"),
-  proNumber: (s) => s.proNumber,
-  createdAt: (s) => s.createdAt,
-  totalChargeAmount: (s) => s.board.revenue,
-  "customer.name": (s) => s.customer.name,
-  ownerId: (s) => s.ownerId ?? null,
-  "owner.name": (s) => s.owner?.name ?? null,
-  "shipperStop.scheduledWindowStart": (s) => pickupOf(s).scheduledWindowStart,
-  "consigneeStop.scheduledWindowStart": (s) => deliveryOf(s).scheduledWindowStart,
-  bol: (s) => s.bol,
-  billingTransferStatus: (s) => s.billingTransferStatus ?? "",
-}));
+const FIELD_GETTERS = new Map(
+  Object.entries({
+    stageRank: (s) => stageRankOf(s),
+    status: (s) => s.status,
+    tenderStatus: (s) => s.tenderStatus,
+    customerId: (s) => s.customerId,
+    equipmentClass: (s) => (s.board.reefer ? "Reefer" : "DryVan"),
+    proNumber: (s) => s.proNumber,
+    createdAt: (s) => s.createdAt,
+    totalChargeAmount: (s) => s.board.revenue,
+    "customer.name": (s) => s.customer.name,
+    ownerId: (s) => s.ownerId ?? null,
+    "owner.name": (s) => s.owner?.name ?? null,
+    "shipperStop.scheduledWindowStart": (s) => pickupOf(s).scheduledWindowStart,
+    "consigneeStop.scheduledWindowStart": (s) => deliveryOf(s).scheduledWindowStart,
+    bol: (s) => s.bol,
+    billingTransferStatus: (s) => s.billingTransferStatus ?? "",
+  }),
+);
 
 function fieldGetter(field) {
   return FIELD_GETTERS.get(field) ?? ((s) => (Object.hasOwn(s, field) ? s[field] : undefined));
@@ -98,7 +112,9 @@ function fieldFilterMatches(s, filter) {
     case "notin":
       return value !== null && value !== undefined && !list.map(String).includes(String(value));
     case "contains":
-      return String(value ?? "").toLowerCase().includes(String(filter.value).toLowerCase());
+      return String(value ?? "")
+        .toLowerCase()
+        .includes(String(filter.value).toLowerCase());
     case "lt":
       return value !== null && value !== undefined && value < filter.value;
     case "gte":
@@ -116,7 +132,14 @@ function scoped(state, input = {}) {
   const query = (input.query ?? "").trim().toLowerCase();
   return state.shipments.filter((s) => {
     if (query) {
-      const haystack = [s.proNumber, s.bol, s.customer.name, city(pickupOf(s)), city(deliveryOf(s)), s.board.driverName ?? ""]
+      const haystack = [
+        s.proNumber,
+        s.bol,
+        s.customer.name,
+        city(pickupOf(s)),
+        city(deliveryOf(s)),
+        s.board.driverName ?? "",
+      ]
         .join(" ")
         .toLowerCase();
       if (!haystack.includes(query)) return false;
@@ -125,7 +148,8 @@ function scoped(state, input = {}) {
       if (!fieldFilterMatches(s, filter)) return false;
     }
     for (const group of input.filterGroups ?? []) {
-      if (group.filters?.length && !group.filters.some((f) => fieldFilterMatches(s, f))) return false;
+      if (group.filters?.length && !group.filters.some((f) => fieldFilterMatches(s, f)))
+        return false;
     }
     for (const token of input.quickFilters ?? []) {
       if (!quickFilterMatches(state, s, token)) return false;
@@ -197,7 +221,12 @@ function stageSummary(state, input) {
   const list = scoped(state, input);
   return Object.entries(STAGE_RANKS).map(([stage, rank]) => {
     const rows = list.filter((s) => stageOf(s) === stage);
-    return { stage, rank, count: rows.length, revenue: money(rows.reduce((t, s) => t + s.board.revenue, 0)) };
+    return {
+      stage,
+      rank,
+      count: rows.length,
+      revenue: money(rows.reduce((t, s) => t + s.board.revenue, 0)),
+    };
   });
 }
 
@@ -212,8 +241,12 @@ const GROUP_KEYS = {
 
 function dayKey(unix, timezone) {
   if (unix === null || unix === undefined) return "";
-  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" })
-    .format(new Date(unix * 1000));
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(unix * 1000));
 }
 
 function boardGroups(state, input, groupBy) {
@@ -222,14 +255,16 @@ function boardGroups(state, input, groupBy) {
   const groups = new Map();
   for (const s of scoped(state, input)) {
     const key = keyOf(s, input.timezone ?? "UTC");
-    const label = groupBy === "Customer" ? s.customer.name : groupBy === "Owner" ? (s.owner?.name ?? "") : "";
+    const label =
+      groupBy === "Customer" ? s.customer.name : groupBy === "Owner" ? (s.owner?.name ?? "") : "";
     const entry = groups.get(key) ?? { key, label, count: 0, total: 0 };
     entry.count += 1;
     entry.total += s.board.revenue;
     groups.set(key, entry);
   }
   const blankLast = (a, b) => (a.key === "") - (b.key === "");
-  const byName = (a, b) => blankLast(a, b) || a.label.localeCompare(b.label) || (a.key < b.key ? -1 : 1);
+  const byName = (a, b) =>
+    blankLast(a, b) || a.label.localeCompare(b.label) || (a.key < b.key ? -1 : 1);
   const byKey = (a, b) => blankLast(a, b) || (a.key < b.key ? -1 : 1);
   return [...groups.values()]
     .sort(groupBy === "Customer" || groupBy === "Owner" ? byName : byKey)
@@ -238,10 +273,12 @@ function boardGroups(state, input, groupBy) {
 
 function quickFilterCounts(state, input) {
   const list = scoped(state, input);
-  return ["Late", "Uncovered", "Moving", "DeliveringToday", "Reefer", "LowMargin"].map((filter) => ({
-    filter,
-    count: list.filter((s) => quickFilterMatches(state, s, { filter })).length,
-  }));
+  return ["Late", "Uncovered", "Moving", "DeliveringToday", "Reefer", "LowMargin"].map(
+    (filter) => ({
+      filter,
+      count: list.filter((s) => quickFilterMatches(state, s, { filter })).length,
+    }),
+  );
 }
 
 function coverageNoun(operationType, count) {
@@ -255,9 +292,12 @@ function plural(count, word) {
 }
 
 function boardFacts(state) {
-  const count = (filter) => state.shipments.filter((s) => quickFilterMatches(state, s, { filter })).length;
+  const count = (filter) =>
+    state.shipments.filter((s) => quickFilterMatches(state, s, { filter })).length;
   const late = state.shipments.filter((s) => stageOf(s) === "Late");
-  const openSuggestions = suggestionItems(state).filter((item) => state.decisions.get(item.key) !== "Done").length;
+  const openSuggestions = suggestionItems(state).filter(
+    (item) => state.decisions.get(item.key) !== "Done",
+  ).length;
   return {
     deliveringToday: count("DeliveringToday"),
     moving: count("Moving"),
@@ -277,7 +317,8 @@ function openIssues(facts) {
 function joinClauses(clauses) {
   const segments = [];
   clauses.forEach((clause, index) => {
-    if (index > 0) segments.push({ text: index === clauses.length - 1 ? " and " : ", ", filter: null });
+    if (index > 0)
+      segments.push({ text: index === clauses.length - 1 ? " and " : ", ", filter: null });
     segments.push(...clause);
   });
   if (clauses.length) segments.push({ text: ". ", filter: null });
@@ -288,19 +329,53 @@ function briefSegments(state, facts) {
   const loads = (count) => plural(count, "load");
   const verb = (count, one, many) => (count === 1 ? one : many);
   const board = [];
-  if (facts.deliveringToday) board.push([{ text: `${loads(facts.deliveringToday)} ${verb(facts.deliveringToday, "delivers", "deliver")} today`, filter: "DeliveringToday" }]);
-  if (facts.moving) board.push([{ text: `${loads(facts.moving)} ${verb(facts.moving, "is", "are")} moving on schedule`, filter: "Moving" }]);
+  if (facts.deliveringToday)
+    board.push([
+      {
+        text: `${loads(facts.deliveringToday)} ${verb(facts.deliveringToday, "delivers", "deliver")} today`,
+        filter: "DeliveringToday",
+      },
+    ]);
+  if (facts.moving)
+    board.push([
+      {
+        text: `${loads(facts.moving)} ${verb(facts.moving, "is", "are")} moving on schedule`,
+        filter: "Moving",
+      },
+    ]);
   if (facts.late) {
-    const clause = [{ text: `${loads(facts.late)} ${verb(facts.late, "is", "are")} late`, filter: "Late" }];
-    if (facts.lateReason) clause.push({ text: `, mostly ${facts.lateReason.toLowerCase()}`, filter: null });
+    const clause = [
+      { text: `${loads(facts.late)} ${verb(facts.late, "is", "are")} late`, filter: "Late" },
+    ];
+    if (facts.lateReason)
+      clause.push({ text: `, mostly ${facts.lateReason.toLowerCase()}`, filter: null });
     board.push(clause);
   }
   const followUp = [];
-  if (facts.uncovered) followUp.push([{ text: `${loads(facts.uncovered)} still ${verb(facts.uncovered, "needs", "need")} ${coverageNoun(state.scenario.operationType, facts.uncovered)}`, filter: "Uncovered" }]);
-  if (facts.detention) followUp.push([{ text: `${loads(facts.detention)} ${verb(facts.detention, "is", "are")} accruing detention`, filter: "Detention" }]);
-  if (facts.readyToBill) followUp.push([{ text: `${loads(facts.readyToBill)} ${verb(facts.readyToBill, "is", "are")} ready to bill`, filter: "ReadyToBill" }]);
+  if (facts.uncovered)
+    followUp.push([
+      {
+        text: `${loads(facts.uncovered)} still ${verb(facts.uncovered, "needs", "need")} ${coverageNoun(state.scenario.operationType, facts.uncovered)}`,
+        filter: "Uncovered",
+      },
+    ]);
+  if (facts.detention)
+    followUp.push([
+      {
+        text: `${loads(facts.detention)} ${verb(facts.detention, "is", "are")} accruing detention`,
+        filter: "Detention",
+      },
+    ]);
+  if (facts.readyToBill)
+    followUp.push([
+      {
+        text: `${loads(facts.readyToBill)} ${verb(facts.readyToBill, "is", "are")} ready to bill`,
+        filter: "ReadyToBill",
+      },
+    ]);
   const segments = [...joinClauses(board), ...joinClauses(followUp)];
-  if (!segments.length) return [{ text: "Nothing on the board needs you right now.", filter: null }];
+  if (!segments.length)
+    return [{ text: "Nothing on the board needs you right now.", filter: null }];
   segments[segments.length - 1] = { text: ".", filter: null };
   return segments;
 }
@@ -338,7 +413,9 @@ function driverUnits(state) {
       freeAt: d.freeInHours === 0 ? null : Math.round(state.now() + d.freeInHours * HOUR),
       city: d.city,
       unitLabel: d.unit,
-      ring: state.scenario.hos ? { value: Number(d.hosHours.toFixed(2)), max: 11, low: d.hosHours < 4 } : null,
+      ring: state.scenario.hos
+        ? { value: Number(d.hosHours.toFixed(2)), max: 11, low: d.hosHours < 4 }
+        : null,
       badgeCount: null,
       ratePerMile: null,
       acceptancePercent: null,
@@ -347,7 +424,16 @@ function driverUnits(state) {
     }));
 }
 
-const HAZMAT_NAMES = ["Gasoline", "Diesel fuel", "Propane", "Sulfuric acid", "Ammonia, anhydrous", "Lithium ion batteries", "Paint", "Chlorine"];
+const HAZMAT_NAMES = [
+  "Gasoline",
+  "Diesel fuel",
+  "Propane",
+  "Sulfuric acid",
+  "Ammonia, anhydrous",
+  "Lithium ion batteries",
+  "Paint",
+  "Chlorine",
+];
 
 function hazardousMaterials(state, input) {
   const rows = Array.from({ length: state.scenario.listRows }, (_, i) => ({
@@ -405,7 +491,10 @@ function billingReadiness(state, shipmentId) {
     documentIds: satisfied ? [`doc_${code}_${shipmentId}`] : [],
     ineligibleDocuments: [],
   });
-  const requirements = [requirement("BOL", "Bill of lading", true), requirement("POD", "Proof of delivery", delivered)];
+  const requirements = [
+    requirement("BOL", "Bill of lading", true),
+    requirement("POD", "Proof of delivery", delivered),
+  ];
   return {
     shipmentId,
     shipmentStatus: shipment?.status ?? "New",
@@ -497,7 +586,12 @@ function capacity(state, kind) {
     return {
       kind,
       units,
-      drivers: { ready, withinTwoHours: within, short: Math.max(0, untendered.length - units.length), uncovered: untendered.length },
+      drivers: {
+        ready,
+        withinTwoHours: within,
+        short: Math.max(0, untendered.length - units.length),
+        uncovered: untendered.length,
+      },
       carriers: null,
     };
   }
@@ -528,7 +622,8 @@ function capacityMatches(state, kind, unitId, limit = 2) {
   if (!open.length) return [];
   const offset = hash(unitId) % open.length;
   const picks = [];
-  for (let k = 0; k < Math.min(limit, open.length); k++) picks.push(open[(offset + k * 3) % open.length]);
+  for (let k = 0; k < Math.min(limit, open.length); k++)
+    picks.push(open[(offset + k * 3) % open.length]);
   const carrier = state.carriers.find((c) => c.id === unitId);
   const driver = state.drivers.find((d) => d.id === unitId);
   return [...new Set(picks)].map((s, k) => {
@@ -553,43 +648,45 @@ function coverageSuggestions(state, shipmentId) {
   const shipment = state.shipments.find((s) => s.id === shipmentId);
   if (!shipment) return { drivers: [], carriers: [] };
   const moveId = shipment.moves[0].id;
-  const drivers = state.scenario.operationType === "brokerage"
-    ? []
-    : driverUnits(state)
-        .slice()
-        .sort((a, b) => {
-          const da = state.drivers.find((d) => d.id === a.id).deadheadMiles;
-          const db = state.drivers.find((d) => d.id === b.id).deadheadMiles;
-          return da - db;
-        })
-        .slice(0, 2)
-        .map((u, k) => ({
-          workerId: u.id,
-          tractorId: u.tractorId,
-          moveId,
-          name: u.name,
-          initials: u.initials,
-          unitLabel: u.unitLabel,
-          distanceMiles: state.drivers.find((d) => d.id === u.id).deadheadMiles,
-          driveRemainingMs: u.driveRemainingMs,
-          fitPercent: state.scenario.ai ? (k ? 81 : 96) : null,
-        }));
-  const carriers = state.scenario.operationType === "asset"
-    ? []
-    : state.carriers
-        .filter((_c, i) => (hash(shipmentId) + i) % 4 === 0)
-        .slice(0, 2)
-        .map((c) => ({
-          carrierId: c.id,
-          moveId,
-          name: c.name,
-          initials: initials(c.name),
-          mcNumber: c.mcNumber,
-          quote: money(quoteFor(c, shipment)),
-          ratePerMile: c.rate.toFixed(2),
-          acceptancePercent: c.acceptance,
-          posted: c.trucks > 0,
-        }));
+  const drivers =
+    state.scenario.operationType === "brokerage"
+      ? []
+      : driverUnits(state)
+          .slice()
+          .sort((a, b) => {
+            const da = state.drivers.find((d) => d.id === a.id).deadheadMiles;
+            const db = state.drivers.find((d) => d.id === b.id).deadheadMiles;
+            return da - db;
+          })
+          .slice(0, 2)
+          .map((u, k) => ({
+            workerId: u.id,
+            tractorId: u.tractorId,
+            moveId,
+            name: u.name,
+            initials: u.initials,
+            unitLabel: u.unitLabel,
+            distanceMiles: state.drivers.find((d) => d.id === u.id).deadheadMiles,
+            driveRemainingMs: u.driveRemainingMs,
+            fitPercent: state.scenario.ai ? (k ? 81 : 96) : null,
+          }));
+  const carriers =
+    state.scenario.operationType === "asset"
+      ? []
+      : state.carriers
+          .filter((_c, i) => (hash(shipmentId) + i) % 4 === 0)
+          .slice(0, 2)
+          .map((c) => ({
+            carrierId: c.id,
+            moveId,
+            name: c.name,
+            initials: initials(c.name),
+            mcNumber: c.mcNumber,
+            quote: money(quoteFor(c, shipment)),
+            ratePerMile: c.rate.toFixed(2),
+            acceptancePercent: c.acceptance,
+            posted: c.trucks > 0,
+          }));
   return { drivers, carriers };
 }
 
@@ -598,71 +695,186 @@ function suggestionItems(state) {
   const now = state.now();
   const items = [];
   const brokerage = operationType === "brokerage";
-  const open = state.shipments.filter((s) => isUncovered(s) && !isTendered(s)).sort((a, b) => a.board.pickupAt - b.board.pickupAt);
+  const open = state.shipments
+    .filter((s) => isUncovered(s) && !isTendered(s))
+    .sort((a, b) => a.board.pickupAt - b.board.pickupAt);
   for (const s of open.slice(0, 2)) {
     const lane = `${city(pickupOf(s))} → ${city(deliveryOf(s))}`;
     if (brokerage) {
       const carrier = state.carriers[hash(s.id) % state.carriers.length];
       const quote = quoteFor(carrier, s);
       items.push({
-        key: `coverage:${s.id}`, kind: "Tender", tone: "Warning", shipmentId: s.id, proNumber: s.proNumber,
+        key: `coverage:${s.id}`,
+        kind: "Tender",
+        tone: "Warning",
+        shipmentId: s.id,
+        proNumber: s.proNumber,
         title: ai ? `Tender ${lane} to ${carrier.name}` : `${s.proNumber} has no carrier`,
-        reason: ai ? `${carrier.acceptance}% acceptance on this lane, quoting $${quote.toLocaleString()} ($${carrier.rate.toFixed(2)}/mi).` : `Pickup at ${new Date(s.board.pickupAt * 1000).toISOString().slice(11, 16)}. No carrier has been tendered.`,
-        impact: [`$${quote.toLocaleString()} quote`, `${carrier.acceptance}% accept`, `${Math.round((1 - quote / s.board.revenue) * 100)}% margin`],
-        primary: { type: "TenderCarrier", label: ai ? "Tender" : "Find carrier", moveId: s.moves[0].id, workerId: null, tractorId: null, carrierId: carrier.id, detentionOccurrenceId: null, message: null },
-        manualLabel: "Find carrier", dueAt: s.board.pickupAt, deferred: false,
+        reason: ai
+          ? `${carrier.acceptance}% acceptance on this lane, quoting $${quote.toLocaleString()} ($${carrier.rate.toFixed(2)}/mi).`
+          : `Pickup at ${new Date(s.board.pickupAt * 1000).toISOString().slice(11, 16)}. No carrier has been tendered.`,
+        impact: [
+          `$${quote.toLocaleString()} quote`,
+          `${carrier.acceptance}% accept`,
+          `${Math.round((1 - quote / s.board.revenue) * 100)}% margin`,
+        ],
+        primary: {
+          type: "TenderCarrier",
+          label: ai ? "Tender" : "Find carrier",
+          moveId: s.moves[0].id,
+          workerId: null,
+          tractorId: null,
+          carrierId: carrier.id,
+          detentionOccurrenceId: null,
+          message: null,
+        },
+        manualLabel: "Find carrier",
+        dueAt: s.board.pickupAt,
+        deferred: false,
       });
     } else {
-      const driver = state.drivers.filter((d) => !state.usedDrivers.has(d.id)).sort((a, b) => a.deadheadMiles - b.deadheadMiles)[0];
+      const driver = state.drivers
+        .filter((d) => !state.usedDrivers.has(d.id))
+        .sort((a, b) => a.deadheadMiles - b.deadheadMiles)[0];
       if (!driver) continue;
       items.push({
-        key: `coverage:${s.id}`, kind: "Coverage", tone: "Warning", shipmentId: s.id, proNumber: s.proNumber,
+        key: `coverage:${s.id}`,
+        kind: "Coverage",
+        tone: "Warning",
+        shipmentId: s.id,
+        proNumber: s.proNumber,
         title: ai ? `Assign ${name(driver)} to ${lane}` : `${s.proNumber} needs a driver`,
-        reason: ai ? `${driver.deadheadMiles} mi out with ${Math.floor(driver.hosHours)}h of drive time left. Pickup closes at ${new Date((s.board.pickupAt + 2 * HOUR) * 1000).toISOString().slice(11, 16)}.` : `Pickup at ${new Date(s.board.pickupAt * 1000).toISOString().slice(11, 16)}. Nobody is assigned yet.`,
-        impact: [`$${s.board.revenue.toLocaleString()}`, `${driver.deadheadMiles} mi out`, ...(ai ? ["96% fit"] : [])],
-        primary: { type: "AssignDriver", label: ai ? "Assign" : "Assign driver", moveId: s.moves[0].id, workerId: driver.id, tractorId: driver.tractorId, carrierId: null, detentionOccurrenceId: null, message: null },
-        manualLabel: "Assign driver", dueAt: s.board.pickupAt, deferred: false,
+        reason: ai
+          ? `${driver.deadheadMiles} mi out with ${Math.floor(driver.hosHours)}h of drive time left. Pickup closes at ${new Date((s.board.pickupAt + 2 * HOUR) * 1000).toISOString().slice(11, 16)}.`
+          : `Pickup at ${new Date(s.board.pickupAt * 1000).toISOString().slice(11, 16)}. Nobody is assigned yet.`,
+        impact: [
+          `$${s.board.revenue.toLocaleString()}`,
+          `${driver.deadheadMiles} mi out`,
+          ...(ai ? ["96% fit"] : []),
+        ],
+        primary: {
+          type: "AssignDriver",
+          label: ai ? "Assign" : "Assign driver",
+          moveId: s.moves[0].id,
+          workerId: driver.id,
+          tractorId: driver.tractorId,
+          carrierId: null,
+          detentionOccurrenceId: null,
+          message: null,
+        },
+        manualLabel: "Assign driver",
+        dueAt: s.board.pickupAt,
+        deferred: false,
       });
     }
   }
-  const late = state.shipments.filter((s) => stageOf(s) === "Late").sort((a, b) => (b.board.slippedEta - b.board.deliveryAt) - (a.board.slippedEta - a.board.deliveryAt));
+  const late = state.shipments
+    .filter((s) => stageOf(s) === "Late")
+    .sort(
+      (a, b) => b.board.slippedEta - b.board.deliveryAt - (a.board.slippedEta - a.board.deliveryAt),
+    );
   if (late.length) {
     const s = late[0];
     const delta = Math.round((s.board.slippedEta - s.board.deliveryAt) / 60);
     const eta = new Date(s.board.slippedEta * 1000).toISOString().slice(11, 16);
     const message = `${s.board.risk ?? "A delay"} has held up ${s.proNumber}. The new ETA is ${eta}; we'll confirm a new delivery window within the hour.`;
     items.push({
-      key: `delay:${s.id}`, kind: "DelayNotice", tone: "Danger", shipmentId: s.id, proNumber: s.proNumber,
-      title: ai ? `Let ${s.customer.name} know about the delay` : `${s.proNumber} will miss its appointment`,
-      reason: ai ? `${Math.floor(delta / 60)}h ${delta % 60}m behind · ${s.board.risk}. I've drafted the notice.` : `${Math.floor(delta / 60)}h ${delta % 60}m behind · ${s.board.risk}.`,
+      key: `delay:${s.id}`,
+      kind: "DelayNotice",
+      tone: "Danger",
+      shipmentId: s.id,
+      proNumber: s.proNumber,
+      title: ai
+        ? `Let ${s.customer.name} know about the delay`
+        : `${s.proNumber} will miss its appointment`,
+      reason: ai
+        ? `${Math.floor(delta / 60)}h ${delta % 60}m behind · ${s.board.risk}. I've drafted the notice.`
+        : `${Math.floor(delta / 60)}h ${delta % 60}m behind · ${s.board.risk}.`,
       impact: [`${Math.floor(delta / 60)}h ${delta % 60}m late`, s.customer.name],
-      primary: { type: "NotifyCustomer", label: ai ? "Send notice" : "Notify customer", moveId: null, workerId: null, tractorId: null, carrierId: null, detentionOccurrenceId: null, message },
-      manualLabel: "Notify customer", dueAt: s.board.deliveryAt, deferred: false,
+      primary: {
+        type: "NotifyCustomer",
+        label: ai ? "Send notice" : "Notify customer",
+        moveId: null,
+        workerId: null,
+        tractorId: null,
+        carrierId: null,
+        detentionOccurrenceId: null,
+        message,
+      },
+      manualLabel: "Notify customer",
+      dueAt: s.board.deliveryAt,
+      deferred: false,
     });
   }
   if (hos && !brokerage) {
-    const tight = state.shipments.find((s) => stageOf(s) !== "Delivered" && s.board.hosHours != null && s.board.hosHours < 4 && s.moves[0].assignment && s.board.pct > 0);
+    const tight = state.shipments.find(
+      (s) =>
+        stageOf(s) !== "Delivered" &&
+        s.board.hosHours != null &&
+        s.board.hosHours < 4 &&
+        s.moves[0].assignment &&
+        s.board.pct > 0,
+    );
     if (tight) {
       const left = `${Math.floor(tight.board.hosHours)}:${String(Math.round((tight.board.hosHours % 1) * 60)).padStart(2, "0")}`;
       items.push({
-        key: `hos:${tight.id}`, kind: "HoursOfService", tone: "Warning", shipmentId: tight.id, proNumber: tight.proNumber,
+        key: `hos:${tight.id}`,
+        kind: "HoursOfService",
+        tone: "Warning",
+        shipmentId: tight.id,
+        proNumber: tight.proNumber,
         title: `${tight.board.driverName} runs out of hours before ${city(deliveryOf(tight))}`,
         reason: `${tight.proNumber} is ${Math.round(tight.board.miles * (1 - tight.board.pct / 100))} mi out with ${left} of drive time left.`,
-        impact: [`${left} left`, `${Math.round(tight.board.miles * (1 - tight.board.pct / 100))} mi to go`],
-        primary: { type: "Review", label: "Plan relay", moveId: null, workerId: null, tractorId: null, carrierId: null, detentionOccurrenceId: null, message: null },
-        manualLabel: "Plan relay", dueAt: now + tight.board.hosHours * HOUR, deferred: false,
+        impact: [
+          `${left} left`,
+          `${Math.round(tight.board.miles * (1 - tight.board.pct / 100))} mi to go`,
+        ],
+        primary: {
+          type: "Review",
+          label: "Plan relay",
+          moveId: null,
+          workerId: null,
+          tractorId: null,
+          carrierId: null,
+          detentionOccurrenceId: null,
+          message: null,
+        },
+        manualLabel: "Plan relay",
+        dueAt: now + tight.board.hosHours * HOUR,
+        deferred: false,
       });
     }
   }
-  const detained = state.shipments.find((s) => s.board.detentionMinutes && stageOf(s) !== "Delivered" && !state.billedDetention.has(s.id));
+  const detained = state.shipments.find(
+    (s) =>
+      s.board.detentionMinutes && stageOf(s) !== "Delivered" && !state.billedDetention.has(s.id),
+  );
   if (detained) {
     items.push({
-      key: `detention:${detained.id}`, kind: "Detention", tone: "Accent", shipmentId: detained.id, proNumber: detained.proNumber,
+      key: `detention:${detained.id}`,
+      kind: "Detention",
+      tone: "Accent",
+      shipmentId: detained.id,
+      proNumber: detained.proNumber,
       title: `${detained.board.driverName ?? "The driver"} is waiting at ${pickupOf(detained).location.name}`,
       reason: `Free time ended at 2h. Detention is billable at $75/hr.`,
-      impact: [`${Math.floor(detained.board.detentionMinutes / 60)}h ${detained.board.detentionMinutes % 60}m on site`, "$75/hr"],
-      primary: { type: "ApproveDetention", label: "Add detention", moveId: null, workerId: null, tractorId: null, carrierId: null, detentionOccurrenceId: `det_${detained.id}`, message: null },
-      manualLabel: "Add detention", dueAt: null, deferred: false,
+      impact: [
+        `${Math.floor(detained.board.detentionMinutes / 60)}h ${detained.board.detentionMinutes % 60}m on site`,
+        "$75/hr",
+      ],
+      primary: {
+        type: "ApproveDetention",
+        label: "Add detention",
+        moveId: null,
+        workerId: null,
+        tractorId: null,
+        carrierId: null,
+        detentionOccurrenceId: `det_${detained.id}`,
+        message: null,
+      },
+      manualLabel: "Add detention",
+      dueAt: null,
+      deferred: false,
     });
   }
   if (state.scenario.board === "quiet") return items.slice(0, 2);
@@ -680,7 +892,12 @@ function suggestions(state) {
 function watchlist(state) {
   const now = state.now();
   const dayStart = startOfDay(now);
-  const today = state.shipments.filter((s) => startOfDay(projectedArrival(s)) === dayStart && stageOf(s) !== "NeedsCoverage" && stageOf(s) !== "Canceled");
+  const today = state.shipments.filter(
+    (s) =>
+      startOfDay(projectedArrival(s)) === dayStart &&
+      stageOf(s) !== "NeedsCoverage" &&
+      stageOf(s) !== "Canceled",
+  );
   const buckets = Array.from({ length: 18 }, (_, i) => {
     const hour = 6 + i;
     const rows = today.filter((s) => Math.floor((projectedArrival(s) % 86400) / HOUR) === hour);
@@ -691,27 +908,55 @@ function watchlist(state) {
       scheduled: rows.filter((s) => stageOf(s) !== "Delivered" && stageOf(s) !== "Late").length,
     };
   });
-  const late = today.filter((s) => stageOf(s) === "Late").sort((a, b) => (b.board.slippedEta - b.board.deliveryAt) - (a.board.slippedEta - a.board.deliveryAt));
-  const uncovered = state.shipments.filter((s) => isUncovered(s) && !isTendered(s)).sort((a, b) => a.board.pickupAt - b.board.pickupAt);
+  const late = today
+    .filter((s) => stageOf(s) === "Late")
+    .sort(
+      (a, b) => b.board.slippedEta - b.board.deliveryAt - (a.board.slippedEta - a.board.deliveryAt),
+    );
+  const uncovered = state.shipments
+    .filter((s) => isUncovered(s) && !isTendered(s))
+    .sort((a, b) => a.board.pickupAt - b.board.pickupAt);
   const toMidnight = Math.round((dayStart + 86400 - now) / 60);
-  const windowDefs = [["UnderTwoHours", 0, 120], ["TwoToSixHours", 120, 360], ["LaterToday", 360, toMidnight], ["TomorrowOrLater", toMidnight, null]];
+  const windowDefs = [
+    ["UnderTwoHours", 0, 120],
+    ["TwoToSixHours", 120, 360],
+    ["LaterToday", 360, toMidnight],
+    ["TomorrowOrLater", toMidnight, null],
+  ];
   const windows = windowDefs.map(([window, start, end]) => {
     const rows = uncovered.filter((s) => {
       const minutes = (s.board.pickupAt - now) / 60;
       return minutes >= start && (end == null || minutes < end);
     });
-    return { window, startMinutes: start, endMinutes: end, count: rows.length, revenue: money(rows.reduce((t, s) => t + s.board.revenue, 0)) };
+    return {
+      window,
+      startMinutes: start,
+      endMinutes: end,
+      count: rows.length,
+      revenue: money(rows.reduce((t, s) => t + s.board.revenue, 0)),
+    };
   });
   const next = uncovered.find((s) => s.board.pickupAt > now) ?? null;
   const detained = state.shipments
-    .filter((s) => s.board.detentionMinutes && stageOf(s) !== "Delivered" && !state.billedDetention.has(s.id))
+    .filter(
+      (s) =>
+        s.board.detentionMinutes && stageOf(s) !== "Delivered" && !state.billedDetention.has(s.id),
+    )
     .sort((a, b) => b.board.detentionMinutes - a.board.detentionMinutes);
   const rate = 75;
-  const accrual = (s) => ((s.board.detentionMinutes - 120) / 60) * rate + ((now - state.anchor) / 3600) * rate;
-  const billable = state.shipments.filter((s) => stageOf(s) === "Delivered" && !s.billingTransferStatus);
+  const accrual = (s) =>
+    ((s.board.detentionMinutes - 120) / 60) * rate + ((now - state.anchor) / 3600) * rate;
+  const billable = state.shipments.filter(
+    (s) => stageOf(s) === "Delivered" && !s.billingTransferStatus,
+  );
   const byCustomer = new Map();
   for (const s of billable) {
-    const entry = byCustomer.get(s.customerId) ?? { customerId: s.customerId, name: s.customer.name, count: 0, total: 0 };
+    const entry = byCustomer.get(s.customerId) ?? {
+      customerId: s.customerId,
+      name: s.customer.name,
+      count: 0,
+      total: 0,
+    };
     entry.count += 1;
     entry.total += s.board.revenue;
     byCustomer.set(s.customerId, entry);
@@ -735,7 +980,12 @@ function watchlist(state) {
       count: uncovered.length,
       revenue: money(uncovered.reduce((t, s) => t + s.board.revenue, 0)),
       windows,
-      next: next && { shipmentId: next.id, pickupAt: next.board.pickupAt, originCity: city(pickupOf(next)), destinationCity: city(deliveryOf(next)) },
+      next: next && {
+        shipmentId: next.id,
+        pickupAt: next.board.pickupAt,
+        originCity: city(pickupOf(next)),
+        destinationCity: city(deliveryOf(next)),
+      },
     },
     detention: {
       stopCount: detained.length,
@@ -792,17 +1042,40 @@ function assignMoves(state, input) {
     const shipment = state.shipments.find((s) => s.moves[0].id === item.moveId);
     const driver = state.drivers.find((d) => d.id === item.primaryWorkerId);
     if (!shipment || !driver) {
-      return { moveId: item.moveId, success: false, assignmentId: null, error: "Not found", findings: [] };
+      return {
+        moveId: item.moveId,
+        success: false,
+        assignmentId: null,
+        error: "Not found",
+        findings: [],
+      };
     }
     const move = shipment.moves[0];
     move.coverageType = "driver";
     move.status = "Assigned";
     move.assignment = {
-      id: `asg_${move.id}`, businessUnitId: "bu_mock", organizationId: "org_mock", shipmentMoveId: move.id,
-      primaryWorkerId: driver.id, tractorId: driver.tractorId, trailerId: null, secondaryWorkerId: null,
-      status: "New", archivedAt: null, version: 1, createdAt: 0, updatedAt: 0,
-      tractor: { id: driver.tractorId, code: driver.unit }, trailer: null,
-      primaryWorker: { id: driver.id, firstName: driver.firstName, lastName: driver.lastName, wholeName: name(driver), profilePicUrl: null },
+      id: `asg_${move.id}`,
+      businessUnitId: "bu_mock",
+      organizationId: "org_mock",
+      shipmentMoveId: move.id,
+      primaryWorkerId: driver.id,
+      tractorId: driver.tractorId,
+      trailerId: null,
+      secondaryWorkerId: null,
+      status: "New",
+      archivedAt: null,
+      version: 1,
+      createdAt: 0,
+      updatedAt: 0,
+      tractor: { id: driver.tractorId, code: driver.unit },
+      trailer: null,
+      primaryWorker: {
+        id: driver.id,
+        firstName: driver.firstName,
+        lastName: driver.lastName,
+        wholeName: name(driver),
+        profilePicUrl: null,
+      },
       secondaryWorker: null,
     };
     shipment.status = "Assigned";
@@ -812,7 +1085,13 @@ function assignMoves(state, input) {
     state.usedDrivers.add(driver.id);
     state.decisions.set(`coverage:${shipment.id}`, "Done");
     pushEvent(state, shipment, "DriverAssigned", `Assigned ${name(driver)}`);
-    return { moveId: item.moveId, success: true, assignmentId: move.assignment.id, error: null, findings: [] };
+    return {
+      moveId: item.moveId,
+      success: true,
+      assignmentId: move.assignment.id,
+      error: null,
+      findings: [],
+    };
   });
   const succeeded = results.filter((r) => r.success).length;
   return { succeeded, failed: results.length - succeeded, results };
@@ -827,12 +1106,19 @@ function tender(state, input) {
       failed.push({ shipmentId: item.shipmentId, message: "Shipment is not waiting for coverage" });
       continue;
     }
-    const carrier = state.carriers.find((c) => c.id === item.carrierId) ?? state.carriers[hash(shipment.id) % state.carriers.length];
+    const carrier =
+      state.carriers.find((c) => c.id === item.carrierId) ??
+      state.carriers[hash(shipment.id) % state.carriers.length];
     shipment.tenderStatus = "Tendered";
     shipment.board.tenderTo = carrier.name;
     state.decisions.set(`coverage:${shipment.id}`, "Done");
     pushEvent(state, shipment, "TenderOffered", `Tendered to ${carrier.name}`);
-    tendered.push({ shipmentId: shipment.id, tenderId: `tdr_${shipment.id}`, carrierId: carrier.id, carrierName: carrier.name });
+    tendered.push({
+      shipmentId: shipment.id,
+      tenderId: `tdr_${shipment.id}`,
+      carrierId: carrier.id,
+      carrierName: carrier.name,
+    });
   }
   return { tendered, failed };
 }
@@ -844,11 +1130,6 @@ const EMPTY_CONNECTION = {
 };
 
 const SHELL_HANDLERS = {
-  SelectOptions: (state, v) =>
-    v.input?.resource === "USER"
-      ? userSelectOptions(state, v.input)
-      : { selectOptions: { totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null }, edges: [] } },
-  MyAgents: () => ({ myAgents: EMPTY_CONNECTION }),
   AttentionSummary: () => ({
     attentionSummary: {
       billingQueue: 0,
@@ -860,6 +1141,9 @@ const SHELL_HANDLERS = {
     },
   }),
   SidebarPreferences: () => ({ sidebarPreferences: null }),
+  RecentActivity: () => ({
+    auditEntries: { edges: [], pageInfo: { endCursor: null, hasNextPage: false } },
+  }),
   NotificationUnreadCount: () => ({ notificationUnreadCount: 0 }),
   DefaultTableConfiguration: () => ({ defaultTableConfiguration: null }),
   TableConfigurationTable: () => ({ tableConfigurations: EMPTY_CONNECTION }),
@@ -869,13 +1153,44 @@ const HANDLERS = {
   ...SHELL_HANDLERS,
   ...PROVIDER_HANDLERS,
   ...AI_HANDLERS,
+  ...DESK_HANDLERS,
+  ...TRIAGE_HANDLERS,
   ...DESK_CARD_HANDLERS,
-  ShipmentBoardTable: (state, v) => ({ shipments: shipmentConnection(state, v.input, v.includeTotalCount) }),
+  ...FORMULA_HANDLERS,
+  SelectOptions: (state, v) => {
+    const cards = DESK_CARD_HANDLERS.SelectOptions(state, v);
+    if (v.input?.resource !== "USER" && cards.selectOptions.totalCount > 0) return cards;
+    const resource = v.input?.resource;
+    if (resource === "FORMULA_TEMPLATE" || resource === "SHIPMENT") {
+      return formulaAndTriageOptions(state, v.input);
+    }
+    return DESK_HANDLERS.SelectOptions(state, v);
+  },
+  MyAgents: (state, v) => {
+    const triage = DESK_HANDLERS.MyAgents(state, v).myAgents;
+    const known = new Set(triage.edges.map((edge) => edge.node.id));
+    const cards = DESK_CARD_HANDLERS.MyAgents(state, v)
+      .myAgents.edges.filter((edge) => !known.has(edge.node.id))
+      .map((edge) => ({ node: { systemKey: "", delegates: [], starters: [], ...edge.node } }));
+    const edges = [...triage.edges, ...cards];
+    return {
+      myAgents: {
+        edges,
+        pageInfo: triage.pageInfo,
+        ...(v.includeTotalCount ? { totalCount: edges.length } : {}),
+      },
+    };
+  },
+  ShipmentBoardTable: (state, v) => ({
+    shipments: shipmentConnection(state, v.input, v.includeTotalCount),
+  }),
   ShipmentDetail: (state, v) => {
     const s = state.shipments.find((x) => x.id === v.id);
     return { shipment: s ? toNode(s) : null };
   },
-  HazardousMaterialTable: (state, v) => ({ hazardousMaterials: hazardousMaterials(state, v.input) }),
+  HazardousMaterialTable: (state, v) => ({
+    hazardousMaterials: hazardousMaterials(state, v.input),
+  }),
   TelematicsStatus: (state) => ({
     telematicsStatus: {
       provider: "Samsara",
@@ -891,7 +1206,9 @@ const HANDLERS = {
       mappedWorkers: state.scenario.hos ? 24 : 0,
     },
   }),
-  ShipmentBillingReadiness: (state, v) => ({ shipmentBillingReadiness: billingReadiness(state, v.shipmentId) }),
+  ShipmentBillingReadiness: (state, v) => ({
+    shipmentBillingReadiness: billingReadiness(state, v.shipmentId),
+  }),
   WorkerHosStates: (state) => ({ workerHosStates: hosStates(state) }),
   ShipmentBoardCapabilities: (state) => ({
     shipmentBoardCapabilities: {
@@ -902,12 +1219,20 @@ const HANDLERS = {
     },
   }),
   ShipmentStageSummary: (state, v) => ({ shipmentStageSummary: stageSummary(state, v.input) }),
-  ShipmentBoardGroups: (state, v) => ({ shipmentBoardGroups: boardGroups(state, v.input, v.groupBy) }),
-  ShipmentQuickFilterCounts: (state, v) => ({ shipmentQuickFilterCounts: quickFilterCounts(state, v.input) }),
+  ShipmentBoardGroups: (state, v) => ({
+    shipmentBoardGroups: boardGroups(state, v.input, v.groupBy),
+  }),
+  ShipmentQuickFilterCounts: (state, v) => ({
+    shipmentQuickFilterCounts: quickFilterCounts(state, v.input),
+  }),
   ShipmentBriefing: (state) => ({ shipmentBriefing: briefing(state) }),
   ShipmentCapacity: (state, v) => ({ shipmentCapacity: capacity(state, v.kind) }),
-  CapacityUnitMatches: (state, v) => ({ capacityUnitMatches: capacityMatches(state, v.kind, v.unitId, v.limit ?? 2) }),
-  ShipmentCoverageSuggestions: (state, v) => ({ shipmentCoverageSuggestions: coverageSuggestions(state, v.shipmentId) }),
+  CapacityUnitMatches: (state, v) => ({
+    capacityUnitMatches: capacityMatches(state, v.kind, v.unitId, v.limit ?? 2),
+  }),
+  ShipmentCoverageSuggestions: (state, v) => ({
+    shipmentCoverageSuggestions: coverageSuggestions(state, v.shipmentId),
+  }),
   ShipmentSuggestions: (state) => ({ shipmentSuggestions: suggestions(state) }),
   ShipmentWatchlist: (state) => ({ shipmentWatchlist: watchlist(state) }),
   ShipmentEvents: (state, v) => ({
@@ -944,15 +1269,44 @@ const HANDLERS = {
     const now = state.now();
     return {
       approveDetentionOccurrence: {
-        id: v.occurrenceId, organizationId: "org_mock", businessUnitId: "bu_mock",
-        shipmentId: s?.id ?? "", shipmentMoveId: s?.moves[0].id ?? "", stopId: s ? pickupOf(s).id : "",
-        customerId: s?.customerId ?? "", locationId: s ? pickupOf(s).locationId : "", detentionPolicyId: null,
-        stopType: "Pickup", scheduleType: "Appointment", clockStartAt: now - 7200, freeTimeExpiresAt: now - 3600,
-        isOpen: true, arrivedLate: false, lateByMinutes: 0, freeMinutesGranted: 120, rawDwellMinutes: 180,
-        billableMinutes: 60, roundedMinutes: 60, billableUnits: 1, grossAmount: 75, billableAmount: 75,
-        driverPayMinutes: 0, driverPayAmount: 0, netMargin: 75, capApplied: "None", convertedToLayover: false,
-        currency: "USD", status: "Approved", notificationStatus: "NotRequired", suppressedByGate: false,
-        requiresApproval: false, waivedAmount: 0, collectabilityScore: 80, version: 2, createdAt: now, updatedAt: now,
+        id: v.occurrenceId,
+        organizationId: "org_mock",
+        businessUnitId: "bu_mock",
+        shipmentId: s?.id ?? "",
+        shipmentMoveId: s?.moves[0].id ?? "",
+        stopId: s ? pickupOf(s).id : "",
+        customerId: s?.customerId ?? "",
+        locationId: s ? pickupOf(s).locationId : "",
+        detentionPolicyId: null,
+        stopType: "Pickup",
+        scheduleType: "Appointment",
+        clockStartAt: now - 7200,
+        freeTimeExpiresAt: now - 3600,
+        isOpen: true,
+        arrivedLate: false,
+        lateByMinutes: 0,
+        freeMinutesGranted: 120,
+        rawDwellMinutes: 180,
+        billableMinutes: 60,
+        roundedMinutes: 60,
+        billableUnits: 1,
+        grossAmount: 75,
+        billableAmount: 75,
+        driverPayMinutes: 0,
+        driverPayAmount: 0,
+        netMargin: 75,
+        capApplied: "None",
+        convertedToLayover: false,
+        currency: "USD",
+        status: "Approved",
+        notificationStatus: "NotRequired",
+        suppressedByGate: false,
+        requiresApproval: false,
+        waivedAmount: 0,
+        collectabilityScore: 80,
+        version: 2,
+        createdAt: now,
+        updatedAt: now,
       },
     };
   },
@@ -960,7 +1314,9 @@ const HANDLERS = {
     const ids = state.shipments
       .filter((s) => stageOf(s) === "Delivered" && !s.billingTransferStatus)
       .map((s) => s.id);
-    return { shipmentBillingTransferCandidateIds: { ids, totalCount: ids.length, truncated: false } };
+    return {
+      shipmentBillingTransferCandidateIds: { ids, totalCount: ids.length, truncated: false },
+    };
   },
   BulkTransferShipmentsToBilling: (state, v) => {
     const ids = new Set(v.input.shipmentIds);
@@ -968,22 +1324,101 @@ const HANDLERS = {
       .filter((s) => ids.has(s.id))
       .map((s) => {
         s.billingTransferStatus = "ReadyForReview";
-        return { shipmentId: s.id, proNumber: s.proNumber, success: true, markedReadyToInvoice: true, failureCode: null, error: null, billingQueueItem: null, billingQueueItems: [] };
+        return {
+          shipmentId: s.id,
+          proNumber: s.proNumber,
+          success: true,
+          markedReadyToInvoice: true,
+          failureCode: null,
+          error: null,
+          billingQueueItem: null,
+          billingQueueItems: [],
+        };
       });
-    return { bulkTransferShipmentsToBilling: { results, transferredCount: results.length, failedCount: 0 } };
+    return {
+      bulkTransferShipmentsToBilling: { results, transferredCount: results.length, failedCount: 0 },
+    };
   },
 };
 
-export function handleGraphQL(state, body) {
-  const handler = Object.hasOwn(HANDLERS, body.operationName) ? HANDLERS[body.operationName] : undefined;
+/**
+ * Formula templates for the studio's "copy from" picker, and shipments for its real-shipment
+ * picker: the formula fixture's priced loads first, then Triage's.
+ */
+function formulaAndTriageOptions(state, input) {
+  const query = String(input.query ?? "").toLowerCase();
+  const others =
+    input.resource === "SHIPMENT"
+      ? DESK_HANDLERS.SelectOptions(state, { input: { ...input, query: "", ids: undefined, offset: 0, first: 10000 } })
+          .selectOptions.edges.map((edge) => edge.node)
+      : [];
+  let rows = [...formulaSelectRows(state, input.resource), ...others];
+  if (input.ids?.length) rows = rows.filter((row) => input.ids.includes(row.id));
+  if (query) rows = rows.filter((row) => `${row.label} ${row.description ?? ""}`.toLowerCase().includes(query));
+  const offset = input.offset ?? 0;
+  const first = input.first ?? 20;
+  const page = rows.slice(offset, offset + first);
+  return {
+    selectOptions: {
+      edges: page.map((node, i) => ({ node, cursor: Buffer.from(`offset:${offset + i + 1}`).toString("base64url") })),
+      pageInfo: {
+        hasNextPage: offset + first < rows.length,
+        endCursor: page.length ? Buffer.from(`offset:${offset + page.length}`).toString("base64url") : null,
+      },
+      totalCount: rows.length,
+    },
+  };
+}
+
+/** A domain error the way the server's error presenter returns it: code, problem type and field errors. */
+function presentedError(error, operationName) {
+  return {
+    message: error.message,
+    path: [operationName.charAt(0).toLowerCase() + operationName.slice(1)],
+    extensions: {
+      code: error.code,
+      type: `https://api.trenova.app/problems/${error.problem}`,
+      ...(error.field
+        ? { errors: [{ field: error.field, message: error.message, code: error.code }] }
+        : {}),
+    },
+  };
+}
+
+Object.assign(HANDLERS, paletteHandlers({ ...HANDLERS }));
+
+export async function handleGraphQL(state, body) {
+  const handler = Object.hasOwn(HANDLERS, body.operationName)
+    ? HANDLERS[body.operationName]
+    : undefined;
   if (!handler) {
-    return { known: false, payload: { data: null, errors: [{ message: `mock-api: no handler for ${body.operationName}`, extensions: { code: "MOCK_UNHANDLED" } }] } };
+    return {
+      known: false,
+      payload: {
+        data: null,
+        errors: [
+          {
+            message: `mock-api: no handler for ${body.operationName}`,
+            extensions: { code: "MOCK_UNHANDLED" },
+          },
+        ],
+      },
+    };
   }
   try {
-    const data = handler(state, body.variables ?? {});
+    const data = await handler(state, body.variables ?? {});
     if (data && data.__hold) return { known: true, hold: true };
     return { known: true, payload: { data } };
   } catch (error) {
-    return { known: true, payload: { data: null, errors: [{ message: String(error?.stack ?? error) }] } };
+    if (error instanceof TriageError) {
+      return {
+        known: true,
+        payload: { data: null, errors: [presentedError(error, body.operationName)] },
+      };
+    }
+    return {
+      known: true,
+      payload: { data: null, errors: [{ message: String(error?.stack ?? error) }] },
+    };
   }
 }

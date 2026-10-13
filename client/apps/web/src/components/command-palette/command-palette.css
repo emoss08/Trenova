@@ -1,0 +1,109 @@
+/*
+  The command palette (design_handoff_command_palette). Everything else is
+  tokens.css utilities; this file holds only what a utility cannot say: the
+  entrance, and the spectrum border that runs round Nova's answer while it
+  works, which is the Desk composer's ring and the one gradient the palette
+  spends.
+*/
+
+@property --cp-ang {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.cp-dialog[data-open] {
+  animation: cp-in 280ms var(--ease-settle) both;
+}
+
+@keyframes cp-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.cp-spectrum {
+  position: relative;
+  isolation: isolate;
+}
+
+.cp-spectrum::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 400ms var(--ease-settle);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  background: conic-gradient(
+    from var(--cp-ang),
+    transparent 0deg,
+    transparent 150deg,
+    oklch(0.72 0.15 225 / 0.5) 190deg,
+    oklch(0.62 0.2 255) 225deg,
+    oklch(0.5 0.22 290) 260deg,
+    oklch(0.6 0.25 345) 290deg,
+    oklch(0.72 0.2 45) 320deg,
+    oklch(0.85 0.17 85) 342deg,
+    transparent 360deg
+  );
+  animation: cp-ang 2.6s linear infinite;
+}
+
+.cp-spectrum[data-busy="true"]::before {
+  opacity: 1;
+}
+
+@keyframes cp-ang {
+  to {
+    --cp-ang: 360deg;
+  }
+}
+
+.cp-grow-x {
+  transform-origin: left center;
+  animation: cp-grow-x 600ms var(--ease-settle) both;
+}
+
+@keyframes cp-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.cp-grow {
+  animation: cp-grow 420ms var(--ease-spring) 180ms both;
+}
+
+@keyframes cp-grow {
+  from {
+    transform: scale(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-dialog[data-open],
+  .cp-grow-x,
+  .cp-grow {
+    animation: none;
+  }
+
+  .cp-spectrum::before {
+    animation: none;
+  }
+}

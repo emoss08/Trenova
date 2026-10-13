@@ -120,6 +120,11 @@ type Usage struct {
 	// ThinkingDropped is how many replayed thinking blocks the provider
 	// dropped because the conversation before them had changed.
 	ThinkingDropped int64
+	// CacheMissReason is where the provider found the prompt stopped
+	// matching the call before it, when cache diagnostics are on, and
+	// CacheMissedTokens its estimate of how much came after that point.
+	CacheMissReason   string
+	CacheMissedTokens int64
 }
 
 func StartModelCall(ctx context.Context, spec *ModelCallSpec) (context.Context, trace.Span) {
@@ -312,6 +317,10 @@ func RecordUsage(span trace.Span, usage *Usage) {
 	}
 	if usage.ThinkingDropped > 0 {
 		attrs = append(attrs, AIThinkingDropped.Int64(usage.ThinkingDropped))
+	}
+	attrs = appendString(attrs, AICacheMissReason, usage.CacheMissReason)
+	if usage.CacheMissedTokens > 0 {
+		attrs = append(attrs, AICacheMissedTokens.Int64(usage.CacheMissedTokens))
 	}
 	if len(usage.FinishReasons) > 0 {
 		attrs = append(attrs, GenAIResponseFinishReasons.StringSlice(usage.FinishReasons))

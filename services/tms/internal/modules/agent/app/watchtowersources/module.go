@@ -22,7 +22,9 @@ var Module = fx.Module("watchtower-sources",
 		asSource(NewQualityRegressionSource),
 		asSource(NewAccountingSyncSource),
 		asSource(NewTelematicsStopVisitSource),
+		asSource(NewNoCheckCallSource),
 	),
+	fx.Provide(NewNoCheckCallObserver),
 )
 
 func asSource(constructor any) any {

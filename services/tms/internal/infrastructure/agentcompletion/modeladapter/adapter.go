@@ -81,10 +81,19 @@ type Response struct {
 	CacheWriteTokens int
 	OutputLimit      int
 	CutOffCall       *CutOffToolCall
+	// Files says which files the request sent as themselves, and which it
+	// sent as their text instead and why.
+	Files FileReport
 	// ThinkingDropped is how many replayed thinking blocks the provider
 	// dropped because the conversation before them had changed. Anthropic
 	// reports it; a recurring drop is an edit the harness should stop making.
 	ThinkingDropped int
+	// MessageID is the provider's own id for the reply, where it gives one.
+	MessageID string
+	// CacheDiagnosis is what the provider said about why the prompt cache
+	// missed against the call before this one. Nil when it was not asked, or
+	// found nothing to report.
+	CacheDiagnosis *CacheDiagnosis
 }
 
 // Adapter speaks one wire protocol.
@@ -114,7 +123,21 @@ type Call struct {
 	// protocol carries it. Optional; a call without one still reads the
 	// thinking into the Response, it just does not show it as it happens.
 	Reasoning StreamSink
+	// ServerCredentialsAllowed lets a provider sign in to its platform with
+	// the server's own cloud identity. The server's configuration says; a
+	// provider saved while it allowed that is refused once it no longer does.
+	ServerCredentialsAllowed bool
+	// Files reads the files a request's messages carry, for a protocol whose
+	// model reads files itself. Nil sends every message as its text.
+	Files FileSource
+	// CacheDiagnostics asks a provider that can say why its prompt cache
+	// missed to compare this call with the one before it. The server's
+	// configuration says.
+	CacheDiagnostics bool
 }
+
+// FileSource reads the bytes of a file a message carries, by its document.
+type FileSource func(ctx context.Context, documentID string) (*MessageFileContent, error)
 
 // think hands a piece of thinking to the reasoning sink, if there is one.
 func (c *Call) think(delta string) {

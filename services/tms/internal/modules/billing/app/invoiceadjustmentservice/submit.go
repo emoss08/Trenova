@@ -206,9 +206,7 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 				ApprovalRequired:                computation.preview.RequiresApproval,
 				SubmittedByID:                   actor.UserID,
 				SubmittedAt:                     &now,
-				Metadata: map[string]any{
-					"attachmentIds": req.AttachmentIDs,
-				},
+				Metadata:                        adjustmentMetadata(req),
 			}
 			if computation.preview.RequiresApproval {
 				adjustment.Status = invoiceadjustment.StatusPendingApproval

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
@@ -67,7 +68,9 @@ type Params struct {
 	// holding its shipment off an invoice.
 	Realtime agentports.RealtimeService `optional:"true"`
 	// Senders names who a notice would go out as, for its preview.
-	Senders emailports.EmailSenderResolver `optional:"true"`
+	Senders       emailports.EmailSenderResolver   `optional:"true"`
+	DocumentStore documentports.DocumentStore      `optional:"true"`
+	Documents     documentports.DocumentRepository `optional:"true"`
 }
 
 type Service struct {
@@ -95,6 +98,8 @@ type Service struct {
 	publisher         agentports.AgentEventPublisher
 	realtime          agentports.RealtimeService
 	senders           emailports.EmailSenderResolver
+	documentStore     documentports.DocumentStore
+	documents         documentports.DocumentRepository
 	now               func() int64
 }
 
@@ -125,6 +130,8 @@ func New(p Params) *Service {
 		publisher:         p.Publisher,
 		realtime:          p.Realtime,
 		senders:           p.Senders,
+		documentStore:     p.DocumentStore,
+		documents:         p.Documents,
 		auditService:      p.AuditService,
 		now:               timeutils.NowUnix,
 	}

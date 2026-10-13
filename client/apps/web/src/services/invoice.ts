@@ -4,6 +4,7 @@ import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 import {
   invoiceEmailAttemptSchema,
   generateInvoicePdfResultSchema,
+  invoicePostPreviewSchema,
   invoiceSchema,
   invoiceSendPlanSchema,
   invoiceSendResultSchema,
@@ -65,6 +66,12 @@ export class InvoiceService {
     const query = search ? `?${search}` : "";
     const response = await api.get(`/billing/invoices/${id}/email-attempts/${query}`);
     return safeParse(invoiceEmailAttemptListSchema, response, "InvoiceEmailAttempts");
+  }
+
+  /** What posting the invoice would book and move, without posting it. */
+  public async getPostPreview(id: string) {
+    const response = await api.get(`/billing/invoices/${id}/post-preview/`);
+    return safeParse(invoicePostPreviewSchema, response, "InvoicePostPreview");
   }
 
   public async post(id: string) {

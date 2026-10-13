@@ -19,11 +19,11 @@ import (
 )
 
 const (
-	KickAccountingDriftWorkflowName          = "KickAccountingDriftWorkflow"
-	AnnounceAccountingReconciliationWorkflow = "AnnounceAccountingReconciliationWorkflow"
-	driftBatchesPerRun                       = 50
-	driftEventsPerRun                        = 20
-	driftConnectionsPage                     = 100
+	KickAccountingDriftWorkflowName                 = "KickAccountingDriftWorkflow"
+	AnnounceAccountingReconciliationDueWorkflowName = "AnnounceAccountingReconciliationDueWorkflow"
+	driftBatchesPerRun                              = 50
+	driftEventsPerRun                               = 20
+	driftConnectionsPage                            = 100
 )
 
 var driftActivityOptions = workflow.ActivityOptions{
@@ -60,7 +60,7 @@ func driftWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Start the nightly drift check for every syncing accounting connection",
 		},
 		{
-			Name:        AnnounceAccountingReconciliationWorkflow,
+			Name:        AnnounceAccountingReconciliationDueWorkflowName,
 			Fn:          AnnounceAccountingReconciliationDueWorkflow,
 			TaskQueue:   temporaltype.IntegrationTaskQueue,
 			Description: "Raise the weekly books reconciliation for every syncing accounting connection",

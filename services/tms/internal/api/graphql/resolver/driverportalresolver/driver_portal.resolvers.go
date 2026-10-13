@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func (r *MutationResolver) InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalservice.InviteWorkerResult, error) {
@@ -127,13 +128,14 @@ func (r *MutationResolver) RecordMyStopAction(ctx context.Context, input gqlmode
 	if err != nil {
 		return false, errortypes.NewValidationError("stopId", errortypes.ErrInvalid, "Invalid stop")
 	}
-	if err = r.DriverPortalService.MyStopAction(
-		ctx,
-		base.TenantInfo(authCtx),
-		moveID,
-		stopID,
-		input.Action,
-	); err != nil {
+	if err = r.DriverPortalService.MyStopAction(ctx, &driverportalservice.MyStopActionRequest{
+		TenantInfo:    base.TenantInfo(authCtx),
+		MoveID:        moveID,
+		StopID:        stopID,
+		Action:        input.Action,
+		OccurredAt:    base.Int64Ptr(input.OccurredAt),
+		ClientEventID: stringutils.FromPtr(input.ClientEventID),
+	}); err != nil {
 		return false, err
 	}
 	return true, nil

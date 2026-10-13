@@ -12,6 +12,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	workflowstarterservice "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
@@ -25,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -77,6 +80,7 @@ type Params struct {
 	Encryption           *encryptionservice.Service
 	Realtime             agentports.RealtimeService
 	AICorrections        aicorrectionports.AICorrectionService `optional:"true"`
+	Triage               inboundmessageports.TriageEventSink   `optional:"true"`
 }
 
 type Service struct {
@@ -101,6 +105,7 @@ type Service struct {
 	encryption           *encryptionservice.Service
 	realtime             agentports.RealtimeService
 	aiCorrections        aicorrectionports.AICorrectionService
+	triage               inboundmessageports.TriageEventSink
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -141,6 +146,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		encryption:           p.Encryption,
 		realtime:             p.Realtime,
 		aiCorrections:        p.AICorrections,
+		triage:               p.Triage,
 	}
 }
 
@@ -234,14 +240,86 @@ func (s *Service) Upload(
 	}
 	defer file.Close()
 
-	contentType := req.File.Header.Get("Content-Type")
+	return s.storeUpload(ctx, log, &uploadInput{
+		req:               req,
+		processingProfile: processingProfile,
+		fileName:          req.File.Filename,
+		size:              req.File.Size,
+		contentType:       req.File.Header.Get("Content-Type"),
+		read:              func() ([]byte, error) { return io.ReadAll(file) },
+	})
+}
+
+func (s *Service) Store(
+	ctx context.Context,
+	req *documentports.StoreDocumentRequest,
+) (*document.Document, error) {
+	log := s.l.With(
+		zap.String("operation", "Store"),
+		zap.String("resourceId", req.ResourceID),
+		zap.String("resourceType", req.ResourceType),
+	)
+
+	size := int64(len(req.Content))
+	if multiErr := s.validator.ValidateUploadMetadata(
+		req.FileName,
+		size,
+		req.ContentType,
+	); multiErr != nil {
+		return nil, multiErr
+	}
+
+	upload := &documentports.UploadRequest{
+		TenantInfo:   req.TenantInfo,
+		Actor:        req.Actor,
+		ResourceID:   req.ResourceID,
+		ResourceType: req.ResourceType,
+		Description:  req.Description,
+		Tags:         req.Tags,
+	}
+	if req.DocumentTypeID.IsNotNil() {
+		upload.DocumentTypeID = req.DocumentTypeID.String()
+	}
+
+	result, err := s.storeUpload(ctx, log, &uploadInput{
+		req:               upload,
+		processingProfile: document.ProcessingProfileNone,
+		fileName:          req.FileName,
+		size:              size,
+		contentType:       req.ContentType,
+		read:              func() ([]byte, error) { return req.Content, nil },
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Document, nil
+}
+
+type uploadInput struct {
+	req               *documentports.UploadRequest
+	processingProfile document.ProcessingProfile
+	fileName          string
+	size              int64
+	contentType       string
+	read              func() ([]byte, error)
+}
+
+func (s *Service) storeUpload(
+	ctx context.Context,
+	log *zap.Logger,
+	in *uploadInput,
+) (*UploadResult, error) {
+	req := in.req
+	processingProfile := in.processingProfile
+	contentType := in.contentType
 	storagePath := fileutils.GenerateStoragePath(
 		req.TenantInfo.OrgID.String(),
 		req.ResourceType,
-		req.File.Filename,
+		in.fileName,
 	)
 	docID := pulid.MustNew("doc_")
-	if err = usageservice.CheckDocumentUploadLimit(
+	if err := usageservice.CheckDocumentUploadLimit(
 		ctx,
 		s.usageProvider,
 		usageservice.DocumentUploadUsageParams{
@@ -252,13 +330,13 @@ func (s *Service) Upload(
 	); err != nil {
 		return nil, err
 	}
-	if err = usageservice.CheckDocumentBytesLimit(
+	if err := usageservice.CheckDocumentBytesLimit(
 		ctx,
 		s.usageProvider,
 		usageservice.DocumentBytesUsageParams{
 			TenantInfo: req.TenantInfo,
 			Actor:      req.Actor,
-			Bytes:      req.File.Size,
+			Bytes:      in.size,
 		},
 	); err != nil {
 		return nil, err
@@ -269,7 +347,7 @@ func (s *Service) Upload(
 		return nil, err
 	}
 
-	plaintext, err := io.ReadAll(file)
+	plaintext, err := in.read()
 	if err != nil {
 		log.Error("failed to read uploaded file", zap.Error(err))
 		return nil, errortypes.NewDatabaseError("Failed to process uploaded file").WithInternal(err)
@@ -290,7 +368,7 @@ func (s *Service) Upload(
 		Size:        int64(len(uploadBody)),
 		Body:        bytes.NewReader(uploadBody),
 		Metadata: map[string]string{
-			"original_name": req.File.Filename,
+			"original_name": in.fileName,
 			"resource_id":   req.ResourceID,
 			"resource_type": req.ResourceType,
 			"crypto_mode":   cryptoMode,
@@ -309,8 +387,8 @@ func (s *Service) Upload(
 		VersionNumber:      s.nextVersionNumber(lineageInfo),
 		IsCurrentVersion:   true,
 		FileName:           filepath.Base(storagePath),
-		OriginalName:       req.File.Filename,
-		FileSize:           req.File.Size,
+		OriginalName:       in.fileName,
+		FileSize:           in.size,
 		FileType:           contentType,
 		StoragePath:        storagePath,
 		ChecksumSHA256:     hashutils.SHA256BytesHex(plaintext),
@@ -364,6 +442,7 @@ func (s *Service) Upload(
 		s.deleteSearchProjection(ctx, lineageInfo)
 	}
 	s.syncSearchProjection(ctx, log, createdDoc, "")
+	inboundmessageports.AnnounceDocumentAttached(ctx, s.triage, createdDoc)
 
 	if s.thumbnailGenerator.SupportsThumbnail(contentType) {
 		s.startThumbnailWorkflow(ctx, log, createdDoc)
@@ -460,7 +539,7 @@ func (s *Service) documentUploadBody(
 
 	encrypted, err := s.encryption.EncryptBytesWithAAD(
 		plaintext,
-		documentStorageAAD(tenantInfo, storagePath),
+		storedobject.AAD(tenantInfo, storagePath),
 	)
 	if err != nil {
 		return nil, "", 0, errortypes.NewBusinessError("Failed to encrypt document").
@@ -705,7 +784,7 @@ func (s *Service) GetPreviewContent(
 	body, err := s.readStoredObject(
 		ctx,
 		doc.PreviewStoragePath,
-		documentStorageAAD(req.TenantInfo, doc.PreviewStoragePath),
+		storedobject.AAD(req.TenantInfo, doc.PreviewStoragePath),
 	)
 	if err != nil {
 		return nil, err
@@ -726,7 +805,7 @@ func (s *Service) readDocumentObject(
 	tenantInfo pagination.TenantInfo,
 	storagePath string,
 ) ([]byte, error) {
-	return s.readStoredObject(ctx, storagePath, documentStorageAAD(tenantInfo, doc.StoragePath))
+	return s.readStoredObject(ctx, storagePath, storedobject.AAD(tenantInfo, doc.StoragePath))
 }
 
 func (s *Service) readStoredObject(
@@ -734,31 +813,7 @@ func (s *Service) readStoredObject(
 	storagePath string,
 	aad encryptionservice.AAD,
 ) ([]byte, error) {
-	download, err := s.storage.Download(ctx, storagePath)
-	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to download document").WithInternal(err)
-	}
-	if download == nil || download.Body == nil {
-		return nil, errortypes.NewDatabaseError("Failed to download document")
-	}
-	defer download.Body.Close()
-
-	data, err := io.ReadAll(download.Body)
-	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to read document").WithInternal(err)
-	}
-	if s.encryption == nil {
-		return nil, errortypes.NewBusinessError("Document encryption is not configured")
-	}
-	if !encryptionservice.IsEnvelope(string(data)) {
-		return nil, errortypes.NewBusinessError("Stored document is not encrypted")
-	}
-
-	plaintext, err := s.encryption.DecryptBytesWithAAD(string(data), aad)
-	if err != nil {
-		return nil, errortypes.NewBusinessError("Failed to decrypt document").WithInternal(err)
-	}
-	return plaintext, nil
+	return storedobject.Read(ctx, s.storage, s.encryption, storagePath, aad)
 }
 
 func viewContentDisposition(doc *document.Document) string {
@@ -776,18 +831,6 @@ func isActiveContentType(contentType string) bool {
 		return true
 	default:
 		return false
-	}
-}
-
-func documentStorageAAD(
-	tenantInfo pagination.TenantInfo,
-	storagePath string,
-) encryptionservice.AAD {
-	return encryptionservice.AAD{
-		Purpose:        encryptionservice.PurposeDocument,
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		ResourceID:     storagePath,
 	}
 }
 

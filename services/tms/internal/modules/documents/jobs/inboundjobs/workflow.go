@@ -71,6 +71,17 @@ var fetchOptions = workflow.ActivityOptions{
 // message is read. Executions that began before it replay without the step.
 const changeFetchContent = "inbound-message-fetch-content"
 
+const changeCheckConflicts = "inbound-message-check-conflicts"
+
+var conflictOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: time.Minute,
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval:    5 * time.Second,
+		BackoffCoefficient: 2,
+		MaximumAttempts:    3,
+	},
+}
+
 // fetchFailedReason is what the inbox shows when the fetch itself failed
 // rather than the provider refusing it.
 const fetchFailedReason = "The body and attachments of this message could not be read " +
@@ -151,6 +162,10 @@ func ProcessInboundMessageWorkflow(
 	err := workflow.ExecuteActivity(settleCtx, a.SettleInboundMessageActivity, payload).
 		Get(settleCtx, result)
 	if err == nil {
+		if workflow.GetVersion(ctx, changeCheckConflicts, workflow.DefaultVersion, 1) == 1 {
+			checkConflicts(ctx, payload)
+		}
+
 		return result, nil
 	}
 
@@ -365,5 +380,16 @@ func recordAttachment(
 		}).Get(ctx, nil); err != nil {
 		workflow.GetLogger(ctx).Error("could not record an inbound attachment's document",
 			"attachmentId", ref.AttachmentID.String(), "error", err)
+	}
+}
+
+func checkConflicts(ctx workflow.Context, payload *ProcessInboundMessagePayload) {
+	var a *Activities
+
+	conflictCtx := workflow.WithActivityOptions(ctx, conflictOptions)
+	if err := workflow.ExecuteActivity(conflictCtx, a.CheckInboundConflictsActivity, payload).
+		Get(conflictCtx, nil); err != nil {
+		workflow.GetLogger(ctx).Warn("could not check an inbound message for conflicts",
+			"messageId", payload.MessageID.String(), "error", err)
 	}
 }

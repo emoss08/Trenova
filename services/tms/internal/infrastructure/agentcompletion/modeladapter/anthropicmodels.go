@@ -1,12 +1,6 @@
 package modeladapter
 
-import (
-	"regexp"
-	"strconv"
-	"strings"
-
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-)
+import "github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 
 // anthropicModel is what a Claude model takes for thinking. The models differ
 // sharply: the ones from Opus 4.6 and Sonnet 4.6 on think by effort and refuse
@@ -33,27 +27,6 @@ type anthropicModel struct {
 	declared bool
 }
 
-var (
-	// claudeID is family, major and an optional minor, as in claude-opus-5-5
-	// or claude-haiku-4-5. The older claude-3-7-sonnet shape does not match
-	// and keeps the budget behaviour every model of that age takes.
-	claudeID = regexp.MustCompile(`^claude-([a-z]+)-(\d+)(?:-(\d))?$`)
-	// dateSuffix is a snapshot date: claude-haiku-4-5-20251001.
-	dateSuffix = regexp.MustCompile(`-\d{8}$`)
-	// bedrockSuffix is Bedrock's model version: ...-v1:0.
-	bedrockSuffix = regexp.MustCompile(`-v\d+(?::\d+)?$`)
-)
-
-// anthropicTraits reads what a configured model id takes. The id comes in the
-// form of whatever endpoint serves it: the Claude API's plain id, Bedrock's
-// anthropic.-prefixed one (with a region in front for an inference profile),
-// Vertex's @date one, a dated snapshot, or an alias a gateway made up. An id
-// this cannot read gets no traits, which is the budget behaviour every model
-// took before adaptive thinking, so nothing that works today changes.
-//
-// A version past the newest named here is read as that newest one: the model
-// table moves faster than this code, and the newest constraints are the safe
-// ones to assume.
 // providerTraits is what the configured provider's model takes: read from its
 // id unless the operator said how it thinks.
 func providerTraits(provider *aiprovider.Provider) anthropicModel {
@@ -73,47 +46,36 @@ func providerTraits(provider *aiprovider.Provider) anthropicModel {
 	}
 }
 
+// anthropicTraits reads what a configured model id takes, in any form
+// aiprovider.ParseClaudeModel reads. An id it cannot read gets no traits,
+// which is the budget behaviour every model took before adaptive thinking, so
+// nothing that works today changes.
+//
+// A version past the newest named here is read as that newest one: the model
+// table moves faster than this code, and the newest constraints are the safe
+// ones to assume.
 func anthropicTraits(model string) anthropicModel {
-	id := strings.ToLower(strings.TrimSpace(model))
-	if at := strings.IndexByte(id, '@'); at >= 0 {
-		id = id[:at]
-	}
-	start := strings.Index(id, "claude-")
-	if start < 0 {
+	claude, ok := aiprovider.ParseClaudeModel(model)
+	if !ok {
 		return anthropicModel{}
 	}
-	id = bedrockSuffix.ReplaceAllString(id[start:], "")
-	id = dateSuffix.ReplaceAllString(id, "")
-
-	match := claudeID.FindStringSubmatch(id)
-	if match == nil {
-		return anthropicModel{}
-	}
-	major, err := strconv.Atoi(match[2])
-	if err != nil {
-		return anthropicModel{}
-	}
-	minor := 0
-	if match[3] != "" {
-		minor, _ = strconv.Atoi(match[3])
-	}
-	version := major*10 + minor
+	version := claude.Version
 
 	traits := anthropicModel{adaptive: version >= 46}
-	switch match[1] {
-	case "opus":
+	switch claude.Family {
+	case aiprovider.ClaudeFamilyOpus:
 		traits.thinksAlways = version >= 55
 		traits.bindsPrefix = version >= 55
 		traits.disableNeedsLowEffort = version == 50
-	case "sonnet":
+	case aiprovider.ClaudeFamilySonnet:
 		traits.disableRefused = version >= 55
 		traits.bindsPrefix = version >= 55
-	case "fable":
+	case aiprovider.ClaudeFamilyFable:
 		traits.thinksAlways = true
 		traits.bindsPrefix = version >= 51
-	case "mythos":
+	case aiprovider.ClaudeFamilyMythos:
 		traits.thinksAlways = true
-	case "haiku":
+	case aiprovider.ClaudeFamilyHaiku:
 		traits.disableNeedsLowEffort = version >= 55
 	}
 

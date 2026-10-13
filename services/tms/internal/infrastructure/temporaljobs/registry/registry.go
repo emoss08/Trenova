@@ -10,6 +10,7 @@ import (
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/interceptor"
 	"go.temporal.io/sdk/worker"
+	"go.temporal.io/sdk/workflow"
 	"go.uber.org/zap"
 )
 
@@ -311,7 +312,7 @@ func (r *DomainRegistry) RegisterActivities(w worker.Worker) error {
 
 func (r *DomainRegistry) RegisterWorkflows(w worker.Worker) error {
 	for _, wf := range r.workflows {
-		w.RegisterWorkflow(wf.Fn)
+		w.RegisterWorkflowWithOptions(wf.Fn, workflow.RegisterOptions{Name: wf.Name})
 		r.logger.Debug("registered workflow",
 			zap.String("name", wf.Name),
 			zap.String("description", wf.Description),

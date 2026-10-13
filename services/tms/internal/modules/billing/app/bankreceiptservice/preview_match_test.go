@@ -1,10 +1,10 @@
 package bankreceiptservice
 
 import (
+	"context"
 	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
-	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
@@ -47,12 +47,13 @@ func TestPreviewMatch_IsWhatMatchSaves(t *testing.T) {
 	}
 
 	receiptRepo := bankreceiptportsmock.NewMockBankReceiptRepository(t)
-	receiptRepo.EXPECT().
-		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, bankreceiptports.GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error) {
-			copied := *stored
-			return &copied, nil
-		})
+	readStored := func(context.Context, bankreceiptports.GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error) {
+		copied := *stored
+		return &copied, nil
+	}
+	receiptRepo.EXPECT().GetByID(mock.Anything, mock.Anything).RunAndReturn(readStored)
+	receiptRepo.EXPECT().LockForUpdate(mock.Anything, mock.Anything).RunAndReturn(readStored)
+	receiptRepo.EXPECT().ListMatchedToPayment(mock.Anything, mock.Anything).Return(nil, nil)
 	paymentRepo := customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
 	paymentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(payment, nil)
 	workItems := bankreceiptworkitemportsmock.NewMockBankReceiptWorkItemRepository(t)
@@ -64,6 +65,7 @@ func TestPreviewMatch_IsWhatMatchSaves(t *testing.T) {
 		})
 
 	svc := &Service{
+		db:           passthroughDB{},
 		repo:         receiptRepo,
 		workItemRepo: workItems,
 		paymentRepo:  paymentRepo,

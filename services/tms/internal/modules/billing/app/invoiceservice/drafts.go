@@ -40,7 +40,7 @@ func (s *Service) UpdateDraft(
 	if err != nil {
 		return nil, err
 	}
-	if err = refuseNonDraftUpdate(entity); err != nil {
+	if err = refuseDeliveryUpdate(entity, req); err != nil {
 		return nil, err
 	}
 
@@ -210,6 +210,7 @@ func (s *Service) AutoSendInvoiceAfterPDFGeneration(
 		InvoiceID:  req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 		BaseURL:    req.BaseURL,
+		StartedAt:  req.StartedAt,
 	}, actor)
 }
 

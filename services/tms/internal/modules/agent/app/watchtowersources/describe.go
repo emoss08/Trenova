@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -704,5 +705,49 @@ func DescribeTelematicsStopVisit(
 		SubjectID:   event.ShipmentMoveID,
 		Path:        path,
 		OccurredAt:  event.OccurredAt,
+	}
+}
+
+func DescribeNoCheckCall(
+	tenant pagination.TenantInfo,
+	move *checkcallports.OverdueMove,
+) watchtowerports.WatchtowerItemInput {
+	window := int64(move.IntervalHours) * 60 * 60
+	severity := watchtower.SeverityWarning
+	if window > 0 && move.OverdueBy >= window {
+		severity = watchtower.SeverityCritical
+	}
+
+	title := "No check call"
+	if move.ProNumber != "" {
+		title = "No check call on " + move.ProNumber
+	}
+
+	carrier := stringutils.FirstNonEmpty(move.CarrierName, "The carrier")
+	hours := strconv.FormatInt(int64(move.IntervalHours), 10)
+	summary := carrier + " has not checked in within the " + hours + "h window for this load."
+	if severity == watchtower.SeverityCritical {
+		summary = carrier + " has been silent for more than twice the " + hours +
+			"h check call window on this load."
+	}
+
+	path := pathDispatchConsole
+	if move.ShipmentID.IsNotNil() {
+		if recordPath, ok := productguide.RecordPath("shipment", move.ShipmentID.String()); ok {
+			path = recordPath
+		}
+	}
+
+	return watchtowerports.WatchtowerItemInput{
+		TenantInfo:  tenant,
+		SourceKind:  watchtower.SourceNoCheckCall,
+		SourceID:    move.MoveID.String(),
+		Severity:    severity,
+		Title:       title,
+		Summary:     summary,
+		SubjectType: agent.SubjectShipmentMove,
+		SubjectID:   move.MoveID,
+		Path:        path,
+		OccurredAt:  move.LastContactAt + window,
 	}
 }

@@ -3016,3 +3016,236 @@ var AccountingSyncRecordFilter = struct {
 		return buncolgen.NewFieldFilter("updatedAt", op, value)
 	},
 }
+
+// ---------------------------------------------------------------------------
+// AccountingWebhookSubscription — table "accounting_webhook_subscriptions", alias "acctwhs"
+// ---------------------------------------------------------------------------
+
+// AccountingWebhookSubscriptionTable holds the table name, alias, and primary key columns
+// for the "accounting_webhook_subscriptions" table. The alias "acctwhs" is used in all generated
+// SQL fragments (e.g. "acctwhs.id = ?").
+var AccountingWebhookSubscriptionTable = buncolgen.TableInfo{
+	Name:       "accounting_webhook_subscriptions",
+	Alias:      "acctwhs",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AccountingWebhookSubscriptionColumns provides type-safe column references for the "accounting_webhook_subscriptions" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AccountingWebhookSubscriptionColumns.ID.String())
+//	// SELECT acctwhs.id FROM accounting_webhook_subscriptions AS acctwhs
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AccountingWebhookSubscriptionColumns.ID.Eq(), id)           // WHERE acctwhs.id = ?
+//	q.Order(AccountingWebhookSubscriptionColumns.CreatedAt.OrderDesc())  // ORDER BY acctwhs.created_at DESC
+var AccountingWebhookSubscriptionColumns = struct {
+	ID                     buncolgen.Column // "id" → qualified: "acctwhs.id"
+	BusinessUnitID         buncolgen.Column // "business_unit_id" → qualified: "acctwhs.business_unit_id"
+	OrganizationID         buncolgen.Column // "organization_id" → qualified: "acctwhs.organization_id"
+	ConnectionID           buncolgen.Column // "connection_id" → qualified: "acctwhs.connection_id"
+	IntegrationType        buncolgen.Column // "integration_type" → qualified: "acctwhs.integration_type"
+	Resource               buncolgen.Column // "resource" → qualified: "acctwhs.resource"
+	ExternalSubscriptionID buncolgen.Column // "external_subscription_id" → qualified: "acctwhs.external_subscription_id"
+	NotificationURL        buncolgen.Column // "notification_url" → qualified: "acctwhs.notification_url"
+	ClientStateCiphertext  buncolgen.Column // "client_state_ciphertext" → qualified: "acctwhs.client_state_ciphertext"
+	ETag                   buncolgen.Column // "etag" → qualified: "acctwhs.etag"
+	Status                 buncolgen.Column // "status" → qualified: "acctwhs.status"
+	ExpiresAt              buncolgen.Column // "expires_at" → qualified: "acctwhs.expires_at"
+	LastAttemptAt          buncolgen.Column // "last_attempt_at" → qualified: "acctwhs.last_attempt_at"
+	LastError              buncolgen.Column // "last_error" → qualified: "acctwhs.last_error"
+	Version                buncolgen.Column // "version" → qualified: "acctwhs.version"
+	CreatedAt              buncolgen.Column // "created_at" → qualified: "acctwhs.created_at"
+	UpdatedAt              buncolgen.Column // "updated_at" → qualified: "acctwhs.updated_at"
+}{
+	ID:                     buncolgen.NewColumn("id", "acctwhs"),
+	BusinessUnitID:         buncolgen.NewColumn("business_unit_id", "acctwhs"),
+	OrganizationID:         buncolgen.NewColumn("organization_id", "acctwhs"),
+	ConnectionID:           buncolgen.NewColumn("connection_id", "acctwhs"),
+	IntegrationType:        buncolgen.NewColumn("integration_type", "acctwhs"),
+	Resource:               buncolgen.NewColumn("resource", "acctwhs"),
+	ExternalSubscriptionID: buncolgen.NewColumn("external_subscription_id", "acctwhs"),
+	NotificationURL:        buncolgen.NewColumn("notification_url", "acctwhs"),
+	ClientStateCiphertext:  buncolgen.NewColumn("client_state_ciphertext", "acctwhs"),
+	ETag:                   buncolgen.NewColumn("etag", "acctwhs"),
+	Status:                 buncolgen.NewColumn("status", "acctwhs"),
+	ExpiresAt:              buncolgen.NewColumn("expires_at", "acctwhs"),
+	LastAttemptAt:          buncolgen.NewColumn("last_attempt_at", "acctwhs"),
+	LastError:              buncolgen.NewColumn("last_error", "acctwhs"),
+	Version:                buncolgen.NewColumn("version", "acctwhs"),
+	CreatedAt:              buncolgen.NewColumn("created_at", "acctwhs"),
+	UpdatedAt:              buncolgen.NewColumn("updated_at", "acctwhs"),
+}
+
+// AccountingWebhookSubscriptionFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AccountingWebhookSubscription.GetStaticFieldMap().
+var AccountingWebhookSubscriptionFieldMap = map[string]string{
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"connectionId":           "connection_id",
+	"integrationType":        "integration_type",
+	"resource":               "resource",
+	"externalSubscriptionId": "external_subscription_id",
+	"notificationUrl":        "notification_url",
+	"status":                 "status",
+	"expiresAt":              "expires_at",
+	"lastAttemptAt":          "last_attempt_at",
+	"lastError":              "last_error",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
+}
+
+// AccountingWebhookSubscriptionInsertableColumns lists column names suitable for INSERT statements on the "accounting_webhook_subscriptions" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AccountingWebhookSubscriptionInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"connection_id",
+	"integration_type",
+	"resource",
+	"external_subscription_id",
+	"notification_url",
+	"client_state_ciphertext",
+	"etag",
+	"status",
+	"expires_at",
+	"last_attempt_at",
+	"last_error",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AccountingWebhookSubscriptionRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(AccountingWebhookSubscriptionRelations.Organization)
+//	// Bun eager-loads the Organization association via a separate query
+var AccountingWebhookSubscriptionRelations = struct {
+	Organization string
+	BusinessUnit string
+}{
+	Organization: "Organization",
+	BusinessUnit: "BusinessUnit",
+}
+
+// AccountingWebhookSubscriptionScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE acctwhs.organization_id = ? AND acctwhs.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	accountingsynccol.AccountingWebhookSubscriptionScopeTenant(sq, ti).
+//		Where(accountingsynccol.AccountingWebhookSubscriptionColumns.ID.Eq(), id)
+func AccountingWebhookSubscriptionScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, AccountingWebhookSubscriptionColumns.OrganizationID, AccountingWebhookSubscriptionColumns.BusinessUnitID, ti)
+}
+
+// AccountingWebhookSubscriptionScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return accountingsynccol.AccountingWebhookSubscriptionScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(accountingsynccol.AccountingWebhookSubscriptionColumns.ID.In(), bun.List(ids))
+//	})
+func AccountingWebhookSubscriptionScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, AccountingWebhookSubscriptionColumns.OrganizationID, AccountingWebhookSubscriptionColumns.BusinessUnitID, ti)
+}
+
+// AccountingWebhookSubscriptionScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return accountingsynccol.AccountingWebhookSubscriptionScopeTenantDelete(dq, req.TenantInfo).
+//			Where(accountingsynccol.AccountingWebhookSubscriptionColumns.ID.Eq(), id)
+//	})
+func AccountingWebhookSubscriptionScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, AccountingWebhookSubscriptionColumns.OrganizationID, AccountingWebhookSubscriptionColumns.BusinessUnitID, ti)
+}
+
+// AccountingWebhookSubscriptionApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(accountingsynccol.AccountingWebhookSubscriptionApplyTenant(tenantInfo))
+func AccountingWebhookSubscriptionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(AccountingWebhookSubscriptionColumns.OrganizationID, AccountingWebhookSubscriptionColumns.BusinessUnitID, ti)
+}
+
+// AccountingWebhookSubscriptionFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "accounting_webhook_subscriptions" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AccountingWebhookSubscriptionFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AccountingWebhookSubscriptionFilter = struct {
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ConnectionID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "connectionId" → DB: "connection_id"
+	IntegrationType        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "integrationType" → DB: "integration_type"
+	Resource               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resource" → DB: "resource"
+	ExternalSubscriptionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalSubscriptionId" → DB: "external_subscription_id"
+	NotificationURL        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notificationUrl" → DB: "notification_url"
+	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	ExpiresAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	LastAttemptAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastAttemptAt" → DB: "last_attempt_at"
+	LastError              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastError" → DB: "last_error"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	ConnectionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("connectionId", op, value)
+	},
+	IntegrationType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("integrationType", op, value)
+	},
+	Resource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("resource", op, value)
+	},
+	ExternalSubscriptionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("externalSubscriptionId", op, value)
+	},
+	NotificationURL: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("notificationUrl", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("status", op, value)
+	},
+	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("expiresAt", op, value)
+	},
+	LastAttemptAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("lastAttemptAt", op, value)
+	},
+	LastError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("lastError", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}

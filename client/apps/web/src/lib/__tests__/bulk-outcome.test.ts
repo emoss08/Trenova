@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { translate } from "@trenova/shared/i18n/runtime";
-import { notifyBulkOutcome, type BulkOutcomeMessages } from "../bulk-outcome";
+import { notifyBulkOutcome, settleAll, type BulkOutcomeMessages } from "../bulk-outcome";
 
 const { success, warning, error } = vi.hoisted(() => ({
   success: vi.fn(),
@@ -79,5 +79,57 @@ describe("notifyBulkOutcome", () => {
     expect(error).toHaveBeenCalledExactlyOnceWith("All 1 selected PTO request failed", {
       description: "PTO is rejected and cannot be approved",
     });
+  });
+});
+
+describe("settleAll", () => {
+  it("records every success and failure without stopping at the first", async () => {
+    const rows = [1, 2, 3, 4, 5].map((n) => ({ id: `row-${n}`, n }));
+    const outcome = await settleAll(rows, async (row) => {
+      if (row.n % 2 === 0) throw new Error(`even ${row.n}`);
+    });
+
+    expect(outcome).toEqual({
+      succeeded: ["row-1", "row-3", "row-5"],
+      failed: [
+        { id: "row-2", error: "even 2" },
+        { id: "row-4", error: "even 4" },
+      ],
+    });
+  });
+
+  it("names a failed row by its label when one is given", async () => {
+    const outcome = await settleAll(
+      [{ id: "a", number: "INV-12" }],
+      async () => {
+        throw new Error("period closed");
+      },
+      { label: (row) => row.number },
+    );
+
+    expect(outcome.failed).toEqual([{ id: "a", error: "INV-12: period closed" }]);
+  });
+
+  it("never has more requests in flight than its concurrency", async () => {
+    let inFlight = 0;
+    let peak = 0;
+    const rows = Array.from({ length: 12 }, (_, i) => ({ id: `${i}` }));
+    const outcome = await settleAll(
+      rows,
+      async () => {
+        inFlight += 1;
+        peak = Math.max(peak, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        inFlight -= 1;
+      },
+      { concurrency: 3 },
+    );
+
+    expect(peak).toBe(3);
+    expect(outcome.succeeded).toHaveLength(12);
+  });
+
+  it("does nothing for no rows", async () => {
+    expect(await settleAll([], async () => undefined)).toEqual({ succeeded: [], failed: [] });
   });
 });

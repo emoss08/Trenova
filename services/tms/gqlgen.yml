@@ -133,6 +133,9 @@ models:
   HoldReason:
     model:
       - github.com/emoss08/trenova/internal/modules/reference/domain/holdreason.HoldReason
+  FactoringCompany:
+    model:
+      - github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany.FactoringCompany
   JurisdictionRule:
     model:
       - github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule.JurisdictionRule
@@ -2319,6 +2322,15 @@ models:
   AIThinkingStyle:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.ThinkingStyle
+  AIProviderPlatform:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.Platform
+  AIProviderPlatformAuth:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.PlatformAuth
+  AIProviderPlatformSettings:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.PlatformSettings
   AIRetrievalSourceType:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval.SourceType
@@ -2855,6 +2867,42 @@ models:
         resolver: true
       matchedCustomer:
         resolver: true
+      threadCount:
+        resolver: true
+      ownerId:
+        resolver: true
+      owner:
+        resolver: true
+      dueAt:
+        resolver: true
+      responseTargetMinutes:
+        resolver: true
+      snooze:
+        resolver: true
+      awaitingReply:
+        resolver: true
+      handledByNova:
+        resolver: true
+      handledByRuleId:
+        resolver: true
+      handledAction:
+        resolver: true
+      reviewer:
+        resolver: true
+      activity:
+        resolver: true
+      facts:
+        resolver: true
+      conflicts:
+        resolver: true
+      actions:
+        resolver: true
+      replies:
+        resolver: true
+      replyDraft:
+        resolver: true
+      loadDraft:
+        resolver: true
   InboundShipmentRef:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports.ShipmentSummary
@@ -2878,6 +2926,20 @@ models:
     fields:
       documentId:
         resolver: true
+      filedShipmentId:
+        resolver: true
+      filedShipment:
+        resolver: true
+      filedAs:
+        resolver: true
+      filedAt:
+        resolver: true
+      pages:
+        resolver: true
+      splitDocuments:
+        resolver: true
+      reading:
+        resolver: true
   InboundMailbox:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.Mailbox
@@ -2885,6 +2947,16 @@ models:
       hasSigningSecret:
         resolver: true
       hasApiKey:
+        resolver: true
+      lastReceivedAt:
+        resolver: true
+      health:
+        resolver: true
+      testSentAt:
+        resolver: true
+      testReceivedAt:
+        resolver: true
+      blockedSenders:
         resolver: true
   InboundMailboxCredentials:
     model:
@@ -2910,6 +2982,320 @@ models:
   InboundProvider:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.Provider
+  InboundSourceHealth:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.SourceHealth
+  InboundAttachmentPage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.AttachmentPage
+  InboundSplitDocument:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.SplitDocument
+    fields:
+      documentId:
+        resolver: true
+  TriageLane:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.Lane
+  TriageSort:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.Sort
+  InboundSnoozeEvent:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.SnoozeEvent
+  InboundSnooze:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.SnoozeView
+    fields:
+      watchShipment:
+        resolver: true
+      documentTypeName:
+        resolver: true
+      snoozedBy:
+        resolver: true
+      documentTypeId:
+        fieldName: DocumentTypeID
+  InboundAwaitingReply:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.AwaitingReplyView
+  InboundActorKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.ActorKind
+  InboundActivityKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.ActivityKind
+  InboundActivity:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.Activity
+    fields:
+      actor:
+        resolver: true
+      until:
+        resolver: true
+      fromClassification:
+        resolver: true
+      toClassification:
+        resolver: true
+      recordId:
+        resolver: true
+  TriageBulkResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.BulkResult
+  TriageHandOff:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.HandOffResult
+    fields:
+      to:
+        resolver: true
+  TriageView:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.View
+    fields:
+      waiting:
+        resolver: true
+  TriageResponseTarget:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.ResponseTargetView
+  TriageSettings:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.Settings
+    fields:
+      onCallUser:
+        resolver: true
+      onCallUserId:
+        resolver: true
+      timezone:
+        resolver: true
+  TriageAssignee:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.AssigneeView
+    fields:
+      user:
+        resolver: true
+  TriageRuleAction:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.NovaAction
+  TriageSenderScope:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.SenderScope
+  TriageRule:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.Rule
+    fields:
+      mailboxId:
+        resolver: true
+      mailbox:
+        resolver: true
+      assigneeId:
+        resolver: true
+      assignee:
+        resolver: true
+      createdBy:
+        resolver: true
+      matchesThisMonth:
+        resolver: true
+      lastMatchedAt:
+        resolver: true
+      lastMatch:
+        resolver: true
+  TriageRuleMismatch:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.RuleMismatch
+  TriageRuleMatch:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.RuleMatch
+  TriageRulePreview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.RulePreview
+  TriageRuleSuggestion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.RuleSuggestion
+  TriageSample:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.Sample
+  TriageFactTone:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.FactTone
+  TriageFact:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.Fact
+  TriageConflictKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.ConflictKind
+  TriageConflictResolution:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.ConflictResolution
+  TriageConflict:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.Conflict
+    fields:
+      attachmentId:
+        resolver: true
+      existingDocumentId:
+        resolver: true
+      existingShipment:
+        resolver: true
+      existingFiledAt:
+        resolver: true
+      existingAmount:
+        resolver: true
+      newAmount:
+        resolver: true
+      loadIndex:
+        resolver: true
+      resolution:
+        resolver: true
+      resolvedAt:
+        resolver: true
+      options:
+        resolver: true
+  TriageActionKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.ActionKind
+  TriageReplyPurpose:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.ReplyPurpose
+  TriageStopsDecision:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.StopsDecision
+  TriageExceptionKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.ExceptionKind
+  TriageAction:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.Action
+    fields:
+      attachment:
+        resolver: true
+      shipment:
+        resolver: true
+      replyPurpose:
+        resolver: true
+      refusedFileName:
+        resolver: true
+      reply:
+        resolver: true
+      createdShipment:
+        resolver: true
+      stopsDecision:
+        resolver: true
+      exceptionKind:
+        resolver: true
+      completedAt:
+        resolver: true
+  TriageDeckGroup:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.DeckGroup
+  TriageDeckItem:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.DeckItem
+    fields:
+      owner:
+        resolver: true
+  TriageDeckCard:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.DeckCard
+  TriageHandledGroup:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.HandledGroup
+  TriageArrivalBucket:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.ArrivalBucket
+  TriageRiverPoint:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.RiverPoint
+  TriageCorrections:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.CorrectionsSummary
+  TriageBriefingPhase:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.BriefingPhase
+  TriageBriefing:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.Briefing
+    fields:
+      unhealthySources:
+        resolver: true
+      onCall:
+        resolver: true
+  InboundSenderRole:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.SenderRole
+  InboundSenderKindCount:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.SenderKindCount
+  InboundSenderProfile:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.SenderProfile
+  InboundReplyStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.ReplyStatus
+  InboundReply:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.Reply
+    fields:
+      ccAddresses:
+        resolver: true
+      templateId:
+        resolver: true
+      suggestedAddress:
+        resolver: true
+      sentBy:
+        resolver: true
+      sentAt:
+        resolver: true
+  InboundReplyAttachment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.ReplyAttachment
+  InboundReplyAttachableSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.AttachableSource
+  InboundReplyAttachable:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.ReplyAttachable
+  TriageReplyTemplate:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/triage.ReplyTemplate
+    fields:
+      createdBy:
+        resolver: true
+  TriageLoadFieldKey:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.LoadFieldKey
+  TriageLoadField:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.LoadDraftField
+  TriageLoadDraft:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.LoadDraft
+  InboundDocumentField:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.DocumentField
+  InboundDocumentReading:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.DocumentReading
+  TriageStopTimes:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.StopTimes
+    fields:
+      shipment:
+        resolver: true
+  TriagePeekStop:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.PeekStop
+  TriageShipmentPeek:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.ShipmentPeek
+    fields:
+      bol:
+        fieldName: BOL
+      poNumber:
+        fieldName: PONumber
+      eta:
+        fieldName: ETA
+  TriageCustomerPeek:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.CustomerPeek
   AgentDecision:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentDecision
@@ -4461,6 +4847,11 @@ models:
     fields:
       ledgerAvailable:
         fieldName: Ledger
+      inboundPaymentsAvailable:
+        fieldName: InboundPayments
+  AccountingWebhookSubscriptionSummary:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingWebhookSubscriptionSummary
   AccountingCompany:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingCompany
@@ -4737,3 +5128,30 @@ models:
   AccountingAuthorizationStart:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingAuthorizationStart
+  TrackingEvent:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent.TrackingEvent
+  TrackingEventSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent.Source
+  TrackingMatchMethod:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent.MatchMethod
+  TrackingEventOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent.Outcome
+  StopVisitKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.VisitKind
+  CheckCall:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.CheckCall
+  CheckCallSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.Source
+  CheckCallKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.Kind
+  CarrierTrackingLink:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.TrackingLink

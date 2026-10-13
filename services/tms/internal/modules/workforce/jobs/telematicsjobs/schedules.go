@@ -21,7 +21,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "samsara-telematics-poll",
 			Description:   "Poll Samsara vehicle positions and HOS clocks for all enabled tenants",
-			Spec:          schedule.Every(time.Minute),
+			Spec:          schedule.Every(5 * time.Minute),
 			Workflow:      TelematicsPollWorkflow,
 			TaskQueue:     temporaltype.IntegrationTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
@@ -43,7 +43,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "samsara-telematics-sweep",
 			Description:   "Sync Samsara vehicle mappings and ingest HOS violations for all enabled tenants",
-			Spec:          schedule.Every(30 * time.Minute),
+			Spec:          schedule.Every(2 * time.Hour),
 			Workflow:      TelematicsSweepWorkflow,
 			TaskQueue:     temporaltype.IntegrationTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

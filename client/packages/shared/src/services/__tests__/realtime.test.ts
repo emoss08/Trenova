@@ -352,6 +352,117 @@ describe("RealtimeClient", () => {
     client.disconnect();
   });
 
+  it("carries a member's own state on the join, sends a change at once, and resends the latest after a reconnect", async () => {
+    const scope = "inbox:messages";
+    const path = "/inbox/presence/";
+    apiPost.mockResolvedValue({ scope, members: [] });
+
+    const first = streamReply();
+    const client = new RealtimeClient();
+    client.connect({ identity: "usr_1", joinUsers: false });
+    await tick();
+    first.send("ready", ready("rtc_1"));
+    await tick();
+
+    const leave = client.joinScope(scope, path, { messageId: null, activity: "viewing" });
+    await tick();
+    // The server refuses an activity that names no message (realtimeservice validatePresenceState).
+    expect(apiPost).toHaveBeenLastCalledWith(path, { connectionId: "rtc_1" });
+
+    client.setScopeState(scope, { messageId: "imsg_7", activity: "writing" });
+    await tick();
+    expect(apiPost).toHaveBeenLastCalledWith(path, {
+      connectionId: "rtc_1",
+      messageId: "imsg_7",
+      activity: "writing",
+    });
+
+    client.setScopeState(scope, { messageId: "imsg_7", activity: "writing" });
+    await tick();
+    expect(apiPost).toHaveBeenCalledTimes(2);
+
+    const second = streamReply();
+    first.end();
+    await tick(250);
+    second.send("ready", ready("rtc_2"));
+    await tick();
+    expect(apiPost).toHaveBeenLastCalledWith(path, {
+      connectionId: "rtc_2",
+      messageId: "imsg_7",
+      activity: "writing",
+    });
+
+    client.setScopeState(scope, { messageId: null, activity: "viewing" });
+    await tick();
+    expect(apiPost).toHaveBeenLastCalledWith(path, { connectionId: "rtc_2" });
+
+    leave();
+    client.disconnect();
+  });
+
+  it("keeps what each member has open from the snapshot and from every enter, a change included", async () => {
+    const scope = "inbox:messages";
+    const path = "/inbox/presence/";
+    apiPost.mockResolvedValue({
+      scope,
+      members: [
+        {
+          userId: "usr_2",
+          connectionId: "rtc_9",
+          name: "Dana",
+          messageId: "imsg_1",
+          activity: "viewing",
+        },
+        {
+          userId: "usr_3",
+          connectionId: "rtc_8",
+          name: "Priya",
+          messageId: "",
+          activity: "staring",
+        },
+      ],
+    });
+
+    const stream = streamReply();
+    const client = new RealtimeClient();
+    client.connect({ identity: "usr_1", joinUsers: false });
+    await tick();
+    stream.send("ready", ready("rtc_1"));
+    await tick();
+
+    const seen: Array<Array<{ id: string; messageId?: string | null; activity?: string }>> = [];
+    client.subscribePresence(scope, (members) =>
+      seen.push(
+        members.map((member) => ({
+          id: member.connectionId,
+          messageId: member.messageId,
+          activity: member.activity,
+        })),
+      ),
+    );
+    client.joinScope(scope, path, { messageId: null, activity: "viewing" });
+    await tick();
+
+    expect(seen.at(-1)).toEqual([
+      { id: "rtc_9", messageId: "imsg_1", activity: "viewing" },
+      { id: "rtc_8", messageId: null, activity: undefined },
+    ]);
+
+    stream.send("presence", {
+      scope,
+      action: "enter",
+      userId: "usr_2",
+      connectionId: "rtc_9",
+      name: "Dana",
+      messageId: "imsg_1",
+      activity: "writing",
+    });
+    await tick();
+
+    expect(seen.at(-1)?.[0]).toEqual({ id: "rtc_9", messageId: "imsg_1", activity: "writing" });
+    client.disconnect();
+  });
+
   it("shares one membership between two joins of the same scope", async () => {
     const scope = "shipment-comments:shp_1";
     const path = "/shipments/shp_1/comments/presence/";

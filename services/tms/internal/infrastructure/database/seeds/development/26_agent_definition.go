@@ -386,7 +386,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Name:              "Help",
 			Icon:              agentdefinition.IconSparkle,
 			Accent:            agentdefinition.AccentSlate,
-			Description:       "Explains how to do things in Trenova. Cannot read or change records.",
+			Description:       "Explains how to do things in Trenova and answers quick questions from " +
+				"the command palette. Reads what the person may read; changes nothing.",
 			Template:          agentdefinition.TemplateGeneralAssistant,
 			Instructions:      agentdefinition.TemplateGeneralAssistant.StarterInstructions(),
 			AutonomyCeiling:   agent.TierPropose,

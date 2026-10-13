@@ -244,6 +244,37 @@ func TestDomainRegistry_WithActivitiesAndWorkflows(t *testing.T) {
 	assert.Len(t, reg.workflows, 2)
 }
 
+type namedWorkflowWorker struct {
+	countingWorker
+	names []string
+}
+
+func (w *namedWorkflowWorker) RegisterWorkflowWithOptions(
+	_ any,
+	options workflow.RegisterOptions,
+) {
+	w.names = append(w.names, options.Name)
+}
+
+func TestDomainRegistry_RegisterWorkflowsUsesDeclaredName(t *testing.T) {
+	t.Parallel()
+
+	workflows := []WorkflowDefinition{
+		{Name: "TriageDraftManyWorkflow", Fn: func() {}},
+		{Name: "TriageSplitFilingWorkflow", Fn: func() {}},
+	}
+	config := DomainConfig{
+		Name:         "named-workflows",
+		TaskQueue:    "named-queue",
+		WorkerConfig: DefaultWorkerConfig(),
+	}
+	reg := NewDomainRegistry(&config, nil, workflows, zap.NewNop())
+	w := &namedWorkflowWorker{}
+
+	require.NoError(t, reg.RegisterWorkflows(w))
+	assert.Equal(t, []string{"TriageDraftManyWorkflow", "TriageSplitFilingWorkflow"}, w.names)
+}
+
 func TestDomainRegistry_NilWorkflows(t *testing.T) {
 	t.Parallel()
 

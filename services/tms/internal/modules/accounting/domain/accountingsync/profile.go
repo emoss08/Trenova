@@ -25,6 +25,10 @@ type ProviderProfile struct {
 	Ledger                       bool
 	LedgerUnavailableReason      string
 	CallbackCarriesCompany       bool
+	InboundPayments              bool
+	InboundUnavailableReason     string
+	WebhookSubscriptions         bool
+	RevokesTokens                bool
 }
 
 var providerProfiles = []ProviderProfile{
@@ -65,6 +69,8 @@ var providerProfiles = []ProviderProfile{
 		RefreshTokenAbsoluteLifetime: 5 * 365 * 24 * time.Hour,
 		Ledger:                       true,
 		CallbackCarriesCompany:       true,
+		InboundPayments:              true,
+		RevokesTokens:                true,
 	},
 	{
 		Type:            integration.TypeXero,
@@ -96,6 +102,47 @@ var providerProfiles = []ProviderProfile{
 			"accounts payable or bank accounts, or name a customer or supplier, " +
 			"so Trenova's journals cannot be sent to Xero as they are. Send documents instead.",
 		CallbackCarriesCompany: false,
+		InboundPayments:        true,
+		RevokesTokens:          true,
+	},
+	{
+		Type:            integration.TypeBusinessCentral,
+		Name:            "Business Central",
+		WebhookSlug:     "businesscentral",
+		CallbackPath:    "/admin/integrations/business-central/callback",
+		AppName:         "Microsoft Entra app",
+		WebhookKeyLabel: "",
+		LineKind:        ReferenceKindItem,
+		ReferenceKinds: []ReferenceKind{
+			ReferenceKindAccount,
+			ReferenceKindItem,
+			ReferenceKindCustomer,
+			ReferenceKindVendor,
+			ReferenceKindTerm,
+		},
+		AccountRoles: []string{
+			AccountRoleDeposit,
+			AccountRolePurchasedTransportation,
+		},
+		RequiredAccountRoles: []string{
+			AccountRoleDeposit,
+		},
+		Environments: []AppEnvironment{
+			AppEnvironmentProduction,
+		},
+		RefreshTokenLifetime: 90 * 24 * time.Hour,
+		Ledger:               false,
+		LedgerUnavailableReason: "Business Central journal lines cannot post to a customer or " +
+			"vendor or apply to an invoice, so Trenova's journals cannot be sent to " +
+			"Business Central as they are. Send documents instead.",
+		CallbackCarriesCompany: false,
+		InboundPayments:        false,
+		InboundUnavailableReason: "Business Central's API does not let Trenova read posted " +
+			"payments or which invoices they paid, so payments recorded in Business Central " +
+			"are not brought in. An invoice paid there shows as a balance difference on the " +
+			"drift page.",
+		WebhookSubscriptions: true,
+		RevokesTokens:        false,
 	},
 }
 

@@ -31,6 +31,7 @@ type GlobalSearchResult struct {
 type GlobalSearchGroup struct {
 	EntityType search.EntityType  `json:"entityType"`
 	Label      string             `json:"label"`
+	Total      int                `json:"total"`
 	Hits       []*GlobalSearchHit `json:"hits"`
 }
 
@@ -45,4 +46,25 @@ type GlobalSearchHit struct {
 
 type GlobalSearchService interface {
 	Search(ctx context.Context, req *GlobalSearchRequest) (*GlobalSearchResult, error)
+}
+
+type ListCustomerOpenBalancesRequest struct {
+	TenantInfo  pagination.TenantInfo
+	CustomerIDs []pulid.ID
+}
+
+type CustomerOpenBalance struct {
+	CustomerID   pulid.ID `bun:"customer_id"`
+	OpenMinor    int64    `bun:"open_minor"`
+	OverdueMinor int64    `bun:"overdue_minor"`
+	CurrencyCode string   `bun:"currency_code"`
+}
+
+// CustomerOpenBalanceReader is provided by billing so a search can show what a
+// customer owes beside its name without the search depending on billing.
+type CustomerOpenBalanceReader interface {
+	ListCustomerOpenBalances(
+		ctx context.Context,
+		req *ListCustomerOpenBalancesRequest,
+	) ([]*CustomerOpenBalance, error)
 }

@@ -56,6 +56,9 @@ func (s *Service) planPost(
 	if multiErr := s.validator.ValidatePost(ctx, entity, req.TenantInfo, now); multiErr != nil {
 		return false, multiErr
 	}
+	if err := s.assignFactoring(ctx, entity, req.TenantInfo); err != nil {
+		return false, err
+	}
 
 	entity.Status = invoice.StatusPosted
 	entity.PostedAt = &now

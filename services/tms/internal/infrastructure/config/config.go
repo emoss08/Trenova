@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -655,13 +654,12 @@ type CSRFBrowserGuardConfig struct {
 }
 
 type DatabaseConfig struct {
-	Driver           string        `mapstructure:"driver"                          validate:"omitempty,oneof=postgres sqlite"`
-	Host             string        `mapstructure:"host"                            validate:"required_if=Driver postgres"`
-	Port             int           `mapstructure:"port"                            validate:"required_if=Driver postgres,omitempty,min=1,max=65535"`
-	Name             string        `mapstructure:"name"                            validate:"required_if=Driver postgres,omitempty,min=1,max=63"`
-	User             string        `mapstructure:"user"                            validate:"required_if=Driver postgres,omitempty,min=1,max=63"`
-	Password         string        `mapstructure:"password"                        validate:"required_if=Driver postgres"`
-	SSLMode          string        `mapstructure:"sslMode"                         validate:"required_if=Driver postgres,omitempty,oneof=disable require verify-ca verify-full"`
+	Host             string        `mapstructure:"host"                            validate:"required"`
+	Port             int           `mapstructure:"port"                            validate:"required,min=1,max=65535"`
+	Name             string        `mapstructure:"name"                            validate:"required,min=1,max=63"`
+	User             string        `mapstructure:"user"                            validate:"required,min=1,max=63"`
+	Password         string        `mapstructure:"password"                        validate:"required"`
+	SSLMode          string        `mapstructure:"sslMode"                         validate:"required,oneof=disable require verify-ca verify-full"`
 	MaxIdleConns     int           `mapstructure:"maxIdleConns"                    validate:"min=1,max=1000"`
 	MaxOpenConns     int           `mapstructure:"maxOpenConns"                    validate:"min=1,max=1000"`
 	Verbose          bool          `mapstructure:"verbose"`
@@ -670,69 +668,9 @@ type DatabaseConfig struct {
 	StatementTimeout time.Duration `mapstructure:"statementTimeout"`
 	LockTimeout      time.Duration `mapstructure:"lockTimeout"`
 	IdleTxTimeout    time.Duration `mapstructure:"idleInTransactionSessionTimeout"`
-	SQLite           SQLiteConfig  `mapstructure:"sqlite"`
 	RLS              RLSConfig     `mapstructure:"rls"`
 	System           DatabaseRole  `mapstructure:"system"`
 	Migrator         DatabaseRole  `mapstructure:"migrator"`
-}
-
-type SQLiteConfig struct {
-	Path        string        `mapstructure:"path"`
-	JournalMode string        `mapstructure:"journalMode" validate:"omitempty,oneof=WAL DELETE TRUNCATE PERSIST MEMORY OFF"`
-	Synchronous string        `mapstructure:"synchronous" validate:"omitempty,oneof=OFF NORMAL FULL EXTRA"`
-	BusyTimeout time.Duration `mapstructure:"busyTimeout"`
-	ForeignKeys *bool         `mapstructure:"foreignKeys"`
-	CacheSizeKB int           `mapstructure:"cacheSizeKb"`
-}
-
-func (c *SQLiteConfig) GetPath() string {
-	if c.Path == "" {
-		return "trenova.db"
-	}
-	return c.Path
-}
-
-func (c *SQLiteConfig) GetJournalMode() string {
-	if c.JournalMode == "" {
-		return "WAL"
-	}
-	return c.JournalMode
-}
-
-func (c *SQLiteConfig) GetSynchronous() string {
-	if c.Synchronous == "" {
-		return "NORMAL"
-	}
-	return c.Synchronous
-}
-
-func (c *SQLiteConfig) GetBusyTimeout() time.Duration {
-	if c.BusyTimeout <= 0 {
-		return 5 * time.Second
-	}
-	return c.BusyTimeout
-}
-
-func (c *SQLiteConfig) GetForeignKeys() bool {
-	if c.ForeignKeys == nil {
-		return true
-	}
-	return *c.ForeignKeys
-}
-
-func (c *SQLiteConfig) GetCacheSizeKB() int {
-	if c.CacheSizeKB <= 0 {
-		return 64000
-	}
-	return c.CacheSizeKB
-}
-
-func (c *DatabaseConfig) GetDialect() dbdialect.Kind {
-	kind, err := dbdialect.Parse(c.Driver)
-	if err != nil {
-		return dbdialect.DefaultKind
-	}
-	return kind
 }
 
 func (c *DatabaseConfig) GetStatementTimeout() time.Duration {
@@ -839,7 +777,20 @@ type AIConfig struct {
 	// many organizations sets it false, because otherwise any of their
 	// administrators can make the server call into its own network.
 	PrivateNetworkProviders *bool `mapstructure:"privateNetworkProviders"`
-	MaxRetries              int   `mapstructure:"maxRetries"              validate:"omitempty,min=0,max=10"`
+	// ServerCloudCredentials lets a provider on Amazon Bedrock, Vertex AI or
+	// Claude Platform on AWS or Google Cloud sign in with this server's own
+	// cloud identity (an IAM role, application default credentials) instead
+	// of a key stored for it. Off unless set: on a server that hosts many
+	// organizations it would let any of their administrators spend the
+	// operator's cloud account.
+	ServerCloudCredentials bool `mapstructure:"serverCloudCredentials"`
+	// CacheDiagnostics asks the Claude API, on each agent turn's model call,
+	// where the prompt stopped matching the call before it, and logs and
+	// traces the answer. Off unless set: it is for an operator chasing cache
+	// misses, and the API keeps a fingerprint of each request it is asked
+	// about for a short while.
+	CacheDiagnostics bool `mapstructure:"cacheDiagnostics"`
+	MaxRetries       int  `mapstructure:"maxRetries"       validate:"omitempty,min=0,max=10"`
 	// ModelPriceReference fills in a model's price, when the provider's own
 	// model list gives none, from OpenRouter's public catalog, marked as an
 	// estimate. It is a pointer so an absent key keeps it on; a deployment that
@@ -911,6 +862,18 @@ const AIEnabledKey = "ai.enabled"
 // on a private or loopback address.
 func (c *AIConfig) PrivateNetworkProvidersAllowed() bool {
 	return c == nil || c.PrivateNetworkProviders == nil || *c.PrivateNetworkProviders
+}
+
+// ServerCloudCredentialsAllowed reports whether a provider may sign in with
+// the server's own cloud credentials.
+func (c *AIConfig) ServerCloudCredentialsAllowed() bool {
+	return c != nil && c.ServerCloudCredentials
+}
+
+// CacheDiagnosticsEnabled reports whether model calls ask the Claude API why
+// their prompt cache missed.
+func (c *AIConfig) CacheDiagnosticsEnabled() bool {
+	return c != nil && c.CacheDiagnostics
 }
 
 func (c *AIConfig) AIEnabled() bool {
@@ -1805,8 +1768,47 @@ type Config struct {
 }
 
 type AccountingConfig struct {
-	QuickBooks QuickBooksConfig `mapstructure:"quickbooks"`
-	Xero       XeroConfig       `mapstructure:"xero"`
+	QuickBooks      QuickBooksConfig      `mapstructure:"quickbooks"`
+	Xero            XeroConfig            `mapstructure:"xero"`
+	BusinessCentral BusinessCentralConfig `mapstructure:"businessCentral"`
+}
+
+type BusinessCentralConfig struct {
+	ClientID       string `mapstructure:"clientId"`
+	ClientSecret   string `mapstructure:"clientSecret"`
+	RedirectURL    string `mapstructure:"redirectUrl"    validate:"omitempty,url"`
+	WebhookBaseURL string `mapstructure:"webhookBaseUrl" validate:"omitempty,url"`
+}
+
+const (
+	businessCentralCallbackPath = "/admin/integrations/business-central/callback"
+	apiBasePath                 = "/api/v1"
+)
+
+func (c *BusinessCentralConfig) GetRedirectURL(app *AppConfig) string {
+	if c.RedirectURL != "" {
+		return c.RedirectURL
+	}
+	if base := app.GetWebBaseURL(); base != "" {
+		return base + businessCentralCallbackPath
+	}
+	return ""
+}
+
+func (c *BusinessCentralConfig) GetWebhookBaseURL(app *AppConfig) string {
+	if base := strings.TrimSuffix(strings.TrimSpace(c.WebhookBaseURL), "/"); base != "" {
+		return base
+	}
+	if base := app.GetWebBaseURL(); base != "" {
+		return base + apiBasePath
+	}
+	return ""
+}
+
+func (c *BusinessCentralConfig) IsConfigured(app *AppConfig) bool {
+	return strings.TrimSpace(c.ClientID) != "" &&
+		strings.TrimSpace(c.ClientSecret) != "" &&
+		c.GetRedirectURL(app) != ""
 }
 
 type XeroConfig struct {
@@ -1959,10 +1961,6 @@ func (c *Config) GetRendererConfig() *RendererConfig { return &c.Renderer }
 func (c *Config) GetPDFReaderConfig() *PDFReaderConfig { return &c.PDFReader }
 
 func (c *Config) GetDSN(password string) string {
-	if c.Database.GetDialect().IsSQLite() {
-		return c.getSQLiteDSN()
-	}
-
 	return c.postgresDSN(c.Database.User, password)
 }
 
@@ -1980,34 +1978,7 @@ func (c *Config) postgresDSN(user, password string) string {
 	return dsn.String()
 }
 
-func (c *Config) getSQLiteDSN() string {
-	sqlite := &c.Database.SQLite
-
-	pragmas := []string{
-		fmt.Sprintf("_pragma=journal_mode(%s)", sqlite.GetJournalMode()),
-		fmt.Sprintf("_pragma=synchronous(%s)", sqlite.GetSynchronous()),
-		fmt.Sprintf("_pragma=busy_timeout(%d)", sqlite.GetBusyTimeout().Milliseconds()),
-		fmt.Sprintf("_pragma=foreign_keys(%d)", boolToPragma(sqlite.GetForeignKeys())),
-		fmt.Sprintf("_pragma=cache_size(-%d)", sqlite.GetCacheSizeKB()),
-		"_time_format=sqlite",
-		"_txlock=immediate",
-	}
-
-	return fmt.Sprintf("file:%s?%s", sqlite.GetPath(), strings.Join(pragmas, "&"))
-}
-
-func boolToPragma(value bool) int {
-	if value {
-		return 1
-	}
-	return 0
-}
-
 func (c *Config) GetDSNMasked() string {
-	if c.Database.GetDialect().IsSQLite() {
-		return fmt.Sprintf("sqlite://%s", c.Database.SQLite.GetPath())
-	}
-
 	return fmt.Sprintf(
 		"postgres://%s:****@%s/%s?sslmode=%s",
 		c.Database.User,

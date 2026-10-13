@@ -67,7 +67,10 @@ pub async fn pair(
             Ok(PairingPoll::Approved(tokens)) => {
                 let credential = Credential {
                     server: api.server().as_str().to_owned(),
+                    api_base: api.server().api_base().to_owned(),
                     web_base,
+                    server_name: String::new(),
+                    shared_tenancy: false,
                     tokens,
                 };
                 api.sign_in(credential.clone()).await?;

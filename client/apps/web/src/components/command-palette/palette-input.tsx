@@ -1,63 +1,56 @@
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
-import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
+import { dropdownMenuSurfaceClassName } from "@trenova/shared/components/ui/dropdown-menu";
+import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Command as CommandPrimitive } from "cmdk";
-import { ArrowLeftIcon, SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
-import { PALETTE_ENTITIES } from "./palette-entities";
+import { SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
+import { paletteEntityText } from "./palette-entities";
 import type { PaletteScope } from "./palette-model";
 import { isRecordScope } from "./palette-model";
+import { PaletteTile } from "./palette-parts";
+import { scopePresentation } from "./palette-scope-tabs";
 import type { SearchEntityOption } from "./search-entity-filter";
 
 function Chip({
   children,
   onRemove,
   removeLabel,
-  className,
 }: {
   children: React.ReactNode;
-  onRemove: () => void;
-  removeLabel: string;
-  className?: string;
+  onRemove?: () => void;
+  removeLabel?: string;
 }) {
   return (
-    <span
-      className={cn(
-        "inline-flex h-6 shrink-0 items-center gap-1 rounded-full pr-1 pl-2 text-xs font-medium ring-1 ring-inset",
-        className,
-      )}
-    >
+    <span className="animate-pop-in bg-sunken text-foreground ring-border-subtle inline-flex h-6 max-w-56 shrink-0 items-center gap-1.5 rounded-full pr-1 pl-2 text-sm font-medium ring-1 ring-inset">
       {children}
-      <button
-        type="button"
-        tabIndex={-1}
-        aria-label={removeLabel}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={onRemove}
-        className="flex size-4 items-center justify-center rounded-full opacity-70 transition-opacity hover:opacity-100"
-      >
-        <XCloseIcon className="size-3" />
-      </button>
+      {onRemove && (
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-label={removeLabel}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={onRemove}
+          className="text-foreground-subtle hover:text-foreground flex size-4 items-center justify-center rounded-full transition-colors"
+        >
+          <XCloseIcon className="size-3" />
+        </button>
+      )}
     </span>
   );
 }
 
-function scopePlaceholder(scope: PaletteScope, t: TranslateFn): string {
+export function scopePlaceholder(scope: PaletteScope, t: TranslateFn): string {
+  if (isRecordScope(scope)) {
+    return paletteEntityText(scope, t).placeholder;
+  }
   switch (scope) {
-    case "shipment":
-      return t("Search shipments by PRO or BOL…");
-    case "customer":
-      return t("Search customers by name or code…");
-    case "worker":
-      return t("Search workers by name…");
-    case "document":
-      return t("Search documents by file name…");
     case "pages":
       return t("Jump to a page…");
     case "commands":
       return t("Run a command…");
-    case "all":
-      return t("Search records, pages and commands, or ask a question…");
+    default:
+      return t("Search records and pages, run a command, or ask Nova…");
   }
 }
 
@@ -66,14 +59,13 @@ export interface PaletteInputProps {
   value: string;
   onValueChange: (value: string) => void;
   onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  onClear: () => void;
   scope: PaletteScope;
   onClearScope: () => void;
-  /** The row whose actions are listed, when the action view is open. */
-  actionsFor: string | null;
-  onBack: () => void;
+  /** The query starts with ">", so only commands are searched. */
+  commandMode: boolean;
   askSubject: string | null;
   onClearAskSubject: () => void;
-  busy: boolean;
   mention: {
     open: boolean;
     options: readonly SearchEntityOption[];
@@ -83,78 +75,47 @@ export interface PaletteInputProps {
 }
 
 /**
- * The search box and what currently narrows it: a record scope, the record
- * a question is about, or the row whose actions are listed. Each shows as a
- * removable chip inside the box, so what the palette is doing is always
- * written where the person is looking.
+ * The search box and what currently narrows it: a scope, the record a
+ * question is about, or command mode. Each shows as a chip inside the box,
+ * so what the palette is doing is always written where the person is looking.
  */
 export function PaletteInput({
   ref,
   value,
   onValueChange,
   onKeyDown,
+  onClear,
   scope,
   onClearScope,
-  actionsFor,
-  onBack,
+  commandMode,
   askSubject,
   onClearAskSubject,
-  busy,
   mention,
 }: PaletteInputProps) {
   const t = useT();
-  const recordScope = isRecordScope(scope) ? PALETTE_ENTITIES[scope] : null;
+  const scoped = askSubject === null && scope !== "all" ? scopePresentation(scope, t) : null;
 
-  const placeholder = actionsFor
-    ? t("Search actions…")
-    : askSubject
-      ? t("Ask anything about it…")
-      : scopePlaceholder(scope, t);
+  const placeholder = askSubject
+    ? t("Ask Nova about {0}…", askSubject)
+    : scopePlaceholder(commandMode ? "commands" : scope, t);
 
   return (
     <div className="relative">
-      <div className="flex h-14 items-center gap-2.5 px-4">
-        {actionsFor ? (
-          <button
-            type="button"
-            tabIndex={-1}
-            aria-label={t("Back to results")}
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={onBack}
-            className="ui-press rounded-control text-foreground-muted hover:bg-surface-hover hover:text-foreground flex size-6 shrink-0 items-center justify-center transition-colors"
-          >
-            <ArrowLeftIcon className="size-4" />
-          </button>
-        ) : busy ? (
-          <Spinner className="text-foreground-subtle size-4 shrink-0" />
-        ) : (
-          <SearchLgIcon className="text-foreground-subtle size-4 shrink-0" strokeWidth={1.75} />
-        )}
-        {actionsFor && (
-          <span className="bg-sunken text-foreground-muted ring-border-subtle max-w-48 shrink-0 truncate rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset">
-            {actionsFor}
-          </span>
-        )}
-        {!actionsFor && recordScope && (
-          <Chip
-            onRemove={onClearScope}
-            removeLabel={t("Search everything")}
-            className={recordScope.tileClass}
-          >
-            <recordScope.icon className="size-3" />
-            {t(recordScope.pluralLabel)}
+      <div className="flex h-13.5 items-center gap-2.5 px-4">
+        <SearchLgIcon className="text-foreground-faint size-4.25 shrink-0" strokeWidth={1.75} />
+        {askSubject && (
+          <Chip onRemove={onClearAskSubject} removeLabel={t("Stop asking about this")}>
+            <NovaMark className="size-3 shrink-0" />
+            <span className="truncate">{askSubject}</span>
           </Chip>
         )}
-        {!actionsFor && askSubject && (
-          <Chip
-            onRemove={onClearAskSubject}
-            removeLabel={t("Stop asking about this")}
-            className="bg-brand-subtle text-brand-subtle-foreground ring-brand-border"
-          >
-            <AssistMark className="size-3" />
-            <span className="max-w-40 truncate">{askSubject}</span>
+        {scoped && (
+          <Chip onRemove={onClearScope} removeLabel={t("Search everything")}>
+            <scoped.icon className="text-foreground-subtle size-3 shrink-0" />
+            {scoped.label}
           </Chip>
         )}
+        {!askSubject && !scoped && commandMode && <Chip>{t("Commands")}</Chip>}
         <CommandPrimitive.Input
           ref={ref}
           value={value}
@@ -162,18 +123,35 @@ export function PaletteInput({
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           autoFocus
-          className="text-foreground placeholder:text-foreground-subtle h-full min-w-0 flex-1 bg-transparent text-base outline-hidden"
+          spellCheck={false}
+          autoComplete="off"
+          className="text-foreground placeholder:text-foreground-subtle h-full min-w-0 flex-1 bg-transparent text-lg outline-hidden"
         />
+        {value !== "" && (
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={t("Clear")}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={onClear}
+            className="text-foreground-subtle hover:bg-surface-hover hover:text-foreground rounded-control flex size-6 shrink-0 items-center justify-center transition-colors"
+          >
+            <XCloseIcon className="size-3.5" />
+          </button>
+        )}
+        <Kbd className="shrink-0">Esc</Kbd>
       </div>
       {mention.open && mention.options.length > 0 && (
         <div
           role="listbox"
-          aria-label={t("Search one kind of record")}
-          className="animate-rise rounded-surface bg-raised ring-foreground/10 ui-lift-float absolute top-12 left-10 z-10 w-60 p-1 ring-1"
+          aria-label={t("Search one kind of thing")}
+          className={cn(
+            dropdownMenuSurfaceClassName,
+            "animate-rise ui-lift-float absolute top-11 left-9 z-20 w-60 p-1",
+          )}
         >
-          <p className="text-foreground-subtle px-2 pt-1 pb-1.5 text-xs">{t("Search only…")}</p>
           {mention.options.map((option, index) => {
-            const entity = PALETTE_ENTITIES[option.key];
+            const presentation = scopePresentation(option.key, t);
             return (
               <button
                 key={option.key}
@@ -184,22 +162,13 @@ export function PaletteInput({
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => mention.onPick(option)}
                 className={cn(
-                  "rounded-control flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm transition-colors",
-                  index === mention.index ? "bg-surface-selected" : "hover:bg-surface-hover",
+                  "rounded-control text-foreground flex h-8 w-full items-center gap-2 px-2 text-left text-base transition-colors",
+                  index === mention.index ? "bg-surface-hover" : "hover:bg-surface-hover",
                 )}
               >
-                <span
-                  className={cn(
-                    "rounded-control flex size-5 items-center justify-center ring-1 ring-inset",
-                    entity.tileClass,
-                  )}
-                >
-                  <entity.icon className="size-3" />
-                </span>
-                <span className="flex-1">{t(option.label)}</span>
-                <span className="text-2xs text-foreground-subtle font-mono">
-                  @{option.aliases[0]}
-                </span>
+                <PaletteTile icon={presentation.icon} size="chip" />
+                <span className="flex-1 truncate">{presentation.label}</span>
+                <span className="text-foreground-faint font-mono text-xs">@{option.key}</span>
               </button>
             );
           })}

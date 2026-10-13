@@ -71,6 +71,7 @@ var CustomerColumns = struct {
 	StatusUpdatePreference buncolgen.Column // "status_update_preference" → qualified: "cus.status_update_preference"
 	StatusUpdateRecipients buncolgen.Column // "status_update_recipients" → qualified: "cus.status_update_recipients"
 	BrokerVettingEnabled   buncolgen.Column // "broker_vetting_enabled" → qualified: "cus.broker_vetting_enabled"
+	CheckCallIntervalHours buncolgen.Column // "check_call_interval_hours" → qualified: "cus.check_call_interval_hours"
 	Geom                   buncolgen.Column // "geom" → qualified: "cus.geom"
 	AllowConsolidation     buncolgen.Column // "allow_consolidation" → qualified: "cus.allow_consolidation"
 	ExclusiveConsolidation buncolgen.Column // "exclusive_consolidation" → qualified: "cus.exclusive_consolidation"
@@ -102,6 +103,7 @@ var CustomerColumns = struct {
 	StatusUpdatePreference: buncolgen.NewColumn("status_update_preference", "cus"),
 	StatusUpdateRecipients: buncolgen.NewColumn("status_update_recipients", "cus"),
 	BrokerVettingEnabled:   buncolgen.NewColumn("broker_vetting_enabled", "cus"),
+	CheckCallIntervalHours: buncolgen.NewColumn("check_call_interval_hours", "cus"),
 	Geom:                   buncolgen.NewColumn("geom", "cus"),
 	AllowConsolidation:     buncolgen.NewColumn("allow_consolidation", "cus"),
 	ExclusiveConsolidation: buncolgen.NewColumn("exclusive_consolidation", "cus"),
@@ -139,6 +141,7 @@ var CustomerFieldMap = map[string]string{
 	"statusUpdatePreference": "status_update_preference",
 	"statusUpdateRecipients": "status_update_recipients",
 	"brokerVettingEnabled":   "broker_vetting_enabled",
+	"checkCallIntervalHours": "check_call_interval_hours",
 	"allowConsolidation":     "allow_consolidation",
 	"exclusiveConsolidation": "exclusive_consolidation",
 	"consolidationPriority":  "consolidation_priority",
@@ -171,6 +174,7 @@ var CustomerInsertableColumns = []string{
 	"status_update_preference",
 	"status_update_recipients",
 	"broker_vetting_enabled",
+	"check_call_interval_hours",
 	"allow_consolidation",
 	"exclusive_consolidation",
 	"consolidation_priority",
@@ -269,6 +273,7 @@ var CustomerFilter = struct {
 	StatusUpdatePreference func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "statusUpdatePreference" → DB: "status_update_preference"
 	StatusUpdateRecipients func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "statusUpdateRecipients" → DB: "status_update_recipients"
 	BrokerVettingEnabled   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "brokerVettingEnabled" → DB: "broker_vetting_enabled"
+	CheckCallIntervalHours func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "checkCallIntervalHours" → DB: "check_call_interval_hours"
 	AllowConsolidation     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowConsolidation" → DB: "allow_consolidation"
 	ExclusiveConsolidation func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exclusiveConsolidation" → DB: "exclusive_consolidation"
 	ConsolidationPriority  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationPriority" → DB: "consolidation_priority"
@@ -339,6 +344,9 @@ var CustomerFilter = struct {
 	BrokerVettingEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("brokerVettingEnabled", op, value)
 	},
+	CheckCallIntervalHours: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("checkCallIntervalHours", op, value)
+	},
 	AllowConsolidation: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("allowConsolidation", op, value)
 	},
@@ -402,7 +410,11 @@ var CustomerBillingProfileColumns = struct {
 	EnforceCreditLimit              buncolgen.Column // "enforce_credit_limit" → qualified: "cbp.enforce_credit_limit"
 	AutoCreditHold                  buncolgen.Column // "auto_credit_hold" → qualified: "cbp.auto_credit_hold"
 	CreditHoldReason                buncolgen.Column // "credit_hold_reason" → qualified: "cbp.credit_hold_reason"
+	CreditHoldAutomatic             buncolgen.Column // "credit_hold_automatic" → qualified: "cbp.credit_hold_automatic"
+	CreditReviewedAt                buncolgen.Column // "credit_reviewed_at" → qualified: "cbp.credit_reviewed_at"
 	AutoSendInvoiceOnGeneration     buncolgen.Column // "auto_send_invoice_on_generation" → qualified: "cbp.auto_send_invoice_on_generation"
+	SendPaymentReminders            buncolgen.Column // "send_payment_reminders" → qualified: "cbp.send_payment_reminders"
+	SendStatements                  buncolgen.Column // "send_statements" → qualified: "cbp.send_statements"
 	EmailInvoiceEnabled             buncolgen.Column // "email_invoice_enabled" → qualified: "cbp.email_invoice_enabled"
 	EDIInvoiceEnabled               buncolgen.Column // "edi_invoice_enabled" → qualified: "cbp.edi_invoice_enabled"
 	SplitBy                         buncolgen.Column // "split_by" → qualified: "cbp.split_by"
@@ -437,6 +449,7 @@ var CustomerBillingProfileColumns = struct {
 	BillingNotes                    buncolgen.Column // "billing_notes" → qualified: "cbp.billing_notes"
 	FuelSurchargeMode               buncolgen.Column // "fuel_surcharge_mode" → qualified: "cbp.fuel_surcharge_mode"
 	FuelSurchargeProgramID          buncolgen.Column // "fuel_surcharge_program_id" → qualified: "cbp.fuel_surcharge_program_id"
+	FactoringCompanyID              buncolgen.Column // "factoring_company_id" → qualified: "cbp.factoring_company_id"
 	Version                         buncolgen.Column // "version" → qualified: "cbp.version"
 	CreatedAt                       buncolgen.Column // "created_at" → qualified: "cbp.created_at"
 	UpdatedAt                       buncolgen.Column // "updated_at" → qualified: "cbp.updated_at"
@@ -458,7 +471,11 @@ var CustomerBillingProfileColumns = struct {
 	EnforceCreditLimit:              buncolgen.NewColumn("enforce_credit_limit", "cbp"),
 	AutoCreditHold:                  buncolgen.NewColumn("auto_credit_hold", "cbp"),
 	CreditHoldReason:                buncolgen.NewColumn("credit_hold_reason", "cbp"),
+	CreditHoldAutomatic:             buncolgen.NewColumn("credit_hold_automatic", "cbp"),
+	CreditReviewedAt:                buncolgen.NewColumn("credit_reviewed_at", "cbp"),
 	AutoSendInvoiceOnGeneration:     buncolgen.NewColumn("auto_send_invoice_on_generation", "cbp"),
+	SendPaymentReminders:            buncolgen.NewColumn("send_payment_reminders", "cbp"),
+	SendStatements:                  buncolgen.NewColumn("send_statements", "cbp"),
 	EmailInvoiceEnabled:             buncolgen.NewColumn("email_invoice_enabled", "cbp"),
 	EDIInvoiceEnabled:               buncolgen.NewColumn("edi_invoice_enabled", "cbp"),
 	SplitBy:                         buncolgen.NewColumn("split_by", "cbp"),
@@ -493,6 +510,7 @@ var CustomerBillingProfileColumns = struct {
 	BillingNotes:                    buncolgen.NewColumn("billing_notes", "cbp"),
 	FuelSurchargeMode:               buncolgen.NewColumn("fuel_surcharge_mode", "cbp"),
 	FuelSurchargeProgramID:          buncolgen.NewColumn("fuel_surcharge_program_id", "cbp"),
+	FactoringCompanyID:              buncolgen.NewColumn("factoring_company_id", "cbp"),
 	Version:                         buncolgen.NewColumn("version", "cbp"),
 	CreatedAt:                       buncolgen.NewColumn("created_at", "cbp"),
 	UpdatedAt:                       buncolgen.NewColumn("updated_at", "cbp"),
@@ -520,7 +538,11 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"enforceCreditLimit":              "enforce_credit_limit",
 	"autoCreditHold":                  "auto_credit_hold",
 	"creditHoldReason":                "credit_hold_reason",
+	"creditHoldAutomatic":             "credit_hold_automatic",
+	"creditReviewedAt":                "credit_reviewed_at",
 	"autoSendInvoiceOnGeneration":     "auto_send_invoice_on_generation",
+	"sendPaymentReminders":            "send_payment_reminders",
+	"sendStatements":                  "send_statements",
 	"emailInvoiceEnabled":             "email_invoice_enabled",
 	"ediInvoiceEnabled":               "edi_invoice_enabled",
 	"splitBy":                         "split_by",
@@ -555,6 +577,7 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"billingNotes":                    "billing_notes",
 	"fuelSurchargeMode":               "fuel_surcharge_mode",
 	"fuelSurchargeProgramId":          "fuel_surcharge_program_id",
+	"factoringCompanyId":              "factoring_company_id",
 	"version":                         "version",
 	"createdAt":                       "created_at",
 	"updatedAt":                       "updated_at",
@@ -580,7 +603,11 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"enforce_credit_limit",
 	"auto_credit_hold",
 	"credit_hold_reason",
+	"credit_hold_automatic",
+	"credit_reviewed_at",
 	"auto_send_invoice_on_generation",
+	"send_payment_reminders",
+	"send_statements",
 	"email_invoice_enabled",
 	"edi_invoice_enabled",
 	"split_by",
@@ -615,6 +642,7 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"billing_notes",
 	"fuel_surcharge_mode",
 	"fuel_surcharge_program_id",
+	"factoring_company_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -632,6 +660,7 @@ var CustomerBillingProfileRelations = struct {
 	RevenueAccount       string
 	ARAccount            string
 	FuelSurchargeProgram string
+	FactoringCompany     string
 }{
 	BusinessUnit:         "BusinessUnit",
 	Organization:         "Organization",
@@ -639,6 +668,7 @@ var CustomerBillingProfileRelations = struct {
 	RevenueAccount:       "RevenueAccount",
 	ARAccount:            "ARAccount",
 	FuelSurchargeProgram: "FuelSurchargeProgram",
+	FactoringCompany:     "FactoringCompany",
 }
 
 // CustomerBillingProfileScopeTenant restricts a query to a single tenant by adding:
@@ -708,7 +738,11 @@ var CustomerBillingProfileFilter = struct {
 	EnforceCreditLimit              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceCreditLimit" → DB: "enforce_credit_limit"
 	AutoCreditHold                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoCreditHold" → DB: "auto_credit_hold"
 	CreditHoldReason                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditHoldReason" → DB: "credit_hold_reason"
+	CreditHoldAutomatic             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditHoldAutomatic" → DB: "credit_hold_automatic"
+	CreditReviewedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditReviewedAt" → DB: "credit_reviewed_at"
 	AutoSendInvoiceOnGeneration     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoSendInvoiceOnGeneration" → DB: "auto_send_invoice_on_generation"
+	SendPaymentReminders            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sendPaymentReminders" → DB: "send_payment_reminders"
+	SendStatements                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sendStatements" → DB: "send_statements"
 	EmailInvoiceEnabled             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailInvoiceEnabled" → DB: "email_invoice_enabled"
 	EDIInvoiceEnabled               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediInvoiceEnabled" → DB: "edi_invoice_enabled"
 	SplitBy                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "splitBy" → DB: "split_by"
@@ -743,6 +777,7 @@ var CustomerBillingProfileFilter = struct {
 	BillingNotes                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingNotes" → DB: "billing_notes"
 	FuelSurchargeMode               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeMode" → DB: "fuel_surcharge_mode"
 	FuelSurchargeProgramID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeProgramId" → DB: "fuel_surcharge_program_id"
+	FactoringCompanyID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringCompanyId" → DB: "factoring_company_id"
 	Version                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -798,8 +833,20 @@ var CustomerBillingProfileFilter = struct {
 	CreditHoldReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("creditHoldReason", op, value)
 	},
+	CreditHoldAutomatic: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("creditHoldAutomatic", op, value)
+	},
+	CreditReviewedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("creditReviewedAt", op, value)
+	},
 	AutoSendInvoiceOnGeneration: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("autoSendInvoiceOnGeneration", op, value)
+	},
+	SendPaymentReminders: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sendPaymentReminders", op, value)
+	},
+	SendStatements: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sendStatements", op, value)
 	},
 	EmailInvoiceEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("emailInvoiceEnabled", op, value)
@@ -902,6 +949,9 @@ var CustomerBillingProfileFilter = struct {
 	},
 	FuelSurchargeProgramID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("fuelSurchargeProgramId", op, value)
+	},
+	FactoringCompanyID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("factoringCompanyId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)
@@ -1053,7 +1103,6 @@ var CustomerEmailProfileColumns = struct {
 	CustomerID            buncolgen.Column // "customer_id" → qualified: "cem.customer_id"
 	Subject               buncolgen.Column // "subject" → qualified: "cem.subject"
 	Comment               buncolgen.Column // "comment" → qualified: "cem.comment"
-	FromEmail             buncolgen.Column // "from_email" → qualified: "cem.from_email"
 	ToRecipients          buncolgen.Column // "to_recipients" → qualified: "cem.to_recipients"
 	CCRecipients          buncolgen.Column // "cc_recipients" → qualified: "cem.cc_recipients"
 	BCCRecipients         buncolgen.Column // "bcc_recipients" → qualified: "cem.bcc_recipients"
@@ -1070,7 +1119,6 @@ var CustomerEmailProfileColumns = struct {
 	CustomerID:            buncolgen.NewColumn("customer_id", "cem"),
 	Subject:               buncolgen.NewColumn("subject", "cem"),
 	Comment:               buncolgen.NewColumn("comment", "cem"),
-	FromEmail:             buncolgen.NewColumn("from_email", "cem"),
 	ToRecipients:          buncolgen.NewColumn("to_recipients", "cem"),
 	CCRecipients:          buncolgen.NewColumn("cc_recipients", "cem"),
 	BCCRecipients:         buncolgen.NewColumn("bcc_recipients", "cem"),
@@ -1093,7 +1141,6 @@ var CustomerEmailProfileFieldMap = map[string]string{
 	"customerId":            "customer_id",
 	"subject":               "subject",
 	"comment":               "comment",
-	"fromEmail":             "from_email",
 	"toRecipients":          "to_recipients",
 	"ccRecipients":          "cc_recipients",
 	"bccRecipients":         "bcc_recipients",
@@ -1114,7 +1161,6 @@ var CustomerEmailProfileInsertableColumns = []string{
 	"customer_id",
 	"subject",
 	"comment",
-	"from_email",
 	"to_recipients",
 	"cc_recipients",
 	"bcc_recipients",
@@ -1195,7 +1241,6 @@ var CustomerEmailProfileFilter = struct {
 	CustomerID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
 	Subject               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subject" → DB: "subject"
 	Comment               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comment" → DB: "comment"
-	FromEmail             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromEmail" → DB: "from_email"
 	ToRecipients          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toRecipients" → DB: "to_recipients"
 	CCRecipients          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ccRecipients" → DB: "cc_recipients"
 	BCCRecipients         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bccRecipients" → DB: "bcc_recipients"
@@ -1223,9 +1268,6 @@ var CustomerEmailProfileFilter = struct {
 	},
 	Comment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("comment", op, value)
-	},
-	FromEmail: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("fromEmail", op, value)
 	},
 	ToRecipients: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("toRecipients", op, value)

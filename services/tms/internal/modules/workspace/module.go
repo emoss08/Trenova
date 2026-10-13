@@ -113,6 +113,7 @@ func SharedOptions() fx.Option {
 				func(svc *integrationservice.Service) fuelpurchaseports.FuelCardFeedResolver { return svc },
 			),
 		),
+		fx.Invoke(emailservice.RegisterObservers),
 		formulaassistantservice.Module,
 	)
 }

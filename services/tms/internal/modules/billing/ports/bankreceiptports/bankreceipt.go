@@ -38,6 +38,11 @@ type GetBankReceiptByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type ListBankReceiptsMatchedToPaymentRequest struct {
+	PaymentID  pulid.ID              `json:"paymentId"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type GetBankReceiptSummaryRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	AsOfDate   int64                 `json:"asOfDate"`
@@ -50,6 +55,18 @@ type ListBankReceiptsByImportBatchRequest struct {
 
 type BankReceiptRepository interface {
 	GetByID(ctx context.Context, req GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error)
+	// LockForUpdate reads the receipt under a row lock inside the caller's
+	// transaction.
+	LockForUpdate(
+		ctx context.Context,
+		req GetBankReceiptByIDRequest,
+	) (*bankreceipt.BankReceipt, error)
+	// ListMatchedToPayment lists the receipts matched to a customer payment,
+	// locked, so a match or a reversal decides on rows nobody else can move.
+	ListMatchedToPayment(
+		ctx context.Context,
+		req ListBankReceiptsMatchedToPaymentRequest,
+	) ([]*bankreceipt.BankReceipt, error)
 	ListByImportBatchID(
 		ctx context.Context,
 		req ListBankReceiptsByImportBatchRequest,

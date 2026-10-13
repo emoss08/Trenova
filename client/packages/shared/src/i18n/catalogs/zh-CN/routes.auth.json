@@ -63,6 +63,5 @@
   "you@carrier.com": "you@carrier.com",
   "{0, plural, one {# role} other {# roles}}{1}": "{0, plural, other {# 个角色}}{1}",
   "{0, plural, one {permission} other {permissions}}": "{0, plural, other {项权限}}",
-  "{0} of {1} selected": "已选择 {0}/{1}",
   "· {0} {1, plural, one {permission} other {permissions}}": "· {0} {1, plural, other {项权限}}"
 }
