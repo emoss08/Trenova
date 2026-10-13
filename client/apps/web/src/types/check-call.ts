@@ -18,12 +18,8 @@ export function isStopVisit(kind: CheckCallKind): boolean {
   return kind === "Arrival" || kind === "Departure";
 }
 
-function boundedText(limit: number, field: string) {
-  return z
-    .string()
-    .max(limit, {
-      error: () => translate("{0} cannot be longer than {1} characters", field, limit),
-    });
+function boundedText(limit: number, message: () => string) {
+  return z.string().max(limit, { error: message });
 }
 
 export const logCheckCallFormSchema = z
@@ -32,13 +28,23 @@ export const logCheckCallFormSchema = z
     kind: checkCallKindSchema,
     stopId: z.string().nullable(),
     reportedAt: z.number().int().positive().nullable(),
-    city: boundedText(CHECK_CALL_LIMITS.city, "City"),
-    stateCode: boundedText(CHECK_CALL_LIMITS.stateCode, "State"),
+    city: boundedText(CHECK_CALL_LIMITS.city, () =>
+      translate("City cannot be longer than 100 characters"),
+    ),
+    stateCode: boundedText(CHECK_CALL_LIMITS.stateCode, () =>
+      translate("State cannot be longer than 10 characters"),
+    ),
     delayed: z.boolean(),
-    delayReason: boundedText(CHECK_CALL_LIMITS.delayReason, "Delay reason"),
+    delayReason: boundedText(CHECK_CALL_LIMITS.delayReason, () =>
+      translate("Delay reason cannot be longer than 255 characters"),
+    ),
     estimatedArrival: z.number().int().positive().nullable(),
-    contactName: boundedText(CHECK_CALL_LIMITS.contactName, "Contact name"),
-    note: boundedText(CHECK_CALL_LIMITS.note, "Note"),
+    contactName: boundedText(CHECK_CALL_LIMITS.contactName, () =>
+      translate("Contact name cannot be longer than 100 characters"),
+    ),
+    note: boundedText(CHECK_CALL_LIMITS.note, () =>
+      translate("Note cannot be longer than 1000 characters"),
+    ),
   })
   .superRefine((values, ctx) => {
     if (isStopVisit(values.kind) && !values.stopId) {

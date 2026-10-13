@@ -313,7 +313,6 @@
   "Lease ends": "Fin del arrendamiento",
   "Lease ends in {0, plural, one {# day} other {# days}}": "El arrendamiento finaliza en {0, plural, one {# día} other {# días}}",
   "Left out <b>“{0}”</b>.": "Se omitió <b>«{0}»</b>.",
-  "Left {0}": "Salió {0}",
   "Let the customer know {0} has delivered.": "Avísele al cliente que {0} ya se entregó.",
   "Limits": "Límites",
   "List": "Lista",

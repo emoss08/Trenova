@@ -6,6 +6,7 @@
   "Automated resource assignment": "Asignación automática de recursos",
   "Candidate scoring weights": "Ponderaciones de puntuación de candidatos",
   "Candidates beyond this many empty miles from the pickup are never auto-assigned. Leave empty for no cap.": "Los candidatos que estén a más de esta cantidad de millas vacías de la recogida nunca se asignan automáticamente. Déjelo vacío para no poner límite.",
+  "Check call monitoring": "Supervisión de llamadas de control",
   "Choose which incident types should be captured as service failures.": "Elija qué tipos de incidente deben registrarse como fallos de servicio.",
   "Compliance enforcement level": "Nivel de aplicación del cumplimiento",
   "Configure and manage your dispatch control settings": "Configure y gestione los ajustes del control de despacho",
@@ -28,9 +29,11 @@
   "Fine-tune how heavily each factor counts when ranking drivers for a shipment. Weights run from 0 to 10 and are relative to each other; a factor set to 0 is ignored entirely. Leave a field empty to inherit the {0} strategy's preset, shown as the placeholder.": "Ajuste cuánto pesa cada factor al clasificar conductores para un envío. Las ponderaciones van de 0 a 10 y son relativas entre sí; un factor con valor 0 se ignora por completo. Deje un campo vacío para heredar el valor preestablecido de la estrategia {0}, mostrado como marcador de posición.",
   "Hazardous materials compliance": "Cumplimiento de materiales peligrosos",
   "How far ahead the optimizer plans moves, from 1 to 336 hours.": "Con cuánta antelación planifica los tramos el optimizador, de 1 a 336 horas.",
+  "How long a load may go without word from the carrier, from 1 to 72 hours. A customer can set its own window.": "Cuánto tiempo puede pasar una carga sin noticias del transportista, de 1 a 72 horas. Un cliente puede configurar su propia ventana.",
   "Maximum deadhead miles": "Millas máximas de recorrido en vacío",
   "Medical certification validation": "Validación de la certificación médica",
   "Minimum confidence (0 to 1) an automatic assignment must reach before it executes without dispatcher review.": "Confianza mínima (de 0 a 1) que debe alcanzar una asignación automática antes de ejecutarse sin revisión del despachador.",
+  "Monitor brokered loads for check calls": "Supervisar las llamadas de control de las cargas intermediadas",
   "Optional threshold for acceptable service failure rate.": "Umbral opcional para la tasa aceptable de fallos de servicio.",
   "Planning horizon (hours)": "Horizonte de planificación (horas)",
   "Prevent dispatching without an assigned worker.": "Impedir el despacho sin un trabajador asignado.",
@@ -47,6 +50,8 @@
   "Service failure grace period": "Período de gracia para fallos de servicio",
   "Service failure monitoring": "Seguimiento de fallos de servicio",
   "Service failure target": "Objetivo de fallos de servicio",
+  "Watch brokered loads in transit for carriers that stop reporting. A load with no check call, tracking update or stop time inside the window is raised to the watchtower.": "Vigile las cargas intermediadas en tránsito cuyos transportistas dejen de informar. Una carga sin llamada de control, actualización de seguimiento ni hora de parada dentro de la ventana se envía a la torre de vigilancia.",
+  "When enabled, a carrier-covered load that goes quiet raises a No check call item, and one silent for twice the window is critical.": "Cuando está activado, una carga cubierta por un transportista que deja de informar genera un elemento Sin llamada de control, y una que permanece en silencio el doble de la ventana es crítica.",
   "When enabled, the system applies configured compliance checks before assignments proceed.": "Cuando está habilitado, el sistema aplica las comprobaciones de cumplimiento configuradas antes de que prosigan las asignaciones.",
   "When enabled, the system can automatically assign available resources to shipments.": "Cuando está habilitado, el sistema puede asignar automáticamente los recursos disponibles a los envíos."
 }

@@ -313,7 +313,6 @@
   "Lease ends": "租賃到期",
   "Lease ends in {0, plural, one {# day} other {# days}}": "租約將於 {0, plural, one {# 天} other {# 天}}後結束",
   "Left out <b>“{0}”</b>.": "已略過<b>「{0}」</b>。",
-  "Left {0}": "{0} 離開",
   "Let the customer know {0} has delivered.": "告知客戶{0}已送達。",
   "Limits": "限制",
   "List": "清單",

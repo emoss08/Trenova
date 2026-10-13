@@ -6037,6 +6037,15 @@
       "routes/agent-control"
     ]
   },
+  "A new link replaces the one already out, which stops working. The carrier posts arrivals, departures and position updates through it until the load is done.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A new shipment was entered, whether by hand, by import, or by an integration.": {
     "sites": 1,
     "scope": [
@@ -17621,7 +17630,7 @@
     ]
   },
   "Agent": {
-    "sites": 28,
+    "sites": 29,
     "scope": [
       "ts"
     ],
@@ -23464,6 +23473,15 @@
       "routes/my-team"
     ]
   },
+  "Anyone with the link can post updates for this load, so please do not forward it.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/carriertracking.link.email"
+    ]
+  },
   "Anyone working the case ticks it. Everyone sees who did.": {
     "sites": 1,
     "scope": [
@@ -26232,6 +26250,15 @@
       "routes/shipment"
     ]
   },
+  "Arrival sent. Thank you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
   "Arrival time": {
     "sites": 1,
     "scope": [
@@ -26315,13 +26342,14 @@
     ]
   },
   "Arrived": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "routes/desk",
       "routes/inbox",
       "routes/service-failure",
@@ -26348,12 +26376,13 @@
     ]
   },
   "Arrived {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "routes/carrier-tracking-public",
       "routes/desk"
     ]
   },
@@ -27470,6 +27499,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Assign a carrier to this load before sending a tracking link": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Assign a course": {
@@ -37256,7 +37294,7 @@
     ]
   },
   "Business unit ID is required": {
-    "sites": 50,
+    "sites": 51,
     "scope": [
       "go"
     ],
@@ -37274,7 +37312,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 135,
+    "sites": 136,
     "scope": [
       "go"
     ],
@@ -38308,7 +38346,7 @@
     ]
   },
   "Cancel": {
-    "sites": 281,
+    "sites": 283,
     "scope": [
       "ts"
     ],
@@ -40167,7 +40205,7 @@
     ]
   },
   "Carrier": {
-    "sites": 45,
+    "sites": 46,
     "scope": [
       "go",
       "ts"
@@ -40880,11 +40918,12 @@
     ]
   },
   "Carrier link": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "routes/carrier-invoice-matching"
     ]
   },
@@ -41237,6 +41276,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "Carrier tracking links need a public base URL; set tendering.publicBaseUrl": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Carrier type": {
@@ -44161,6 +44209,91 @@
       "routes/customer-payments"
     ]
   },
+  "Check call": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Check call interval cannot exceed 72 hours": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "packages/shared/types"
+    ]
+  },
+  "Check call interval must be at least 1 hour": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "packages/shared/types"
+    ]
+  },
+  "Check call interval must be between 1 and 72 hours": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Check call logged": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Check call monitoring": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Check call window": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer",
+      "routes/dispatch-control"
+    ]
+  },
+  "Check calls": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer",
+      "routes/shipment"
+    ]
+  },
+  "Check calls could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Check digit": {
     "sites": 1,
     "scope": [
@@ -45106,6 +45239,15 @@
       "routes/policies"
     ]
   },
+  "Choose a stop on this load": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose a template": {
     "sites": 1,
     "scope": [
@@ -45814,6 +45956,15 @@
       "routes/home"
     ]
   },
+  "Choose the move": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Choose the new driver type or worker type": {
     "sites": 1,
     "scope": [
@@ -45948,6 +46099,26 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Choose the stop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Choose the stop that was reached or left": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
     ]
   },
   "Choose the tractor that ran the miles": {
@@ -46436,7 +46607,7 @@
     ]
   },
   "City": {
-    "sites": 30,
+    "sites": 32,
     "scope": [
       "go",
       "ts"
@@ -46449,6 +46620,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/carrier",
+      "routes/carrier-tracking-public",
       "routes/customer",
       "routes/fuel-purchase",
       "routes/location",
@@ -46514,11 +46686,13 @@
     ]
   },
   "City cannot be longer than 100 characters": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/types",
       "go/other"
     ]
   },
@@ -48030,7 +48204,7 @@
     ]
   },
   "Client event ID must be 128 characters or fewer with no spaces": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -53703,6 +53877,17 @@
       "routes/edi"
     ]
   },
+  "Contact name cannot be longer than 100 characters": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
+    ]
+  },
   "Contact number for the carrier's driver while in transit.": {
     "sites": 1,
     "scope": [
@@ -55070,7 +55255,7 @@
     ]
   },
   "Copied": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -55168,7 +55353,7 @@
     ]
   },
   "Copy": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -58641,6 +58826,15 @@
       "go/other"
     ]
   },
+  "Create link": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Create location": {
     "sites": 1,
     "scope": [
@@ -59357,7 +59551,7 @@
     ]
   },
   "Creating...": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -66599,6 +66793,17 @@
       "routes/shipment"
     ]
   },
+  "Delay reason cannot be longer than 255 characters": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
+    ]
+  },
   "Delay status threshold": {
     "sites": 1,
     "scope": [
@@ -68027,11 +68232,13 @@
     ]
   },
   "Departed": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "template/detention.notice.email",
       "template/detention.notice.pdf"
     ]
@@ -68128,6 +68335,15 @@
     "areas": [
       "apps/dash/_components",
       "routes/shipment"
+    ]
+  },
+  "Departure sent. Thank you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
     ]
   },
   "Departure time": {
@@ -68878,7 +69094,7 @@
     ]
   },
   "Destination": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -68890,6 +69106,7 @@
       "routes/inbox",
       "routes/rate-agreement",
       "routes/tender-offer-public",
+      "template/carriertracking.link.email",
       "template/tender.offer.email"
     ]
   },
@@ -69141,20 +69358,22 @@
     ]
   },
   "Destination: {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/carriertracking.link.email",
       "template/tender.offer.email"
     ]
   },
   "Destination: {0} ({1})": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/carriertracking.link.email",
       "template/tender.offer.email"
     ]
   },
@@ -71404,7 +71623,7 @@
     ]
   },
   "Dispatcher": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -73973,7 +74192,7 @@
     ]
   },
   "Done": {
-    "sites": 32,
+    "sites": 33,
     "scope": [
       "ts"
     ],
@@ -76670,12 +76889,13 @@
     ]
   },
   "Due {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/carrier-tracking-public",
       "routes/desk",
       "routes/ifta-return"
     ]
@@ -80210,7 +80430,7 @@
     ]
   },
   "Email delivery is not configured for this environment": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -80475,7 +80695,7 @@
     ]
   },
   "Email to": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -82712,11 +82932,12 @@
     ]
   },
   "Enter a valid email address": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/types",
       "packages/shared/types"
     ]
   },
@@ -82835,6 +83056,15 @@
     ],
     "areas": [
       "routes/dispatch-control"
+    ]
+  },
+  "Enter how many hours a load may go without a check call": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Enter how many sheets to print": {
@@ -84475,6 +84705,24 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Estimated arrival must be a valid timestamp": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Estimated arrival must be within the next 30 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Estimated cloud coverage worldwide": {
@@ -88000,6 +88248,33 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Expected at next stop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Expected at next stop {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Expected at the next stop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
     ]
   },
   "Expected charge ($)": {
@@ -98416,6 +98691,15 @@
       "routes/org-structure"
     ]
   },
+  "From 1 to 72 hours. Leave empty to use the window set in dispatch controls.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "From Values": {
     "sites": 1,
     "scope": [
@@ -103936,7 +104220,7 @@
     ]
   },
   "Hello {0},": {
-    "sites": 12,
+    "sites": 14,
     "scope": [
       "go"
     ],
@@ -103945,6 +104229,7 @@
       "template/agent.inbound_reply.email",
       "template/agent.proposal_reminder.email",
       "template/agent.request_missing_docs.email",
+      "template/carriertracking.link.email",
       "template/invoice.email",
       "template/tender.offer.email"
     ]
@@ -103959,7 +104244,7 @@
     ]
   },
   "Hello,": {
-    "sites": 12,
+    "sites": 14,
     "scope": [
       "go"
     ],
@@ -103968,6 +104253,7 @@
       "template/agent.inbound_reply.email",
       "template/agent.proposal_reminder.email",
       "template/agent.request_missing_docs.email",
+      "template/carriertracking.link.email",
       "template/invoice.email",
       "template/tender.offer.email"
     ]
@@ -105864,6 +106150,15 @@
       "routes/agent-control"
     ]
   },
+  "How long a load may go without word from the carrier, from 1 to 72 hours. A customer can set its own window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "How long a permit takes to obtain and how long it lasts": {
     "sites": 1,
     "scope": [
@@ -105928,6 +106223,15 @@
     ]
   },
   "How long this customer has to pay, and in what currency": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
+  "How long this customer's brokered loads may go without word from the carrier before they are raised": {
     "sites": 1,
     "scope": [
       "ts"
@@ -106881,6 +107185,15 @@
       "routes/formula-template"
     ]
   },
+  "I've arrived at stop {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
   "I've completed this": {
     "sites": 1,
     "scope": [
@@ -106897,6 +107210,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "I've left stop {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
     ]
   },
   "I've read this": {
@@ -111855,6 +112177,15 @@
       "go/other"
     ]
   },
+  "Invalid move": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Invalid operation": {
     "sites": 1,
     "scope": [
@@ -112036,7 +112367,7 @@
     ]
   },
   "Invalid shipment": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -112074,7 +112405,7 @@
     ]
   },
   "Invalid stop": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -117126,7 +117457,7 @@
     ]
   },
   "Kind is required": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go"
     ],
@@ -117145,6 +117476,15 @@
   },
   "Kind must be Arrival or Departure": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Kind must be Update, Arrival or Departure": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -118519,6 +118859,15 @@
       "routes/time-attendance"
     ]
   },
+  "Last update {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
   "Last updated": {
     "sites": 1,
     "scope": [
@@ -119090,7 +119439,7 @@
     ]
   },
   "Latitude is required with a longitude": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -119099,7 +119448,7 @@
     ]
   },
   "Latitude must be between -90 and 90": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go"
     ],
@@ -119720,6 +120069,24 @@
       "routes/worker"
     ]
   },
+  "Leave empty to copy the link and share it with {0} yourself.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Leave empty to copy the link and share it yourself.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Leave empty to keep each run in Reports only.": {
     "sites": 1,
     "scope": [
@@ -119736,6 +120103,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Leave empty to record it as now.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Leave empty to record the time as now.": {
@@ -120057,11 +120433,12 @@
     ]
   },
   "Left {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/carrier-tracking-public",
       "routes/desk"
     ]
   },
@@ -122598,6 +122975,15 @@
       "routes/shipment"
     ]
   },
+  "Load for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
   "Load messaging": {
     "sites": 1,
     "scope": [
@@ -122827,6 +123213,17 @@
       "routes/agent-control"
     ]
   },
+  "Load tracking": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public",
+      "template/carriertracking.link.email"
+    ]
+  },
   "Load workflow": {
     "sites": 1,
     "scope": [
@@ -122834,6 +123231,15 @@
     ],
     "areas": [
       "routes/dash-control"
+    ]
+  },
+  "Load {0} for {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
     ]
   },
   "Load {0} is new": {
@@ -123814,6 +124220,15 @@
       "routes/desk"
     ]
   },
+  "Loading tracking link…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Loading tries...": {
     "sites": 1,
     "scope": [
@@ -124552,6 +124967,15 @@
       "routes/inbox"
     ]
   },
+  "Log check call": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Log column": {
     "sites": 1,
     "scope": [
@@ -124667,6 +125091,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Logging...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Logging…": {
@@ -124836,7 +125269,7 @@
     ]
   },
   "Longitude is required with a latitude": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -124845,7 +125278,7 @@
     ]
   },
   "Longitude must be between -180 and 180": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go"
     ],
@@ -132671,6 +133104,15 @@
       "routes/table-change-alert"
     ]
   },
+  "Monitor brokered loads for check calls": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Monitor our own authority": {
     "sites": 1,
     "scope": [
@@ -133341,13 +133783,14 @@
     ]
   },
   "Move": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-monitoring",
-      "routes/inbox"
+      "routes/inbox",
+      "routes/shipment"
     ]
   },
   "Move ID": {
@@ -133369,7 +133812,7 @@
     ]
   },
   "Move ID is required": {
-    "sites": 6,
+    "sites": 10,
     "scope": [
       "go"
     ],
@@ -133524,7 +133967,7 @@
     ]
   },
   "Move is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -133813,14 +134256,15 @@
     ]
   },
   "Move {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/desk",
-      "routes/edi"
+      "routes/edi",
+      "routes/shipment"
     ]
   },
   "Move {0} to {1} for {2}": {
@@ -139457,6 +139901,24 @@
       "routes/invoice"
     ]
   },
+  "No check call": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "No check calls have been logged yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "No checklist templates yet": {
     "sites": 1,
     "scope": [
@@ -144798,6 +145260,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "No updates yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
   "No uploaded parts were found for this session": {
     "sites": 1,
     "scope": [
@@ -145657,6 +146128,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "None sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "None voided": {
@@ -147188,7 +147668,7 @@
     ]
   },
   "Note": {
-    "sites": 19,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -147199,6 +147679,7 @@
       "go/other",
       "packages/shared/lib",
       "routes/accounting-inbound",
+      "routes/carrier-tracking-public",
       "routes/desk",
       "routes/detention-desk",
       "routes/edi",
@@ -147207,6 +147688,7 @@
       "routes/ifta-return",
       "routes/inbox",
       "routes/invoice",
+      "routes/shipment",
       "routes/time-attendance",
       "routes/worker",
       "template/invoice.share.email"
@@ -147219,6 +147701,17 @@
     ],
     "areas": [
       "routes/driver-expense"
+    ]
+  },
+  "Note cannot be longer than 1000 characters": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
     ]
   },
   "Note cannot exceed 2000 characters": {
@@ -149967,12 +150460,13 @@
     ]
   },
   "Now": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/shipment"
     ]
   },
   "Now at: {0}.": {
@@ -152973,6 +153467,15 @@
   },
   "Only a human user can decide on agent proposals": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a load covered by an outside carrier gets a carrier tracking link": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -156290,6 +156793,15 @@
       "routes/desk"
     ]
   },
+  "Open the link to check in, record arrivals and departures, and tell us about delays. No sign-in is needed.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/carriertracking.link.email"
+    ]
+  },
   "Open the next message; the down arrow does the same": {
     "sites": 1,
     "scope": [
@@ -156477,6 +156989,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Open tracking link": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/carriertracking.link.email"
     ]
   },
   "Open tractor": {
@@ -157946,12 +158467,13 @@
     ]
   },
   "Or paste this link into your browser:": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
     "areas": [
       "template/account.password_reset.email",
+      "template/carriertracking.link.email",
       "template/driverportal.invitation.email",
       "template/invoice.share.email",
       "template/rateconfirmation.email"
@@ -158370,7 +158892,7 @@
     ]
   },
   "Organization ID is required": {
-    "sites": 53,
+    "sites": 54,
     "scope": [
       "go",
       "ts"
@@ -158426,13 +158948,14 @@
     ]
   },
   "Organization default": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/customer",
       "routes/desk",
       "routes/detention-policy",
       "routes/reports"
@@ -158484,7 +159007,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 134,
+    "sites": 135,
     "scope": [
       "go"
     ],
@@ -158707,7 +159230,7 @@
     ]
   },
   "Origin": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -158719,6 +159242,7 @@
       "routes/inbox",
       "routes/rate-agreement",
       "routes/tender-offer-public",
+      "template/carriertracking.link.email",
       "template/tender.offer.email"
     ]
   },
@@ -158981,20 +159505,22 @@
     ]
   },
   "Origin: {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/carriertracking.link.email",
       "template/tender.offer.email"
     ]
   },
   "Origin: {0} ({1})": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/carriertracking.link.email",
       "template/tender.offer.email"
     ]
   },
@@ -169586,6 +170112,15 @@
       "routes/worker"
     ]
   },
+  "Please wait a minute and open the link again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
   "Please wait a minute and try the link from your email again.": {
     "sites": 3,
     "scope": [
@@ -170374,6 +170909,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Position update": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Position updated": {
@@ -171263,6 +171807,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Powered by Trenova. Questions about this load? Reply to the email the link arrived in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
     ]
   },
   "Powered by Trenova. Questions about this load? Reply to the offer email.": {
@@ -177374,6 +177927,15 @@
       "go/other"
     ]
   },
+  "Raise and clear watchtower items for brokered loads overdue a check call": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Raise it": {
     "sites": 1,
     "scope": [
@@ -182122,7 +182684,7 @@
     ]
   },
   "Received time is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -182131,7 +182693,7 @@
     ]
   },
   "Received time must be a valid timestamp": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -182439,7 +183001,7 @@
     ]
   },
   "Recipient email must be a valid email address": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -183857,6 +184419,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Record what the carrier or driver told you. An arrival or departure also records the stop's actual time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Record what the customer is disputing": {
@@ -189232,6 +189803,15 @@
       "routes/home"
     ]
   },
+  "Report where a load is": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
   "ReportDefinition not found": {
     "sites": 1,
     "scope": [
@@ -189284,6 +189864,42 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Reported time cannot be in the future": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reported time cannot be more than 7 days ago": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reported time is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reported time must be a valid timestamp": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Reported to the clearinghouse": {
@@ -189642,7 +190258,7 @@
     ]
   },
   "Request is required": {
-    "sites": 50,
+    "sites": 53,
     "scope": [
       "go"
     ],
@@ -193030,7 +193646,7 @@
     ]
   },
   "Retrying...": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -193038,6 +193654,7 @@
       "apps/dash/routes",
       "apps/web/components",
       "routes/admin",
+      "routes/carrier-tracking-public",
       "routes/ifta-return",
       "routes/rate-confirmation-public",
       "routes/tender-offer-public"
@@ -194814,7 +195431,7 @@
     ]
   },
   "Revoke": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -197534,13 +198151,14 @@
     ]
   },
   "Running late": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/carrier-tracking-public",
       "routes/inbox",
       "routes/shipment"
     ]
@@ -200680,6 +201298,18 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "Say why the load is delayed": {
+    "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other",
+      "routes/carrier-tracking-public"
     ]
   },
   "Say why the memo is being raised": {
@@ -206598,6 +207228,15 @@
       "go/other"
     ]
   },
+  "Send a position update": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
   "Send a rate agreement back for revision": {
     "sites": 1,
     "scope": [
@@ -206862,6 +207501,15 @@
       "apps/web/hooks"
     ]
   },
+  "Send new link": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Send next": {
     "sites": 1,
     "scope": [
@@ -207079,6 +207727,15 @@
       "go/other"
     ]
   },
+  "Send the carrier a link to post arrivals, departures and position updates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Send the comment you are composing": {
     "sites": 1,
     "scope": [
@@ -207260,6 +207917,15 @@
       "routes/inbox"
     ]
   },
+  "Send tracking link": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Send true or false": {
     "sites": 1,
     "scope": [
@@ -207270,12 +207936,14 @@
     ]
   },
   "Send update": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/carrier-tracking-public"
     ]
   },
   "Send with": {
@@ -207541,13 +208209,14 @@
     ]
   },
   "Sending...": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "routes/admin",
+      "routes/carrier-tracking-public",
       "routes/dispatch-console",
       "routes/formula-template",
       "routes/organization",
@@ -207672,6 +208341,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Sends the carrier on a brokered load the link it posts check calls, arrivals and departures through. Not customer-scoped: the recipient is a carrier.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Senior role is required": {
@@ -207907,7 +208585,7 @@
     ]
   },
   "Sent to {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -210770,6 +211448,15 @@
       "routes/admin"
     ]
   },
+  "Share this device's location": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
   "Share this page with Desk": {
     "sites": 2,
     "scope": [
@@ -210807,12 +211494,13 @@
     ]
   },
   "Shared": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/types",
       "go/other",
       "routes/reports"
@@ -211230,7 +211918,7 @@
     ]
   },
   "Shipment ID is required": {
-    "sites": 34,
+    "sites": 35,
     "scope": [
       "go",
       "ts"
@@ -212161,7 +212849,7 @@
     ]
   },
   "Shipment is required": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go"
     ],
@@ -216630,7 +217318,7 @@
     ]
   },
   "Source is required": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -216641,7 +217329,7 @@
     ]
   },
   "Source key cannot be longer than 255 characters": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -216650,7 +217338,7 @@
     ]
   },
   "Source key is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -216712,7 +217400,7 @@
       "go/other"
     ]
   },
-  "Source must be Dispatcher, Agent or Driver": {
+  "Source must be Carrier, Telematics or EDI": {
     "sites": 1,
     "scope": [
       "go"
@@ -216721,7 +217409,16 @@
       "go/other"
     ]
   },
-  "Source must be Telematics or EDI": {
+  "Source must be Dispatcher or Agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Source must be Dispatcher, Agent or Driver": {
     "sites": 1,
     "scope": [
       "go"
@@ -217533,6 +218230,24 @@
     ]
   },
   "Splitting...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Spoke to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Spoke to {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -219079,7 +219794,7 @@
     ]
   },
   "State": {
-    "sites": 35,
+    "sites": 37,
     "scope": [
       "go",
       "ts"
@@ -219092,6 +219807,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/carrier",
+      "routes/carrier-tracking-public",
       "routes/customer",
       "routes/jurisdiction-rule",
       "routes/jurisdiction-rule-override",
@@ -219145,6 +219861,17 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "State cannot be longer than 10 characters": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
     ]
   },
   "State in Trenova": {
@@ -220197,7 +220924,7 @@
     ]
   },
   "Stop": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -220210,6 +220937,7 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/service-failure",
+      "routes/shipment",
       "template/rateconfirmation.pdf"
     ]
   },
@@ -220385,7 +221113,7 @@
     ]
   },
   "Stop not found on this load": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -220686,11 +221414,12 @@
     ]
   },
   "Stop {0} · {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/carrier-tracking-public",
       "routes/rate-confirmation-public"
     ]
   },
@@ -223301,6 +224030,15 @@
       "routes/worker"
     ]
   },
+  "TX": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Tab": {
     "sites": 2,
     "scope": [
@@ -225225,11 +225963,12 @@
     ]
   },
   "Temporarily unavailable": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/carrier-tracking-public",
       "routes/rate-confirmation-public",
       "routes/tender-offer-public"
     ]
@@ -228603,6 +229342,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "The caller said the load will miss its appointment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "The candidate answered; it is scored once a person confirms the document": {
     "sites": 1,
     "scope": [
@@ -228756,6 +229504,15 @@
       "go/other"
     ]
   },
+  "The carrier can no longer post check calls through it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The carrier confirmed the negotiated rate for this move.": {
     "sites": 1,
     "scope": [
@@ -228810,6 +229567,15 @@
       "packages/shared/components"
     ]
   },
+  "The carrier hauling the load.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The carrier issuing the invoice.": {
     "sites": 1,
     "scope": [
@@ -228835,6 +229601,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "The carrier posts arrivals, departures and position updates through this link until the load is done.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The carrier record changed": {
@@ -228979,6 +229754,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "The carrier's tracking link. Required: without it the carrier has nowhere to post updates.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The carrier's tractor unit, when known.": {
@@ -233318,6 +234102,15 @@
       "routes/shipment"
     ]
   },
+  "The link may have expired or been replaced by a newer one. Contact the broker if you believe this is an error.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
   "The link may have expired or been revoked. Ask your carrier to send a new invitation to get set up on Dash.": {
     "sites": 1,
     "scope": [
@@ -233361,6 +234154,42 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The link was emailed to {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The link works until the load is delivered.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/carriertracking.link.email"
+    ]
+  },
+  "The link works until {0} or until the load is delivered.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/carriertracking.link.email"
+    ]
+  },
+  "The link works, but the email could not be sent: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The linked assignment is unavailable. Expected total:": {
@@ -233408,6 +234237,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "The load could not be loaded because of a temporary problem. Please try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
   "The load has no temperature control, and 0 to 0 °F would make it a frozen load. Leave both temperatures out to keep it as it is, or give the range the person asked for": {
     "sites": 1,
     "scope": [
@@ -233415,6 +234253,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The load is finished or was canceled. Contact the broker if anything changed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
     ]
   },
   "The load this failure was recorded on is gone.": {
@@ -235233,7 +236080,7 @@
     ]
   },
   "The planned delivery window.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -235242,7 +236089,7 @@
     ]
   },
   "The planned pickup window.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -236490,6 +237337,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The reported time cannot be in the future": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "The request belongs to a different organization than your session": {
@@ -238138,6 +238994,15 @@
       "go/other"
     ]
   },
+  "The stop's times were not changed by this report.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "The stops are still in the notice window — try again in a moment.": {
     "sites": 1,
     "scope": [
@@ -238605,6 +239470,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The tracking link could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The tracking link could not be revoked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The tractor has not reported a position": {
@@ -242864,6 +243747,15 @@
       "routes/auth"
     ]
   },
+  "This link is shown once. Send a new one if it is lost.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "This link works once and expires in {0, plural, one {# minute} other {# minutes}}, at {1}.": {
     "sites": 2,
     "scope": [
@@ -242889,6 +243781,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "This link works until {0} or until the load is done.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
     ]
   },
   "This live connection belongs to another session": {
@@ -242927,6 +243828,15 @@
       "go/other"
     ]
   },
+  "This load has no active carrier tracking link": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This load is already completed": {
     "sites": 1,
     "scope": [
@@ -242934,6 +243844,35 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This load is canceled, so it takes no check calls": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This load is finished, so there is nothing left for a carrier to track": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This load is no longer being tracked": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/carrier-tracking-public"
     ]
   },
   "This load's carrier cost was already adjusted for invoice {0}; accepting this variance too would pay the difference twice": {
@@ -244853,6 +245792,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This tracking link is no longer valid": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/carrier-tracking-public"
     ]
   },
   "This tractor could not be read": {
@@ -247471,11 +248421,12 @@
     ]
   },
   "Too many attempts": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/carrier-tracking-public",
       "routes/rate-confirmation-public",
       "routes/tender-offer-public"
     ]
@@ -247669,6 +248620,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Too many updates in a short time. Please wait a minute and try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
     ]
   },
   "Too many variable values": {
@@ -248942,6 +249902,42 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Tracking link": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Tracking link for load {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/carriertracking.link.email"
+    ]
+  },
+  "Tracking link for your load": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/carriertracking.link.email"
+    ]
+  },
+  "Tracking link revoked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Tracking was cleared. Start a new sync to continue.": {
@@ -251499,7 +252495,7 @@
     ]
   },
   "Try again": {
-    "sites": 54,
+    "sites": 55,
     "scope": [
       "ts"
     ],
@@ -251511,6 +252507,7 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/capture",
+      "routes/carrier-tracking-public",
       "routes/desk",
       "routes/detention-desk",
       "routes/detention-intelligence",
@@ -255665,6 +256662,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Update sent. Thank you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
     ]
   },
   "Update status": {
@@ -262493,6 +263499,15 @@
       "routes/worker"
     ]
   },
+  "Watch brokered loads in transit for carriers that stop reporting. A load with no check call, tracking update or stop time inside the window is raised to the watchtower.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Watch each customer's period build toward one invoice": {
     "sites": 1,
     "scope": [
@@ -264144,7 +265159,7 @@
     ]
   },
   "What happened": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -264153,6 +265168,7 @@
       "routes/desk",
       "routes/inbox",
       "routes/osha",
+      "routes/shipment",
       "routes/worker"
     ]
   },
@@ -265621,7 +266637,7 @@
     ]
   },
   "When": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -265629,6 +266645,7 @@
       "apps/web/components",
       "routes/agent-control",
       "routes/edi",
+      "routes/shipment",
       "routes/worker"
     ]
   },
@@ -265882,6 +266899,15 @@
     ],
     "areas": [
       "routes/pto-policy"
+    ]
+  },
+  "When enabled, a carrier-covered load that goes quiet raises a No check call item, and one silent for twice the window is critical.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "When enabled, calculations check stored lane mileage before calling PC*Miler.": {
@@ -266408,6 +267434,15 @@
       "routes/worker"
     ]
   },
+  "When the link stops working.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "When the new move arrives at the final destination. These should be after the handoff pickup departure above.": {
     "sites": 1,
     "scope": [
@@ -266836,7 +267871,7 @@
     ]
   },
   "Where the load delivers, as city and state.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -266845,12 +267880,21 @@
     ]
   },
   "Where the load picks up, as city and state.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Where the load was reported to be, by dispatchers, the carrier's tracking link and agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Where the platform serves Claude for you.": {
@@ -266914,6 +267958,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Where the truck is": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Where the worker should focus before the next review.": {
@@ -268288,14 +269341,16 @@
     ]
   },
   "Why": {
-    "sites": 12,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/carrier-tracking-public",
       "routes/org-structure",
+      "routes/shipment",
       "routes/time-attendance",
       "routes/worker"
     ]
@@ -272981,6 +274036,15 @@
       "template/notification.dash.review_submitted"
     ]
   },
+  "Your name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
   "Your name (required)": {
     "sites": 1,
     "scope": [
@@ -273476,6 +274540,24 @@
     ],
     "areas": [
       "template/notification.dash.pto_reviewed"
+    ]
+  },
+  "Your update could not be sent because of a temporary problem. Please try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
+    ]
+  },
+  "Your update was saved, but the stop time was not changed: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-tracking-public"
     ]
   },
   "Your work, your numbers, and where to go next": {
@@ -274865,11 +275947,12 @@
     ]
   },
   "dispatch@carrier.com": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/dispatch-console"
     ]
   },
@@ -277168,6 +278251,15 @@
       "routes/invoice"
     ]
   },
+  "expires {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "external EDI connections can be configured but are not accepted through invite flow": {
     "sites": 1,
     "scope": [
@@ -277817,11 +278909,12 @@
     ]
   },
   "last used {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -278321,11 +279414,12 @@
     ]
   },
   "not used yet": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -286397,6 +287491,24 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "{0} asks you to post updates for load {1} through this link.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/carriertracking.link.email"
+    ]
+  },
+  "{0} asks you to post updates for this load through this link.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/carriertracking.link.email"
     ]
   },
   "{0} assigned": {
