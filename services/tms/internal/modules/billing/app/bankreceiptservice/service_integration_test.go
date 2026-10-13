@@ -252,6 +252,7 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 	svc := New(
 		Params{
 			Logger:       logger,
+			DB:           conn,
 			Repo:         receiptRepo,
 			PaymentRepo:  paymentRepo,
 			AuditService: &mocks.NoopAuditService{},

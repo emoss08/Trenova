@@ -298,6 +298,7 @@ func setupBatchIntegrationEnv(t *testing.T) *batchIntegrationEnv {
 	receiptSvc := bankreceiptservice.New(
 		bankreceiptservice.Params{
 			Logger:         logger,
+			DB:             conn,
 			Repo:           receiptRepo,
 			WorkItemRepo:   workItemRepo,
 			PaymentRepo:    paymentRepo,
