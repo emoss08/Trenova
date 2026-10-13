@@ -59,10 +59,7 @@ type DragState = {
  * with a data attribute, so a drag never re-renders anything; a drag that moved
  * swallows the click that ends it, so dragging never presses what it started on.
  */
-function useDragToScroll(
-  viewportRef: React.RefObject<HTMLDivElement | null>,
-  enabled: boolean,
-) {
+function useDragToScroll(viewportRef: React.RefObject<HTMLDivElement | null>, enabled: boolean) {
   const state = React.useRef<DragState | null>(null);
   const swallowClick = React.useRef(false);
 
@@ -146,6 +143,8 @@ const ScrollArea = React.forwardRef<
      * does; a click that does not move still reaches what was clicked.
      */
     dragToScroll?: boolean;
+    /** Receives the scrolling viewport, for a caller that scrolls it or watches where it is. */
+    viewportRef?: React.Ref<HTMLDivElement>;
   }
 >(
   (
@@ -158,6 +157,7 @@ const ScrollArea = React.forwardRef<
       maskVariant = "background",
       viewportClassName,
       dragToScroll = false,
+      viewportRef: externalViewportRef,
       style,
       ...props
     },
@@ -171,6 +171,17 @@ const ScrollArea = React.forwardRef<
     });
 
     const viewportRef = React.useRef<HTMLDivElement>(null);
+    const setViewport = React.useCallback(
+      (node: HTMLDivElement | null) => {
+        viewportRef.current = node;
+        if (typeof externalViewportRef === "function") {
+          externalViewportRef(node);
+        } else if (externalViewportRef) {
+          externalViewportRef.current = node;
+        }
+      },
+      [externalViewportRef],
+    );
     const drag = useDragToScroll(viewportRef, dragToScroll);
     const isTouch = useTouchPrimary();
     const touchStyle = typeof style === "function" ? undefined : style;
@@ -233,7 +244,7 @@ const ScrollArea = React.forwardRef<
             className={cn("relative overflow-hidden", className)}
           >
             <div
-              ref={viewportRef}
+              ref={setViewport}
               className={cn("size-full overflow-auto", viewportClassName)}
               tabIndex={0}
             >
@@ -256,11 +267,12 @@ const ScrollArea = React.forwardRef<
             {...props}
           >
             <ScrollAreaPrimitive.Viewport
-              ref={viewportRef}
+              ref={setViewport}
               data-slot="scroll-area-viewport"
               className={cn(
                 "ui-focus-ring size-full rounded-[inherit]",
-                dragToScroll && "cursor-grab data-dragging:cursor-grabbing data-dragging:select-none",
+                dragToScroll &&
+                  "cursor-grab data-dragging:cursor-grabbing data-dragging:select-none",
                 viewportClassName,
               )}
               {...(dragToScroll ? drag.handlers : undefined)}

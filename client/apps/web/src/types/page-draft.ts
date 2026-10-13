@@ -106,8 +106,20 @@ export const pricedScenarioSchema = z.object({
   error: z.string().optional().default(""),
 });
 
+export const formulaProposalBreakdownSchema = z.object({
+  name: z.string(),
+  label: z.string().optional().default(""),
+  expression: z.string(),
+});
+
 export const formulaProposalSchema = z.object({
   schemaId: z.string(),
+  /** Offered when the formula is drafted from scratch; the editor keeps any it already has. */
+  name: z.string().optional().default(""),
+  description: z.string().optional().default(""),
+  templateType: z.enum(["FreightCharge", "AccessorialCharge"]).nullish(),
+  /** Itemized lines, when the person asked for them. */
+  breakdown: z.preprocess((value) => value ?? [], z.array(formulaProposalBreakdownSchema)),
   expression: z.string(),
   variables: z.preprocess((value) => value ?? [], z.array(formulaDraftVariableSchema)),
   explanation: z.string().optional().default(""),

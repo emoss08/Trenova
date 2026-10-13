@@ -113,7 +113,7 @@ async function handle(req, res) {
     return send(res, 200, result.payload);
   }
 
-  const result = handleRest(state, { method: req.method, path: url.pathname, query: url.searchParams, body });
+  const result = await handleRest(state, { method: req.method, path: url.pathname, query: url.searchParams, body });
   if (!result.known && LOG_UNKNOWN) {
     console.log(`[mock-api] unhandled ${req.method} ${url.pathname}`);
   }

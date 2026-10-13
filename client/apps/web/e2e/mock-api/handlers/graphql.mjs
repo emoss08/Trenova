@@ -4,6 +4,7 @@ import { DESK_HANDLERS, TRIAGE_HANDLERS } from "./triage.mjs";
 import { TriageError } from "./triage-model.mjs";
 import { DESK_CARD_HANDLERS } from "./deskcards.mjs";
 import { paletteHandlers } from "./palette.mjs";
+import { FORMULA_HANDLERS, formulaSelectRows } from "./formula.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
 
 const HOUR = 3600;
@@ -1155,11 +1156,15 @@ const HANDLERS = {
   ...DESK_HANDLERS,
   ...TRIAGE_HANDLERS,
   ...DESK_CARD_HANDLERS,
+  ...FORMULA_HANDLERS,
   SelectOptions: (state, v) => {
     const cards = DESK_CARD_HANDLERS.SelectOptions(state, v);
-    return v.input?.resource !== "USER" && cards.selectOptions.totalCount > 0
-      ? cards
-      : DESK_HANDLERS.SelectOptions(state, v);
+    if (v.input?.resource !== "USER" && cards.selectOptions.totalCount > 0) return cards;
+    const resource = v.input?.resource;
+    if (resource === "FORMULA_TEMPLATE" || resource === "SHIPMENT") {
+      return formulaAndTriageOptions(state, v.input);
+    }
+    return DESK_HANDLERS.SelectOptions(state, v);
   },
   MyAgents: (state, v) => {
     const triage = DESK_HANDLERS.MyAgents(state, v).myAgents;
@@ -1335,6 +1340,35 @@ const HANDLERS = {
     };
   },
 };
+
+/**
+ * Formula templates for the studio's "copy from" picker, and shipments for its real-shipment
+ * picker: the formula fixture's priced loads first, then Triage's.
+ */
+function formulaAndTriageOptions(state, input) {
+  const query = String(input.query ?? "").toLowerCase();
+  const others =
+    input.resource === "SHIPMENT"
+      ? DESK_HANDLERS.SelectOptions(state, { input: { ...input, query: "", ids: undefined, offset: 0, first: 10000 } })
+          .selectOptions.edges.map((edge) => edge.node)
+      : [];
+  let rows = [...formulaSelectRows(state, input.resource), ...others];
+  if (input.ids?.length) rows = rows.filter((row) => input.ids.includes(row.id));
+  if (query) rows = rows.filter((row) => `${row.label} ${row.description ?? ""}`.toLowerCase().includes(query));
+  const offset = input.offset ?? 0;
+  const first = input.first ?? 20;
+  const page = rows.slice(offset, offset + first);
+  return {
+    selectOptions: {
+      edges: page.map((node, i) => ({ node, cursor: Buffer.from(`offset:${offset + i + 1}`).toString("base64url") })),
+      pageInfo: {
+        hasNextPage: offset + first < rows.length,
+        endCursor: page.length ? Buffer.from(`offset:${offset + page.length}`).toString("base64url") : null,
+      },
+      totalCount: rows.length,
+    },
+  };
+}
 
 /** A domain error the way the server's error presenter returns it: code, problem type and field errors. */
 function presentedError(error, operationName) {
