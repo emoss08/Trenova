@@ -1,0 +1,21 @@
+/* ScrollArea — shared/components/ui/scroll-area.tsx */
+[data-sa="root"]{position:relative;overflow:hidden;display:flex;flex-direction:column;--sa-c:var(--canvas)}
+[data-sa="vp"]{flex:1 1 auto;min-height:0;width:100%;overflow:auto;border-radius:inherit;scrollbar-width:none;outline:none}
+[data-sa="vp"]::-webkit-scrollbar{display:none}
+[data-sa="root"][data-mask="card"]{--sa-c:var(--card)}[data-sa="root"][data-mask="raised"]{--sa-c:var(--raised)}[data-sa="root"][data-mask="field"]{--sa-c:var(--field)}[data-sa="root"][data-mask="muted"]{--sa-c:var(--sunken)}[data-sa="root"][data-mask="popover"]{--sa-c:oklch(0.205 0 0)}
+[data-sa="bar"]{position:absolute;z-index:11;display:flex;padding:1px;touch-action:none;user-select:none;opacity:0;transition:opacity 150ms ease-out,background 150ms ease-out}
+[data-sa="bar"][data-orientation="vertical"]{top:0;right:0;bottom:0;width:10px}[data-sa="bar"][data-orientation="horizontal"]{left:0;right:0;bottom:0;height:10px}
+[data-sa="root"][data-type="hover"]:hover>[data-sa="bar"],[data-sa="root"][data-type="always"]>[data-sa="bar"],[data-sa="bar"]:active{opacity:1}
+[data-sa="bar"]:hover{background:color-mix(in oklch,var(--sunken) 70%,transparent)}
+[data-sa="bar"] i{display:block;border-radius:999px;background:var(--b);transition:scale 150ms}
+[data-sa="bar"][data-orientation="vertical"] i{width:100%;margin:4px 0 0}[data-sa="bar"][data-orientation="vertical"] i:active{scale:1 .95}
+[data-sa="bar"][data-orientation="horizontal"] i{height:100%;margin-left:4px}
+[data-sa="root"][data-mask="popover"]>[data-sa="bar"] i{background:oklch(1 0 0/.14)}
+[data-sa="mask"]{position:absolute;inset:0;z-index:10;pointer-events:none}
+[data-sa="mask"]::before,[data-sa="mask"]::after{content:'';position:absolute;opacity:0;transition:height 300ms,width 300ms,opacity 300ms}
+[data-sa="mask"][data-axis="y"]::before{left:0;right:0;top:0;height:0;background:linear-gradient(to bottom,var(--sa-c),transparent)}
+[data-sa="mask"][data-axis="y"]::after{left:0;right:0;bottom:0;height:0;background:linear-gradient(to top,var(--sa-c),transparent)}
+[data-sa="mask"][data-axis="y"][data-start]::before,[data-sa="mask"][data-axis="y"][data-end]::after{height:var(--mh);opacity:1}
+[data-sa="mask"][data-axis="x"]::before{top:0;bottom:0;left:0;width:0;background:linear-gradient(to right,var(--sa-c),transparent)}
+[data-sa="mask"][data-axis="x"]::after{top:0;bottom:0;right:0;width:0;background:linear-gradient(to left,var(--sa-c),transparent)}
+[data-sa="mask"][data-axis="x"][data-start]::before,[data-sa="mask"][data-axis="x"][data-end]::after{width:var(--mh);opacity:1}

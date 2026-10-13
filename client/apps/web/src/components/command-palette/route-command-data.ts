@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { isNavGroup, type NavGroup, type NavItem, type NavModule } from "@/config/navigation.types";
 import type { SidebarLink } from "@/components/sidebar-nav";
+import type { GlobalSearchEntityType } from "@/services/global-search";
 import { Settings01Icon } from "@trenova/shared/components/icons";
 
 type PaletteIconComponent = React.ComponentType<{
@@ -9,14 +10,53 @@ type PaletteIconComponent = React.ComponentType<{
   strokeWidth?: number;
 }>;
 
+/**
+ * The live figures a page's preview can show. Each is read from a query the
+ * page itself already depends on, and a figure the person cannot read, or
+ * that has not loaded, is simply not drawn.
+ */
+export type PageGlanceKey =
+  | "shipments"
+  | "service-failures"
+  | "workers"
+  | "billing-queue"
+  | "pending-approvals"
+  | "reconciliation-exceptions"
+  | "receivables"
+  | "edi"
+  | "desk";
+
+const PAGE_GLANCES: Readonly<Record<string, PageGlanceKey>> = {
+  "/shipment-management/shipments": "shipments",
+  "/shipment-management/service-failures": "service-failures",
+  "/hr/workers": "workers",
+  "/billing/queue": "billing-queue",
+  "/billing/pending-approvals": "pending-approvals",
+  "/billing/reconciliation-exceptions": "reconciliation-exceptions",
+  "/accounting/ar/customer-ledger": "receivables",
+  "/accounting/ar/aging": "receivables",
+  "/edi/overview": "edi",
+  "/desk": "desk",
+};
+
+/** The pages that list one kind of record, so a preview can offer the ones opened last. */
+const PAGE_RECORD_TYPES: Readonly<Record<string, GlobalSearchEntityType>> = {
+  "/shipment-management/shipments": "shipment",
+  "/billing/configuration-files/customers": "customer",
+  "/hr/workers": "worker",
+};
+
 export interface RouteCommandItem {
   id: string;
   title: string;
-  subtitle: string;
+  /** Where the page sits, without the page itself. Empty for a top-level page. */
+  trail: string[];
   href: string;
   group: string;
   icon: PaletteIconComponent;
   keywords: string[];
+  glance?: PageGlanceKey;
+  recordType?: GlobalSearchEntityType;
 }
 
 export interface RouteCommandGroup {
@@ -40,28 +80,32 @@ function normalizePath(path: string): string | null {
   return normalized || "/";
 }
 
-function createCommandItem(
-  itemId: string,
-  title: string,
-  subtitle: string,
-  path: string,
-  group: string,
-  icon: PaletteIconComponent,
-  keywords: string[],
-): RouteCommandItem | null {
-  const normalizedPath = normalizePath(path);
-  if (!normalizedPath) {
+interface CommandItemInput {
+  id: string;
+  title: string;
+  trail: string[];
+  path: string;
+  group: string;
+  icon: PaletteIconComponent;
+  keywords: readonly string[] | undefined;
+}
+
+function createCommandItem(input: CommandItemInput): RouteCommandItem | null {
+  const href = normalizePath(input.path);
+  if (!href) {
     return null;
   }
 
   return {
-    id: itemId,
-    title,
-    subtitle,
-    href: normalizedPath,
-    group,
-    icon,
-    keywords,
+    id: input.id,
+    title: input.title,
+    trail: input.trail,
+    href,
+    group: input.group,
+    icon: input.icon,
+    keywords: [...(input.keywords ?? [])],
+    glance: PAGE_GLANCES[href],
+    recordType: PAGE_RECORD_TYPES[href],
   };
 }
 
@@ -81,16 +125,15 @@ function collectNavItems(
       continue;
     }
 
-    const subtitleSegments = [module.label, ...parentSegments, item.label];
-    const command = createCommandItem(
-      `${module.id}:${item.id}`,
-      item.label,
-      subtitleSegments.join(" > "),
-      item.path,
-      module.label,
-      item.icon ?? module.icon,
-      [item.label, module.label, ...parentSegments],
-    );
+    const command = createCommandItem({
+      id: `${module.id}:${item.id}`,
+      title: item.label,
+      trail: [module.label, ...parentSegments],
+      path: item.path,
+      group: module.label,
+      icon: item.icon ?? module.icon,
+      keywords: item.keywords,
+    });
     if (command) {
       commands.push(command);
     }
@@ -117,15 +160,15 @@ export function buildRouteCommandGroups(
     if (hasSecondaryNavigation) {
       collectNavItems(moduleCommands, module, module.navigation);
     } else {
-      const command = createCommandItem(
-        `${module.id}:base`,
-        module.label,
-        module.label,
-        module.basePath,
-        module.label,
-        module.icon,
-        [module.label],
-      );
+      const command = createCommandItem({
+        id: `${module.id}:base`,
+        title: module.label,
+        trail: [],
+        path: module.basePath,
+        group: module.label,
+        icon: module.icon,
+        keywords: module.keywords,
+      });
       if (command) {
         moduleCommands.push(command);
       }
@@ -139,25 +182,22 @@ export function buildRouteCommandGroups(
     addToGroup(module.label, dedupedItems);
   }
 
+  const administration = translate("Administration");
   for (const link of adminLinks) {
     if (link.disabled) {
       continue;
     }
 
     const group = link.group || "Administration";
-    const title = link.title;
-    const subtitle = link.group
-      ? translate("Administration > {0} > {1}", link.group, link.title)
-      : translate("Administration > {0}", link.title);
-    const command = createCommandItem(
-      `admin:${title.toLowerCase().replace(/\s+/g, "-")}`,
-      title,
-      subtitle,
-      link.href,
+    const command = createCommandItem({
+      id: `admin:${link.title.toLowerCase().replace(/\s+/g, "-")}`,
+      title: link.title,
+      trail: link.group ? [administration, link.group] : [administration],
+      path: link.href,
       group,
-      Settings01Icon,
-      ["administration", group, title],
-    );
+      icon: Settings01Icon,
+      keywords: link.keywords,
+    });
 
     if (command) {
       addToGroup(group, [command]);

@@ -490,8 +490,10 @@
   --sidebar-border: oklch(0.94 0 0);
   --sidebar-ring: var(--ring);
 
-  --highlight: oklch(0.909 0.104 87);
+  /* Trenova's yellow, #ffa31a. A search match is marked with a fill mixed from it. */
+  --highlight: oklch(0.79 0.168 68.5);
   --highlight-foreground: oklch(0.205 0 0);
+  --highlight-fill: color-mix(in oklch, var(--highlight) 32%, transparent);
 
   /* Density ---------------------------------------------------------------
      Row rhythm, named once. Table rows were sized by whatever padding the
@@ -675,8 +677,9 @@
   --sidebar-border: oklch(0.218 0 0);
   --sidebar-ring: var(--ring);
 
-  --highlight: oklch(0.82 0.14 87);
+  --highlight: oklch(0.79 0.168 68.5);
   --highlight-foreground: oklch(0 0 0);
+  --highlight-fill: color-mix(in oklch, var(--highlight) 26%, transparent);
 }
 
 /* ---------------------------------------------------------------------------
@@ -934,6 +937,7 @@
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
   --color-foreground-subtle: var(--foreground-subtle);
+  --color-foreground-faint: var(--foreground-faint);
   --color-foreground-on-solid: var(--foreground-on-solid);
 
   /* Borders */
@@ -1111,6 +1115,7 @@
 
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
+  --color-highlight-fill: var(--highlight-fill);
 
   /* Compatibility colour aliases */
   --color-background: var(--background);

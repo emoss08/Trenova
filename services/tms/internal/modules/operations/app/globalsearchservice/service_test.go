@@ -40,6 +40,10 @@ func allowAllPermissionsMock(t *testing.T) *permissionportsmock.MockPermissionEn
 	return engine
 }
 
+func page(documents ...map[string]any) *customerports.SearchPage {
+	return &customerports.SearchPage{Documents: documents, EstimatedTotal: len(documents)}
+}
+
 func TestSearchReturnsEmptyForBlankQuery(t *testing.T) {
 	repo := customerportsmock.NewMockSearchRepository(t)
 	svc := &Service{
@@ -63,19 +67,17 @@ func TestSearchFiltersByRequestedEntityTypesAndTenant(t *testing.T) {
 	var requests []customerports.SearchRequest
 	repo.EXPECT().Enabled().Return(true).Once()
 	repo.EXPECT().
-		Search(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req customerports.SearchRequest) ([]map[string]any, error) {
+		SearchPage(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, req customerports.SearchRequest) (*customerports.SearchPage, error) {
 			requests = append(requests, req)
-			return []map[string]any{
-				{
-					"id":               "wrk_123",
-					"first_name":       "Sam",
-					"last_name":        "Carter",
-					"status":           "Active",
-					"organization_id":  orgID.String(),
-					"business_unit_id": buID.String(),
-				},
-			}, nil
+			return page(map[string]any{
+				"id":               "wrk_123",
+				"first_name":       "Sam",
+				"last_name":        "Carter",
+				"status":           "Active",
+				"organization_id":  orgID.String(),
+				"business_unit_id": buID.String(),
+			}), nil
 		}).
 		Once()
 
@@ -131,10 +133,10 @@ func TestSearchClampsRequestedLimit(t *testing.T) {
 	var requests []customerports.SearchRequest
 	repo.EXPECT().Enabled().Return(true).Once()
 	repo.EXPECT().
-		Search(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req customerports.SearchRequest) ([]map[string]any, error) {
+		SearchPage(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, req customerports.SearchRequest) (*customerports.SearchPage, error) {
 			requests = append(requests, req)
-			return nil, nil
+			return page(), nil
 		}).
 		Once()
 
@@ -173,17 +175,17 @@ func TestSearchContinuesWhenOneIndexFails(t *testing.T) {
 	repo := customerportsmock.NewMockSearchRepository(t)
 	repo.EXPECT().Enabled().Return(true).Once()
 	repo.EXPECT().
-		Search(mock.Anything, mock.MatchedBy(func(req customerports.SearchRequest) bool {
+		SearchPage(mock.Anything, mock.MatchedBy(func(req customerports.SearchRequest) bool {
 			return req.Index == "customers"
 		})).
 		Return(nil, errors.New("boom")).
 		Once()
 	repo.EXPECT().
-		Search(mock.Anything, mock.MatchedBy(func(req customerports.SearchRequest) bool {
+		SearchPage(mock.Anything, mock.MatchedBy(func(req customerports.SearchRequest) bool {
 			return req.Index == "workers"
 		})).
-		Return([]map[string]any{
-			{
+		Return(page(
+			map[string]any{
 				"id":               "wrk_123",
 				"first_name":       "Sam",
 				"last_name":        "Carter",
@@ -191,7 +193,7 @@ func TestSearchContinuesWhenOneIndexFails(t *testing.T) {
 				"organization_id":  orgID.String(),
 				"business_unit_id": buID.String(),
 			},
-		}, nil).
+		), nil).
 		Once()
 
 	svc := &Service{

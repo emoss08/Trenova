@@ -6,6 +6,7 @@ import {
   describeTurnFailure,
   initialTurnState,
   reduceTurn,
+  turnCitedRecords,
   turnHandOffAgents,
   type TurnState,
 } from "../turn-stream";
@@ -956,5 +957,62 @@ describe("hand-off agents on a live turn", () => {
       }),
     ]);
     expect(turnHandOffAgents(delegated.segments)).toBe(NO_HAND_OFF_AGENTS);
+  });
+});
+
+/**
+ * The records an answer was built from are what the tools returned, named by
+ * the server on each finished call; the reply's wording never adds one.
+ */
+describe("turnCitedRecords", () => {
+  function finished(json: string): AssistantStreamEvent {
+    const event = parseAssistantStreamEvent("tool_finished", json);
+    if (!event) {
+      throw new Error("tool_finished did not parse");
+    }
+    return event;
+  }
+
+  it("lists each record the finished tools named once, in the order they came", () => {
+    const state = run([
+      accepted,
+      { event: "tool_started", data: { callId: "c1", name: "list_shipments", arguments: {} } },
+      finished(
+        '{"callId":"c1","name":"list_shipments","failed":false,"content":"[]","records":[{"type":"shipment","id":"shp_1","label":"S-1"},{"type":"worker","id":"wrk_1","label":"Leon Park"}]}',
+      ),
+      { event: "tool_started", data: { callId: "c2", name: "get_shipment", arguments: {} } },
+      finished(
+        '{"callId":"c2","name":"get_shipment","failed":false,"content":"{}","records":[{"type":"shipment","id":"shp_1","label":"S-1"},{"type":"customer","id":"cus_1","label":"Acme"}]}',
+      ),
+    ]);
+
+    expect(turnCitedRecords(state.segments)).toEqual([
+      { type: "shipment", id: "shp_1", label: "S-1" },
+      { type: "worker", id: "wrk_1", label: "Leon Park" },
+      { type: "customer", id: "cus_1", label: "Acme" },
+    ]);
+  });
+
+  it("names nothing for a call that carried no records, failed, or is still running", () => {
+    const state = run([
+      accepted,
+      { event: "tool_started", data: { callId: "c1", name: "get_worker", arguments: {} } },
+      finished('{"callId":"c1","name":"get_worker","failed":false,"content":"{}"}'),
+      { event: "tool_started", data: { callId: "c2", name: "get_worker", arguments: {} } },
+      finished(
+        '{"callId":"c2","name":"get_worker","failed":true,"content":"no","records":[{"type":"worker","id":"wrk_1","label":"Leon"}]}',
+      ),
+      { event: "tool_started", data: { callId: "c3", name: "get_customer", arguments: {} } },
+    ]);
+
+    expect(turnCitedRecords(state.segments)).toEqual([]);
+  });
+
+  it("reads a records list it cannot parse as none rather than failing the event", () => {
+    const event = finished(
+      '{"callId":"c1","name":"get_worker","failed":false,"content":"{}","records":"oops"}',
+    );
+
+    expect(event.event === "tool_finished" && event.data.records).toBeNull();
   });
 });

@@ -25,6 +25,7 @@ import {
   ShippingContainerIcon,
 } from "@trenova/shared/components/icons";
 import { parseAsBoolean, useQueryState } from "nuqs";
+import { NEW_SHIPMENT_CUSTOMER_PARAM } from "@/lib/shipment-links";
 import { lazy } from "react";
 import { useForm } from "react-hook-form";
 import { ShipmentBillingActionsMenu } from "./shipment-billing-actions-menu";
@@ -59,7 +60,7 @@ function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
   return <span className="text-2xs text-foreground">{t("No owner assigned")}</span>;
 }
 
-const getDefaultValues = (): ShipmentCreateInput => {
+const getDefaultValues = (customerId: string | null): ShipmentCreateInput => {
   const today = getTodayDate();
 
   return {
@@ -68,7 +69,7 @@ const getDefaultValues = (): ShipmentCreateInput => {
     externalReference: "",
     serviceTypeId: "",
     shipmentTypeId: "",
-    customerId: "",
+    customerId: customerId ?? "",
     tractorTypeId: undefined,
     trailerTypeId: undefined,
     ownerId: undefined,
@@ -127,7 +128,8 @@ const getDefaultValues = (): ShipmentCreateInput => {
 export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Shipment>) {
   const t = useT();
 
-  const defaultValues = getDefaultValues();
+  const [customerId] = useQueryState(NEW_SHIPMENT_CUSTOMER_PARAM);
+  const defaultValues = getDefaultValues(mode === "create" ? customerId : null);
   const withIdempotencyKey = useIdempotencyKey();
   const createForm = useForm({
     resolver: zodResolver(shipmentCreateSchema),

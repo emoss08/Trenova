@@ -725,12 +725,12 @@ type sendMessageRequest struct {
 	awaited bool
 }
 
-// askRequest is a quick question from anywhere: the words, the page, and the
-// records named. There is no thread yet; the answer makes one.
+// askRequest is a quick question from the command palette: the words, the
+// page under the palette, and the records named. There is no thread yet; the
+// answer makes one. It names no surface: this route is the palette's.
 type askRequest struct {
 	Content  string              `json:"content"`
 	Context  *pageContextRequest `json:"context"`
-	Surface  agent.Surface       `json:"surface"`
 	Mentions []agent.EntityRef   `json:"mentions"`
 }
 

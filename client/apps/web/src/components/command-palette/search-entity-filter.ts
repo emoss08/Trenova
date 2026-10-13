@@ -1,6 +1,7 @@
-import type { GlobalSearchEntityType } from "@/services/global-search";
+import type { PaletteScope } from "./palette-model";
 
-export type SearchableEntityType = GlobalSearchEntityType;
+/** Anything an `@` mention can narrow the palette to: a kind of record, the pages, or the commands. */
+export type SearchableEntityType = Exclude<PaletteScope, "all">;
 
 export interface SearchEntityOption {
   key: SearchableEntityType;
@@ -12,7 +13,7 @@ export const searchEntityOptions: SearchEntityOption[] = [
   {
     key: "shipment",
     label: "Shipments",
-    aliases: ["s", "ship", "shipment", "shipments"],
+    aliases: ["s", "ship", "shipment", "shipments", "load", "loads"],
   },
   {
     key: "customer",
@@ -22,12 +23,22 @@ export const searchEntityOptions: SearchEntityOption[] = [
   {
     key: "worker",
     label: "Workers",
-    aliases: ["w", "worker", "workers"],
+    aliases: ["w", "worker", "workers", "driver", "drivers"],
   },
   {
     key: "document",
     label: "Documents",
-    aliases: ["d", "doc", "document", "documents"],
+    aliases: ["d", "doc", "docs", "document", "documents"],
+  },
+  {
+    key: "pages",
+    label: "Pages",
+    aliases: ["page", "pages"],
+  },
+  {
+    key: "commands",
+    label: "Commands",
+    aliases: ["cmd", "command", "commands"],
   },
 ];
 
@@ -63,12 +74,12 @@ export function getSearchEntityOption(
 
 export function getMentionState(input: string): SearchMentionState {
   const lastAtIndex = input.lastIndexOf("@");
-  if (lastAtIndex < 0) {
+  if (lastAtIndex < 0 || (lastAtIndex > 0 && !/\s/.test(input.charAt(lastAtIndex - 1)))) {
     return { activeFilter: null, mentionOpen: false, mentionText: "" };
   }
 
   const suffix = input.slice(lastAtIndex + 1);
-  if (suffix.includes(" ")) {
+  if (/\s/.test(suffix)) {
     return { activeFilter: null, mentionOpen: false, mentionText: "" };
   }
 
@@ -90,7 +101,7 @@ export function filterMentionOptions(mentionText: string): SearchEntityOption[] 
 
   return searchEntityOptions.filter(
     (option) =>
-      option.label.toLowerCase().includes(normalized) ||
+      option.label.toLowerCase().startsWith(normalized) ||
       option.aliases.some((alias) => alias.startsWith(normalized)),
   );
 }

@@ -44,7 +44,7 @@ const PAGES = [
   page({
     id: "workers",
     title: "Workers",
-    trail: "People > Workers",
+    trail: ["People"],
     href: "/hr/workers",
     module: "People",
     keywords: ["Workers"],
@@ -58,8 +58,14 @@ vi.mock("../use-palette-data", () => ({
     pages: PAGES,
     pageIndex: new Map(PAGES.map((entry) => [entry.href, entry])),
     commands: COMMANDS,
-    suggested: COMMANDS,
-    actionContext: { mac: true, canReach: () => true, canUseAssistant: true },
+    quickActions: COMMANDS,
+    actionContext: {
+      mac: true,
+      canReach: () => true,
+      canUseAssistant: true,
+      canCreateShipment: true,
+      relatedCommands: () => [],
+    },
   }),
   usePinnedPages: () => ({ pages: [], pinnedUrls: new Set<string>(), loading: false }),
   usePaletteHome: () => homeState.current,
@@ -72,6 +78,7 @@ vi.mock("../use-palette-data", () => ({
 const { CommandPalette } = await import("../command-palette");
 
 const SHIPMENT = record({ title: "PRO-1001", metadata: { proNumber: "PRO-1001" } });
+const VISITED_AT = 1_700_000_000_000;
 
 function renderPalette() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -97,12 +104,10 @@ beforeEach(() => {
   remoteArgs.length = 0;
   remoteState.current = { groups: [], loading: false, error: false, ready: false };
   homeState.current = {
-    recentRecords: [SHIPMENT],
+    recentRecords: [{ record: SHIPMENT, visitedAt: VISITED_AT }],
     attention: { rows: [], loading: false },
-    notifications: { items: [], unread: 0, loading: false },
     pinnedPages: { pages: [], loading: false },
-    recentPages: [],
-    suggested: COMMANDS,
+    quickActions: COMMANDS,
   };
   useRecentRecordsStore.setState({ recordsByOrganization: {} });
   useAuthStore.setState({
@@ -116,10 +121,10 @@ afterEach(() => {
 });
 
 describe("CommandPalette", () => {
-  it("shows recent records and quick actions before anything is typed", () => {
+  it("shows where the person just was and quick actions before anything is typed", () => {
     renderPalette();
 
-    expect(screen.getByText("Recent records")).toBeInTheDocument();
+    expect(screen.getByText("Jump back in")).toBeInTheDocument();
     expect(screen.getByText("PRO-1001")).toBeInTheDocument();
     expect(screen.getByText("Quick actions")).toBeInTheDocument();
     expect(screen.getByText("New shipment")).toBeInTheDocument();
@@ -146,7 +151,7 @@ describe("CommandPalette", () => {
     expect(screen.queryByText("Invoices")).not.toBeInTheDocument();
   });
 
-  it("opens a new tab on Mod+Enter without closing on a plain Enter first", async () => {
+  it("opens a new tab on Mod+Enter without running a plain Enter first", async () => {
     const user = userEvent.setup();
     renderPalette();
 
@@ -156,30 +161,52 @@ describe("CommandPalette", () => {
     expect(runIntent).toHaveBeenCalledWith({ type: "new-tab", href: SHIPMENT.href });
   });
 
-  it("copies the selected record's number on Alt+C", async () => {
+  it("copies the selected record's number on Alt+C and keeps what was typed", async () => {
     const user = userEvent.setup();
     renderPalette();
 
     await user.type(input(), "{Alt>}c{/Alt}");
 
-    expect(runIntent).toHaveBeenCalledWith({ type: "copy", text: "PRO-1001" });
+    expect(runIntent).toHaveBeenCalledWith({ type: "copy", text: "PRO-1001", what: "pro" });
     expect(input()).toHaveValue("");
   });
 
-  it("lists a row's actions on the right arrow and comes back on Escape without closing", async () => {
+  it("copies the selected record's link on Mod+L", async () => {
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "{Meta>}l{/Meta}");
+
+    expect(runIntent).toHaveBeenCalledWith({ type: "copy-link", href: SHIPMENT.href });
+  });
+
+  it("opens the actions menu on the right arrow and closes only it on Escape", async () => {
     const user = userEvent.setup();
     renderPalette();
 
     await user.type(input(), "{ArrowRight}");
 
-    expect(screen.getByText("Actions for PRO-1001")).toBeInTheDocument();
-    expect(screen.getByText("Copy PRO number")).toBeInTheDocument();
+    const menu = screen.getByRole("dialog", { name: "Actions for PRO-1001" });
+    expect(within(menu).getByRole("option", { name: /Copy PRO number/ })).toBeInTheDocument();
 
     await user.keyboard("{Escape}");
 
-    await waitFor(() => expect(screen.queryByText("Actions for PRO-1001")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Actions for PRO-1001" }),
+      ).not.toBeInTheDocument(),
+    );
     expect(useCommandPaletteStore.getState().open).toBe(true);
-    expect(screen.getByText("Recent records")).toBeInTheDocument();
+    expect(screen.getByText("Jump back in")).toBeInTheDocument();
+  });
+
+  it("opens the actions menu on Mod+K too", async () => {
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "{Meta>}k{/Meta}");
+
+    expect(screen.getByRole("dialog", { name: "Actions for PRO-1001" })).toBeInTheDocument();
   });
 
   it("filters the action list by what is typed and runs the chosen one", async () => {
@@ -187,9 +214,28 @@ describe("CommandPalette", () => {
     renderPalette();
 
     await user.type(input(), "{ArrowRight}");
-    await user.type(input(), "copy link{Enter}");
+    await user.keyboard("copy link{Enter}");
 
     expect(runIntent).toHaveBeenCalledWith({ type: "copy-link", href: SHIPMENT.href });
+  });
+
+  it("steps back one layer per Escape: query, then scope, then closes", async () => {
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "{Tab}");
+    await user.type(input(), "pro");
+    await user.keyboard("{Escape}");
+
+    expect(input()).toHaveValue("");
+    expect(screen.getByRole("tab", { name: /Shipments/ })).toHaveAttribute("aria-selected", "true");
+
+    await user.keyboard("{Escape}");
+    expect(screen.getByRole("tab", { name: /All/ })).toHaveAttribute("aria-selected", "true");
+    expect(useCommandPaletteStore.getState().open).toBe(true);
+
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(useCommandPaletteStore.getState().open).toBe(false));
   });
 
   it("moves through scopes with Tab and back to everything with Backspace", async () => {
@@ -201,6 +247,15 @@ describe("CommandPalette", () => {
 
     await user.type(input(), "{Backspace}");
     expect(screen.getByRole("tab", { name: /All/ })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("browses a record scope with nothing typed", async () => {
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "{Tab}");
+
+    expect(remoteArgs.at(-1)).toEqual({ enabled: true, query: "", scope: "shipment" });
   });
 
   it("commits an @ mention to a record scope", async () => {
@@ -222,6 +277,26 @@ describe("CommandPalette", () => {
     expect(screen.getByRole("tab", { name: /Workers/ })).toHaveAttribute("aria-selected", "true");
   });
 
+  it("does not search with a mention that is still being typed", async () => {
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "@doc");
+
+    expect(screen.getByText("Jump back in")).toBeInTheDocument();
+    expect(remoteArgs.at(-1)?.query).toBe("");
+  });
+
+  it("searches only commands after a leading >", async () => {
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), ">new");
+
+    expect(screen.getByRole("option", { name: /New shipment/ })).toBeInTheDocument();
+    expect(remoteArgs.at(-1)?.scope).toBe("commands");
+  });
+
   it("does not claim nothing matched when record search failed", async () => {
     remoteState.current = { groups: [], loading: false, error: true, ready: true };
     const user = userEvent.setup();
@@ -230,7 +305,7 @@ describe("CommandPalette", () => {
     await user.type(input(), "zzzzqqq");
 
     expect(screen.getByText("Record search is unavailable right now.")).toBeInTheDocument();
-    expect(screen.queryByText("Nothing matches that")).not.toBeInTheDocument();
+    expect(screen.queryByText("Nothing called “zzzzqqq”")).not.toBeInTheDocument();
   });
 
   it("says so inside the list when record search fails, and keeps pages", async () => {
@@ -244,22 +319,47 @@ describe("CommandPalette", () => {
     expect(screen.getByRole("option", { name: /Workers/ })).toBeInTheDocument();
   });
 
-  it("takes a question to the assistant instead of searching records with it", async () => {
+  it("takes a question to Nova instead of searching records with it", async () => {
     const user = userEvent.setup();
     renderPalette();
 
     await user.type(input(), "how many loads are late?");
 
-    expect(screen.getByRole("option", { name: /Ask the assistant/ })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Ask Nova/ })).toBeInTheDocument();
     expect(remoteArgs.at(-1)?.enabled).toBe(false);
   });
 
-  it("offers the empty state with a way forward when nothing matches", async () => {
+  it("ends every search with a way to ask Nova", async () => {
+    remoteState.current = { groups: [], loading: false, error: false, ready: true };
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "workers");
+
+    const options = screen.getAllByRole("option");
+    expect(options.at(-1)).toHaveAccessibleName(/Ask Nova/);
+  });
+
+  it("names what was searched for when nothing matches, and offers to ask instead", async () => {
+    remoteState.current = { groups: [], loading: false, error: false, ready: true };
     const user = userEvent.setup();
     renderPalette();
 
     await user.type(input(), "zzzzqqq");
 
-    expect(screen.getByText("Nothing matches that")).toBeInTheDocument();
+    expect(screen.getByText("Nothing called “zzzzqqq”")).toBeInTheDocument();
+    expect(screen.getByText("Try asking instead")).toBeInTheDocument();
+  });
+
+  it("asks about the selected record on Mod+I with that record's starter questions", async () => {
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "{Meta>}i{/Meta}");
+
+    expect(runIntent).toHaveBeenCalledWith({
+      type: "ask-about",
+      subject: { type: "shipment", id: "shp_1", label: "PRO-1001" },
+    });
   });
 });

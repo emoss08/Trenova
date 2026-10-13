@@ -12,6 +12,8 @@ export interface GlobalSearchHit {
 export interface GlobalSearchGroup {
   entityType: string;
   label: string;
+  /** How many records match in all, which can be more than the hits returned. */
+  total?: number;
   hits: GlobalSearchHit[];
 }
 

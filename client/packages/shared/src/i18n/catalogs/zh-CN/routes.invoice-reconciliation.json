@@ -8,7 +8,6 @@
   "Investigate adjustment-created finance exceptions and trace them back to source artifacts.": "调查由调整产生的财务例外，并回溯至来源产出物。",
   "Jump directly into the related billing and invoice surfaces.": "直接前往相关的计费与发票界面。",
   "Line-level credit and rebill values that created the exception.": "造成此例外的明细层级贷记与重新开单金额。",
-  "Open exceptions": "未结例外",
   "Pick an exception from the list to trace it back to the adjustment and invoices it came from.": "请从列表中选择一笔例外，以回溯其来源的调整与发票。",
   "Rebill queue item": "重新开单队列项目",
   "Replacement invoice": "替代发票",
