@@ -171,6 +171,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
+				Name:     "nonRecourse",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringcompany.FactoringCompany)
+					return obj.NonRecourse, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:     "notes",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -182,7 +192,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoringcompany.FactoringCompany)
 					return obj.Version, nil
@@ -192,7 +202,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoringcompany.FactoringCompany)
 					return obj.CreatedAt, nil
@@ -202,7 +212,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoringcompany.FactoringCompany)
 					return obj.UpdatedAt, nil
@@ -245,7 +255,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FactoringCompanyConnection)
 					return obj.TotalCount, nil
@@ -320,8 +330,9 @@ var (
 	errNoChild0 = errors.New("field of type ID does not have child fields")
 	errNoChild1 = errors.New("field of type EntityStatus does not have child fields")
 	errNoChild2 = errors.New("field of type String does not have child fields")
-	errNoChild3 = errors.New("field of type Int does not have child fields")
-	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild3 = errors.New("field of type Boolean does not have child fields")
+	errNoChild4 = errors.New("field of type Int does not have child fields")
+	errNoChild5 = errors.New("field of type Timestamp does not have child fields")
 )
 
 func field_Query_factoringCompanies_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -362,6 +373,14 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v domaintypes.Status) graphql.Marshaler {
