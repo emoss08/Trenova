@@ -202,6 +202,10 @@ const fuelSurchargeProgramSelectOptionsGraphQL = {
   resource: "FUEL_SURCHARGE_PROGRAM",
 } satisfies GraphQLSelectOptionsConfig;
 
+const factoringCompanySelectOptionsGraphQL = {
+  resource: "FACTORING_COMPANY",
+} satisfies GraphQLSelectOptionsConfig;
+
 const ediConnectionSelectOptionsGraphQL = {
   resource: "EDI_CONNECTION",
 } satisfies GraphQLSelectOptionsConfig;
@@ -2115,6 +2119,31 @@ export function FuelSurchargeProgramAutocompleteField<T extends FieldValues>({
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function FactoringCompanyAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/factoring-companies/select-options/"
+      graphql={factoringCompanySelectOptionsGraphQL}
+      popoutLink="/billing/configuration-files/factoring-companies"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.label}</span>
+          {option?.description && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {option.description}
             </span>
           )}
         </div>

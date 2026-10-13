@@ -345,6 +345,59 @@ export const invoiceSendResultSchema = z.object({
 });
 export type InvoiceSendResult = z.infer<typeof invoiceSendResultSchema>;
 
+const stringList = z
+  .array(z.string())
+  .nullish()
+  .transform((value) => value ?? []);
+
+/** What posting an invoice would do, read before the person posts it. */
+export const invoicePostPreviewSchema = z.object({
+  invoiceId: z.string(),
+  number: z.string(),
+  billToName: z.string(),
+  currencyCode: z.string(),
+  totalMinor: z.number(),
+  refusals: stringList,
+  alreadyPosted: z.boolean(),
+  journal: z
+    .object({
+      accountingDate: z.number(),
+      entryStatus: z.string(),
+      requiresApproval: z.boolean(),
+      lines: z.array(
+        z.object({
+          glAccountId: z.string(),
+          accountCode: z.string(),
+          accountName: z.string(),
+          description: z.string(),
+          debitMinor: z.number(),
+          creditMinor: z.number(),
+        }),
+      ),
+    })
+    .nullish(),
+  shipmentsBilled: stringList,
+  queueItemPosted: z.boolean(),
+  accountingSync: z
+    .array(
+      z.object({
+        integration: z.string(),
+        company: z.string(),
+        awaitsRelease: z.boolean(),
+      }),
+    )
+    .nullish()
+    .transform((value) => value ?? []),
+  edi: z
+    .object({
+      partnerName: z.string(),
+      willSend: z.boolean(),
+      blockers: stringList,
+    })
+    .nullish(),
+});
+export type InvoicePostPreview = z.infer<typeof invoicePostPreviewSchema>;
+
 export const generateInvoicePdfResultSchema = z.object({
   invoiceId: z.string(),
   workflowId: z.string(),
@@ -352,6 +405,14 @@ export const generateInvoicePdfResultSchema = z.object({
   status: z.literal("Queued"),
 });
 export type GenerateInvoicePdfResult = z.infer<typeof generateInvoicePdfResultSchema>;
+
+/** The factor an invoice is assigned to, as an invoice carries it. */
+export const invoiceFactorSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  name: z.string(),
+  remittanceInstructions: nullableStringSchema,
+});
 
 export const invoiceSchema = z.object({
   ...tenantInfoSchema.shape,
@@ -400,6 +461,9 @@ export const invoiceSchema = z.object({
   /** The customer who ordered the freight when somebody else is billed for it. */
   shipperCustomerId: nullableStringSchema,
   shipperCustomer: customerSchema.nullish().transform((value) => value ?? undefined),
+  /** The factoring company the invoice was assigned to when it posted. */
+  factoringCompanyId: nullableStringSchema,
+  factoringCompany: invoiceFactorSchema.nullish().transform((value) => value ?? undefined),
   /** Whether this invoice bills only part of what its shipments charged. */
   isSplitBill: z.boolean().default(false),
   subtotalAmount: decimalStringSchema,

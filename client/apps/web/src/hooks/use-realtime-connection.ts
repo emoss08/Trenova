@@ -252,6 +252,10 @@ export function useRealtimeConnection() {
             // asked for it, which is who this notice is addressed to, so the
             // toast downloads it directly; a failed one opens the exports.
             const auditExport = aiAuditExportNotice(notif);
+            const noticeLink =
+              typeof notif.data?.link === "string" && notif.data.link.startsWith("/")
+                ? notif.data.link
+                : null;
 
             toast.info(notif.title, {
               description: notif.message,
@@ -283,7 +287,12 @@ export function useRealtimeConnection() {
                           label: t("View exports"),
                           onClick: () => navigateRef.current(auditExport.link),
                         }
-                      : undefined,
+                      : noticeLink
+                        ? {
+                            label: t("Open"),
+                            onClick: () => navigateRef.current(noticeLink),
+                          }
+                        : undefined,
             });
           }
         }
@@ -326,7 +335,10 @@ export function useRealtimeConnection() {
         return;
       }
 
-      const { roots: queryKeys, activeOnly } = invalidationFor(evt);
+      const { roots: queryKeys, activeOnly, activeRoots } = invalidationFor(evt);
+      if (activeRoots.length > 0) {
+        enqueueInvalidation(activeRoots, true);
+      }
       if (queryKeys.length === 0) return;
       if (activeOnly) {
         enqueueInvalidation(queryKeys, true);

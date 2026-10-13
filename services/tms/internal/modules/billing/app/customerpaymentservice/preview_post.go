@@ -111,5 +111,5 @@ func (s *Service) planPost(
 // applyPostedApplication settles one application on its invoice: the amount
 // applied and the amount written off as a short pay both close the balance.
 func applyPostedApplication(inv *invoice.Invoice, app *customerpayment.Application) {
-	inv.ApplyPaymentMinor(app.AppliedAmountMinor + app.ShortPayAmountMinor)
+	inv.ApplyPaymentMinor(app.SettledAmountMinor())
 }

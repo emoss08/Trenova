@@ -161,3 +161,11 @@ func reportCellFields() []VariableDefinition {
 		},
 	}
 }
+
+func noticeOfAssignmentVariable() VariableDefinition {
+	return VariableDefinition{
+		Path:        "NoticeOfAssignment",
+		Type:        VariableString,
+		Description: "The factor's notice of assignment when the invoice is assigned to a factoring company, blank otherwise. Print it whenever it is set: a factored invoice without its notice can be paid to the wrong party.",
+	}
+}

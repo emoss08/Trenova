@@ -45,6 +45,20 @@ func (s *Service) Start(
 	ctx context.Context,
 	req *StartRunRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
+	if req.Scope == billingtransfer.RunScopeAutomatic {
+		return nil, errortypes.NewValidationError(
+			"scope", errortypes.ErrInvalidOperation,
+			"Automatic transfers are started by billing control, not by hand",
+		)
+	}
+
+	return s.start(ctx, req)
+}
+
+func (s *Service) start(
+	ctx context.Context,
+	req *StartRunRequest,
+) (*billingtransfer.BillingTransferRun, error) {
 	log := s.l.With(zap.String("operation", "StartRun"))
 
 	if !s.workflows.Enabled() {
@@ -73,7 +87,8 @@ func (s *Service) Start(
 
 	// A Selected run knows its shipments now, so its report is complete and
 	// ordered before the worker has even picked the job up.
-	if created.Scope == billingtransfer.RunScopeSelected {
+	if created.Scope == billingtransfer.RunScopeSelected ||
+		created.Scope == billingtransfer.RunScopeAutomatic {
 		if _, err = s.runRepo.SeedItems(
 			ctx,
 			&billingtransferports.SeedBillingTransferRunItemsRequest{
@@ -117,7 +132,7 @@ func (s *Service) buildRun(req *StartRunRequest) (*billingtransfer.BillingTransf
 	}
 
 	switch req.Scope {
-	case billingtransfer.RunScopeSelected:
+	case billingtransfer.RunScopeSelected, billingtransfer.RunScopeAutomatic:
 		req.ShipmentIDs = sliceutils.Dedupe(req.ShipmentIDs)
 		run.TotalCount = len(req.ShipmentIDs)
 	case billingtransfer.RunScopeAllMatching:

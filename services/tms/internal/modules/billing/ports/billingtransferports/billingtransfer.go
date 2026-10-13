@@ -116,6 +116,11 @@ type ListBillingTransferRunItemsRequest struct {
 	Statuses []billingtransfer.ItemStatus
 }
 
+type LastBillingTransferRunQueuedAtRequest struct {
+	TenantInfo pagination.TenantInfo
+	Scope      billingtransfer.RunScope
+}
+
 type ListStaleBillingTransferRunsRequest struct {
 	Statuses          []billingtransfer.RunStatus
 	UpdatedBeforeUnix int64
@@ -135,6 +140,9 @@ type BillingTransferRunRepository interface {
 		ctx context.Context,
 		req *GetBillingTransferRunRequest,
 	) (*billingtransfer.BillingTransferRun, error)
+	// LastQueuedAt is when the tenant's latest run of the scope was queued, or
+	// zero when there has never been one.
+	LastQueuedAt(ctx context.Context, req *LastBillingTransferRunQueuedAtRequest) (int64, error)
 	GetActive(
 		ctx context.Context,
 		req *GetActiveBillingTransferRunRequest,

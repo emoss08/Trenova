@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -35,6 +36,7 @@ type Params struct {
 	Transformer  accessorialchargeports.DataTransformer
 	DB           kernelports.DBConnection                   `optional:"true"`
 	Sync         accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
+	Credit       customerports.CreditReviewer               `optional:"true"`
 }
 
 type Service struct {
@@ -47,6 +49,7 @@ type Service struct {
 	transformer  accessorialchargeports.DataTransformer
 	db           kernelports.DBConnection
 	sync         accountingsyncports.AccountingSyncEnqueuer
+	credit       customerports.CreditReviewer
 }
 
 func New(p Params) *Service {
@@ -60,6 +63,7 @@ func New(p Params) *Service {
 		transformer:  p.Transformer,
 		db:           p.DB,
 		sync:         p.Sync,
+		credit:       p.Credit,
 	}
 }
 
@@ -283,6 +287,8 @@ func (s *Service) Update(
 		return nil, err
 	}
 
+	s.reviewCredit(ctx, updatedEntity, original)
+
 	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCustomer,
 		ResourceID:     updatedEntity.GetID().String(),
@@ -318,4 +324,41 @@ func (s *Service) Update(
 	}
 
 	return updatedEntity, nil
+}
+
+// reviewCredit holds or releases the customer at once when its credit terms
+// change, rather than leaving the new limit to the next posting or the
+// nightly sweep, and returns the standing the review left.
+func (s *Service) reviewCredit(ctx context.Context, updated, original *customer.Customer) {
+	if s.credit == nil || updated == nil || !updated.HasBillingProfile() ||
+		!creditTermsChanged(original, updated) {
+		return
+	}
+	tenant := pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID}
+	if err := s.credit.Review(ctx, tenant, []pulid.ID{updated.ID}); err != nil {
+		s.l.Warn("failed to review credit after a customer update; the nightly sweep will retry",
+			zap.String("customerId", updated.ID.String()), zap.Error(err))
+		return
+	}
+	profile, err := s.repo.GetBillingProfile(ctx, customerports.GetCustomerBillingProfileRequest{
+		CustomerID: updated.ID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		s.l.Warn("failed to reread the billing profile after a credit review", zap.Error(err))
+		return
+	}
+	updated.BillingProfile = profile
+}
+
+func creditTermsChanged(original, updated *customer.Customer) bool {
+	if original == nil || !original.HasBillingProfile() {
+		return true
+	}
+	before, after := original.BillingProfile, updated.BillingProfile
+	return before.EnforceCreditLimit != after.EnforceCreditLimit ||
+		before.AutoCreditHold != after.AutoCreditHold ||
+		before.CreditStatus != after.CreditStatus ||
+		before.CreditLimit.Valid != after.CreditLimit.Valid ||
+		!before.CreditLimit.Decimal.Equal(after.CreditLimit.Decimal)
 }

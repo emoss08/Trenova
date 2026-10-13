@@ -35,4 +35,17 @@ func (r *Registry) registerCustomerResources() {
 		},
 		DefaultSensitivity: SensitivityInternal,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceFactoringCompany.String(),
+		DisplayName: "Factoring Company",
+		Description: "Factors that customers' invoices are assigned to",
+		Category:    "Customers",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View factoring companies"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Add factoring companies"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify factoring companies"},
+		},
+		DefaultSensitivity: SensitivityConfidential,
+	})
 }

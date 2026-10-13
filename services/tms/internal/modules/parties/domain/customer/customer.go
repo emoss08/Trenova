@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/addressutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -157,7 +158,10 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 	}
 
 	if c.EmailProfile != nil {
-		c.EmailProfile.Validate(multiErr.WithPrefix("emailProfile"))
+		c.EmailProfile.ValidateForDelivery(
+			multiErr.WithPrefix("emailProfile"),
+			c.BillingProfile == nil || c.BillingProfile.EmailInvoiceEnabled,
+		)
 	}
 }
 
@@ -192,6 +196,36 @@ func (c *Customer) BillingCurrencyCode() string {
 	}
 
 	return c.BillingProfile.BillingCurrency
+}
+
+// DisplayName is how a message to a person names the customer: its name, or
+// its code when it has none.
+func (c *Customer) DisplayName() string {
+	if c == nil {
+		return ""
+	}
+	if name := strings.TrimSpace(c.Name); name != "" {
+		return name
+	}
+	return c.Code
+}
+
+// MailingAddress is the customer's address as a document prints it.
+func (c *Customer) MailingAddress() addressutils.Mailing {
+	if c == nil {
+		return addressutils.Mailing{}
+	}
+	m := addressutils.Mailing{
+		Line1:      c.AddressLine1,
+		Line2:      c.AddressLine2,
+		City:       c.City,
+		PostalCode: c.PostalCode,
+	}
+	if c.State != nil {
+		m.State = c.State.Abbreviation
+		m.Country = c.State.CountryName
+	}
+	return m
 }
 
 func (c *Customer) HasEmailProfile() bool {

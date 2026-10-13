@@ -138,6 +138,8 @@ type Invoice {
   Null on an ordinary invoice and on consolidated ones, whose lines carry it.
   """
   shipperCustomerId: ID
+  "The factoring company the invoice was assigned to when it posted; null when it is not factored."
+  factoringCompanyId: ID
   shipperCustomer: Customer
   "Whether this invoice bills only part of what its shipments charged."
   isSplitBill: Boolean!

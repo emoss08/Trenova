@@ -128,6 +128,28 @@ func (r *repository) GetByID(
 	)
 }
 
+func (r *repository) LastQueuedAt(
+	ctx context.Context,
+	req *billingtransferports.LastBillingTransferRunQueuedAtRequest,
+) (int64, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
+		cols := billingtransfercol.BillingTransferRunColumns
+
+		var queuedAt sql.NullInt64
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*billingtransfer.BillingTransferRun)(nil)).
+			ColumnExpr("MAX(?)", bun.Safe(cols.QueuedAt.Qualified())).
+			Apply(billingtransfercol.BillingTransferRunApplyTenant(req.TenantInfo)).
+			Where(cols.Scope.Eq(), req.Scope).
+			Scan(ctx, &queuedAt); err != nil {
+			return 0, err
+		}
+
+		return queuedAt.Int64, nil
+	})
+}
+
 // GetActive returns the one run this user has not finished. Having none is the
 // ordinary case, so it answers with nothing rather than a not-found error; the
 // caller's dialog simply opens on the picker instead of reattaching.

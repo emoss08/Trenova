@@ -110,6 +110,7 @@ const (
 	PreviewWarningRetargetRefused     = PreviewWarningCode("retarget_refused")
 	PreviewWarningUnpinned            = PreviewWarningCode("unpinned")
 	PreviewWarningRateCoverage        = PreviewWarningCode("rate_coverage")
+	PreviewWarningRecipientSkipped    = PreviewWarningCode("recipient_skipped")
 )
 
 func AllPreviewWarningCodes() []PreviewWarningCode {
@@ -127,6 +128,7 @@ func AllPreviewWarningCodes() []PreviewWarningCode {
 		PreviewWarningRetargetRefused,
 		PreviewWarningUnpinned,
 		PreviewWarningRateCoverage,
+		PreviewWarningRecipientSkipped,
 	}
 }
 

@@ -158,6 +158,10 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 			me.WithIndex("applications", idx).
 				Add("invoiceId", errortypes.ErrInvalid, "Invoice customer must match payment customer")
 		}
+		if !inv.BilledIn(entity.CurrencyCode) {
+			me.WithIndex("applications", idx).
+				Add("invoiceId", errortypes.ErrInvalid, "Invoice {0} is billed in {1}, but this payment is in {2}", inv.Number, inv.CurrencyCode, entity.CurrencyCode)
+		}
 		if inv.Status != invoice.StatusPosted {
 			me.WithIndex("applications", idx).
 				Add("invoiceId", errortypes.ErrInvalidOperation, "Only posted invoices can accept customer payments")
@@ -336,6 +340,10 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 		if inv.CustomerID != payment.CustomerID {
 			me.WithIndex("applications", idx).
 				Add("invoiceId", errortypes.ErrInvalid, "Invoice customer must match payment customer")
+		}
+		if !inv.BilledIn(payment.CurrencyCode) {
+			me.WithIndex("applications", idx).
+				Add("invoiceId", errortypes.ErrInvalid, "Invoice {0} is billed in {1}, but this payment is in {2}", inv.Number, inv.CurrencyCode, payment.CurrencyCode)
 		}
 		if inv.Status != invoice.StatusPosted {
 			me.WithIndex("applications", idx).

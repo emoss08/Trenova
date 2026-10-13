@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 )
@@ -35,6 +36,7 @@ type ContextBuilderParams struct {
 	ShipmentRepo     shipmentports.ShipmentRepository
 	BillingRepo      tenantports.BillingControlRepository
 	OrganizationRepo tenantports.OrganizationRepository
+	FactoringRepo    factoringcompanyports.FactoringCompanyRepository
 	Inliner          documenttemplateports.AssetInliner
 }
 
@@ -47,6 +49,7 @@ func NewContextBuilder(p ContextBuilderParams) *ContextBuilder {
 			shipmentRepo:     p.ShipmentRepo,
 			billingRepo:      p.BillingRepo,
 			organizationRepo: p.OrganizationRepo,
+			factoringRepo:    p.FactoringRepo,
 		},
 		inliner: p.Inliner,
 	}
@@ -178,6 +181,8 @@ func invoiceContextFromPDFData(
 		InvoiceFooter: data.InvoiceFooter,
 		Notes:         data.Notes,
 		Attachments:   data.Attachments,
+
+		NoticeOfAssignment: data.NoticeOfAssignment,
 	}
 }
 
@@ -316,6 +321,11 @@ func emailContext(p *EmailContextParams) documenttemplate.InvoiceEmailContext {
 
 	if p.Profile == nil {
 		return out
+	}
+
+	if factor := p.Profile.Factor; factor != nil {
+		out.RemittanceInstructions = factor.RemittanceText()
+		out.NoticeOfAssignment = factor.Notice()
 	}
 
 	if org := p.Profile.Organization; org != nil {

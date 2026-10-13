@@ -1615,6 +1615,8 @@ export type BillingTransferRunItemsFilterInput = {
 export type BillingTransferRunScope =
   /** Everything matching a search, resolved when the run starts. */
   | 'AllMatching'
+  /** Started by billing control on its own schedule, for shipments ready to bill. */
+  | 'Automatic'
   /** A second attempt at an earlier transfer. */
   | 'Retry'
   /** The shipments were picked one by one. */
@@ -6219,6 +6221,7 @@ export type SelectOptionResource =
   | 'EMAIL_PROFILE'
   | 'EQUIPMENT_MANUFACTURER'
   | 'EQUIPMENT_TYPE'
+  | 'FACTORING_COMPANY'
   | 'FISCAL_PERIOD'
   | 'FISCAL_YEAR'
   | 'FLEET_CODE'
@@ -8728,7 +8731,7 @@ export type ArCustomerStatementQueryVariables = Exact<{
 }>;
 
 
-export type ArCustomerStatementQuery = { arCustomerStatement: { customerId: string, customerName: string, statementDate: number, startDate: number, openingBalanceMinor: number, totalChargesMinor: number, totalPaymentsMinor: number, endingBalanceMinor: number, aging: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, transactions: Array<{ transactionDate: number, eventType: string, documentNumber: string, sourceObjectId: string, amountMinor: number, chargeMinor: number, paymentMinor: number, runningBalanceMinor: number }>, openItems: Array<{ invoiceId: string, customerId: string, customerName: string, invoiceNumber: string, billType: string, invoiceDate: number, dueDate: number, currencyCode: string, shipmentProNumber: string, shipmentBol: string, totalAmountMinor: number, appliedAmountMinor: number, openAmountMinor: number, daysPastDue: number, settlementStatus: string, disputeStatus: string, hasShortPay: boolean }> } };
+export type ArCustomerStatementQuery = { arCustomerStatement: { customerId: string, customerName: string, statementDate: number, startDate: number, openingBalanceMinor: number, totalChargesMinor: number, totalPaymentsMinor: number, endingBalanceMinor: number, aging: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, transactions: Array<{ transactionDate: number, eventType: string, description: string, documentNumber: string, sourceObjectId: string, amountMinor: number, chargeMinor: number, paymentMinor: number, runningBalanceMinor: number }>, openItems: Array<{ invoiceId: string, customerId: string, customerName: string, invoiceNumber: string, billType: string, invoiceDate: number, dueDate: number, currencyCode: string, shipmentProNumber: string, shipmentBol: string, totalAmountMinor: number, appliedAmountMinor: number, openAmountMinor: number, daysPastDue: number, settlementStatus: string, disputeStatus: string, hasShortPay: boolean }> } };
 
 export type ArDashboardKpisQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -11031,9 +11034,9 @@ export type DeskCustomerRateAgreementsQueryVariables = Exact<{
 
 export type DeskCustomerRateAgreementsQuery = { rateAgreements: { totalCount: number | null, edges: Array<{ node: { id: string, code: string, name: string, status: RateAgreementStatus, agreementType: RateAgreementType, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number } }> } };
 
-export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle, billingCycleAnchorDay: number, billingCycleTimezone: string, lastBilledPeriodEnd: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, autoSendInvoiceOnGeneration: boolean, emailInvoiceEnabled: boolean, ediInvoiceEnabled: boolean, splitBy: InvoiceSplitKey, sectionBy: InvoiceSectionKey, invoiceDetail: InvoiceDetail, minConsolidatedAmount: string | null, maxShipmentsPerInvoice: number, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoApprove: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
+export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle, billingCycleAnchorDay: number, billingCycleTimezone: string, lastBilledPeriodEnd: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, autoSendInvoiceOnGeneration: boolean, sendPaymentReminders: boolean, sendStatements: boolean, factoringCompanyId: string | null, creditHoldAutomatic: boolean, creditReviewedAt: number | null, emailInvoiceEnabled: boolean, ediInvoiceEnabled: boolean, splitBy: InvoiceSplitKey, sectionBy: InvoiceSectionKey, invoiceDetail: InvoiceDetail, minConsolidatedAmount: string | null, maxShipmentsPerInvoice: number, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoApprove: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
 
-export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, fromEmail: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
+export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
 
 export type CustomerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string | null, externalId: string | null, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number, billingProfile: { ' $fragmentRefs'?: { 'CustomerBillingProfileFieldsFragment': CustomerBillingProfileFieldsFragment } } | null, emailProfile: { ' $fragmentRefs'?: { 'CustomerEmailProfileFieldsFragment': CustomerEmailProfileFieldsFragment } } | null } & { ' $fragmentName'?: 'CustomerTableRowFieldsFragment' };
 
@@ -12598,6 +12601,16 @@ export type UpdateExtractionShadowSettingsMutationVariables = Exact<{
 
 
 export type UpdateExtractionShadowSettingsMutation = { updateExtractionShadowSettings: { ' $fragmentRefs'?: { 'ExtractionShadowSettingsFieldsFragment': ExtractionShadowSettingsFieldsFragment } } };
+
+export type FactoringCompanyTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string | null, city: string, stateId: string, postalCode: string, email: string | null, phoneNumber: string | null, remittanceInstructions: string | null, noticeOfAssignment: string | null, notes: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FactoringCompanyTableRowFieldsFragment' };
+
+export type FactoringCompanyTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type FactoringCompanyTableQuery = { factoringCompanies: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringCompanyTableRowFieldsFragment': FactoringCompanyTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type FiscalPeriodFieldsFragment = { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, closedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FiscalPeriodFieldsFragment' };
 
@@ -20795,6 +20808,11 @@ export const CustomerBillingProfileFieldsFragmentDoc = new TypedDocumentString(`
   autoCreditHold
   creditHoldReason
   autoSendInvoiceOnGeneration
+  sendPaymentReminders
+  sendStatements
+  factoringCompanyId
+  creditHoldAutomatic
+  creditReviewedAt
   emailInvoiceEnabled
   ediInvoiceEnabled
   splitBy
@@ -20849,7 +20867,6 @@ export const CustomerEmailProfileFieldsFragmentDoc = new TypedDocumentString(`
   customerId
   subject
   comment
-  fromEmail
   toRecipients
   ccRecipients
   bccRecipients
@@ -20911,6 +20928,11 @@ export const CustomerTableRowFieldsFragmentDoc = new TypedDocumentString(`
   autoCreditHold
   creditHoldReason
   autoSendInvoiceOnGeneration
+  sendPaymentReminders
+  sendStatements
+  factoringCompanyId
+  creditHoldAutomatic
+  creditReviewedAt
   emailInvoiceEnabled
   ediInvoiceEnabled
   splitBy
@@ -20963,7 +20985,6 @@ fragment CustomerEmailProfileFields on CustomerEmailProfile {
   customerId
   subject
   comment
-  fromEmail
   toRecipients
   ccRecipients
   bccRecipients
@@ -22198,6 +22219,29 @@ fragment ExtractionShadowResultTableRowFields on ExtractionShadowResult {
   createdAt
   updatedAt
 }`, {"fragmentName":"ExtractionShadowResultDetailFields"}) as unknown as TypedDocumentString<ExtractionShadowResultDetailFieldsFragment, unknown>;
+export const FactoringCompanyTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment FactoringCompanyTableRowFields on FactoringCompany {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  name
+  addressLine1
+  addressLine2
+  city
+  stateId
+  postalCode
+  email
+  phoneNumber
+  remittanceInstructions
+  noticeOfAssignment
+  notes
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"FactoringCompanyTableRowFields"}) as unknown as TypedDocumentString<FactoringCompanyTableRowFieldsFragment, unknown>;
 export const FiscalPeriodFieldsFragmentDoc = new TypedDocumentString(`
     fragment FiscalPeriodFields on FiscalPeriod {
   id
@@ -27718,7 +27762,7 @@ export const AssessLateChargesDocument = {"__meta__":{"kind":"mutation","name":"
 export const ArAgingSummaryDocument = {"__meta__":{"kind":"query","name":"ArAgingSummary","hash":"sha256:6e0cbca355dfb7e59c403efe34be542aee4f26ff779d480e08e077574626daf9"}} as unknown as TypedDocumentString<ArAgingSummaryQuery, ArAgingSummaryQueryVariables>;
 export const ArOpenItemsDocument = {"__meta__":{"kind":"query","name":"ArOpenItems","hash":"sha256:7d695f3c3b6eacc1f00c10b1905a5d1d33969269106ffe2ef5c30e81146fc7d3"}} as unknown as TypedDocumentString<ArOpenItemsQuery, ArOpenItemsQueryVariables>;
 export const ArCustomerLedgerDocument = {"__meta__":{"kind":"query","name":"ArCustomerLedger","hash":"sha256:d9554d04015d108ca655b857f923eae260ae36f143a509025f79717a4fdf65c4"}} as unknown as TypedDocumentString<ArCustomerLedgerQuery, ArCustomerLedgerQueryVariables>;
-export const ArCustomerStatementDocument = {"__meta__":{"kind":"query","name":"ArCustomerStatement","hash":"sha256:716ca016b568a28b37004384395e0071a31d5fb8334f818d3a1a1aa5a403c21b"}} as unknown as TypedDocumentString<ArCustomerStatementQuery, ArCustomerStatementQueryVariables>;
+export const ArCustomerStatementDocument = {"__meta__":{"kind":"query","name":"ArCustomerStatement","hash":"sha256:37786f0d0781649a4cfcd0ece0f6dd76640072c127bafb5cdb3b1e810d50a4bd"}} as unknown as TypedDocumentString<ArCustomerStatementQuery, ArCustomerStatementQueryVariables>;
 export const ArDashboardKpisDocument = {"__meta__":{"kind":"query","name":"ArDashboardKpis","hash":"sha256:a05fd02645fddb941d688972550b27be3ce6665510aecb4170c44dd11c491452"}} as unknown as TypedDocumentString<ArDashboardKpisQuery, ArDashboardKpisQueryVariables>;
 export const ArDsoTrendDocument = {"__meta__":{"kind":"query","name":"ArDsoTrend","hash":"sha256:031255e1f9c64413b438a2b3825d9dd8c2101fb1705a6c0e6e66175243334571"}} as unknown as TypedDocumentString<ArDsoTrendQuery, ArDsoTrendQueryVariables>;
 export const ArAgingTrendDocument = {"__meta__":{"kind":"query","name":"ArAgingTrend","hash":"sha256:ef0336444abe3d8b2ab3101645e9f24367fbb81bda8e4c66f902a2fbfedda191"}} as unknown as TypedDocumentString<ArAgingTrendQuery, ArAgingTrendQueryVariables>;
@@ -28006,7 +28050,7 @@ export const ApplyUnappliedCustomerPaymentDocument = {"__meta__":{"kind":"mutati
 export const ReverseCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ReverseCustomerPayment","hash":"sha256:fe84be95798f92734cec53df3348b8593909fafde378deb329d583affe25145f"}} as unknown as TypedDocumentString<ReverseCustomerPaymentMutation, ReverseCustomerPaymentMutationVariables>;
 export const DeskCustomerCardDocument = {"__meta__":{"kind":"query","name":"DeskCustomerCard","hash":"sha256:f9392e6e7b40d6562977857131ff16dbaf3bfcbc0d21b2512c1acec7fbd6176f"}} as unknown as TypedDocumentString<DeskCustomerCardQuery, DeskCustomerCardQueryVariables>;
 export const DeskCustomerRateAgreementsDocument = {"__meta__":{"kind":"query","name":"DeskCustomerRateAgreements","hash":"sha256:1ba242b68d29998af524f262662b0017f695a8e36d48900f2a6969c1b19bce2e"}} as unknown as TypedDocumentString<DeskCustomerRateAgreementsQuery, DeskCustomerRateAgreementsQueryVariables>;
-export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:5ac4908d539bd6bee48049a6729a62ad4ac0e1a6a6c7e4ddf366f208b533ef1b"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
+export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:b03bdf83cbfd113e6933f80dbe8d2689721f4abd1057e18d8b5b0510ff57f510"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
 export const DataTableInsightFieldsDocument = {"__meta__":{"kind":"query","name":"DataTableInsightFields","hash":"sha256:22fecf32b7271231ed11fa6894b1067fa462fe7647a51aec3ce2573a6dead073"}} as unknown as TypedDocumentString<DataTableInsightFieldsQuery, DataTableInsightFieldsQueryVariables>;
 export const DataTableFacetsDocument = {"__meta__":{"kind":"query","name":"DataTableFacets","hash":"sha256:65addc4be5159ffbc133b39c9fdd7f1fc5052ee694ffe223537fa75fb3351f6f"}} as unknown as TypedDocumentString<DataTableFacetsQuery, DataTableFacetsQueryVariables>;
 export const DataTableAggregatesDocument = {"__meta__":{"kind":"query","name":"DataTableAggregates","hash":"sha256:0bce5400a204835b85f3b9246d4a61cd213afb549e8ad2121531b270af0cee00"}} as unknown as TypedDocumentString<DataTableAggregatesQuery, DataTableAggregatesQueryVariables>;
@@ -28213,6 +28257,7 @@ export const ExtractionShadowReportDocument = {"__meta__":{"kind":"query","name"
 export const ExtractionShadowResultTableDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowResultTable","hash":"sha256:0f8c34e7b121c16ddc8ab00931306ec12ff556d65f7e01d96d8b3e4a9c713e06"}} as unknown as TypedDocumentString<ExtractionShadowResultTableQuery, ExtractionShadowResultTableQueryVariables>;
 export const ExtractionShadowResultDetailDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowResultDetail","hash":"sha256:f8ab396ade746603c58d63653a216371ce02b7632d660ff73ffee7a5059cbad3"}} as unknown as TypedDocumentString<ExtractionShadowResultDetailQuery, ExtractionShadowResultDetailQueryVariables>;
 export const UpdateExtractionShadowSettingsDocument = {"__meta__":{"kind":"mutation","name":"UpdateExtractionShadowSettings","hash":"sha256:557a7473030ad51dbabe9d39f6b844ccd2f4d64917eda8cff73c2eb6c7de4f51"}} as unknown as TypedDocumentString<UpdateExtractionShadowSettingsMutation, UpdateExtractionShadowSettingsMutationVariables>;
+export const FactoringCompanyTableDocument = {"__meta__":{"kind":"query","name":"FactoringCompanyTable","hash":"sha256:0e23148b59caf9e99f3b13e6ff1466760d462dfdccd38f7dd96e1bdd8c5cb5be"}} as unknown as TypedDocumentString<FactoringCompanyTableQuery, FactoringCompanyTableQueryVariables>;
 export const FiscalYearTableDocument = {"__meta__":{"kind":"query","name":"FiscalYearTable","hash":"sha256:b71efb13dab593e5639accbcbd43154e83864413588b315ef028c1029087a5b7"}} as unknown as TypedDocumentString<FiscalYearTableQuery, FiscalYearTableQueryVariables>;
 export const FleetCodeTableDocument = {"__meta__":{"kind":"query","name":"FleetCodeTable","hash":"sha256:aa2917e7de6d4a5981909b298d418eeaa9d673b8eef470e6ed424667aa344b43"}} as unknown as TypedDocumentString<FleetCodeTableQuery, FleetCodeTableQueryVariables>;
 export const FleetSafetyDocument = {"__meta__":{"kind":"query","name":"FleetSafety","hash":"sha256:6e9a229e80256b02928afbbb05c93d141f6955ef63bf3b19a4bfb228954c1334"}} as unknown as TypedDocumentString<FleetSafetyQuery, FleetSafetyQueryVariables>;

@@ -31,6 +31,16 @@ type ListLateChargeCandidatesRequest struct {
 	AsOfDate    int64                 `json:"asOfDate"`
 }
 
+// ListLateChargeCustomersRequest pages through the customers that have at least
+// one invoice a late charge could be assessed on, by customer id.
+type ListLateChargeCustomersRequest struct {
+	TenantInfo      pagination.TenantInfo `json:"-"`
+	CustomerIDs     []pulid.ID            `json:"customerIds"`
+	AsOfDate        int64                 `json:"asOfDate"`
+	AfterCustomerID pulid.ID              `json:"afterCustomerId"`
+	Limit           int                   `json:"limit"`
+}
+
 type ListLateChargeAssessmentsByInvoiceIDsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	InvoiceIDs []pulid.ID            `json:"-"`
@@ -45,6 +55,10 @@ type LateChargeRepository interface {
 		ctx context.Context,
 		req *ListLateChargeCandidatesRequest,
 	) ([]*LateChargeCandidate, error)
+	ListCandidateCustomers(
+		ctx context.Context,
+		req *ListLateChargeCustomersRequest,
+	) ([]pulid.ID, error)
 	// InsertAssessments writes the rows, skipping any (invoice, period) already
 	// assessed, and returns the rows this run actually inserted.
 	InsertAssessments(

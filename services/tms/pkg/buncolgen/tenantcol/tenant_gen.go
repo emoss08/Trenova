@@ -772,6 +772,10 @@ var BillingControlColumns = struct {
 	EnforceMarginFloor                    buncolgen.Column // "enforce_margin_floor" → qualified: "bc.enforce_margin_floor"
 	LateChargeAssessmentMode              buncolgen.Column // "late_charge_assessment_mode" → qualified: "bc.late_charge_assessment_mode"
 	LateChargeMinimumAmount               buncolgen.Column // "late_charge_minimum_amount" → qualified: "bc.late_charge_minimum_amount"
+	PaymentRemindersEnabled               buncolgen.Column // "payment_reminders_enabled" → qualified: "bc.payment_reminders_enabled"
+	PaymentReminderDays                   buncolgen.Column // "payment_reminder_days" → qualified: "bc.payment_reminder_days"
+	MonthlyStatementsEnabled              buncolgen.Column // "monthly_statements_enabled" → qualified: "bc.monthly_statements_enabled"
+	MonthlyStatementDay                   buncolgen.Column // "monthly_statement_day" → qualified: "bc.monthly_statement_day"
 	Version                               buncolgen.Column // "version" → qualified: "bc.version"
 	CreatedAt                             buncolgen.Column // "created_at" → qualified: "bc.created_at"
 	UpdatedAt                             buncolgen.Column // "updated_at" → qualified: "bc.updated_at"
@@ -804,6 +808,10 @@ var BillingControlColumns = struct {
 	EnforceMarginFloor:                    buncolgen.NewColumn("enforce_margin_floor", "bc"),
 	LateChargeAssessmentMode:              buncolgen.NewColumn("late_charge_assessment_mode", "bc"),
 	LateChargeMinimumAmount:               buncolgen.NewColumn("late_charge_minimum_amount", "bc"),
+	PaymentRemindersEnabled:               buncolgen.NewColumn("payment_reminders_enabled", "bc"),
+	PaymentReminderDays:                   buncolgen.NewColumn("payment_reminder_days", "bc"),
+	MonthlyStatementsEnabled:              buncolgen.NewColumn("monthly_statements_enabled", "bc"),
+	MonthlyStatementDay:                   buncolgen.NewColumn("monthly_statement_day", "bc"),
 	Version:                               buncolgen.NewColumn("version", "bc"),
 	CreatedAt:                             buncolgen.NewColumn("created_at", "bc"),
 	UpdatedAt:                             buncolgen.NewColumn("updated_at", "bc"),
@@ -842,6 +850,10 @@ var BillingControlFieldMap = map[string]string{
 	"enforceMarginFloor":                    "enforce_margin_floor",
 	"lateChargeAssessmentMode":              "late_charge_assessment_mode",
 	"lateChargeMinimumAmount":               "late_charge_minimum_amount",
+	"paymentRemindersEnabled":               "payment_reminders_enabled",
+	"paymentReminderDays":                   "payment_reminder_days",
+	"monthlyStatementsEnabled":              "monthly_statements_enabled",
+	"monthlyStatementDay":                   "monthly_statement_day",
 	"version":                               "version",
 	"createdAt":                             "created_at",
 	"updatedAt":                             "updated_at",
@@ -878,6 +890,10 @@ var BillingControlInsertableColumns = []string{
 	"enforce_margin_floor",
 	"late_charge_assessment_mode",
 	"late_charge_minimum_amount",
+	"payment_reminders_enabled",
+	"payment_reminder_days",
+	"monthly_statements_enabled",
+	"monthly_statement_day",
 	"version",
 	"created_at",
 	"updated_at",
@@ -974,6 +990,10 @@ var BillingControlFilter = struct {
 	EnforceMarginFloor                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceMarginFloor" → DB: "enforce_margin_floor"
 	LateChargeAssessmentMode              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lateChargeAssessmentMode" → DB: "late_charge_assessment_mode"
 	LateChargeMinimumAmount               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lateChargeMinimumAmount" → DB: "late_charge_minimum_amount"
+	PaymentRemindersEnabled               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentRemindersEnabled" → DB: "payment_reminders_enabled"
+	PaymentReminderDays                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentReminderDays" → DB: "payment_reminder_days"
+	MonthlyStatementsEnabled              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "monthlyStatementsEnabled" → DB: "monthly_statements_enabled"
+	MonthlyStatementDay                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "monthlyStatementDay" → DB: "monthly_statement_day"
 	Version                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1061,6 +1081,18 @@ var BillingControlFilter = struct {
 	},
 	LateChargeMinimumAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("lateChargeMinimumAmount", op, value)
+	},
+	PaymentRemindersEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("paymentRemindersEnabled", op, value)
+	},
+	PaymentReminderDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("paymentReminderDays", op, value)
+	},
+	MonthlyStatementsEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("monthlyStatementsEnabled", op, value)
+	},
+	MonthlyStatementDay: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("monthlyStatementDay", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)
@@ -2254,6 +2286,7 @@ var InvoiceAdjustmentControlColumns = struct {
 	StandardAdjustmentApprovalThreshold  buncolgen.Column // "standard_adjustment_approval_threshold" → qualified: "iac.standard_adjustment_approval_threshold"
 	WriteOffApprovalPolicy               buncolgen.Column // "write_off_approval_policy" → qualified: "iac.write_off_approval_policy"
 	WriteOffApprovalThreshold            buncolgen.Column // "write_off_approval_threshold" → qualified: "iac.write_off_approval_threshold"
+	RequireSeparateApprover              buncolgen.Column // "require_separate_approver" → qualified: "iac.require_separate_approver"
 	RerateVarianceTolerancePercent       buncolgen.Column // "rerate_variance_tolerance_percent" → qualified: "iac.rerate_variance_tolerance_percent"
 	ReplacementInvoiceReviewPolicy       buncolgen.Column // "replacement_invoice_review_policy" → qualified: "iac.replacement_invoice_review_policy"
 	CustomerCreditBalancePolicy          buncolgen.Column // "customer_credit_balance_policy" → qualified: "iac.customer_credit_balance_policy"
@@ -2276,6 +2309,7 @@ var InvoiceAdjustmentControlColumns = struct {
 	StandardAdjustmentApprovalThreshold:  buncolgen.NewColumn("standard_adjustment_approval_threshold", "iac"),
 	WriteOffApprovalPolicy:               buncolgen.NewColumn("write_off_approval_policy", "iac"),
 	WriteOffApprovalThreshold:            buncolgen.NewColumn("write_off_approval_threshold", "iac"),
+	RequireSeparateApprover:              buncolgen.NewColumn("require_separate_approver", "iac"),
 	RerateVarianceTolerancePercent:       buncolgen.NewColumn("rerate_variance_tolerance_percent", "iac"),
 	ReplacementInvoiceReviewPolicy:       buncolgen.NewColumn("replacement_invoice_review_policy", "iac"),
 	CustomerCreditBalancePolicy:          buncolgen.NewColumn("customer_credit_balance_policy", "iac"),
@@ -2304,6 +2338,7 @@ var InvoiceAdjustmentControlFieldMap = map[string]string{
 	"standardAdjustmentApprovalThreshold":  "standard_adjustment_approval_threshold",
 	"writeOffApprovalPolicy":               "write_off_approval_policy",
 	"writeOffApprovalThreshold":            "write_off_approval_threshold",
+	"requireSeparateApprover":              "require_separate_approver",
 	"rerateVarianceTolerancePercent":       "rerate_variance_tolerance_percent",
 	"replacementInvoiceReviewPolicy":       "replacement_invoice_review_policy",
 	"customerCreditBalancePolicy":          "customer_credit_balance_policy",
@@ -2330,6 +2365,7 @@ var InvoiceAdjustmentControlInsertableColumns = []string{
 	"standard_adjustment_approval_threshold",
 	"write_off_approval_policy",
 	"write_off_approval_threshold",
+	"require_separate_approver",
 	"rerate_variance_tolerance_percent",
 	"replacement_invoice_review_policy",
 	"customer_credit_balance_policy",
@@ -2416,6 +2452,7 @@ var InvoiceAdjustmentControlFilter = struct {
 	StandardAdjustmentApprovalThreshold  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "standardAdjustmentApprovalThreshold" → DB: "standard_adjustment_approval_threshold"
 	WriteOffApprovalPolicy               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "writeOffApprovalPolicy" → DB: "write_off_approval_policy"
 	WriteOffApprovalThreshold            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "writeOffApprovalThreshold" → DB: "write_off_approval_threshold"
+	RequireSeparateApprover              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireSeparateApprover" → DB: "require_separate_approver"
 	RerateVarianceTolerancePercent       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rerateVarianceTolerancePercent" → DB: "rerate_variance_tolerance_percent"
 	ReplacementInvoiceReviewPolicy       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "replacementInvoiceReviewPolicy" → DB: "replacement_invoice_review_policy"
 	CustomerCreditBalancePolicy          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerCreditBalancePolicy" → DB: "customer_credit_balance_policy"
@@ -2463,6 +2500,9 @@ var InvoiceAdjustmentControlFilter = struct {
 	},
 	WriteOffApprovalThreshold: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("writeOffApprovalThreshold", op, value)
+	},
+	RequireSeparateApprover: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("requireSeparateApprover", op, value)
 	},
 	RerateVarianceTolerancePercent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("rerateVarianceTolerancePercent", op, value)

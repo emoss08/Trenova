@@ -133,6 +133,9 @@ models:
   HoldReason:
     model:
       - github.com/emoss08/trenova/internal/modules/reference/domain/holdreason.HoldReason
+  FactoringCompany:
+    model:
+      - github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany.FactoringCompany
   JurisdictionRule:
     model:
       - github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule.JurisdictionRule

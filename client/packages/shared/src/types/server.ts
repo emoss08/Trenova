@@ -82,6 +82,7 @@ export type BaseEndpoint =
   | "/hazardous-materials/"
   | "/commodities/"
   | "/customers/"
+  | "/factoring-companies/"
   | "/carriers/"
   | "/account-types/"
   | "/custom-fields/definitions/"

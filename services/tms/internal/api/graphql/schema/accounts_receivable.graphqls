@@ -53,6 +53,8 @@ type ARLedgerEntry {
 type ARStatementTransaction {
   transactionDate: Timestamp!
   eventType: String!
+  "What moved the balance, in words a customer reads: Invoice, Payment, Credit memo."
+  description: String!
   documentNumber: String!
   sourceObjectId: String!
   amountMinor: Int!

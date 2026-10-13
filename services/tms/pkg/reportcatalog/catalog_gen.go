@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:d6a0460e444357b0ede1304a6e646eb038f5b9ea1300c110c67e3dc97bf12727"
+const Version = "sha256:9f9653fb217ea2c70f8cc30baf7244f5620cdf512befd037a5d2b2fc502151a7"
 
 var Default = indexed(defaultCatalog)
 
@@ -9314,6 +9314,16 @@ var defaultCatalog = Catalog{
 					Key:          "shipperCustomerId",
 					Column:       buncolgen.NewColumn("shipper_customer_id", "inv"),
 					Label:        "Shipper Customer ID",
+					Type:         FieldRef,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "factoringCompanyId",
+					Column:       buncolgen.NewColumn("factoring_company_id", "inv"),
+					Label:        "Factoring Company ID",
 					Type:         FieldRef,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},

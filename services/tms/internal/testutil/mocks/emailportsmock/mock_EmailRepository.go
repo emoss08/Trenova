@@ -476,7 +476,7 @@ type MockEmailRepository_DeleteProfile_Call struct {
 
 // DeleteProfile is a helper method to define mock.On call
 //   - context1 context.Context
-//   - getEmailEntityRequest repositories.GetEmailEntityRequest
+//   - getEmailEntityRequest emailports.GetEmailEntityRequest
 func (_e *MockEmailRepository_Expecter) DeleteProfile(context1 any, getEmailEntityRequest any) *MockEmailRepository_DeleteProfile_Call {
 	return &MockEmailRepository_DeleteProfile_Call{Call: _e.mock.On("DeleteProfile", context1, getEmailEntityRequest)}
 }
@@ -533,7 +533,7 @@ type MockEmailRepository_DeleteSuppression_Call struct {
 
 // DeleteSuppression is a helper method to define mock.On call
 //   - context1 context.Context
-//   - getEmailEntityRequest repositories.GetEmailEntityRequest
+//   - getEmailEntityRequest emailports.GetEmailEntityRequest
 func (_e *MockEmailRepository_Expecter) DeleteSuppression(context1 any, getEmailEntityRequest any) *MockEmailRepository_DeleteSuppression_Call {
 	return &MockEmailRepository_DeleteSuppression_Call{Call: _e.mock.On("DeleteSuppression", context1, getEmailEntityRequest)}
 }
@@ -675,7 +675,7 @@ type MockEmailRepository_GetEmailWebhookConfig_Call struct {
 
 // GetEmailWebhookConfig is a helper method to define mock.On call
 //   - context1 context.Context
-//   - getEmailWebhookConfigRequest repositories.GetEmailWebhookConfigRequest
+//   - getEmailWebhookConfigRequest emailports.GetEmailWebhookConfigRequest
 func (_e *MockEmailRepository_Expecter) GetEmailWebhookConfig(context1 any, getEmailWebhookConfigRequest any) *MockEmailRepository_GetEmailWebhookConfig_Call {
 	return &MockEmailRepository_GetEmailWebhookConfig_Call{Call: _e.mock.On("GetEmailWebhookConfig", context1, getEmailWebhookConfigRequest)}
 }
@@ -743,7 +743,7 @@ type MockEmailRepository_GetMessage_Call struct {
 
 // GetMessage is a helper method to define mock.On call
 //   - context1 context.Context
-//   - getEmailEntityRequest repositories.GetEmailEntityRequest
+//   - getEmailEntityRequest emailports.GetEmailEntityRequest
 func (_e *MockEmailRepository_Expecter) GetMessage(context1 any, getEmailEntityRequest any) *MockEmailRepository_GetMessage_Call {
 	return &MockEmailRepository_GetMessage_Call{Call: _e.mock.On("GetMessage", context1, getEmailEntityRequest)}
 }
@@ -772,6 +772,74 @@ func (_c *MockEmailRepository_GetMessage_Call) Return(message *email.Message, er
 }
 
 func (_c *MockEmailRepository_GetMessage_Call) RunAndReturn(run func(context1 context.Context, getEmailEntityRequest emailports.GetEmailEntityRequest) (*email.Message, error)) *MockEmailRepository_GetMessage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListEventRecipients provides a mock function for the type MockEmailRepository
+func (_mock *MockEmailRepository) ListEventRecipients(context1 context.Context, listEmailEventRecipientsRequest emailports.ListEmailEventRecipientsRequest) ([]string, error) {
+	ret := _mock.Called(context1, listEmailEventRecipientsRequest)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListEventRecipients")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, emailports.ListEmailEventRecipientsRequest) ([]string, error)); ok {
+		return returnFunc(context1, listEmailEventRecipientsRequest)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, emailports.ListEmailEventRecipientsRequest) []string); ok {
+		r0 = returnFunc(context1, listEmailEventRecipientsRequest)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, emailports.ListEmailEventRecipientsRequest) error); ok {
+		r1 = returnFunc(context1, listEmailEventRecipientsRequest)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEmailRepository_ListEventRecipients_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListEventRecipients'
+type MockEmailRepository_ListEventRecipients_Call struct {
+	*mock.Call
+}
+
+// ListEventRecipients is a helper method to define mock.On call
+//   - context1 context.Context
+//   - listEmailEventRecipientsRequest emailports.ListEmailEventRecipientsRequest
+func (_e *MockEmailRepository_Expecter) ListEventRecipients(context1 any, listEmailEventRecipientsRequest any) *MockEmailRepository_ListEventRecipients_Call {
+	return &MockEmailRepository_ListEventRecipients_Call{Call: _e.mock.On("ListEventRecipients", context1, listEmailEventRecipientsRequest)}
+}
+
+func (_c *MockEmailRepository_ListEventRecipients_Call) Run(run func(context1 context.Context, listEmailEventRecipientsRequest emailports.ListEmailEventRecipientsRequest)) *MockEmailRepository_ListEventRecipients_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 emailports.ListEmailEventRecipientsRequest
+		if args[1] != nil {
+			arg1 = args[1].(emailports.ListEmailEventRecipientsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEmailRepository_ListEventRecipients_Call) Return(recipients []string, err error) *MockEmailRepository_ListEventRecipients_Call {
+	_c.Call.Return(recipients, err)
+	return _c
+}
+
+func (_c *MockEmailRepository_ListEventRecipients_Call) RunAndReturn(run func(context1 context.Context, listEmailEventRecipientsRequest emailports.ListEmailEventRecipientsRequest) ([]string, error)) *MockEmailRepository_ListEventRecipients_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -811,7 +879,7 @@ type MockEmailRepository_GetMessageByProviderID_Call struct {
 
 // GetMessageByProviderID is a helper method to define mock.On call
 //   - context1 context.Context
-//   - getEmailMessageByProviderIDRequest repositories.GetEmailMessageByProviderIDRequest
+//   - getEmailMessageByProviderIDRequest emailports.GetEmailMessageByProviderIDRequest
 func (_e *MockEmailRepository_Expecter) GetMessageByProviderID(context1 any, getEmailMessageByProviderIDRequest any) *MockEmailRepository_GetMessageByProviderID_Call {
 	return &MockEmailRepository_GetMessageByProviderID_Call{Call: _e.mock.On("GetMessageByProviderID", context1, getEmailMessageByProviderIDRequest)}
 }
@@ -879,7 +947,7 @@ type MockEmailRepository_GetProfile_Call struct {
 
 // GetProfile is a helper method to define mock.On call
 //   - context1 context.Context
-//   - getEmailEntityRequest repositories.GetEmailEntityRequest
+//   - getEmailEntityRequest emailports.GetEmailEntityRequest
 func (_e *MockEmailRepository_Expecter) GetProfile(context1 any, getEmailEntityRequest any) *MockEmailRepository_GetProfile_Call {
 	return &MockEmailRepository_GetProfile_Call{Call: _e.mock.On("GetProfile", context1, getEmailEntityRequest)}
 }
@@ -1087,7 +1155,7 @@ type MockEmailRepository_ListAttachments_Call struct {
 
 // ListAttachments is a helper method to define mock.On call
 //   - context1 context.Context
-//   - listEmailAttachmentsRequest repositories.ListEmailAttachmentsRequest
+//   - listEmailAttachmentsRequest emailports.ListEmailAttachmentsRequest
 func (_e *MockEmailRepository_Expecter) ListAttachments(context1 any, listEmailAttachmentsRequest any) *MockEmailRepository_ListAttachments_Call {
 	return &MockEmailRepository_ListAttachments_Call{Call: _e.mock.On("ListAttachments", context1, listEmailAttachmentsRequest)}
 }
@@ -1155,7 +1223,7 @@ type MockEmailRepository_ListMessages_Call struct {
 
 // ListMessages is a helper method to define mock.On call
 //   - context1 context.Context
-//   - listEmailMessagesRequest *repositories.ListEmailMessagesRequest
+//   - listEmailMessagesRequest *emailports.ListEmailMessagesRequest
 func (_e *MockEmailRepository_Expecter) ListMessages(context1 any, listEmailMessagesRequest any) *MockEmailRepository_ListMessages_Call {
 	return &MockEmailRepository_ListMessages_Call{Call: _e.mock.On("ListMessages", context1, listEmailMessagesRequest)}
 }
@@ -1223,7 +1291,7 @@ type MockEmailRepository_ListProfiles_Call struct {
 
 // ListProfiles is a helper method to define mock.On call
 //   - context1 context.Context
-//   - listEmailProfilesRequest *repositories.ListEmailProfilesRequest
+//   - listEmailProfilesRequest *emailports.ListEmailProfilesRequest
 func (_e *MockEmailRepository_Expecter) ListProfiles(context1 any, listEmailProfilesRequest any) *MockEmailRepository_ListProfiles_Call {
 	return &MockEmailRepository_ListProfiles_Call{Call: _e.mock.On("ListProfiles", context1, listEmailProfilesRequest)}
 }
@@ -1291,7 +1359,7 @@ type MockEmailRepository_ListProfilesConnection_Call struct {
 
 // ListProfilesConnection is a helper method to define mock.On call
 //   - context1 context.Context
-//   - listEmailProfileConnectionRequest *repositories.ListEmailProfileConnectionRequest
+//   - listEmailProfileConnectionRequest *emailports.ListEmailProfileConnectionRequest
 func (_e *MockEmailRepository_Expecter) ListProfilesConnection(context1 any, listEmailProfileConnectionRequest any) *MockEmailRepository_ListProfilesConnection_Call {
 	return &MockEmailRepository_ListProfilesConnection_Call{Call: _e.mock.On("ListProfilesConnection", context1, listEmailProfileConnectionRequest)}
 }
@@ -1359,7 +1427,7 @@ type MockEmailRepository_ListSuppressions_Call struct {
 
 // ListSuppressions is a helper method to define mock.On call
 //   - context1 context.Context
-//   - listEmailSuppressionsRequest *repositories.ListEmailSuppressionsRequest
+//   - listEmailSuppressionsRequest *emailports.ListEmailSuppressionsRequest
 func (_e *MockEmailRepository_Expecter) ListSuppressions(context1 any, listEmailSuppressionsRequest any) *MockEmailRepository_ListSuppressions_Call {
 	return &MockEmailRepository_ListSuppressions_Call{Call: _e.mock.On("ListSuppressions", context1, listEmailSuppressionsRequest)}
 }
@@ -1427,7 +1495,7 @@ type MockEmailRepository_SelectProfileOptions_Call struct {
 
 // SelectProfileOptions is a helper method to define mock.On call
 //   - context1 context.Context
-//   - emailProfileSelectOptionsRequest *repositories.EmailProfileSelectOptionsRequest
+//   - emailProfileSelectOptionsRequest *emailports.EmailProfileSelectOptionsRequest
 func (_e *MockEmailRepository_Expecter) SelectProfileOptions(context1 any, emailProfileSelectOptionsRequest any) *MockEmailRepository_SelectProfileOptions_Call {
 	return &MockEmailRepository_SelectProfileOptions_Call{Call: _e.mock.On("SelectProfileOptions", context1, emailProfileSelectOptionsRequest)}
 }

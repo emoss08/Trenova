@@ -110,6 +110,8 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  CustomerEmailProfile:
+    - fromEmail
   LogCheckCallPayload:
     - checkCall
     - outcome

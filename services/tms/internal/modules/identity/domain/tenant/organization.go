@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/addressutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -83,6 +84,24 @@ func (o *Organization) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&o.Locale,
 			validation.By(domainvalidation.ValidateLocale)),
 	))
+}
+
+// MailingAddress is the organization's address as a document prints it.
+func (o *Organization) MailingAddress() addressutils.Mailing {
+	if o == nil {
+		return addressutils.Mailing{}
+	}
+	m := addressutils.Mailing{
+		Line1:      o.AddressLine1,
+		Line2:      o.AddressLine2,
+		City:       o.City,
+		PostalCode: o.PostalCode,
+	}
+	if o.State != nil {
+		m.State = o.State.Abbreviation
+		m.Country = o.State.CountryName
+	}
+	return m
 }
 
 func (o *Organization) GetID() pulid.ID {

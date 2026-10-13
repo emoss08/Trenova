@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
+import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import {
   Card,
@@ -295,6 +296,17 @@ function ApprovalCard() {
               />
             </FormControl>
           )}
+          <FormControl className="max-w-[520px]">
+            <SwitchField
+              control={control}
+              name="requireSeparateApprover"
+              label={t("Require a separate approver")}
+              description={t(
+                "Whoever submits an adjustment or raises a credit memo that needs approval cannot approve or post it themselves. Leave this off if one person handles billing.",
+              )}
+              position="left"
+            />
+          </FormControl>
         </FormGroup>
       </CardContent>
     </Card>

@@ -12,6 +12,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
+import { BULK_CONCURRENCY, notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import {
   billingQueueAssignSchema,
   type BillingQueueAssignInput,
@@ -22,16 +23,24 @@ import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+/** One queue item to assign, with the label a failure is reported under. */
+export type BillingQueueTarget = {
+  id: string;
+  label: string;
+};
+
 type BillingQueueAssignDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  itemId: string;
+  targets: readonly BillingQueueTarget[];
+  onDone?: () => void;
 };
 
 export function BillingQueueAssignDialog({
   open,
   onOpenChange,
-  itemId,
+  targets,
+  onDone,
 }: BillingQueueAssignDialogProps) {
   const t = useT();
 
@@ -51,17 +60,40 @@ export function BillingQueueAssignDialog({
     formState: { isSubmitting },
   } = form;
 
+  const single = targets.length === 1;
   const { mutateAsync } = useApiMutation({
-    mutationFn: (values: BillingQueueAssignInput) =>
-      apiService.billingQueueService.assign(itemId, values),
+    mutationFn: async (values: BillingQueueAssignInput) => {
+      if (single) {
+        await apiService.billingQueueService.assign(targets[0].id, values);
+        return null;
+      }
+      return settleAll(
+        targets,
+        (target) => apiService.billingQueueService.assign(target.id, values),
+        { concurrency: BULK_CONCURRENCY, label: (target) => target.label },
+      );
+    },
     resourceName: "BillingQueueItem",
     form,
-    onSuccess: () => {
+    onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-      toast.success(t("Biller assigned"), {
-        description: t("The billing queue item has been assigned."),
+      if (!result) {
+        toast.success(t("Biller assigned"), {
+          description: t("The billing queue item has been assigned."),
+        });
+        return;
+      }
+      notifyBulkOutcome(result, {
+        succeeded: (count) => t("{0, plural, one {# item} other {# items}} assigned", count),
+        partial: (succeeded, failed) =>
+          t("{0} assigned; {1} could not be assigned", succeeded, failed),
+        allFailed: (failed) =>
+          t("{0, plural, one {# item} other {# items}} could not be assigned", failed),
       });
+      if (result.failed.length === 0) {
+        onDone?.();
+      }
     },
   });
 
@@ -84,7 +116,12 @@ export function BillingQueueAssignDialog({
         <DialogHeader>
           <DialogTitle>{t("Assign biller")}</DialogTitle>
           <DialogDescription>
-            {t("Assign a biller to review this billing queue item.")}
+            {single
+              ? t("Assign a biller to review this billing queue item.")
+              : t(
+                  "Assign a biller to review {0, plural, one {# billing queue item} other {# billing queue items}}.",
+                  targets.length,
+                )}
           </DialogDescription>
         </DialogHeader>
         <Form

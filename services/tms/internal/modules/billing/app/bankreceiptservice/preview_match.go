@@ -31,7 +31,7 @@ func (s *Service) PreviewMatch(
 	req *bankreceiptports.MatchBankReceiptRequest,
 	actor *permissionports.RequestActor,
 ) (*MatchPreview, error) {
-	return s.planStoredMatch(ctx, req, actor)
+	return s.planStoredMatch(ctx, req, actor, s.repo.GetByID)
 }
 
 // PreviewMatchPaymentRequest is a match to a payment that is itself only
@@ -60,13 +60,19 @@ func (s *Service) PreviewMatchPayment(
 		return nil, err
 	}
 
-	return s.planMatch(ctx, req.ReceiptID, req.TenantInfo, req.Payment, actor)
+	return s.planMatch(ctx, req.ReceiptID, req.TenantInfo, req.Payment, actor, s.repo.GetByID)
 }
+
+type receiptLoader func(
+	ctx context.Context,
+	req bankreceiptports.GetBankReceiptByIDRequest,
+) (*bankreceipt.BankReceipt, error)
 
 func (s *Service) planStoredMatch(
 	ctx context.Context,
 	req *bankreceiptports.MatchBankReceiptRequest,
 	actor *permissionports.RequestActor,
+	load receiptLoader,
 ) (*MatchPreview, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -90,7 +96,7 @@ func (s *Service) planStoredMatch(
 		return nil, err
 	}
 
-	return s.planMatch(ctx, req.ReceiptID, req.TenantInfo, payment, actor)
+	return s.planMatch(ctx, req.ReceiptID, req.TenantInfo, payment, actor, load)
 }
 
 func requireMatchActor(actor *permissionports.RequestActor) error {
@@ -112,8 +118,9 @@ func (s *Service) planMatch(
 	tenantInfo pagination.TenantInfo,
 	payment *customerpayment.Payment,
 	actor *permissionports.RequestActor,
+	load receiptLoader,
 ) (*MatchPreview, error) {
-	receipt, err := s.repo.GetByID(
+	receipt, err := load(
 		ctx,
 		bankreceiptports.GetBankReceiptByIDRequest{ID: receiptID, TenantInfo: tenantInfo},
 	)
@@ -130,6 +137,9 @@ func (s *Service) planMatch(
 		return nil, errortypes.NewBusinessError(
 			"Bank receipt amount must match customer payment amount",
 		)
+	}
+	if err = s.refusePaymentMatchedElsewhere(ctx, receipt, payment, tenantInfo); err != nil {
+		return nil, err
 	}
 
 	before := *receipt
@@ -160,4 +170,32 @@ func (s *Service) planMatch(
 	plan.WorkItemAfter = item
 
 	return plan, nil
+}
+
+// refusePaymentMatchedElsewhere keeps one payment to one deposit. Matching the
+// same payment to a second receipt would mark two deposits reconciled against
+// cash that arrived once.
+func (s *Service) refusePaymentMatchedElsewhere(
+	ctx context.Context,
+	receipt *bankreceipt.BankReceipt,
+	payment *customerpayment.Payment,
+	tenantInfo pagination.TenantInfo,
+) error {
+	matched, err := s.repo.ListMatchedToPayment(ctx, bankreceiptports.ListBankReceiptsMatchedToPaymentRequest{
+		PaymentID:  payment.ID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	for _, other := range matched {
+		if other != nil && other.ID != receipt.ID {
+			return errortypes.NewBusinessError(
+				"This payment is already matched to bank receipt {0}",
+				other.ReferenceNumber,
+			)
+		}
+	}
+
+	return nil
 }

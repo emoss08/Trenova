@@ -11,6 +11,7 @@ import {
 import { Form } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
+import { parseAmountToMinor } from "@trenova/shared/lib/money";
 import type { BatchDetailResponse, CreateBatchRequest } from "@/types/bank-receipt-batch";
 import { useQueryClient } from "@tanstack/react-query";
 import { Upload01Icon } from "@trenova/shared/components/icons";
@@ -23,10 +24,6 @@ import { EMPTY_LINE, ImportBatchForm, type ImportBatchFormValues } from "./impor
 function toUnixTimestamp(dateStr: string): number {
   const [year, month, day] = dateStr.split("-").map(Number);
   return Math.floor(new Date(year, month - 1, day).getTime() / 1000);
-}
-
-function toCents(dollarStr: string): number {
-  return Math.round(parseFloat(dollarStr) * 100);
 }
 
 type ImportBatchDialogProps = {
@@ -87,7 +84,7 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
         reference: values.reference.trim(),
         receipts: values.receipts.map((line) => ({
           receiptDate: toUnixTimestamp(line.receiptDate),
-          amountMinor: toCents(line.amount),
+          amountMinor: parseAmountToMinor(line.amount) ?? 0,
           referenceNumber: line.referenceNumber.trim(),
           memo: line.memo.trim() || undefined,
         })),

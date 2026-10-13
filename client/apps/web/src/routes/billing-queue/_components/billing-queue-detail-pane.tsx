@@ -24,6 +24,7 @@ import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { BillingQueueActionBar } from "./billing-queue-action-bar";
 import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
+import { billingQueueItemLabel } from "@/lib/billing-queue-label";
 import { BillingQueueChargesTab } from "./billing-queue-charges-tab";
 import { BillingQueueDetentionHolds } from "./billing-queue-detention-holds";
 import { BillingQueueDocumentsTab } from "./billing-queue-documents-tab";
@@ -215,7 +216,7 @@ export default function BillingQueueDetailPane({
         <BillingQueueAssignDialog
           open={assignDialogOpen}
           onOpenChange={setAssignDialogOpen}
-          itemId={item.id}
+          targets={[{ id: item.id, label: billingQueueItemLabel(item) }]}
         />
       )}
     </div>

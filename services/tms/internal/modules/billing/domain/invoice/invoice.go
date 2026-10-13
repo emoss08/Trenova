@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -115,34 +116,38 @@ type Invoice struct {
 	SourceInvoiceAdjustmentID pulid.ID              `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"`
 	IsAdjustmentArtifact      bool                  `json:"isAdjustmentArtifact"      bun:"is_adjustment_artifact,type:BOOLEAN,notnull"`
 	ShipperCustomerID         pulid.ID              `json:"shipperCustomerId"         bun:"shipper_customer_id,type:VARCHAR(100),nullzero"`
-	IsSplitBill               bool                  `json:"isSplitBill"               bun:"is_split_bill,type:BOOLEAN,notnull"`
-	VoidedAt                  *int64                `json:"voidedAt"                  bun:"voided_at,type:BIGINT,nullzero"`
-	VoidedByID                pulid.ID              `json:"voidedById"                bun:"voided_by_id,type:VARCHAR(100),nullzero"`
-	VoidReason                string                `json:"voidReason"                bun:"void_reason,type:TEXT,nullzero"`
-	VoidDisposition           VoidDisposition       `json:"voidDisposition"           bun:"void_disposition,type:VARCHAR(20),nullzero"`
-	VoidedByAdjustmentID      pulid.ID              `json:"voidedByAdjustmentId"      bun:"voided_by_adjustment_id,type:VARCHAR(100),nullzero"`
-	ReferenceInvoiceID        pulid.ID              `json:"referenceInvoiceId"        bun:"reference_invoice_id,type:VARCHAR(100),nullzero"`
-	MemoReason                string                `json:"memoReason"                bun:"memo_reason,type:TEXT,nullzero"`
-	MemoKind                  MemoKind              `json:"memoKind"                  bun:"memo_kind,type:VARCHAR(30),nullzero"`
-	EDISendStatus             EDISendStatus         `json:"ediSendStatus"             bun:"edi_send_status,type:VARCHAR(30),notnull,default:'NotSent'"`
-	LastEDIMessageID          pulid.ID              `json:"lastEdiMessageId"          bun:"last_edi_message_id,type:VARCHAR(100),nullzero"`
-	EDISentAt                 *int64                `json:"ediSentAt"                 bun:"edi_sent_at,type:BIGINT,nullzero"`
-	LastEDIError              string                `json:"lastEdiError"              bun:"last_edi_error,type:TEXT,nullzero"`
-	BalanceDueMinor           int64                 `json:"balanceDueMinor"           bun:"balance_due_minor,scanonly"`
-	Version                   int64                 `json:"version"                   bun:"version,type:BIGINT,notnull"`
-	CreatedAt                 int64                 `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                 int64                 `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	// FactoringCompanyID is the factor the invoice was assigned to when it
+	// posted: it is remitted to the factor and carries its notice.
+	FactoringCompanyID   *pulid.ID       `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),nullzero"`
+	IsSplitBill          bool            `json:"isSplitBill"               bun:"is_split_bill,type:BOOLEAN,notnull"`
+	VoidedAt             *int64          `json:"voidedAt"                  bun:"voided_at,type:BIGINT,nullzero"`
+	VoidedByID           pulid.ID        `json:"voidedById"                bun:"voided_by_id,type:VARCHAR(100),nullzero"`
+	VoidReason           string          `json:"voidReason"                bun:"void_reason,type:TEXT,nullzero"`
+	VoidDisposition      VoidDisposition `json:"voidDisposition"           bun:"void_disposition,type:VARCHAR(20),nullzero"`
+	VoidedByAdjustmentID pulid.ID        `json:"voidedByAdjustmentId"      bun:"voided_by_adjustment_id,type:VARCHAR(100),nullzero"`
+	ReferenceInvoiceID   pulid.ID        `json:"referenceInvoiceId"        bun:"reference_invoice_id,type:VARCHAR(100),nullzero"`
+	MemoReason           string          `json:"memoReason"                bun:"memo_reason,type:TEXT,nullzero"`
+	MemoKind             MemoKind        `json:"memoKind"                  bun:"memo_kind,type:VARCHAR(30),nullzero"`
+	EDISendStatus        EDISendStatus   `json:"ediSendStatus"             bun:"edi_send_status,type:VARCHAR(30),notnull,default:'NotSent'"`
+	LastEDIMessageID     pulid.ID        `json:"lastEdiMessageId"          bun:"last_edi_message_id,type:VARCHAR(100),nullzero"`
+	EDISentAt            *int64          `json:"ediSentAt"                 bun:"edi_sent_at,type:BIGINT,nullzero"`
+	LastEDIError         string          `json:"lastEdiError"              bun:"last_edi_error,type:TEXT,nullzero"`
+	BalanceDueMinor      int64           `json:"balanceDueMinor"           bun:"balance_due_minor,scanonly"`
+	Version              int64           `json:"version"                   bun:"version,type:BIGINT,notnull"`
+	CreatedAt            int64           `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt            int64           `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
-	BillingQueueItem *billingqueue.BillingQueueItem `json:"billingQueueItem,omitempty" bun:"rel:belongs-to,join:billing_queue_item_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Shipment         *shipment.Shipment             `json:"shipment,omitempty"         bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Order            *order.Order                   `json:"order,omitempty"            bun:"rel:belongs-to,join:order_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Customer         *customer.Customer             `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	ShipperCustomer  *customer.Customer             `json:"shipperCustomer,omitempty"  bun:"rel:belongs-to,join:shipper_customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	ReferenceInvoice *Invoice                       `json:"referenceInvoice,omitempty" bun:"rel:belongs-to,join:reference_invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	PDFDocument      *document.Document             `json:"pdfDocument,omitempty"      bun:"rel:belongs-to,join:pdf_document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Lines            []*InvoiceLine                 `json:"lines,omitempty"            bun:"rel:has-many,join:id=invoice_id"`
-	Attachments      []*Attachment                  `json:"attachments,omitempty"      bun:"rel:has-many,join:id=invoice_id"`
-	EmailAttempts    []*EmailAttempt                `json:"emailAttempts,omitempty"    bun:"rel:has-many,join:id=invoice_id"`
+	BillingQueueItem *billingqueue.BillingQueueItem     `json:"billingQueueItem,omitempty" bun:"rel:belongs-to,join:billing_queue_item_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Shipment         *shipment.Shipment                 `json:"shipment,omitempty"         bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Order            *order.Order                       `json:"order,omitempty"            bun:"rel:belongs-to,join:order_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Customer         *customer.Customer                 `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	ShipperCustomer  *customer.Customer                 `json:"shipperCustomer,omitempty"  bun:"rel:belongs-to,join:shipper_customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	ReferenceInvoice *Invoice                           `json:"referenceInvoice,omitempty" bun:"rel:belongs-to,join:reference_invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	PDFDocument      *document.Document                 `json:"pdfDocument,omitempty"      bun:"rel:belongs-to,join:pdf_document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Lines            []*InvoiceLine                     `json:"lines,omitempty"            bun:"rel:has-many,join:id=invoice_id"`
+	Attachments      []*Attachment                      `json:"attachments,omitempty"      bun:"rel:has-many,join:id=invoice_id"`
+	EmailAttempts    []*EmailAttempt                    `json:"emailAttempts,omitempty"    bun:"rel:has-many,join:id=invoice_id"`
 }
 
 type InvoiceLine struct {
@@ -996,3 +1001,17 @@ const (
 	maxAttachmentContentTypeLength = 120
 	maxShareTokenHashLength        = 128
 )
+
+// BilledIn reports whether the invoice is in the given currency. A blank code
+// on either side means the default currency, which is what a blank is saved as.
+func (i *Invoice) BilledIn(currencyCode string) bool {
+	return strings.EqualFold(currencyOrDefault(i.CurrencyCode), currencyOrDefault(currencyCode))
+}
+
+func currencyOrDefault(code string) string {
+	if code = strings.TrimSpace(code); code == "" {
+		return money.DefaultCurrencyCode
+	}
+
+	return code
+}

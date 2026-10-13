@@ -702,6 +702,69 @@ func (_c *MockInvoiceService_VoidInvoice_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
+// DiscardDraftForReview provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) DiscardDraftForReview(ctx context.Context, req *invoiceports.DiscardDraftForReviewRequest, actor *permissionports.RequestActor) error {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DiscardDraftForReview")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.DiscardDraftForReviewRequest, *permissionports.RequestActor) error); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockInvoiceService_DiscardDraftForReview_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DiscardDraftForReview'
+type MockInvoiceService_DiscardDraftForReview_Call struct {
+	*mock.Call
+}
+
+// DiscardDraftForReview is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *invoiceports.DiscardDraftForReviewRequest
+//   - actor *services.RequestActor
+func (_e *MockInvoiceService_Expecter) DiscardDraftForReview(ctx any, req any, actor any) *MockInvoiceService_DiscardDraftForReview_Call {
+	return &MockInvoiceService_DiscardDraftForReview_Call{Call: _e.mock.On("DiscardDraftForReview", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceService_DiscardDraftForReview_Call) Run(run func(ctx context.Context, req *invoiceports.DiscardDraftForReviewRequest, actor *permissionports.RequestActor)) *MockInvoiceService_DiscardDraftForReview_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *invoiceports.DiscardDraftForReviewRequest
+		if args[1] != nil {
+			arg1 = args[1].(*invoiceports.DiscardDraftForReviewRequest)
+		}
+		var arg2 *permissionports.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*permissionports.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_DiscardDraftForReview_Call) Return(err error) *MockInvoiceService_DiscardDraftForReview_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockInvoiceService_DiscardDraftForReview_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.DiscardDraftForReviewRequest, actor *permissionports.RequestActor) error) *MockInvoiceService_DiscardDraftForReview_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // EnqueueAutoPost provides a mock function for the type MockInvoiceService
 func (_mock *MockInvoiceService) EnqueueAutoPost(ctx context.Context, entity *invoice.Invoice, actor *permissionports.RequestActor) error {
 	ret := _mock.Called(ctx, entity, actor)
@@ -1749,6 +1812,206 @@ func (_c *MockInvoiceService_UpdateDraft_Call) Return(invoice1 *invoice.Invoice,
 }
 
 func (_c *MockInvoiceService_UpdateDraft_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.UpdateInvoiceDraftRequest, actor *permissionports.RequestActor) (*invoice.Invoice, error)) *MockInvoiceService_UpdateDraft_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AttachGeneratedPDF provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) AttachGeneratedPDF(ctx context.Context, req *invoiceports.AttachGeneratedPDFRequest) (*invoice.Invoice, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AttachGeneratedPDF")
+	}
+
+	var r0 *invoice.Invoice
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.AttachGeneratedPDFRequest) (*invoice.Invoice, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.AttachGeneratedPDFRequest) *invoice.Invoice); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*invoice.Invoice)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceports.AttachGeneratedPDFRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceService_AttachGeneratedPDF_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AttachGeneratedPDF'
+type MockInvoiceService_AttachGeneratedPDF_Call struct {
+	*mock.Call
+}
+
+// AttachGeneratedPDF is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *invoiceports.AttachGeneratedPDFRequest
+func (_e *MockInvoiceService_Expecter) AttachGeneratedPDF(ctx any, req any) *MockInvoiceService_AttachGeneratedPDF_Call {
+	return &MockInvoiceService_AttachGeneratedPDF_Call{Call: _e.mock.On("AttachGeneratedPDF", ctx, req)}
+}
+
+func (_c *MockInvoiceService_AttachGeneratedPDF_Call) Run(run func(ctx context.Context, req *invoiceports.AttachGeneratedPDFRequest)) *MockInvoiceService_AttachGeneratedPDF_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *invoiceports.AttachGeneratedPDFRequest
+		if args[1] != nil {
+			arg1 = args[1].(*invoiceports.AttachGeneratedPDFRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_AttachGeneratedPDF_Call) Return(value *invoice.Invoice, err error) *MockInvoiceService_AttachGeneratedPDF_Call {
+	_c.Call.Return(value, err)
+	return _c
+}
+
+func (_c *MockInvoiceService_AttachGeneratedPDF_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.AttachGeneratedPDFRequest) (*invoice.Invoice, error)) *MockInvoiceService_AttachGeneratedPDF_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReportAutoPostFailure provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) ReportAutoPostFailure(ctx context.Context, req *invoiceports.ReportAutoPostFailureRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReportAutoPostFailure")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.ReportAutoPostFailureRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockInvoiceService_ReportAutoPostFailure_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReportAutoPostFailure'
+type MockInvoiceService_ReportAutoPostFailure_Call struct {
+	*mock.Call
+}
+
+// ReportAutoPostFailure is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *invoiceports.ReportAutoPostFailureRequest
+
+func (_e *MockInvoiceService_Expecter) ReportAutoPostFailure(ctx any, req any) *MockInvoiceService_ReportAutoPostFailure_Call {
+	return &MockInvoiceService_ReportAutoPostFailure_Call{Call: _e.mock.On("ReportAutoPostFailure", ctx, req)}
+}
+
+func (_c *MockInvoiceService_ReportAutoPostFailure_Call) Run(run func(ctx context.Context, req *invoiceports.ReportAutoPostFailureRequest)) *MockInvoiceService_ReportAutoPostFailure_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *invoiceports.ReportAutoPostFailureRequest
+		if args[1] != nil {
+			arg1 = args[1].(*invoiceports.ReportAutoPostFailureRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_ReportAutoPostFailure_Call) Return(err error) *MockInvoiceService_ReportAutoPostFailure_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockInvoiceService_ReportAutoPostFailure_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.ReportAutoPostFailureRequest) error) *MockInvoiceService_ReportAutoPostFailure_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewPostSummary provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) PreviewPostSummary(ctx context.Context, req *invoiceports.PostInvoiceRequest, actor *permissionports.RequestActor) (*invoiceports.InvoicePostPreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewPostSummary")
+	}
+
+	var r0 *invoiceports.InvoicePostPreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.PostInvoiceRequest, *permissionports.RequestActor) (*invoiceports.InvoicePostPreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.PostInvoiceRequest, *permissionports.RequestActor) *invoiceports.InvoicePostPreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*invoiceports.InvoicePostPreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceports.PostInvoiceRequest, *permissionports.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceService_PreviewPostSummary_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewPostSummary'
+type MockInvoiceService_PreviewPostSummary_Call struct {
+	*mock.Call
+}
+
+// PreviewPostSummary is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *invoiceports.PostInvoiceRequest
+//   - actor *permissionports.RequestActor
+func (_e *MockInvoiceService_Expecter) PreviewPostSummary(ctx any, req any, actor any) *MockInvoiceService_PreviewPostSummary_Call {
+	return &MockInvoiceService_PreviewPostSummary_Call{Call: _e.mock.On("PreviewPostSummary", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceService_PreviewPostSummary_Call) Run(run func(ctx context.Context, req *invoiceports.PostInvoiceRequest, actor *permissionports.RequestActor)) *MockInvoiceService_PreviewPostSummary_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *invoiceports.PostInvoiceRequest
+		if args[1] != nil {
+			arg1 = args[1].(*invoiceports.PostInvoiceRequest)
+		}
+		var arg2 *permissionports.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*permissionports.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_PreviewPostSummary_Call) Return(value *invoiceports.InvoicePostPreview, err error) *MockInvoiceService_PreviewPostSummary_Call {
+	_c.Call.Return(value, err)
+	return _c
+}
+
+func (_c *MockInvoiceService_PreviewPostSummary_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.PostInvoiceRequest, actor *permissionports.RequestActor) (*invoiceports.InvoicePostPreview, error)) *MockInvoiceService_PreviewPostSummary_Call {
 	_c.Call.Return(run)
 	return _c
 }

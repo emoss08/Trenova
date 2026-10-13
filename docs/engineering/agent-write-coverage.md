@@ -86,7 +86,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 80 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 268 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 271 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 94 |
@@ -97,14 +97,14 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1095 writes: 585 GraphQL mutations and 510 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1103 writes: 585 GraphQL mutations and 518 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 390 |
-| Exempt | 676 |
+| Exempt | 679 |
 | — Security | 80 |
-| — Configuration | 268 |
+| — Configuration | 271 |
 | — User preference | 38 |
 | — Infrastructure | 52 |
 | — Agent administration | 94 |
@@ -112,10 +112,10 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Read-only | 56 |
 | — Attestation | 46 |
 | — Duplicate | 8 |
-| **Pending** | **29** |
-| Total | 1095 |
+| **Pending** | **34** |
+| Total | 1103 |
 
-Of the 419 writes an agent should be able to make, 390 have a tool (93%).
+Of the 424 writes an agent should be able to make, 390 have a tool (91%).
 
 ## Pending
 
@@ -128,6 +128,11 @@ The writes no tool performs yet, and what the tool would do.
 | billingqueue | `mutation undoBillingQueueIssue` | Take back how a billing queue item's check was settled and put back any charge the settlement changed. |
 | checkcall | `mutation issueCarrierTrackingLink` | Issue a tracking link to the carrier on a brokered move and email it to them, replacing any live link. |
 | checkcall | `mutation revokeCarrierTrackingLink` | Revoke the live carrier tracking link on a move, so the carrier can no longer post through it. |
+| collection | `POST /api/v1/accounting/collections/customers/:customerID/activities/` | Log a call, email, note or promise to pay against a customer's overdue receivables. |
+| collection | `POST /api/v1/accounting/collections/customers/:customerID/reminder/` | Email a customer a reminder of every overdue invoice it has, with a note. |
+| collection | `PUT /api/v1/accounting/collections/customers/:customerID/collector/` | Assign a customer's overdue receivables to a collector, or take them off whoever has them. |
+| collection | `PUT /api/v1/accounting/collections/customers/:customerID/follow-up/` | Schedule when a customer's overdue receivables are next chased, or clear the follow-up. |
+| customerstatement | `POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/` | Email a customer its statement of account as a PDF, with a note. |
 | inboundmessage | `mutation assignInboundMessages` | Assign inbound messages to a person, or take them off whoever has them. |
 | inboundmessage | `mutation handOffTriage` | Hand everything still waiting in Triage to the on-call person at the end of the day. |
 | inboundmessage | `mutation reopenInboundMessages` | Put settled inbound messages back in the Triage queue. |
@@ -194,10 +199,12 @@ The writes no tool performs yet, and what the tool would do.
 | carriertrackingpublic | 1 | 0 | 1 | 0 |
 | casechecklist | 2 | 0 | 2 | 0 |
 | checkcall | 3 | 1 | 0 | 2 |
+| collection | 4 | 0 | 0 | 4 |
 | commodity | 4 | 4 | 0 | 0 |
 | costing | 2 | 0 | 2 | 0 |
 | customer | 4 | 4 | 0 | 0 |
 | customerpayment | 5 | 5 | 0 | 0 |
+| customerstatement | 1 | 0 | 0 | 1 |
 | customfield | 4 | 0 | 4 | 0 |
 | dataentrycontrol | 1 | 0 | 1 | 0 |
 | dataretention | 1 | 0 | 1 | 0 |
@@ -227,6 +234,7 @@ The writes no tool performs yet, and what the tool would do.
 | extractioneval | 5 | 0 | 5 | 0 |
 | extractionrollout | 1 | 0 | 1 | 0 |
 | extractionshadow | 1 | 0 | 1 | 0 |
+| factoringcompany | 3 | 0 | 3 | 0 |
 | fiscalperiod | 9 | 5 | 4 | 0 |
 | fiscalyear | 7 | 0 | 7 | 0 |
 | fleetcode | 3 | 0 | 3 | 0 |
@@ -771,6 +779,15 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation logCheckCall` | Tool: `log_check_call` |
 | `mutation revokeCarrierTrackingLink` | Pending: Revoke the live carrier tracking link on a move, so the carrier can no longer post through it. |
 
+### collection
+
+| Write | Decision |
+| --- | --- |
+| `POST /api/v1/accounting/collections/customers/:customerID/activities/`<br>collectionhandler.logActivity | Pending: Log a call, email, note or promise to pay against a customer's overdue receivables. |
+| `POST /api/v1/accounting/collections/customers/:customerID/reminder/`<br>collectionhandler.sendReminder | Pending: Email a customer a reminder of every overdue invoice it has, with a note. |
+| `PUT /api/v1/accounting/collections/customers/:customerID/collector/`<br>collectionhandler.assignCollector | Pending: Assign a customer's overdue receivables to a collector, or take them off whoever has them. |
+| `PUT /api/v1/accounting/collections/customers/:customerID/follow-up/`<br>collectionhandler.scheduleFollowUp | Pending: Schedule when a customer's overdue receivables are next chased, or clear the follow-up. |
+
 ### commodity
 
 | Write | Decision |
@@ -805,6 +822,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation postAndApplyCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/` | Tool: `post_customer_payment` |
 | `mutation reverseCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/:paymentID/reverse/` | Tool: `reverse_customer_payment` |
 | `mutation unapplyCreditMemoApplication`<br>twin `POST /api/v1/accounting/customer-payments/credit-memo-applications/:applicationID/unapply/` | Tool: `unapply_credit_memo` |
+
+### customerstatement
+
+| Write | Decision |
+| --- | --- |
+| `POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/`<br>customerstatementhandler.send | Pending: Email a customer its statement of account as a PDF, with a note. |
 
 ### customfield
 
@@ -1182,6 +1205,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation updateExtractionShadowSettings` | Exempt, agent-administration: Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against. |
+
+### factoringcompany
+
+| Write | Decision |
+| --- | --- |
+| `PATCH /api/v1/factoring-companies/:factoringCompanyID/`<br>factoringcompanyhandler.patch | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
+| `POST /api/v1/factoring-companies/`<br>factoringcompanyhandler.create | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
+| `PUT /api/v1/factoring-companies/:factoringCompanyID/`<br>factoringcompanyhandler.update | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
 
 ### fiscalperiod
 

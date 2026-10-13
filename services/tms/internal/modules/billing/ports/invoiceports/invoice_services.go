@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -58,6 +59,25 @@ type VoidInvoiceRequest struct {
 	Disposition invoice.VoidDisposition
 }
 
+type AttachGeneratedPDFRequest struct {
+	InvoiceID  pulid.ID
+	DocumentID pulid.ID
+	TenantInfo pagination.TenantInfo
+	Actor      kernelports.AuditActor
+}
+
+type ReportAutoPostFailureRequest struct {
+	InvoiceID  pulid.ID
+	TenantInfo pagination.TenantInfo
+	Reason     string
+	Actor      kernelports.AuditActor
+}
+
+type DiscardDraftForReviewRequest struct {
+	BillingQueueItemID pulid.ID
+	TenantInfo         pagination.TenantInfo
+}
+
 type VoidInvoiceResult struct {
 	Invoice *invoice.Invoice `json:"invoice"`
 	// AdjustmentID is the full reversal a posted void went through.
@@ -89,6 +109,10 @@ type CreateMemoRequest struct {
 	Memo               string
 	MemoKind           invoice.MemoKind
 	AutoPost           bool
+	// CurrencyCode bills the memo in a currency other than the customer's
+	// billing currency, as a late charge on an invoice in that currency must
+	// be. Blank means the customer's billing currency.
+	CurrencyCode string
 }
 
 type CreateInvoiceFromShipmentsRequest struct {
@@ -198,12 +222,14 @@ type InvoiceSendRequest struct {
 	InvoiceID  pulid.ID
 	TenantInfo pagination.TenantInfo
 	BaseURL    string
+	StartedAt  int64
 }
 
 type AutoSendInvoiceAfterPDFGenerationRequest struct {
 	InvoiceID  pulid.ID
 	TenantInfo pagination.TenantInfo
 	BaseURL    string
+	StartedAt  int64
 }
 
 type InvoiceSendPlan struct {
@@ -229,14 +255,8 @@ type InvoiceSendPlan struct {
 	// profile, because those are free text and the send path wraps them itself.
 	BodyHTML string `json:"bodyHtml"`
 
-	// FromTemplate says the wording is the organization's template rather than a
-	// stored draft.
-	//
-	// The send path needs it for two decisions: whether to use BodyHTML, and
-	// whether to freeze this wording into the invoice's draft columns. Freezing a
-	// template render would mean a later edit to the template never reaches a
-	// re-sent invoice, and the frozen copy would come back through the ad-hoc
-	// engine instead of html/template.
+	// FromTemplate says the wording is the organization's template rather than
+	// free text, which decides whether the send path uses BodyHTML.
 	FromTemplate bool `json:"fromTemplate"`
 }
 
@@ -348,6 +368,16 @@ type InvoiceService interface {
 		req *CreateInvoiceFromOrderRequest,
 		actor *permissionports.RequestActor,
 	) (*CreateInvoicesResult, error)
+	AttachGeneratedPDF(
+		ctx context.Context,
+		req *AttachGeneratedPDFRequest,
+	) (*invoice.Invoice, error)
+	ReportAutoPostFailure(ctx context.Context, req *ReportAutoPostFailureRequest) error
+	DiscardDraftForReview(
+		ctx context.Context,
+		req *DiscardDraftForReviewRequest,
+		actor *permissionports.RequestActor,
+	) error
 	VoidInvoice(
 		ctx context.Context,
 		req *VoidInvoiceRequest,
@@ -409,6 +439,63 @@ type InvoiceService interface {
 		entity *invoice.Invoice,
 		actor *permissionports.RequestActor,
 	) error
+	PreviewPostSummary(
+		ctx context.Context,
+		req *PostInvoiceRequest,
+		actor *permissionports.RequestActor,
+	) (*InvoicePostPreview, error)
+}
+
+// InvoicePostPreview is what posting an invoice would do, for the person
+// about to post it: the ledger entry it books, the records it moves, where
+// it goes next, or why it would be refused.
+type InvoicePostPreview struct {
+	InvoiceID    pulid.ID `json:"invoiceId"`
+	Number       string   `json:"number"`
+	BillToName   string   `json:"billToName"`
+	CurrencyCode string   `json:"currencyCode"`
+	TotalMinor   int64    `json:"totalMinor"`
+	// Refusals are why Post would refuse the invoice as it stands; nothing
+	// else is planned when there are any.
+	Refusals      []string `json:"refusals"`
+	AlreadyPosted bool     `json:"alreadyPosted"`
+	// Journal is nil when the organization's accounting control books no
+	// entry for this invoice.
+	Journal         *InvoicePostJournal          `json:"journal"`
+	ShipmentsBilled []string                     `json:"shipmentsBilled"`
+	QueueItemPosted bool                         `json:"queueItemPosted"`
+	AccountingSync  []InvoicePostSyncDestination `json:"accountingSync"`
+	EDI             *InvoicePostEDI              `json:"edi"`
+}
+
+type InvoicePostJournal struct {
+	AccountingDate   int64                    `json:"accountingDate"`
+	EntryStatus      string                   `json:"entryStatus"`
+	RequiresApproval bool                     `json:"requiresApproval"`
+	Lines            []InvoicePostJournalLine `json:"lines"`
+}
+
+type InvoicePostJournalLine struct {
+	GLAccountID pulid.ID `json:"glAccountId"`
+	AccountCode string   `json:"accountCode"`
+	AccountName string   `json:"accountName"`
+	Description string   `json:"description"`
+	DebitMinor  int64    `json:"debitMinor"`
+	CreditMinor int64    `json:"creditMinor"`
+}
+
+type InvoicePostSyncDestination struct {
+	Integration   string `json:"integration"`
+	Company       string `json:"company"`
+	AwaitsRelease bool   `json:"awaitsRelease"`
+}
+
+// InvoicePostEDI is the outbound 210 posting would queue; WillSend is false
+// when the customer sends 210s by hand or a blocker stands in the way.
+type InvoicePostEDI struct {
+	PartnerName string   `json:"partnerName"`
+	WillSend    bool     `json:"willSend"`
+	Blockers    []string `json:"blockers"`
 }
 
 // InvoiceEDISendPlan is whether an invoice's outbound 210 can go, where it

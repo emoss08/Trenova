@@ -116,6 +116,37 @@ const CREDIT_STATUS_CONFIG: Record<
   },
 };
 
+/** What the customer's credit standing stops, in the words dispatch reads. */
+function creditConsequence(
+  profile: {
+    creditStatus?: string | null;
+    enforceCreditLimit?: boolean | null;
+    creditHoldAutomatic?: boolean | null;
+  },
+  t: ReturnType<typeof useT>,
+): string {
+  switch (profile.creditStatus) {
+    case "Warning":
+      return t("This customer is close to their credit limit.");
+    case "Review":
+      return t("This customer's credit is under review.");
+    case "Hold":
+    case "Suspended":
+      if (!profile.enforceCreditLimit) {
+        return t("Their credit limit isn't enforced, so nothing is blocked.");
+      }
+      return profile.creditHoldAutomatic
+        ? t(
+            "No new shipments can be booked for them until the balance is paid back under the limit. Shipments already booked are still billed.",
+          )
+        : t(
+            "No new shipments can be booked for them, and their invoices wait until accounts receivable lifts the hold.",
+          );
+    default:
+      return "";
+  }
+}
+
 function CreditHoldAlert({ customerId, payerName }: { customerId: string; payerName?: string }) {
   const t = useT();
 
@@ -136,16 +167,9 @@ function CreditHoldAlert({ customerId, payerName }: { customerId: string; payerN
       <Icon className="size-4" />
       <AlertTitle>{payerName ? `${t(config.label)} — ${payerName}` : t(config.label)}</AlertTitle>
       <AlertDescription>
-        {billingProfile.creditHoldReason ||
-          (billingProfile.creditStatus === "Warning"
-            ? t("This customer is approaching their credit limit. Review before dispatching.")
-            : billingProfile.creditStatus === "Review"
-              ? t(
-                  "This customer's credit is under review. Shipments may be delayed pending approval.",
-                )
-              : t(
-                  "This customer's account is restricted. New shipments may not be invoiced until the hold is resolved.",
-                ))}
+        {[billingProfile.creditHoldReason, creditConsequence(billingProfile, t)]
+          .filter(Boolean)
+          .join(". ")}
       </AlertDescription>
     </Alert>
   );

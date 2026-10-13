@@ -37,6 +37,7 @@ type InvoiceAdjustmentControl struct {
 	StandardAdjustmentApprovalThreshold decimal.Decimal        `json:"standardAdjustmentApprovalThreshold" bun:"standard_adjustment_approval_threshold,type:NUMERIC(19,4),nullzero"`
 	WriteOffApprovalPolicy              WriteOffApprovalPolicy `json:"writeOffApprovalPolicy"              bun:"write_off_approval_policy,type:write_off_approval_policy_enum,notnull,default:'RequireApprovalAboveThreshold'"`
 	WriteOffApprovalThreshold           decimal.Decimal        `json:"writeOffApprovalThreshold"           bun:"write_off_approval_threshold,type:NUMERIC(19,4),nullzero"`
+	RequireSeparateApprover             bool                   `json:"requireSeparateApprover"             bun:"require_separate_approver,type:BOOLEAN,notnull,default:false"`
 
 	RerateVarianceTolerancePercent decimal.Decimal                `json:"rerateVarianceTolerancePercent" bun:"rerate_variance_tolerance_percent,type:NUMERIC(9,6),notnull,default:0.000000"`
 	ReplacementInvoiceReviewPolicy ReplacementInvoiceReviewPolicy `json:"replacementInvoiceReviewPolicy" bun:"replacement_invoice_review_policy,type:replacement_invoice_review_policy_enum,notnull,default:'RequireReviewWhenEconomicTermsChange'"`

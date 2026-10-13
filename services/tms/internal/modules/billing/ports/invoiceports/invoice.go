@@ -73,6 +73,11 @@ type UpsertInvoiceAttachmentsRequest struct {
 	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type RevokeInvoiceDocumentShareTokensRequest struct {
+	InvoiceID  pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type GetInvoiceDocumentShareTokenRequest struct {
 	TokenHash string `json:"-"`
 }
@@ -181,7 +186,7 @@ type InvoiceRepository interface {
 		ctx context.Context,
 		messageID pulid.ID,
 		tenantInfo pagination.TenantInfo,
-	) error
+	) ([]*invoice.Invoice, error)
 	CreateDocumentShareToken(
 		ctx context.Context,
 		token *invoice.DocumentShareToken,
@@ -190,6 +195,10 @@ type InvoiceRepository interface {
 		ctx context.Context,
 		req GetInvoiceDocumentShareTokenRequest,
 	) (*invoice.DocumentShareToken, error)
+	RevokeDocumentShareTokens(
+		ctx context.Context,
+		req RevokeInvoiceDocumentShareTokensRequest,
+	) (int64, error)
 	UpdateDocumentShareToken(
 		ctx context.Context,
 		token *invoice.DocumentShareToken,

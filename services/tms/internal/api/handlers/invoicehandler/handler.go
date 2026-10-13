@@ -22,19 +22,22 @@ type Params struct {
 	Service              invoiceports.InvoiceService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	RateLimiter          *middleware.RateLimiter
 }
 
 type Handler struct {
-	service invoiceports.InvoiceService
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	service     invoiceports.InvoiceService
+	eh          *helpers.ErrorHandler
+	pm          *middleware.PermissionMiddleware
+	rateLimiter *middleware.RateLimiter
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		service:     p.Service,
+		eh:          p.ErrorHandler,
+		pm:          p.PermissionMiddleware,
+		rateLimiter: p.RateLimiter,
 	}
 }
 
@@ -95,6 +98,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpRead),
 		h.emailAttempts,
 	)
+	api.GET(
+		"/:invoiceID/post-preview/",
+		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpUpdate),
+		h.postPreview,
+	)
 	api.POST(
 		"/:invoiceID/post/",
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpUpdate),
@@ -113,11 +121,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
-	api := rg.Group("/billing/invoices")
-	api.GET(
-		"/shared-documents/:token/download/",
-		h.downloadSharedDocument,
-	)
+	api := rg.Group("/billing/invoices/shared-documents")
+	api.Use(h.rateLimiter.ByPublicToken("token"))
+	api.GET("/:token/download/", h.downloadSharedDocument)
 }
 
 type createFromShipmentsRequest struct {
@@ -463,6 +469,31 @@ func (h *Handler) post(c *gin.Context) {
 	c.JSON(http.StatusOK, updated)
 }
 
+func (h *Handler) postPreview(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	invoiceID, err := pulid.MustParse(c.Param("invoiceID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	preview, err := h.service.PreviewPostSummary(
+		c.Request.Context(),
+		&invoiceports.PostInvoiceRequest{
+			InvoiceID:   invoiceID,
+			TenantInfo:  pagination.FromAuth(authCtx),
+			TriggeredBy: "manual",
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, preview)
+}
+
 func tenantInfo(authCtx *authctx.AuthContext) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  authCtx.OrganizationID,
@@ -479,11 +510,7 @@ func baseURL(c *gin.Context) string {
 			scheme = "http"
 		}
 	}
-	host := c.GetHeader("X-Forwarded-Host")
-	if host == "" {
-		host = c.Request.Host
-	}
-	return scheme + "://" + host
+	return scheme + "://" + c.Request.Host
 }
 
 type voidInvoiceRequest struct {

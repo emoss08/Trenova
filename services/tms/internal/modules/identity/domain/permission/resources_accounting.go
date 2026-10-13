@@ -497,6 +497,11 @@ func (r *Registry) registerAccountingResources() {
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View AR ledger and aging"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Work collections",
+				Description: "Log calls, notes and promises to pay, assign collectors and schedule follow-ups",
+			},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export the AR subledger"},
 		},
 		DefaultSensitivity: SensitivityRestricted,

@@ -17,6 +17,11 @@ fragment CustomerBillingProfileFields on CustomerBillingProfile {
   autoCreditHold
   creditHoldReason
   autoSendInvoiceOnGeneration
+  sendPaymentReminders
+  sendStatements
+  factoringCompanyId
+  creditHoldAutomatic
+  creditReviewedAt
   emailInvoiceEnabled
   ediInvoiceEnabled
   splitBy
@@ -70,7 +75,6 @@ fragment CustomerEmailProfileFields on CustomerEmailProfile {
   customerId
   subject
   comment
-  fromEmail
   toRecipients
   ccRecipients
   bccRecipients

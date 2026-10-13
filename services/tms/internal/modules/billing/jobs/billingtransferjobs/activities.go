@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingtransferjobs/billingtransfercontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -35,6 +37,9 @@ type ActivitiesParams struct {
 	fx.In
 
 	RunRepo             billingtransferports.BillingTransferRunRepository
+	BillingControls     tenantports.BillingControlRepository
+	Users               tenantports.UserRepository
+	Transfers           *billingtransferservice.Service
 	ShipmentService     shipmentports.ShipmentService
 	NotificationService *notificationservice.Service
 	RealtimeService     agentports.RealtimeService `optional:"true"`
@@ -43,6 +48,9 @@ type ActivitiesParams struct {
 
 type Activities struct {
 	runRepo      billingtransferports.BillingTransferRunRepository
+	controls     tenantports.BillingControlRepository
+	users        tenantports.UserRepository
+	transfers    *billingtransferservice.Service
 	shipments    shipmentports.ShipmentService
 	notification *notificationservice.Service
 	realtime     agentports.RealtimeService
@@ -52,6 +60,9 @@ type Activities struct {
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		runRepo:      p.RunRepo,
+		controls:     p.BillingControls,
+		users:        p.Users,
+		transfers:    p.Transfers,
 		shipments:    p.ShipmentService,
 		notification: p.NotificationService,
 		realtime:     p.RealtimeService,
@@ -462,6 +473,10 @@ func (a *Activities) notifyFinished(
 	if a.notification == nil {
 		return
 	}
+	if run.Scope == billingtransfer.RunScopeAutomatic {
+		a.notifyAutomaticFinished(ctx, run)
+		return
+	}
 
 	eventType, priority, title, message := finishedWording(run)
 	targetUserID := run.RequestedByID
@@ -476,20 +491,24 @@ func (a *Activities) notifyFinished(
 		Priority:       priority,
 		Title:          title,
 		Message:        message,
-		Data: map[string]any{
-			"runId":               run.ID.String(),
-			"status":              string(run.Status),
-			"totalCount":          run.TotalCount,
-			"transferredCount":    run.TransferredCount,
-			"notTransferredCount": run.NotTransferredCount,
-			"skippedCount":        run.SkippedCount,
-			"retryableCount":      run.RetryableCount,
-			"unmatchedCount":      run.UnmatchedCount,
-		},
-		Source: "billingtransferjobs.FinalizeRun",
+		Data:           runNoticeData(run),
+		Source:         "billingtransferjobs.FinalizeRun",
 	}); err != nil {
 		a.l.Error("failed to announce a finished billing transfer",
 			zap.String("runId", run.ID.String()), zap.Error(err))
+	}
+}
+
+func runNoticeData(run *billingtransfer.BillingTransferRun) map[string]any {
+	return map[string]any{
+		"runId":               run.ID.String(),
+		"status":              string(run.Status),
+		"totalCount":          run.TotalCount,
+		"transferredCount":    run.TransferredCount,
+		"notTransferredCount": run.NotTransferredCount,
+		"skippedCount":        run.SkippedCount,
+		"retryableCount":      run.RetryableCount,
+		"unmatchedCount":      run.UnmatchedCount,
 	}
 }
 

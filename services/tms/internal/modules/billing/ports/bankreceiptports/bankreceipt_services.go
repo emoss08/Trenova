@@ -35,6 +35,13 @@ type MatchBankReceiptRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type ReleasePaymentMatchRequest struct {
+	PaymentID        pulid.ID
+	PaymentReference string
+	Reason           string
+	TenantInfo       pagination.TenantInfo
+}
+
 type GetBankReceiptRequest struct {
 	ReceiptID  pulid.ID              `json:"receiptId"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -52,6 +59,11 @@ type BankReceiptService interface {
 		req *MatchBankReceiptRequest,
 		actor *permissionports.RequestActor,
 	) (*bankreceipt.BankReceipt, error)
+	ReleasePaymentMatch(
+		ctx context.Context,
+		req *ReleasePaymentMatchRequest,
+		actor *permissionports.RequestActor,
+	) ([]*bankreceipt.BankReceipt, error)
 	ListExceptions(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

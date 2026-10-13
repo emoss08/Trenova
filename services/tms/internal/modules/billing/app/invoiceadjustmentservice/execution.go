@@ -3,6 +3,7 @@ package invoiceadjustmentservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -94,19 +95,8 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 	if adjustment.Status == invoiceadjustment.StatusExecuted {
 		return adjustment, nil
 	}
-	if adjustment.Status == invoiceadjustment.StatusDraft {
-		return nil, errortypes.NewValidationError(
-			"adjustmentId",
-			errortypes.ErrInvalidOperation,
-			"Draft adjustments cannot be executed",
-		)
-	}
-	if adjustment.Status == invoiceadjustment.StatusRejected {
-		return nil, errortypes.NewValidationError(
-			"adjustmentId",
-			errortypes.ErrInvalidOperation,
-			"Rejected adjustments cannot be executed",
-		)
+	if err = refuseUnexecutable(adjustment); err != nil {
+		return nil, err
 	}
 
 	waivers, err := detentionWaiversOf(adjustment)
@@ -122,6 +112,22 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		},
 	)
 	if err != nil {
+		return nil, err
+	}
+
+	// A rejection holds the same lock, so the status read before it may be
+	// stale: read it again now that nobody else can change it.
+	adjustment, err = s.repo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
+		ID:         adjustmentID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if adjustment.Status == invoiceadjustment.StatusExecuted {
+		return adjustment, nil
+	}
+	if err = refuseUnexecutable(adjustment); err != nil {
 		return nil, err
 	}
 
@@ -216,6 +222,15 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 			creditMemoInvoice,
 			accountingsync.SyncSourceAdjustmentCreditMemo,
 		),
+	); err != nil {
+		return nil, err
+	}
+	if lockedInvoice, err = s.applyCreditToSource(
+		ctx,
+		adjustment,
+		creditMemoInvoice,
+		lockedInvoice,
+		actor,
 	); err != nil {
 		return nil, err
 	}
@@ -350,8 +365,28 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 	}
 
 	s.logAudit(updated, actor, permission.OpUpdate, "Invoice adjustment executed")
+	s.publishAdjustedInvoices(ctx, actor, lockedInvoice, creditMemoInvoice, replacementInvoice)
 	s.logAdjustmentEvent("invoice adjustment executed", updated, zap.InfoLevel)
 	return updated, nil
+}
+
+func refuseUnexecutable(adjustment *invoiceadjustment.InvoiceAdjustment) error {
+	switch adjustment.Status { //nolint:exhaustive // every other status may run
+	case invoiceadjustment.StatusDraft:
+		return errortypes.NewValidationError(
+			"adjustmentId",
+			errortypes.ErrInvalidOperation,
+			"Draft adjustments cannot be executed",
+		)
+	case invoiceadjustment.StatusRejected:
+		return errortypes.NewValidationError(
+			"adjustmentId",
+			errortypes.ErrInvalidOperation,
+			"Rejected adjustments cannot be executed",
+		)
+	default:
+		return nil
+	}
 }
 
 func (s *Service) createCreditMemoQueueItem(
@@ -480,13 +515,14 @@ func (s *Service) createReplacementQueueItem(
 	lines []*invoice.InvoiceLine,
 	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 ) (*billingqueue.BillingQueueItem, error) {
-	number, err := s.generator.GenerateInvoiceNumber(
-		ctx,
-		adjustment.OrganizationID,
-		adjustment.BusinessUnitID,
-		"",
-		"",
-	)
+	number, err := s.numberer().Next(ctx, &billingnumber.Request{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: adjustment.OrganizationID,
+			BuID:  adjustment.BusinessUnitID,
+		},
+		BillType: billingqueue.BillTypeInvoice,
+		PayerID:  sourceInvoice.CustomerID,
+	})
 	if err != nil {
 		return nil, err
 	}

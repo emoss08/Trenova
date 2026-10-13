@@ -115,6 +115,7 @@ func (s *Service) sweepPeriod(
 		if err != nil {
 			s.l.Error("failed to build scheduled invoice run", zap.Error(err))
 			result.Failed++
+			s.notifyBuildFailed(ctx, tenantInfo, key, err)
 			return
 		}
 		result.RunsBuilt++
@@ -138,8 +139,10 @@ func (s *Service) sweepPeriod(
 	if err != nil {
 		s.l.Error("failed to commit scheduled invoice run", zap.Error(err))
 		result.Failed++
+		s.notifyCommitFailed(ctx, tenantInfo, key, run.ID.String(), err)
 		return
 	}
+	s.notifyGroupsFailed(ctx, tenantInfo, key, commit)
 
 	result.InvoicesCreated += commit.SuccessCount
 	result.GroupsSkipped += commit.SkippedCount

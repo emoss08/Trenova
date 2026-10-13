@@ -16,6 +16,8 @@ import { ar } from "./ar";
 import { bankReceipt } from "./bank-receipt";
 import { bankReceiptBatch } from "./bank-receipt-batch";
 import { bankReceiptWorkItem } from "./bank-receipt-work-item";
+import { collection } from "./collection";
+import { customerStatement } from "./customer-statement";
 import { journalEntry } from "./journal-entry";
 import { journalReversal } from "./journal-reversal";
 import { manualJournal } from "./manual-journal";
@@ -90,6 +92,8 @@ const financialQueries = mergeQueryKeys(
   bankReceipt,
   bankReceiptBatch,
   bankReceiptWorkItem,
+  collection,
+  customerStatement,
   journalEntry,
   journalReversal,
   manualJournal,

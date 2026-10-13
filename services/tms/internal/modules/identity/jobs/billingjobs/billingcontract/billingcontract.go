@@ -31,6 +31,13 @@ type AutoPostInvoicePayload struct {
 	APIKeyID      pulid.ID                  `json:"apiKeyId"`
 }
 
+// AutoPostFailurePayload reports why an automatic post gave up, so the person
+// who approved the invoice learns it is still a draft.
+type AutoPostFailurePayload struct {
+	AutoPostInvoicePayload
+	Reason string `json:"reason"`
+}
+
 type SendInvoiceEmailPayload struct {
 	temporaltype.BasePayload
 	InvoiceID     pulid.ID                  `json:"invoiceId"`

@@ -11,6 +11,7 @@ import {
 } from "@trenova/shared/types/errors";
 import { API_BASE_URL } from "./constants";
 import { reportPlanLimit } from "./plan-limit";
+import { filenameFromDisposition } from "./utils";
 
 const CSRF_HEADER_NAME =
   (import.meta.env.VITE_CSRF_HEADER_NAME as string | undefined) ?? "X-CSRF-Token";
@@ -262,18 +263,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({
-      type: "internal-error",
-      title: translate("Request failed"),
-      // i18n-ignore: HTTP status code, the same in every language
-      detail: `HTTP ${response.status}`,
-      status: response.status,
-    }));
-    const parsed = apiErrorResponseSchema.safeParse(errorData);
-    const validatedData = parsed.success ? parsed.data : errorData;
-    throw failedRequest(
-      new ApiRequestError(response.status, validatedData, retryAfterOf(response)),
-    );
+    await rejectResponse(response, translate("Request failed"));
   }
 
   if (response.status === 204) {
@@ -281,6 +271,49 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   return response.json();
+}
+
+/**
+ * Turns a failed response into the ApiRequestError every caller handles,
+ * reading the problem body when the server sent one.
+ */
+async function rejectResponse(response: Response, title: string): Promise<never> {
+  const errorData = await response.json().catch(() => ({
+    type: "internal-error",
+    title,
+    // i18n-ignore: HTTP status code, the same in every language
+    detail: `HTTP ${response.status}`,
+    status: response.status,
+  }));
+  const parsed = apiErrorResponseSchema.safeParse(errorData);
+  const validatedData = parsed.success ? parsed.data : errorData;
+  throw failedRequest(new ApiRequestError(response.status, validatedData, retryAfterOf(response)));
+}
+
+/** A generated file the server sent back, named as the server named it. */
+export type DownloadedFile = { blob: Blob; fileName: string };
+
+async function fileRequest(
+  endpoint: string,
+  fallbackName: string,
+  options: RequestInit = {},
+): Promise<DownloadedFile> {
+  const method = options.method ?? "GET";
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    method,
+    credentials: "include",
+    headers: await withCsrfHeader(method, options.headers, endpoint),
+  });
+
+  if (!response.ok) {
+    await rejectResponse(response, translate("Download failed"));
+  }
+
+  return {
+    blob: await response.blob(),
+    fileName: filenameFromDisposition(response.headers.get("Content-Disposition"), fallbackName),
+  };
 }
 
 async function uploadRequest<T>(
@@ -507,6 +540,14 @@ export const api = {
 
   delete: async <T>(endpoint: string, options?: RequestInit) =>
     request<T>(endpoint, { ...options, method: "DELETE" }),
+
+  /**
+   * Fetches a file the server generates, such as a PDF, with the same
+   * credentials and error handling as every other request. Errors come back
+   * as ApiRequestError rather than a downloaded error page.
+   */
+  download: async (endpoint: string, fallbackName: string, options?: RequestInit) =>
+    fileRequest(endpoint, fallbackName, options),
 
   upload: async <T>(endpoint: string, formData: FormData, options?: RequestInit) =>
     uploadRequest<T>(endpoint, formData, options),

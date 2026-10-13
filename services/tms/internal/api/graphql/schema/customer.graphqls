@@ -136,14 +136,23 @@ type CustomerBillingProfile {
   paymentTerm: CustomerPaymentTerm!
   hasBillingControlOverrides: Boolean!
   creditLimit: Decimal
+  """Open receivables, net of unapplied cash and credits, as of creditReviewedAt. Kept by the credit review, not entered."""
   creditBalance: Decimal!
   creditStatus: CustomerCreditStatus!
   enforceCreditLimit: Boolean!
   autoCreditHold: Boolean!
   creditHoldReason: String!
+  """True when the credit review placed the current Hold or Warning; only the review lifts it."""
+  creditHoldAutomatic: Boolean!
+  """When creditBalance was last recomputed from the receivables ledger."""
+  creditReviewedAt: Timestamp
   invoiceMethod: CustomerInvoiceMethod!
     @deprecated(reason: "Split into invoiceDelivery (how many invoices) and invoiceDetail (how verbose). Removed in a later release.")
   autoSendInvoiceOnGeneration: Boolean!
+  "Whether the organization's payment reminders may email this customer about overdue invoices."
+  sendPaymentReminders: Boolean!
+  "Whether the organization's monthly statements may be emailed to this customer."
+  sendStatements: Boolean!
   "Whether invoices may be emailed to this customer."
   emailInvoiceEnabled: Boolean!
   "Whether invoices are sent to this customer's EDI partner as an 210."
@@ -188,6 +197,8 @@ type CustomerBillingProfile {
   billingNotes: String!
   fuelSurchargeMode: CustomerFuelSurchargeMode!
   fuelSurchargeProgramId: ID
+  "The factor this customer's invoices are assigned to; null when they are not factored."
+  factoringCompanyId: ID
   documentTypes: [DocumentType!]
   version: Int!
   createdAt: Timestamp!
@@ -202,6 +213,7 @@ type CustomerEmailProfile {
   subject: String!
   comment: String!
   fromEmail: String!
+    @deprecated(reason: "Invoices are always sent from the organization's Billing email profile")
   toRecipients: String!
   ccRecipients: String!
   bccRecipients: String!

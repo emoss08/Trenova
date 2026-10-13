@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   DocumentTypeMultiSelectField,
+  FactoringCompanyAutocompleteField,
   FuelSurchargeProgramAutocompleteField,
   GLAccountAutocompleteField,
   UserAutocompleteField,
@@ -25,6 +26,7 @@ import {
   timezoneChoices,
 } from "@/lib/choices";
 import { BillingSchedulePreview } from "./billing-schedule-preview";
+import { CreditExposureSummary } from "./credit-exposure-summary";
 import { MemoEntryButton } from "@/components/billing/memo-entry-button";
 import type { Customer } from "@trenova/shared/types/customer";
 import { useMemo } from "react";
@@ -145,7 +147,7 @@ export function CustomerBillingProfileForm() {
               name="billingProfile.creditStatus"
               label={t("Credit status")}
               description={t(
-                "Reflects this customer's current creditworthiness. 'Hold' and 'Suspended' block new shipments from being dispatched.",
+                "With the credit limit enforced, 'Hold' and 'Suspended' stop new shipments from being booked for this customer. A status you set here stays until someone changes it.",
               )}
               options={creditStatusChoices}
             />
@@ -157,20 +159,12 @@ export function CustomerBillingProfileForm() {
               label={t("Credit limit")}
               placeholder="0.00"
               description={t(
-                "Maximum outstanding balance allowed before shipments are blocked. Leave empty for unlimited credit.",
+                "The most this customer may owe on open invoices. Leave empty for no limit.",
               )}
             />
           </FormControl>
           <FormControl>
-            <NumberField
-              control={control}
-              name="billingProfile.creditBalance"
-              label={t("Outstanding balance")}
-              placeholder="0.00"
-              description={t(
-                "Current unpaid invoice total. Automatically updated as invoices are generated and payments received.",
-              )}
-            />
+            <CreditExposureSummary />
           </FormControl>
           <FormControl>
             <SwitchField
@@ -178,7 +172,7 @@ export function CustomerBillingProfileForm() {
               name="billingProfile.enforceCreditLimit"
               label={t("Enforce credit limit")}
               description={t(
-                "When enabled, the system will prevent new shipments from being created once the outstanding balance exceeds the credit limit.",
+                "Turns on credit control for this customer: a 'Hold' or 'Suspended' status stops new shipments from being booked for them.",
               )}
             />
           </FormControl>
@@ -188,7 +182,7 @@ export function CustomerBillingProfileForm() {
               name="billingProfile.autoCreditHold"
               label={t("Auto credit hold")}
               description={t(
-                "Automatically change credit status to 'Hold' when the outstanding balance exceeds the credit limit, without requiring manual intervention.",
+                "Put the customer on hold when open receivables go over the credit limit, warn at 90% of it, and lift the hold once they are paid back under. An automatic hold stops new shipments but not billing.",
               )}
             />
           </FormControl>
@@ -200,7 +194,7 @@ export function CustomerBillingProfileForm() {
                 label={t("Hold reason")}
                 placeholder={t("e.g., Past due on Invoice #1234, awaiting payment...")}
                 description={t(
-                  "Document why this customer is on hold or suspended. This is visible to dispatch and billing staff when they attempt to create shipments.",
+                  "Why this customer is on hold or suspended. Dispatch sees it when a shipment for them is refused.",
                 )}
               />
             </FormControl>
@@ -253,9 +247,29 @@ export function CustomerBillingProfileForm() {
             <SwitchField
               control={control}
               name="billingProfile.autoSendInvoiceOnGeneration"
-              label={t("Auto-send after PDF generation")}
+              label={t("Send automatically when posted")}
               description={t(
-                "Email the invoice to the configured recipients after the invoice PDF is generated.",
+                "Email the invoice, and send the EDI 210 when it is on, as soon as the invoice is posted and its PDF is ready. Draft invoices are never sent.",
+              )}
+            />
+          </FormControl>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="billingProfile.sendPaymentReminders"
+              label={t("Send payment reminders")}
+              description={t(
+                "Email this customer when invoices go past due, on the schedule in billing control. Turn off for a customer who must never receive an automated reminder.",
+              )}
+            />
+          </FormControl>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="billingProfile.sendStatements"
+              label={t("Send monthly statements")}
+              description={t(
+                "Email this customer a statement of its account each month when billing control sends monthly statements. A statement can still be emailed by hand from its statement page.",
               )}
             />
           </FormControl>
@@ -553,6 +567,27 @@ export function CustomerBillingProfileForm() {
               />
             </FormControl>
           )}
+        </FormGroup>
+      </FormSection>
+      <FormSection
+        title={t("Factoring")}
+        description={t(
+          "Assign this customer's invoices to a factoring company you sell your receivables to",
+        )}
+      >
+        <FormGroup cols={1}>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <FactoringCompanyAutocompleteField
+              control={control}
+              name="billingProfile.factoringCompanyId"
+              label={t("Factoring company")}
+              placeholder={t("Not factored")}
+              clearable
+              description={t(
+                "Invoices posted from now on are remitted to this factor, print its notice of assignment, and are left out of payment reminders. Invoices already posted keep the factor they were posted with.",
+              )}
+            />
+          </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection
