@@ -45,17 +45,17 @@ function MaterialBanner() {
       <InfoCircleIcon />
       <AlertDescription>
         <p>
-        {template.status === "Active"
-          ? rt(
-              "Saving this edit returns the template to <b>Draft</b>. The {0, plural, one {# place} other {# places}} that use it keep rating with v{1} until a new version is approved.",
-              bold,
-              usageTotal,
-              template.currentVersionNumber || 1,
-            )
-          : rt(
-              "Saving this edit cancels the review in progress and returns the template to <b>Draft</b>.",
-              bold,
-            )}
+          {template.status === "Active"
+            ? rt(
+                "Saving this edit returns the template to <b>Draft</b>. The {0, plural, one {# place} other {# places}} that use it keep rating with v{1} until a new version is approved.",
+                bold,
+                usageTotal,
+                template.currentVersionNumber || 1,
+              )
+            : rt(
+                "Saving this edit cancels the review in progress and returns the template to <b>Draft</b>.",
+                bold,
+              )}
         </p>
       </AlertDescription>
     </Alert>

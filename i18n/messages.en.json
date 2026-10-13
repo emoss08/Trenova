@@ -14018,7 +14018,7 @@
     ]
   },
   "Add": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -14033,6 +14033,15 @@
       "routes/inbox",
       "routes/org-structure",
       "routes/worker"
+    ]
+  },
+  "Add <name>{0}</name> as input": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Add Filter to group": {
@@ -179256,6 +179265,24 @@
       "routes/shipment"
     ]
   },
+  "Rate agreement accessorials": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Rate agreement rules": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Rate agreements": {
     "sites": 3,
     "scope": [
@@ -179638,12 +179665,13 @@
     ]
   },
   "Rate matrices": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "routes/formula-template",
       "routes/rate-matrix"
     ]
   },
@@ -214094,7 +214122,7 @@
     ]
   },
   "Shipments": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -275895,15 +275923,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "as input": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "as of {0}": {

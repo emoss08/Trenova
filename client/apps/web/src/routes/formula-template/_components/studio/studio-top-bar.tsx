@@ -16,6 +16,7 @@ import {
 } from "@trenova/shared/components/ui/hover-card";
 import { Kbd, kbdOnSolidClassName } from "@trenova/shared/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
@@ -44,12 +45,12 @@ import { useNavigate } from "react-router";
 import type { ApprovalAction } from "../approval-action-dialog";
 import { useStudio } from "./studio-context";
 
-const USAGE_LABELS: Record<string, string> = {
+const USAGE_LABELS: Readonly<Record<string, string>> = defineLabels({
   shipment: "Shipments",
   rate_matrix: "Rate matrices",
   rate_agreement_rule: "Rate agreement rules",
   rate_agreement_accessorial: "Rate agreement accessorials",
-};
+});
 
 /** What editing does to the places a template is used, by where it is. */
 export function usageConsequence(
@@ -73,12 +74,11 @@ export function usageConsequence(
 }
 
 export function UsageRows({ usage }: { usage: TemplateUsageResponse }) {
-  const t = useT();
   return (
     <div className="flex flex-col gap-1">
       {usage.usages.map((item) => (
         <div key={item.type} className="flex items-center justify-between gap-3 text-xs">
-          <span className="text-foreground-muted">{t(USAGE_LABELS[item.type] ?? item.type)}</span>
+          <span className="text-foreground-muted">{USAGE_LABELS[item.type] ?? item.type}</span>
           <span className="font-mono tabular-nums">{item.count}</span>
         </div>
       ))}

@@ -1,5 +1,6 @@
 import { guardNullableField, scopeToFormPath } from "@/components/formula-editor/guard-nullable";
 import { Button } from "@trenova/shared/components/ui/button";
+import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type {
@@ -46,8 +47,13 @@ function ProblemRow({
  * it: an unknown name becomes an input, an optional field gets its guard, and
  * anything else, or a failure on the preview load, goes to Nova.
  */
+const nameTag = {
+  name: (content: ReactNode) => <span className="font-mono">{content}</span>,
+};
+
 export function ExpressionProblems() {
   const t = useT();
+  const rt = useRichT();
   const { analysis, preview, askNova } = useStudio();
   const form = useFormContext<FormulaTemplateFormValues>();
   const result = preview.result;
@@ -107,9 +113,7 @@ export function ExpressionProblems() {
                 onClick={() => addInput(problem.name ?? "")}
               >
                 <PlusIcon className="size-3" />
-                {t("Add")}
-                <span className="font-mono">{problem.name}</span>
-                {t("as input")}
+                {rt("Add <name>{0}</name> as input", nameTag, problem.name)}
               </Button>
             ) : (
               <NovaButton onClick={() => fix(problem.message)}>{t("Fix with Nova")}</NovaButton>
