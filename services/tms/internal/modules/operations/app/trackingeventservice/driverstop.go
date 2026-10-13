@@ -24,8 +24,7 @@ func (s *Service) ReportDriverStop(
 	}
 
 	clientEventID := strings.TrimSpace(report.ClientEventID)
-	if stringutils.CountNonSpace(clientEventID) != len([]rune(clientEventID)) ||
-		len([]rune(clientEventID)) > maxClientEventIDLength {
+	if clientEventID != "" && !stringutils.IsCompactToken(clientEventID, maxClientEventIDLength) {
 		return errortypes.NewValidationError(
 			"clientEventId",
 			errortypes.ErrInvalid,

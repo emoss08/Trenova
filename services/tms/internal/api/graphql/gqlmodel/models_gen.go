@@ -56,12 +56,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -4965,6 +4967,21 @@ type InvoiceEdge struct {
 	Cursor string           `json:"cursor"`
 }
 
+type IssueCarrierTrackingLinkInput struct {
+	ShipmentMoveID string `json:"shipmentMoveId"`
+	// Where to email the link. Leave empty to copy it instead.
+	RecipientEmail *string `json:"recipientEmail,omitempty"`
+}
+
+type IssueCarrierTrackingLinkPayload struct {
+	Link *checkcall.TrackingLink `json:"link"`
+	// The link to share. It is not stored and cannot be shown again.
+	URL     string `json:"url"`
+	Emailed bool   `json:"emailed"`
+	// Why the email could not be sent, when one was asked for. The link still works.
+	EmailError *string `json:"emailError,omitempty"`
+}
+
 type IssueDisciplinaryActionInput struct {
 	WorkerID       string                   `json:"workerId"`
 	Level          worker.DisciplinaryLevel `json:"level"`
@@ -5130,6 +5147,31 @@ type LocationReference struct {
 	// Where the location is, when it has been geocoded.
 	Latitude  *float64 `json:"latitude,omitempty"`
 	Longitude *float64 `json:"longitude,omitempty"`
+}
+
+type LogCheckCallInput struct {
+	ShipmentMoveID string         `json:"shipmentMoveId"`
+	Kind           checkcall.Kind `json:"kind"`
+	// Required for an arrival or departure.
+	StopID *string `json:"stopId,omitempty"`
+	// Defaults to now. A time in the future is refused.
+	ReportedAt       *int     `json:"reportedAt,omitempty"`
+	Latitude         *float64 `json:"latitude,omitempty"`
+	Longitude        *float64 `json:"longitude,omitempty"`
+	City             *string  `json:"city,omitempty"`
+	StateCode        *string  `json:"stateCode,omitempty"`
+	Delayed          *bool    `json:"delayed,omitempty"`
+	DelayReason      *string  `json:"delayReason,omitempty"`
+	EstimatedArrival *int     `json:"estimatedArrival,omitempty"`
+	Note             *string  `json:"note,omitempty"`
+	ContactName      *string  `json:"contactName,omitempty"`
+}
+
+type LogCheckCallPayload struct {
+	CheckCall *checkcall.CheckCall `json:"checkCall"`
+	// What became of an arrival or departure when the stop's times were settled.
+	Outcome       *trackingevent.Outcome `json:"outcome,omitempty"`
+	OutcomeReason *string                `json:"outcomeReason,omitempty"`
 }
 
 type LogInboundExceptionInput struct {

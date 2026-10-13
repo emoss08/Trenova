@@ -66,6 +66,12 @@ var Bindings = []Binding{
 		},
 	},
 	{
+		Tool:      "log_check_call",
+		Input:     "LogCheckCallInput",
+		Defaulted: map[string]string{"shipmentMoveId": namedID("moveId")},
+		Extra:     map[string]string{"moveId": namedID("moveId")},
+	},
+	{
 		Tool:  "add_shipment_comment",
 		Input: "ShipmentCommentInput",
 		Extra: map[string]string{"shipmentId": shipmentIDArg},

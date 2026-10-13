@@ -232,6 +232,12 @@ export const customerSchema = z
       error: () => translate("MC number must contain only digits (12 max)"),
     }),
     brokerVettingEnabled: z.boolean().default(false),
+    checkCallIntervalHours: z
+      .number()
+      .int()
+      .min(1, { error: () => translate("Check call interval must be at least 1 hour") })
+      .max(72, { error: () => translate("Check call interval cannot exceed 72 hours") })
+      .nullish(),
     allowConsolidation: z.boolean().default(true),
     exclusiveConsolidation: z.boolean().default(false),
     consolidationPriority: z.number().int().min(1).default(1),

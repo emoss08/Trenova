@@ -74,9 +74,10 @@ Callable after find_tools:
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - send_detention_notice — Send the customer the detention notice for an occurrence on the desk.
 - record_stop_actual — Record that a driver arrived at or departed from a stop.
+- log_check_call — Log a check call on a brokered load: where the carrier said the truck is, whether it is late, and when it expects the next stop.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, evaluate_service_failures, resolve_service_failure, add_shipment_comment, notify_driver, email_customer, send_detention_notice, record_stop_actual
+- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, evaluate_service_failures, resolve_service_failure, add_shipment_comment, notify_driver, email_customer, send_detention_notice, record_stop_actual, log_check_call
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
@@ -85,3 +86,4 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - email_customer: get_shipment_tracking → get_customer_update_preferences → email_customer
 - send_detention_notice: get_detention_occurrence → send_detention_notice
 - record_stop_actual: search_shipments → get_shipment → record_stop_actual
+- log_check_call: search_shipments → get_shipment → log_check_call

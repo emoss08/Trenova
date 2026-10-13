@@ -250,6 +250,13 @@ export const dispatchControlSchema = z
       .nonnegative({ error: () => translate("Service failure target must be non-negative") })
       .nullish(),
     serviceFailureGracePeriod: z.number().int().nullish(),
+    enableCheckCallMonitoring: z.boolean().default(false),
+    checkCallIntervalHours: z
+      .number({ error: () => translate("Enter how many hours a load may go without a check call") })
+      .int()
+      .min(1, { error: () => translate("Check call interval must be at least 1 hour") })
+      .max(72, { error: () => translate("Check call interval cannot exceed 72 hours") })
+      .default(4),
   })
   .refine(
     (data) => {

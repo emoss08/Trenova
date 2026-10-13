@@ -703,6 +703,11 @@ writes:
   "mutation voidCarrierSettlement":
     tools: [void_carrier_settlement]
 
+  # carriertrackingpublic
+  "POST /api/v1/carrier-tracking-links/:token/check-calls/":
+    exempt: counterparty
+    reason: "The carrier posting through its own tracking link; an agent acting for the organization must not report for the carrier."
+
   # casechecklist
   "DELETE /api/v1/case-checklists/:templateID/":
     exempt: configuration
@@ -710,6 +715,14 @@ writes:
   "PUT /api/v1/case-checklists/":
     exempt: configuration
     reason: "How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it."
+
+  # checkcall
+  "mutation issueCarrierTrackingLink":
+    pending: "Issue a tracking link to the carrier on a brokered move and email it to them, replacing any live link."
+  "mutation logCheckCall":
+    tools: [log_check_call]
+  "mutation revokeCarrierTrackingLink":
+    pending: "Revoke the live carrier tracking link on a move, so the carrier can no longer post through it."
 
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":

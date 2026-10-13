@@ -1,5 +1,6 @@
 import { useTrackingEventLabels } from "@/hooks/use-tracking-event-labels";
 import { queries } from "@/lib/queries";
+import { stopRouteLabel } from "@/lib/stop-labels";
 import {
   groupTrackingEventsByStop,
   trackingOutcomePhase,
@@ -14,7 +15,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
-import { stopTypeLabel } from "@trenova/shared/lib/stop-type";
 import type { Shipment, Stop } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -46,7 +46,7 @@ export function StopReports() {
             moveSequence: move.sequence ?? moveIndex,
             sequence: stop.sequence ?? stopIndex,
           },
-          label: stopReportLabel(stop, stopIndex),
+          label: stopRouteLabel(stop, stopIndex),
         });
       });
     });
@@ -139,10 +139,4 @@ function StopReportRow({ event }: { event: TrackingEventRow }) {
       ) : null}
     </li>
   );
-}
-
-function stopReportLabel(stop: Stop, index: number): string {
-  const place = stop.location?.name || stop.addressLine;
-  const position = `${index + 1}. ${stopTypeLabel(stop.type)}`;
-  return place ? `${position} · ${place}` : position;
 }

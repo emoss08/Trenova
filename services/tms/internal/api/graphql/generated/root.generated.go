@@ -38,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierintelligenceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriersettlementexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/checkcallexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/commodityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/costingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerexec"
@@ -206,6 +207,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -1726,6 +1728,9 @@ type MutationResolver interface {
 	AcceptCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
 	AcceptCarrierInvoiceMatchWithVariance(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
 	RejectCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
+	LogCheckCall(ctx context.Context, input gqlmodel.LogCheckCallInput) (*gqlmodel.LogCheckCallPayload, error)
+	IssueCarrierTrackingLink(ctx context.Context, input gqlmodel.IssueCarrierTrackingLinkInput) (*gqlmodel.IssueCarrierTrackingLinkPayload, error)
+	RevokeCarrierTrackingLink(ctx context.Context, shipmentMoveID string) (bool, error)
 	UpdateCostingControl(ctx context.Context, input gqlmodel.CostingControlInput) (*gqlmodel.CostingControl, error)
 	UpdateCostCategory(ctx context.Context, input gqlmodel.CostCategoryUpdateInput) (*gqlmodel.CostCategory, error)
 	PostAndApplyCustomerPayment(ctx context.Context, input gqlmodel.PostCustomerPaymentInput) (*customerpayment.Payment, error)
@@ -2478,6 +2483,8 @@ type QueryResolver interface {
 	EDICarrierInvoices(ctx context.Context, reconciliationStatus *string, limit *int, offset *int) (*gqlmodel.EDICarrierInvoiceList, error)
 	SuggestCarrierForEDIInvoice(ctx context.Context, invoiceID string) (*carrier.Carrier, error)
 	ExportCarrierSettlementBatchCSV(ctx context.Context, batchID string) (string, error)
+	ShipmentCheckCalls(ctx context.Context, shipmentID string) ([]*checkcall.CheckCall, error)
+	CarrierTrackingLink(ctx context.Context, shipmentMoveID string) (*checkcall.TrackingLink, error)
 	Commodities(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CommodityConnection, error)
 	Commodity(ctx context.Context, id string) (*commodity.Commodity, error)
 	CostingControl(ctx context.Context) (*gqlmodel.CostingControl, error)
@@ -3380,6 +3387,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		carriercapacityexec.Shard,
 		carrierintelligenceexec.Shard,
 		carriersettlementexec.Shard,
+		checkcallexec.Shard,
 		commodityexec.Shard,
 		costingexec.Shard,
 		customerexec.Shard,
@@ -12826,6 +12834,122 @@ extend type Mutation {
     input: CarrierInvoiceMatchActionInput!
   ): CarrierInvoiceMatch!
   rejectCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
+}
+`, BuiltIn: false},
+	{Name: "../schema/checkcall.graphqls", Input: `"Who logged a check call."
+enum CheckCallSource {
+  Dispatcher
+  Carrier
+  Agent
+}
+
+"What a check call reports: a position update, or reaching or leaving a stop."
+enum CheckCallKind {
+  Update
+  Arrival
+  Departure
+}
+
+"""
+One report of where a brokered load is, from a dispatcher who called the
+carrier, the carrier through its tracking link, or an agent. An arrival or
+departure also settles the stop's actual times through its tracking event.
+"""
+type CheckCall {
+  id: ID!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  "The stop reached or left, for an arrival or departure."
+  stopId: ID
+  source: CheckCallSource!
+  kind: CheckCallKind!
+  "When it happened, as reported."
+  reportedAt: Timestamp!
+  "When Trenova received it."
+  receivedAt: Timestamp!
+  latitude: Float
+  longitude: Float
+  city: String
+  stateCode: String
+  delayed: Boolean!
+  delayReason: String
+  "The arrival the reporter expects at the next stop."
+  estimatedArrival: Timestamp
+  note: String
+  "Who the dispatcher spoke to, or who posted through the link."
+  contactName: String
+  reportedById: ID
+  "The tracking event an arrival or departure settled the stop through."
+  trackingEventId: ID
+}
+
+"""
+The live link a carrier uses to post check calls on one move. Only its
+existence is shown here: the link itself is returned once, when it is issued.
+"""
+type CarrierTrackingLink {
+  id: ID!
+  shipmentMoveId: ID!
+  carrierId: ID!
+  recipientEmail: String
+  expiresAt: Timestamp!
+  lastUsedAt: Timestamp
+  createdById: ID
+  createdAt: Timestamp!
+}
+
+input LogCheckCallInput {
+  shipmentMoveId: ID!
+  kind: CheckCallKind!
+  "Required for an arrival or departure."
+  stopId: ID
+  "Defaults to now. A time in the future is refused."
+  reportedAt: Timestamp
+  latitude: Float
+  longitude: Float
+  city: String
+  stateCode: String
+  delayed: Boolean
+  delayReason: String
+  estimatedArrival: Timestamp
+  note: String
+  contactName: String
+}
+
+type LogCheckCallPayload {
+  checkCall: CheckCall!
+  "What became of an arrival or departure when the stop's times were settled."
+  outcome: TrackingEventOutcome
+  outcomeReason: String
+}
+
+input IssueCarrierTrackingLinkInput {
+  shipmentMoveId: ID!
+  "Where to email the link. Leave empty to copy it instead."
+  recipientEmail: String
+}
+
+type IssueCarrierTrackingLinkPayload {
+  link: CarrierTrackingLink!
+  "The link to share. It is not stored and cannot be shown again."
+  url: String!
+  emailed: Boolean!
+  "Why the email could not be sent, when one was asked for. The link still works."
+  emailError: String
+}
+
+extend type Query {
+  "Every check call on a shipment's moves, newest first."
+  shipmentCheckCalls(shipmentId: ID!): [CheckCall!]!
+  "The live carrier tracking link on a move, if one has been issued."
+  carrierTrackingLink(shipmentMoveId: ID!): CarrierTrackingLink
+}
+
+extend type Mutation {
+  logCheckCall(input: LogCheckCallInput!): LogCheckCallPayload!
+  "Issue a tracking link for the move's carrier, replacing any live one."
+  issueCarrierTrackingLink(input: IssueCarrierTrackingLinkInput!): IssueCarrierTrackingLinkPayload!
+  revokeCarrierTrackingLink(shipmentMoveId: ID!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/commodity.graphqls", Input: `enum FreightClass {
@@ -28227,6 +28351,7 @@ enum TrackingEventSource {
   Dispatcher
   Agent
   Driver
+  Carrier
   Telematics
   EDI
 }
@@ -30471,6 +30596,7 @@ enum WatchtowerSourceKind {
   TelematicsStopVisit
   AgentQualityRegression
   AccountingSync
+  NoCheckCall
 }
 
 "How loudly an item asks to be looked at."

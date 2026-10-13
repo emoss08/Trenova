@@ -2296,6 +2296,18 @@ export type ChargeAllocationMethod =
   | 'Amount'
   | 'Percent';
 
+/** What a check call reports: a position update, or reaching or leaving a stop. */
+export type CheckCallKind =
+  | 'Arrival'
+  | 'Departure'
+  | 'Update';
+
+/** Who logged a check call. */
+export type CheckCallSource =
+  | 'Agent'
+  | 'Carrier'
+  | 'Dispatcher';
+
 export type ChooseAccountingCompanyInput = {
   /** The token finishAccountingAuthorization returned. */
   choiceToken: string;
@@ -4613,6 +4625,12 @@ export type InvoiceVoidDisposition =
   /** The billing queue items go back to Approved with a fresh number, ready to bill again. */
   | 'Rebill';
 
+export type IssueCarrierTrackingLinkInput = {
+  /** Where to email the link. Leave empty to copy it instead. */
+  recipientEmail?: string | null | undefined;
+  shipmentMoveId: string | number;
+};
+
 export type IssueDisciplinaryActionInput = {
   details?: string | null | undefined;
   documentId?: string | number | null | undefined;
@@ -4754,6 +4772,24 @@ export type LocationGeofenceType =
   | 'circle'
   | 'draw'
   | 'rectangle';
+
+export type LogCheckCallInput = {
+  city?: string | null | undefined;
+  contactName?: string | null | undefined;
+  delayReason?: string | null | undefined;
+  delayed?: boolean | null | undefined;
+  estimatedArrival?: number | null | undefined;
+  kind: CheckCallKind;
+  latitude?: number | null | undefined;
+  longitude?: number | null | undefined;
+  note?: string | null | undefined;
+  /** Defaults to now. A time in the future is refused. */
+  reportedAt?: number | null | undefined;
+  shipmentMoveId: string | number;
+  stateCode?: string | null | undefined;
+  /** Required for an arrival or departure. */
+  stopId?: string | number | null | undefined;
+};
 
 export type LogInboundExceptionInput = {
   kind: TriageExceptionKind;
@@ -7095,6 +7131,7 @@ export type TrackingEventOutcome =
 /** Who reported a stop arrival or departure. */
 export type TrackingEventSource =
   | 'Agent'
+  | 'Carrier'
   | 'Dispatcher'
   | 'Driver'
   | 'EDI'
@@ -7912,6 +7949,7 @@ export type WatchtowerSourceKind =
   | 'InboundMessage'
   | 'Insight'
   | 'MoveCoverage'
+  | 'NoCheckCall'
   | 'ServiceFailure'
   | 'TelematicsStopVisit'
   | 'WeatherAlert'
@@ -15278,6 +15316,45 @@ export type NotifyShipmentDelayMutationVariables = Exact<{
 
 
 export type NotifyShipmentDelayMutation = { notifyShipmentDelay: boolean };
+
+export type CheckCallFieldsFragment = { id: string, shipmentId: string, shipmentMoveId: string, stopId: string | null, source: CheckCallSource, kind: CheckCallKind, reportedAt: number, receivedAt: number, latitude: number | null, longitude: number | null, city: string | null, stateCode: string | null, delayed: boolean, delayReason: string | null, estimatedArrival: number | null, note: string | null, contactName: string | null, reportedById: string | null, trackingEventId: string | null } & { ' $fragmentName'?: 'CheckCallFieldsFragment' };
+
+export type CarrierTrackingLinkFieldsFragment = { id: string, shipmentMoveId: string, carrierId: string, recipientEmail: string | null, expiresAt: number, lastUsedAt: number | null, createdById: string | null, createdAt: number } & { ' $fragmentName'?: 'CarrierTrackingLinkFieldsFragment' };
+
+export type ShipmentCheckCallsQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type ShipmentCheckCallsQuery = { shipmentCheckCalls: Array<{ ' $fragmentRefs'?: { 'CheckCallFieldsFragment': CheckCallFieldsFragment } }> };
+
+export type CarrierTrackingLinkQueryVariables = Exact<{
+  shipmentMoveId: string | number;
+}>;
+
+
+export type CarrierTrackingLinkQuery = { carrierTrackingLink: { ' $fragmentRefs'?: { 'CarrierTrackingLinkFieldsFragment': CarrierTrackingLinkFieldsFragment } } | null };
+
+export type LogCheckCallMutationVariables = Exact<{
+  input: LogCheckCallInput;
+}>;
+
+
+export type LogCheckCallMutation = { logCheckCall: { outcome: TrackingEventOutcome | null, outcomeReason: string | null, checkCall: { ' $fragmentRefs'?: { 'CheckCallFieldsFragment': CheckCallFieldsFragment } } } };
+
+export type IssueCarrierTrackingLinkMutationVariables = Exact<{
+  input: IssueCarrierTrackingLinkInput;
+}>;
+
+
+export type IssueCarrierTrackingLinkMutation = { issueCarrierTrackingLink: { url: string, emailed: boolean, emailError: string | null, link: { ' $fragmentRefs'?: { 'CarrierTrackingLinkFieldsFragment': CarrierTrackingLinkFieldsFragment } } } };
+
+export type RevokeCarrierTrackingLinkMutationVariables = Exact<{
+  shipmentMoveId: string | number;
+}>;
+
+
+export type RevokeCarrierTrackingLinkMutation = { revokeCarrierTrackingLink: boolean };
 
 export type DeskRecordShipmentsQueryVariables = Exact<{
   input: ShipmentsInput;
@@ -25300,6 +25377,41 @@ export const ShipmentTypeTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"ShipmentTypeTableRowFields"}) as unknown as TypedDocumentString<ShipmentTypeTableRowFieldsFragment, unknown>;
+export const CheckCallFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CheckCallFields on CheckCall {
+  id
+  shipmentId
+  shipmentMoveId
+  stopId
+  source
+  kind
+  reportedAt
+  receivedAt
+  latitude
+  longitude
+  city
+  stateCode
+  delayed
+  delayReason
+  estimatedArrival
+  note
+  contactName
+  reportedById
+  trackingEventId
+}
+    `, {"fragmentName":"CheckCallFields"}) as unknown as TypedDocumentString<CheckCallFieldsFragment, unknown>;
+export const CarrierTrackingLinkFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierTrackingLinkFields on CarrierTrackingLink {
+  id
+  shipmentMoveId
+  carrierId
+  recipientEmail
+  expiresAt
+  lastUsedAt
+  createdById
+  createdAt
+}
+    `, {"fragmentName":"CarrierTrackingLinkFields"}) as unknown as TypedDocumentString<CarrierTrackingLinkFieldsFragment, unknown>;
 export const ShipmentRatingDetailFieldsFragmentDoc = new TypedDocumentString(`
     fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -28445,6 +28557,11 @@ export const TenderShipmentsDocument = {"__meta__":{"kind":"mutation","name":"Te
 export const DecideShipmentSuggestionDocument = {"__meta__":{"kind":"mutation","name":"DecideShipmentSuggestion","hash":"sha256:c58d215bd70ddacae5cb7bb1db402fe00f516e3b02750be051dba50a8fb157a8"}} as unknown as TypedDocumentString<DecideShipmentSuggestionMutation, DecideShipmentSuggestionMutationVariables>;
 export const UndoShipmentSuggestionDecisionDocument = {"__meta__":{"kind":"mutation","name":"UndoShipmentSuggestionDecision","hash":"sha256:70cabba6bbcd1f39dd47f1d0d7c1458757280bef6239eab04b33a90166f9ad16"}} as unknown as TypedDocumentString<UndoShipmentSuggestionDecisionMutation, UndoShipmentSuggestionDecisionMutationVariables>;
 export const NotifyShipmentDelayDocument = {"__meta__":{"kind":"mutation","name":"NotifyShipmentDelay","hash":"sha256:ac9e4fcb73800c23f82a4b48d988a24a084b6aca45e5d9747b7a7c04a0ad7183"}} as unknown as TypedDocumentString<NotifyShipmentDelayMutation, NotifyShipmentDelayMutationVariables>;
+export const ShipmentCheckCallsDocument = {"__meta__":{"kind":"query","name":"ShipmentCheckCalls","hash":"sha256:8fbfd73531976ff3ead45515fdd5656c6da356f8edb2ab6c326fe7227f5e2f8a"}} as unknown as TypedDocumentString<ShipmentCheckCallsQuery, ShipmentCheckCallsQueryVariables>;
+export const CarrierTrackingLinkDocument = {"__meta__":{"kind":"query","name":"CarrierTrackingLink","hash":"sha256:32904c616b34e4353756f6d323e062b63bb64a82c66e060759275f9dd49e444a"}} as unknown as TypedDocumentString<CarrierTrackingLinkQuery, CarrierTrackingLinkQueryVariables>;
+export const LogCheckCallDocument = {"__meta__":{"kind":"mutation","name":"LogCheckCall","hash":"sha256:933544372402cc8ecb0066d1c6768169bbc61bc7b657e00868ae04cc38086dbe"}} as unknown as TypedDocumentString<LogCheckCallMutation, LogCheckCallMutationVariables>;
+export const IssueCarrierTrackingLinkDocument = {"__meta__":{"kind":"mutation","name":"IssueCarrierTrackingLink","hash":"sha256:e93db8bd28cd6aee6a91517080f37c161fe87948bd053d7bb7a0bdb8eb923cbb"}} as unknown as TypedDocumentString<IssueCarrierTrackingLinkMutation, IssueCarrierTrackingLinkMutationVariables>;
+export const RevokeCarrierTrackingLinkDocument = {"__meta__":{"kind":"mutation","name":"RevokeCarrierTrackingLink","hash":"sha256:68ec2fe6c553e49640e573d542e7ac05240aeb18ec2b800fd6e21f0b7bd170ca"}} as unknown as TypedDocumentString<RevokeCarrierTrackingLinkMutation, RevokeCarrierTrackingLinkMutationVariables>;
 export const DeskRecordShipmentsDocument = {"__meta__":{"kind":"query","name":"DeskRecordShipments","hash":"sha256:a9cf9b623392f2f14bab6db16dee4c7dd368b5429c28393ac5e79f0d133fc4d1"}} as unknown as TypedDocumentString<DeskRecordShipmentsQuery, DeskRecordShipmentsQueryVariables>;
 export const ShipmentBoardTableDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardTable","hash":"sha256:173bd6b0bd2951dbc6f0f2c7e7b37f107eacaac97bad99d7c9164a18742d58e6"}} as unknown as TypedDocumentString<ShipmentBoardTableQuery, ShipmentBoardTableQueryVariables>;
 export const ShipmentDetailDocument = {"__meta__":{"kind":"query","name":"ShipmentDetail","hash":"sha256:e4cea406adc9fa670c66e4b1e33216c5ba72cea42a2c3e84de2b8692b14a02f3"}} as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;

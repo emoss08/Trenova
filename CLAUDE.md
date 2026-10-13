@@ -477,6 +477,18 @@ call `RecordStopActual` for a new source. **Read
 `trackingevent`, `trackingeventservice`, `ReconcileStopActuals`, the telematics stop-visit
 path, the EDI 214 parser, or adding anything that records a stop actual.**
 
+## Check Calls
+
+A brokered load is followed through `check_calls`: dispatchers log calls (`logCheckCall`), the
+load monitor logs them with `log_check_call`, and the carrier posts through a per-move token
+link at `/carrier-tracking/:token` without signing in. An arrival or departure also goes through
+tracking events (people strict, the carrier tolerant as source `Carrier`). With monitoring on in
+dispatch controls, an in-transit carrier load quiet past its window (customer override, else the
+organization's) raises a `NoCheckCall` watchtower item, swept every 15 minutes and cleared the
+moment a check call lands. **Read [docs/engineering/check-calls.md](docs/engineering/check-calls.md)
+before changing `checkcall`, `checkcallservice`, the carrier tracking link or its public page,
+or the no-check-call sweep.**
+
 ## AI Training Export
 
 Operators export consenting organizations' AI corrections for fine-tuning with

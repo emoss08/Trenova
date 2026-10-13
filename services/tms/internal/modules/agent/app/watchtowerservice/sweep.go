@@ -2,6 +2,7 @@ package watchtowerservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -16,7 +17,7 @@ func (s *Service) Backfill(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (*watchtowerports.WatchtowerSweepResult, error) {
-	return s.sweep(ctx, tenant, false)
+	return s.sweep(ctx, tenant, watchtower.AllSourceKinds(), false)
 }
 
 // Reconcile corrects the feed against the sources: what they report open is
@@ -28,16 +29,32 @@ func (s *Service) Reconcile(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (*watchtowerports.WatchtowerSweepResult, error) {
-	return s.sweep(ctx, tenant, true)
+	return s.sweep(ctx, tenant, watchtower.AllSourceKinds(), true)
+}
+
+// ReconcileKind corrects one kind against its source between nightly
+// reconciles, for sources whose items come and go with the clock rather than
+// with a write anyone could project from.
+func (s *Service) ReconcileKind(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	kind watchtower.SourceKind,
+) (*watchtowerports.WatchtowerSweepResult, error) {
+	if !kind.IsValid() {
+		return nil, fmt.Errorf("unknown watchtower source kind %q", kind)
+	}
+
+	return s.sweep(ctx, tenant, []watchtower.SourceKind{kind}, true)
 }
 
 func (s *Service) sweep(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
+	kinds []watchtower.SourceKind,
 	resolveMissing bool,
 ) (*watchtowerports.WatchtowerSweepResult, error) {
 	result := &watchtowerports.WatchtowerSweepResult{Failed: []string{}}
-	for _, kind := range watchtower.AllSourceKinds() {
+	for _, kind := range kinds {
 		source, ok := s.sources[kind]
 		if !ok {
 			continue

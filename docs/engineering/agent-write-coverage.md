@@ -90,32 +90,32 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 94 |
-| `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
+| `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 34 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 46 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 8 |
 
 ## Totals
 
-1091 writes: 582 GraphQL mutations and 509 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1095 writes: 585 GraphQL mutations and 510 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 389 |
-| Exempt | 675 |
+| Covered by a tool | 390 |
+| Exempt | 676 |
 | — Security | 80 |
 | — Configuration | 268 |
 | — User preference | 38 |
 | — Infrastructure | 52 |
 | — Agent administration | 94 |
-| — Counterparty | 33 |
+| — Counterparty | 34 |
 | — Read-only | 56 |
 | — Attestation | 46 |
 | — Duplicate | 8 |
-| **Pending** | **27** |
-| Total | 1091 |
+| **Pending** | **29** |
+| Total | 1095 |
 
-Of the 416 writes an agent should be able to make, 389 have a tool (93%).
+Of the 419 writes an agent should be able to make, 390 have a tool (93%).
 
 ## Pending
 
@@ -126,6 +126,8 @@ The writes no tool performs yet, and what the tool would do.
 | billingqueue | `mutation releaseBillingQueueItem` | Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. |
 | billingqueue | `mutation resolveBillingQueueIssue` | Settle one of a billing queue item's checks with one of the options the check offers. |
 | billingqueue | `mutation undoBillingQueueIssue` | Take back how a billing queue item's check was settled and put back any charge the settlement changed. |
+| checkcall | `mutation issueCarrierTrackingLink` | Issue a tracking link to the carrier on a brokered move and email it to them, replacing any live link. |
+| checkcall | `mutation revokeCarrierTrackingLink` | Revoke the live carrier tracking link on a move, so the carrier can no longer post through it. |
 | inboundmessage | `mutation assignInboundMessages` | Assign inbound messages to a person, or take them off whoever has them. |
 | inboundmessage | `mutation handOffTriage` | Hand everything still waiting in Triage to the on-call person at the end of the day. |
 | inboundmessage | `mutation reopenInboundMessages` | Put settled inbound messages back in the Triage queue. |
@@ -189,7 +191,9 @@ The writes no tool performs yet, and what the tool would do.
 | carriercapacity | 3 | 3 | 0 | 0 |
 | carrierintelligence | 15 | 9 | 6 | 0 |
 | carriersettlement | 16 | 15 | 1 | 0 |
+| carriertrackingpublic | 1 | 0 | 1 | 0 |
 | casechecklist | 2 | 0 | 2 | 0 |
+| checkcall | 3 | 1 | 0 | 2 |
 | commodity | 4 | 4 | 0 | 0 |
 | costing | 2 | 0 | 2 | 0 |
 | customer | 4 | 4 | 0 | 0 |
@@ -746,12 +750,26 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation updateCarrierSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 | `mutation voidCarrierSettlement` | Tool: `void_carrier_settlement` |
 
+### carriertrackingpublic
+
+| Write | Decision |
+| --- | --- |
+| `POST /api/v1/carrier-tracking-links/:token/check-calls/`<br>carriertrackingpublichandler.post | Exempt, counterparty: The carrier posting through its own tracking link; an agent acting for the organization must not report for the carrier. |
+
 ### casechecklist
 
 | Write | Decision |
 | --- | --- |
 | `DELETE /api/v1/case-checklists/:templateID/`<br>casechecklisthandler.delete | Exempt, configuration: How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it. |
 | `PUT /api/v1/case-checklists/`<br>casechecklisthandler.save | Exempt, configuration: How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it. |
+
+### checkcall
+
+| Write | Decision |
+| --- | --- |
+| `mutation issueCarrierTrackingLink` | Pending: Issue a tracking link to the carrier on a brokered move and email it to them, replacing any live link. |
+| `mutation logCheckCall` | Tool: `log_check_call` |
+| `mutation revokeCarrierTrackingLink` | Pending: Revoke the live carrier tracking link on a move, so the carrier can no longer post through it. |
 
 ### commodity
 

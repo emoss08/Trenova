@@ -121,6 +121,7 @@ func ToolProviders() []any {
 		shipmenttools.NewReleaseShipmentHoldTool,
 		provideCancelShipmentTool,
 		movetools.ProvideRecordStopActualTool,
+		movetools.ProvideLogCheckCallTool,
 		provideUpdateTractorStatusTool,
 		provideUpdateTrailerStatusTool,
 		provideApproveWorkerPTOTool,

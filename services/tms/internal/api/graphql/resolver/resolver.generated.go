@@ -35,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/carrierintelligenceresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/carrierresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/carriersettlementresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/checkcallresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/commodityresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/costingresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/customerpaymentresolver"
@@ -553,6 +554,10 @@ func FromServices(s *Services) *Resolver {
 		CarrierSettlementRepo:      s.CarrierSettlementRepo,
 		CarrierSettlementBatchRepo: s.CarrierSettlementBatchRepo,
 		CarrierCostEventRepo:       s.CarrierCostEventRepo,
+	}
+	checkcallDeps := &checkcallresolver.Deps{
+		Core:             s.Core,
+		CheckCallService: s.CheckCallService,
 	}
 	commodityDeps := &commodityresolver.Deps{
 		Core:             s.Core,
@@ -1244,6 +1249,7 @@ func FromServices(s *Services) *Resolver {
 			carriercapacityMutation:       &carriercapacityMutation{Deps: carriercapacityDeps},
 			carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
 			carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
+			checkcallMutation:             &checkcallMutation{Deps: checkcallDeps},
 			costingMutation:               &costingMutation{Deps: costingDeps},
 			customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
 			decisionsMutation:             &decisionsMutation{Deps: decisionsDeps},
@@ -1355,6 +1361,7 @@ func FromServices(s *Services) *Resolver {
 			carriercapacityQuery:          &carriercapacityQuery{Deps: carriercapacityDeps},
 			carrierintelligenceQuery:      &carrierintelligenceQuery{Deps: carrierintelligenceDeps},
 			carriersettlementQuery:        &carriersettlementQuery{Deps: carriersettlementDeps},
+			checkcallQuery:                &checkcallQuery{Deps: checkcallDeps},
 			commodityQuery:                &commodityQuery{Deps: commodityDeps},
 			costingQuery:                  &costingQuery{Deps: costingDeps},
 			customerQuery:                 &customerQuery{Deps: customerDeps},
@@ -2216,6 +2223,7 @@ type mutationResolver struct {
 	*carriercapacityMutation
 	*carrierintelligenceMutation
 	*carriersettlementMutation
+	*checkcallMutation
 	*costingMutation
 	*customerpaymentMutation
 	*decisionsMutation
@@ -2398,6 +2406,7 @@ type queryResolver struct {
 	*carriercapacityQuery
 	*carrierintelligenceQuery
 	*carriersettlementQuery
+	*checkcallQuery
 	*commodityQuery
 	*costingQuery
 	*customerQuery
@@ -2783,6 +2792,7 @@ type (
 	carriercapacityMutation         = carriercapacityresolver.MutationResolver
 	carrierintelligenceMutation     = carrierintelligenceresolver.MutationResolver
 	carriersettlementMutation       = carriersettlementresolver.MutationResolver
+	checkcallMutation               = checkcallresolver.MutationResolver
 	costingMutation                 = costingresolver.MutationResolver
 	customerpaymentMutation         = customerpaymentresolver.MutationResolver
 	decisionsMutation               = decisionsresolver.MutationResolver
@@ -2870,6 +2880,7 @@ type (
 	carriercapacityQuery            = carriercapacityresolver.QueryResolver
 	carrierintelligenceQuery        = carrierintelligenceresolver.QueryResolver
 	carriersettlementQuery          = carriersettlementresolver.QueryResolver
+	checkcallQuery                  = checkcallresolver.QueryResolver
 	commodityQuery                  = commodityresolver.QueryResolver
 	costingQuery                    = costingresolver.QueryResolver
 	customerQuery                   = customerresolver.QueryResolver

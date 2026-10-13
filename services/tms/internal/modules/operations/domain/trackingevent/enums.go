@@ -6,6 +6,7 @@ const (
 	SourceDispatcher = Source("Dispatcher")
 	SourceAgent      = Source("Agent")
 	SourceDriver     = Source("Driver")
+	SourceCarrier    = Source("Carrier")
 	SourceTelematics = Source("Telematics")
 	SourceEDI        = Source("EDI")
 )
@@ -23,7 +24,7 @@ func (s Source) Interactive() bool {
 	switch s {
 	case SourceDispatcher, SourceAgent, SourceDriver:
 		return true
-	case SourceTelematics, SourceEDI:
+	case SourceCarrier, SourceTelematics, SourceEDI:
 		return false
 	default:
 		return false
@@ -34,12 +35,20 @@ var sourcePrecedence = map[Source]int{
 	SourceDispatcher: 50,
 	SourceAgent:      40,
 	SourceDriver:     30,
+	SourceCarrier:    25,
 	SourceTelematics: 20,
 	SourceEDI:        10,
 }
 
 func Sources() []Source {
-	return []Source{SourceDispatcher, SourceAgent, SourceDriver, SourceTelematics, SourceEDI}
+	return []Source{
+		SourceDispatcher,
+		SourceAgent,
+		SourceDriver,
+		SourceCarrier,
+		SourceTelematics,
+		SourceEDI,
+	}
 }
 
 type MatchMethod string

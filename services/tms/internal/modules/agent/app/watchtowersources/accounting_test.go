@@ -5,14 +5,16 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func accountingConnection(status accountingsync.ConnectionStatus) *accountingsync.AccountingConnection {
+func accountingConnection(
+	status accountingsync.ConnectionStatus,
+) *accountingsync.AccountingConnection {
 	failed := int64(1_790_000_000)
 	return &accountingsync.AccountingConnection{
 		ID:                            pulid.MustNew("acctc_"),

@@ -1,6 +1,7 @@
 package stringutils
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -58,4 +59,23 @@ func TestCollapseWhitespace(t *testing.T) {
 
 	assert.Equal(t, "Shipments for Peak", CollapseWhitespace("  Shipments\nfor\t\tPeak \r\n"))
 	assert.Empty(t, CollapseWhitespace(" \n\t "))
+}
+
+func TestIsCompactToken(t *testing.T) {
+	t.Parallel()
+
+	for value, want := range map[string]bool{
+		"7f1c2a-9":             true,
+		"a":                    true,
+		"":                     false,
+		"has space":            false,
+		"tab\there":            false,
+		"line\nbreak":          false,
+		"bell\a":               false,
+		strings.Repeat("x", 8): true,
+		strings.Repeat("x", 9): false,
+	} {
+		assert.Equal(t, want, IsCompactToken(value, 8), value)
+	}
+	assert.False(t, IsCompactToken("abc", 0))
 }

@@ -1893,6 +1893,7 @@ enum TrackingEventSource {
   Dispatcher
   Agent
   Driver
+  Carrier
   Telematics
   EDI
 }

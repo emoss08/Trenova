@@ -1,0 +1,69 @@
+fragment CheckCallFields on CheckCall {
+  id
+  shipmentId
+  shipmentMoveId
+  stopId
+  source
+  kind
+  reportedAt
+  receivedAt
+  latitude
+  longitude
+  city
+  stateCode
+  delayed
+  delayReason
+  estimatedArrival
+  note
+  contactName
+  reportedById
+  trackingEventId
+}
+
+fragment CarrierTrackingLinkFields on CarrierTrackingLink {
+  id
+  shipmentMoveId
+  carrierId
+  recipientEmail
+  expiresAt
+  lastUsedAt
+  createdById
+  createdAt
+}
+
+query ShipmentCheckCalls($shipmentId: ID!) {
+  shipmentCheckCalls(shipmentId: $shipmentId) {
+    ...CheckCallFields
+  }
+}
+
+query CarrierTrackingLink($shipmentMoveId: ID!) {
+  carrierTrackingLink(shipmentMoveId: $shipmentMoveId) {
+    ...CarrierTrackingLinkFields
+  }
+}
+
+mutation LogCheckCall($input: LogCheckCallInput!) {
+  logCheckCall(input: $input) {
+    checkCall {
+      ...CheckCallFields
+    }
+    outcome
+    outcomeReason
+  }
+}
+
+mutation IssueCarrierTrackingLink($input: IssueCarrierTrackingLinkInput!) {
+  issueCarrierTrackingLink(input: $input) {
+    link {
+      ...CarrierTrackingLinkFields
+    }
+    url
+    emailed
+    emailError
+  }
+}
+
+mutation RevokeCarrierTrackingLink($shipmentMoveId: ID!) {
+  revokeCarrierTrackingLink(shipmentMoveId: $shipmentMoveId)
+}

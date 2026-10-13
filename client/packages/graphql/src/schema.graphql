@@ -8917,6 +8917,21 @@ enum CarrierTaxIDType {
   SSN
 }
 
+"""
+The live link a carrier uses to post check calls on one move. Only its
+existence is shown here: the link itself is returned once, when it is issued.
+"""
+type CarrierTrackingLink {
+  carrierId: ID!
+  createdAt: Timestamp!
+  createdById: ID
+  expiresAt: Timestamp!
+  id: ID!
+  lastUsedAt: Timestamp
+  recipientEmail: String
+  shipmentMoveId: ID!
+}
+
 enum CarrierType {
   Broker
   Common
@@ -8984,6 +8999,55 @@ enum ChargeAllocationKind {
 enum ChargeAllocationMethod {
   Amount
   Percent
+}
+
+"""
+One report of where a brokered load is, from a dispatcher who called the
+carrier, the carrier through its tracking link, or an agent. An arrival or
+departure also settles the stop's actual times through its tracking event.
+"""
+type CheckCall {
+  city: String
+  """Who the dispatcher spoke to, or who posted through the link."""
+  contactName: String
+  delayReason: String
+  delayed: Boolean!
+  """The arrival the reporter expects at the next stop."""
+  estimatedArrival: Timestamp
+  id: ID!
+  kind: CheckCallKind!
+  latitude: Float
+  longitude: Float
+  note: String
+  """When Trenova received it."""
+  receivedAt: Timestamp!
+  """When it happened, as reported."""
+  reportedAt: Timestamp!
+  reportedById: ID
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  source: CheckCallSource!
+  stateCode: String
+  """The stop reached or left, for an arrival or departure."""
+  stopId: ID
+  """The tracking event an arrival or departure settled the stop through."""
+  trackingEventId: ID
+}
+
+"""
+What a check call reports: a position update, or reaching or leaving a stop.
+"""
+enum CheckCallKind {
+  Arrival
+  Departure
+  Update
+}
+
+"""Who logged a check call."""
+enum CheckCallSource {
+  Agent
+  Carrier
+  Dispatcher
 }
 
 input ChooseAccountingCompanyInput {
@@ -16895,6 +16959,23 @@ enum InvoiceVoidDisposition {
   Rebill
 }
 
+input IssueCarrierTrackingLinkInput {
+  """Where to email the link. Leave empty to copy it instead."""
+  recipientEmail: String
+  shipmentMoveId: ID!
+}
+
+type IssueCarrierTrackingLinkPayload {
+  """
+  Why the email could not be sent, when one was asked for. The link still works.
+  """
+  emailError: String
+  emailed: Boolean!
+  link: CarrierTrackingLink!
+  """The link to share. It is not stored and cannot be shown again."""
+  url: String!
+}
+
 input IssueDisciplinaryActionInput {
   details: String
   documentId: ID
@@ -17557,6 +17638,33 @@ type LocationReference {
   name: String!
 }
 
+input LogCheckCallInput {
+  city: String
+  contactName: String
+  delayReason: String
+  delayed: Boolean
+  estimatedArrival: Timestamp
+  kind: CheckCallKind!
+  latitude: Float
+  longitude: Float
+  note: String
+  """Defaults to now. A time in the future is refused."""
+  reportedAt: Timestamp
+  shipmentMoveId: ID!
+  stateCode: String
+  """Required for an arrival or departure."""
+  stopId: ID
+}
+
+type LogCheckCallPayload {
+  checkCall: CheckCall!
+  """
+  What became of an arrival or departure when the stop's times were settled.
+  """
+  outcome: TrackingEventOutcome
+  outcomeReason: String
+}
+
 input LogInboundExceptionInput {
   kind: TriageExceptionKind!
   note: String
@@ -18170,6 +18278,8 @@ type Mutation {
   importSourcedCarrier(input: ImportSourcedCarrierInput!): Carrier!
   """Invites a worker to the driver portal (back office)."""
   inviteWorkerToPortal(input: InviteWorkerToPortalInput!): InviteWorkerToPortalResult!
+  """Issue a tracking link for the move's carrier, replacing any live one."""
+  issueCarrierTrackingLink(input: IssueCarrierTrackingLinkInput!): IssueCarrierTrackingLinkPayload!
   issueDisciplinaryAction(input: IssueDisciplinaryActionInput!): IssueDisciplinaryActionPayload!
   issuePayAdvance(input: IssuePayAdvanceInput!): PayAdvance!
   """
@@ -18184,6 +18294,7 @@ type Mutation {
   linkInboundMessage(id: ID!, input: LinkInboundMessageInput!): InboundMessage!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
+  logCheckCall(input: LogCheckCallInput!): LogCheckCallPayload!
   """Adds a shortage, overage or damage exception to the matched shipment."""
   logInboundException(input: LogInboundExceptionInput!, messageId: ID!): InboundMessage!
   """
@@ -18438,6 +18549,7 @@ type Mutation {
   """Revokes anybody's companion."""
   revokeCaptureDevice(id: ID!, reason: String): CaptureDevice!
   revokeCarrierIntelOverride(id: ID!, reason: String!): CarrierIntelOverride!
+  revokeCarrierTrackingLink(shipmentMoveId: ID!): Boolean!
   """Revokes one of the caller's own companions. It stops working at once."""
   revokeMyCaptureDevice(id: ID!, reason: String): CaptureDevice!
   """
@@ -20832,6 +20944,8 @@ type Query {
   carrierSettlements(input: DataTableConnectionInput!): CarrierSettlementConnection!
   carrierSourcingAutocomplete(limit: Int, query: String!): [CarrierIntelSuggestion!]!
   carrierSourcingSearch(input: CarrierSourcingSearchInput!): CarrierSourcingPage!
+  """The live carrier tracking link on a move, if one has been issued."""
+  carrierTrackingLink(shipmentMoveId: ID!): CarrierTrackingLink
   carriers(input: DataTableConnectionInput!): CarrierConnection!
   commodities(input: DataTableConnectionInput!): CommodityConnection!
   commodity(id: ID!): Commodity
@@ -21335,6 +21449,8 @@ type Query {
   """
   shipmentBriefing(timezone: String!): ShipmentBriefing!
   shipmentCapacity(kind: CapacityUnitKind!): ShipmentCapacity!
+  """Every check call on a shipment's moves, newest first."""
+  shipmentCheckCalls(shipmentId: ID!): [CheckCall!]!
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
   shipmentCommentReplies(after: String, commentId: ID!, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
   shipmentComments(after: String, filter: ShipmentCommentsFilterInput, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
@@ -26515,6 +26631,7 @@ enum TrackingEventOutcome {
 """Who reported a stop arrival or departure."""
 enum TrackingEventSource {
   Agent
+  Carrier
   Dispatcher
   Driver
   EDI
@@ -28264,6 +28381,7 @@ enum WatchtowerSourceKind {
   InboundMessage
   Insight
   MoveCoverage
+  NoCheckCall
   ServiceFailure
   TelematicsStopVisit
   WeatherAlert

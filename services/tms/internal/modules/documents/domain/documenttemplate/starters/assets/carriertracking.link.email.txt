@@ -1,0 +1,11 @@
+{{ if .CarrierName }}{{ t "Hello {0}," .CarrierName }}{{ else }}{{ t "Hello," }}{{ end }}
+
+{{ if .ShipmentProNumber }}{{ t "{0} asks you to post updates for load {1} through this link." .CompanyName .ShipmentProNumber }}{{ else }}{{ t "{0} asks you to post updates for this load through this link." .CompanyName }}{{ end }}
+
+{{ if .OriginSummary }}{{ if .PickupWindow }}{{ t "Origin: {0} ({1})" .OriginSummary .PickupWindow }}{{ else }}{{ t "Origin: {0}" .OriginSummary }}{{ end }}
+{{ end }}{{ if .DestinationSummary }}{{ if .DeliveryWindow }}{{ t "Destination: {0} ({1})" .DestinationSummary .DeliveryWindow }}{{ else }}{{ t "Destination: {0}" .DestinationSummary }}{{ end }}
+{{ end }}
+{{ t "Open the link to check in, record arrivals and departures, and tell us about delays. No sign-in is needed." }}
+{{ .TrackingURL }}
+
+{{ if .ExpiresAt }}{{ t "The link works until {0} or until the load is delivered." .ExpiresAt }}{{ else }}{{ t "The link works until the load is delivered." }}{{ end }} {{ t "Anyone with the link can post updates for this load, so please do not forward it." }}
