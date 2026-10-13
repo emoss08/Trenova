@@ -3,6 +3,7 @@
 package nsconnector
 
 import (
+	"context"
 	"os"
 	"strconv"
 	"strings"
@@ -24,6 +25,7 @@ const (
 	sandboxLookback    = 30 * 24 * time.Hour
 	sandboxStateSample = 20
 	sandboxAmount      = 100
+	sandboxCleanupWait = time.Minute
 )
 
 type sandbox struct {
@@ -229,7 +231,9 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 	require.NoError(t, err)
 	invoiceID := created.ExternalID
 	t.Cleanup(func() {
-		_, voidErr := s.conn.VoidSalesDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), sandboxCleanupWait)
+		defer cancel()
+		_, voidErr := s.conn.VoidSalesDocument(cleanupCtx, &accountingsyncports.AccountingDocumentRef{
 			Auth:       s.auth,
 			RequestID:  requestID + "-cleanup",
 			Kind:       accountingsync.SyncObjectInvoice,
@@ -298,7 +302,9 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 		Refs:       paid.Refs,
 	}
 	t.Cleanup(func() {
-		if _, voidErr := s.conn.VoidPayment(t.Context(), paymentRef); voidErr != nil {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), sandboxCleanupWait)
+		defer cancel()
+		if _, voidErr := s.conn.VoidPayment(cleanupCtx, paymentRef); voidErr != nil {
 			t.Logf("cleanup left payment %s in the sandbox: %v", paymentID, voidErr)
 		}
 	})
