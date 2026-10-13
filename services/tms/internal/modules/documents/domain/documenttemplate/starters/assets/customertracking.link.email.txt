@@ -1,0 +1,12 @@
+{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
+
+{{ t "{0} has shared a tracking page for your shipment. It shows where the load is and when it is expected, and it updates as the load moves. No sign-in is needed." .CompanyName }}
+
+{{ if .ShipmentProNumber }}{{ t "Load: {0}" .ShipmentProNumber }}
+{{ end }}{{ if .BOL }}{{ t "BOL: {0}" .BOL }}
+{{ end }}{{ if .OriginSummary }}{{ if .PickupWindow }}{{ t "Origin: {0} ({1})" .OriginSummary .PickupWindow }}{{ else }}{{ t "Origin: {0}" .OriginSummary }}{{ end }}
+{{ end }}{{ if .DestinationSummary }}{{ if .DeliveryWindow }}{{ t "Destination: {0} ({1})" .DestinationSummary .DeliveryWindow }}{{ else }}{{ t "Destination: {0}" .DestinationSummary }}{{ end }}
+{{ end }}
+{{ .TrackingURL }}
+
+{{ if .ExpiresAt }}{{ t "The link works until {0}." .ExpiresAt }} {{ end }}{{ t "Anyone with the link can see this shipment, so share it only with people who should." }}

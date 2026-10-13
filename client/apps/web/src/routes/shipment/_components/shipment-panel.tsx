@@ -22,6 +22,7 @@ import {
   ClockRewindIcon,
   File06Icon,
   MessageSquare01Icon,
+  Share07Icon,
   ShippingContainerIcon,
 } from "@trenova/shared/components/icons";
 import { parseAsBoolean, useQueryState } from "nuqs";
@@ -35,6 +36,7 @@ const AuditTab = lazy(() => import("@/components/audit-tab"));
 const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
 const ShipmentCommentsTab = lazy(() => import("./comments"));
 const ShipmentServiceFailuresTab = lazy(() => import("./shipment-service-failures"));
+const ShipmentCustomerTrackingTab = lazy(() => import("./shipment-customer-tracking"));
 
 function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
   const t = useT();
@@ -168,6 +170,16 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
       icon: AlertTriangleIcon,
       hideFooter: true,
       content: ShipmentServiceFailuresTab,
+      contentProps: {
+        shipment: row,
+      },
+    },
+    {
+      value: "customer-tracking",
+      label: t("Customer Tracking"),
+      icon: Share07Icon,
+      hideFooter: true,
+      content: ShipmentCustomerTrackingTab,
       contentProps: {
         shipment: row,
       },

@@ -120,6 +120,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenteventhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmovehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/shipmenttrackingpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
@@ -241,6 +242,7 @@ type RouterParams struct {
 	RateConfirmationHandler         *rateconfirmationhandler.Handler
 	RateConfirmationPublicHandler   *rateconfirmationpublichandler.Handler
 	CarrierTrackingPublicHandler    *carriertrackingpublichandler.Handler
+	ShipmentTrackingPublicHandler   *shipmenttrackingpublichandler.Handler
 	CustomerHandler                 *customerhandler.Handler
 	CustomerPaymentHandler          *customerpaymenthandler.Handler
 	GoogleMapsHandler               *googlemapshandler.Handler
@@ -386,6 +388,7 @@ type Router struct {
 	rateConfirmationHandler         *rateconfirmationhandler.Handler
 	rateConfirmationPublicHandler   *rateconfirmationpublichandler.Handler
 	carrierTrackingPublicHandler    *carriertrackingpublichandler.Handler
+	shipmentTrackingPublicHandler   *shipmenttrackingpublichandler.Handler
 	customerHandler                 *customerhandler.Handler
 	customerPaymentHandler          *customerpaymenthandler.Handler
 	googleMapsHandler               *googlemapshandler.Handler
@@ -533,6 +536,7 @@ func NewRouter(p RouterParams) *Router {
 		rateConfirmationHandler:         p.RateConfirmationHandler,
 		rateConfirmationPublicHandler:   p.RateConfirmationPublicHandler,
 		carrierTrackingPublicHandler:    p.CarrierTrackingPublicHandler,
+		shipmentTrackingPublicHandler:   p.ShipmentTrackingPublicHandler,
 		customerHandler:                 p.CustomerHandler,
 		customerPaymentHandler:          p.CustomerPaymentHandler,
 		googleMapsHandler:               p.GoogleMapsHandler,
@@ -666,6 +670,7 @@ func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	r.tenderPublicHandler.RegisterPublicRoutes(rg)
 	r.rateConfirmationPublicHandler.RegisterPublicRoutes(rg)
 	r.carrierTrackingPublicHandler.RegisterPublicRoutes(rg)
+	r.shipmentTrackingPublicHandler.RegisterPublicRoutes(rg)
 	r.editionRoutes.RegisterPublic(rg)
 }
 

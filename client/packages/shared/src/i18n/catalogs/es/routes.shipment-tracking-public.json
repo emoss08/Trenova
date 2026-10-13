@@ -1,0 +1,15 @@
+{
+  "Follow a shipment": "Seguir un envío",
+  "Last reported": "Último reporte",
+  "Load {0}": "Carga {0}",
+  "Not on file yet. It appears here once it is.": "Aún no está archivado. Aparecerá aquí cuando lo esté.",
+  "Powered by Trenova. Questions about this shipment? Reply to the email the link arrived in.": "Con tecnología de Trenova. ¿Preguntas sobre este envío? Responda al correo en el que llegó el enlace.",
+  "Shipment tracking": "Seguimiento de envíos",
+  "The link may have expired or been turned off. Ask the company that sent it for a new one.": "Es posible que el enlace haya vencido o se haya desactivado. Pida uno nuevo a la empresa que lo envió.",
+  "The shipment could not be loaded because of a temporary problem. Please try again in a moment.": "No se pudo cargar el envío por un problema temporal. Inténtelo de nuevo en un momento.",
+  "This link works until {0}.": "Este enlace funciona hasta {0}.",
+  "Updates": "Actualizaciones",
+  "Your reference": "Su referencia",
+  "{0}, since {1}": "{0}, desde {1}",
+  "{0}, {1} at {2}": "{0}, {1} a las {2}"
+}

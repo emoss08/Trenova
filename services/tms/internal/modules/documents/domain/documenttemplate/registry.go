@@ -145,6 +145,7 @@ func (r *Registry) registerAll() {
 	r.registerReportingKinds()
 	r.registerTenderKinds()
 	r.registerCarrierTrackingKinds()
+	r.registerCustomerTrackingKinds()
 	r.registerPortalKinds()
 	r.registerAccountKinds()
 	r.registerAgentKinds()

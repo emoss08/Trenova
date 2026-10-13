@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 575.
+Tools listed: 577.
 
 ## The model
 
@@ -62,9 +62,9 @@ and Confidential fields never reach a model at all.
 | Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 197 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 8 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 233 |
-| Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
+| Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 24 |
-| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 34 |
+| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 35 |
 | Money | Moves or commits money. | Automatic | Yes | 98 |
 
 ## Reads only
@@ -521,6 +521,7 @@ Changes something a customer can see.
 
 | Tool | Classes | Max tier | Condition | Reads outside text | Rationale |
 | --- | --- | --- | --- | --- | --- |
+| Revoke customer tracking link (`revoke_customer_tracking_link`) | Seen by a customer | Ask first | — | — | Ends the customer's access to the shipment's tracking page; a new link can be shared later. |
 | Update shipment hold (`update_shipment_hold`) | Inside the organization, seen by a customer | Automatic | Each call is classified by what it reaches. | — | Changes a hold inside Trenova; one made visible to the customer is shown to them, so that call is held to the customer-visible ceiling. |
 
 ## Seen by a driver
@@ -579,6 +580,7 @@ Sends to someone outside the organization.
 | Send invoice EDI (`send_invoice_edi`) | Sent outside the organization | Propose | — | — | Transmits the invoice to the customer's EDI trading partner, which cannot be called back; only a person sends it. |
 | Send invoices (`send_invoices`) | Sent outside the organization | Propose | — | — | Emails several customers their invoices at once; only a person sends them, is named as who sent each, and sees every recipient before approving. |
 | Send rate confirmation (`send_rate_confirmation`) | Sent outside the organization | Propose | — | — | Emails a binding agreement, with a link to sign it, to a carrier outside the organization; the recipients come from the carrier's record, and a sent email cannot be recalled, so a person decides every send. |
+| Share customer tracking link (`share_customer_tracking_link`) | Seen by a customer, sent outside the organization | Ask first | Each call is classified by what it reaches. | — | Gives the customer a link to the shipment's tracking page and can email it outside the organization; the link can be revoked. |
 | Tender move to carriers (`tender_move_to_carriers`) | Sent outside the organization | Ask first | — | — | Offers the load to carriers outside the organization. |
 | Tender move to routing guide (`tender_move_to_routing_guide`) | Sent outside the organization | Ask first | — | — | Offers the load to carriers outside the organization. |
 | Update customer (`update_customer`) | Inside the organization, sent outside the organization | Ask first | Each call is classified by what it reaches. A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it. | — | Changes a customer inside Trenova and leaves its billing and email profiles alone; nothing is sent. Changing who receives status emails is held for a person. |

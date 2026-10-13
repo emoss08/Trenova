@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/assignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/carrierassignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/checkcallrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/customertrackingrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/detentionrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchconsolerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchcontrolrepository"
@@ -35,6 +36,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/weatheralertrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/app/assignmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/checkcallservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/customerstatustrigger"
+	"github.com/emoss08/trenova/internal/modules/operations/app/customertrackingservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
@@ -68,13 +71,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/triageshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/weatheralertservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/jobs/customertrackingjobs/customertrackingcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/etajobs/etacontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
@@ -141,6 +147,10 @@ func SharedOptions() fx.Option {
 			trackingeventrepository.New,
 			checkcallrepository.New,
 			checkcallrepository.NewTrackingLinks,
+			customertrackingrepository.NewProfiles,
+			customertrackingrepository.NewLinks,
+			customertrackingrepository.NewNotifications,
+			customertrackingrepository.NewFacts,
 			stopetarepository.New,
 			shipmentmovejurisdictionmilerepository.New,
 			detentionrepository.NewPolicyRepository,
@@ -231,6 +241,23 @@ func SharedOptions() fx.Option {
 			fx.Annotate(
 				func(t *etatrigger.Trigger) checkcallports.CheckCallObserver { return t },
 				fx.ResultTags(`group:"check_call_observers"`),
+			),
+			customertrackingservice.New,
+			func(s *customertrackingservice.Service) customertrackingports.CustomerTrackingService {
+				return s
+			},
+			func(s *customertrackingservice.Service) customertrackingports.StatusNotifier { return s },
+			customertrackingcontract.NewRequester,
+			customerstatustrigger.New,
+			fx.Annotate(
+				func(t *customerstatustrigger.Trigger) shipmenteventports.ShipmentEventObserver {
+					return t
+				},
+				fx.ResultTags(`group:"shipment_event_observers"`),
+			),
+			fx.Annotate(
+				func(t *customerstatustrigger.Trigger) stopetaports.Observer { return t },
+				fx.ResultTags(`group:"stop_eta_observers"`),
 			),
 			shipmentwatchlistservice.New,
 			dispatchcontrolservice.New,

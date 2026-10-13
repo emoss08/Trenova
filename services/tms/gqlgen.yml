@@ -5200,6 +5200,33 @@ models:
   CarrierTrackingLink:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.TrackingLink
+  CustomerTrackingField:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/customertracking.Field
+  CustomerTrackingLinkPurpose:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/customertracking.LinkPurpose
+  CustomerStatusEvent:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/customertracking.Event
+  CustomerStatusNotificationStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/customertracking.NotificationStatus
+  CustomerStatusSkipReason:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/customertracking.SkipReason
+  CustomerTrackingProfile:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/customertracking.Profile
+    fields:
+      id:
+        resolver: true
+  CustomerTrackingLink:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/customertracking.Link
+  CustomerStatusNotification:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/customertracking.Notification
   StopEta:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.StopETA

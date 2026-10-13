@@ -31103,6 +31103,45 @@
       }
     },
     {
+      "name": "revoke_customer_tracking_link",
+      "description": "Stop every live customer tracking link on a shipment from working. Use it when a link reached the wrong person or the customer asks for access to end; share a new link afterwards if someone should keep following the load.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "shipmentId": {
+            "description": "The shipment whose links to revoke, from the page, list_shipments or search_shipments.",
+            "type": "string",
+            "x-recordOf": "shipment"
+          }
+        },
+        "required": [
+          "shipmentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "customer_visible"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Ends the customer's access to the shipment's tracking page; a new link can be shared later."
+      }
+    },
+    {
       "name": "run_dot_random_draw",
       "description": "Draw a random testing round from a pool for the period a day falls in, today by default. The pool's rates set how many drivers each substance needs; the names are chosen only when the round is drawn, under a seed nobody sees first, so the preview names no one. The round starts as a draft a person reviews and finalizes with finalize_dot_random_draw, or cancels.",
       "parameters": {
@@ -33053,6 +33092,51 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Records a worker's own stated preference inside Trenova; nothing is sent, and it is set again the same way."
+      }
+    },
+    {
+      "name": "share_customer_tracking_link",
+      "description": "Share a link to a shipment's tracking page with the customer, and email it when given an address. The page shows only what the customer's tracking settings allow and needs no sign-in. Use the address the customer asked you to send it to; never invent one.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "recipientEmail": {
+            "description": "Where to email the link. Leave it out to share the link without emailing it.",
+            "maxLength": 320,
+            "type": "string"
+          },
+          "shipmentId": {
+            "description": "The shipment to share, from the page, list_shipments or search_shipments.",
+            "type": "string",
+            "x-recordOf": "shipment"
+          }
+        },
+        "required": [
+          "shipmentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "customer_visible",
+          "external_recipient"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Gives the customer a link to the shipment's tracking page and can email it outside the organization; the link can be revoked."
       }
     },
     {

@@ -469,6 +469,7 @@ modules:
       - trackingevent
       - checkcall
       - stopeta
+      - customertracking
       - weatheralert
     service:
       - allocationcheck
@@ -485,6 +486,7 @@ modules:
       - equipmentavailabilityhelper
       - etaprojection
       - etatrigger
+      - customerstatustrigger
       - equipmentcontinuityhelper
       - globalsearchservice
       - internaledilifecycle
@@ -502,6 +504,7 @@ modules:
       - shipmentcommentservice
       - shipmentcommercial
       - shipmentetaservice
+      - customertrackingservice
       - shipmenteventservice
       - shipmentholdservice
       - shipmentinvalidation
@@ -520,6 +523,7 @@ modules:
       - checkcalljobs
       - detentionjobs
       - etajobs
+      - customertrackingjobs
       - recurringshipmentjobs
       - shipmentjobs
       - tenderjobs
@@ -551,6 +555,7 @@ modules:
       - trackingeventrepository
       - checkcallrepository
       - stopetarepository
+      - customertrackingrepository
       - triageoverlaprepository
       - weatheralertrepository
   edi:

@@ -61,6 +61,14 @@ const (
 	// arrivals and departures through for one brokered load.
 	KindCarrierTrackingLinkEmail Kind = "carriertracking.link.email"
 
+	// KindCustomerTrackingLinkEmail sends a customer the link to one shipment's
+	// tracking page.
+	KindCustomerTrackingLinkEmail Kind = "customertracking.link.email"
+
+	// KindCustomerStatusEmail tells a customer its load was picked up, is late,
+	// was delivered or has its proof of delivery on file.
+	KindCustomerStatusEmail Kind = "customertracking.status.email"
+
 	// Portal.
 
 	// KindDriverPortalInvitationEmail invites a driver to the portal.
@@ -180,6 +188,8 @@ func AllKinds() []Kind {
 		KindReportDeliveryEmail,
 		KindTenderOfferEmail,
 		KindCarrierTrackingLinkEmail,
+		KindCustomerTrackingLinkEmail,
+		KindCustomerStatusEmail,
 		KindDriverPortalInvitationEmail,
 		KindPasswordResetEmail,
 		KindAgentRequestMissingDocsEmail,

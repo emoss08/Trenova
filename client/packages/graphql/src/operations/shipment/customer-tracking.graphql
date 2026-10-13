@@ -1,0 +1,56 @@
+fragment CustomerTrackingLinkFields on CustomerTrackingLink {
+  id
+  shipmentId
+  customerId
+  purpose
+  recipientEmail
+  expiresAt
+  revokedAt
+  lastViewedAt
+  viewCount
+  createdById
+  createdAt
+}
+
+fragment CustomerStatusNotificationFields on CustomerStatusNotification {
+  id
+  shipmentId
+  event
+  stopId
+  occurredAt
+  estimatedAt
+  status
+  skipReason
+  recipients
+  attempts
+  lastError
+  sentAt
+  createdAt
+}
+
+query CustomerTrackingLinks($shipmentId: ID!) {
+  customerTrackingLinks(shipmentId: $shipmentId) {
+    ...CustomerTrackingLinkFields
+  }
+}
+
+query CustomerStatusNotifications($shipmentId: ID!) {
+  customerStatusNotifications(shipmentId: $shipmentId) {
+    ...CustomerStatusNotificationFields
+  }
+}
+
+mutation IssueCustomerTrackingLink($input: IssueCustomerTrackingLinkInput!) {
+  issueCustomerTrackingLink(input: $input) {
+    link {
+      ...CustomerTrackingLinkFields
+    }
+    url
+    emailed
+    emailError
+  }
+}
+
+mutation RevokeCustomerTrackingLink($shipmentId: ID!, $linkId: ID) {
+  revokeCustomerTrackingLink(shipmentId: $shipmentId, linkId: $linkId)
+}

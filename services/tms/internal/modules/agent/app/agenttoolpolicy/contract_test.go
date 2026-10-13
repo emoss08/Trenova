@@ -206,6 +206,11 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"attach_document_to_shipment":    {agent.EgressInternal},
 		"place_shipment_hold":            {agent.EgressInternal},
 		"release_shipment_hold":          {agent.EgressInternal},
+		"share_customer_tracking_link": {
+			agent.EgressCustomerVisible,
+			agent.EgressExternalRecipient,
+		},
+		"revoke_customer_tracking_link": {agent.EgressCustomerVisible},
 		"create_shipment":                {agent.EgressInternal},
 		"create_location":                {agent.EgressInternal},
 		"escalate_detention":             {agent.EgressInternal},

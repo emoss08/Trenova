@@ -6006,6 +6006,15 @@
       "go/other"
     ]
   },
+  "A link lasts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "A link to the matrix page or bulletin the rate was taken from.": {
     "sites": 1,
     "scope": [
@@ -10087,6 +10096,28 @@
       "go"
     ],
     "areas": [
+      "go/other"
+    ]
+  },
+  "A tracking link can last at most 180 days": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
+    ]
+  },
+  "A tracking link must last at least 1 day": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
       "go/other"
     ]
   },
@@ -20714,6 +20745,15 @@
       "routes/admin"
     ]
   },
+  "Allow tracking links": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Allow unapplied credit": {
     "sites": 1,
     "scope": [
@@ -24451,6 +24491,15 @@
       "template/carriertracking.link.email"
     ]
   },
+  "Anyone with the link can see this shipment, so share it only with people who should.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.link.email"
+    ]
+  },
   "Anyone working the case ticks it. Everyone sees who did.": {
     "sites": 1,
     "scope": [
@@ -25595,13 +25644,32 @@
       "routes/inbox"
     ]
   },
-  "Appointment {0}": {
+  "Appointment windows": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Appointment {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
       "routes/shipment"
+    ]
+  },
+  "Appointment {0} to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Appointment, regardless of arrival": {
@@ -27256,6 +27324,15 @@
       "apps/web/hooks"
     ]
   },
+  "Arrival and departure times": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Arrival projections": {
     "sites": 2,
     "scope": [
@@ -27420,12 +27497,13 @@
     ]
   },
   "Arrived {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "apps/web/lib",
       "routes/carrier-tracking-public",
       "routes/desk"
     ]
@@ -32908,7 +32986,7 @@
     ]
   },
   "BOL": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -32924,7 +33002,8 @@
       "routes/inbox",
       "routes/invoice",
       "routes/order",
-      "routes/shipment"
+      "routes/shipment",
+      "routes/shipment-tracking-public"
     ]
   },
   "BOL / Reference Number": {
@@ -32934,6 +33013,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "BOL and customer reference": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "BOL cannot be longer than 100 characters": {
@@ -33030,6 +33118,16 @@
       "routes/edi",
       "routes/invoice",
       "template/rateconfirmation.pdf"
+    ]
+  },
+  "BOL: {0}": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.link.email",
+      "template/customertracking.status.email"
     ]
   },
   "Back": {
@@ -36474,6 +36572,15 @@
       "routes/billing-queue"
     ]
   },
+  "Billing review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Billing schedule": {
     "sites": 1,
     "scope": [
@@ -38541,7 +38648,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 137,
+    "sites": 138,
     "scope": [
       "go"
     ],
@@ -40144,7 +40251,7 @@
     ]
   },
   "Canceled": {
-    "sites": 42,
+    "sites": 43,
     "scope": [
       "go",
       "ts"
@@ -41495,7 +41602,7 @@
     ]
   },
   "Carrier": {
-    "sites": 46,
+    "sites": 48,
     "scope": [
       "go",
       "ts"
@@ -41522,6 +41629,7 @@
       "routes/rate-agreement",
       "routes/routing-guide",
       "routes/shipment",
+      "routes/shipment-tracking-public",
       "routes/worker",
       "template/rateconfirmation.pdf"
     ]
@@ -52081,6 +52189,15 @@
       "routes/shipment"
     ]
   },
+  "Comments marked for the customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Comments support up to {0, plural, one {# attachment} other {# attachments}}": {
     "sites": 1,
     "scope": [
@@ -53133,6 +53250,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Compliance check": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Compliance comes from the credential file and reads Non-compliant while a required credential is expired or missing. Qualified is set when the onboarding checklist closes with every required item settled.": {
@@ -57126,7 +57252,7 @@
     ]
   },
   "Copied": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -57136,7 +57262,8 @@
       "routes/admin",
       "routes/desk",
       "routes/detention-desk",
-      "routes/invoice"
+      "routes/invoice",
+      "routes/shipment"
     ]
   },
   "Copied @{0}": {
@@ -57206,7 +57333,7 @@
     ]
   },
   "Copy": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -57218,7 +57345,8 @@
       "routes/detention-desk",
       "routes/edi",
       "routes/inbox",
-      "routes/invoice"
+      "routes/invoice",
+      "routes/shipment"
     ]
   },
   "Copy API key": {
@@ -61386,13 +61514,14 @@
     ]
   },
   "Created {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/shipment"
     ]
   },
   "Created {0} in {1}": {
@@ -61513,7 +61642,7 @@
     ]
   },
   "Creating...": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -61522,6 +61651,7 @@
       "routes/admin",
       "routes/edi",
       "routes/journal-reversal",
+      "routes/shipment",
       "routes/worker"
     ]
   },
@@ -63466,7 +63596,7 @@
     ]
   },
   "Customer ID is required": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -63591,6 +63721,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Customer Tracking": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Customer Updated": {
@@ -63756,7 +63895,7 @@
     ]
   },
   "Customer is required": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -64080,6 +64219,33 @@
     ],
     "areas": [
       "routes/customer-statement"
+    ]
+  },
+  "Customer status emails": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Customer tracking links": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Customer tracking links need a public base URL; set tendering.publicBaseUrl": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Customer update": {
@@ -68813,6 +68979,15 @@
       "apps/web/lib"
     ]
   },
+  "Delay": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
   "Delay code definitions": {
     "sites": 1,
     "scope": [
@@ -68860,8 +69035,17 @@
       "apps/web/types"
     ]
   },
+  "Delay: load {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
   "Delayed": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -68870,6 +69054,7 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
+      "routes/customer",
       "routes/shipment"
     ]
   },
@@ -69740,7 +69925,7 @@
     ]
   },
   "Delivered": {
-    "sites": 18,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -69750,12 +69935,14 @@
       "apps/web/lib",
       "go/other",
       "routes/billing-queue",
+      "routes/customer",
       "routes/desk",
       "routes/detention-desk",
       "routes/home",
       "routes/inbox",
       "routes/invoice",
-      "routes/shipment"
+      "routes/shipment",
+      "template/customertracking.status.email"
     ]
   },
   "Delivered loads waiting to be reviewed and billed": {
@@ -69794,6 +69981,15 @@
       "routes/desk",
       "routes/inbox",
       "routes/shipment"
+    ]
+  },
+  "Delivered: load {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
     ]
   },
   "Delivering today": {
@@ -71216,7 +71412,7 @@
     ]
   },
   "Destination": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -71229,6 +71425,8 @@
       "routes/rate-agreement",
       "routes/tender-offer-public",
       "template/carriertracking.link.email",
+      "template/customertracking.link.email",
+      "template/customertracking.status.email",
       "template/tender.offer.email"
     ]
   },
@@ -71480,22 +71678,25 @@
     ]
   },
   "Destination: {0}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
       "template/carriertracking.link.email",
+      "template/customertracking.link.email",
+      "template/customertracking.status.email",
       "template/tender.offer.email"
     ]
   },
   "Destination: {0} ({1})": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
       "template/carriertracking.link.email",
+      "template/customertracking.link.email",
       "template/tender.offer.email"
     ]
   },
@@ -72967,13 +73168,14 @@
     ]
   },
   "Discard": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
       "routes/agent-control",
+      "routes/customer",
       "routes/desk",
       "routes/fuel-purchase",
       "routes/home",
@@ -75342,6 +75544,15 @@
       "go/other"
     ]
   },
+  "Document downloads are not configured": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Document encryption is not configured": {
     "sites": 3,
     "scope": [
@@ -76334,7 +76545,7 @@
     ]
   },
   "Done": {
-    "sites": 34,
+    "sites": 35,
     "scope": [
       "ts"
     ],
@@ -76625,12 +76836,13 @@
     ]
   },
   "Download {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/shipment-tracking-public"
     ]
   },
   "Downloaded v{0} as JSON": {
@@ -79173,12 +79385,13 @@
     ]
   },
   "Due {0}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "routes/carrier-tracking-public",
       "routes/collections",
       "routes/desk",
@@ -80985,6 +81198,15 @@
       "routes/dispatch-control"
     ]
   },
+  "Each event is emailed once per shipment, or once per stop for a delay. Turning a rule on never sends emails about events that already happened.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Each event starts a run about the record it concerns. Repeats inside five minutes are merged.": {
     "sites": 1,
     "scope": [
@@ -81208,6 +81430,17 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Each recipient must be a valid email address": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
     ]
   },
   "Each shipment runs the billing readiness check before it moves into the queue. Completed shipments that pass are marked Ready to Invoice first.": {
@@ -82847,7 +83080,7 @@
     ]
   },
   "Email delivery is not configured for this environment": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -83148,12 +83381,13 @@
     ]
   },
   "Email to": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/shipment"
     ]
   },
   "Email {0, plural, one {# invoice} other {# invoices}} to the customers they bill, as their billing profiles say.": {
@@ -83181,6 +83415,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Emailed to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Emails": {
@@ -85585,6 +85828,15 @@
       "apps/web/types"
     ]
   },
+  "Enter how many days a link lasts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Enter how many hours a load may go without a check call": {
     "sites": 1,
     "scope": [
@@ -86548,7 +86800,7 @@
     ]
   },
   "Equipment": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -86561,6 +86813,7 @@
       "packages/shared/types",
       "routes/desk",
       "routes/inbox",
+      "routes/shipment-tracking-public",
       "routes/tender-offer-public",
       "template/tender.offer.email"
     ]
@@ -89566,6 +89819,15 @@
       "go/other"
     ]
   },
+  "Every stop's city and state, and the load number, are always shown. Holds and comments appear only when marked for the customer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Every term listed here must appear somewhere in the document text for the rule to match.": {
     "sites": 1,
     "scope": [
@@ -91198,6 +91460,15 @@
       "routes/worker"
     ]
   },
+  "Expected to reach a stop later than planned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Expected total": {
     "sites": 1,
     "scope": [
@@ -91262,6 +91533,15 @@
     "areas": [
       "go/other",
       "routes/edi"
+    ]
+  },
+  "Expected {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Expects": {
@@ -91653,7 +91933,7 @@
     ]
   },
   "Expired": {
-    "sites": 35,
+    "sites": 36,
     "scope": [
       "go",
       "ts"
@@ -93810,7 +94090,7 @@
     ]
   },
   "Failed": {
-    "sites": 56,
+    "sites": 57,
     "scope": [
       "go",
       "ts"
@@ -100093,6 +100373,33 @@
       "go/other"
     ]
   },
+  "Follow a shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public"
+    ]
+  },
+  "Follow load {0} as it moves.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.link.email"
+    ]
+  },
+  "Follow the load here:": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
   "Follow up": {
     "sites": 1,
     "scope": [
@@ -100127,6 +100434,15 @@
     ],
     "areas": [
       "routes/collections"
+    ]
+  },
+  "Follow your load as it moves.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.link.email"
     ]
   },
   "Follow your operating system": {
@@ -103762,6 +104078,15 @@
     ],
     "areas": [
       "routes/hold-reason"
+    ]
+  },
+  "Gave up after repeated failures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Gave up after {0, plural, one {# attempt} other {# attempts}}": {
@@ -107569,7 +107894,7 @@
     ]
   },
   "Hello {0},": {
-    "sites": 18,
+    "sites": 22,
     "scope": [
       "go"
     ],
@@ -107580,6 +107905,8 @@
       "template/agent.request_missing_docs.email",
       "template/carriertracking.link.email",
       "template/customer.statement.email",
+      "template/customertracking.link.email",
+      "template/customertracking.status.email",
       "template/invoice.email",
       "template/invoice.reminder.email",
       "template/tender.offer.email"
@@ -107595,7 +107922,7 @@
     ]
   },
   "Hello,": {
-    "sites": 18,
+    "sites": 22,
     "scope": [
       "go"
     ],
@@ -107606,6 +107933,8 @@
       "template/agent.request_missing_docs.email",
       "template/carriertracking.link.email",
       "template/customer.statement.email",
+      "template/customertracking.link.email",
+      "template/customertracking.status.email",
       "template/invoice.email",
       "template/invoice.reminder.email",
       "template/tender.offer.email"
@@ -108640,6 +108969,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Holds marked visible to the customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Holds what this conversation needs": {
@@ -112292,6 +112630,15 @@
       "routes/carrier-sourcing"
     ]
   },
+  "In a status email to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "In an inbound file": {
     "sites": 1,
     "scope": [
@@ -112493,7 +112840,7 @@
     ]
   },
   "In transit": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -113080,6 +113427,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Include a tracking link in each email": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Include blank lines within the section boundaries": {
@@ -115352,6 +115708,15 @@
     ]
   },
   "Invalid GL account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "Invalid ID": {
     "sites": 1,
     "scope": [
       "go"
@@ -118491,6 +118856,15 @@
       "routes/inbox"
     ]
   },
+  "It left the pickup at {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
   "It may have been deleted by another administrator.": {
     "sites": 2,
     "scope": [
@@ -118543,6 +118917,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "It may miss its appointment. We are working on it and will keep you posted.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
     ]
   },
   "It no longer applies to any year.": {
@@ -118660,6 +119043,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "It was delivered at {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
     ]
   },
   "It was discarded or deleted when its retention ran out, or you can no longer see it.": {
@@ -122661,6 +123053,24 @@
       "apps/web/components"
     ]
   },
+  "Last reported": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public"
+    ]
+  },
+  "Last reported location": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Last revocation": {
     "sites": 1,
     "scope": [
@@ -124053,6 +124463,15 @@
       "apps/web/components"
     ]
   },
+  "Leave empty to copy the link and share it yourself. The page shows what the customer's tracking settings allow.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Leave empty to keep each run in Reports only.": {
     "sites": 1,
     "scope": [
@@ -124436,11 +124855,12 @@
     ]
   },
   "Left {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/carrier-tracking-public",
       "routes/desk"
     ]
@@ -126448,6 +126868,17 @@
       "routes/agent-control"
     ]
   },
+  "List at most 20 recipients": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
+    ]
+  },
   "List carriers": {
     "sites": 1,
     "scope": [
@@ -126811,13 +127242,14 @@
     ]
   },
   "Live": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
+      "apps/web/lib",
       "routes/admin",
       "routes/agent-control",
       "routes/detention-policy"
@@ -127347,6 +127779,15 @@
       "routes/dash-control"
     ]
   },
+  "Load {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public"
+    ]
+  },
   "Load {0} for {1}": {
     "sites": 1,
     "scope": [
@@ -127356,6 +127797,24 @@
       "routes/carrier-tracking-public"
     ]
   },
+  "Load {0} has been delivered.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "Load {0} has been picked up.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
   "Load {0} is new": {
     "sites": 1,
     "scope": [
@@ -127363,6 +127822,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Load {0} is running late.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
     ]
   },
   "Load {0} may already exist": {
@@ -127381,6 +127849,15 @@
     ],
     "areas": [
       "template/notification.dash.load_unassigned"
+    ]
+  },
+  "Load: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.link.email"
     ]
   },
   "Loaded": {
@@ -128871,6 +129348,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Location names and addresses": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Location updated successfully": {
@@ -146711,6 +147197,15 @@
       "routes/formula-template"
     ]
   },
+  "No link has been shared for this shipment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "No load has stopped here yet.": {
     "sites": 1,
     "scope": [
@@ -149313,6 +149808,15 @@
       "routes/customer-statement"
     ]
   },
+  "No status email has been owed yet. The customer's tracking settings choose which events send one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "No steps are left to run.": {
     "sites": 1,
     "scope": [
@@ -150453,6 +150957,15 @@
     ],
     "areas": [
       "routes/my-team"
+    ]
+  },
+  "Nobody to send it to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Nobody yet: no role is granted it": {
@@ -151701,6 +152214,15 @@
       "routes/desk"
     ]
   },
+  "Not on file yet. It appears here once it is.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public"
+    ]
+  },
   "Not on the clock": {
     "sites": 1,
     "scope": [
@@ -151711,12 +152233,13 @@
     ]
   },
   "Not opened yet": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/shipment"
     ]
   },
   "Not part of the total": {
@@ -151765,6 +152288,15 @@
     ]
   },
   "Not picked up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Not picked up yet": {
     "sites": 1,
     "scope": [
       "ts"
@@ -155498,6 +156030,15 @@
       "routes/inbox"
     ]
   },
+  "Now expected {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Nowhere": {
     "sites": 1,
     "scope": [
@@ -157096,7 +157637,7 @@
     ]
   },
   "On hold": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -157105,7 +157646,8 @@
       "packages/shared/components",
       "routes/desk",
       "routes/dispatch-console",
-      "routes/settlement-workspace"
+      "routes/settlement-workspace",
+      "routes/shipment-tracking-public"
     ]
   },
   "On hold for": {
@@ -157145,6 +157687,15 @@
     ]
   },
   "On invoice post": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "On its way": {
     "sites": 1,
     "scope": [
       "ts"
@@ -162198,6 +162749,16 @@
       "template/carriertracking.link.email"
     ]
   },
+  "Open tracking page": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.link.email",
+      "template/customertracking.status.email"
+    ]
+  },
   "Open tractor": {
     "sites": 2,
     "scope": [
@@ -162869,6 +163430,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Operational hold": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Operational insights": {
@@ -163649,13 +164219,15 @@
     ]
   },
   "Or paste this link into your browser:": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "go"
     ],
     "areas": [
       "template/account.password_reset.email",
       "template/carriertracking.link.email",
+      "template/customertracking.link.email",
+      "template/customertracking.status.email",
       "template/driverportal.invitation.email",
       "template/invoice.share.email",
       "template/rateconfirmation.email"
@@ -164112,7 +164684,7 @@
     ]
   },
   "Organization and business unit are required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -164189,7 +164761,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 136,
+    "sites": 137,
     "scope": [
       "go"
     ],
@@ -164412,7 +164984,7 @@
     ]
   },
   "Origin": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -164425,6 +164997,8 @@
       "routes/rate-agreement",
       "routes/tender-offer-public",
       "template/carriertracking.link.email",
+      "template/customertracking.link.email",
+      "template/customertracking.status.email",
       "template/tender.offer.email"
     ]
   },
@@ -164687,22 +165261,25 @@
     ]
   },
   "Origin: {0}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
       "template/carriertracking.link.email",
+      "template/customertracking.link.email",
+      "template/customertracking.status.email",
       "template/tender.offer.email"
     ]
   },
   "Origin: {0} ({1})": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
       "template/carriertracking.link.email",
+      "template/customertracking.link.email",
       "template/tender.offer.email"
     ]
   },
@@ -166176,6 +166753,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Owed and not yet sent; retried after a failure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Owed now": {
@@ -171402,7 +171988,7 @@
     ]
   },
   "Pending": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "go",
       "ts"
@@ -174070,12 +174656,16 @@
     ]
   },
   "Picked up": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/inbox"
+      "apps/web/lib",
+      "routes/customer",
+      "routes/inbox",
+      "template/customertracking.status.email"
     ]
   },
   "Picked up after a wait": {
@@ -174112,6 +174702,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Picked up: load {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
     ]
   },
   "Picking tools and how free each one is": {
@@ -174494,7 +175093,7 @@
     ]
   },
   "Pieces": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -174507,7 +175106,8 @@
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
-      "routes/shipment"
+      "routes/shipment",
+      "routes/shipment-tracking-public"
     ]
   },
   "Pieces / Packages": {
@@ -174517,6 +175117,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Pieces and weight": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Pieces cannot be negative": {
@@ -175124,11 +175733,12 @@
     ]
   },
   "Planned": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/dispatch-console"
     ]
   },
@@ -175572,12 +176182,13 @@
     ]
   },
   "Please wait a minute and open the link again.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-tracking-public"
+      "routes/carrier-tracking-public",
+      "routes/shipment-tracking-public"
     ]
   },
   "Please wait a minute and try the link from your email again.": {
@@ -177345,6 +177956,15 @@
     ],
     "areas": [
       "routes/rate-confirmation-public"
+    ]
+  },
+  "Powered by Trenova. Questions about this shipment? Reply to the email the link arrived in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public"
     ]
   },
   "Practical": {
@@ -180075,6 +180695,15 @@
       "apps/web/components"
     ]
   },
+  "Projected arrivals": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Projected hours-of-service margin left after completing the trip.": {
     "sites": 1,
     "scope": [
@@ -180187,8 +180816,9 @@
     ]
   },
   "Proof of delivery": {
-    "sites": 7,
+    "sites": 10,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -180196,7 +180826,28 @@
       "apps/web/lib",
       "routes/agent-control",
       "routes/desk",
-      "routes/inbox"
+      "routes/inbox",
+      "routes/shipment-tracking-public",
+      "template/customertracking.status.email"
+    ]
+  },
+  "Proof of delivery ready": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/customer"
+    ]
+  },
+  "Proof of delivery ready: load {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
     ]
   },
   "Proof of delivery received": {
@@ -188806,7 +189457,7 @@
     ]
   },
   "Recipient email must be a valid email address": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -188848,6 +189499,17 @@
     ],
     "areas": [
       "routes/organization"
+    ]
+  },
+  "Recipients cannot be longer than 2000 characters": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "go/other"
     ]
   },
   "Reclassification": {
@@ -196254,7 +196916,7 @@
     ]
   },
   "Request is required": {
-    "sites": 53,
+    "sites": 54,
     "scope": [
       "go"
     ],
@@ -199736,7 +200398,7 @@
     ]
   },
   "Retrying...": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -199747,6 +200409,7 @@
       "routes/carrier-tracking-public",
       "routes/ifta-return",
       "routes/rate-confirmation-public",
+      "routes/shipment-tracking-public",
       "routes/tender-offer-public"
     ]
   },
@@ -201567,14 +202230,15 @@
     ]
   },
   "Revoke": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
-      "routes/carrier"
+      "routes/carrier",
+      "routes/shipment"
     ]
   },
   "Revoke API key": {
@@ -201602,6 +202266,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Revoke all": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Revoke any paired device": {
@@ -201678,7 +202351,7 @@
     ]
   },
   "Revoked": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -206618,6 +207291,15 @@
       "routes/reports"
     ]
   },
+  "Save tracking settings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Save view": {
     "sites": 3,
     "scope": [
@@ -207004,7 +207686,7 @@
     ]
   },
   "Saving...": {
-    "sites": 60,
+    "sites": 61,
     "scope": [
       "ts"
     ],
@@ -207015,6 +207697,7 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/collections",
+      "routes/customer",
       "routes/desk",
       "routes/document-type",
       "routes/driver-expense",
@@ -214270,6 +214953,15 @@
       "routes/formula-template"
     ]
   },
+  "Send to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Send to another address": {
     "sites": 1,
     "scope": [
@@ -214682,6 +215374,15 @@
       "routes/shipment"
     ]
   },
+  "Sends a customer the link to a shipment's tracking page. What the page shows is set on the customer.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Sends after the one above": {
     "sites": 1,
     "scope": [
@@ -214837,7 +215538,7 @@
     ]
   },
   "Sent": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -215122,14 +215823,15 @@
     ]
   },
   "Sent {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
-      "routes/inbox"
+      "routes/inbox",
+      "routes/shipment"
     ]
   },
   "Sent {0}{1}{2}": {
@@ -215157,6 +215859,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Separate addresses with commas. Leave empty to use the customer's status update recipients, then the To line of its email profile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Separate invoice for each": {
@@ -217822,6 +218533,15 @@
       "routes/invoice"
     ]
   },
+  "Share a link to a shipment's tracking page with the customer, and email it when given an address. The page shows only what the customer's tracking settings allow and needs no sign-in. Use the address the customer asked you to send it to; never invent one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Share corrections": {
     "sites": 3,
     "scope": [
@@ -217858,6 +218578,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Share link": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Share of answers": {
@@ -218060,6 +218789,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Shared by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Shared by {0} on {1}": {
@@ -218457,7 +219195,7 @@
     ]
   },
   "Shipment ID is required": {
-    "sites": 35,
+    "sites": 40,
     "scope": [
       "go",
       "ts"
@@ -219781,6 +220519,17 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Shipment tracking": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public",
+      "template/customertracking.link.email"
     ]
   },
   "Shipment type": {
@@ -222409,7 +223158,7 @@
     ]
   },
   "Skipped": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -226986,7 +227735,7 @@
     ]
   },
   "Status": {
-    "sites": 328,
+    "sites": 329,
     "scope": [
       "go",
       "ts"
@@ -227162,6 +227911,15 @@
       "routes/edi",
       "routes/service-failure",
       "routes/service-failure-reason-code"
+    ]
+  },
+  "Status emails": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Status is invalid": {
@@ -227940,6 +228698,15 @@
       "apps/web/types"
     ]
   },
+  "Stop every live customer tracking link on a shipment from working. Use it when a link reached the wrong person or the customer asks for access to end; share a new link afterwards if someone should keep following the load.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Stop field": {
     "sites": 1,
     "scope": [
@@ -228296,13 +229063,14 @@
     ]
   },
   "Stop {0} · {1}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-tracking-public",
-      "routes/rate-confirmation-public"
+      "routes/rate-confirmation-public",
+      "routes/shipment-tracking-public"
     ]
   },
   "Stopped": {
@@ -232385,6 +233153,15 @@
       "routes/inbox"
     ]
   },
+  "Tells a customer its load was picked up, is running late, was delivered, or has its proof of delivery on file, as the customer's rules ask. Each event is sent once.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Tells a teammate someone shared an invoice with them, with the sharer's note and a link that opens it. Not customer-scoped: the recipient is a user who can already view invoices.": {
     "sites": 1,
     "scope": [
@@ -232896,13 +233673,14 @@
     ]
   },
   "Temporarily unavailable": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-tracking-public",
       "routes/rate-confirmation-public",
+      "routes/shipment-tracking-public",
       "routes/tender-offer-public"
     ]
   },
@@ -235780,6 +236558,24 @@
       "routes/shipment"
     ]
   },
+  "The appointment window at the delayed stop.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The appointment window is {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
   "The approval could not be queued — try again shortly": {
     "sites": 1,
     "scope": [
@@ -236141,6 +236937,15 @@
     ]
   },
   "The biennial MCS-150 update has not been filed within the configured window.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The bill of lading number, when the shipment has one.": {
     "sites": 1,
     "scope": [
       "go"
@@ -241363,6 +242168,15 @@
       "apps/dash/routes"
     ]
   },
+  "The link may have expired or been turned off. Ask the company that sent it for a new one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public"
+    ]
+  },
   "The link may have expired, been revoked, or the rate confirmation may have been updated. Contact the broker if you believe this is an error.": {
     "sites": 1,
     "scope": [
@@ -241400,12 +242214,13 @@
     ]
   },
   "The link was emailed to {0}.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/shipment"
     ]
   },
   "The link works until the load is delivered.": {
@@ -241426,13 +242241,24 @@
       "template/carriertracking.link.email"
     ]
   },
+  "The link works until {0}.": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.link.email",
+      "template/customertracking.status.email"
+    ]
+  },
   "The link works, but the email could not be sent: {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/shipment"
     ]
   },
   "The linked assignment is unavailable. Expected total:": {
@@ -243006,6 +243832,15 @@
       "go/other"
     ]
   },
+  "The page shows": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "The page they are on": {
     "sites": 1,
     "scope": [
@@ -243415,7 +244250,7 @@
     ]
   },
   "The planned delivery window.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -243424,7 +244259,7 @@
     ]
   },
   "The planned pickup window.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -243657,6 +244492,15 @@
       "routes/random-testing"
     ]
   },
+  "The projected arrival at the delayed stop.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The prompt asks for JSON; nothing enforces it.": {
     "sites": 1,
     "scope": [
@@ -243664,6 +244508,33 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The proof of delivery for load {0} is ready.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "The proof of delivery for your load is ready.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "The proof of delivery is not on file yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The proper shipping name as designated by transportation regulations.": {
@@ -245180,6 +246051,15 @@
       "routes/fuel-feed-run"
     ]
   },
+  "The rule was turned off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "The run could not continue": {
     "sites": 1,
     "scope": [
@@ -245667,6 +246547,15 @@
       "go/other"
     ]
   },
+  "The shipment could not be loaded because of a temporary problem. Please try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public"
+    ]
+  },
   "The shipment could not be re-rated": {
     "sites": 1,
     "scope": [
@@ -245782,6 +246671,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "The shipment was canceled": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The shipment will be duplicated in the background.": {
@@ -245917,6 +246815,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "The signed proof of delivery is on file.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
     ]
   },
   "The signed-rate agreement sent to an external carrier before it hauls a brokered move. This is the artifact a disputed carrier invoice is settled against.": {
@@ -246336,6 +247243,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "The stop a delay is about, as city and state.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The stop actuals and move status have been updated.": {
@@ -246886,6 +247802,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The tracking page link, when the customer's rules include it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The tracking page link. Required: it is the point of the email.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The tractor has not reported a position": {
@@ -248518,6 +249452,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "These tracking settings changed since you opened them; refresh and try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "These values would not go through: {0}": {
@@ -251353,6 +252296,15 @@
       "apps/web/components"
     ]
   },
+  "This link is shown once. Share a new one if it is lost.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "This link works once and expires in {0, plural, one {# minute} other {# minutes}}, at {1}.": {
     "sites": 2,
     "scope": [
@@ -251387,6 +252339,15 @@
     ],
     "areas": [
       "routes/carrier-tracking-public"
+    ]
+  },
+  "This link works until {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public"
     ]
   },
   "This live connection belongs to another session": {
@@ -253004,7 +253965,25 @@
       "routes/shipment"
     ]
   },
+  "This shipment has no live customer tracking link": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This shipment has no permit {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This shipment is canceled, so there is nothing to track": {
     "sites": 1,
     "scope": [
       "go"
@@ -253410,14 +254389,15 @@
     ]
   },
   "This tracking link is no longer valid": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/carrier-tracking-public"
+      "routes/carrier-tracking-public",
+      "routes/shipment-tracking-public"
     ]
   },
   "This tractor could not be read": {
@@ -255551,7 +256531,7 @@
     ]
   },
   "To {0}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -255560,7 +256540,8 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/inbox",
-      "routes/invoice"
+      "routes/invoice",
+      "routes/shipment"
     ]
   },
   "To {0}, by {1}": {
@@ -256033,13 +257014,14 @@
     ]
   },
   "Too many attempts": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-tracking-public",
       "routes/rate-confirmation-public",
+      "routes/shipment-tracking-public",
       "routes/tender-offer-public"
     ]
   },
@@ -257474,6 +258456,15 @@
       "go/other"
     ]
   },
+  "Track load {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.link.email"
+    ]
+  },
   "Track rain, snow and sleet": {
     "sites": 1,
     "scope": [
@@ -257519,6 +258510,15 @@
       "routes/admin"
     ]
   },
+  "Track your shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.link.email"
+    ]
+  },
   "Tracked types": {
     "sites": 1,
     "scope": [
@@ -257537,13 +258537,24 @@
       "routes/admin"
     ]
   },
-  "Tracking link": {
-    "sites": 2,
+  "Tracking": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/customer"
+    ]
+  },
+  "Tracking link": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/customer",
+      "routes/shipment"
     ]
   },
   "Tracking link for load {0}": {
@@ -257571,6 +258582,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Tracking links are turned off for this customer; turn them on in the customer's tracking settings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tracking settings saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Tracking was cleared. Start a new sync to continue.": {
@@ -260025,6 +261054,42 @@
       "go/other"
     ]
   },
+  "True when the load has been delivered.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "True when the load has been picked up.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "True when the load is projected to reach a stop late.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "True when the proof of delivery is on file.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "True when the row limit cut the results short. Say so when it is, or a reader will treat a partial answer as the whole one.": {
     "sites": 1,
     "scope": [
@@ -260191,7 +261256,7 @@
     ]
   },
   "Try again": {
-    "sites": 58,
+    "sites": 59,
     "scope": [
       "ts"
     ],
@@ -260215,6 +261280,7 @@
       "routes/onboarding",
       "routes/rate-confirmation-public",
       "routes/shipment",
+      "routes/shipment-tracking-public",
       "routes/tender-offer-public",
       "routes/tractor",
       "routes/worker"
@@ -260751,6 +261817,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Turning this off stops every link already shared for this customer's shipments.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Turns and miles per trailer with last activity — find trailers sitting idle or over-cycled": {
@@ -264566,6 +265641,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Updates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public"
     ]
   },
   "Updating carriers requires carrier update permission.": {
@@ -269660,6 +270744,15 @@
       "routes/worker"
     ]
   },
+  "Visible field is not one Trenova knows": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Visible to": {
     "sites": 1,
     "scope": [
@@ -270603,13 +271696,14 @@
     ]
   },
   "Waiting on you": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "go/other",
       "routes/desk",
       "routes/inbox"
@@ -271800,6 +272894,24 @@
       "routes/jurisdiction-rule-override"
     ]
   },
+  "We now expect it around {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "We now expect it at {0} around {1}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
   "We're working at lightning speed to get things ready. If this takes longer than a coffee break (10 seconds), please check your internet connection.": {
     "sites": 1,
     "scope": [
@@ -272348,7 +273460,7 @@
     ]
   },
   "Weight": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -272364,6 +273476,7 @@
       "routes/inbox",
       "routes/review-template",
       "routes/shipment",
+      "routes/shipment-tracking-public",
       "routes/tender-offer-public",
       "template/invoice.pdf",
       "template/tender.offer.email"
@@ -273084,6 +274197,15 @@
       "routes/osha",
       "routes/shipment",
       "routes/worker"
+    ]
+  },
+  "What happened: PickedUp, Delayed, Delivered or PodReady.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "What happens": {
@@ -274869,6 +275991,15 @@
       "routes/agent-control"
     ]
   },
+  "When a stop's projected arrival falls behind its appointment, with the new arrival time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "When a teammate @mentions you": {
     "sites": 1,
     "scope": [
@@ -275122,6 +276253,15 @@
     ]
   },
   "When it happened.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "When it happened: the departure, the projection, or the filing.": {
     "sites": 1,
     "scope": [
       "go"
@@ -275528,6 +276668,24 @@
       "go/other"
     ]
   },
+  "When the load leaves its first pickup.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
+  "When the load leaves its last delivery.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "When the new move arrives at the final destination. These should be after the handoff pickup departure above.": {
     "sites": 1,
     "scope": [
@@ -275535,6 +276693,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "When the proof of delivery is filed on the shipment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "When the run finished, in the schedule's timezone.": {
@@ -275983,7 +277150,7 @@
     ]
   },
   "Where the load delivers, as city and state.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -275992,7 +277159,7 @@
     ]
   },
   "Where the load picks up, as city and state.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -279607,6 +280774,15 @@
       "routes/agent-control"
     ]
   },
+  "Works until {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Works · {0} ms": {
     "sites": 1,
     "scope": [
@@ -281723,6 +282899,15 @@
       "go/other"
     ]
   },
+  "You receive these updates because {0} sends them for your shipments. Reply to this email to reach us.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
   "You replied": {
     "sites": 1,
     "scope": [
@@ -282473,6 +283658,60 @@
       "apps/dash/routes"
     ]
   },
+  "Your load has been delivered.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "Your load has been picked up.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "Your load is running late": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "Your load is running late.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "Your load was delivered": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
+  "Your load was picked up": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
   "Your loads, settlements, and pay — in one place.": {
     "sites": 1,
     "scope": [
@@ -282824,6 +284063,15 @@
       "apps/web/components"
     ]
   },
+  "Your proof of delivery is ready": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.status.email"
+    ]
+  },
   "Your rating could not be saved": {
     "sites": 1,
     "scope": [
@@ -282831,6 +284079,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Your reference": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public"
     ]
   },
   "Your reply could not finish": {
@@ -289485,6 +290742,24 @@
       "routes/desk"
     ]
   },
+  "shipping@customer.com": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "shipping@customer.com, logistics@customer.com": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "showing the {0} most recent": {
     "sites": 1,
     "scope": [
@@ -291127,6 +292402,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {# attempt} other {# attempts}}: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "{0, plural, one {# awaiting decision} other {# awaiting decision}}": {
@@ -295056,6 +296340,15 @@
       "routes/billing-queue"
     ]
   },
+  "{0, plural, one {Opened # time} other {Opened # times}}, last {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "{0, plural, one {Overdue by # day} other {Overdue by # days}}": {
     "sites": 1,
     "scope": [
@@ -298951,6 +300244,15 @@
       "template/driverportal.invitation.email"
     ]
   },
+  "{0} has shared a tracking page for your shipment. It shows where the load is and when it is expected, and it updates as the load moves. No sign-in is needed.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customertracking.link.email"
+    ]
+  },
   "{0} has the new ETA.": {
     "sites": 1,
     "scope": [
@@ -300574,7 +301876,7 @@
     ]
   },
   "{0} lb": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -300582,7 +301884,8 @@
       "apps/web/components",
       "routes/desk",
       "routes/edi",
-      "routes/shipment"
+      "routes/shipment",
+      "routes/shipment-tracking-public"
     ]
   },
   "{0} lbs": {
@@ -306189,6 +307492,15 @@
       "routes/desk"
     ]
   },
+  "{0}, since {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public"
+    ]
+  },
   "{0}, stop {1}": {
     "sites": 2,
     "scope": [
@@ -306223,6 +307535,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0}, {1} at {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment-tracking-public"
     ]
   },
   "{0}-week rotation": {

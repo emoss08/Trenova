@@ -2734,6 +2734,68 @@ export type CustomerPaymentTerm =
   | 'Net60'
   | 'Net90';
 
+/** A status email a customer's rules can ask for. */
+export type CustomerStatusEvent =
+  | 'Delayed'
+  | 'Delivered'
+  | 'PickedUp'
+  | 'PodReady';
+
+/** Where a status email stands. */
+export type CustomerStatusNotificationStatus =
+  /** Gave up after repeated failures. */
+  | 'Failed'
+  /** Owed and not yet sent; retried with backoff after a failure. */
+  | 'Pending'
+  | 'Sent'
+  /** Deliberately not sent; the reason says why. */
+  | 'Skipped';
+
+/** Why a status email was not sent. */
+export type CustomerStatusSkipReason =
+  /** Neither the tracking settings nor the customer name anyone to send to. */
+  | 'NoRecipients'
+  /** The rule was turned off before the email went out. */
+  | 'RuleOff'
+  /** The shipment was canceled or removed. */
+  | 'ShipmentGone';
+
+/** A part of a shipment a customer's tracking link may show. */
+export type CustomerTrackingField =
+  /** When each stop was actually reached and left. */
+  | 'Actuals'
+  /** The carrier hauling the load. */
+  | 'Carrier'
+  /** The equipment the load was ordered on. */
+  | 'Equipment'
+  /** The projected arrival at each stop not yet reached. */
+  | 'Eta'
+  /** Pieces and weight. */
+  | 'Freight'
+  /** Holds marked visible to the customer. */
+  | 'Holds'
+  /** The last city and state a check call reported. */
+  | 'LastLocation'
+  /** Each stop's location name and street address, not just its city. */
+  | 'LocationNames'
+  /** Shipment comments marked for the customer. */
+  | 'Notes'
+  /** The proof of delivery, downloadable through the link. */
+  | 'ProofOfDelivery'
+  /** The bill of lading number and the customer's own reference. */
+  | 'References'
+  /** Planned, in transit, delayed, delivered or canceled. */
+  | 'Status'
+  /** Each stop's appointment window. */
+  | 'Windows';
+
+/** Why a customer tracking link was made. */
+export type CustomerTrackingLinkPurpose =
+  /** Minted for a status email. */
+  | 'Notification'
+  /** Shared by a person. */
+  | 'Shared';
+
 export type DotRandomPoolInput = {
   alcoholRatePercent: number;
   code: string;
@@ -4655,6 +4717,12 @@ export type IssueCarrierTrackingLinkInput = {
   /** Where to email the link. Leave empty to copy it instead. */
   recipientEmail?: string | null | undefined;
   shipmentMoveId: string | number;
+};
+
+export type IssueCustomerTrackingLinkInput = {
+  /** Where to email the link. Leave empty to copy it instead. */
+  recipientEmail?: string | null | undefined;
+  shipmentId: string | number;
 };
 
 export type IssueDisciplinaryActionInput = {
@@ -7556,6 +7624,21 @@ export type UpdateCarrierSettlementControlInput = {
   periodEndDayOfWeek: number;
   varianceToleranceMinor: number;
   version: number;
+};
+
+export type UpdateCustomerTrackingProfileInput = {
+  customerId: string | number;
+  /** The version the settings were read at. A newer version refuses the change. */
+  expectedVersion?: number | null | undefined;
+  includeLink: boolean;
+  linkEnabled: boolean;
+  linkTtlDays: number;
+  notifyDelayed: boolean;
+  notifyDelivered: boolean;
+  notifyPickedUp: boolean;
+  notifyPodReady: boolean;
+  recipients?: string | null | undefined;
+  visibleFields: Array<CustomerTrackingField>;
 };
 
 export type UpdateDotRandomDrawEntryInput = {
@@ -11167,6 +11250,22 @@ export type ReverseCustomerPaymentMutationVariables = Exact<{
 
 
 export type ReverseCustomerPaymentMutation = { reverseCustomerPayment: { id: string, customerId: string, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, updatedAt: number, applications: Array<{ id: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number }> | null } };
+
+export type CustomerTrackingProfileFieldsFragment = { id: string | null, customerId: string, linkEnabled: boolean, visibleFields: Array<CustomerTrackingField>, linkTtlDays: number, notifyPickedUp: boolean, notifyDelayed: boolean, notifyDelivered: boolean, notifyPodReady: boolean, includeLink: boolean, recipients: string | null, notificationsEnabledAt: number | null, version: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerTrackingProfileFieldsFragment' };
+
+export type CustomerTrackingProfileQueryVariables = Exact<{
+  customerId: string | number;
+}>;
+
+
+export type CustomerTrackingProfileQuery = { customerTrackingProfile: { ' $fragmentRefs'?: { 'CustomerTrackingProfileFieldsFragment': CustomerTrackingProfileFieldsFragment } } };
+
+export type UpdateCustomerTrackingProfileMutationVariables = Exact<{
+  input: UpdateCustomerTrackingProfileInput;
+}>;
+
+
+export type UpdateCustomerTrackingProfileMutation = { updateCustomerTrackingProfile: { ' $fragmentRefs'?: { 'CustomerTrackingProfileFieldsFragment': CustomerTrackingProfileFieldsFragment } } };
 
 export type DeskCustomerCardQueryVariables = Exact<{
   id: string | number;
@@ -15516,6 +15615,39 @@ export type RevokeCarrierTrackingLinkMutationVariables = Exact<{
 
 
 export type RevokeCarrierTrackingLinkMutation = { revokeCarrierTrackingLink: boolean };
+
+export type CustomerTrackingLinkFieldsFragment = { id: string, shipmentId: string, customerId: string, purpose: CustomerTrackingLinkPurpose, recipientEmail: string | null, expiresAt: number, revokedAt: number | null, lastViewedAt: number | null, viewCount: number, createdById: string | null, createdAt: number } & { ' $fragmentName'?: 'CustomerTrackingLinkFieldsFragment' };
+
+export type CustomerStatusNotificationFieldsFragment = { id: string, shipmentId: string, event: CustomerStatusEvent, stopId: string | null, occurredAt: number, estimatedAt: number | null, status: CustomerStatusNotificationStatus, skipReason: CustomerStatusSkipReason | null, recipients: Array<string>, attempts: number, lastError: string | null, sentAt: number | null, createdAt: number } & { ' $fragmentName'?: 'CustomerStatusNotificationFieldsFragment' };
+
+export type CustomerTrackingLinksQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type CustomerTrackingLinksQuery = { customerTrackingLinks: Array<{ ' $fragmentRefs'?: { 'CustomerTrackingLinkFieldsFragment': CustomerTrackingLinkFieldsFragment } }> };
+
+export type CustomerStatusNotificationsQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type CustomerStatusNotificationsQuery = { customerStatusNotifications: Array<{ ' $fragmentRefs'?: { 'CustomerStatusNotificationFieldsFragment': CustomerStatusNotificationFieldsFragment } }> };
+
+export type IssueCustomerTrackingLinkMutationVariables = Exact<{
+  input: IssueCustomerTrackingLinkInput;
+}>;
+
+
+export type IssueCustomerTrackingLinkMutation = { issueCustomerTrackingLink: { url: string, emailed: boolean, emailError: string | null, link: { ' $fragmentRefs'?: { 'CustomerTrackingLinkFieldsFragment': CustomerTrackingLinkFieldsFragment } } } };
+
+export type RevokeCustomerTrackingLinkMutationVariables = Exact<{
+  shipmentId: string | number;
+  linkId?: string | number | null | undefined;
+}>;
+
+
+export type RevokeCustomerTrackingLinkMutation = { revokeCustomerTrackingLink: number };
 
 export type DeskRecordShipmentsQueryVariables = Exact<{
   input: ShipmentsInput;
@@ -21051,6 +21183,24 @@ export const CustomFieldDefinitionTableRowFieldsFragmentDoc = new TypedDocumentS
   updatedAt
 }
     `, {"fragmentName":"CustomFieldDefinitionTableRowFields"}) as unknown as TypedDocumentString<CustomFieldDefinitionTableRowFieldsFragment, unknown>;
+export const CustomerTrackingProfileFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CustomerTrackingProfileFields on CustomerTrackingProfile {
+  id
+  customerId
+  linkEnabled
+  visibleFields
+  linkTtlDays
+  notifyPickedUp
+  notifyDelayed
+  notifyDelivered
+  notifyPodReady
+  includeLink
+  recipients
+  notificationsEnabledAt
+  version
+  updatedAt
+}
+    `, {"fragmentName":"CustomerTrackingProfileFields"}) as unknown as TypedDocumentString<CustomerTrackingProfileFieldsFragment, unknown>;
 export const CustomerBillingProfileFieldsFragmentDoc = new TypedDocumentString(`
     fragment CustomerBillingProfileFields on CustomerBillingProfile {
   id
@@ -25720,6 +25870,38 @@ export const CarrierTrackingLinkFieldsFragmentDoc = new TypedDocumentString(`
   createdAt
 }
     `, {"fragmentName":"CarrierTrackingLinkFields"}) as unknown as TypedDocumentString<CarrierTrackingLinkFieldsFragment, unknown>;
+export const CustomerTrackingLinkFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CustomerTrackingLinkFields on CustomerTrackingLink {
+  id
+  shipmentId
+  customerId
+  purpose
+  recipientEmail
+  expiresAt
+  revokedAt
+  lastViewedAt
+  viewCount
+  createdById
+  createdAt
+}
+    `, {"fragmentName":"CustomerTrackingLinkFields"}) as unknown as TypedDocumentString<CustomerTrackingLinkFieldsFragment, unknown>;
+export const CustomerStatusNotificationFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CustomerStatusNotificationFields on CustomerStatusNotification {
+  id
+  shipmentId
+  event
+  stopId
+  occurredAt
+  estimatedAt
+  status
+  skipReason
+  recipients
+  attempts
+  lastError
+  sentAt
+  createdAt
+}
+    `, {"fragmentName":"CustomerStatusNotificationFields"}) as unknown as TypedDocumentString<CustomerStatusNotificationFieldsFragment, unknown>;
 export const ShipmentRatingDetailFieldsFragmentDoc = new TypedDocumentString(`
     fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -28356,6 +28538,8 @@ export const CustomerPaymentDetailDocument = {"__meta__":{"kind":"query","name":
 export const PostAndApplyCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"PostAndApplyCustomerPayment","hash":"sha256:8509b32952e2ba614257d3189c57cbd58da45afbb0dafb31f17958e117f62ea6"}} as unknown as TypedDocumentString<PostAndApplyCustomerPaymentMutation, PostAndApplyCustomerPaymentMutationVariables>;
 export const ApplyUnappliedCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ApplyUnappliedCustomerPayment","hash":"sha256:1c0798232c1c035894870e85c421a9f0f214ff7407eb9f35155cfd9b87a9b4e0"}} as unknown as TypedDocumentString<ApplyUnappliedCustomerPaymentMutation, ApplyUnappliedCustomerPaymentMutationVariables>;
 export const ReverseCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ReverseCustomerPayment","hash":"sha256:fe84be95798f92734cec53df3348b8593909fafde378deb329d583affe25145f"}} as unknown as TypedDocumentString<ReverseCustomerPaymentMutation, ReverseCustomerPaymentMutationVariables>;
+export const CustomerTrackingProfileDocument = {"__meta__":{"kind":"query","name":"CustomerTrackingProfile","hash":"sha256:44429a4e0597356f5d8e1ff13847809f185aa7d9db652988a6945134153a775a"}} as unknown as TypedDocumentString<CustomerTrackingProfileQuery, CustomerTrackingProfileQueryVariables>;
+export const UpdateCustomerTrackingProfileDocument = {"__meta__":{"kind":"mutation","name":"UpdateCustomerTrackingProfile","hash":"sha256:37cceee6144c6dc405bcce3ca8417d61b07f965bb0d4cfa2b56617696cc9c070"}} as unknown as TypedDocumentString<UpdateCustomerTrackingProfileMutation, UpdateCustomerTrackingProfileMutationVariables>;
 export const DeskCustomerCardDocument = {"__meta__":{"kind":"query","name":"DeskCustomerCard","hash":"sha256:f9392e6e7b40d6562977857131ff16dbaf3bfcbc0d21b2512c1acec7fbd6176f"}} as unknown as TypedDocumentString<DeskCustomerCardQuery, DeskCustomerCardQueryVariables>;
 export const DeskCustomerRateAgreementsDocument = {"__meta__":{"kind":"query","name":"DeskCustomerRateAgreements","hash":"sha256:1ba242b68d29998af524f262662b0017f695a8e36d48900f2a6969c1b19bce2e"}} as unknown as TypedDocumentString<DeskCustomerRateAgreementsQuery, DeskCustomerRateAgreementsQueryVariables>;
 export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:b03bdf83cbfd113e6933f80dbe8d2689721f4abd1057e18d8b5b0510ff57f510"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
@@ -28915,6 +29099,10 @@ export const CarrierTrackingLinkDocument = {"__meta__":{"kind":"query","name":"C
 export const LogCheckCallDocument = {"__meta__":{"kind":"mutation","name":"LogCheckCall","hash":"sha256:933544372402cc8ecb0066d1c6768169bbc61bc7b657e00868ae04cc38086dbe"}} as unknown as TypedDocumentString<LogCheckCallMutation, LogCheckCallMutationVariables>;
 export const IssueCarrierTrackingLinkDocument = {"__meta__":{"kind":"mutation","name":"IssueCarrierTrackingLink","hash":"sha256:e93db8bd28cd6aee6a91517080f37c161fe87948bd053d7bb7a0bdb8eb923cbb"}} as unknown as TypedDocumentString<IssueCarrierTrackingLinkMutation, IssueCarrierTrackingLinkMutationVariables>;
 export const RevokeCarrierTrackingLinkDocument = {"__meta__":{"kind":"mutation","name":"RevokeCarrierTrackingLink","hash":"sha256:68ec2fe6c553e49640e573d542e7ac05240aeb18ec2b800fd6e21f0b7bd170ca"}} as unknown as TypedDocumentString<RevokeCarrierTrackingLinkMutation, RevokeCarrierTrackingLinkMutationVariables>;
+export const CustomerTrackingLinksDocument = {"__meta__":{"kind":"query","name":"CustomerTrackingLinks","hash":"sha256:2be3f595b6c7b5e7d9e12da994ba3bdc41399be35fc9e0ba6f22bcb580655ca5"}} as unknown as TypedDocumentString<CustomerTrackingLinksQuery, CustomerTrackingLinksQueryVariables>;
+export const CustomerStatusNotificationsDocument = {"__meta__":{"kind":"query","name":"CustomerStatusNotifications","hash":"sha256:3427d6beb75ba27e14370fd112409411245523f4301582f6c6bad1cd05c58485"}} as unknown as TypedDocumentString<CustomerStatusNotificationsQuery, CustomerStatusNotificationsQueryVariables>;
+export const IssueCustomerTrackingLinkDocument = {"__meta__":{"kind":"mutation","name":"IssueCustomerTrackingLink","hash":"sha256:5832b58ad6a46a84de71efa53a89a63ce177c12ce21b0c1098f08ede1848590c"}} as unknown as TypedDocumentString<IssueCustomerTrackingLinkMutation, IssueCustomerTrackingLinkMutationVariables>;
+export const RevokeCustomerTrackingLinkDocument = {"__meta__":{"kind":"mutation","name":"RevokeCustomerTrackingLink","hash":"sha256:f1131953b21b3dba5cf438b6ffdbfa76d6c5cf8e2a93323342e219fcefda54dc"}} as unknown as TypedDocumentString<RevokeCustomerTrackingLinkMutation, RevokeCustomerTrackingLinkMutationVariables>;
 export const DeskRecordShipmentsDocument = {"__meta__":{"kind":"query","name":"DeskRecordShipments","hash":"sha256:a9cf9b623392f2f14bab6db16dee4c7dd368b5429c28393ac5e79f0d133fc4d1"}} as unknown as TypedDocumentString<DeskRecordShipmentsQuery, DeskRecordShipmentsQueryVariables>;
 export const ShipmentBoardTableDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardTable","hash":"sha256:173bd6b0bd2951dbc6f0f2c7e7b37f107eacaac97bad99d7c9164a18742d58e6"}} as unknown as TypedDocumentString<ShipmentBoardTableQuery, ShipmentBoardTableQueryVariables>;
 export const ShipmentDetailDocument = {"__meta__":{"kind":"query","name":"ShipmentDetail","hash":"sha256:e4cea406adc9fa670c66e4b1e33216c5ba72cea42a2c3e84de2b8692b14a02f3"}} as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;

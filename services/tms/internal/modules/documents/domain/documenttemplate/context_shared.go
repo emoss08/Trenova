@@ -169,3 +169,45 @@ func noticeOfAssignmentVariable() VariableDefinition {
 		Description: "The factor's notice of assignment when the invoice is assigned to a factoring company, blank otherwise. Print it whenever it is set: a factored invoice without its notice can be paid to the wrong party.",
 	}
 }
+
+//nolint:gosec // G101: rendering fixtures of fake values, not credentials
+const (
+	trackingCategory         = "Tracking"
+	sampleOriginSummary      = "Dallas, TX"
+	sampleDestinationSummary = "Memphis, TN"
+	samplePickupWindow       = "2026-07-18 08:00 – 12:00 CDT"
+	sampleDeliveryWindow     = "2026-07-19 09:00 – 15:00 CDT"
+)
+
+// routeVariables are where a load picks up and delivers, as city and state.
+func routeVariables() []VariableDefinition {
+	return []VariableDefinition{
+		{
+			Path:        "OriginSummary",
+			Type:        VariableString,
+			Description: "Where the load picks up, as city and state.",
+		},
+		{
+			Path:        "DestinationSummary",
+			Type:        VariableString,
+			Description: "Where the load delivers, as city and state.",
+		},
+	}
+}
+
+// routeScheduleVariables are the route plus its planned pickup and delivery
+// windows.
+func routeScheduleVariables() []VariableDefinition {
+	return append(routeVariables(),
+		VariableDefinition{
+			Path:        "PickupWindow",
+			Type:        VariableString,
+			Description: "The planned pickup window.",
+		},
+		VariableDefinition{
+			Path:        "DeliveryWindow",
+			Type:        VariableString,
+			Description: "The planned delivery window.",
+		},
+	)
+}

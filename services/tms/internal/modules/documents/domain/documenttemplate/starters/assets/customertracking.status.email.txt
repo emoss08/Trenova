@@ -1,0 +1,13 @@
+{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
+
+{{ if .IsPickedUp }}{{ if .ShipmentProNumber }}{{ t "Load {0} has been picked up." .ShipmentProNumber }}{{ else }}{{ t "Your load has been picked up." }}{{ end }}{{ else if .IsDelayed }}{{ if .ShipmentProNumber }}{{ t "Load {0} is running late." .ShipmentProNumber }}{{ else }}{{ t "Your load is running late." }}{{ end }}{{ else if .IsDelivered }}{{ if .ShipmentProNumber }}{{ t "Load {0} has been delivered." .ShipmentProNumber }}{{ else }}{{ t "Your load has been delivered." }}{{ end }}{{ else }}{{ if .ShipmentProNumber }}{{ t "The proof of delivery for load {0} is ready." .ShipmentProNumber }}{{ else }}{{ t "The proof of delivery for your load is ready." }}{{ end }}{{ end }} {{ if .IsPickedUp }}{{ if .OccurredAt }}{{ t "It left the pickup at {0}." .OccurredAt }}{{ end }}{{ else if .IsDelayed }}{{ if .EstimatedArrival }}{{ if .StopSummary }}{{ t "We now expect it at {0} around {1}." .StopSummary .EstimatedArrival }}{{ else }}{{ t "We now expect it around {0}." .EstimatedArrival }}{{ end }}{{ else }}{{ t "It may miss its appointment. We are working on it and will keep you posted." }}{{ end }}{{ else if .IsDelivered }}{{ if .OccurredAt }}{{ t "It was delivered at {0}." .OccurredAt }}{{ end }}{{ else }}{{ t "The signed proof of delivery is on file." }}{{ end }}
+{{ if and .IsDelayed .StopWindow }}{{ t "The appointment window is {0}." .StopWindow }}
+{{ end }}
+{{ if .BOL }}{{ t "BOL: {0}" .BOL }}
+{{ end }}{{ if .OriginSummary }}{{ t "Origin: {0}" .OriginSummary }}
+{{ end }}{{ if .DestinationSummary }}{{ t "Destination: {0}" .DestinationSummary }}
+{{ end }}{{ if .TrackingURL }}
+{{ t "Follow the load here:" }}
+{{ .TrackingURL }}
+{{ end }}
+{{ t "You receive these updates because {0} sends them for your shipments. Reply to this email to reach us." .CompanyName }}{{ if and .TrackingURL .ExpiresAt }} {{ t "The link works until {0}." .ExpiresAt }}{{ end }}

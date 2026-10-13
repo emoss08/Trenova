@@ -1,0 +1,15 @@
+{
+  "Follow a shipment": "跟踪运单",
+  "Last reported": "最后报告",
+  "Load {0}": "货载 {0}",
+  "Not on file yet. It appears here once it is.": "尚未归档。归档后会显示在此。",
+  "Powered by Trenova. Questions about this shipment? Reply to the email the link arrived in.": "由 Trenova 提供。对此运单有疑问？请回复附有此链接的邮件。",
+  "Shipment tracking": "运单跟踪",
+  "The link may have expired or been turned off. Ask the company that sent it for a new one.": "此链接可能已过期或已停用。请向发送链接的公司索取新链接。",
+  "The shipment could not be loaded because of a temporary problem. Please try again in a moment.": "因临时问题无法加载运单。请稍后再试。",
+  "This link works until {0}.": "此链接有效至 {0}。",
+  "Updates": "更新",
+  "Your reference": "您的参考号",
+  "{0}, since {1}": "{0}，自 {1} 起",
+  "{0}, {1} at {2}": "{0}，{1} {2}"
+}
