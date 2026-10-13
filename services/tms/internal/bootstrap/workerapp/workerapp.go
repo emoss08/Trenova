@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs"
 
 	"github.com/emoss08/trenova/internal/bootstrap/edition"
+	apimodule "github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
@@ -57,6 +58,10 @@ func Options() fx.Option {
 
 func OptionsFor(e *edition.Edition) fx.Option {
 	return fx.Options(
+		// The worker serves the same metrics and health endpoints as the API
+		// (monitoring.metrics), so its Temporal activity, AI and database
+		// metrics can be scraped too. Each process listens in its own container.
+		apimodule.MonitoringServerModule,
 		temporaljobs.WorkerModule,
 		agentjobs.WorkerModule,
 		conversationschedulejobs.WorkerModule,
