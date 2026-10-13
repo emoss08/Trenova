@@ -509,6 +509,7 @@ modules:
       - triagedeliveryrelay
       - weatheralertservice
     job:
+      - checkcalljobs
       - detentionjobs
       - recurringshipmentjobs
       - shipmentjobs
