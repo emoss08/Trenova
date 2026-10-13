@@ -8,6 +8,8 @@ import { DESK_THREAD_ROUTES } from "./deskthreads.mjs";
 import { ORG, permissionManifest } from "../fixtures/session.mjs";
 import { SETTINGS_ROUTES } from "./settings.mjs";
 import { PALETTE_ROUTES } from "./palette.mjs";
+import { FORMULA_ROUTES } from "./formula.mjs";
+import { FORMULA_NOVA_ROUTES } from "./formula-nova.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
@@ -88,18 +90,22 @@ const ROUTES = [
   ["GET", /^\/api\/v1\/tables\/?$/, () => ({ results: [], count: 0 })],
 ];
 
+/** A handler's answer as the server sends it; a handler may answer later with a promise. */
+function respond(payload) {
+  if (payload && payload.__stream) return { known: true, stream: true };
+  if (payload && payload.__raw) return { known: true, raw: payload.__raw, contentType: payload.contentType };
+  if (payload && payload.__sse) return { known: true, sse: payload.__sse, sseHold: payload.__sseHold };
+  if (payload && payload.__status) {
+    return { known: true, status: payload.__status, payload: payload.body };
+  }
+  return { known: true, payload };
+}
+
 export function handleRest(state, { method, path, query, body }) {
   for (const [routeMethod, pattern, handler] of ROUTES) {
     if (routeMethod === method && pattern.test(path)) {
       const payload = handler(state, path, body, query);
-      if (payload && payload.__stream) return { known: true, stream: true };
-      if (payload && payload.__raw)
-        return { known: true, raw: payload.__raw, contentType: payload.contentType };
-      if (payload && payload.__sse) return { known: true, sse: payload.__sse };
-      if (payload && payload.__status) {
-        return { known: true, status: payload.__status, payload: payload.body };
-      }
-      return { known: true, payload };
+      return payload && typeof payload.then === "function" ? payload.then(respond) : respond(payload);
     }
   }
   if (method === "GET") {

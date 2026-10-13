@@ -28,6 +28,7 @@ type testExpressionRequest struct {
 	// omitted means the default the template would store.
 	RoundingMode      string `json:"roundingMode"`
 	RoundingPrecision *int32 `json:"roundingPrecision"`
+	TraceStatements   bool   `json:"traceStatements"`
 }
 
 // @Summary Test a formula expression
@@ -56,11 +57,12 @@ func (h *Handler) testExpression(c *gin.Context) {
 	}
 
 	serviceReq := &formulatemplateservice.TestExpressionRequest{
-		Expression: req.Expression,
-		SchemaID:   req.SchemaID,
-		Variables:  req.Variables,
-		Breakdowns: req.Breakdowns,
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
+		Expression:      req.Expression,
+		SchemaID:        req.SchemaID,
+		Variables:       req.Variables,
+		Breakdowns:      req.Breakdowns,
+		TenantInfo:      pagination.FromAuthAsUser(authCtx),
+		TraceStatements: req.TraceStatements,
 	}
 
 	minCharge, err := parseGuardrailCharge("minCharge", req.MinCharge)

@@ -3,10 +3,12 @@ package formulatemplatetestcaserepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/uptrace/bun"
@@ -119,7 +121,11 @@ func (r *repository) Delete(
 			return err
 		}
 
-		return dberror.CheckRowsAffected(results, "FormulaTemplateTestCase", req.TestCaseID.String())
+		return dberror.CheckRowsAffected(
+			results,
+			"FormulaTemplateTestCase",
+			req.TestCaseID.String(),
+		)
 	})
 }
 
@@ -133,15 +139,16 @@ func (r *repository) GetByID(
 			zap.String("testCaseID", req.TestCaseID.String()),
 		)
 
+		cols := formulatemplatecol.TestCaseColumns
 		entity := new(formulatemplate.TestCase)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
+			Relation(buncolgen.Rel(formulatemplatecol.TestCaseRelations.RecordedBy)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("ftc.id = ?", req.TestCaseID).
-					Where("ftc.template_id = ?", req.TemplateID).
-					Where("ftc.organization_id = ?", req.TenantInfo.OrgID).
-					Where("ftc.business_unit_id = ?", req.TenantInfo.BuID)
+				return formulatemplatecol.TestCaseScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.TestCaseID).
+					Where(cols.TemplateID.Eq(), req.TemplateID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -163,16 +170,17 @@ func (r *repository) ListByTemplate(
 			zap.String("templateID", req.TemplateID.String()),
 		)
 
+		cols := formulatemplatecol.TestCaseColumns
 		entities := make([]*formulatemplate.TestCase, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
+			Relation(buncolgen.Rel(formulatemplatecol.TestCaseRelations.RecordedBy)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("ftc.template_id = ?", req.TemplateID).
-					Where("ftc.organization_id = ?", req.TenantInfo.OrgID).
-					Where("ftc.business_unit_id = ?", req.TenantInfo.BuID)
+				return formulatemplatecol.TestCaseScopeTenant(sq, req.TenantInfo).
+					Where(cols.TemplateID.Eq(), req.TemplateID)
 			}).
-			Order("ftc.created_at ASC").
+			Order(cols.CreatedAt.OrderAsc()).
 			Scan(ctx)
 		if err != nil {
 			log.Error("failed to list formula template test cases", zap.Error(err))

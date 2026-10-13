@@ -35,8 +35,19 @@ function ReviewEntry({ review }: { review: FormulaTemplateReview }) {
             {t(decision.label)}
           </Badge>
           <span className="font-medium">{actorName(review)}</span>
+          {review.requestedReviewer?.name && (
+            <span className="text-muted-foreground">
+              {t("asked {0} to review", review.requestedReviewer.name)}
+            </span>
+          )}
         </div>
         {review.comment && <p className="text-muted-foreground">{review.comment}</p>}
+        {review.reviewerNote && (
+          <p className="bg-sunken rounded-sm px-2 py-1 leading-relaxed whitespace-pre-wrap">
+            <span className="text-foreground-subtle block">{t("Note for the reviewer")}</span>
+            {review.reviewerNote}
+          </p>
+        )}
       </div>
       <span className="text-2xs text-muted-foreground shrink-0">
         {formatDistanceToNow(new Date(review.createdAt * 1000), { addSuffix: true })}

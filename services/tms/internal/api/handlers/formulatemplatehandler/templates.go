@@ -187,12 +187,17 @@ func (h *Handler) getUsage(c *gin.Context) {
 	c.JSON(http.StatusOK, usage)
 }
 
+type createTemplateRequest struct {
+	formulatemplate.FormulaTemplate
+	TestCases []*formulatemplateservice.TestCaseInput `json:"testCases"`
+}
+
 // @Summary Create a formula template
 // @ID createFormulaTemplate
 // @Tags Formula Templates
 // @Accept json
 // @Produce json
-// @Param request body formulatemplate.FormulaTemplate true "Formula template payload"
+// @Param request body createTemplateRequest true "Formula template payload, with the scenarios held while it was being written"
 // @Success 201 {object} formulatemplate.FormulaTemplate
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -202,16 +207,21 @@ func (h *Handler) getUsage(c *gin.Context) {
 func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entity := new(formulatemplate.FormulaTemplate)
-	entity.OrganizationID = authCtx.OrganizationID
-	entity.BusinessUnitID = authCtx.BusinessUnitID
+	req := new(createTemplateRequest)
+	req.OrganizationID = authCtx.OrganizationID
+	req.BusinessUnitID = authCtx.BusinessUnitID
 
-	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	createdEntity, err := h.service.Create(c.Request.Context(), entity, authCtx.UserID)
+	createdEntity, err := h.service.CreateWithTestCases(
+		c.Request.Context(),
+		&req.FormulaTemplate,
+		authCtx.UserID,
+		req.TestCases,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

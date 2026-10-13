@@ -2,6 +2,7 @@ package formulatemplateservice
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -94,8 +95,10 @@ func (s *Service) RequestChanges(
 			updated *formulatemplate.FormulaTemplate,
 			r *ApprovalActionRequest,
 		) error {
-			return s.recordReview(aCtx, updated, r.TenantInfo, r.Comment,
-				formulatemplate.ReviewDecisionChangesRequested)
+			return s.recordReview(aCtx, updated, r.TenantInfo, &reviewRecord{
+				Comment:  r.Comment,
+				Decision: formulatemplate.ReviewDecisionChangesRequested,
+			})
 		},
 	})
 	if err != nil {
@@ -191,8 +194,10 @@ func (s *Service) expireSubmission(
 		return err
 	}
 
-	if err = s.recordReview(ctx, updated, tenantInfo, template.ReviewComment,
-		formulatemplate.ReviewDecisionExpired); err != nil {
+	if err = s.recordReview(ctx, updated, tenantInfo, &reviewRecord{
+		Comment:  template.ReviewComment,
+		Decision: formulatemplate.ReviewDecisionExpired,
+	}); err != nil {
 		return err
 	}
 
@@ -219,13 +224,20 @@ func (s *Service) expireSubmission(
 // or continue a round; every other decision lands in the round that is open.
 // The approved base version is captured at submission so the diff a reviewer
 // saw is reconstructible later.
+type reviewRecord struct {
+	Comment             string
+	Decision            formulatemplate.ReviewDecision
+	RequestedReviewerID pulid.ID
+	ReviewerNote        string
+}
+
 func (s *Service) recordReview(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 	tenantInfo pagination.TenantInfo,
-	comment string,
-	decision formulatemplate.ReviewDecision,
+	record *reviewRecord,
 ) error {
+	decision := record.Decision
 	latest, err := s.reviewRepo.Latest(ctx, template.ID, tenantInfo)
 	if err != nil {
 		return err
@@ -245,7 +257,12 @@ func (s *Service) recordReview(
 		BusinessUnitID: template.BusinessUnitID,
 		Round:          round,
 		Decision:       decision,
-		Comment:        comment,
+		Comment:        record.Comment,
+		ReviewerNote:   strings.TrimSpace(record.ReviewerNote),
+	}
+	if record.RequestedReviewerID.IsNotNil() {
+		reviewerID := record.RequestedReviewerID
+		review.RequestedReviewerID = &reviewerID
 	}
 	if decision != formulatemplate.ReviewDecisionExpired && !tenantInfo.UserID.IsNil() {
 		actor := tenantInfo.UserID

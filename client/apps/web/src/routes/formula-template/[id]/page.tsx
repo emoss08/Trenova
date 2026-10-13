@@ -6,16 +6,6 @@ import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { queries } from "@/lib/queries";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { api } from "@trenova/shared/lib/api";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@trenova/shared/components/ui/alert-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
@@ -32,88 +22,43 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
+import { SaveDemoteDialog } from "../_components/studio/dialogs/save-demote-dialog";
 import { FormulaStudio } from "../_components/studio/formula-studio";
 
 function StudioSkeleton() {
   return (
-    <div className="flex h-full flex-col overflow-hidden">
-      <div className="flex items-center justify-between gap-3 border-b px-4 py-2.5">
-        <div className="flex min-w-0 items-center gap-3">
-          <Skeleton className="size-7 rounded-md" />
-          <Skeleton className="h-5 w-44" />
-          <Skeleton className="h-5 w-16 rounded-full" />
-          <Skeleton className="h-5 w-10 rounded-full" />
-        </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <Skeleton className="h-7 w-32" />
-          <Skeleton className="h-7 w-24" />
-          <Skeleton className="size-7" />
-        </div>
+    <div className="bg-canvas flex h-full flex-col overflow-hidden" aria-busy>
+      <div className="flex h-13 items-center gap-3 border-b px-3">
+        <Skeleton className="size-7 rounded-md" />
+        <Skeleton className="h-5 w-48" />
+        <Skeleton className="h-5 w-64 rounded-full max-[760px]:hidden" />
+        <span className="flex-1" />
+        <Skeleton className="h-7 w-32" />
+        <Skeleton className="h-7 w-20" />
       </div>
-
-      <div className="flex min-h-0 flex-1">
-        <div className="min-w-0 flex-[55] space-y-4 overflow-hidden border-r p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Skeleton className="size-8 rounded-lg" />
-              <div className="space-y-1.5">
-                <Skeleton className="h-3.5 w-32" />
-                <Skeleton className="h-3 w-52" />
-              </div>
-            </div>
-            <Skeleton className="size-4" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Skeleton className="h-8" />
-            <Skeleton className="h-8" />
-            <Skeleton className="h-8" />
-            <Skeleton className="h-8" />
-          </div>
-          <div className="space-y-2 pt-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Skeleton className="size-8 rounded-lg" />
-                <Skeleton className="h-3.5 w-24" />
-              </div>
-              <Skeleton className="h-6 w-28" />
-            </div>
-            <Skeleton className="h-44 w-full rounded-md" />
-          </div>
-          <div className="space-y-2 pt-2">
-            <div className="flex items-center gap-3">
-              <Skeleton className="size-8 rounded-lg" />
-              <Skeleton className="h-3.5 w-36" />
-            </div>
-            <Skeleton className="h-9 w-full rounded-md" />
-            <Skeleton className="h-9 w-full rounded-md" />
-          </div>
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1280px]:grid-cols-[256px_minmax(0,1fr)_minmax(360px,420px)]">
+        <div className="hidden flex-col gap-4 border-r p-4 min-[1280px]:flex">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-3.5 w-40" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-20 w-full rounded-lg" />
         </div>
-
-        <div className="flex min-w-0 flex-[45] flex-col overflow-hidden">
-          <div className="flex gap-1 border-b px-2 pt-1.5 pb-1">
-            <Skeleton className="h-6 w-24" />
-            <Skeleton className="h-6 w-20" />
-          </div>
-          <div className="basis-[55%] space-y-3 border-b p-4">
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-9 w-40" />
-            <Skeleton className="h-3.5 w-32" />
-            <div className="space-y-1.5 pt-2">
-              <Skeleton className="h-7 w-full rounded-md" />
-              <Skeleton className="h-7 w-full rounded-md" />
-              <Skeleton className="h-7 w-full rounded-md" />
-            </div>
-          </div>
-          <div className="min-h-0 flex-1 space-y-2 p-3">
-            <Skeleton className="h-8 w-full rounded-md" />
-            <Skeleton className="mt-3 h-3 w-24" />
-            <div className="space-y-1.5">
-              <Skeleton className="h-7 w-full rounded-md" />
-              <Skeleton className="h-7 w-full rounded-md" />
-              <Skeleton className="h-7 w-full rounded-md" />
-              <Skeleton className="h-7 w-full rounded-md" />
-            </div>
-          </div>
+        <div className="mx-auto flex w-full max-w-200 flex-col gap-4 px-9 pt-7">
+          <Skeleton className="h-8 w-2/3" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-6 w-56" />
+          <Skeleton className="mt-6 h-5 w-32" />
+          <Skeleton className="h-40 w-full rounded-lg" />
+          <Skeleton className="mt-6 h-5 w-28" />
+          <Skeleton className="h-28 w-full rounded-lg" />
+        </div>
+        <div className="flex flex-col gap-3 border-l p-3">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-36 w-full rounded-lg" />
+          <Skeleton className="h-7 w-full" />
+          <Skeleton className="h-7 w-full" />
+          <Skeleton className="h-7 w-full" />
         </div>
       </div>
     </div>
@@ -172,13 +117,15 @@ export function FormulaStudioEditPage() {
     },
     onSuccess: async (updated) => {
       if (template && updated.status !== template.status && updated.status === "Draft") {
-        toast.success(t("Formula template saved as a draft"), {
-          description: t(
-            "The change returned it to Draft. Shipments cannot be rated with it until it is approved again.",
-          ),
+        toast(t("Saved as v{0} · back to Draft", updated.currentVersionNumber ?? 1), {
+          description: t("The approved version keeps rating shipments until this one is approved."),
         });
       } else {
-        toast.success(t("Formula template saved"));
+        toast(
+          template && updated.currentVersionNumber !== template.currentVersionNumber
+            ? t("Saved as v{0}", updated.currentVersionNumber ?? 1)
+            : t("Changes saved"),
+        );
       }
       // Reseat the form on the saved record right away so the dirty flag —
       // and with it the unsaved-changes guard — clears without waiting for
@@ -231,8 +178,6 @@ export function FormulaStudioEditPage() {
     return <StudioSkeleton />;
   }
 
-  const inReview = template?.status === "InReview";
-
   return (
     <FormProvider {...form}>
       <FormulaStudio
@@ -242,39 +187,12 @@ export function FormulaStudioEditPage() {
         onSave={() => void onSave()}
       />
 
-      <AlertDialog
+      <SaveDemoteDialog
         open={pendingDemotingSave !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingDemotingSave(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg font-semibold">
-              {inReview
-                ? t("Cancel the review and save?")
-                : t("Take this template out of production?")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {inReview
-                ? t(
-                    "This changes what the reviewer is looking at, so the template returns to Draft and must be submitted again.",
-                  )
-                : t(
-                    "This changes what the template computes, so it returns to Draft and stops rating shipments until it is approved again. Name and description edits do not do this.",
-                  )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel variant="outline" size="default">
-              {t("Keep editing")}
-            </AlertDialogCancel>
-            <AlertDialogAction variant="destructive" size="default" onClick={confirmDemotingSave}>
-              {t("Save and return to Draft")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        template={template ?? null}
+        onCancel={() => setPendingDemotingSave(null)}
+        onConfirm={confirmDemotingSave}
+      />
     </FormProvider>
   );
 }

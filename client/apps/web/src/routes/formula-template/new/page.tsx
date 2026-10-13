@@ -3,7 +3,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
-import { api } from "@trenova/shared/lib/api";
+import { apiService } from "@/services/api";
 import {
   DEFAULT_ROUNDING_MODE,
   DEFAULT_ROUNDING_PRECISION,
@@ -16,7 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { FormulaStudio } from "../_components/studio/formula-studio";
+import { FormulaStudio, type StudioSaveExtras } from "../_components/studio/formula-studio";
 
 export function FormulaStudioCreatePage() {
   const t = useT();
@@ -44,13 +44,28 @@ export function FormulaStudioCreatePage() {
   });
 
   const { mutate } = useApiMutation({
-    mutationFn: async (values: FormulaTemplateFormValues) => {
-      return api.post<FormulaTemplate>("/formula-templates/", values);
-    },
-    onSuccess: async (created) => {
-      toast.success(t("Formula template created"), {
-        description: t("It starts as a draft. Submit it for review when it is ready."),
-      });
+    mutationFn: async ({
+      values,
+      extras,
+    }: {
+      values: FormulaTemplateFormValues;
+      extras: StudioSaveExtras;
+    }) =>
+      apiService.formulaTemplateService.create({
+        ...(values as FormulaTemplate),
+        testCases: extras.testCases,
+      }),
+    onSuccess: async (created, { extras }) => {
+      toast(
+        extras.testCases.length > 0
+          ? t(
+              "Created “{0}” as a draft with {1, plural, one {# scenario} other {# scenarios}}",
+              created.name,
+              extras.testCases.length,
+            )
+          : t("Created “{0}” as a draft", created.name),
+        { description: t("Submit it for review when it is ready.") },
+      );
       await invalidateFormulaTemplate(queryClient);
       // Reset onto the saved record before navigating so the unsaved-changes
       // guard sees a clean form and lets the redirect through.
@@ -67,7 +82,13 @@ export function FormulaStudioCreatePage() {
 
   // `mutate` reports failure through the hook's error handling; `mutateAsync`
   // would also reject, and a rejection nobody awaits is an unhandled promise.
-  const onSave = form.handleSubmit((values) => mutate(values));
+  const onSave = (extras: StudioSaveExtras) =>
+    void form.handleSubmit(
+      (values) => mutate({ values, extras }),
+      () => {
+        toast(t("Fix the highlighted fields to create the template"));
+      },
+    )();
 
   return (
     <FormProvider {...form}>
@@ -75,7 +96,7 @@ export function FormulaStudioCreatePage() {
         mode="create"
         template={null}
         isSubmitting={form.formState.isSubmitting}
-        onSave={() => void onSave()}
+        onSave={onSave}
       />
     </FormProvider>
   );

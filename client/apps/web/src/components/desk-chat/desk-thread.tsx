@@ -199,6 +199,20 @@ export type DeskThreadProps = {
   /** The quiet line under the composer when nothing waits on the person. */
   disclaimer?: string;
   /**
+   * What the composer offers. "page" is a page's own assistant: the page's
+   * chip and the model picker, without files, agents, dictation or the
+   * context meter.
+   */
+  composerKit?: "full" | "page";
+  /** The page's chip in a "page" composer, read-only. */
+  composerChip?: ReactNode;
+  /** Questions the empty composer types out, with Tab to use one. */
+  presets?: readonly string[];
+  /** Drawn in an empty conversation in place of nothing, given the dock to ask with. */
+  emptyState?: (dock: DeskDock) => ReactNode;
+  /** Drawn under a saved reply: what the page makes of what that reply produced. */
+  renderReplyExtras?: (messageId: string) => ReactNode;
+  /**
    * Where a change is reviewed on a surface without a workspace: the Desk,
    * opened on the conversation and the change's artifact when there is one.
    */
@@ -272,6 +286,11 @@ export function DeskThread({
   dockTop,
   disclaimer,
   onOpenInDesk,
+  composerKit = "full",
+  composerChip,
+  presets,
+  emptyState,
+  renderReplyExtras,
 }: DeskThreadProps) {
   const t = useT();
   const rt = useRichT();
@@ -909,6 +928,14 @@ export function DeskThread({
                     {model.historyLoading && entries.length === 0 && turn === null && (
                       <DeskTranscriptSkeleton />
                     )}
+                    {emptyState &&
+                      !model.historyLoading &&
+                      entries.length === 0 &&
+                      turn === null &&
+                      !opening.openingQuestion &&
+                      !waitingOpening &&
+                      !queued &&
+                      emptyState({ ask, busy: isActive })}
                     {hasOlder && (
                       <div ref={olderRef} className="dk-older" aria-live="polite">
                         {loadingOlder ? t("Reading earlier messages…") : ""}
@@ -1161,6 +1188,7 @@ export function DeskThread({
                               />
                             </div>
                           ))}
+                          {renderReplyExtras?.(entry.message.id)}
                           {(writeResults.get(entry.message.id) ?? []).map((proposal) => (
                             <div key={proposal.id} className="dk-ec-after">
                               <DeskWriteResultCard proposal={proposal} onAsk={ask} />
@@ -1532,14 +1560,19 @@ export function DeskThread({
                         }
                         lock={lock}
                         note={composerLock?.note}
-                        attachments={attachments}
-                        scans={scans}
+                        attachments={composerKit === "page" ? undefined : attachments}
+                        scans={composerKit === "page" ? null : scans}
                         mentions={composerContext.mentions}
                         onMentionsChange={composerContext.setMentions}
                         suggestions={model.suggestions}
                         drag={drag}
+                        dictation={composerKit !== "page"}
+                        typewriter={presets !== undefined && presets.length > 0}
+                        presets={presets}
                         extras={
-                          page || pageSource === "none" ? undefined : (
+                          composerKit === "page" ? (
+                            composerChip
+                          ) : page || pageSource === "none" ? undefined : (
                             <DeskPageChip
                               page={deskPage.page}
                               share={deskPage.share}
@@ -1560,14 +1593,16 @@ export function DeskThread({
                           />
                         }
                         meter={
-                          <DeskContextMeter
-                            usage={compaction.usage}
-                            auto={compaction.auto}
-                            onAutoChange={(on) => void compaction.setAuto(on)}
-                            onCompact={() => void compaction.compact()}
-                            compacting={compaction.compacting !== null}
-                            budget={budgetQuery.data}
-                          />
+                          composerKit === "page" ? undefined : (
+                            <DeskContextMeter
+                              usage={compaction.usage}
+                              auto={compaction.auto}
+                              onAutoChange={(on) => void compaction.setAuto(on)}
+                              onCompact={() => void compaction.compact()}
+                              compacting={compaction.compacting !== null}
+                              budget={budgetQuery.data}
+                            />
+                          )
                         }
                         compacting={
                           compaction.compacting && {

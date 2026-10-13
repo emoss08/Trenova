@@ -3,6 +3,7 @@ package formulatemplate
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -20,19 +21,25 @@ var _ bun.BeforeAppendModelHook = (*TestCase)(nil)
 type TestCase struct {
 	bun.BaseModel `bun:"table:formula_template_test_cases,alias:ftc" json:"-"`
 
-	ID             pulid.ID        `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	TemplateID     pulid.ID        `json:"templateId"     bun:"template_id,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID        `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID        `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	Name           string          `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	Description    string          `json:"description"    bun:"description,type:TEXT"`
-	Variables      map[string]any  `json:"variables"      bun:"variables,type:JSONB,notnull,default:'{}'"`
-	ExpectedAmount decimal.Decimal `json:"expectedAmount" bun:"expected_amount,type:NUMERIC(19,4),notnull"`
-	Tolerance      decimal.Decimal `json:"tolerance"      bun:"tolerance,type:NUMERIC(19,4),notnull,default:0.01"`
-	Version        int64           `json:"version"        bun:"version,type:BIGINT"`
-	CreatedByID    pulid.ID        `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),notnull"`
-	CreatedAt      int64           `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID         `json:"id"                bun:"id,pk,type:VARCHAR(100)"`
+	TemplateID        pulid.ID         `json:"templateId"        bun:"template_id,type:VARCHAR(100),notnull"`
+	OrganizationID    pulid.ID         `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),notnull"`
+	BusinessUnitID    pulid.ID         `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),notnull"`
+	Name              string           `json:"name"              bun:"name,type:VARCHAR(100),notnull"`
+	Description       string           `json:"description"       bun:"description,type:TEXT"`
+	Variables         map[string]any   `json:"variables"         bun:"variables,type:JSONB,notnull,default:'{}'"`
+	ExpectedAmount    decimal.Decimal  `json:"expectedAmount"    bun:"expected_amount,type:NUMERIC(19,4),notnull"`
+	Tolerance         decimal.Decimal  `json:"tolerance"         bun:"tolerance,type:NUMERIC(19,4),notnull,default:0.01"`
+	Version           int64            `json:"version"           bun:"version,type:BIGINT"`
+	CreatedByID       pulid.ID         `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),notnull"`
+	RecordedOnVersion *int64           `json:"recordedOnVersion" bun:"recorded_on_version,type:BIGINT"`
+	RecordedByID      *pulid.ID        `json:"recordedById"      bun:"recorded_by_id,type:VARCHAR(100)"`
+	RecordedAt        *int64           `json:"recordedAt"        bun:"recorded_at,type:BIGINT"`
+	RecordedContent   *ScenarioContent `json:"-"                 bun:"recorded_content,type:JSONB"`
+	CreatedAt         int64            `json:"createdAt"         bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt         int64            `json:"updatedAt"         bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	RecordedBy *tenant.User `json:"recordedBy" bun:"rel:belongs-to,join:recorded_by_id=id"`
 }
 
 const maxTestCaseNameLength = 100
@@ -57,6 +64,25 @@ func (tc *TestCase) Validate(multiErr *errortypes.MultiError) {
 
 	if tc.Tolerance.IsNegative() {
 		multiErr.Add("tolerance", errortypes.ErrInvalid, "Tolerance cannot be negative")
+	}
+}
+
+func (tc *TestCase) Record(
+	content *ScenarioContent,
+	versionNumber int64,
+	userID pulid.ID,
+	at int64,
+) {
+	recordedOn := versionNumber
+	recordedAt := at
+	tc.RecordedContent = content
+	tc.RecordedOnVersion = &recordedOn
+	tc.RecordedAt = &recordedAt
+	tc.RecordedBy = nil
+	tc.RecordedByID = nil
+	if userID.IsNotNil() {
+		recordedBy := userID
+		tc.RecordedByID = &recordedBy
 	}
 }
 

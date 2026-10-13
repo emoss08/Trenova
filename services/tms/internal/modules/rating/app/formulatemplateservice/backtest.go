@@ -3,12 +3,12 @@ package formulatemplateservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -46,28 +46,7 @@ type BacktestResult struct {
 	GuardrailApplied bool            `json:"guardrailApplied"`
 }
 
-// BacktestSummary is what a whole backtest came to.
-//
-// The shape is ratesimulation.Summary with two fields renamed, because a
-// backtest calls them current and candidate while a rate simulation calls them
-// before and after. The arithmetic is shared; only the words differ.
-type BacktestSummary struct {
-	ShipmentCount       int             `json:"shipmentCount"`
-	EvaluatedCount      int             `json:"evaluatedCount"`
-	ChangedCount        int             `json:"changedCount"`
-	IncreasedCount      int             `json:"increasedCount"`
-	DecreasedCount      int             `json:"decreasedCount"`
-	ErrorCount          int             `json:"errorCount"`
-	CurrentErrorCount   int             `json:"currentErrorCount"`
-	CandidateErrorCount int             `json:"candidateErrorCount"`
-	GuardrailCount      int             `json:"guardrailCount"`
-	CurrentTotal        decimal.Decimal `json:"currentTotal"`
-	CandidateTotal      decimal.Decimal `json:"candidateTotal"`
-	TotalDelta          decimal.Decimal `json:"totalDelta"`
-	TotalDeltaPct       decimal.Decimal `json:"totalDeltaPct"`
-	MaxIncrease         decimal.Decimal `json:"maxIncrease"`
-	MaxDecrease         decimal.Decimal `json:"maxDecrease"`
-}
+type BacktestSummary = formulatemplateports.BacktestSummary
 
 type BacktestResponse struct {
 	Results []*BacktestResult `json:"results"`
@@ -184,11 +163,14 @@ func (s *Service) resolveBacktestCandidate(
 	template *formulatemplate.FormulaTemplate,
 ) (*formulatemplate.FormulaTemplate, error) {
 	if req.VersionNumber != nil {
-		version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
-			TenantInfo:    req.TenantInfo,
-			TemplateID:    req.TemplateID,
-			VersionNumber: *req.VersionNumber,
-		})
+		version, err := s.versionRepo.GetByTemplateAndVersion(
+			ctx,
+			&formulatemplateports.GetVersionRequest{
+				TenantInfo:    req.TenantInfo,
+				TemplateID:    req.TemplateID,
+				VersionNumber: *req.VersionNumber,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -333,11 +315,14 @@ func (s *Service) lookupVersion(
 	versionNumber int64,
 	tenantInfo pagination.TenantInfo,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
-	version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
-		TenantInfo:    tenantInfo,
-		TemplateID:    templateID,
-		VersionNumber: versionNumber,
-	})
+	version, err := s.versionRepo.GetByTemplateAndVersion(
+		ctx,
+		&formulatemplateports.GetVersionRequest{
+			TenantInfo:    tenantInfo,
+			TemplateID:    templateID,
+			VersionNumber: versionNumber,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) || dberror.IsNotFoundError(err) {
 			return nil, nil //nolint:nilnil // nil version means the stamp points at nothing
