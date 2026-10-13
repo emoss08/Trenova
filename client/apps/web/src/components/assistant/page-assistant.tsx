@@ -19,7 +19,7 @@ import { useCallback, useMemo, useRef, type ReactNode } from "react";
 import { toast } from "sonner";
 
 const NO_THREADS: AssistantThread[] = [];
-import { DeskThread } from "@/components/desk-chat/desk-thread";
+import { DeskThread, type DeskThreadProps } from "@/components/desk-chat/desk-thread";
 import type { PageBinding, PageRequest } from "./use-thread-model";
 import { OutsideContentBadge } from "./outside-content-badge";
 import { pageAssistantAvailability } from "./page-assistant-availability";
@@ -44,6 +44,19 @@ export type PageAssistantProps = {
   onOpenArtifact?: (artifact: AssistantArtifact) => void;
   /** Drawn under the agent's name: the page's own progress, for example. */
   header?: ReactNode;
+  /**
+   * "header" draws the agent's name above the thread; "none" leaves the thread
+   * bare for a page that names the assistant itself, keeping only the notice
+   * that it has read outside content.
+   */
+  chrome?: "header" | "none";
+  /** Told while a reply is being written. */
+  onWorkingChange?: (working: boolean) => void;
+  /** What a page changes about the thread: a page composer, its empty state, cards under replies. */
+  thread?: Pick<
+    DeskThreadProps,
+    "composerKit" | "composerChip" | "presets" | "emptyState" | "renderReplyExtras" | "disclaimer"
+  >;
   className?: string;
 };
 
@@ -82,6 +95,9 @@ export function PageAssistant({
   onPageRequestSent,
   onOpenArtifact,
   header,
+  chrome = "header",
+  onWorkingChange: onWorkingChangeProp,
+  thread: threadOptions,
   className,
 }: PageAssistantProps) {
   const t = useT();
@@ -145,13 +161,17 @@ export function PageAssistant({
     (active: boolean) => {
       const finished = working.current && !active;
       working.current = active;
+      onWorkingChangeProp?.(active);
       if (finished && threadId !== "") {
         void queryClient.invalidateQueries({
           queryKey: queries.assistant.thread(threadId).queryKey,
         });
+        void queryClient.invalidateQueries({
+          queryKey: queries.assistant.artifacts(threadId).queryKey,
+        });
       }
     },
-    [queryClient, threadId],
+    [onWorkingChangeProp, queryClient, threadId],
   );
 
   const agent = useMemo(
@@ -231,20 +251,33 @@ export function PageAssistant({
 
   return (
     <div className={cn("flex min-h-0 flex-col", className)}>
-      <div className="flex shrink-0 flex-col gap-2 border-b px-3 py-2.5">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-sm font-medium">{agent.name}</span>
-          {tainted && (
+      {chrome === "header" ? (
+        <div className="flex shrink-0 flex-col gap-2 border-b px-3 py-2.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 flex-1 truncate text-sm font-medium">{agent.name}</span>
+            {tainted && (
+              <OutsideContentBadge
+                t={t}
+                title={t(
+                  "This conversation has read text from outside your organization, so every change it proposes waits for your approval.",
+                )}
+              />
+            )}
+          </div>
+          {header}
+        </div>
+      ) : (
+        tainted && (
+          <div className="flex shrink-0 justify-end border-b px-3 py-1.5">
             <OutsideContentBadge
               t={t}
               title={t(
                 "This conversation has read text from outside your organization, so every change it proposes waits for your approval.",
               )}
             />
-          )}
-        </div>
-        {header}
-      </div>
+          </div>
+        )
+      )}
       <div className="dk-chat flex min-h-0 flex-1 flex-col">
         <DeskThread
           key={thread.id}
@@ -261,6 +294,7 @@ export function PageAssistant({
           onPageRequestSent={onPageRequestSent}
           artifacts={onOpenArtifact ? pageArtifacts : undefined}
           onWorkingChange={onWorkingChange}
+          {...threadOptions}
         />
       </div>
     </div>

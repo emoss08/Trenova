@@ -322,37 +322,11 @@ func (e *Engine) evaluateShaped(
 	shape *compileShape,
 	resolveFailures map[string]error,
 ) (*formulatemplatetypes.EvaluationResult, error) {
-	injectLookupFunctions(env, shape.lookup)
-
-	env[ctxEnvKey] = ctx
-	defer delete(env, ctxEnvKey)
-
-	compiled, err := e.compileShaped(expression, shape)
+	output, err := e.runShaped(ctx, expression, env, shape, resolveFailures)
 	if err != nil {
-		if missing := missingFieldError(expression, env, resolveFailures); missing != nil {
-			return nil, missing
-		}
-		return nil, withResolveFailures(err, resolveFailures)
+		return nil, err
 	}
 
-	output, err := e.run(ctx, compiled.program, env)
-	if err != nil {
-		// The program was compiled against the schema's declared types, so a
-		// record that lacks a nullable value fails here rather than at
-		// compile time. It is the same authoring problem with the same fix.
-		if missing := missingFieldError(expression, env, resolveFailures); missing != nil {
-			return nil, missing
-		}
-		return nil, errors.NewComputeError(
-			expression,
-			"expression",
-			withResolveFailures(err, resolveFailures),
-		)
-	}
-
-	// The injected context is deleted before the copy so the variables a
-	// caller sees are exactly what the formula saw.
-	delete(env, ctxEnvKey)
 	result := &formulatemplatetypes.EvaluationResult{
 		RawValue:  output,
 		Variables: maputils.WithoutFuncValues(env),
@@ -369,6 +343,41 @@ func (e *Engine) evaluateShaped(
 	}
 
 	return result, nil
+}
+
+func (e *Engine) runShaped(
+	ctx context.Context,
+	expression string,
+	env map[string]any,
+	shape *compileShape,
+	resolveFailures map[string]error,
+) (any, error) {
+	injectLookupFunctions(env, shape.lookup)
+
+	env[ctxEnvKey] = ctx
+	defer delete(env, ctxEnvKey)
+
+	compiled, err := e.compileShaped(expression, shape)
+	if err != nil {
+		if missing := missingFieldError(expression, env, resolveFailures); missing != nil {
+			return nil, missing
+		}
+		return nil, withResolveFailures(err, resolveFailures)
+	}
+
+	output, err := e.run(ctx, compiled.program, env)
+	if err != nil {
+		if missing := missingFieldError(expression, env, resolveFailures); missing != nil {
+			return nil, missing
+		}
+		return nil, errors.NewComputeError(
+			expression,
+			"expression",
+			withResolveFailures(err, resolveFailures),
+		)
+	}
+
+	return output, nil
 }
 
 func (e *Engine) evaluateBreakdowns(

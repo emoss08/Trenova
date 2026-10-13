@@ -11,6 +11,11 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.get(templateId),
   }),
+  recent: (limit: number) => ({
+    queryKey: [limit],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.list({ limit }, { signal }),
+  }),
   usage: (templateId: FormulaTemplate["id"]) => ({
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.getUsage(templateId),
@@ -53,6 +58,11 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
   approvalImpact: (templateId: FormulaTemplate["id"]) => ({
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.approvalImpact(templateId),
+  }),
+  reviewers: (templateId: FormulaTemplate["id"]) => ({
+    queryKey: [templateId],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.listReviewers(templateId, { signal }),
   }),
   readiness: (templateId: FormulaTemplate["id"]) => ({
     queryKey: [templateId],

@@ -4,6 +4,7 @@
 // start), and conversations bound to a page (Ask, Import, Formula) left out.
 import { deskThread } from "../fixtures/desk-cards.mjs";
 import { deskCaseThreads } from "./deskcase.mjs";
+import { formulaThreads } from "./formula-nova.mjs";
 
 const UNLISTED_ORIGINS = new Set(["Ask", "Import", "Formula"]);
 const DEFAULT_LIMIT = 50;
@@ -17,7 +18,7 @@ function touchedAt(thread) {
 function threads(state) {
   const cards = deskThread(state.anchor, state.scenario.deskSlug ?? "tractor-t-101").thread;
   const triage = [...(state.triage?.assistantThreads?.values() ?? [])];
-  return [cards, ...deskCaseThreads(state), ...triage]
+  return [cards, ...deskCaseThreads(state), ...triage, ...formulaThreads(state)]
     .filter((thread) => thread.id !== undefined && !UNLISTED_ORIGINS.has(thread.origin))
     .sort(
       (a, b) =>

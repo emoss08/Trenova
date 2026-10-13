@@ -1,7 +1,13 @@
 import { pageDraftSchema, type FormulaProposal } from "@/types/page-draft";
 import type { VariableDefinition } from "@trenova/shared/types/formula-template";
 import { describe, expect, it } from "vitest";
-import { formulaDraftFromEditor, proposalForEditor } from "../formula-draft";
+import {
+  applyProposal,
+  formulaDraftFromEditor,
+  newProposalVariables,
+  proposalForEditor,
+  type ProposalTarget,
+} from "../formula-draft";
 
 /*
  * pagedraft.Formula on the server: a schema id and template type of key
@@ -111,6 +117,9 @@ describe("proposalForEditor", () => {
   it("turns a proposal into the editor's expression and variable definitions", () => {
     const proposal: FormulaProposal = {
       schemaId: "shipment",
+      name: "",
+      description: "",
+      breakdown: [],
       expression: "max(totalDistance * perMile, minimum)",
       variables: [
         { name: "perMile", type: "Number", description: "Rate per mile", defaultValue: 2.85 },
@@ -140,5 +149,118 @@ describe("proposalForEditor", () => {
         },
       ],
     });
+  });
+});
+
+function proposalWith(overrides: Partial<FormulaProposal>): FormulaProposal {
+  return {
+    schemaId: "shipment",
+    name: "",
+    description: "",
+    templateType: null,
+    breakdown: [],
+    expression: "baseRate * totalDistance + weekendFee",
+    variables: [
+      { name: "weekendFee", type: "Number", description: "Weekend fee", defaultValue: 125 },
+    ],
+    explanation: "Adds a weekend fee.",
+    check: { valid: true, result: "1750", error: "" },
+    scenarios: [],
+    ...overrides,
+  };
+}
+
+const editor: ProposalTarget = {
+  name: "Linehaul",
+  description: "Per mile linehaul",
+  type: "FreightCharge",
+  expression: "baseRate * totalDistance",
+  variableDefinitions: [
+    {
+      name: "weekendFee",
+      type: "Number",
+      description: "Set by lanes",
+      required: true,
+      defaultValue: 90,
+    },
+    { name: "stopFee", type: "Number", description: "", required: false, defaultValue: 50 },
+  ],
+  breakdownDefinitions: [
+    { name: "linehaul", label: "Linehaul", expression: "baseRate * totalDistance" },
+  ],
+};
+
+describe("applyProposal", () => {
+  it("keeps the editor's own variables and adds only the ones it lacks", () => {
+    const next = applyProposal(
+      editor,
+      proposalWith({
+        variables: [
+          { name: "weekendFee", type: "Number", description: "Weekend fee", defaultValue: 125 },
+          { name: "reeferFee", type: "Number", description: "Reefer fee", defaultValue: 225 },
+        ],
+      }),
+    );
+
+    expect(next.expression).toBe("baseRate * totalDistance + weekendFee");
+    expect(next.variableDefinitions).toEqual([
+      editor.variableDefinitions[0],
+      editor.variableDefinitions[1],
+      {
+        name: "reeferFee",
+        type: "Number",
+        description: "Reefer fee",
+        required: false,
+        defaultValue: 225,
+      },
+    ]);
+  });
+
+  it("keeps the editor's breakdown unless the proposal itemizes, then takes its lines", () => {
+    expect(applyProposal(editor, proposalWith({})).breakdownDefinitions).toEqual(
+      editor.breakdownDefinitions,
+    );
+    const lines = [
+      { name: "linehaul", label: "Linehaul", expression: "baseRate * totalDistance" },
+      { name: "weekend", label: "Weekend pickup", expression: "weekendFee" },
+    ];
+    expect(applyProposal(editor, proposalWith({ breakdown: lines })).breakdownDefinitions).toEqual(
+      lines,
+    );
+  });
+
+  it("fills name, description and type only where the editor has none", () => {
+    const proposal = proposalWith({
+      name: "Weekend linehaul",
+      description: "Linehaul with a weekend fee",
+      templateType: "AccessorialCharge",
+    });
+
+    const kept = applyProposal(editor, proposal);
+    expect([kept.name, kept.description, kept.type]).toEqual([
+      "Linehaul",
+      "Per mile linehaul",
+      "FreightCharge",
+    ]);
+
+    const empty: ProposalTarget = { ...editor, name: "", description: "  " };
+    const filled = applyProposal(empty, proposal);
+    expect([filled.name, filled.description, filled.type]).toEqual([
+      "Weekend linehaul",
+      "Linehaul with a weekend fee",
+      "AccessorialCharge",
+    ]);
+  });
+
+  it("lists as new only the proposal's variables the editor does not declare", () => {
+    const proposal = proposalWith({
+      variables: [
+        { name: "weekendFee", type: "Number", description: "", defaultValue: 125 },
+        { name: "reeferFee", type: "Number", description: "", defaultValue: 225 },
+      ],
+    });
+    expect(newProposalVariables(editor.variableDefinitions, proposal).map((v) => v.name)).toEqual([
+      "reeferFee",
+    ]);
   });
 });

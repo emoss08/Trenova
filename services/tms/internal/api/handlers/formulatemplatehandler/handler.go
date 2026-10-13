@@ -15,7 +15,8 @@ type Params struct {
 	fx.In
 
 	Service              *formulatemplateservice.Service
-	PageAssistant        agentports.PageAssistant `optional:"true"`
+	PageAssistant        agentports.PageAssistant       `optional:"true"`
+	StudioAssist         agentports.FormulaStudioAssist `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	PermissionEngine     permissionports.PermissionEngine
@@ -24,6 +25,7 @@ type Params struct {
 type Handler struct {
 	service       *formulatemplateservice.Service
 	pageAssistant agentports.PageAssistant
+	studio        agentports.FormulaStudioAssist
 	eh            *helpers.ErrorHandler
 	pm            *middleware.PermissionMiddleware
 	permEngine    permissionports.PermissionEngine
@@ -33,6 +35,7 @@ func New(p Params) *Handler {
 	return &Handler{
 		service:       p.Service,
 		pageAssistant: p.PageAssistant,
+		studio:        p.StudioAssist,
 		eh:            p.ErrorHandler,
 		pm:            p.PermissionMiddleware,
 		permEngine:    p.PermissionEngine,
@@ -63,12 +66,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("/import", requireCreate, h.importTemplates)
 	api.GET("/standards", requireRead, h.listStandards)
 	api.POST("/install-standards", requireCreate, h.installStandards)
-	api.POST(
-		"/ai/thread/",
-		requireRead,
-		h.pm.RequirePermission(permission.ResourceAssistant.String(), permission.OpCreate),
-		h.openAssistantThread,
+	requireAssistant := h.pm.RequirePermission(
+		permission.ResourceAssistant.String(),
+		permission.OpCreate,
 	)
+	api.POST("/ai/thread/", requireRead, requireAssistant, h.openAssistantThread)
+	api.POST("/ai/explain", requireRead, requireAssistant, h.explainFormula)
+	api.POST("/ai/describe-inputs", requireRead, requireAssistant, h.describeInputs)
+	api.POST("/ai/suggest-scenarios", requireRead, requireAssistant, h.suggestScenarios)
 
 	idGroup := api.Group("/:templateID")
 	idGroup.GET("/", requireRead, h.get)
@@ -88,6 +93,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	idGroup.POST("/reject", requireReject, h.reject)
 	idGroup.POST("/request-changes", requireReject, h.requestChanges)
 	idGroup.GET("/reviews", requireRead, h.listReviews)
+	idGroup.GET("/reviewers", requireRead, h.listReviewers)
+	idGroup.POST("/review-note", requireRead, requireAssistant, h.reviewNote)
 	idGroup.POST("/backtest", requireAuthoring, h.backtest)
 	idGroup.POST("/impact", requireRead, h.approvalImpact)
 	idGroup.GET("/readiness", requireRead, h.readiness)
@@ -97,6 +104,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	idGroup.PUT("/test-cases/:testCaseID", requireUpdate, h.updateTestCase)
 	idGroup.DELETE("/test-cases/:testCaseID", requireUpdate, h.deleteTestCase)
 	idGroup.POST("/test-cases/run", requireAuthoring, h.runTestCases)
+	idGroup.POST(
+		"/test-cases/:testCaseID/explain",
+		requireRead,
+		requireAssistant,
+		h.explainScenario,
+	)
 	idGroup.GET("/versions/scheduled", requireRead, h.listScheduledVersions)
 	idGroup.PATCH(
 		"/versions/:versionNumber/effective-date",

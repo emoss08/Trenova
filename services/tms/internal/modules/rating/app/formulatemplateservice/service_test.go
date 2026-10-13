@@ -1691,6 +1691,10 @@ func TestApprovalTransitions(t *testing.T) {
 			deps := setupTest(t)
 
 			template := newTestTemplate()
+			deps.testCaseRepo.cases = append(
+				deps.testCaseRepo.cases,
+				newTestCase("exact match", 250, 0.01),
+			)
 			template.Status = tt.from
 
 			deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -1721,7 +1725,10 @@ func TestApprovalTransitions(t *testing.T) {
 				deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).
 					Return(nil, nil).
 					Maybe()
-				result, err = deps.svc.Submit(t.Context(), req)
+				result, err = deps.svc.Submit(
+					t.Context(),
+					&SubmitRequest{ApprovalActionRequest: *req},
+				)
 			case "approve":
 				result, err = deps.svc.Approve(t.Context(), req)
 			case "reject":
@@ -1747,6 +1754,7 @@ func TestSubmit_StampsSubmissionFields(t *testing.T) {
 
 	tenant := newTenantInfo()
 	template := newTestTemplate()
+	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	template.Status = formulatemplate.StatusDraft
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -1754,11 +1762,14 @@ func TestSubmit_StampsSubmissionFields(t *testing.T) {
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
-	result, err := deps.svc.Submit(t.Context(), &ApprovalActionRequest{
-		TenantInfo: tenant,
-		EntityID:   template.ID,
-		Comment:    "ready for review",
-	})
+	result, err := deps.svc.Submit(
+		t.Context(),
+		&SubmitRequest{ApprovalActionRequest: ApprovalActionRequest{
+			TenantInfo: tenant,
+			EntityID:   template.ID,
+			Comment:    "ready for review",
+		}},
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, formulatemplate.StatusInReview, result.Status)
@@ -1807,6 +1818,7 @@ func TestApprove_StampsApprovalAndKeepsSubmission(t *testing.T) {
 	submittedAt := timeutils.NowUnix() - 3600
 
 	template := newTestTemplate()
+	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	template.Status = formulatemplate.StatusInReview
 	template.SubmittedByID = &submitterID
 	template.SubmittedAt = &submittedAt

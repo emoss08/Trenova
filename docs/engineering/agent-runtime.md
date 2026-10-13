@@ -1760,9 +1760,9 @@ needs to answer, so a call never outlives the request waiting on it. A person wh
 stops waiting cancels a call that was theirs alone.
 
 - `StructuredCompletionWorkflow` asks one structured question (table compose,
-  and the agent builder's drafting and tightening, routed as `AssistantChat`),
-  retried the `modelcall` way. Formula generate and explain no longer call it;
-  they are turns of the formula assistant.
+  the agent builder's drafting and tightening, and the Formula Studio's one-shot
+  Nova calls, routed as `AssistantChat`), retried the `modelcall` way. Drafting a
+  formula is a turn of the formula assistant, not a one-shot call.
 - `TestAIProviderWorkflow` probes once and never retries: the administrator is
   asking whether the connection works now.
 - `ListAIProviderModelsWorkflow` and `TestAIProviderDraftWorkflow` ask an endpoint
@@ -1820,7 +1820,9 @@ location create. The formula tools price with the formula engine:
 `describe_formula_schema` lists the variables, functions and rate tables,
 `test_formula_expression` prices sample loads or a saved shipment the person
 may read, and `propose_formula` hands the editor an expression with its
-variables, an explanation and engine-priced scenarios. It requires formula
+variables, an explanation and engine-priced scenarios, and, when it drafts a new
+template or the person asks for itemized lines, a name, a description, a type and
+breakdown lines, each line priced by the engine as part of the proposal's check. It requires formula
 template create or update. The model never states an amount the engine did not
 produce.
 
@@ -1836,6 +1838,30 @@ only when asked. Without `assistant:create` the panel says so without calling
 the server; a refusal from `MayUseAgent` or a disabled agent is shown in the
 server's words; an archived thread (the document was re-extracted) offers a
 fresh one.
+
+**The studio's one-shot calls.** Besides its thread, the Formula Studio asks the
+formula assistant five single questions through `agentports.FormulaStudioAssist`
+(`formulastudioservice`): `POST /formula-templates/ai/explain` (one sentence per
+statement), `ai/describe-inputs` (descriptions for inputs that have none),
+`ai/suggest-scenarios` (three to five edge-case loads),
+`/:templateID/test-cases/:testCaseID/explain` (why a scenario no longer bills what
+it expects, with a verdict) and `/:templateID/review-note` (the note for the
+reviewer). Each requires formula template read and `assistant:create`, ensures the
+organization's `formula_assistant` and checks `MayUseAgent`, then asks on the
+structured path with the agent's preferred provider, attributed to the agent and
+the person (`FormulaExplain`, or `FormulaGenerate` for inputs and scenarios). The
+engine does every sum first: `TestExpression` with `traceStatements` evaluates each
+`let` and the result (split with expr's own parser and lexer, offsets in UTF-16 code
+units for CodeMirror), suggested loads are priced as billed amounts with the charge
+policy applied, the scenario trace evaluates the recorded content and the editor's on
+the scenario's inputs and keeps only the rows that differ, and the review note reads
+`ReviewDiff` and a backtest of the saved content when an approved version exists and
+the person may read shipments. The model only writes words: page content reaches it
+in untrusted sections, it is told to quote amounts only from the engine's, and its
+answer is bounded (lengths, a statement index in range, the verdict enum) with a
+written fallback filling any statement it skipped. Without a provider the calls
+answer a 422 business error, except the scenario explanation, which falls back to a
+cause written from the trace with `generated: false`.
 
 **What stayed behind.** Conversations that were still active when this shipped
 were carried into page threads by `20261231006560_carry_import_conversations`:

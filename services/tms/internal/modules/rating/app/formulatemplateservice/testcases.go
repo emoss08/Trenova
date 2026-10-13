@@ -4,29 +4,36 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
-	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
 var defaultTestCaseTolerance = decimal.NewFromFloat(0.01)
 
+const (
+	maxScenarioVariableNameLength = 100
+	maxScenarioVariableTextLength = 1000
+)
+
 type TestCaseInput struct {
-	Name           string          `json:"name"`
-	Description    string          `json:"description"`
-	Variables      map[string]any  `json:"variables"`
-	ExpectedAmount decimal.Decimal `json:"expectedAmount"`
-	Tolerance      decimal.Decimal `json:"tolerance"`
+	Name           string             `json:"name"`
+	Description    string             `json:"description"`
+	Variables      map[string]any     `json:"variables"`
+	ExpectedAmount decimal.Decimal    `json:"expectedAmount"`
+	Tolerance      decimal.Decimal    `json:"tolerance"`
+	Candidate      *TestCaseCandidate `json:"candidate,omitempty"`
 }
 
 type CreateTestCaseRequest struct {
@@ -67,9 +74,16 @@ func (s *Service) CreateTestCase(
 
 	entity := buildTestCaseEntity(template.ID, req.TenantInfo, &req.TestCaseInput)
 
-	if vErr := validateTestCase(entity); vErr != nil {
+	if vErr := validateTestCaseWithCandidate(entity, req.Candidate); vErr != nil {
 		return nil, vErr
 	}
+
+	entity.Record(
+		recordedContent(template, req.Candidate),
+		s.recordingVersion(ctx, template, req.TenantInfo),
+		req.TenantInfo.UserID,
+		timeutils.NowUnix(),
+	)
 
 	created, err := s.testCaseRepo.Create(ctx, entity)
 	if err != nil {
@@ -86,7 +100,7 @@ func (s *Service) CreateTestCase(
 		fmt.Sprintf("Test scenario %q added", created.Name),
 	)
 
-	return created, nil
+	return s.reloadTestCase(ctx, created, req.TenantInfo), nil
 }
 
 func (s *Service) UpdateTestCase(
@@ -121,8 +135,22 @@ func (s *Service) UpdateTestCase(
 		existing.Tolerance = defaultTestCaseTolerance
 	}
 
-	if vErr := validateTestCase(existing); vErr != nil {
+	if vErr := validateTestCaseWithCandidate(existing, req.Candidate); vErr != nil {
 		return nil, vErr
+	}
+
+	if req.Candidate != nil {
+		template, tErr := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+		if tErr != nil {
+			log.Error("failed to get template", zap.Error(tErr))
+			return nil, tErr
+		}
+		existing.Record(
+			recordedContent(template, req.Candidate),
+			s.recordingVersion(ctx, template, req.TenantInfo),
+			req.TenantInfo.UserID,
+			timeutils.NowUnix(),
+		)
 	}
 
 	updated, err := s.testCaseRepo.Update(ctx, existing)
@@ -131,7 +159,7 @@ func (s *Service) UpdateTestCase(
 		return nil, err
 	}
 
-	return updated, nil
+	return s.reloadTestCase(ctx, updated, req.TenantInfo), nil
 }
 
 func (s *Service) DeleteTestCase(
@@ -181,8 +209,16 @@ func buildTestCaseEntity(
 }
 
 func validateTestCase(entity *formulatemplate.TestCase) error {
+	return validateTestCaseWithCandidate(entity, nil)
+}
+
+func validateTestCaseWithCandidate(
+	entity *formulatemplate.TestCase,
+	candidate *TestCaseCandidate,
+) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
+	ValidateScenarioContent(multiErr, "candidate", candidate)
 	if multiErr.HasErrors() {
 		return multiErr
 	}
@@ -190,17 +226,166 @@ func validateTestCase(entity *formulatemplate.TestCase) error {
 	return nil
 }
 
-// TestCaseCandidate carries unsaved editor content so scenarios can run
-// against what the author is typing, not just what is stored.
-type TestCaseCandidate struct {
-	Expression           string                              `json:"expression"`
-	VariableDefinitions  []*formulatypes.VariableDefinition  `json:"variableDefinitions"`
-	BreakdownDefinitions []*formulatypes.BreakdownDefinition `json:"breakdownDefinitions"`
-	MinCharge            decimal.NullDecimal                 `json:"minCharge"`
-	MaxCharge            decimal.NullDecimal                 `json:"maxCharge"`
-	RoundingMode         ratetypes.RoundingMode              `json:"roundingMode"`
-	RoundingPrecision    int32                               `json:"roundingPrecision"`
+func (s *Service) reloadTestCase(
+	ctx context.Context,
+	entity *formulatemplate.TestCase,
+	tenantInfo pagination.TenantInfo,
+) *formulatemplate.TestCase {
+	reloaded, err := s.testCaseRepo.GetByID(ctx, formulatemplateports.GetTestCaseByIDRequest{
+		TenantInfo: tenantInfo,
+		TestCaseID: entity.ID,
+		TemplateID: entity.TemplateID,
+	})
+	if err != nil {
+		s.l.Warn("failed to reload test case after saving it",
+			zap.String("testCaseID", entity.ID.String()),
+			zap.Error(err),
+		)
+		return entity
+	}
+
+	return reloaded
 }
+
+func (s *Service) recordingVersion(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	tenantInfo pagination.TenantInfo,
+) int64 {
+	if s.latestApprovedVersionNumber(ctx, template, tenantInfo) == 0 {
+		return 0
+	}
+
+	return template.CurrentVersionNumber
+}
+
+func recordedContent(
+	template *formulatemplate.FormulaTemplate,
+	candidate *TestCaseCandidate,
+) *formulatemplate.ScenarioContent {
+	if candidate == nil {
+		return template.ScenarioContent()
+	}
+
+	content := *candidate
+	if content.VariableDefinitions == nil {
+		content.VariableDefinitions = []*formulatypes.VariableDefinition{}
+	}
+	if content.BreakdownDefinitions == nil {
+		content.BreakdownDefinitions = []*formulatypes.BreakdownDefinition{}
+	}
+
+	return &content
+}
+
+func ValidateScenarioContent(
+	multiErr *errortypes.MultiError,
+	prefix string,
+	content *formulatemplate.ScenarioContent,
+) {
+	if content == nil {
+		return
+	}
+
+	if utf8.RuneCountInString(content.Expression) > formulatemplate.MaxExpressionLength {
+		multiErr.Add(
+			scenarioField(prefix, "expression"),
+			errortypes.ErrInvalid,
+			"Expression cannot exceed 10,000 characters",
+		)
+	}
+	if len(content.VariableDefinitions) > formulatemplate.MaxVariableDefinitions {
+		multiErr.Add(
+			scenarioField(prefix, "variableDefinitions"),
+			errortypes.ErrInvalid,
+			"A template cannot declare more than 50 custom variables",
+		)
+	}
+	if content.MinCharge.Valid && content.MinCharge.Decimal.IsNegative() {
+		multiErr.Add(
+			scenarioField(prefix, "minCharge"),
+			errortypes.ErrInvalid,
+			"Minimum charge cannot be negative",
+		)
+	}
+	if content.MaxCharge.Valid && content.MaxCharge.Decimal.IsNegative() {
+		multiErr.Add(
+			scenarioField(prefix, "maxCharge"),
+			errortypes.ErrInvalid,
+			"Maximum charge cannot be negative",
+		)
+	}
+	if content.MinCharge.Valid && content.MaxCharge.Valid &&
+		content.MinCharge.Decimal.GreaterThan(content.MaxCharge.Decimal) {
+		multiErr.Add(
+			scenarioField(prefix, "minCharge"),
+			errortypes.ErrInvalid,
+			"Minimum charge cannot exceed maximum charge",
+		)
+	}
+	if content.RoundingMode != "" && !content.RoundingMode.IsValid() {
+		multiErr.Add(
+			scenarioField(prefix, "roundingMode"),
+			errortypes.ErrInvalid,
+			"Rounding mode is invalid",
+		)
+	}
+	if content.RoundingPrecision < 0 ||
+		content.RoundingPrecision > formulatypes.MaxRoundingPrecision {
+		multiErr.Add(
+			scenarioField(prefix, "roundingPrecision"),
+			errortypes.ErrInvalid,
+			"Rounding precision must be between 0 and 4",
+		)
+	}
+
+	for index, definition := range content.VariableDefinitions {
+		if definition == nil {
+			continue
+		}
+		if utf8.RuneCountInString(definition.Name) > maxScenarioVariableNameLength ||
+			utf8.RuneCountInString(definition.Description) > maxScenarioVariableTextLength {
+			multiErr.Add(
+				scenarioField(prefix, fmt.Sprintf("variableDefinitions[%d]", index)),
+				errortypes.ErrInvalid,
+				"Variable name or description is too long",
+			)
+		}
+	}
+	for index, definition := range content.BreakdownDefinitions {
+		if definition == nil {
+			continue
+		}
+		if utf8.RuneCountInString(definition.Expression) > formulatemplate.MaxExpressionLength ||
+			utf8.RuneCountInString(definition.Label) > maxScenarioVariableNameLength {
+			multiErr.Add(
+				scenarioField(prefix, fmt.Sprintf("breakdownDefinitions[%d]", index)),
+				errortypes.ErrInvalid,
+				"Breakdown label or expression is too long",
+			)
+		}
+	}
+
+	breakdownErrs := errortypes.NewMultiError()
+	formulatypes.ValidateBreakdownDefinitions(content.BreakdownDefinitions, breakdownErrs)
+	for _, fieldErr := range breakdownErrs.Errors {
+		multiErr.Add(
+			scenarioField(prefix, fieldErr.Field),
+			fieldErr.Code,
+			fieldErr.Message,
+			fieldErr.Args...)
+	}
+}
+
+func scenarioField(prefix, name string) string {
+	if prefix == "" {
+		return name
+	}
+
+	return prefix + "." + name
+}
+
+type TestCaseCandidate = formulatemplate.ScenarioContent
 
 type RunTestCasesRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -252,13 +437,7 @@ func (s *Service) RunTestCases(
 
 	candidate := req.Candidate
 	if candidate == nil {
-		candidate = &TestCaseCandidate{
-			Expression:           template.Expression,
-			VariableDefinitions:  template.VariableDefinitions,
-			BreakdownDefinitions: template.BreakdownDefinitions,
-			MinCharge:            template.MinCharge,
-			MaxCharge:            template.MaxCharge,
-		}
+		candidate = template.ScenarioContent()
 	}
 
 	return s.runCasesAgainstCandidate(
@@ -309,26 +488,10 @@ func (s *Service) runSingleCase(
 		Tolerance:      testCase.Tolerance,
 	}
 
-	variables := make(map[string]any, len(testCase.Variables)+len(candidate.VariableDefinitions))
-	for _, definition := range candidate.VariableDefinitions {
-		if definition != nil && definition.Name != "" && definition.DefaultValue != nil {
-			variables[definition.Name] = definition.DefaultValue
-		}
-	}
-	for key, value := range testCase.Variables {
-		variables[key] = value
-	}
-
-	evaluation := s.TestExpression(ctx, &TestExpressionRequest{
-		Expression:        candidate.Expression,
-		SchemaID:          schemaID,
-		Variables:         variables,
-		TenantInfo:        tenantInfo,
-		MinCharge:         candidate.MinCharge,
-		MaxCharge:         candidate.MaxCharge,
-		RoundingMode:      candidate.RoundingMode,
-		RoundingPrecision: candidate.RoundingPrecision,
-	})
+	evaluation := s.TestExpression(
+		ctx,
+		candidateRequest(schemaID, tenantInfo, candidate, testCase.Variables),
+	)
 
 	if !evaluation.Valid {
 		result.Error = evaluation.Error
@@ -354,10 +517,36 @@ func (s *Service) runSingleCase(
 	return result
 }
 
-// requirePassingTestCases is the approval gate: a template with saved
-// scenarios cannot go Active while any of them fail against its content.
-// Templates without scenarios pass — the gate enforces what authors pinned,
-// it does not force adoption.
+func scenarioVariables(
+	content *formulatemplate.ScenarioContent,
+	inputs map[string]any,
+) map[string]any {
+	variables := content.VariableDefaults()
+	for key, value := range inputs {
+		variables[key] = value
+	}
+
+	return variables
+}
+
+func candidateRequest(
+	schemaID string,
+	tenantInfo pagination.TenantInfo,
+	content *formulatemplate.ScenarioContent,
+	inputs map[string]any,
+) *TestExpressionRequest {
+	return &TestExpressionRequest{
+		Expression:        content.Expression,
+		SchemaID:          schemaID,
+		Variables:         scenarioVariables(content, inputs),
+		TenantInfo:        tenantInfo,
+		MinCharge:         content.MinCharge,
+		MaxCharge:         content.MaxCharge,
+		RoundingMode:      content.RoundingMode,
+		RoundingPrecision: content.RoundingPrecision,
+	}
+}
+
 func (s *Service) requirePassingTestCases(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
@@ -372,7 +561,11 @@ func (s *Service) requirePassingTestCases(
 	}
 
 	if len(cases) == 0 {
-		return nil
+		return errortypes.NewValidationError(
+			"testCases",
+			errortypes.ErrRequired,
+			"Add at least one test scenario before approving, so the template's charge is pinned by an example.",
+		)
 	}
 
 	run := s.runCasesAgainstCandidate(
@@ -380,15 +573,7 @@ func (s *Service) requirePassingTestCases(
 		template.SchemaID,
 		tenantInfo,
 		cases,
-		&TestCaseCandidate{
-			Expression:           template.Expression,
-			VariableDefinitions:  template.VariableDefinitions,
-			BreakdownDefinitions: template.BreakdownDefinitions,
-			MinCharge:            template.MinCharge,
-			MaxCharge:            template.MaxCharge,
-			RoundingMode:         template.RoundingMode,
-			RoundingPrecision:    template.RoundingPrecision,
-		},
+		template.ScenarioContent(),
 	)
 
 	if run.Failed == 0 {

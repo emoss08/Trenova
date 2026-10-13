@@ -2,7 +2,18 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   backtestResponseSchema,
+  describeInputsResponseSchema,
+  formulaExplainResponseSchema,
+  listFormulaReviewersResponseSchema,
   listFormulaTemplateReviewsResponseSchema,
+  reviewNoteResponseSchema,
+  scenarioExplanationSchema,
+  type DescribeInputsResponse,
+  type FormulaDraftContent,
+  type FormulaExplainResponse,
+  type FormulaReviewer,
+  type ReviewNoteResponse,
+  type ScenarioExplanation,
   listStandardsResponseSchema,
   type FormulaTemplateReview,
   readinessResponseSchema,
@@ -47,6 +58,7 @@ import {
 } from "@trenova/shared/types/formula-template";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { pageThreadSchema, type PageThread } from "@/types/assistant";
+import { pricedScenarioSchema, type PricedScenario } from "@/types/page-draft";
 import { z } from "zod";
 
 export type ImportTestCasePayload = {
@@ -75,6 +87,24 @@ export type ImportTemplatePayload = {
   testCases?: ImportTestCasePayload[];
 };
 
+/** A template as it is created: the form's values and the scenarios held until it exists. */
+export type CreateFormulaTemplateRequest = FormulaTemplate & {
+  testCases?: FormulaTestCaseInput[];
+};
+
+/** Submitting for review: who should look, and the note they read first. */
+export type SubmitForReviewRequest = {
+  comment?: string;
+  reviewerId?: string;
+  reviewerNote?: string;
+};
+
+/** The load Nova's explanation is priced on: the preview's sample values or a saved shipment. */
+export type ExplainPreviewLoad = {
+  sampleValues?: Record<string, unknown>;
+  shipmentId?: string;
+};
+
 export type ImportTemplatesRequest = {
   exportVersion: string;
   templates: ImportTemplatePayload[];
@@ -82,6 +112,30 @@ export type ImportTemplatesRequest = {
 };
 
 export class FormulaTemplateService {
+  public async list(
+    params: { limit: number; offset?: number; type?: string },
+    options?: { signal?: AbortSignal },
+  ): Promise<GenericLimitOffsetResponse<FormulaTemplate>> {
+    const search = new URLSearchParams({
+      limit: String(params.limit),
+      offset: String(params.offset ?? 0),
+    });
+    if (params.type) search.set("type", params.type);
+    const response = await api.get<GenericLimitOffsetResponse<FormulaTemplate>>(
+      `/formula-templates/?${search.toString()}`,
+      { signal: options?.signal },
+    );
+
+    return {
+      ...response,
+      results: await safeParse(
+        listFormulaTemplateResponseSchema,
+        response.results ?? [],
+        "Formula Templates",
+      ),
+    };
+  }
+
   public async get(templateId: FormulaTemplate["id"]): Promise<FormulaTemplate> {
     const response = await api.get<FormulaTemplate>(`/formula-templates/${templateId}/`);
 
@@ -303,15 +357,115 @@ export class FormulaTemplateService {
     return safeParse(formulaTemplateVersionSchema, response, "Formula Template Version");
   }
 
-  public async submit(
-    templateId: FormulaTemplate["id"],
-    comment: string,
-  ): Promise<FormulaTemplate> {
-    const response = await api.post<FormulaTemplate>(`/formula-templates/${templateId}/submit`, {
-      comment,
-    });
+  public async create(request: CreateFormulaTemplateRequest): Promise<FormulaTemplate> {
+    const response = await api.post<FormulaTemplate>("/formula-templates/", request);
 
     return safeParse(formulaTemplateSchema, response, "Formula Template");
+  }
+
+  public async submit(
+    templateId: FormulaTemplate["id"],
+    request: string | SubmitForReviewRequest,
+  ): Promise<FormulaTemplate> {
+    const body = typeof request === "string" ? { comment: request } : request;
+    const response = await api.post<FormulaTemplate>(
+      `/formula-templates/${templateId}/submit`,
+      body,
+    );
+
+    return safeParse(formulaTemplateSchema, response, "Formula Template");
+  }
+
+  public async listReviewers(
+    templateId: FormulaTemplate["id"],
+    options?: { signal?: AbortSignal },
+  ): Promise<FormulaReviewer[]> {
+    const response = await api.get<FormulaReviewer[]>(
+      `/formula-templates/${templateId}/reviewers`,
+      { signal: options?.signal },
+    );
+
+    return safeParse(listFormulaReviewersResponseSchema, response, "Formula Template Reviewers");
+  }
+
+  public async explainFormula(
+    content: FormulaDraftContent,
+    load: ExplainPreviewLoad,
+    options?: { signal?: AbortSignal },
+  ): Promise<FormulaExplainResponse> {
+    const response = await api.post<FormulaExplainResponse>(
+      "/formula-templates/ai/explain",
+      { ...content, ...load },
+      { signal: options?.signal },
+    );
+
+    return safeParse(formulaExplainResponseSchema, response, "Formula Explanation");
+  }
+
+  public async describeInputs(
+    content: FormulaDraftContent,
+    options?: { signal?: AbortSignal },
+  ): Promise<DescribeInputsResponse> {
+    const response = await api.post<DescribeInputsResponse>(
+      "/formula-templates/ai/describe-inputs",
+      content,
+      { signal: options?.signal },
+    );
+
+    return safeParse(describeInputsResponseSchema, response, "Input Descriptions");
+  }
+
+  public async suggestScenarios(
+    content: FormulaDraftContent,
+    existing: Array<{ name: string; variables: Record<string, unknown> }>,
+    options?: { signal?: AbortSignal },
+  ): Promise<PricedScenario[]> {
+    const response = await api.post<{ scenarios: PricedScenario[] }>(
+      "/formula-templates/ai/suggest-scenarios",
+      { ...content, existing },
+      { signal: options?.signal },
+    );
+
+    const parsed = await safeParse(
+      z.object({
+        scenarios: z
+          .array(pricedScenarioSchema)
+          .nullish()
+          .transform((v) => v ?? []),
+      }),
+      response,
+      "Suggested Scenarios",
+    );
+
+    return parsed.scenarios;
+  }
+
+  public async explainScenario(
+    templateId: FormulaTemplate["id"],
+    testCaseId: string,
+    candidate: TestCaseCandidate,
+    options?: { signal?: AbortSignal },
+  ): Promise<ScenarioExplanation> {
+    const response = await api.post<ScenarioExplanation>(
+      `/formula-templates/${templateId}/test-cases/${testCaseId}/explain`,
+      { candidate },
+      { signal: options?.signal },
+    );
+
+    return safeParse(scenarioExplanationSchema, response, "Scenario Explanation");
+  }
+
+  public async draftReviewNote(
+    templateId: FormulaTemplate["id"],
+    options?: { signal?: AbortSignal },
+  ): Promise<ReviewNoteResponse> {
+    const response = await api.post<ReviewNoteResponse>(
+      `/formula-templates/${templateId}/review-note`,
+      {},
+      { signal: options?.signal },
+    );
+
+    return safeParse(reviewNoteResponseSchema, response, "Reviewer Note");
   }
 
   public async approve(

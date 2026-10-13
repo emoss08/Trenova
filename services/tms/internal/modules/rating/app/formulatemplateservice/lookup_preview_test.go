@@ -18,7 +18,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func exactMatrixFixture(code string, entries map[string]string) *ratematrixports.RateMatrixLookupData {
+func exactMatrixFixture(
+	code string,
+	entries map[string]string,
+) *ratematrixports.RateMatrixLookupData {
 	matrixID := pulid.MustNew("rmx_")
 
 	cells := make([]*ratematrix.RateMatrixCell, 0, len(entries))
@@ -406,7 +409,7 @@ func TestReadiness_SubmitterCannotApproveButOthersCan(t *testing.T) {
 	assert.False(t, asReviewer.CanSubmit, "an in-review template is not submittable")
 }
 
-func TestReadiness_WarnsAboutUnguardedFieldsAndMissingDescription(t *testing.T) {
+func TestReadiness_WarnsAboutUnguardedFieldsAndFailsWithoutDescriptionOrScenarios(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
@@ -422,12 +425,37 @@ func TestReadiness_WarnsAboutUnguardedFieldsAndMissingDescription(t *testing.T) 
 	})
 
 	require.NoError(t, err)
-	assert.True(t, resp.CanSubmit, "warnings do not block")
+	assert.False(t, resp.CanSubmit)
 	checks := readinessByKey(resp)
 	assert.Equal(t, ReadinessWarn, checks[ReadinessCheckNullables].Status)
-	assert.Contains(t, checks[ReadinessCheckNullables].Detail, "weight")
-	assert.Equal(t, ReadinessWarn, checks[ReadinessCheckDescription].Status)
-	assert.Equal(t, ReadinessWarn, checks[ReadinessCheckScenarios].Status)
+	assert.Equal(t, "1 value can be empty: weight", checks[ReadinessCheckNullables].Detail)
+	assert.Equal(t, ReadinessFail, checks[ReadinessCheckDetails].Status)
+	assert.Equal(t, "Description is missing", checks[ReadinessCheckDetails].Detail)
+	assert.Equal(t, ReadinessFail, checks[ReadinessCheckScenarios].Status)
+	assert.Equal(t, "Add at least one", checks[ReadinessCheckScenarios].Detail)
+}
+
+func TestReadiness_WarningsDoNotBlock(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusDraft
+	template.Expression = "(weight ?? 0) * 0 + totalDistance * 2.5"
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.testCaseRepo.cases = []*formulatemplate.TestCase{newTestCase("exact", 250, 0.01)}
+
+	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+
+	require.NoError(t, err)
+	assert.True(t, resp.CanSubmit)
+	checks := readinessByKey(resp)
+	assert.Equal(t, ReadinessPass, checks[ReadinessCheckDetails].Status)
+	assert.Equal(t, ReadinessPass, checks[ReadinessCheckScenarios].Status)
+	assert.Equal(t, "1 of 1 pass", checks[ReadinessCheckScenarios].Detail)
 }
 
 func TestReadiness_BrokenExpressionBlocks(t *testing.T) {

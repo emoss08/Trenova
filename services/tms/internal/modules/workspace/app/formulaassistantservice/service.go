@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -94,6 +95,7 @@ type ProposeRequest struct {
 	SchemaID    string
 	Expression  string
 	Variables   []pagedraft.FormulaVariable
+	Details     pagedraft.FormulaDetails
 	Explanation string
 	Scenarios   []Scenario
 }
@@ -254,14 +256,70 @@ func (s *Service) Propose(
 		return nil, err
 	}
 
+	details := req.Details.Normalized()
+	check := outcome.Check
+	if check.Valid && len(details.Breakdown) > 0 {
+		check = s.checkBreakdown(ctx, req, outcome.SchemaID, defaults, details.Breakdown, check)
+	}
+
 	return &pagedraft.FormulaProposal{
-		SchemaID:    outcome.SchemaID,
-		Expression:  strings.TrimSpace(req.Expression),
-		Variables:   req.Variables,
-		Explanation: strings.TrimSpace(req.Explanation),
-		Check:       outcome.Check,
-		Scenarios:   outcome.Scenarios,
+		SchemaID:       outcome.SchemaID,
+		Expression:     strings.TrimSpace(req.Expression),
+		Variables:      req.Variables,
+		FormulaDetails: details,
+		Explanation:    strings.TrimSpace(req.Explanation),
+		Check:          check,
+		Scenarios:      outcome.Scenarios,
 	}, nil
+}
+
+func (s *Service) checkBreakdown(
+	ctx context.Context,
+	req *ProposeRequest,
+	schemaID string,
+	defaults map[string]any,
+	lines []pagedraft.BreakdownLine,
+	check pagedraft.FormulaCheck,
+) pagedraft.FormulaCheck {
+	definitions := make([]*formulatypes.BreakdownDefinition, 0, len(lines))
+	for _, line := range lines {
+		definitions = append(definitions, &formulatypes.BreakdownDefinition{
+			Name:       line.Name,
+			Label:      line.Label,
+			Expression: line.Expression,
+		})
+	}
+
+	result := s.templateService.TestExpression(ctx, &formulatemplateservice.TestExpressionRequest{
+		Expression: req.Expression,
+		SchemaID:   schemaID,
+		Variables:  defaults,
+		TenantInfo: req.TenantInfo,
+		Breakdowns: definitions,
+	})
+	if !result.Valid {
+		return checkOf(result)
+	}
+
+	for index, item := range result.Breakdown {
+		if item.Error == "" {
+			continue
+		}
+		label := item.Label
+		if index < len(lines) {
+			label = lines[index].Label
+		}
+		return pagedraft.FormulaCheck{
+			Error: fmt.Sprintf(
+				"Breakdown line %q (%s) does not run: %s",
+				label,
+				item.Name,
+				strings.TrimSpace(item.Error),
+			),
+		}
+	}
+
+	return check
 }
 
 func (s *Service) price(
@@ -422,6 +480,7 @@ func validatePropose(req *ProposeRequest) error {
 	}
 	(&pagedraft.Draft{Surface: pagedraft.SurfaceFormula, Formula: &draft}).
 		Validate("", multiErr)
+	req.Details.Validate("", multiErr)
 	if multiErr.HasErrors() {
 		return multiErr
 	}

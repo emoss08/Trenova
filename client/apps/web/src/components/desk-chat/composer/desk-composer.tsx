@@ -111,6 +111,10 @@ export type DeskComposerProps = {
   onCancelCompact?: () => void;
   /** Compacts the conversation: what /compact does. Without it there is no /compact. */
   onCompact?: () => void;
+  /** Offers dictation when the person has the microphone on; a page's composer leaves it out. */
+  dictation?: boolean;
+  /** Types out `presets` in the empty box with a Tab hint, away from the front page too. */
+  typewriter?: boolean;
 };
 
 /**
@@ -159,6 +163,8 @@ export function DeskComposer({
   compacting = null,
   onCancelCompact,
   onCompact,
+  dictation: dictationAllowed = true,
+  typewriter = false,
 }: DeskComposerProps) {
   const t = useT();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -167,7 +173,8 @@ export function DeskComposer({
   const markTermsSeen = useDeskStore((state) => state.markTermsSeen);
   const settings = useDeskSettingsStore((state) => state.settings);
   const empty = value === "";
-  const typing = home && settings.presets === "on" && presets.length > 0 && empty && !disabled;
+  const typing =
+    (home || typewriter) && settings.presets === "on" && presets.length > 0 && empty && !disabled;
   const typed = useTypewriter(presets, typing);
   const dictation = useComposerDictation({ draft: value, onDraftChange: onChange });
 
@@ -511,7 +518,7 @@ export function DeskComposer({
         <span className="flex-1" />
         {model}
         {meter}
-        {!lock && settings.mic === "on" && (
+        {!lock && dictationAllowed && settings.mic === "on" && (
           <DeskDictate
             dictation={dictation}
             disabled={(busy && !steering) || disabled || Boolean(compacting)}
