@@ -52,6 +52,10 @@ const (
 		"WHERE c.isinactive = 'F' AND c.id > ? ORDER BY c.id"
 	deletedSQL = "SELECT dr.recordid AS id, dr.type AS recordtype, " +
 		"TO_CHAR(dr.deleteddate, " + timeFormat + ") AS lastmodified FROM deletedrecord dr"
+	transactionRecordTypeID = "-30"
+	editorsSQL              = "SELECT sn.recordid AS id, BUILTIN.DF(sn.name) AS modifiedby FROM systemnote sn " +
+		"WHERE sn.id IN (SELECT MAX(n.id) FROM systemnote n WHERE n.recordtypeid = " +
+		transactionRecordTypeID + " AND n.recordid IN ("
 )
 
 type transactionRow struct {
@@ -157,6 +161,11 @@ type deletedRow struct {
 	ID         jsonflex.String `json:"id"`
 	RecordType jsonflex.String `json:"recordtype"`
 	Modified   jsonflex.String `json:"lastmodified"`
+}
+
+type editorRow struct {
+	ID         jsonflex.String `json:"id"`
+	ModifiedBy jsonflex.String `json:"modifiedby"`
 }
 
 type referenceSpec struct {
@@ -301,6 +310,46 @@ func parseInternalID(raw string) (int64, bool) {
 		return 0, false
 	}
 	return id, true
+}
+
+func idList(ids []int64) (marks string, params []any) {
+	params = make([]any, 0, len(ids))
+	holders := make([]string, 0, len(ids))
+	for _, id := range ids {
+		params = append(params, id)
+		holders = append(holders, "?")
+	}
+	return strings.Join(holders, ", "), params
+}
+
+type editorBook struct {
+	client     *netsuite.Client
+	unreadable bool
+}
+
+func (b *editorBook) names(ctx context.Context, ids []int64) (map[string]string, error) {
+	out := make(map[string]string, len(ids))
+	for start := 0; start < len(ids) && !b.unreadable; start += maxIDsPerRead {
+		marks, params := idList(ids[start:min(start+maxIDsPerRead, len(ids))])
+		var rows []editorRow
+		_, err := b.client.Query(ctx, netsuite.Query{
+			SQL:    editorsSQL + marks + ") GROUP BY n.recordid)",
+			Params: params,
+		}, &rows)
+		if err != nil {
+			if !isQueryRefused(err) {
+				return nil, err
+			}
+			b.unreadable = true
+			return out, nil
+		}
+		for idx := range rows {
+			if name := strings.TrimSpace(rows[idx].ModifiedBy.Value()); name != "" {
+				out[rows[idx].ID.Value()] = name
+			}
+		}
+	}
+	return out, nil
 }
 
 func queryAll[T any](

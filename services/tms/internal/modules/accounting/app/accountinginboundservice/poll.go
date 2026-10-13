@@ -147,6 +147,13 @@ func (s *Service) PollChanges(
 	result.Documents = s.recheckDocuments(ctx, sess, page.Documents)
 	result.More = page.More
 	result.CursorExpired = page.CursorExpired
+	result.DeletesUnread = page.DeletesUnread
+	if page.DeletesUnread {
+		s.l.Info(
+			"accounting deletions are not readable; the drift reconciler finds deleted documents",
+			zap.String("connectionId", sess.conn.ID.String()),
+		)
+	}
 	if page.CursorExpired && s.refresher != nil {
 		if refreshErr := s.refresher.RequestReferenceRefresh(
 			ctx,

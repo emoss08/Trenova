@@ -342,22 +342,25 @@ func (c *Connector) VoidSalesDocument(
 	}
 	result := newResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
+	var corrective string
 	if recordType == recordCreditMemo {
-		return result, c.unwindRecord(ctx, s, &unwind{
+		corrective, err = c.unwindRecord(ctx, s, &unwind{
 			recordType: recordCreditMemo,
 			id:         ref.ExternalID,
 			locked:     salesLocked,
 			refused:    func() error { return creditReversalRefused("credit memo") },
+			offset:     invoiceOffset(ref.RequestID),
+		})
+	} else {
+		corrective, err = c.retireDocument(ctx, s, &reversal{
+			recordType:  recordInvoice,
+			reverseType: recordCreditMemo,
+			reverseCode: typeCreditMemo,
+			id:          ref.ExternalID,
+			requestID:   ref.RequestID,
+			locked:      salesLocked,
 		})
 	}
-	corrective, err := c.retireDocument(ctx, s, &reversal{
-		recordType:  recordInvoice,
-		reverseType: recordCreditMemo,
-		reverseCode: typeCreditMemo,
-		id:          ref.ExternalID,
-		requestID:   ref.RequestID,
-		locked:      salesLocked,
-	})
 	if corrective != "" {
 		result.Refs[refCorrective] = corrective
 	}

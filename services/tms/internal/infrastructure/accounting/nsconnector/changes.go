@@ -190,7 +190,7 @@ func parsePosition(entry string) (string, keyset, bool) {
 func (c *Connector) ChangeFeedLimits() accountingsyncports.AccountingChangeFeedLimits {
 	return accountingsyncports.AccountingChangeFeedLimits{
 		MaxLookback:    0,
-		ReportsDeletes: false,
+		ReportsDeletes: true,
 		MaxPerRead:     maxChangesPerRead,
 	}
 }
@@ -251,6 +251,7 @@ func (c *Connector) ReadChanges(
 		if collect.session, err = c.open(req.Auth); err != nil {
 			return nil, err
 		}
+		collect.editors = &editorBook{client: collect.session.client}
 		if err = collect.run(ctx, cursor); err != nil {
 			return nil, err
 		}
@@ -261,6 +262,7 @@ func (c *Connector) ReadChanges(
 
 type changeCollector struct {
 	session *session
+	editors *editorBook
 	targets []*targetInfo
 	page    *accountingsyncports.AccountingChangePage
 	budget  int
@@ -344,12 +346,16 @@ func (c *changeCollector) readTransactions(
 	if err != nil {
 		return pos, false, err
 	}
+	editors, err := c.editorsOf(ctx, rows)
+	if err != nil {
+		return pos, false, err
+	}
 	for idx := range rows {
 		row := &rows[idx]
 		pos = advance(pos, row.modified(), row.id())
 		c.budget--
 		if target.payment != "" {
-			if err = c.payment(ctx, target, row); err != nil {
+			if err = c.payment(ctx, target, row, editors[row.id()]); err != nil {
 				return pos, false, err
 			}
 			continue
@@ -363,15 +369,30 @@ func (c *changeCollector) readTransactions(
 			ExternalID:  row.id(),
 			Operation:   operation,
 			ModifiedAt:  unixOrZero(row.modified()),
+			ModifiedBy:  editors[row.id()],
 		})
 	}
 	return pos, page.HasMore && len(rows) > 0, nil
+}
+
+func (c *changeCollector) editorsOf(
+	ctx context.Context,
+	rows []transactionRow,
+) (map[string]string, error) {
+	ids := make([]int64, 0, len(rows))
+	for idx := range rows {
+		if id, ok := parseInternalID(rows[idx].id()); ok {
+			ids = append(ids, id)
+		}
+	}
+	return c.editors.names(ctx, ids)
 }
 
 func (c *changeCollector) payment(
 	ctx context.Context,
 	target *targetInfo,
 	row *transactionRow,
+	modifiedBy string,
 ) error {
 	var record transactionRecord
 	err := c.session.client.Get(ctx, netsuite.RecordRead{
@@ -385,7 +406,9 @@ func (c *changeCollector) payment(
 		}
 		return err
 	}
-	c.page.Payments = append(c.page.Payments, inboundPaymentOf(target.payment, row, &record))
+	payment := inboundPaymentOf(target.payment, row, &record)
+	payment.ModifiedBy = modifiedBy
+	c.page.Payments = append(c.page.Payments, payment)
 	return nil
 }
 
@@ -528,6 +551,7 @@ func (c *changeCollector) readDeleted(
 	}, &rows)
 	if err != nil {
 		if netsuite.IsUnsupportedTable(err) || isPermissionFault(err) {
+			c.page.DeletesUnread = true
 			return pos, false, nil
 		}
 		return pos, false, err

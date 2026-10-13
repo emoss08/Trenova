@@ -242,6 +242,40 @@ func TestVoidPaymentWhoseDeleteIsRefusedForThePeriodAsksForAReversal(t *testing.
 	assert.Equal(t, reversePayment, classified.Resolution)
 }
 
+func TestVoidPaymentOffsetsAShortPayCreditMemoInAClosedPeriod(t *testing.T) {
+	t.Parallel()
+
+	offsetID := testVoidRequest + "-1320"
+	fake := &fakeNS{respond: func(call nsCall) reply {
+		switch {
+		case call.queries("LEFT JOIN accountingperiod ap"):
+			if len(call.Params) == 1 && call.Params[0] == float64(1320) {
+				return reply{status: http.StatusOK, body: rowsJSON(t, false, stateRow("1320",
+					map[string]any{"type": "CustCred", "arlocked": "T"}))}
+			}
+			return reply{status: http.StatusOK, body: rowsJSON(t, false, stateRow(testPayment,
+				map[string]any{"type": "CustPymt"}))}
+		case call.is(http.MethodGet, recordPath(recordCustomerPayment, testPayment)):
+			return fixtureReply(t, http.StatusOK, "customer_payment.json")
+		case call.is(http.MethodGet, recordPath(recordCreditMemo, "1320")):
+			return fixtureReply(t, http.StatusOK, "credit_memo.json")
+		case call.is(http.MethodPut, eidPath(recordInvoice, offsetID)):
+			return upserted(recordInvoice, "1211")
+		}
+		return reply{}
+	}}
+	conn := testConnector(t, fake)
+	ref := voidRef(accountingsync.SyncObjectCustomerPayment, testPayment)
+	ref.Refs[accountingsync.ExternalRefShortPayPrefix+testInvoice] = "1320"
+	result, err := conn.VoidPayment(t.Context(), ref)
+	require.NoError(t, err)
+	assert.Equal(t, "1211", result.Refs[refCorrective+"-"+testInvoice])
+	writes := methods(fake.writes())
+	assert.Contains(t, writes, "DELETE "+recordPath(recordCustomerPayment, testPayment))
+	assert.Contains(t, writes, "PUT "+eidPath(recordInvoice, offsetID))
+	assert.NotContains(t, writes, "DELETE "+recordPath(recordCreditMemo, "1320"))
+}
+
 func TestCreateCreditApplicationPatchesTheCreditMemoApplyList(t *testing.T) {
 	t.Parallel()
 
