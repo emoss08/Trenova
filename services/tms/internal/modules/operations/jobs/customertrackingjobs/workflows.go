@@ -65,7 +65,7 @@ func EvaluateCustomerStatusWorkflow(
 		drainSignals(signals)
 
 		var evaluated EvaluateResult
-		if err := workflow.ExecuteActivity(actx, a.EvaluateShipmentActivity, payload).
+		if err := workflow.ExecuteActivity(actx, a.EvaluateCustomerStatusActivity, payload).
 			Get(actx, &evaluated); err != nil {
 			return result, err
 		}
@@ -106,7 +106,7 @@ func CustomerStatusSweepWorkflow(ctx workflow.Context) (*SweepResult, error) {
 	tenantCtx := workflow.WithActivityOptions(ctx, sweepTenantOptions)
 
 	var tenants []TenantRef
-	if err := workflow.ExecuteActivity(listCtx, a.ListSweepTenantsActivity).
+	if err := workflow.ExecuteActivity(listCtx, a.ListCustomerStatusSweepTenantsActivity).
 		Get(listCtx, &tenants); err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func CustomerStatusSweepWorkflow(ctx workflow.Context) (*SweepResult, error) {
 	result := &SweepResult{}
 	for i := range tenants {
 		var swept EvaluateResult
-		err := workflow.ExecuteActivity(tenantCtx, a.SweepTenantActivity, &tenants[i]).
+		err := workflow.ExecuteActivity(tenantCtx, a.SweepCustomerStatusTenantActivity, &tenants[i]).
 			Get(tenantCtx, &swept)
 		if err != nil {
 			workflow.GetLogger(ctx).Error("customer status sweep failed for organization",
@@ -136,7 +136,7 @@ func CustomerTrackingLinkPurgeWorkflow(ctx workflow.Context) (int, error) {
 	var a *Activities
 	actx := workflow.WithActivityOptions(ctx, listOptions)
 	var purged int
-	if err := workflow.ExecuteActivity(actx, a.PurgeDeadLinksActivity).
+	if err := workflow.ExecuteActivity(actx, a.PurgeDeadCustomerTrackingLinksActivity).
 		Get(actx, &purged); err != nil {
 		return 0, err
 	}

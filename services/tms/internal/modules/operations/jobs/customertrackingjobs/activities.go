@@ -68,7 +68,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 	}
 }
 
-func (a *Activities) EvaluateShipmentActivity(
+func (a *Activities) EvaluateCustomerStatusActivity(
 	ctx context.Context,
 	payload *customertrackingcontract.EvaluatePayload,
 ) (*EvaluateResult, error) {
@@ -87,7 +87,9 @@ func (a *Activities) EvaluateShipmentActivity(
 	return result, nil
 }
 
-func (a *Activities) ListSweepTenantsActivity(ctx context.Context) ([]TenantRef, error) {
+func (a *Activities) ListCustomerStatusSweepTenantsActivity(
+	ctx context.Context,
+) ([]TenantRef, error) {
 	tenants, err := a.notifier.ListSweepTenants(ctx)
 	if err != nil {
 		return nil, err
@@ -99,7 +101,7 @@ func (a *Activities) ListSweepTenantsActivity(ctx context.Context) ([]TenantRef,
 	return refs, nil
 }
 
-func (a *Activities) SweepTenantActivity(
+func (a *Activities) SweepCustomerStatusTenantActivity(
 	ctx context.Context,
 	ref *TenantRef,
 ) (*EvaluateResult, error) {
@@ -121,7 +123,7 @@ func (a *Activities) SweepTenantActivity(
 	return result, nil
 }
 
-func (a *Activities) PurgeDeadLinksActivity(ctx context.Context) (int, error) {
+func (a *Activities) PurgeDeadCustomerTrackingLinksActivity(ctx context.Context) (int, error) {
 	return a.notifier.PurgeDeadLinks(ctx)
 }
 
