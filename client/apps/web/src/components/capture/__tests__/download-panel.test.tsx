@@ -47,12 +47,16 @@ describe("CaptureDownloadPanel", () => {
     );
   });
 
-  it("shows the not-published note only when the server answers with no release", async () => {
+  it("points at the GitHub releases, with the not-published note, when the server mirrors none", async () => {
     stubGraphQL({ CaptureAgentRelease: () => json({ data: { captureAgentRelease: null } }) });
 
     renderWithClient(<CaptureDownloadPanel whenMissing={MISSING} />);
 
     expect(await screen.findByText("No installer is published")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Get it from GitHub/ })).toHaveAttribute(
+      "href",
+      expect.stringContaining("github.com/emoss08/Trenova/releases"),
+    );
     expect(screen.queryByText("The Trenova Capture download could not be loaded.")).toBeNull();
   });
 

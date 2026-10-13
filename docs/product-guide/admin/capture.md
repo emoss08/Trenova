@@ -29,9 +29,9 @@ Keywords: scanner settings, DPI, color scanning, duplex, split stack
 ### Roll out Trenova Capture to computers
 Keywords: install Trenova Capture, download installer, deploy MSI, silent install, Intune, group policy
 1. Open [Scanning and printing](/admin/capture) and select **Computers**.
-2. Select **Download Trenova Capture** to get the current installer. The panel shows its version, size and SHA-256, so a deployment tool can check the file it got.
-3. Install it on each computer with administrator rights, or deploy it silently: `msiexec /i TrenovaCapture.msi /qn TRENOVAURL=https://your-trenova-server AUTOUPDATE=0` presets the server address and leaves updates to your deployment tool; without `AUTOUPDATE=0`, computers update themselves to each release.
-4. Each person then signs in from the Trenova Capture icon in the notification area and approves their computer on [My scanners](/capture/devices).
+2. Select **Download Trenova Capture** to get the current installer. The panel shows its version, size and SHA-256, so a deployment tool can check the file it got. A server that does not mirror releases shows **Get it from GitHub** instead, which opens the same installers on GitHub.
+3. Install it on each computer with administrator rights, or deploy it silently: `msiexec /i TrenovaCapture.msi /qn TRENOVAURL=https://your-trenova-server AUTOUPDATE=0` presets the server address (the one people open Trenova at; Trenova Capture finds the API from it) and leaves updates to your deployment tool; without `AUTOUPDATE=0`, computers update themselves to each release.
+4. Each person then signs in from the Trenova Capture icon in the notification area and approves their computer on [My scanners](/capture/devices). Without a preset address, the first run offers Trenova Cloud or a self-hosted address.
 
 ### Stop a computer from scanning
 Keywords: revoke scanner, lost laptop, employee left, remove device

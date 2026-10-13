@@ -15,10 +15,11 @@ Pairing happens on the pairing page, where you approve the code Trenova Capture 
 ## Tasks
 
 ### Pair a computer
-Keywords: set up scanner, connect Trenova Capture, sign in the companion, approve code
-1. On the computer your scanner is plugged into, open [My scanners](/capture/devices), select **Download Trenova Capture** and run the installer (it needs administrator rights). Then open Trenova Capture from the Start menu, or select its icon in the notification area, and choose Sign in. It shows an eight-letter code and opens the pairing page.
-2. If the page did not open, open [My scanners](/capture/devices), select **Enter a pairing code**, type the code and select **Look up**.
-3. Check that **The computer asking** is the one in front of you, change **Name it** if you like, and select **Approve**.
+Keywords: set up scanner, connect Trenova Capture, sign in the companion, approve code, Trenova Cloud, server address
+1. On the computer your scanner is plugged into, open [My scanners](/capture/devices), select **Download Trenova Capture** (or **Get it from GitHub**) and run the installer (it needs administrator rights). Then open Trenova Capture from the Start menu, or select its icon in the notification area.
+2. On its first run, choose Trenova Cloud, or choose Self-hosted Trenova and enter the address you open Trenova at in your browser. Trenova Capture finds the server, then choose Sign in. It shows an eight-letter code and opens the pairing page.
+3. If the page did not open, open [My scanners](/capture/devices), select **Enter a pairing code**, type the code and select **Look up**.
+4. Check that **The computer asking** is the one in front of you and that **Joins** names the organization you want it to scan into (switch organizations first if not), change **Name it** if you like, and select **Approve**.
 
 ### Scan without opening Trenova
 Keywords: scan to intake, tray menu, scan from the computer, quick scan, stop a scan
@@ -49,4 +50,4 @@ Keywords: lost laptop, remove scanner, unpair, revoke device
 2. Select **Revoke** beside the computer, optionally say why, and select **Revoke** again. It stops at once; pages it already sent stay in [Intake](/intake).
 
 ## Notes
-Pages wait on the computer, encrypted, until Trenova has them, so scanning works while the network is down and nothing is lost if the computer restarts; the Trenova Capture window shows what is waiting and why. A notification you missed is kept under Messages in the window. Choosing Sign out from the icon revokes the computer, as **Revoke** does here. Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. The Trenova printer is added when Trenova Capture is installed, and only the person who printed a document can send it: another person signed in to the same computer never sees it. Only approve a computer you are using: once paired it uploads documents as you.
+A paired computer scans into the organization you approved it from; to scan into another of your organizations, sign out of Trenova Capture and sign in again from that one. Pages wait on the computer, encrypted, until Trenova has them, so scanning works while the network is down and nothing is lost if the computer restarts; the Trenova Capture window shows what is waiting and why. A notification you missed is kept under Messages in the window. Choosing Sign out from the icon revokes the computer, as **Revoke** does here. Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. The Trenova printer is added when Trenova Capture is installed, and only the person who printed a document can send it: another person signed in to the same computer never sees it. Only approve a computer you are using: once paired it uploads documents as you.

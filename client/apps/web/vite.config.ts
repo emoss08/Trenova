@@ -9,6 +9,7 @@ import { compression } from "vite-plugin-compression2";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import { editionAlias } from "../../packages/edition/node/resolve-entry.ts";
 import { singletonPackages } from "../../singleton-packages.ts";
+import { captureDiscovery } from "./vite/capture-discovery.ts";
 import { routeCatalogs } from "./vite/route-catalogs.ts";
 
 const require = createRequire(import.meta.url);
@@ -32,6 +33,7 @@ export default defineConfig({
   },
   plugins: [
     routeCatalogs({ srcDir: path.resolve(dirname, "src") }),
+    captureDiscovery(),
     react(),
     // Every component is compiled. Files built on TanStack Virtual, whose virtualizer
     // changes in place, start with "use no memo", as does any page found showing stale
