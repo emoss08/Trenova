@@ -17423,7 +17423,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "formula_template",

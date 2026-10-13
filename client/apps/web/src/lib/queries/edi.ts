@@ -79,11 +79,13 @@ export const edi = createQueryKeys("edi", {
   }),
   message: (messageId: string) => ({
     queryKey: ["message", messageId],
-    queryFn: async () => apiService.ediService.getMessage(messageId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.ediService.getMessage(messageId, { signal }),
   }),
   messageInspection: (messageId: string) => ({
     queryKey: ["message-inspection", messageId],
-    queryFn: async () => apiService.ediService.inspectMessage(messageId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.ediService.inspectMessage(messageId, { signal }),
   }),
   testCases: (query = "") => ({
     queryKey: ["test-cases", query],

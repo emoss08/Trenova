@@ -300,6 +300,9 @@ in a 1000px window. It writes to `e2e/mock-api/screenshots/desk-cards` by defaul
 are in `fixtures/desk-cards.mjs`: each card has a conversation for the record loaded, one with
 something to flag, one with nothing on file and one that is gone. A new card adds its records
 there, its operations to `handlers/deskcards.mjs`, and an entry to `CARDS` in the walkthrough.
+A card read over REST answers its routes from the same handler; the EDI message card's X12,
+built segment by segment with its inspection, is in `fixtures/desk-edi.mjs`, and a REST
+fixture holds its skeleton with `{ __hold: true }` as a GraphQL one does.
 
 A Desk case and a reply under way have their own walkthrough:
 
@@ -369,6 +372,7 @@ fixtures/board.mjs    Shipments, drivers and carriers ported from the design pro
 fixtures/session.mjs  Signed-in user and permission manifest
 fixtures/aicontrol.mjs  Agents, providers, runs, usage and tune-ups for AI control
 fixtures/desk-cards.mjs  The records the Desk's resource cards draw, and their conversations
+fixtures/desk-edi.mjs    The EDI messages the EDI message card draws: X12, inspections, conversations
 fixtures/settings.mjs   The signed-in person's settings, sessions, sign-ins and teammates
 fixtures/palette.mjs  The command palette's customers, workers, shipments, documents and pins
 fixtures/triage.mjs   Triage's sources, messages, rules, templates and team, from the prototype

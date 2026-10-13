@@ -46,7 +46,12 @@ var families = [...][]string{
 	{"list_edi_transfers", "get_edi_transfer", "accept_edi_tender", "decline_edi_tender"},
 	{"list_edi_tender_changes", "review_edi_tender_change"},
 	{"list_edi_transfer_changes", "review_edi_transfer_change"},
-	{"list_edi_messages", "retry_edi_message_delivery", "replay_edi_message"},
+	{
+		"list_edi_messages",
+		"get_edi_message",
+		"retry_edi_message_delivery",
+		"replay_edi_message",
+	},
 	{"list_rate_agreements", "get_rate_agreement", "explain_rate"},
 	{"describe_formula_schema", "test_formula_expression", "propose_formula"},
 	{"accept_field", "accept_all_confident", "set_field_value"},

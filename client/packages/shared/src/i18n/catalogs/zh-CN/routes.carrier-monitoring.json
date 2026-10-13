@@ -46,7 +46,6 @@
   "No provider is connected, so nothing new is being detected.": "未连接任何提供商，因此无法检测到新的变更。",
   "None of these rows are carriers": "这些数据行中没有一行是承运商",
   "Nothing awaiting review": "没有等待审查的项目",
-  "Nothing to acknowledge": "没有需要确认的项目",
   "Only open events can be acknowledged.": "仅未结事件可标记为已确认。",
   "Paused feeds poll again on their next scheduled run.": "已暂停的数据源会在下次计划运行时重新轮询。",
   "Paused since {0}": "自 {0} 起暂停",

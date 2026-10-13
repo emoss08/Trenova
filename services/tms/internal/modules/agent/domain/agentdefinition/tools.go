@@ -482,6 +482,7 @@ func (t Template) StarterTools() []string {
 		return []string{
 			"list_edi_inbound_files",
 			"get_edi_inbound_file",
+			"get_edi_message",
 			"list_edi_transfers",
 			"get_edi_partner",
 			"list_edi_partners",

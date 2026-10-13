@@ -81,7 +81,7 @@ is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure).
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message).
 Before taking a prefix or a modifier class, search every stylesheet the Desk loads, the
 Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
 failures, and the status pill's warn tone once shared `dk-hold` with the hold-to-confirm
@@ -104,14 +104,15 @@ ask what the record looks like to the person who reads it, and draw that:
 | Location | amenity chips under the map, a dwell ruler with median, average and p90 pins and the share that ran past free time, an address card, terms as tickets |
 | Carrier | a verdict banner for whether it can be tendered, insurance as coverage tiles, authority as pills over the CSA BASICs as columns against their thresholds, contacts with initials |
 | Service failure | its clock along one track, each stretch as wide as it ran (before the cutoff, in grace, late) with its moments beneath, the 214's codes as tiles |
+| EDI message | its transaction set as a stamp, its way as a relay edge to edge (generated, delivered, acknowledged; or received, read, tendered) with the envelope resting at the furthest stop and, where it stopped, a slip pointing at that stop with why, the attempt and the words sent back, what it says read in plain words over a stub of its fields, the ISA/GS/ST envelope nested with each trailer's check, the X12 as a tape with every finding pinned to its segment and element |
 
 Tone is carried by the part's own fill, icon or text, never by an accent bar down or across
 its edge. A part only one card draws stays in that card's folder; it moves to `record-card/` when a
 second card needs it. The shared parts take a shape where cards differ:
 `CardShipments` takes a `layout` (`rows`, `table`, `board` with the pickup time first, or
 `route` numbered down a line) and `CardShipmentsSkeleton` the same one; `CardHead` takes a
-`lead` (a `CardAvatar` of a person's initials before their name, `CardHeadSkeleton`'s
-`lead` in the outline); `CardActivity` takes `showChanges` to read the first changed fields
+`lead` (a `CardAvatar` of a person's initials before their name, the EDI message's
+stamp; `CardHeadSkeleton`'s `lead` is `true` for the avatar's outline or the node to draw); `CardActivity` takes `showChanges` to read the first changed fields
 of an update from what to what (`activityChanges` in `record-activity.ts`, which reads an
 enum value as words and never shows a redacted one). Every new part has its outline in the
 card's skeleton, drawn on the part's own classes.

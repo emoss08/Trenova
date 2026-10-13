@@ -333,6 +333,27 @@ func TestEntityCardArtifact_NeverTitlesARecordByItsID(t *testing.T) {
 	assert.Equal(t, "Bank receipt", artifact.Title)
 }
 
+func TestEntityCardArtifact_DrawsAnEDIMessageByItsDocumentAndPartner(t *testing.T) {
+	t.Parallel()
+
+	id := "edimsg_01M37R101VKZTB7TSKR30FJ0AT"
+	artifact := artifactFromObservation(observation("get_edi_message", map[string]any{
+		"id":             id,
+		"transactionSet": "210",
+		"direction":      "Outbound",
+		"status":         "Generated",
+		"partner":        "Acme Foods",
+		"deliveryStatus": "DeadLettered",
+		"title":          "210 to Acme Foods",
+	}))
+	require.NotNil(t, artifact)
+	assert.Equal(t, assistantartifact.KindEntityCard, artifact.Kind)
+	assert.Equal(t, "EDI message 210 to Acme Foods", artifact.Title)
+	assert.Equal(t, "edi_message", artifact.Payload[payloadEntity])
+	assert.Equal(t, id, artifact.Payload[payloadRecordID])
+	assert.Contains(t, artifact.Payload["path"], id, "the id is how the card opens")
+}
+
 func TestRecordEntityOf_FindsTheRegistrysName(t *testing.T) {
 	t.Parallel()
 

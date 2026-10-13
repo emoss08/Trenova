@@ -5816,6 +5816,9 @@ th.dk-cb .dk-ax-cb:hover {
 .dk-ax-ki.dk-k-failure {
   color: var(--warning);
 }
+.dk-ax-ki.dk-k-edi {
+  color: var(--accent-violet);
+}
 /* The shipment card */
 .dk-sh-nowsec {
   padding: 16px 16px 4px;
@@ -8250,11 +8253,7 @@ a.dk-wk-way:focus-visible {
   background: var(--dsk-b-strong);
 }
 .dk-svf-gap.dk-grace > i {
-  background: repeating-linear-gradient(
-    -45deg,
-    var(--dsk-warn) 0 3px,
-    var(--dsk-warn-sub) 3px 6px
-  );
+  background: repeating-linear-gradient(-45deg, var(--dsk-warn) 0 3px, var(--dsk-warn-sub) 3px 6px);
 }
 .dk-svf-gap.dk-late > i {
   background: var(--danger);
@@ -9423,6 +9422,778 @@ button.dk-ra-tpl:hover {
 @media (prefers-reduced-motion: reduce) {
   .dk-ra-done,
   .dk-ra-lane {
+    animation: none;
+  }
+}
+/* The EDI message card */
+.dk-edi {
+  --dk-edi-gap: 16px;
+  --dk-edi-node: 28px;
+  container: dkedi / inline-size;
+}
+/* the message's stamp: its transaction set, franked with the way it travels */
+.dk-edi-stamp {
+  position: relative;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  align-self: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 6px;
+  outline: 1.5px dashed var(--dsk-b-strong);
+  outline-offset: -4px;
+  color: var(--dsk-fg);
+  background: var(--dsk-sunken);
+}
+.dk-edi-stamp b {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.dk-edi-stamp svg {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
+  padding: 1px;
+  border-radius: 999px;
+  background: var(--dsk-card);
+  color: var(--accent-violet);
+}
+.dk-rec-hrow > .dk-edi-stamp + .dk-rec-who {
+  flex: 1;
+}
+/* the way the message travels, edge to edge: the first stop on the start edge, the last on the
+   end edge, any between them centred in its column, a wire from each node to the next */
+.dk-edi-way {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0 var(--dk-edi-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-edi-stop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  padding-top: calc(var(--dk-edi-node) + 8px);
+}
+.dk-edi-stop:not(:first-child):not(:last-child) {
+  align-items: center;
+  text-align: center;
+}
+.dk-edi-stop:last-child:not(:first-child) {
+  align-items: flex-end;
+  text-align: right;
+}
+.dk-edi-stop::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--dk-edi-node) / 2 - 1px);
+  left: calc(var(--dk-edi-node) + 4px);
+  right: calc(var(--dk-edi-node) / 2 + 4px - 50% - var(--dk-edi-gap));
+  border-top: 2px dashed var(--dsk-b);
+}
+.dk-edi-stop:not(:first-child)::before {
+  left: calc(50% + var(--dk-edi-node) / 2 + 4px);
+}
+.dk-edi-stop:nth-last-child(2)::before {
+  right: calc(var(--dk-edi-node) + 4px - 100% - var(--dk-edi-gap));
+}
+.dk-edi-stop:last-child::before {
+  display: none;
+}
+.dk-edi-stop.dk-travelled:has(+ .dk-edi-stop.dk-travelled)::before {
+  border-top-style: solid;
+  border-top-color: var(--dsk-fg2);
+}
+.dk-edi-node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: var(--dk-edi-node);
+  height: var(--dk-edi-node);
+  border-radius: 999px;
+  border: 1.5px solid var(--dsk-b-strong);
+  color: var(--dsk-subtle);
+  background: var(--dsk-card);
+}
+.dk-edi-stop:not(:first-child):not(:last-child) .dk-edi-node {
+  left: 50%;
+  translate: -50% 0;
+}
+.dk-edi-stop:last-child:not(:first-child) .dk-edi-node {
+  left: auto;
+  right: 0;
+}
+.dk-edi-stop.dk-done .dk-edi-node {
+  border-color: var(--dsk-fg2);
+  color: var(--dsk-fg2);
+}
+.dk-edi-stop.dk-skipped .dk-edi-node {
+  border-style: dashed;
+  border-color: var(--dsk-b);
+}
+.dk-edi-stop.dk-failed .dk-edi-node {
+  border-color: var(--danger);
+  color: var(--dsk-on-solid);
+  background: var(--danger);
+}
+.dk-edi-stop.dk-here:not(.dk-failed) .dk-edi-node {
+  border-color: var(--dsk-ink);
+  color: var(--dsk-ink-fg);
+  background: var(--dsk-ink);
+  animation: dk-edi-arrive 420ms var(--dk-settle) both;
+}
+@keyframes dk-edi-arrive {
+  from {
+    transform: translateX(-14px);
+    opacity: 0;
+  }
+}
+.dk-edi-stop > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edi-stop > span {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+  overflow-wrap: anywhere;
+}
+.dk-edi-stop > time {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 11px;
+  color: var(--dsk-faint);
+}
+.dk-edi-stop.dk-failed > b,
+.dk-edi-stop.dk-failed > span {
+  color: var(--danger);
+}
+.dk-edi-stop.dk-skipped > b,
+.dk-edi-stop.dk-skipped > span {
+  color: var(--dsk-faint);
+}
+/* why the way stopped: a slip pinned under the stop it stopped at, the words sent back kept as sent */
+.dk-edi-halt {
+  --dk-edi-halt-b: color-mix(in oklch, var(--danger) 32%, var(--dsk-b-sub));
+  --dk-edi-halt-bg: color-mix(in oklch, var(--danger) 5%, var(--dsk-card));
+  position: relative;
+  margin: 16px 0 0;
+  border: 1px solid var(--dk-edi-halt-b);
+  border-radius: 8px;
+  background: var(--dk-edi-halt-bg);
+}
+.dk-edi-halt.dk-pointed::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: calc((100% + var(--dk-edi-gap)) * var(--dk-edi-at, 0) - var(--dk-edi-gap) / 2 - 5px);
+  width: 10px;
+  height: 10px;
+  border-top: 1px solid var(--dk-edi-halt-b);
+  border-left: 1px solid var(--dk-edi-halt-b);
+  border-top-left-radius: 2px;
+  background: var(--dk-edi-halt-bg);
+  rotate: 45deg;
+}
+.dk-edi-halt.dk-pointed[data-edge="start"]::before {
+  left: calc(var(--dk-edi-node) / 2 - 5px);
+}
+.dk-edi-halt.dk-pointed[data-edge="end"]::before {
+  left: auto;
+  right: calc(var(--dk-edi-node) / 2 - 5px);
+}
+.dk-edi-halt-h {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 0;
+  padding: 9px 12px 0;
+  font-size: 12px;
+  color: var(--danger);
+}
+.dk-edi-halt-h > svg {
+  flex: none;
+}
+.dk-edi-halt-h > b {
+  font-weight: 500;
+}
+.dk-edi-halt-h > span {
+  margin-left: auto;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-halt-t {
+  margin: 0;
+  padding: 6px 12px 10px 32px;
+  font-family: var(--dk-plex);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--dsk-fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* what the message says, decoded: the headline, then the stub its facts are written on */
+.dk-edi-read {
+  --dk-edi-tone: var(--dsk-subtle);
+  --dk-edi-tone-sub: var(--dsk-sunken);
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-card);
+  overflow: hidden;
+}
+.dk-edi-read.dk-ok {
+  --dk-edi-tone: var(--dsk-success-fg);
+  --dk-edi-tone-sub: var(--dsk-success-sub);
+}
+.dk-edi-read.dk-warn {
+  --dk-edi-tone: var(--dsk-warn-fg);
+  --dk-edi-tone-sub: var(--dsk-warn-sub);
+}
+.dk-edi-read.dk-bad {
+  --dk-edi-tone: var(--danger);
+  --dk-edi-tone-sub: color-mix(in oklch, var(--danger) 10%, var(--dsk-card));
+}
+.dk-edi-read-h {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+.dk-edi-read-i {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: var(--dk-edi-tone);
+  background: var(--dk-edi-tone-sub);
+}
+.dk-edi-read-t {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-edi-read-t > b {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--dsk-fg);
+}
+.dk-edi-read-t > span {
+  font-size: 12.5px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-read-fig {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--dsk-fg);
+}
+.dk-edi-stops,
+.dk-edi-lines,
+.dk-edi-faults {
+  margin: 0;
+  padding: 0 16px 12px 56px;
+  list-style: none;
+}
+.dk-edi-stops > li {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  padding: 4px 0;
+}
+.dk-edi-stops > li > i {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 4px;
+  border-radius: 999px;
+  border: 1.5px solid var(--dsk-fg2);
+  background: var(--dsk-card);
+}
+.dk-edi-stops > li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 17px;
+  bottom: -6px;
+  left: 4px;
+  border-left: 1px dotted var(--dsk-b-strong);
+}
+.dk-edi-stops > li > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.dk-edi-stops b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edi-stops b + span {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-lines > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12.5px;
+}
+.dk-edi-lines > div::after {
+  content: "";
+  order: 1;
+  flex: 1;
+  border-bottom: 1px dotted var(--dsk-b-strong);
+}
+.dk-edi-lines dt {
+  color: var(--dsk-fg2);
+}
+.dk-edi-lines dd {
+  order: 2;
+  margin: 0;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-edi-faults > li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-edi-faults code {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-family: var(--dk-plex);
+  font-size: 11px;
+  color: var(--danger);
+  background: color-mix(in oklch, var(--danger) 10%, var(--dsk-card));
+}
+.dk-edi-pass {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0 16px;
+  margin: 0;
+  padding: 10px 16px 12px;
+  border-top: 1px dashed var(--dsk-b);
+  background: var(--dsk-sunken);
+}
+.dk-edi-pass > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+  min-width: 0;
+}
+.dk-edi-pass dt {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-pass dd {
+  margin: 0;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-edi-read-sk .dk-edi-read-i {
+  display: block;
+}
+/* the X12 envelope as envelopes inside one another: interchange, group, transaction set */
+.dk-edi-nest {
+  padding: 10px 12px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-card);
+}
+.dk-edi-nest .dk-edi-nest {
+  margin-top: 10px;
+}
+.dk-edi-nest.dk-edi-gs {
+  background: var(--dsk-sunken);
+}
+.dk-edi-nest.dk-edi-st {
+  border-style: dashed;
+  border-color: var(--dsk-b-strong);
+  background: var(--dsk-card);
+}
+.dk-edi-flap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.dk-edi-pair {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-family: var(--dk-plex);
+  font-size: 10.5px;
+  white-space: nowrap;
+  color: var(--dsk-subtle);
+  background: var(--dsk-sunken);
+}
+.dk-edi-nest.dk-edi-gs > .dk-edi-flap .dk-edi-pair {
+  background: var(--dsk-card);
+}
+.dk-edi-flap > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edi-flap > code {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--dsk-fg);
+}
+.dk-edi-flap-d {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.dk-edi-close.dk-ok {
+  color: var(--dsk-success-fg);
+}
+.dk-edi-close.dk-bad {
+  color: var(--danger);
+}
+.dk-edi-path {
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--dk-plex);
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+/* the X12 itself as a tape of segments, every element apart, every finding pinned to its segment */
+.dk-edi-aside {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+.dk-edi-aside .dk-bad {
+  color: var(--danger);
+}
+.dk-edi-paper {
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-sunken);
+  overflow: hidden;
+}
+.dk-edi-tape {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+.dk-edi-seg {
+  display: flex;
+  flex-direction: column;
+}
+.dk-edi-line {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 10px;
+  padding: 1px 12px 1px 0;
+}
+.dk-edi-n {
+  justify-self: end;
+  min-width: 20px;
+  padding: 0 5px;
+  text-align: right;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 10.5px;
+  line-height: 20px;
+  user-select: none;
+  color: var(--dsk-faint);
+}
+.dk-edi-line > code {
+  font-family: var(--dk-plex);
+  font-size: 12px;
+  line-height: 20px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg2);
+}
+.dk-edi-line > code b {
+  font-weight: 600;
+  color: var(--dsk-fg);
+}
+.dk-edi-line > code i {
+  padding: 0 1px;
+  font-style: normal;
+  color: var(--dsk-faint);
+}
+.dk-edi-seg.dk-envelope > .dk-edi-line > code,
+.dk-edi-seg.dk-envelope > .dk-edi-line > code b {
+  color: var(--dsk-subtle);
+}
+.dk-edi-seg.dk-envelope > .dk-edi-line > code b {
+  font-weight: 500;
+}
+.dk-edi-seg .dk-flag {
+  text-decoration: underline wavy var(--danger);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+.dk-edi-seg.dk-warn .dk-flag {
+  text-decoration-color: var(--dsk-warn);
+}
+.dk-edi-seg.dk-bad > .dk-edi-line {
+  background: color-mix(in oklch, var(--danger) 7%, transparent);
+}
+.dk-edi-seg.dk-warn > .dk-edi-line {
+  background: color-mix(in oklch, var(--dsk-warn) 9%, transparent);
+}
+/* a flagged line's number is a badge: a circle around one digit, a pill around more, the
+   digits centred in it */
+.dk-edi-seg.dk-bad .dk-edi-n,
+.dk-edi-seg.dk-warn .dk-edi-n {
+  display: inline-grid;
+  place-items: center;
+  height: 18px;
+  margin-top: 1px;
+  padding: 0 4px;
+  border-radius: 999px;
+  min-width: 18px;
+  line-height: 1;
+  text-align: center;
+  font-weight: 500;
+}
+.dk-edi-seg.dk-bad .dk-edi-n {
+  color: var(--dsk-on-solid);
+  background: var(--danger);
+}
+.dk-edi-seg.dk-warn .dk-edi-n {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-edi-seg.dk-malformed > .dk-edi-line > code {
+  text-decoration: line-through;
+  text-decoration-color: var(--danger);
+}
+/* what was said of a segment, under it: the finding, where it is and its code, then the fix */
+.dk-edi-mark {
+  --dk-edi-mark-tone: var(--dsk-subtle);
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  column-gap: 10px;
+  margin: 6px 12px 10px 44px;
+  padding: 9px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  background: var(--dsk-card);
+}
+.dk-edi-mark.dk-bad {
+  --dk-edi-mark-tone: var(--danger);
+  border-color: color-mix(in oklch, var(--danger) 28%, var(--dsk-b-sub));
+}
+.dk-edi-mark.dk-warn {
+  --dk-edi-mark-tone: var(--dsk-warn-fg);
+  border-color: color-mix(in oklch, var(--dsk-warn) 60%, var(--dsk-b-sub));
+}
+.dk-edi-mark-i {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  color: var(--dk-edi-mark-tone);
+  background: color-mix(in oklch, var(--dk-edi-mark-tone) 12%, transparent);
+}
+.dk-edi-mark-b {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.dk-edi-mark-b > b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edi-mark-at {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-mark-el {
+  padding: 0 7px;
+  border-radius: 999px;
+  line-height: 18px;
+  color: var(--dk-edi-mark-tone);
+  background: color-mix(in oklch, var(--dk-edi-mark-tone) 10%, transparent);
+}
+.dk-edi-mark-at > code {
+  font-family: var(--dk-plex);
+  font-size: 11px;
+  color: var(--dsk-faint);
+}
+.dk-edi-mark-fix {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--dsk-b);
+  color: var(--dsk-fg2);
+}
+.dk-edi-mark-fix > svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-loose > .dk-edi-mark {
+  margin: 0;
+}
+.dk-edi-loose {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px 2px 44px;
+}
+.dk-edi-fold {
+  align-self: flex-start;
+  margin: 3px 0 3px 44px;
+  padding: 1px 10px;
+  border: 1px dashed var(--dsk-b-strong);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-fold:hover {
+  color: var(--dsk-fg);
+  background: var(--dsk-hover);
+}
+.dk-edi-unfold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px;
+  border-top: 1px dashed var(--dsk-b);
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-edi-unfold:hover {
+  color: var(--dsk-fg);
+  background: var(--dsk-hover);
+}
+.dk-edi-tape-sk {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 12px 12px 0;
+}
+.dk-edi-tape-sk .dk-edi-line {
+  align-items: center;
+  padding: 0;
+}
+@container dkedi (max-width: 460px) {
+  .dk-edi-way {
+    grid-auto-flow: row;
+    gap: 10px;
+  }
+  .dk-edi-stop,
+  .dk-edi-stop:not(:first-child):not(:last-child),
+  .dk-edi-stop:last-child:not(:first-child) {
+    align-items: flex-start;
+    padding: 4px 0 0 calc(var(--dk-edi-node) + 12px);
+    text-align: left;
+  }
+  .dk-edi-stop .dk-edi-node,
+  .dk-edi-stop:not(:first-child):not(:last-child) .dk-edi-node,
+  .dk-edi-stop:last-child:not(:first-child) .dk-edi-node {
+    left: 0;
+    right: auto;
+    translate: none;
+  }
+  .dk-edi-stop::before,
+  .dk-edi-stop:not(:first-child)::before,
+  .dk-edi-stop:nth-last-child(2)::before {
+    top: calc(var(--dk-edi-node) + 4px);
+    bottom: -8px;
+    left: calc(var(--dk-edi-node) / 2 - 1px);
+    right: auto;
+    border-top: 0;
+    border-left: 2px dashed var(--dsk-b);
+  }
+  .dk-edi-halt.dk-pointed::before {
+    display: none;
+  }
+  .dk-edi-mark {
+    margin-left: 12px;
+  }
+  .dk-edi-loose {
+    padding-left: 12px;
+  }
+  .dk-edi-stop.dk-travelled:has(+ .dk-edi-stop.dk-travelled)::before {
+    border-left-style: solid;
+    border-left-color: var(--dsk-fg2);
+  }
+  .dk-edi-read-h {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+  .dk-edi-read-fig {
+    grid-column: 2;
+  }
+  .dk-edi-stops,
+  .dk-edi-lines,
+  .dk-edi-faults {
+    padding-left: 16px;
+  }
+  .dk-edi-close {
+    margin-left: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-edi-stop.dk-here:not(.dk-failed) .dk-edi-node {
     animation: none;
   }
 }
