@@ -12,6 +12,8 @@ import { PALETTE_ROUTES } from "./palette.mjs";
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
 const ROUTES = [
+  ...DESK_CASE_ROUTES,
+  ...DESK_THREAD_ROUTES,
   ...PALETTE_ROUTES,
   ...TRIAGE_ROUTES,
   ...PROVIDER_ROUTES,
