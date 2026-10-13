@@ -1,6 +1,9 @@
 package documenttemplate
 
-import "html/template"
+import (
+	"html/template"
+	"slices"
+)
 
 type CarrierTrackingLinkEmailContext struct {
 	CarrierName string
@@ -25,10 +28,10 @@ func newCarrierTrackingLinkEmailSampleContext() any {
 		CarrierName:        "Redline Freight LLC",
 		CompanyName:        sampleCompanyName,
 		ShipmentProNumber:  sampleProNumber,
-		OriginSummary:      "Dallas, TX",
-		DestinationSummary: "Memphis, TN",
-		PickupWindow:       "2026-07-18 08:00 – 12:00 CDT",
-		DeliveryWindow:     "2026-07-19 09:00 – 15:00 CDT",
+		OriginSummary:      sampleOriginSummary,
+		DestinationSummary: sampleDestinationSummary,
+		PickupWindow:       samplePickupWindow,
+		DeliveryWindow:     sampleDeliveryWindow,
 		TrackingURL: template.URL(
 			"https://app.example.com/carrier-tracking/8f2c41a9b7e34d05",
 		),
@@ -43,48 +46,33 @@ func (r *Registry) registerCarrierTrackingKinds() {
 		Description: "Sends the carrier on a brokered load the link it posts " +
 			"check calls, arrivals and departures through. Not customer-scoped: " +
 			"the recipient is a carrier.",
-		Category:      "Tracking",
+		Category:      trackingCategory,
 		Channels:      []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
 		sampleFactory: newCarrierTrackingLinkEmailSampleContext,
-		Variables: []VariableDefinition{
-			{
-				Path:        carrierNamePath,
-				Type:        VariableString,
-				Description: "The carrier hauling the load.",
+		Variables: slices.Concat(
+			[]VariableDefinition{
+				{
+					Path:        carrierNamePath,
+					Type:        VariableString,
+					Description: "The carrier hauling the load.",
+				},
+				companyNameVariable(),
+				proNumberVariable(false, "The shipment the link tracks."),
 			},
-			companyNameVariable(),
-			proNumberVariable(false, "The shipment the link tracks."),
-			{
-				Path:        "OriginSummary",
-				Type:        VariableString,
-				Description: "Where the load picks up, as city and state.",
+			routeScheduleVariables(),
+			[]VariableDefinition{
+				{
+					Path:        "TrackingURL",
+					Type:        VariableString,
+					Required:    true,
+					Description: "The carrier's tracking link. Required: without it the carrier has nowhere to post updates.",
+				},
+				{
+					Path:        expiresAtPath,
+					Type:        VariableDateTime,
+					Description: "When the link stops working.",
+				},
 			},
-			{
-				Path:        "DestinationSummary",
-				Type:        VariableString,
-				Description: "Where the load delivers, as city and state.",
-			},
-			{
-				Path:        "PickupWindow",
-				Type:        VariableString,
-				Description: "The planned pickup window.",
-			},
-			{
-				Path:        "DeliveryWindow",
-				Type:        VariableString,
-				Description: "The planned delivery window.",
-			},
-			{
-				Path:        "TrackingURL",
-				Type:        VariableString,
-				Required:    true,
-				Description: "The carrier's tracking link. Required: without it the carrier has nowhere to post updates.",
-			},
-			{
-				Path:        expiresAtPath,
-				Type:        VariableDateTime,
-				Description: "When the link stops working.",
-			},
-		},
+		),
 	})
 }
