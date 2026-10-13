@@ -1,6 +1,9 @@
 import {
   fetchWatchtowerCounts,
   fetchWatchtowerFeed,
+  fetchWatchtowerItem,
+  fetchWatchtowerItemHistory,
+  fetchWatchtowerResolutionCodes,
   type WatchtowerFilter,
 } from "@/lib/graphql/watchtower";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
@@ -15,5 +18,17 @@ export const watchtower = createQueryKeys("watchtower", {
   feed: (filter: WatchtowerFilter) => ({
     queryKey: [filter],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchWatchtowerFeed(filter, { signal }),
+  }),
+  item: (id: string) => ({
+    queryKey: [id],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchWatchtowerItem(id, { signal }),
+  }),
+  history: (id: string) => ({
+    queryKey: [id],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchWatchtowerItemHistory(id, { signal }),
+  }),
+  resolutionCodes: () => ({
+    queryKey: ["resolution-codes"],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchWatchtowerResolutionCodes({ signal }),
   }),
 });

@@ -24,6 +24,9 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { WatchtowerItemRow } from "./item-row";
 import { ALL_SEVERITIES, isUnseen, toggleFilter } from "./severity";
+import { EXCEPTION_VIEWS, exceptionViewFilter, type ExceptionView } from "./exception";
+import { ExceptionSheet } from "./exception-sheet";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 
@@ -46,9 +49,14 @@ export function WatchtowerFeed() {
   const [now] = useState(nowInSeconds);
   const [kinds, setKinds] = useState<WatchtowerSourceKind[]>([]);
   const [severities, setSeverities] = useState<WatchtowerSeverity[]>([]);
+  const [view, setView] = useState<ExceptionView>("all");
+  const [openItemId, setOpenItemId] = useState<string | null>(null);
 
   const countsQuery = useQuery(queries.watchtower.counts());
-  const filter = useMemo(() => ({ kinds, severities, unresolvedOnly: true }), [kinds, severities]);
+  const filter = useMemo(
+    () => ({ kinds, severities, unresolvedOnly: true, ...exceptionViewFilter(view) }),
+    [kinds, severities, view],
+  );
   const feedQuery = useQuery(queries.watchtower.feed(filter));
 
   const refresh = useCallback(async () => {
@@ -142,8 +150,41 @@ export function WatchtowerFeed() {
   const busy = dismissMutation.isPending || handOffMutation.isPending || askMutation.isPending;
   const canAsk = askAgent !== null;
 
+  const viewCount = (value: ExceptionView): number | undefined => {
+    switch (value) {
+      case "mine":
+        return counts?.mine;
+      case "unassigned":
+        return counts?.unassigned;
+      case "overdue":
+        return counts?.overdue;
+      default:
+        return counts?.unresolved;
+    }
+  };
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      <div className="border-desk-hairline flex flex-wrap items-center gap-3 border-b px-4 py-3">
+        <SegmentedControl<ExceptionView>
+          aria-label={t("Which exceptions to show")}
+          value={view}
+          onValueChange={setView}
+          items={EXCEPTION_VIEWS.map((value) => ({
+            value,
+            label: viewLabel(t, value),
+            caption: viewCount(value),
+          }))}
+        />
+        {counts !== undefined && counts.mineOverdue > 0 && (
+          <span className="text-danger text-xs">
+            {t(
+              "{0, plural, one {# of yours is overdue} other {# of yours are overdue}}",
+              counts.mineOverdue,
+            )}
+          </span>
+        )}
+      </div>
       <div className="border-desk-hairline flex flex-wrap items-center gap-1.5 border-b px-4 py-3">
         {ALL_SEVERITIES.map((severity) => (
           <FilterChip
@@ -203,6 +244,7 @@ export function WatchtowerFeed() {
                 onAsk={canAsk ? (value) => askMutation.mutate(value) : undefined}
                 onHandOff={(value) => handOffMutation.mutate(value)}
                 onDismiss={(value) => dismissMutation.mutate(value)}
+                onOpen={(value) => setOpenItemId(value.id)}
               />
             ))}
           </ul>
@@ -221,8 +263,30 @@ export function WatchtowerFeed() {
           </Button>
         </div>
       )}
+
+      <ExceptionSheet
+        itemId={openItemId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setOpenItemId(null);
+          }
+        }}
+      />
     </div>
   );
+}
+
+function viewLabel(t: (value: string) => string, view: ExceptionView): string {
+  switch (view) {
+    case "mine":
+      return t("Mine");
+    case "unassigned":
+      return t("Unassigned");
+    case "overdue":
+      return t("Overdue");
+    default:
+      return t("All");
+  }
 }
 
 function FilterChip({
