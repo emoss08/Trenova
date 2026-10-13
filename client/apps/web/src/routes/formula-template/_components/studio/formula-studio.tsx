@@ -129,7 +129,7 @@ function warmStudioModules(): () => void {
       import("./dialogs/submit-review-dialog"),
     ]);
   };
-  if ("requestIdleCallback" in window) {
+  if (typeof window.requestIdleCallback === "function") {
     const handle = window.requestIdleCallback(warm, { timeout: WARM_AFTER_MS * 2 });
     return () => window.cancelIdleCallback(handle);
   }

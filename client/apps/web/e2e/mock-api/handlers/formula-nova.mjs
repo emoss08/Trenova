@@ -819,6 +819,12 @@ const FEES = [
     charge: { name: "liftgateCharge", expression: "requiresLiftgate ? liftgateFee : 0" },
     line: { name: "liftgate", label: "Liftgate", expression: "requiresLiftgate ? liftgateFee : 0" },
     says: "a liftgate fee as a yes/no input lanes can set",
+    extra: {
+      name: "requiresLiftgate",
+      type: "Boolean",
+      def: false,
+      desc: "Whether a liftgate is needed at a stop; no shipment field marks it",
+    },
   },
   {
     key: /fuel/,
@@ -1095,7 +1101,7 @@ function planTurn(state, entry, body) {
           ...next.variables,
           {
             name: fee.extra.name,
-            type: "Number",
+            type: fee.extra.type ?? "Number",
             description: fee.extra.desc,
             defaultValue: fee.extra.def,
           },
