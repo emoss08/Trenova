@@ -152,6 +152,44 @@ var providerProfiles = []ProviderProfile{
 		RevokesTokens:        false,
 		ReconnectWarning:     defaultReconnectWarning,
 	},
+	{
+		Type:            integration.TypeNetSuite,
+		Name:            "NetSuite",
+		WebhookSlug:     "",
+		CallbackPath:    "/admin/integrations/netsuite/callback",
+		AppName:         "NetSuite integration record",
+		WebhookKeyLabel: "",
+		LineKind:        ReferenceKindItem,
+		ReferenceKinds: []ReferenceKind{
+			ReferenceKindAccount,
+			ReferenceKindItem,
+			ReferenceKindCustomer,
+			ReferenceKindVendor,
+			ReferenceKindTerm,
+		},
+		AccountRoles: []string{
+			AccountRoleDeposit,
+			AccountRolePurchasedTransportation,
+		},
+		RequiredAccountRoles: []string{
+			AccountRoleDeposit,
+		},
+		Environments: []AppEnvironment{
+			AppEnvironmentProduction,
+		},
+		RefreshTokenLifetime:         7 * 24 * time.Hour,
+		RefreshTokenAbsoluteLifetime: 7 * 24 * time.Hour,
+		Ledger:                       false,
+		LedgerUnavailableReason: "Ledger mode for NetSuite is not available yet: journal " +
+			"entries through REST web services are unconfirmed. Send documents instead.",
+		CallbackCarriesCompany: true,
+		InboundPayments:        true,
+		WebhookSubscriptions:   false,
+		RevokesTokens:          true,
+		PKCE:                   true,
+		ClientCredentials:      true,
+		ReconnectWarning:       2 * 24 * time.Hour,
+	},
 }
 
 func Profile(typ integration.Type) (ProviderProfile, bool) {
@@ -180,6 +218,9 @@ func AccountingSystems() []integration.Type {
 }
 
 func ProfileByWebhookSlug(slug string) (ProviderProfile, bool) {
+	if slug == "" {
+		return ProviderProfile{}, false
+	}
 	for idx := range providerProfiles {
 		if providerProfiles[idx].WebhookSlug == slug {
 			return providerProfiles[idx], true

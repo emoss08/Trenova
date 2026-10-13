@@ -420,6 +420,7 @@ var errProvider = errors.New("provider failure")
 
 type fakeConnector struct {
 	mu             sync.Mutex
+	typ            integration.Type
 	available      bool
 	exchangeGrant  *accountingsyncports.AccountingTokenGrant
 	exchangeErr    error
@@ -458,6 +459,7 @@ const instanceVerifier = "instance-verifier"
 
 func newFakeConnector() *fakeConnector {
 	return &fakeConnector{
+		typ:         integration.TypeQuickBooksOnline,
 		available:   true,
 		redirectURL: "https://app.example.com/admin/integrations/quickbooks/callback",
 		exchangeGrant: &accountingsyncports.AccountingTokenGrant{
@@ -482,7 +484,7 @@ func newFakeConnector() *fakeConnector {
 	}
 }
 
-func (f *fakeConnector) IntegrationType() integration.Type { return integration.TypeQuickBooksOnline }
+func (f *fakeConnector) IntegrationType() integration.Type { return f.typ }
 
 func (f *fakeConnector) InstanceApp() (*accountingsyncports.AccountingApp, bool) {
 	if !f.available {
@@ -648,7 +650,7 @@ type fakeRegistry struct {
 
 func (r fakeRegistry) For(typ integration.Type) (accountingsyncports.AccountingProvider, bool) {
 	switch {
-	case typ == integration.TypeQuickBooksOnline:
+	case typ == r.connector.typ:
 		return r.connector, true
 	case typ == integration.TypeBusinessCentral && r.bc != nil:
 		return r.bc, true
