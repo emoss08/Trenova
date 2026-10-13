@@ -241,6 +241,15 @@ func (h *integrationHarness) seededPaidSettlement(t *testing.T) (pulid.ID, int64
 		Where("paid_journal_batch_id IS NULL").
 		Scan(h.ctx, &row))
 	require.Positive(t, row.NetPayMinor)
+
+	_, err := h.db.NewUpdate().
+		Table("driver_settlements").
+		Set("posted_payable_account_id = NULL").
+		Set("posted_journal_batch_id = NULL").
+		Where("id = ?", row.ID).
+		Exec(h.ctx)
+	require.NoError(t, err)
+
 	return row.ID, row.NetPayMinor
 }
 

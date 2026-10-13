@@ -40,6 +40,12 @@ type DocumentCacheRepository interface {
 type SearchRepository interface {
 	Enabled() bool
 	Search(ctx context.Context, req SearchRequest) ([]map[string]any, error)
+	SearchPage(ctx context.Context, req SearchRequest) (*SearchPage, error)
+}
+
+type SearchPage struct {
+	Documents      []map[string]any
+	EstimatedTotal int
 }
 
 type SearchRequest struct {

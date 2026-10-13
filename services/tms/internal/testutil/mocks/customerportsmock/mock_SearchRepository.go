@@ -149,3 +149,71 @@ func (_c *MockSearchRepository_Search_Call) RunAndReturn(run func(ctx context.Co
 	_c.Call.Return(run)
 	return _c
 }
+
+// SearchPage provides a mock function for the type MockSearchRepository
+func (_mock *MockSearchRepository) SearchPage(ctx context.Context, req customerports.SearchRequest) (*customerports.SearchPage, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchPage")
+	}
+
+	var r0 *customerports.SearchPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, customerports.SearchRequest) (*customerports.SearchPage, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, customerports.SearchRequest) *customerports.SearchPage); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*customerports.SearchPage)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, customerports.SearchRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockSearchRepository_SearchPage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchPage'
+type MockSearchRepository_SearchPage_Call struct {
+	*mock.Call
+}
+
+// SearchPage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req customerports.SearchRequest
+func (_e *MockSearchRepository_Expecter) SearchPage(ctx any, req any) *MockSearchRepository_SearchPage_Call {
+	return &MockSearchRepository_SearchPage_Call{Call: _e.mock.On("SearchPage", ctx, req)}
+}
+
+func (_c *MockSearchRepository_SearchPage_Call) Run(run func(ctx context.Context, req customerports.SearchRequest)) *MockSearchRepository_SearchPage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 customerports.SearchRequest
+		if args[1] != nil {
+			arg1 = args[1].(customerports.SearchRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSearchRepository_SearchPage_Call) Return(searchPage *customerports.SearchPage, err error) *MockSearchRepository_SearchPage_Call {
+	_c.Call.Return(searchPage, err)
+	return _c
+}
+
+func (_c *MockSearchRepository_SearchPage_Call) RunAndReturn(run func(ctx context.Context, req customerports.SearchRequest) (*customerports.SearchPage, error)) *MockSearchRepository_SearchPage_Call {
+	_c.Call.Return(run)
+	return _c
+}

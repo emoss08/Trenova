@@ -25,20 +25,24 @@ vi.mock("react-router", async (importOriginal) => ({
   useNavigate: () => navigate,
 }));
 
-function setup() {
+function setup({ withFooter = false }: { withFooter?: boolean } = {}) {
   const close = vi.fn();
   const askAbout = vi.fn();
+  const confirm = vi.fn();
   const client = new QueryClient();
-  const { result } = renderHook(() => usePaletteIntentRunner({ close, askAbout }), {
-    wrapper: ({ children }) => (
-      <QueryClientProvider client={client}>
-        <ThemeProvider defaultTheme="light" storageKey="palette-intents-test">
-          <MemoryRouter>{children}</MemoryRouter>
-        </ThemeProvider>
-      </QueryClientProvider>
-    ),
-  });
-  return { run: result.current, close, askAbout };
+  const { result } = renderHook(
+    () => usePaletteIntentRunner({ close, askAbout, confirm: withFooter ? confirm : undefined }),
+    {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>
+          <ThemeProvider defaultTheme="light" storageKey="palette-intents-test">
+            <MemoryRouter>{children}</MemoryRouter>
+          </ThemeProvider>
+        </QueryClientProvider>
+      ),
+    },
+  );
+  return { run: result.current, close, askAbout, confirm };
 }
 
 describe("usePaletteIntentRunner", () => {
@@ -49,15 +53,36 @@ describe("usePaletteIntentRunner", () => {
     vi.spyOn(window, "open").mockImplementation(() => null);
   });
 
-  it("copies the text itself and says only that it was copied, leaving the palette open", async () => {
+  it("copies the text itself and says what it copied, leaving the palette open", async () => {
     copy.mockResolvedValue(true);
     const { run, close } = setup();
 
-    await act(async () => run({ type: "copy", text: "PRO-1001" }));
+    await act(async () => run({ type: "copy", text: "PRO-1001", what: "pro" }));
 
     expect(copy).toHaveBeenCalledWith("PRO-1001", { withToast: false });
-    expect(toastSuccess).toHaveBeenCalledWith("Copied to clipboard");
+    expect(toastSuccess).toHaveBeenCalledWith("PRO number copied");
     expect(close).not.toHaveBeenCalled();
+  });
+
+  it("confirms in the palette's footer instead of a toast when the palette gives it one", async () => {
+    copy.mockResolvedValue(true);
+    const { run, confirm } = setup({ withFooter: true });
+
+    await act(async () => run({ type: "copy", text: "88213", what: "bol" }));
+    await act(async () => run({ type: "copy-link", href: "/hr/workers" }));
+
+    expect(confirm.mock.calls).toEqual([["BOL copied"], ["Link copied"]]);
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("changes the theme without closing the palette, and says which one is on", () => {
+    const { run, close, confirm } = setup({ withFooter: true });
+
+    act(() => run({ type: "set-theme", theme: "dark" }));
+
+    expect(close).not.toHaveBeenCalled();
+    expect(confirm).toHaveBeenCalledWith("Dark theme on");
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
 
   it("copies a link as an absolute address", async () => {
@@ -75,7 +100,7 @@ describe("usePaletteIntentRunner", () => {
     copy.mockResolvedValue(false);
     const { run } = setup();
 
-    await act(async () => run({ type: "copy", text: "x" }));
+    await act(async () => run({ type: "copy", text: "x", what: "text" }));
 
     expect(toastError).toHaveBeenCalledWith("Couldn't copy to the clipboard");
     expect(toastSuccess).not.toHaveBeenCalled();

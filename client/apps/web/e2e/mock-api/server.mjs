@@ -121,14 +121,26 @@ async function handle(req, res) {
   if (result.sse) {
     res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" });
     let closed = false;
-    req.on("close", () => (closed = true));
+    let sent = 0;
+    let release = () => {};
+    req.on("close", () => {
+      closed = true;
+      release();
+    });
+    const write = (event, data) => {
+      if (closed) return;
+      sent += 1;
+      res.write(`id: ${sent}\nevent: ${event}\ndata: ${JSON.stringify(data ?? {})}\n\n`);
+    };
     let at = 0;
     for (const [index, frame] of result.sse.entries()) {
       at += frame.delay ?? 0;
       setTimeout(() => {
-        if (closed) return;
-        res.write(`id: ${index + 1}\nevent: ${frame.event}\ndata: ${JSON.stringify(frame.data ?? {})}\n\n`);
-        if (index === result.sse.length - 1) res.end();
+        write(frame.event, frame.data);
+        if (index !== result.sse.length - 1 || closed) return;
+        // A held stream stays open after its frames, for its handler to write to as things happen.
+        if (result.sseHold) release = result.sseHold(write);
+        else res.end();
       }, at);
     }
     return undefined;

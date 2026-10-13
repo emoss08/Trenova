@@ -1,8 +1,8 @@
 # Mock API
 
 A dependency-free Node server that stands in for the TMS API, so the shipments board
-(`/shipment-management/shipments`), AI control (`/admin/agent-control`) and Triage (`/triage`, the
-redesign of `/inbox`) can be run, clicked through and screenshotted without Postgres, Redis,
+(`/shipment-management/shipments`), AI control (`/admin/agent-control`), Triage (`/triage`, the
+redesign of `/inbox`) and the Desk (`/desk`) can be run, clicked through and screenshotted without Postgres, Redis,
 Temporal or an AI provider. It answers the REST session endpoints the app shell needs, every
 GraphQL operation those pages send, and the realtime stream, from a deterministic fixture.
 
@@ -44,6 +44,7 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `triageReplyAfterMs` | number | `6500` | How long after "Wait for reply" the sender answers on the thread |
 | `desk` | `full` \| `empty` \| `hold` | `full` | Desk resource cards: the fixture, every section empty, or every card request left open (the skeleton) |
 | `deskSlug` | an artifact slug | `tractor-t-101` | The card the Desk cards conversation (`thr_desk_cards`) holds |
+| `deskReply` | `idle` \| `working` | `idle` | The Desk's live conversation (`athr_desk_live`): nothing under way, or a reply under way that has been steered once, with two follow-ups queued |
 
 ```bash
 curl -X POST localhost:8080/__mock/scenario \
@@ -56,7 +57,7 @@ curl -X POST localhost:8080/__mock/scenario \
 so an open page refetches. Environment equivalents: `MOCK_BOARD`, `MOCK_AI=0`,
 `MOCK_OPERATION_TYPE`, `MOCK_HOS=0`, `MOCK_MAPS=1`, `MOCK_LIST_ROWS`, `MOCK_AI_PROVIDERS`,
 `MOCK_AI_PAUSED=1`, `MOCK_DESK`, `MOCK_DESK_SLUG`, `MOCK_TRIAGE`, `MOCK_TRIAGE_TIME`,
-`MOCK_TRIAGE_REPLY_MS`, plus `MOCK_TRIAGE_LIVE_MS` (the live arrival interval, default 26000),
+`MOCK_TRIAGE_REPLY_MS`, `MOCK_PALETTE=1`, plus `MOCK_TRIAGE_LIVE_MS` (the live arrival interval, default 26000),
 `MOCK_API_PORT` (default 8080) and `MOCK_API_PUBLIC_URL` (the origin avatar URLs are built on).
 
 The board briefing is stored the way the server stores it: written on the first read of a
@@ -80,7 +81,8 @@ closed by hand today, and the 11 Blue Ridge rate cons filed by hand this month t
 Lee (on call) and Priya Shah are the rest of the team, with avatars served from
 `/__mock/avatar/<id>.svg`.
 
-Nothing in the briefing is stored: `handlers/triage-model.mjs` works it out from the queue on every
+Nothing in the briefing is stored: `handlers/palette.mjs   Global search, documents, pins, Nova's ask stream and the palette's previews
+handlers/triage-model.mjs` works it out from the queue on every
 read, so it moves as you act. Each message's `actions` come from a line-for-line port of
 `triage.Actions` and `triage.GroupFor` (`services/tms/internal/modules/documents/domain/triage/actions.go`),
 and the deck, the river, lanes, counts, Due/Newest order, `collapseThreads`, search and cursors
@@ -211,6 +213,35 @@ are in `fixtures/desk-cards.mjs`: each card has a conversation for the record lo
 something to flag, one with nothing on file and one that is gone. A new card adds its records
 there, its operations to `handlers/deskcards.mjs`, and an entry to `CARDS` in the walkthrough.
 
+A Desk case and a reply under way have their own walkthrough:
+
+```bash
+node e2e/mock-api/desk-case-screenshots.mjs [outDir] [name,name,...]
+```
+
+It opens two conversations from `handlers/deskcase.mjs`. The first, `/desk/t/athr_desk_case`, is a
+case about a delivered shipment: its card with the ready-to-bill checklist (one step a person
+ticks, one handed to another agent), the case menu, the parties it can wait on, the agent's two
+open waits and the organization's case checklist settings (`?settings=checklists`). The second,
+`/desk/t/athr_desk_live`, has a reply under way when `deskReply` is `working`: its stream sends
+the turn from its start, including every steer so far, and is then held open, so a steer sent
+from the page reaches it the way it reaches a live turn. The walkthrough shoots each in light and
+dark, then snoozes the case, waits on the customer, ticks the added step and steers the reply,
+starting each shot from a fresh scenario. It writes to `e2e/mock-api/screenshots/desk-case` by
+default.
+
+Writes keep the server's rules (`assistantcaseservice`, `agentwaitservice`,
+`assistantqueueservice`): a snooze is at least a minute and at most 30 days ahead, the delivered
+shipment has no stop ahead to snooze to, only a step the organization added for a person can be
+ticked, a reply wait is on the record's own customer or carrier and gives up after 72 hours unless
+asked otherwise (at most 168), a conversation holds at most ten open waits and twenty queued
+messages, an edit at a stale version is refused, and a reorder must name every waiting message
+once. Refusals carry the server's problem details (`type`, `title`, `status`, `detail`, field
+`errors`). A message sent while nothing is under way is answered as a new turn. The rail's list
+(`GET /assistant/threads/`) and shelf counts (`/threads/shelves/`) are read from every
+conversation the mock serves, ordered and banded by when each was last touched, as
+`conversationrepository` does.
+
 Settings has its own walkthrough, the same way:
 
 ```bash
@@ -225,6 +256,21 @@ preferences and sessions the dialog saves are what it reads back. The password c
 `correct-horse` as the current password. It writes to `e2e/mock-api/screenshots/settings` by
 default.
 
+The command palette has its own walkthrough. Start the mock with `MOCK_PALETTE=1`, which also
+serves the palette's records, the counts under "Needs you" and Nova's streamed answer:
+
+```bash
+MOCK_PALETTE=1 node e2e/mock-api/server.mjs
+node e2e/mock-api/palette-screenshots.mjs [outDir] [name,name,...]
+```
+
+It seeds "Jump back in" in local storage, then captures Home in light and dark, the matcher on
+`ai`, `acme`, `leon`, a BOL and `bq`, an `@doc` mention, `>theme` command mode, a scope browsed
+with nothing typed, a page's preview, the actions menu, a copy confirmed in the footer, asking
+about a record, Nova working, answering and previewing a cited record on hover, the empty state,
+and the 860px and 700px layouts. Its records live in `fixtures/palette.mjs` and its routes and
+operations in `handlers/palette.mjs`. It writes to `e2e/mock-api/screenshots/palette` by default.
+
 ## Layout
 
 ```
@@ -236,19 +282,25 @@ fixtures/session.mjs  Signed-in user and permission manifest
 fixtures/aicontrol.mjs  Agents, providers, runs, usage and tune-ups for AI control
 fixtures/desk-cards.mjs  The records the Desk's resource cards draw, and their conversations
 fixtures/settings.mjs   The signed-in person's settings, sessions, sign-ins and teammates
+fixtures/palette.mjs  The command palette's customers, workers, shipments, documents and pins
 fixtures/triage.mjs   Triage's sources, messages, rules, templates and team, from the prototype
 fixtures/ai/          Catalogs dumped from the Go service
 handlers/rest.mjs     REST routes the shell and board call
 handlers/graphql.mjs  GraphQL operations, keyed by operation name
 handlers/aicontrol.mjs  AI control's GraphQL operations and REST routes
 handlers/deskcards.mjs  The Desk cards conversation and each card's GraphQL operations
+handlers/deskcase.mjs   A Desk case and a reply under way: case, waits, queue, turns and checklist settings
+handlers/deskthreads.mjs  The Desk rail: the conversation list and its shelf counts
 handlers/settings.mjs   Settings' REST routes and the user select options
+handlers/palette.mjs   Global search, documents, pins, Nova's ask stream and the palette's previews
 handlers/triage-model.mjs  Triage's rules: actions, lanes, counts, briefing, previews and every write
 handlers/triage.mjs   Triage's GraphQL operations shaped to their selections, presence and Desk routes
 screenshots.mjs       Playwright walkthrough of every board scenario
 ai-control-screenshots.mjs  Playwright walkthrough of AI control
 desk-cards-screenshots.mjs  Playwright walkthrough of the Desk's resource cards
+desk-case-screenshots.mjs   Playwright walkthrough of a Desk case and a reply under way
 settings-screenshots.mjs    Playwright walkthrough of Settings
+palette-screenshots.mjs     Playwright walkthrough of the command palette
 triage-screenshots.mjs  Playwright walkthrough of Triage
 check-triage.mjs      Sends every Triage operation and checks each response against its selection
 ```

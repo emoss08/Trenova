@@ -1787,6 +1787,8 @@ export const assistantToolFinishedEventSchema = z.object({
   verdict: optionalToolVerdict,
   /** The person's other agents a find_tools answer named as holding what this agent lacks. */
   handOffAgents: z.array(z.string()).nullish().catch(null),
+  /** The records the call's result described, in the order the result named them. */
+  records: z.array(entityRefSchema).nullish().catch(null),
   ...delegateScopeShape,
 });
 

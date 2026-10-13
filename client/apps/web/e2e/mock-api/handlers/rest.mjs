@@ -3,12 +3,16 @@ import { PROVIDER_ROUTES } from "./aiproviders.mjs";
 import { AI_ROUTES } from "./aicontrol.mjs";
 import { TRIAGE_ROUTES } from "./triage.mjs";
 import { DESK_CARD_ROUTES } from "./deskcards.mjs";
+import { DESK_CASE_ROUTES } from "./deskcase.mjs";
+import { DESK_THREAD_ROUTES } from "./deskthreads.mjs";
 import { ORG, permissionManifest } from "../fixtures/session.mjs";
 import { SETTINGS_ROUTES } from "./settings.mjs";
+import { PALETTE_ROUTES } from "./palette.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
 const ROUTES = [
+  ...PALETTE_ROUTES,
   ...TRIAGE_ROUTES,
   ...PROVIDER_ROUTES,
   ...EXTENSION_ROUTES,
@@ -16,14 +20,36 @@ const ROUTES = [
   ...DESK_CARD_ROUTES,
   ...SETTINGS_ROUTES,
   ["GET", /^\/api\/v1\/me\/permissions\/?$/, () => permissionManifest()],
-  ["GET", /^\/api\/v1\/me\/permissions\/version\/?$/, () => ({ checksum: "mock", expiresAt: Math.floor(Date.now() / 1000) + 86400 })],
-  ["GET", /^\/api\/v1\/system\/version\/?$/, () => ({ version: "mock", commit: "mock", buildDate: "" })],
+  [
+    "GET",
+    /^\/api\/v1\/me\/permissions\/version\/?$/,
+    () => ({ checksum: "mock", expiresAt: Math.floor(Date.now() / 1000) + 86400 }),
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/system\/version\/?$/,
+    () => ({ version: "mock", commit: "mock", buildDate: "" }),
+  ],
   ["GET", /^\/api\/v1\/system\/public-config\/?$/, () => ({})],
-  ["GET", /^\/api\/v1\/auth\/csrf\/?$/, () => ({ csrfToken: "mock-csrf", headerName: "X-CSRF-Token" })],
+  [
+    "GET",
+    /^\/api\/v1\/auth\/csrf\/?$/,
+    () => ({ csrfToken: "mock-csrf", headerName: "X-CSRF-Token" }),
+  ],
   [
     "GET",
     /^\/api\/v1\/users\/me\/organizations\/?$/,
-    () => [{ id: ORG.id, name: ORG.name, city: "Dallas", state: "TX", logoUrl: null, isDefault: true, isCurrent: true }],
+    () => [
+      {
+        id: ORG.id,
+        name: ORG.name,
+        city: "Dallas",
+        state: "TX",
+        logoUrl: null,
+        isDefault: true,
+        isCurrent: true,
+      },
+    ],
   ],
   [
     "GET",
@@ -39,7 +65,13 @@ const ROUTES = [
   [
     "GET",
     /^\/api\/v1\/integrations\/[A-Za-z]+\/runtime-config\/?$/,
-    () => ({ enabled: false, configured: false, ready: false, missingRequiredFields: [], config: {} }),
+    () => ({
+      enabled: false,
+      configured: false,
+      ready: false,
+      missingRequiredFields: [],
+      config: {},
+    }),
   ],
   [
     "GET",
@@ -48,8 +80,6 @@ const ROUTES = [
   ],
   ["GET", /^\/api\/v1\/page-favorites\/check\/?$/, () => ({ favorited: false })],
   ["GET", /^\/api\/v1\/page-favorites\/?$/, () => []],
-  ["GET", /^\/api\/v1\/assistant\/threads\/?$/, () => ({ items: [], total: 0 })],
-  ["GET", /^\/api\/v1\/assistant\/turns\/active\/?$/, () => ({ items: [] })],
   ["GET", /^\/api\/v1\/documents\/uploads\/active\/?$/, () => []],
   ["GET", /^\/api\/v1\/realtime\/stream\/?$/, () => ({ __stream: true })],
   ["GET", /^\/api\/v1\/insights\/?$/, () => ({ items: [], total: 0 })],
@@ -61,7 +91,8 @@ export function handleRest(state, { method, path, query, body }) {
     if (routeMethod === method && pattern.test(path)) {
       const payload = handler(state, path, body, query);
       if (payload && payload.__stream) return { known: true, stream: true };
-      if (payload && payload.__raw) return { known: true, raw: payload.__raw, contentType: payload.contentType };
+      if (payload && payload.__raw)
+        return { known: true, raw: payload.__raw, contentType: payload.contentType };
       if (payload && payload.__sse) return { known: true, sse: payload.__sse };
       if (payload && payload.__status) {
         return { known: true, status: payload.__status, payload: payload.body };

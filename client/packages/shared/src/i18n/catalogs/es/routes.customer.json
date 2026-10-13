@@ -53,6 +53,7 @@
   "Core identifiers used across the system to reference this customer": "Identificadores principales que se utilizan en todo el sistema para referenciar a este cliente",
   "Count late only on appointment stops": "Contar el retraso solo en las paradas con cita",
   "Credit management": "Gestión del crédito",
+  "Credit status": "Estado del crédito",
   "Cross-check all applied rates against this customer's contracted rate agreements before invoicing. Mismatches will block billing and flag for review.": "Coteje todas las tarifas aplicadas con los acuerdos de tarifas contratados de este cliente antes de facturar. Las discrepancias bloquearán la facturación y se marcarán para revisión.",
   "Currency used on all invoices for this customer. Determines how amounts are formatted and displayed on billing documents.": "Moneda que se utiliza en todas las facturas de este cliente. Determina cómo se formatean y muestran los importes en los documentos de facturación.",
   "Custom string prepended to all invoice numbers for this customer, useful when customers require a specific format for their AP system.": "Cadena personalizada que se antepone a todos los números de factura de este cliente; resulta útil cuando el cliente exige un formato concreto para su sistema de cuentas por pagar.",

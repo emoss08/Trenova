@@ -54,13 +54,27 @@ function scopeInput(
   }
 }
 
-/** A page of the shipments a record lists, newest first, each with its stops for the lane. */
+/** The shipments still in play: not delivered, billed or canceled. */
+export const OPEN_SHIPMENT_STATUSES_FILTER = {
+  field: "status",
+  operator: "notin",
+  value: ["Completed", "ReadyToInvoice", "Invoiced", "Canceled"],
+} as const;
+
+/**
+ * A page of the shipments a record lists, newest first, each with its stops
+ * for the lane. `openOnly` keeps to the ones still in play.
+ */
 export async function fetchRecordShipments(
   scope: ShipmentScope,
-  page: { first: number; after: string | null },
+  page: { first: number; after: string | null; openOnly?: boolean },
   options?: { signal?: AbortSignal },
 ): Promise<RecordShipmentsPage> {
   const firstPage = page.after === null;
+  const scoped = scopeInput(scope);
+  const fieldFilters = page.openOnly
+    ? [...(scoped.fieldFilters ?? []), { ...OPEN_SHIPMENT_STATUSES_FILTER }]
+    : scoped.fieldFilters;
   const data = await requestGraphQL({
     document: DeskRecordShipmentsDocument,
     operationName: "DeskRecordShipments",
@@ -70,7 +84,8 @@ export async function fetchRecordShipments(
         after: page.after,
         expandShipmentDetails: true,
         sort: [{ field: "createdAt", direction: "desc" }],
-        ...scopeInput(scope),
+        ...scoped,
+        ...(fieldFilters ? { fieldFilters } : {}),
       },
       includeTotalCount: firstPage,
     },

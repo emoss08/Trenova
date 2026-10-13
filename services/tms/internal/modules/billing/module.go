@@ -63,6 +63,7 @@ func SharedOptions() fx.Option {
 		fx.Provide(
 			accountsreceivablerepository.New,
 			accountsreceivablerepository.NewAnalytics,
+			accountsreceivablerepository.NewOpenBalanceReader,
 			costingrepository.New,
 			costingrepository.NewActuals,
 			costingservice.NewValidator,

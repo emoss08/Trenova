@@ -11,7 +11,7 @@ export function page(overrides: Partial<PalettePage> = {}): PalettePage {
   return {
     id: "billing:invoices",
     title: "Invoices",
-    trail: "Billing > Invoices",
+    trail: ["Billing"],
     href: "/billing/invoices",
     icon: File04Icon,
     keywords: ["Invoices", "Billing"],
@@ -49,7 +49,9 @@ export function actionContext(overrides: Partial<ActionContext> = {}): ActionCon
     mac: true,
     canReach: () => true,
     canUseAssistant: true,
+    canCreateShipment: true,
     pinnedUrls: new Set(),
+    relatedCommands: () => [],
     ...overrides,
   };
 }
