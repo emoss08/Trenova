@@ -1,0 +1,1 @@
+{"links":[],"count":2,"hasMore":false,"offset":0,"totalResults":2,"items":[{"links":[],"id":"341","entityid":"CUST-341","companyname":"Acme Freight","email":"ap@acme.example","isinactive":"F","currency":"usd","lastmodified":"2026-10-02 10:30:00"},{"links":[],"id":"342","entityid":"Jane Shipper","isinactive":"T","lastmodified":"2026-10-03 11:00:00"}]}

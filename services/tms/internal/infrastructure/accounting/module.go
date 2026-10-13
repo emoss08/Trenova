@@ -2,6 +2,7 @@ package accounting
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcconnector"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/accounting/qboconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/accounting/xeroconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/outboundlimit"
@@ -15,12 +16,14 @@ var Module = fx.Module("accounting-connectors",
 		qboconnector.New,
 		xeroconnector.New,
 		bcconnector.New,
+		nsconnector.New,
 		func(
 			qbo *qboconnector.Provider,
 			xero *xeroconnector.Provider,
 			bc *bcconnector.Provider,
+			ns *nsconnector.Provider,
 		) accountingsyncports.AccountingConnectorRegistry {
-			return NewRegistry(qbo, xero, bc)
+			return NewRegistry(qbo, xero, bc, ns)
 		},
 	),
 )

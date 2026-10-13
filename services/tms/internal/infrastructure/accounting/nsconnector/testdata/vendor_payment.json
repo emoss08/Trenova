@@ -1,0 +1,1 @@
+{"links":[],"id":"1701","tranId":"CHK-1009","tranDate":"2026-10-07","entity":{"id":"512","refName":"Swift Carriers LLC"},"subsidiary":{"id":"3","refName":"Acme US"},"account":{"id":"10","refName":"Operating Account"},"total":900.0,"apply":{"links":[],"items":[{"apply":true,"doc":1501,"line":0,"type":"Vendor Bill","refNum":"BILL-77","amount":900.0}],"totalResults":1}}

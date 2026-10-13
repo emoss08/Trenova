@@ -1,0 +1,1 @@
+{"type":"https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.1","title":"Bad Request","status":400,"o:errorDetails":[{"detail":"Record type 'serviceSaleItem' is not supported for this operation.","o:errorCode":"INVALID_REQUEST"}]}
