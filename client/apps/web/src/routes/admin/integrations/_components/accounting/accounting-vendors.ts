@@ -40,8 +40,8 @@ export const xeroVendor: AccountingVendor = {
 export const businessCentralVendor: AccountingVendor = {
   system: "BusinessCentral",
   name: "Business Central",
-  logoLight: "/integrations/logos/business-central-light.svg",
-  logoDark: "/integrations/logos/business-central-dark.svg",
+  logoLight: "/integrations/logos/microsoft.svg",
+  logoDark: "/integrations/logos/microsoft.svg",
   docsUrl: "https://learn.microsoft.com/en-us/dynamics365/business-central/",
   appName: "Microsoft Entra app",
   developer: "Microsoft Entra",

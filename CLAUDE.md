@@ -311,6 +311,16 @@ record link means regenerating it** (`pnpm --filter @trenova/web guide:generate`
 otherwise. Record links are built from one registry, `client/apps/web/src/config/record-links.ts`
 (`recordPath`), never by hand. Read [docs/engineering/product-guide.md](docs/engineering/product-guide.md).
 
+## Integration Logos
+
+Every integration logo comes from Brandfetch, never drawn or traced by hand. Look the brand up
+with the Brand API (`GET https://api.brandfetch.io/v2/brands/{domain}`, `Authorization: Bearer
+<key>`), download the SVG it lists (PNG only when it has no SVG) unmodified into
+`client/apps/web/public/integrations/logos/`, and point both the client vendor entry and the
+server catalog (`integrationports`) at it. When Brandfetch has no mark for the product itself,
+use its parent company's (Business Central uses Microsoft's). The API key and client ID are the
+maintainer's: ask for them or read `BRANDFETCH_API_KEY`, and never commit them.
+
 ## GraphQL (gqlgen + gqlexec)
 
 - Schema lives in `services/tms/internal/api/graphql/schema/*.graphqls`; regenerate with `task gqlgen`. It runs `internal/api/graphql/gqlexec/gen`, which keeps gqlgen's binder, models and resolver stubs but writes the executor as one package per schema file (`internal/api/graphql/generated/exec/<file>exec`) on a shared runtime (`internal/api/graphql/gqlexec`). Never run `go tool gqlgen generate`; it writes gqlgen's single-package executor and breaks the build. Read [docs/engineering/graphql-executor.md](docs/engineering/graphql-executor.md) before changing the generator or runtime.
