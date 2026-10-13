@@ -86,7 +86,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 83 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 271 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 272 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 94 |
@@ -97,14 +97,14 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1114 writes: 596 GraphQL mutations and 518 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1117 writes: 599 GraphQL mutations and 518 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 396 |
-| Exempt | 684 |
+| Covered by a tool | 398 |
+| Exempt | 685 |
 | — Security | 83 |
-| — Configuration | 271 |
+| — Configuration | 272 |
 | — User preference | 38 |
 | — Infrastructure | 52 |
 | — Agent administration | 94 |
@@ -113,9 +113,9 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1114 |
+| Total | 1117 |
 
-Of the 430 writes an agent should be able to make, 396 have a tool (92%).
+Of the 432 writes an agent should be able to make, 398 have a tool (92%).
 
 ## Pending
 
@@ -205,6 +205,7 @@ The writes no tool performs yet, and what the tool would do.
 | customer | 4 | 4 | 0 | 0 |
 | customerpayment | 5 | 5 | 0 | 0 |
 | customerstatement | 1 | 0 | 0 | 1 |
+| customertracking | 3 | 2 | 1 | 0 |
 | customfield | 4 | 0 | 4 | 0 |
 | dataentrycontrol | 1 | 0 | 1 | 0 |
 | dataretention | 1 | 0 | 1 | 0 |
@@ -831,6 +832,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/`<br>customerstatementhandler.send | Pending: Email a customer its statement of account as a PDF, with a note. |
+
+### customertracking
+
+| Write | Decision |
+| --- | --- |
+| `mutation issueCustomerTrackingLink` | Tool: `share_customer_tracking_link` |
+| `mutation revokeCustomerTrackingLink` | Tool: `revoke_customer_tracking_link` |
+| `mutation updateCustomerTrackingProfile` | Exempt, configuration: What a customer's tracking page shows and which status emails it gets is a commercial agreement with the customer, set by a person on the customer record. |
 
 ### customfield
 

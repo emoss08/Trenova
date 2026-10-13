@@ -18,6 +18,11 @@ const (
 		"preview pins"
 )
 
+const (
+	watchtowerItemIDParam = "watchtowerItemId"
+	exceptionIDArg        = "the mutation takes the exception as its id argument, beside the input"
+)
+
 func stateCode(field string) string {
 	return "the tool takes the two-letter state code and resolves it to the " + field +
 		" the input takes; no read tool hands out state ids"
@@ -70,6 +75,43 @@ var Bindings = []Binding{
 		Input:     "LogCheckCallInput",
 		Defaulted: map[string]string{"shipmentMoveId": namedID("moveId")},
 		Extra:     map[string]string{"moveId": namedID("moveId")},
+	},
+	{
+		Tool:  "assign_exception",
+		Input: "AssignWatchtowerItemInput",
+		Extra: map[string]string{watchtowerItemIDParam: exceptionIDArg},
+	},
+	{
+		Tool:  "snooze_exception",
+		Input: "SnoozeWatchtowerItemInput",
+		Extra: map[string]string{watchtowerItemIDParam: exceptionIDArg},
+	},
+	{
+		Tool:  "set_exception_due",
+		Input: "SetWatchtowerItemDueInput",
+		Extra: map[string]string{watchtowerItemIDParam: exceptionIDArg},
+	},
+	{
+		Tool:  "resolve_exception",
+		Input: "ResolveWatchtowerItemInput",
+		Defaulted: map[string]string{
+			"code": "one value under two names: the input's code, and resolutionCode, " +
+				"which the tool takes so it is not mistaken for a shipment or charge code",
+		},
+		Extra: map[string]string{
+			watchtowerItemIDParam: exceptionIDArg,
+			"resolutionCode": "one value under two names: the input's code, and " +
+				"resolutionCode, which the tool takes",
+		},
+	},
+	{
+		Tool:  "reopen_exception",
+		Input: "ReopenWatchtowerItemInput",
+		Extra: map[string]string{watchtowerItemIDParam: exceptionIDArg},
+	},
+	{
+		Tool:  "share_customer_tracking_link",
+		Input: "IssueCustomerTrackingLinkInput",
 	},
 	{
 		Tool:  "add_shipment_comment",

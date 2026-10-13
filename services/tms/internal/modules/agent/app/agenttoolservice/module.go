@@ -119,6 +119,8 @@ func ToolProviders() []any {
 		shipmenttools.NewAddShipmentCommentTool,
 		shipmenttools.NewPlaceShipmentHoldTool,
 		shipmenttools.NewReleaseShipmentHoldTool,
+		shipmenttools.NewShareCustomerTrackingLinkTool,
+		shipmenttools.NewRevokeCustomerTrackingLinkTool,
 		provideCancelShipmentTool,
 		movetools.ProvideRecordStopActualTool,
 		movetools.ProvideLogCheckCallTool,

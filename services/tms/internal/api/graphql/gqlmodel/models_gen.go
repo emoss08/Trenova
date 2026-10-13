@@ -56,6 +56,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
@@ -5010,6 +5011,21 @@ type IssueCarrierTrackingLinkPayload struct {
 	EmailError *string `json:"emailError,omitempty"`
 }
 
+type IssueCustomerTrackingLinkInput struct {
+	ShipmentID string `json:"shipmentId"`
+	// Where to email the link. Leave empty to copy it instead.
+	RecipientEmail *string `json:"recipientEmail,omitempty"`
+}
+
+type IssueCustomerTrackingLinkPayload struct {
+	Link *customertracking.Link `json:"link"`
+	// The link to share. It is not stored and cannot be shown again.
+	URL     string `json:"url"`
+	Emailed bool   `json:"emailed"`
+	// Why the email could not be sent, when one was asked for. The link still works.
+	EmailError *string `json:"emailError,omitempty"`
+}
+
 type IssueDisciplinaryActionInput struct {
 	WorkerID       string                   `json:"workerId"`
 	Level          worker.DisciplinaryLevel `json:"level"`
@@ -9660,6 +9676,21 @@ type UpdateCarrierSettlementControlInput struct {
 	HoldUntilInvoiceMatched                 *bool   `json:"holdUntilInvoiceMatched,omitempty"`
 	DefaultApAccountID                      *string `json:"defaultApAccountId,omitempty"`
 	DefaultPurchasedTransportationAccountID *string `json:"defaultPurchasedTransportationAccountId,omitempty"`
+}
+
+type UpdateCustomerTrackingProfileInput struct {
+	CustomerID      string                   `json:"customerId"`
+	LinkEnabled     bool                     `json:"linkEnabled"`
+	VisibleFields   []customertracking.Field `json:"visibleFields"`
+	LinkTTLDays     int                      `json:"linkTtlDays"`
+	NotifyPickedUp  bool                     `json:"notifyPickedUp"`
+	NotifyDelayed   bool                     `json:"notifyDelayed"`
+	NotifyDelivered bool                     `json:"notifyDelivered"`
+	NotifyPodReady  bool                     `json:"notifyPodReady"`
+	IncludeLink     bool                     `json:"includeLink"`
+	Recipients      *string                  `json:"recipients,omitempty"`
+	// The version the settings were read at. A newer version refuses the change.
+	ExpectedVersion *int `json:"expectedVersion,omitempty"`
 }
 
 type UpdateDOTRandomDrawEntryInput struct {

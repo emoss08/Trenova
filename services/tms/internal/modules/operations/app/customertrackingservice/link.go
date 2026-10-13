@@ -73,36 +73,76 @@ func (s *Service) mintLink(
 	return &mintedLink{link: link, url: base + trackingPagePath + url.PathEscape(token)}, nil
 }
 
-func (s *Service) IssueLink(
+// shareable runs every check IssueLink makes before it writes anything, so a
+// preview refuses exactly what the real call would.
+func (s *Service) shareable(
 	ctx context.Context,
 	req *customertrackingports.IssueLinkRequest,
-) (*customertrackingports.IssuedLink, error) {
+) (*shipment.Shipment, *customertracking.Profile, error) {
 	if multiErr := validateIssueRequest(req); multiErr != nil {
-		return nil, multiErr
+		return nil, nil, multiErr
 	}
 	if req.RecipientEmail != "" && !s.canEmail() {
-		return nil, errortypes.NewBusinessError(
+		return nil, nil, errortypes.NewBusinessError(
 			"Email delivery is not configured for this environment",
+		)
+	}
+	if s.cfg.Tendering.GetPublicBaseURL() == "" {
+		return nil, nil, errortypes.NewBusinessError(
+			"Customer tracking links need a public base URL; set tendering.publicBaseUrl",
 		)
 	}
 
 	sh, err := s.loadShipment(ctx, req.TenantInfo, req.ShipmentID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if sh.IsCanceled() {
-		return nil, errortypes.NewBusinessError(
+		return nil, nil, errortypes.NewBusinessError(
 			"This shipment is canceled, so there is nothing to track",
 		)
 	}
 	profile, err := s.profileOrDefault(ctx, req.TenantInfo, sh.CustomerID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if !profile.LinkEnabled {
-		return nil, errortypes.NewBusinessError(
+		return nil, nil, errortypes.NewBusinessError(
 			"Tracking links are turned off for this customer; turn them on in the customer's tracking settings",
 		)
+	}
+	return sh, profile, nil
+}
+
+func (s *Service) PreviewIssueLink(
+	ctx context.Context,
+	req *customertrackingports.IssueLinkRequest,
+) (*customertrackingports.LinkPreview, error) {
+	sh, profile, err := s.shareable(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	preview := &customertrackingports.LinkPreview{
+		ShipmentID:        sh.ID,
+		ShipmentProNumber: sh.ProNumber,
+		CustomerID:        sh.CustomerID,
+		RecipientEmail:    req.RecipientEmail,
+		ExpiresAt:         s.now() + profile.LinkTTLSeconds(),
+		VisibleFields:     profile.VisibleFields,
+	}
+	if sh.Customer != nil {
+		preview.CustomerName = sh.Customer.Name
+	}
+	return preview, nil
+}
+
+func (s *Service) IssueLink(
+	ctx context.Context,
+	req *customertrackingports.IssueLinkRequest,
+) (*customertrackingports.IssuedLink, error) {
+	sh, profile, err := s.shareable(ctx, req)
+	if err != nil {
+		return nil, err
 	}
 
 	minted, err := s.mintLink(
@@ -178,6 +218,38 @@ func (s *Service) RevokeLink(
 		current:    state,
 	})
 	return revoked, nil
+}
+
+func (s *Service) PreviewRevokeLink(
+	ctx context.Context,
+	req *customertrackingports.RevokeLinkRequest,
+) ([]*customertracking.Link, error) {
+	if req == nil || req.ShipmentID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"shipmentId",
+			errortypes.ErrRequired,
+			"Shipment ID is required",
+		)
+	}
+	links, err := s.links.ListForShipment(ctx, req.TenantInfo, req.ShipmentID)
+	if err != nil {
+		return nil, err
+	}
+	now := s.now()
+	live := make([]*customertracking.Link, 0, len(links))
+	for _, link := range links {
+		if link.RevokedAt != nil || (!req.LinkID.IsNil() && link.ID != req.LinkID) {
+			continue
+		}
+		if link.ExpiresAt <= now && req.LinkID.IsNil() {
+			continue
+		}
+		live = append(live, link)
+	}
+	if len(live) == 0 {
+		return nil, errortypes.NewNotFoundError("This shipment has no live customer tracking link")
+	}
+	return live, nil
 }
 
 func (s *Service) ListLinks(

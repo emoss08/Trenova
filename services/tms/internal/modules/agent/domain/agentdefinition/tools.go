@@ -244,6 +244,7 @@ func (t Template) StarterTools() []string {
 			"list_email_profiles",
 			"email_customer",
 			"quote_shipment",
+			"share_customer_tracking_link",
 		}
 	case TemplateLoadMonitor:
 		return []string{

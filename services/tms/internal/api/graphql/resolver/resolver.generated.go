@@ -40,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/costingresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/customerpaymentresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/customerresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/customertrackingresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/customfielddefinitionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/datatableinsightresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionsresolver"
@@ -227,6 +228,7 @@ type Resolver struct {
 	customerEmailProfile               *customerresolver.CustomerEmailProfileResolver
 	customerPayment                    *customerpaymentresolver.CustomerPaymentResolver
 	customerPaymentApplication         *customerpaymentresolver.CustomerPaymentApplicationResolver
+	customerTrackingProfile            *customertrackingresolver.CustomerTrackingProfileResolver
 	dOTRandomDraw                      *workerdrugalcoholresolver.DOTRandomDrawResolver
 	dOTRandomDrawEntry                 *workerdrugalcoholresolver.DOTRandomDrawEntryResolver
 	dOTRandomPool                      *workerdrugalcoholresolver.DOTRandomPoolResolver
@@ -580,6 +582,10 @@ func FromServices(s *Services) *Resolver {
 		CustomerPaymentRepo:    s.CustomerPaymentRepo,
 		CustomerService:        s.CustomerService,
 		InvoiceService:         s.InvoiceService,
+	}
+	customertrackingDeps := &customertrackingresolver.Deps{
+		Core:                    s.Core,
+		CustomerTrackingService: s.CustomerTrackingService,
 	}
 	customfielddefinitionDeps := &customfielddefinitionresolver.Deps{
 		Core:               s.Core,
@@ -1158,6 +1164,7 @@ func FromServices(s *Services) *Resolver {
 		customerEmailProfile:         &customerresolver.CustomerEmailProfileResolver{Deps: customerDeps},
 		customerPayment:              &customerpaymentresolver.CustomerPaymentResolver{Deps: customerpaymentDeps},
 		customerPaymentApplication:   &customerpaymentresolver.CustomerPaymentApplicationResolver{Deps: customerpaymentDeps},
+		customerTrackingProfile:      &customertrackingresolver.CustomerTrackingProfileResolver{Deps: customertrackingDeps},
 		dOTRandomDraw:                &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps},
 		dOTRandomDrawEntry:           &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps},
 		dOTRandomPool:                &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps},
@@ -1262,6 +1269,7 @@ func FromServices(s *Services) *Resolver {
 			checkcallMutation:             &checkcallMutation{Deps: checkcallDeps},
 			costingMutation:               &costingMutation{Deps: costingDeps},
 			customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
+			customertrackingMutation:      &customertrackingMutation{Deps: customertrackingDeps},
 			decisionsMutation:             &decisionsMutation{Deps: decisionsDeps},
 			deskmemoryMutation:            &deskmemoryMutation{Deps: deskmemoryDeps},
 			detentionMutation:             &detentionMutation{Deps: detentionDeps},
@@ -1376,6 +1384,7 @@ func FromServices(s *Services) *Resolver {
 			costingQuery:                  &costingQuery{Deps: costingDeps},
 			customerQuery:                 &customerQuery{Deps: customerDeps},
 			customerpaymentQuery:          &customerpaymentQuery{Deps: customerpaymentDeps},
+			customertrackingQuery:         &customertrackingQuery{Deps: customertrackingDeps},
 			customfielddefinitionQuery:    &customfielddefinitionQuery{Deps: customfielddefinitionDeps},
 			datatableinsightQuery:         &datatableinsightQuery{Deps: datatableinsightDeps},
 			decisionsQuery:                &decisionsQuery{Deps: decisionsDeps},
@@ -1918,6 +1927,10 @@ func (r *Resolver) CustomerPaymentApplication() generated.CustomerPaymentApplica
 	return r.customerPaymentApplication
 }
 
+func (r *Resolver) CustomerTrackingProfile() generated.CustomerTrackingProfileResolver {
+	return r.customerTrackingProfile
+}
+
 func (r *Resolver) DOTRandomDraw() generated.DOTRandomDrawResolver {
 	return r.dOTRandomDraw
 }
@@ -2242,6 +2255,7 @@ type mutationResolver struct {
 	*checkcallMutation
 	*costingMutation
 	*customerpaymentMutation
+	*customertrackingMutation
 	*decisionsMutation
 	*deskmemoryMutation
 	*detentionMutation
@@ -2427,6 +2441,7 @@ type queryResolver struct {
 	*costingQuery
 	*customerQuery
 	*customerpaymentQuery
+	*customertrackingQuery
 	*customfielddefinitionQuery
 	*datatableinsightQuery
 	*decisionsQuery
@@ -2816,6 +2831,7 @@ type (
 	checkcallMutation               = checkcallresolver.MutationResolver
 	costingMutation                 = costingresolver.MutationResolver
 	customerpaymentMutation         = customerpaymentresolver.MutationResolver
+	customertrackingMutation        = customertrackingresolver.MutationResolver
 	decisionsMutation               = decisionsresolver.MutationResolver
 	deskmemoryMutation              = deskmemoryresolver.MutationResolver
 	detentionMutation               = detentionresolver.MutationResolver
@@ -2906,6 +2922,7 @@ type (
 	costingQuery                    = costingresolver.QueryResolver
 	customerQuery                   = customerresolver.QueryResolver
 	customerpaymentQuery            = customerpaymentresolver.QueryResolver
+	customertrackingQuery           = customertrackingresolver.QueryResolver
 	customfielddefinitionQuery      = customfielddefinitionresolver.QueryResolver
 	datatableinsightQuery           = datatableinsightresolver.QueryResolver
 	decisionsQuery                  = decisionsresolver.QueryResolver

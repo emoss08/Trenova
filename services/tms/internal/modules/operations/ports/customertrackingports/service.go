@@ -30,6 +30,18 @@ type IssuedLink struct {
 	EmailError string
 }
 
+// LinkPreview is what issuing a link would do, worked out by the same checks
+// IssueLink makes, with nothing written and nothing sent.
+type LinkPreview struct {
+	ShipmentID        pulid.ID
+	ShipmentProNumber string
+	CustomerID        pulid.ID
+	CustomerName      string
+	RecipientEmail    string
+	ExpiresAt         int64
+	VisibleFields     []customertracking.Field
+}
+
 type RevokeLinkRequest struct {
 	TenantInfo  pagination.TenantInfo
 	ShipmentID  pulid.ID
@@ -142,7 +154,13 @@ type CustomerTrackingService interface {
 		req *UpdateProfileRequest,
 	) (*customertracking.Profile, error)
 	IssueLink(ctx context.Context, req *IssueLinkRequest) (*IssuedLink, error)
+	PreviewIssueLink(ctx context.Context, req *IssueLinkRequest) (*LinkPreview, error)
 	RevokeLink(ctx context.Context, req *RevokeLinkRequest) (int, error)
+	// PreviewRevokeLink lists the live links RevokeLink would revoke.
+	PreviewRevokeLink(
+		ctx context.Context,
+		req *RevokeLinkRequest,
+	) ([]*customertracking.Link, error)
 	ListLinks(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

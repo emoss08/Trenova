@@ -43,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/costingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerpaymentexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customertrackingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customfielddefinitionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/datatableinsightexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
@@ -209,6 +210,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -367,6 +369,7 @@ type ResolverRoot interface {
 	CustomerEmailProfile() CustomerEmailProfileResolver
 	CustomerPayment() CustomerPaymentResolver
 	CustomerPaymentApplication() CustomerPaymentApplicationResolver
+	CustomerTrackingProfile() CustomerTrackingProfileResolver
 	DOTRandomDraw() DOTRandomDrawResolver
 	DOTRandomDrawEntry() DOTRandomDrawEntryResolver
 	DOTRandomPool() DOTRandomPoolResolver
@@ -1089,6 +1092,10 @@ type CustomerPaymentApplicationResolver interface {
 	Invoice(ctx context.Context, obj *customerpayment.Application) (*invoice.Invoice, error)
 }
 
+type CustomerTrackingProfileResolver interface {
+	ID(ctx context.Context, obj *customertracking.Profile) (*string, error)
+}
+
 type DOTRandomDrawResolver interface {
 	DrawnByID(ctx context.Context, obj *worker.DOTRandomDraw) (*string, error)
 	FinalizedAt(ctx context.Context, obj *worker.DOTRandomDraw) (*int, error)
@@ -1749,6 +1756,9 @@ type MutationResolver interface {
 	ReverseCustomerPayment(ctx context.Context, input gqlmodel.ReverseCustomerPaymentInput) (*customerpayment.Payment, error)
 	ApplyCreditMemo(ctx context.Context, input gqlmodel.ApplyCreditMemoInput) ([]*customerpayment.CreditMemoApplication, error)
 	UnapplyCreditMemoApplication(ctx context.Context, input gqlmodel.UnapplyCreditMemoApplicationInput) (*customerpayment.CreditMemoApplication, error)
+	UpdateCustomerTrackingProfile(ctx context.Context, input gqlmodel.UpdateCustomerTrackingProfileInput) (*customertracking.Profile, error)
+	IssueCustomerTrackingLink(ctx context.Context, input gqlmodel.IssueCustomerTrackingLinkInput) (*gqlmodel.IssueCustomerTrackingLinkPayload, error)
+	RevokeCustomerTrackingLink(ctx context.Context, shipmentID string, linkID *string) (int, error)
 	DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
 	CreateDeskMemory(ctx context.Context, input gqlmodel.CreateDeskMemoryInput) (*gqlmodel.DeskMemory, error)
 	ReviseDeskMemory(ctx context.Context, id string, input gqlmodel.ReviseDeskMemoryInput) (*gqlmodel.DeskMemory, error)
@@ -2516,6 +2526,9 @@ type QueryResolver interface {
 	Customer(ctx context.Context, id string) (*customer.Customer, error)
 	CustomerPayments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerPaymentConnection, error)
 	CustomerPayment(ctx context.Context, id string) (*customerpayment.Payment, error)
+	CustomerTrackingProfile(ctx context.Context, customerID string) (*customertracking.Profile, error)
+	CustomerTrackingLinks(ctx context.Context, shipmentID string) ([]*customertracking.Link, error)
+	CustomerStatusNotifications(ctx context.Context, shipmentID string) ([]*customertracking.Notification, error)
 	DataTableFacets(ctx context.Context, input gqlmodel.DataTableFacetInput) (*gqlmodel.DataTableFacets, error)
 	DataTableAggregates(ctx context.Context, input gqlmodel.DataTableAggregateInput) (*gqlmodel.DataTableAggregates, error)
 	DataTableSeries(ctx context.Context, input gqlmodel.DataTableSeriesInput) (*gqlmodel.DataTableSeries, error)
@@ -3428,6 +3441,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		costingexec.Shard,
 		customerexec.Shard,
 		customerpaymentexec.Shard,
+		customertrackingexec.Shard,
 		customfielddefinitionexec.Shard,
 		datatableinsightexec.Shard,
 		decisionsexec.Shard,
@@ -3627,6 +3641,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"CustomerEmailProfile":               func() any { return r.CustomerEmailProfile() },
 			"CustomerPayment":                    func() any { return r.CustomerPayment() },
 			"CustomerPaymentApplication":         func() any { return r.CustomerPaymentApplication() },
+			"CustomerTrackingProfile":            func() any { return r.CustomerTrackingProfile() },
 			"DOTRandomDraw":                      func() any { return r.DOTRandomDraw() },
 			"DOTRandomDrawEntry":                 func() any { return r.DOTRandomDrawEntry() },
 			"DOTRandomPool":                      func() any { return r.DOTRandomPool() },
@@ -13846,6 +13861,194 @@ extend type Mutation {
   applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]!
   "Takes one credit memo application back."
   unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication!
+}
+`, BuiltIn: false},
+	{Name: "../schema/customertracking.graphqls", Input: `"A part of a shipment a customer's tracking link may show."
+enum CustomerTrackingField {
+  "Planned, in transit, delayed, delivered or canceled."
+  Status
+  "Each stop's location name and street address, not just its city."
+  LocationNames
+  "Each stop's appointment window."
+  Windows
+  "When each stop was actually reached and left."
+  Actuals
+  "The projected arrival at each stop not yet reached."
+  Eta
+  "The bill of lading number and the customer's own reference."
+  References
+  "The carrier hauling the load."
+  Carrier
+  "The equipment the load was ordered on."
+  Equipment
+  "Pieces and weight."
+  Freight
+  "The last city and state a check call reported."
+  LastLocation
+  "Holds marked visible to the customer."
+  Holds
+  "Shipment comments marked for the customer."
+  Notes
+  "The proof of delivery, downloadable through the link."
+  ProofOfDelivery
+}
+
+"Why a customer tracking link was made."
+enum CustomerTrackingLinkPurpose {
+  "Shared by a person."
+  Shared
+  "Minted for a status email."
+  Notification
+}
+
+"A status email a customer's rules can ask for."
+enum CustomerStatusEvent {
+  PickedUp
+  Delayed
+  Delivered
+  PodReady
+}
+
+"Where a status email stands."
+enum CustomerStatusNotificationStatus {
+  "Owed and not yet sent; retried with backoff after a failure."
+  Pending
+  Sent
+  "Deliberately not sent; the reason says why."
+  Skipped
+  "Gave up after repeated failures."
+  Failed
+}
+
+"Why a status email was not sent."
+enum CustomerStatusSkipReason {
+  "Neither the tracking settings nor the customer name anyone to send to."
+  NoRecipients
+  "The rule was turned off before the email went out."
+  RuleOff
+  "The shipment was canceled or removed."
+  ShipmentGone
+}
+
+"""
+What a customer sees through a shipment tracking link, and which status emails
+it is sent. A customer that has never had these changed reads the defaults,
+with no id.
+"""
+type CustomerTrackingProfile {
+  "Empty until the settings are first saved."
+  id: ID
+  customerId: ID!
+  "Whether links can be shared for this customer's shipments. Turning it off stops every existing link."
+  linkEnabled: Boolean!
+  visibleFields: [CustomerTrackingField!]!
+  "How long a new link lasts, from 1 to 180 days."
+  linkTtlDays: Int!
+  notifyPickedUp: Boolean!
+  notifyDelayed: Boolean!
+  notifyDelivered: Boolean!
+  notifyPodReady: Boolean!
+  "Whether each status email carries its own tracking link."
+  includeLink: Boolean!
+  """
+  Who the status emails go to. Empty falls back to the customer's status update
+  recipients, then to the To line of its email profile.
+  """
+  recipients: String
+  "When a rule was last switched on. Events before it are never emailed."
+  notificationsEnabledAt: Timestamp
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+"""
+A shareable link to one shipment's tracking page. Only its existence is shown:
+the link itself is returned once, when it is issued.
+"""
+type CustomerTrackingLink {
+  id: ID!
+  shipmentId: ID!
+  customerId: ID!
+  purpose: CustomerTrackingLinkPurpose!
+  recipientEmail: String
+  expiresAt: Timestamp!
+  revokedAt: Timestamp
+  lastViewedAt: Timestamp
+  viewCount: Int!
+  createdById: ID
+  createdAt: Timestamp!
+}
+
+"One status email a shipment owes its customer, and what became of it."
+type CustomerStatusNotification {
+  id: ID!
+  shipmentId: ID!
+  event: CustomerStatusEvent!
+  "The stop a delay is about."
+  stopId: ID
+  "When it happened: the departure, the projection, or the filing."
+  occurredAt: Timestamp!
+  "The projected arrival a delay email gave."
+  estimatedAt: Timestamp
+  status: CustomerStatusNotificationStatus!
+  skipReason: CustomerStatusSkipReason
+  recipients: [String!]!
+  attempts: Int!
+  lastError: String
+  sentAt: Timestamp
+  createdAt: Timestamp!
+}
+
+input UpdateCustomerTrackingProfileInput {
+  customerId: ID!
+  linkEnabled: Boolean!
+  visibleFields: [CustomerTrackingField!]!
+  linkTtlDays: Int!
+  notifyPickedUp: Boolean!
+  notifyDelayed: Boolean!
+  notifyDelivered: Boolean!
+  notifyPodReady: Boolean!
+  includeLink: Boolean!
+  recipients: String
+  "The version the settings were read at. A newer version refuses the change."
+  expectedVersion: Int
+}
+
+input IssueCustomerTrackingLinkInput {
+  shipmentId: ID!
+  "Where to email the link. Leave empty to copy it instead."
+  recipientEmail: String
+}
+
+type IssueCustomerTrackingLinkPayload {
+  link: CustomerTrackingLink!
+  "The link to share. It is not stored and cannot be shown again."
+  url: String!
+  emailed: Boolean!
+  "Why the email could not be sent, when one was asked for. The link still works."
+  emailError: String
+}
+
+extend type Query {
+  "A customer's tracking link and status email settings, or the defaults."
+  customerTrackingProfile(customerId: ID!): CustomerTrackingProfile!
+  "Every tracking link shared for a shipment, newest first, live or not."
+  customerTrackingLinks(shipmentId: ID!): [CustomerTrackingLink!]!
+  "The status emails a shipment has owed its customer, newest first."
+  customerStatusNotifications(shipmentId: ID!): [CustomerStatusNotification!]!
+}
+
+extend type Mutation {
+  "Change what a customer's tracking links show and which status emails it is sent."
+  updateCustomerTrackingProfile(
+    input: UpdateCustomerTrackingProfileInput!
+  ): CustomerTrackingProfile!
+  "Share a new tracking link for a shipment, optionally emailing it."
+  issueCustomerTrackingLink(
+    input: IssueCustomerTrackingLinkInput!
+  ): IssueCustomerTrackingLinkPayload!
+  "Revoke one tracking link, or every live link on the shipment. Returns how many were revoked."
+  revokeCustomerTrackingLink(shipmentId: ID!, linkId: ID): Int!
 }
 `, BuiltIn: false},
 	{Name: "../schema/data_table_insight.graphqls", Input: `"How many of a table's filtered rows hold each value of one field."

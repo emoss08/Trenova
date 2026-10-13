@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/costingcontrolcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customertrackingcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/customfieldcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
 	"github.com/emoss08/trenova/pkg/buncolgen/distanceoverridecol"
@@ -274,6 +275,12 @@ var CustomerEmailProfileSpec TypeSpec
 var CustomerPaymentSpec TypeSpec
 
 var CustomerPaymentApplicationSpec TypeSpec
+
+var CustomerStatusNotificationSpec TypeSpec
+
+var CustomerTrackingLinkSpec TypeSpec
+
+var CustomerTrackingProfileSpec TypeSpec
 
 var DOTRandomDrawSpec TypeSpec
 
@@ -9434,6 +9441,191 @@ func init() {
 			{
 				Name:    "payment",
 				Special: "payment",
+			},
+		},
+	}
+
+	CustomerStatusNotificationSpec = TypeSpec{
+		TypeName: "CustomerStatusNotification",
+		FieldMap: map[string]string{"attempts": "attempts", "businessUnitId": "business_unit_id", "createdAt": "created_at", "customerId": "customer_id", "emailMessageId": "email_message_id", "estimatedAt": "estimated_at", "event": "event", "id": "id", "lastError": "last_error", "linkId": "link_id", "nextAttemptAt": "next_attempt_at", "occurredAt": "occurred_at", "organizationId": "organization_id", "recipients": "recipients", "sentAt": "sent_at", "shipmentId": "shipment_id", "skipReason": "skip_reason", "status": "status", "stopId": "stop_id", "subjectKey": "subject_key", "updatedAt": "updated_at"},
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "event",
+				FieldMapKey: "event",
+			},
+			{
+				Name:        "stopId",
+				FieldMapKey: "stopId",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "estimatedAt",
+				FieldMapKey: "estimatedAt",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "skipReason",
+				FieldMapKey: "skipReason",
+			},
+			{
+				Name:        "recipients",
+				FieldMapKey: "recipients",
+			},
+			{
+				Name:        "attempts",
+				FieldMapKey: "attempts",
+			},
+			{
+				Name:        "lastError",
+				FieldMapKey: "lastError",
+			},
+			{
+				Name:        "sentAt",
+				FieldMapKey: "sentAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	CustomerTrackingLinkSpec = TypeSpec{
+		TypeName: "CustomerTrackingLink",
+		FieldMap: customertrackingcol.LinkFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "purpose",
+				FieldMapKey: "purpose",
+			},
+			{
+				Name:        "recipientEmail",
+				FieldMapKey: "recipientEmail",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "revokedAt",
+				FieldMapKey: "revokedAt",
+			},
+			{
+				Name:        "lastViewedAt",
+				FieldMapKey: "lastViewedAt",
+			},
+			{
+				Name:        "viewCount",
+				FieldMapKey: "viewCount",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	CustomerTrackingProfileSpec = TypeSpec{
+		TypeName: "CustomerTrackingProfile",
+		FieldMap: map[string]string{"businessUnitId": "business_unit_id", "createdAt": "created_at", "customerId": "customer_id", "id": "id", "includeLink": "include_link", "linkEnabled": "link_enabled", "linkTtlDays": "link_ttl_days", "notificationsEnabledAt": "notifications_enabled_at", "notifyDelayed": "notify_delayed", "notifyDelivered": "notify_delivered", "notifyPickedUp": "notify_picked_up", "notifyPodReady": "notify_pod_ready", "organizationId": "organization_id", "recipients": "recipients", "updatedAt": "updated_at", "version": "version", "visibleFields": "visible_fields"},
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "linkEnabled",
+				FieldMapKey: "linkEnabled",
+			},
+			{
+				Name:        "visibleFields",
+				FieldMapKey: "visibleFields",
+			},
+			{
+				Name:        "linkTtlDays",
+				FieldMapKey: "linkTtlDays",
+			},
+			{
+				Name:        "notifyPickedUp",
+				FieldMapKey: "notifyPickedUp",
+			},
+			{
+				Name:        "notifyDelayed",
+				FieldMapKey: "notifyDelayed",
+			},
+			{
+				Name:        "notifyDelivered",
+				FieldMapKey: "notifyDelivered",
+			},
+			{
+				Name:        "notifyPodReady",
+				FieldMapKey: "notifyPodReady",
+			},
+			{
+				Name:        "includeLink",
+				FieldMapKey: "includeLink",
+			},
+			{
+				Name:        "recipients",
+				FieldMapKey: "recipients",
+			},
+			{
+				Name:        "notificationsEnabledAt",
+				FieldMapKey: "notificationsEnabledAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}

@@ -733,6 +733,15 @@ writes:
   "mutation revokeCarrierTrackingLink":
     pending: "Revoke the live carrier tracking link on a move, so the carrier can no longer post through it."
 
+  # customertracking
+  "mutation issueCustomerTrackingLink":
+    tools: [share_customer_tracking_link]
+  "mutation revokeCustomerTrackingLink":
+    tools: [revoke_customer_tracking_link]
+  "mutation updateCustomerTrackingProfile":
+    exempt: configuration
+    reason: "What a customer's tracking page shows and which status emails it gets is a commercial agreement with the customer, set by a person on the customer record."
+
   # collection
   "POST /api/v1/accounting/collections/customers/:customerID/activities/":
     pending: "Log a call, email, note or promise to pay against a customer's overdue receivables."
