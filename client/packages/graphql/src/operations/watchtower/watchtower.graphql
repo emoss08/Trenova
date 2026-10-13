@@ -13,6 +13,42 @@ fragment WatchtowerItemFields on WatchtowerItem {
   resolvedAt
   seen
   kindLabel
+  version
+  status
+  assigneeId
+  assignee {
+    id
+    name
+  }
+  dueAt
+  overdue
+  snoozedUntil
+  acknowledgedAt
+  resolutionCode
+  resolutionNote
+  resolvedById
+  resolvedBy {
+    id
+    name
+  }
+  sourceClearedAt
+  escalationLevel
+  lastEscalatedAt
+}
+
+fragment WatchtowerItemEventFields on WatchtowerItemEvent {
+  id
+  itemId
+  kind
+  actorId
+  actor {
+    id
+    name
+  }
+  fromValue
+  toValue
+  note
+  createdAt
 }
 
 fragment WatchtowerCountsFields on WatchtowerCounts {
@@ -20,6 +56,10 @@ fragment WatchtowerCountsFields on WatchtowerCounts {
   critical
   unseen
   unseenCritical
+  overdue
+  unassigned
+  mine
+  mineOverdue
   seenAt
   byKind {
     kind
@@ -86,5 +126,73 @@ mutation HandOffWatchtowerItem($id: ID!, $input: HandOffWatchtowerItemInput!) {
       template
     }
     templates
+  }
+}
+
+query WatchtowerItemDetail($id: ID!) {
+  watchtowerItem(id: $id) {
+    ...WatchtowerItemFields
+  }
+}
+
+query WatchtowerItemHistory($id: ID!, $limit: Int) {
+  watchtowerItemHistory(id: $id, limit: $limit) {
+    ...WatchtowerItemEventFields
+  }
+}
+
+query WatchtowerResolutionCodes {
+  watchtowerResolutionCodes {
+    code
+    label
+    requiresNote
+  }
+}
+
+mutation AssignWatchtowerItem($id: ID!, $input: AssignWatchtowerItemInput!) {
+  assignWatchtowerItem(id: $id, input: $input) {
+    ...WatchtowerItemFields
+  }
+}
+
+mutation AcknowledgeWatchtowerItem($id: ID!, $expectedVersion: Int) {
+  acknowledgeWatchtowerItem(id: $id, expectedVersion: $expectedVersion) {
+    ...WatchtowerItemFields
+  }
+}
+
+mutation StartWatchtowerItem($id: ID!, $expectedVersion: Int) {
+  startWatchtowerItem(id: $id, expectedVersion: $expectedVersion) {
+    ...WatchtowerItemFields
+  }
+}
+
+mutation SnoozeWatchtowerItem($id: ID!, $input: SnoozeWatchtowerItemInput!) {
+  snoozeWatchtowerItem(id: $id, input: $input) {
+    ...WatchtowerItemFields
+  }
+}
+
+mutation SetWatchtowerItemDue($id: ID!, $input: SetWatchtowerItemDueInput!) {
+  setWatchtowerItemDue(id: $id, input: $input) {
+    ...WatchtowerItemFields
+  }
+}
+
+mutation CommentOnWatchtowerItem($id: ID!, $body: String!) {
+  commentOnWatchtowerItem(id: $id, body: $body) {
+    ...WatchtowerItemEventFields
+  }
+}
+
+mutation ResolveWatchtowerItem($id: ID!, $input: ResolveWatchtowerItemInput!) {
+  resolveWatchtowerItem(id: $id, input: $input) {
+    ...WatchtowerItemFields
+  }
+}
+
+mutation ReopenWatchtowerItem($id: ID!, $input: ReopenWatchtowerItemInput!) {
+  reopenWatchtowerItem(id: $id, input: $input) {
+    ...WatchtowerItemFields
   }
 }

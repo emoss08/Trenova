@@ -924,6 +924,7 @@ modules:
       - casechecklistrepository
       - conversationrepository
       - conversationschedulerepository
+      - exceptionsourcerepository
       - insightrepository
       - recordlabelrepository
       - roleagentgrantrepository

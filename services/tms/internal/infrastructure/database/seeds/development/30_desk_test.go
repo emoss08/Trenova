@@ -92,6 +92,11 @@ func TestDeskSeed_OneStandingItemIsAlreadyResolved(t *testing.T) {
 	for _, item := range NewDeskSeed().standingItems(deskRefs(t)) {
 		if item.IsResolved() {
 			resolved++
+			assert.Equal(t, watchtower.StatusResolved, item.Status,
+				"a resolved row must say so, or the table's resolution check refuses it")
+			assert.Equal(t, watchtower.ResolutionCleared, item.ResolutionCode)
+		} else {
+			assert.NotEqual(t, watchtower.StatusResolved, item.Status)
 		}
 	}
 

@@ -45,6 +45,18 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Raise and clear watchtower items for brokered loads overdue a check call",
 		},
 		{
+			Name:        ExceptionAttentionWorkflowName,
+			Fn:          ExceptionAttentionWorkflow,
+			TaskQueue:   temporaltype.TaskQueueSystem.String(),
+			Description: "Wake snoozed exceptions and escalate overdue ones",
+		},
+		{
+			Name:        ShipmentExceptionSweepWorkflowName,
+			Fn:          ShipmentExceptionSweepWorkflow,
+			TaskQueue:   temporaltype.TaskQueueSystem.String(),
+			Description: "Raise and clear missed stops, missing PODs and exhausted tenders",
+		},
+		{
 			Name:        WatchtowerRetentionWorkflowName,
 			Fn:          WatchtowerRetentionWorkflow,
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
@@ -108,6 +120,36 @@ func NoCheckCallSweepWorkflow(ctx workflow.Context) (*WatchtowerSweepResult, err
 	if err := workflow.ExecuteActivity(ctx, a.NoCheckCallSweepActivity).
 		Get(ctx, result); err != nil {
 		workflow.GetLogger(ctx).Error("No check call sweep workflow failed", "error", err)
+
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func ExceptionAttentionWorkflow(ctx workflow.Context) (*ExceptionAttentionResult, error) {
+	ctx = workflow.WithActivityOptions(ctx, watchtowerActivityOptions)
+
+	var a *Activities
+	result := new(ExceptionAttentionResult)
+	if err := workflow.ExecuteActivity(ctx, a.ExceptionAttentionActivity).
+		Get(ctx, result); err != nil {
+		workflow.GetLogger(ctx).Error("Exception attention workflow failed", "error", err)
+
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func ShipmentExceptionSweepWorkflow(ctx workflow.Context) (*WatchtowerSweepResult, error) {
+	ctx = workflow.WithActivityOptions(ctx, watchtowerActivityOptions)
+
+	var a *Activities
+	result := new(WatchtowerSweepResult)
+	if err := workflow.ExecuteActivity(ctx, a.ShipmentExceptionSweepActivity).
+		Get(ctx, result); err != nil {
+		workflow.GetLogger(ctx).Error("Shipment exception sweep workflow failed", "error", err)
 
 		return nil, err
 	}

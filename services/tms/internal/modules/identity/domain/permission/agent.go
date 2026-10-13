@@ -205,8 +205,13 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead:   {},
 		OpUpdate: {},
 	},
+	// The load monitor works the exceptions on the loads it watches: it notes
+	// what a carrier said, snoozes what cannot move yet, routes an exception to
+	// its owner and proposes closing what is dealt with. Each write starts as a
+	// proposal a person approves.
 	ResourceWatchtower: {
-		OpRead: {},
+		OpRead:   {},
+		OpUpdate: {},
 	},
 	// Searching and reading public pages, through an extension the
 	// organization turned on. What the agent reads there can only lead to a

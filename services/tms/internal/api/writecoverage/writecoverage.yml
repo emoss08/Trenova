@@ -3002,8 +3002,26 @@ writes:
     reason: "Asks the release server whether a newer version exists and changes nothing."
 
   # watchtower
+  "mutation acknowledgeWatchtowerItem":
+    exempt: attestation
+    reason: "A person saying they have seen an exception, and taking it if nobody owns it; an agent cannot see on someone's behalf."
+  "mutation assignWatchtowerItem":
+    tools: [assign_exception]
+  "mutation commentOnWatchtowerItem":
+    tools: [comment_on_exception]
   "mutation dismissWatchtowerItem":
     tools: [dismiss_watchtower_item]
+  "mutation reopenWatchtowerItem":
+    tools: [reopen_exception]
+  "mutation resolveWatchtowerItem":
+    tools: [resolve_exception]
+  "mutation setWatchtowerItemDue":
+    tools: [set_exception_due]
+  "mutation snoozeWatchtowerItem":
+    tools: [snooze_exception]
+  "mutation startWatchtowerItem":
+    exempt: attestation
+    reason: "A person saying they are working an exception now, and taking it if nobody owns it; an agent cannot start work for them."
   "mutation handOffWatchtowerItem":
     exempt: agent-administration
     reason: "Starts an agent on the item's subject, or publishes its event to the agents that subscribe; agents hand work to one another through delegate_task instead."

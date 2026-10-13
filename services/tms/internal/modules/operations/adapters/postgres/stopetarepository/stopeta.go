@@ -198,6 +198,7 @@ func (r *repository) ListAttention(
 			item := &stopetaports.AttentionStop{ETA: row}
 			if m, ok := meta[row.StopID]; ok {
 				item.ProNumber = m.ProNumber
+				item.OwnerID = m.OwnerID
 				item.StopType = m.StopType
 				item.LocationName = m.LocationName
 				item.City = m.City
@@ -254,6 +255,7 @@ type stopMetaRow struct {
 	StopID       pulid.ID          `bun:"stop_id"`
 	StopType     shipment.StopType `bun:"stop_type"`
 	ProNumber    string            `bun:"pro_number"`
+	OwnerID      pulid.ID          `bun:"owner_id"`
 	LocationName string            `bun:"location_name"`
 	City         string            `bun:"city"`
 	StateCode    string            `bun:"state_code"`
@@ -280,6 +282,7 @@ func (r *repository) stopMeta(
 		ColumnExpr(stp.ID.As("stop_id")).
 		ColumnExpr(stp.Type.As("stop_type")).
 		ColumnExpr(sp.ProNumber.As("pro_number")).
+		ColumnExpr(sp.OwnerID.As("owner_id")).
 		ColumnExpr(loc.Name.Expr("COALESCE({}, '')")+" AS location_name").
 		ColumnExpr(loc.City.Expr("COALESCE({}, '')")+" AS city").
 		ColumnExpr(ust.Abbreviation.Expr("COALESCE({}, '')")+" AS state_code").

@@ -360,6 +360,8 @@ func (s *DeskSeed) standingItems(refs *deskSeedRefs) []*watchtower.Item {
 		refs.now-deskSeedDay,
 	)
 	closed.ResolvedAt = &resolved
+	closed.Status = watchtower.StatusResolved
+	closed.ResolutionCode = watchtower.ResolutionCleared
 
 	return []*watchtower.Item{
 		build(

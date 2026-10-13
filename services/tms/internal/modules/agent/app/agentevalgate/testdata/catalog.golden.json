@@ -2576,6 +2576,63 @@
       }
     },
     {
+      "name": "assign_exception",
+      "description": "Give an exception on the watchtower to a person, or to nobody, so someone owns getting it dealt with. The new owner must be able to see the record behind it; they are told it is theirs.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "assigneeId": {
+            "description": "The person who should own it: the person who asked, or an assigneeId list_watchtower_items shows. Omit to leave it with nobody. Never guess one.",
+            "type": "string",
+            "x-recordOf": "user"
+          },
+          "note": {
+            "description": "Why it goes to them, kept in its history.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "watchtowerItemId": {
+            "description": "The exception, from list_watchtower_items. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "watchtower_item"
+            ]
+          }
+        },
+        "required": [
+          "watchtowerItemId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "assign exception",
+        "give to",
+        "owner",
+        "reassign alert"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "watchtower",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes who owns an exception inside Trenova and notifies that person; the record behind it is unchanged."
+      }
+    },
+    {
       "name": "assign_fuel_card",
       "description": "Assign a fuel card to the tractor or driver that carries it, most often a card a feed discovered. Assigning a suspended card also activates it, and once assigned, resolve_fuel_purchase_import_rows posts the purchases that waited for it.",
       "parameters": {
@@ -4738,6 +4795,58 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Closes a training assignment inside Trenova; the reason stays on the record, and the course is assigned again the same way."
+      }
+    },
+    {
+      "name": "comment_on_exception",
+      "description": "Add a note to an exception's history, such as what the carrier said. Its owner is told. The history is never edited.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "description": "The comment, in plain words.",
+            "maxLength": 4000,
+            "type": "string"
+          },
+          "watchtowerItemId": {
+            "description": "The exception, from list_watchtower_items. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "watchtower_item"
+            ]
+          }
+        },
+        "required": [
+          "watchtowerItemId",
+          "body"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "comment on exception",
+        "note on alert",
+        "exception history"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "watchtower",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds a line to an exception's history inside Trenova and tells its owner."
       }
     },
     {
@@ -22434,13 +22543,17 @@
     },
     {
       "name": "list_watchtower_items",
-      "description": "List the watchtower feed of open items that need attention now, newest first: failed agent runs, proposals awaiting a decision, exceptions and service failures. It also carries weather, quarantined EDI files, inbound email to review and coverage at risk. Narrow it by kind or severity. It never marks anything seen.",
+      "description": "List the watchtower feed of open items that need attention now, newest first: failed agent runs, proposals awaiting a decision, exceptions and service failures. It also carries weather, quarantined EDI files, inbound email to review and coverage at risk, missed stops, missing PODs and exhausted tenders. Each exception shows its status, owner, due time and whether it is overdue. Narrow it by kind, severity, owner or overdue, or order it by due time. It never marks anything seen.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "after": {
             "description": "The nextCursor of a previous result, for the page after it.",
             "type": "string"
+          },
+          "assignedToMe": {
+            "description": "Only exceptions the person owns. Ignored when an agent runs on its own.",
+            "type": "boolean"
           },
           "includeResolved": {
             "description": "Also list items whose source has since resolved. Off by default: the feed is what is still open.",
@@ -22469,7 +22582,11 @@
                 "AgentQualityRegression",
                 "AccountingSync",
                 "NoCheckCall",
-                "EtaAtRisk"
+                "EtaAtRisk",
+                "MissedPickup",
+                "MissedDelivery",
+                "PodMissing",
+                "TenderExhausted"
               ],
               "type": "string",
               "x-enumOf": "watchtower.sourceKind"
@@ -22479,6 +22596,14 @@
           "limit": {
             "description": "How many rows to return: 20 unless you ask, at most 50.",
             "type": "integer"
+          },
+          "orderByDue": {
+            "description": "Soonest due first instead of newest first; items with no due time come last.",
+            "type": "boolean"
+          },
+          "overdueOnly": {
+            "description": "Only open exceptions past their due time.",
+            "type": "boolean"
           },
           "severities": {
             "description": "Only items of these severities.",
@@ -22492,6 +22617,10 @@
               "x-enumOf": "watchtower.severity"
             },
             "type": "array"
+          },
+          "unassigned": {
+            "description": "Only exceptions nobody owns.",
+            "type": "boolean"
           },
           "unseenOnly": {
             "description": "Only items the person has not been shown yet, from their own place in the feed. Ignored when an agent runs on its own.",
@@ -28585,6 +28714,56 @@
       }
     },
     {
+      "name": "reopen_exception",
+      "description": "Open a resolved exception again when it was closed too soon. It gets a fresh due time and keeps its owner.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "description": "Why it is open again, kept in its history.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "watchtowerItemId": {
+            "description": "The exception, from list_watchtower_items. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "watchtower_item"
+            ]
+          }
+        },
+        "required": [
+          "watchtowerItemId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "reopen exception",
+        "not resolved"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "watchtower",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Puts an exception back on the open queue inside Trenova; nothing outside changes."
+      }
+    },
+    {
       "name": "reopen_fiscal_period",
       "description": "Propose reopening a closed fiscal period, with the reason, so a correction can post in it. Later periods must be reopened first and a closed fiscal year never is. A person always decides.",
       "parameters": {
@@ -29550,6 +29729,79 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Closes a carrier finding inside Trenova."
+      }
+    },
+    {
+      "name": "resolve_exception",
+      "description": "Close an exception with the reason it is closed. The resolution holds while the record behind it still shows the problem; it reopens only after the problem clears and comes back. Other needs a note.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "description": "How it was resolved. Required when the code is Other.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "resolutionCode": {
+            "description": "Why it is closed.",
+            "enum": [
+              "Fixed",
+              "CarrierDelay",
+              "ShipperDelay",
+              "ReceiverDelay",
+              "CustomerChange",
+              "Rescheduled",
+              "Weather",
+              "Equipment",
+              "DriverIssue",
+              "DocumentReceived",
+              "DataCorrected",
+              "Duplicate",
+              "NoActionNeeded",
+              "Other"
+            ],
+            "type": "string",
+            "x-enumOf": "watchtower.resolutionCode"
+          },
+          "watchtowerItemId": {
+            "description": "The exception, from list_watchtower_items. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "watchtower_item"
+            ]
+          }
+        },
+        "required": [
+          "watchtowerItemId",
+          "resolutionCode"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "resolve exception",
+        "close exception",
+        "mark handled"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "watchtower",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Closes an exception inside Trenova with an audited reason; the record behind it is unchanged."
       }
     },
     {
@@ -32193,6 +32445,65 @@
       }
     },
     {
+      "name": "set_exception_due",
+      "description": "Move when an exception must be dealt with, or clear its due time. An exception past its due time escalates to its owner and the escalation contact.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "dueAt": {
+            "description": "The new due time, at most 90 days out. Omit to clear it. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+            "examples": [
+              "2026-10-01T08:00"
+            ],
+            "format": "local-date-time",
+            "type": "string"
+          },
+          "note": {
+            "description": "Why it moved, kept in its history.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "watchtowerItemId": {
+            "description": "The exception, from list_watchtower_items. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "watchtower_item"
+            ]
+          }
+        },
+        "required": [
+          "watchtowerItemId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "exception due",
+        "extend deadline",
+        "due time"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "watchtower",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes when an exception escalates inside Trenova; nothing outside changes."
+      }
+    },
+    {
       "name": "set_field_value",
       "description": "Set or correct the value of a field on the import page, such as the BOL, the weight, the pieces or the freight rate. Use it with the value the person gave you or one the document plainly shows; never make a value up.",
       "parameters": {
@@ -32877,6 +33188,66 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Leaves a document out of the organization's books for good; nothing sends it again, so a person approves it."
+      }
+    },
+    {
+      "name": "snooze_exception",
+      "description": "Put an exception aside until a time when nothing can be done before then, such as a receiver that opens at 7. It wakes on its own and its owner is told.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "description": "Why it can wait, kept in its history.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "until": {
+            "description": "When it should come back, at most 30 days out. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+            "examples": [
+              "2026-10-01T08:00"
+            ],
+            "format": "local-date-time",
+            "type": "string"
+          },
+          "watchtowerItemId": {
+            "description": "The exception, from list_watchtower_items. Never guess one.",
+            "type": "string",
+            "x-recordKinds": [
+              "watchtower_item"
+            ]
+          }
+        },
+        "required": [
+          "watchtowerItemId",
+          "until"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "snooze exception",
+        "remind me later",
+        "put aside"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "watchtower",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Hides an exception from the open queue until a time; nothing outside Trenova changes."
       }
     },
     {

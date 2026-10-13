@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -24,7 +25,9 @@ var Shard = &gqlexec.Shard{
 		{Name: "WatchtowerItem", Implementors: []string{"WatchtowerItem"}},
 		{Name: "WatchtowerItemConnection", Implementors: []string{"WatchtowerItemConnection"}},
 		{Name: "WatchtowerItemEdge", Implementors: []string{"WatchtowerItemEdge"}},
+		{Name: "WatchtowerItemEvent", Implementors: []string{"WatchtowerItemEvent"}},
 		{Name: "WatchtowerKindSummary", Implementors: []string{"WatchtowerKindSummary"}},
+		{Name: "WatchtowerResolutionCodeOption", Implementors: []string{"WatchtowerResolutionCodeOption"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -67,6 +70,110 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNWatchtowerHandOffResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWatchtowerHandOffResult),
 			},
+			{
+				Name:       "assignWatchtowerItem",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerItem",
+				Args:       field_Mutation_assignWatchtowerItem_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignWatchtowerItem(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AssignWatchtowerItemInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem),
+			},
+			{
+				Name:       "acknowledgeWatchtowerItem",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerItem",
+				Args:       field_Mutation_acknowledgeWatchtowerItem_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AcknowledgeWatchtowerItem(ctx, fc.Args["id"].(string), fc.Args["expectedVersion"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem),
+			},
+			{
+				Name:       "startWatchtowerItem",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerItem",
+				Args:       field_Mutation_startWatchtowerItem_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").StartWatchtowerItem(ctx, fc.Args["id"].(string), fc.Args["expectedVersion"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem),
+			},
+			{
+				Name:       "snoozeWatchtowerItem",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerItem",
+				Args:       field_Mutation_snoozeWatchtowerItem_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SnoozeWatchtowerItem(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.SnoozeWatchtowerItemInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem),
+			},
+			{
+				Name:       "setWatchtowerItemDue",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerItem",
+				Args:       field_Mutation_setWatchtowerItemDue_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetWatchtowerItemDue(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.SetWatchtowerItemDueInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem),
+			},
+			{
+				Name:       "commentOnWatchtowerItem",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerItemEvent",
+				Args:       field_Mutation_commentOnWatchtowerItem_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CommentOnWatchtowerItem(ctx, fc.Args["id"].(string), fc.Args["body"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItemEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐEvent),
+			},
+			{
+				Name:       "resolveWatchtowerItem",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerItem",
+				Args:       field_Mutation_resolveWatchtowerItem_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResolveWatchtowerItem(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ResolveWatchtowerItemInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem),
+			},
+			{
+				Name:       "reopenWatchtowerItem",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerItem",
+				Args:       field_Mutation_reopenWatchtowerItem_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReopenWatchtowerItem(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ReopenWatchtowerItemInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem),
+			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
@@ -94,6 +201,46 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WatchtowerCounts(ctx)
 				},
 				Marshal: gqlexec.Marshal(marshalNWatchtowerCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWatchtowerCounts),
+			},
+			{
+				Name:       "watchtowerItem",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerItem",
+				Args:       field_Query_watchtowerItem_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").WatchtowerItem(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem),
+			},
+			{
+				Name:       "watchtowerItemHistory",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerItemEvent",
+				Args:       field_Query_watchtowerItemHistory_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").WatchtowerItemHistory(ctx, fc.Args["id"].(string), fc.Args["limit"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItemEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐEventᚄ),
+			},
+			{
+				Name:       "watchtowerResolutionCodes",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerResolutionCodeOption",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").WatchtowerResolutionCodes(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerResolutionCodeOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐResolutionCodeOptionᚄ),
 			},
 		}},
 		{Object: "WatchtowerCounts", Fields: []*gqlexec.Field{
@@ -134,6 +281,46 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerCounts)
 					return obj.UnseenCritical, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "overdue",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WatchtowerCounts)
+					return obj.Overdue, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "unassigned",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WatchtowerCounts)
+					return obj.Unassigned, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "mine",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WatchtowerCounts)
+					return obj.Mine, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "mineOverdue",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.WatchtowerCounts)
+					return obj.MineOverdue, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -409,6 +596,151 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐStatus),
+			},
+			{
+				Name:       "assigneeId",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return gqlexec.Resolver[resolverWatchtowerItem](ec, "WatchtowerItem").AssigneeID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:       "assignee",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return gqlexec.Resolver[resolverWatchtowerItem](ec, "WatchtowerItem").Assignee(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:     "dueAt",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return obj.DueAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:       "overdue",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return gqlexec.Resolver[resolverWatchtowerItem](ec, "WatchtowerItem").Overdue(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "snoozedUntil",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return obj.SnoozedUntil, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "acknowledgedAt",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return obj.AcknowledgedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:       "resolutionCode",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return gqlexec.Resolver[resolverWatchtowerItem](ec, "WatchtowerItem").ResolutionCode(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOWatchtowerResolutionCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐResolutionCode),
+			},
+			{
+				Name:       "resolutionNote",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return gqlexec.Resolver[resolverWatchtowerItem](ec, "WatchtowerItem").ResolutionNote(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:       "resolvedById",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return gqlexec.Resolver[resolverWatchtowerItem](ec, "WatchtowerItem").ResolvedByID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:       "resolvedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return gqlexec.Resolver[resolverWatchtowerItem](ec, "WatchtowerItem").ResolvedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:     "sourceClearedAt",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return obj.SourceClearedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "escalationLevel",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return obj.EscalationLevel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int16),
+			},
+			{
+				Name:     "lastEscalatedAt",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Item)
+					return obj.LastEscalatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
 		}},
 		{Object: "WatchtowerItemConnection", Fields: []*gqlexec.Field{
 			{
@@ -467,6 +799,101 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "WatchtowerItemEvent", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Event)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "itemId",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Event)
+					return obj.ItemID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Event)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItemEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐEventKind),
+			},
+			{
+				Name:       "actorId",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Event)
+					return gqlexec.Resolver[resolverWatchtowerItemEvent](ec, "WatchtowerItemEvent").ActorID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:       "actor",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Event)
+					return gqlexec.Resolver[resolverWatchtowerItemEvent](ec, "WatchtowerItemEvent").Actor(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:     "fromValue",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Event)
+					return obj.FromValue, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "toValue",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Event)
+					return obj.ToValue, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "note",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Event)
+					return obj.Note, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Event)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
 		{Object: "WatchtowerKindSummary", Fields: []*gqlexec.Field{
 			{
 				Name:     "kind",
@@ -499,15 +926,53 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 		}},
+		{Object: "WatchtowerResolutionCodeOption", Fields: []*gqlexec.Field{
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.ResolutionCodeOption)
+					return obj.Code, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerResolutionCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐResolutionCode),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.ResolutionCodeOption)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "requiresNote",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.ResolutionCodeOption)
+					return obj.RequiresNote, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 	},
 	Inputs: []gqlexec.Input{
+		{Name: "AssignWatchtowerItemInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAssignWatchtowerItemInput)},
 		{Name: "HandOffWatchtowerItemInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputHandOffWatchtowerItemInput)},
+		{Name: "ReopenWatchtowerItemInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReopenWatchtowerItemInput)},
+		{Name: "ResolveWatchtowerItemInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputResolveWatchtowerItemInput)},
+		{Name: "SetWatchtowerItemDueInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSetWatchtowerItemDueInput)},
+		{Name: "SnoozeWatchtowerItemInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSnoozeWatchtowerItemInput)},
 		{Name: "WatchtowerItemsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWatchtowerItemsInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 		{Root: "WatchtowerItem", Check: func(r any) bool { _, ok := r.(resolverWatchtowerItem); return ok }},
+		{Root: "WatchtowerItemEvent", Check: func(r any) bool { _, ok := r.(resolverWatchtowerItemEvent); return ok }},
 	},
 }
 
@@ -515,11 +980,22 @@ type resolverMutation interface {
 	MarkWatchtowerSeen(ctx context.Context, seenAt *int) (*gqlmodel.WatchtowerCounts, error)
 	DismissWatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
 	HandOffWatchtowerItem(ctx context.Context, id string, input gqlmodel.HandOffWatchtowerItemInput) (*gqlmodel.WatchtowerHandOffResult, error)
+	AssignWatchtowerItem(ctx context.Context, id string, input gqlmodel.AssignWatchtowerItemInput) (*watchtower.Item, error)
+	AcknowledgeWatchtowerItem(ctx context.Context, id string, expectedVersion *int) (*watchtower.Item, error)
+	StartWatchtowerItem(ctx context.Context, id string, expectedVersion *int) (*watchtower.Item, error)
+	SnoozeWatchtowerItem(ctx context.Context, id string, input gqlmodel.SnoozeWatchtowerItemInput) (*watchtower.Item, error)
+	SetWatchtowerItemDue(ctx context.Context, id string, input gqlmodel.SetWatchtowerItemDueInput) (*watchtower.Item, error)
+	CommentOnWatchtowerItem(ctx context.Context, id string, body string) (*watchtower.Event, error)
+	ResolveWatchtowerItem(ctx context.Context, id string, input gqlmodel.ResolveWatchtowerItemInput) (*watchtower.Item, error)
+	ReopenWatchtowerItem(ctx context.Context, id string, input gqlmodel.ReopenWatchtowerItemInput) (*watchtower.Item, error)
 }
 
 type resolverQuery interface {
 	WatchtowerItems(ctx context.Context, input gqlmodel.WatchtowerItemsInput) (*gqlmodel.WatchtowerItemConnection, error)
 	WatchtowerCounts(ctx context.Context) (*gqlmodel.WatchtowerCounts, error)
+	WatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
+	WatchtowerItemHistory(ctx context.Context, id string, limit *int) ([]*watchtower.Event, error)
+	WatchtowerResolutionCodes(ctx context.Context) ([]*watchtower.ResolutionCodeOption, error)
 }
 
 type resolverWatchtowerItem interface {
@@ -527,17 +1003,32 @@ type resolverWatchtowerItem interface {
 	SubjectID(ctx context.Context, obj *watchtower.Item) (*string, error)
 	EventKind(ctx context.Context, obj *watchtower.Item) (*string, error)
 	KindLabel(ctx context.Context, obj *watchtower.Item) (string, error)
+	AssigneeID(ctx context.Context, obj *watchtower.Item) (*string, error)
+	Assignee(ctx context.Context, obj *watchtower.Item) (*tenant.User, error)
+	Overdue(ctx context.Context, obj *watchtower.Item) (bool, error)
+	ResolutionCode(ctx context.Context, obj *watchtower.Item) (*watchtower.ResolutionCode, error)
+	ResolutionNote(ctx context.Context, obj *watchtower.Item) (*string, error)
+	ResolvedByID(ctx context.Context, obj *watchtower.Item) (*string, error)
+	ResolvedBy(ctx context.Context, obj *watchtower.Item) (*tenant.User, error)
+}
+
+type resolverWatchtowerItemEvent interface {
+	ActorID(ctx context.Context, obj *watchtower.Event) (*string, error)
+	Actor(ctx context.Context, obj *watchtower.Event) (*tenant.User, error)
 }
 
 var (
-	errNoChild0 = errors.New("field of type Int does not have child fields")
-	errNoChild1 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild2 = errors.New("field of type String does not have child fields")
-	errNoChild3 = errors.New("field of type ID does not have child fields")
-	errNoChild4 = errors.New("field of type WatchtowerSourceKind does not have child fields")
-	errNoChild5 = errors.New("field of type WatchtowerSeverity does not have child fields")
-	errNoChild6 = errors.New("field of type AgentSubjectType does not have child fields")
-	errNoChild7 = errors.New("field of type Boolean does not have child fields")
+	errNoChild0  = errors.New("field of type Int does not have child fields")
+	errNoChild1  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild2  = errors.New("field of type String does not have child fields")
+	errNoChild3  = errors.New("field of type ID does not have child fields")
+	errNoChild4  = errors.New("field of type WatchtowerSourceKind does not have child fields")
+	errNoChild5  = errors.New("field of type WatchtowerSeverity does not have child fields")
+	errNoChild6  = errors.New("field of type AgentSubjectType does not have child fields")
+	errNoChild7  = errors.New("field of type Boolean does not have child fields")
+	errNoChild8  = errors.New("field of type WatchtowerItemStatus does not have child fields")
+	errNoChild9  = errors.New("field of type WatchtowerResolutionCode does not have child fields")
+	errNoChild10 = errors.New("field of type WatchtowerItemEventKind does not have child fields")
 )
 
 func field_Mutation_markWatchtowerSeen_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -587,6 +1078,174 @@ func field_Mutation_handOffWatchtowerItem_args(ctx context.Context, ec *gqlexec.
 	return args, nil
 }
 
+func field_Mutation_assignWatchtowerItem_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.AssignWatchtowerItemInput, error) {
+			return unmarshalNAssignWatchtowerItemInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAssignWatchtowerItemInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_acknowledgeWatchtowerItem_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "expectedVersion",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["expectedVersion"] = arg1
+	return args, nil
+}
+
+func field_Mutation_startWatchtowerItem_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "expectedVersion",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["expectedVersion"] = arg1
+	return args, nil
+}
+
+func field_Mutation_snoozeWatchtowerItem_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SnoozeWatchtowerItemInput, error) {
+			return unmarshalNSnoozeWatchtowerItemInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSnoozeWatchtowerItemInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_setWatchtowerItemDue_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SetWatchtowerItemDueInput, error) {
+			return unmarshalNSetWatchtowerItemDueInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSetWatchtowerItemDueInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_commentOnWatchtowerItem_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "body",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["body"] = arg1
+	return args, nil
+}
+
+func field_Mutation_resolveWatchtowerItem_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ResolveWatchtowerItemInput, error) {
+			return unmarshalNResolveWatchtowerItemInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐResolveWatchtowerItemInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_reopenWatchtowerItem_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ReopenWatchtowerItemInput, error) {
+			return unmarshalNReopenWatchtowerItemInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReopenWatchtowerItemInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
 func field_Query_watchtowerItems_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
@@ -598,6 +1257,84 @@ func field_Query_watchtowerItems_args(ctx context.Context, ec *gqlexec.Exec, raw
 	}
 	args["input"] = arg0
 	return args, nil
+}
+
+func field_Query_watchtowerItem_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Query_watchtowerItemHistory_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
+	return args, nil
+}
+
+func unmarshalInputAssignWatchtowerItemInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AssignWatchtowerItemInput, error) {
+	var it gqlmodel.AssignWatchtowerItemInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"assigneeId", "note", "expectedVersion"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "assigneeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assigneeId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AssigneeID = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
+		case "expectedVersion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expectedVersion"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpectedVersion = data
+		}
+	}
+	return it, nil
 }
 
 func unmarshalInputHandOffWatchtowerItemInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.HandOffWatchtowerItemInput, error) {
@@ -630,6 +1367,175 @@ func unmarshalInputHandOffWatchtowerItemInput(ctx context.Context, ec *gqlexec.E
 	return it, nil
 }
 
+func unmarshalInputReopenWatchtowerItemInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ReopenWatchtowerItemInput, error) {
+	var it gqlmodel.ReopenWatchtowerItemInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"note", "expectedVersion"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
+		case "expectedVersion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expectedVersion"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpectedVersion = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputResolveWatchtowerItemInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ResolveWatchtowerItemInput, error) {
+	var it gqlmodel.ResolveWatchtowerItemInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"code", "note", "expectedVersion"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalNWatchtowerResolutionCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐResolutionCode(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
+		case "expectedVersion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expectedVersion"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpectedVersion = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputSetWatchtowerItemDueInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.SetWatchtowerItemDueInput, error) {
+	var it gqlmodel.SetWatchtowerItemDueInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"dueAt", "note", "expectedVersion"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "dueAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dueAt"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DueAt = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
+		case "expectedVersion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expectedVersion"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpectedVersion = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputSnoozeWatchtowerItemInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.SnoozeWatchtowerItemInput, error) {
+	var it gqlmodel.SnoozeWatchtowerItemInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"until", "note", "expectedVersion"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "until":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("until"))
+			data, err := unmarshalNTimestamp2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Until = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
+		case "expectedVersion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expectedVersion"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpectedVersion = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputWatchtowerItemsInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.WatchtowerItemsInput, error) {
 	var it gqlmodel.WatchtowerItemsInput
 	if obj == nil {
@@ -646,8 +1552,20 @@ func unmarshalInputWatchtowerItemsInput(ctx context.Context, ec *gqlexec.Exec, o
 	if _, present := asMap["unresolvedOnly"]; !present {
 		asMap["unresolvedOnly"] = true
 	}
+	if _, present := asMap["assignedToMe"]; !present {
+		asMap["assignedToMe"] = false
+	}
+	if _, present := asMap["unassigned"]; !present {
+		asMap["unassigned"] = false
+	}
+	if _, present := asMap["overdueOnly"]; !present {
+		asMap["overdueOnly"] = false
+	}
+	if _, present := asMap["orderByDue"]; !present {
+		asMap["orderByDue"] = false
+	}
 
-	fieldsInOrder := [...]string{"first", "after", "kinds", "severities", "unresolvedOnly", "since"}
+	fieldsInOrder := [...]string{"first", "after", "kinds", "severities", "unresolvedOnly", "since", "statuses", "assignedToMe", "assigneeIds", "unassigned", "overdueOnly", "subjectId", "orderByDue"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -696,9 +1614,63 @@ func unmarshalInputWatchtowerItemsInput(ctx context.Context, ec *gqlexec.Exec, o
 				return it, err
 			}
 			it.Since = data
+		case "statuses":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
+			data, err := unmarshalOWatchtowerItemStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐStatusᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Statuses = data
+		case "assignedToMe":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assignedToMe"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AssignedToMe = data
+		case "assigneeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assigneeIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AssigneeIds = data
+		case "unassigned":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unassigned"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Unassigned = data
+		case "overdueOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("overdueOnly"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OverdueOnly = data
+		case "subjectId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subjectId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubjectID = data
+		case "orderByDue":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderByDue"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrderByDue = data
 		}
 	}
 	return it, nil
+}
+
+func unmarshalNAssignWatchtowerItemInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAssignWatchtowerItemInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.AssignWatchtowerItemInput, error) {
+	res, err := unmarshalInputAssignWatchtowerItemInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNHandOffWatchtowerItemInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHandOffWatchtowerItemInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.HandOffWatchtowerItemInput, error) {
@@ -711,8 +1683,50 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNReopenWatchtowerItemInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReopenWatchtowerItemInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ReopenWatchtowerItemInput, error) {
+	res, err := unmarshalInputReopenWatchtowerItemInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNResolveWatchtowerItemInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐResolveWatchtowerItemInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ResolveWatchtowerItemInput, error) {
+	res, err := unmarshalInputResolveWatchtowerItemInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNSetWatchtowerItemDueInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSetWatchtowerItemDueInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.SetWatchtowerItemDueInput, error) {
+	res, err := unmarshalInputSetWatchtowerItemDueInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNSnoozeWatchtowerItemInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSnoozeWatchtowerItemInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.SnoozeWatchtowerItemInput, error) {
+	res, err := unmarshalInputSnoozeWatchtowerItemInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNWatchtowerItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (watchtower.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := watchtower.Status(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNWatchtowerItemsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWatchtowerItemsInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.WatchtowerItemsInput, error) {
 	res, err := unmarshalInputWatchtowerItemsInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNWatchtowerResolutionCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐResolutionCode(ctx context.Context, ec *gqlexec.Exec, v any) (watchtower.ResolutionCode, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := watchtower.ResolutionCode(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -734,6 +1748,13 @@ func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*b
 	}
 	res, err := graphql.UnmarshalBoolean(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
 }
 
 func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
@@ -766,6 +1787,13 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	}
 	res, err := graphql.UnmarshalInt(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOWatchtowerItemStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]watchtower.Status, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNWatchtowerItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐStatus)
 }
 
 func unmarshalOWatchtowerSeverity2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverityᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]watchtower.Severity, error) {
@@ -816,6 +1844,14 @@ func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx conte
 
 func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNInt2int16(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int16) graphql.Marshaler {
+	res := graphql.MarshalInt16(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -919,6 +1955,38 @@ func marshalNWatchtowerItemEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "WatchtowerItemEdge", v)
 }
 
+func marshalNWatchtowerItemEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐEventᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*watchtower.Event) graphql.Marshaler {
+	return gqlexec.List[*watchtower.Event]{
+		Elem:        marshalNWatchtowerItemEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐEvent,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNWatchtowerItemEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.Event) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WatchtowerItemEvent", v)
+}
+
+func marshalNWatchtowerItemEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐEventKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.EventKind) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNWatchtowerItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.Status) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNWatchtowerKindSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWatchtowerKindSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.WatchtowerKindSummary) graphql.Marshaler {
 	return gqlexec.List[*gqlmodel.WatchtowerKindSummary]{
 		Elem:        marshalNWatchtowerKindSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWatchtowerKindSummary,
@@ -933,6 +2001,30 @@ func marshalNWatchtowerKindSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerKindSummary", v)
+}
+
+func marshalNWatchtowerResolutionCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐResolutionCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.ResolutionCode) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNWatchtowerResolutionCodeOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐResolutionCodeOptionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*watchtower.ResolutionCodeOption) graphql.Marshaler {
+	return gqlexec.List[*watchtower.ResolutionCodeOption]{
+		Elem:        marshalNWatchtowerResolutionCodeOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐResolutionCodeOption,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNWatchtowerResolutionCodeOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐResolutionCodeOption(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.ResolutionCodeOption) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WatchtowerResolutionCodeOption", v)
 }
 
 func marshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.Severity) graphql.Marshaler {
@@ -987,5 +2079,20 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 		return graphql.Null
 	}
 	res := graphql.MarshalInt64(*v)
+	return res
+}
+
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "User", v)
+}
+
+func marshalOWatchtowerResolutionCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐResolutionCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.ResolutionCode) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
 	return res
 }
