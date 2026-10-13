@@ -48,7 +48,9 @@ func errNoPendingCertificate(provider string) error {
 	)
 }
 
-func (s *Service) pendingKeyAAD(pending *accountingsync.AccountingPendingCertificate) encryptionservice.AAD {
+func (s *Service) pendingKeyAAD(
+	pending *accountingsync.AccountingPendingCertificate,
+) encryptionservice.AAD {
 	return encryptionservice.AAD{
 		Purpose:        encryptionservice.PurposeAccountingClientKey,
 		OrganizationID: pending.OrganizationID,
@@ -176,20 +178,23 @@ func (s *Service) heldPendingCertificate(
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
 	certificateID string,
-) (*accountingsync.AccountingPendingCertificate, *heldCertificate, error) {
+) (*heldCertificate, error) {
 	name := accountingsync.ProviderName(typ)
-	pending, err := s.certificates.GetByType(ctx, accountingsyncports.GetAccountingConnectionRequest{
-		TenantInfo:      tenantInfo,
-		IntegrationType: typ,
-	})
+	pending, err := s.certificates.GetByType(
+		ctx,
+		accountingsyncports.GetAccountingConnectionRequest{
+			TenantInfo:      tenantInfo,
+			IntegrationType: typ,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, nil, errNoPendingCertificate(name)
+			return nil, errNoPendingCertificate(name)
 		}
-		return nil, nil, err
+		return nil, err
 	}
 	if pending.ExpiresAt <= timeutils.NowUnix() {
-		return nil, nil, errortypes.NewBusinessError(
+		return nil, errortypes.NewBusinessError(
 			"The {0} certificate waiting to be connected has expired. Generate a new one.",
 			name,
 		)
@@ -199,12 +204,12 @@ func (s *Service) heldPendingCertificate(
 		s.pendingKeyAAD(pending),
 	)
 	if err != nil {
-		return nil, nil, errortypes.NewBusinessError(
+		return nil, errortypes.NewBusinessError(
 			"The {0} certificate's key could not be read. Generate a new certificate.",
 			name,
 		).WithInternal(err)
 	}
-	return pending, &heldCertificate{
+	return &heldCertificate{
 		certificateID: certificateID,
 		privateKeyPEM: key,
 		expiresAt:     pending.ExpiresAt,
@@ -257,7 +262,7 @@ func (s *Service) ConnectWithCertificate(
 		return nil, multiErr
 	}
 
-	_, held, err := s.heldPendingCertificate(
+	held, err := s.heldPendingCertificate(
 		ctx,
 		req.TenantInfo,
 		req.IntegrationType,
@@ -324,10 +329,13 @@ func (s *Service) RenewCertificate(
 	if multiErr := validateCertificateID("certificateId", req.CertificateID); multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	current, err := s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: req.TenantInfo,
-		ID:         req.ConnectionID,
-	})
+	current, err := s.connections.GetByID(
+		ctx,
+		accountingsyncports.GetAccountingConnectionByIDRequest{
+			TenantInfo: req.TenantInfo,
+			ID:         req.ConnectionID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -351,7 +359,7 @@ func (s *Service) RenewCertificate(
 	if err != nil {
 		return nil, err
 	}
-	_, held, err := s.heldPendingCertificate(
+	held, err := s.heldPendingCertificate(
 		ctx,
 		req.TenantInfo,
 		current.IntegrationType,
@@ -370,55 +378,20 @@ func (s *Service) RenewCertificate(
 	}
 
 	now := timeutils.NowUnix()
-	var conn *accountingsync.AccountingConnection
-	var previous map[string]any
-	var before accountingsync.ConnectionStatus
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		locked, lockErr := s.connections.LockWithTokens(
-			txCtx,
-			accountingsyncports.GetAccountingConnectionByIDRequest{
-				TenantInfo: req.TenantInfo,
-				ID:         req.ConnectionID,
-			},
-		)
-		if lockErr != nil {
-			return lockErr
-		}
-		if !locked.UsesCertificate() || locked.Status == accountingsync.ConnectionStatusDisconnected {
-			return errortypes.NewBusinessError(
-				"The {0} connection changed while the certificate was being checked. Try again.",
-				name,
-			)
-		}
-		before = locked.Status
-		previous = jsonutils.MustToJSON(locked)
-		if useErr := s.useCertificate(locked, held); useErr != nil {
-			return useErr
-		}
-		sealed, sealErr := s.seal(locked, grant, now)
-		if sealErr != nil {
-			return sealErr
-		}
-		locked.ApplyGrant(sealed, now)
-		locked.RecordSuccess(now)
-		if _, updateErr := s.connections.Update(txCtx, locked); updateErr != nil {
-			return updateErr
-		}
-		if storeErr := s.connections.StoreTokens(txCtx, tokensOf(locked, now)); storeErr != nil {
-			return storeErr
-		}
-		conn = locked
-		return s.certificates.Delete(txCtx, accountingsyncports.GetAccountingConnectionRequest{
-			TenantInfo:      req.TenantInfo,
-			IntegrationType: locked.IntegrationType,
-		})
+	renewed, err := s.storeRenewedCertificate(ctx, &certificateRenewal{
+		req:   req,
+		name:  name,
+		held:  held,
+		grant: grant,
+		now:   now,
 	})
 	if err != nil {
 		return nil, err
 	}
+	conn := renewed.conn
 
-	s.logAudit(conn, req.UserID, previous, "Renewed the "+name+" certificate")
-	s.afterHealthChange(ctx, before, conn, now)
+	s.logAudit(conn, req.UserID, renewed.previous, "Renewed the "+name+" certificate")
+	s.afterHealthChange(ctx, renewed.before, conn, now)
 	s.publishInvalidation(ctx, conn, req.UserID)
 	return conn, nil
 }
@@ -508,10 +481,13 @@ func (s *Service) pendingCertificate(
 	if s.certificates == nil || !accountingsync.MustProfile(typ).ClientCredentials {
 		return nil, nil //nolint:nilnil // no certificate is waiting
 	}
-	pending, err := s.certificates.GetByType(ctx, accountingsyncports.GetAccountingConnectionRequest{
-		TenantInfo:      tenantInfo,
-		IntegrationType: typ,
-	})
+	pending, err := s.certificates.GetByType(
+		ctx,
+		accountingsyncports.GetAccountingConnectionRequest{
+			TenantInfo:      tenantInfo,
+			IntegrationType: typ,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil //nolint:nilnil // no certificate is waiting
@@ -530,4 +506,70 @@ func preparedCertificateOf(
 		ExpiresAt:       pending.ExpiresAt,
 		PreparedAt:      pending.PreparedAt,
 	}
+}
+
+type certificateRenewal struct {
+	req   *accountingsyncports.RenewAccountingCertificateRequest
+	name  string
+	held  *heldCertificate
+	grant *accountingsyncports.AccountingTokenGrant
+	now   int64
+}
+
+type renewedCertificate struct {
+	conn     *accountingsync.AccountingConnection
+	previous map[string]any
+	before   accountingsync.ConnectionStatus
+}
+
+func (s *Service) storeRenewedCertificate(
+	ctx context.Context,
+	in *certificateRenewal,
+) (*renewedCertificate, error) {
+	out := &renewedCertificate{}
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		locked, lockErr := s.connections.LockWithTokens(
+			txCtx,
+			accountingsyncports.GetAccountingConnectionByIDRequest{
+				TenantInfo: in.req.TenantInfo,
+				ID:         in.req.ConnectionID,
+			},
+		)
+		if lockErr != nil {
+			return lockErr
+		}
+		if !locked.UsesCertificate() ||
+			locked.Status == accountingsync.ConnectionStatusDisconnected {
+			return errortypes.NewBusinessError(
+				"The {0} connection changed while the certificate was being checked. Try again.",
+				in.name,
+			)
+		}
+		out.before = locked.Status
+		out.previous = jsonutils.MustToJSON(locked)
+		if useErr := s.useCertificate(locked, in.held); useErr != nil {
+			return useErr
+		}
+		sealed, sealErr := s.seal(locked, in.grant, in.now)
+		if sealErr != nil {
+			return sealErr
+		}
+		locked.ApplyGrant(sealed, in.now)
+		locked.RecordSuccess(in.now)
+		if _, updateErr := s.connections.Update(txCtx, locked); updateErr != nil {
+			return updateErr
+		}
+		if storeErr := s.connections.StoreTokens(txCtx, tokensOf(locked, in.now)); storeErr != nil {
+			return storeErr
+		}
+		out.conn = locked
+		return s.certificates.Delete(txCtx, accountingsyncports.GetAccountingConnectionRequest{
+			TenantInfo:      in.req.TenantInfo,
+			IntegrationType: locked.IntegrationType,
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }

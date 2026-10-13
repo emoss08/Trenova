@@ -1,4 +1,3 @@
-//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
 package accountingsyncrepository
 
 import (

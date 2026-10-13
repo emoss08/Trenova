@@ -170,7 +170,12 @@ func (s *Service) grantedCompanies(
 		}
 	}
 	if len(companies) == 0 {
-		s.revokeQuietly(ctx, app.connector, grant.RefreshToken, grantRealmOf(callbackRealmID, granted))
+		s.revokeQuietly(
+			ctx,
+			app.connector,
+			grant.RefreshToken,
+			grantRealmOf(callbackRealmID, granted),
+		)
 		return nil, errortypes.NewBusinessError(
 			"{0} did not authorize any company. Connect again and choose the company to sync with.",
 			app.provider,
@@ -180,16 +185,19 @@ func (s *Service) grantedCompanies(
 }
 
 type companyChoiceOffer struct {
-	owner      *stateOwner
-	state      *accountingsyncports.AccountingOAuthState
-	app        *authorizedApp
-	grant      *accountingsyncports.AccountingTokenGrant
+	owner         *stateOwner
+	state         *accountingsyncports.AccountingOAuthState
+	app           *authorizedApp
+	grant         *accountingsyncports.AccountingTokenGrant
 	companies     []accountingsyncports.AccountingCompany
 	grantRealm    string
 	certificateID string
 }
 
-func grantRealmOf(callbackRealmID string, companies []accountingsyncports.AccountingCompany) string {
+func grantRealmOf(
+	callbackRealmID string,
+	companies []accountingsyncports.AccountingCompany,
+) string {
 	if callbackRealmID != "" || len(companies) == 0 {
 		return callbackRealmID
 	}
@@ -309,7 +317,7 @@ func (s *Service) ChooseCompany(
 		if s.certificates == nil {
 			return nil, errCertificatesUnsupported(app.provider)
 		}
-		if _, certificate, err = s.heldPendingCertificate(
+		if certificate, err = s.heldPendingCertificate(
 			ctx,
 			req.TenantInfo,
 			req.IntegrationType,
@@ -534,10 +542,10 @@ func (s *Service) openPendingGrant(
 }
 
 type connectionSave struct {
-	owner    *stateOwner
-	realmID  string
-	grant    *accountingsyncports.AccountingTokenGrant
-	facts    *accountingsync.CompanyFacts
+	owner       *stateOwner
+	realmID     string
+	grant       *accountingsyncports.AccountingTokenGrant
+	facts       *accountingsync.CompanyFacts
 	app         accountingsync.AppIdentity
 	provider    string
 	now         int64

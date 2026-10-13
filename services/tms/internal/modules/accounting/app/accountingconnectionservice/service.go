@@ -211,7 +211,11 @@ func (s *Service) StartAuthorization(
 		return nil, err
 	}
 
-	challenge, sealedVerifier, err := s.newCodeVerifier(req.TenantInfo, tokenHash, req.IntegrationType)
+	challenge, sealedVerifier, err := s.newCodeVerifier(
+		req.TenantInfo,
+		tokenHash,
+		req.IntegrationType,
+	)
 	if err != nil {
 		return nil, err
 	}

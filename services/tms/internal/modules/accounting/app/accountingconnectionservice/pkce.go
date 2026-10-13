@@ -57,5 +57,8 @@ func (s *Service) openCodeVerifier(
 	if state.SealedVerifier == "" {
 		return "", errVerifierMissing
 	}
-	return s.encryption.DecryptStringWithAAD(state.SealedVerifier, s.verifierAAD(tenantInfo, stateHash))
+	return s.encryption.DecryptStringWithAAD(
+		state.SealedVerifier,
+		s.verifierAAD(tenantInfo, stateHash),
+	)
 }
