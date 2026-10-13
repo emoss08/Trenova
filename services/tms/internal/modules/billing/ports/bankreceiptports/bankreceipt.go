@@ -57,7 +57,10 @@ type BankReceiptRepository interface {
 	GetByID(ctx context.Context, req GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error)
 	// LockForUpdate reads the receipt under a row lock inside the caller's
 	// transaction.
-	LockForUpdate(ctx context.Context, req GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error)
+	LockForUpdate(
+		ctx context.Context,
+		req GetBankReceiptByIDRequest,
+	) (*bankreceipt.BankReceipt, error)
 	// ListMatchedToPayment lists the receipts matched to a customer payment,
 	// locked, so a match or a reversal decides on rows nobody else can move.
 	ListMatchedToPayment(

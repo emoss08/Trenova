@@ -214,14 +214,23 @@ What it says follows the question and the editor in the turn's page draft:
 - "edge", "scenario": the four edge loads priced in the reply, no artifact.
 - "fix", "error": a `propose_formula` draft edit guarding every unguarded optional field with
   `?? 0` and correcting misspelt names.
-- "weekend", and any "write", "draft", "add", "create" or "build": `describe_formula_schema`,
-  `test_formula_expression` and `propose_formula` steps, a short reply and a `draft_edit` artifact
-  (`{surface: "formula", action: "propose_formula", formula}`) adding a `weekendFee` input (125)
-  and `(isWeekendPickup ? weekendFee : 0)` to the result, with a weekend breakdown line when the
-  template itemizes (or a name, description and lines when the editor is empty), checked and
-  priced on the sample load and three shipments.
-- "minimum", "why": what a 60-mile load comes to and whether the policy moved it; "explain": the
-  formula in a sentence a statement; anything else, what Nova can do.
+- A fee by name ("weekend", "reefer", "hazmat", "liftgate", "fuel", "stop") with "add", "write",
+  "draft", "create" or "include": `describe_formula_schema`, `test_formula_expression` and
+  `propose_formula` steps, a short reply and a `draft_edit` artifact
+  (`{surface: "formula", action: "propose_formula", formula}`) adding the fee's input and term
+  to the result, with a breakdown line when the template itemizes (or a name, description and
+  lines when the editor is empty), checked and priced on the sample load and three shipments.
+  "per mile" and "cwt" draft a method from scratch.
+- "set/raise/remove the minimum/maximum" and "round up/down/half even/to whole dollars": a
+  proposal whose `policy` moves the charge policy and nothing else.
+- "set <input> to <n>" changes that input's default; "remove the <input>" takes its term and the
+  input out; "rename it to …" names the template; "itemize", "breakdown" adds lines from the `let`s.
+- "minimum", "why": what a 60-mile load comes to and whether the policy moved it; "what would …
+  charge for a 600 mile load": that load priced; "explain": the formula in a sentence a statement;
+  anything else, what Nova can do.
+
+The studio applies every valid proposal to its editor the moment the artifact streams, so a
+turn that proposes changes the page; the card under the reply undoes it.
 
 ## Screenshots
 

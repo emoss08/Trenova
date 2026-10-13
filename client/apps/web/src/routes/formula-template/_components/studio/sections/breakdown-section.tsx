@@ -14,7 +14,7 @@ import { SectionHead } from "./section-head";
 
 export function BreakdownSection() {
   const t = useT();
-  const { known, preview, reconciliation } = useStudio();
+  const { known, preview, reconciliation, declareInput } = useStudio();
   const { control } = useFormContext<FormulaTemplateFormValues>();
   const result = preview.result;
 
@@ -37,6 +37,7 @@ export function BreakdownSection() {
         control={control as never}
         knownIdentifiers={known}
         pricing={pricing}
+        declareInput={declareInput}
         head={({ add, atLimit }) => (
           <SectionHead
             section="breakdown"

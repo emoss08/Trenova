@@ -36,8 +36,8 @@ function StudioSkeleton() {
         <Skeleton className="h-7 w-32" />
         <Skeleton className="h-7 w-20" />
       </div>
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1280px]:grid-cols-[256px_minmax(0,1fr)_minmax(360px,420px)]">
-        <div className="hidden flex-col gap-4 border-r p-4 min-[1280px]:flex">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1180px]:grid-cols-[248px_minmax(0,1fr)_minmax(360px,420px)]">
+        <div className="hidden flex-col gap-4 border-r p-4 min-[1180px]:flex">
           <Skeleton className="h-4 w-28" />
           <Skeleton className="h-3.5 w-40" />
           <Skeleton className="h-24 w-full" />

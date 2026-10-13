@@ -209,7 +209,7 @@ func (s *Service) Send(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.deliver(ctx, from, statement, &delivery{
+	if err = s.deliver(ctx, from, statement, &delivery{
 		recipients: recipients,
 		note:       note,
 		sentBy:     actorID,
@@ -219,9 +219,12 @@ func (s *Service) Send(
 		return nil, err
 	}
 	return &customerstatementports.SendResult{
-		SentTo:        recipients.To,
-		EndingBalance: money.FormatMinor(statement.statement.EndingBalanceMinor, statement.currency),
-		FileName:      statement.fileName,
+		SentTo: recipients.To,
+		EndingBalance: money.FormatMinor(
+			statement.statement.EndingBalanceMinor,
+			statement.currency,
+		),
+		FileName: statement.fileName,
 	}, nil
 }
 
@@ -253,10 +256,13 @@ func (s *Service) SendMonthly(
 		return result, nil
 	}
 
-	candidates, err := s.repo.ListStatementCustomers(ctx, customerstatementports.ListStatementCustomersRequest{
-		TenantInfo: tenantInfo,
-		Period:     period,
-	})
+	candidates, err := s.repo.ListStatementCustomers(
+		ctx,
+		customerstatementports.ListStatementCustomersRequest{
+			TenantInfo: tenantInfo,
+			Period:     period,
+		},
+	)
 	if err != nil || len(candidates) == 0 {
 		return result, err
 	}
@@ -318,11 +324,14 @@ func (s *Service) sendMonthly(
 	if err != nil {
 		return err
 	}
-	_, err = s.deliver(ctx, from, statement, &delivery{
+	err = s.deliver(ctx, from, statement, &delivery{
 		recipients: recipients,
 		monthly:    true,
 		sentAt:     now,
-		key:        "customer-statement-monthly-" + cus.ID.String() + "-" + strconv.FormatInt(period.End, 10),
+		key: "customer-statement-monthly-" + cus.ID.String() + "-" + strconv.FormatInt(
+			period.End,
+			10,
+		),
 	})
 	return err
 }
@@ -343,7 +352,13 @@ func (s *Service) prepare(
 	period customerstatement.Period,
 	note string,
 ) (*prepared, error) {
-	statement, err := s.statements.GetCustomerStatement(ctx, from.tenant, cus.ID, period.Start, period.End)
+	statement, err := s.statements.GetCustomerStatement(
+		ctx,
+		from.tenant,
+		cus.ID,
+		period.Start,
+		period.End,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -363,15 +378,18 @@ func (s *Service) prepare(
 		fileNameFallback,
 		maxFileNameLength,
 	)
-	out.document, err = s.templates.RenderDocument(ctx, &documenttemplateports.RenderDocumentRequest{
-		TenantInfo:  from.tenant,
-		Kind:        documenttemplate.KindCustomerStatementPDF,
-		CustomerID:  &cus.ID,
-		Data:        pdfContext(from, out, note),
-		ReferenceID: cus.ID,
-		UserID:      from.tenant.UserID,
-		Title:       strings.TrimSuffix(out.fileName, ".pdf"),
-	})
+	out.document, err = s.templates.RenderDocument(
+		ctx,
+		&documenttemplateports.RenderDocumentRequest{
+			TenantInfo:  from.tenant,
+			Kind:        documenttemplate.KindCustomerStatementPDF,
+			CustomerID:  &cus.ID,
+			Data:        pdfContext(from, out, note),
+			ReferenceID: cus.ID,
+			UserID:      from.tenant.UserID,
+			Title:       strings.TrimSuffix(out.fileName, ".pdf"),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -388,14 +406,13 @@ type delivery struct {
 }
 
 // deliver emails the statement and records it. The idempotency key makes a
-// retried send replay the queued message rather than send it again. It
-// reports false when a monthly statement for the period was already recorded.
+// retried send replay the queued message rather than send it again.
 func (s *Service) deliver(
 	ctx context.Context,
 	from *issuer,
 	statement *prepared,
 	d *delivery,
-) (bool, error) {
+) error {
 	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo:  from.tenant,
 		Kind:        documenttemplate.KindCustomerStatementEmail,
@@ -405,7 +422,7 @@ func (s *Service) deliver(
 		UserID:      d.sentBy,
 	})
 	if err != nil {
-		return false, err
+		return err
 	}
 	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo: from.tenant,
@@ -424,7 +441,7 @@ func (s *Service) deliver(
 		}},
 		IdempotencyKey: d.key,
 	}); err != nil {
-		return false, err
+		return err
 	}
 
 	sentTo := strings.Join(d.recipients.To, ", ")
@@ -451,12 +468,12 @@ func (s *Service) deliver(
 		return s.logActivity(txCtx, from, statement, d, sentTo)
 	})
 	if err != nil {
-		return false, err
+		return err
 	}
 	if inserted {
 		s.recordDocument(ctx, from, statement, record, d.sentBy)
 	}
-	return inserted, nil
+	return nil
 }
 
 // logActivity writes the statement into the customer's collections history,
@@ -534,9 +551,10 @@ func (s *Service) factorOf(
 	tenantInfo pagination.TenantInfo,
 	cus *customer.Customer,
 ) (*factoringcompany.FactoringCompany, error) {
-	if s.factors == nil || cus.BillingProfile == nil || cus.BillingProfile.FactoringCompanyID == nil ||
+	if s.factors == nil || cus.BillingProfile == nil ||
+		cus.BillingProfile.FactoringCompanyID == nil ||
 		cus.BillingProfile.FactoringCompanyID.IsNil() {
-		return nil, nil
+		return nil, nil //nolint:nilnil // the customer has no factor
 	}
 	factor, err := s.factors.GetByID(ctx, factoringcompanyports.GetFactoringCompanyByIDRequest{
 		ID:           *cus.BillingProfile.FactoringCompanyID,
@@ -589,7 +607,11 @@ func (s *Service) loadCustomer(
 	id pulid.ID,
 ) (*customer.Customer, error) {
 	if id.IsNil() {
-		return nil, errortypes.NewValidationError("customerId", errortypes.ErrRequired, "Customer is required")
+		return nil, errortypes.NewValidationError(
+			"customerId",
+			errortypes.ErrRequired,
+			"Customer is required",
+		)
 	}
 	customers, err := s.loadCustomers(ctx, tenantInfo, []pulid.ID{id})
 	if err != nil {
@@ -628,7 +650,10 @@ func (s *Service) loadCustomers(
 
 // periodOf checks the span a person asked for: today when no date is given,
 // never ending in the future, and never starting after it ends.
-func periodOf(req *customerstatementports.StatementRequest, now int64) (customerstatement.Period, error) {
+func periodOf(
+	req *customerstatementports.StatementRequest,
+	now int64,
+) (customerstatement.Period, error) {
 	period := customerstatement.Period{Start: req.StartDate, End: req.AsOfDate}
 	if period.End == 0 {
 		period.End = now
@@ -644,7 +669,9 @@ func periodOf(req *customerstatementports.StatementRequest, now int64) (customer
 		)
 	case period.Start > period.End:
 		return period, errortypes.NewValidationError(
-			"startDate", errortypes.ErrInvalid, "Start the statement on or before its statement date",
+			"startDate",
+			errortypes.ErrInvalid,
+			"Start the statement on or before its statement date",
 		)
 	}
 	return period, nil

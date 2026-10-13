@@ -91,12 +91,32 @@ type CustomerStatementEmailContext struct {
 	AttachmentName         string
 }
 
+const (
+	billingCategory            = "Billing"
+	customerCodePath           = "CustomerCode"
+	notePath                   = "Note"
+	currencyCodePath           = "CurrencyCode"
+	customerPath               = "Customer"
+	descriptionPath            = "Description"
+	invoiceDatePath            = "InvoiceDate"
+	dueDatePath                = "DueDate"
+	remittanceInstructionsPath = "RemittanceInstructions"
+	sampleCustomerCode         = "HALSTEAD"
+	sampleRemittanceText       = "Remit by ACH to routing 111000614, account 8842091."
+	sampleAmountPartial        = "USD 1,763.62"
+	sampleAmountOverdue        = "USD 4,102.36"
+	sampleAmountZero           = "USD 0.00"
+	sampleDateJul15            = "2026-07-15"
+	sampleDateAug01            = "2026-08-01"
+	sampleDateAug14            = "2026-08-14"
+)
+
 func newCustomerStatementSampleContext() any {
 	return CustomerStatementContext{
 		StatementDate: "2026-08-31",
-		PeriodStart:   "2026-08-01",
+		PeriodStart:   sampleDateAug01,
 		CurrencyCode:  sampleCurrency,
-		CustomerCode:  "HALSTEAD",
+		CustomerCode:  sampleCustomerCode,
 		Organization: AddressBlock{
 			Name:  sampleCompanyName,
 			Lines: []string{"2200 Commerce St", "Dallas, TX 75201", "United States"},
@@ -110,21 +130,21 @@ func newCustomerStatementSampleContext() any {
 			Lines: []string{
 				"PO Box 2290",
 				"Dallas, TX 75221",
-				"Remit by ACH to routing 111000614, account 8842091.",
+				sampleRemittanceText,
 			},
 		},
 		LogoDataURI:    "",
-		OpeningBalance: "USD 2,338.74",
+		OpeningBalance: sampleTotalAmount,
 		TotalCharges:   "USD 3,527.24",
-		TotalPayments:  "USD 1,763.62",
-		EndingBalance:  "USD 4,102.36",
-		PastDue:        "USD 2,338.74",
+		TotalPayments:  sampleAmountPartial,
+		EndingBalance:  sampleAmountOverdue,
+		PastDue:        sampleTotalAmount,
 		Aging: StatementAging{
-			Current:    "USD 1,763.62",
-			Days1To30:  "USD 2,338.74",
-			Days31To60: "USD 0.00",
-			Days61To90: "USD 0.00",
-			Over90:     "USD 0.00",
+			Current:    sampleAmountPartial,
+			Days1To30:  sampleTotalAmount,
+			Days31To60: sampleAmountZero,
+			Days61To90: sampleAmountZero,
+			Over90:     sampleAmountZero,
 		},
 		Transactions: []StatementTransaction{
 			{
@@ -132,47 +152,47 @@ func newCustomerStatementSampleContext() any {
 				Document:    "PMT-88213",
 				Description: "Payment",
 				Charge:      "",
-				Payment:     "USD 1,763.62",
+				Payment:     sampleAmountPartial,
 				Balance:     "USD 575.12",
 			},
 			{
-				Date:        "2026-08-14",
+				Date:        sampleDateAug14,
 				Document:    sampleInvoiceNo,
 				Description: "Invoice",
-				Charge:      "USD 1,763.62",
+				Charge:      sampleAmountPartial,
 				Payment:     "",
-				Balance:     "USD 2,338.74",
+				Balance:     sampleTotalAmount,
 			},
 			{
 				Date:        "2026-08-23",
 				Document:    "INV-2026-1077",
 				Description: "Invoice",
-				Charge:      "USD 1,763.62",
+				Charge:      sampleAmountPartial,
 				Payment:     "",
-				Balance:     "USD 4,102.36",
+				Balance:     sampleAmountOverdue,
 			},
 		},
 		OpenItems: []StatementOpenItem{
 			{
 				InvoiceNumber: "INV-2026-0988",
 				InvoiceDate:   "2026-07-02",
-				DueDate:       "2026-08-01",
+				DueDate:       sampleDateAug01,
 				DaysPastDue:   30,
-				Total:         "USD 2,338.74",
+				Total:         sampleTotalAmount,
 				Open:          "USD 575.12",
 				Disputed:      false,
 			},
 			{
 				InvoiceNumber: sampleInvoiceNo,
-				InvoiceDate:   "2026-08-14",
+				InvoiceDate:   sampleDateAug14,
 				DueDate:       "2026-09-13",
 				DaysPastDue:   0,
-				Total:         "USD 1,763.62",
-				Open:          "USD 1,763.62",
+				Total:         sampleAmountPartial,
+				Open:          sampleAmountPartial,
 				Disputed:      false,
 			},
 		},
-		TotalOpen:          "USD 4,102.36",
+		TotalOpen:          sampleAmountOverdue,
 		Note:               "",
 		InvoiceFooter:      "Thank you for your business.",
 		NoticeOfAssignment: "",
@@ -182,16 +202,16 @@ func newCustomerStatementSampleContext() any {
 func newCustomerStatementEmailSampleContext() any {
 	return CustomerStatementEmailContext{
 		CustomerName:           sampleCustomerName,
-		CustomerCode:           "HALSTEAD",
+		CustomerCode:           sampleCustomerCode,
 		CompanyName:            sampleCompanyName,
 		StatementDate:          "2026-08-31",
-		PeriodStart:            "2026-08-01",
+		PeriodStart:            sampleDateAug01,
 		CurrencyCode:           sampleCurrency,
-		EndingBalance:          "USD 4,102.36",
-		PastDue:                "USD 2,338.74",
+		EndingBalance:          sampleAmountOverdue,
+		PastDue:                sampleTotalAmount,
 		OpenItemCount:          2,
 		IsMonthly:              true,
-		RemittanceInstructions: "Remit by ACH to routing 111000614, account 8842091.",
+		RemittanceInstructions: sampleRemittanceText,
 		Note:                   "",
 		AttachmentName:         "Statement-HALSTEAD-2026-08-31.pdf",
 	}
@@ -233,19 +253,23 @@ func statementPastDueVariable() VariableDefinition {
 
 func statementCurrencyVariable() VariableDefinition {
 	return VariableDefinition{
-		Path:        "CurrencyCode",
+		Path:        currencyCodePath,
 		Type:        VariableString,
 		Description: "The currency the customer is billed in.",
 	}
 }
 
 func statementCustomerCodeVariable() VariableDefinition {
-	return VariableDefinition{Path: "CustomerCode", Type: VariableString, Description: "The customer's code."}
+	return VariableDefinition{
+		Path:        customerCodePath,
+		Type:        VariableString,
+		Description: "The customer's code.",
+	}
 }
 
 func statementNoteVariable() VariableDefinition {
 	return VariableDefinition{
-		Path:        "Note",
+		Path:        notePath,
 		Type:        VariableString,
 		Description: "What the person sending the statement wrote. Print it when present.",
 	}
@@ -257,7 +281,7 @@ func (r *Registry) registerCustomerStatementKinds() {
 		Kind:           KindCustomerStatementPDF,
 		DisplayName:    "Customer Statement",
 		Description:    "A customer's account statement: opening balance, every invoice, payment and credit in the period, the closing balance, and the invoices still open, aged. Downloaded from the statement page, emailed by hand, or sent each month by billing control.",
-		Category:       "Billing",
+		Category:       billingCategory,
 		Channels:       []Channel{ChannelPDF},
 		Paged:          true,
 		CustomerScoped: true,
@@ -274,7 +298,7 @@ func (r *Registry) registerCustomerStatementKinds() {
 				Fields:      addressBlockFields(),
 			},
 			{
-				Path:        "Customer",
+				Path:        customerPath,
 				Type:        VariableObject,
 				Required:    true,
 				Description: "The customer the statement is for. Required: a statement with no addressee cannot be acted on.",
@@ -311,9 +335,21 @@ func (r *Registry) registerCustomerStatementKinds() {
 				Fields: []VariableDefinition{
 					{Path: "Current", Type: VariableMoney, Description: "Not yet due."},
 					{Path: "Days1To30", Type: VariableMoney, Description: "1 to 30 days past due."},
-					{Path: "Days31To60", Type: VariableMoney, Description: "31 to 60 days past due."},
-					{Path: "Days61To90", Type: VariableMoney, Description: "61 to 90 days past due."},
-					{Path: "Over90", Type: VariableMoney, Description: "More than 90 days past due."},
+					{
+						Path:        "Days31To60",
+						Type:        VariableMoney,
+						Description: "31 to 60 days past due.",
+					},
+					{
+						Path:        "Days61To90",
+						Type:        VariableMoney,
+						Description: "61 to 90 days past due.",
+					},
+					{
+						Path:        "Over90",
+						Type:        VariableMoney,
+						Description: "More than 90 days past due.",
+					},
 				},
 			},
 			{
@@ -322,10 +358,26 @@ func (r *Registry) registerCustomerStatementKinds() {
 				Description: "Every document that moved the balance in the period, oldest first, with the running balance after each.",
 				Fields: []VariableDefinition{
 					{Path: "Date", Type: VariableDate, Description: "When it happened."},
-					{Path: "Document", Type: VariableString, Description: "The invoice number or payment reference."},
-					{Path: "Description", Type: VariableString, Description: "What it was: Invoice, Payment, Credit memo."},
-					{Path: "Charge", Type: VariableMoney, Description: "What it added to the balance. Blank for a payment or credit."},
-					{Path: "Payment", Type: VariableMoney, Description: "What it took off the balance. Blank for a charge."},
+					{
+						Path:        "Document",
+						Type:        VariableString,
+						Description: "The invoice number or payment reference.",
+					},
+					{
+						Path:        descriptionPath,
+						Type:        VariableString,
+						Description: "What it was: Invoice, Payment, Credit memo.",
+					},
+					{
+						Path:        "Charge",
+						Type:        VariableMoney,
+						Description: "What it added to the balance. Blank for a payment or credit.",
+					},
+					{
+						Path:        "Payment",
+						Type:        VariableMoney,
+						Description: "What it took off the balance. Blank for a charge.",
+					},
 					{Path: "Balance", Type: VariableMoney, Description: "The balance after it."},
 				},
 			},
@@ -335,12 +387,24 @@ func (r *Registry) registerCustomerStatementKinds() {
 				Description: "Every invoice with money still owed on the statement date, oldest due date first.",
 				Fields: []VariableDefinition{
 					invoiceNumberVariable(false, "The invoice number."),
-					{Path: "InvoiceDate", Type: VariableDate, Description: "When the invoice was issued."},
-					{Path: "DueDate", Type: VariableDate, Description: "When payment is due."},
-					{Path: "DaysPastDue", Type: VariableInt, Description: "Whole days past the due date; zero when it is not yet due."},
+					{
+						Path:        invoiceDatePath,
+						Type:        VariableDate,
+						Description: "When the invoice was issued.",
+					},
+					{Path: dueDatePath, Type: VariableDate, Description: "When payment is due."},
+					{
+						Path:        "DaysPastDue",
+						Type:        VariableInt,
+						Description: "Whole days past the due date; zero when it is not yet due.",
+					},
 					{Path: "Total", Type: VariableMoney, Description: "The invoice total."},
 					{Path: "Open", Type: VariableMoney, Description: "What is still unpaid on it."},
-					{Path: "Disputed", Type: VariableBool, Description: "True while the customer disputes the invoice."},
+					{
+						Path:        "Disputed",
+						Type:        VariableBool,
+						Description: "True while the customer disputes the invoice.",
+					},
 				},
 			},
 			{
@@ -362,7 +426,7 @@ func (r *Registry) registerCustomerStatementKinds() {
 		Kind:           KindCustomerStatementEmail,
 		DisplayName:    "Customer Statement Email",
 		Description:    "The message a customer statement is attached to.",
-		Category:       "Billing",
+		Category:       billingCategory,
 		Channels:       []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
 		CustomerScoped: true,
 		sampleFactory:  newCustomerStatementEmailSampleContext,
@@ -386,7 +450,7 @@ func (r *Registry) registerCustomerStatementKinds() {
 				Description: "True for the statement sent each month, false for one a person sent.",
 			},
 			{
-				Path:        "RemittanceInstructions",
+				Path:        remittanceInstructionsPath,
 				Type:        VariableString,
 				Description: "How to pay, from billing control's default invoice terms.",
 			},

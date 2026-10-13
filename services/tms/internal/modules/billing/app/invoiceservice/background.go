@@ -13,6 +13,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const invoiceIDKey = "invoiceId"
+
 const (
 	autoPostFailedEventType = "invoice_auto_post_failed"
 	invoiceRecordEntity     = "invoice"
@@ -39,7 +41,14 @@ func (s *Service) AttachGeneratedPDF(
 		return nil, err
 	}
 
-	s.logAction(updated, req.Actor, permission.OpUpdate, &previous, updated, "Invoice PDF generated")
+	s.logAction(
+		updated,
+		req.Actor,
+		permission.OpUpdate,
+		&previous,
+		updated,
+		"Invoice PDF generated",
+	)
 	s.publishInvoiceChange(ctx, updated, req.Actor, invoice.RealtimeActionPDFGenerated)
 
 	return updated, nil
@@ -62,7 +71,7 @@ func (s *Service) ReportAutoPostFailure(
 	})
 	if err != nil {
 		s.l.Warn("failed to load the invoice whose auto-post failed",
-			zap.String("invoiceId", req.InvoiceID.String()),
+			zap.String(invoiceIDKey, req.InvoiceID.String()),
 			zap.Error(err),
 		)
 		return nil
@@ -106,9 +115,9 @@ func (s *Service) notifyAutoPostFailed(
 		message = reason + " " + message
 	}
 	data := map[string]any{
-		"invoiceId": entity.ID.String(),
-		"number":    entity.Number,
-		"reason":    reason,
+		invoiceIDKey: entity.ID.String(),
+		"number":     entity.Number,
+		"reason":     reason,
 	}
 	if link, ok := productguide.RecordPath(invoiceRecordEntity, entity.ID.String()); ok {
 		data["link"] = link
@@ -125,14 +134,14 @@ func (s *Service) notifyAutoPostFailed(
 		Message:        message,
 		Data:           data,
 		RelatedEntities: map[string]any{
-			"invoiceId":          entity.ID.String(),
+			invoiceIDKey:         entity.ID.String(),
 			"billingQueueItemId": entity.BillingQueueItemID.String(),
 			"customerId":         entity.CustomerID.String(),
 		},
 		Source: "invoiceservice.ReportAutoPostFailure",
 	}); err != nil {
 		s.l.Error("failed to announce a failed invoice auto-post",
-			zap.String("invoiceId", entity.ID.String()),
+			zap.String(invoiceIDKey, entity.ID.String()),
 			zap.Error(err),
 		)
 		return false

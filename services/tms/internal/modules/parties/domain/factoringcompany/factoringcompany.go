@@ -72,9 +72,11 @@ type FactoringCompany struct {
 
 func (f *FactoringCompany) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(f,
-		validation.Field(&f.Status,
+		validation.Field(
+			&f.Status,
 			validation.Required.Error("Status is required"),
-			validation.In(domaintypes.StatusActive, domaintypes.StatusInactive).Error("Invalid status"),
+			validation.In(domaintypes.StatusActive, domaintypes.StatusInactive).
+				Error("Invalid status"),
 		),
 		validation.Field(&f.Code,
 			validation.Required.Error("Code is required"),

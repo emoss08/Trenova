@@ -44,8 +44,14 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/accounting/collections")
-	read := h.pm.RequirePermission(permission.ResourceAccountsReceivable.String(), permission.OpRead)
-	work := h.pm.RequirePermission(permission.ResourceAccountsReceivable.String(), permission.OpUpdate)
+	read := h.pm.RequirePermission(
+		permission.ResourceAccountsReceivable.String(),
+		permission.OpRead,
+	)
+	work := h.pm.RequirePermission(
+		permission.ResourceAccountsReceivable.String(),
+		permission.OpUpdate,
+	)
 
 	api.GET("/worklist/", read, h.worklist)
 	api.GET("/customers/:customerID/", read, h.account)

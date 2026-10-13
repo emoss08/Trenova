@@ -45,7 +45,7 @@ func (e *SenderRejectedError) Error() string {
 
 	var b strings.Builder
 	fmt.Fprintf(&b, "%s refused to send from %s because ", e.Provider, address)
-	switch e.Rejection {
+	switch e.Rejection { //nolint:exhaustive // an unverified domain is the remaining rejection
 	case SenderSignatureMissing:
 		fmt.Fprintf(
 			&b,
@@ -83,7 +83,7 @@ func resendSenderRejection(statusCode int, body []byte) *SenderRejectedError {
 		Message string `json:"message"`
 	}
 	if err := sonic.Unmarshal(body, &payload); err != nil {
-		return nil
+		return nil //nolint:nilerr // a body that is not the provider's error shape is not a sender rejection
 	}
 	if !strings.Contains(strings.ToLower(payload.Message), "domain is not verified") {
 		return nil
@@ -102,7 +102,7 @@ func postmarkSenderRejection(statusCode int, body []byte) *SenderRejectedError {
 		ErrorCode int `json:"ErrorCode"`
 	}
 	if err := sonic.Unmarshal(body, &payload); err != nil {
-		return nil
+		return nil //nolint:nilerr // a body that is not the provider's error shape is not a sender rejection
 	}
 	switch payload.ErrorCode {
 	case postmarkErrorSenderSignatureMissing:

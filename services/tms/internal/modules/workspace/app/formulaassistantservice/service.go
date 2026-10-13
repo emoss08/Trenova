@@ -77,6 +77,7 @@ type TestRequest struct {
 	Variables  map[string]any
 	ShipmentID pulid.ID
 	Scenarios  []Scenario
+	Policy     *pagedraft.FormulaPolicy
 	// declaredOnly checks the expression with Variables alone, for a proposal:
 	// the studio holds only its declared variables.
 	declaredOnly bool
@@ -85,6 +86,7 @@ type TestRequest struct {
 type TestOutcome struct {
 	SchemaID  string                     `json:"schemaId"`
 	Check     pagedraft.FormulaCheck     `json:"check"`
+	Policy    *pagedraft.FormulaPolicy   `json:"policy,omitempty"`
 	Warnings  []string                   `json:"warnings,omitempty"`
 	Resolved  map[string]any             `json:"resolvedVariables,omitempty"`
 	Scenarios []pagedraft.PricedScenario `json:"scenarios,omitempty"`
@@ -177,12 +179,12 @@ func (s *Service) Test(ctx context.Context, req *TestRequest) (*TestOutcome, err
 	}
 
 	schemaID := SchemaIDOrDefault(req.SchemaID)
-	check := &formulatemplateservice.TestExpressionRequest{
+	check := policedRequest(&formulatemplateservice.TestExpressionRequest{
 		Expression: req.Expression,
 		SchemaID:   schemaID,
 		Variables:  checkVariables(req),
 		TenantInfo: req.TenantInfo,
-	}
+	}, req.Policy)
 	if req.ShipmentID.IsNotNil() {
 		shipmentID := req.ShipmentID
 		check.ShipmentID = &shipmentID
@@ -192,17 +194,36 @@ func (s *Service) Test(ctx context.Context, req *TestRequest) (*TestOutcome, err
 	outcome := &TestOutcome{
 		SchemaID: schemaID,
 		Check:    checkOf(result),
+		Policy:   req.Policy.Resolved(),
 		Resolved: result.ResolvedVariables,
 	}
 	for _, warning := range result.Warnings {
 		outcome.Warnings = append(outcome.Warnings, warning.Message)
 	}
 	if outcome.Check.Valid {
-		outcome.Scenarios = s.price(ctx, req.TenantInfo, schemaID, req.Expression,
-			req.Variables, req.Scenarios)
+		outcome.Scenarios = s.price(ctx, &pricing{
+			tenant:     req.TenantInfo,
+			schemaID:   schemaID,
+			expression: req.Expression,
+			defaults:   req.Variables,
+			policy:     req.Policy,
+		}, req.Scenarios)
 	}
 
 	return outcome, nil
+}
+
+func policedRequest(
+	req *formulatemplateservice.TestExpressionRequest,
+	policy *pagedraft.FormulaPolicy,
+) *formulatemplateservice.TestExpressionRequest {
+	charge := policy.ChargePolicy()
+	req.MinCharge = charge.MinCharge
+	req.MaxCharge = charge.MaxCharge
+	req.RoundingMode = charge.RoundingMode
+	req.RoundingPrecision = charge.RoundingPrecision
+
+	return req
 }
 
 // checkVariables are the values the expression is checked with: the shared
@@ -250,6 +271,7 @@ func (s *Service) Propose(
 		Expression:   req.Expression,
 		Variables:    defaults,
 		Scenarios:    req.Scenarios,
+		Policy:       req.Details.Policy,
 		declaredOnly: true,
 	})
 	if err != nil {
@@ -290,13 +312,14 @@ func (s *Service) checkBreakdown(
 		})
 	}
 
-	result := s.templateService.TestExpression(ctx, &formulatemplateservice.TestExpressionRequest{
-		Expression: req.Expression,
-		SchemaID:   schemaID,
-		Variables:  defaults,
-		TenantInfo: req.TenantInfo,
-		Breakdowns: definitions,
-	})
+	result := s.templateService.TestExpression(ctx, policedRequest(
+		&formulatemplateservice.TestExpressionRequest{
+			Expression: req.Expression,
+			SchemaID:   schemaID,
+			Variables:  defaults,
+			TenantInfo: req.TenantInfo,
+			Breakdowns: definitions,
+		}, req.Details.Policy))
 	if !result.Valid {
 		return checkOf(result)
 	}
@@ -322,30 +345,36 @@ func (s *Service) checkBreakdown(
 	return check
 }
 
+type pricing struct {
+	tenant     pagination.TenantInfo
+	schemaID   string
+	expression string
+	defaults   map[string]any
+	policy     *pagedraft.FormulaPolicy
+}
+
 func (s *Service) price(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
-	schemaID, expression string,
-	defaults map[string]any,
+	run *pricing,
 	scenarios []Scenario,
 ) []pagedraft.PricedScenario {
 	priced := make([]pagedraft.PricedScenario, 0, len(scenarios))
 	for _, scenario := range scenarios {
-		variables := make(map[string]any, len(defaults)+len(scenario.Variables))
-		maps.Copy(variables, defaults)
+		variables := make(map[string]any, len(run.defaults)+len(scenario.Variables))
+		maps.Copy(variables, run.defaults)
 		for name, value := range scenario.Variables {
 			if value != nil {
 				variables[name] = value
 			}
 		}
 
-		result := s.templateService.TestExpression(ctx,
+		result := s.templateService.TestExpression(ctx, policedRequest(
 			&formulatemplateservice.TestExpressionRequest{
-				Expression: expression,
-				SchemaID:   schemaID,
+				Expression: run.expression,
+				SchemaID:   run.schemaID,
 				Variables:  variables,
-				TenantInfo: tenant,
-			})
+				TenantInfo: run.tenant,
+			}, run.policy))
 		check := checkOf(result)
 		priced = append(priced, pagedraft.PricedScenario{
 			Name:        strings.TrimSpace(scenario.Name),
@@ -420,6 +449,7 @@ func validateTest(req *TestRequest) error {
 			"Expression cannot exceed {0} characters", pagedraft.MaxExpressionLength)
 	}
 	validateValues(multiErr, "variables", req.Variables)
+	req.Policy.Validate("policy", multiErr)
 	if len(req.Scenarios) > MaxScenarios {
 		multiErr.Add("scenarios", errortypes.ErrInvalid,
 			"At most {0} scenarios are priced at once", MaxScenarios)

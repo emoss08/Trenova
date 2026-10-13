@@ -1069,6 +1069,9 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
           },
           {
             path: "/billing/configuration-files/formula-templates/new",
+            // The studio is a room: the header stays, and its rate trace takes
+            // the sidebar's place and its fold.
+            handle: { frame: "room" } satisfies RouteHandle,
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.FormulaTemplate, Operation.Create),
@@ -1081,6 +1084,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
           },
           {
             path: "/billing/configuration-files/formula-templates/:id/edit",
+            handle: { frame: "room" } satisfies RouteHandle,
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.FormulaTemplate),

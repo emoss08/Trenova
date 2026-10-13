@@ -9,28 +9,42 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
+import {
+  DEFAULT_ROUNDING_MODE,
+  DEFAULT_ROUNDING_PRECISION,
+  type FormulaTemplateFormValues,
+} from "@trenova/shared/types/formula-template";
 import {
   AlertTriangleIcon,
   CheckCircleIcon,
   CheckIcon,
   Code01Icon,
   ReverseLeftIcon,
+  Scales01Icon,
   XCircleIcon,
 } from "@trenova/shared/components/icons";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { analyzeExpression } from "../model/expression-analysis";
-import { formatMoney, formatStudioValue, numericAmount } from "../model/format";
+import { formatMoney, formatStudioValue, numericAmount, roundingSentence } from "../model/format";
 import { lineDiff } from "../model/line-diff";
-import { applyProposal, newProposalVariables, type ProposalTarget } from "./formula-draft";
+import {
+  applyProposal,
+  newProposalVariables,
+  policyChanged,
+  type ProposalTarget,
+} from "./formula-draft";
 import { ProposedScenariosCard } from "./proposed-scenarios-card";
 import { TickedText } from "./ticked-text";
 
 const PRICED_SHIPMENTS = 3;
 
-export type ProposalState = "pending" | "inserted" | "dismissed";
+/**
+ * Where a proposal stands: in the editor (applied the moment it arrived, or
+ * by hand), waiting (a reload, or one the engine could not run), or set aside.
+ */
+export type ProposalState = "pending" | "applied" | "dismissed";
 
 export function proposalTargetOf(values: FormulaTemplateFormValues): ProposalTarget {
   return {
@@ -50,29 +64,65 @@ export function proposalTargetOf(values: FormulaTemplateFormValues): ProposalTar
       label: line.label ?? "",
       expression: line.expression ?? "",
     })),
+    minCharge: numericAmount(values.minCharge),
+    maxCharge: numericAmount(values.maxCharge),
+    roundingMode: values.roundingMode ?? DEFAULT_ROUNDING_MODE,
+    roundingPrecision: values.roundingPrecision ?? DEFAULT_ROUNDING_PRECISION,
   };
 }
 
+function PolicyLine({ before, after }: { before: ProposalTarget; after: ProposalTarget }) {
+  const t = useT();
+  const bound = (value: number | null, none: string) =>
+    value === null ? none : formatMoney(value);
+  const parts: string[] = [];
+  if (before.minCharge !== after.minCharge) {
+    parts.push(
+      t("minimum {0} → {1}", bound(before.minCharge, t("none")), bound(after.minCharge, t("none"))),
+    );
+  }
+  if (before.maxCharge !== after.maxCharge) {
+    parts.push(
+      t("maximum {0} → {1}", bound(before.maxCharge, t("none")), bound(after.maxCharge, t("none"))),
+    );
+  }
+  if (
+    before.roundingMode !== after.roundingMode ||
+    before.roundingPrecision !== after.roundingPrecision
+  ) {
+    parts.push(roundingSentence(after.roundingMode, after.roundingPrecision, t).toLowerCase());
+  }
+  return (
+    <div className="flex items-start gap-1.5 border-t px-3 py-2 text-xs">
+      <Scales01Icon className="text-foreground-subtle mt-px size-3.5 shrink-0" />
+      <span>
+        <b className="font-medium">{t("Charge policy")}</b>
+        <span className="text-foreground-muted"> · {parts.join(" · ")}</span>
+      </span>
+    </div>
+  );
+}
+
 /**
- * A change Nova proposed, drawn as a diff against the editor: the lines it
- * adds and removes, the inputs it needs, what it says it does, whether every
- * name resolves, and what the engine bills the sample load and three real
- * shipments with it. Nothing reaches the editor until it is inserted, and an
- * insert can be undone.
+ * A change Nova made, drawn as a diff against the editor as it was: the
+ * lines it adds and removes, the inputs it needs, the charge policy it moved,
+ * what it says it does, whether every name resolves, and what the engine
+ * bills the sample load and three real shipments with it. Applied the moment
+ * it arrived; one click undoes it.
  */
 export function ProposalCard({
   proposal,
   state,
   before,
-  onInsert,
+  onApply,
   onUndo,
   onDismiss,
 }: {
   proposal: FormulaProposal;
   state: ProposalState;
-  /** The expression the editor held when the proposal was inserted. */
-  before: string | null;
-  onInsert: (next: ProposalTarget) => void;
+  /** The editor as it was when the proposal was applied. */
+  before: ProposalTarget | null;
+  onApply: (next: ProposalTarget) => void;
   onUndo: () => void;
   onDismiss: () => void;
 }) {
@@ -80,30 +130,27 @@ export function ProposalCard({
   const form = useFormContext<FormulaTemplateFormValues>();
   const values = form.watch();
   const current = proposalTargetOf(values);
-  const next = applyProposal(current, proposal);
-  const baseExpression = state === "inserted" ? (before ?? "") : current.expression;
+  const base = state === "applied" && before ? before : current;
+  const next = applyProposal(base, proposal);
   const diff = useMemo(
-    () => lineDiff(baseExpression, proposal.expression),
-    [baseExpression, proposal.expression],
+    () => lineDiff(base.expression, proposal.expression),
+    [base.expression, proposal.expression],
   );
-  const added =
-    state === "inserted"
-      ? proposal.variables
-      : newProposalVariables(current.variableDefinitions, proposal);
+  const added = newProposalVariables(base.variableDefinitions, proposal);
+  const movedPolicy = policyChanged(base, next);
 
   const { data: schema } = useFormulaSchema(values.schemaId || "shipment");
   const analysis = useMemo(() => {
     const nextKnown = buildKnownIdentifiers(schema, next.variableDefinitions);
-    return analyzeExpression(
-      next.expression,
-      nextKnown,
-      new Set(next.variableDefinitions.map((variable) => variable.name)),
-    );
+    return analyzeExpression(next.expression, nextKnown);
   }, [next.expression, next.variableDefinitions, schema]);
   const check = !proposal.check.valid
     ? { tone: "bad" as const, text: proposal.check.error || t("The engine could not run it.") }
-    : analysis.problems.length > 0
-      ? { tone: "warn" as const, text: analysis.problems[0]?.message ?? "" }
+    : analysis.errorCount > 0
+      ? {
+          tone: "warn" as const,
+          text: analysis.problems.find((problem) => problem.severity === "error")?.message ?? "",
+        }
       : {
           tone: "ok" as const,
           text: t("Checked against the shipment schema. Every name resolves."),
@@ -114,10 +161,10 @@ export function ProposalCard({
     schemaId: values.schemaId || "shipment",
     variableDefinitions: next.variableDefinitions,
     breakdownDefinitions: next.breakdownDefinitions,
-    minCharge: values.minCharge,
-    maxCharge: values.maxCharge,
-    roundingMode: values.roundingMode,
-    roundingPrecision: values.roundingPrecision,
+    minCharge: next.minCharge,
+    maxCharge: next.maxCharge,
+    roundingMode: next.roundingMode,
+    roundingPrecision: next.roundingPrecision,
   };
 
   const shipments = useQuery({
@@ -166,23 +213,25 @@ export function ProposalCard({
 
   if (state === "dismissed") return null;
 
+  const expressionChanged = diff.some((line) => line.kind !== "same");
+  const title = !base.expression.trim()
+    ? t("Formula")
+    : expressionChanged
+      ? t("Changed the formula")
+      : movedPolicy
+        ? t("Changed the charge policy")
+        : t("Changed the template");
+
   return (
-    <div
-      className={cn(
-        "bg-card flex flex-col overflow-hidden rounded-lg border",
-        state === "inserted" && "opacity-90",
-      )}
-    >
+    <div className={cn("bg-card flex flex-col overflow-hidden rounded-lg border")}>
       <div className="flex items-center gap-2 border-b px-3 py-2">
         <Code01Icon className="text-foreground-subtle size-3.5" />
-        <span className="text-sm font-semibold">
-          {baseExpression.trim() ? t("Proposed change") : t("Proposed formula")}
-        </span>
-        {proposal.name && !current.name.trim() && state !== "inserted" && (
+        <span className="text-sm font-semibold">{title}</span>
+        {proposal.name && !base.name.trim() && (
           <span className="text-foreground-muted truncate text-xs">{proposal.name}</span>
         )}
         <span className="flex-1" />
-        {state === "inserted" && (
+        {state === "applied" && (
           <Badge variant="success" className="gap-1">
             <CheckIcon className="size-3" />
             {t("In the editor")}
@@ -190,24 +239,27 @@ export function ProposalCard({
         )}
       </div>
 
-      <div className="bg-sunken overflow-x-auto py-1.5 font-mono text-xs">
-        {diff.map((line, index) => (
-          <div
-            // oxlint-disable-next-line react/no-array-index-key -- a diff is positional
-            key={index}
-            className={cn(
-              "flex gap-2 px-3 whitespace-pre",
-              line.kind === "add" && "bg-success-subtle text-success-subtle-foreground",
-              line.kind === "del" && "bg-danger-subtle text-danger-subtle-foreground line-through",
-            )}
-          >
-            <span className="w-2 shrink-0 select-none" aria-hidden>
-              {line.kind === "add" ? "+" : line.kind === "del" ? "−" : ""}
-            </span>
-            <span>{line.text || " "}</span>
-          </div>
-        ))}
-      </div>
+      {(expressionChanged || !base.expression.trim()) && (
+        <div className="bg-sunken overflow-x-auto py-1.5 font-mono text-xs">
+          {diff.map((line, index) => (
+            <div
+              // oxlint-disable-next-line react/no-array-index-key -- a diff is positional
+              key={index}
+              className={cn(
+                "flex gap-2 px-3 whitespace-pre",
+                line.kind === "add" && "bg-success-subtle text-success-subtle-foreground",
+                line.kind === "del" &&
+                  "bg-danger-subtle text-danger-subtle-foreground line-through",
+              )}
+            >
+              <span className="w-2 shrink-0 select-none" aria-hidden>
+                {line.kind === "add" ? "+" : line.kind === "del" ? "−" : ""}
+              </span>
+              <span>{line.text || " "}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {added.length > 0 && (
         <div className="flex flex-wrap gap-1.5 border-t px-3 py-2">
@@ -227,6 +279,8 @@ export function ProposalCard({
           ))}
         </div>
       )}
+
+      {movedPolicy && <PolicyLine before={base} after={next} />}
 
       {proposal.explanation !== "" && (
         <p className="border-t px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap">
@@ -288,17 +342,17 @@ export function ProposalCard({
         </div>
       )}
 
-      {proposal.scenarios.length > 0 && state !== "inserted" && (
+      {proposal.scenarios.length > 0 && (
         <div className="border-t p-2">
           <ProposedScenariosCard scenarios={proposal.scenarios} />
         </div>
       )}
 
       <div className="flex items-center gap-1.5 border-t px-3 py-2">
-        {state === "inserted" ? (
+        {state === "applied" ? (
           <>
             <span className="text-foreground-muted flex-1 text-xs">
-              {t("Review and test it, then save. Nothing is saved yet.")}
+              {t("In the editor. Test it, then save — nothing is saved yet.")}
             </span>
             <Button type="button" variant="ghost" size="xs" className="gap-1" onClick={onUndo}>
               <ReverseLeftIcon className="size-3" />
@@ -307,15 +361,20 @@ export function ProposalCard({
           </>
         ) : (
           <>
+            <span className="text-foreground-muted flex-1 text-xs">
+              {check.tone === "bad"
+                ? t("Not applied: the engine could not run it.")
+                : t("Not in the editor yet.")}
+            </span>
             <Button
               type="button"
-              size="sm"
+              size="xs"
               disabled={check.tone === "bad"}
-              onClick={() => onInsert(next)}
+              onClick={() => onApply(next)}
             >
-              {t("Insert into editor")}
+              {t("Apply to editor")}
             </Button>
-            <Button type="button" variant="quiet" size="sm" onClick={onDismiss}>
+            <Button type="button" variant="quiet" size="xs" onClick={onDismiss}>
               {t("Dismiss")}
             </Button>
           </>

@@ -45,11 +45,17 @@ const (
 )
 
 type notifier interface {
-	Create(ctx context.Context, entity *notification.Notification) (*notification.Notification, error)
+	Create(
+		ctx context.Context,
+		entity *notification.Notification,
+	) (*notification.Notification, error)
 }
 
 type members interface {
-	GetTenantMember(ctx context.Context, req tenantports.GetTenantMemberRequest) (*tenant.User, error)
+	GetTenantMember(
+		ctx context.Context,
+		req tenantports.GetTenantMemberRequest,
+	) (*tenant.User, error)
 }
 
 type Params struct {
@@ -77,6 +83,7 @@ type Service struct {
 
 var _ collectionports.Service = (*Service)(nil)
 
+//nolint:gocritic // dependency injection
 func New(p Params) *Service {
 	s := &Service{
 		db:        p.DB,
@@ -103,7 +110,11 @@ func (s *Service) Worklist(
 		req.Scope = collectionports.CollectorScopeAll
 	}
 	if !req.Scope.IsValid() {
-		return nil, errortypes.NewValidationError("scope", errortypes.ErrInvalid, "Collector filter is invalid")
+		return nil, errortypes.NewValidationError(
+			"scope",
+			errortypes.ErrInvalid,
+			"Collector filter is invalid",
+		)
 	}
 	req.Limit = clampLimit(req.Limit)
 	req.Offset = max(req.Offset, 0)
@@ -239,7 +250,10 @@ func (s *Service) LogActivity(
 	}
 
 	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		account, txErr := s.repo.GetAccountForUpdate(txCtx, accountRequest(req.TenantInfo, req.CustomerID))
+		account, txErr := s.repo.GetAccountForUpdate(
+			txCtx,
+			accountRequest(req.TenantInfo, req.CustomerID),
+		)
 		if txErr != nil {
 			return txErr
 		}
@@ -278,18 +292,18 @@ func (s *Service) AssignCollector(
 	}
 	var collectorName string
 	if req.CollectorID.IsNotNil() {
-		member, err := s.users.GetTenantMember(ctx, tenantports.GetTenantMemberRequest{
+		member, memberErr := s.users.GetTenantMember(ctx, tenantports.GetTenantMemberRequest{
 			UserID:     req.CollectorID,
 			TenantInfo: req.TenantInfo,
 			Now:        s.now(),
 		})
-		if err != nil {
-			if errortypes.IsNotFoundError(err) {
+		if memberErr != nil {
+			if errortypes.IsNotFoundError(memberErr) {
 				return nil, errortypes.NewValidationError(
 					"collectorId", errortypes.ErrInvalid, "Choose someone in this organization",
 				)
 			}
-			return nil, err
+			return nil, memberErr
 		}
 		collectorName = member.Name
 	}
@@ -297,7 +311,10 @@ func (s *Service) AssignCollector(
 	actorID := actorUserID(actor, req.TenantInfo)
 	changed := false
 	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		account, txErr := s.repo.GetAccountForUpdate(txCtx, accountRequest(req.TenantInfo, req.CustomerID))
+		account, txErr := s.repo.GetAccountForUpdate(
+			txCtx,
+			accountRequest(req.TenantInfo, req.CustomerID),
+		)
 		if txErr != nil {
 			return txErr
 		}
@@ -362,7 +379,10 @@ func (s *Service) ScheduleFollowUp(
 	}
 
 	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		account, txErr := s.repo.GetAccountForUpdate(txCtx, accountRequest(req.TenantInfo, req.CustomerID))
+		account, txErr := s.repo.GetAccountForUpdate(
+			txCtx,
+			accountRequest(req.TenantInfo, req.CustomerID),
+		)
 		if txErr != nil {
 			return txErr
 		}
@@ -394,7 +414,11 @@ func (s *Service) ScheduleFollowUp(
 }
 
 // validateFollowUp refuses a follow-up scheduled for a day already over.
-func (s *Service) validateFollowUp(multiErr *errortypes.MultiError, field string, followUpOn *int64) {
+func (s *Service) validateFollowUp(
+	multiErr *errortypes.MultiError,
+	field string,
+	followUpOn *int64,
+) {
 	if followUpOn != nil && *followUpOn+secondsPerDay <= s.now() {
 		multiErr.Add(field, errortypes.ErrInvalid, "Schedule the follow-up for today or later")
 	}
@@ -404,12 +428,12 @@ func (s *Service) validateFollowUp(multiErr *errortypes.MultiError, field string
 // currency its promises are recorded in.
 func (s *Service) billingCurrency(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
+	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
 ) (string, error) {
 	cus, err := s.customers.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:                    customerID,
-		TenantInfo:            tenant,
+		TenantInfo:            tenantInfo,
 		CustomerFilterOptions: customerports.CustomerFilterOptions{IncludeBillingProfile: true},
 	})
 	if err != nil {
@@ -423,7 +447,7 @@ func (s *Service) billingCurrency(
 
 func (s *Service) publish(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
+	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
 	actor *permissionports.RequestActor,
 ) {
@@ -432,8 +456,8 @@ func (s *Service) publish(
 	}
 	auditActor := actor.AuditActor()
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: tenant.OrgID,
-		BusinessUnitID: tenant.BuID,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
 		ActorUserID:    auditActor.UserID,
 		ActorType:      auditActor.PrincipalType,
 		ActorID:        auditActor.PrincipalID,
@@ -448,7 +472,7 @@ func (s *Service) publish(
 
 func (s *Service) tellCollector(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
+	tenantInfo pagination.TenantInfo,
 	collectorID pulid.ID,
 	row *collectionports.WorklistRow,
 	currency string,
@@ -456,10 +480,10 @@ func (s *Service) tellCollector(
 	if s.notifier == nil || row == nil {
 		return
 	}
-	buID := tenant.BuID
+	buID := tenantInfo.BuID
 	userID := collectorID
 	if _, err := s.notifier.Create(ctx, &notification.Notification{
-		OrganizationID: tenant.OrgID,
+		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: &buID,
 		TargetUserID:   &userID,
 		Channel:        notification.ChannelUser,
@@ -519,10 +543,16 @@ func isDue(row *collectionports.WorklistRow) bool {
 func currencyTotals(byCurrency map[string]int64) []collectionports.CurrencyTotal {
 	totals := make([]collectionports.CurrencyTotal, 0, len(byCurrency))
 	for code, amount := range byCurrency {
-		totals = append(totals, collectionports.CurrencyTotal{CurrencyCode: code, AmountMinor: amount})
+		totals = append(
+			totals,
+			collectionports.CurrencyTotal{CurrencyCode: code, AmountMinor: amount},
+		)
 	}
 	slices.SortFunc(totals, func(a, b collectionports.CurrencyTotal) int {
-		return cmp.Or(cmp.Compare(b.AmountMinor, a.AmountMinor), strings.Compare(a.CurrencyCode, b.CurrencyCode))
+		return cmp.Or(
+			cmp.Compare(b.AmountMinor, a.AmountMinor),
+			strings.Compare(a.CurrencyCode, b.CurrencyCode),
+		)
 	})
 	return totals
 }
@@ -538,15 +568,18 @@ func clampLimit(limit int) int {
 	}
 }
 
-func accountRequest(tenant pagination.TenantInfo, customerID pulid.ID) collectionports.GetAccountRequest {
-	return collectionports.GetAccountRequest{TenantInfo: tenant, CustomerID: customerID}
+func accountRequest(
+	tenantInfo pagination.TenantInfo,
+	customerID pulid.ID,
+) collectionports.GetAccountRequest {
+	return collectionports.GetAccountRequest{TenantInfo: tenantInfo, CustomerID: customerID}
 }
 
-func actorUserID(actor *permissionports.RequestActor, tenant pagination.TenantInfo) pulid.ID {
+func actorUserID(actor *permissionports.RequestActor, tenantInfo pagination.TenantInfo) pulid.ID {
 	if actor != nil && actor.UserID.IsNotNil() {
 		return actor.UserID
 	}
-	return tenant.UserID
+	return tenantInfo.UserID
 }
 
 func pluralInvoices(count int) string {

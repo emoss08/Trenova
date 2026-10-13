@@ -49,6 +49,9 @@ fn online() -> Snapshot {
     default.id = Id::from("cprf_default");
     Snapshot {
         server: Some("https://tms.acme-freight.com".into()),
+        server_name: Some("Trenova".into()),
+        device_name: Some("DISPATCH-07".into()),
+        device_id: Some("cdev_01JXK3M9Q4R8T2V6W0Y1Z3A5B7".into()),
         connection: Connection::Online,
         person: Some("Jordan Doe".into()),
         organization: Some("Acme Freight".into()),
@@ -154,10 +157,34 @@ fn write_preview() {
     std::fs::write(dir.join("page.html"), trenova_capture::page::html()).expect("page");
     let pairing = Snapshot {
         server: Some("https://tms.acme-freight.com".into()),
+        server_name: Some("Trenova".into()),
+        web_base: Some("https://tms.acme-freight.com".into()),
         connection: Connection::Pairing {
             code: "BCDF-GHJK".into(),
             url: "https://tms.acme-freight.com/capture/pair?code=BCDF-GHJK".into(),
         },
+        ..Snapshot::default()
+    };
+    let checking = Snapshot {
+        server: Some("https://cloud.trenova.app".into()),
+        connection: Connection::Checking,
+        ..Snapshot::default()
+    };
+    let unreachable = Snapshot {
+        server: Some("https://tms.acme-freight.com".into()),
+        server_problem: Some(
+            "nothing answered at https://tms.acme-freight.com. Check the address and the connection, then try again.".into(),
+        ),
+        connection: Connection::NeedsServer,
+        ..Snapshot::default()
+    };
+    let signed_out = Snapshot {
+        server: Some("https://cloud.trenova.app".into()),
+        server_name: Some("Trenova Cloud".into()),
+        server_shared: true,
+        server_api: Some("https://api.trenova.app".into()),
+        web_base: Some("https://cloud.trenova.app".into()),
+        connection: Connection::SignedOut,
         ..Snapshot::default()
     };
     let mut offline = online();
@@ -168,6 +195,9 @@ fn write_preview() {
     offline.pages_waiting = 3;
     let states = [
         ("first-run", Snapshot::default()),
+        ("checking", checking),
+        ("unreachable", unreachable),
+        ("signed-out", signed_out),
         ("pairing", pairing),
         ("ready", online()),
         ("busy", busy()),

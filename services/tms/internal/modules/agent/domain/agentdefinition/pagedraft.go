@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -140,6 +141,14 @@ func writeFormulaDraft(builder *strings.Builder, draft *pagedraft.Formula) {
 		builder.WriteString("\ntype: ")
 		builder.WriteString(draftText(draft.TemplateType))
 	}
+	if draft.Name != "" {
+		builder.WriteString("\nname: ")
+		builder.WriteString(draftText(draft.Name))
+	}
+	if draft.Description != "" {
+		builder.WriteString("\ndescription: ")
+		builder.WriteString(draftText(draft.Description))
+	}
 	builder.WriteString("\nexpression: ")
 	if strings.TrimSpace(draft.Expression) == "" {
 		builder.WriteString("empty")
@@ -162,6 +171,39 @@ func writeFormulaDraft(builder *strings.Builder, draft *pagedraft.Formula) {
 			builder.WriteString(draftText(variable.Description))
 		}
 	}
+	builder.WriteString("\ncharge policy: ")
+	builder.WriteString(draftText(describeChargePolicy(draft.Policy)))
+	for _, line := range draft.Breakdown {
+		builder.WriteString("\nbreakdown line ")
+		builder.WriteString(draftText(line.Name))
+		builder.WriteString(" (")
+		builder.WriteString(draftText(line.Label))
+		builder.WriteString("): ")
+		builder.WriteString(draftText(line.Expression))
+	}
+}
+
+func describeChargePolicy(policy *pagedraft.FormulaPolicy) string {
+	charge := policy.ChargePolicy()
+	parts := make([]string, 0, 3)
+	if charge.MinCharge.Valid {
+		parts = append(parts, "minimum $"+charge.MinCharge.Decimal.String())
+	} else {
+		parts = append(parts, "no minimum")
+	}
+	if charge.MaxCharge.Valid {
+		parts = append(parts, "maximum $"+charge.MaxCharge.Decimal.String())
+	} else {
+		parts = append(parts, "no maximum")
+	}
+	if charge.RoundingMode == ratetypes.RoundingModeNone {
+		parts = append(parts, "no rounding")
+	} else {
+		parts = append(parts, "rounding "+charge.RoundingMode.String()+" to "+
+			strconv.Itoa(int(charge.RoundingPrecision))+" places")
+	}
+
+	return strings.Join(parts, ", ")
 }
 
 func formatDraftValue(value any) string {

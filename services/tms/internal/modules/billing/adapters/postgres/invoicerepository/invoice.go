@@ -955,36 +955,40 @@ func (r *repository) SyncEmailAttemptsForMessage(
 		}
 
 		updated := make([]*invoice.Invoice, 0, len(attempts))
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			if _, err := r.db.DBForContext(txCtx).
-				NewUpdate().
-				Model((*invoice.EmailAttempt)(nil)).
-				Set("status = ?", status).
-				Set("provider_message_id = ?", msg.ProviderMessageID).
-				Set("error = ?", errorMessage).
-				Set("sent_at = ?", sentAt).
-				Where("email_message_id = ?", messageID).
-				Where("organization_id = ?", tenantInfo.OrgID).
-				Where("business_unit_id = ?", tenantInfo.BuID).
-				Exec(txCtx); err != nil {
-				return fmt.Errorf("sync invoice email attempts: %w", err)
-			}
+		err := r.db.WithTx(
+			ctx,
+			kernelports.TxOptions{},
+			func(txCtx context.Context, _ bun.Tx) error {
+				if _, err := r.db.DBForContext(txCtx).
+					NewUpdate().
+					Model((*invoice.EmailAttempt)(nil)).
+					Set("status = ?", status).
+					Set("provider_message_id = ?", msg.ProviderMessageID).
+					Set("error = ?", errorMessage).
+					Set("sent_at = ?", sentAt).
+					Where("email_message_id = ?", messageID).
+					Where("organization_id = ?", tenantInfo.OrgID).
+					Where("business_unit_id = ?", tenantInfo.BuID).
+					Exec(txCtx); err != nil {
+					return fmt.Errorf("sync invoice email attempts: %w", err)
+				}
 
-			invoiceIDs := make(map[pulid.ID]struct{}, len(attempts))
-			for _, attempt := range attempts {
-				invoiceIDs[attempt.InvoiceID] = struct{}{}
-			}
-			for invoiceID := range invoiceIDs {
-				entity, err := r.syncInvoiceSendStatus(txCtx, invoiceID, tenantInfo)
-				if err != nil {
-					return err
+				invoiceIDs := make(map[pulid.ID]struct{}, len(attempts))
+				for _, attempt := range attempts {
+					invoiceIDs[attempt.InvoiceID] = struct{}{}
 				}
-				if entity != nil {
-					updated = append(updated, entity)
+				for invoiceID := range invoiceIDs {
+					entity, err := r.syncInvoiceSendStatus(txCtx, invoiceID, tenantInfo)
+					if err != nil {
+						return err
+					}
+					if entity != nil {
+						updated = append(updated, entity)
+					}
 				}
-			}
-			return nil
-		})
+				return nil
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -1012,7 +1016,9 @@ func (r *repository) syncInvoiceSendStatus(
 			return nil, nil
 		}
 
-		status, sentAt, lastError := invoiceSendStatusFromAttempts(invoice.LatestSendAttempts(attempts))
+		status, sentAt, lastError := invoiceSendStatusFromAttempts(
+			invoice.LatestSendAttempts(attempts),
+		)
 		entity := new(invoice.Invoice)
 		if _, err := r.db.DBForContext(ctx).
 			NewUpdate().

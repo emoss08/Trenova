@@ -85,7 +85,7 @@ func (s *service) autoTransferEligible(
 		return false, err
 	}
 	if _, _, gateErr := transferGate(entity, true); gateErr != nil {
-		return false, nil
+		return false, nil //nolint:nilerr // a shipment the gate refuses is not ready to transfer
 	}
 
 	readiness, err := s.evaluateBillingReadinessCached(ctx, entity, cache, true)

@@ -13,6 +13,7 @@
 pub mod api;
 pub mod backoff;
 pub mod credentials;
+pub mod discovery;
 pub mod error;
 pub mod pairing;
 pub mod server;
@@ -23,6 +24,7 @@ pub mod uploader;
 
 pub use api::{AgentInfo, Api, PageMarkers, PairingPoll};
 pub use credentials::{Credential, MemoryStore, SecretStore};
+pub use discovery::{Discovery, DiscoveryError, discover};
 pub use error::ApiError;
 pub use server::{Server, ServerUrlError};
 pub use spool::{Protector, Spool, SpoolError, SpoolSummary, SpooledBatch};

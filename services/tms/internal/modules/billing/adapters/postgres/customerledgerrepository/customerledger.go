@@ -136,7 +136,7 @@ func (r *repository) SumCustomerBalances(
 			ColumnExpr("COALESCE(SUM(cle.amount_minor), 0) AS balance").
 			Where("cle.organization_id = ?", req.TenantInfo.OrgID).
 			Where("cle.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("cle.customer_id IN (?)", bun.In(req.CustomerIDs)).
+			Where("cle.customer_id IN (?)", bun.List(req.CustomerIDs)).
 			GroupExpr("cle.customer_id").
 			Scan(ctx, &rows)
 		if err != nil {

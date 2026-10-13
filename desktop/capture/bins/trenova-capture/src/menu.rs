@@ -82,6 +82,7 @@ impl Snapshot {
         let refused = (!self.refused.is_empty()).then(|| not_sent(self.refused.len()));
         match &self.connection {
             Connection::NeedsServer => "Set the server address to begin".to_owned(),
+            Connection::Checking => "Checking the server address".to_owned(),
             Connection::SignedOut => "Not signed in".to_owned(),
             Connection::Pairing { code, .. } => format!("Waiting for approval, code {code}"),
             Connection::Connecting => "Connecting".to_owned(),
@@ -274,7 +275,7 @@ impl Snapshot {
 
         menu.push(MenuEntry::Separator);
         match &self.connection {
-            Connection::NeedsServer => {}
+            Connection::NeedsServer | Connection::Checking => {}
             Connection::SignedOut => {
                 menu.push(item("Sign in", MenuAction::Command(Command::SignIn)));
             }

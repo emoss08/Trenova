@@ -22,10 +22,10 @@ func TestResendWebhookPayloadReadsRecipientList(t *testing.T) {
 		}
 	}`), &payload))
 
-	eventType, known := resendEventType(payload)
+	eventType, known := resendEventType(&payload)
 	require.True(t, known)
 	require.Equal(t, email.EventTypeBounced, eventType)
-	require.Equal(t, "ap@customer.example.com", resendRecipient(payload))
+	require.Equal(t, "ap@customer.example.com", resendRecipient(&payload))
 }
 
 func TestResendEventTypeMapsKnownEventsAndIgnoresTheRest(t *testing.T) {
@@ -56,7 +56,7 @@ func TestResendEventTypeMapsKnownEventsAndIgnoresTheRest(t *testing.T) {
 			var payload resendWebhookPayload
 			payload.Type = tt.eventType
 			payload.Data.Bounce.Type = tt.bounce
-			got, known := resendEventType(payload)
+			got, known := resendEventType(&payload)
 			require.Equal(t, tt.known, known)
 			require.Equal(t, tt.expected, got)
 		})
@@ -68,5 +68,5 @@ func TestResendRecipientIsBlankWhenTheEventCoversSeveralRecipients(t *testing.T)
 
 	var payload resendWebhookPayload
 	payload.Data.To = []string{"a@example.com", "b@example.com"}
-	require.Empty(t, resendRecipient(payload))
+	require.Empty(t, resendRecipient(&payload))
 }

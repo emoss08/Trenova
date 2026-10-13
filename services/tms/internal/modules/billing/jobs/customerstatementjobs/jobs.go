@@ -83,9 +83,9 @@ type SweepResult struct {
 	Failed        int `json:"failed"`
 }
 
-// SweepActivity gives every organization with monthly statements on its
+// CustomerStatementSweepActivity gives every organization with monthly statements on its
 // turn. One organization's failure is logged and the sweep moves on.
-func (a *Activities) SweepActivity(ctx context.Context) (*SweepResult, error) {
+func (a *Activities) CustomerStatementSweepActivity(ctx context.Context) (*SweepResult, error) {
 	controls, err := a.controls.ListMonthlyStatements(ctx)
 	if err != nil {
 		return nil, err
@@ -143,7 +143,7 @@ func CustomerStatementSweepWorkflow(ctx workflow.Context) (*SweepResult, error) 
 
 	var a *Activities
 	var result *SweepResult
-	if err := workflow.ExecuteActivity(ctx, a.SweepActivity).Get(ctx, &result); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.CustomerStatementSweepActivity).Get(ctx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil

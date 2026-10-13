@@ -171,10 +171,13 @@ func (s *Service) lockForDecision(
 		return nil, err
 	}
 
-	locked, err := s.repo.LockInvoiceForUpdate(ctx, invoiceadjustmentports.LockInvoiceAdjustmentRequest{
-		InvoiceID:  unlocked.OriginalInvoiceID,
-		TenantInfo: tenantInfo,
-	})
+	locked, err := s.repo.LockInvoiceForUpdate(
+		ctx,
+		invoiceadjustmentports.LockInvoiceAdjustmentRequest{
+			InvoiceID:  unlocked.OriginalInvoiceID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +202,7 @@ func (s *Service) withdrawVoidRequest(
 		entity == nil ||
 		entity.Status != invoice.StatusPosted ||
 		(entity.VoidReason == "" && entity.VoidDisposition == "") {
-		return nil, nil
+		return nil, nil //nolint:nilnil // only a voided full reversal has a void outcome
 	}
 
 	entity.VoidReason = ""

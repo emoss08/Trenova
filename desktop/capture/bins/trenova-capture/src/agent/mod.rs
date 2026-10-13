@@ -26,8 +26,8 @@ use capture_client::spool::{Export, PagePictures, RefusedBatch};
 use capture_client::stream::{self, DeviceEvent};
 use capture_client::uploader::{UploadEvent, Uploader};
 use capture_client::{
-    AgentInfo, Api, ApiError, PageMarkers, Protector, SecretStore, Server, Spool, SpoolError,
-    SpooledBatch,
+    AgentInfo, Api, ApiError, Discovery, DiscoveryError, PageMarkers, Protector, SecretStore,
+    Server, Spool, SpoolError, SpooledBatch, discover,
 };
 use capture_protocol::api::{
     Architecture, BatchSource, CaptureProfile, CaptureRequest, DeviceIdentity, DeviceUpdatePolicy,
@@ -119,6 +119,14 @@ impl std::fmt::Debug for Environment {
 
 /// What spawned work reports back.
 enum Internal {
+    /// A server address was looked up. `check` numbers the look-up, so one
+    /// that finishes after the address changed again is dropped.
+    Discovered {
+        check: u64,
+        save: bool,
+        then_sign_in: bool,
+        result: Result<Discovery, DiscoveryError>,
+    },
     Identity(Result<Box<DeviceIdentity>, ApiError>),
     Profiles(Result<Vec<CaptureProfile>, ApiError>),
     Sources(Vec<SourceInfo>),
@@ -155,6 +163,12 @@ struct Agent {
     env: Environment,
     shared: Arc<Shared>,
     spool: Arc<Spool>,
+    /// The server as entered and, once found, where its API answers.
+    server: Option<Server>,
+    /// What the server said about itself, from the look-up that found it.
+    discovery: Option<Discovery>,
+    /// Counts address look-ups, so a late answer never wins.
+    checks: u64,
     api: Option<Arc<Api>>,
     session: Option<CancellationToken>,
     stream_rx: Option<mpsc::Receiver<DeviceEvent>>,
@@ -220,6 +234,9 @@ pub async fn run(
         env,
         shared,
         spool,
+        server: None,
+        discovery: None,
+        checks: 0,
         api: None,
         session: None,
         stream_rx: None,
@@ -411,13 +428,20 @@ impl Agent {
         self.session.is_some()
     }
 
-    /// Points the agent at a server, signing in if a credential is saved.
+    /// Points the agent at the saved server address: signs in if a credential
+    /// is saved for it, and otherwise finds the Trenova at it.
     async fn configure(&mut self, url: Option<&str>) {
         self.stop_session();
         self.api = None;
+        self.server = None;
+        self.discovery = None;
         let Some(url) = url else {
             self.shared.update(|s| {
                 s.server = None;
+                s.server_name = None;
+                s.server_shared = false;
+                s.server_api = None;
+                s.server_problem = None;
                 s.connection = Connection::NeedsServer;
             });
             self.shared.attention(Attention::SetUp);
@@ -426,25 +450,59 @@ impl Agent {
         let server = match Server::parse(url) {
             Ok(server) => server,
             Err(err) => {
-                self.shared
-                    .update(|s| s.connection = Connection::NeedsServer);
+                let problem = err.to_string();
+                self.shared.update(|s| {
+                    s.server = Some(url.to_owned());
+                    s.server_problem = Some(problem);
+                    s.connection = Connection::NeedsServer;
+                });
                 self.shared.attention(Attention::SetUp);
-                self.notify(
-                    Severity::Error,
-                    "The server address is not valid",
-                    err.to_string(),
-                    None,
-                );
                 return;
             }
         };
         let store = (self.env.secrets)(&server);
-        let address = server.as_str().to_owned();
-        let api = match Api::new(server, self.env.agent.clone(), store) {
+        let saved = store
+            .load()
+            .inspect_err(|err| tracing::warn!(error = %err, "could not read the saved credential"))
+            .ok()
+            .flatten()
+            .filter(|credential| credential.server == server.as_str());
+        let Some(credential) = saved else {
+            self.begin_check(server, false, false);
+            return;
+        };
+        let server = match credential.server() {
+            Ok(server) => server,
+            Err(err) => {
+                tracing::warn!(error = %err, "the saved credential names an address that cannot be used");
+                self.begin_check(server, false, false);
+                return;
+            }
+        };
+        self.use_server(server, None);
+        if !credential.server_name.is_empty() {
+            let (name, shared) = (credential.server_name.clone(), credential.shared_tenancy);
+            self.shared.update(|s| {
+                s.server_name = Some(name);
+                s.server_shared = shared;
+            });
+        }
+        self.start_session().await;
+    }
+
+    /// Takes `server` as the one to talk to, with what discovery said about
+    /// it when it has answered.
+    fn use_server(&mut self, server: Server, discovery: Option<&Discovery>) {
+        let store = (self.env.secrets)(&server);
+        let api = match Api::new(server.clone(), self.env.agent.clone(), store) {
             Ok(api) => Arc::new(api),
             Err(err) => {
-                self.shared
-                    .update(|s| s.connection = Connection::NeedsServer);
+                let problem = err.to_string();
+                self.shared.update(|s| {
+                    s.server = Some(server.as_str().to_owned());
+                    s.server_problem = Some(problem);
+                    s.connection = Connection::NeedsServer;
+                });
                 self.notify(
                     Severity::Error,
                     "Trenova Capture could not start",
@@ -454,13 +512,119 @@ impl Agent {
                 return;
             }
         };
-        let signed_in = api.credential().await.is_some();
+        let address = server.as_str().to_owned();
+        let api_base = server.api_elsewhere().then(|| server.api_base().to_owned());
+        let (name, shared, web_base) = match discovery {
+            Some(found) => (
+                Some(found.name.clone()),
+                found.shared_tenancy,
+                found.web_base.clone(),
+            ),
+            None => (None, false, None),
+        };
         self.api = Some(api);
-        self.shared.update(|s| s.server = Some(address));
-        if signed_in {
-            self.start_session().await;
-        } else {
-            self.shared.update(|s| s.connection = Connection::SignedOut);
+        self.server = Some(server);
+        self.shared.update(|s| {
+            s.server = Some(address);
+            s.server_api = api_base;
+            s.server_problem = None;
+            if discovery.is_some() {
+                s.server_name = name;
+                s.server_shared = shared;
+                if web_base.is_some() {
+                    s.web_base = web_base;
+                }
+            }
+            s.connection = Connection::SignedOut;
+        });
+    }
+
+    /// Looks the address up off this task. `save` remembers it for next time
+    /// once it has answered; `then_sign_in` starts pairing right after.
+    fn begin_check(&mut self, server: Server, save: bool, then_sign_in: bool) {
+        self.stop_session();
+        self.api = None;
+        self.server = None;
+        self.discovery = None;
+        self.checks += 1;
+        let check = self.checks;
+        let address = server.as_str().to_owned();
+        self.shared.update(|s| {
+            s.server = Some(address);
+            s.server_name = None;
+            s.server_shared = false;
+            s.server_api = None;
+            s.server_problem = None;
+            s.connection = Connection::Checking;
+        });
+        let (agent, tx) = (self.env.agent.clone(), self.internal_tx.clone());
+        tokio::spawn(async move {
+            let result = discover(&agent, server).await;
+            let _ = tx
+                .send(Internal::Discovered {
+                    check,
+                    save,
+                    then_sign_in,
+                    result,
+                })
+                .await;
+        });
+    }
+
+    /// What a look-up found. A late answer, from before the address changed
+    /// again, is dropped.
+    fn discovered(
+        &mut self,
+        check: u64,
+        save: bool,
+        then_sign_in: bool,
+        result: Result<Discovery, DiscoveryError>,
+    ) {
+        if check != self.checks
+            || !matches!(self.shared.snapshot().connection, Connection::Checking)
+        {
+            return;
+        }
+        match result {
+            Ok(found) => {
+                if save && let Err(err) = self.env.server_setting.save(found.server.as_str()) {
+                    self.notify(
+                        Severity::Error,
+                        "The server address could not be saved",
+                        err.to_string(),
+                        None,
+                    );
+                }
+                tracing::info!(
+                    server = found.server.as_str(),
+                    api = found.server.api_base(),
+                    name = %found.name,
+                    edition = %found.edition,
+                    "found the Trenova server"
+                );
+                if !found.pairing {
+                    self.notify(
+                        Severity::Warning,
+                        "Computers cannot be paired with this Trenova",
+                        "Its administrator has not set the web app's address (app.webBaseUrl), which approving a computer needs.",
+                        None,
+                    );
+                }
+                self.use_server(found.server.clone(), Some(&found));
+                self.discovery = Some(found);
+                if then_sign_in {
+                    self.sign_in();
+                }
+            }
+            Err(err) => {
+                tracing::warn!(error = %err, "the server address could not be used");
+                let problem = err.to_string();
+                self.shared.update(|s| {
+                    s.server_problem = Some(problem);
+                    s.connection = Connection::NeedsServer;
+                });
+                self.shared.attention(Attention::SetUp);
+            }
         }
     }
 
@@ -613,7 +777,8 @@ impl Agent {
 
     async fn command(&mut self, command: Command) {
         match command {
-            Command::SetServer(url) => self.set_server(&url).await,
+            Command::SetServer(url) => self.set_server(&url, false),
+            Command::Connect(url) => self.set_server(&url, true),
             Command::SignIn => self.sign_in(),
             Command::CancelSignIn => {
                 if let Some(pairing) = self.pairing.take() {
@@ -858,7 +1023,9 @@ impl Agent {
         }
     }
 
-    async fn set_server(&mut self, url: &str) {
+    /// Takes a new server address: looks the Trenova at it up, and remembers
+    /// it once it has answered. `then_sign_in` goes on to pairing.
+    fn set_server(&mut self, url: &str, then_sign_in: bool) {
         if self.env.server_setting.locked() {
             self.notify(
                 Severity::Warning,
@@ -871,17 +1038,16 @@ impl Agent {
         let server = match Server::parse(url) {
             Ok(server) => server,
             Err(err) => {
-                self.notify(
-                    Severity::Error,
-                    "The server address is not valid",
-                    err.to_string(),
-                    None,
-                );
+                let problem = err.to_string();
+                self.shared.update(|s| s.server_problem = Some(problem));
                 return;
             }
         };
-        let current = self.api.as_ref().map(|a| a.server().as_str().to_owned());
+        let current = self.server.as_ref().map(|s| s.as_str().to_owned());
         if current.as_deref() == Some(server.as_str()) {
+            if then_sign_in {
+                self.sign_in();
+            }
             return;
         }
         let waiting = self.spool.summary().map(|s| s.pages_waiting).unwrap_or(0);
@@ -897,26 +1063,26 @@ impl Agent {
             );
             return;
         }
-        if let Err(err) = self.env.server_setting.save(server.as_str()) {
-            self.notify(
-                Severity::Error,
-                "The server address could not be saved",
-                err.to_string(),
-                None,
-            );
-            return;
-        }
-        self.configure(Some(server.as_str())).await;
+        self.begin_check(server, true, then_sign_in);
     }
 
     fn sign_in(&mut self) {
         let Some(api) = self.api.clone() else {
-            self.notify(
-                Severity::Warning,
-                "Set the server address first",
-                "Choose Set server address in the Trenova Capture menu.",
-                None,
-            );
+            let snapshot = self.shared.snapshot();
+            match (snapshot.connection, snapshot.server) {
+                (Connection::Checking, _) => {}
+                (Connection::NeedsServer, Some(address)) => {
+                    if let Ok(server) = Server::parse(&address) {
+                        self.begin_check(server, true, true);
+                    }
+                }
+                _ => self.notify(
+                    Severity::Warning,
+                    "Set the server address first",
+                    "Enter the address you open Trenova at, then sign in.",
+                    None,
+                ),
+            }
             return;
         };
         if self.pairing.is_some() || self.signed_in() {
@@ -976,6 +1142,8 @@ impl Agent {
             s.connection = Connection::SignedOut;
             s.person = None;
             s.organization = None;
+            s.device_name = None;
+            s.device_id = None;
             s.profiles.clear();
         });
     }
@@ -1116,12 +1284,25 @@ impl Agent {
 
     async fn internal(&mut self, message: Internal) {
         match message {
+            Internal::Discovered {
+                check,
+                save,
+                then_sign_in,
+                result,
+            } => self.discovered(check, save, then_sign_in, result),
             Internal::Identity(Ok(identity)) => {
                 self.update_policy = identity.updates.clone();
                 self.policy_known = true;
                 self.shared.update(|s| {
                     s.person = Some(identity.person.name.clone());
                     s.organization = Some(identity.organization.name.clone());
+                    s.device_name = Some(if identity.device.name.is_empty() {
+                        identity.device.machine_name.clone()
+                    } else {
+                        identity.device.name.clone()
+                    })
+                    .filter(|name| !name.is_empty());
+                    s.device_id = Some(identity.device.id.as_str().to_owned());
                 });
                 if let Some(release) = self.held_release.take() {
                     self.release(Ok(Some(release)));
@@ -1165,7 +1346,15 @@ impl Agent {
     async fn paired(&mut self, result: Result<PairingOutcome, ApiError>) {
         self.pairing = None;
         match result {
-            Ok(PairingOutcome::Paired(_)) => {
+            Ok(PairingOutcome::Paired(credential)) => {
+                if let (Some(found), Some(api)) = (&self.discovery, &self.api) {
+                    let mut credential = *credential;
+                    credential.server_name.clone_from(&found.name);
+                    credential.shared_tenancy = found.shared_tenancy;
+                    if let Err(err) = api.sign_in(credential).await {
+                        tracing::warn!(error = %err, "could not keep the server's name with the credential");
+                    }
+                }
                 self.notify(
                     Severity::Info,
                     "This computer is signed in to Trenova",
@@ -1597,6 +1786,8 @@ impl Agent {
                     s.connection = Connection::SignedOut;
                     s.person = None;
                     s.organization = None;
+                    s.device_name = None;
+                    s.device_id = None;
                 });
                 self.notify(
                     Severity::Warning,
@@ -1884,6 +2075,8 @@ impl Agent {
                     s.connection = Connection::SignedOut;
                     s.person = None;
                     s.organization = None;
+                    s.device_name = None;
+                    s.device_id = None;
                 });
                 self.notify(
                     Severity::Warning,

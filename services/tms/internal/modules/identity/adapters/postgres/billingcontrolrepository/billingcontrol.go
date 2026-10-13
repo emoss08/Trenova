@@ -59,7 +59,10 @@ func (r *repository) GetByOrgID(
 }
 
 func (r *repository) ListAutomaticTransfer(ctx context.Context) ([]*tenant.BillingControl, error) {
-	ctx = dbscope.WithSystem(ctx, "list organizations that transfer freight to billing automatically")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list organizations that transfer freight to billing automatically",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.BillingControl, error) {
 		cols := tenantcol.BillingControlColumns
 		items := make([]*tenant.BillingControl, 0)

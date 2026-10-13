@@ -40,10 +40,13 @@ func (s *Service) assignFactoring(
 		entity.FactoringCompanyID = nil
 		return nil
 	}
-	factor, err := s.factoringRepo.GetByID(ctx, factoringcompanyports.GetFactoringCompanyByIDRequest{
-		ID:         *factorID,
-		TenantInfo: tenantInfo,
-	})
+	factor, err := s.factoringRepo.GetByID(
+		ctx,
+		factoringcompanyports.GetFactoringCompanyByIDRequest{
+			ID:         *factorID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -69,14 +72,14 @@ func resolveFactor(
 	tenantInfo pagination.TenantInfo,
 ) (*factoringcompany.FactoringCompany, error) {
 	if repo == nil || entity == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // factoring is not wired in this process
 	}
 	factorID := entity.FactoringCompanyID
 	if entity.Status == invoice.StatusDraft {
 		factorID = assignedFactorID(cus)
 	}
 	if factorID == nil || factorID.IsNil() {
-		return nil, nil
+		return nil, nil //nolint:nilnil // the invoice has no factor
 	}
 	factor, err := repo.GetByID(ctx, factoringcompanyports.GetFactoringCompanyByIDRequest{
 		ID:           *factorID,
@@ -85,7 +88,7 @@ func resolveFactor(
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // a factor deleted since assignment is treated as none
 		}
 		return nil, err
 	}

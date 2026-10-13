@@ -19,11 +19,11 @@ export function SectionHead({
   return (
     <div id={sectionDomId(section)} className="flex scroll-mt-6 items-end justify-between gap-3">
       <div className="flex min-w-0 flex-col gap-0.5">
-        <h2 className="flex items-center gap-1.5 text-lg font-semibold">
+        <h2 className="flex items-center gap-1.5 text-base font-semibold">
           <Icon className="text-foreground-subtle size-4" />
           {title}
         </h2>
-        {description && <p className="text-foreground-muted text-sm">{description}</p>}
+        {description && <p className="text-foreground-muted text-xs">{description}</p>}
       </div>
       {children && <div className="flex shrink-0 items-center gap-1.5">{children}</div>}
     </div>

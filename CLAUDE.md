@@ -393,6 +393,16 @@ rows to their spans, and the known limits are in
 [docs/engineering/ai-tracing.md](docs/engineering/ai-tracing.md). Read it before adding a span,
 a trace attribute or a link column.
 
+## Formula Language Service
+
+The Formula Studio's editor parses and checks the formula language in the browser
+(`client/apps/web/src/components/formula-editor/expr-parser.ts`, `expr-check.ts`): every finding
+carries its span and, where one exists, its fix, and the same analysis feeds the editor's
+squiggles, the problems panel, the rate trace and Nova's cards. **Read
+[docs/engineering/formula-language-service.md](docs/engineering/formula-language-service.md)
+before changing the parser, a check, a diagnostic message, or anything that reads
+`analyzeExpression`.** Diagnostic messages are ICU patterns: never put a bare brace in one.
+
 ## Desk Bench
 
 `trenova desk ask "…"` and `trenova desk run` (`task desk-ask`, `task desk-bench`) drive the

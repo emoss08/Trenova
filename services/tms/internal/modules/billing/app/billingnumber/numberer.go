@@ -67,7 +67,10 @@ func (n Numberer) Next(ctx context.Context, req *Request) (string, error) {
 }
 
 // ForItem renumbers an item being released to be billed again, for its payer.
-func (n Numberer) ForItem(ctx context.Context, item *billingqueue.BillingQueueItem) (string, error) {
+func (n Numberer) ForItem(
+	ctx context.Context,
+	item *billingqueue.BillingQueueItem,
+) (string, error) {
 	return n.Next(ctx, &Request{
 		TenantInfo: pagination.TenantInfo{OrgID: item.OrganizationID, BuID: item.BusinessUnitID},
 		BillType:   item.BillType,
@@ -83,7 +86,13 @@ func (n Numberer) invoiceNumber(ctx context.Context, req *Request) (string, erro
 
 	format := n.customerFormat(ctx, req.TenantInfo, profile)
 	if format == nil {
-		return n.generator.GenerateInvoiceNumber(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID, "", "")
+		return n.generator.GenerateInvoiceNumber(
+			ctx,
+			req.TenantInfo.OrgID,
+			req.TenantInfo.BuID,
+			"",
+			"",
+		)
 	}
 
 	return n.generator.Generate(ctx, &seqgen.GenerateRequest{
@@ -94,7 +103,10 @@ func (n Numberer) invoiceNumber(ctx context.Context, req *Request) (string, erro
 	})
 }
 
-func (n Numberer) profile(ctx context.Context, req *Request) (*customer.CustomerBillingProfile, error) {
+func (n Numberer) profile(
+	ctx context.Context,
+	req *Request,
+) (*customer.CustomerBillingProfile, error) {
 	if req.Profile != nil || req.PayerID.IsNil() || n.customers == nil || n.formats == nil {
 		return req.Profile, nil
 	}
@@ -107,7 +119,7 @@ func (n Numberer) profile(ctx context.Context, req *Request) (*customer.Customer
 		},
 	})
 	if errortypes.IsNotFoundError(err) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a missing customer has no billing profile prefix
 	}
 	if err != nil {
 		return nil, err
@@ -134,14 +146,18 @@ func (n Numberer) customerFormat(
 		return nil
 	}
 
-	base, err := n.formats.GetFormat(ctx, tenant.SequenceTypeInvoice, tenantInfo.OrgID, tenantInfo.BuID)
+	base, err := n.formats.GetFormat(
+		ctx,
+		tenant.SequenceTypeInvoice,
+		tenantInfo.OrgID,
+		tenantInfo.BuID,
+	)
 	if err != nil || base == nil {
 		// A missing tenant format is not worth failing a bill over; the
 		// generator's own default still produces a valid, unique number.
 		return nil
 	}
 
-	//nolint:govet // a shallow copy is the point: the generator mutates what it is given.
 	copied := *base
 	copied.Prefix = profile.CustomerInvoicePrefix
 
