@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/interceptor"
 	"go.temporal.io/sdk/workflow"
 )
@@ -60,7 +61,8 @@ func (a *metricsActivityInbound) ExecuteActivity(
 	result, err := a.Next.ExecuteActivity(ctx, in)
 	duration := time.Since(start).Seconds()
 
-	a.metrics.RecordActivityExecution("activity", "default", duration, err)
+	activityType, taskQueue := activityLabels(ctx)
+	a.metrics.RecordActivityExecution(activityType, taskQueue, duration, err)
 
 	return result, err
 }
@@ -85,7 +87,18 @@ func (w *metricsWorkflowInbound) ExecuteWorkflow(
 	result, err := w.Next.ExecuteWorkflow(ctx, in)
 	duration := time.Since(start).Seconds()
 
-	w.metrics.RecordWorkflowExecution("workflow", duration, err)
+	w.metrics.RecordWorkflowExecution(workflow.GetInfo(ctx).WorkflowType.Name, duration, err)
 
 	return result, err
+}
+
+// activityLabels names the activity and its task queue for the metrics. Outside
+// a real activity context (unit tests) there is no info, so the old constant
+// labels stand in.
+func activityLabels(ctx context.Context) (activityType, taskQueue string) {
+	if !activity.IsActivity(ctx) {
+		return "activity", "default"
+	}
+	info := activity.GetInfo(ctx)
+	return info.ActivityType.Name, info.TaskQueue
 }
