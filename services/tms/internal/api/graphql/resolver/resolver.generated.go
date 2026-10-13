@@ -355,6 +355,7 @@ type Resolver struct {
 	triageView                         *inboundmessageresolver.TriageViewResolver
 	user                               *tenantresolver.UserResolver
 	watchtowerItem                     *watchtowerresolver.WatchtowerItemResolver
+	watchtowerItemEvent                *watchtowerresolver.WatchtowerItemEventResolver
 	worker                             *workerresolver.WorkerResolver
 	workerBenefitEnrollment            *benefitsresolver.WorkerBenefitEnrollmentResolver
 	workerChecklist                    *workerchecklistresolver.WorkerChecklistResolver
@@ -1003,8 +1004,9 @@ func FromServices(s *Services) *Resolver {
 		UserService: s.UserService,
 	}
 	watchtowerDeps := &watchtowerresolver.Deps{
-		Core:              s.Core,
-		WatchtowerService: s.WatchtowerService,
+		Core:                 s.Core,
+		WatchtowerService:    s.WatchtowerService,
+		WatchtowerExceptions: s.WatchtowerExceptions,
 	}
 	workerDeps := &workerresolver.Deps{
 		Core:          s.Core,
@@ -1499,6 +1501,7 @@ func FromServices(s *Services) *Resolver {
 		triageView:                   &inboundmessageresolver.TriageViewResolver{Deps: inboundmessageDeps},
 		user:                         &tenantresolver.UserResolver{Deps: tenantDeps},
 		watchtowerItem:               &watchtowerresolver.WatchtowerItemResolver{Deps: watchtowerDeps},
+		watchtowerItemEvent:          &watchtowerresolver.WatchtowerItemEventResolver{Deps: watchtowerDeps},
 		worker:                       &workerresolver.WorkerResolver{Deps: workerDeps},
 		workerBenefitEnrollment:      &benefitsresolver.WorkerBenefitEnrollmentResolver{Deps: benefitsDeps},
 		workerChecklist:              &workerchecklistresolver.WorkerChecklistResolver{Deps: workerchecklistDeps},
@@ -2650,6 +2653,10 @@ func (r *Resolver) User() generated.UserResolver {
 
 func (r *Resolver) WatchtowerItem() generated.WatchtowerItemResolver {
 	return r.watchtowerItem
+}
+
+func (r *Resolver) WatchtowerItemEvent() generated.WatchtowerItemEventResolver {
+	return r.watchtowerItemEvent
 }
 
 func (r *Resolver) Worker() generated.WorkerResolver {

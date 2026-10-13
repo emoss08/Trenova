@@ -115,14 +115,12 @@ func (d *Dismisser) PlanDismiss(
 	id pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*kernelports.RecordChange[watchtower.Item], error) {
-	item, err := d.exceptions.repo.GetByID(
+	item, err := d.exceptions.GetException(
 		ctx,
 		watchtowerports.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
+		actor,
 	)
 	if err != nil {
-		return nil, err
-	}
-	if err = d.exceptions.access.assertMaySee(ctx, actor, item); err != nil {
 		return nil, err
 	}
 

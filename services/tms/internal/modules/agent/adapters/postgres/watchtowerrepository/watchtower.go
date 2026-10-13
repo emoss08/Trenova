@@ -645,13 +645,9 @@ func (r *repository) List(
 	})
 }
 
-const noDueSortValue = int64(9_000_000_000_000)
-
-func NoDueSortValue() int64 { return noDueSortValue }
-
 func dueSortExpr() string {
 	return watchtowercol.ItemColumns.DueAt.Expr(
-		"COALESCE({}, " + strconv.FormatInt(noDueSortValue, 10) + ")",
+		"COALESCE({}, " + strconv.FormatInt(watchtower.NoDueSortKey, 10) + ")",
 	)
 }
 

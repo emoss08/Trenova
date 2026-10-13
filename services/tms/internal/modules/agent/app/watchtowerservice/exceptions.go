@@ -90,14 +90,11 @@ func (s *Exceptions) applyException(
 		)
 	}
 
-	before, err := s.repo.GetByID(ctx, watchtowerports.GetWatchtowerItemRequest{
+	before, err := s.GetException(ctx, watchtowerports.GetWatchtowerItemRequest{
 		ID:         change.target.ItemID,
 		TenantInfo: change.target.TenantInfo,
-	})
+	}, change.actor)
 	if err != nil {
-		return nil, err
-	}
-	if err = s.access.assertMaySee(ctx, change.actor, before); err != nil {
 		return nil, err
 	}
 
@@ -119,6 +116,9 @@ func (s *Exceptions) applyException(
 	if err != nil {
 		return nil, err
 	}
+	if change.target.DryRun {
+		return &working, nil
+	}
 
 	saved, err := s.repo.UpdateWorkflow(ctx, &watchtowerports.UpdateWatchtowerWorkflowRequest{
 		Item:            &working,
@@ -136,6 +136,21 @@ func (s *Exceptions) applyException(
 	}
 
 	return saved, nil
+}
+
+func (s *Exceptions) GetException(
+	ctx context.Context,
+	req watchtowerports.GetWatchtowerItemRequest,
+	actor *permissionports.RequestActor,
+) (*watchtower.Item, error) {
+	item, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.access.assertMaySee(ctx, actor, item); err != nil {
+		return nil, err
+	}
+	return item, nil
 }
 
 func actorUserID(actor *permissionports.RequestActor) pulid.ID {
@@ -319,18 +334,18 @@ func (s *Exceptions) CommentOnException(
 	if err != nil {
 		return nil, err
 	}
-	item, err := s.repo.GetByID(ctx, watchtowerports.GetWatchtowerItemRequest{
+	item, err := s.GetException(ctx, watchtowerports.GetWatchtowerItemRequest{
 		ID:         req.ItemID,
 		TenantInfo: req.TenantInfo,
-	})
+	}, actor)
 	if err != nil {
-		return nil, err
-	}
-	if err = s.access.assertMaySee(ctx, actor, item); err != nil {
 		return nil, err
 	}
 
 	event := watchtower.NewEvent(item, watchtower.EventCommented, actorUserID(actor)).WithNote(body)
+	if req.DryRun {
+		return event, nil
+	}
 	if err = s.repo.InsertEvents(ctx, []*watchtower.Event{event}); err != nil {
 		return nil, err
 	}
@@ -394,14 +409,10 @@ func (s *Exceptions) ExceptionHistory(
 	req *watchtowerports.ExceptionHistoryRequest,
 	actor *permissionports.RequestActor,
 ) ([]*watchtower.Event, error) {
-	item, err := s.repo.GetByID(ctx, watchtowerports.GetWatchtowerItemRequest{
+	if _, err := s.GetException(ctx, watchtowerports.GetWatchtowerItemRequest{
 		ID:         req.ItemID,
 		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if err = s.access.assertMaySee(ctx, actor, item); err != nil {
+	}, actor); err != nil {
 		return nil, err
 	}
 

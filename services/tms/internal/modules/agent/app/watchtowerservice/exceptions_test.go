@@ -265,3 +265,26 @@ func TestCommentOnException_KeepsTheCommentInTheHistory(t *testing.T) {
 	assert.Equal(t, watchtower.EventCommented, history[0].Kind)
 	assert.Equal(t, f.actor.UserID, history[0].ActorID)
 }
+
+func TestDryRun_PreviewsWithoutWriting(t *testing.T) {
+	t.Parallel()
+
+	f := newExceptionFixture(t, &agenttest.StubPermissions{})
+	target := f.target()
+	target.DryRun = true
+
+	preview, err := f.exceptions.ResolveException(t.Context(), &watchtowerports.ResolveExceptionRequest{
+		ExceptionTarget: target,
+		Code:            watchtower.ResolutionFixed,
+	}, f.actor)
+	require.NoError(t, err)
+	assert.Equal(t, watchtower.StatusResolved, preview.Status)
+	assert.Equal(t, watchtower.StatusOpen, f.repo.items["ServiceFailure:sf_1"].Status)
+
+	_, err = f.exceptions.CommentOnException(t.Context(), &watchtowerports.CommentOnExceptionRequest{
+		ExceptionTarget: target,
+		Body:            "Checked with the carrier",
+	}, f.actor)
+	require.NoError(t, err)
+	assert.Empty(t, f.repo.events)
+}

@@ -3,6 +3,7 @@ package watchtowerservice
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -100,6 +101,18 @@ func New(p Params) *Service {
 	return svc
 }
 
+func ItemCursor(item *watchtower.Item, orderByDue bool) (string, error) {
+	key := item.OccurredAt
+	if orderByDue {
+		key = item.DueSortKey()
+	}
+	encoded, err := pagination.EncodeCursor(pagination.Cursor{CreatedAt: key, ID: item.ID})
+	if err != nil {
+		return "", fmt.Errorf("encode watchtower cursor: %w", err)
+	}
+	return encoded, nil
+}
+
 func AsService(s *Service) watchtowerports.WatchtowerService { return s }
 
 func (s *Service) List(
@@ -119,6 +132,22 @@ func (s *Service) List(
 				"Unknown severity",
 			)
 		}
+	}
+	for _, status := range req.Statuses {
+		if !status.IsValid() {
+			return nil, errortypes.NewValidationError(
+				"statuses",
+				errortypes.ErrInvalid,
+				"Unknown status",
+			)
+		}
+	}
+	assignees := req.AssigneeIDs
+	if req.AssignedToMe {
+		if actor.UserID.IsNil() {
+			return nil, errortypes.NewBusinessError("Only a person has exceptions of their own")
+		}
+		assignees = append(slices.Clone(assignees), actor.UserID)
 	}
 
 	cursor, err := s.repo.GetCursor(ctx, watchtowerports.GetWatchtowerCursorRequest{
@@ -149,6 +178,14 @@ func (s *Service) List(
 		UnresolvedOnly: req.UnresolvedOnly,
 		Since:          req.Since,
 		Limit:          first + 1,
+		Statuses:       req.Statuses,
+		AssigneeIDs:    assignees,
+		Unassigned:     req.Unassigned,
+		SubjectID:      req.SubjectID,
+		OrderByDue:     req.OrderByDue,
+	}
+	if req.OverdueOnly {
+		listReq.OverdueAt = s.now()
 	}
 	if req.After != "" {
 		decoded, dErr := pagination.DecodeCursor(req.After)
@@ -159,8 +196,12 @@ func (s *Service) List(
 				"Cursor is invalid",
 			)
 		}
-		listReq.BeforeOccurredAt = decoded.CreatedAt
 		listReq.BeforeID = decoded.ID
+		if req.OrderByDue {
+			listReq.BeforeDueAt = decoded.CreatedAt
+		} else {
+			listReq.BeforeOccurredAt = decoded.CreatedAt
+		}
 	}
 
 	items, err := s.repo.List(ctx, listReq)
@@ -171,19 +212,18 @@ func (s *Service) List(
 		items = items[:first]
 		page.HasNextPage = true
 	}
+	page.Cursors = make([]string, 0, len(items))
 	for _, item := range items {
 		item.Seen = item.OccurredAt <= cursor.SeenAt
+		encoded, eErr := ItemCursor(item, req.OrderByDue)
+		if eErr != nil {
+			return nil, eErr
+		}
+		page.Cursors = append(page.Cursors, encoded)
 	}
 	page.Items = items
-	if last := len(items); last > 0 {
-		encoded, eErr := pagination.EncodeCursor(pagination.Cursor{
-			CreatedAt: items[last-1].OccurredAt,
-			ID:        items[last-1].ID,
-		})
-		if eErr != nil {
-			return nil, fmt.Errorf("encode watchtower cursor: %w", eErr)
-		}
-		page.EndCursor = encoded
+	if last := len(page.Cursors); last > 0 {
+		page.EndCursor = page.Cursors[last-1]
 	}
 
 	return page, nil
@@ -218,6 +258,8 @@ func (s *Service) Counts(
 		TenantInfo: tenant,
 		Kinds:      kinds,
 		SeenAt:     cursor.SeenAt,
+		AssigneeID: actor.UserID,
+		Now:        s.now(),
 	})
 	if err != nil {
 		return nil, err
@@ -226,6 +268,10 @@ func (s *Service) Counts(
 	counts.Critical = stored.Critical
 	counts.UnseenCritical = stored.UnseenCritical
 	counts.Unseen = stored.Unseen
+	counts.Overdue = stored.Overdue
+	counts.Unassigned = stored.Unassigned
+	counts.Mine = stored.Mine
+	counts.MineOverdue = stored.MineOverdue
 	for _, row := range stored.ByKind {
 		counts.ByKind[row.SourceKind] = row.Count
 	}

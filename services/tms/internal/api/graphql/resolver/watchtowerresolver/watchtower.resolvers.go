@@ -12,10 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 func (r *MutationResolver) MarkWatchtowerSeen(ctx context.Context, seenAt *int) (*gqlmodel.WatchtowerCounts, error) {
@@ -103,6 +107,21 @@ func (r *QueryResolver) WatchtowerItems(ctx context.Context, input gqlmodel.Watc
 		Kinds:          input.Kinds,
 		Severities:     input.Severities,
 		UnresolvedOnly: true,
+		Statuses:       input.Statuses,
+		AssignedToMe:   typeutils.ValueOrZero(input.AssignedToMe),
+		Unassigned:     typeutils.ValueOrZero(input.Unassigned),
+		OverdueOnly:    typeutils.ValueOrZero(input.OverdueOnly),
+		OrderByDue:     typeutils.ValueOrZero(input.OrderByDue),
+	}
+	if len(input.AssigneeIds) > 0 {
+		assignees, parseErr := base.ParseIDs(input.AssigneeIds)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		req.AssigneeIDs = assignees
+	}
+	if req.SubjectID, err = base.OptionalID(input.SubjectID); err != nil {
+		return nil, err
 	}
 	if input.UnresolvedOnly != nil {
 		req.UnresolvedOnly = *input.UnresolvedOnly
@@ -123,10 +142,10 @@ func (r *QueryResolver) WatchtowerItems(ctx context.Context, input gqlmodel.Watc
 	}
 
 	edges := make([]*gqlmodel.WatchtowerItemEdge, 0, len(page.Items))
-	for _, item := range page.Items {
+	for i, item := range page.Items {
 		edges = append(edges, &gqlmodel.WatchtowerItemEdge{
 			Node:   item,
-			Cursor: watchtowerCursor(item),
+			Cursor: page.Cursors[i],
 		})
 	}
 
@@ -190,4 +209,195 @@ func (r *WatchtowerItemResolver) EventKind(ctx context.Context, obj *watchtower.
 
 func (r *WatchtowerItemResolver) KindLabel(ctx context.Context, obj *watchtower.Item) (string, error) {
 	return obj.SourceKind.Label(), nil
+}
+
+func (r *MutationResolver) AssignWatchtowerItem(ctx context.Context, id string, input gqlmodel.AssignWatchtowerItemInput) (*watchtower.Item, error) {
+	authCtx, target, err := r.exceptionTarget(ctx, id, input.ExpectedVersion)
+	if err != nil {
+		return nil, err
+	}
+	req := &watchtowerports.AssignExceptionRequest{
+		ExceptionTarget: target,
+		Note:            stringutils.FromPtr(input.Note),
+	}
+	if req.AssigneeID, err = base.OptionalID(input.AssigneeID); err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerExceptions.AssignException(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) AcknowledgeWatchtowerItem(ctx context.Context, id string, expectedVersion *int) (*watchtower.Item, error) {
+	authCtx, target, err := r.exceptionTarget(ctx, id, expectedVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerExceptions.AcknowledgeException(ctx, &target, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) StartWatchtowerItem(ctx context.Context, id string, expectedVersion *int) (*watchtower.Item, error) {
+	authCtx, target, err := r.exceptionTarget(ctx, id, expectedVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerExceptions.StartException(ctx, &target, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) SnoozeWatchtowerItem(ctx context.Context, id string, input gqlmodel.SnoozeWatchtowerItemInput) (*watchtower.Item, error) {
+	authCtx, target, err := r.exceptionTarget(ctx, id, input.ExpectedVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerExceptions.SnoozeException(ctx, &watchtowerports.SnoozeExceptionRequest{
+		ExceptionTarget: target,
+		Until:           int64(input.Until),
+		Note:            stringutils.FromPtr(input.Note),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) SetWatchtowerItemDue(ctx context.Context, id string, input gqlmodel.SetWatchtowerItemDueInput) (*watchtower.Item, error) {
+	authCtx, target, err := r.exceptionTarget(ctx, id, input.ExpectedVersion)
+	if err != nil {
+		return nil, err
+	}
+	req := &watchtowerports.SetExceptionDueRequest{
+		ExceptionTarget: target,
+		Note:            stringutils.FromPtr(input.Note),
+	}
+	if input.DueAt != nil {
+		dueAt := int64(*input.DueAt)
+		req.DueAt = &dueAt
+	}
+
+	return r.WatchtowerExceptions.SetExceptionDue(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) CommentOnWatchtowerItem(ctx context.Context, id string, body string) (*watchtower.Event, error) {
+	authCtx, target, err := r.exceptionTarget(ctx, id, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerExceptions.CommentOnException(ctx, &watchtowerports.CommentOnExceptionRequest{
+		ExceptionTarget: target,
+		Body:            body,
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) ResolveWatchtowerItem(ctx context.Context, id string, input gqlmodel.ResolveWatchtowerItemInput) (*watchtower.Item, error) {
+	authCtx, target, err := r.exceptionTarget(ctx, id, input.ExpectedVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerExceptions.ResolveException(ctx, &watchtowerports.ResolveExceptionRequest{
+		ExceptionTarget: target,
+		Code:            input.Code,
+		Note:            stringutils.FromPtr(input.Note),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) ReopenWatchtowerItem(ctx context.Context, id string, input gqlmodel.ReopenWatchtowerItemInput) (*watchtower.Item, error) {
+	authCtx, target, err := r.exceptionTarget(ctx, id, input.ExpectedVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerExceptions.ReopenException(ctx, &watchtowerports.ReopenExceptionRequest{
+		ExceptionTarget: target,
+		Note:            stringutils.FromPtr(input.Note),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) WatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWatchtower, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	itemID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerExceptions.GetException(ctx, watchtowerports.GetWatchtowerItemRequest{
+		ID:         itemID,
+		TenantInfo: base.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) WatchtowerItemHistory(ctx context.Context, id string, limit *int) ([]*watchtower.Event, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWatchtower, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	itemID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+	req := &watchtowerports.ExceptionHistoryRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		ItemID:     itemID,
+	}
+	if limit != nil {
+		req.Limit = *limit
+	}
+
+	return r.WatchtowerExceptions.ExceptionHistory(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) WatchtowerResolutionCodes(ctx context.Context) ([]*watchtower.ResolutionCodeOption, error) {
+	if _, err := r.RequirePermission(ctx, permission.ResourceWatchtower, permission.OpRead); err != nil {
+		return nil, err
+	}
+
+	return watchtower.SelectableResolutionCodeOptions(), nil
+}
+
+func (r *WatchtowerItemEventResolver) ActorID(ctx context.Context, obj *watchtower.Event) (*string, error) {
+	return base.IDPtr(obj.ActorID), nil
+}
+
+func (r *WatchtowerItemEventResolver) Actor(ctx context.Context, obj *watchtower.Event) (*tenant.User, error) {
+	return optionalUser(ctx, obj.ActorID)
+}
+
+func (r *WatchtowerItemResolver) AssigneeID(ctx context.Context, obj *watchtower.Item) (*string, error) {
+	return base.IDPtr(obj.AssigneeID), nil
+}
+
+func (r *WatchtowerItemResolver) Assignee(ctx context.Context, obj *watchtower.Item) (*tenant.User, error) {
+	return optionalUser(ctx, obj.AssigneeID)
+}
+
+func (r *WatchtowerItemResolver) Overdue(ctx context.Context, obj *watchtower.Item) (bool, error) {
+	return obj.IsOverdue(timeutils.NowUnix()), nil
+}
+
+func (r *WatchtowerItemResolver) ResolutionCode(ctx context.Context, obj *watchtower.Item) (*watchtower.ResolutionCode, error) {
+	if obj.ResolutionCode == "" {
+		return nil, nil
+	}
+	code := obj.ResolutionCode
+
+	return &code, nil
+}
+
+func (r *WatchtowerItemResolver) ResolutionNote(ctx context.Context, obj *watchtower.Item) (*string, error) {
+	if obj.ResolutionNote == "" {
+		return nil, nil
+	}
+	note := obj.ResolutionNote
+
+	return &note, nil
+}
+
+func (r *WatchtowerItemResolver) ResolvedByID(ctx context.Context, obj *watchtower.Item) (*string, error) {
+	return base.IDPtr(obj.ResolvedByID), nil
+}
+
+func (r *WatchtowerItemResolver) ResolvedBy(ctx context.Context, obj *watchtower.Item) (*tenant.User, error) {
+	return optionalUser(ctx, obj.ResolvedByID)
 }

@@ -32,6 +32,10 @@ const (
 	paramSeverities      = "severities"
 	paramIncludeResolved = "includeResolved"
 	paramUnseenOnly      = "unseenOnly"
+	paramAssignedToMe    = "assignedToMe"
+	paramUnassigned      = "unassigned"
+	paramOverdueOnly     = "overdueOnly"
+	paramOrderByDue      = "orderByDue"
 	paramAfter           = "after"
 	paramRole            = "role"
 	paramDate            = "date"
@@ -41,6 +45,8 @@ const (
 		"reported, never what you should do."
 	watchtowerAgentUnseenNote = "unseenOnly follows a person's own place in the feed; an " +
 		"agent has none, so every item is listed."
+	watchtowerAgentMineNote = "assignedToMe follows the person asking; an agent running on its " +
+		"own owns nothing, so every owner is listed."
 	watchtowerEmptyNote = "Nothing on the watchtower matches, among the kinds you may read."
 
 	briefingMissingNote = "No briefing has been written for this role and day yet; the " +
@@ -141,7 +147,9 @@ func (t *listWatchtowerItemsTool) Description() string {
 	return "List the watchtower feed of open items that need attention now, newest first: " +
 		"failed agent runs, proposals awaiting a decision, exceptions and service failures. " +
 		"It also carries weather, quarantined EDI files, inbound email to review and " +
-		"coverage at risk. Narrow it by kind or severity. It never marks anything seen."
+		"coverage at risk, missed stops, missing PODs and exhausted tenders. Each exception " +
+		"shows its status, owner, due time and whether it is overdue. Narrow it by kind, " +
+		"severity, owner or overdue, or order it by due time. It never marks anything seen."
 }
 
 func (t *listWatchtowerItemsTool) SearchTerms() []string {
@@ -173,6 +181,24 @@ func (t *listWatchtowerItemsTool) ParamSchema() map[string]any {
 				toolschema.KeyType: toolschema.TypeBoolean,
 				toolschema.KeyDescription: "Only items the person has not been shown yet, " +
 					"from their own place in the feed. Ignored when an agent runs on its own.",
+			},
+			paramAssignedToMe: map[string]any{
+				toolschema.KeyType: toolschema.TypeBoolean,
+				toolschema.KeyDescription: "Only exceptions the person owns. Ignored when an " +
+					"agent runs on its own.",
+			},
+			paramUnassigned: map[string]any{
+				toolschema.KeyType:        toolschema.TypeBoolean,
+				toolschema.KeyDescription: "Only exceptions nobody owns.",
+			},
+			paramOverdueOnly: map[string]any{
+				toolschema.KeyType:        toolschema.TypeBoolean,
+				toolschema.KeyDescription: "Only open exceptions past their due time.",
+			},
+			paramOrderByDue: map[string]any{
+				toolschema.KeyType: toolschema.TypeBoolean,
+				toolschema.KeyDescription: "Soonest due first instead of newest first; items " +
+					"with no due time come last.",
 			},
 			paramAfter: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
@@ -214,6 +240,12 @@ type watchtowerRow struct {
 	Path        string `json:"path,omitempty"`
 	OccurredAt  int64  `json:"occurredAt"`
 	Resolved    bool   `json:"resolved"`
+	Status      string `json:"status"`
+	AssigneeID  string `json:"assigneeId,omitempty"`
+	DueAt       *int64 `json:"dueAt,omitempty"`
+	Overdue     bool   `json:"overdue"`
+	Escalations int16  `json:"escalations,omitempty"`
+	Resolution  string `json:"resolution,omitempty"`
 	Seen        *bool  `json:"seen,omitempty"`
 	FromOutside bool   `json:"fromOutside"`
 }
@@ -249,6 +281,12 @@ func (t *listWatchtowerItemsTool) Query(
 
 	person := params.Actor.IsUser()
 	tenant := tenantOf(params)
+	notes := make([]string, 0, 4)
+	assignedToMe := optionalBool(params.Params, paramAssignedToMe)
+	if assignedToMe && !person {
+		assignedToMe = false
+		notes = append(notes, watchtowerAgentMineNote)
+	}
 	window := readPage(params.Params, watchtowerDefaultLimit, watchtowerMaxLimit)
 	page, err := t.feed.List(ctx, watchtowerports.ListWatchtowerItemsRequest{
 		TenantInfo:     tenant,
@@ -257,6 +295,10 @@ func (t *listWatchtowerItemsTool) Query(
 		UnresolvedOnly: !optionalBool(params.Params, paramIncludeResolved),
 		After:          optionalString(params.Params, paramAfter),
 		First:          window.limit,
+		AssignedToMe:   assignedToMe,
+		Unassigned:     optionalBool(params.Params, paramUnassigned),
+		OverdueOnly:    optionalBool(params.Params, paramOverdueOnly),
+		OrderByDue:     optionalBool(params.Params, paramOrderByDue),
 	}, params.Actor)
 	if err != nil {
 		return nil, err
@@ -266,7 +308,6 @@ func (t *listWatchtowerItemsTool) Query(
 	}
 
 	items, hasMore := page.Items, page.HasNextPage
-	notes := make([]string, 0, 3)
 	if optionalBool(params.Params, paramUnseenOnly) {
 		if person {
 			items, hasMore = unseenPrefix(items, hasMore)
@@ -322,6 +363,16 @@ func watchtowerRowFrom(item *watchtower.Item, person, outside bool) watchtowerRo
 		OccurredAt:  item.OccurredAt,
 		Resolved:    item.IsResolved(),
 		FromOutside: outside,
+		Status:      item.Status.String(),
+		DueAt:       item.DueAt,
+		Overdue:     item.IsOverdue(timeutils.NowUnix()),
+		Escalations: item.EscalationLevel,
+	}
+	if item.AssigneeID.IsNotNil() {
+		row.AssigneeID = item.AssigneeID.String()
+	}
+	if item.ResolutionCode != "" {
+		row.Resolution = item.ResolutionCode.Label()
 	}
 	if item.SubjectID.IsNotNil() {
 		row.SubjectID = item.SubjectID.String()

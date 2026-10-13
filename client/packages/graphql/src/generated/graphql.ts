@@ -7913,15 +7913,37 @@ export type WaiveWorkerTrainingInput = {
   version?: number | null | undefined;
 };
 
+/** Where an exception is in its owner's hands. */
+export type WatchtowerItemStatus =
+  | 'Acknowledged'
+  | 'InProgress'
+  | 'Open'
+  | 'Resolved'
+  | 'Snoozed';
+
 export type WatchtowerItemsInput = {
   after?: string | null | undefined;
+  /** Only what this reader owns. */
+  assignedToMe?: boolean | null | undefined;
+  /** Only what these people own. */
+  assigneeIds?: Array<string | number> | null | undefined;
   first?: number | null | undefined;
   /** Only these kinds; empty is every kind the reader may see. */
   kinds?: Array<WatchtowerSourceKind> | null | undefined;
+  /** Soonest due first, items without a due time last, instead of newest first. */
+  orderByDue?: boolean | null | undefined;
+  /** Only what is open, not snoozed and past its due time. */
+  overdueOnly?: boolean | null | undefined;
   /** Only these severities; empty is all three. */
   severities?: Array<WatchtowerSeverity> | null | undefined;
   /** Only what occurred at or after this instant. */
   since?: number | null | undefined;
+  /** Only these statuses; empty is all of them. */
+  statuses?: Array<WatchtowerItemStatus> | null | undefined;
+  /** Only items about this record. */
+  subjectId?: string | number | null | undefined;
+  /** Only what nobody owns; with assigneeIds, what nobody or one of them owns. */
+  unassigned?: boolean | null | undefined;
   /** Leave out what has already resolved. */
   unresolvedOnly?: boolean | null | undefined;
 };

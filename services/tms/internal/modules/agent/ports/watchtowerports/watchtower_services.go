@@ -85,6 +85,7 @@ type WatchtowerPage struct {
 	Items       []*watchtower.Item
 	HasNextPage bool
 	EndCursor   string
+	Cursors     []string
 	// SeenAt is the reader's cursor, so a client can draw the unseen line.
 	SeenAt int64
 }
@@ -134,6 +135,7 @@ type ExceptionTarget struct {
 	TenantInfo      pagination.TenantInfo
 	ItemID          pulid.ID
 	ExpectedVersion int64
+	DryRun          bool
 }
 
 type AssignExceptionRequest struct {
@@ -177,6 +179,11 @@ type ExceptionHistoryRequest struct {
 }
 
 type ExceptionService interface {
+	GetException(
+		ctx context.Context,
+		req GetWatchtowerItemRequest,
+		actor *permissionports.RequestActor,
+	) (*watchtower.Item, error)
 	AssignException(
 		ctx context.Context,
 		req *AssignExceptionRequest,

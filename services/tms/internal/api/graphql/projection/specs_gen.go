@@ -649,6 +649,8 @@ var VehiclePositionSpec TypeSpec
 
 var WatchtowerItemSpec TypeSpec
 
+var WatchtowerItemEventSpec TypeSpec
+
 var WorkerSpec TypeSpec
 
 var WorkerAvailabilityPreferenceSpec TypeSpec
@@ -26022,6 +26024,8 @@ func init() {
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
+			"status",
+			"resolved_at",
 		},
 		Fields: []FieldSpec{
 			{
@@ -26099,6 +26103,109 @@ func init() {
 			{
 				Name:    "kindLabel",
 				Special: "kindLabel",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "assigneeId",
+				FieldMapKey: "assigneeId",
+			},
+			{
+				Name:        "assignee",
+				FieldMapKey: "assigneeId",
+			},
+			{
+				Name:        "dueAt",
+				FieldMapKey: "dueAt",
+			},
+			{
+				Name:        "overdue",
+				FieldMapKey: "dueAt",
+			},
+			{
+				Name:        "snoozedUntil",
+				FieldMapKey: "snoozedUntil",
+			},
+			{
+				Name:        "acknowledgedAt",
+				FieldMapKey: "acknowledgedAt",
+			},
+			{
+				Name:        "resolutionCode",
+				FieldMapKey: "resolutionCode",
+			},
+			{
+				Name:        "resolutionNote",
+				FieldMapKey: "resolutionNote",
+			},
+			{
+				Name:        "resolvedById",
+				FieldMapKey: "resolvedById",
+			},
+			{
+				Name:        "resolvedBy",
+				FieldMapKey: "resolvedById",
+			},
+			{
+				Name:        "sourceClearedAt",
+				FieldMapKey: "sourceClearedAt",
+			},
+			{
+				Name:        "escalationLevel",
+				FieldMapKey: "escalationLevel",
+			},
+			{
+				Name:        "lastEscalatedAt",
+				FieldMapKey: "lastEscalatedAt",
+			},
+		},
+	}
+
+	WatchtowerItemEventSpec = TypeSpec{
+		TypeName: "WatchtowerItemEvent",
+		FieldMap: watchtowercol.EventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "itemId",
+				FieldMapKey: "itemId",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "actorId",
+				FieldMapKey: "actorId",
+			},
+			{
+				Name:        "actor",
+				FieldMapKey: "actorId",
+			},
+			{
+				Name:        "fromValue",
+				FieldMapKey: "fromValue",
+			},
+			{
+				Name:        "toValue",
+				FieldMapKey: "toValue",
+			},
+			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
 			},
 		},
 	}

@@ -495,6 +495,7 @@ type ResolverRoot interface {
 	TriageView() TriageViewResolver
 	User() UserResolver
 	WatchtowerItem() WatchtowerItemResolver
+	WatchtowerItemEvent() WatchtowerItemEventResolver
 	Worker() WorkerResolver
 	WorkerBenefitEnrollment() WorkerBenefitEnrollmentResolver
 	WorkerChecklist() WorkerChecklistResolver
@@ -2087,6 +2088,14 @@ type MutationResolver interface {
 	MarkWatchtowerSeen(ctx context.Context, seenAt *int) (*gqlmodel.WatchtowerCounts, error)
 	DismissWatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
 	HandOffWatchtowerItem(ctx context.Context, id string, input gqlmodel.HandOffWatchtowerItemInput) (*gqlmodel.WatchtowerHandOffResult, error)
+	AssignWatchtowerItem(ctx context.Context, id string, input gqlmodel.AssignWatchtowerItemInput) (*watchtower.Item, error)
+	AcknowledgeWatchtowerItem(ctx context.Context, id string, expectedVersion *int) (*watchtower.Item, error)
+	StartWatchtowerItem(ctx context.Context, id string, expectedVersion *int) (*watchtower.Item, error)
+	SnoozeWatchtowerItem(ctx context.Context, id string, input gqlmodel.SnoozeWatchtowerItemInput) (*watchtower.Item, error)
+	SetWatchtowerItemDue(ctx context.Context, id string, input gqlmodel.SetWatchtowerItemDueInput) (*watchtower.Item, error)
+	CommentOnWatchtowerItem(ctx context.Context, id string, body string) (*watchtower.Event, error)
+	ResolveWatchtowerItem(ctx context.Context, id string, input gqlmodel.ResolveWatchtowerItemInput) (*watchtower.Item, error)
+	ReopenWatchtowerItem(ctx context.Context, id string, input gqlmodel.ReopenWatchtowerItemInput) (*watchtower.Item, error)
 	PatchWorker(ctx context.Context, id string, input gqlmodel.WorkerPatchInput) (*worker.Worker, error)
 	CreateWorkerPTO(ctx context.Context, input gqlmodel.CreateWorkerPTOInput) (*worker.WorkerPTO, error)
 	UpdateWorkerPTO(ctx context.Context, input gqlmodel.UpdateWorkerPTOInput) (*worker.WorkerPTO, error)
@@ -2877,6 +2886,9 @@ type QueryResolver interface {
 	User(ctx context.Context, id string) (*tenant.User, error)
 	WatchtowerItems(ctx context.Context, input gqlmodel.WatchtowerItemsInput) (*gqlmodel.WatchtowerItemConnection, error)
 	WatchtowerCounts(ctx context.Context) (*gqlmodel.WatchtowerCounts, error)
+	WatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
+	WatchtowerItemHistory(ctx context.Context, id string, limit *int) ([]*watchtower.Event, error)
+	WatchtowerResolutionCodes(ctx context.Context) ([]*watchtower.ResolutionCodeOption, error)
 	Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.WorkerConnection, error)
 	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
@@ -3133,6 +3145,18 @@ type WatchtowerItemResolver interface {
 	SubjectID(ctx context.Context, obj *watchtower.Item) (*string, error)
 	EventKind(ctx context.Context, obj *watchtower.Item) (*string, error)
 	KindLabel(ctx context.Context, obj *watchtower.Item) (string, error)
+	AssigneeID(ctx context.Context, obj *watchtower.Item) (*string, error)
+	Assignee(ctx context.Context, obj *watchtower.Item) (*tenant.User, error)
+	Overdue(ctx context.Context, obj *watchtower.Item) (bool, error)
+	ResolutionCode(ctx context.Context, obj *watchtower.Item) (*watchtower.ResolutionCode, error)
+	ResolutionNote(ctx context.Context, obj *watchtower.Item) (*string, error)
+	ResolvedByID(ctx context.Context, obj *watchtower.Item) (*string, error)
+	ResolvedBy(ctx context.Context, obj *watchtower.Item) (*tenant.User, error)
+}
+
+type WatchtowerItemEventResolver interface {
+	ActorID(ctx context.Context, obj *watchtower.Event) (*string, error)
+	Actor(ctx context.Context, obj *watchtower.Event) (*tenant.User, error)
 }
 
 type WorkerResolver interface {
@@ -3728,6 +3752,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"TriageView":                         func() any { return r.TriageView() },
 			"User":                               func() any { return r.User() },
 			"WatchtowerItem":                     func() any { return r.WatchtowerItem() },
+			"WatchtowerItemEvent":                func() any { return r.WatchtowerItemEvent() },
 			"Worker":                             func() any { return r.Worker() },
 			"WorkerBenefitEnrollment":            func() any { return r.WorkerBenefitEnrollment() },
 			"WorkerChecklist":                    func() any { return r.WorkerChecklist() },
@@ -30747,6 +30772,56 @@ enum WatchtowerSourceKind {
   TenderExhausted
 }
 
+"Where an exception is in its owner's hands."
+enum WatchtowerItemStatus {
+  Open
+  Acknowledged
+  InProgress
+  Snoozed
+  Resolved
+}
+
+"""
+Why an exception was closed. Cleared is the system's own code for a source
+that stopped reporting the problem; a person picks one of the others, and
+Other needs a note.
+"""
+enum WatchtowerResolutionCode {
+  Fixed
+  CarrierDelay
+  ShipperDelay
+  ReceiverDelay
+  CustomerChange
+  Rescheduled
+  Weather
+  Equipment
+  DriverIssue
+  DocumentReceived
+  DataCorrected
+  Duplicate
+  NoActionNeeded
+  Other
+  Cleared
+}
+
+"What happened to an exception, one line of its history."
+enum WatchtowerItemEventKind {
+  Created
+  Assigned
+  Unassigned
+  Acknowledged
+  Started
+  Snoozed
+  Woke
+  DueChanged
+  Commented
+  Escalated
+  Resolved
+  Reopened
+  SourceResolved
+  SourceReopened
+}
+
 "How loudly an item asks to be looked at."
 enum WatchtowerSeverity {
   Info
@@ -30785,6 +30860,48 @@ type WatchtowerItem {
   updatedAt: Timestamp!
   "The kind in the reader's words, for a filter chip."
   kindLabel: String!
+  status: WatchtowerItemStatus!
+  "Who owns the exception; absent while nobody does."
+  assigneeId: ID
+  assignee: User
+  "When the owner is expected to have dealt with it; absent when no due time applies."
+  dueAt: Timestamp
+  "Open, not snoozed, and past its due time."
+  overdue: Boolean!
+  snoozedUntil: Timestamp
+  acknowledgedAt: Timestamp
+  "Why it was closed; absent while open."
+  resolutionCode: WatchtowerResolutionCode
+  resolutionNote: String
+  "Who closed it; absent when the source cleared it."
+  resolvedById: ID
+  resolvedBy: User
+  "When the source stopped reporting a problem a person had already resolved."
+  sourceClearedAt: Timestamp
+  "How many times it has escalated for being overdue."
+  escalationLevel: Int!
+  lastEscalatedAt: Timestamp
+}
+
+"One line of an exception's history. The history is never edited."
+type WatchtowerItemEvent {
+  id: ID!
+  itemId: ID!
+  kind: WatchtowerItemEventKind!
+  "The person behind the change; absent for the system."
+  actorId: ID
+  actor: User
+  fromValue: String!
+  toValue: String!
+  note: String!
+  createdAt: Timestamp!
+}
+
+"A resolution a person may pick, in their words."
+type WatchtowerResolutionCodeOption {
+  code: WatchtowerResolutionCode!
+  label: String!
+  requiresNote: Boolean!
 }
 
 type WatchtowerItemEdge {
@@ -30810,6 +30927,20 @@ input WatchtowerItemsInput {
   unresolvedOnly: Boolean = true
   "Only what occurred at or after this instant."
   since: Timestamp
+  "Only these statuses; empty is all of them."
+  statuses: [WatchtowerItemStatus!]
+  "Only what this reader owns."
+  assignedToMe: Boolean = false
+  "Only what these people own."
+  assigneeIds: [ID!]
+  "Only what nobody owns; with assigneeIds, what nobody or one of them owns."
+  unassigned: Boolean = false
+  "Only what is open, not snoozed and past its due time."
+  overdueOnly: Boolean = false
+  "Only items about this record."
+  subjectId: ID
+  "Soonest due first, items without a due time last, instead of newest first."
+  orderByDue: Boolean = false
 }
 
 type WatchtowerKindSummary {
@@ -30824,6 +30955,14 @@ type WatchtowerCounts {
   critical: Int!
   unseen: Int!
   unseenCritical: Int!
+  "Open, not snoozed and past their due time."
+  overdue: Int!
+  "Open with nobody owning them."
+  unassigned: Int!
+  "Open and owned by this reader."
+  mine: Int!
+  "Owned by this reader and overdue."
+  mineOverdue: Int!
   byKind: [WatchtowerKindSummary!]!
   seenAt: Timestamp!
 }
@@ -30842,6 +30981,39 @@ type WatchtowerHandOffResult {
   templates: [String!]!
 }
 
+input AssignWatchtowerItemInput {
+  "The new owner; omit to leave the exception with nobody."
+  assigneeId: ID
+  note: String
+  "The version the person was looking at; a newer one refuses the change."
+  expectedVersion: Int
+}
+
+input SnoozeWatchtowerItemInput {
+  until: Timestamp!
+  note: String
+  expectedVersion: Int
+}
+
+input SetWatchtowerItemDueInput {
+  "The new due time; omit to clear it."
+  dueAt: Timestamp
+  note: String
+  expectedVersion: Int
+}
+
+input ResolveWatchtowerItemInput {
+  code: WatchtowerResolutionCode!
+  "Required when the code is Other."
+  note: String
+  expectedVersion: Int
+}
+
+input ReopenWatchtowerItemInput {
+  note: String
+  expectedVersion: Int
+}
+
 input HandOffWatchtowerItemInput {
   "Start this agent on the item's subject; omit to publish the item's event to whoever subscribes."
   agentDefinitionId: ID
@@ -30851,6 +31023,12 @@ extend type Query {
   "What needs attention, newest first, filtered to what this reader may see."
   watchtowerItems(input: WatchtowerItemsInput!): WatchtowerItemConnection!
   watchtowerCounts: WatchtowerCounts!
+  "One item, if this reader may see it."
+  watchtowerItem(id: ID!): WatchtowerItem!
+  "What happened to an item, oldest first."
+  watchtowerItemHistory(id: ID!, limit: Int = 100): [WatchtowerItemEvent!]!
+  "The resolutions a person may pick."
+  watchtowerResolutionCodes: [WatchtowerResolutionCodeOption!]!
 }
 
 extend type Mutation {
@@ -30860,6 +31038,22 @@ extend type Mutation {
   dismissWatchtowerItem(id: ID!): WatchtowerItem!
   "Hands an item to an agent, or to whoever subscribes to its event."
   handOffWatchtowerItem(id: ID!, input: HandOffWatchtowerItemInput!): WatchtowerHandOffResult!
+  "Gives an exception to someone who can see it, or to nobody."
+  assignWatchtowerItem(id: ID!, input: AssignWatchtowerItemInput!): WatchtowerItem!
+  "Says someone has seen an open exception; an unowned one becomes the reader's."
+  acknowledgeWatchtowerItem(id: ID!, expectedVersion: Int): WatchtowerItem!
+  "Says someone is working on an exception; an unowned one becomes the reader's."
+  startWatchtowerItem(id: ID!, expectedVersion: Int): WatchtowerItem!
+  "Puts an exception aside until a time; it wakes on its own."
+  snoozeWatchtowerItem(id: ID!, input: SnoozeWatchtowerItemInput!): WatchtowerItem!
+  "Moves or clears an exception's due time."
+  setWatchtowerItemDue(id: ID!, input: SetWatchtowerItemDueInput!): WatchtowerItem!
+  "Adds a comment to an exception's history."
+  commentOnWatchtowerItem(id: ID!, body: String!): WatchtowerItemEvent!
+  "Closes an exception with a reason."
+  resolveWatchtowerItem(id: ID!, input: ResolveWatchtowerItemInput!): WatchtowerItem!
+  "Opens a resolved exception again."
+  reopenWatchtowerItem(id: ID!, input: ReopenWatchtowerItemInput!): WatchtowerItem!
 }
 `, BuiltIn: false},
 	{Name: "../schema/worker.graphqls", Input: `enum WorkerType {

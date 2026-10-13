@@ -54,17 +54,19 @@ Loaded now:
 - flag_for_manual_review
 - wait_until
 - cancel_wait
-- get_dispatch_board
 - get_shipment_tracking
 - get_shipment
-- get_worker_hos
 - evaluate_service_failures
 - add_shipment_comment
 - email_customer
+- list_watchtower_items
+- assign_exception
 - get_detention_occurrence
 
 Callable after find_tools:
+- get_dispatch_board — The dispatch board: every move in the window with its urgency and coverage, and every driver with availability, hours remaining and last position.
 - list_vehicle_positions — Where every tractor is right now, from the telematics feed: its last known position, the nearest place name, speed, engine state and how old the reading is.
+- get_worker_hos — A driver's hours of service as the ELD last reported them: duty status and the drive, shift, cycle and break time remaining, in minutes.
 - list_service_failures — List the service failures that happened: late and missed pickups and deliveries, with how late, which stop, and whether anyone reviewed or resolved them.
 - list_service_failure_reason_codes — The reason codes a service failure can carry, such as Weather, Shipper delay or Equipment.
 - list_detention_desk — List every open detention occurrence: a truck at a stop past its free time, with minutes until free time ends, notice status and the amount at risk.
@@ -75,9 +77,13 @@ Callable after find_tools:
 - send_detention_notice — Send the customer the detention notice for an occurrence on the desk.
 - record_stop_actual — Record that a driver arrived at or departed from a stop.
 - log_check_call — Log a check call on a brokered load: where the carrier said the truck is, whether it is late, and when it expects the next stop.
+- comment_on_exception — Add a note to an exception's history, such as what the carrier said.
+- snooze_exception — Put an exception aside until a time when nothing can be done before then, such as a receiver that opens at 7.
+- set_exception_due — Move when an exception must be dealt with, or clear its due time.
+- resolve_exception — Close an exception with the reason it is closed.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, evaluate_service_failures, resolve_service_failure, add_shipment_comment, notify_driver, email_customer, send_detention_notice, record_stop_actual, log_check_call
+- Changes that always record a proposal for a person to decide: raise_exception, flag_for_manual_review, wait_until, cancel_wait, evaluate_service_failures, resolve_service_failure, add_shipment_comment, notify_driver, email_customer, send_detention_notice, record_stop_actual, log_check_call, comment_on_exception, snooze_exception, assign_exception, set_exception_due, resolve_exception
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
@@ -87,3 +93,8 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - send_detention_notice: get_detention_occurrence → send_detention_notice
 - record_stop_actual: search_shipments → get_shipment → record_stop_actual
 - log_check_call: search_shipments → get_shipment → log_check_call
+- comment_on_exception: list_watchtower_items → comment_on_exception
+- snooze_exception: list_watchtower_items → snooze_exception
+- assign_exception: list_watchtower_items → assign_exception
+- set_exception_due: list_watchtower_items → set_exception_due
+- resolve_exception: list_watchtower_items → resolve_exception

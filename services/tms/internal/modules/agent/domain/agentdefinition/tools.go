@@ -265,6 +265,12 @@ func (t Template) StarterTools() []string {
 			"send_detention_notice",
 			"record_stop_actual",
 			"log_check_call",
+			"list_watchtower_items",
+			"comment_on_exception",
+			"snooze_exception",
+			"assign_exception",
+			"set_exception_due",
+			"resolve_exception",
 		}
 	case TemplateGeneralAssistant:
 		return nil

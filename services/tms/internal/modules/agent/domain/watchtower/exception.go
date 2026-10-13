@@ -80,6 +80,25 @@ func SelectableResolutionCodes() []ResolutionCode {
 	}
 }
 
+type ResolutionCodeOption struct {
+	Code         ResolutionCode `json:"code"`
+	Label        string         `json:"label"`
+	RequiresNote bool           `json:"requiresNote"`
+}
+
+func SelectableResolutionCodeOptions() []*ResolutionCodeOption {
+	codes := SelectableResolutionCodes()
+	options := make([]*ResolutionCodeOption, 0, len(codes))
+	for _, code := range codes {
+		options = append(options, &ResolutionCodeOption{
+			Code:         code,
+			Label:        code.Label(),
+			RequiresNote: code.RequiresNote(),
+		})
+	}
+	return options
+}
+
 func (c ResolutionCode) IsValid() bool {
 	return c == ResolutionCleared || c.IsSelectable()
 }
@@ -404,6 +423,15 @@ func ValidateComment(body string) (string, error) {
 		)
 	}
 	return body, nil
+}
+
+const NoDueSortKey = int64(9_000_000_000_000)
+
+func (i *Item) DueSortKey() int64 {
+	if i.DueAt == nil {
+		return NoDueSortKey
+	}
+	return *i.DueAt
 }
 
 func (i *Item) IsOverdue(now int64) bool {
