@@ -260,6 +260,8 @@ export function useAccountingCertificateActions(
 ) {
   const t = useT();
   const queryClient = useQueryClient();
+  const connectForm = forms?.connect;
+  const renewForm = forms?.renew;
 
   const refresh = useCallback(
     () =>
@@ -290,7 +292,7 @@ export function useAccountingCertificateActions(
         accountId: normalizeNetSuiteAccountId(values.accountId) ?? values.accountId.trim(),
         certificateId: values.certificateId.trim(),
       }),
-    form: forms?.connect,
+    form: connectForm,
     resourceName: vendor.name,
   });
 
@@ -306,7 +308,7 @@ export function useAccountingCertificateActions(
         connectionId: connection.id,
         certificateId: values.certificateId.trim(),
       }),
-    form: forms?.renew,
+    form: renewForm,
     resourceName: t("{0} certificate", vendor.name),
     onSuccess: async () => {
       await refresh();
