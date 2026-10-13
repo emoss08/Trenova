@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -69,7 +70,29 @@ func TestAICorrectionRetentionWorkflow_PurgesEachOrganization(t *testing.T) {
 func TestSchedules_MatchTheirWorkflowSignatures(t *testing.T) {
 	t.Parallel()
 
-	for _, s := range NewScheduleProvider().GetSchedules() {
+	for _, s := range scheduleProviderWith(true).GetSchedules() {
 		require.NoError(t, s.Validate(), s.ID)
 	}
+}
+
+func TestSchedules_ExtractionDriftOnlyWithDocumentExtraction(t *testing.T) {
+	t.Parallel()
+
+	ids := func(p *ScheduleProvider) []string {
+		var out []string
+		for _, s := range p.GetSchedules() {
+			out = append(out, s.ID)
+		}
+		return out
+	}
+
+	assert.Contains(t, ids(scheduleProviderWith(true)), "extraction-accuracy-drift")
+	assert.NotContains(t, ids(scheduleProviderWith(false)), "extraction-accuracy-drift")
+	assert.Contains(t, ids(scheduleProviderWith(false)), "ai-correction-retention")
+}
+
+func scheduleProviderWith(extraction bool) *ScheduleProvider {
+	cfg := &config.Config{}
+	cfg.AI.DocumentExtraction = extraction
+	return NewScheduleProvider(cfg)
 }

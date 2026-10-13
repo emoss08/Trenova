@@ -19,7 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "document-upload-reconciliation",
 			Description:   "Reconcile stale document uploads and pending previews",
-			Spec:          schedule.Every(15 * time.Minute),
+			Spec:          schedule.Every(time.Hour),
 			Workflow:      ReconcileDocumentUploadsWorkflow,
 			TaskQueue:     temporaltype.UploadTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
