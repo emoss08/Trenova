@@ -196,10 +196,12 @@ export type SendMessageOptions = {
   directedAgentId?: string;
 };
 
-/** A quick question from anywhere: no thread yet, the answer makes one. */
+/**
+ * A quick question from the command palette: no thread yet, the answer makes
+ * one. The route is the palette's, so the server names the surface itself.
+ */
 export type AskOptions = {
   context?: AssistantPageContext | null;
-  surface?: AssistantSurface;
   mentions?: readonly AssistantEntityRef[];
 };
 
@@ -758,7 +760,6 @@ export class AssistantService {
       {
         content,
         context: options.context ?? null,
-        surface: options.surface ?? "",
         mentions: options.mentions ?? [],
       },
       { signal },
