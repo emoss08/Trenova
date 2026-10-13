@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
@@ -27,7 +28,30 @@ import (
 // shipment ends up with the right numbers, not which contract produced them.
 // Resolving nothing puts the engine on its fallback path, so those tests go on
 // asserting exactly what they asserted before rate agreements existed.
-func NewFallbackEngine(t *testing.T, formula formulatemplateports.FormulaCalculator) *rateengine.Service {
+func NewFallbackEngine(
+	t *testing.T,
+	formula formulatemplateports.FormulaCalculator,
+) *rateengine.Service {
+	t.Helper()
+
+	return newFallbackEngine(t, formula, nil)
+}
+
+func NewHydratingFallbackEngine(
+	t *testing.T,
+	formula formulatemplateports.FormulaCalculator,
+	hydrator ratequoteports.ShipmentRatingHydrator,
+) *rateengine.Service {
+	t.Helper()
+
+	return newFallbackEngine(t, formula, hydrator)
+}
+
+func newFallbackEngine(
+	t *testing.T,
+	formula formulatemplateports.FormulaCalculator,
+	hydrator ratequoteports.ShipmentRatingHydrator,
+) *rateengine.Service {
 	t.Helper()
 
 	agreementRepo := rateagreementportsmock.NewMockRateAgreementRepository(t)
@@ -68,5 +92,6 @@ func NewFallbackEngine(t *testing.T, formula formulatemplateports.FormulaCalcula
 		QuoteRepo:     quoteRepo,
 		Formula:       formula,
 		Exchange:      exchangerateportsmock.NewMockExchangeRateService(t),
+		Hydrator:      hydrator,
 	})
 }

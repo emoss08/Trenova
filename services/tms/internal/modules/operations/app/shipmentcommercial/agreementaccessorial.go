@@ -131,8 +131,12 @@ func (c *Calculator) applicableAccessorials(
 	})
 
 	applicable := make([]*rateagreement.RateAgreementAccessorial, 0, len(scoped))
+	conditionsReadable := c.hydrateForConditions(ctx, entity, scoped)
 
 	for _, accessorial := range scoped {
+		if accessorial.ApplyCondition != "" && !conditionsReadable {
+			continue
+		}
 		if !c.conditionHolds(ctx, accessorial, entity) {
 			continue
 		}
@@ -141,6 +145,33 @@ func (c *Calculator) applicableAccessorials(
 	}
 
 	return applicable
+}
+
+func (c *Calculator) hydrateForConditions(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	scoped []*rateagreement.RateAgreementAccessorial,
+) bool {
+	conditional := false
+	for _, accessorial := range scoped {
+		if accessorial.ApplyCondition != "" {
+			conditional = true
+			break
+		}
+	}
+	if !conditional {
+		return true
+	}
+
+	if err := c.hydrate(ctx, entity); err != nil {
+		c.logger.Warn("shipment relations could not be loaded for accessorial conditions",
+			zap.String("shipmentId", entity.ID.String()),
+			zap.Error(err),
+		)
+		return false
+	}
+
+	return true
 }
 
 // conditionHolds evaluates the accessorial's own applicability expression.

@@ -14,7 +14,7 @@ import (
 //go:embed schema/definitions/*.schema.json
 var schemaFiles embed.FS
 
-func newSchemaRegistry() (*schema.Registry, error) {
+func NewSchemaRegistry() (*schema.Registry, error) {
 	registry := schema.NewRegistry()
 
 	shipmentSchema, err := schemaFiles.ReadFile("schema/definitions/shipment.schema.json")
@@ -40,7 +40,7 @@ func asFormulaPredicateEvaluator(s *Service) formulatemplateports.FormulaPredica
 var Module = fx.Module(
 	"formula",
 	fx.Provide(
-		newSchemaRegistry,
+		NewSchemaRegistry,
 		resolver.NewResolver,
 		engine.NewEngine,
 		engine.NewEnvironmentBuilder,

@@ -186,6 +186,14 @@ func (e *Engine) Evaluate(
 
 	sources.markPaths(e.applyVariableDefaults(req.Template, env), formulatypes.ValueSourceDefault)
 
+	if err = unresolvedFieldError(
+		breakdownExpressions(req.Template.Expression, req.Template.BreakdownDefinitions),
+		env,
+		resolveFailures,
+	); err != nil {
+		return nil, err
+	}
+
 	recorder := newLookupRecorder(req.Lookup)
 	shape := e.shapeFor(ctx, definition, env, recorder)
 	result, err := e.evaluateShaped(ctx, req.Template.Expression, env, shape, resolveFailures)
@@ -250,6 +258,14 @@ func (e *Engine) EvaluateExpression(
 	}
 	sources.markAll(req.Provided, formulatypes.ValueSourceProvided)
 	sources.markAll(req.Variables, formulatypes.ValueSourceInput)
+
+	if err = unresolvedFieldError(
+		breakdownExpressions(req.Expression, req.Breakdowns),
+		env,
+		resolveFailures,
+	); err != nil {
+		return nil, err
+	}
 
 	recorder := newLookupRecorder(req.Lookup)
 	var definition *formulatypes.Definition

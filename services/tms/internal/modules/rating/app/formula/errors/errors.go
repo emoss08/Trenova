@@ -157,3 +157,23 @@ func NewMissingFieldError(expression string, fields, suggestions []string) *Miss
 		Suggestions: suggestions,
 	}
 }
+
+type UnresolvedFieldError struct {
+	Fields []string
+	Causes map[string]error
+}
+
+func (e *UnresolvedFieldError) Error() string {
+	return fmt.Sprintf(
+		"the formula reads %s, which could not be read from this record; "+
+			"it cannot be priced until the field has a value",
+		strings.Join(e.Fields, ", "),
+	)
+}
+
+func NewUnresolvedFieldError(fields []string, causes map[string]error) *UnresolvedFieldError {
+	return &UnresolvedFieldError{
+		Fields: fields,
+		Causes: causes,
+	}
+}

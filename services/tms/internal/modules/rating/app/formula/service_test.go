@@ -562,7 +562,7 @@ func TestService_EvaluateExpression(t *testing.T) {
 			},
 			want:            decimal.Zero,
 			wantErr:         true,
-			wantErrContains: "unresolved fields",
+			wantErrContains: "the formula reads baseRate, which could not be read",
 		},
 	}
 

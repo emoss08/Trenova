@@ -42,8 +42,8 @@ workstreams follows from that.
 
 | Workstream | State |
 |---|---|
-| WS0. Relation fields reach a real shipment's environment | done on branch, ships with WS1 |
-| WS1. Rate with the relations the schema needs, and fail on what didn't resolve | open |
+| WS0. Relation fields reach a real shipment's environment | done, ships with WS1 |
+| WS1. Rate with the relations the schema needs, and fail on what didn't resolve | done, in review with WS0 |
 | WS2. Data-contract defects (silent mispricing) | open |
 | WS3. Data-contract defects (loud failures the preview hides) | open |
 | WS4. Engine hardening and money arithmetic | open |
@@ -70,7 +70,7 @@ in preview and in billing.
 - Client copies (`packages/shared/src/types/formula-template.ts`,
   `apps/web/src/components/formula-editor/test-data-editor.tsx`) follow.
 - Tests: `formula/module_test.go`, `formula/schema/registry_test.go`,
-  `formula/relation_fields_test.go`. **These have not been run yet** — run them first.
+  `formula/relation_fields_test.go`. Run and passing before WS1 started.
 
 **Why it cannot ship alone.** Shipment create and update rate an entity whose relations are not
 loaded (WS1). Before WS0 a formula reading `serviceType` failed loudly there; after WS0 it reads
@@ -155,6 +155,49 @@ rates a shipment without one.
 Acceptance: rating `serviceType.code == "EXP" ? 75 : 0` against a shipment whose `ServiceType`
 is nil returns a validation error naming `serviceType.code`; `10 / 3` against an empty
 `shipment.Shipment` still rates (existing `TestService_Rate_AppliesTemplateRoundingPolicy`).
+
+### Done
+
+All three items were reproduced before they were fixed: 1.1 and the accessorial case price 0 and
+withhold the charge without the hydrator (`shipmentcommercial/relations_test.go`), 1.2's impact
+run prices 0 on ID-only shipments, and 1.3's three cases rated silently.
+
+- **Hydrator.** `rating/app/ratinghydration` loads, by ID and one query per relation kind, every
+  relation the shipment schema reads. The list comes from `GetRequiredPreloads("shipment")`, which
+  now derives it from the schema: `x-data-source.preloads`, each field's `preload`, each `requires`
+  entry that is not itself a schema field, and the parent of every `path` leaf. The constructor
+  fails (and with it the process) when the schema names a relation the hydrator has no loader for,
+  so a new relation field cannot ship unloaded. A relation already loaded under its current ID is
+  kept, one whose ID changed is reloaded, one whose ID was cleared is dropped, and an ID that does
+  not exist in the organization is a 422 on its field.
+- **Port.** `ratequoteports.ShipmentRatingHydrator` (single and batch). Rating is below operations,
+  and the hydrator needs only lower modules' repositories, so it lives in rating with no new
+  architecture exception.
+- **Where it runs.** `rateengine.RateShipment` and `Shop` (every rating entry point:
+  shipment create, update, totals, contract preview, tender, buy side, simulation, quotes, shop);
+  `shipmentcommercial` at the start of every totals calculation, which also covers a rate-locked
+  shipment's fuel formula, and before any contract accessorial condition is evaluated (a condition
+  whose relations cannot be loaded withholds the charge, as an unevaluable condition already did);
+  backtest and approval impact, as one batch per run; the Studio preview against a saved
+  shipment.
+- **1.2.** `ListRatedByFormulaTemplate` loads service type, shipment type and each stop's location
+  with its state, and the batch hydrator backs it. `ratequoteservice.Quote` (the REST quote and the
+  agent's quote tool) clears every rating output the caller sent (`Shipment.ClearRatingOutcome`:
+  charges, rating detail, override, lock, agreement stamp) and reloads every relation by ID,
+  discarding the objects the caller sent. The agent tool labels the lane after the quote, so the
+  label carries the state the quote loaded.
+- **1.3.** The engine fails before evaluating when the main expression or a breakdown line reads a
+  required field that did not resolve and that no variable, provided value or override supplied
+  (`formula/errors.UnresolvedFieldError`, mapped to a 422 on `expression`; the causes are logged,
+  not returned). `referencedPaths` now parses with the engine's own function set: under the bare
+  parser `sum(a, b, 25)` does not parse, which would have silently disabled this check. The other
+  two helpers WS3.3 names (`ExtractLookupTableRefs`, `splitStatements`) still use the bare parser.
+- **Schema.** `AdditionalCharges.AccessorialCharge` was replaced by `AdditionalCharges` in the
+  preloads: no formula field reads the accessorial charge relation, and the charge rows themselves
+  carry everything `otherChargeAmount` needs.
+- **Tests.** `ratingtest.NewFormulaService`, `NewHydrator` and `NewRelationStore` build the real
+  formula service on the embedded schema and the real hydrator over in-memory records, for tests
+  outside the rating module. `formula.NewSchemaRegistry` is exported for that.
 
 ---
 

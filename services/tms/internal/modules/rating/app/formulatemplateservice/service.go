@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -35,6 +36,7 @@ type Params struct {
 	ReviewRepo     formulatemplateports.FormulaTemplateReviewRepository
 	ShipmentRepo   shipmentports.ShipmentRepository
 	FormulaService *formula.Service
+	Hydrator       ratequoteports.ShipmentRatingHydrator
 	AuditService   auditports.AuditService
 	Notifications  *notificationservice.Service   `optional:"true"`
 	Roles          permissionports.RoleRepository `optional:"true"`
@@ -49,6 +51,7 @@ type Service struct {
 	reviewRepo     formulatemplateports.FormulaTemplateReviewRepository
 	shipmentRepo   shipmentports.ShipmentRepository
 	formulaService *formula.Service
+	hydrator       ratequoteports.ShipmentRatingHydrator
 	auditService   auditports.AuditService
 	notifications  *notificationservice.Service
 	roles          permissionports.RoleRepository
@@ -64,6 +67,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 		reviewRepo:     p.ReviewRepo,
 		shipmentRepo:   p.ShipmentRepo,
 		formulaService: p.FormulaService,
+		hydrator:       p.Hydrator,
 		auditService:   p.AuditService,
 		notifications:  p.Notifications,
 		roles:          p.Roles,

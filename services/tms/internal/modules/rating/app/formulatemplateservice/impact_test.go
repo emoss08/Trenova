@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -245,4 +247,41 @@ func TestSortResultsByImpact_BiggestMoversFirstErrorsLast(t *testing.T) {
 	}
 
 	assert.Equal(t, []string{"BIG-DECREASE", "MEDIUM", "SMALL", "FAILED"}, order)
+}
+
+func TestApprovalImpact_PricesWithTheRelationsTheFormulaReads(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	store := ratingtest.NewRelationStore()
+	expedited := &servicetype.ServiceType{ID: pulid.MustNew("svt_"), Code: "EXP"}
+	store.ServiceTypes[expedited.ID] = expedited
+	deps.svc.hydrator = ratingtest.NewHydrator(t, store)
+	deps.svc.formulaService = ratingtest.NewFormulaService(t)
+
+	template := newBacktestTemplate()
+	template.Expression = `serviceType.code == "EXP" ? 75 : 0`
+
+	shipments := newBacktestShipments()
+	for _, entity := range shipments {
+		entity.ServiceTypeID = expedited.ID
+	}
+	expectRatedShipments(deps, template, shipments)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).
+		Return(newApprovedSnapshot(template, 1, template.Expression), nil).Once()
+
+	result, err := deps.svc.ApprovalImpact(t.Context(), &ApprovalImpactRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+
+	require.NoError(t, err)
+	require.Len(t, result.Results, 2)
+	for _, row := range result.Results {
+		assert.Empty(t, row.CandidateError)
+		assert.Empty(t, row.CurrentError)
+		assert.True(t, decimal.NewFromInt(75).Equal(row.CandidateAmount), row.CandidateAmount)
+		assert.True(t, decimal.NewFromInt(75).Equal(row.CurrentAmount), row.CurrentAmount)
+	}
+	assert.Len(t, store.Fetches("serviceType"), 1, "the batch loads each relation kind once")
 }

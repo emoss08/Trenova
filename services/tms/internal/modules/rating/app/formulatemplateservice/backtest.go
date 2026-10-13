@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -87,14 +88,7 @@ func (s *Service) Backtest(
 		return nil, err
 	}
 
-	shipments, err := s.shipmentRepo.ListRatedByFormulaTemplate(
-		ctx,
-		&shipmentports.ListRatedByFormulaTemplateRequest{
-			TemplateID: req.TemplateID,
-			TenantInfo: req.TenantInfo,
-			Limit:      limit,
-		},
-	)
+	shipments, err := s.listRatedShipments(ctx, req.TemplateID, req.TenantInfo, limit)
 	if err != nil {
 		log.Error("failed to list rated shipments", zap.Error(err))
 		return nil, err
@@ -398,4 +392,44 @@ func buildBacktestSummary(results []*BacktestResult) BacktestSummary {
 		MaxIncrease:         shared.MaxIncrease,
 		MaxDecrease:         shared.MaxDecrease,
 	}
+}
+
+func (s *Service) listRatedShipments(
+	ctx context.Context,
+	templateID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+	limit int,
+) ([]*shipment.Shipment, error) {
+	shipments, err := s.shipmentRepo.ListRatedByFormulaTemplate(
+		ctx,
+		&shipmentports.ListRatedByFormulaTemplateRequest{
+			TemplateID: templateID,
+			TenantInfo: tenantInfo,
+			Limit:      limit,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.hydrateShipments(ctx, shipments, tenantInfo); err != nil {
+		return nil, err
+	}
+
+	return shipments, nil
+}
+
+func (s *Service) hydrateShipments(
+	ctx context.Context,
+	shipments []*shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if s.hydrator == nil {
+		return nil
+	}
+
+	return s.hydrator.HydrateShipments(ctx, &ratequoteports.HydrateShipmentsRequest{
+		Shipments:  shipments,
+		TenantInfo: tenantInfo,
+	})
 }

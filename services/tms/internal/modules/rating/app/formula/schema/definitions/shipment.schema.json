@@ -26,7 +26,7 @@
             "Moves.Stops",
             "Moves.Stops.Location",
             "Moves.Stops.Location.State",
-            "AdditionalCharges.AccessorialCharge",
+            "AdditionalCharges",
             "Commodities.Commodity",
             "Commodities.Commodity.HazardousMaterial"
         ]

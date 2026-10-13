@@ -47,6 +47,10 @@ func (s *Service) Shop(
 		return nil, ErrNoParty
 	}
 
+	if err := s.hydrate(ctx, req.Shipment, req.TenantInfo); err != nil {
+		return nil, err
+	}
+
 	strategy := req.Strategy
 	if !strategy.IsValid() {
 		strategy = ratequoteports.ShopStrategyLeastCost

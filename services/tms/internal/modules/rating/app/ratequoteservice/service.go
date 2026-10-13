@@ -26,6 +26,7 @@ type Params struct {
 	ShipmentRepo       shipmentports.ShipmentRepository
 	BillingControlRepo tenantports.BillingControlRepository
 	Engine             ratequoteports.RateEngine
+	Hydrator           ratequoteports.ShipmentRatingHydrator
 	Distances          shipmentports.DistanceCalculationService `optional:"true"`
 }
 
@@ -35,6 +36,7 @@ type Service struct {
 	shipmentRepo       shipmentports.ShipmentRepository
 	billingControlRepo tenantports.BillingControlRepository
 	engine             ratequoteports.RateEngine
+	hydrator           ratequoteports.ShipmentRatingHydrator
 	distances          shipmentports.DistanceCalculationService
 }
 
@@ -45,6 +47,7 @@ func New(p Params) *Service {
 		shipmentRepo:       p.ShipmentRepo,
 		billingControlRepo: p.BillingControlRepo,
 		engine:             p.Engine,
+		hydrator:           p.Hydrator,
 		distances:          p.Distances,
 	}
 }
@@ -161,6 +164,10 @@ func (s *Service) Quote(
 
 	req.Shipment.OrganizationID = req.TenantInfo.OrgID
 	req.Shipment.BusinessUnitID = req.TenantInfo.BuID
+	req.Shipment.ClearRatingOutcome()
+	if err := s.hydrateFromRecords(ctx, req.Shipment, req.TenantInfo); err != nil {
+		return nil, err
+	}
 	if err := s.fillMissingDistances(ctx, req.Shipment); err != nil {
 		return nil, err
 	}
@@ -171,6 +178,22 @@ func (s *Service) Quote(
 		PartyID:    req.PartyID,
 		AsOf:       req.AsOf,
 	}, ratequote.PurposeQuote, req.Persist)
+}
+
+func (s *Service) hydrateFromRecords(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if s.hydrator == nil {
+		return nil
+	}
+
+	return s.hydrator.HydrateShipment(ctx, &ratequoteports.HydrateShipmentRequest{
+		Shipment:   entity,
+		TenantInfo: tenantInfo,
+		Refresh:    true,
+	})
 }
 
 func (s *Service) fillMissingDistances(ctx context.Context, entity *shipment.Shipment) error {

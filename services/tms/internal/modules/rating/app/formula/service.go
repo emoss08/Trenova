@@ -248,18 +248,7 @@ func (s *Service) Rate(
 		Lookup:    lookup,
 	})
 	if err != nil {
-		// A record missing a field the formula never guarded is an authoring
-		// problem with a clear fix, and the caller should see it as one rather
-		// than as an internal failure.
-		var missing *formulaerrors.MissingFieldError
-		if goErrors.As(err, &missing) {
-			return nil, errortypes.NewValidationError(
-				"expression",
-				errortypes.ErrInvalid,
-				missing.Error(),
-			)
-		}
-		return nil, err
+		return nil, s.asRatingValidationError(err)
 	}
 
 	amount, guardrail, rounding := ApplyChargePolicy(req.Template.ChargePolicy(), result.Value)
@@ -282,6 +271,30 @@ func (s *Service) Rate(
 		VersionNumber:       req.Template.CurrentVersionNumber,
 		Receipt:             receipt,
 	}, nil
+}
+
+func (s *Service) asRatingValidationError(err error) error {
+	var missing *formulaerrors.MissingFieldError
+	if goErrors.As(err, &missing) {
+		return errortypes.NewValidationError("expression", errortypes.ErrInvalid, missing.Error())
+	}
+
+	var unresolved *formulaerrors.UnresolvedFieldError
+	if goErrors.As(err, &unresolved) {
+		for field, cause := range unresolved.Causes {
+			s.l.Warn("formula reads a field the record could not supply",
+				zap.String("field", field),
+				zap.Error(cause),
+			)
+		}
+		return errortypes.NewValidationError(
+			"expression",
+			errortypes.ErrInvalid,
+			unresolved.Error(),
+		)
+	}
+
+	return err
 }
 
 // BuildLookup reads the tenant's lookup tables, once per unit of work.
@@ -418,7 +431,7 @@ func (s *Service) EvaluateExpression(
 	)
 	if err != nil {
 		log.Error("failed to evaluate expression", zap.Error(err))
-		return nil, err
+		return nil, s.asRatingValidationError(err)
 	}
 
 	return &formulatemplatetypes.CalculateResponse{

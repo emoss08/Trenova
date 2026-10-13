@@ -4,6 +4,7 @@ package engine
 import (
 	"fmt"
 	"maps"
+	"sort"
 	"strings"
 	"time"
 
@@ -134,15 +135,28 @@ func (b *EnvironmentBuilder) GetRequiredPreloads(schemaID string) []string {
 		return nil
 	}
 
-	preloadSet := make(map[string]struct{})
+	preloadSet := make(map[string]struct{}, len(definition.DataSource.Preloads))
+	addRelation := func(path string) {
+		if path != "" {
+			preloadSet[path] = struct{}{}
+		}
+	}
 
 	for _, preload := range definition.DataSource.Preloads {
-		preloadSet[preload] = struct{}{}
+		addRelation(preload)
 	}
 
 	for _, source := range definition.FieldSources {
 		for _, preload := range source.Preload {
-			preloadSet[preload] = struct{}{}
+			addRelation(preload)
+		}
+		for _, required := range source.Requires {
+			if !isSchemaField(definition, required) {
+				addRelation(required)
+			}
+		}
+		if index := strings.LastIndex(source.Path, "."); index > 0 {
+			addRelation(source.Path[:index])
 		}
 	}
 
@@ -150,8 +164,17 @@ func (b *EnvironmentBuilder) GetRequiredPreloads(schemaID string) []string {
 	for p := range preloadSet {
 		preloads = append(preloads, p)
 	}
+	sort.Strings(preloads)
 
 	return preloads
+}
+
+func isSchemaField(definition *formulatypes.Definition, name string) bool {
+	if _, ok := definition.FieldSources[name]; ok {
+		return true
+	}
+	_, ok := definition.Properties[name]
+	return ok
 }
 
 func (b *EnvironmentBuilder) GetAvailableVariables(schemaID string) []*formulatypes.FieldSource {

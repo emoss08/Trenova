@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
@@ -131,6 +132,7 @@ type fakeQuoter struct {
 	rated   *ratequoteports.RatedShipment
 	lastReq *ratequoteservice.QuoteRequest
 	miles   float64
+	hydrate func(*shipment.Shipment)
 }
 
 func (f *fakeQuoter) Quote(
@@ -138,6 +140,9 @@ func (f *fakeQuoter) Quote(
 	req *ratequoteservice.QuoteRequest,
 ) (*ratequoteports.RatedShipment, error) {
 	f.lastReq = req
+	if f.hydrate != nil && req.Shipment != nil {
+		f.hydrate(req.Shipment)
+	}
 	if f.miles > 0 && req.Shipment != nil {
 		for _, move := range req.Shipment.Moves {
 			miles := f.miles
@@ -369,4 +374,39 @@ func (s *shopCarriers) GetByIDs(
 	carrierports.GetCarriersByIDsRequest,
 ) ([]*carrier.Carrier, error) {
 	return s.carriers, nil
+}
+
+func TestQuoteShipment_LabelsTheLaneWithWhatTheQuoteLoaded(t *testing.T) {
+	t.Parallel()
+
+	texas := &usstate.UsState{ID: pulid.MustNew("st_"), Abbreviation: "TX"}
+	origin := &location.Location{
+		ID: pulid.MustNew("loc_"), City: "Dallas", PostalCode: "75201", StateID: texas.ID,
+	}
+	destination := &location.Location{
+		ID: pulid.MustNew("loc_"), City: "Houston", PostalCode: "77001", StateID: texas.ID,
+	}
+	quoter := &fakeQuoter{
+		rated: &ratequoteports.RatedShipment{Outcome: ratequote.OutcomeNoRateFound},
+		hydrate: func(entity *shipment.Shipment) {
+			for _, stop := range entity.Moves[0].Stops {
+				stop.Location.State = texas
+			}
+		},
+	}
+	tool := newQuoteShipmentTool(quoter, &fakeLocations{byID: map[pulid.ID]*location.Location{
+		origin.ID: origin, destination.ID: destination,
+	}})
+
+	result, err := tool.Query(t.Context(), testParamsIn("America/Chicago", map[string]any{
+		"customerId":    pulid.MustNew("cust_").String(),
+		"serviceTypeId": pulid.MustNew("st_").String(),
+		"stops": []any{
+			map[string]any{"locationId": origin.ID.String(), "type": "Pickup"},
+			map[string]any{"locationId": destination.ID.String(), "type": "Delivery"},
+		},
+	}))
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"Dallas, TX, 75201", "Houston, TX, 77001"}, result.(*quoteView).Lane)
 }

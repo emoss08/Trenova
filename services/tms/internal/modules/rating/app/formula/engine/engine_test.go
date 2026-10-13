@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	formulaerrors "github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
@@ -1139,9 +1140,10 @@ func TestEngine_Evaluate_UnresolvedNonNullableField(t *testing.T) {
 			Entity:    struct{}{},
 			Variables: map[string]any{},
 		})
-		require.Error(t, evalErr)
-		require.ErrorContains(t, evalErr, "unresolved fields")
-		require.ErrorContains(t, evalErr, "weight")
+		var unresolved *formulaerrors.UnresolvedFieldError
+		require.ErrorAs(t, evalErr, &unresolved)
+		assert.Equal(t, []string{"weight"}, unresolved.Fields)
+		require.Error(t, unresolved.Causes["weight"])
 	})
 }
 

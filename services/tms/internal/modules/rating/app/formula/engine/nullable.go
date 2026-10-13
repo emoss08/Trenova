@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/expr-lang/expr/ast"
-	"github.com/expr-lang/expr/parser"
 )
 
 // NullableFieldWarning names a schema field that can be empty on a real record
@@ -154,7 +153,7 @@ func rawPropertyTypeInfo(prop formulatypes.Property) (string, bool) {
 // referencedPaths lists every identifier and dotted member path an expression
 // names. A parse failure yields nothing: compile validation reports it.
 func referencedPaths(expression string) map[string]struct{} {
-	tree, err := parser.Parse(expression)
+	tree, err := parseExpression(expression)
 	if err != nil {
 		return nil
 	}
@@ -279,4 +278,53 @@ func missingFieldError(
 	}
 
 	return errors.NewMissingFieldError(expression, fields, suggestions)
+}
+
+func unresolvedFieldError(
+	expressions []string,
+	env map[string]any,
+	resolveFailures map[string]error,
+) error {
+	if len(resolveFailures) == 0 {
+		return nil
+	}
+
+	fields := make([]string, 0, len(resolveFailures))
+	causes := make(map[string]error, len(resolveFailures))
+	for _, expression := range expressions {
+		for path := range referencedPaths(expression) {
+			cause, failed := resolveFailures[path]
+			if !failed {
+				continue
+			}
+			if _, seen := causes[path]; seen {
+				continue
+			}
+			if value, ok := nestedValue(env, path); ok && value != nil {
+				continue
+			}
+			fields = append(fields, path)
+			causes[path] = cause
+		}
+	}
+	if len(fields) == 0 {
+		return nil
+	}
+	sort.Strings(fields)
+
+	return errors.NewUnresolvedFieldError(fields, causes)
+}
+
+func breakdownExpressions(
+	expression string,
+	definitions []*formulatypes.BreakdownDefinition,
+) []string {
+	expressions := make([]string, 0, len(definitions)+1)
+	expressions = append(expressions, expression)
+	for _, definition := range definitions {
+		if definition != nil {
+			expressions = append(expressions, definition.Expression)
+		}
+	}
+	return expressions
 }

@@ -38,6 +38,10 @@ func TestDefaultClassifier_FormulaErrorsAreValidationProblems(t *testing.T) {
 			[]string{"weight"},
 			[]string{"coalesce(weight, 0)"},
 		),
+		"unresolved": formulaerrors.NewUnresolvedFieldError(
+			[]string{"serviceType.code"},
+			map[string]error{"serviceType.code": errors.New("nil pointer")},
+		),
 		"wrapped": fmt.Errorf(
 			"rating: %w",
 			formulaerrors.NewComputeError("x", "expression", errors.New("boom")),

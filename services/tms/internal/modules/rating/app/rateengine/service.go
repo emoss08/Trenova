@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -37,6 +39,7 @@ type Params struct {
 	Exchange      exchangerateports.ExchangeRateService
 	ModeProfile   modeprofileports.ModeProfileService
 	RoutingGuides tenderports.RoutingGuideRepository
+	Hydrator      ratequoteports.ShipmentRatingHydrator
 }
 
 type Service struct {
@@ -50,6 +53,7 @@ type Service struct {
 	exchange      exchangerateports.ExchangeRateService
 	modeProfile   modeprofileports.ModeProfileService
 	routingGuides tenderports.RoutingGuideRepository
+	hydrator      ratequoteports.ShipmentRatingHydrator
 	now           func() int64
 }
 
@@ -66,6 +70,7 @@ func New(p Params) *Service {
 		exchange:      p.Exchange,
 		modeProfile:   p.ModeProfile,
 		routingGuides: p.RoutingGuides,
+		hydrator:      p.Hydrator,
 		now:           timeutils.NowUnix,
 	}
 }
@@ -80,6 +85,10 @@ func (s *Service) RateShipment(
 	ctx context.Context,
 	req *ratequoteports.RateShipmentRequest,
 ) (*ratequoteports.RatedShipment, error) {
+	if err := s.hydrate(ctx, req.Shipment, req.TenantInfo); err != nil {
+		return nil, err
+	}
+
 	rateCtx, err := s.buildContext(ctx, req)
 	if err != nil {
 		return nil, err
@@ -471,4 +480,19 @@ func agreementBillTo(agreement *rateagreement.RateAgreement) *pulid.ID {
 	id := *agreement.BillToCustomerID
 
 	return &id
+}
+
+func (s *Service) hydrate(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if s.hydrator == nil || entity == nil {
+		return nil
+	}
+
+	return s.hydrator.HydrateShipment(ctx, &ratequoteports.HydrateShipmentRequest{
+		Shipment:   entity,
+		TenantInfo: tenantInfo,
+	})
 }

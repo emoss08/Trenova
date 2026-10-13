@@ -4,7 +4,6 @@ import (
 	"context"
 	"sort"
 
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -59,14 +58,7 @@ func (s *Service) ApprovalImpact(
 		return nil, err
 	}
 
-	shipments, err := s.shipmentRepo.ListRatedByFormulaTemplate(
-		ctx,
-		&shipmentports.ListRatedByFormulaTemplateRequest{
-			TemplateID: req.TemplateID,
-			TenantInfo: req.TenantInfo,
-			Limit:      limit,
-		},
-	)
+	shipments, err := s.listRatedShipments(ctx, req.TemplateID, req.TenantInfo, limit)
 	if err != nil {
 		log.Error("failed to list rated shipments", zap.Error(err))
 		return nil, err
