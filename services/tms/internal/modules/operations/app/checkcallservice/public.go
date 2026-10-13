@@ -171,7 +171,12 @@ func (s *Service) PostByToken(
 		return nil, err
 	}
 
-	if tErr := s.links.Touch(resolved.ctx, resolved.tenant, resolved.link.ID, s.now()); tErr != nil {
+	if tErr := s.links.Touch(
+		resolved.ctx,
+		resolved.tenant,
+		resolved.link.ID,
+		s.now(),
+	); tErr != nil {
 		s.l.Warn("failed to record carrier tracking link use",
 			zap.String("linkId", resolved.link.ID.String()),
 			zap.Error(tErr))

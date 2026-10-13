@@ -14,11 +14,24 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 var checkCallKinds = agenttoolschema.Source("checkCall.kind", checkcall.KindValues())
+
+const (
+	paramKind             = "kind"
+	paramCity             = "city"
+	paramStateCode        = "stateCode"
+	paramDelayed          = "delayed"
+	paramDelayReason      = "delayReason"
+	paramNote             = "note"
+	paramContactName      = "contactName"
+	fieldReportedAt       = "reportedAt"
+	fieldEstimatedArrival = "estimatedArrival"
+)
 
 type checkCallLogger interface {
 	Log(
@@ -77,60 +90,55 @@ func (t *LogCheckCallTool) Description() string {
 
 func (t *LogCheckCallTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"moveId": agenttoolschema.RecordIDText(
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			ParamMoveID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
 				"The move the check call is about, from get_shipment (its moves).",
 			),
-			"kind": agenttoolschema.Enum(
+			paramKind: agenttoolschema.Enum(
 				"Update for a position or delay report; Arrival or Departure when the "+
 					"truck reached or left a stop.",
 				checkCallKinds,
 			),
-			"stopId": agenttoolschema.RecordIDText(
+			common.ParamStopID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentStop,
 				"Required for Arrival and Departure: the stop reached or left, from the "+
 					"move's stops in get_shipment. Leave it out for an Update.",
 			),
-			"reportedAt": agenttoolschema.LocalDateTime(
+			fieldReportedAt: agenttoolschema.LocalDateTime(
 				"When the truck was where the caller said. Leave it out unless you were " +
 					"given a time: omitted means now.",
 			),
-			"city": map[string]any{
-				"type":        "string",
-				"maxLength":   checkcall.MaxCityLength,
-				"description": "The city the truck was in or near, as the caller said.",
-			},
-			"stateCode": map[string]any{
-				"type":        "string",
-				"maxLength":   checkcall.MaxStateCodeLength,
-				"description": "The two-letter state or province code, such as TX.",
-			},
-			"delayed": common.BooleanProperty(
+			paramCity: common.StringProperty(
+				"The city the truck was in or near, as the caller said.",
+				checkcall.MaxCityLength,
+			),
+			paramStateCode: common.StringProperty(
+				"The two-letter state or province code, such as TX.",
+				checkcall.MaxStateCodeLength,
+			),
+			paramDelayed: common.BooleanProperty(
 				"True only when the caller said the load is running late.",
 			),
-			"delayReason": map[string]any{
-				"type":        "string",
-				"maxLength":   checkcall.MaxDelayReasonLength,
-				"description": "Why the load is late, in the caller's words. Needs delayed.",
-			},
-			"estimatedArrival": agenttoolschema.LocalDateTime(
+			paramDelayReason: common.StringProperty(
+				"Why the load is late, in the caller's words. Needs delayed.",
+				checkcall.MaxDelayReasonLength,
+			),
+			fieldEstimatedArrival: agenttoolschema.LocalDateTime(
 				"When the caller expects to reach the next stop, if they said.",
 			),
-			"note": map[string]any{
-				"type":        "string",
-				"maxLength":   checkcall.MaxNoteLength,
-				"description": "Anything else the caller reported that a dispatcher should read.",
-			},
-			"contactName": map[string]any{
-				"type":        "string",
-				"maxLength":   checkcall.MaxContactNameLength,
-				"description": "Who gave the update, if you know.",
-			},
+			paramNote: common.StringProperty(
+				"Anything else the caller reported that a dispatcher should read.",
+				checkcall.MaxNoteLength,
+			),
+			paramContactName: common.StringProperty(
+				"Who gave the update, if you know.",
+				checkcall.MaxContactNameLength,
+			),
 		},
-		"required":             []string{"moveId", "kind"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{ParamMoveID, paramKind},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -153,7 +161,7 @@ func (t *LogCheckCallTool) Policy() agentports.ToolPolicy {
 
 func (t *LogCheckCallTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := common.GuardExecute(t, params); err != nil {
 		return err
@@ -177,30 +185,30 @@ func (t *LogCheckCallTool) Validate(
 }
 
 func (t *LogCheckCallTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "moveId", permission.ResourceShipmentMove)
+	return common.TargetOf(params, ParamMoveID, permission.ResourceShipmentMove)
 }
 
 func (t *LogCheckCallTool) request(
 	ctx context.Context,
 	params *agentports.ToolExecuteParams,
 ) (*checkcallports.LogCheckCallRequest, error) {
-	moveID, err := common.RequirePulid(params.Params, "moveId")
+	moveID, err := common.RequirePulid(params.Params, ParamMoveID)
 	if err != nil {
 		return nil, err
 	}
 
-	kind, err := common.RequireEnum(params.Params, "kind", checkCallKinds.Values)
+	kind, err := common.RequireEnum(params.Params, paramKind, checkCallKinds.Values)
 	if err != nil {
 		return nil, err
 	}
 
-	stopID, _, err := common.OptionalPulid(params.Params, "stopId")
+	stopID, _, err := common.OptionalPulid(params.Params, common.ParamStopID)
 	if err != nil {
 		return nil, err
 	}
 	if kind.IsStopVisit() && stopID.IsNil() {
 		return nil, errortypes.NewValidationError(
-			"stopId",
+			common.ParamStopID,
 			errortypes.ErrRequired,
 			"Choose the stop that was reached or left",
 		)
@@ -219,17 +227,17 @@ func (t *LogCheckCallTool) request(
 		Details: checkcallports.CheckCallDetails{
 			Kind:        kind,
 			StopID:      stopID,
-			City:        common.OptionalString(params.Params, "city"),
-			StateCode:   common.OptionalString(params.Params, "stateCode"),
-			Delayed:     common.OptionalBool(params.Params, "delayed"),
-			DelayReason: common.OptionalString(params.Params, "delayReason"),
-			Note:        common.OptionalString(params.Params, "note"),
-			ContactName: common.OptionalString(params.Params, "contactName"),
+			City:        common.OptionalString(params.Params, paramCity),
+			StateCode:   common.OptionalString(params.Params, paramStateCode),
+			Delayed:     common.OptionalBool(params.Params, paramDelayed),
+			DelayReason: common.OptionalString(params.Params, paramDelayReason),
+			Note:        common.OptionalString(params.Params, paramNote),
+			ContactName: common.OptionalString(params.Params, paramContactName),
 		},
 	}
 
-	_, reported := params.Params["reportedAt"]
-	_, eta := params.Params["estimatedArrival"]
+	_, reported := params.Params[fieldReportedAt]
+	_, eta := params.Params[fieldEstimatedArrival]
 	if !reported && !eta {
 		return request, nil
 	}
@@ -240,14 +248,14 @@ func (t *LogCheckCallTool) request(
 	}
 	if request.Details.ReportedAt, err = common.OptionalLocalTime(
 		params.Params,
-		"reportedAt",
+		fieldReportedAt,
 		zone,
 	); err != nil {
 		return nil, err
 	}
 	if request.Details.EstimatedArrival, err = common.OptionalLocalTime(
 		params.Params,
-		"estimatedArrival",
+		fieldEstimatedArrival,
 		zone,
 	); err != nil {
 		return nil, err

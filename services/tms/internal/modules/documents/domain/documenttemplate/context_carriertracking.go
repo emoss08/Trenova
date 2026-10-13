@@ -17,6 +17,8 @@ type CarrierTrackingLinkEmailContext struct {
 	ExpiresAt string
 }
 
+const carrierNamePath = "CarrierName"
+
 //nolint:gosec // G101: a rendering fixture of fake values, not a credential
 func newCarrierTrackingLinkEmailSampleContext() any {
 	return CarrierTrackingLinkEmailContext{
@@ -46,7 +48,7 @@ func (r *Registry) registerCarrierTrackingKinds() {
 		sampleFactory: newCarrierTrackingLinkEmailSampleContext,
 		Variables: []VariableDefinition{
 			{
-				Path:        "CarrierName",
+				Path:        carrierNamePath,
 				Type:        VariableString,
 				Description: "The carrier hauling the load.",
 			},
@@ -79,7 +81,7 @@ func (r *Registry) registerCarrierTrackingKinds() {
 				Description: "The carrier's tracking link. Required: without it the carrier has nowhere to post updates.",
 			},
 			{
-				Path:        "ExpiresAt",
+				Path:        expiresAtPath,
 				Type:        VariableDateTime,
 				Description: "When the link stops working.",
 			},

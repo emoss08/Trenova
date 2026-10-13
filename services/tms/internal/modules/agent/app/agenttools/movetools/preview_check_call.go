@@ -18,14 +18,14 @@ import (
 )
 
 var checkCallLabels = map[string]string{
-	"shipmentMoveId":   "Move",
-	"stop":             "Stop",
-	"reportedAt":       "Reported at",
-	"location":         "Location",
-	"delayed":          "Running late",
-	"delayReason":      "Delay reason",
-	"estimatedArrival": "Expected at next stop",
-	"contactName":      "Spoke to",
+	"shipmentMoveId":      "Move",
+	"stop":                "Stop",
+	fieldReportedAt:       "Reported at",
+	"location":            "Location",
+	"delayed":             "Running late",
+	"delayReason":         "Delay reason",
+	fieldEstimatedArrival: "Expected at next stop",
+	"contactName":         "Spoke to",
 }
 
 type checkCallView struct {
@@ -80,13 +80,13 @@ func checkCallOptions(request *checkcallports.LogCheckCallRequest) []toolpreview
 			"shipmentMoveId": permission.ResourceShipmentMove,
 		}),
 		toolpreview.Types(map[string]assistantartifact.DisplayType{
-			"reportedAt":       assistantartifact.DisplayDateTime,
-			"estimatedArrival": assistantartifact.DisplayDateTime,
-			"note":             assistantartifact.DisplayLongText,
+			fieldReportedAt:       assistantartifact.DisplayDateTime,
+			fieldEstimatedArrival: assistantartifact.DisplayDateTime,
+			"note":                assistantartifact.DisplayLongText,
 		}),
 	}
 	if request.Details.ReportedAt == nil {
-		opts = append(opts, toolpreview.Volatile("reportedAt"))
+		opts = append(opts, toolpreview.Volatile(fieldReportedAt))
 	}
 
 	return opts

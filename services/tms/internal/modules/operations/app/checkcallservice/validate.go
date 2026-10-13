@@ -55,7 +55,11 @@ func normalizeDetails(in normalizeInput) (int64, *errortypes.MultiError) {
 		if in.policy == clampFutureTimes {
 			reportedAt = in.now
 		} else {
-			multiErr.Add("reportedAt", errortypes.ErrInvalid, "Reported time cannot be in the future")
+			multiErr.Add(
+				"reportedAt",
+				errortypes.ErrInvalid,
+				"Reported time cannot be in the future",
+			)
 		}
 	case reportedAt < in.now-checkcall.MaxReportBackdateHours*secondsPerHour:
 		multiErr.Add(

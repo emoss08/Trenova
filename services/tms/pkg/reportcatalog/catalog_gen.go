@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:716bbe2888c392c9666760e126e6350bf1739d0a130d110c6f522db0d288643c"
+const Version = "sha256:d6a0460e444357b0ede1304a6e646eb038f5b9ea1300c110c67e3dc97bf12727"
 
 var Default = indexed(defaultCatalog)
 
@@ -3310,6 +3310,16 @@ var defaultCatalog = Catalog{
 					Label:        "Broker Vetting Enabled",
 					Type:         FieldBool,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "checkCallIntervalHours",
+					Column:       buncolgen.NewColumn("check_call_interval_hours", "cus"),
+					Label:        "Check Call Interval Hours",
+					Type:         FieldInt,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
 				},

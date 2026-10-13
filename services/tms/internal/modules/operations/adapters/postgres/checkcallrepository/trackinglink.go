@@ -55,7 +55,7 @@ func (r *linkRepository) GetByHash(
 			Scan(ctx)
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // an unknown link is an absence, not an error
+				return nil, nil
 			}
 			return nil, fmt.Errorf("get carrier tracking link: %w", err)
 		}
