@@ -3431,3 +3431,60 @@ findings:
       - services/tms/internal/modules/agent/app/assistantservice/artifacts.go
       - services/tms/internal/modules/agent/app/assistantservice/turn.go
     fixedIn: uncommitted; verified by .deskbench/runs/20261011-212132-run and .deskbench/runs/20261011-212432-run (customer, locations and both shipments linked on both providers)
+
+  - id: DB-156
+    title: A question from the command palette is answered by the first chat agent by name
+    status: fixed
+    severity: high
+    area: command palette / quick questions
+    found: 2026-10-12, reported from the command palette (threads athr_01M4SGV0YWJXMCCG32E50Q6J83, athr_01M4SBWQSKX7431D7P633A254M)
+    models: [claude-haiku-5-5]
+    scenarios: [palette-shipment-by-pro-number, palette-customer-by-name]
+    problem: >
+      "Tell me about SEED-PAY-002?" and "HARBOR Line Foods?" from the palette were both answered
+      from agent runs: "I found no agent runs that mention HARBOR Line Foods". The palette never
+      looked at the shipment or the customer.
+    cause: >
+      askAgent sent a quick question to the general assistant when it was enabled and otherwise
+      to the first chat agent the list returned, ordered by name. With the general assistant off,
+      that was the Agent Activity Desk, which holds only list_agent_runs and get_agent_run. The
+      general assistant itself held no record tools, so turning it on would not have helped.
+    fix: >
+      Only the general assistant answers a quick question; when it is off or not open to the
+      person the palette says so. A quick question's conversation holds every query tool the
+      person may use (Definition.HoldingReads, ThreadOrigin.ReadsEverything), disclosed through
+      find_tools. The palette searches records for the question's search words, lists them under
+      Nova, and sends the ones the question names as mentions.
+    files:
+      - services/tms/internal/modules/agent/app/assistantservice/ask.go
+      - services/tms/internal/modules/agent/app/assistantservice/checks.go
+      - services/tms/internal/modules/agent/domain/agentdefinition/core.go
+      - client/apps/web/src/components/command-palette/command-palette.tsx
+      - client/apps/web/src/components/command-palette/palette-sections.ts
+      - client/apps/web/src/components/assistant/use-ask.ts
+    fixedIn: >
+      uncommitted; verified by .deskbench/runs/20261012-231320-run and
+      .deskbench/runs/20261012-231711-run (both palette scenarios read the shipment and the
+      customer on gpt-6-luna and claude-haiku-5-5 and never call an agent run tool; the one
+      failing check, relink_artifacts on claude-haiku-5-5, is the runtime correcting where an
+      artifact link sat and passed on the run before)
+
+  - id: DB-157
+    title: An identifier with no hint of its kind is looked for in the wrong place
+    status: open
+    severity: medium
+    area: agent tools / record lookup
+    found: 2026-10-12, .deskbench/runs/20261012-230713-run
+    models: [gpt-6-luna, claude-haiku-5-5]
+    scenarios: [palette-shipment-by-pro-number]
+    problem: >
+      Asked "Tell me about SEED-PAY-002?" with no mention, both models read PAY as pay and
+      searched driver settlements, carrier settlements and pay advances, then asked what kind of
+      record it was. Neither tried the shipment the PRO number belongs to.
+    cause: >
+      Nothing an agent holds looks a record up by an identifier across kinds. Tool disclosure
+      ranks tools by the question's words, so the words in an identifier choose where to look.
+    fix: >
+      Open. The palette sends the records its search finds that a question names, which covers
+      shipments, customers, workers and documents asked about from the palette. The Desk and the
+      kinds outside the global index need a lookup by identifier across kinds.

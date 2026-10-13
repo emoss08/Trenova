@@ -114,11 +114,19 @@ ALTER TABLE "dispatch_controls"
 
 --bun:split
 ALTER TABLE "dispatch_controls"
+    DROP CONSTRAINT IF EXISTS "chk_dispatch_controls_check_call_interval_hours";
+
+--bun:split
+ALTER TABLE "dispatch_controls"
     ADD CONSTRAINT "chk_dispatch_controls_check_call_interval_hours" CHECK ("check_call_interval_hours" BETWEEN 1 AND 72);
 
 --bun:split
 ALTER TABLE "customers"
     ADD COLUMN IF NOT EXISTS "check_call_interval_hours" smallint;
+
+--bun:split
+ALTER TABLE "customers"
+    DROP CONSTRAINT IF EXISTS "chk_customers_check_call_interval_hours";
 
 --bun:split
 ALTER TABLE "customers"

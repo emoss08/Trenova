@@ -1,4 +1,4 @@
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CheckIcon } from "@trenova/shared/components/icons";
 import { ShortcutKeys } from "./palette-parts";
@@ -62,12 +62,12 @@ export function PaletteFooter({
             </>
           ) : aside.kind === "question" ? (
             <>
-              <AssistMark className="size-3.5" />
+              <NovaMark className="size-3.5" />
               <span>{t("Nova will answer this")}</span>
             </>
           ) : (
             <>
-              <AssistMark className="size-3.5" />
+              <NovaMark className="size-3.5" />
               <span>{t("End with ? to ask Nova")}</span>
             </>
           )}

@@ -1,4 +1,4 @@
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -69,7 +69,7 @@ export function PreviewFrame({
               onMouseDown={keepFocus}
               onClick={() => onRun(ask.intent)}
             >
-              <AssistMark className="size-3.5" />
+              <NovaMark className="size-3.5" />
               {t("Ask")}
             </Button>
           )}

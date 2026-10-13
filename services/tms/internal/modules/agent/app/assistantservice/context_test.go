@@ -283,6 +283,7 @@ type stubDefinitionList struct {
 
 	definitions []*agentdefinition.Definition
 	last        *agentdefinitionports.ListAgentDefinitionRequest
+	requests    []*agentdefinitionports.ListAgentDefinitionRequest
 }
 
 func (s *stubDefinitionList) List(
@@ -290,8 +291,33 @@ func (s *stubDefinitionList) List(
 	req *agentdefinitionports.ListAgentDefinitionRequest,
 ) (*pagination.ListResult[*agentdefinition.Definition], error) {
 	s.last = req
+	s.requests = append(s.requests, req)
 
-	return &pagination.ListResult[*agentdefinition.Definition]{Items: s.definitions}, nil
+	items := make([]*agentdefinition.Definition, 0, len(s.definitions))
+	for _, definition := range s.definitions {
+		if matchesTemplateFilter(req.Filter, definition) {
+			items = append(items, definition)
+		}
+	}
+
+	return &pagination.ListResult[*agentdefinition.Definition]{Items: items}, nil
+}
+
+func matchesTemplateFilter(
+	filter *pagination.QueryOptions,
+	definition *agentdefinition.Definition,
+) bool {
+	if filter == nil {
+		return true
+	}
+	for _, field := range filter.FieldFilters {
+		if field.Field == "template" && field.Operator == dbtype.OpEqual &&
+			field.Value != string(definition.Template) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (s *stubDefinitionList) GetByID(
@@ -370,6 +396,13 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 
 	assert.True(t, definitions.last.EnabledOnly)
 	assert.True(t, definitions.last.ChatOnly)
+	require.Len(t, definitions.last.Filter.FieldFilters, 1)
+	assert.Equal(t, "template", definitions.last.Filter.FieldFilters[0].Field)
+	assert.Equal(
+		t,
+		string(agentdefinition.TemplateGeneralAssistant),
+		definitions.last.Filter.FieldFilters[0].Value,
+	)
 	require.NotNil(t, conversations.created)
 	assert.Equal(
 		t,
@@ -386,32 +419,29 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 	assert.Equal(t, "/dispatch", conversations.appended[0].PageContext.Path)
 }
 
-func TestAsk_FallsBackToAnyChatAgentAndRefusesWithNone(t *testing.T) {
+func TestAsk_RefusesWithoutTheGeneralAssistantRatherThanAskingAnotherAgent(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
+	activity := chatDefinition("Agent Activity Desk", "")
 	dispatch := chatDefinition("Dispatch", agentdefinition.TemplateDispatchAssistant)
-	definitions := &stubDefinitionList{definitions: []*agentdefinition.Definition{dispatch}}
+	definitions := &stubDefinitionList{
+		definitions: []*agentdefinition.Definition{activity, dispatch},
+	}
 	conversations := &creatingConversations{}
 	svc.definitions = definitions
 	svc.conversations = conversations
 	actor := testActor()
 
 	_, err := svc.ask(t.Context(), &agentports.AskRequest{
-		Content:    "Anything late?",
-		TenantInfo: actor.TenantInfo(),
-	}, actor, nil)
-	require.NoError(t, err)
-	assert.Equal(t, dispatch.ID, conversations.created.AgentDefinitionID)
-
-	definitions.definitions = nil
-	_, err = svc.ask(t.Context(), &agentports.AskRequest{
-		Content:    "Anything late?",
+		Content:    "Tell me about SEED-PAY-002?",
 		TenantInfo: actor.TenantInfo(),
 	}, actor, nil)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
+	assert.Contains(t, err.Error(), "general assistant, which is turned off")
+	assert.Nil(t, conversations.created, "no other agent answers in its place")
 
 	_, err = svc.ask(t.Context(), &agentports.AskRequest{
 		Content:    "   ",

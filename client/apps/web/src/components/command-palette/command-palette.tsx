@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PalettePreview, type PreviewContext } from "./_components/preview/palette-preview";
 import { prefetchRecordPreview } from "./_components/preview/preview-queries";
 import { answerSources, AskAnswerCard, plainAnswer } from "./ask-answer-card";
-import { askQuestion, commandModeQuery } from "./ask-question";
+import { askQuestion, commandModeQuery, questionSearchText } from "./ask-question";
 import "./command-palette.css";
 import { PALETTE_ENTITY_ICONS } from "./palette-entities";
 import {
@@ -51,6 +51,7 @@ import {
   buildSubjectSections,
   flattenSections,
   rankLocal,
+  recordsNamedIn,
   scopeCounts,
 } from "./palette-sections";
 import {
@@ -61,6 +62,8 @@ import {
   type SearchEntityOption,
 } from "./search-entity-filter";
 import {
+  isRemoteSearchable,
+  paletteSearchQuery,
   usePaletteCatalog,
   usePaletteHome,
   usePaletteRemoteSearch,
@@ -161,10 +164,11 @@ export function CommandPalette() {
         ? null
         : askQuestion(searchQuery);
 
-  const debouncedQuery = useDebounce(searchQuery, SEARCH_DEBOUNCE_MS);
+  const recordQuery = question !== null ? questionSearchText(question) : searchQuery;
+  const debouncedRecordQuery = useDebounce(recordQuery, SEARCH_DEBOUNCE_MS);
   const remote = usePaletteRemoteSearch({
-    enabled: open && askSubject === null && question === null,
-    query: debouncedQuery,
+    enabled: open && askSubject === null,
+    query: debouncedRecordQuery,
     scope: effectiveScope,
   });
 
@@ -267,6 +271,7 @@ export function CommandPalette() {
     const results = buildSearchSections(
       {
         query: searchQuery,
+        recordQuery,
         scope: effectiveScope,
         question,
         remote,
@@ -287,6 +292,7 @@ export function CommandPalette() {
     query,
     question,
     ranking,
+    recordQuery,
     remote,
     searchQuery,
     t,
@@ -296,13 +302,9 @@ export function CommandPalette() {
   const counts = useMemo(
     () =>
       askSubject === null && trimmedQuery !== ""
-        ? scopeCounts(
-            ranking,
-            remote,
-            commandText !== null ? "commands" : question !== null ? "question" : "search",
-          )
+        ? scopeCounts(ranking, remote, commandText !== null ? "commands" : "search")
         : null,
-    [askSubject, commandText, question, ranking, remote, trimmedQuery],
+    [askSubject, commandText, ranking, remote, trimmedQuery],
   );
 
   const items = useMemo(() => flattenSections(sections), [sections]);
@@ -377,17 +379,32 @@ export function CommandPalette() {
     [openRecord, runIntent],
   );
 
+  const namedRecords = useCallback(
+    async (question: string): Promise<AssistantEntityRef[]> => {
+      const text = questionSearchText(question);
+      if (text === "" || !isRemoteSearchable(text, effectiveScope)) {
+        return [];
+      }
+      const found = await queryClient.fetchQuery(paletteSearchQuery(text, effectiveScope));
+      return recordsNamedIn(question, found.groups);
+    },
+    [effectiveScope, queryClient],
+  );
+
   const startAsk = useCallback(
     (item: Extract<PaletteItem, { kind: "ask" }>) => {
       setActionsOpen(false);
       setPeek(null);
       setAsked({ question: item.question, subject: item.subject });
-      void ask(item.question, {
-        context: getPageContext(),
-        mentions: item.subject ? [item.subject] : undefined,
-      });
+      const context = getPageContext();
+      void ask(
+        item.question,
+        item.subject
+          ? { context, mentions: [item.subject] }
+          : { context, findMentions: () => namedRecords(item.question) },
+      );
     },
-    [ask, getPageContext],
+    [ask, getPageContext, namedRecords],
   );
 
   const continueInDesk = useCallback(() => {

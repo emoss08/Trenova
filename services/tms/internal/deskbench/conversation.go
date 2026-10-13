@@ -71,6 +71,7 @@ type Conversation struct {
 	queue    *turnQueue
 	turns    []*TurnRecord
 	formula  *formulaState
+	palette  bool
 }
 
 func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation, error) {
@@ -132,6 +133,9 @@ func (c *Conversation) Say(ctx context.Context, u *Utterance) ([]*TurnRecord, er
 	if c.formula != nil {
 		u.Page = c.formula.page()
 		surface = agent.SurfaceAssistant
+	}
+	if c.palette {
+		surface = agent.SurfacePalette
 	}
 
 	attached, err := c.attach(ctx, u.Attachments)

@@ -1,6 +1,6 @@
 import { recordPath } from "@/config/record-links";
 import { newShipmentForCustomerPath, SHIPMENTS_PATH } from "@/lib/shipment-links";
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   ArrowUpRightIcon,
@@ -142,7 +142,7 @@ function askAction(record: PaletteRecord, context: ActionContext, t: TranslateFn
     {
       id: ACTION_ASK,
       label: t("Ask Nova about this"),
-      icon: AssistMark,
+      icon: NovaMark,
       intent: {
         type: "ask-about",
         subject: { type: record.entityType, id: record.id, label: record.title },
