@@ -213,9 +213,17 @@ func (c *AccountingConnection) AccessTokenExpiresWithin(now, window int64) bool 
 	return c.AccessTokenExpiresAt-now <= window
 }
 
+func (c *AccountingConnection) ReconnectWarningSeconds() int64 {
+	warning := defaultReconnectWarning
+	if profile, ok := Profile(c.IntegrationType); ok && profile.ReconnectWarning > 0 {
+		warning = profile.ReconnectWarning
+	}
+	return int64(warning / time.Second)
+}
+
 func (c *AccountingConnection) RefreshTokenNearAbsoluteExpiry(now int64) bool {
 	return c.RefreshTokenAbsoluteExpiresAt > 0 &&
-		c.RefreshTokenAbsoluteExpiresAt-now <= RefreshTokenWarningWindow
+		c.RefreshTokenAbsoluteExpiresAt-now <= c.ReconnectWarningSeconds()
 }
 
 type AppIdentity struct {

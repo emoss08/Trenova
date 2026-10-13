@@ -116,7 +116,6 @@ func (e AppEnvironment) IsValid() bool {
 
 const (
 	FailingAfterConsecutiveFailures = 3
-	RefreshTokenWarningWindow       = int64(14 * 24 * 60 * 60)
 	maxPausedReasonLength           = 500
 	maxChangesErrorMessage          = 2000
 	maxErrorMessageLength           = 2000

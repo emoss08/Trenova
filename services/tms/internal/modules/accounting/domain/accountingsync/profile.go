@@ -29,7 +29,12 @@ type ProviderProfile struct {
 	InboundUnavailableReason     string
 	WebhookSubscriptions         bool
 	RevokesTokens                bool
+	PKCE                         bool
+	ClientCredentials            bool
+	ReconnectWarning             time.Duration
 }
+
+const defaultReconnectWarning = 14 * 24 * time.Hour
 
 var providerProfiles = []ProviderProfile{
 	{
@@ -71,6 +76,7 @@ var providerProfiles = []ProviderProfile{
 		CallbackCarriesCompany:       true,
 		InboundPayments:              true,
 		RevokesTokens:                true,
+		ReconnectWarning:             defaultReconnectWarning,
 	},
 	{
 		Type:            integration.TypeXero,
@@ -104,6 +110,7 @@ var providerProfiles = []ProviderProfile{
 		CallbackCarriesCompany: false,
 		InboundPayments:        true,
 		RevokesTokens:          true,
+		ReconnectWarning:       defaultReconnectWarning,
 	},
 	{
 		Type:            integration.TypeBusinessCentral,
@@ -143,6 +150,7 @@ var providerProfiles = []ProviderProfile{
 			"drift page.",
 		WebhookSubscriptions: true,
 		RevokesTokens:        false,
+		ReconnectWarning:     defaultReconnectWarning,
 	},
 }
 

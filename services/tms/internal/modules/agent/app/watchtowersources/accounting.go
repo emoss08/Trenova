@@ -169,6 +169,6 @@ func DescribeAccountingReconnect(
 		SubjectID:   conn.ID,
 		EventKind:   agent.EventAccountingConnectionDegraded,
 		Path:        accountingsync.SetupPath(conn.IntegrationType),
-		OccurredAt:  conn.RefreshTokenAbsoluteExpiresAt - accountingsync.RefreshTokenWarningWindow,
+		OccurredAt:  conn.RefreshTokenAbsoluteExpiresAt - conn.ReconnectWarningSeconds(),
 	}, true
 }

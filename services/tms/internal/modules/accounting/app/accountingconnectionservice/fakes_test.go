@@ -431,6 +431,10 @@ type fakeConnector struct {
 	facts          accountingsync.CompanyFacts
 	revoked        []string
 	exchangedCodes []string
+	exchanges      []accountingsyncports.AccountingCodeExchange
+	authorizations []accountingsyncports.AccountingAuthorizeRequest
+	refreshRealms  []string
+	revokeRealms   []string
 	webhookErr     error
 	webhookRealms  []string
 	errCategories  map[error]accountingsync.ErrorCategory
@@ -523,17 +527,23 @@ func (b *boundConnector) VerifyWebhook(signature string, body []byte) error {
 	return nil
 }
 
-func (f *fakeConnector) AuthorizeURL(state string) (string, error) {
-	return "https://appcenter.intuit.com/connect/oauth2?state=" + state, nil
+func (f *fakeConnector) AuthorizeURL(
+	req accountingsyncports.AccountingAuthorizeRequest,
+) (string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.authorizations = append(f.authorizations, req)
+	return "https://appcenter.intuit.com/connect/oauth2?state=" + req.State, nil
 }
 
 func (f *fakeConnector) ExchangeCode(
 	_ context.Context,
-	code string,
+	req *accountingsyncports.AccountingCodeExchange,
 ) (*accountingsyncports.AccountingTokenGrant, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.exchangedCodes = append(f.exchangedCodes, code)
+	f.exchangedCodes = append(f.exchangedCodes, req.Code)
+	f.exchanges = append(f.exchanges, *req)
 	if f.exchangeErr != nil {
 		return nil, f.exchangeErr
 	}
@@ -542,11 +552,12 @@ func (f *fakeConnector) ExchangeCode(
 
 func (f *fakeConnector) Refresh(
 	_ context.Context,
-	refreshToken string,
+	req *accountingsyncports.AccountingRefreshRequest,
 ) (*accountingsyncports.AccountingTokenGrant, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.refreshedWith = append(f.refreshedWith, refreshToken)
+	f.refreshedWith = append(f.refreshedWith, req.RefreshToken)
+	f.refreshRealms = append(f.refreshRealms, req.RealmID)
 	if len(f.refreshErrs) > 0 {
 		err := f.refreshErrs[0]
 		f.refreshErrs = f.refreshErrs[1:]
@@ -557,10 +568,14 @@ func (f *fakeConnector) Refresh(
 	return f.refreshGrant, nil
 }
 
-func (f *fakeConnector) Revoke(_ context.Context, token string) error {
+func (f *fakeConnector) Revoke(
+	_ context.Context,
+	req *accountingsyncports.AccountingRevokeRequest,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.revoked = append(f.revoked, token)
+	f.revoked = append(f.revoked, req.Token)
+	f.revokeRealms = append(f.revokeRealms, req.RealmID)
 	return nil
 }
 

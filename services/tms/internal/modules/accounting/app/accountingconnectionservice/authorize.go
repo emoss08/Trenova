@@ -107,8 +107,16 @@ func (s *Service) CompleteAuthorization(
 	if err != nil {
 		return nil, err
 	}
+	verifier, err := s.openCodeVerifier(req.TenantInfo, tokenutils.Hash(req.State), state)
+	if err != nil {
+		return nil, errStateExpired()
+	}
 
-	grant, err := app.connector.ExchangeCode(ctx, req.Code)
+	grant, err := app.connector.ExchangeCode(ctx, &accountingsyncports.AccountingCodeExchange{
+		Code:            req.Code,
+		CallbackRealmID: req.RealmID,
+		CodeVerifier:    verifier,
+	})
 	if err != nil {
 		return nil, errortypes.NewBusinessError("{0} did not accept the authorization. Try connecting again.", app.provider).
 			WithInternal(err)
@@ -132,11 +140,12 @@ func (s *Service) CompleteAuthorization(
 	}
 
 	return s.offerCompanyChoice(ctx, &companyChoiceOffer{
-		owner:     owner,
-		state:     state,
-		app:       app,
-		grant:     grant,
-		companies: companies,
+		owner:      owner,
+		state:      state,
+		app:        app,
+		grant:      grant,
+		companies:  companies,
+		grantRealm: grantRealmOf(req.RealmID, companies),
 	})
 }
 
@@ -148,7 +157,7 @@ func (s *Service) grantedCompanies(
 ) ([]accountingsyncports.AccountingCompany, error) {
 	granted, err := app.connector.Companies(ctx, grant, callbackRealmID)
 	if err != nil {
-		s.revokeQuietly(ctx, app.connector, grant.RefreshToken)
+		s.revokeQuietly(ctx, app.connector, grant.RefreshToken, callbackRealmID)
 		return nil, errortypes.NewBusinessError("Connected, but {0} would not say which company was authorized. Try connecting again.", app.provider).
 			WithInternal(err)
 	}
@@ -159,7 +168,7 @@ func (s *Service) grantedCompanies(
 		}
 	}
 	if len(companies) == 0 {
-		s.revokeQuietly(ctx, app.connector, grant.RefreshToken)
+		s.revokeQuietly(ctx, app.connector, grant.RefreshToken, grantRealmOf(callbackRealmID, granted))
 		return nil, errortypes.NewBusinessError(
 			"{0} did not authorize any company. Connect again and choose the company to sync with.",
 			app.provider,
@@ -169,11 +178,19 @@ func (s *Service) grantedCompanies(
 }
 
 type companyChoiceOffer struct {
-	owner     *stateOwner
-	state     *accountingsyncports.AccountingOAuthState
-	app       *authorizedApp
-	grant     *accountingsyncports.AccountingTokenGrant
-	companies []accountingsyncports.AccountingCompany
+	owner      *stateOwner
+	state      *accountingsyncports.AccountingOAuthState
+	app        *authorizedApp
+	grant      *accountingsyncports.AccountingTokenGrant
+	companies  []accountingsyncports.AccountingCompany
+	grantRealm string
+}
+
+func grantRealmOf(callbackRealmID string, companies []accountingsyncports.AccountingCompany) string {
+	if callbackRealmID != "" || len(companies) == 0 {
+		return callbackRealmID
+	}
+	return companies[0].ID
 }
 
 func (s *Service) offerCompanyChoice(
@@ -182,12 +199,12 @@ func (s *Service) offerCompanyChoice(
 ) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
 	token, tokenHash, err := tokenutils.New()
 	if err != nil {
-		s.revokeQuietly(ctx, offer.app.connector, offer.grant.RefreshToken)
+		s.revokeQuietly(ctx, offer.app.connector, offer.grant.RefreshToken, offer.grantRealm)
 		return nil, err
 	}
 	sealed, err := s.sealPendingGrant(offer.owner.tenantInfo, tokenHash, offer.grant)
 	if err != nil {
-		s.revokeQuietly(ctx, offer.app.connector, offer.grant.RefreshToken)
+		s.revokeQuietly(ctx, offer.app.connector, offer.grant.RefreshToken, offer.grantRealm)
 		return nil, err
 	}
 
@@ -208,8 +225,9 @@ func (s *Service) offerCompanyChoice(
 		AppFingerprint:  offer.state.AppFingerprint,
 		SealedGrant:     sealed,
 		Companies:       choices,
+		GrantRealmID:    offer.grantRealm,
 	}, companyChoiceTTL); err != nil {
-		s.revokeQuietly(ctx, offer.app.connector, offer.grant.RefreshToken)
+		s.revokeQuietly(ctx, offer.app.connector, offer.grant.RefreshToken, offer.grantRealm)
 		return nil, errortypes.NewBusinessError("Could not hold the authorization while you choose a company. Try connecting again.").
 			WithInternal(err)
 	}
@@ -280,7 +298,7 @@ func (s *Service) ChooseCompany(
 	chosen, others := splitChoice(state.Companies, req.CompanyID)
 	if chosen == nil {
 		s.releaseQuietly(ctx, app.connector, grant, others)
-		s.revokeQuietly(ctx, app.connector, grant.RefreshToken)
+		s.revokeQuietly(ctx, app.connector, grant.RefreshToken, state.GrantRealmID)
 		return nil, errortypes.NewValidationError(
 			"companyId",
 			errortypes.ErrInvalid,
@@ -362,17 +380,17 @@ func (s *Service) connectCompany(
 	provider := in.app.provider
 	facts, err := in.app.connector.CompanyFacts(ctx, in.company.ID, in.grant.AccessToken)
 	if err != nil {
-		s.revokeQuietly(ctx, in.app.connector, in.grant.RefreshToken)
+		s.revokeQuietly(ctx, in.app.connector, in.grant.RefreshToken, in.company.ID)
 		return nil, errortypes.NewBusinessError("Connected, but {0} would not describe the company. Try connecting again.", provider).
 			WithInternal(err)
 	}
 
 	if err = s.ensureNoOtherSystem(ctx, in.owner.tenantInfo, in.owner.integrationType); err != nil {
-		s.revokeQuietly(ctx, in.app.connector, in.grant.RefreshToken)
+		s.revokeQuietly(ctx, in.app.connector, in.grant.RefreshToken, in.company.ID)
 		return nil, err
 	}
 	if err = s.ensureRealmIsFree(ctx, in); err != nil {
-		s.revokeQuietly(ctx, in.app.connector, in.grant.RefreshToken)
+		s.revokeQuietly(ctx, in.app.connector, in.grant.RefreshToken, in.company.ID)
 		return nil, err
 	}
 
@@ -388,7 +406,7 @@ func (s *Service) connectCompany(
 	})
 	if err != nil {
 		if dberror.IsUniqueConstraintViolation(err) {
-			s.revokeQuietly(ctx, in.app.connector, in.grant.RefreshToken)
+			s.revokeQuietly(ctx, in.app.connector, in.grant.RefreshToken, in.company.ID)
 			return nil, errRealmTaken(provider)
 		}
 		return nil, err

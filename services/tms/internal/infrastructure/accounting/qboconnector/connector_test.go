@@ -86,7 +86,7 @@ func TestConfiguredInstanceAppBuildsAuthorizeURLWithDerivedRedirect(t *testing.T
 
 	conn, err := provider.Bind(app)
 	require.NoError(t, err)
-	raw, err := conn.AuthorizeURL("state-1")
+	raw, err := conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state-1"})
 	require.NoError(t, err)
 	assert.Contains(t, raw, "client_id=id")
 	assert.Contains(t, raw, "redirect_uri=https%3A%2F%2Fapp.example.com%2Fadmin%2Fintegrations%2Fquickbooks%2Fcallback")
@@ -110,7 +110,7 @@ func TestTenantAppBindsWithoutAnInstanceApp(t *testing.T) {
 	provider := newProvider(t, config.QuickBooksConfig{})
 	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentProduction))
 	require.NoError(t, err)
-	raw, err := conn.AuthorizeURL("state-2")
+	raw, err := conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state-2"})
 	require.NoError(t, err)
 	assert.Contains(t, raw, "client_id=tenant-id")
 }
@@ -160,10 +160,10 @@ func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	assert.Empty(t, provider.RedirectURL())
 	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
 	require.NoError(t, err)
-	_, err = conn.AuthorizeURL("state")
+	_, err = conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state"})
 	require.Error(t, err)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
-	_, err = conn.ExchangeCode(t.Context(), "code")
+	_, err = conn.ExchangeCode(t.Context(), &accountingsyncports.AccountingCodeExchange{Code: "code"})
 	require.Error(t, err)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
 }

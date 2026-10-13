@@ -200,6 +200,11 @@ func (s *Service) StartAuthorization(
 		return nil, err
 	}
 
+	challenge, sealedVerifier, err := s.newCodeVerifier(req.TenantInfo, tokenHash, req.IntegrationType)
+	if err != nil {
+		return nil, err
+	}
+
 	now := timeutils.NowUnix()
 	if err = s.states.Save(ctx, &accountingsyncports.AccountingOAuthState{
 		State:           tokenHash,
@@ -210,12 +215,16 @@ func (s *Service) StartAuthorization(
 		CreatedAt:       now,
 		AppSource:       identity.Source,
 		AppFingerprint:  identity.Fingerprint,
+		SealedVerifier:  sealedVerifier,
 	}, authorizationStateTTL); err != nil {
 		return nil, errortypes.NewBusinessError("Could not start the connection. Try again.").
 			WithInternal(err)
 	}
 
-	authorizeURL, err := connector.AuthorizeURL(token)
+	authorizeURL, err := connector.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{
+		State:         token,
+		CodeChallenge: challenge,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -356,7 +365,7 @@ func (s *Service) revokeStored(
 		s.l.Warn("could not read refresh token to revoke it", zap.Error(err))
 		return
 	}
-	s.revokeQuietly(ctx, connector, refreshToken)
+	s.revokeQuietly(ctx, connector, refreshToken, conn.ExternalRealmID)
 }
 
 type tokenOutcome struct {
@@ -439,7 +448,10 @@ func (s *Service) refresh(
 	if err != nil {
 		return err
 	}
-	grant, err := connector.Refresh(ctx, refreshToken)
+	grant, err := connector.Refresh(ctx, &accountingsyncports.AccountingRefreshRequest{
+		RefreshToken: refreshToken,
+		RealmID:      conn.ExternalRealmID,
+	})
 	if err != nil {
 		return err
 	}
@@ -856,12 +868,15 @@ func (s *Service) publishInvalidation(
 func (s *Service) revokeQuietly(
 	ctx context.Context,
 	connector accountingsyncports.AccountingConnector,
-	refreshToken string,
+	refreshToken, realmID string,
 ) {
 	if refreshToken == "" {
 		return
 	}
-	if err := connector.Revoke(ctx, refreshToken); err != nil {
+	if err := connector.Revoke(ctx, &accountingsyncports.AccountingRevokeRequest{
+		Token:   refreshToken,
+		RealmID: realmID,
+	}); err != nil {
 		s.l.Warn("could not revoke accounting authorization", zap.Error(err))
 	}
 }
@@ -890,6 +905,16 @@ func (s *Service) seal(
 	if err != nil {
 		return accountingsync.TokenGrant{}, err
 	}
+	sealed := accountingsync.TokenGrant{
+		AccessTokenCiphertext: access,
+		AccessTokenExpiresAt:  now + int64(grant.AccessTokenTTL/time.Second),
+	}
+	if grant.RefreshToken == "" {
+		sealed.RefreshTokenCiphertext = conn.RefreshTokenCiphertext
+		sealed.RefreshTokenExpiresAt = conn.RefreshTokenExpiresAt
+		return sealed, nil
+	}
+
 	refresh, err := s.encryption.EncryptStringWithAAD(
 		grant.RefreshToken,
 		s.aad(conn, refreshTokenField),
@@ -904,13 +929,9 @@ func (s *Service) seal(
 			accountingsync.MustProfile(conn.IntegrationType).RefreshTokenLifetime / time.Second,
 		)
 	}
-
-	return accountingsync.TokenGrant{
-		AccessTokenCiphertext:  access,
-		AccessTokenExpiresAt:   now + int64(grant.AccessTokenTTL/time.Second),
-		RefreshTokenCiphertext: refresh,
-		RefreshTokenExpiresAt:  now + refreshLifetime,
-	}, nil
+	sealed.RefreshTokenCiphertext = refresh
+	sealed.RefreshTokenExpiresAt = now + refreshLifetime
+	return sealed, nil
 }
 
 func (s *Service) open(

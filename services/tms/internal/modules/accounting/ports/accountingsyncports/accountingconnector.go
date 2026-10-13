@@ -42,12 +42,33 @@ func (a *AccountingApp) Identity() accountingsync.AppIdentity {
 	}
 }
 
+type AccountingAuthorizeRequest struct {
+	State         string
+	CodeChallenge string
+}
+
+type AccountingCodeExchange struct {
+	Code            string
+	CallbackRealmID string
+	CodeVerifier    string
+}
+
+type AccountingRefreshRequest struct {
+	RefreshToken string
+	RealmID      string
+}
+
+type AccountingRevokeRequest struct {
+	Token   string
+	RealmID string
+}
+
 type AccountingConnector interface {
 	IntegrationType() integration.Type
-	AuthorizeURL(state string) (string, error)
-	ExchangeCode(ctx context.Context, code string) (*AccountingTokenGrant, error)
-	Refresh(ctx context.Context, refreshToken string) (*AccountingTokenGrant, error)
-	Revoke(ctx context.Context, token string) error
+	AuthorizeURL(req AccountingAuthorizeRequest) (string, error)
+	ExchangeCode(ctx context.Context, req *AccountingCodeExchange) (*AccountingTokenGrant, error)
+	Refresh(ctx context.Context, req *AccountingRefreshRequest) (*AccountingTokenGrant, error)
+	Revoke(ctx context.Context, req *AccountingRevokeRequest) error
 	Companies(
 		ctx context.Context,
 		grant *AccountingTokenGrant,

@@ -136,6 +136,8 @@ type AccountingOAuthState struct {
 	AppSource       accountingsync.AppSource `json:"appSource"`
 	AppFingerprint  string                   `json:"appFingerprint"`
 	SealedGrant     string                   `json:"sealedGrant,omitempty"`
+	SealedVerifier  string                   `json:"sealedVerifier,omitempty"`
+	GrantRealmID    string                   `json:"grantRealmId,omitempty"`
 	Companies       []AccountingOAuthCompany `json:"companies,omitempty"`
 }
 
