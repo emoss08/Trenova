@@ -1,7 +1,7 @@
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
-export const pageFavoite = createQueryKeys("pageFavorite", {
+export const pageFavorite = createQueryKeys("pageFavorite", {
   all: () => ({
     queryKey: ["all"],
     queryFn: async () => {

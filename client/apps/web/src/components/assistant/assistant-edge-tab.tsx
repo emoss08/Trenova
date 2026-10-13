@@ -17,6 +17,8 @@ type AssistantEdgeTabProps = {
   dock: AssistantDock;
   beacon: BeaconState;
   onClick: () => void;
+  /** Someone is about to open it: pointed at or focused. */
+  onIntent?: () => void;
 };
 
 /**
@@ -28,7 +30,7 @@ type AssistantEdgeTabProps = {
  * the person keeps it open with the orb turned warm, because hiding the
  * button is a choice about space, not about being told nothing.
  */
-export function AssistantEdgeTab({ dock, beacon, onClick }: AssistantEdgeTabProps) {
+export function AssistantEdgeTab({ dock, beacon, onClick, onIntent }: AssistantEdgeTabProps) {
   const t = useT();
   const reduceMotion = useReducedMotion();
   const left = isLeftDock(dock);
@@ -39,6 +41,8 @@ export function AssistantEdgeTab({ dock, beacon, onClick }: AssistantEdgeTabProp
     <m.button
       type="button"
       onClick={onClick}
+      onPointerEnter={onIntent}
+      onFocus={onIntent}
       layoutId={ASSISTANT_SURFACE_ID}
       style={{
         borderTopLeftRadius: left ? 0 : 10,

@@ -1,70 +1,20 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
-import { Metadata } from "@/components/metadata";
 import { SidebarLayout } from "@/components/navigation";
+import { lazyComponent } from "@/lib/lazy-component";
+import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
 import { usePermissionPolling } from "@/hooks/use-permission-polling";
 import { useRealtimeConnection } from "@/hooks/use-realtime-connection";
 import { useUserDatePreferenceKey } from "@trenova/shared/hooks/use-user-date-preferences";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import type { PermissionManifest } from "@trenova/shared/types/permission";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Outlet } from "react-router";
-import { AuthShell } from "./auth/_components/auth-shell";
-import { ChangePasswordForm } from "./auth/_components/change-password-form";
-import { RoleSelection, resolveAuthorizedRoles } from "./auth/_components/role-selection";
 
-/**
- * The safety net for sessions that reach the app still needing roles activated — an SSO
- * callback that lands on "/", or an organization switch made from inside the app, both
- * of which bypass the sign-in flow's own role step. It reuses that step, in the same
- * frame, so the two never drift apart.
- */
-function RoleActivationGate({ manifest }: { manifest: PermissionManifest }) {
-  const t = useT();
-
-  const authorizedRoles = resolveAuthorizedRoles(manifest);
-  const organizationName = manifest.availableOrgs.find(
-    (org) => org.id === manifest.organizationId,
-  )?.name;
-
-  return (
-    <>
-      <Metadata
-        title={t("Select roles")}
-        description={t("Choose the roles to activate for this session")}
-      />
-      <AuthShell screenKey="role">
-        <RoleSelection
-          roles={authorizedRoles}
-          organizationName={organizationName}
-          stepLabel="Session scope"
-        />
-      </AuthShell>
-    </>
-  );
-}
-
-/**
- * Stands in front of the app when the account owes a password change — set by an
- * administrator, or on a freshly provisioned account.
- *
- * This is the visible half of a rule the API already enforces: a session with the flag
- * set is refused everything but the change-password endpoint, so there is nothing to
- * skip to. The gate exists so the user is told why, not to be the thing stopping them.
- */
-function PasswordChangeGate() {
-  const t = useT();
-
-  return (
-    <>
-      <Metadata title={t("Change password")} description={t("Choose a new password to continue")} />
-      <AuthShell screenKey="change-password">
-        <ChangePasswordForm />
-      </AuthShell>
-    </>
-  );
-}
+// Only a session that owes a password change or a role choice meets a gate, so the
+// sign-in frame and forms they draw are read when one is shown, not by every session.
+const loadSessionGates = () => import("./session-gates");
+const PasswordChangeGate = lazyComponent(loadSessionGates, (module) => module.PasswordChangeGate);
+const RoleActivationGate = lazyComponent(loadSessionGates, (module) => module.RoleActivationGate);
 
 /**
  * Everything a signed-in session owes before a page may render: the polling
@@ -91,11 +41,19 @@ export function AppSession({ children }: { children: (outlet: ReactNode) => Reac
   // change-password cannot activate a role either, so asking for one first would
   // strand the user against an API that refuses the request.
   if (user?.mustChangePassword) {
-    return <PasswordChangeGate />;
+    return (
+      <Suspense fallback={<LoadingSkeleton />}>
+        <PasswordChangeGate.Component />
+      </Suspense>
+    );
   }
 
   if (manifest?.requiresRoleActivation) {
-    return <RoleActivationGate key={manifest.organizationId} manifest={manifest} />;
+    return (
+      <Suspense fallback={<LoadingSkeleton />}>
+        <RoleActivationGate.Component key={manifest.organizationId} manifest={manifest} />
+      </Suspense>
+    );
   }
 
   return children(<Outlet key={datePreferenceKey} />);

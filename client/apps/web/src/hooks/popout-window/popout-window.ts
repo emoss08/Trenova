@@ -1,3 +1,4 @@
+import { addReloadGuard } from "@/lib/reload-guards";
 import { APP_ENV } from "@trenova/shared/lib/constants";
 import { nanoid } from "nanoid";
 
@@ -116,6 +117,7 @@ class PopoutWindowManager {
   private isInitialized: boolean;
   private readonly origin: string;
   private cleanupInterval?: ReturnType<typeof setInterval>;
+  private releaseReloadGuard?: () => void;
   private readonly storedPositions: Map<string, StoredWindowPosition>;
   private focusQueue: string[];
 
@@ -149,6 +151,9 @@ class PopoutWindowManager {
       window.addEventListener("message", this.boundHandleMessage);
       window.addEventListener("beforeunload", this.boundHandleBeforeUnload);
       window.addEventListener("unload", this.boundCleanup);
+      // Unloading closes every popout (handleBeforeUnload), and a popout may hold a form
+      // being filled in, so the app never reloads itself while one is open.
+      this.releaseReloadGuard = addReloadGuard(() => this.hasOpenWindows());
       window.addEventListener("focus", this.boundHandleParentFocus);
       window.addEventListener("blur", this.boundHandleParentBlur);
 
@@ -623,6 +628,7 @@ class PopoutWindowManager {
     window.removeEventListener("unload", this.boundCleanup);
     window.removeEventListener("focus", this.boundHandleParentFocus);
     window.removeEventListener("blur", this.boundHandleParentBlur);
+    this.releaseReloadGuard?.();
   }
 
   private loadStoredPositions(): void {

@@ -1,7 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { dateTimeFormatter, formatRelativeTime } from "@trenova/shared/i18n/format";
 import { TimeFormat, type TimeFormatType } from "@trenova/shared/types/user";
-import { parseDate } from "@trenova/shared/lib/chrono";
 import { endOfDay, startOfDay, startOfMonth } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
@@ -273,20 +272,6 @@ export function generateDateOnlyString(date: Date): string {
   }).format(date);
 }
 
-export function generateDateOnly(date: string): Date | null {
-  if (!date || typeof date !== "string") {
-    return null;
-  }
-
-  const parsed = parseDate(date);
-  if (parsed && !isNaN(parsed.getTime())) {
-    const normalized = new Date(parsed);
-    normalized.setHours(0, 0, 0, 0);
-    return normalized;
-  }
-  return null;
-}
-
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /**
@@ -398,15 +383,6 @@ export function generateDateTimeStringFromUnixTimestamp(
     minute: "2-digit",
     ...(showSeconds ? { second: "2-digit" } : {}),
   });
-}
-
-export function generateDateTime(date: string): Date | null {
-  if (!date || typeof date !== "string") {
-    return null;
-  }
-
-  const parsed = parseDate(date);
-  return parsed && !isNaN(parsed.getTime()) ? parsed : null;
 }
 
 const dateTimeFormatRegex =

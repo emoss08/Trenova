@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { insight as insightQueries } from "@/lib/queries/insight";
 import { apiService } from "@/services/api";
 import type { Insight, InsightMetric, InsightSeverity } from "@/types/insight";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,7 +45,7 @@ const INSIGHT_FEEDBACK_REVEAL = "opacity-0 group-hover/insight:opacity-100";
 export function AIInsightsWidget({ widget }: WidgetProps) {
   const t = useT();
 
-  const insightsQuery = useQuery(queries.insight.active(INSIGHT_LIMIT));
+  const insightsQuery = useQuery(insightQueries.active(INSIGHT_LIMIT));
   const insights = sortInsights(insightsQuery.data?.results ?? []);
 
   // The clock is read once at mount rather than on every render: staleness is
@@ -96,7 +96,7 @@ function InsightCard({ insight, now }: { insight: Insight; now: number }) {
     mutationFn: () => apiService.insightService.dismiss(insight.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: queries.insight.active(INSIGHT_LIMIT).queryKey,
+        queryKey: insightQueries.active(INSIGHT_LIMIT).queryKey,
       });
     },
     resourceName: "Insight",

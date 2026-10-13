@@ -4,7 +4,7 @@ import { downloadReportRun } from "@/hooks/use-reports";
 import { aiAuditExportNotice, downloadAIAuditExport } from "@/lib/ai-audit-exports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { APP_ENV } from "@trenova/shared/lib/constants";
-import { queries } from "@/lib/queries";
+import { notification } from "@trenova/shared/lib/queries/notification";
 import { realtimeClient, type RealtimeConnectionState } from "@trenova/shared/services/realtime";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useRealtimeStore } from "@/stores/realtime-store";
@@ -298,7 +298,7 @@ export function useRealtimeConnection() {
         }
 
         void queryClient.invalidateQueries({
-          queryKey: queries.notification._def,
+          queryKey: notification._def,
         });
       }
 

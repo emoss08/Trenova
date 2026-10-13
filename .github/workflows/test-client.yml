@@ -104,8 +104,10 @@ jobs:
             run: pnpm typecheck
           - name: Test
             run: pnpm test
+          # The budget reads the web build the step before it wrote: what a first visit
+          # downloads before anything renders.
           - name: Build
-            run: pnpm build
+            run: pnpm build && pnpm --filter @trenova/web bundle:check
 
     steps:
       - name: Checkout code
@@ -113,6 +115,21 @@ jobs:
 
       - name: Set up client toolchain
         uses: ./.github/actions/setup-client
+
+      # tsc -b is incremental: with the build info from an earlier run it checks again only
+      # what changed since, rather than every project from cold. It compares file contents,
+      # not times, so a restored build info is never trusted for a file that changed, and a
+      # TypeScript upgrade discards it.
+      - name: Restore TypeScript build info
+        if: matrix.task.name == 'Typecheck'
+        uses: actions/cache@v4
+        with:
+          path: |
+            client/apps/*/node_modules/.tmp
+            client/packages/*/node_modules/.tmp
+          key: tsbuildinfo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            tsbuildinfo-${{ runner.os }}-
 
       - name: ${{ matrix.task.name }}
         working-directory: ./client

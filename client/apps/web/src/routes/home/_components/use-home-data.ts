@@ -1,6 +1,6 @@
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { analytics } from "@/lib/queries/analytics";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import {
   mergeShipmentAnalyticsWithDefaults,
   type DeepPartial,
@@ -73,7 +73,7 @@ function useHomeReceivables(enabled: boolean) {
   );
 
   return useQuery({
-    ...queries.ar.dashboardKpis(),
+    ...ar.dashboardKpis(),
     enabled: enabled && canReadReceivables,
   });
 }

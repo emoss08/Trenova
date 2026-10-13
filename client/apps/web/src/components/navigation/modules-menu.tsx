@@ -10,7 +10,7 @@ import { ModuleTile } from "@/components/navigation/workspace-primitives";
 import type { ModuleId } from "@/config/navigation.types";
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
 import { SIDEBAR_SECTION_KEYS } from "@/lib/graphql/sidebar-preferences";
-import { queries } from "@/lib/queries";
+import { pageFavorite } from "@/lib/queries/page-favorite";
 import { useRecentPages } from "@/stores/recent-pages-store";
 import { useQuery } from "@tanstack/react-query";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
@@ -157,7 +157,7 @@ function ShortcutsColumn({
   const t = useT();
 
   const { pathname } = useLocation();
-  const { data: favorites } = useQuery({ ...queries.pageFavorite.all(), enabled: showPinned });
+  const { data: favorites } = useQuery({ ...pageFavorite.all(), enabled: showPinned });
   const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
   const recent = useRecentPages(organizationId);
   const pinned = (favorites ?? []).slice(0, PINNED_LIMIT);

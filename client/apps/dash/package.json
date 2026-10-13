@@ -7,7 +7,7 @@
     "dev": "vite",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "oxlint"
   },
   "dependencies": {
@@ -33,8 +33,7 @@
     "happy-dom": "^20.14.0",
     "oxlint": "^1.82.0",
     "typescript": "~7.0.2",
-    "vite": "^8.2.2",
-    "vite-plugin-compression2": "^2.5.3",
+    "vite": "^8.3.4",
     "vitest": "^5.0.0"
   }
 }

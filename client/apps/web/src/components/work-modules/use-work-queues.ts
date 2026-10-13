@@ -7,7 +7,7 @@ import {
   listExceptionShipmentsGraphQL,
   listUnassignedShipmentsGraphQL,
 } from "@/lib/graphql/shipment";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import type { FieldFilter } from "@trenova/shared/types/data-table";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
@@ -44,7 +44,7 @@ function exceptionFilters(category: ExceptionCategory): FieldFilter[] {
 
 export function useUnassignedShipments(pageSize = DEFAULT_LIMIT, enabled = true) {
   return useInfiniteQuery({
-    queryKey: [...queries.shipment.listUnassigned._def, { pageSize }],
+    queryKey: [...shipment.listUnassigned._def, { pageSize }],
     queryFn: ({ pageParam }) =>
       listUnassignedShipmentsGraphQL({ limit: pageSize, after: pageParam }),
     initialPageParam: null as string | null,

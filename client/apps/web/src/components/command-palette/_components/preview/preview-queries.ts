@@ -1,6 +1,8 @@
 import { fetchRecordShipments, type ShipmentScope } from "@/lib/graphql/record-shipments";
 import { fetchDeskWorker } from "@/lib/graphql/worker-card";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
+import { shipment } from "@/lib/queries/shipment";
+import { telematics } from "@/lib/queries/telematics";
 import { apiService } from "@/services/api";
 import {
   CommandPaletteCustomerPreviewDocument,
@@ -45,7 +47,7 @@ export function customerPreviewQuery(id: string) {
 }
 
 export function customerAgingQuery(id: string) {
-  return { ...queries.ar.customerProfile(id), staleTime: PREVIEW_STALE_TIME };
+  return { ...ar.customerProfile(id), staleTime: PREVIEW_STALE_TIME };
 }
 
 export function openShipmentsQuery(scope: ShipmentScope, first: number) {
@@ -66,7 +68,7 @@ export function workerPreviewQuery(id: string) {
 }
 
 export function workerHosQuery(id: string) {
-  return { ...queries.telematics.workerHosState(id), staleTime: PREVIEW_STALE_TIME };
+  return { ...telematics.workerHosState(id), staleTime: PREVIEW_STALE_TIME };
 }
 
 export function documentPreviewQuery(id: string) {
@@ -87,13 +89,13 @@ export function documentExtractionQuery(id: string) {
 
 export function shipmentPreviewQuery(id: string) {
   return {
-    ...queries.shipment.get(id, { expandShipmentDetails: "true" }),
+    ...shipment.get(id, { expandShipmentDetails: "true" }),
     staleTime: PREVIEW_STALE_TIME,
   };
 }
 
 export function shipmentEventsQuery(id: string) {
-  return { ...queries.shipment.events(id, SHIPMENT_EVENTS_SHOWN), staleTime: PREVIEW_STALE_TIME };
+  return { ...shipment.events(id, SHIPMENT_EVENTS_SHOWN), staleTime: PREVIEW_STALE_TIME };
 }
 
 /** Starts loading a record's preview before it is shown; a cached one is left alone. */

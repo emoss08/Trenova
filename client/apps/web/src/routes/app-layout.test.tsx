@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppLayout } from "./app-layout";
 
 const mocks = vi.hoisted(() => ({
@@ -92,6 +92,12 @@ function renderAppLayout() {
 }
 
 describe("AppLayout role activation", () => {
+  // The gates are read on demand. Reading them first keeps these tests about what the gate
+  // draws, not about how long a cold import takes under a busy test run.
+  beforeAll(async () => {
+    await import("./session-gates");
+  }, 60_000);
+
   beforeEach(() => {
     mocks.activateSessionRoles.mockClear();
     mocks.fetchManifest.mockClear();
@@ -110,7 +116,7 @@ describe("AppLayout role activation", () => {
 
     renderAppLayout();
 
-    expect(screen.getByText("Dispatcher")).toBeInTheDocument();
+    expect(await screen.findByText("Dispatcher")).toBeInTheDocument();
     expect(screen.getByText("Coordinates dispatch activity")).toBeInTheDocument();
     expect(screen.getByText("Billing Admin")).toBeInTheDocument();
     expect(screen.queryByText("Org admin")).not.toBeInTheDocument();
@@ -125,7 +131,7 @@ describe("AppLayout role activation", () => {
   it("scopes the role step to the session's organization, in the sign-in frame", async () => {
     renderAppLayout();
 
-    expect(screen.getByRole("heading", { name: "Select active roles" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Select active roles" })).toBeInTheDocument();
     expect(screen.getByText(/Alpha Logistics/)).toBeInTheDocument();
     // The old panel's credential receipt is gone with the shader stage.
     expect(screen.queryByText("Identity")).not.toBeInTheDocument();

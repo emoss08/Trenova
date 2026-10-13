@@ -18,6 +18,8 @@ const config: CodegenConfig = {
   documents: "src/operations/**/*.graphql",
   hooks: {
     afterAllFileWrite: [
+      "node scripts/strip-fragment-text.mjs",
+      "node scripts/split-documents.mjs",
       "node scripts/sync-graphql-persisted-documents.mjs",
       "node scripts/generate-error-enums.mjs",
       "node scripts/generate-permission-resources.mjs",

@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import type { ReportChartSpec } from "@/types/report";
 import { useQuery } from "@tanstack/react-query";
 import { AdvancedMarker, APIProvider, Map } from "@vis.gl/react-google-maps";
@@ -52,7 +52,7 @@ export function ReportMap({ chart, columns, rows, className }: ReportMapProps) {
 
   const mapId = useMapId();
   const { data: googleMaps } = useQuery({
-    ...queries.integration.runtimeConfig("GoogleMaps"),
+    ...integration.runtimeConfig("GoogleMaps"),
   });
 
   const points = useMemo<MapPoint[]>(() => {

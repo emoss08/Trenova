@@ -1,6 +1,7 @@
 import { useAsk } from "@/components/assistant/use-ask";
 import { usePageContext } from "@/components/assistant/use-page-context";
 import { isRecordEntityType, recordPath } from "@/config/record-links";
+import { lazyComponent } from "@/lib/lazy-component";
 import { conversationPath } from "@/lib/conversation-path";
 import { isGlobalSearchEntityType } from "@/services/global-search";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
@@ -12,10 +13,10 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PalettePreview, type PreviewContext } from "./_components/preview/palette-preview";
 import { prefetchRecordPreview } from "./_components/preview/preview-queries";
-import { answerSources, AskAnswerCard, plainAnswer } from "./ask-answer-card";
+import { answerSources, plainAnswer } from "./ask-answer";
 import { askQuestion, commandModeQuery, questionSearchText } from "./ask-question";
 import "./command-palette.css";
 import { PALETTE_ENTITY_ICONS } from "./palette-entities";
@@ -71,6 +72,14 @@ import {
   useUnreadCount,
 } from "./use-palette-data";
 import { usePaletteIntentRunner } from "./use-palette-intents";
+
+// The answer is drawn in the Desk's prose, with its markdown and code highlighting. The
+// palette itself is read ahead of every first open, so the answer's code is read only once
+// a question is asked; the model takes far longer to reply than the code takes to arrive.
+const AnswerCard = lazyComponent(
+  () => import("./ask-answer-card"),
+  (module) => module.AskAnswerCard,
+);
 
 const SEARCH_DEBOUNCE_MS = 200;
 const PREVIEW_SETTLE_MS = 90;
@@ -396,6 +405,8 @@ export function CommandPalette() {
       setActionsOpen(false);
       setPeek(null);
       setAsked({ question: item.question, subject: item.subject });
+      // A failed read is forgotten, and drawing the answer asks again.
+      void AnswerCard.preload().catch(() => undefined);
       const context = getPageContext();
       void ask(
         item.question,
@@ -736,19 +747,21 @@ export function CommandPalette() {
   const head = (
     <>
       {answerVisible && turn && asked && (
-        <AskAnswerCard
-          question={asked.question}
-          turn={turn}
-          subject={asked.subject?.label ?? null}
-          onAsk={() => startAsk({ kind: "ask", key: "retry", ...asked })}
-          onStop={stopAsk}
-          onContinue={continueInDesk}
-          onCopy={() => runIntent({ type: "copy", text: plainAnswer(turn), what: "answer" })}
-          onFollowUp={followUp}
-          onPeek={setPeek}
-          onOpenRecord={openCited}
-          mac={actionContext.mac}
-        />
+        <Suspense fallback={null}>
+          <AnswerCard.Component
+            question={asked.question}
+            turn={turn}
+            subject={asked.subject?.label ?? null}
+            onAsk={() => startAsk({ kind: "ask", key: "retry", ...asked })}
+            onStop={stopAsk}
+            onContinue={continueInDesk}
+            onCopy={() => runIntent({ type: "copy", text: plainAnswer(turn), what: "answer" })}
+            onFollowUp={followUp}
+            onPeek={setPeek}
+            onOpenRecord={openCited}
+            mac={actionContext.mac}
+          />
+        </Suspense>
       )}
       {showEmpty && (
         <div className="px-2.5 pt-6 pb-3">

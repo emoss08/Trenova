@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import "@/components/desk-chat/desk-chat.css";
-import "./_styles/desk-v2.css";
+import "@/components/desk-chat/desk-frame.css";
 
 /**
  * The Desk while it is first opened: the room's shape — the rail, the strip

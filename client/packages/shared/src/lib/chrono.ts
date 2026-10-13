@@ -148,3 +148,29 @@ export function parseDate(text: string): Date | null {
   if (!result || isNaN(result.getTime())) return null;
   return result;
 }
+
+// Free text a person typed into a date field ("next tue", "3/4"). These live with the
+// parser rather than in lib/date, which nearly every screen imports: chrono and its
+// locale tables are only read by the screens that take typed dates.
+export function generateDateOnly(date: string): Date | null {
+  if (!date || typeof date !== "string") {
+    return null;
+  }
+
+  const parsed = parseDate(date);
+  if (parsed && !isNaN(parsed.getTime())) {
+    const normalized = new Date(parsed);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  }
+  return null;
+}
+
+export function generateDateTime(date: string): Date | null {
+  if (!date || typeof date !== "string") {
+    return null;
+  }
+
+  const parsed = parseDate(date);
+  return parsed && !isNaN(parsed.getTime()) ? parsed : null;
+}

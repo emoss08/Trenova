@@ -24,7 +24,6 @@ import {
   toUnixTimeStamp,
   formatSplitDateTime,
   generateDateOnlyString,
-  generateDateOnly,
   isValidDateOnlyFormat,
   generateDateTimeString,
   generateDateTimeStringFromUnixTimestamp,
@@ -250,28 +249,6 @@ describe("generateDateOnlyString", () => {
     const date = new Date(2024, 0, 5);
     const result = generateDateOnlyString(date);
     expect(result).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
-  });
-});
-
-describe("generateDateOnly", () => {
-  it("parses valid date string to midnight Date", () => {
-    const result = generateDateOnly("January 15, 2024");
-    expect(result).toBeInstanceOf(Date);
-    expect(result!.getHours()).toBe(0);
-    expect(result!.getMinutes()).toBe(0);
-    expect(result!.getSeconds()).toBe(0);
-  });
-
-  it("returns null for empty string", () => {
-    expect(generateDateOnly("")).toBeNull();
-  });
-
-  it("returns null for null input", () => {
-    expect(generateDateOnly(null as any)).toBeNull();
-  });
-
-  it("returns null for unparseable string", () => {
-    expect(generateDateOnly("not a date at all xyz")).toBeNull();
   });
 });
 

@@ -1,4 +1,5 @@
-import { generateDateOnly, getEndOfDay, getStartOfDay } from "@trenova/shared/lib/date";
+import { generateDateOnly } from "@trenova/shared/lib/chrono";
+import { getEndOfDay, getStartOfDay } from "@trenova/shared/lib/date";
 import type { EDIDiagnostic, EDIMessage, EDIX12EnvelopeSettings } from "@trenova/shared/types/edi";
 import { parseX12Document } from "../inspector/utils/x12-parser";
 

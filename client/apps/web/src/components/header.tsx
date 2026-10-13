@@ -12,7 +12,7 @@ import { useSidebarFold } from "@/components/navigation/sidebar-fold";
 import { useBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { useHistoryNavigation } from "@/hooks/use-history-navigation";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
-import { queries } from "@/lib/queries";
+import { pageFavorite } from "@/lib/queries/page-favorite";
 import { getPageTitle } from "@/lib/route-utils";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
@@ -116,18 +116,18 @@ export function FavoriteToggle({ className }: { className?: string }) {
   const pageTitle = typeof lastCrumb === "string" ? lastCrumb : getPageTitle(pageUrl);
 
   const { data, isLoading } = useQuery({
-    ...queries.pageFavorite.check(pageUrl),
+    ...pageFavorite.check(pageUrl),
     enabled: !!pageUrl,
   });
 
   const isFavorited = data?.favorited;
 
   const { mutateAsync, isPending } = useOptimisticMutation({
-    queryKey: queries.pageFavorite.check(pageUrl).queryKey,
+    queryKey: pageFavorite.check(pageUrl).queryKey,
     mutationFn: async (values: ToggleFavoriteRequest) =>
       apiService.pageFavoriteService.togglePageFavorite(values),
     resourceName: "Page Favorite",
-    invalidateQueries: [queries.pageFavorite.all._def, queries.pageFavorite.check._def],
+    invalidateQueries: [pageFavorite.all._def, pageFavorite.check._def],
     optimisticUpdate: (_variables, currentData) => !currentData,
     onSuccess: (result) => {
       toast.success(

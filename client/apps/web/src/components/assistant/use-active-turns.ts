@@ -1,5 +1,5 @@
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import type { AssistantLiveTurn, AssistantLiveTurnList } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,7 +26,7 @@ function useActiveTurnsQuery<T>(select: Select<T>) {
   const connected = useRealtimeStore((state) => state.connectionState === "connected");
 
   return useQuery({
-    ...queries.assistant.activeTurns(),
+    ...assistant.activeTurns(),
     enabled: allowed,
     select,
     refetchInterval: connected ? false : ACTIVE_TURNS_FALLBACK_POLL_MS,
@@ -67,7 +67,7 @@ export function useInvalidateActiveTurns(): () => Promise<void> {
   const queryClient = useQueryClient();
 
   return useCallback(
-    () => queryClient.invalidateQueries({ queryKey: queries.assistant.activeTurns().queryKey }),
+    () => queryClient.invalidateQueries({ queryKey: assistant.activeTurns().queryKey }),
     [queryClient],
   );
 }

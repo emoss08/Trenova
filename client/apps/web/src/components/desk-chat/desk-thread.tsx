@@ -98,6 +98,7 @@ import { useOnline } from "./desk-online";
 import { DeskTermsNote } from "./desk-terms-note";
 import { DeskTranscriptSkeleton } from "./desk-skeletons";
 import { turnTime } from "./turn-time";
+import "./desk-frame.css";
 import "./desk-chat.css";
 import "./desk-chat-compact.css";
 import { useRichT } from "@trenova/shared/i18n/rich";

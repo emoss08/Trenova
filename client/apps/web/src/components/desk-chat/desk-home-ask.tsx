@@ -16,6 +16,7 @@ import { DeskModelPicker } from "./composer/desk-model-picker";
 import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
 import { useDeskDrop } from "./composer/desk-uploads";
 import { DeskTermsNote } from "./desk-terms-note";
+import "./desk-frame.css";
 import "./desk-chat.css";
 import "./desk-chat-compact.css";
 

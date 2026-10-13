@@ -1,0 +1,253 @@
+/* The frame the Desk and the in-app assistant stand in: the variables, resets and
+   layout of the room (.dsk) and of a surface that mounts the shared chat (.dk-chat),
+   with the skeleton the Desk shows while it first opens. Taken out of desk-chat.css
+   and desk-v2.css so the Desk's loading screen, which the router imports for every
+   page, brings these few rules rather than the whole of the Desk's stylesheets. Every
+   rule here comes before the ones in those files and none of theirs relied on coming
+   after, so the cascade is unchanged. Load this before desk-chat.css. */
+:is(.dsk, .dk-chat) {
+  --dk-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dk-settle: cubic-bezier(0.16, 1, 0.3, 1);
+  --dk-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dk-glow: 0%;
+  --dk-lift-light: 24%;
+  --dk-plex: var(--font-plex-mono);
+  --dk-chat-w: 640px;
+  --dk-chat-w-open: 600px;
+}
+.dark :is(.dsk, .dk-chat) {
+  --dk-glow: 0%;
+  --dk-lift-light: 14%;
+}
+:is(.dsk, .dk-chat) *,
+:is(.dsk, .dk-chat) *::before,
+:is(.dsk, .dk-chat) *::after {
+  box-sizing: border-box;
+}
+:is(.dsk, .dk-chat) :where(a) {
+  color: var(--dsk-blue);
+  text-decoration: none;
+}
+/* The Desk's resets sit in the base layer, under Tailwind's utilities: unlayered,
+   they outranked every utility class, so a shared <Button> inside the Desk lost
+   its fill, padding and type to "background: none; padding: 0". The Desk's own
+   classes are unlayered and still win where they set a property. */
+@layer base {
+  :is(.dsk, .dk-chat) :where(button) {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+  /* Keyboard focus wears the design's field ring (0 0 0 3px var(--ring)),
+     drawn as an outline so it shows over a control's own shadow. No
+     specificity, so a control with a focus treatment of its own keeps it, and
+     a pointer never sees it. */
+  :is(.dsk, .dk-chat)
+    :where(
+      button,
+      a[href],
+      [role="option"],
+      [role="tab"],
+      [role="radio"],
+      [role="switch"],
+      [role="menuitem"],
+      [tabindex="0"]
+    ):not([data-slot="button"]):focus-visible {
+    outline: 3px solid var(--dsk-ring);
+    outline-offset: 0;
+  }
+}
+:is(.dsk, .dk-chat) svg {
+  flex: none;
+}
+
+.dsk {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  background: var(--dsk-canvas);
+  color: var(--dsk-fg);
+  font: 400 13px/1.45 var(--font-sans);
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+.dk-mainc {
+  position: relative;
+  display: grid;
+  grid-template-rows: 52px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  container-type: inline-size;
+  container-name: mainc;
+}
+.dark :is(.dsk, .dk-chat) .dk-mainc {
+  background: var(--dsk-canvas);
+}
+.dk-mainc > .dk-top,
+.dk-mainc > .dk-home {
+  min-width: 0;
+}
+.dk-top {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px 0 16px;
+}
+
+.dk-sb {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--dsk-canvas);
+  border-right: 1px solid var(--dsk-b-sub);
+}
+:is(.dsk, .dk-chat) .dk-sb {
+  background: var(--dsk-rail);
+}
+.dark :is(.dsk, .dk-chat) .dk-sb {
+  background: var(--dsk-rail);
+}
+.dk-sb-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 8px 0 14px;
+  font-size: 13px;
+}
+.dk-sb-top b {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.dk-sb-list {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  padding: 4px 8px 16px;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+}
+
+.dk-home-w {
+  position: relative;
+  display: grid;
+  min-height: 0;
+  min-width: 0;
+}
+.dk-home-w > .dk-home {
+  min-height: 0;
+}
+.dk-home {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  overflow: hidden;
+}
+.dk-home::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  width: 1000px;
+  height: 420px;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklch, oklch(0.8 0.14 78) var(--dk-glow), transparent),
+    transparent
+  );
+  pointer-events: none;
+  display: none;
+}
+.dk-home-in {
+  position: relative;
+  width: min(640px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -70px;
+}
+
+/* skeletons: the outline of what is loading, in the Desk's own palette */
+.dk-sk {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--dsk-sunken) 0%,
+    color-mix(in srgb, var(--dsk-fg) 7%, var(--dsk-sunken)) 50%,
+    var(--dsk-sunken) 100%
+  );
+  background-size: 200% 100%;
+  animation: dk-skel 1.2s ease-in-out infinite;
+}
+@keyframes dk-skel {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+.dk-sk-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+}
+.dk-sk-row {
+  height: 22px;
+  margin: 4px 2px;
+  border-radius: 6px;
+}
+.dk-sk-gh {
+  width: 60px;
+  height: 10px;
+  margin: 22px 10px 10px;
+  border-radius: 4px;
+}
+.dk-sk-title {
+  width: 240px;
+  height: 14px;
+  border-radius: 5px;
+}
+.dk-sk-cmp {
+  width: 100%;
+  height: 96px;
+  border-radius: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dk-sk {
+    animation: none;
+  }
+}
+@media (max-width: 720px) {
+  .dsk {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-top {
+    padding-inline: 10px 8px;
+  }
+  :is(.dsk, .dk-chat) .dk-sb {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    width: min(300px, 86vw);
+    transform: translateX(-102%);
+    transition: transform 320ms var(--dk-settle);
+    box-shadow: none;
+  }
+}

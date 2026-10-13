@@ -1,4 +1,5 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
+import { notification } from "@trenova/shared/lib/queries/notification";
 import { cachedThreads } from "@/lib/thread-list";
 import { apiService } from "@/services/api";
 import { useAssistantStore } from "@/stores/assistant-store";
@@ -52,10 +53,10 @@ export async function announceReplyReady(
   // The reply is over wherever it is shown: the markers clear and the
   // conversation reads what was saved rather than what a reader last saw.
   void Promise.all([
-    queryClient.invalidateQueries({ queryKey: queries.assistant.activeTurns().queryKey }),
-    queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
+    queryClient.invalidateQueries({ queryKey: assistant.activeTurns().queryKey }),
+    queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey }),
     queryClient.invalidateQueries({
-      queryKey: queries.assistant.messages(reply.threadId).queryKey,
+      queryKey: assistant.messages(reply.threadId).queryKey,
     }),
   ]);
 
@@ -118,15 +119,13 @@ export function cachedConversationTitle(queryClient: QueryClient, threadId: stri
     return listed.title;
   }
 
-  const single = queryClient.getQueryData<AssistantThread>(
-    queries.assistant.thread(threadId).queryKey,
-  );
+  const single = queryClient.getQueryData<AssistantThread>(assistant.thread(threadId).queryKey);
   if (single) {
     return single.title;
   }
 
   const live = queryClient
-    .getQueryData<AssistantLiveTurnList>(queries.assistant.activeTurns().queryKey)
+    .getQueryData<AssistantLiveTurnList>(assistant.activeTurns().queryKey)
     ?.items.find((turn) => turn.threadId === threadId);
 
   return live ? live.threadTitle : null;
@@ -143,7 +142,7 @@ async function fetchConversationTitle(
 ): Promise<string | null> {
   try {
     const thread = await queryClient.fetchQuery({
-      ...queries.assistant.thread(threadId),
+      ...assistant.thread(threadId),
       retry: false,
     });
     return thread.title;
@@ -168,6 +167,6 @@ function markSeen({ notificationId, queryClient }: AnnounceReplyReadyOptions): v
   }
   apiService.notificationService
     .markRead([notificationId])
-    .then(() => queryClient.invalidateQueries({ queryKey: queries.notification._def }))
+    .then(() => queryClient.invalidateQueries({ queryKey: notification._def }))
     .catch(() => undefined);
 }

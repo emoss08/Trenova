@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Metadata } from "@/components/metadata";
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import { queryClient } from "@/lib/query-client";
+import { clearSessionCache } from "@/lib/session-cache";
 import { apiService } from "@/services/api";
 import { authService } from "@trenova/shared/services/auth";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -169,8 +169,7 @@ export function AuthForm({
   const handleHandoff = useCallback(() => {
     // Drop anything cached by an earlier session in this tab, including one that
     // expired without signing out, before the app loads for the new one.
-    queryClient.clear();
-    void navigate("/", { replace: true });
+    void clearSessionCache().then(() => navigate("/", { replace: true }));
   }, [navigate]);
 
   return (

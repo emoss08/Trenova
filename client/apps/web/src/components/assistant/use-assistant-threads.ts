@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { threadListQuery, threadsOf } from "@/lib/thread-list";
 import type { AssistantThread } from "@/types/assistant";
@@ -22,7 +22,7 @@ export type AssistantThreads = {
 /** The person's conversations and agents, and the one the panel has open. */
 export function useAssistantThreads(activeThreadId: string | null): AssistantThreads {
   const threadsQuery = useInfiniteQuery(threadListQuery());
-  const agentsQuery = useQuery(queries.assistant.myAgents());
+  const agentsQuery = useQuery(assistant.myAgents());
   const threads = threadsOf(threadsQuery.data);
   const agents = useMemo(() => agentsQuery.data ?? [], [agentsQuery.data]);
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
@@ -34,7 +34,7 @@ export function useAssistantThreads(activeThreadId: string | null): AssistantThr
   // Read on its own only once the list has said it does not have it, so a
   // listed conversation never costs a second request.
   const unlistedQuery = useQuery({
-    ...queries.assistant.thread(activeThreadId ?? ""),
+    ...assistant.thread(activeThreadId ?? ""),
     enabled: activeThreadId !== null && threadsQuery.isSuccess && listed === null,
     retry: false,
   });

@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SidebarNavLink, SidebarSectionLabel } from "@/components/navigation/sidebar-primitives";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { queries } from "@/lib/queries";
+import { pageFavorite } from "@/lib/queries/page-favorite";
 import { isRouteActive } from "@/lib/route-utils";
 import { useQuery } from "@tanstack/react-query";
 import { Star01Icon } from "@trenova/shared/components/icons";
@@ -11,7 +11,7 @@ export function FavoritesSection() {
   const t = useT();
 
   const { pathname } = useLocation();
-  const { data: favorites } = useQuery(queries.pageFavorite.all());
+  const { data: favorites } = useQuery(pageFavorite.all());
 
   if (!favorites || favorites.length === 0) {
     return null;

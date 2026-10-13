@@ -8,7 +8,8 @@ import {
 } from "@/hooks/use-home-layout";
 import { DEFAULT_HOME_LAYOUT, toWidgetInput, type HomeWidget } from "@/lib/graphql/home-layout";
 import { analytics } from "@/lib/queries/analytics";
-import { queries } from "@/lib/queries";
+import { attention } from "@/lib/queries/attention";
+import { homeLayout } from "@/lib/queries/home-layout";
 import { ensurePermissionManifest } from "@/lib/route-permission";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -34,8 +35,8 @@ const HOME_LAYOUT_STALE_TIME = 60_000;
 // the same way createPermissionLoader settles it for every other route.
 export const prefetch: RoutePrefetch = async () => {
   const list: RoutePrefetchQuery[] = [
-    { ...queries.homeLayout.effective(), staleTime: HOME_LAYOUT_STALE_TIME },
-    queries.attention.summary(),
+    { ...homeLayout.effective(), staleTime: HOME_LAYOUT_STALE_TIME },
+    attention.summary(),
   ];
 
   // A manifest that cannot be loaded costs only the analytics warm-up; the page asks again.

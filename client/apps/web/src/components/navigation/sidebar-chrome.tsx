@@ -77,7 +77,7 @@ export function SearchTrigger({
   const t = useT();
 
   const setOpen = useCommandPaletteStore((state) => state.setOpen);
-  const preload = () => void preloadCommandPalette();
+  const preload = preloadCommandPalette;
   const shortcut = formatShortcut("K");
 
   if (compact) {

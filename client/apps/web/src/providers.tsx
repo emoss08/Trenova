@@ -1,9 +1,15 @@
-import { QueryClientProvider } from "@tanstack/react-query";
 // import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { APP_CATALOGS } from "@/lib/app-catalogs";
 import { edition } from "@/lib/edition";
 import { installPlanLimitHandler } from "@/lib/plan-limit-handler";
 import { queryClient } from "@/lib/query-client";
+import { SessionQueryProvider } from "@/components/session-query-provider";
+import {
+  clearSessionCache,
+  retainShellQueries,
+  sessionPersistence,
+  sessionScope,
+} from "@/lib/session-cache";
 import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";
@@ -13,7 +19,7 @@ import { registerCatalogSource } from "@trenova/shared/i18n/runtime";
 import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/shared/lib/graphql";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
-import type React from "react";
+import type { ReactNode } from "react";
 
 // The transport cannot reach the router or the auth store, so the expiry path is wired
 // here instead. clearAuth performs the same teardown protectedLoader's 401 branch does;
@@ -26,10 +32,17 @@ setSessionExpiryHandler(() => {
 
   useAuthStore.getState().clearAuth();
 
-  if (window.location.pathname !== "/login") {
-    window.location.assign("/login");
-  }
+  // The session that wrote the cache is gone; its frame must not paint for whoever signs in
+  // next on this device.
+  void clearSessionCache().then(() => {
+    if (window.location.pathname !== "/login") {
+      window.location.assign("/login");
+    }
+  });
 });
+
+// The shell's queries live on in memory as long as their copy on disk is trusted.
+retainShellQueries(queryClient);
 
 // QUOTA_EXCEEDED and PLAN_RESTRICTED from any request open the plan-limit dialog; the
 // transports report them here because they cannot reach the dialog themselves.
@@ -117,7 +130,18 @@ function useUserLocale(): string | null {
   return useAuthStore((state) => state.user?.locale ?? null);
 }
 
-function LocalizedApp({ children }: { children: React.ReactNode }) {
+// The query cache, with the shell's queries kept on disk for the signed-in person in their
+// organization (lib/session-cache).
+function AppQueryProvider({ children }: { children: ReactNode }) {
+  const scope = useAuthStore((state) => sessionScope(state.user));
+  return (
+    <SessionQueryProvider client={queryClient} scope={scope} persistence={sessionPersistence}>
+      {children}
+    </SessionQueryProvider>
+  );
+}
+
+function LocalizedApp({ children }: { children: ReactNode }) {
   return (
     <I18nProvider catalogs={APP_CATALOGS} userLocale={useUserLocale()}>
       {children}
@@ -125,10 +149,10 @@ function LocalizedApp({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children }: { children: ReactNode }) {
   return (
     <RootErrorBoundary>
-      <QueryClientProvider client={queryClient}>
+      <AppQueryProvider>
         <NuqsAdapter processUrlSearchParams={normalizeSearchParams}>
           <ThemeProvider defaultTheme="system" storageKey="trenova-ui-theme">
             <MotionPreferenceProvider>
@@ -141,7 +165,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <Toaster position="top-right" />
           </ThemeProvider>
         </NuqsAdapter>
-      </QueryClientProvider>
+      </AppQueryProvider>
     </RootErrorBoundary>
   );
 }

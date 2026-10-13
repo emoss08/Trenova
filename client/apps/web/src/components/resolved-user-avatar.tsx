@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
-import { queries } from "@/lib/queries";
+import { user } from "@/lib/queries/user";
 import { avatarBackground } from "@trenova/shared/lib/avatar-gradient";
 import { cn, isAbsoluteUrl } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -29,7 +29,7 @@ function useAvatarGradient(userId: string | undefined, name: string | undefined)
   const me = useAuthStore((state) => state.user);
   const isMe = Boolean(userId && me?.id === userId);
   const { data: summary } = useQuery({
-    ...queries.user.avatar(userId ?? ""),
+    ...user.avatar(userId ?? ""),
     enabled: Boolean(userId) && !isMe,
     staleTime: AVATAR_STALE_MS,
     retry: false,
@@ -66,7 +66,7 @@ export function ResolvedUserAvatar({
   const shouldResolve = Boolean(userId && preferredSource && !isAbsoluteUrl(preferredSource));
 
   const { data: resolvedUrl } = useQuery({
-    ...queries.user.profilePicture(userId ?? "", variant),
+    ...user.profilePicture(userId ?? "", variant),
     enabled: shouldResolve,
     retry: false,
   });

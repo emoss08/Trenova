@@ -26,6 +26,8 @@ type AssistantLauncherProps = {
   onMove?: (dock: AssistantDock) => void;
   /** Tucks the beacon into a tab at the edge of the screen. */
   onHide?: () => void;
+  /** Someone is about to open it: pointed at or focused. */
+  onIntent?: () => void;
 };
 
 /**
@@ -49,6 +51,7 @@ export function AssistantLauncher({
   onClick,
   onMove,
   onHide,
+  onIntent,
 }: AssistantLauncherProps) {
   const t = useT();
   const reduceMotion = useReducedMotion();
@@ -111,6 +114,8 @@ export function AssistantLauncher({
         transition={
           reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 30 }
         }
+        onPointerEnter={onIntent}
+        onFocus={onIntent}
         onClick={() => {
           // A drag ends with the pointer let go over the beacon, which the
           // browser reports as a click. Moving it is not asking for it.
