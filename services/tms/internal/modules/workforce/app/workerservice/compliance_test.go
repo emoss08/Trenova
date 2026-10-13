@@ -76,6 +76,16 @@ func (m *mockDispatchControlRepo) ListHorizonPlanningTenants(
 	return args.Get(0).([]pagination.TenantInfo), args.Error(1)
 }
 
+func (m *mockDispatchControlRepo) ListCheckCallMonitoringTenants(
+	ctx context.Context,
+) ([]pagination.TenantInfo, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]pagination.TenantInfo), args.Error(1)
+}
+
 func newComplianceWorker() *worker.Worker {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
