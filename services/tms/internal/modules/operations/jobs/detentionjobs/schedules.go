@@ -17,7 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "detention-notice-sweep",
 			Description:   "Send due detention notices for auto-send policies before the contractual deadline lapses",
-			Spec:          schedule.Cron("*/5 * * * *"),
+			Spec:          schedule.Cron("*/15 * * * *"),
 			Workflow:      SweepDetentionNoticesWorkflow,
 			TaskQueue:     temporaltype.TaskQueueBilling.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

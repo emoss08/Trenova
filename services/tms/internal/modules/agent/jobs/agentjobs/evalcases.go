@@ -14,7 +14,7 @@ const (
 	PurgeEvalCasesWorkflowName            = "PurgeEvalCasesWorkflow"
 	PurgeEvalCasesScheduleID              = "agent-eval-case-retention"
 
-	evalCaseCaptureEvery    = 30 * time.Minute
+	evalCaseCaptureEvery    = 2 * time.Hour // must stay under evalCaseCaptureLookback
 	evalCaseCaptureLookback = 6 * time.Hour
 	evalCaseCaptureBatch    = 100
 	evalCaseCaptureRounds   = 20

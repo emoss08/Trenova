@@ -55,7 +55,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "edi-inbound-poll",
 			Description:   "Poll partner SFTP and VAN mailboxes for inbound EDI files",
-			Spec:          schedule.Every(5 * time.Minute),
+			Spec:          schedule.Every(10 * time.Minute),
 			Workflow:      PollInboundMailboxesWorkflow,
 			TaskQueue:     temporaltype.EDITaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
