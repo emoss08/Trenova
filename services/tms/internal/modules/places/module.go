@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/app/jurisdictionruleservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
+	"github.com/emoss08/trenova/internal/modules/places/app/routeestimateservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/storedmileageservice"
 	"go.uber.org/fx"
 )
@@ -37,6 +38,7 @@ func SharedOptions() fx.Option {
 			locationservice.New,
 			jurisdictionruleservice.NewService,
 			distancecalculationservice.New,
+			routeestimateservice.New,
 			distancecontrolservice.New,
 			distanceoverrideservice.New,
 			distanceprofileservice.New,

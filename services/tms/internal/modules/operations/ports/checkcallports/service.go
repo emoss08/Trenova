@@ -111,6 +111,7 @@ type OverdueMove struct {
 	MoveID        pulid.ID
 	ShipmentID    pulid.ID
 	ProNumber     string
+	OwnerID       pulid.ID
 	CarrierID     pulid.ID
 	CarrierName   string
 	LastContactAt int64
@@ -146,5 +147,9 @@ type CheckCallService interface {
 }
 
 type CheckCallObserver interface {
-	CheckCallRecorded(ctx context.Context, tenantInfo pagination.TenantInfo, moveID pulid.ID)
+	CheckCallRecorded(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		shipmentID, moveID pulid.ID,
+	)
 }

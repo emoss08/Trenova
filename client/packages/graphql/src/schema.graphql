@@ -5978,6 +5978,14 @@ input AssignShiftInput {
   workerId: ID!
 }
 
+input AssignWatchtowerItemInput {
+  """The new owner; omit to leave the exception with nobody."""
+  assigneeId: ID
+  """The version the person was looking at; a newer one refuses the change."""
+  expectedVersion: Int
+  note: String
+}
+
 type AssignWorkerPTOPolicyFailure {
   error: String!
   workerId: ID!
@@ -13856,6 +13864,10 @@ type FactoringCompany {
   email: String
   id: ID!
   name: String!
+  """
+  True when the factor buys invoices without recourse and carries the credit risk. Its invoices leave collections and stop counting toward credit exposure.
+  """
+  nonRecourse: Boolean!
   notes: String
   """
   The notice printed on assigned invoices. Blank prints the standard notice.
@@ -17871,6 +17883,10 @@ type Mutation {
   """
   acknowledgeMyTraining(id: ID!): PortalTraining!
   acknowledgeShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
+  """
+  Says someone has seen an open exception; an unowned one becomes the reader's.
+  """
+  acknowledgeWatchtowerItem(expectedVersion: Int, id: ID!): WatchtowerItem!
   addCarrierSettlementAdjustment(input: AddCarrierSettlementAdjustmentInput!): CarrierSettlement!
   addDriverSettlementAdjustment(input: AddSettlementAdjustmentInput!): DriverSettlement!
   addFuelIndexPrice(input: FuelIndexPriceInput!): FuelIndexPrice!
@@ -17939,6 +17955,8 @@ type Mutation {
   organisation, or takes them off one. A driving title is refused.
   """
   assignUserPosition(positionId: ID, userId: ID!): Boolean!
+  """Gives an exception to someone who can see it, or to nobody."""
+  assignWatchtowerItem(id: ID!, input: AssignWatchtowerItemInput!): WatchtowerItem!
   """
   Puts a worker on a driving position, or takes them off one with no
   position. A front-office title is refused: it is held by users.
@@ -18032,6 +18050,8 @@ type Mutation {
   closeOrder(id: ID!): Order!
   closePerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
   closeWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
+  """Adds a comment to an exception's history."""
+  commentOnWatchtowerItem(body: String!, id: ID!): WatchtowerItemEvent!
   """
   Turns every New row into a purchase in one transaction. Rows whose reference
   is already on file are marked AlreadyImported rather than duplicated.
@@ -18526,6 +18546,8 @@ type Mutation {
   """Puts settled messages back in the queue."""
   reopenInboundMessages(selection: TriageSelectionInput!): TriageBulkResult!
   reopenPerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
+  """Opens a resolved exception again."""
+  reopenWatchtowerItem(id: ID!, input: ReopenWatchtowerItemInput!): WatchtowerItem!
   reopenWorkerChecklistItem(id: ID!, version: Int): WorkerChecklist!
   reopenWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   """
@@ -18577,6 +18599,8 @@ type Mutation {
   """
   resolveSettlementDispute(input: ResolveSettlementDisputeInput!): SettlementDispute!
   resolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
+  """Closes an exception with a reason."""
+  resolveWatchtowerItem(id: ID!, input: ResolveWatchtowerItemInput!): WatchtowerItem!
   """
   Accept or decline one of the signed-in driver's load assignments. Declining
   requires a reason and alerts dispatch.
@@ -18716,12 +18740,16 @@ type Mutation {
   """Replaces the agents a role is granted."""
   setRoleAgentAccess(agentIds: [ID!]!, roleId: ID!): Role!
   setTriageRuleEnabled(enabled: Boolean!, id: ID!): TriageRule!
+  """Moves or clears an exception's due time."""
+  setWatchtowerItemDue(id: ID!, input: SetWatchtowerItemDueInput!): WatchtowerItem!
   setWorkerAvailabilityPreference(input: SetAvailabilityPreferenceInput!): WorkerAvailabilityPreference!
   """Marks a record as not to be sent."""
   skipAccountingSync(input: SkipAccountingSyncInput!): AccountingSyncRecord!
   skipWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   """Takes messages out of the queue until a time or an event."""
   snoozeInboundMessages(input: SnoozeInboundMessagesInput!, selection: TriageSelectionInput!): TriageBulkResult!
+  """Puts an exception aside until a time; it wakes on its own."""
+  snoozeWatchtowerItem(id: ID!, input: SnoozeWatchtowerItemInput!): WatchtowerItem!
   """
   Reads the uploaded statement and resolves every row without committing
   anything. Can be run again on the same batch with a different document or
@@ -18747,6 +18775,10 @@ type Mutation {
   startMyTraining(id: ID!): PortalTraining!
   """Moves an open dispute into review (back office)."""
   startSettlementDisputeReview(id: ID!): SettlementDispute!
+  """
+  Says someone is working on an exception; an unowned one becomes the reader's.
+  """
+  startWatchtowerItem(expectedVersion: Int, id: ID!): WatchtowerItem!
   startWorkerChecklist(input: StartWorkerChecklistInput!): WorkerChecklist!
   """Brings a message waiting on a reply back now."""
   stopWaitingForInboundReply(id: ID!): InboundMessage!
@@ -21627,10 +21659,16 @@ type Query {
   vehiclePosition(tractorId: ID!): VehiclePosition
   vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
   watchtowerCounts: WatchtowerCounts!
+  """One item, if this reader may see it."""
+  watchtowerItem(id: ID!): WatchtowerItem!
+  """What happened to an item, oldest first."""
+  watchtowerItemHistory(id: ID!, limit: Int = 100): [WatchtowerItemEvent!]!
   """
   What needs attention, newest first, filtered to what this reader may see.
   """
   watchtowerItems(input: WatchtowerItemsInput!): WatchtowerItemConnection!
+  """The resolutions a person may pick."""
+  watchtowerResolutionCodes: [WatchtowerResolutionCodeOption!]!
   """
   One worker, with the profile, state, fleet, manager and license state it is asked for.
   """
@@ -22358,6 +22396,11 @@ input RemoveSettlementAdjustmentInput {
   settlementId: ID!
 }
 
+input ReopenWatchtowerItemInput {
+  expectedVersion: Int
+  note: String
+}
+
 type ReportBand {
   edges: [Float!]!
   width: Float!
@@ -22856,6 +22899,13 @@ input ResolveSettlementDisputeInput {
   approve: Boolean!
   disputeId: ID!
   resolutionNote: String!
+}
+
+input ResolveWatchtowerItemInput {
+  code: WatchtowerResolutionCode!
+  expectedVersion: Int
+  """Required when the code is Other."""
+  note: String
 }
 
 type ResolvedCategoryRate {
@@ -23686,6 +23736,13 @@ input SetOrderChargeAllocationsInput {
   allocations: [ChargeAllocationInput!]!
   chargeId: ID!
   orderId: ID!
+}
+
+input SetWatchtowerItemDueInput {
+  """The new due time; omit to clear it."""
+  dueAt: Timestamp
+  expectedVersion: Int
+  note: String
 }
 
 """
@@ -24963,13 +25020,24 @@ enum ShipmentEntryMethod {
 }
 
 type ShipmentEta {
+  basis: StopEtaBasis
+  computedAt: Timestamp
   estimatedArrival: Timestamp
-  """Why the load is behind, when the tracking snapshot can say."""
+  inputStale: Boolean!
+  """
+  Why the load is behind: an open service failure's reason, else what the projection rests on.
+  """
   reason: String
   """
-  Minutes between the projected arrival and the end of the delivery window; negative when it will be missed.
+  Minutes between the projected arrival and the end of the stop's window; negative when it will be missed.
   """
   slackMinutes: Int
+  """
+  The stop the shipment's verdict comes from: the worst open stop, else the next one.
+  """
+  stopId: ID
+  """Every open stop's projected arrival, in route order."""
+  stops: [StopEta!]!
   verdict: EtaVerdict!
 }
 
@@ -26069,6 +26137,12 @@ input SnoozeInboundMessagesInput {
   until: Timestamp
 }
 
+input SnoozeWatchtowerItemInput {
+  expectedVersion: Int
+  note: String
+  until: Timestamp!
+}
+
 input SortFieldInput {
   direction: String!
   field: String!
@@ -26111,6 +26185,74 @@ input StartWorkerChecklistInput {
   startedAt: Timestamp
   templateId: ID!
   workerId: ID!
+}
+
+"""
+The projected arrival at one open stop, stored and refreshed as its inputs change.
+"""
+type StopEta {
+  """The truck is at the stop; the arrival is the recorded one."""
+  arrived: Boolean!
+  basis: StopEtaBasis!
+  computedAt: Timestamp!
+  driveMethod: StopEtaDriveMethod!
+  """Driving minutes from the starting point to this stop."""
+  driveMinutes: Int!
+  estimatedArrival: Timestamp
+  estimatedDeparture: Timestamp
+  id: ID!
+  """When the position, check call or departure it rests on was recorded."""
+  inputAt: Timestamp
+  """The input is older than it should be to trust the projection."""
+  inputStale: Boolean!
+  """Road miles from the projection's starting point to this stop."""
+  milesRemaining: Float!
+  moveSequence: Int!
+  """What the projection rests on, in words."""
+  reason: String
+  """Breaks, resets and restarts the driver's hours add before this stop."""
+  restMinutes: Int!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  """
+  Minutes between the projected arrival and the window end; negative when it will be missed.
+  """
+  slackMinutes: Int
+  stopId: ID!
+  stopSequence: Int!
+  """Slack under this many minutes is at risk."""
+  thresholdMinutes: Int!
+  verdict: EtaVerdict!
+  """The end of the stop's window, or its start when it has no end."""
+  windowEnd: Timestamp
+}
+
+"""What a projected arrival was worked out from."""
+enum StopEtaBasis {
+  """The truck has arrived at the stop and not yet left."""
+  AtStop
+  """The arrival the carrier gave on its latest check call."""
+  CarrierReported
+  """The position on the latest check call."""
+  CheckCall
+  """The last stop the truck left, with no position since."""
+  LastDeparture
+  """Nothing to estimate from."""
+  None
+  """The assigned tractor's telematics position."""
+  Position
+}
+
+"""How the drive time behind a projected arrival was found."""
+enum StopEtaDriveMethod {
+  """No drive was needed or none could be worked out."""
+  None
+  """Straight line widened for roads, at the planning speed."""
+  Planning
+  """Stated by the carrier."""
+  Reported
+  """Routed by the organization's routing integration."""
+  Routed
 }
 
 type StopKey {
@@ -28339,7 +28481,15 @@ input WaiveWorkerTrainingInput {
 type WatchtowerCounts {
   byKind: [WatchtowerKindSummary!]!
   critical: Int!
+  """Open and owned by this reader."""
+  mine: Int!
+  """Owned by this reader and overdue."""
+  mineOverdue: Int!
+  """Open, not snoozed and past their due time."""
+  overdue: Int!
   seenAt: Timestamp!
+  """Open with nobody owning them."""
+  unassigned: Int!
   unresolved: Int!
   unseen: Int!
   unseenCritical: Int!
@@ -28366,8 +28516,18 @@ One thing worth a person's attention, drawn from the record that raised it.
 Every item a reader is shown is one whose source they could open themselves.
 """
 type WatchtowerItem {
+  acknowledgedAt: Timestamp
+  assignee: User
+  """Who owns the exception; absent while nobody does."""
+  assigneeId: ID
   businessUnitId: ID!
   createdAt: Timestamp!
+  """
+  When the owner is expected to have dealt with it; absent when no due time applies.
+  """
+  dueAt: Timestamp
+  """How many times it has escalated for being overdue."""
+  escalationLevel: Int!
   """
   The event a hand-off publishes; absent when no agent can take this kind.
   """
@@ -28375,22 +28535,37 @@ type WatchtowerItem {
   id: ID!
   """The kind in the reader's words, for a filter chip."""
   kindLabel: String!
+  lastEscalatedAt: Timestamp
   occurredAt: Timestamp!
   organizationId: ID!
+  """Open, not snoozed, and past its due time."""
+  overdue: Boolean!
   """
   An application path that opens the source record; blank when the source has no page of its own.
   """
   path: String!
+  """Why it was closed; absent while open."""
+  resolutionCode: WatchtowerResolutionCode
+  resolutionNote: String
   """When the source closed; absent while the item is still open."""
   resolvedAt: Timestamp
+  resolvedBy: User
+  """Who closed it; absent when the source cleared it."""
+  resolvedById: ID
   """
   Whether this reader had already been shown the item, from their own cursor.
   """
   seen: Boolean!
   severity: WatchtowerSeverity!
+  snoozedUntil: Timestamp
+  """
+  When the source stopped reporting a problem a person had already resolved.
+  """
+  sourceClearedAt: Timestamp
   """The id of the record this stands for, in that source's own terms."""
   sourceId: String!
   sourceKind: WatchtowerSourceKind!
+  status: WatchtowerItemStatus!
   subjectId: ID
   """The record an agent would work on if this item were handed to one."""
   subjectType: AgentSubjectType
@@ -28414,15 +28589,74 @@ type WatchtowerItemEdge {
   node: WatchtowerItem!
 }
 
+"""One line of an exception's history. The history is never edited."""
+type WatchtowerItemEvent {
+  actor: User
+  """The person behind the change; absent for the system."""
+  actorId: ID
+  createdAt: Timestamp!
+  fromValue: String!
+  id: ID!
+  itemId: ID!
+  kind: WatchtowerItemEventKind!
+  note: String!
+  toValue: String!
+}
+
+"""What happened to an exception, one line of its history."""
+enum WatchtowerItemEventKind {
+  Acknowledged
+  Assigned
+  Commented
+  Created
+  DueChanged
+  Escalated
+  Reopened
+  Resolved
+  Snoozed
+  SourceReopened
+  SourceResolved
+  Started
+  Unassigned
+  Woke
+}
+
+"""Where an exception is in its owner's hands."""
+enum WatchtowerItemStatus {
+  Acknowledged
+  InProgress
+  Open
+  Resolved
+  Snoozed
+}
+
 input WatchtowerItemsInput {
   after: String
+  """Only what this reader owns."""
+  assignedToMe: Boolean = false
+  """Only what these people own."""
+  assigneeIds: [ID!]
   first: Int = 25
   """Only these kinds; empty is every kind the reader may see."""
   kinds: [WatchtowerSourceKind!]
+  """
+  Soonest due first, items without a due time last, instead of newest first.
+  """
+  orderByDue: Boolean = false
+  """Only what is open, not snoozed and past its due time."""
+  overdueOnly: Boolean = false
   """Only these severities; empty is all three."""
   severities: [WatchtowerSeverity!]
   """Only what occurred at or after this instant."""
   since: Timestamp
+  """Only these statuses; empty is all of them."""
+  statuses: [WatchtowerItemStatus!]
+  """Only items about this record."""
+  subjectId: ID
+  """
+  Only what nobody owns; with assigneeIds, what nobody or one of them owns.
+  """
+  unassigned: Boolean = false
   """Leave out what has already resolved."""
   unresolvedOnly: Boolean = true
 }
@@ -28431,6 +28665,36 @@ type WatchtowerKindSummary {
   count: Int!
   kind: WatchtowerSourceKind!
   label: String!
+}
+
+"""
+Why an exception was closed. Cleared is the system's own code for a source
+that stopped reporting the problem; a person picks one of the others, and
+Other needs a note.
+"""
+enum WatchtowerResolutionCode {
+  CarrierDelay
+  Cleared
+  CustomerChange
+  DataCorrected
+  DocumentReceived
+  DriverIssue
+  Duplicate
+  Equipment
+  Fixed
+  NoActionNeeded
+  Other
+  ReceiverDelay
+  Rescheduled
+  ShipperDelay
+  Weather
+}
+
+"""A resolution a person may pick, in their words."""
+type WatchtowerResolutionCodeOption {
+  code: WatchtowerResolutionCode!
+  label: String!
+  requiresNote: Boolean!
 }
 
 """How loudly an item asks to be looked at."""
@@ -28456,13 +28720,18 @@ enum WatchtowerSourceKind {
   CarrierIntelEvent
   DetentionOccurrence
   EDIInboundQuarantined
+  EtaAtRisk
   HOSViolation
   InboundMessage
   Insight
+  MissedDelivery
+  MissedPickup
   MoveCoverage
   NoCheckCall
+  PodMissing
   ServiceFailure
   TelematicsStopVisit
+  TenderExhausted
   WeatherAlert
   WorkerCredential
 }

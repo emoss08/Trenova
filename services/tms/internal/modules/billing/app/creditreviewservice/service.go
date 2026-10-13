@@ -115,8 +115,9 @@ func (s *Service) Review(
 	balances, err := s.ledger.SumCustomerBalances(
 		ctx,
 		customerledgerports.SumCustomerBalancesRequest{
-			TenantInfo:  tenant,
-			CustomerIDs: ids,
+			TenantInfo:                 tenant,
+			CustomerIDs:                ids,
+			ExcludeNonRecourseFactored: true,
 		},
 	)
 	if err != nil {

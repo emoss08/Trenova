@@ -66,3 +66,8 @@ Keywords: assign collector, owner, next follow-up
 ## Notes
 Opening the page needs read access to accounts receivable; logging contacts, recording promises,
 assigning collectors and setting follow-ups needs permission to update accounts receivable. History is kept as it was recorded and cannot be edited.
+
+Invoices sold to a non-recourse factor are the factor's to collect, so they are left out of the
+worklist and its totals. Invoices sold to a recourse factor stay, because an unpaid one comes back to
+you. Mark a factor as non-recourse on
+[Factoring companies](/billing/configuration-files/factoring-companies).

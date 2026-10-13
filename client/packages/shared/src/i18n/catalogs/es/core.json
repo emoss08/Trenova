@@ -427,6 +427,8 @@
   "E85 (85% ethanol)": "E85 (85% de etanol)",
   "EDI": "EDI",
   "EFS": "EFS",
+  "ETA risk threshold cannot be negative": "El umbral de riesgo de ETA no puede ser negativo",
+  "ETA risk threshold cannot exceed 1440 minutes": "El umbral de riesgo de ETA no puede superar los 1440 minutos",
   "Each PTO type may only have one rule": "Cada tipo de tiempo libre solo puede tener una regla",
   "Each employee's own year. Same stacking risk as the calendar year, spread across the roster.": "El año propio de cada empleado. El mismo riesgo de acumulación que el año calendario, repartido en toda la plantilla.",
   "Earned but not yet on a settlement — waiting in the unsettled pool.": "Devengado pero aún no incluido en una liquidación: en espera en el fondo sin liquidar.",

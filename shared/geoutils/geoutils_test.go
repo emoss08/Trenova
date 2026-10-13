@@ -49,3 +49,23 @@ func TestHaversineMiles(t *testing.T) {
 		})
 	}
 }
+
+func TestPlanningRoadMilesWidensTheStraightLine(t *testing.T) {
+	straight := HaversineMiles(32.7767, -96.797, 29.7604, -95.3698)
+	got := PlanningRoadMiles(32.7767, -96.797, 29.7604, -95.3698)
+	if math.Abs(got-straight*RoadCircuityFactor) > 1e-9 {
+		t.Fatalf("expected %v, got %v", straight*RoadCircuityFactor, got)
+	}
+}
+
+func TestPlanningDriveSeconds(t *testing.T) {
+	if got := PlanningDriveSeconds(100); got != 7200 {
+		t.Fatalf("expected 100 miles at 50 mph to be 7200s, got %d", got)
+	}
+	if got := PlanningDriveSeconds(0); got != 0 {
+		t.Fatalf("expected no drive for no miles, got %d", got)
+	}
+	if got := PlanningDriveSeconds(-5); got != 0 {
+		t.Fatalf("expected no drive for negative miles, got %d", got)
+	}
+}

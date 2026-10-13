@@ -7,6 +7,9 @@ import { cn } from "@trenova/shared/lib/utils";
 import { ArrowRightIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { SEVERITY_TONE } from "./severity";
+import { dueLabel, exceptionDueState, exceptionStatusAttrs } from "./exception";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { FeedbackControl } from "@/components/ai-feedback/feedback-control";
 import { isRatableWatchtowerKind } from "@/components/ai-feedback/feedback-targets";
 
@@ -28,6 +31,7 @@ export function WatchtowerItemRow({
   onAsk,
   onHandOff,
   onDismiss,
+  onOpen,
   busy = false,
 }: {
   item: WatchtowerItem;
@@ -36,10 +40,14 @@ export function WatchtowerItemRow({
   onAsk?: (item: WatchtowerItem) => void;
   onHandOff: (item: WatchtowerItem) => void;
   onDismiss: (item: WatchtowerItem) => void;
+  onOpen: (item: WatchtowerItem) => void;
   busy?: boolean;
 }) {
   const t = useT();
   const canHandOff = item.subjectType !== null && item.subjectId !== null;
+  const statusAttrs = exceptionStatusAttrs(t)[item.status];
+  const dueState = exceptionDueState(item, now);
+  const due = dueLabel(t, dueState);
 
   return (
     <li
@@ -56,9 +64,17 @@ export function WatchtowerItemRow({
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex min-w-0 items-baseline gap-2">
-          <span className={cn("min-w-0 truncate text-sm", unseen && "font-medium")}>
+          <Button
+            variant="bare"
+            size="bare"
+            onClick={() => onOpen(item)}
+            className={cn(
+              "ui-focus-ring min-w-0 truncate text-left text-sm hover:underline",
+              unseen && "font-medium",
+            )}
+          >
             {item.title}
-          </span>
+          </Button>
           {unseen && <span className="sr-only">{t("New since you last looked")}</span>}
         </div>
         {item.summary !== "" && (
@@ -70,6 +86,19 @@ export function WatchtowerItemRow({
           <span>{item.kindLabel}</span>
           <span aria-hidden>·</span>
           <span className="tabular-nums">{formatSecondsAgo(now - item.occurredAt)}</span>
+          <span aria-hidden>·</span>
+          <Badge variant={phaseTone(statusAttrs.phase)} title={statusAttrs.description}>
+            {statusAttrs.text}
+          </Badge>
+          <span className="min-w-0 truncate">{item.assignee?.name ?? t("Unassigned")}</span>
+          {due !== null && (
+            <>
+              <span aria-hidden>·</span>
+              <span className={cn("tabular-nums", dueState.kind === "overdue" && "text-danger")}>
+                {due}
+              </span>
+            </>
+          )}
         </div>
       </div>
 

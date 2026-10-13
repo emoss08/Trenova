@@ -146,10 +146,54 @@ func (r *repository) LatestForMove(
 	})
 }
 
+func (r *repository) LatestForMoves(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveIDs []pulid.ID,
+) (map[pulid.ID]*checkcall.CheckCall, error) {
+	out := make(map[pulid.ID]*checkcall.CheckCall, len(moveIDs))
+	if len(moveIDs) == 0 {
+		return out, nil
+	}
+
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID]*checkcall.CheckCall, error) {
+			cols := checkcallcol.CheckCallColumns
+			for start := 0; start < len(moveIDs); start += contactBatchSize {
+				batch := moveIDs[start:min(start+contactBatchSize, len(moveIDs))]
+				entities := make([]*checkcall.CheckCall, 0, len(batch))
+				err := r.db.DBForContext(ctx).NewSelect().
+					Model(&entities).
+					DistinctOn(cols.ShipmentMoveID.Qualified()).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return checkcallcol.CheckCallScopeTenant(sq, tenantInfo).
+							Where(cols.ShipmentMoveID.In(), bun.List(batch))
+					}).
+					Order(
+						cols.ShipmentMoveID.OrderAsc(),
+						cols.ReportedAt.OrderDesc(),
+						cols.ID.OrderDesc(),
+					).
+					Scan(ctx)
+				if err != nil {
+					return nil, fmt.Errorf("latest check calls for moves: %w", err)
+				}
+				for _, entity := range entities {
+					out[entity.ShipmentMoveID] = entity
+				}
+			}
+			return out, nil
+		},
+	)
+}
+
 type monitoredMoveRow struct {
 	MoveID                pulid.ID `bun:"move_id"`
 	ShipmentID            pulid.ID `bun:"shipment_id"`
 	ProNumber             string   `bun:"pro_number"`
+	OwnerID               pulid.ID `bun:"owner_id"`
 	CarrierID             pulid.ID `bun:"carrier_id"`
 	CarrierName           string   `bun:"carrier_name"`
 	CustomerIntervalHours *int16   `bun:"customer_interval_hours"`
@@ -194,6 +238,7 @@ func (r *repository) ListMonitoredMoves(
 				MoveID:                row.MoveID,
 				ShipmentID:            row.ShipmentID,
 				ProNumber:             row.ProNumber,
+				OwnerID:               row.OwnerID,
 				CarrierID:             row.CarrierID,
 				CarrierName:           row.CarrierName,
 				CustomerIntervalHours: row.CustomerIntervalHours,
@@ -229,6 +274,7 @@ func (r *repository) listMonitoredRows(
 		ColumnExpr(sm.ID.As("move_id")).
 		ColumnExpr(sm.ShipmentID.As("shipment_id")).
 		ColumnExpr(sp.ProNumber.As("pro_number")).
+		ColumnExpr(sp.OwnerID.As("owner_id")).
 		ColumnExpr(ca.CarrierID.As("carrier_id")).
 		ColumnExpr(car.Name.Expr("COALESCE({}, '')")+" AS carrier_name").
 		ColumnExpr(cus.CheckCallIntervalHours.As("customer_interval_hours")).

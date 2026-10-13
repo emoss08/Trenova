@@ -15,8 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -731,13 +733,6 @@ func DescribeNoCheckCall(
 			"h check call window on this load."
 	}
 
-	path := pathDispatchConsole
-	if move.ShipmentID.IsNotNil() {
-		if recordPath, ok := productguide.RecordPath("shipment", move.ShipmentID.String()); ok {
-			path = recordPath
-		}
-	}
-
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
 		SourceKind:  watchtower.SourceNoCheckCall,
@@ -747,7 +742,77 @@ func DescribeNoCheckCall(
 		Summary:     summary,
 		SubjectType: agent.SubjectShipmentMove,
 		SubjectID:   move.MoveID,
-		Path:        path,
+		Path:        shipmentPath(move.ShipmentID),
 		OccurredAt:  move.LastContactAt + window,
+		OwnerID:     move.OwnerID,
 	}
+}
+
+func DescribeEtaRisk(
+	tenant pagination.TenantInfo,
+	stop *stopetaports.AttentionStop,
+) watchtowerports.WatchtowerItemInput {
+	row := stop.ETA
+	late := row.Verdict == stopeta.VerdictLate
+	severity := watchtower.SeverityWarning
+	if late {
+		severity = watchtower.SeverityCritical
+	}
+
+	place := etaStopPlace(stop)
+	title := "ETA at risk"
+	summary := "Projected to reach " + place + " with less than " +
+		strconv.FormatInt(row.ThresholdMinutes, 10) + " minutes to spare."
+	if late {
+		title = "Projected late"
+		summary = "Projected to reach " + place + " after its window closes."
+	}
+	if stop.ProNumber != "" {
+		title += " on " + stop.ProNumber
+	}
+	if row.InputStale {
+		summary += " The projection is working from old information."
+	}
+
+	return watchtowerports.WatchtowerItemInput{
+		TenantInfo:  tenant,
+		SourceKind:  watchtower.SourceEtaAtRisk,
+		SourceID:    row.ShipmentID.String(),
+		Severity:    severity,
+		Title:       title,
+		Summary:     summary,
+		SubjectType: agent.SubjectShipment,
+		SubjectID:   row.ShipmentID,
+		Path:        shipmentPath(row.ShipmentID),
+		OccurredAt:  etaRiskOccurredAt(row, late),
+		OwnerID:     stop.OwnerID,
+	}
+}
+
+func etaStopPlace(stop *stopetaports.AttentionStop) string {
+	kind := "the " + strings.ToLower(stringutils.FirstNonEmpty(string(stop.StopType), "stop"))
+	city := stop.City
+	if city != "" && stop.StateCode != "" {
+		city += ", " + stop.StateCode
+	}
+	switch {
+	case stop.LocationName != "" && city != "":
+		return kind + " at " + stop.LocationName + " in " + city
+	case stop.LocationName != "":
+		return kind + " at " + stop.LocationName
+	case city != "":
+		return kind + " in " + city
+	default:
+		return kind
+	}
+}
+
+func etaRiskOccurredAt(row *stopeta.StopETA, late bool) int64 {
+	if row.WindowEnd == nil {
+		return row.ComputedAt
+	}
+	if late {
+		return min(*row.WindowEnd, row.ComputedAt)
+	}
+	return min(*row.WindowEnd-row.ThresholdMinutes*60, row.ComputedAt)
 }

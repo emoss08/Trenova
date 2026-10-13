@@ -59,11 +59,17 @@ type FactoringCompany struct {
 	// NoticeOfAssignment is the notice printed on every invoice assigned to
 	// the factor. Blank prints the standard notice.
 	NoticeOfAssignment string `json:"noticeOfAssignment" bun:"notice_of_assignment,type:TEXT,nullzero"`
-	Notes              string `json:"notes"              bun:"notes,type:TEXT,nullzero"`
-	SearchVector       string `json:"-"                  bun:"search_vector,type:TSVECTOR,scanonly"`
-	Version            int64  `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64  `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64  `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	// NonRecourse is true when the factor buys invoices outright and carries
+	// the credit risk. Its invoices then belong to the factor: they leave the
+	// collections worklist and stop counting toward the customer's credit
+	// exposure. With recourse, the default, an unpaid invoice comes back, so
+	// it is still collected and still counts.
+	NonRecourse  bool   `json:"nonRecourse" bun:"non_recourse,type:BOOLEAN,notnull"`
+	Notes        string `json:"notes"       bun:"notes,type:TEXT,nullzero"`
+	SearchVector string `json:"-"           bun:"search_vector,type:TSVECTOR,scanonly"`
+	Version      int64  `json:"version"     bun:"version,type:BIGINT"`
+	CreatedAt    int64  `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt    int64  `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-"               bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-"               bun:"rel:belongs-to,join:organization_id=id"`

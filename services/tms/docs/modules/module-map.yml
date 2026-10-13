@@ -229,6 +229,8 @@ modules:
       - jurisdictionruleservice
       - locationcategoryservice
       - locationservice
+      - pcmilerruntime
+      - routeestimateservice
       - storedmileageservice
     job:
       - distancemileagejobs
@@ -466,6 +468,7 @@ modules:
       - tender
       - trackingevent
       - checkcall
+      - stopeta
       - weatheralert
     service:
       - allocationcheck
@@ -480,6 +483,8 @@ modules:
       - dispatcheligibility
       - dispatchguard
       - equipmentavailabilityhelper
+      - etaprojection
+      - etatrigger
       - equipmentcontinuityhelper
       - globalsearchservice
       - internaledilifecycle
@@ -514,6 +519,7 @@ modules:
     job:
       - checkcalljobs
       - detentionjobs
+      - etajobs
       - recurringshipmentjobs
       - shipmentjobs
       - tenderjobs
@@ -544,6 +550,7 @@ modules:
       - tenderrepository
       - trackingeventrepository
       - checkcallrepository
+      - stopetarepository
       - triageoverlaprepository
       - weatheralertrepository
   edi:
@@ -917,6 +924,7 @@ modules:
       - casechecklistrepository
       - conversationrepository
       - conversationschedulerepository
+      - exceptionsourcerepository
       - insightrepository
       - recordlabelrepository
       - roleagentgrantrepository

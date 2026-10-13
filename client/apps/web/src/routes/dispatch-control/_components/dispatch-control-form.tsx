@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { CapabilityGate } from "@/components/capability-gate";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
+import { UserAutocompleteField } from "@/components/autocomplete-fields";
 import { ScoringWeightForm } from "./scoring-weight-form";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
@@ -78,6 +79,8 @@ export default function DispatchControlForm() {
           </CapabilityGate>
           <ServiceFailureForm />
           <CheckCallMonitoringForm />
+          <EtaMonitoringForm />
+          <ExceptionQueueForm />
           <CapabilityGate capability={OrganizationCapability.AssetOperations}>
             <ComplianceForm />
           </CapabilityGate>
@@ -303,6 +306,197 @@ function CheckCallMonitoringForm() {
               />
             </FormControl>
           )}
+        </FormGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+function EtaMonitoringForm() {
+  const t = useT();
+  const { control } = useFormContext<DispatchControl>();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("Arrival projections")}</CardTitle>
+        <CardDescription>
+          {t(
+            "Every open stop on an active shipment carries a projected arrival, worked out from the truck's position, the carrier's check calls or the last departure, with routed drive time and the driver's hours.",
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-prose">
+        <FormGroup cols={1}>
+          <FormControl className="min-h-[3em]">
+            <SwitchField
+              control={control}
+              name="enableEtaAlerts"
+              label={t("Raise at-risk loads in the watchtower")}
+              description={t(
+                "A load projected to arrive with less slack than the threshold raises an ETA at risk item; one projected past its window is critical.",
+              )}
+              position="left"
+            />
+          </FormControl>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <NumberField
+              control={control}
+              name="etaRiskThresholdMinutes"
+              label={t("At-risk threshold")}
+              description={t(
+                "Slack under this many minutes counts as at risk, from 0 to 1440. A customer can set its own threshold.",
+              )}
+              placeholder="60"
+              sideText="minutes"
+              min={0}
+              max={1440}
+            />
+          </FormControl>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <NumberField
+              control={control}
+              name="etaDwellMinutes"
+              label={t("Stop dwell time")}
+              description={t(
+                "How long a stop takes once the truck is there, used to chain later stops, from 0 to 720 minutes.",
+              )}
+              placeholder="60"
+              sideText="minutes"
+              min={0}
+              max={720}
+            />
+          </FormControl>
+        </FormGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ExceptionQueueForm() {
+  const t = useT();
+  const { control } = useFormContext<DispatchControl>();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("Exception queue")}</CardTitle>
+        <CardDescription>
+          {t(
+            "Every exception on the watchtower has an owner and a due time. An overdue one escalates to its owner and the escalation contact until it is dealt with or the escalation limit is reached.",
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-prose">
+        <FormGroup cols={1}>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <NumberField
+              control={control}
+              name="exceptionDueCriticalMinutes"
+              label={t("Critical exceptions are due in")}
+              placeholder="60"
+              sideText="minutes"
+              min={5}
+              max={10080}
+            />
+          </FormControl>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <NumberField
+              control={control}
+              name="exceptionDueWarningMinutes"
+              label={t("Warnings are due in")}
+              placeholder="240"
+              sideText="minutes"
+              min={5}
+              max={10080}
+            />
+          </FormControl>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <NumberField
+              control={control}
+              name="exceptionDueInfoMinutes"
+              label={t("Information is due in")}
+              description={t(
+                "From 5 minutes to a week, counted from when the exception is raised.",
+              )}
+              placeholder="1440"
+              sideText="minutes"
+              min={5}
+              max={10080}
+            />
+          </FormControl>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <NumberField
+              control={control}
+              name="exceptionEscalationMinutes"
+              label={t("Escalate an overdue exception every")}
+              description={t(
+                "Each escalation raises its severity, tells its owner and the escalation contact, and gives it this long again.",
+              )}
+              placeholder="60"
+              sideText="minutes"
+              min={5}
+              max={1440}
+            />
+          </FormControl>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <NumberField
+              control={control}
+              name="exceptionMaxEscalations"
+              label={t("Escalate at most")}
+              description={t("0 turns escalation off; at most 10.")}
+              placeholder="3"
+              sideText="times"
+              min={0}
+              max={10}
+            />
+          </FormControl>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <UserAutocompleteField
+              control={control}
+              name="exceptionDefaultAssigneeId"
+              label={t("Default owner")}
+              description={t(
+                "Owns an exception no rule assigns. A shipment's own exceptions go to its owner first.",
+              )}
+              placeholder={t("Nobody")}
+            />
+          </FormControl>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <UserAutocompleteField
+              control={control}
+              name="exceptionEscalationContactId"
+              label={t("Escalation contact")}
+              description={t("Hears about every escalation, alongside the owner.")}
+              placeholder={t("Nobody")}
+            />
+          </FormControl>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <NumberField
+              control={control}
+              name="exceptionMissedStopGraceMinutes"
+              label={t("A stop is missed after its window closes by")}
+              description={t(
+                "With no arrival recorded by then, a missed pickup or missed delivery is raised.",
+              )}
+              placeholder="30"
+              sideText="minutes"
+              min={0}
+              max={1440}
+            />
+          </FormControl>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <NumberField
+              control={control}
+              name="exceptionPodGraceHours"
+              label={t("A POD is missing after delivery by")}
+              description={t("With no proof of delivery on file by then, POD missing is raised.")}
+              placeholder="24"
+              sideText="hours"
+              min={1}
+              max={720}
+            />
+          </FormControl>
         </FormGroup>
       </CardContent>
     </Card>

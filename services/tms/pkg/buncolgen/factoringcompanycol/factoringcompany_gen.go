@@ -65,6 +65,7 @@ var FactoringCompanyColumns = struct {
 	PhoneNumber            buncolgen.Column // "phone_number" → qualified: "fac.phone_number"
 	RemittanceInstructions buncolgen.Column // "remittance_instructions" → qualified: "fac.remittance_instructions"
 	NoticeOfAssignment     buncolgen.Column // "notice_of_assignment" → qualified: "fac.notice_of_assignment"
+	NonRecourse            buncolgen.Column // "non_recourse" → qualified: "fac.non_recourse"
 	Notes                  buncolgen.Column // "notes" → qualified: "fac.notes"
 	SearchVector           buncolgen.Column // "search_vector" → qualified: "fac.search_vector"
 	Version                buncolgen.Column // "version" → qualified: "fac.version"
@@ -86,6 +87,7 @@ var FactoringCompanyColumns = struct {
 	PhoneNumber:            buncolgen.NewColumn("phone_number", "fac"),
 	RemittanceInstructions: buncolgen.NewColumn("remittance_instructions", "fac"),
 	NoticeOfAssignment:     buncolgen.NewColumn("notice_of_assignment", "fac"),
+	NonRecourse:            buncolgen.NewColumn("non_recourse", "fac"),
 	Notes:                  buncolgen.NewColumn("notes", "fac"),
 	SearchVector:           buncolgen.NewColumn("search_vector", "fac"),
 	Version:                buncolgen.NewColumn("version", "fac"),
@@ -113,6 +115,7 @@ var FactoringCompanyFieldMap = map[string]string{
 	"phoneNumber":            "phone_number",
 	"remittanceInstructions": "remittance_instructions",
 	"noticeOfAssignment":     "notice_of_assignment",
+	"nonRecourse":            "non_recourse",
 	"notes":                  "notes",
 	"version":                "version",
 	"createdAt":              "created_at",
@@ -137,6 +140,7 @@ var FactoringCompanyInsertableColumns = []string{
 	"phone_number",
 	"remittance_instructions",
 	"notice_of_assignment",
+	"non_recourse",
 	"notes",
 	"version",
 	"created_at",
@@ -223,6 +227,7 @@ var FactoringCompanyFilter = struct {
 	PhoneNumber            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "phoneNumber" → DB: "phone_number"
 	RemittanceInstructions func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remittanceInstructions" → DB: "remittance_instructions"
 	NoticeOfAssignment     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "noticeOfAssignment" → DB: "notice_of_assignment"
+	NonRecourse            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "nonRecourse" → DB: "non_recourse"
 	Notes                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
 	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
@@ -272,6 +277,9 @@ var FactoringCompanyFilter = struct {
 	},
 	NoticeOfAssignment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("noticeOfAssignment", op, value)
+	},
+	NonRecourse: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("nonRecourse", op, value)
 	},
 	Notes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("notes", op, value)

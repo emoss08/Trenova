@@ -82,6 +82,27 @@ func (r *memoryCheckCalls) LatestForMove(
 	return latest, nil
 }
 
+func (r *memoryCheckCalls) LatestForMoves(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	moveIDs []pulid.ID,
+) (map[pulid.ID]*checkcall.CheckCall, error) {
+	wanted := make(map[pulid.ID]struct{}, len(moveIDs))
+	for _, id := range moveIDs {
+		wanted[id] = struct{}{}
+	}
+	out := make(map[pulid.ID]*checkcall.CheckCall, len(moveIDs))
+	for _, row := range r.rows {
+		if _, ok := wanted[row.ShipmentMoveID]; !ok {
+			continue
+		}
+		if latest := out[row.ShipmentMoveID]; latest == nil || row.ReportedAt > latest.ReportedAt {
+			out[row.ShipmentMoveID] = row
+		}
+	}
+	return out, nil
+}
+
 func (r *memoryCheckCalls) ListMonitoredMoves(
 	_ context.Context,
 	_ pagination.TenantInfo,
@@ -222,7 +243,9 @@ func (f *fakeControls) GetByOrgID(
 		return nil, f.err
 	}
 	if f.control == nil {
-		return nil, errortypes.NewNotFoundError("DispatchControl not found within your organization")
+		return nil, errortypes.NewNotFoundError(
+			"DispatchControl not found within your organization",
+		)
 	}
 	return f.control, nil
 }
@@ -300,7 +323,7 @@ type observedCalls struct {
 func (o *observedCalls) CheckCallRecorded(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	moveID pulid.ID,
+	_, moveID pulid.ID,
 ) {
 	o.moves = append(o.moves, moveID)
 }
@@ -396,7 +419,7 @@ func newHarness(t *testing.T) *harness {
 		TrackingEvents:      h.tracking,
 		Templates:           h.templates,
 		EmailService:        h.email,
-		Observer:            h.observer,
+		Observers:           []checkcallports.CheckCallObserver{h.observer},
 	})
 	h.svc.now = func() int64 { return testNow }
 	return h

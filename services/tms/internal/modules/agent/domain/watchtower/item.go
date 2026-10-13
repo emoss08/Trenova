@@ -54,6 +54,18 @@ type Item struct {
 	OccurredAt int64  `json:"occurredAt" bun:"occurred_at,type:BIGINT,notnull"`
 	ResolvedAt *int64 `json:"resolvedAt" bun:"resolved_at,type:BIGINT,nullzero"`
 
+	Status          Status         `json:"status"          bun:"status,type:VARCHAR(20),notnull,default:'Open'"`
+	AssigneeID      pulid.ID       `json:"assigneeId"      bun:"assignee_id,type:VARCHAR(100),nullzero"`
+	DueAt           *int64         `json:"dueAt"           bun:"due_at,type:BIGINT,nullzero"`
+	SnoozedUntil    *int64         `json:"snoozedUntil"    bun:"snoozed_until,type:BIGINT,nullzero"`
+	AcknowledgedAt  *int64         `json:"acknowledgedAt"  bun:"acknowledged_at,type:BIGINT,nullzero"`
+	ResolutionCode  ResolutionCode `json:"resolutionCode"  bun:"resolution_code,type:VARCHAR(30),nullzero"`
+	ResolutionNote  string         `json:"resolutionNote"  bun:"resolution_note,type:TEXT,nullzero"`
+	ResolvedByID    pulid.ID       `json:"resolvedById"    bun:"resolved_by_id,type:VARCHAR(100),nullzero"`
+	SourceClearedAt *int64         `json:"sourceClearedAt" bun:"source_cleared_at,type:BIGINT,nullzero"`
+	EscalationLevel int16          `json:"escalationLevel" bun:"escalation_level,type:SMALLINT,notnull,default:0"`
+	LastEscalatedAt *int64         `json:"lastEscalatedAt" bun:"last_escalated_at,type:BIGINT,nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -64,6 +76,8 @@ type Item struct {
 	// Inserted is set by an upsert that reports whether the row was created
 	// rather than replaced; it is never selected on its own.
 	Inserted bool `json:"-" bun:"inserted,scanonly"`
+	// Reopened is set by an upsert that brought a resolved item back.
+	Reopened bool `json:"-" bun:"reopened,scanonly"`
 }
 
 func (i *Item) GetID() pulid.ID { return i.ID }
@@ -143,6 +157,12 @@ func (i *Item) Validate(multiErr *errortypes.MultiError) {
 	}
 	if i.EventKind != "" && !i.EventKind.IsValid() {
 		multiErr.Add("eventKind", errortypes.ErrInvalid, "Event kind is invalid")
+	}
+	if i.Status != "" && !i.Status.IsValid() {
+		multiErr.Add("status", errortypes.ErrInvalid, "Status is invalid")
+	}
+	if i.ResolutionCode != "" && !i.ResolutionCode.IsValid() {
+		multiErr.Add("resolutionCode", errortypes.ErrInvalid, "Resolution code is invalid")
 	}
 }
 

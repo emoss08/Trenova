@@ -27,6 +27,11 @@ const (
 	SourceAgentQualityRegression = SourceKind("AgentQualityRegression")
 	SourceAccountingSync         = SourceKind("AccountingSync")
 	SourceNoCheckCall            = SourceKind("NoCheckCall")
+	SourceEtaAtRisk              = SourceKind("EtaAtRisk")
+	SourceMissedPickup           = SourceKind("MissedPickup")
+	SourceMissedDelivery         = SourceKind("MissedDelivery")
+	SourcePodMissing             = SourceKind("PodMissing")
+	SourceTenderExhausted        = SourceKind("TenderExhausted")
 )
 
 // readResources is the permission a reader needs to be shown items of each
@@ -52,6 +57,11 @@ var readResources = map[SourceKind]permission.Resource{
 	SourceAgentQualityRegression: permission.ResourceAgentEvalSuite,
 	SourceAccountingSync:         permission.ResourceAccountingSync,
 	SourceNoCheckCall:            permission.ResourceShipmentMove,
+	SourceEtaAtRisk:              permission.ResourceShipment,
+	SourceMissedPickup:           permission.ResourceShipment,
+	SourceMissedDelivery:         permission.ResourceShipment,
+	SourcePodMissing:             permission.ResourceShipment,
+	SourceTenderExhausted:        permission.ResourceTender,
 }
 
 func (k SourceKind) IsValid() bool {
@@ -108,6 +118,16 @@ func (k SourceKind) Label() string {
 		return "Accounting sync"
 	case SourceNoCheckCall:
 		return "No check call"
+	case SourceEtaAtRisk:
+		return "ETA at risk"
+	case SourceMissedPickup:
+		return "Missed pickup"
+	case SourceMissedDelivery:
+		return "Missed delivery"
+	case SourcePodMissing:
+		return "POD missing"
+	case SourceTenderExhausted:
+		return "Tender exhausted"
 	default:
 		return string(k)
 	}
@@ -134,6 +154,11 @@ func AllSourceKinds() []SourceKind {
 		SourceAgentQualityRegression,
 		SourceAccountingSync,
 		SourceNoCheckCall,
+		SourceEtaAtRisk,
+		SourceMissedPickup,
+		SourceMissedDelivery,
+		SourcePodMissing,
+		SourceTenderExhausted,
 	}
 }
 
@@ -194,7 +219,12 @@ func (k SourceKind) OverseesAgents() bool {
 		SourceMoveCoverage,
 		SourceTelematicsStopVisit,
 		SourceAccountingSync,
-		SourceNoCheckCall:
+		SourceNoCheckCall,
+		SourceEtaAtRisk,
+		SourceMissedPickup,
+		SourceMissedDelivery,
+		SourcePodMissing,
+		SourceTenderExhausted:
 		return false
 	default:
 		return false

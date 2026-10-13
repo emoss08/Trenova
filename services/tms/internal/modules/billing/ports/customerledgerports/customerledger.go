@@ -21,6 +21,10 @@ type SumCustomerLedgerBalanceRequest struct {
 type SumCustomerBalancesRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
 	CustomerIDs []pulid.ID            `json:"customerIds"`
+	// ExcludeNonRecourseFactored leaves out every entry for an invoice sold to
+	// a non-recourse factor: the invoice itself and whatever was applied to
+	// it. The customer owes that money to the factor, which carries the risk.
+	ExcludeNonRecourseFactored bool `json:"excludeNonRecourseFactored"`
 }
 
 type CustomerLedgerProjectionRepository interface {

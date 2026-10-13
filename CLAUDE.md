@@ -499,6 +499,32 @@ moment a check call lands. **Read [docs/engineering/check-calls.md](docs/enginee
 before changing `checkcall`, `checkcallservice`, the carrier tracking link or its public page,
 or the no-check-call sweep.**
 
+## Projected Arrivals
+
+Every open stop of an active shipment has a stored projected arrival in `stop_etas`, worked out
+by the pure `etaprojection` package from the truck's position, the carrier's check calls or the
+last departure, with routed drive time (PC*MILER when configured, else the planning speed),
+dwell and the driver's hours. Stop, assignment and check call events signal a debounced
+per-shipment refresh workflow, and a five-minute sweep picks up positions and hours; the board,
+`Shipment.eta`, `GET /shipments/:id/eta/`, the agents and `etaSlip` all read the stored rows,
+and an at-risk load raises an `EtaAtRisk` watchtower item. **Read
+[docs/engineering/eta.md](docs/engineering/eta.md) before changing `stopeta`, `etaprojection`,
+`shipmentetaservice`, `etajobs`, `etatrigger`, the route estimator or the arrival settings.**
+
+## Exception Queue
+
+Every watchtower item is an owned exception: a status (Open, Acknowledged, InProgress, Snoozed,
+Resolved), an owner, a due time by severity, a resolution code, and an append-only history in
+`watchtower_item_events`, each change audited. New items are routed to the shipment's owner or
+the default owner in dispatch controls (only someone who can see the item), overdue ones
+escalate every few minutes up to a cap, and missed pickups, missed deliveries, missing PODs and
+exhausted tenders are raised on their own. A person's resolution holds until the source clears;
+a source never overwrites the owner, status or resolution. **Read
+[docs/engineering/exception-queue.md](docs/engineering/exception-queue.md) before changing
+`watchtower` (`exception.go`), `watchtowerservice`, `watchtowerrepository`,
+`exceptionsourcerepository`, the shipment exception sources, the exception settings or the
+exception tools.**
+
 ## AI Training Export
 
 Operators export consenting organizations' AI corrections for fine-tuning with

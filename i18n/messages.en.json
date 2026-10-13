@@ -934,6 +934,15 @@
       "routes/worker"
     ]
   },
+  "0 turns escalation off; at most 10.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "0.0 to 1.0": {
     "sites": 1,
     "scope": [
@@ -2951,6 +2960,15 @@
       "go/other"
     ]
   },
+  "A POD is missing after delivery by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "A PTO policy with this code already exists": {
     "sites": 1,
     "scope": [
@@ -4048,6 +4066,15 @@
     ]
   },
   "A column can carry a date bucket or a numeric range, not both": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A comment cannot be longer than 4000 characters": {
     "sites": 1,
     "scope": [
       "go"
@@ -6015,6 +6042,15 @@
       "apps/web/lib"
     ]
   },
+  "A load projected to arrive with less slack than the threshold raises an ETA at risk item; one projected past its window is critical.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "A load was taken off your schedule.": {
     "sites": 1,
     "scope": [
@@ -6584,6 +6620,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "A note cannot be longer than 2000 characters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "A note for the reviewer cannot be longer than 4,000 characters": {
@@ -9288,6 +9333,33 @@
     "areas": [
       "go/other",
       "routes/desk"
+    ]
+  },
+  "A stop ETA belongs to another organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A stop ETA names a shipment outside the refresh": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A stop is missed after its window closes by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "A stop no longer on this shipment": {
@@ -13516,13 +13588,14 @@
     ]
   },
   "Acknowledge": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -13536,7 +13609,7 @@
     ]
   },
   "Acknowledged": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -14607,6 +14680,15 @@
       "go/other"
     ]
   },
+  "Add a comment for the history": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Add a course workers can be assigned, and decide whether it is required, how it is taken, and what passes.": {
     "sites": 1,
     "scope": [
@@ -15010,6 +15092,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Add a note to an exception's history, such as what the carrier said. Its owner is told. The history is never edited.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Add a plan": {
@@ -19060,11 +19151,12 @@
     ]
   },
   "Agreement": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/factoring-company",
       "routes/rate-agreement"
     ]
   },
@@ -19362,7 +19454,7 @@
     ]
   },
   "All": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "ts"
     ],
@@ -22708,6 +22800,37 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An exception about an agent's own work stays for a person to work": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An exception can be due at most 90 days out": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/desk"
+    ]
+  },
+  "An exception can be snoozed for at most 30 days": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/desk"
     ]
   },
   "An excluded shipment must record why it was pulled off the invoice": {
@@ -27069,6 +27192,16 @@
       "apps/web/hooks"
     ]
   },
+  "Arrival projections": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer",
+      "routes/dispatch-control"
+    ]
+  },
   "Arrival recorded": {
     "sites": 2,
     "scope": [
@@ -28288,7 +28421,7 @@
     ]
   },
   "Assign": {
-    "sites": 17,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -28297,6 +28430,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
+      "routes/desk",
       "routes/dispatch-console",
       "routes/fuel-card",
       "routes/inbox",
@@ -28528,6 +28662,15 @@
     ],
     "areas": [
       "routes/organization"
+    ]
+  },
+  "Assign exception": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Assign manually": {
@@ -28791,7 +28934,7 @@
     ]
   },
   "Assigned": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -29090,13 +29233,14 @@
     ]
   },
   "Assigning...": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
       "routes/billing-queue",
+      "routes/desk",
       "routes/dispatch-console",
       "routes/fuel-card",
       "routes/worker"
@@ -29880,6 +30024,15 @@
       "routes/agent-control"
     ]
   },
+  "At most %d shipments can be refreshed at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "At most 10 agents can be compared at once": {
     "sites": 1,
     "scope": [
@@ -30098,12 +30251,13 @@
     ]
   },
   "At risk": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
@@ -30175,6 +30329,16 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "At-risk threshold": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer",
+      "routes/dispatch-control"
     ]
   },
   "Atlanta": {
@@ -34186,6 +34350,15 @@
       "routes/shipment"
     ]
   },
+  "Basis is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Batch": {
     "sites": 4,
     "scope": [
@@ -37535,6 +37708,15 @@
       "go/other"
     ]
   },
+  "Bring it back at": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Bring what you can to the office, or upload it in Dash.": {
     "sites": 1,
     "scope": [
@@ -38295,7 +38477,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 136,
+    "sites": 137,
     "scope": [
       "go"
     ],
@@ -39183,6 +39365,15 @@
       "routes/agent-control"
     ]
   },
+  "Came back from snooze": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Came from": {
     "sites": 1,
     "scope": [
@@ -39368,7 +39559,7 @@
     ]
   },
   "Cancel": {
-    "sites": 291,
+    "sites": 292,
     "scope": [
       "ts"
     ],
@@ -41623,6 +41814,15 @@
       "routes/carrier-cost-event"
     ]
   },
+  "Carrier delay": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Carrier does not exist within your organization": {
     "sites": 1,
     "scope": [
@@ -42385,6 +42585,15 @@
     "areas": [
       "apps/web/components",
       "routes/dispatch-console"
+    ]
+  },
+  "Carrier's estimate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Carrier-defined component — describe it so drivers recognize it.": {
@@ -43689,6 +43898,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Change due time": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Change employment status by recording a Terminated, Rehired or similar event on the Timeline tab": {
@@ -45386,6 +45604,15 @@
       "routes/dispatch-control"
     ]
   },
+  "Check call position": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Check call window": {
     "sites": 2,
     "scope": [
@@ -46371,12 +46598,22 @@
     ]
   },
   "Choose a resolution": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
+    ]
+  },
+  "Choose a resolution code": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Choose a shift": {
@@ -46504,6 +46741,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Choose an exception": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Choose an existing rule set from the sidebar to view and edit its parsing configuration, or create a new one to define extraction rules for a document provider.": {
@@ -46747,6 +46993,15 @@
     ]
   },
   "Choose how the value is compared": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Choose one of the listed resolution codes": {
     "sites": 1,
     "scope": [
       "go"
@@ -47460,6 +47715,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Choose when it comes back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Choose when sending starts": {
@@ -49221,6 +49485,24 @@
       "apps/web/components"
     ]
   },
+  "Cleared by the source": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Cleared the due time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Cleared tracked run from UI": {
     "sites": 1,
     "scope": [
@@ -49709,6 +49991,15 @@
       "apps/web/hooks"
     ]
   },
+  "Close an exception with the reason it is closed. The resolution holds while the record behind it still shows the problem; it reopens only after the problem clears and comes back. Other needs a note.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Close and pick up the agent waits whose workflow vanished": {
     "sites": 2,
     "scope": [
@@ -49843,6 +50134,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Close it with a reason. It stays closed while the record still shows the problem.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Close order": {
@@ -50267,6 +50567,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Closed with a reason": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Closed with an explanation; the original settlement stands.": {
@@ -51439,12 +51748,13 @@
     ]
   },
   "Comment": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/worker"
     ]
   },
@@ -51563,6 +51873,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Commented": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Comments": {
@@ -53026,6 +53345,15 @@
     "areas": [
       "apps/web/components",
       "packages/shared/types"
+    ]
+  },
+  "Computed time is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Computed {0}": {
@@ -61721,6 +62049,15 @@
       "routes/table-change-alert"
     ]
   },
+  "Critical exceptions are due in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Critical financial configuration": {
     "sites": 1,
     "scope": [
@@ -63051,6 +63388,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Customer change": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Customer claims the driver arrived 40 minutes later than our records show": {
@@ -64585,6 +64931,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "Data corrected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Data correction": {
@@ -67361,6 +67716,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Default owner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Default payment term": {
@@ -75074,6 +75438,15 @@
       "go/other"
     ]
   },
+  "Document received": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Document rejected": {
     "sites": 1,
     "scope": [
@@ -76752,6 +77125,24 @@
       "routes/dispatch-console"
     ]
   },
+  "Drive method is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drive minutes cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Drive one carrier tender through dispatch, expiry, and response": {
     "sites": 1,
     "scope": [
@@ -77248,6 +77639,15 @@
     ]
   },
   "Driver is not eligible for assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Driver issue": {
     "sites": 1,
     "scope": [
       "go"
@@ -78229,7 +78629,7 @@
     ]
   },
   "Due": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -78290,6 +78690,15 @@
     ],
     "areas": [
       "routes/training-course"
+    ]
+  },
+  "Due at": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Due by": {
@@ -78359,6 +78768,15 @@
       "routes/inbox"
     ]
   },
+  "Due in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Due now": {
     "sites": 1,
     "scope": [
@@ -78425,6 +78843,33 @@
       "packages/shared/types"
     ]
   },
+  "Due time cannot exceed 10080 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Due time is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Due time must be at least 5 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Due today": {
     "sites": 1,
     "scope": [
@@ -78462,7 +78907,7 @@
     ]
   },
   "Due {0}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -78493,7 +78938,7 @@
     ]
   },
   "Duplicate": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -80033,6 +80478,24 @@
       "routes/shipment"
     ]
   },
+  "ETA Risk Threshold Minutes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "ETA at risk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "ETA out-of-route": {
     "sites": 1,
     "scope": [
@@ -80042,8 +80505,37 @@
       "routes/admin"
     ]
   },
+  "ETA risk threshold cannot be negative": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "packages/shared/types"
+    ]
+  },
+  "ETA risk threshold cannot exceed 1440 minutes": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "packages/shared/types"
+    ]
+  },
+  "ETA risk threshold must be between 0 and 1440 minutes": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "ETA {0}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -80216,6 +80708,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "Each escalation raises its severity, tells its owner and the escalation contact, and gives it this long again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Each event starts a run about the record it concerns. Repeats inside five minutes are merged.": {
@@ -84791,7 +85292,52 @@
       "routes/dispatch-control"
     ]
   },
+  "Enter how long a stop takes once the truck is there": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Enter how long after a stop window closes it is missed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Enter how long after delivery a POD is due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Enter how many hours a load may go without a check call": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Enter how many minutes an exception has before it is overdue": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Enter how many minutes of slack count as at risk": {
     "sites": 1,
     "scope": [
       "ts"
@@ -84807,6 +85353,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Enter how many times an exception may escalate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Enter how often an overdue exception escalates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Enter maximum shipment weight": {
@@ -85709,7 +86273,7 @@
     ]
   },
   "Equipment": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -85717,6 +86281,7 @@
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "go/other",
       "packages/shared/lib",
       "packages/shared/types",
       "routes/desk",
@@ -86142,6 +86707,24 @@
       "routes/shipment"
     ]
   },
+  "Escalate an overdue exception every": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Escalate at most": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Escalated for review": {
     "sites": 1,
     "scope": [
@@ -86149,6 +86732,78 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Escalated from {0} to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Escalation contact": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Escalation interval cannot exceed 1440 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Escalation interval must be at least 5 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Escalations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Escalations cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Escalations cannot exceed 10": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Escalations must be between 0 and 10": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Escalator": {
@@ -87569,6 +88224,15 @@
       "packages/shared/components"
     ]
   },
+  "Every carrier in the routing guide passed or let the offer lapse, and the move is still uncovered.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Every carrier invoice is linked to a carrier and matched. Clear the filter to see them anyway.": {
     "sites": 1,
     "scope": [
@@ -87912,6 +88576,15 @@
       "apps/web/components"
     ]
   },
+  "Every exception on the watchtower has an owner and a due time. An overdue one escalates to its owner and the escalation contact until it is dealt with or the escalation limit is reached.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Every exportable field": {
     "sites": 1,
     "scope": [
@@ -88182,6 +88855,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Every open stop on an active shipment carries a projected arrival, worked out from the truck's position, the carrier's check calls or the last departure, with routed drive time and the driver's hours.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Every open title has at least one person in it.": {
@@ -89348,7 +90030,7 @@
     ]
   },
   "Exception": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -89392,6 +90074,15 @@
       "routes/desk",
       "routes/service-failure",
       "routes/service-failure-reason-code"
+    ]
+  },
+  "Exception comment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Exception detection": {
@@ -89494,6 +90185,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Exception queue": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Exception reason": {
@@ -98387,7 +99087,7 @@
     ]
   },
   "Fixed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -100831,6 +101531,15 @@
       "routes/org-structure"
     ]
   },
+  "From 0 to 1440 minutes. Leave empty to use the threshold set in dispatch controls.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "From 1 to 28, so the day falls in every month. Statements are dated the last day of the month before.": {
     "sites": 1,
     "scope": [
@@ -100847,6 +101556,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "From 5 minutes to a week, counted from when the exception is raised.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "From Values": {
@@ -101136,6 +101854,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "From: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Front escort": {
@@ -103544,6 +104271,15 @@
       "go/other"
     ]
   },
+  "Give an exception on the watchtower to a person, or to nobody, so someone owns getting it dealt with. The new owner must be able to see the record behind it; they are told it is theirs.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Give at least ten characters saying what the amendment corrects.": {
     "sites": 1,
     "scope": [
@@ -103587,6 +104323,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Give it to someone who can see the record behind it. They are told.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Give it {0}": {
@@ -106224,6 +106969,15 @@
       "packages/shared/lib"
     ]
   },
+  "Hears about every escalation, alongside the owner.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Heartbeat: sync workflow is still running": {
     "sites": 1,
     "scope": [
@@ -107176,7 +107930,7 @@
     ]
   },
   "History": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -107186,6 +107940,7 @@
       "routes/carrier",
       "routes/carrier-settlement",
       "routes/collections",
+      "routes/desk",
       "routes/driver-settlement",
       "routes/order",
       "routes/rate-agreement",
@@ -108445,6 +109200,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "How it was resolved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "How it's doing": {
     "sites": 2,
     "scope": [
@@ -108488,6 +109252,15 @@
     ],
     "areas": [
       "routes/jurisdiction-rule"
+    ]
+  },
+  "How long a stop takes once the truck is there, used to chain later stops, from 0 to 720 minutes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "How long a worker has once the course is assigned. 0 = no due date.": {
@@ -108797,6 +109570,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "How much slack under a stop's window counts as at risk for this customer's loads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "How much the % of charge goes up from one band to the next.": {
@@ -111211,7 +111993,7 @@
     ]
   },
   "In progress": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -111220,6 +112002,7 @@
       "packages/shared/components",
       "packages/shared/lib",
       "routes/accounting-sync",
+      "routes/desk",
       "routes/training-course",
       "routes/worker",
       "routes/worker-checklist-template"
@@ -112058,6 +112841,15 @@
       "packages/shared/components"
     ]
   },
+  "Includes {0} of rest for hours of service": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Income Statement": {
     "sites": 2,
     "scope": [
@@ -112494,6 +113286,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Information is due in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Informational": {
@@ -119788,6 +120589,15 @@
       "apps/web/components"
     ]
   },
+  "Kept in its history": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Kept in the audit trail so the missing hours can be explained later.": {
     "sites": 1,
     "scope": [
@@ -121219,6 +122029,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Last departure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Last error": {
@@ -123211,6 +124030,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Left with nobody": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Left {0}": {
@@ -134479,6 +135307,15 @@
       "apps/web/components"
     ]
   },
+  "Miles remaining cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Miles the return could not place, and everything the computation flagged while it ran.": {
     "sites": 1,
     "scope": [
@@ -134672,12 +135509,13 @@
     ]
   },
   "Mine": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/collections"
+      "routes/collections",
+      "routes/desk"
     ]
   },
   "Minimal": {
@@ -135188,21 +136026,52 @@
     ]
   },
   "Missed delivery": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Missed pickup": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "go/other"
+    ]
+  },
+  "Missed stop grace cannot be negative": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/types"
+    ]
+  },
+  "Missed stop grace cannot exceed 1440 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Missed stop grace must be between 0 and 1440 minutes": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Missing": {
@@ -137052,7 +137921,7 @@
     ]
   },
   "Move is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -137338,6 +138207,15 @@
     "areas": [
       "apps/web/components",
       "routes/agent-control"
+    ]
+  },
+  "Move when an exception must be dealt with, or clear its due time. An exception past its due time escalates to its owner and the escalation contact.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Move who pays one charge on a shipment in billing review: its freight or one accessorial, whole to another payer or split among several. A payer who gains a share gets a queue item and one left with nothing has theirs canceled. An empty allocations list gives the charge back to the shipment's own payer. Only while every queue item for the shipment is in review or on hold.": {
@@ -142080,6 +142958,15 @@
       "packages/shared/components"
     ]
   },
+  "No action needed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "No action required": {
     "sites": 1,
     "scope": [
@@ -144065,6 +144952,15 @@
     ],
     "areas": [
       "routes/accounting-drift"
+    ]
+  },
+  "No drive": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "No driver expenses yet": {
@@ -146666,6 +147562,15 @@
       "routes/fuel-management"
     ]
   },
+  "No projection": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "No proposal is expected.": {
     "sites": 1,
     "scope": [
@@ -148800,12 +149705,14 @@
     ]
   },
   "Nobody": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/desk",
+      "routes/dispatch-control",
       "routes/inbox",
       "routes/worker"
     ]
@@ -148925,6 +149832,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Nobody has said they are on it yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nobody has worked this account yet. Calls, emails, notes and promises appear here.": {
@@ -149210,6 +150126,15 @@
     "areas": [
       "routes/ifta-return",
       "routes/ifta-tax-rate"
+    ]
+  },
+  "Non-recourse": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Non-urgent emails arrive together at 8:00 AM. Urgent ones still come right away.": {
@@ -151103,7 +152028,7 @@
     ]
   },
   "Note": {
-    "sites": 23,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -151860,12 +152785,13 @@
     ]
   },
   "Nothing has happened yet.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Nothing has posted to this customer's receivables. Their first invoice or payment starts the ledger.": {
@@ -152850,6 +153776,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Nothing to estimate from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Nothing to file: every page is set aside": {
@@ -156042,12 +156977,13 @@
     ]
   },
   "On time": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "routes/desk"
     ]
   },
@@ -157371,6 +158307,15 @@
       "go/other"
     ]
   },
+  "Only a person has exceptions of their own": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only a person keeps memories on the Desk": {
     "sites": 1,
     "scope": [
@@ -157925,6 +158870,15 @@
     ]
   },
   "Only an inactive worker can be rehired": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only an open exception can be acknowledged": {
     "sites": 1,
     "scope": [
       "go"
@@ -159245,7 +160199,7 @@
     ]
   },
   "Open": {
-    "sites": 63,
+    "sites": 64,
     "scope": [
       "go",
       "ts"
@@ -159503,6 +160457,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Open a resolved exception again when it was closed too soon. It gets a fresh due time and keeps its owner.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Open a statement import": {
@@ -160644,7 +161607,7 @@
     ]
   },
   "Open the record": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -162746,7 +163709,7 @@
     ]
   },
   "Organization default": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -162805,7 +163768,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 135,
+    "sites": 136,
     "scope": [
       "go"
     ],
@@ -163470,7 +164433,7 @@
     ]
   },
   "Other": {
-    "sites": 55,
+    "sites": 56,
     "scope": [
       "go",
       "ts"
@@ -164320,7 +165283,7 @@
     ]
   },
   "Overdue": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -164335,6 +165298,7 @@
       "routes/ar-aging",
       "routes/ar-open-items",
       "routes/collections",
+      "routes/desk",
       "routes/home",
       "routes/worker"
     ]
@@ -164366,6 +165330,15 @@
       "routes/edi"
     ]
   },
+  "Overdue and escalated {0, plural, one {# time} other {# times}}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Overdue invoices are charged once per thirty-day period at the customer's late charge rate, after their grace period, as one debit memo per customer per run.": {
     "sites": 1,
     "scope": [
@@ -164382,6 +165355,24 @@
     ],
     "areas": [
       "routes/late-charges"
+    ]
+  },
+  "Overdue {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Overdue. It escalates to its owner and the escalation contact.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Overlay": {
@@ -164849,7 +165840,7 @@
     ]
   },
   "Owner": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -165160,6 +166151,15 @@
       "go/other"
     ]
   },
+  "Owns an exception no rule assigns. A shipment's own exceptions go to its owner first.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "PC*Miler": {
     "sites": 1,
     "scope": [
@@ -165412,7 +166412,34 @@
       "routes/dash-control"
     ]
   },
+  "POD grace cannot exceed 720 hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "POD grace must be at least 1 hour": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "POD isn't signed — the receiver's line is blank": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "POD missing": {
     "sites": 1,
     "scope": [
       "go"
@@ -167729,6 +168756,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Past its due time an exception escalates. Leave it empty to clear it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Past terms": {
@@ -173757,6 +174793,15 @@
       "go/other"
     ]
   },
+  "Planning speed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Plans": {
     "sites": 1,
     "scope": [
@@ -178619,6 +179664,15 @@
       "apps/web/types"
     ]
   },
+  "Projected late": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Promise": {
     "sites": 2,
     "scope": [
@@ -180711,6 +181765,15 @@
       "routes/org-structure"
     ]
   },
+  "Put an exception aside until a time when nothing can be done before then, such as a receiver that opens at 7. It wakes on its own and its owner is told.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Put an unpaid load on hold": {
     "sites": 1,
     "scope": [
@@ -180736,6 +181799,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Put it back on the open queue with a fresh due time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Put on a shift": {
@@ -182062,6 +183134,15 @@
       "go/other"
     ]
   },
+  "Raise and clear missed stops, missing PODs and exhausted tenders": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Raise and clear watchtower items for brokered loads overdue a check call": {
     "sites": 2,
     "scope": [
@@ -182069,6 +183150,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Raise at-risk loads in the watchtower": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Raise it": {
@@ -182108,12 +183198,22 @@
     ]
   },
   "Raised": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/desk"
+    ]
+  },
+  "Raised as {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Raised to minimum": {
@@ -186006,6 +187106,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Reason cannot be longer than 500 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Reason cannot exceed 2000 characters": {
     "sites": 4,
     "scope": [
@@ -186984,6 +188093,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Receiver delay": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Receiver id cannot be longer than 20 characters": {
@@ -189244,6 +190362,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Recourse": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Recovered": {
@@ -192913,13 +194040,14 @@
     ]
   },
   "Reopen": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
       "routes/agent-control",
+      "routes/desk",
       "routes/inbox",
       "routes/osha",
       "routes/worker"
@@ -192950,6 +194078,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Reopen exception": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Reopen fiscal period": {
@@ -193052,7 +194189,7 @@
     ]
   },
   "Reopened": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -193116,11 +194253,12 @@
     ]
   },
   "Reopening...": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/fiscal-year",
       "routes/ifta-return"
     ]
@@ -194230,6 +195368,15 @@
     ],
     "areas": [
       "routes/hazardous-material"
+    ]
+  },
+  "Reported by the carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Reported mileage compared with peers of the same fleet size.": {
@@ -195558,6 +196705,15 @@
       "routes/worker-credential-type"
     ]
   },
+  "Required for this resolution": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Required items must settle before the checklist closes.": {
     "sites": 1,
     "scope": [
@@ -195922,6 +197078,15 @@
   },
   "Rerun an unchanged agent at least every 90 days": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Rescheduled": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -196354,7 +197519,7 @@
     ]
   },
   "Resolution": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -196364,6 +197529,7 @@
       "go/other",
       "routes/admin",
       "routes/bank-receipt-queue",
+      "routes/desk",
       "routes/invoice",
       "routes/settlement-dispute",
       "routes/worker"
@@ -196376,6 +197542,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Resolution code is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Resolution is invalid": {
@@ -196478,7 +197653,7 @@
     ]
   },
   "Resolve": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -196488,6 +197663,7 @@
       "routes/bank-receipt-queue",
       "routes/billing-queue",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/invoice",
       "routes/service-failure"
     ]
@@ -196545,6 +197721,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Resolve exception": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Resolve external directory groups into application roles.": {
@@ -196675,7 +197860,7 @@
     ]
   },
   "Resolved": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -196729,12 +197914,13 @@
     ]
   },
   "Resolved as {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Resolved as {0} by {1} on {2}": {
@@ -196852,6 +198038,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Resolving...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Resource": {
@@ -197178,6 +198373,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Rest minutes cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Rest of day": {
@@ -200283,6 +201487,15 @@
       "routes/admin"
     ]
   },
+  "Risk threshold must be between 0 and 1440 minutes": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Risk unknown": {
     "sites": 1,
     "scope": [
@@ -201329,6 +202542,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Routed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Routed miles are captured from every completed move automatically. A manual entry is for travel the system did not see, such as bobtailing to a shop or repositioning between customers, and is added to the jurisdiction's line on the quarter's return at its next recompute. Manual miles are never subtracted, so do not enter miles a move already carries unless the entry names that move.": {
@@ -204543,6 +205765,15 @@
       "routes/worker"
     ]
   },
+  "Save due time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Save filter preset": {
     "sites": 1,
     "scope": [
@@ -205317,7 +206548,7 @@
     ]
   },
   "Saving...": {
-    "sites": 59,
+    "sites": 60,
     "scope": [
       "ts"
     ],
@@ -205328,6 +206559,7 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/collections",
+      "routes/desk",
       "routes/document-type",
       "routes/driver-expense",
       "routes/factoring-company",
@@ -205363,6 +206595,17 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Say how it was resolved": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/desk"
     ]
   },
   "Say how long you are focusing for": {
@@ -214755,6 +215998,15 @@
       "routes/intake"
     ]
   },
+  "Set aside until a time; it comes back on its own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Set by a Terminated event in the employment history.": {
     "sites": 1,
     "scope": [
@@ -214828,6 +216080,15 @@
     ]
   },
   "Set in Billing profiles": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Set it aside until a time. It comes back on its own and its owner is told.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -217671,7 +218932,7 @@
     ]
   },
   "Shipment is required": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "go"
     ],
@@ -218441,6 +219702,15 @@
     ]
   },
   "Shipper closed early": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Shipper delay": {
     "sites": 1,
     "scope": [
       "go"
@@ -220769,6 +222039,15 @@
       "apps/web/types"
     ]
   },
+  "Slack under this many minutes counts as at risk, from 0 to 1440. A customer can set its own threshold.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Slash (/)": {
     "sites": 1,
     "scope": [
@@ -221108,7 +222387,7 @@
     ]
   },
   "Snooze": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -221124,6 +222403,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Snooze exception": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Snooze the message, or every selected one, until tomorrow morning": {
@@ -221143,6 +222431,17 @@
     "areas": [
       "routes/desk",
       "routes/inbox"
+    ]
+  },
+  "Snooze until a time in the future": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/desk"
     ]
   },
   "Snooze until a time or until something happens, not both": {
@@ -221183,11 +222482,12 @@
     ]
   },
   "Snoozed": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/inbox"
     ]
   },
@@ -221219,7 +222519,7 @@
     ]
   },
   "Snoozed until {0}": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -221243,6 +222543,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Snoozing...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "So nothing fails while other systems switch over.": {
@@ -221570,6 +222879,24 @@
     ]
   },
   "Someone else…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Someone has seen it and will get to it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Someone is working on it now": {
     "sites": 1,
     "scope": [
       "ts"
@@ -223775,11 +225102,12 @@
     ]
   },
   "Start": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/edi",
       "routes/inbox",
       "routes/worker"
@@ -224473,6 +225801,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Started working on it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Started {0}": {
@@ -225344,7 +226681,7 @@
     ]
   },
   "Status is invalid": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go"
     ],
@@ -226092,6 +227429,33 @@
       "apps/web/components"
     ]
   },
+  "Stop dwell time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Stop dwell time cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Stop dwell time cannot exceed 720 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Stop field": {
     "sites": 1,
     "scope": [
@@ -226102,7 +227466,7 @@
     ]
   },
   "Stop is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -231241,11 +232605,13 @@
     ]
   },
   "Tender exhausted": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/dispatch-console"
     ]
   },
@@ -232686,6 +234052,15 @@
     ]
   },
   "That passage is not in the latest version": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "That person cannot see this exception": {
     "sites": 1,
     "scope": [
       "go"
@@ -237998,6 +239373,15 @@
       "routes/shipment"
     ]
   },
+  "The factor buys invoices outright and carries the credit risk. Its invoices leave the collections worklist and stop counting toward the customer's credit limit. Leave off for recourse factoring, where an unpaid invoice comes back to you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "The factor's legal name. It is printed as the payee on every invoice assigned to it.": {
     "sites": 1,
     "scope": [
@@ -240686,6 +242070,15 @@
       "routes/agent-control"
     ]
   },
+  "The note cannot be longer than 2000 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The note that goes with it, when there is one.": {
     "sites": 1,
     "scope": [
@@ -241717,6 +243110,15 @@
       "go/other"
     ]
   },
+  "The problem came back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The production year of the tractor.": {
     "sites": 1,
     "scope": [
@@ -242354,6 +243756,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The record cleared": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The record has been edited since this was proposed.": {
@@ -248392,6 +249803,51 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "This exception changed since you opened it; refresh and try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This exception is already assigned that way": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This exception is already in progress": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This exception is not resolved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This exception is resolved; reopen it first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This expense could not be loaded.": {
@@ -257181,7 +258637,7 @@
     ]
   },
   "Trenova": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -257842,6 +259298,15 @@
       "go/other"
     ]
   },
+  "Truck at the stop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Truck count is required": {
     "sites": 1,
     "scope": [
@@ -257876,6 +259341,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Truck position": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Truck stop": {
@@ -259676,7 +261150,7 @@
     ]
   },
   "Unassigned": {
-    "sites": 17,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -260999,7 +262473,7 @@
     ]
   },
   "Unknown status": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -265388,6 +266862,15 @@
       "routes/worker"
     ]
   },
+  "Verdict is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Verification": {
     "sites": 3,
     "scope": [
@@ -268973,6 +270456,15 @@
       "routes/inbox"
     ]
   },
+  "Wake snoozed exceptions and escalate overdue ones": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Wake the change reader for every accounting connection that is syncing": {
     "sites": 1,
     "scope": [
@@ -269176,6 +270668,15 @@
     "areas": [
       "routes/edi",
       "routes/invoice"
+    ]
+  },
+  "Warnings are due in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Warnings: {0} (matches expected)": {
@@ -269744,7 +271245,7 @@
     ]
   },
   "Weather": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -274627,6 +276128,15 @@
       "apps/web/components"
     ]
   },
+  "Which exceptions to show": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Which facilities cost the most, which customers are unprofitable once driver pay is netted off, and where discretionary revenue is going": {
     "sites": 1,
     "scope": [
@@ -275050,6 +276560,15 @@
     ],
     "areas": [
       "routes/fuel-card"
+    ]
+  },
+  "Who carries the risk when a customer does not pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Who customers and your team reach at the factor": {
@@ -276304,6 +277823,15 @@
       "routes/agent-control"
     ]
   },
+  "With no arrival recorded by then, a missed pickup or missed delivery is raised.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "With no end date this runs until you call it back. Set one if you are covering a specific absence.": {
     "sites": 1,
     "scope": [
@@ -276311,6 +277839,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "With no proof of delivery on file by then, POD missing is raised.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "With the chain's details": {
@@ -277415,6 +278952,15 @@
       "routes/scheduling"
     ]
   },
+  "Working from old information": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Working late, <em>{0}</em>.": {
     "sites": 1,
     "scope": [
@@ -277706,6 +279252,15 @@
     ]
   },
   "Write Off": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Write a comment": {
     "sites": 1,
     "scope": [
       "go"
@@ -284148,6 +285703,15 @@
       "routes/factoring-company"
     ]
   },
+  "e.g., 90-day chargeback, 3% fee": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "e.g., 90210": {
     "sites": 4,
     "scope": [
@@ -284495,15 +286059,6 @@
     ]
   },
   "e.g., RTSFIN": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/factoring-company"
-    ]
-  },
-  "e.g., Recourse agreement, 90-day chargeback": {
     "sites": 1,
     "scope": [
       "ts"
@@ -290597,6 +292152,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# of yours is overdue} other {# of yours are overdue}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# open change} other {# open changes}}": {
@@ -300345,12 +301909,13 @@
     ]
   },
   "{0} past the window": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/shipment"
     ]
   },
   "{0} payable": {
@@ -301901,12 +303466,13 @@
     ]
   },
   "{0} to spare": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/shipment"
     ]
   },
   "{0} to {1}": {

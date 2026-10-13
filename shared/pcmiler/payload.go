@@ -13,6 +13,9 @@ const (
 	stateReportTotalLine   = "TOTAL"
 	mileageReportTypeValue = "MileageReportType:http://pcmiler.alk.com/APIs/v1.0"
 	stateReportTypeValue   = "StateReportType:http://pcmiler.alk.com/APIs/v1.0"
+	secondsPerHour         = 3600
+	secondsPerMinute       = 60
+	minutesPerHour         = 60
 )
 
 type routeReport struct {
@@ -26,6 +29,8 @@ type reportLine struct {
 	TMiles string `json:"TMiles"`
 	LMiles string `json:"LMiles"`
 	Dist   string `json:"Dist"`
+	THours string `json:"THours"`
+	LHours string `json:"LHours"`
 	Warn   string `json:"Warn"`
 }
 
@@ -214,6 +219,7 @@ func parseMileageResponse(reports []routeReport) []RouteMileage {
 		}
 		if isMileage {
 			results[idx].Distance, results[idx].Warnings = mileageFromLines(report.ReportLines)
+			results[idx].DriveSeconds = driveSecondsFromLines(report.ReportLines)
 		}
 		if isState {
 			results[idx].JurisdictionDistances = jurisdictionsFromLines(report.StateReportLines)
@@ -267,6 +273,48 @@ func mileageFromLines(lines []reportLine) (float64, []string) {
 		distance = lastParsedPositive(distance, line.TMiles, line.Dist, line.LMiles)
 	}
 	return distance, warnings
+}
+
+func driveSecondsFromLines(lines []reportLine) int64 {
+	var total int64
+	var legs int64
+	for _, line := range lines {
+		if seconds, ok := parseHours(line.THours); ok {
+			total = seconds
+		}
+		if seconds, ok := parseHours(line.LHours); ok {
+			legs += seconds
+		}
+	}
+	if total > 0 {
+		return total
+	}
+	return legs
+}
+
+func parseHours(value string) (int64, bool) {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return 0, false
+	}
+	hours, minutes, clock := strings.Cut(trimmed, ":")
+	if !clock {
+		parsed, err := strconv.ParseFloat(trimmed, 64)
+		if err != nil || parsed <= 0 {
+			return 0, false
+		}
+		return int64(parsed * secondsPerHour), true
+	}
+	h, err := strconv.ParseInt(strings.TrimSpace(hours), 10, 64)
+	if err != nil || h < 0 {
+		return 0, false
+	}
+	m, err := strconv.ParseInt(strings.TrimSpace(minutes), 10, 64)
+	if err != nil || m < 0 || m >= minutesPerHour {
+		return 0, false
+	}
+	seconds := h*secondsPerHour + m*secondsPerMinute
+	return seconds, seconds > 0
 }
 
 func lastParsedPositive(current float64, values ...string) float64 {

@@ -66,7 +66,7 @@ func NewNoCheckCallObserver(
 func (o *NoCheckCallObserver) CheckCallRecorded(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	moveID pulid.ID,
+	_, moveID pulid.ID,
 ) {
 	if moveID.IsNil() {
 		return

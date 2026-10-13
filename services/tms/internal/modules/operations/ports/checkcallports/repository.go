@@ -18,6 +18,7 @@ type MonitoredMove struct {
 	MoveID                pulid.ID
 	ShipmentID            pulid.ID
 	ProNumber             string
+	OwnerID               pulid.ID
 	CarrierID             pulid.ID
 	CarrierName           string
 	CustomerIntervalHours *int16
@@ -38,6 +39,11 @@ type CheckCallRepository interface {
 		tenantInfo pagination.TenantInfo,
 		moveID pulid.ID,
 	) (*checkcall.CheckCall, error)
+	LatestForMoves(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		moveIDs []pulid.ID,
+	) (map[pulid.ID]*checkcall.CheckCall, error)
 	ListMonitoredMoves(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

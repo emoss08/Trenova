@@ -244,6 +244,9 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     "billing-transfer-run-items",
   ],
   shipmentEvents: ["shipment-events", ["shipment", "events"]],
+  // A shipment's projected arrivals were refreshed: its stop ETAs and the
+  // board rows that show its ETA column.
+  shipmentEta: [["shipment", "eta"], "shipment-list", "shipmentBoard"],
   "report-run": ["report-run-list"],
   routing_guides: ["routing-guide-list"],
   driver_settlement: [

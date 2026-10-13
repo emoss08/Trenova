@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
-	"github.com/emoss08/trenova/shared/geoutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -21,22 +21,11 @@ import (
 // by hand across four screens.
 
 const (
-	// averageLinehaulMph and roadCircuityFactor are the planning assumptions
-	// dispatch already scores candidates with; the estimate here uses the
-	// same ones so a monitoring agent and the board do not disagree.
-	averageLinehaulMph = 50.0
-	roadCircuityFactor = geoutils.RoadCircuityFactor
-
 	// positionStaleAfterSeconds is how old a position may be before it is
 	// reported as stale: a truck that has not reported in an hour is not
 	// where its last ping says.
 	positionStaleAfterSeconds = int64(3600)
 	hosStaleAfterSeconds      = int64(12 * 3600)
-
-	// atRiskBufferSeconds is the margin under which an on-time estimate is
-	// called at risk: the estimate is straight-line at a flat speed, so a
-	// half hour of slack is no slack.
-	atRiskBufferSeconds = int64(30 * 60)
 
 	minutesPerHour = 60
 	msPerMinute    = 60_000
@@ -50,7 +39,10 @@ type Input struct {
 	// Positions is the last known position per tractor.
 	Positions map[pulid.ID]*telematics.VehiclePosition
 	// HOS is the hours-of-service state per worker.
-	HOS      map[pulid.ID]*telematics.WorkerHOSState
+	HOS map[pulid.ID]*telematics.WorkerHOSState
+	// StopETAs is the stored projection per stop id, the same rows the board,
+	// the shipment page and the API read.
+	StopETAs map[pulid.ID]*stopeta.StopETA
 	Now      int64
 	Timezone string
 }
@@ -119,6 +111,11 @@ type StopSnapshot struct {
 	Overdue     bool  `json:"overdue"`
 	LateMinutes int64 `json:"lateMinutes,omitempty"`
 	Next        bool  `json:"next"`
+	// The projected arrival from the stored ETA, for a stop not yet reached.
+	EstimatedArrival     int64  `json:"estimatedArrival,omitempty"`
+	EstimatedArrivalText string `json:"estimatedArrivalText,omitempty"`
+	SlackMinutes         *int64 `json:"slackMinutes,omitempty"`
+	EtaVerdict           string `json:"etaVerdict,omitempty"`
 
 	latitude  *float64
 	longitude *float64
@@ -149,44 +146,39 @@ type DriverSnapshot struct {
 	Stale                 bool   `json:"stale"`
 }
 
-// ArrivalEstimate is a planning-grade guess, and says so. It is the
-// straight-line distance from the last position to the next stop, widened
-// by the road circuity factor, at the linehaul speed dispatch plans with.
-// It ignores traffic, weather, dwell and the driver's remaining hours,
-// except to say when the hours alone make the drive impossible.
+// ArrivalEstimate is the stored projection for the next stop: routed drive
+// time where the organization has routing, the driver's hours, dwell at the
+// stops before it, and the carrier's own estimate when that is the best there
+// is. Basis says in words what it was worked out from.
 type ArrivalEstimate struct {
 	StopID               string  `json:"stopId"`
 	StopLabel            string  `json:"stopLabel"`
 	MilesRemaining       float64 `json:"milesRemaining"`
 	DriveMinutes         int64   `json:"driveMinutes"`
+	RestMinutes          int64   `json:"restMinutes,omitempty"`
 	EstimatedArrival     int64   `json:"estimatedArrival"`
 	EstimatedArrivalText string  `json:"estimatedArrivalText"`
 	WindowEnd            int64   `json:"windowEnd,omitempty"`
 	SlackMinutes         int64   `json:"slackMinutes"`
 	// Verdict is OnTime, AtRisk, Late or Unknown.
-	Verdict Verdict `json:"verdict"`
-	Basis   string  `json:"basis"`
+	Verdict        Verdict `json:"verdict"`
+	Source         string  `json:"source,omitempty"`
+	DriveMethod    string  `json:"driveMethod,omitempty"`
+	InputStale     bool    `json:"inputStale"`
+	InputAt        int64   `json:"inputAt,omitempty"`
+	ComputedAt     int64   `json:"computedAt,omitempty"`
+	ComputedAtText string  `json:"computedAtText,omitempty"`
+	Basis          string  `json:"basis"`
 }
 
-type Verdict string
+type Verdict = stopeta.Verdict
 
 const (
-	VerdictOnTime  = Verdict("OnTime")
-	VerdictAtRisk  = Verdict("AtRisk")
-	VerdictLate    = Verdict("Late")
-	VerdictUnknown = Verdict("Unknown")
+	VerdictOnTime  = stopeta.VerdictOnTime
+	VerdictAtRisk  = stopeta.VerdictAtRisk
+	VerdictLate    = stopeta.VerdictLate
+	VerdictUnknown = stopeta.VerdictUnknown
 )
-
-func (v Verdict) String() string { return string(v) }
-
-func (v Verdict) IsValid() bool {
-	switch v {
-	case VerdictOnTime, VerdictAtRisk, VerdictLate, VerdictUnknown:
-		return true
-	default:
-		return false
-	}
-}
 
 func Build(in Input) *Snapshot {
 	sp := in.Shipment
@@ -264,7 +256,7 @@ func Build(in Input) *Snapshot {
 			snapshot.Flags = append(snapshot.Flags,
 				"No telematics position is on file for the assigned tractor")
 		}
-		snapshot.Estimate = estimate(nextStop, snapshot.Position, snapshot.Driver, in)
+		snapshot.Estimate = estimate(nextStop, in)
 	}
 
 	snapshot.Summary = summarize(snapshot)
@@ -319,7 +311,9 @@ func buildMove(move *shipment.ShipmentMove, in Input) MoveSnapshot {
 		if stop == nil {
 			continue
 		}
-		ms.Stops = append(ms.Stops, buildStop(stop, move.ID, in))
+		built := buildStop(stop, move.ID, in)
+		applyStopEta(&built, in)
+		ms.Stops = append(ms.Stops, built)
 	}
 
 	return ms
@@ -429,12 +423,7 @@ func driverFor(move *MoveSnapshot, in Input) *DriverSnapshot {
 	}
 }
 
-func estimate(
-	stop *StopSnapshot,
-	position *PositionSnapshot,
-	driver *DriverSnapshot,
-	in Input,
-) *ArrivalEstimate {
+func estimate(stop *StopSnapshot, in Input) *ArrivalEstimate {
 	if stop == nil || stop.ActualArrival > 0 {
 		return nil
 	}
@@ -449,51 +438,75 @@ func estimate(
 		out.WindowEnd = stop.ScheduledStart
 	}
 
-	if position == nil || stop.latitude == nil || stop.longitude == nil {
-		out.Basis = "No estimate: the assigned tractor has no position on file, or the stop " +
-			"has no coordinates. Ask the driver or check the last stop's departure."
-
+	row := etaFor(stop, in)
+	if row == nil {
+		out.Basis = "No arrival has been projected for this stop yet. Projections are " +
+			"refreshed when the truck reports, a check call comes in or a stop changes."
 		return out
 	}
 
-	miles := geoutils.HaversineMiles(
-		position.Latitude, position.Longitude, *stop.latitude, *stop.longitude,
-	) * roadCircuityFactor
-	driveMinutes := int64(miles / averageLinehaulMph * minutesPerHour)
-	out.MilesRemaining = float64(int(miles*10)) / 10
-	out.DriveMinutes = driveMinutes
-	out.EstimatedArrival = in.Now + driveMinutes*minutesPerHour
-	out.EstimatedArrivalText = timeutils.FormatUnixDateTimeIn(out.EstimatedArrival, in.Timezone)
-	out.Basis = fmt.Sprintf(
-		"Straight-line distance from the last position at %s, widened %.0f%% for roads, "+
-			"at %.0f mph. Not routed; ignores traffic, weather and dwell.",
-		position.RecordedAtText, (roadCircuityFactor-1)*100, averageLinehaulMph,
-	)
-
-	if out.WindowEnd > 0 {
-		out.SlackMinutes = (out.WindowEnd - out.EstimatedArrival) / minutesPerHour
-		switch {
-		case out.EstimatedArrival > out.WindowEnd:
-			out.Verdict = VerdictLate
-		case out.WindowEnd-out.EstimatedArrival <= atRiskBufferSeconds:
-			out.Verdict = VerdictAtRisk
-		default:
-			out.Verdict = VerdictOnTime
-		}
+	out.MilesRemaining = row.MilesRemaining
+	out.DriveMinutes = row.DriveMinutes
+	out.RestMinutes = row.RestMinutes
+	out.Verdict = row.Verdict
+	out.Source = row.Basis.String()
+	out.DriveMethod = row.DriveMethod.String()
+	out.InputStale = row.InputStale
+	if row.InputAt != nil {
+		out.InputAt = *row.InputAt
 	}
-
-	if driver != nil && !driver.Stale && driver.DriveRemainingMinutes < driveMinutes {
-		out.Basis += fmt.Sprintf(
-			" The driver has %d minutes of drive time left against a %d minute drive, "+
-				"so the arrival needs a rest break first.",
-			driver.DriveRemainingMinutes, driveMinutes,
+	out.ComputedAt = row.ComputedAt
+	out.ComputedAtText = timeutils.FormatUnixDateTimeIn(row.ComputedAt, in.Timezone)
+	out.Basis = row.Reason
+	if row.WindowEnd != nil {
+		out.WindowEnd = *row.WindowEnd
+	}
+	if row.EstimatedArrival != nil {
+		out.EstimatedArrival = *row.EstimatedArrival
+		out.EstimatedArrivalText = timeutils.FormatUnixDateTimeIn(
+			*row.EstimatedArrival,
+			in.Timezone,
 		)
-		if out.Verdict == VerdictOnTime {
-			out.Verdict = VerdictAtRisk
-		}
+	}
+	if row.SlackMinutes != nil {
+		out.SlackMinutes = *row.SlackMinutes
 	}
 
 	return out
+}
+
+func etaFor(stop *StopSnapshot, in Input) *stopeta.StopETA {
+	if len(in.StopETAs) == 0 {
+		return nil
+	}
+	id, err := pulid.Parse(stop.ID)
+	if err != nil {
+		return nil
+	}
+
+	return in.StopETAs[id]
+}
+
+func applyStopEta(stop *StopSnapshot, in Input) {
+	if stop.ActualArrival > 0 {
+		return
+	}
+	row := etaFor(stop, in)
+	if row == nil {
+		return
+	}
+	stop.EtaVerdict = row.Verdict.String()
+	if row.EstimatedArrival != nil {
+		stop.EstimatedArrival = *row.EstimatedArrival
+		stop.EstimatedArrivalText = timeutils.FormatUnixDateTimeIn(
+			*row.EstimatedArrival,
+			in.Timezone,
+		)
+	}
+	if row.SlackMinutes != nil {
+		slack := *row.SlackMinutes
+		stop.SlackMinutes = &slack
+	}
 }
 
 func stopPlace(stop *StopSnapshot) string {

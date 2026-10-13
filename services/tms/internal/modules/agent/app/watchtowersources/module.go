@@ -23,8 +23,24 @@ var Module = fx.Module("watchtower-sources",
 		asSource(NewAccountingSyncSource),
 		asSource(NewTelematicsStopVisitSource),
 		asSource(NewNoCheckCallSource),
+		asSource(NewEtaAtRiskSource),
+		asSource(NewMissedPickupSource),
+		asSource(NewMissedDeliverySource),
+		asSource(NewPodMissingSource),
+		asSource(NewTenderExhaustedSource),
 	),
-	fx.Provide(NewNoCheckCallObserver),
+	fx.Provide(fx.Annotate(
+		NewShipmentExceptionObserver,
+		fx.ResultTags(`group:"shipment_event_observers"`),
+	)),
+	fx.Provide(fx.Annotate(
+		NewNoCheckCallObserver,
+		fx.ResultTags(`group:"check_call_observers"`),
+	)),
+	fx.Provide(fx.Annotate(
+		NewEtaAtRiskObserver,
+		fx.ResultTags(`group:"stop_eta_observers"`),
+	)),
 )
 
 func asSource(constructor any) any {

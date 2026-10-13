@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 569.
+Tools listed: 575.
 
 ## The model
 
@@ -61,7 +61,7 @@ and Confidential fields never reach a model at all.
 | --- | --- | --- | --- | --- |
 | Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 197 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 8 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 227 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 233 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 24 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 34 |
@@ -298,6 +298,7 @@ Changes records only people inside the organization see.
 | Archive worker credential (`archive_worker_credential`) | Inside the organization | Propose | — | — | Retires a credential inside Trenova, which can take the worker off dispatch; the archived row stays on file, and a new credential is recorded to replace it. |
 | Assign billing queue biller (`assign_billing_queue_biller`) | Inside the organization | Automatic | — | — | Names who reviews an item inside Trenova; it creates no money and is changed by assigning someone else. |
 | Assign billing queue billers (`assign_billing_queue_billers`) | Inside the organization | Automatic | — | — | Names who reviews several items inside Trenova, each exactly as assign_billing_queue_biller would; it creates no money and is changed by assigning someone else. |
+| Assign exception (`assign_exception`) | Inside the organization | Ask first | — | — | Changes who owns an exception inside Trenova and notifies that person; the record behind it is unchanged. |
 | Assign fuel card (`assign_fuel_card`) | Inside the organization | Ask first | — | — | Changes which tractor a card's purchases count against inside Trenova; nothing is sent, and assigning it again changes it back. |
 | Assign move (`assign_move`) | Inside the organization | Automatic | — | — | Assigns a driver and tractor to a move; the driver sees the assignment but no text the model wrote. |
 | Assign worker shift (`assign_worker_shift`) | Inside the organization | Ask first | — | — | Changes a worker's standing schedule inside Trenova; nothing is sent, and end_worker_shift_assignment or a new assignment changes it back. |
@@ -324,6 +325,7 @@ Changes records only people inside the organization see.
 | Close leave case (`close_leave_case`) | Inside the organization | Propose | — | — | Closes a leave case under the leave approval grant, so it runs as the person who approves it; the days it drew down stay drawn down. |
 | Close order (`close_order`) | Inside the organization | Propose | — | — | Settles an order for good; nothing reopens it, so only a person closes one. |
 | Close worker training (`close_worker_training`) | Inside the organization | Propose | — | — | Closes a training assignment inside Trenova; the reason stays on the record, and the course is assigned again the same way. |
+| Comment on exception (`comment_on_exception`) | Inside the organization | Ask first | — | — | Adds a line to an exception's history inside Trenova and tells its owner. |
 | Commit fuel purchase import (`commit_fuel_purchase_import`) | Inside the organization | Ask first | — | — | Adds a statement's purchases inside Trenova, which the IFTA return counts; nothing is sent, but undoing it means deleting each purchase. |
 | Confirm accounting mapping proposals (`confirm_accounting_mapping_proposals`) | Inside the organization | Ask first | — | — | Decides which accounts and records Trenova's documents post to in the books, so a person approves it; clearing or changing a mapping undoes it. |
 | Correct fuel purchase (`correct_fuel_purchase`) | Inside the organization | Ask first | A purchase read from a receipt or statement someone outside sent is proposed, since it is a tax record the IFTA return is computed from. | — | Changes a fuel purchase inside Trenova; nothing is sent, and a later correction changes it back. |
@@ -435,11 +437,13 @@ Changes records only people inside the organization see.
 | Release driver pay event (`release_driver_pay_event`) | Inside the organization | Automatic | — | — | Returns held pay to the settlement pool inside Trenova; nothing is paid until a settlement is approved, and the pay is held again the same way. |
 | Release shipment hold (`release_shipment_hold`) | Inside the organization | Automatic | — | — | Releases a hold on a shipment inside Trenova; no customer or EDI notice is sent. |
 | Remember (`remember`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. An Instruction, a Procedure or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text. A call on the caller's own records runs unasked while they are present. | Carries outside text into later runs | Saves a memory later runs read, so it keeps the taint of the run that wrote it. One kept for the caller alone is their own record; one for their team or the organization reaches colleagues' conversations. |
+| Reopen exception (`reopen_exception`) | Inside the organization | Ask first | — | — | Puts an exception back on the open queue inside Trenova; nothing outside changes. |
 | Request accounting backfill (`request_accounting_backfill`) | Inside the organization | Ask first | — | — | Sends historical documents to the organization's books, some of which may already be there by hand, and cannot be called back; a person who manages the integration approves it. |
 | Request leave certification (`request_leave_certification`) | Inside the organization | Ask first | — | — | Starts the certification clock on a leave case inside Trenova; nothing is sent to the worker, and a later request restarts it. |
 | Reset report fork (`reset_report_fork`) | Inside the organization | Ask first | — | — | Rewrites a report the person owns from the built-in catalog; nothing is sent, but the person's changes to it are lost. |
 | Resolve bank receipt work item (`resolve_bank_receipt_work_item`) | Inside the organization | Automatic | — | — | Closes a reconciliation work item without moving money; the note is read inside the organization. |
 | Resolve carrier intel event (`resolve_carrier_intel_event`) | Inside the organization | Automatic | — | — | Closes a carrier finding inside Trenova. |
+| Resolve exception (`resolve_exception`) | Inside the organization | Ask first | — | — | Closes an exception inside Trenova with an audited reason; the record behind it is unchanged. |
 | Resolve fuel purchase import rows (`resolve_fuel_purchase_import_rows`) | Inside the organization | Ask first | — | — | Re-matches held statement rows inside Trenova and, for a feed, posts the purchases that now resolve; nothing is sent. |
 | Resolve invoice dispute (`resolve_invoice_dispute`) | Inside the organization | Propose | — | — | Records the outcome of a customer's dispute and releases the invoice back to collections; the outcome is a biller's call, so the agent proposes it. |
 | Resolve shipment comment (`resolve_shipment_comment`) | Inside the organization | Automatic | — | — | Marks a shipment's own comment settled inside Trenova; reopening undoes it and nothing is sent. |
@@ -456,11 +460,13 @@ Changes records only people inside the organization see.
 | Schedule DOT test (`schedule_dot_test`) | Inside the organization | Ask first | — | — | Files a scheduled collection inside Trenova. The driver is sent nothing, no result is recorded, and cancel_dot_test withdraws it. |
 | Send billing item back to ops (`send_billing_item_back_to_ops`) | Inside the organization | Automatic | Its notes are what a biller or operations reads next, so a run that has read outside text proposes it rather than writing it. | — | Returns an item to operations with a note on its shipment inside Trenova; it creates no money and the item comes back when operations fixes it. |
 | Set accounting mapping (`set_accounting_mapping`) | Inside the organization | Ask first | — | — | Decides which account or record Trenova's invoices, payments and bills will post to, so a person approves it; clearing or changing it undoes it. |
+| Set exception due (`set_exception_due`) | Inside the organization | Ask first | — | — | Changes when an exception escalates inside Trenova; nothing outside changes. |
 | Set recurring shipment status (`set_recurring_shipment_status`) | Inside the organization | Ask first | — | — | Starts or stops a schedule inside Trenova; nothing is sent, and the status is set back the same way. |
 | Set table change alert status (`set_table_change_alert_status`) | Inside the organization | Automatic | — | — | Pauses or resumes an alert whose notices go to the person who owns it; the opposite call undoes it. |
 | Set worker availability preference (`set_worker_availability_preference`) | Inside the organization | Ask first | — | — | Records a worker's own stated preference inside Trenova; nothing is sent, and it is set again the same way. |
 | Share invoice (`share_invoice`) | Inside the organization | Propose | — | — | Notifies and emails colleagues in the name of the person who shares it, with a note they read as theirs; only that person sends it. |
 | Skip accounting sync (`skip_accounting_sync`) | Inside the organization | Ask first | — | — | Leaves a document out of the organization's books for good; nothing sends it again, so a person approves it. |
+| Snooze exception (`snooze_exception`) | Inside the organization | Ask first | — | — | Hides an exception from the open queue until a time; nothing outside Trenova changes. |
 | Split move at relay (`split_move_at_relay`) | Inside the organization | Propose | — | — | Adds a move and turns a delivery into a relay inside Trenova; the two new windows are times only a person can vouch for, so a person always approves it. |
 | Start performance review (`start_performance_review`) | Inside the organization | Ask first | — | — | Opens a draft review inside Trenova; the worker sees nothing, and delete_performance_review removes the draft. |
 | Start worker checklist (`start_worker_checklist`) | Inside the organization | Ask first | — | — | Opens a checklist on the worker inside Trenova; nothing is sent, and cancel_worker_checklist cancels it. |

@@ -55,13 +55,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -1144,6 +1144,14 @@ type AssignShiftInput struct {
 	EffectiveFrom    int     `json:"effectiveFrom"`
 	CycleOffsetWeeks *int    `json:"cycleOffsetWeeks,omitempty"`
 	Notes            *string `json:"notes,omitempty"`
+}
+
+type AssignWatchtowerItemInput struct {
+	// The new owner; omit to leave the exception with nobody.
+	AssigneeID *string `json:"assigneeId,omitempty"`
+	Note       *string `json:"note,omitempty"`
+	// The version the person was looking at; a newer one refuses the change.
+	ExpectedVersion *int `json:"expectedVersion,omitempty"`
 }
 
 type AssignWorkerPTOPolicyInput struct {
@@ -6147,6 +6155,11 @@ type RemoveSettlementAdjustmentInput struct {
 	LineID       string `json:"lineId"`
 }
 
+type ReopenWatchtowerItemInput struct {
+	Note            *string `json:"note,omitempty"`
+	ExpectedVersion *int    `json:"expectedVersion,omitempty"`
+}
+
 type ReportBand struct {
 	Width float64   `json:"width"`
 	Edges []float64 `json:"edges"`
@@ -6643,6 +6656,13 @@ type ResolveSettlementDisputeInput struct {
 	Adjustment *DisputeAdjustmentInput `json:"adjustment,omitempty"`
 }
 
+type ResolveWatchtowerItemInput struct {
+	Code watchtower.ResolutionCode `json:"code"`
+	// Required when the code is Other.
+	Note            *string `json:"note,omitempty"`
+	ExpectedVersion *int    `json:"expectedVersion,omitempty"`
+}
+
 type ResolvedCategoryRate struct {
 	Category        CostCategoryType    `json:"category"`
 	Name            string              `json:"name"`
@@ -7052,6 +7072,13 @@ type SetOrderChargeAllocationsInput struct {
 	OrderID     string                   `json:"orderId"`
 	ChargeID    string                   `json:"chargeId"`
 	Allocations []*ChargeAllocationInput `json:"allocations"`
+}
+
+type SetWatchtowerItemDueInput struct {
+	// The new due time; omit to clear it.
+	DueAt           *int    `json:"dueAt,omitempty"`
+	Note            *string `json:"note,omitempty"`
+	ExpectedVersion *int    `json:"expectedVersion,omitempty"`
 }
 
 type SettlementBatchConnection struct {
@@ -8006,12 +8033,19 @@ type ShipmentEmptyMile struct {
 }
 
 type ShipmentEta struct {
-	EstimatedArrival *int `json:"estimatedArrival,omitempty"`
-	// Minutes between the projected arrival and the end of the delivery window; negative when it will be missed.
-	SlackMinutes *int                     `json:"slackMinutes,omitempty"`
-	Verdict      shipmenttracking.Verdict `json:"verdict"`
-	// Why the load is behind, when the tracking snapshot can say.
+	// The stop the shipment's verdict comes from: the worst open stop, else the next one.
+	StopID           *string `json:"stopId,omitempty"`
+	EstimatedArrival *int    `json:"estimatedArrival,omitempty"`
+	// Minutes between the projected arrival and the end of the stop's window; negative when it will be missed.
+	SlackMinutes *int            `json:"slackMinutes,omitempty"`
+	Verdict      stopeta.Verdict `json:"verdict"`
+	Basis        *stopeta.Basis  `json:"basis,omitempty"`
+	InputStale   bool            `json:"inputStale"`
+	ComputedAt   *int            `json:"computedAt,omitempty"`
+	// Why the load is behind: an open service failure's reason, else what the projection rests on.
 	Reason *string `json:"reason,omitempty"`
+	// Every open stop's projected arrival, in route order.
+	Stops []*stopeta.StopETA `json:"stops"`
 }
 
 type ShipmentEventShipmentReference struct {
@@ -8970,6 +9004,12 @@ type SnoozeInboundMessagesInput struct {
 	Event *inboundmessage.SnoozeEvent `json:"event,omitempty"`
 	// The document type DocumentAttached waits for.
 	DocumentTypeID *string `json:"documentTypeId,omitempty"`
+}
+
+type SnoozeWatchtowerItemInput struct {
+	Until           int     `json:"until"`
+	Note            *string `json:"note,omitempty"`
+	ExpectedVersion *int    `json:"expectedVersion,omitempty"`
 }
 
 type SortFieldInput struct {
@@ -10076,12 +10116,20 @@ type WaiveWorkerTrainingInput struct {
 
 // The feed in numbers, for a badge and a set of filter chips.
 type WatchtowerCounts struct {
-	Unresolved     int                      `json:"unresolved"`
-	Critical       int                      `json:"critical"`
-	Unseen         int                      `json:"unseen"`
-	UnseenCritical int                      `json:"unseenCritical"`
-	ByKind         []*WatchtowerKindSummary `json:"byKind"`
-	SeenAt         int                      `json:"seenAt"`
+	Unresolved     int `json:"unresolved"`
+	Critical       int `json:"critical"`
+	Unseen         int `json:"unseen"`
+	UnseenCritical int `json:"unseenCritical"`
+	// Open, not snoozed and past their due time.
+	Overdue int `json:"overdue"`
+	// Open with nobody owning them.
+	Unassigned int `json:"unassigned"`
+	// Open and owned by this reader.
+	Mine int `json:"mine"`
+	// Owned by this reader and overdue.
+	MineOverdue int                      `json:"mineOverdue"`
+	ByKind      []*WatchtowerKindSummary `json:"byKind"`
+	SeenAt      int                      `json:"seenAt"`
 }
 
 // What a hand-off did. With a run, an agent is already working on the item;
@@ -10119,6 +10167,20 @@ type WatchtowerItemsInput struct {
 	UnresolvedOnly *bool `json:"unresolvedOnly,omitempty"`
 	// Only what occurred at or after this instant.
 	Since *int `json:"since,omitempty"`
+	// Only these statuses; empty is all of them.
+	Statuses []watchtower.Status `json:"statuses,omitempty"`
+	// Only what this reader owns.
+	AssignedToMe *bool `json:"assignedToMe,omitempty"`
+	// Only what these people own.
+	AssigneeIds []string `json:"assigneeIds,omitempty"`
+	// Only what nobody owns; with assigneeIds, what nobody or one of them owns.
+	Unassigned *bool `json:"unassigned,omitempty"`
+	// Only what is open, not snoozed and past its due time.
+	OverdueOnly *bool `json:"overdueOnly,omitempty"`
+	// Only items about this record.
+	SubjectID *string `json:"subjectId,omitempty"`
+	// Soonest due first, items without a due time last, instead of newest first.
+	OrderByDue *bool `json:"orderByDue,omitempty"`
 }
 
 type WatchtowerKindSummary struct {
