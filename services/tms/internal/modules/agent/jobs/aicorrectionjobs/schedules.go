@@ -1,19 +1,24 @@
 package aicorrectionjobs
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
 
-type ScheduleProvider struct{}
+type ScheduleProvider struct {
+	// extraction is ai.documentExtraction: the drift report compares extraction
+	// accuracy, which only exists when a model reads documents.
+	extraction bool
+}
 
-func NewScheduleProvider() *ScheduleProvider {
-	return &ScheduleProvider{}
+func NewScheduleProvider(cfg *config.Config) *ScheduleProvider {
+	return &ScheduleProvider{extraction: cfg.AI.DocumentExtractionEnabled()}
 }
 
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
-	return []*schedule.Schedule{
+	schedules := []*schedule.Schedule{
 		{
 			ID:            "ai-correction-retention",
 			Description:   "Purge AI corrections older than each organization's retention period",
@@ -26,7 +31,13 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 				"purpose": "ai-correction-retention",
 			},
 		},
-		{
+	}
+	if !p.extraction {
+		return schedules
+	}
+
+	return append(schedules,
+		&schedule.Schedule{
 			ID:            "extraction-accuracy-drift",
 			Description:   "Tell each organization when an extraction provider read last week's documents worse than its own recent weeks",
 			Spec:          schedule.Cron("20 6 * * 1"),
@@ -38,5 +49,5 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 				"purpose": "extraction-accuracy-drift",
 			},
 		},
-	}
+	)
 }

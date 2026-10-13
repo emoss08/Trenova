@@ -35,7 +35,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            ExpireStaleProposalsScheduleID,
 			Description:   "Mark pending agent proposals whose decision window has closed as expired",
-			Spec:          schedule.Every(15 * time.Minute),
+			Spec:          schedule.Every(time.Hour),
 			Workflow:      ExpireStaleProposalsWorkflow,
 			TaskQueue:     temporaltype.TaskQueueAgentBackground.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
