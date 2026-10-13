@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -42,6 +43,7 @@ const (
 	HealthCheckInterval      = int64(15 * 60)
 	accessTokenField         = "access_token"
 	refreshTokenField        = "refresh_token"
+	clientKeyField           = "client_key"
 )
 
 var realmIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,100}$`)
@@ -65,6 +67,8 @@ type Params struct {
 	Poller        accountingsyncports.AccountingChangePoller                  `optional:"true"`
 	Plans         platformplanports.PlanService                               `optional:"true"`
 	Subscriptions accountingsyncports.AccountingWebhookSubscriptionRepository `optional:"true"`
+	Certificates  accountingsyncports.AccountingPendingCertificateRepository  `optional:"true"`
+	Organizations tenantports.OrganizationRepository                          `optional:"true"`
 }
 
 type Service struct {
@@ -84,6 +88,8 @@ type Service struct {
 	poller        accountingsyncports.AccountingChangePoller
 	plans         platformplanports.PlanService
 	subscriptions accountingsyncports.AccountingWebhookSubscriptionRepository
+	certificates  accountingsyncports.AccountingPendingCertificateRepository
+	organizations tenantports.OrganizationRepository
 }
 
 var _ accountingsyncports.AccountingConnectionService = (*Service)(nil)
@@ -107,6 +113,8 @@ func New(p Params) *Service {
 		poller:        p.Poller,
 		plans:         p.Plans,
 		subscriptions: p.Subscriptions,
+		certificates:  p.Certificates,
+		organizations: p.Organizations,
 	}
 }
 
@@ -410,12 +418,10 @@ func (s *Service) freshAccessToken(
 		}
 		outcome.connector = connector
 
-		if conn.HasTokens() && conn.AccessTokenExpiresWithin(now, accessTokenRefreshWindow) {
-			if refreshErr := s.refresh(ctx, txCtx, connector, conn, now); refreshErr != nil {
-				outcome.failure = refreshErr
-				outcome.category = connector.ClassifyError(refreshErr)
-				return s.recordFailure(txCtx, conn, outcome.category, refreshErr, now)
-			}
+		if renewErr := s.renewAccessToken(ctx, txCtx, connector, conn, now); renewErr != nil {
+			outcome.failure = renewErr
+			outcome.category = connector.ClassifyError(renewErr)
+			return s.recordFailure(txCtx, conn, outcome.category, renewErr, now)
 		}
 
 		if !conn.HasTokens() {
@@ -436,6 +442,26 @@ func (s *Service) freshAccessToken(
 		return nil
 	})
 	return outcome, err
+}
+
+func (s *Service) renewAccessToken(
+	ctx, txCtx context.Context,
+	connector accountingsyncports.AccountingConnector,
+	conn *accountingsync.AccountingConnection,
+	now int64,
+) error {
+	if conn.UsesCertificate() {
+		if !conn.HasCertificate() ||
+			(conn.AccessTokenCiphertext != "" &&
+				!conn.AccessTokenExpiresWithin(now, accessTokenRefreshWindow)) {
+			return nil
+		}
+		return s.tokenFromStoredCertificate(ctx, txCtx, connector, conn, now)
+	}
+	if conn.HasTokens() && conn.AccessTokenExpiresWithin(now, accessTokenRefreshWindow) {
+		return s.refresh(ctx, txCtx, connector, conn, now)
+	}
+	return nil
 }
 
 func (s *Service) refresh(
@@ -955,6 +981,7 @@ func tokensOf(
 		AccessTokenExpiresAt:   conn.AccessTokenExpiresAt,
 		RefreshTokenCiphertext: conn.RefreshTokenCiphertext,
 		RefreshTokenExpiresAt:  conn.RefreshTokenExpiresAt,
+		ClientKeyCiphertext:    conn.ClientKeyCiphertext,
 		RefreshedAt:            conn.LastRefreshedAt,
 		At:                     now,
 	}

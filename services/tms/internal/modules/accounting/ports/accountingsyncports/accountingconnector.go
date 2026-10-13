@@ -88,6 +88,27 @@ type AccountingConnector interface {
 	ClassifyError(err error) accountingsync.ErrorCategory
 }
 
+type AccountingCertificate struct {
+	PrivateKeyPEM  []byte
+	CertificatePEM []byte
+	ExpiresAt      time.Time
+}
+
+type AccountingCertificateGrant struct {
+	RealmID       string
+	CertificateID string
+	PrivateKeyPEM []byte
+}
+
+type AccountingClientCredentialsConnector interface {
+	NormalizeAccountID(raw string) (string, error)
+	PrepareCertificate(subject string) (*AccountingCertificate, error)
+	TokenFromCertificate(
+		ctx context.Context,
+		grant *AccountingCertificateGrant,
+	) (*AccountingTokenGrant, error)
+}
+
 type AccountingProvider interface {
 	IntegrationType() integration.Type
 	InstanceApp() (*AccountingApp, bool)

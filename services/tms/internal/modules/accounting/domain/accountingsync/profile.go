@@ -217,6 +217,16 @@ func AccountingSystems() []integration.Type {
 	return systems
 }
 
+func ClientCredentialsSystems() []integration.Type {
+	systems := make([]integration.Type, 0, len(providerProfiles))
+	for idx := range providerProfiles {
+		if providerProfiles[idx].ClientCredentials {
+			systems = append(systems, providerProfiles[idx].Type)
+		}
+	}
+	return systems
+}
+
 func ProfileByWebhookSlug(slug string) (ProviderProfile, bool) {
 	if slug == "" {
 		return ProviderProfile{}, false

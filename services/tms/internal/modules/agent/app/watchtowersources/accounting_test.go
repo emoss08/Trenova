@@ -2,6 +2,7 @@ package watchtowersources
 
 import (
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -75,4 +76,50 @@ func TestDescribeAccountingReconnect(t *testing.T) {
 	conn.Status = accountingsync.ConnectionStatusRevoked
 	_, open = DescribeAccountingReconnect(conn, conn.RefreshTokenAbsoluteExpiresAt-7*24*60*60)
 	assert.False(t, open, "a revoked connection is already a health item")
+}
+
+func TestDescribeAccountingReconnectNamesTheExpiryDate(t *testing.T) {
+	t.Parallel()
+
+	conn := accountingConnection(accountingsync.ConnectionStatusConnected)
+	conn.RefreshTokenAbsoluteExpiresAt = time.Date(2026, time.October, 20, 15, 0, 0, 0, time.UTC).Unix()
+
+	item, open := DescribeAccountingReconnect(conn, conn.RefreshTokenAbsoluteExpiresAt-24*60*60)
+	require.True(t, open)
+	assert.Contains(t, item.Title, "Reconnect")
+	assert.Contains(t, item.Summary, "October 20, 2026")
+	assert.NotContains(t, item.Summary, "five years")
+}
+
+func TestDescribeAccountingReconnectAsksForANewCertificate(t *testing.T) {
+	t.Parallel()
+
+	conn := accountingConnection(accountingsync.ConnectionStatusConnected)
+	conn.IntegrationType = integration.TypeNetSuite
+	conn.UseCertificate(accountingsync.ClientCertificate{
+		KeyCiphertext: "sealed",
+		CertificateID: "cert-1",
+		ExpiresAt:     time.Date(2028, time.March, 1, 0, 0, 0, 0, time.UTC).Unix(),
+	})
+
+	_, open := DescribeAccountingReconnect(conn, conn.RefreshTokenAbsoluteExpiresAt-20*24*60*60)
+	assert.False(t, open, "a certificate warns 14 days ahead")
+
+	item, open := DescribeAccountingReconnect(conn, conn.RefreshTokenAbsoluteExpiresAt-10*24*60*60)
+	require.True(t, open)
+	assert.Equal(t, "Renew the NetSuite certificate before it expires", item.Title)
+	assert.Contains(t, item.Summary, "March 1, 2028")
+	assert.Equal(t, conn.RefreshTokenAbsoluteExpiresAt-14*24*60*60, item.OccurredAt)
+}
+
+func TestDescribeRevokedCertificateConnectionAsksForTheMapping(t *testing.T) {
+	t.Parallel()
+
+	conn := accountingConnection(accountingsync.ConnectionStatusRevoked)
+	conn.IntegrationType = integration.TypeNetSuite
+	conn.AuthMethod = accountingsync.AuthMethodClientCredentials
+
+	item, open := DescribeAccountingConnectionHealth(conn)
+	require.True(t, open)
+	assert.Contains(t, item.Summary, "certificate mapping")
 }

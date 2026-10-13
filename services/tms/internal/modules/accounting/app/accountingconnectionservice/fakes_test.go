@@ -20,7 +20,7 @@ import (
 )
 
 type storedTokens struct {
-	access, refresh               string
+	access, refresh, clientKey    string
 	accessExpires, refreshExpires int64
 }
 
@@ -45,6 +45,7 @@ func (f *fakeConnections) withoutTokens(conn *accountingsync.AccountingConnectio
 	out := *conn
 	out.AccessTokenCiphertext = ""
 	out.RefreshTokenCiphertext = ""
+	out.ClientKeyCiphertext = ""
 	return &out
 }
 
@@ -53,6 +54,7 @@ func (f *fakeConnections) withTokens(conn *accountingsync.AccountingConnection) 
 	tokens := f.tokens[conn.ID]
 	out.AccessTokenCiphertext = tokens.access
 	out.RefreshTokenCiphertext = tokens.refresh
+	out.ClientKeyCiphertext = tokens.clientKey
 	out.AccessTokenExpiresAt = tokens.accessExpires
 	out.RefreshTokenExpiresAt = tokens.refreshExpires
 	return &out
@@ -179,6 +181,7 @@ func (f *fakeConnections) Create(
 	f.tokens[entity.ID] = storedTokens{
 		access:         entity.AccessTokenCiphertext,
 		refresh:        entity.RefreshTokenCiphertext,
+		clientKey:      entity.ClientKeyCiphertext,
 		accessExpires:  entity.AccessTokenExpiresAt,
 		refreshExpires: entity.RefreshTokenExpiresAt,
 	}
@@ -216,6 +219,7 @@ func (f *fakeConnections) StoreTokens(
 	f.tokens[req.ID] = storedTokens{
 		access:         req.AccessTokenCiphertext,
 		refresh:        req.RefreshTokenCiphertext,
+		clientKey:      req.ClientKeyCiphertext,
 		accessExpires:  req.AccessTokenExpiresAt,
 		refreshExpires: req.RefreshTokenExpiresAt,
 	}
@@ -421,6 +425,7 @@ var errProvider = errors.New("provider failure")
 type fakeConnector struct {
 	mu             sync.Mutex
 	typ            integration.Type
+	cc             *fakeClientCredentials
 	available      bool
 	exchangeGrant  *accountingsyncports.AccountingTokenGrant
 	exchangeErr    error

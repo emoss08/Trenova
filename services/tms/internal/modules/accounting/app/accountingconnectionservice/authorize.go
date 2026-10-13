@@ -35,6 +35,7 @@ type pendingGrant struct {
 	RefreshToken    string        `json:"refreshToken"`
 	AccessTokenTTL  time.Duration `json:"accessTokenTtl"`
 	RefreshTokenTTL time.Duration `json:"refreshTokenTtl"`
+	CertificateID   string        `json:"certificateId,omitempty"`
 }
 
 type authorizedApp struct {
@@ -44,10 +45,11 @@ type authorizedApp struct {
 }
 
 type companyConnect struct {
-	owner   *stateOwner
-	app     *authorizedApp
-	grant   *accountingsyncports.AccountingTokenGrant
-	company accountingsyncports.AccountingCompany
+	owner       *stateOwner
+	app         *authorizedApp
+	grant       *accountingsyncports.AccountingTokenGrant
+	company     accountingsyncports.AccountingCompany
+	certificate *heldCertificate
 }
 
 func validateCompletion(
@@ -182,8 +184,9 @@ type companyChoiceOffer struct {
 	state      *accountingsyncports.AccountingOAuthState
 	app        *authorizedApp
 	grant      *accountingsyncports.AccountingTokenGrant
-	companies  []accountingsyncports.AccountingCompany
-	grantRealm string
+	companies     []accountingsyncports.AccountingCompany
+	grantRealm    string
+	certificateID string
 }
 
 func grantRealmOf(callbackRealmID string, companies []accountingsyncports.AccountingCompany) string {
@@ -202,7 +205,13 @@ func (s *Service) offerCompanyChoice(
 		s.revokeQuietly(ctx, offer.app.connector, offer.grant.RefreshToken, offer.grantRealm)
 		return nil, err
 	}
-	sealed, err := s.sealPendingGrant(offer.owner.tenantInfo, tokenHash, offer.grant)
+	sealed, err := s.sealPendingGrant(offer.owner.tenantInfo, tokenHash, &pendingGrant{
+		AccessToken:     offer.grant.AccessToken,
+		RefreshToken:    offer.grant.RefreshToken,
+		AccessTokenTTL:  offer.grant.AccessTokenTTL,
+		RefreshTokenTTL: offer.grant.RefreshTokenTTL,
+		CertificateID:   offer.certificateID,
+	})
 	if err != nil {
 		s.revokeQuietly(ctx, offer.app.connector, offer.grant.RefreshToken, offer.grantRealm)
 		return nil, err
@@ -289,10 +298,25 @@ func (s *Service) ChooseCompany(
 	if err != nil {
 		return nil, err
 	}
-	grant, err := s.openPendingGrant(req.TenantInfo, tokenHash, state.SealedGrant)
+	held, err := s.openPendingGrant(req.TenantInfo, tokenHash, state.SealedGrant)
 	if err != nil {
 		return nil, errortypes.NewBusinessError("The held authorization could not be read. Try connecting again.").
 			WithInternal(err)
+	}
+	grant := held.tokenGrant()
+	var certificate *heldCertificate
+	if held.CertificateID != "" {
+		if s.certificates == nil {
+			return nil, errCertificatesUnsupported(app.provider)
+		}
+		if _, certificate, err = s.heldPendingCertificate(
+			ctx,
+			req.TenantInfo,
+			req.IntegrationType,
+			held.CertificateID,
+		); err != nil {
+			return nil, err
+		}
 	}
 
 	chosen, others := splitChoice(state.Companies, req.CompanyID)
@@ -309,10 +333,11 @@ func (s *Service) ChooseCompany(
 
 	s.releaseQuietly(ctx, app.connector, grant, others)
 	return s.connectCompany(ctx, &companyConnect{
-		owner:   owner,
-		app:     app,
-		grant:   grant,
-		company: *chosen,
+		owner:       owner,
+		app:         app,
+		grant:       grant,
+		company:     *chosen,
+		certificate: certificate,
 	})
 }
 
@@ -396,13 +421,14 @@ func (s *Service) connectCompany(
 
 	now := timeutils.NowUnix()
 	conn, previous, err := s.saveConnection(ctx, &connectionSave{
-		owner:    in.owner,
-		realmID:  in.company.ID,
-		grant:    in.grant,
-		facts:    facts,
-		app:      in.app.identity,
-		provider: provider,
-		now:      now,
+		owner:       in.owner,
+		realmID:     in.company.ID,
+		grant:       in.grant,
+		facts:       facts,
+		app:         in.app.identity,
+		provider:    provider,
+		now:         now,
+		certificate: in.certificate,
 	})
 	if err != nil {
 		if dberror.IsUniqueConstraintViolation(err) {
@@ -470,17 +496,21 @@ func (s *Service) pendingGrantAAD(
 	}
 }
 
+func (g *pendingGrant) tokenGrant() *accountingsyncports.AccountingTokenGrant {
+	return &accountingsyncports.AccountingTokenGrant{
+		AccessToken:     g.AccessToken,
+		RefreshToken:    g.RefreshToken,
+		AccessTokenTTL:  g.AccessTokenTTL,
+		RefreshTokenTTL: g.RefreshTokenTTL,
+	}
+}
+
 func (s *Service) sealPendingGrant(
 	tenantInfo pagination.TenantInfo,
 	stateHash string,
-	grant *accountingsyncports.AccountingTokenGrant,
+	grant *pendingGrant,
 ) (string, error) {
-	raw, err := sonic.Marshal(pendingGrant{
-		AccessToken:     grant.AccessToken,
-		RefreshToken:    grant.RefreshToken,
-		AccessTokenTTL:  grant.AccessTokenTTL,
-		RefreshTokenTTL: grant.RefreshTokenTTL,
-	})
+	raw, err := sonic.Marshal(grant)
 	if err != nil {
 		return "", err
 	}
@@ -491,21 +521,16 @@ func (s *Service) openPendingGrant(
 	tenantInfo pagination.TenantInfo,
 	stateHash string,
 	sealed string,
-) (*accountingsyncports.AccountingTokenGrant, error) {
+) (*pendingGrant, error) {
 	raw, err := s.encryption.DecryptStringWithAAD(sealed, s.pendingGrantAAD(tenantInfo, stateHash))
 	if err != nil {
 		return nil, err
 	}
-	var held pendingGrant
-	if err = sonic.UnmarshalString(raw, &held); err != nil {
+	held := new(pendingGrant)
+	if err = sonic.UnmarshalString(raw, held); err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingTokenGrant{
-		AccessToken:     held.AccessToken,
-		RefreshToken:    held.RefreshToken,
-		AccessTokenTTL:  held.AccessTokenTTL,
-		RefreshTokenTTL: held.RefreshTokenTTL,
-	}, nil
+	return held, nil
 }
 
 type connectionSave struct {
@@ -513,9 +538,10 @@ type connectionSave struct {
 	realmID  string
 	grant    *accountingsyncports.AccountingTokenGrant
 	facts    *accountingsync.CompanyFacts
-	app      accountingsync.AppIdentity
-	provider string
-	now      int64
+	app         accountingsync.AppIdentity
+	provider    string
+	now         int64
+	certificate *heldCertificate
 }
 
 func (s *Service) saveConnection(
@@ -546,11 +572,16 @@ func (s *Service) saveConnection(
 				ExternalRealmID: in.realmID,
 			}
 			conn.BindApp(in.app)
+			if methodErr := s.applyConnectMethod(conn, in.certificate); methodErr != nil {
+				return methodErr
+			}
 			if sealErr := s.connect(conn, owner.userID, grant, facts, now); sealErr != nil {
 				return sealErr
 			}
-			_, createErr := s.connections.Create(txCtx, conn)
-			return createErr
+			if _, createErr := s.connections.Create(txCtx, conn); createErr != nil {
+				return createErr
+			}
+			return s.consumePendingCertificate(txCtx, conn, in.certificate)
 		}
 
 		if existing.IsActive() && existing.ExternalRealmID != in.realmID {
@@ -564,6 +595,9 @@ func (s *Service) saveConnection(
 		previous = jsonutils.MustToJSON(existing)
 		existing.ExternalRealmID = in.realmID
 		existing.BindApp(in.app)
+		if methodErr := s.applyConnectMethod(existing, in.certificate); methodErr != nil {
+			return methodErr
+		}
 		if sealErr := s.connect(existing, owner.userID, grant, facts, now); sealErr != nil {
 			return sealErr
 		}
@@ -574,7 +608,7 @@ func (s *Service) saveConnection(
 			return storeErr
 		}
 		conn = existing
-		return nil
+		return s.consumePendingCertificate(txCtx, existing, in.certificate)
 	})
 	return conn, previous, err
 }

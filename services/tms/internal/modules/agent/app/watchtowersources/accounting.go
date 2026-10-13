@@ -14,7 +14,10 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const accountingReconnectSuffix = ":reconnect"
+const (
+	accountingReconnectSuffix = ":reconnect"
+	reconnectDateLayout       = "January 2, 2006"
+)
 
 type AccountingSyncSource struct {
 	repo    accountingsyncports.AccountingConnectionRepository
@@ -124,6 +127,11 @@ func DescribeAccountingConnectionHealth(
 		title = provider + " access was revoked"
 		summary = "The authorization was revoked or expired. Reconnect " + provider +
 			" to resume sync; nothing is lost while it is disconnected."
+		if conn.UsesCertificate() {
+			summary = provider + " refused Trenova's certificate. If the account was refreshed " +
+				"from production, set up the certificate mapping again, then renew the " +
+				"certificate here; nothing is lost while it is disconnected."
+		}
 	default:
 		return watchtowerports.WatchtowerItemInput{}, false
 	}
@@ -157,14 +165,23 @@ func DescribeAccountingReconnect(
 	}
 
 	provider := accountingsync.ProviderName(conn.IntegrationType)
+	expires := time.Unix(conn.RefreshTokenAbsoluteExpiresAt, 0).UTC().Format(reconnectDateLayout)
+	title := "Reconnect " + provider + " before its authorization expires"
+	summary := "The " + provider + " authorization expires on " + expires +
+		" and cannot be extended. Reconnect before it lapses so sync does not stop."
+	if conn.UsesCertificate() {
+		title = "Renew the " + provider + " certificate before it expires"
+		summary = "The certificate Trenova connects to " + provider + " with expires on " +
+			expires + ". Generate a new certificate, upload it to the same mapping in " +
+			provider + ", and renew it here so sync does not stop."
+	}
 	return watchtowerports.WatchtowerItemInput{
-		TenantInfo: pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID},
-		SourceKind: watchtower.SourceAccountingSync,
-		SourceID:   AccountingReconnectSourceID(conn),
-		Severity:   watchtower.SeverityWarning,
-		Title:      "Reconnect " + provider + " before its authorization expires",
-		Summary: provider + " authorizations last five years from the day they were granted. " +
-			"Reconnect before it lapses so sync does not stop.",
+		TenantInfo:  pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID},
+		SourceKind:  watchtower.SourceAccountingSync,
+		SourceID:    AccountingReconnectSourceID(conn),
+		Severity:    watchtower.SeverityWarning,
+		Title:       title,
+		Summary:     summary,
 		SubjectType: agent.SubjectAccountingConnection,
 		SubjectID:   conn.ID,
 		EventKind:   agent.EventAccountingConnectionDegraded,

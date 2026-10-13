@@ -46,6 +46,13 @@ func (e *AccountingMapping) GetStaticFieldMap() map[string]string {
 	return accountingsynccol.AccountingMappingFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingPendingCertificate].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [accountingsynccol.AccountingPendingCertificateFieldMap] instead of parsing struct tags via reflection.
+func (e *AccountingPendingCertificate) GetStaticFieldMap() map[string]string {
+	return accountingsynccol.AccountingPendingCertificateFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingReferenceObject].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [accountingsynccol.AccountingReferenceObjectFieldMap] instead of parsing struct tags via reflection.

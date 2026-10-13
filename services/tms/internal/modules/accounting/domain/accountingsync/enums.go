@@ -96,6 +96,28 @@ func (s AppSource) IsValid() bool {
 	}
 }
 
+type AuthMethod string
+
+const (
+	AuthMethodAuthorization     = AuthMethod("Authorization")
+	AuthMethodClientCredentials = AuthMethod("ClientCredentials")
+)
+
+func (m AuthMethod) String() string { return string(m) }
+
+func AllAuthMethods() []AuthMethod {
+	return []AuthMethod{AuthMethodAuthorization, AuthMethodClientCredentials}
+}
+
+func (m AuthMethod) IsValid() bool {
+	switch m {
+	case AuthMethodAuthorization, AuthMethodClientCredentials:
+		return true
+	default:
+		return false
+	}
+}
+
 type AppEnvironment string
 
 const (

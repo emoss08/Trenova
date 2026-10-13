@@ -30,6 +30,10 @@ type AccountingConnection struct {
 	AppSource                     AppSource            `json:"appSource"                     bun:"app_source,type:VARCHAR(20),nullzero,notnull,default:'Instance'"`
 	AppEnvironment                AppEnvironment       `json:"appEnvironment"                bun:"app_environment,type:VARCHAR(20),nullzero"`
 	AppFingerprint                string               `json:"-"                             bun:"app_fingerprint,type:VARCHAR(64),nullzero"`
+	AuthMethod                    AuthMethod           `json:"authMethod"                    bun:"auth_method,type:VARCHAR(30),nullzero,notnull,default:'Authorization'"`
+	ClientKeyCiphertext           string               `json:"-"                             bun:"client_key_ciphertext,type:TEXT,nullzero"`
+	ClientCertificateID           string               `json:"clientCertificateId"           bun:"client_certificate_id,type:VARCHAR(100),nullzero"`
+	ClientCertificateExpiresAt    *int64               `json:"clientCertificateExpiresAt"    bun:"client_certificate_expires_at,type:BIGINT,nullzero"`
 	ExternalCompanyName           string               `json:"externalCompanyName"           bun:"external_company_name,type:VARCHAR(255),nullzero"`
 	ExternalShortCode             string               `json:"externalShortCode"             bun:"external_short_code,type:VARCHAR(20),nullzero"`
 	ExternalLegalName             string               `json:"externalLegalName"             bun:"external_legal_name,type:VARCHAR(255),nullzero"`
@@ -88,6 +92,12 @@ type AccountingConnection struct {
 	PausedBy       *tenant.User         `json:"pausedBy,omitempty"       bun:"rel:belongs-to,join:paused_by_id=id"`
 }
 
+type ClientCertificate struct {
+	KeyCiphertext string
+	CertificateID string
+	ExpiresAt     int64
+}
+
 type TokenGrant struct {
 	AccessTokenCiphertext  string
 	AccessTokenExpiresAt   int64
@@ -134,6 +144,16 @@ func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&c.AppEnvironment,
 			domainvalidation.ValidEnum[AppEnvironment]("App environment is not recognized"),
+		),
+		validation.Field(&c.AuthMethod,
+			domainvalidation.ValidEnum[AuthMethod]("Connection method is not recognized"),
+		),
+		validation.Field(&c.ClientCertificateID,
+			validation.When(
+				c.UsesCertificate(),
+				validation.Required.Error("Certificate id is required"),
+			),
+			validation.Length(0, 100).Error("Certificate id must be at most 100 characters"),
 		),
 		validation.Field(&c.ExternalHomeCurrency, validation.Length(0, 3)),
 		validation.Field(&c.LastErrorCategory,
@@ -205,8 +225,37 @@ func (c *AccountingConnection) IsActive() bool {
 	return c.Status != ConnectionStatusDisconnected && c.Status != ConnectionStatusRevoked
 }
 
+func (c *AccountingConnection) UsesCertificate() bool {
+	return c.AuthMethod == AuthMethodClientCredentials
+}
+
 func (c *AccountingConnection) HasTokens() bool {
+	if c.UsesCertificate() {
+		return c.AccessTokenCiphertext != "" && c.HasCertificate()
+	}
 	return c.AccessTokenCiphertext != "" && c.RefreshTokenCiphertext != ""
+}
+
+func (c *AccountingConnection) HasCertificate() bool {
+	return c.ClientKeyCiphertext != "" && c.ClientCertificateID != ""
+}
+
+func (c *AccountingConnection) UseCertificate(cert ClientCertificate) {
+	c.AuthMethod = AuthMethodClientCredentials
+	c.ClientKeyCiphertext = cert.KeyCiphertext
+	c.ClientCertificateID = cert.CertificateID
+	expiresAt := cert.ExpiresAt
+	c.ClientCertificateExpiresAt = &expiresAt
+	c.RefreshTokenAbsoluteExpiresAt = expiresAt
+	c.RefreshTokenCiphertext = ""
+	c.RefreshTokenExpiresAt = 0
+}
+
+func (c *AccountingConnection) UseAuthorization() {
+	c.AuthMethod = AuthMethodAuthorization
+	c.ClientKeyCiphertext = ""
+	c.ClientCertificateID = ""
+	c.ClientCertificateExpiresAt = nil
 }
 
 func (c *AccountingConnection) AccessTokenExpiresWithin(now, window int64) bool {
@@ -215,6 +264,9 @@ func (c *AccountingConnection) AccessTokenExpiresWithin(now, window int64) bool 
 
 func (c *AccountingConnection) ReconnectWarningSeconds() int64 {
 	warning := defaultReconnectWarning
+	if c.UsesCertificate() {
+		return int64(warning / time.Second)
+	}
 	if profile, ok := Profile(c.IntegrationType); ok && profile.ReconnectWarning > 0 {
 		warning = profile.ReconnectWarning
 	}
@@ -256,8 +308,15 @@ func (c *AccountingConnection) Connect(userID pulid.ID, grant TokenGrant, now in
 	c.DisconnectedAt = nil
 	c.RefreshTokenAbsoluteExpiresAt = 0
 	profile := MustProfile(c.IntegrationType)
-	if lifetime := int64(profile.RefreshTokenAbsoluteLifetime / time.Second); lifetime > 0 {
-		c.RefreshTokenAbsoluteExpiresAt = now + lifetime
+	switch {
+	case c.UsesCertificate():
+		if c.ClientCertificateExpiresAt != nil {
+			c.RefreshTokenAbsoluteExpiresAt = *c.ClientCertificateExpiresAt
+		}
+	case profile.RefreshTokenAbsoluteLifetime > 0:
+		c.RefreshTokenAbsoluteExpiresAt = now + int64(
+			profile.RefreshTokenAbsoluteLifetime/time.Second,
+		)
 	}
 	if c.SetupStep == "" {
 		c.SetupStep = SetupStepMode
@@ -311,6 +370,7 @@ func (c *AccountingConnection) RecordFailure(category ErrorCategory, message str
 		c.Status = ConnectionStatusRevoked
 		c.AccessTokenCiphertext = ""
 		c.RefreshTokenCiphertext = ""
+		c.ClientKeyCiphertext = ""
 		c.AccessTokenExpiresAt = 0
 		c.RefreshTokenExpiresAt = 0
 		return
@@ -330,6 +390,7 @@ func (c *AccountingConnection) Disconnect(userID pulid.ID, now int64) {
 	c.DisconnectedAt = &now
 	c.AccessTokenCiphertext = ""
 	c.RefreshTokenCiphertext = ""
+	c.ClientKeyCiphertext = ""
 	c.AccessTokenExpiresAt = 0
 	c.RefreshTokenExpiresAt = 0
 	c.ConsecutiveFailures = 0

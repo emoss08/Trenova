@@ -95,6 +95,34 @@ type AccountingAuthorizationCompletion struct {
 	ChoiceExpiresAt int64
 }
 
+type PrepareAccountingCertificateRequest struct {
+	TenantInfo      pagination.TenantInfo
+	UserID          pulid.ID
+	IntegrationType integration.Type
+}
+
+type AccountingPreparedCertificate struct {
+	IntegrationType integration.Type
+	CertificatePEM  string
+	ExpiresAt       int64
+	PreparedAt      int64
+}
+
+type ConnectAccountingWithCertificateRequest struct {
+	TenantInfo      pagination.TenantInfo
+	UserID          pulid.ID
+	IntegrationType integration.Type
+	AccountID       string
+	CertificateID   string
+}
+
+type RenewAccountingCertificateRequest struct {
+	TenantInfo    pagination.TenantInfo
+	UserID        pulid.ID
+	ConnectionID  pulid.ID
+	CertificateID string
+}
+
 type ChooseAccountingCompanyRequest struct {
 	TenantInfo      pagination.TenantInfo
 	UserID          pulid.ID
@@ -139,6 +167,18 @@ type AccountingConnectionService interface {
 	ChooseCompany(
 		ctx context.Context,
 		req *ChooseAccountingCompanyRequest,
+	) (*accountingsync.AccountingConnection, error)
+	PrepareCertificate(
+		ctx context.Context,
+		req *PrepareAccountingCertificateRequest,
+	) (*AccountingPreparedCertificate, error)
+	ConnectWithCertificate(
+		ctx context.Context,
+		req *ConnectAccountingWithCertificateRequest,
+	) (*AccountingAuthorizationCompletion, error)
+	RenewCertificate(
+		ctx context.Context,
+		req *RenewAccountingCertificateRequest,
 	) (*accountingsync.AccountingConnection, error)
 	Disconnect(
 		ctx context.Context,
