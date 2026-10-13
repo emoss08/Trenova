@@ -6,7 +6,8 @@ import { QUICK_ACTION_ICONS } from "@/config/quick-action-icons";
 import { useRecentActivityInfinite } from "@/hooks/use-attention";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
 import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
-import { queries } from "@/lib/queries";
+import { pageFavorite } from "@/lib/queries/page-favorite";
+import { notification as notificationQueries } from "@trenova/shared/lib/queries/notification";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -68,7 +69,7 @@ export function QuickActionsWidget({ widget }: WidgetProps) {
 export function FavoritesWidget({ widget }: WidgetProps) {
   const t = useT();
 
-  const { data: favorites, isLoading } = useQuery(queries.pageFavorite.all());
+  const { data: favorites, isLoading } = useQuery(pageFavorite.all());
 
   return (
     <WidgetShell
@@ -206,7 +207,7 @@ export function NotificationsWidget({ widget }: WidgetProps) {
 
   const limit = widget.config.limit ?? 8;
   const { data: notifications, isLoading } = useQuery({
-    ...queries.notification.feed({ first: limit, unreadOnly: true }),
+    ...notificationQueries.feed({ first: limit, unreadOnly: true }),
     select: (data) => data.results,
   });
   // The badge is the true unread total, not the page size the list happened to

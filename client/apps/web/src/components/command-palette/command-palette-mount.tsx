@@ -1,23 +1,23 @@
+import { lazyComponent } from "@/lib/lazy-component";
 import { whenIdle } from "@/lib/when-idle";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useHotkey } from "@tanstack/react-hotkeys";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { CommandPaletteSkeleton } from "./command-palette-skeleton";
 
-const CommandPalette = lazy(() =>
-  import("./command-palette").then((module) => ({ default: module.CommandPalette })),
+const Palette = lazyComponent(
+  () => import("./command-palette"),
+  (module) => module.CommandPalette,
 );
-
-let preloadPromise: Promise<unknown> | null = null;
 
 /**
  * Pulls the palette chunk in ahead of the first open. Idempotent — repeat calls
- * reuse the in-flight import.
+ * reuse the in-flight import. A read that fails (offline, or a release removed the
+ * file this tab was built with) is forgotten, so opening the palette asks again.
  */
-export function preloadCommandPalette(): Promise<unknown> {
-  preloadPromise ??= import("./command-palette");
-  return preloadPromise;
+export function preloadCommandPalette(): void {
+  void Palette.preload().catch(() => undefined);
 }
 
 /**
@@ -36,7 +36,7 @@ export function CommandPaletteMount() {
     () => {
       // Settings has its own ⌘K, which finds a setting; the palette stays out of its way.
       if (useAppDialogsStore.getState().active === "settings") return;
-      void preloadCommandPalette();
+      preloadCommandPalette();
       toggleOpen();
     },
     {
@@ -54,14 +54,14 @@ export function CommandPaletteMount() {
 
   useEffect(() => {
     if (mounted) return;
-    return whenIdle(() => void preloadCommandPalette());
+    return whenIdle(preloadCommandPalette);
   }, [mounted]);
 
   if (!mounted) return null;
 
   return (
     <Suspense fallback={open ? <CommandPaletteSkeleton /> : null}>
-      <CommandPalette />
+      <Palette.Component />
     </Suspense>
   );
 }

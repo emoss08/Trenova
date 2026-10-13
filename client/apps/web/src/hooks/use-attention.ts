@@ -5,7 +5,7 @@ import {
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { ATTENTION_ROWS_BY_KEY, type AttentionRowConfig } from "@/config/attention-rows";
 import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
-import { queries } from "@/lib/queries";
+import { attention } from "@/lib/queries/attention";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -19,7 +19,7 @@ export type RecentActivityEntry = RecentActivityQuery["auditEntries"]["edges"][n
 
 export function useAttentionSummary() {
   return useQuery({
-    ...queries.attention.summary(),
+    ...attention.summary(),
     refetchInterval: ATTENTION_REFETCH_INTERVAL,
     select: (data) => data.attentionSummary,
   });
@@ -58,7 +58,7 @@ export function useRecentActivityInfinite(pageSize = RECENT_ACTIVITY_DEFAULT_PAG
   );
 
   return useInfiniteQuery({
-    queryKey: [...queries.attention.recentActivity.queryKey, pageSize],
+    queryKey: [...attention.recentActivity.queryKey, pageSize],
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam, signal }) =>
       requestGraphQL({

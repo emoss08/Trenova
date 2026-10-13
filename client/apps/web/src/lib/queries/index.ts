@@ -54,7 +54,7 @@ import { invoiceShare } from "./invoice-share";
 import { location } from "./location";
 import { order } from "./order";
 import { organization } from "./organization";
-import { pageFavoite } from "./page-favorite";
+import { pageFavorite } from "./page-favorite";
 import { reports } from "./reports";
 import { sequenceConfig } from "./sequence-config";
 import { serviceFailure } from "./service-failure";
@@ -142,7 +142,7 @@ const operationsQueries = mergeQueryKeys(
 
 const workspaceQueries = mergeQueryKeys(
   userOrganization,
-  pageFavoite,
+  pageFavorite,
   tableConfiguration,
   tableLayout,
   dataTableInsight,

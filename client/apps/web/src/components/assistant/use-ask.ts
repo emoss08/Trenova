@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import type {
   AssistantEntityRef,
@@ -70,8 +70,7 @@ export function useAsk() {
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const refreshActiveTurns = useCallback(
-    () =>
-      void queryClient.invalidateQueries({ queryKey: queries.assistant.activeTurns().queryKey }),
+    () => void queryClient.invalidateQueries({ queryKey: assistant.activeTurns().queryKey }),
     [queryClient],
   );
 
@@ -192,7 +191,7 @@ export function useAsk() {
       return null;
     }
     await apiService.assistantService.updateThread(threadId, { keep: true });
-    await queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey });
+    await queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
 
     return threadId;
   }, [queryClient, turn?.result?.thread.id, turn?.thread?.id]);

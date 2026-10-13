@@ -4,19 +4,6 @@
    carry a dk- prefix so nothing here reaches outside the Desk. The
    conversation and composer rules live in components/desk-chat/desk-chat.css,
    which loads first. */
-.dsk {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
-  background: var(--dsk-canvas);
-  color: var(--dsk-fg);
-  font: 400 13px/1.45 var(--font-sans);
-  letter-spacing: -0.005em;
-  -webkit-font-smoothing: antialiased;
-  overflow: hidden;
-}
 /* A dialog's panel takes focus only to hold it when it opens; it is not a
    control and draws no ring. */
 .dk-sx:focus-visible {
@@ -353,15 +340,6 @@
   background: oklch(0.79 0.15 76);
   box-shadow: 0 0 0 3px color-mix(in oklch, oklch(0.79 0.15 76) 25%, transparent);
 }
-
-.dk-mainc {
-  position: relative;
-  display: grid;
-  grid-template-rows: 52px minmax(0, 1fr);
-  grid-template-columns: minmax(0, 1fr);
-  min-width: 0;
-  min-height: 0;
-}
 .dk-sb-top .dk-logo {
   width: 22px;
   height: 22px;
@@ -418,11 +396,6 @@
 .dk-sun {
   background: var(--dsk-fg);
   box-shadow: none;
-}
-
-.dk-mainc {
-  container-type: inline-size;
-  container-name: mainc;
 }
 @container mainc (max-width:1040px) {
   .dk-stage.dk-open .dk-panel {
@@ -3125,35 +3098,6 @@
     display: none;
   }
 }
-.dsk {
-  height: 100dvh;
-}
-.dk-sk-logo {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-}
-.dk-sk-row {
-  height: 22px;
-  margin: 4px 2px;
-  border-radius: 6px;
-}
-.dk-sk-gh {
-  width: 60px;
-  height: 10px;
-  margin: 22px 10px 10px;
-  border-radius: 4px;
-}
-.dk-sk-title {
-  width: 240px;
-  height: 14px;
-  border-radius: 5px;
-}
-.dk-sk-cmp {
-  width: 100%;
-  height: 96px;
-  border-radius: 16px;
-}
 
 /* workspace empty state */
 .dk-axe {
@@ -3250,9 +3194,6 @@
   animation: dk-fadein 200ms ease both;
 }
 @media (max-width: 720px) {
-  .dsk {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .dsk.dk-rail-open .dk-sb {
     transform: none;
     box-shadow:
@@ -3261,9 +3202,6 @@
   }
 }
 @media (max-width: 720px) {
-  .dk-top {
-    padding-inline: 10px 8px;
-  }
   .dk-ttl-a,
   .dk-ttl-sl {
     display: none;

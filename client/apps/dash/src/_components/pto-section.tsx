@@ -12,12 +12,8 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import {
-  dateToUnixTimestamp,
-  formatRange,
-  generateDateOnly,
-  inclusiveDays,
-} from "@trenova/shared/lib/date";
+import { generateDateOnly } from "@trenova/shared/lib/chrono";
+import { dateToUnixTimestamp, formatRange, inclusiveDays } from "@trenova/shared/lib/date";
 import {
   cancelMyPto,
   fetchMyPto,

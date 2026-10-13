@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import type { ThreadListFilter } from "@/services/assistant";
 import type { AssistantThread, AssistantThreadPage } from "@/types/assistant";
@@ -68,7 +68,7 @@ function listState(client: QueryClient, queryKey: QueryKey): ListState {
 
 /** The key every list of conversations, and the shelf counts, are cached under. */
 function threadListRoot(): QueryKey {
-  return queries.assistant.threads().queryKey;
+  return assistant.threads().queryKey;
 }
 
 /** Whether a cache entry under the list's key holds pages of conversations rather than counts. */
@@ -198,10 +198,10 @@ export function threadListQuery() {
     AssistantThreadPage,
     DefaultError,
     ThreadPages,
-    ReturnType<typeof queries.assistant.threads>["queryKey"],
+    ReturnType<typeof assistant.threads>["queryKey"],
     string
   >({
-    queryKey: queries.assistant.threads().queryKey,
+    queryKey: assistant.threads().queryKey,
     queryFn: ({ client, queryKey, pageParam, signal }) =>
       readPage({ client, queryKey, pageParam, filter: undefined, signal }),
     ...PAGED_BY_CURSOR,
@@ -218,10 +218,10 @@ export function threadShelfQuery(filter: ThreadListFilter) {
     AssistantThreadPage,
     DefaultError,
     ThreadPages,
-    ReturnType<ReturnType<typeof queries.assistant.threads>["_ctx"]["shelf"]>["queryKey"],
+    ReturnType<ReturnType<typeof assistant.threads>["_ctx"]["shelf"]>["queryKey"],
     string
   >({
-    queryKey: queries.assistant.threads()._ctx.shelf(filter).queryKey,
+    queryKey: assistant.threads()._ctx.shelf(filter).queryKey,
     queryFn: ({ client, queryKey, pageParam, signal }) =>
       readPage({ client, queryKey, pageParam, filter, signal }),
     ...PAGED_BY_CURSOR,
@@ -235,7 +235,7 @@ export function threadShelfQuery(filter: ThreadListFilter) {
  */
 export function threadShelfCountsQuery(edges: readonly number[]) {
   return queryOptions({
-    ...queries.assistant.threads()._ctx.shelfCounts(edges),
+    ...assistant.threads()._ctx.shelfCounts(edges),
     queryFn: ({ signal }) => apiService.assistantService.countThreadShelves(edges, { signal }),
   });
 }

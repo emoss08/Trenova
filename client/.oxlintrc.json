@@ -24,9 +24,6 @@
         "packages/*/src/**/generated/**",
         "packages/*/scripts/**"
     ],
-    "options": {
-        "typeAware": true
-    },
     "rules": {
         "@typescript-eslint/ban-ts-comment": [
             "error",

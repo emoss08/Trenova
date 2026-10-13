@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseDate } from "@trenova/shared/lib/chrono";
+import { generateDateOnly, parseDate } from "@trenova/shared/lib/chrono";
 
 function startOfToday(): Date {
   const d = new Date();
@@ -321,5 +321,27 @@ describe("edge cases", () => {
 
   it("returns null when chrono produces an invalid date", () => {
     expect(parseDate("not a real date zzz")).toBeNull();
+  });
+});
+
+describe("generateDateOnly", () => {
+  it("parses valid date string to midnight Date", () => {
+    const result = generateDateOnly("January 15, 2024");
+    expect(result).toBeInstanceOf(Date);
+    expect(result!.getHours()).toBe(0);
+    expect(result!.getMinutes()).toBe(0);
+    expect(result!.getSeconds()).toBe(0);
+  });
+
+  it("returns null for empty string", () => {
+    expect(generateDateOnly("")).toBeNull();
+  });
+
+  it("returns null for null input", () => {
+    expect(generateDateOnly(null as any)).toBeNull();
+  });
+
+  it("returns null for unparseable string", () => {
+    expect(generateDateOnly("not a date at all xyz")).toBeNull();
   });
 });

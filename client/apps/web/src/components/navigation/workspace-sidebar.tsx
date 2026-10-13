@@ -16,7 +16,7 @@ import {
 import { useAttentionRows } from "@/hooks/use-attention";
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
 import { SIDEBAR_SECTION_KEYS } from "@/lib/graphql/sidebar-preferences";
-import { queries } from "@/lib/queries";
+import { pageFavorite } from "@/lib/queries/page-favorite";
 import { isRouteActive } from "@/lib/route-utils";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -82,7 +82,7 @@ function PinnedRows() {
   const t = useT();
 
   const { pathname } = useLocation();
-  const { data: favorites } = useQuery(queries.pageFavorite.all());
+  const { data: favorites } = useQuery(pageFavorite.all());
 
   if (!favorites || favorites.length === 0) {
     return null;

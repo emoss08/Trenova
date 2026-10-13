@@ -25,6 +25,7 @@ import { DeskMessageActions } from "./desk-message-actions";
 import { DeskStepFailures } from "./desk-tool-failures";
 import { DeskWebCites, DeskWebSources } from "./desk-web";
 import { deskWebSources, webQueryOf, withWebCites, type DeskWebSource } from "./web-cites";
+import "../desk-frame.css";
 import "../desk-chat.css";
 
 /** Where a row sits in the conversation's three columns: time, words, margin. */

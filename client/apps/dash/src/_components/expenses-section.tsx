@@ -13,7 +13,8 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { dateToUnixTimestamp, formatRange, generateDateOnly } from "@trenova/shared/lib/date";
+import { generateDateOnly } from "@trenova/shared/lib/chrono";
+import { dateToUnixTimestamp, formatRange } from "@trenova/shared/lib/date";
 import {
   cancelMyExpense,
   fetchMyExpenses,

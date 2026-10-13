@@ -3,7 +3,7 @@ import { navigationConfig } from "@/config/navigation.config";
 import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
-import { queries } from "@/lib/queries";
+import { pageFavorite } from "@/lib/queries/page-favorite";
 import { apiService } from "@/services/api";
 import { useRecentRecords } from "@/stores/recent-records-store";
 import { useTheme } from "@trenova/shared/components/theme-provider";
@@ -222,7 +222,7 @@ export function useRecentPaletteRecords(): readonly RecentPaletteRecord[] {
 }
 
 export function usePinnedPages(open: boolean, pageIndex: ReadonlyMap<string, PalettePage>) {
-  const { data, isLoading } = useQuery({ ...queries.pageFavorite.all(), enabled: open });
+  const { data, isLoading } = useQuery({ ...pageFavorite.all(), enabled: open });
   const pages = useMemo(
     () =>
       (data ?? []).map((favorite) =>

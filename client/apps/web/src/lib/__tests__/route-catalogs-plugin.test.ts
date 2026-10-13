@@ -11,7 +11,18 @@ const SRC = "/repo/client/apps/web/src";
 const ROUTES = `${SRC}/routes`;
 const RUNTIME = '"@trenova/shared/i18n/runtime"';
 
-type TransformResult = { code: string; map: { mappings: string } } | null;
+type TransformResult = { code: string; map: { mappings: string } | null } | null;
+
+type EnvironmentConfig = { command: "build" | "serve"; build: { sourcemap: boolean | "hidden" } };
+
+type TransformHook = {
+  filter: { id: { include: RegExp; exclude: RegExp[] } };
+  handler: (
+    this: { resolve: typeof resolve; environment?: { config: EnvironmentConfig } },
+    code: string,
+    id: string,
+  ) => Promise<TransformResult>;
+};
 
 // What Vite's resolver would answer: the app's aliases and relative paths land in src, a
 // package lands in node_modules, an unknown specifier resolves to nothing.
@@ -34,14 +45,21 @@ function resolve(specifier: string, importer: string) {
 }
 
 const plugin = routeCatalogs({ srcDir: SRC });
+const hook = plugin.transform as unknown as TransformHook;
 
-async function transform(code: string, id: string): Promise<TransformResult> {
-  const hook = plugin.transform as unknown as (
-    this: { resolve: typeof resolve },
-    code: string,
-    id: string,
-  ) => Promise<TransformResult>;
-  return hook.call({ resolve }, code, id);
+async function transform(
+  code: string,
+  id: string,
+  config?: EnvironmentConfig,
+): Promise<TransformResult> {
+  const environment = config === undefined ? undefined : { config };
+  return hook.handler.call({ resolve, environment }, code, id);
+}
+
+// Rolldown's reading of a hook filter: the id must match include and no exclude.
+function reachesHandler(id: string): boolean {
+  const { include, exclude } = hook.filter.id;
+  return include.test(id) && !exclude.some((pattern) => pattern.test(id));
 }
 
 describe("routeCatalogFor", () => {
@@ -170,12 +188,48 @@ describe("routeCatalogs plugin", () => {
 
   it("keeps the source map pointing at the original lines", async () => {
     const code = 'const A = lazy(() => import("./a"));\nexport const b = 2;\n';
-    const result = await transform(code, `${SRC}/components/x.tsx`);
+    const result = await transform(code, `${SRC}/components/x.tsx`, {
+      command: "serve",
+      build: { sourcemap: false },
+    });
 
-    const lines = result?.map.mappings.split(";") ?? [];
+    const lines = result?.map?.mappings.split(";") ?? [];
     expect(lines.length).toBeGreaterThanOrEqual(2);
     expect(lines[0]).not.toBe("");
     expect(lines[1]).not.toBe("");
+  });
+
+  it("maps a dev server's and a source-mapped build's output, not a build without maps", async () => {
+    const code = 'const A = lazy(() => import("./a"));\nexport const b = 2;\n';
+    const id = `${SRC}/components/x.tsx`;
+    const withoutMaps = await transform(code, id, {
+      command: "build",
+      build: { sourcemap: false },
+    });
+    const hiddenMaps = await transform(code, id, {
+      command: "build",
+      build: { sourcemap: "hidden" },
+    });
+    const devServer = await transform(code, id, { command: "serve", build: { sourcemap: false } });
+
+    expect(withoutMaps?.code).toContain(`import("./a").then(${AFTER_CATALOGS})`);
+    expect(withoutMaps?.map).toBeNull();
+    expect(hiddenMaps?.map?.mappings).not.toBe("");
+    expect(devServer?.map?.mappings).not.toBe("");
+  });
+
+  it("is called only for the app's source modules", () => {
+    expect(reachesHandler(`${ROUTES}/shipment/page.tsx`)).toBe(true);
+    expect(reachesHandler(`${SRC}/lib/api.ts`)).toBe(true);
+    expect(
+      reachesHandler("/repo/client/node_modules/.pnpm/react@19/node_modules/react/index.js"),
+    ).toBe(false);
+    expect(reachesHandler("C:\\repo\\client\\node_modules\\react\\index.js")).toBe(false);
+    expect(reachesHandler(`\0virtual:${ROUTES}/shipment/page.tsx`)).toBe(false);
+    expect(reachesHandler(`${ROUTES}/shipment/page.tsx?raw`)).toBe(false);
+    expect(reachesHandler(`${ROUTES}/shipment/page.test.tsx`)).toBe(false);
+    expect(reachesHandler(`${ROUTES}/shipment/__tests__/helpers.ts`)).toBe(false);
+    expect(reachesHandler(`${ROUTES}/shipment/styles.css`)).toBe(false);
   });
 
   it("leaves code outside the app, tests and assets untouched", async () => {

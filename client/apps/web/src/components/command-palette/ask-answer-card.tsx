@@ -20,6 +20,7 @@ import {
   SquareIcon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
+import { answerText } from "./ask-answer";
 import { CITE_HREF_PREFIX, linkCitedRecords } from "./cited-text";
 import { ShortcutKeys } from "./palette-parts";
 
@@ -38,22 +39,6 @@ function phaseOf(turn: TurnState, text: string): AnswerPhase {
     default:
       return text === "" ? "working" : "answering";
   }
-}
-
-function answerText(turn: TurnState): string {
-  return turn.segments
-    .flatMap((segment) => (segment.kind === "text" ? [segment.text] : []))
-    .join("\n\n");
-}
-
-/** The words of the answer, for the clipboard, without the chips' links. */
-export function plainAnswer(turn: TurnState): string {
-  return answerText(turn).trim();
-}
-
-/** The records an answer was built from, as its tools returned them. */
-export function answerSources(turn: TurnState | null): AssistantEntityRef[] {
-  return turn ? turnCitedRecords(turn.segments) : [];
 }
 
 function RecordChip({

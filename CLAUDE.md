@@ -303,6 +303,24 @@ GraphQL field to resolve to a column, an inferred relation, or a declared overri
 retiring a column while keeping its deprecated field breaks the build until the field is
 added to `virtuals`.
 
+## Web Build
+
+The React Compiler runs in Rust (`react({ compiler: true })`, `oxc-transform-react`), `pnpm build`
+bundles without typechecking, and CI fails a build whose first-visit download passes
+`client/apps/web/bundle-budget.json` (`pnpm --filter @trenova/web bundle:check`). Chunking lives in
+`client/apps/web/vite/chunk-groups.ts`, and a group with a `maxSize`, a pattern that is not anchored
+to `node_modules/<name>/`, or a feature imported statically from the shell has each already broken
+the app or put a whole feature on every page. A service worker (`/sw.js`) serves the app shell
+and hashed assets from cache, and the shell's queries persist to IndexedDB from an allow-list
+(`SHELL_QUERIES` in `lib/session-cache.ts`) that must never hold business records or personal
+details; every session end goes through `clearSessionCache()`. Open tabs reload onto a new
+release at their next change of page unless a reload guard (`lib/reload-guards.ts`) holds the
+page; anything new that keeps in-memory work a reload would lose must register one. **Read
+[docs/engineering/web-build.md](docs/engineering/web-build.md) before changing
+`apps/web/vite.config.ts`, `chunk-groups.ts`, the budget, `main.tsx`'s imports, the service
+worker, the persisted query cache, or the GraphQL codegen hooks (`strip-fragment-text`,
+`split-documents`).**
+
 ## Product Guide
 
 Agents answer "where is…" and "how do I…" from a catalog generated from the web app and the

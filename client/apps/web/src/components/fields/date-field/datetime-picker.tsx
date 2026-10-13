@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
-import { generateDateTime, generateDateTimeString } from "@trenova/shared/lib/date";
+import { generateDateTime } from "@trenova/shared/lib/chrono";
+import { generateDateTimeString } from "@trenova/shared/lib/date";
 import { CalendarIcon } from "@trenova/shared/components/icons";
 import { DateSuggestionInput } from "./date-suggestion-input";
 import { DateTimePickerPopover } from "./datetime-picker-popover";

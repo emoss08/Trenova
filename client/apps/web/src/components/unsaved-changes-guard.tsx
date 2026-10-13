@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
+import { addReloadGuard } from "@/lib/reload-guards";
 import { useCallback, useEffect } from "react";
 import { useBlocker, type BlockerFunction } from "react-router";
 
@@ -38,7 +39,13 @@ export function UnsavedChangesGuard({ when }: UnsavedChangesGuardProps) {
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    // A reload the app starts itself (moving onto a new release) waits until the edits are
+    // saved or discarded, instead of raising the browser's prompt over the app's own.
+    const releaseReloadGuard = addReloadGuard(() => true);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      releaseReloadGuard();
+    };
   }, [when]);
 
   // A save that lands while the dialog is open clears `when`; the block is

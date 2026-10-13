@@ -1,5 +1,5 @@
 import { releaseTurnReaders } from "@/components/assistant/turn-readers";
-import { queryClient } from "@/lib/query-client";
+import { clearSessionCache } from "@/lib/session-cache";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
@@ -17,9 +17,9 @@ export function useSignOut(): () => Promise<void> {
   return useCallback(async () => {
     releaseTurnReaders();
     await logout();
-    // Cached queries belong to the session that just ended; the next sign-in must
-    // not see the last organization's plan, usage or records.
-    queryClient.clear();
+    // Cached queries belong to the session that just ended, in memory and on disk; the
+    // next sign-in must not see the last organization's plan, usage or records.
+    await clearSessionCache();
     void navigate("/login");
   }, [logout, navigate]);
 }

@@ -70,7 +70,7 @@
     "happy-dom": "^20.14.0",
     "react-dom": "catalog:",
     "typescript": "~7.0.2",
-    "vite": "^8.2.2",
+    "vite": "^8.3.4",
     "vitest": "^5.0.0"
   }
 }

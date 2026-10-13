@@ -29,7 +29,7 @@ which is exactly how this one slipped in.
 */
 
 var (
-	taskQueuePattern = regexp.MustCompile(`TaskQueue:\s*(.+?),`)
+	taskQueuePattern = regexp.MustCompile(`(?s)registry\.DomainConfig\{[^}]*?TaskQueue:\s*(.+?),`)
 	jobsRoot         = filepath.Join(".")
 )
 
@@ -74,21 +74,30 @@ func TestActivityNamesDoNotCollideOnAQueue(t *testing.T) {
 	}
 }
 
-// taskQueueOf reads the queue a jobs package registers on. A directory
-// without a registry.go is not a worker package.
+// taskQueueOf reads the queue a jobs package registers on from the first
+// registry.DomainConfig it declares, in whichever file that is: the dispatch
+// workers declare theirs in module.go, and reading only registry.go let the
+// customer status and shipment ETA workers collide on dispatch-queue unseen.
+// A directory that declares no DomainConfig is not a worker package.
 func taskQueueOf(t *testing.T, dir string) (string, bool) {
 	t.Helper()
 
-	source, err := os.ReadFile(filepath.Join(dir, "registry.go"))
-	if err != nil {
-		return "", false
-	}
-	match := taskQueuePattern.FindSubmatch(source)
-	if match == nil {
-		return "", false
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err)
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".go") ||
+			strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		source, readErr := os.ReadFile(filepath.Join(dir, name))
+		require.NoError(t, readErr)
+		if match := taskQueuePattern.FindSubmatch(source); match != nil {
+			return strings.TrimSpace(string(match[1])), true
+		}
 	}
 
-	return strings.TrimSpace(string(match[1])), true
+	return "", false
 }
 
 // activityMethodsIn is every exported method on the package's Activities

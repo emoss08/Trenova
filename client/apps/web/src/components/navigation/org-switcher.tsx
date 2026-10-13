@@ -10,7 +10,8 @@ import {
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useSwitchOrganization } from "@/hooks/use-organization-switch";
-import { queries } from "@/lib/queries";
+import { organization } from "@/lib/queries/organization";
+import { userOrganization } from "@/lib/queries/user";
 import { cn } from "@trenova/shared/lib/utils";
 import type { UserOrganization } from "@trenova/shared/types/organization";
 import { useQuery } from "@tanstack/react-query";
@@ -70,7 +71,7 @@ function OrgLogo({
 export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
   const t = useT();
 
-  const { data: organizations, isLoading } = useQuery(queries.userOrganization.all());
+  const { data: organizations, isLoading } = useQuery(userOrganization.all());
   const switchMutation = useSwitchOrganization();
 
   const currentOrg = organizations?.find((org) => org.isCurrent);
@@ -92,7 +93,7 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
     Boolean(currentOrg?.id) && Boolean(currentOrgLogoUrl) && !hasAbsoluteLogoURL;
 
   const { data: resolvedLogoURL } = useQuery({
-    ...queries.organization.logo(currentOrg?.id ?? ""),
+    ...organization.logo(currentOrg?.id ?? ""),
     enabled: shouldResolveLogo,
     retry: false,
   });

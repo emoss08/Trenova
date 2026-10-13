@@ -9,7 +9,7 @@ import {
   updateHomeLayoutPreset,
   type HomeLayout,
 } from "@/lib/graphql/home-layout";
-import { queries } from "@/lib/queries";
+import { homeLayout } from "@/lib/queries/home-layout";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const HOME_LAYOUT_STALE_TIME = 60_000;
@@ -17,7 +17,7 @@ const HOME_CATALOG_STALE_TIME = 5 * 60_000;
 
 export function useHomeLayout() {
   return useQuery({
-    ...queries.homeLayout.effective(),
+    ...homeLayout.effective(),
     staleTime: HOME_LAYOUT_STALE_TIME,
     select: (data): HomeLayout => toHomeLayout(data.homeLayout),
   });
@@ -30,7 +30,7 @@ export function useHomeLayout() {
  */
 export function useHomeWidgetCatalog(enabled = true) {
   return useQuery({
-    ...queries.homeLayout.catalog(),
+    ...homeLayout.catalog(),
     enabled,
     staleTime: HOME_CATALOG_STALE_TIME,
     select: (data) => data.homeWidgetCatalog,
@@ -39,7 +39,7 @@ export function useHomeWidgetCatalog(enabled = true) {
 
 export function useHomeLayoutPresets(enabled = true) {
   return useQuery({
-    ...queries.homeLayout.presets(),
+    ...homeLayout.presets(),
     enabled,
     select: (data) => data.homeLayoutPresets.map(toHomeLayoutPreset),
   });
@@ -47,7 +47,7 @@ export function useHomeLayoutPresets(enabled = true) {
 
 export function useHomeLayoutPreset(id: string | undefined) {
   return useQuery({
-    ...queries.homeLayout.preset(id ?? ""),
+    ...homeLayout.preset(id ?? ""),
     enabled: Boolean(id),
     select: (data) => toHomeLayoutPreset(data.homeLayoutPreset),
   });
@@ -55,7 +55,7 @@ export function useHomeLayoutPreset(id: string | undefined) {
 
 export function useHomeLayoutPreview(presetId: string | null, roleId: string | null) {
   return useQuery({
-    ...queries.homeLayout.preview(presetId, roleId),
+    ...homeLayout.preview(presetId, roleId),
     enabled: roleId != null,
     select: (data): HomeLayout => toHomeLayout(data.homeLayoutPreview),
   });
@@ -73,11 +73,11 @@ function useHomeLayoutWriter<TArgs>(mutationFn: (args: TArgs) => Promise<HomeLay
   return useMutation({
     mutationFn,
     onSuccess: (updated) => {
-      queryClient.setQueryData(queries.homeLayout.effective().queryKey, {
+      queryClient.setQueryData(homeLayout.effective().queryKey, {
         homeLayout: updated,
       });
       void queryClient.invalidateQueries({
-        queryKey: queries.homeLayout.effective().queryKey,
+        queryKey: homeLayout.effective().queryKey,
       });
     },
   });
@@ -103,7 +103,7 @@ function useHomeLayoutPresetWriter<TArgs, TResult>(mutationFn: (args: TArgs) => 
       // stale together. Invalidating the preset detail is what keeps a second
       // consecutive save from carrying a stale version into the optimistic
       // lock.
-      void queryClient.invalidateQueries({ queryKey: queries.homeLayout._def });
+      void queryClient.invalidateQueries({ queryKey: homeLayout._def });
     },
   });
 }

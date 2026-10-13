@@ -2,7 +2,6 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { defineConfig } from "vite";
-import { compression } from "vite-plugin-compression2";
 import { singletonPackages } from "../../singleton-packages.ts";
 
 const proxyConfig = {
@@ -20,14 +19,7 @@ const proxyConfig = {
 export default defineConfig({
   base: "/dash/",
   envDir: path.resolve(__dirname, "../.."),
-  plugins: [
-    react(),
-    tailwindcss(),
-    compression({
-      algorithms: ["gzip", "brotliCompress"],
-      threshold: 10240,
-    }),
-  ],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

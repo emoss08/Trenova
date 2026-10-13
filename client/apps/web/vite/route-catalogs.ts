@@ -20,6 +20,8 @@ import type { Plugin } from "vite";
 
 const SOURCE_FILE = /\.[cm]?[jt]sx?$/;
 const NOT_APP_CODE = /\.(test|spec|stories)\.[cm]?[jt]sx?$|\/__tests__\//;
+const DEPENDENCY = /[\\/]node_modules[\\/]/;
+const VIRTUAL = /\0/;
 const RUNTIME = "@trenova/shared/i18n/runtime";
 
 function toPosix(path: string): string {
@@ -110,33 +112,46 @@ export function routeCatalogs({ srcDir }: RouteCatalogsOptions): Plugin {
   return {
     name: "trenova:route-catalogs",
     enforce: "pre",
-    async transform(code, id) {
-      const file = appSourceFile(id, srcDir);
-      if (file === null) return null;
+    // The filter is matched in Rust, so the thousands of dependency modules in a build never
+    // cross into JavaScript only to be turned away by appSourceFile.
+    transform: {
+      filter: { id: { include: SOURCE_FILE, exclude: [DEPENDENCY, VIRTUAL, NOT_APP_CODE] } },
+      async handler(code, id) {
+        const file = appSourceFile(id, srcDir);
+        if (file === null) return null;
 
-      const waits: number[] = [];
-      for (const { specifier, end } of dynamicImports(code, file)) {
-        const resolved = await this.resolve(specifier, id);
-        if (resolved === null || resolved.external) continue;
-        if (appSourceFile(resolved.id, srcDir) !== null) waits.push(end);
-      }
+        const waits: number[] = [];
+        for (const { specifier, end } of dynamicImports(code, file)) {
+          const resolved = await this.resolve(specifier, id);
+          if (resolved === null || resolved.external) continue;
+          if (appSourceFile(resolved.id, srcDir) !== null) waits.push(end);
+        }
 
-      const bundle = routeCatalogFor(id, routesDir);
-      if (bundle === null && waits.length === 0) return null;
+        const bundle = routeCatalogFor(id, routesDir);
+        if (bundle === null && waits.length === 0) return null;
 
-      const out = new MagicString(code);
-      for (const end of waits) out.appendLeft(end, `.then(${AFTER_CATALOGS})`);
+        const out = new MagicString(code);
+        for (const end of waits) out.appendLeft(end, `.then(${AFTER_CATALOGS})`);
 
-      const names = [
-        ...(bundle === null ? [] : [`requireCatalog as ${REQUIRE_CATALOG}`]),
-        ...(waits.length === 0 ? [] : [`afterCatalogs as ${AFTER_CATALOGS}`]),
-      ];
-      // At the end, so the original lines keep their numbers; imports are hoisted, and the
-      // require runs once the module body has, still before anything importing it renders.
-      out.append(`\nimport { ${names.join(", ")} } from "${RUNTIME}";\n`);
-      if (bundle !== null) out.append(`${REQUIRE_CATALOG}(${JSON.stringify(bundle)});\n`);
+        const names = [
+          ...(bundle === null ? [] : [`requireCatalog as ${REQUIRE_CATALOG}`]),
+          ...(waits.length === 0 ? [] : [`afterCatalogs as ${AFTER_CATALOGS}`]),
+        ];
+        // At the end, so the original lines keep their numbers; imports are hoisted, and the
+        // require runs once the module body has, still before anything importing it renders.
+        out.append(`\nimport { ${names.join(", ")} } from "${RUNTIME}";\n`);
+        if (bundle !== null) out.append(`${REQUIRE_CATALOG}(${JSON.stringify(bundle)});\n`);
 
-      return { code: out.toString(), map: out.generateMap({ hires: true, source: id }) };
+        // A production build writes no source maps, and a high-resolution map of every app
+        // module was most of this plugin's cost in one.
+        const config = this.environment?.config;
+        const wantsMap =
+          config === undefined || config.command === "serve" || Boolean(config.build.sourcemap);
+        return {
+          code: out.toString(),
+          map: wantsMap ? out.generateMap({ hires: true, source: id }) : null,
+        };
+      },
     },
   };
 }

@@ -1,5 +1,6 @@
 import { usePermission } from "@/hooks/use-permission";
 import { useAttentionSummary } from "@/hooks/use-attention";
+import { lazyComponent } from "@/lib/lazy-component";
 import {
   DEFAULT_PANEL_SIZE,
   dockPositionClass,
@@ -10,16 +11,16 @@ import {
 } from "@/lib/assistant-dock";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useHotkey } from "@tanstack/react-hotkeys";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { AssistantEdgeTab } from "./assistant-edge-tab";
 import type { AssistantView } from "./assistant-header";
 import { AssistantLauncher } from "./assistant-launcher";
-import { AssistantPanel } from "./assistant-panel";
 import { AssistantResizeHandle } from "./assistant-resize-handle";
 import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
 import { beaconState } from "./beacon-state";
@@ -28,6 +29,27 @@ import { useAssistantThreads } from "./use-assistant-threads";
 import "./assistant.css";
 
 const OPEN_PARAM = "assistant";
+
+// The panel is the conversation: the thread, its markdown, code highlighting and the
+// cards a reply can carry. Most visits to a page never open it, so its code is read when
+// the panel first opens, or as soon as someone points at or focuses the beacon.
+const Panel = lazyComponent(
+  () => import("./assistant-panel"),
+  (module) => module.AssistantPanel,
+);
+
+// A failed read is forgotten, and opening the panel asks again.
+const preloadPanel = () => void Panel.preload().catch(() => undefined);
+
+function AssistantPanelFallback() {
+  return (
+    <div className="flex flex-1 flex-col gap-3 p-4" aria-busy="true">
+      <Skeleton className="h-6 w-2/5" />
+      <Skeleton className="h-4 w-4/5" />
+      <Skeleton className="h-4 w-3/5" />
+    </div>
+  );
+}
 
 /** What the panel shows: in full screen the sidebar stands in for the history view. */
 export function assistantView(
@@ -241,21 +263,29 @@ export function AssistantWidget() {
                 }}
               />
             )}
-            <AssistantPanel
-              layout={layout}
-              view={view}
-              data={data}
-              onHistory={setHistoryOpen}
-              onLayout={(next) => {
-                setLayout(next);
-                setHistoryOpen(false);
-              }}
-              onClose={closeWidget}
-            />
+            <Suspense fallback={<AssistantPanelFallback />}>
+              <Panel.Component
+                layout={layout}
+                view={view}
+                data={data}
+                onHistory={setHistoryOpen}
+                onLayout={(next) => {
+                  setLayout(next);
+                  setHistoryOpen(false);
+                }}
+                onClose={closeWidget}
+              />
+            </Suspense>
           </m.section>
         </Fragment>
       ) : launcherHidden ? (
-        <AssistantEdgeTab key="tab" dock={dock} beacon={beacon} onClick={openFromBeacon} />
+        <AssistantEdgeTab
+          key="tab"
+          dock={dock}
+          beacon={beacon}
+          onClick={openFromBeacon}
+          onIntent={preloadPanel}
+        />
       ) : (
         <AssistantLauncher
           key="launcher"
@@ -264,6 +294,7 @@ export function AssistantWidget() {
           onClick={openFromBeacon}
           onMove={setDock}
           onHide={() => setLauncherHidden(true)}
+          onIntent={preloadPanel}
         />
       )}
     </AnimatePresence>

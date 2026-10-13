@@ -4,7 +4,8 @@ import {
   fetchWorkerRosterAttention,
   WORKER_ROSTER_ATTENTION_KEY,
 } from "@/lib/graphql/worker-overview";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCompactCurrency } from "@trenova/shared/lib/utils";
@@ -113,7 +114,7 @@ export function usePageGlance(key: PageGlanceKey | undefined): {
 
   const attention = useAttentionSummary();
   const shipments = useQuery({
-    ...queries.shipmentBoard.stageSummary({ timezone }),
+    ...shipmentBoard.stageSummary({ timezone }),
     enabled: key === "shipments",
     staleTime: GLANCE_STALE_TIME,
   });
@@ -124,7 +125,7 @@ export function usePageGlance(key: PageGlanceKey | undefined): {
     staleTime: GLANCE_STALE_TIME,
   });
   const receivables = useQuery({
-    ...queries.ar.dashboardKpis(),
+    ...ar.dashboardKpis(),
     enabled: key === "receivables",
     staleTime: GLANCE_STALE_TIME,
   });

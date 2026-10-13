@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "sideEffects": false,
   "exports": {
     "./generated": "./src/generated/index.ts",
     "./fragment-data": "./src/fragment-data.ts",
@@ -19,7 +20,8 @@
     "enums": "node scripts/generate-error-enums.mjs",
     "resources": "node scripts/generate-permission-resources.mjs",
     "record-kinds": "node scripts/generate-record-kinds.mjs",
-    "codegen:check": "pnpm codegen && node scripts/assert-codegen-clean.mjs"
+    "codegen:check": "pnpm codegen && node scripts/assert-codegen-clean.mjs",
+    "test": "node --test \"scripts/**/*.test.mjs\""
   },
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.2.0"
