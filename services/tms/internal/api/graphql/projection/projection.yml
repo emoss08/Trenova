@@ -110,6 +110,10 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  LogCheckCallPayload:
+    - checkCall
+    - outcome
+    - outcomeReason
   AICorrection:
     - accuracy
   AITuneUp:
