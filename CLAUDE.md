@@ -317,8 +317,11 @@ Every integration logo comes from Brandfetch, never drawn or traced by hand. Loo
 with the Brand API (`GET https://api.brandfetch.io/v2/brands/{domain}`, `Authorization: Bearer
 <key>`), download the SVG it lists (PNG only when it has no SVG) unmodified into
 `client/apps/web/public/integrations/logos/`, and point both the client vendor entry and the
-server catalog (`integrationports`) at it. When Brandfetch has no mark for the product itself,
-use its parent company's (Business Central uses Microsoft's). The API key and client ID are the
+server catalog (`integrationports`) at it. Brandfetch's `theme` names the background a variant
+is drawn for, so its `dark` variant is our `*-light` file and its `light` variant our `*-dark`
+one. When Brandfetch has no mark for the product itself, or none for one of the two
+backgrounds, use the parent company's (Business Central uses Microsoft's; QuickBooks shows
+Intuit's in dark mode). The API key and client ID are the
 maintainer's: ask for them or read `BRANDFETCH_API_KEY`, and never commit them.
 
 ## GraphQL (gqlgen + gqlexec)

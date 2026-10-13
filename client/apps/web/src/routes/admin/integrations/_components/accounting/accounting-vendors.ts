@@ -16,7 +16,7 @@ export const quickBooksVendor: AccountingVendor = {
   system: "QuickBooksOnline",
   name: "QuickBooks Online",
   logoLight: "/integrations/logos/quickbooks-light.svg",
-  logoDark: "/integrations/logos/quickbooks-dark.svg",
+  logoDark: "/integrations/logos/intuit-dark.svg",
   docsUrl: "https://quickbooks.intuit.com/learn-support/",
   appName: "Intuit app",
   developer: "Intuit",

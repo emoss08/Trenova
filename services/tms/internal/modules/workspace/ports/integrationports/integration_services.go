@@ -462,7 +462,7 @@ var CatalogDefinitions = []CatalogItem{
 		CategoryLabel: catalogAccountingLabel,
 		LogoURL:       "/integrations/logos/quickbooks-light.svg",
 		LogoLightURL:  "/integrations/logos/quickbooks-light.svg",
-		LogoDarkURL:   "/integrations/logos/quickbooks-dark.svg",
+		LogoDarkURL:   "/integrations/logos/intuit-dark.svg",
 		DocsURL:       "https://developer.intuit.com/app/developer/qbo/docs/get-started",
 		WebsiteURL:    "https://quickbooks.intuit.com/",
 		Color:         "#2CA01C",
