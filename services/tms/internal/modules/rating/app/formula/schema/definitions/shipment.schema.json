@@ -198,13 +198,6 @@
                 "nullable": true
             },
             "properties": {
-                "name": {
-                    "description": "Equipment type name",
-                    "type": "string",
-                    "x-source": {
-                        "path": "TractorType.Name"
-                    }
-                },
                 "code": {
                     "description": "Equipment type code",
                     "type": "string",
@@ -212,17 +205,11 @@
                         "path": "TractorType.Code"
                     }
                 },
-                "costPerMile": {
-                    "description": "Operating cost per mile in USD",
-                    "type": [
-                        "number",
-                        "null"
-                    ],
-                    "minimum": 0,
+                "description": {
+                    "description": "Equipment type description",
+                    "type": "string",
                     "x-source": {
-                        "path": "TractorType.CostPerMile",
-                        "transform": "decimalToFloat64",
-                        "nullable": true
+                        "path": "TractorType.Description"
                     }
                 }
             }
@@ -238,13 +225,6 @@
                 "nullable": true
             },
             "properties": {
-                "name": {
-                    "description": "Equipment type name",
-                    "type": "string",
-                    "x-source": {
-                        "path": "TrailerType.Name"
-                    }
-                },
                 "code": {
                     "description": "Equipment type code",
                     "type": "string",
@@ -252,17 +232,11 @@
                         "path": "TrailerType.Code"
                     }
                 },
-                "costPerMile": {
-                    "description": "Operating cost per mile in USD",
-                    "type": [
-                        "number",
-                        "null"
-                    ],
-                    "minimum": 0,
+                "description": {
+                    "description": "Equipment type description",
+                    "type": "string",
                     "x-source": {
-                        "path": "TrailerType.CostPerMile",
-                        "transform": "decimalToFloat64",
-                        "nullable": true
+                        "path": "TrailerType.Description"
                     }
                 }
             }
@@ -508,11 +482,10 @@
             }
         },
         "serviceType": {
-            "description": "Service level the shipment was booked under",
-            "type": ["object", "null"],
+            "description": "Service level the shipment was booked under; every shipment has one",
+            "type": "object",
             "x-source": {
-                "relation": "ServiceType",
-                "nullable": true
+                "relation": "ServiceType"
             },
             "properties": {
                 "code": {

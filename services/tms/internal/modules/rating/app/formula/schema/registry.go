@@ -57,7 +57,7 @@ func (r *Registry) Register(id string, schemaJSON []byte) error {
 	}
 
 	definition.CompiledSchema = compiled
-	definition.FieldSources = r.extractFieldSource(definition.Properties, "")
+	definition.FieldSources = r.extractFieldSource(definition.Properties, "", false)
 
 	r.schemas[id] = &definition
 	return nil
@@ -103,6 +103,7 @@ func (r *Registry) ListSchemas() []*formulatypes.Definition {
 func (r *Registry) extractFieldSource(
 	properties map[string]formulatypes.Property,
 	prefix string,
+	optional bool,
 ) map[string]*formulatypes.FieldSource {
 	sources := make(map[string]*formulatypes.FieldSource)
 
@@ -114,13 +115,18 @@ func (r *Registry) extractFieldSource(
 			fieldPath = fmt.Sprintf("%s.%s", prefix, fieldPath)
 		}
 
-		if prop.Source.Field != "" || prop.Source.Computed || prop.Source.Provided {
+		if isFieldSource(prop.Source) {
 			source := prop.Source
+			source.Nullable = source.Nullable || optional
 			sources[fieldPath] = &source
 		}
 
 		if prop.Properties != nil {
-			nestedSources := r.extractFieldSource(prop.Properties, fieldPath)
+			nestedSources := r.extractFieldSource(
+				prop.Properties,
+				fieldPath,
+				optional || prop.Source.Nullable,
+			)
 			maps.Copy(sources, nestedSources)
 		}
 
@@ -132,11 +138,19 @@ func (r *Registry) extractFieldSource(
 			}
 
 			if prop.Items.Properties != nil {
-				nestedSources := r.extractFieldSource(prop.Items.Properties, arrayPrefix)
+				nestedSources := r.extractFieldSource(
+					prop.Items.Properties,
+					arrayPrefix,
+					optional || prop.Source.Nullable,
+				)
 				maps.Copy(sources, nestedSources)
 			}
 		}
 	}
 
 	return sources
+}
+
+func isFieldSource(source formulatypes.FieldSource) bool {
+	return source.Field != "" || source.Path != "" || source.Computed || source.Provided
 }
