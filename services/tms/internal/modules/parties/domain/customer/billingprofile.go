@@ -55,10 +55,10 @@ type CustomerBillingProfile struct {
 	AutoSendInvoiceOnGeneration bool   `json:"autoSendInvoiceOnGeneration" bun:"auto_send_invoice_on_generation,type:BOOLEAN,notnull"`
 	// SendPaymentReminders lets the organization's payment reminders reach
 	// this customer; off for a customer who must never be dunned by email.
-	SendPaymentReminders bool `json:"sendPaymentReminders" bun:"send_payment_reminders,type:BOOLEAN,notnull,default:true"`
+	SendPaymentReminders bool `json:"sendPaymentReminders" bun:"send_payment_reminders,type:BOOLEAN,notnull"`
 	// SendStatements lets the organization's monthly statements reach this
 	// customer.
-	SendStatements bool `json:"sendStatements" bun:"send_statements,type:BOOLEAN,notnull,default:true"`
+	SendStatements bool `json:"sendStatements" bun:"send_statements,type:BOOLEAN,notnull"`
 	// EmailInvoiceEnabled and EDIInvoiceEnabled are the delivery channels an
 	// invoice may leave through. Auto-send after posting honours both.
 	EmailInvoiceEnabled        bool                `json:"emailInvoiceEnabled"        bun:"email_invoice_enabled,type:BOOLEAN,notnull"`
