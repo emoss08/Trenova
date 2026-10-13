@@ -10,6 +10,9 @@ export function useEtaDelta(shipment: Shipment): { text: string; tone: string } 
   const slack = shipment.eta?.slackMinutes;
   if (shipment.stage === "Delivered" || slack == null) return null;
   if (slack < 0) return { text: `+${formatMinutesSpan(-slack)}`, tone: "text-danger" };
+  if (shipment.eta?.verdict === "AtRisk") {
+    return { text: t("{0} to spare", formatMinutesSpan(slack)), tone: "text-warning" };
+  }
   if (slack < 15) return { text: t("on time"), tone: "text-success" };
   return { text: t("{0} early", formatMinutesSpan(slack)), tone: "text-success" };
 }
@@ -17,7 +20,10 @@ export function useEtaDelta(shipment: Shipment): { text: string; tone: string } 
 export function EtaCell({ shipment }: { shipment: Shipment }) {
   const stop = getDestinationStop(shipment);
   const arrival =
-    shipment.eta?.estimatedArrival ?? stop?.scheduledWindowEnd ?? stop?.scheduledWindowStart ?? null;
+    shipment.eta?.estimatedArrival ??
+    stop?.scheduledWindowEnd ??
+    stop?.scheduledWindowStart ??
+    null;
   const delta = useEtaDelta(shipment);
 
   if (!arrival) {

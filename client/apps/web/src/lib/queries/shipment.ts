@@ -17,6 +17,11 @@ export const shipment = createQueryKeys("shipment", {
     queryKey: ["get", shipmentId, params],
     queryFn: async () => apiService.shipmentService.get(shipmentId, params),
   }),
+  eta: (shipmentId: NonNullable<Shipment["id"]>) => ({
+    queryKey: ["eta", shipmentId],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.shipmentService.getEta(shipmentId, { signal }),
+  }),
   billingReadiness: (shipmentId: Shipment["id"]) => ({
     queryKey: ["billing-readiness", shipmentId],
     queryFn: async () => apiService.shipmentService.getBillingReadiness(shipmentId),

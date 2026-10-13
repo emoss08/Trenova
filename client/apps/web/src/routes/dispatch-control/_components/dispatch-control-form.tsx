@@ -78,6 +78,7 @@ export default function DispatchControlForm() {
           </CapabilityGate>
           <ServiceFailureForm />
           <CheckCallMonitoringForm />
+          <EtaMonitoringForm />
           <CapabilityGate capability={OrganizationCapability.AssetOperations}>
             <ComplianceForm />
           </CapabilityGate>
@@ -303,6 +304,67 @@ function CheckCallMonitoringForm() {
               />
             </FormControl>
           )}
+        </FormGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+function EtaMonitoringForm() {
+  const t = useT();
+  const { control } = useFormContext<DispatchControl>();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("Arrival projections")}</CardTitle>
+        <CardDescription>
+          {t(
+            "Every open stop on an active shipment carries a projected arrival, worked out from the truck's position, the carrier's check calls or the last departure, with routed drive time and the driver's hours.",
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-prose">
+        <FormGroup cols={1}>
+          <FormControl className="min-h-[3em]">
+            <SwitchField
+              control={control}
+              name="enableEtaAlerts"
+              label={t("Raise at-risk loads in the watchtower")}
+              description={t(
+                "A load projected to arrive with less slack than the threshold raises an ETA at risk item; one projected past its window is critical.",
+              )}
+              position="left"
+            />
+          </FormControl>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <NumberField
+              control={control}
+              name="etaRiskThresholdMinutes"
+              label={t("At-risk threshold")}
+              description={t(
+                "Slack under this many minutes counts as at risk, from 0 to 1440. A customer can set its own threshold.",
+              )}
+              placeholder="60"
+              sideText="minutes"
+              min={0}
+              max={1440}
+            />
+          </FormControl>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <NumberField
+              control={control}
+              name="etaDwellMinutes"
+              label={t("Stop dwell time")}
+              description={t(
+                "How long a stop takes once the truck is there, used to chain later stops, from 0 to 720 minutes.",
+              )}
+              placeholder="60"
+              sideText="minutes"
+              min={0}
+              max={720}
+            />
+          </FormControl>
         </FormGroup>
       </CardContent>
     </Card>

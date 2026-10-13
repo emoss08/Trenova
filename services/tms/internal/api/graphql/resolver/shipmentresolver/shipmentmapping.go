@@ -3,6 +3,7 @@ package shipmentresolver
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"math"
 	"strings"
 
@@ -975,7 +976,26 @@ func shipmentEtaToModel(eta *shipmenttrackingports.ShipmentEta) *gqlmodel.Shipme
 		return nil
 	}
 
-	out := &gqlmodel.ShipmentEta{Verdict: eta.Verdict}
+	out := &gqlmodel.ShipmentEta{
+		Verdict:    eta.Verdict,
+		InputStale: eta.InputStale,
+		Stops:      eta.Stops,
+	}
+	if out.Stops == nil {
+		out.Stops = []*stopeta.StopETA{}
+	}
+	if eta.StopID.IsNotNil() {
+		stopID := eta.StopID.String()
+		out.StopID = &stopID
+	}
+	if eta.Basis != "" {
+		basis := eta.Basis
+		out.Basis = &basis
+	}
+	if eta.ComputedAt > 0 {
+		computedAt := int(eta.ComputedAt)
+		out.ComputedAt = &computedAt
+	}
 	if eta.EstimatedArrival != nil {
 		arrival := int(*eta.EstimatedArrival)
 		out.EstimatedArrival = &arrival

@@ -242,6 +242,12 @@ export const customerSchema = z
       .min(1, { error: () => translate("Check call interval must be at least 1 hour") })
       .max(72, { error: () => translate("Check call interval cannot exceed 72 hours") })
       .nullish(),
+    etaRiskThresholdMinutes: z
+      .number()
+      .int()
+      .min(0, { error: () => translate("ETA risk threshold cannot be negative") })
+      .max(1440, { error: () => translate("ETA risk threshold cannot exceed 1440 minutes") })
+      .nullish(),
     allowConsolidation: z.boolean().default(true),
     exclusiveConsolidation: z.boolean().default(false),
     consolidationPriority: z.number().int().min(1).default(1),

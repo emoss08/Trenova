@@ -257,6 +257,19 @@ export const dispatchControlSchema = z
       .min(1, { error: () => translate("Check call interval must be at least 1 hour") })
       .max(72, { error: () => translate("Check call interval cannot exceed 72 hours") })
       .default(4),
+    enableEtaAlerts: z.boolean().default(true),
+    etaRiskThresholdMinutes: z
+      .number({ error: () => translate("Enter how many minutes of slack count as at risk") })
+      .int()
+      .min(0, { error: () => translate("ETA risk threshold cannot be negative") })
+      .max(1440, { error: () => translate("ETA risk threshold cannot exceed 1440 minutes") })
+      .default(60),
+    etaDwellMinutes: z
+      .number({ error: () => translate("Enter how long a stop takes once the truck is there") })
+      .int()
+      .min(0, { error: () => translate("Stop dwell time cannot be negative") })
+      .max(720, { error: () => translate("Stop dwell time cannot exceed 720 minutes") })
+      .default(60),
   })
   .refine(
     (data) => {

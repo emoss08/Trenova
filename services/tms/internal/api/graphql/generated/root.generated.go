@@ -28551,13 +28551,84 @@ enum EtaVerdict {
   Unknown
 }
 
-type ShipmentEta {
+"What a projected arrival was worked out from."
+enum StopEtaBasis {
+  "The assigned tractor's telematics position."
+  Position
+  "The position on the latest check call."
+  CheckCall
+  "The arrival the carrier gave on its latest check call."
+  CarrierReported
+  "The truck has arrived at the stop and not yet left."
+  AtStop
+  "The last stop the truck left, with no position since."
+  LastDeparture
+  "Nothing to estimate from."
+  None
+}
+
+"How the drive time behind a projected arrival was found."
+enum StopEtaDriveMethod {
+  "Routed by the organization's routing integration."
+  Routed
+  "Straight line widened for roads, at the planning speed."
+  Planning
+  "Stated by the carrier."
+  Reported
+  "No drive was needed or none could be worked out."
+  None
+}
+
+"The projected arrival at one open stop, stored and refreshed as its inputs change."
+type StopEta {
+  id: ID!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  stopId: ID!
+  moveSequence: Int!
+  stopSequence: Int!
+  "The truck is at the stop; the arrival is the recorded one."
+  arrived: Boolean!
   estimatedArrival: Timestamp
-  "Minutes between the projected arrival and the end of the delivery window; negative when it will be missed."
+  estimatedDeparture: Timestamp
+  "The end of the stop's window, or its start when it has no end."
+  windowEnd: Timestamp
+  "Minutes between the projected arrival and the window end; negative when it will be missed."
   slackMinutes: Int
   verdict: EtaVerdict!
-  "Why the load is behind, when the tracking snapshot can say."
+  basis: StopEtaBasis!
+  driveMethod: StopEtaDriveMethod!
+  "Road miles from the projection's starting point to this stop."
+  milesRemaining: Float!
+  "Driving minutes from the starting point to this stop."
+  driveMinutes: Int!
+  "Breaks, resets and restarts the driver's hours add before this stop."
+  restMinutes: Int!
+  "When the position, check call or departure it rests on was recorded."
+  inputAt: Timestamp
+  "The input is older than it should be to trust the projection."
+  inputStale: Boolean!
+  "Slack under this many minutes is at risk."
+  thresholdMinutes: Int!
+  "What the projection rests on, in words."
   reason: String
+  computedAt: Timestamp!
+}
+
+type ShipmentEta {
+  "The stop the shipment's verdict comes from: the worst open stop, else the next one."
+  stopId: ID
+  estimatedArrival: Timestamp
+  "Minutes between the projected arrival and the end of the stop's window; negative when it will be missed."
+  slackMinutes: Int
+  verdict: EtaVerdict!
+  basis: StopEtaBasis
+  inputStale: Boolean!
+  computedAt: Timestamp
+  "Why the load is behind: an open service failure's reason, else what the projection rests on."
+  reason: String
+  "Every open stop's projected arrival, in route order."
+  stops: [StopEta!]!
 }
 
 "How an organization moves freight: with its own drivers, through carriers, or both."
@@ -30669,6 +30740,7 @@ enum WatchtowerSourceKind {
   AgentQualityRegression
   AccountingSync
   NoCheckCall
+  EtaAtRisk
 }
 
 "How loudly an item asks to be looked at."

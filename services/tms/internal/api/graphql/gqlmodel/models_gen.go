@@ -55,13 +55,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -8006,12 +8006,19 @@ type ShipmentEmptyMile struct {
 }
 
 type ShipmentEta struct {
-	EstimatedArrival *int `json:"estimatedArrival,omitempty"`
-	// Minutes between the projected arrival and the end of the delivery window; negative when it will be missed.
-	SlackMinutes *int                     `json:"slackMinutes,omitempty"`
-	Verdict      shipmenttracking.Verdict `json:"verdict"`
-	// Why the load is behind, when the tracking snapshot can say.
+	// The stop the shipment's verdict comes from: the worst open stop, else the next one.
+	StopID           *string `json:"stopId,omitempty"`
+	EstimatedArrival *int    `json:"estimatedArrival,omitempty"`
+	// Minutes between the projected arrival and the end of the stop's window; negative when it will be missed.
+	SlackMinutes *int            `json:"slackMinutes,omitempty"`
+	Verdict      stopeta.Verdict `json:"verdict"`
+	Basis        *stopeta.Basis  `json:"basis,omitempty"`
+	InputStale   bool            `json:"inputStale"`
+	ComputedAt   *int            `json:"computedAt,omitempty"`
+	// Why the load is behind: an open service failure's reason, else what the projection rests on.
 	Reason *string `json:"reason,omitempty"`
+	// Every open stop's projected arrival, in route order.
+	Stops []*stopeta.StopETA `json:"stops"`
 }
 
 type ShipmentEventShipmentReference struct {

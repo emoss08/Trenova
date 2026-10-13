@@ -7948,6 +7948,7 @@ export type WatchtowerSourceKind =
   | 'CarrierIntelEvent'
   | 'DetentionOccurrence'
   | 'EDIInboundQuarantined'
+  | 'EtaAtRisk'
   | 'HOSViolation'
   | 'InboundMessage'
   | 'Insight'

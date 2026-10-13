@@ -5155,3 +5155,12 @@ models:
   CarrierTrackingLink:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.TrackingLink
+  StopEta:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.StopETA
+  StopEtaBasis:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.Basis
+  StopEtaDriveMethod:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.DriveMethod

@@ -10,16 +10,24 @@ import (
 )
 
 type ShipmentEta struct {
-	ShipmentID       pulid.ID
-	StopID           pulid.ID
-	EstimatedArrival *int64
-	SlackMinutes     *int64
-	Verdict          stopeta.Verdict
-	Basis            stopeta.Basis
-	InputStale       bool
-	ComputedAt       int64
-	Reason           string
-	Stops            []*stopeta.StopETA
+	ShipmentID       pulid.ID           `json:"shipmentId"`
+	StopID           pulid.ID           `json:"stopId,omitempty"`
+	EstimatedArrival *int64             `json:"estimatedArrival"`
+	SlackMinutes     *int64             `json:"slackMinutes"`
+	Verdict          stopeta.Verdict    `json:"verdict"`
+	Basis            stopeta.Basis      `json:"basis,omitempty"`
+	InputStale       bool               `json:"inputStale"`
+	ComputedAt       int64              `json:"computedAt,omitempty"`
+	Reason           string             `json:"reason,omitempty"`
+	Stops            []*stopeta.StopETA `json:"stops"`
+}
+
+func UnknownShipmentEta(shipmentID pulid.ID) *ShipmentEta {
+	return &ShipmentEta{
+		ShipmentID: shipmentID,
+		Verdict:    stopeta.VerdictUnknown,
+		Stops:      []*stopeta.StopETA{},
+	}
 }
 
 type ShipmentEtaReader interface {

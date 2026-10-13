@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:9f9653fb217ea2c70f8cc30baf7244f5620cdf512befd037a5d2b2fc502151a7"
+const Version = "sha256:c543ed79f086aad5bc3eada52b40ed2191c2320abe12d0b4269b149b9478819a"
 
 var Default = indexed(defaultCatalog)
 
@@ -3317,6 +3317,16 @@ var defaultCatalog = Catalog{
 					Key:          "checkCallIntervalHours",
 					Column:       buncolgen.NewColumn("check_call_interval_hours", "cus"),
 					Label:        "Check Call Interval Hours",
+					Type:         FieldInt,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "etaRiskThresholdMinutes",
+					Column:       buncolgen.NewColumn("eta_risk_threshold_minutes", "cus"),
+					Label:        "ETA Risk Threshold Minutes",
 					Type:         FieldInt,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
