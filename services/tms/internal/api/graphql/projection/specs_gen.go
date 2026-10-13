@@ -8863,6 +8863,10 @@ func init() {
 				FieldMapKey: "autoSendInvoiceOnGeneration",
 			},
 			{
+				Name:        "sendPaymentReminders",
+				FieldMapKey: "sendPaymentReminders",
+			},
+			{
 				Name:        "emailInvoiceEnabled",
 				FieldMapKey: "emailInvoiceEnabled",
 			},

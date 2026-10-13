@@ -149,6 +149,8 @@ type CustomerBillingProfile {
   invoiceMethod: CustomerInvoiceMethod!
     @deprecated(reason: "Split into invoiceDelivery (how many invoices) and invoiceDetail (how verbose). Removed in a later release.")
   autoSendInvoiceOnGeneration: Boolean!
+  "Whether the organization's payment reminders may email this customer about overdue invoices."
+  sendPaymentReminders: Boolean!
   "Whether invoices may be emailed to this customer."
   emailInvoiceEnabled: Boolean!
   "Whether invoices are sent to this customer's EDI partner as an 210."

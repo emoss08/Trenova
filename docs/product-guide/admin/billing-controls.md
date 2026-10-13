@@ -75,8 +75,22 @@ Keywords: late fees, overdue invoices, debit memo, finance charges
 3. Set the **Minimum late charge**; customers whose charges for a run add up to less are skipped.
 4. Select **Save changes**.
 
+### Email customers payment reminders
+Keywords: dunning, overdue reminder, past due email, collection letter
+1. Open [Billing controls](/admin/billing-controls).
+2. In **Payment reminders**, turn on **Send payment reminders**.
+3. In **Remind on days past due**, list the days to send on, such as 1, 15, 30. The last one is
+   sent as the final reminder.
+4. Select **Save changes**.
+
 ## Notes
 Opening the page needs read access to billing control; saving needs update access. Late charge
 rates and grace periods are set on each customer's billing profile, not here. In **Preview only**
 the nightly run writes nothing, and memos are raised by hand on
 [Late charges](/accounting/ar/late-charges).
+
+Payment reminders go out each morning: a customer with an invoice newly reaching one of the
+**Remind on days past due** days is emailed one reminder listing every overdue invoice it has.
+Disputed invoices are left off, and a customer waiting on an open promise to pay recorded in
+[Collections](/accounting/ar/collections) is not reminded until the promised date passes. Turn off
+**Send payment reminders** on a customer's billing profile to leave that customer out.

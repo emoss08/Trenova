@@ -405,6 +405,7 @@ var CustomerBillingProfileColumns = struct {
 	CreditHoldAutomatic             buncolgen.Column // "credit_hold_automatic" → qualified: "cbp.credit_hold_automatic"
 	CreditReviewedAt                buncolgen.Column // "credit_reviewed_at" → qualified: "cbp.credit_reviewed_at"
 	AutoSendInvoiceOnGeneration     buncolgen.Column // "auto_send_invoice_on_generation" → qualified: "cbp.auto_send_invoice_on_generation"
+	SendPaymentReminders            buncolgen.Column // "send_payment_reminders" → qualified: "cbp.send_payment_reminders"
 	EmailInvoiceEnabled             buncolgen.Column // "email_invoice_enabled" → qualified: "cbp.email_invoice_enabled"
 	EDIInvoiceEnabled               buncolgen.Column // "edi_invoice_enabled" → qualified: "cbp.edi_invoice_enabled"
 	SplitBy                         buncolgen.Column // "split_by" → qualified: "cbp.split_by"
@@ -463,6 +464,7 @@ var CustomerBillingProfileColumns = struct {
 	CreditHoldAutomatic:             buncolgen.NewColumn("credit_hold_automatic", "cbp"),
 	CreditReviewedAt:                buncolgen.NewColumn("credit_reviewed_at", "cbp"),
 	AutoSendInvoiceOnGeneration:     buncolgen.NewColumn("auto_send_invoice_on_generation", "cbp"),
+	SendPaymentReminders:            buncolgen.NewColumn("send_payment_reminders", "cbp"),
 	EmailInvoiceEnabled:             buncolgen.NewColumn("email_invoice_enabled", "cbp"),
 	EDIInvoiceEnabled:               buncolgen.NewColumn("edi_invoice_enabled", "cbp"),
 	SplitBy:                         buncolgen.NewColumn("split_by", "cbp"),
@@ -527,6 +529,7 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"creditHoldAutomatic":             "credit_hold_automatic",
 	"creditReviewedAt":                "credit_reviewed_at",
 	"autoSendInvoiceOnGeneration":     "auto_send_invoice_on_generation",
+	"sendPaymentReminders":            "send_payment_reminders",
 	"emailInvoiceEnabled":             "email_invoice_enabled",
 	"ediInvoiceEnabled":               "edi_invoice_enabled",
 	"splitBy":                         "split_by",
@@ -589,6 +592,7 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"credit_hold_automatic",
 	"credit_reviewed_at",
 	"auto_send_invoice_on_generation",
+	"send_payment_reminders",
 	"email_invoice_enabled",
 	"edi_invoice_enabled",
 	"split_by",
@@ -719,6 +723,7 @@ var CustomerBillingProfileFilter = struct {
 	CreditHoldAutomatic             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditHoldAutomatic" → DB: "credit_hold_automatic"
 	CreditReviewedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditReviewedAt" → DB: "credit_reviewed_at"
 	AutoSendInvoiceOnGeneration     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoSendInvoiceOnGeneration" → DB: "auto_send_invoice_on_generation"
+	SendPaymentReminders            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sendPaymentReminders" → DB: "send_payment_reminders"
 	EmailInvoiceEnabled             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailInvoiceEnabled" → DB: "email_invoice_enabled"
 	EDIInvoiceEnabled               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediInvoiceEnabled" → DB: "edi_invoice_enabled"
 	SplitBy                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "splitBy" → DB: "split_by"
@@ -816,6 +821,9 @@ var CustomerBillingProfileFilter = struct {
 	},
 	AutoSendInvoiceOnGeneration: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("autoSendInvoiceOnGeneration", op, value)
+	},
+	SendPaymentReminders: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sendPaymentReminders", op, value)
 	},
 	EmailInvoiceEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("emailInvoiceEnabled", op, value)

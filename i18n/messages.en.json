@@ -28178,11 +28178,12 @@
     ]
   },
   "Assigned to {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/collections",
       "routes/inbox"
     ]
   },
@@ -36655,12 +36656,22 @@
     ]
   },
   "Broken": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/agent-control"
+    ]
+  },
+  "Broken promises": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/collections"
     ]
   },
   "Broker": {
@@ -38145,11 +38156,13 @@
     ]
   },
   "Call": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
+      "routes/collections",
       "routes/desk"
     ]
   },
@@ -38420,7 +38433,7 @@
     ]
   },
   "Cancel": {
-    "sites": 284,
+    "sites": 285,
     "scope": [
       "ts"
     ],
@@ -38441,6 +38454,7 @@
       "routes/carrier-invoice-matching",
       "routes/carrier-settlement",
       "routes/carrier-sourcing",
+      "routes/collections",
       "routes/customer-payments",
       "routes/desk",
       "routes/detention-desk",
@@ -44919,6 +44933,15 @@
       "routes/customer-ledger"
     ]
   },
+  "Choose a date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Choose a dispute reason": {
     "sites": 1,
     "scope": [
@@ -45365,6 +45388,17 @@
       "routes/worker"
     ]
   },
+  "Choose at least one day past due to send a reminder on": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/billing-control"
+    ]
+  },
   "Choose at least one event that starts this agent": {
     "sites": 1,
     "scope": [
@@ -45663,6 +45697,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Choose someone in this organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Choose the AI provider to evaluate": {
@@ -47733,6 +47776,15 @@
       "routes/shipment"
     ]
   },
+  "Clear follow-up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Clear of dispute": {
     "sites": 1,
     "scope": [
@@ -49705,12 +49757,23 @@
     ]
   },
   "Collections": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/collections",
+      "routes/random-testing"
+    ]
+  },
+  "Collections account": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/random-testing"
+      "routes/collections"
     ]
   },
   "Collections performance": {
@@ -49720,6 +49783,15 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
+    ]
+  },
+  "Collections summary": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Collections worklist": {
@@ -49732,15 +49804,35 @@
     ]
   },
   "Collector": {
+    "sites": 6,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/collections",
+      "routes/worker"
+    ]
+  },
+  "Collector and follow-up": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/worker"
+      "routes/collections"
     ]
   },
   "Collector cannot exceed 100 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Collector filter is invalid": {
     "sites": 1,
     "scope": [
       "go"
@@ -59779,12 +59871,13 @@
     ]
   },
   "Credit": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/collections",
       "routes/customer-ledger",
       "routes/desk",
       "routes/invoice",
@@ -60023,11 +60116,12 @@
     ]
   },
   "Credit hold": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/collections",
       "routes/shipment"
     ]
   },
@@ -60299,13 +60393,14 @@
     ]
   },
   "Critical": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "go/other",
       "packages/shared/types",
       "routes/admin",
@@ -61407,7 +61502,7 @@
     ]
   },
   "Customer": {
-    "sites": 78,
+    "sites": 80,
     "scope": [
       "go",
       "ts"
@@ -61425,6 +61520,7 @@
       "routes/ar-aging",
       "routes/ar-open-items",
       "routes/billing-queue",
+      "routes/collections",
       "routes/customer",
       "routes/customer-ledger",
       "routes/customer-payments",
@@ -61751,7 +61847,7 @@
     ]
   },
   "Customer is required": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -61817,6 +61913,15 @@
       "packages/shared/types",
       "routes/billing-queue",
       "routes/shipment"
+    ]
+  },
+  "Customer not found": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Customer notice": {
@@ -62211,6 +62316,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Customers with overdue receivables, ranked by who to call first. Open one to log a call, record a promise to pay, or schedule the next follow-up.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Customers with their own": {
@@ -63692,6 +63806,15 @@
       "routes/worker"
     ]
   },
+  "Day after the promise": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Day boundary mode is invalid": {
     "sites": 1,
     "scope": [
@@ -63942,6 +64065,15 @@
       "routes/pto-policy"
     ]
   },
+  "Days late": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
+    ]
+  },
   "Days lost": {
     "sites": 3,
     "scope": [
@@ -63996,6 +64128,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Days past due of the oldest invoice listed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Days restricted or transferred": {
@@ -71966,6 +72107,15 @@
       "go/other"
     ]
   },
+  "Disputed invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Disputed line": {
     "sites": 1,
     "scope": [
@@ -76599,7 +76749,7 @@
     ]
   },
   "Due": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -76612,7 +76762,8 @@
       "routes/worker",
       "routes/worker-checklist-template",
       "template/invoice.email",
-      "template/invoice.pdf"
+      "template/invoice.pdf",
+      "template/invoice.reminder.email"
     ]
   },
   "Due Date": {
@@ -76802,6 +76953,15 @@
       "packages/shared/lib"
     ]
   },
+  "Due today only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Due tomorrow": {
     "sites": 1,
     "scope": [
@@ -76821,12 +76981,13 @@
     ]
   },
   "Due {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/collections",
       "routes/desk",
       "routes/ifta-return"
     ]
@@ -80112,7 +80273,7 @@
     ]
   },
   "Email": {
-    "sites": 24,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -80126,6 +80287,7 @@
       "packages/shared/types",
       "routes/auth",
       "routes/carrier",
+      "routes/collections",
       "routes/desk",
       "routes/inbox",
       "routes/worker"
@@ -80375,6 +80537,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Email customers about overdue invoices on the days past due you choose. One reminder lists every overdue invoice a customer has; disputed invoices and customers waiting on a promise to pay are left out.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
+  "Email customers the payment reminders their schedule says are due": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Email delivery": {
@@ -80643,6 +80823,15 @@
       "apps/web/components"
     ]
   },
+  "Email this customer when invoices go past due, on the schedule in billing control. Turn off for a customer who must never receive an automated reminder.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Email to": {
     "sites": 1,
     "scope": [
@@ -80695,6 +80884,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Emails every overdue invoice not in dispute to the invoice recipients on the customer's email profile, whatever the reminder schedule says.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Emails this user a single-use link to choose their own password. Their current password keeps working until they use it, and you never see the new one.": {
@@ -83177,6 +83375,15 @@
       "routes/auth"
     ]
   },
+  "Enter the amount the customer promised": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Enter the client secret that goes with this client ID": {
     "sites": 2,
     "scope": [
@@ -83206,6 +83413,17 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "Enter the date the customer promised to pay by": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/collections"
     ]
   },
   "Enter the day the miles were run": {
@@ -83289,6 +83507,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Enter the promised amount, with at most two decimal places": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Enter the resource name or the endpoint's address, not both": {
@@ -83379,6 +83606,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Enter whole days separated by commas, such as 1, 15, 30": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
     ]
   },
   "Enter your code": {
@@ -86341,6 +86577,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "Every overdue invoice, oldest first. Required: a reminder that names no invoice cannot be acted on.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Every page arrived; the stack is waiting to be read": {
     "sites": 1,
     "scope": [
@@ -87041,6 +87286,15 @@
     ],
     "areas": [
       "routes/my-team"
+    ]
+  },
+  "Everyone's": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Everyone's ratings of AI output, with what they saw and why they rated it": {
@@ -95035,6 +95289,24 @@
       "routes/detention-desk"
     ]
   },
+  "Final reminder": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
+    ]
+  },
+  "Final reminder: {0} overdue with {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
+    ]
+  },
   "Final warning": {
     "sites": 1,
     "scope": [
@@ -96972,6 +97244,15 @@
       "go/other"
     ]
   },
+  "Follow up on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Follow up on payment": {
     "sites": 1,
     "scope": [
@@ -96981,15 +97262,35 @@
       "routes/desk"
     ]
   },
+  "Follow up on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Follow-up": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "go/other",
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/collections"
+    ]
+  },
+  "Follow-up cleared": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Follow-up count cannot be negative": {
@@ -97017,6 +97318,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Follow-up set for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Follow-up test count cannot be negative": {
@@ -97064,6 +97374,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Follow-ups due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Follows rate validation in billing control.": {
@@ -101750,11 +102069,12 @@
     ]
   },
   "Good standing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "packages/shared/types"
     ]
   },
@@ -104159,7 +104479,7 @@
     ]
   },
   "Hello {0},": {
-    "sites": 12,
+    "sites": 14,
     "scope": [
       "go"
     ],
@@ -104169,6 +104489,7 @@
       "template/agent.proposal_reminder.email",
       "template/agent.request_missing_docs.email",
       "template/invoice.email",
+      "template/invoice.reminder.email",
       "template/tender.offer.email"
     ]
   },
@@ -104182,7 +104503,7 @@
     ]
   },
   "Hello,": {
-    "sites": 12,
+    "sites": 14,
     "scope": [
       "go"
     ],
@@ -104192,6 +104513,7 @@
       "template/agent.proposal_reminder.email",
       "template/agent.request_missing_docs.email",
       "template/invoice.email",
+      "template/invoice.reminder.email",
       "template/tender.offer.email"
     ]
   },
@@ -104580,7 +104902,7 @@
     ]
   },
   "High": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -104837,7 +105159,7 @@
     ]
   },
   "History": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -104846,6 +105168,7 @@
       "apps/web/components",
       "routes/carrier",
       "routes/carrier-settlement",
+      "routes/collections",
       "routes/driver-settlement",
       "routes/order",
       "routes/rate-agreement",
@@ -106910,6 +107233,15 @@
       "routes/rate-zone"
     ]
   },
+  "How to pay, from billing control's default invoice terms.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "How to pay, from the invoice.": {
     "sites": 1,
     "scope": [
@@ -107837,6 +108169,15 @@
     ],
     "areas": [
       "template/account.password_reset.email"
+    ]
+  },
+  "If you have already paid, thank you, and please disregard this reminder. If any of these invoices is in question, reply to this message and we will look into it.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
     ]
   },
   "If you were not expecting this, you can ignore it.": {
@@ -112540,7 +112881,7 @@
     ]
   },
   "Invoice": {
-    "sites": 36,
+    "sites": 37,
     "scope": [
       "go",
       "ts"
@@ -112562,6 +112903,7 @@
       "routes/late-charges",
       "template/invoice.email",
       "template/invoice.pdf",
+      "template/invoice.reminder.email",
       "template/invoice.share.email"
     ]
   },
@@ -113759,6 +114101,15 @@
     ],
     "areas": [
       "routes/order"
+    ]
+  },
+  "Invoice {0}, due {1} ({2} days past due): {3}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
     ]
   },
   "Invoiced": {
@@ -116663,6 +117014,24 @@
       "apps/web/components"
     ]
   },
+  "Keep the note under 2,000 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Keep the note under 4,000 characters": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Keep the note under 500 characters": {
     "sites": 3,
     "scope": [
@@ -116955,11 +117324,12 @@
     ]
   },
   "Kept": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/agent-control",
       "routes/detention-intelligence"
     ]
@@ -117412,7 +117782,7 @@
     ]
   },
   "Kind is required": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go"
     ],
@@ -117445,6 +117815,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Kind of contact": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Kind of exception": {
@@ -118386,6 +118765,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Last contact": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Last conversation": {
@@ -120279,11 +120667,12 @@
     ]
   },
   "Ledger": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/collections",
       "routes/worker"
     ]
   },
@@ -122487,6 +122876,15 @@
       "apps/web/components"
     ]
   },
+  "List reminder days from earliest to latest, each once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "List request is required": {
     "sites": 1,
     "scope": [
@@ -123028,6 +123426,15 @@
     ],
     "areas": [
       "template/tender.offer.email"
+    ]
+  },
+  "Load older": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Load plan": {
@@ -124218,7 +124625,7 @@
     ]
   },
   "Loading...": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "ts"
     ],
@@ -124229,6 +124636,7 @@
       "routes/admin",
       "routes/bank-receipt-batch",
       "routes/billing-queue",
+      "routes/collections",
       "routes/customer-statement",
       "routes/shipment",
       "routes/worker"
@@ -124856,6 +125264,24 @@
       "routes/worker"
     ]
   },
+  "Log a contact": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
+  "Log a note, call, email or promise to pay": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Log a query": {
     "sites": 1,
     "scope": [
@@ -124872,6 +125298,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Log calls, notes and promises to pay, assign collectors and schedule follow-ups": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Log column": {
@@ -124899,6 +125334,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Log it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Log of work-related injuries and illnesses, {0}": {
@@ -124980,6 +125424,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Logged": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Logged by hand": {
@@ -125590,7 +126043,7 @@
     ]
   },
   "Low": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -131549,6 +132002,15 @@
       "routes/desk"
     ]
   },
+  "Mine": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Minimal": {
     "sites": 1,
     "scope": [
@@ -135665,6 +136127,15 @@
       "apps/web/components"
     ]
   },
+  "Near limit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Near miss": {
     "sites": 1,
     "scope": [
@@ -136564,6 +137035,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Never contacted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Never convert": {
@@ -137672,12 +138152,13 @@
     ]
   },
   "Next": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/collections",
       "routes/desk",
       "routes/inbox"
     ]
@@ -137860,6 +138341,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Next follow-up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
+  "Next follow-up {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Next frame": {
@@ -145501,6 +146000,15 @@
       "routes/org-structure"
     ]
   },
+  "Nobody has worked this account yet. Calls, emails, notes and promises appear here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Nobody holds this title yet.": {
     "sites": 1,
     "scope": [
@@ -146047,11 +146555,12 @@
     ]
   },
   "Normal": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "packages/shared/lib"
     ]
   },
@@ -146882,6 +147391,15 @@
       "routes/worker"
     ]
   },
+  "Not past due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Not paused": {
     "sites": 1,
     "scope": [
@@ -147214,12 +147732,13 @@
     ]
   },
   "Not scheduled": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/dash/_components"
+      "apps/dash/_components",
+      "routes/collections"
     ]
   },
   "Not scored": {
@@ -147565,7 +148084,7 @@
     ]
   },
   "Note": {
-    "sites": 19,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -147573,9 +148092,11 @@
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
+      "apps/web/lib",
       "go/other",
       "packages/shared/lib",
       "routes/accounting-inbound",
+      "routes/collections",
       "routes/desk",
       "routes/detention-desk",
       "routes/edi",
@@ -147685,6 +148206,15 @@
       "routes/edi"
     ]
   },
+  "Note to the customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Noted on the delivery": {
     "sites": 1,
     "scope": [
@@ -147695,7 +148225,7 @@
     ]
   },
   "Notes": {
-    "sites": 53,
+    "sites": 54,
     "scope": [
       "go",
       "ts"
@@ -147707,6 +148237,7 @@
       "routes/billing-queue",
       "routes/carrier",
       "routes/carrier-settlement-batch",
+      "routes/collections",
       "routes/customer",
       "routes/desk",
       "routes/edi",
@@ -151618,6 +152149,15 @@
       "routes/agent-control"
     ]
   },
+  "Older history could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Older than {0} hours, past the maximum age the tender gate accepts. Vet the carrier again.": {
     "sites": 1,
     "scope": [
@@ -151634,6 +152174,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Oldest": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Oldest blocked items": {
@@ -151661,6 +152210,15 @@
     ],
     "areas": [
       "routes/customer-ledger"
+    ]
+  },
+  "Oldest past due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Oldest pending": {
@@ -151951,7 +152509,7 @@
     ]
   },
   "On hold": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -155366,7 +155924,7 @@
     ]
   },
   "Open": {
-    "sites": 62,
+    "sites": 63,
     "scope": [
       "go",
       "ts"
@@ -155405,7 +155963,8 @@
       "routes/shipment",
       "routes/time-attendance",
       "routes/tractor",
-      "routes/worker"
+      "routes/worker",
+      "template/invoice.reminder.email"
     ]
   },
   "Open (first-come) stops will not accrue detention under this policy.": {
@@ -155773,6 +156332,15 @@
     "areas": [
       "routes/osha",
       "routes/worker"
+    ]
+  },
+  "Open collections": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-dashboard"
     ]
   },
   "Open comparison": {
@@ -156233,6 +156801,7 @@
       "apps/web/config",
       "routes/accounting-dashboard",
       "routes/ar-open-items",
+      "routes/collections",
       "routes/customer-statement"
     ]
   },
@@ -159809,6 +160378,15 @@
       "routes/edi"
     ]
   },
+  "Our records show {0} past due on the invoices below.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
+    ]
+  },
   "Our sender identifier placed in the ISA interchange header.": {
     "sites": 1,
     "scope": [
@@ -160357,7 +160935,7 @@
     ]
   },
   "Overdue": {
-    "sites": 14,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -160371,6 +160949,7 @@
       "routes/accounting-dashboard",
       "routes/ar-aging",
       "routes/ar-open-items",
+      "routes/collections",
       "routes/home",
       "routes/worker"
     ]
@@ -162097,11 +162676,12 @@
     ]
   },
   "Page {0} of {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/collections",
       "routes/insights"
     ]
   },
@@ -163682,12 +164262,14 @@
     ]
   },
   "Past due": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/invoice-register"
+      "routes/invoice-register",
+      "template/invoice.reminder.email"
     ]
   },
   "Past due since {0}": {
@@ -165433,6 +166015,42 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Payment reminder": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
+    ]
+  },
+  "Payment reminder: {0} overdue with {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
+    ]
+  },
+  "Payment reminders": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
+  "Payment reminders could not be sent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Payment reversal": {
@@ -172532,12 +173150,13 @@
     ]
   },
   "Previous": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/collections",
       "routes/desk",
       "routes/inbox"
     ]
@@ -174425,6 +175044,61 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Promise": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
+  "Promise recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
+  "Promise to pay": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/collections"
+    ]
+  },
+  "Promised": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Promised amount": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
+  "Promised {0} by {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Promoted": {
@@ -182446,11 +183120,12 @@
     ]
   },
   "Receivables": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/collections",
       "routes/desk"
     ]
   },
@@ -184041,6 +184716,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Record promise": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Record recognition": {
@@ -187057,6 +187741,33 @@
       "go/other"
     ]
   },
+  "Remind on days past due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
+  "Reminder days must be between 1 and 365 days past due": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reminder sent to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Reminders & alerts": {
     "sites": 1,
     "scope": [
@@ -187064,6 +187775,24 @@
     ],
     "areas": [
       "routes/dash-control"
+    ]
+  },
+  "Reminders go out each morning to the invoice recipients on each customer's email profile, from your Billing email profile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
+  "Reminds a customer that invoices are past due, listing each one with what is still open. Sent on the days past due billing control schedules, or by hand from collections.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Reminds the people who can decide an agent's proposals that some have been waiting for hours, and takes them to the list to decide.": {
@@ -187167,7 +187896,7 @@
     ]
   },
   "Remittance": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -187175,7 +187904,8 @@
     "areas": [
       "routes/carrier",
       "routes/carrier-settlement",
-      "template/invoice.email"
+      "template/invoice.email",
+      "template/invoice.reminder.email"
     ]
   },
   "Remittance CSV downloaded": {
@@ -199847,6 +200577,15 @@
       "routes/admin"
     ]
   },
+  "Save follow-up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Save how the pages divide into documents": {
     "sites": 1,
     "scope": [
@@ -200601,7 +201340,7 @@
     ]
   },
   "Saving...": {
-    "sites": 59,
+    "sites": 60,
     "scope": [
       "ts"
     ],
@@ -200611,6 +201350,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
+      "routes/collections",
       "routes/document-type",
       "routes/driver-expense",
       "routes/formula-template",
@@ -200709,6 +201449,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Say what happened": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/collections"
     ]
   },
   "Say what is being asked for": {
@@ -201812,6 +202563,15 @@
       "routes/reports"
     ]
   },
+  "Schedule the follow-up for today or later": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Schedule type": {
     "sites": 1,
     "scope": [
@@ -202882,6 +203642,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Search customers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Search customers by name or code…": {
@@ -207184,6 +207953,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Send at most six reminders per invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Send automatically when posted": {
     "sites": 1,
     "scope": [
@@ -207439,6 +208217,16 @@
       "routes/admin"
     ]
   },
+  "Send payment reminders": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control",
+      "routes/customer"
+    ]
+  },
   "Send persisted email message via provider": {
     "sites": 1,
     "scope": [
@@ -207482,6 +208270,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "Send reminder": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Send request": {
@@ -207810,6 +208607,15 @@
       "routes/invoice"
     ]
   },
+  "Send {0} a payment reminder?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "Send {0} the ETA": {
     "sites": 1,
     "scope": [
@@ -208073,13 +208879,14 @@
     ]
   },
   "Sending...": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "routes/admin",
+      "routes/collections",
       "routes/dispatch-console",
       "routes/formula-template",
       "routes/invoice",
@@ -216535,6 +217342,15 @@
       "go/other"
     ]
   },
+  "Someone else updated this account at the same time. Reload it and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Someone else…": {
     "sites": 1,
     "scope": [
@@ -216623,6 +217439,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Something went wrong reading receivables. Try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Something went wrong reading the quarter.": {
@@ -218090,6 +218915,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Spoke with": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Spot": {
@@ -223096,7 +223930,7 @@
     ]
   },
   "Suspended": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -230648,6 +231482,15 @@
       "go/other"
     ]
   },
+  "The currency the invoices are billed in.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The currency the numbers in the grid are in, converted at rating time when it differs from the contract's": {
     "sites": 1,
     "scope": [
@@ -230889,6 +231732,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "The customer's code.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The customer's own order or load number. No other live shipment for this customer can use the same one.": {
@@ -235400,6 +236252,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The overdue total across the listed invoices. Required: the customer needs the figure to pay.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The override distance between the two locations": {
@@ -240067,6 +240928,15 @@
       "go/other"
     ]
   },
+  "The worklist could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "The worksheet and every jurisdiction line on it are removed outright. The miles, fuel purchases and rates it was built from are untouched, so generating the quarter again rebuilds it from the same data.": {
     "sites": 1,
     "scope": [
@@ -243269,6 +244139,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "This is our final reminder: {0} is past due on the invoices below.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
     ]
   },
   "This is outside what {0} can do": {
@@ -249302,6 +250181,15 @@
       "go/other"
     ]
   },
+  "Total past due": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
+    ]
+  },
   "Total row": {
     "sites": 1,
     "scope": [
@@ -251976,6 +252864,15 @@
       "apps/web/types"
     ]
   },
+  "True on the last reminder the schedule sends. Say what happens next when it is.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "True once the date has passed. Set rather than inferred, so a template that does no arithmetic still gets it right.": {
     "sites": 1,
     "scope": [
@@ -252169,7 +253066,7 @@
     ]
   },
   "Try again": {
-    "sites": 55,
+    "sites": 56,
     "scope": [
       "ts"
     ],
@@ -252181,6 +253078,7 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/capture",
+      "routes/collections",
       "routes/desk",
       "routes/detention-desk",
       "routes/detention-intelligence",
@@ -253690,7 +254588,7 @@
     ]
   },
   "Unassigned": {
-    "sites": 11,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -253698,6 +254596,7 @@
     "areas": [
       "go/other",
       "routes/bank-receipt-queue",
+      "routes/collections",
       "routes/desk",
       "routes/home",
       "routes/inbox",
@@ -254029,11 +254928,12 @@
     ]
   },
   "Under review": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "packages/shared/types"
     ]
   },
@@ -256142,6 +257042,15 @@
     ],
     "areas": [
       "routes/ifta-tax-rate"
+    ]
+  },
+  "Up to six days, from 1 to 365. The last one is sent as the final reminder.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
     ]
   },
   "Up to six metrics in one compact band": {
@@ -264843,12 +265752,13 @@
     ]
   },
   "What happened": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/collections",
       "routes/desk",
       "routes/inbox",
       "routes/osha",
@@ -265042,6 +265952,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "What is still unpaid on the invoice, with its currency.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "What is the customer disputing?": {
@@ -265757,6 +266676,15 @@
     ],
     "areas": [
       "routes/review-template"
+    ]
+  },
+  "What the sender wrote, when the reminder was sent by hand. Print it: it is why this one went out.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "What the sharer wrote, if anything. Print it: it is the reason the invoice was shared.": {
@@ -266819,6 +267747,15 @@
       "go/other"
     ]
   },
+  "When payment was due.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "When postal-code matching is unavailable, fall back to city and state lane keys.": {
     "sites": 1,
     "scope": [
@@ -267069,6 +268006,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "When the invoice was issued.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "When the laboratory or MRO reported the result; it also fills the collection date if none was recorded.": {
@@ -268398,6 +269344,15 @@
       "apps/web/components"
     ]
   },
+  "Which scheduled reminder this is, counting from 1. Zero when someone sent it by hand.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Which service this price is for": {
     "sites": 1,
     "scope": [
@@ -268966,6 +269921,15 @@
     ],
     "areas": [
       "routes/invoice-adjustment-control"
+    ]
+  },
+  "Whole days since the due date.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Whole number": {
@@ -269549,6 +270513,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Will pay by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "Wind & storm": {
@@ -277439,6 +278412,15 @@
       "routes/customer"
     ]
   },
+  "e.g., Dana in payables": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "e.g., Dispatch Manager": {
     "sites": 1,
     "scope": [
@@ -277473,6 +278455,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "e.g., Following up on our call this morning": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "e.g., Invoice #{number} from {company}": {
@@ -277510,6 +278501,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "e.g., Left a voicemail; their AP runs on Thursdays": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "e.g., Lumper fee": {
@@ -277565,6 +278565,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "e.g., Paying INV-1042 and INV-1051 by ACH": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "e.g., Please find invoice {number} attached for {customer}.": {
@@ -281623,6 +282632,15 @@
       "routes/worker"
     ]
   },
+  "{0, plural, one {# account} other {# accounts}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "{0, plural, one {# active action} other {# active actions}}": {
     "sites": 1,
     "scope": [
@@ -282392,6 +283410,15 @@
     ],
     "areas": [
       "routes/settlement-dispute"
+    ]
+  },
+  "{0, plural, one {# disputed} other {# disputed}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "{0, plural, one {# dispute} other {# disputes}}": {
@@ -287600,14 +288627,24 @@
     ]
   },
   "{0} by {1}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/accounting-drift",
-      "routes/accounting-inbound"
+      "routes/accounting-inbound",
+      "routes/collections"
+    ]
+  },
+  "{0} by {1}, promised to {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "{0} calculation details": {
@@ -288166,13 +289203,14 @@
     ]
   },
   "{0} days": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/collections",
       "routes/worker"
     ]
   },
@@ -289202,6 +290240,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} has no invoice email recipients. Add one to the customer's email profile to send reminders.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} has no overdue invoice that is not in dispute, so there is nothing to remind them of.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} has no proposed match to confirm; choose a record for it instead": {
@@ -290407,6 +291463,15 @@
       "routes/capture"
     ]
   },
+  "{0} is past due.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.reminder.email"
+    ]
+  },
   "{0} is paused for {1} seconds after repeated failures. Try again then, or pick another model": {
     "sites": 1,
     "scope": [
@@ -290511,6 +291576,15 @@
     ]
   },
   "{0} is set by this system and cannot be overridden": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} is set not to receive payment reminders. Turn reminders on in the customer's billing profile to send one.": {
     "sites": 1,
     "scope": [
       "go"
@@ -292558,11 +293632,12 @@
     ]
   },
   "{0} open": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/collections",
       "routes/fleet-safety",
       "routes/shipment"
     ]
@@ -292667,6 +293742,15 @@
       "routes/worker"
     ]
   },
+  "{0} overdue of {1} open across {2, plural, one {# invoice} other {# invoices}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "{0} overdue · {1} open": {
     "sites": 1,
     "scope": [
@@ -292701,6 +293785,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "{0} paid since ({1}%)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
     ]
   },
   "{0} paid this week so far": {
@@ -294925,6 +296018,15 @@
       "routes/time-attendance"
     ]
   },
+  "{0} with {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/collections"
+    ]
+  },
   "{0} within 2h": {
     "sites": 1,
     "scope": [
@@ -296567,13 +297669,14 @@
     ]
   },
   "{0}d": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/accounting-dashboard",
+      "routes/collections",
       "routes/customer-ledger",
       "routes/customer-statement",
       "routes/document-packet-rule",

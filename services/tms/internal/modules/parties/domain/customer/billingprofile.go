@@ -52,6 +52,9 @@ type CustomerBillingProfile struct {
 	// computed by the credit review.
 	CreditReviewedAt            *int64 `json:"creditReviewedAt" bun:"credit_reviewed_at,type:BIGINT,nullzero"`
 	AutoSendInvoiceOnGeneration bool   `json:"autoSendInvoiceOnGeneration" bun:"auto_send_invoice_on_generation,type:BOOLEAN,notnull"`
+	// SendPaymentReminders lets the organization's payment reminders reach
+	// this customer; off for a customer who must never be dunned by email.
+	SendPaymentReminders bool `json:"sendPaymentReminders" bun:"send_payment_reminders,type:BOOLEAN,notnull,default:true"`
 	// EmailInvoiceEnabled and EDIInvoiceEnabled are the delivery channels an
 	// invoice may leave through. Auto-send after posting honours both.
 	EmailInvoiceEnabled        bool                `json:"emailInvoiceEnabled"        bun:"email_invoice_enabled,type:BOOLEAN,notnull"`
@@ -277,6 +280,7 @@ func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBilling
 		BusinessUnitID:              buID,
 		CustomerID:                  customerID,
 		AutoSendInvoiceOnGeneration: true,
+		SendPaymentReminders:        true,
 		EmailInvoiceEnabled:         true,
 		EnforceCustomerBillingReq:   true,
 		ValidateCustomerRates:       true,

@@ -14,6 +14,7 @@ import { AssignmentService } from "./assignment";
 import { BankReceiptService } from "./bank-receipt";
 import { BankReceiptBatchService } from "./bank-receipt-batch";
 import { BankReceiptWorkItemService } from "./bank-receipt-work-item";
+import { CollectionService } from "./collection";
 import { BillingControlService } from "./billing-control";
 import { CaseChecklistService } from "./case-checklist";
 import { BillingQueueService } from "./billing-queue";
@@ -178,6 +179,7 @@ class APIService {
   public bankReceiptService: BankReceiptService;
   public bankReceiptBatchService: BankReceiptBatchService;
   public bankReceiptWorkItemService: BankReceiptWorkItemService;
+  public collectionService: CollectionService;
   public weatherAlertService: WeatherAlertService;
   public weatherRadarService: WeatherRadarService;
   public ediService: EDIService;
@@ -272,6 +274,7 @@ class APIService {
     this.bankReceiptService = new BankReceiptService();
     this.bankReceiptBatchService = new BankReceiptBatchService();
     this.bankReceiptWorkItemService = new BankReceiptWorkItemService();
+    this.collectionService = new CollectionService();
     this.weatherAlertService = new WeatherAlertService();
     this.weatherRadarService = new WeatherRadarService();
     this.ediService = new EDIService();

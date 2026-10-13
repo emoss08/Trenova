@@ -75,6 +75,23 @@ func (r *repository) ListAutomaticTransfer(ctx context.Context) ([]*tenant.Billi
 	})
 }
 
+func (r *repository) ListPaymentReminders(ctx context.Context) ([]*tenant.BillingControl, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations that email customers payment reminders")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.BillingControl, error) {
+		cols := tenantcol.BillingControlColumns
+		items := make([]*tenant.BillingControl, 0)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&items).
+			Where(cols.PaymentRemindersEnabled.IsTrue()).
+			Scan(ctx); err != nil {
+			return nil, fmt.Errorf("list payment reminder billing controls: %w", err)
+		}
+
+		return items, nil
+	})
+}
+
 func (r *repository) Update(
 	ctx context.Context,
 	entity *tenant.BillingControl,

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:98c24731f8e10a5fab70dcd5115a722f8474e7a0d8a4df5a6dac1b5fe1524d0c",
+  "version": "sha256:2e8e377cc2c5cbc8aa74f5014ff38a3a7605a43b6d9100d2003ba5789f9a3f43",
   "modules": [
     {
       "id": "home",
@@ -347,6 +347,112 @@
         "/accounting/ar/customer-ledger",
         "/accounting/ar/open-items",
         "/accounting"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/accounting/ar/collections",
+      "name": "Collections",
+      "module": "accounting",
+      "breadcrumb": [
+        "Accounting management",
+        "Accounts receivable",
+        "Collections"
+      ],
+      "description": "Customers with overdue receivables, ranked by who to call first. Open one to log a call, record a promise to pay, or schedule the next follow-up.",
+      "summary": "Collections lists every customer with an overdue invoice, ranked so the first row is the account to work next: a broken promise to pay or anything sixty days late comes first, an account waiting on an open promise or on a follow-up that has not come round yet comes last. Each row shows what is **Overdue**, the **Oldest** invoice's days past due, the **Promise** standing against the balance, the next **Follow-up**, the **Collector** and the **Last contact**.\n\nThe figures above the table give the total **Overdue**, **Follow-ups due**, **Broken promises** and **Unassigned** accounts. Select **Follow-ups due** or **Unassigned** to narrow the list to them.",
+      "requires": [
+        {
+          "resource": "accounts_receivable",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "collections worklist",
+        "dunning list",
+        "past due accounts",
+        "overdue customers",
+        "promise to pay",
+        "collector"
+      ],
+      "tasks": [
+        {
+          "title": "Work today's accounts",
+          "keywords": [
+            "who to call",
+            "follow-ups due",
+            "dunning"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections).",
+            "Choose **Mine** to see the accounts you collect, and turn on **Due today only**.",
+            "Select a customer to open their account."
+          ]
+        },
+        {
+          "title": "Log a call or email",
+          "keywords": [
+            "record call",
+            "collection note",
+            "contact log"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Under **Log a contact**, choose **Call**, **Email** or **Note**.",
+            "Fill in **Spoke with** and **What happened**, and optionally **Follow up on**.",
+            "Select **Log it**."
+          ]
+        },
+        {
+          "title": "Record a promise to pay",
+          "keywords": [
+            "promise to pay",
+            "payment commitment",
+            "PTP"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Under **Log a contact**, choose **Promise to pay**.",
+            "Fill in **Promised amount** and **Will pay by**, then select **Record promise**.",
+            "The account waits on the promise and comes back the day after the promised date. Payments posted since the promise count toward it: it shows **Kept** once paid in full and **Broken** if the date passes short."
+          ]
+        },
+        {
+          "title": "Send a payment reminder now",
+          "keywords": [
+            "email reminder",
+            "dunning letter",
+            "past due notice"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Select **Send reminder**.",
+            "Optionally write a **Note to the customer**, then select **Send reminder**.",
+            "The reminder lists every overdue invoice not in dispute and goes to the invoice recipients on the customer's email profile. It is recorded in the account's **History**."
+          ]
+        },
+        {
+          "title": "Assign a collector or schedule a follow-up",
+          "keywords": [
+            "assign collector",
+            "owner",
+            "next follow-up"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Under **Collector and follow-up**, choose the **Collector**. They are notified.",
+            "Choose the **Next follow-up** date and select **Save follow-up**, or clear the date and select **Clear follow-up**."
+          ]
+        }
+      ],
+      "notes": "Opening the page needs read access to accounts receivable; logging contacts, recording promises, assigning collectors and scheduling follow-ups needs permission to update accounts receivable. History is kept as it was recorded and cannot be edited.",
+      "related": [
+        "/accounting/ar/open-items",
+        "/accounting/ar/customer-ledger",
+        "/accounting/ar/aging"
       ],
       "covers": [],
       "createAction": null,
@@ -3218,9 +3324,24 @@
             "Set the **Minimum late charge**; customers whose charges for a run add up to less are skipped.",
             "Select **Save changes**."
           ]
+        },
+        {
+          "title": "Email customers payment reminders",
+          "keywords": [
+            "dunning",
+            "overdue reminder",
+            "past due email",
+            "collection letter"
+          ],
+          "steps": [
+            "Open [Billing controls](/admin/billing-controls).",
+            "In **Payment reminders**, turn on **Send payment reminders**.",
+            "In **Remind on days past due**, list the days to send on, such as 1, 15, 30. The last one is sent as the final reminder.",
+            "Select **Save changes**."
+          ]
         }
       ],
-      "notes": "Opening the page needs read access to billing control; saving needs update access. Late charge rates and grace periods are set on each customer's billing profile, not here. In **Preview only** the nightly run writes nothing, and memos are raised by hand on [Late charges](/accounting/ar/late-charges).",
+      "notes": "Opening the page needs read access to billing control; saving needs update access. Late charge rates and grace periods are set on each customer's billing profile, not here. In **Preview only** the nightly run writes nothing, and memos are raised by hand on [Late charges](/accounting/ar/late-charges).\n\nPayment reminders go out each morning: a customer with an invoice newly reaching one of the **Remind on days past due** days is emailed one reminder listing every overdue invoice it has. Disputed invoices are left off, and a customer waiting on an open promise to pay recorded in [Collections](/accounting/ar/collections) is not reminded until the promised date passes. Turn off **Send payment reminders** on a customer's billing profile to leave that customer out.",
       "related": [
         "/billing/queue",
         "/billing/invoices",

@@ -167,7 +167,6 @@
   "Create one or more copies of this shipment.": "创建本运单的一份或多份副本。",
   "Create the shipment and finish import.": "创建运单并完成导入。",
   "Creating the shipment failed:": "创建运单失败：",
-  "Credit hold": "信用冻结",
   "Credit hold: {0}": "信用冻结：{0}",
   "Current move": "当前运程",
   "Customer EDI 214 {0}": "客户 EDI 214 {0}",

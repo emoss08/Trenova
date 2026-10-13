@@ -100,6 +100,12 @@ export const billingControlSchema = z.object({
 
   lateChargeAssessmentMode: lateChargeAssessmentModeSchema.default("Disabled"),
   lateChargeMinimumAmount: decimalNumberSchema.default(0),
+
+  paymentRemindersEnabled: z.boolean().default(false),
+  paymentReminderDays: z
+    .array(z.number().int())
+    .nullish()
+    .transform((value) => value ?? [1, 15, 30]),
 });
 
 export type BillingControl = z.infer<typeof billingControlSchema>;

@@ -52,6 +52,7 @@ const DEFAULT_VALUES: Customer = {
     creditReviewedAt: null,
     hasBillingControlOverrides: false,
     autoSendInvoiceOnGeneration: true,
+    sendPaymentReminders: true,
     emailInvoiceEnabled: true,
     ediInvoiceEnabled: false,
     splitBy: "Customer",

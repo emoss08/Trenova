@@ -497,6 +497,7 @@ func (r *repository) saveBillingProfile(
 		Set(cbp.AutoCreditHold.SetExcluded()).
 		Set(cbp.CreditHoldReason.SetExcluded()).
 		Set(cbp.AutoSendInvoiceOnGeneration.SetExcluded()).
+		Set(cbp.SendPaymentReminders.SetExcluded()).
 		Set(cbp.EmailInvoiceEnabled.SetExcluded()).
 		Set(cbp.EDIInvoiceEnabled.SetExcluded()).
 		Set(cbp.SplitBy.SetExcluded()).

@@ -34,10 +34,10 @@ export function CollectionsWorklistCard() {
           ) : null}
         </CardTitle>
         <Link
-          to="/accounting/ar/open-items"
+          to="/accounting/ar/collections"
           className="text-muted-foreground hover:text-foreground text-xs hover:underline"
         >
-          {t("Open items")}
+          {t("Open collections")}
         </Link>
       </CardHeader>
       <CardContent className="p-2">
@@ -69,7 +69,7 @@ function WorklistRow({ item }: { item: ARWorklistItem }) {
 
   return (
     <Link
-      to={`/accounting/ar/customer-ledger?customerId=${item.customerId}`}
+      to={`/accounting/ar/collections?customerId=${item.customerId}`}
       className="hover:bg-muted/50 flex items-center gap-3 rounded-md px-2 py-2 transition-colors"
     >
       <span

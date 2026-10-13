@@ -711,6 +711,16 @@ writes:
     exempt: configuration
     reason: "How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it."
 
+  # collection
+  "POST /api/v1/accounting/collections/customers/:customerID/activities/":
+    pending: "Log a call, email, note or promise to pay against a customer's overdue receivables."
+  "PUT /api/v1/accounting/collections/customers/:customerID/collector/":
+    pending: "Assign a customer's overdue receivables to a collector, or take them off whoever has them."
+  "POST /api/v1/accounting/collections/customers/:customerID/reminder/":
+    pending: "Email a customer a reminder of every overdue invoice it has, with a note."
+  "PUT /api/v1/accounting/collections/customers/:customerID/follow-up/":
+    pending: "Schedule when a customer's overdue receivables are next chased, or clear the follow-up."
+
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":
     tools: [update_commodity]

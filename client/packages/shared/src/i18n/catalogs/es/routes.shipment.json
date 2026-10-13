@@ -167,7 +167,6 @@
   "Create one or more copies of this shipment.": "Cree una o más copias de este envío.",
   "Create the shipment and finish import.": "Cree el envío y finalice la importación.",
   "Creating the shipment failed:": "No se pudo crear el envío:",
-  "Credit hold": "Retención por crédito",
   "Credit hold: {0}": "Retención por crédito: {0}",
   "Current move": "Tramo actual",
   "Customer EDI 214 {0}": "EDI 214 del cliente {0}",

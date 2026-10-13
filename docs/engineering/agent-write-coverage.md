@@ -97,7 +97,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1086 writes: 582 GraphQL mutations and 504 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1090 writes: 582 GraphQL mutations and 508 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
@@ -112,10 +112,10 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Read-only | 51 |
 | — Attestation | 46 |
 | — Duplicate | 8 |
-| **Pending** | **27** |
-| Total | 1086 |
+| **Pending** | **31** |
+| Total | 1090 |
 
-Of the 416 writes an agent should be able to make, 389 have a tool (93%).
+Of the 420 writes an agent should be able to make, 389 have a tool (92%).
 
 ## Pending
 
@@ -126,6 +126,10 @@ The writes no tool performs yet, and what the tool would do.
 | billingqueue | `mutation releaseBillingQueueItem` | Take a billing queue item off hold and back to the status the hold found it in, the counterpart of hold_billing_queue_item. |
 | billingqueue | `mutation resolveBillingQueueIssue` | Settle one of a billing queue item's checks with one of the options the check offers. |
 | billingqueue | `mutation undoBillingQueueIssue` | Take back how a billing queue item's check was settled and put back any charge the settlement changed. |
+| collection | `POST /api/v1/accounting/collections/customers/:customerID/activities/` | Log a call, email, note or promise to pay against a customer's overdue receivables. |
+| collection | `POST /api/v1/accounting/collections/customers/:customerID/reminder/` | Email a customer a reminder of every overdue invoice it has, with a note. |
+| collection | `PUT /api/v1/accounting/collections/customers/:customerID/collector/` | Assign a customer's overdue receivables to a collector, or take them off whoever has them. |
+| collection | `PUT /api/v1/accounting/collections/customers/:customerID/follow-up/` | Schedule when a customer's overdue receivables are next chased, or clear the follow-up. |
 | inboundmessage | `mutation assignInboundMessages` | Assign inbound messages to a person, or take them off whoever has them. |
 | inboundmessage | `mutation handOffTriage` | Hand everything still waiting in Triage to the on-call person at the end of the day. |
 | inboundmessage | `mutation reopenInboundMessages` | Put settled inbound messages back in the Triage queue. |
@@ -190,6 +194,7 @@ The writes no tool performs yet, and what the tool would do.
 | carrierintelligence | 15 | 9 | 6 | 0 |
 | carriersettlement | 16 | 15 | 1 | 0 |
 | casechecklist | 2 | 0 | 2 | 0 |
+| collection | 4 | 0 | 0 | 4 |
 | commodity | 4 | 4 | 0 | 0 |
 | costing | 2 | 0 | 2 | 0 |
 | customer | 4 | 4 | 0 | 0 |
@@ -752,6 +757,15 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `DELETE /api/v1/case-checklists/:templateID/`<br>casechecklisthandler.delete | Exempt, configuration: How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it. |
 | `PUT /api/v1/case-checklists/`<br>casechecklisthandler.save | Exempt, configuration: How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it. |
+
+### collection
+
+| Write | Decision |
+| --- | --- |
+| `POST /api/v1/accounting/collections/customers/:customerID/activities/`<br>collectionhandler.logActivity | Pending: Log a call, email, note or promise to pay against a customer's overdue receivables. |
+| `POST /api/v1/accounting/collections/customers/:customerID/reminder/`<br>collectionhandler.sendReminder | Pending: Email a customer a reminder of every overdue invoice it has, with a note. |
+| `PUT /api/v1/accounting/collections/customers/:customerID/collector/`<br>collectionhandler.assignCollector | Pending: Assign a customer's overdue receivables to a collector, or take them off whoever has them. |
+| `PUT /api/v1/accounting/collections/customers/:customerID/follow-up/`<br>collectionhandler.scheduleFollowUp | Pending: Schedule when a customer's overdue receivables are next chased, or clear the follow-up. |
 
 ### commodity
 

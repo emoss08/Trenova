@@ -9711,6 +9711,10 @@ type CustomerBillingProfile {
   requirePONumber: Boolean!
   revenueAccountId: ID
   sectionBy: InvoiceSectionKey!
+  """
+  Whether the organization's payment reminders may email this customer about overdue invoices.
+  """
+  sendPaymentReminders: Boolean!
   splitBy: InvoiceSplitKey!
   taxExempt: Boolean!
   taxExemptNumber: String!

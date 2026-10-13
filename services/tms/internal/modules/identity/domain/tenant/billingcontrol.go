@@ -2,6 +2,7 @@ package tenant
 
 import (
 	"context"
+	"slices"
 
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -61,6 +62,11 @@ type BillingControl struct {
 	// LateChargeMinimumAmount is the smallest total a run will bill a customer.
 	LateChargeMinimumAmount decimal.Decimal `json:"lateChargeMinimumAmount" bun:"late_charge_minimum_amount,type:NUMERIC(19,4),notnull,default:0"`
 
+	// PaymentRemindersEnabled emails customers about their overdue invoices on
+	// the days past due in PaymentReminderDays, one reminder per step.
+	PaymentRemindersEnabled bool    `json:"paymentRemindersEnabled" bun:"payment_reminders_enabled,type:BOOLEAN,notnull,default:false"`
+	PaymentReminderDays     []int32 `json:"paymentReminderDays"     bun:"payment_reminder_days,type:INTEGER[],array,notnull"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -69,7 +75,15 @@ type BillingControl struct {
 	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
+// MaxPaymentReminderSteps bounds how many reminders one invoice can draw.
+const MaxPaymentReminderSteps = 6
+
+// DefaultPaymentReminderDays is the schedule an organization starts from: a
+// day late, two weeks late, a month late.
+var DefaultPaymentReminderDays = []int32{1, 15, 30}
+
 func (bc *BillingControl) Validate(multiErr *errortypes.MultiError) {
+	bc.validatePaymentReminderDays(multiErr)
 	if bc.LateChargeMinimumAmount.LessThan(decimal.Zero) {
 		multiErr.Add(
 			"lateChargeMinimumAmount",
@@ -104,8 +118,42 @@ func (bc *BillingControl) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+// validatePaymentReminderDays requires a schedule of distinct days past due,
+// earliest first, when reminders are on.
+func (bc *BillingControl) validatePaymentReminderDays(multiErr *errortypes.MultiError) {
+	if !bc.PaymentRemindersEnabled {
+		return
+	}
+	days := bc.PaymentReminderDays
+	switch {
+	case len(days) == 0:
+		multiErr.Add("paymentReminderDays", errortypes.ErrRequired,
+			"Choose at least one day past due to send a reminder on")
+		return
+	case len(days) > MaxPaymentReminderSteps:
+		multiErr.Add("paymentReminderDays", errortypes.ErrInvalid,
+			"Send at most six reminders per invoice")
+		return
+	}
+	for i, day := range days {
+		if day < 1 || day > 365 {
+			multiErr.Add("paymentReminderDays", errortypes.ErrInvalid,
+				"Reminder days must be between 1 and 365 days past due")
+			return
+		}
+		if i > 0 && day <= days[i-1] {
+			multiErr.Add("paymentReminderDays", errortypes.ErrInvalid,
+				"List reminder days from earliest to latest, each once")
+			return
+		}
+	}
+}
+
 func (bc *BillingControl) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
+	if len(bc.PaymentReminderDays) == 0 {
+		bc.PaymentReminderDays = slices.Clone(DefaultPaymentReminderDays)
+	}
 
 	switch query.(type) {
 	case *bun.InsertQuery:

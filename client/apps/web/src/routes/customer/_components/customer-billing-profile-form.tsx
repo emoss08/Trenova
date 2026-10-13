@@ -252,6 +252,16 @@ export function CustomerBillingProfileForm() {
               )}
             />
           </FormControl>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="billingProfile.sendPaymentReminders"
+              label={t("Send payment reminders")}
+              description={t(
+                "Email this customer when invoices go past due, on the schedule in billing control. Turn off for a customer who must never receive an automated reminder.",
+              )}
+            />
+          </FormControl>
           <FormControl cols="full">
             <div className="flex flex-col gap-2 rounded-md border p-3">
               <p className="text-xs font-medium">{t("Invoice delivery")}</p>

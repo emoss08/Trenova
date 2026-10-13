@@ -20,6 +20,8 @@ const (
 	// KindInvoiceEmail is the message that delivers an invoice.
 	KindInvoiceEmail      Kind = "invoice.email"
 	KindInvoiceShareEmail Kind = "invoice.share.email"
+	// KindPaymentReminderEmail reminds a customer that invoices are past due.
+	KindPaymentReminderEmail Kind = "invoice.reminder.email"
 
 	// Detention.
 
@@ -156,6 +158,7 @@ func AllKinds() []Kind {
 		KindInvoicePDF,
 		KindInvoiceEmail,
 		KindInvoiceShareEmail,
+		KindPaymentReminderEmail,
 		KindDetentionNoticeEmail,
 		KindDetentionNoticePDF,
 		KindRateConfirmationPDF,

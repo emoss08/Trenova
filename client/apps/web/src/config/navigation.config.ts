@@ -930,6 +930,12 @@ const accountingModule: NavModule = {
           path: "/accounting/ar/open-items",
         },
         {
+          id: "collections",
+          label: "Collections",
+          path: "/accounting/ar/collections",
+          resource: Resource.AccountsReceivable,
+        },
+        {
           id: "invoice-register",
           label: "Invoice register",
           path: "/accounting/ar/invoices",

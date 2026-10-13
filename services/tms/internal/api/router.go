@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/casechecklisthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/collectionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
@@ -242,6 +243,7 @@ type RouterParams struct {
 	GoogleMapsHandler               *googlemapshandler.Handler
 	AccountingControlHandler        *accountingcontrolhandler.Handler
 	AccountsReceivableHandler       *accountsreceivablehandler.Handler
+	CollectionHandler               *collectionhandler.Handler
 	AccountTypeHandler              *accounttypehandler.Handler
 	AssignmentHandler               *assignmenthandler.Handler
 	GLAccountHandler                *glaccounthandler.Handler
@@ -383,6 +385,7 @@ type Router struct {
 	googleMapsHandler               *googlemapshandler.Handler
 	accountingControlHandler        *accountingcontrolhandler.Handler
 	accountsReceivableHandler       *accountsreceivablehandler.Handler
+	collectionHandler               *collectionhandler.Handler
 	accountTypeHandler              *accounttypehandler.Handler
 	assignmentHandler               *assignmenthandler.Handler
 	glAccountHandler                *glaccounthandler.Handler
@@ -526,6 +529,7 @@ func NewRouter(p RouterParams) *Router {
 		googleMapsHandler:               p.GoogleMapsHandler,
 		accountingControlHandler:        p.AccountingControlHandler,
 		accountsReceivableHandler:       p.AccountsReceivableHandler,
+		collectionHandler:               p.CollectionHandler,
 		accountTypeHandler:              p.AccountTypeHandler,
 		assignmentHandler:               p.AssignmentHandler,
 		glAccountHandler:                p.GLAccountHandler,
@@ -728,6 +732,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.weatherAlertHandler.RegisterRoutes(protected)
 	r.accountingControlHandler.RegisterRoutes(protected)
 	r.accountsReceivableHandler.RegisterRoutes(protected)
+	r.collectionHandler.RegisterRoutes(protected)
 	r.accountTypeHandler.RegisterRoutes(protected)
 	r.assignmentHandler.RegisterRoutes(protected)
 	r.glAccountHandler.RegisterRoutes(protected)

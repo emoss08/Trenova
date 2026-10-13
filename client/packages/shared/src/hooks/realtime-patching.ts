@@ -49,7 +49,7 @@ const RECORD_CHANGE_KEYS: Record<string, QueryKeyRoot[]> = {
   carrier_settlement: ["carrier-settlement-list", "carrier-settlement-batch-list"],
   commodity: ["commodity-list"],
   custom_field_definition: ["custom-field-definition-list"],
-  customer_payment: ["customer-payment-list"],
+  customer_payment: ["customer-payment-list", "collection"],
   detention_policy: ["detention-policy-list"],
   distance_override: ["distance-override-list"],
   distance_profile: ["distance-profile-list"],
@@ -211,7 +211,7 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   ],
   orders: ["order-list", "order-detail"],
   users: ["user-list"],
-  customers: ["customer-list"],
+  customers: ["customer-list", "collection"],
   tractors: ["tractor-list"],
   trailers: ["trailer-list"],
   workers: ["worker-list", "dispatch-board", "shipmentBoard"],
@@ -231,9 +231,13 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     "billingQueue",
     "billing-queue-list",
     "ar",
+    "collection",
     "customerPayment",
     "customer-payment-list",
   ],
+  // A collector, follow-up, note or promise logged against a customer's
+  // overdue receivables: the collections worklist and that account's panel.
+  "collection-account": ["collection"],
   "billing-transfer-run": [
     "billing-transfer-run",
     "billing-transfer-active-run",

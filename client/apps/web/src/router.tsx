@@ -884,6 +884,17 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
+            path: "/accounting/ar/collections",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountsReceivable),
+            ),
+            async lazy() {
+              const { CollectionsPage } = await import("@/routes/collections/page");
+              return { Component: CollectionsPage };
+            },
+          },
+          {
             path: "/accounting/ar/open-items",
             loader: combineLoaders(
               protectedLoader,

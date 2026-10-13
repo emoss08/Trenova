@@ -631,6 +631,7 @@ modules:
       - billingqueue
       - billingqueuefilterpreset
       - billingtransfer
+      - collection
       - costingcontrol
       - customerledger
       - customerpayment
@@ -645,11 +646,14 @@ modules:
       - bankreceiptservice
       - bankreceiptworkitemservice
       - billingcontrolpolicyservice
+      - billingnumber
       - billingqueueapprovalservice
       - billingqueueservice
       - billingtransfercriteria
       - billingtransferservice
+      - collectionservice
       - costingservice
+      - creditreviewservice
       - customerpaymentservice
       - detentionbillingservice
       - detentioncreditservice
@@ -665,6 +669,7 @@ modules:
     job:
       - billingqueuejobs
       - billingtransferjobs
+      - creditreviewjobs
       - invoiceadjustmentjobs
     repository:
       - accountsreceivablerepository
@@ -676,6 +681,7 @@ modules:
       - billingqueuereviewrepository
       - billingtransferrepository
       - chargeallocationrepository
+      - collectionrepository
       - costingrepository
       - customerledgerrepository
       - customerpaymentrepository
