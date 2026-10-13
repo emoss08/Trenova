@@ -1,5 +1,5 @@
 {
-  "version": "sha256:017fcf71f0353e0feffc2f6d1cef918ceb602c0d7d8a7dcc2cd6f229c54d40e1",
+  "version": "sha256:90d810743bf31b4b13453a623444e780a7fb9743e94a792df820e9c6d3b5ed72",
   "modules": [
     {
       "id": "home",
@@ -461,7 +461,7 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to accounts receivable; logging contacts, recording promises, assigning collectors and setting follow-ups needs permission to update accounts receivable. History is kept as it was recorded and cannot be edited.",
+      "notes": "Opening the page needs read access to accounts receivable; logging contacts, recording promises, assigning collectors and setting follow-ups needs permission to update accounts receivable. History is kept as it was recorded and cannot be edited.\n\nInvoices sold to a non-recourse factor are the factor's to collect, so they are left out of the worklist and its totals. Invoices sold to a recourse factor stay, because an unpaid one comes back to you. Mark a factor as non-recourse on [Factoring companies](/billing/configuration-files/factoring-companies).",
       "related": [
         "/accounting/ar/open-items",
         "/accounting/ar/customer-ledger",
@@ -6965,7 +6965,7 @@
         "Factoring companies"
       ],
       "description": "The factors your receivables are sold to. Customers assigned to one are invoiced with its remit-to and notice of assignment.",
-      "summary": "Factoring companies lists the factors you sell receivables to. Each one holds the factor's **Code**, **Name** and remit-to address, how customers pay it (**Remittance instructions**) and the **Notice of assignment** printed on every invoice assigned to it.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.",
+      "summary": "Factoring companies lists the factors you sell receivables to. Each one holds the factor's **Code**, **Name** and remit-to address, how customers pay it (**Remittance instructions**) and the **Notice of assignment** printed on every invoice assigned to it.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.\n\nA factor is either recourse or **Non-recourse**. With recourse, the usual arrangement, an invoice the customer never pays comes back to you, so factored invoices stay on the [Collections](/accounting/ar/collections) worklist and still count toward the customer's credit limit. A non-recourse factor buys the invoices outright and carries the risk, so its invoices leave the worklist and stop counting toward the credit limit.",
       "requires": [
         {
           "resource": "factoring_company",
@@ -6979,7 +6979,10 @@
         "factored invoices",
         "notice of assignment",
         "remit to factor",
-        "invoice factoring"
+        "invoice factoring",
+        "recourse",
+        "non-recourse",
+        "without recourse"
       ],
       "tasks": [
         {
@@ -6994,7 +6997,20 @@
             "Select **New factoring company**.",
             "Fill in **Code**, **Name** and the remit-to address (**Address line 1**, **City**, **State**, **Postal code**), and optionally **Email** and **Phone**.",
             "Fill in **Remittance instructions** with the factor's bank, lockbox or ACH details.",
+            "Turn on **Non-recourse** if the factor buys invoices without recourse.",
             "Optionally enter the **Notice of assignment** your agreement requires, then select **Save**."
+          ]
+        },
+        {
+          "title": "Mark a factor as non-recourse",
+          "keywords": [
+            "without recourse",
+            "factor carries the risk",
+            "remove factored invoices from collections"
+          ],
+          "steps": [
+            "Open [Factoring companies](/billing/configuration-files/factoring-companies) and select the factor's row.",
+            "Under **Agreement**, turn on **Non-recourse**, then select **Save**."
           ]
         },
         {
@@ -7023,7 +7039,7 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.",
+      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nRecourse is a property of the agreement, so it applies to every invoice assigned to the factor, including ones already posted. Credit standings follow at the next credit review, which runs each night and whenever the customer's receivables change.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.",
       "related": [
         "/billing/configuration-files/customers",
         "/billing/invoices"

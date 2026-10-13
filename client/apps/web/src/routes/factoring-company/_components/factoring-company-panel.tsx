@@ -51,6 +51,7 @@ export function FactoringCompanyPanel({
       remittanceInstructions: "",
       noticeOfAssignment: "",
       notes: "",
+      nonRecourse: false,
     },
   });
 
