@@ -2,7 +2,8 @@
 
 A dependency-free Node server that stands in for the TMS API, so the shipments board
 (`/shipment-management/shipments`), AI control (`/admin/agent-control`), Triage (`/triage`, the
-redesign of `/inbox`) and the Desk (`/desk`) can be run, clicked through and screenshotted without Postgres, Redis,
+redesign of `/inbox`), the Desk (`/desk`) and the Formula Studio
+(`/billing/configuration-files/formula-templates/new`, `…/<id>/edit`) can be run, clicked through and screenshotted without Postgres, Redis,
 Temporal or an AI provider. It answers the REST session endpoints the app shell needs, every
 GraphQL operation those pages send, and the realtime stream, from a deterministic fixture.
 
@@ -144,6 +145,84 @@ An operation the mock does not know is logged as `unhandled GraphQL operation <n
 `unhandled GET <path>`) and answered with an empty result; add a handler in
 `handlers/graphql.mjs` or `handlers/rest.mjs` when a new one appears.
 
+## Formula Studio
+
+The redesigned Formula Studio (`/billing/configuration-files/formula-templates/new` and
+`/billing/configuration-files/formula-templates/<id>/edit`) runs on the design handoff's data
+(`design_handoff_formula_studio/design/data.jsx`), ported to the server's shapes in
+`fixtures/formula.mjs`, and on a port of the prototype's formula engine in
+`fixtures/formula-engine.mjs`: the tokenizer and analysis (unknown names, unguarded optional
+fields, unclosed brackets), `let`, `??`, the ternary and the function library, then the charge
+policy (minimum, maximum, rounding HalfUp/HalfEven/Up/Down/None at a precision), breakdown lines
+and the receipt's sources. The preview, scenario runs, backtest, impact and every amount Nova
+quotes come from it, so they agree. Statement offsets are UTF-16 code units.
+
+Three saved copies of the prototype's "Regional per mile + fuel" template are always there:
+
+| Id | Status | What it shows |
+|---|---|---|
+| `fmt_studio_draft` | Draft, v4 | The prototype's edit template (`FS_EDIT_TEMPLATE`): v3 is the approved version (fuel 14%, no breakdown), v4 the draft (fuel 18%, four breakdown lines). Its four scenarios: three recorded on v4, and "Weekend reefer, Fresno" recorded on v3 by Priya Shah with `fuelSurchargePercent` 14, so it fails (1,837.68 expected, 1,902.16 billed) and explaining it has a real trace. Readiness fails on scenarios, so Submit is refused until it is re-recorded. Usage is the prototype's `FS_USAGE` |
+| `fmt_studio_review` | In review, v3 | Submitted by Dana Whitfield two days ago with the signed-in person as the requested reviewer and a reviewer note; v2 (fuel 16%) is production, so the impact and the review diff have something to show. Every scenario passes, so it can be approved |
+| `fmt_studio_active` | Active, v2 | Approved by Priya Shah, with `FS_USAGE` usage |
+
+A created template is `fmt_studio_new_1`, `fmt_studio_new_2`, …. The reviewers are Priya Shah,
+Marcus Lee and Dana Whitfield (Triage's team, with the same avatars); review history, versions and
+scenarios are recorded by them. The real-shipment picker (`SelectOptions` with `SHIPMENT`) lists
+the prototype's `FS_SHIPMENTS` and four more first (`shp_fs_240811` … `shp_fs_240719`: a short
+haul on the minimum, a Sunday five-stop, a reefer with no stop times, hazmat), then Triage's; the
+"copy from" picker (`FORMULA_TEMPLATE`) and `FormulaTemplateTable` list the saved templates. A
+backtest or impact re-rates those seven and 121 more drawn the way the prototype's backtest draws
+them, with production (the newest active snapshot) against the candidate.
+
+Every route is under `/api/v1/formula-templates`:
+
+- `GET /` (`limit`, `offset`, `type`, `status`, `query`) a limit/offset page; `POST /` creates a
+  draft at v1, with `testCases` (at most 50) recorded on it; `GET|PUT|PATCH /:id/` read and save
+  (a material change takes a new version and returns an active or in-review template to draft).
+- `POST /test` prices a draft on the sample values (`variables`; a name the schema does not know
+  is one of the template's inputs) or `shipmentId`, with breakdown, guardrail, rounding, nullable
+  warnings and the receipt; `traceStatements: true` adds `statements`.
+- `GET /schema?schemaId=shipment`, `GET /standards`, `GET /:id/usage`, `GET /:id/versions`
+  (and `/versions/<n>`, `/versions/scheduled`, `/compare`, `/lineage`).
+- `GET|POST /:id/test-cases`, `PUT|DELETE /:id/test-cases/:tcid` (a `candidate` records the
+  scenario on the editor's content, stamping `recordedOnVersion`, `recordedBy` and `recordedAt`),
+  `POST /:id/test-cases/run` (on `candidate`, or the saved content).
+- `GET /:id/readiness` (the contract's check keys: `details`, `expression`, `nullableFields`,
+  `scenarios`, `breakdown`, `status`, `reviewer`, `submissionAge`), `GET /:id/reviews`,
+  `GET /:id/review-diff`, `GET /:id/reviewers`, `POST /:id/impact`, `POST /:id/backtest`.
+- `POST /:id/submit` (refused with 422 and field errors keyed by check when readiness fails, or for
+  a `reviewerId` who is not a reviewer or a note over 4,000 characters), `/approve` (not by the
+  submitter, every scenario passing), `/reject` and `/request-changes` (a comment required).
+
+**Nova.** The one-shots answer after about 700ms (`MOCK_FORMULA_NOVA_MS`), from the handoff's
+offline answers (`ai.jsx`) with the engine's amounts: `POST /ai/explain` (the statements priced on
+`sampleValues` or `shipmentId`, one sentence each, raw and billed amounts and the guardrail),
+`/ai/describe-inputs` (inputs with no description), `/ai/suggest-scenarios` (3–5 edge loads not
+already in `existing`, billed with the policy), `/:id/test-cases/:tcid/explain` (the trace rows
+between the recorded content and the `candidate`, a verdict and a two-sentence cause) and
+`/:id/review-note` (the change from the review diff and a backtest against production). With
+`aiProviders` at `none` they refuse with 422 `No AI provider is configured for the formula
+assistant`, except explaining a scenario, which answers with `generated: false`.
+
+`POST /ai/thread/` opens the page conversation (`athr_formula_<n>`, origin `Formula`, so the Desk
+rail leaves it out): the same one for a saved template every time, a fresh one for `templateId: ""`.
+A turn (`POST /assistant/threads/<id>/turns/`, or the queue) streams `accepted`, a `reasoning`
+line, the tool steps and the reply as deskcase does, and is written to the conversation, so
+`messages/` and `artifacts/` (the summary list and a lineage with its payload) return it after.
+What it says follows the question and the editor in the turn's page draft:
+
+- "edge", "scenario": the four edge loads priced in the reply, no artifact.
+- "fix", "error": a `propose_formula` draft edit guarding every unguarded optional field with
+  `?? 0` and correcting misspelt names.
+- "weekend", and any "write", "draft", "add", "create" or "build": `describe_formula_schema`,
+  `test_formula_expression` and `propose_formula` steps, a short reply and a `draft_edit` artifact
+  (`{surface: "formula", action: "propose_formula", formula}`) adding a `weekendFee` input (125)
+  and `(isWeekendPickup ? weekendFee : 0)` to the result, with a weekend breakdown line when the
+  template itemizes (or a name, description and lines when the editor is empty), checked and
+  priced on the sample load and three shipments.
+- "minimum", "why": what a 60-mile load comes to and whether the policy moved it; "explain": the
+  formula in a sentence a statement; anything else, what Nova can do.
+
 ## Screenshots
 
 With both servers running:
@@ -284,6 +363,8 @@ fixtures/desk-cards.mjs  The records the Desk's resource cards draw, and their c
 fixtures/settings.mjs   The signed-in person's settings, sessions, sign-ins and teammates
 fixtures/palette.mjs  The command palette's customers, workers, shipments, documents and pins
 fixtures/triage.mjs   Triage's sources, messages, rules, templates and team, from the prototype
+fixtures/formula.mjs  The Formula Studio's schema, standards, shipments and three saved templates
+fixtures/formula-engine.mjs  The prototype's formula engine: analysis, evaluation, policy, trace
 fixtures/ai/          Catalogs dumped from the Go service
 handlers/rest.mjs     REST routes the shell and board call
 handlers/graphql.mjs  GraphQL operations, keyed by operation name
@@ -295,6 +376,8 @@ handlers/settings.mjs   Settings' REST routes and the user select options
 handlers/palette.mjs   Global search, documents, pins, Nova's ask stream and the palette's previews
 handlers/triage-model.mjs  Triage's rules: actions, lanes, counts, briefing, previews and every write
 handlers/triage.mjs   Triage's GraphQL operations shaped to their selections, presence and Desk routes
+handlers/formula.mjs  The Formula Studio's templates, scenarios, review, backtest, preview and GraphQL
+handlers/formula-nova.mjs  Nova on the studio: the one-shots and the page conversation's turns
 screenshots.mjs       Playwright walkthrough of every board scenario
 ai-control-screenshots.mjs  Playwright walkthrough of AI control
 desk-cards-screenshots.mjs  Playwright walkthrough of the Desk's resource cards

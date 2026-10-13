@@ -1,12 +1,13 @@
 package formulatemplateservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
+
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	notificationdomain "github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	notificationdomain "github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -49,6 +50,7 @@ func TestSubmit_NotifiesReviewers(t *testing.T) {
 
 	tenant := newTenantInfo()
 	template := newTestTemplate()
+	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	template.Status = formulatemplate.StatusDraft
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -56,11 +58,14 @@ func TestSubmit_NotifiesReviewers(t *testing.T) {
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
-	_, err := deps.svc.Submit(t.Context(), &ApprovalActionRequest{
-		TenantInfo: tenant,
-		EntityID:   template.ID,
-		Comment:    "ready for review",
-	})
+	_, err := deps.svc.Submit(
+		t.Context(),
+		&SubmitRequest{ApprovalActionRequest: ApprovalActionRequest{
+			TenantInfo: tenant,
+			EntityID:   template.ID,
+			Comment:    "ready for review",
+		}},
+	)
 
 	require.NoError(t, err)
 	notified := *captured
@@ -82,6 +87,7 @@ func TestApprove_NotifiesSubmitter(t *testing.T) {
 	submittedAt := timeutils.NowUnix() - 3600
 
 	template := newTestTemplate()
+	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	template.Status = formulatemplate.StatusInReview
 	template.SubmittedByID = &submitterID
 	template.SubmittedAt = &submittedAt

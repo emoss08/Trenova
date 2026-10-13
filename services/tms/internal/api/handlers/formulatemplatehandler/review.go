@@ -4,11 +4,13 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -52,13 +54,19 @@ func (h *Handler) handleApprovalAction(
 	c.JSON(http.StatusOK, template)
 }
 
+type submitRequest struct {
+	Comment      string `json:"comment"`
+	ReviewerID   string `json:"reviewerId"`
+	ReviewerNote string `json:"reviewerNote"`
+}
+
 // @Summary Submit a formula template for review
 // @ID submitFormulaTemplate
 // @Tags Formula Templates
 // @Accept json
 // @Produce json
 // @Param templateID path string true "Formula template ID"
-// @Param request body approvalActionRequest true "Submit request"
+// @Param request body submitRequest true "Submit request"
 // @Success 200 {object} formulatemplate.FormulaTemplate
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -67,7 +75,48 @@ func (h *Handler) handleApprovalAction(
 // @Security BearerAuth
 // @Router /formula-templates/{templateID}/submit [post]
 func (h *Handler) submit(c *gin.Context) {
-	h.handleApprovalAction(c, h.service.Submit)
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var req submitRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	reviewerID := pulid.Nil
+	if raw := strings.TrimSpace(req.ReviewerID); raw != "" {
+		reviewerID, err = pulid.Parse(raw)
+		if err != nil {
+			h.eh.HandleError(c, errortypes.NewValidationError(
+				"reviewerId",
+				errortypes.ErrInvalid,
+				"Choose an active reviewer, other than you, who can approve formula templates",
+			))
+			return
+		}
+	}
+
+	template, err := h.service.Submit(c.Request.Context(), &formulatemplateservice.SubmitRequest{
+		ApprovalActionRequest: formulatemplateservice.ApprovalActionRequest{
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+			EntityID:   templateID,
+			Comment:    req.Comment,
+		},
+		ReviewerID:   reviewerID,
+		ReviewerNote: req.ReviewerNote,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, template)
 }
 
 // @Summary Approve a formula template

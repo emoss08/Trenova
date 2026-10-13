@@ -1,180 +1,238 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import type { BreakdownReconciliation } from "@/components/formula-editor/breakdown-reconcile";
 import { ExpressionEditor } from "@/components/formula-editor/expression-editor";
 import type { KnownIdentifiers } from "@/components/formula-editor/known-identifiers";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Input } from "@trenova/shared/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   MAX_BREAKDOWN_DEFINITIONS,
   type BreakdownDefinitionInput,
+  type TestBreakdownItem,
 } from "@trenova/shared/types/formula-template";
-import { Dataflow02Icon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
-import { useCallback } from "react";
-import { useFieldArray, useFormState, type Control, type UseFormRegister } from "react-hook-form";
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  PlusIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
+import { useState, type ReactNode } from "react";
+import { Controller, useFieldArray, useWatch, type Control } from "react-hook-form";
+import { keyFromLabel, sanitizeIdentifier } from "./studio/model/expression-analysis";
+import { formatMoney } from "./studio/model/format";
 
 type FormWithBreakdowns = {
   breakdownDefinitions: BreakdownDefinitionInput[];
 };
 
-type BreakdownDefinitionEditorProps = {
-  control: Control<FormWithBreakdowns>;
-  register: UseFormRegister<FormWithBreakdowns>;
-  knownIdentifiers?: KnownIdentifiers;
-  className?: string;
+export type BreakdownPricing = {
+  /** Each line as the preview priced it, by key. */
+  lines: ReadonlyMap<string, TestBreakdownItem>;
+  reconciliation: BreakdownReconciliation | null;
+  /** The billed amount, when a guardrail moved it away from the formula's result. */
+  clamped: { bound: "min" | "max"; billed: number } | null;
 };
 
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
+type BreakdownDefinitionEditorProps = {
+  control: Control<FormWithBreakdowns>;
+  knownIdentifiers?: KnownIdentifiers;
+  pricing: BreakdownPricing | null;
+  /** The section's head, handed the editor's own add so both stay one field array. */
+  head?: (controls: { add: () => void; atLimit: boolean }) => ReactNode;
+};
 
-  return <p className="text-2xs text-destructive mt-1">{message}</p>;
-}
-
-export function BreakdownDefinitionEditor({
-  control,
-  register,
-  knownIdentifiers,
-  className,
-}: BreakdownDefinitionEditorProps) {
+function Reconcile({ pricing }: { pricing: BreakdownPricing }) {
   const t = useT();
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "breakdownDefinitions",
-  });
-  const { errors } = useFormState({ control, name: "breakdownDefinitions" });
-
-  const handleAdd = useCallback(() => {
-    append({
-      name: "",
-      label: "",
-      expression: "",
-    });
-  }, [append]);
-
-  const atLimit = fields.length >= MAX_BREAKDOWN_DEFINITIONS;
+  const reconciliation = pricing.reconciliation;
+  if (!reconciliation) return null;
+  const ok = reconciliation.balanced && !reconciliation.clampMismatch;
+  const message = reconciliation.clampMismatch
+    ? pricing.clamped?.bound === "max"
+      ? t(
+          "Lines add up to the formula's {0}, but the maximum bills {1}. An invoice built from these lines won't match the charge.",
+          formatMoney(reconciliation.sum),
+          formatMoney(pricing.clamped.billed),
+        )
+      : t(
+          "Lines add up to the formula's {0}, but the minimum bills {1}. An invoice built from these lines won't match the charge.",
+          formatMoney(reconciliation.sum),
+          formatMoney(pricing.clamped?.billed ?? 0),
+        )
+    : reconciliation.balanced
+      ? t("Lines explain the total")
+      : reconciliation.failedCount > 0
+        ? t(
+            "{0, plural, one {# line fails} other {# lines fail}} on the preview load",
+            reconciliation.failedCount,
+          )
+        : reconciliation.residual > 0
+          ? t("{0} of the total isn't on any line", formatMoney(reconciliation.residual))
+          : t("Lines exceed the total by {0}", formatMoney(-reconciliation.residual));
 
   return (
-    <Card className={className}>
-      <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <div className="flex items-center gap-2">
-          <div>
-            <CardTitle className="text-sm font-medium">{t("Charge breakdown")}</CardTitle>
-            <p className="text-muted-foreground text-xs">
-              {t("Itemize the total into named components for invoices and audit")}
-            </p>
-          </div>
+    <div
+      className={cn(
+        "flex items-start gap-2 border-t px-3 py-2 text-xs",
+        ok ? "text-foreground-muted" : "bg-warning-subtle text-warning-subtle-foreground",
+      )}
+    >
+      {ok ? (
+        <CheckCircleIcon className="text-success mt-px size-3.5 shrink-0" />
+      ) : (
+        <AlertTriangleIcon className="text-warning mt-px size-3.5 shrink-0" />
+      )}
+      <span className="min-w-0 flex-1">{message}</span>
+      <span className="font-mono tabular-nums">{formatMoney(reconciliation.sum)}</span>
+    </div>
+  );
+}
+
+/**
+ * The total itemized into named lines for invoices and disputes: a label, a
+ * short expression and what it comes to on the preview load, with the key an
+ * invoice line carries underneath, followed from the label until it is set by
+ * hand. The footer says whether the lines explain the total.
+ */
+export function BreakdownDefinitionEditor({
+  control,
+  knownIdentifiers,
+  pricing,
+  head,
+}: BreakdownDefinitionEditorProps) {
+  const t = useT();
+  const { fields, append, remove } = useFieldArray({ control, name: "breakdownDefinitions" });
+  const values = useWatch({ control, name: "breakdownDefinitions" }) ?? [];
+  const [touchedKeys, setTouchedKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const atLimit = fields.length >= MAX_BREAKDOWN_DEFINITIONS;
+
+  const add = () => append({ name: "", label: "", expression: "" });
+
+  const heading = head?.({ add, atLimit });
+
+  if (fields.length === 0) {
+    return (
+      <>
+        {heading}
+        <div className="text-foreground-muted flex items-center justify-between gap-3 rounded-lg border border-dashed px-3 py-2.5 text-sm">
+          <span>{t("No lines. The invoice shows one amount for this charge.")}</span>
+          <Button type="button" variant="ghost" size="xs" className="gap-1" onClick={add}>
+            <PlusIcon className="size-3" />
+            {t("Add line")}
+          </Button>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleAdd}
-          disabled={atLimit}
-          className="gap-1.5"
-        >
-          <PlusIcon className="size-3.5" />
-          {t("Add")}
-        </Button>
-      </CardHeader>
-      <CardContent className="p-4">
-        {fields.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="bg-muted flex size-12 items-center justify-center rounded-full">
-              <Dataflow02Icon className="text-muted-foreground size-5" />
-            </div>
-            <p className="mt-3 text-sm font-medium">{t("No breakdown items")}</p>
-            <p className="text-muted-foreground mt-1 text-xs">
-              {t("Add items to break the calculated charge into labeled amounts")}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAdd}
-              className="mt-4 gap-1.5"
+      </>
+    );
+  }
+
+  return (
+    <>
+      {heading}
+      <div className="bg-card overflow-hidden rounded-lg border">
+        {fields.map((field, index) => {
+          const current = values[index] ?? field;
+          const line = pricing?.lines.get(current.name ?? "");
+          const keyFollowsLabel =
+            !touchedKeys.has(field.id) &&
+            (current.name === "" || current.name === keyFromLabel(current.label ?? ""));
+          return (
+            <div
+              key={field.id}
+              className="grid grid-cols-[minmax(0,10rem)_minmax(0,1fr)_5.5rem_1.75rem] items-start gap-2 border-b px-3 py-2 last:border-b-0"
             >
-              <PlusIcon className="size-3.5" />
-              {t("Add item")}
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {fields.map((field, index) => {
-              const rowErrors = errors.breakdownDefinitions?.[index];
-
-              return (
-                <div
-                  key={field.id}
-                  className="group bg-muted/30 hover:bg-muted/50 relative grid grid-cols-12 gap-3 rounded-lg border p-3 transition-colors"
-                >
-                  <div className="col-span-3">
-                    <label
-                      htmlFor={`breakdown-${index}-name`}
-                      className="text-muted-foreground mb-1.5 block text-xs font-medium"
-                    >
-                      {t("Name")}
-                    </label>
+              <div className="flex min-w-0 flex-col gap-1">
+                <Controller
+                  control={control}
+                  name={`breakdownDefinitions.${index}.label`}
+                  render={({ field: labelField }) => (
+                    <Controller
+                      control={control}
+                      name={`breakdownDefinitions.${index}.name`}
+                      render={({ field: nameField }) => (
+                        <Input
+                          ref={labelField.ref}
+                          value={labelField.value ?? ""}
+                          onBlur={labelField.onBlur}
+                          onChange={(event) => {
+                            labelField.onChange(event.target.value);
+                            if (keyFollowsLabel) {
+                              nameField.onChange(keyFromLabel(event.target.value));
+                            }
+                          }}
+                          aria-label={t("Line label")}
+                          placeholder={t("Fuel surcharge")}
+                        />
+                      )}
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name={`breakdownDefinitions.${index}.name`}
+                  render={({ field: nameField, fieldState }) => (
                     <Input
-                      id={`breakdown-${index}-name`}
-                      {...register(`breakdownDefinitions.${index}.name`)}
-                      placeholder="fuelSurcharge"
-                      className="h-8 font-mono text-sm"
+                      ref={nameField.ref}
+                      value={nameField.value ?? ""}
+                      onBlur={nameField.onBlur}
+                      onChange={(event) => {
+                        nameField.onChange(sanitizeIdentifier(event.target.value));
+                        setTouchedKeys((previous) => new Set(previous).add(field.id));
+                      }}
+                      aria-label={t("Line key")}
+                      aria-invalid={fieldState.invalid || undefined}
+                      placeholder={t("key")}
+                      title={fieldState.error?.message}
+                      className="text-foreground-subtle h-5.5 border-transparent bg-transparent px-1 font-mono text-2xs md:text-2xs"
                     />
-                    <FieldError message={rowErrors?.name?.message} />
-                  </div>
-
-                  <div className="col-span-3">
-                    <label
-                      htmlFor={`breakdown-${index}-label`}
-                      className="text-muted-foreground mb-1.5 block text-xs font-medium"
-                    >
-                      {t("Label")}
-                    </label>
-                    <Input
-                      id={`breakdown-${index}-label`}
-                      {...register(`breakdownDefinitions.${index}.label`)}
-                      placeholder={t("Fuel surcharge")}
-                      className="h-8 text-sm"
+                  )}
+                />
+              </div>
+              <ExpressionEditor
+                name={`breakdownDefinitions.${index}.expression`}
+                control={control as never}
+                variant="mini"
+                knownIdentifiers={knownIdentifiers}
+                placeholder="baseRate * totalDistance"
+                aria-label={t("Line expression")}
+              />
+              <div className="flex h-7 items-center justify-end">
+                {line?.error ? (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <span className="text-danger cursor-default font-mono text-sm">
+                          {t("Fails")}
+                        </span>
+                      }
                     />
-                    <FieldError message={rowErrors?.label?.message} />
-                  </div>
-
-                  <div className="col-span-5">
-                    <span className="text-muted-foreground mb-1.5 block text-xs font-medium">
-                      {t("Expression")}
-                    </span>
-                    <ExpressionEditor
-                      name={`breakdownDefinitions.${index}.expression`}
-                      control={control as never}
-                      variant="mini"
-                      knownIdentifiers={knownIdentifiers}
-                      placeholder={t("totalDistance * 0.35")}
-                    />
-                  </div>
-
-                  <div className="col-span-1 flex items-start justify-end pt-6">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      aria-label={t("Remove breakdown item")}
-                      onClick={() => remove(index)}
-                      className="text-muted-foreground hover:bg-danger-subtle hover:text-danger-foreground size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                    >
-                      <Trash01Icon className="size-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-            {atLimit && (
-              <p className="text-muted-foreground text-xs">
-                {t("Maximum of {0} breakdown items reached.", MAX_BREAKDOWN_DEFINITIONS)}
-              </p>
-            )}
-          </div>
+                    <TooltipContent>{line.error}</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <span className="font-mono text-sm tabular-nums">
+                    {line ? formatMoney(line.amount) : "—"}
+                  </span>
+                )}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="mt-0.5"
+                aria-label={t("Remove line {0}", current.label || current.name || t("untitled"))}
+                onClick={() => remove(index)}
+              >
+                <Trash01Icon className="size-3.5" />
+              </Button>
+            </div>
+          );
+        })}
+        {pricing && <Reconcile pricing={pricing} />}
+        {atLimit && (
+          <p className="text-foreground-muted border-t px-3 py-2 text-xs">
+            {t("Maximum of {0} breakdown items reached.", MAX_BREAKDOWN_DEFINITIONS)}
+          </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </>
   );
 }

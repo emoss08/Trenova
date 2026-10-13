@@ -2,6 +2,7 @@ package formulatemplate
 
 import (
 	"context"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -60,23 +61,28 @@ func (rd ReviewDecision) ClosesRound() bool {
 // author resubmits against current tables.
 const SubmissionExpiry int64 = 14 * 24 * 60 * 60
 
+const MaxReviewerNoteLength = 4000
+
 // Review is one entry in a template's review history: who did what, in which
 // round, against which approved version, and what they said about it.
 type Review struct {
 	bun.BaseModel `bun:"table:formula_template_reviews,alias:ftr" json:"-"`
 
-	ID                pulid.ID       `json:"id"                bun:"id,pk,type:VARCHAR(100)"`
-	TemplateID        pulid.ID       `json:"templateId"        bun:"template_id,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID       `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID       `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	Round             int32          `json:"round"             bun:"round,type:SMALLINT,notnull"`
-	Decision          ReviewDecision `json:"decision"          bun:"decision,type:formula_template_review_decision_enum,notnull"`
-	ActorID           *pulid.ID      `json:"actorId"           bun:"actor_id,type:VARCHAR(100),nullzero"`
-	Comment           string         `json:"comment"           bun:"comment,type:TEXT,nullzero"`
-	BaseVersionNumber int64          `json:"baseVersionNumber" bun:"base_version_number,type:BIGINT,notnull,default:0"`
-	CreatedAt         int64          `json:"createdAt"         bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                  pulid.ID       `json:"id"                  bun:"id,pk,type:VARCHAR(100)"`
+	TemplateID          pulid.ID       `json:"templateId"          bun:"template_id,type:VARCHAR(100),notnull"`
+	OrganizationID      pulid.ID       `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),notnull"`
+	BusinessUnitID      pulid.ID       `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),notnull"`
+	Round               int32          `json:"round"               bun:"round,type:SMALLINT,notnull"`
+	Decision            ReviewDecision `json:"decision"            bun:"decision,type:formula_template_review_decision_enum,notnull"`
+	ActorID             *pulid.ID      `json:"actorId"             bun:"actor_id,type:VARCHAR(100),nullzero"`
+	Comment             string         `json:"comment"             bun:"comment,type:TEXT,nullzero"`
+	BaseVersionNumber   int64          `json:"baseVersionNumber"   bun:"base_version_number,type:BIGINT,notnull,default:0"`
+	RequestedReviewerID *pulid.ID      `json:"requestedReviewerId" bun:"requested_reviewer_id,type:VARCHAR(100),nullzero"`
+	ReviewerNote        string         `json:"reviewerNote"        bun:"reviewer_note,type:TEXT,nullzero"`
+	CreatedAt           int64          `json:"createdAt"           bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
-	Actor *tenant.User `json:"actor,omitempty" bun:"rel:belongs-to,join:actor_id=id"`
+	Actor             *tenant.User `json:"actor,omitempty"   bun:"rel:belongs-to,join:actor_id=id"`
+	RequestedReviewer *tenant.User `json:"requestedReviewer" bun:"rel:belongs-to,join:requested_reviewer_id=id"`
 }
 
 func (r *Review) Validate(multiErr *errortypes.MultiError) {
@@ -88,6 +94,14 @@ func (r *Review) Validate(multiErr *errortypes.MultiError) {
 			domainvalidation.ValidEnum[ReviewDecision]("Decision is invalid"),
 		),
 	))
+
+	if utf8.RuneCountInString(r.ReviewerNote) > MaxReviewerNoteLength {
+		multiErr.Add(
+			"reviewerNote",
+			errortypes.ErrInvalid,
+			"A note for the reviewer cannot be longer than 4,000 characters",
+		)
+	}
 
 	if r.Decision != ReviewDecisionExpired && (r.ActorID == nil || r.ActorID.IsNil()) {
 		multiErr.Add(

@@ -7,9 +7,11 @@ import { useId } from "react";
  * across three categorical accents so it reads as Nova's own and never as a
  * tone.
  *
- * It appears in exactly three places — the Briefing item in Triage's rail,
- * "Drafted by Nova" on a reply, and Nova's card in the Briefing deck. Machine
- * suggestions anywhere else keep `AssistMark`, and the Desk never wears it.
+ * It appears in Triage — the Briefing item in its rail, "Drafted by Nova" on a
+ * reply, and Nova's card in the Briefing deck — and in the Formula Studio,
+ * where Nova is the formula assistant: its tab, its hand-off buttons and its
+ * answers. Machine suggestions anywhere else keep `AssistMark`, and the Desk
+ * never wears it.
  *
  * `spin` turns it: "hover" while the pointer is on the nearest `group`
  * ancestor (the rail item), "always" while Nova is working. Reduced motion

@@ -120,3 +120,54 @@ export function proposalForEditor(proposal: FormulaProposal): {
     })),
   };
 }
+
+/** The part of the form a proposal can change. */
+export type ProposalTarget = {
+  name: string;
+  description: string;
+  type: "FreightCharge" | "AccessorialCharge";
+  expression: string;
+  variableDefinitions: VariableDefinition[];
+  breakdownDefinitions: { name: string; label: string; expression: string }[];
+};
+
+/**
+ * What the editor holds once a proposal is inserted: Nova's expression, every
+ * variable it needs that the editor lacks (the editor's own are kept as they
+ * are), its breakdown lines when it has any, and its name, description and
+ * type only where the editor has none of its own.
+ */
+export function applyProposal(current: ProposalTarget, proposal: FormulaProposal): ProposalTarget {
+  const fromProposal = proposalForEditor(proposal);
+  const existing = new Set(current.variableDefinitions.map((variable) => variable.name));
+  const additions = fromProposal.variableDefinitions.filter(
+    (variable) => variable.name !== "" && !existing.has(variable.name),
+  );
+  const hasName = current.name.trim() !== "";
+
+  return {
+    name: hasName ? current.name : proposal.name.trim(),
+    description:
+      current.description.trim() !== "" ? current.description : proposal.description.trim(),
+    type: hasName || !proposal.templateType ? current.type : proposal.templateType,
+    expression: fromProposal.expression,
+    variableDefinitions: [...current.variableDefinitions, ...additions],
+    breakdownDefinitions:
+      proposal.breakdown.length > 0
+        ? proposal.breakdown.map((line) => ({
+            name: line.name,
+            label: line.label,
+            expression: line.expression,
+          }))
+        : current.breakdownDefinitions,
+  };
+}
+
+/** The variables a proposal adds that the editor does not have yet. */
+export function newProposalVariables(
+  current: readonly { name: string }[],
+  proposal: FormulaProposal,
+): FormulaDraftVariable[] {
+  const existing = new Set(current.map((variable) => variable.name));
+  return proposal.variables.filter((variable) => !existing.has(variable.name));
+}

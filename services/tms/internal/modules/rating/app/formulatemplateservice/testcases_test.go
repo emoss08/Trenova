@@ -237,6 +237,7 @@ func TestCreateTestCase_DefaultsToleranceAndAudits(t *testing.T) {
 	template := newTestTemplate()
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
 
 	created, err := deps.svc.CreateTestCase(t.Context(), &CreateTestCaseRequest{
 		TenantInfo: newTenantInfo(),
