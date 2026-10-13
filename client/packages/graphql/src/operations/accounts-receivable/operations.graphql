@@ -80,6 +80,7 @@ query ArCustomerStatement($customerId: ID!, $startDate: Timestamp, $asOfDate: Ti
     transactions {
       transactionDate
       eventType
+      description
       documentNumber
       sourceObjectId
       amountMinor

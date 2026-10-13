@@ -2,10 +2,10 @@ package invoiceadjustmentservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoid"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -77,9 +77,7 @@ func (s *Service) voidReversedInvoice(
 		InvoiceRepo:          s.invoiceRepo,
 		OrderDerivation:      s.orderDerivation,
 		DetentionBilling:     s.detentionBilling,
-		Renumber: func(ctx context.Context, billType billingqueue.BillType) (string, error) {
-			return s.renumberReleasedItem(ctx, adjustment, billType)
-		},
+		Renumber:             s.numberer().ForItem,
 	}, invoicevoid.Params{
 		Invoice:     updated,
 		Disposition: disposition,
@@ -96,23 +94,6 @@ func (s *Service) voidReversedInvoice(
 	return nil
 }
 
-func (s *Service) renumberReleasedItem(
-	ctx context.Context,
-	adjustment *invoiceadjustment.InvoiceAdjustment,
-	billType billingqueue.BillType,
-) (string, error) {
-	switch billType {
-	case billingqueue.BillTypeCreditMemo:
-		return s.sequenceGenerator.GenerateCreditMemoNumber(
-			ctx, adjustment.OrganizationID, adjustment.BusinessUnitID, "", "",
-		)
-	case billingqueue.BillTypeDebitMemo:
-		return s.sequenceGenerator.GenerateDebitMemoNumber(
-			ctx, adjustment.OrganizationID, adjustment.BusinessUnitID, "", "",
-		)
-	default:
-		return s.sequenceGenerator.GenerateInvoiceNumber(
-			ctx, adjustment.OrganizationID, adjustment.BusinessUnitID, "", "",
-		)
-	}
+func (s *Service) numberer() billingnumber.Numberer {
+	return billingnumber.New(s.sequenceGenerator, s.sequenceFormats, s.customerRepo)
 }

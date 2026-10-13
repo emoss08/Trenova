@@ -17,7 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "accounting-connection-check",
 			Description:   "Refresh expiring accounting authorizations and check every connection answers",
-			Spec:          schedule.Cron("*/5 * * * *"),
+			Spec:          schedule.Cron("7 * * * *"),
 			Workflow:      CheckAccountingConnectionsWorkflow,
 			TaskQueue:     temporaltype.IntegrationTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
@@ -28,7 +28,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "accounting-webhook-subscriptions",
 			Description:   "Create, renew and remove the webhook subscriptions accounting systems require",
-			Spec:          schedule.Cron("*/15 * * * *"),
+			Spec:          schedule.Cron("15 */6 * * *"),
 			Workflow:      KeepAccountingWebhookSubscriptionsWorkflow,
 			TaskQueue:     temporaltype.IntegrationTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
@@ -51,7 +51,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "accounting-changes-read",
 			Description:   "Read what changed in every syncing accounting system and bring payments in",
-			Spec:          schedule.Cron("*/15 * * * *"),
+			Spec:          schedule.Cron("*/30 * * * *"),
 			Workflow:      KickAccountingChangesWorkflow,
 			TaskQueue:     temporaltype.IntegrationTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
@@ -84,7 +84,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "accounting-sync-dispatch",
 			Description:   "Wake the sender for every accounting connection with documents due",
-			Spec:          schedule.Cron("* * * * *"),
+			Spec:          schedule.Cron("*/5 * * * *"),
 			Workflow:      KickDueAccountingSyncWorkflow,
 			TaskQueue:     temporaltype.IntegrationTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

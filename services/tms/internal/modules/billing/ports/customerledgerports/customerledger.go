@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // SumCustomerLedgerBalanceRequest totals the AR subledger as at a date. The
@@ -15,7 +16,18 @@ type SumCustomerLedgerBalanceRequest struct {
 	AsOfDate   int64                 `json:"asOfDate"`
 }
 
+// SumCustomerBalancesRequest totals each customer's subledger: what it owes
+// on open invoices, less unapplied cash and credits on its account.
+type SumCustomerBalancesRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+	CustomerIDs []pulid.ID            `json:"customerIds"`
+}
+
 type CustomerLedgerProjectionRepository interface {
 	AppendEntries(ctx context.Context, entries []*customerledger.CustomerLedgerEntry) error
 	SumBalanceAsOf(ctx context.Context, req SumCustomerLedgerBalanceRequest) (int64, error)
+	SumCustomerBalances(
+		ctx context.Context,
+		req SumCustomerBalancesRequest,
+	) (map[pulid.ID]int64, error)
 }

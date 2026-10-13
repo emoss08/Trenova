@@ -17,8 +17,16 @@ WHERE "recorded_by_id" IS NULL;
 
 --bun:split
 ALTER TABLE "formula_template_test_cases"
+    DROP CONSTRAINT IF EXISTS "fk_formula_template_test_cases_recorded_by";
+
+--bun:split
+ALTER TABLE "formula_template_test_cases"
     ADD CONSTRAINT "fk_formula_template_test_cases_recorded_by" FOREIGN KEY ("recorded_by_id")
         REFERENCES "users"("id") ON DELETE SET NULL;
+
+--bun:split
+ALTER TABLE "formula_template_test_cases"
+    DROP CONSTRAINT IF EXISTS "chk_formula_template_test_cases_recorded_on_version";
 
 --bun:split
 ALTER TABLE "formula_template_test_cases"
@@ -33,8 +41,16 @@ ALTER TABLE "formula_template_reviews"
 
 --bun:split
 ALTER TABLE "formula_template_reviews"
+    DROP CONSTRAINT IF EXISTS "fk_formula_template_reviews_requested_reviewer";
+
+--bun:split
+ALTER TABLE "formula_template_reviews"
     ADD CONSTRAINT "fk_formula_template_reviews_requested_reviewer" FOREIGN KEY ("requested_reviewer_id")
         REFERENCES "users"("id") ON DELETE SET NULL;
+
+--bun:split
+ALTER TABLE "formula_template_reviews"
+    DROP CONSTRAINT IF EXISTS "chk_formula_template_reviews_reviewer_note_length";
 
 --bun:split
 ALTER TABLE "formula_template_reviews"

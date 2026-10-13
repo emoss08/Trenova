@@ -1,0 +1,38 @@
+fragment FactoringCompanyTableRowFields on FactoringCompany {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  name
+  addressLine1
+  addressLine2
+  city
+  stateId
+  postalCode
+  email
+  phoneNumber
+  remittanceInstructions
+  noticeOfAssignment
+  notes
+  version
+  createdAt
+  updatedAt
+}
+
+query FactoringCompanyTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  factoringCompanies(input: $input) {
+    edges {
+      node {
+        ...FactoringCompanyTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

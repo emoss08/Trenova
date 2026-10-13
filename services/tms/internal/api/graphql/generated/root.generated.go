@@ -64,6 +64,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionevalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionrolloutexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionshadowexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/factoringcompanyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalperiodexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalyearexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetcodeexec"
@@ -220,6 +221,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
@@ -362,6 +364,7 @@ type ResolverRoot interface {
 	Commodity() CommodityResolver
 	Customer() CustomerResolver
 	CustomerBillingProfile() CustomerBillingProfileResolver
+	CustomerEmailProfile() CustomerEmailProfileResolver
 	CustomerPayment() CustomerPaymentResolver
 	CustomerPaymentApplication() CustomerPaymentApplicationResolver
 	DOTRandomDraw() DOTRandomDrawResolver
@@ -1070,6 +1073,10 @@ type CustomerBillingProfileResolver interface {
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	InvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy, error)
+}
+
+type CustomerEmailProfileResolver interface {
+	FromEmail(ctx context.Context, obj *customer.CustomerEmailProfile) (string, error)
 }
 
 type CustomerPaymentResolver interface {
@@ -2640,6 +2647,8 @@ type QueryResolver interface {
 	ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*extractionshadowports.ExtractionShadowReport, error)
 	ExtractionShadowResults(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionShadowResultConnection, error)
 	ExtractionShadowResult(ctx context.Context, id string) (*extractionshadow.ShadowResult, error)
+	FactoringCompanies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FactoringCompanyConnection, error)
+	FactoringCompany(ctx context.Context, id string) (*factoringcompany.FactoringCompany, error)
 	FiscalYears(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalYearConnection, error)
 	FiscalYear(ctx context.Context, id string) (*fiscalyear.FiscalYear, error)
 	FleetCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FleetCodeConnection, error)
@@ -3413,6 +3422,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		extractionevalexec.Shard,
 		extractionrolloutexec.Shard,
 		extractionshadowexec.Shard,
+		factoringcompanyexec.Shard,
 		fiscalperiodexec.Shard,
 		fiscalyearexec.Shard,
 		fleetcodeexec.Shard,
@@ -3587,6 +3597,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"Commodity":                          func() any { return r.Commodity() },
 			"Customer":                           func() any { return r.Customer() },
 			"CustomerBillingProfile":             func() any { return r.CustomerBillingProfile() },
+			"CustomerEmailProfile":               func() any { return r.CustomerEmailProfile() },
 			"CustomerPayment":                    func() any { return r.CustomerPayment() },
 			"CustomerPaymentApplication":         func() any { return r.CustomerPaymentApplication() },
 			"DOTRandomDraw":                      func() any { return r.DOTRandomDraw() },
@@ -5210,6 +5221,8 @@ type ARLedgerEntry {
 type ARStatementTransaction {
   transactionDate: Timestamp!
   eventType: String!
+  "What moved the balance, in words a customer reads: Invoice, Payment, Credit memo."
+  description: String!
   documentNumber: String!
   sourceObjectId: String!
   amountMinor: Int!
@@ -7043,7 +7056,7 @@ Something the person deciding should know. The code is translated by the
 client; the message is the English fallback, with its arguments in order.
 """
 type AgentPreviewWarning {
-  "would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused, unpinned or rate_coverage."
+  "would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused, unpinned, rate_coverage or recipient_skipped."
   code: String!
   args: [String!]!
   message: String!
@@ -10161,6 +10174,8 @@ enum BillingTransferRunScope {
   AllMatching
   "A second attempt at an earlier transfer."
   Retry
+  "Started by billing control on its own schedule, for shipments ready to bill."
+  Automatic
 }
 
 enum BillingTransferItemStatus {
@@ -13427,14 +13442,23 @@ type CustomerBillingProfile {
   paymentTerm: CustomerPaymentTerm!
   hasBillingControlOverrides: Boolean!
   creditLimit: Decimal
+  """Open receivables, net of unapplied cash and credits, as of creditReviewedAt. Kept by the credit review, not entered."""
   creditBalance: Decimal!
   creditStatus: CustomerCreditStatus!
   enforceCreditLimit: Boolean!
   autoCreditHold: Boolean!
   creditHoldReason: String!
+  """True when the credit review placed the current Hold or Warning; only the review lifts it."""
+  creditHoldAutomatic: Boolean!
+  """When creditBalance was last recomputed from the receivables ledger."""
+  creditReviewedAt: Timestamp
   invoiceMethod: CustomerInvoiceMethod!
     @deprecated(reason: "Split into invoiceDelivery (how many invoices) and invoiceDetail (how verbose). Removed in a later release.")
   autoSendInvoiceOnGeneration: Boolean!
+  "Whether the organization's payment reminders may email this customer about overdue invoices."
+  sendPaymentReminders: Boolean!
+  "Whether the organization's monthly statements may be emailed to this customer."
+  sendStatements: Boolean!
   "Whether invoices may be emailed to this customer."
   emailInvoiceEnabled: Boolean!
   "Whether invoices are sent to this customer's EDI partner as an 210."
@@ -13479,6 +13503,8 @@ type CustomerBillingProfile {
   billingNotes: String!
   fuelSurchargeMode: CustomerFuelSurchargeMode!
   fuelSurchargeProgramId: ID
+  "The factor this customer's invoices are assigned to; null when they are not factored."
+  factoringCompanyId: ID
   documentTypes: [DocumentType!]
   version: Int!
   createdAt: Timestamp!
@@ -13493,6 +13519,7 @@ type CustomerEmailProfile {
   subject: String!
   comment: String!
   fromEmail: String!
+    @deprecated(reason: "Invoices are always sent from the organization's Billing email profile")
   toRecipients: String!
   ccRecipients: String!
   bccRecipients: String!
@@ -19180,6 +19207,48 @@ extend type Mutation {
   updateExtractionShadowSettings(input: UpdateExtractionShadowSettingsInput!): ExtractionShadowSettings!
 }
 `, BuiltIn: false},
+	{Name: "../schema/factoring_company.graphqls", Input: `"A factor an organization sells its receivables to. Customers assigned to it are invoiced with its remit-to and notice of assignment."
+type FactoringCompany {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  status: EntityStatus!
+  code: String!
+  name: String!
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  stateId: ID!
+  postalCode: String!
+  email: String
+  phoneNumber: String
+  "How the factor is paid: bank, lockbox or ACH details printed under its address."
+  remittanceInstructions: String
+  "The notice printed on assigned invoices. Blank prints the standard notice."
+  noticeOfAssignment: String
+  notes: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  state: UsState
+}
+
+type FactoringCompanyEdge {
+  node: FactoringCompany!
+  cursor: String!
+}
+
+type FactoringCompanyConnection {
+  edges: [FactoringCompanyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  factoringCompanies(input: DataTableConnectionInput!): FactoringCompanyConnection!
+  factoringCompany(id: ID!): FactoringCompany
+}
+`, BuiltIn: false},
 	{Name: "../schema/fiscal_period.graphqls", Input: `enum PeriodType {
   Month
   Quarter
@@ -22462,6 +22531,8 @@ type Invoice {
   Null on an ordinary invoice and on consolidated ones, whose lines carry it.
   """
   shipperCustomerId: ID
+  "The factoring company the invoice was assigned to when it posted; null when it is not factored."
+  factoringCompanyId: ID
   shipperCustomer: Customer
   "Whether this invoice bills only part of what its shipments charged."
   isSplitBill: Boolean!
@@ -25954,6 +26025,7 @@ extend type Query {
   EDI_TRANSFER
   EQUIPMENT_MANUFACTURER
   EQUIPMENT_TYPE
+  FACTORING_COMPANY
   FLEET_CODE
   FORMULA_TEMPLATE
   FISCAL_PERIOD

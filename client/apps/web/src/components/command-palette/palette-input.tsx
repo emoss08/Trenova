@@ -1,4 +1,4 @@
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
 import { dropdownMenuSurfaceClassName } from "@trenova/shared/components/ui/dropdown-menu";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -105,7 +105,7 @@ export function PaletteInput({
         <SearchLgIcon className="text-foreground-faint size-4.25 shrink-0" strokeWidth={1.75} />
         {askSubject && (
           <Chip onRemove={onClearAskSubject} removeLabel={t("Stop asking about this")}>
-            <AssistMark className="size-3 shrink-0" />
+            <NovaMark className="size-3 shrink-0" />
             <span className="truncate">{askSubject}</span>
           </Chip>
         )}

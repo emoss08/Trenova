@@ -2,6 +2,7 @@ package billingqueueservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -59,6 +60,7 @@ type Params struct {
 	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
 	Commercial           *shipmentcommercial.Calculator
 	Generator            seqgen.Generator
+	SequenceFormats      seqgen.FormatProvider `optional:"true"`
 	AuditService         auditports.AuditService
 	Realtime             agentports.RealtimeService
 	Validator            *Validator
@@ -92,6 +94,7 @@ type service struct {
 	chargeAllocationRepo shipmentports.ChargeAllocationRepository
 	commercial           *shipmentcommercial.Calculator
 	generator            seqgen.Generator
+	sequenceFormats      seqgen.FormatProvider
 	auditService         auditports.AuditService
 	realtime             agentports.RealtimeService
 	validator            *Validator
@@ -123,6 +126,7 @@ func New(p Params) billingqueueports.BillingQueueService {
 		chargeAllocationRepo: p.ChargeAllocationRepo,
 		commercial:           p.Commercial,
 		generator:            p.Generator,
+		sequenceFormats:      p.SequenceFormats,
 		auditService:         p.AuditService,
 		realtime:             p.Realtime,
 		validator:            p.Validator,
@@ -394,8 +398,8 @@ func (s *service) TransferToBillingItems(
 		number, numberErr := s.generateBillingNumber(
 			ctx,
 			req.BillType,
-			req.TenantInfo.OrgID,
-			req.TenantInfo.BuID,
+			req.TenantInfo,
+			share.PayerID,
 		)
 		if numberErr != nil {
 			return nil, numberErr
@@ -510,22 +514,15 @@ func (s *service) shouldAutoApprove(
 func (s *service) generateBillingNumber(
 	ctx context.Context,
 	billType billingqueue.BillType,
-	orgID, buID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+	payerID pulid.ID,
 ) (string, error) {
-	switch billType {
-	case billingqueue.BillTypeInvoice:
-		return s.generator.GenerateInvoiceNumber(ctx, orgID, buID, "", "")
-	case billingqueue.BillTypeCreditMemo:
-		return s.generator.GenerateCreditMemoNumber(ctx, orgID, buID, "", "")
-	case billingqueue.BillTypeDebitMemo:
-		return s.generator.GenerateDebitMemoNumber(ctx, orgID, buID, "", "")
-	default:
-		return "", errortypes.NewValidationError(
-			"billType",
-			errortypes.ErrInvalid,
-			"Unsupported bill type for number generation",
-		)
-	}
+	return billingnumber.New(s.generator, s.sequenceFormats, s.customerRepo).
+		Next(ctx, &billingnumber.Request{
+			TenantInfo: tenantInfo,
+			BillType:   billType,
+			PayerID:    payerID,
+		})
 }
 
 // autoApprove clears a clean item straight through the queue.
@@ -745,6 +742,11 @@ func (s *service) UpdateStatus(
 			return transitionErr
 		}
 
+		entity, getErr = s.discardStaleDraft(txCtx, entity, req, actor)
+		if getErr != nil {
+			return getErr
+		}
+
 		if req.NewStatus == billingqueue.StatusApproved {
 			if holdErr := s.guardDetentionHolds(txCtx, entity, req.TenantInfo); holdErr != nil {
 				return holdErr
@@ -824,6 +826,38 @@ func (s *service) UpdateStatus(
 	s.projectToWatchtower(ctx, updated)
 
 	return updated, nil
+}
+
+// discardStaleDraft voids the draft an approved item produced when the item
+// goes back to review, then rereads the item: releasing the draft renumbers it
+// and bumps its version.
+func (s *service) discardStaleDraft(
+	ctx context.Context,
+	entity *billingqueue.BillingQueueItem,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+	actor *permissionports.RequestActor,
+) (*billingqueue.BillingQueueItem, error) {
+	if s.invoiceSvc == nil ||
+		entity.Status != billingqueue.StatusApproved ||
+		req.NewStatus != billingqueue.StatusInReview {
+		return entity, nil
+	}
+
+	if err := s.invoiceSvc.DiscardDraftForReview(
+		ctx,
+		&invoiceports.DiscardDraftForReviewRequest{
+			BillingQueueItemID: entity.ID,
+			TenantInfo:         req.TenantInfo,
+		},
+		actor,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
+		ItemID:     entity.ID,
+		TenantInfo: req.TenantInfo,
+	})
 }
 
 func (s *service) publishStatusAgentEvent(

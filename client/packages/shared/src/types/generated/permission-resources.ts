@@ -143,6 +143,7 @@ export const Resource = {
   // Customers
   Customer: "customer",
   CustomerContact: "customer_contact",
+  FactoringCompany: "factoring_company",
 
   // Carriers
   Carrier: "carrier",

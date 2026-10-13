@@ -1,18 +1,24 @@
 package emailservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"context"
+	"errors"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -149,7 +155,9 @@ func (r *assignmentRepo) UpsertAssignments(
 	return r.updatedAssignments, nil
 }
 
-type noopAuditService struct{ *auditportsmock.MockAuditService }
+type noopAuditService struct {
+	*auditportsmock.MockAuditService
+}
 
 func (noopAuditService) List(
 	context.Context,
@@ -255,6 +263,14 @@ type handleProviderEventRepo struct {
 	updatedMessage          *email.Message
 	providerMessageIDLookup string
 	suppressions            []*email.Suppression
+	bouncedRecipients       []string
+}
+
+func (r *handleProviderEventRepo) ListEventRecipients(
+	_ context.Context,
+	_ emailports.ListEmailEventRecipientsRequest,
+) ([]string, error) {
+	return r.bouncedRecipients, nil
 }
 
 func (r *handleProviderEventRepo) GetMessage(
@@ -332,4 +348,135 @@ func testEmailEvent(
 		Recipient:       "ops@example.com",
 		Raw:             map[string]any{},
 	}
+}
+
+type senderOriginRepo struct {
+	emailports.EmailRepository
+
+	profile *email.Profile
+}
+
+func (r *senderOriginRepo) GetProfile(
+	_ context.Context,
+	_ emailports.GetEmailEntityRequest,
+) (*email.Profile, error) {
+	if r.profile == nil {
+		return nil, errortypes.NewNotFoundError("EmailProfile not found")
+	}
+	return r.profile, nil
+}
+
+func TestDescribeSenderRejectionNamesWhereTheAddressIsSet(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenantInfo()
+	msg := testEmailMessage(tenantInfo)
+	msg.FromEmail = "mailbox@trenova.app"
+	svc := &Service{
+		repo: &senderOriginRepo{profile: &email.Profile{
+			Name:        "Billing",
+			SenderEmail: "mailbox@trenova.app",
+		}},
+		l: zap.NewNop(),
+	}
+
+	err := svc.describeSenderRejection(t.Context(), msg, &SenderRejectedError{
+		Provider:  email.ProviderResend,
+		Rejection: SenderDomainUnverified,
+	})
+	require.ErrorContains(t, err, "from mailbox@trenova.app")
+	require.ErrorContains(t, err, `the sender email of the "Billing" email profile`)
+
+	plain := errors.New("network down")
+	require.Same(t, plain, svc.describeSenderRejection(t.Context(), msg, plain))
+}
+
+func TestSyncInvoiceAttemptsPublishesEachUpdatedInvoice(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenantInfo()
+	msg := testEmailMessage(tenantInfo)
+	updated := &invoice.Invoice{
+		ID:             pulid.MustNew("inv_"),
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Number:         "INV-1",
+		SendStatus:     invoice.SendStatusSent,
+	}
+
+	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
+	invoiceRepo.EXPECT().
+		SyncEmailAttemptsForMessage(mock.Anything, msg.ID, tenantInfo).
+		Return([]*invoice.Invoice{updated}, nil).
+		Once()
+
+	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime.EXPECT().
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(
+			func(req *agentports.PublishResourceInvalidationRequest) bool {
+				return req.Resource == "invoice" &&
+					req.Action == "send.updated" &&
+					req.RecordID == updated.ID
+			},
+		)).
+		Return(nil).
+		Once()
+
+	svc := &Service{invoiceRepo: invoiceRepo, realtime: realtime, l: zap.NewNop()}
+	svc.syncInvoiceAttempts(t.Context(), msg)
+}
+
+func TestHandleProviderEventBouncesTheMessageOnlyWhenEveryRecipientBounced(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenantInfo()
+	msg := testEmailMessage(tenantInfo)
+	msg.Status = email.MessageStatusDelivered
+	msg.ToRecipients = []string{"ap@customer.example.com", "billing@customer.example.com"}
+	event := testEmailEvent(tenantInfo, email.EventTypeBounced)
+	event.MessageID = msg.ID
+	event.Recipient = "ap@customer.example.com"
+	repo := &handleProviderEventRepo{
+		message:           msg,
+		bouncedRecipients: []string{"AP@customer.example.com"},
+	}
+	svc := &Service{repo: repo}
+
+	require.NoError(t, svc.HandleProviderEvent(t.Context(), HandleProviderEventParams{
+		TenantInfo:        tenantInfo,
+		Event:             event,
+		SuppressionReason: email.SuppressionReasonHardBounce,
+	}))
+	require.Equal(t, email.MessageStatusDelivered, repo.updatedMessage.Status)
+	require.Equal(t, "Bounced for ap@customer.example.com", repo.updatedMessage.LastError)
+	require.Len(t, repo.suppressions, 1)
+
+	repo.bouncedRecipients = []string{"ap@customer.example.com", "billing@customer.example.com"}
+	second := testEmailEvent(tenantInfo, email.EventTypeBounced)
+	second.MessageID = msg.ID
+	second.Recipient = "billing@customer.example.com"
+	require.NoError(t, svc.HandleProviderEvent(t.Context(), HandleProviderEventParams{
+		TenantInfo: tenantInfo,
+		Event:      second,
+	}))
+	require.Equal(t, email.MessageStatusBounced, repo.updatedMessage.Status)
+}
+
+func TestHandleProviderEventIgnoresALateEventThatWouldMoveStatusBackwards(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenantInfo()
+	msg := testEmailMessage(tenantInfo)
+	msg.Status = email.MessageStatusOpened
+	event := testEmailEvent(tenantInfo, email.EventTypeDelivered)
+	event.MessageID = msg.ID
+	repo := &handleProviderEventRepo{message: msg}
+	svc := &Service{repo: repo}
+
+	require.NoError(t, svc.HandleProviderEvent(t.Context(), HandleProviderEventParams{
+		TenantInfo: tenantInfo,
+		Event:      event,
+	}))
+	require.Nil(t, repo.updatedMessage)
+	require.Equal(t, email.MessageStatusOpened, msg.Status)
 }

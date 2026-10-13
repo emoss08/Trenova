@@ -271,11 +271,13 @@ modules:
       - carriercapacity
       - carrierintel
       - customer
+      - factoringcompany
     service:
       - carriercapacityservice
       - carrierintelservice
       - carrierservice
       - customerservice
+      - factoringcompanyservice
     job:
       - carrierintelligencejobs
     repository:
@@ -283,6 +285,7 @@ modules:
       - carrierintelrepository
       - carrierrepository
       - customerrepository
+      - factoringcompanyrepository
   workforce:
     level: 5
     domain:
@@ -642,13 +645,16 @@ modules:
       - billingqueue
       - billingqueuefilterpreset
       - billingtransfer
+      - collection
       - costingcontrol
       - customerledger
       - customerpayment
+      - customerstatement
       - invoice
       - invoiceadjustment
       - invoicerun
       - latecharge
+      - paymentreminder
     service:
       - accountingdriftservice
       - accountsreceivableservice
@@ -656,12 +662,16 @@ modules:
       - bankreceiptservice
       - bankreceiptworkitemservice
       - billingcontrolpolicyservice
+      - billingnumber
       - billingqueueapprovalservice
       - billingqueueservice
       - billingtransfercriteria
       - billingtransferservice
+      - collectionservice
       - costingservice
+      - creditreviewservice
       - customerpaymentservice
+      - customerstatementservice
       - detentionbillingservice
       - detentioncreditservice
       - invoiceadjustmentservice
@@ -673,10 +683,14 @@ modules:
       - invoiceshareservice
       - invoicevoid
       - latechargeservice
+      - paymentreminderservice
     job:
       - billingqueuejobs
       - billingtransferjobs
+      - creditreviewjobs
+      - customerstatementjobs
       - invoiceadjustmentjobs
+      - paymentreminderjobs
     repository:
       - accountsreceivablerepository
       - bankreceiptbatchrepository
@@ -687,9 +701,11 @@ modules:
       - billingqueuereviewrepository
       - billingtransferrepository
       - chargeallocationrepository
+      - collectionrepository
       - costingrepository
       - customerledgerrepository
       - customerpaymentrepository
+      - customerstatementrepository
       - invoiceadjustmentrepository
       - invoicedisputerepository
       - invoicerepository
@@ -697,6 +713,7 @@ modules:
       - invoicesharerepository
       - journalrepairrepository
       - latechargerepository
+      - paymentreminderrepository
       - recordversionrepository
   settlement:
     level: 9

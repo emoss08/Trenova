@@ -245,6 +245,20 @@ func (b *Bench) openCase(
 
 		return conv, nil
 	}
+	if planned.scenario.Palette {
+		conv, err := session.OpenPalette(
+			ctx,
+			planned.label(),
+			fmt.Sprintf("%s #%d", planned.scenario.Name, planned.repeat),
+			planned.scenario.Steps[0].Say,
+		)
+		if err != nil {
+			return nil, err
+		}
+		conv.Provider = provider
+
+		return conv, nil
+	}
 	if opts.ThreadID.IsNotNil() {
 		conv, err := session.Open(ctx, OpenConversation{
 			Label:    planned.label(),
@@ -313,6 +327,9 @@ func (b *Bench) runStep(
 	} else {
 		result.Kind = "say"
 		utterance, err := step.Utterance()
+		if err == nil {
+			err = b.findMentions(ctx, session, step, &utterance)
+		}
 		if err == nil && step.Agent != "" {
 			utterance.Directed, err = conv.directedAgent(ctx, step.Agent)
 		}

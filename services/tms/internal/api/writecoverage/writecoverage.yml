@@ -724,6 +724,18 @@ writes:
   "mutation revokeCarrierTrackingLink":
     pending: "Revoke the live carrier tracking link on a move, so the carrier can no longer post through it."
 
+  # collection
+  "POST /api/v1/accounting/collections/customers/:customerID/activities/":
+    pending: "Log a call, email, note or promise to pay against a customer's overdue receivables."
+  "PUT /api/v1/accounting/collections/customers/:customerID/collector/":
+    pending: "Assign a customer's overdue receivables to a collector, or take them off whoever has them."
+  "POST /api/v1/accounting/collections/customers/:customerID/reminder/":
+    pending: "Email a customer a reminder of every overdue invoice it has, with a note."
+  "PUT /api/v1/accounting/collections/customers/:customerID/follow-up/":
+    pending: "Schedule when a customer's overdue receivables are next chased, or clear the follow-up."
+  "POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/":
+    pending: "Email a customer its statement of account as a PDF, with a note."
+
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":
     tools: [update_commodity]
@@ -1716,6 +1728,17 @@ writes:
   "PUT /api/v1/hazmat-segregation-rules/:hazmatSegregationRuleID/":
     exempt: configuration
     reason: "Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them."
+
+  # factoringcompany
+  "PATCH /api/v1/factoring-companies/:factoringCompanyID/":
+    exempt: configuration
+    reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
+  "POST /api/v1/factoring-companies/":
+    exempt: configuration
+    reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
+  "PUT /api/v1/factoring-companies/:factoringCompanyID/":
+    exempt: configuration
+    reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
 
   # holdreason
   "PATCH /api/v1/hold-reasons/:holdReasonID/":

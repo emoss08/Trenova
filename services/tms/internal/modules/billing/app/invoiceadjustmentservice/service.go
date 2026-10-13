@@ -1,19 +1,24 @@
 package invoiceadjustmentservice
 
 import (
+	"context"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
@@ -23,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -59,9 +65,12 @@ type Params struct {
 	Commercial         *shipmentcommercial.Calculator
 	Generator          invoiceadjustmentports.InvoiceAdjustGenerator
 	SequenceGenerator  seqgen.Generator
-	AccountingSync     accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
+	SequenceFormats    seqgen.FormatProvider                       `optional:"true"`
+	CreditApplier      customerpaymentports.CustomerPaymentService `optional:"true"`
+	AccountingSync     accountingsyncports.AccountingSyncEnqueuer  `optional:"true"`
 	CustomerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	AccountingPolicy   *accountingcontrolpolicyservice.Service
+	Realtime           agentports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
@@ -91,9 +100,12 @@ type Service struct {
 	commercial         *shipmentcommercial.Calculator
 	generator          invoiceadjustmentports.InvoiceAdjustGenerator
 	sequenceGenerator  seqgen.Generator
+	sequenceFormats    seqgen.FormatProvider
+	credits            creditApplier
 	accountingSync     accountingsyncports.AccountingSyncEnqueuer
 	customerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	accountingPolicy   *accountingcontrolpolicyservice.Service
+	realtime           agentports.RealtimeService
 }
 
 type previewComputation struct {
@@ -125,7 +137,7 @@ type previewLineValues struct {
 
 //nolint:gocritic // stable API shape
 func New(p Params) invoiceadjustmentports.InvoiceAdjustmentService {
-	return &Service{
+	svc := &Service{
 		l:                  p.Logger.Named("service.invoice-adjustment"),
 		db:                 p.DB,
 		repo:               p.Repo,
@@ -152,8 +164,35 @@ func New(p Params) invoiceadjustmentports.InvoiceAdjustmentService {
 		commercial:         p.Commercial,
 		generator:          p.Generator,
 		sequenceGenerator:  p.SequenceGenerator,
+		sequenceFormats:    p.SequenceFormats,
 		accountingSync:     p.AccountingSync,
 		customerLedgerRepo: p.CustomerLedgerRepo,
 		accountingPolicy:   p.AccountingPolicy,
+		realtime:           p.Realtime,
+	}
+	if p.CreditApplier != nil {
+		svc.credits = p.CreditApplier
+	}
+
+	return svc
+}
+
+func (s *Service) publishAdjustedInvoices(
+	ctx context.Context,
+	actor *permissionports.RequestActor,
+	invoices ...*invoice.Invoice,
+) {
+	auditActor := actor.AuditActorOrSystem()
+	for _, entity := range invoices {
+		if entity == nil {
+			continue
+		}
+		realtimeinvalidation.PublishAfterCommit(ctx, s.realtime, s.l, realtimeinvalidation.ChangeOf(
+			permission.ResourceInvoice.String(),
+			entity,
+			invoice.RealtimeActionUpdated,
+			auditActor,
+			invoice.NewRealtimeSnapshot(entity),
+		))
 	}
 }

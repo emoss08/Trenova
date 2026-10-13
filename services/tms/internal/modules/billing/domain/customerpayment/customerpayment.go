@@ -217,3 +217,22 @@ func (a *Application) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	}
 	return nil
 }
+
+// SettledAmountMinor is how much of its invoice an application closes: the
+// cash applied plus any short pay written off. Posting settles exactly this
+// much, so reversing must take back exactly this much.
+func (a *Application) SettledAmountMinor() int64 {
+	return a.AppliedAmountMinor + a.ShortPayAmountMinor
+}
+
+// ShortPayAmountMinor is the short pay written off across every application.
+func (p *Payment) ShortPayAmountMinor() int64 {
+	var total int64
+	for _, app := range p.Applications {
+		if app != nil {
+			total += app.ShortPayAmountMinor
+		}
+	}
+
+	return total
+}

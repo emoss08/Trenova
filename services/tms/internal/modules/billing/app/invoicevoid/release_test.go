@@ -79,7 +79,7 @@ func (f *releaseFixture) deps() invoicevoid.Deps {
 		ShipmentRepo:         f.shipmentRepo,
 		InvoiceRepo:          f.invoiceRepo,
 		OrderDerivation:      f.derivation,
-		Renumber: func(context.Context, billingqueue.BillType) (string, error) {
+		Renumber: func(context.Context, *billingqueue.BillingQueueItem) (string, error) {
 			return "INV-2", nil
 		},
 	}
@@ -100,6 +100,13 @@ func (f *releaseFixture) expectCommonReleases(
 				req.RenumberFn != nil
 		})).
 		Return(released, nil).
+		Once()
+	f.invoiceRepo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, invoiceports.RevokeInvoiceDocumentShareTokensRequest{
+			InvoiceID:  f.inv.ID,
+			TenantInfo: f.tenantInfo,
+		}).
+		Return(int64(1), nil).
 		Once()
 	f.orderRepo.EXPECT().
 		ClearChargesInvoice(mock.Anything, &orderports.ClearOrderChargesInvoiceRequest{TenantInfo: f.tenantInfo, InvoiceID: f.inv.ID}).

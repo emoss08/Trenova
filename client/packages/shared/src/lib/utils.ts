@@ -363,6 +363,26 @@ export function downloadBlob(blob: Blob, fileName: string): void {
 }
 
 /**
+ * The file name a Content-Disposition header gives, or the fallback. The
+ * RFC 5987 form (`filename*=UTF-8''...`) wins over the plain one, because a
+ * server sends it exactly when the name is not plain ASCII.
+ */
+export function filenameFromDisposition(header: string | null, fallback: string): string {
+  if (!header) return fallback;
+  const extended = header.match(/filename\*\s*=\s*(?:[\w-]+)?'[^']*'([^;]+)/i);
+  if (extended?.[1]) {
+    try {
+      return decodeURIComponent(extended[1].trim());
+    } catch {
+      // A malformed escape falls through to the plain name.
+    }
+  }
+  const plain = header.match(/filename\s*=\s*"([^"]*)"|filename\s*=\s*([^;]+)/i);
+  const name = (plain?.[1] ?? plain?.[2])?.trim();
+  return name || fallback;
+}
+
+/**
  * Downloads what a URL serves, through a synthetic click on a link the page
  * never shows. The server names the file with a Content-Disposition header
  * when `fileName` is left out; a same-origin link takes the session cookie

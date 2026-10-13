@@ -2,7 +2,9 @@ package invoiceadjustmentservice
 
 import (
 	"context"
+	"time"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -27,6 +29,9 @@ func (s *Service) Approve(
 		ctx,
 		kernelports.TxOptions{LockTimeout: 5 * 1000000000},
 		func(txCtx context.Context, _ bun.Tx) error {
+			if guardErr := s.refuseSelfApproval(txCtx, req, actor); guardErr != nil {
+				return guardErr
+			}
 			executed, execErr := s.executeApprovedAdjustment(
 				txCtx,
 				req.AdjustmentID,
@@ -53,41 +58,153 @@ func (s *Service) Approve(
 	return result, nil
 }
 
+// Reject closes an adjustment without it taking effect. It holds the invoice's
+// lock, the same one approval takes, so a rejection and an approval of the same
+// adjustment cannot both win. An adjustment whose execution failed
+// revalidation can be rejected too, which is the only way to close it when the
+// condition that failed it will not clear. A rejected void reversal takes the
+// void reason it recorded off the invoice, which stays posted.
 func (s *Service) Reject(
 	ctx context.Context,
 	req *invoiceadjustmentports.RejectInvoiceAdjustmentRequest,
 	actor *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
-	entity, err := s.repo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
-		ID:         req.AdjustmentID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if entity.Status != invoiceadjustment.StatusPendingApproval {
-		return nil, errortypes.NewValidationError(
-			"adjustmentId",
-			errortypes.ErrInvalidOperation,
-			"Only pending approval adjustments may be rejected",
-		)
-	}
+	var (
+		updated  *invoiceadjustment.InvoiceAdjustment
+		restored *invoice.Invoice
+	)
+	err := s.db.WithTx(
+		ctx,
+		kernelports.TxOptions{LockTimeout: 5 * time.Second},
+		func(txCtx context.Context, _ bun.Tx) error {
+			entity, txErr := s.lockForDecision(txCtx, req.AdjustmentID, req.TenantInfo)
+			if txErr != nil {
+				return txErr
+			}
+			if !entity.adjustment.Status.CanBeRejected() {
+				return errortypes.NewValidationError(
+					"adjustmentId",
+					errortypes.ErrInvalidOperation,
+					"Only adjustments awaiting approval or whose execution failed may be rejected",
+				)
+			}
 
-	now := timeutils.NowUnix()
-	entity.Status = invoiceadjustment.StatusRejected
-	entity.ApprovalStatus = invoiceadjustment.ApprovalStatusRejected
-	entity.RejectedByID = actor.UserID
-	entity.RejectedAt = &now
-	entity.RejectionReason = req.Reason
+			entity.adjustment.Reject(actor.UserID, timeutils.NowUnix(), req.Reason)
+			if updated, txErr = s.repo.UpdateAdjustment(txCtx, entity.adjustment); txErr != nil {
+				return txErr
+			}
 
-	updated, err := s.repo.UpdateAdjustment(ctx, entity)
+			restored, txErr = s.withdrawVoidRequest(txCtx, updated, entity.invoice)
+			return txErr
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	s.logAdjustmentEvent("invoice adjustment rejected", updated, zap.InfoLevel)
 	s.logAudit(updated, actor, permission.OpReject, "Invoice adjustment rejected")
+	s.publishAdjustedInvoices(ctx, actor, restored)
 	return updated, nil
+}
+
+// refuseSelfApproval keeps whoever submitted an adjustment that needs
+// approval from approving it, where the organization asks for a separate
+// approver. Retrying one whose execution failed without ever needing approval
+// is not an approval and stays open to its submitter.
+func (s *Service) refuseSelfApproval(
+	ctx context.Context,
+	req *invoiceadjustmentports.ApproveInvoiceAdjustmentRequest,
+	actor *permissionports.RequestActor,
+) error {
+	if actor == nil || actor.UserID.IsNil() || s.adjustmentCtrlRepo == nil {
+		return nil
+	}
+
+	adjustment, err := s.repo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
+		ID:         req.AdjustmentID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if !adjustment.ApprovalRequired || adjustment.SubmittedByID != actor.UserID {
+		return nil
+	}
+
+	control, err := s.adjustmentCtrlRepo.GetByOrgID(ctx, adjustment.OrganizationID)
+	if errortypes.IsNotFoundError(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if !control.RequireSeparateApprover {
+		return nil
+	}
+
+	return errortypes.NewValidationError(
+		"adjustmentId",
+		errortypes.ErrInvalidOperation,
+		"You submitted this adjustment, so someone else must approve it",
+	)
+}
+
+type lockedDecision struct {
+	adjustment *invoiceadjustment.InvoiceAdjustment
+	invoice    *invoice.Invoice
+}
+
+// lockForDecision locks the adjustment's invoice and then reads the adjustment,
+// so the status it returns cannot change before the caller's transaction ends.
+func (s *Service) lockForDecision(
+	ctx context.Context,
+	adjustmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*lockedDecision, error) {
+	request := invoiceadjustmentports.GetInvoiceAdjustmentRequest{
+		ID:         adjustmentID,
+		TenantInfo: tenantInfo,
+	}
+	unlocked, err := s.repo.GetByID(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	locked, err := s.repo.LockInvoiceForUpdate(ctx, invoiceadjustmentports.LockInvoiceAdjustmentRequest{
+		InvoiceID:  unlocked.OriginalInvoiceID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	adjustment, err := s.repo.GetByID(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return &lockedDecision{adjustment: adjustment, invoice: locked}, nil
+}
+
+// withdrawVoidRequest clears the reason and disposition a void recorded on a
+// posted invoice before submitting its reversal, once that reversal is
+// rejected: the invoice was never voided and must not read as if it were.
+func (s *Service) withdrawVoidRequest(
+	ctx context.Context,
+	adjustment *invoiceadjustment.InvoiceAdjustment,
+	entity *invoice.Invoice,
+) (*invoice.Invoice, error) {
+	if adjustment.Kind != invoiceadjustment.KindFullReversal ||
+		entity == nil ||
+		entity.Status != invoice.StatusPosted ||
+		(entity.VoidReason == "" && entity.VoidDisposition == "") {
+		return nil, nil
+	}
+
+	entity.VoidReason = ""
+	entity.VoidDisposition = ""
+	return s.invoiceRepo.Update(ctx, entity)
 }
 
 func (s *Service) GetDetail(

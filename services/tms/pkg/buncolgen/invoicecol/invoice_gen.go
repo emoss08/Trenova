@@ -1001,6 +1001,7 @@ var InvoiceColumns = struct {
 	SourceInvoiceAdjustmentID buncolgen.Column // "source_invoice_adjustment_id" → qualified: "inv.source_invoice_adjustment_id"
 	IsAdjustmentArtifact      buncolgen.Column // "is_adjustment_artifact" → qualified: "inv.is_adjustment_artifact"
 	ShipperCustomerID         buncolgen.Column // "shipper_customer_id" → qualified: "inv.shipper_customer_id"
+	FactoringCompanyID        buncolgen.Column // "factoring_company_id" → qualified: "inv.factoring_company_id"
 	IsSplitBill               buncolgen.Column // "is_split_bill" → qualified: "inv.is_split_bill"
 	VoidedAt                  buncolgen.Column // "voided_at" → qualified: "inv.voided_at"
 	VoidedByID                buncolgen.Column // "voided_by_id" → qualified: "inv.voided_by_id"
@@ -1085,6 +1086,7 @@ var InvoiceColumns = struct {
 	SourceInvoiceAdjustmentID: buncolgen.NewColumn("source_invoice_adjustment_id", "inv"),
 	IsAdjustmentArtifact:      buncolgen.NewColumn("is_adjustment_artifact", "inv"),
 	ShipperCustomerID:         buncolgen.NewColumn("shipper_customer_id", "inv"),
+	FactoringCompanyID:        buncolgen.NewColumn("factoring_company_id", "inv"),
 	IsSplitBill:               buncolgen.NewColumn("is_split_bill", "inv"),
 	VoidedAt:                  buncolgen.NewColumn("voided_at", "inv"),
 	VoidedByID:                buncolgen.NewColumn("voided_by_id", "inv"),
@@ -1175,6 +1177,7 @@ var InvoiceFieldMap = map[string]string{
 	"sourceInvoiceAdjustmentId": "source_invoice_adjustment_id",
 	"isAdjustmentArtifact":      "is_adjustment_artifact",
 	"shipperCustomerId":         "shipper_customer_id",
+	"factoringCompanyId":        "factoring_company_id",
 	"isSplitBill":               "is_split_bill",
 	"voidedAt":                  "voided_at",
 	"voidedById":                "voided_by_id",
@@ -1263,6 +1266,7 @@ var InvoiceInsertableColumns = []string{
 	"source_invoice_adjustment_id",
 	"is_adjustment_artifact",
 	"shipper_customer_id",
+	"factoring_company_id",
 	"is_split_bill",
 	"voided_at",
 	"voided_by_id",
@@ -1292,6 +1296,7 @@ var InvoiceRelations = struct {
 	Order            string
 	Customer         string
 	ShipperCustomer  string
+	FactoringCompany string
 	ReferenceInvoice string
 	PDFDocument      string
 	Lines            string
@@ -1303,6 +1308,7 @@ var InvoiceRelations = struct {
 	Order:            "Order",
 	Customer:         "Customer",
 	ShipperCustomer:  "ShipperCustomer",
+	FactoringCompany: "FactoringCompany",
 	ReferenceInvoice: "ReferenceInvoice",
 	PDFDocument:      "PDFDocument",
 	Lines:            "Lines",
@@ -1426,6 +1432,7 @@ var InvoiceFilter = struct {
 	SourceInvoiceAdjustmentID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceInvoiceAdjustmentId" → DB: "source_invoice_adjustment_id"
 	IsAdjustmentArtifact      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isAdjustmentArtifact" → DB: "is_adjustment_artifact"
 	ShipperCustomerID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipperCustomerId" → DB: "shipper_customer_id"
+	FactoringCompanyID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringCompanyId" → DB: "factoring_company_id"
 	IsSplitBill               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isSplitBill" → DB: "is_split_bill"
 	VoidedAt                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedAt" → DB: "voided_at"
 	VoidedByID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedById" → DB: "voided_by_id"
@@ -1640,6 +1647,9 @@ var InvoiceFilter = struct {
 	},
 	ShipperCustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("shipperCustomerId", op, value)
+	},
+	FactoringCompanyID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("factoringCompanyId", op, value)
 	},
 	IsSplitBill: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("isSplitBill", op, value)

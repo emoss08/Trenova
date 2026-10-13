@@ -19,7 +19,7 @@ func TestScheduleProviderGetSchedules(t *testing.T) {
 	require.Len(t, schedules, 1)
 	assert.Equal(t, "weather-alert-poll", schedules[0].ID)
 	assert.Equal(t, temporaltype.TaskQueueWeatherAlert.String(), schedules[0].TaskQueue)
-	assert.Equal(t, 5*time.Minute, schedules[0].Spec.Interval)
+	assert.Equal(t, 30*time.Minute, schedules[0].Spec.Interval)
 	assert.Equal(t, enums.SCHEDULE_OVERLAP_POLICY_SKIP, schedules[0].OverlapPolicy)
 }
 

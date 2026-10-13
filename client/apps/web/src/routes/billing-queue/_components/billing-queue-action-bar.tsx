@@ -32,7 +32,7 @@ function statusUpdatedMessage(t: TranslateFn, status: BillingQueueStatus): strin
     case "ReadyForReview":
       return t("Status updated to ready for review");
     case "InReview":
-      return t("Status updated to in review");
+      return t("Returned to review");
     case "Approved":
       return t("Status updated to approved");
     case "OnHold":
@@ -222,15 +222,26 @@ export function BillingQueueActionBar({
     case "Approved":
       return (
         <div className="flex items-center gap-2 border-b px-4 py-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => updateStatus({ status: "InReview" })}
-            disabled={isPending}
-          >
-            <FlipBackwardIcon className="size-3.5" />
-            {t("Revert to review")}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => updateStatus({ status: "InReview" })}
+                  disabled={isPending}
+                >
+                  <FlipBackwardIcon className="size-3.5" />
+                  {t("Revert to review")}
+                </Button>
+              }
+            />
+            <TooltipContent side="bottom" sideOffset={8}>
+              {t(
+                "The draft invoice is voided and a new one is built from the corrected charges when you approve again",
+              )}
+            </TooltipContent>
+          </Tooltip>
         </div>
       );
 

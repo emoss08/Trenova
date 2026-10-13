@@ -20,7 +20,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			// Every five minutes keeps an unanswered scan request from sitting
 			// in the web app long after its two minutes ran out, and restarts
 			// a lost batch before anybody has noticed it was lost.
-			Spec:          schedule.Cron("*/5 * * * *"),
+			Spec:          schedule.Cron("*/15 * * * *"),
 			Workflow:      CaptureMaintenanceWorkflow,
 			TaskQueue:     temporaltype.CaptureTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

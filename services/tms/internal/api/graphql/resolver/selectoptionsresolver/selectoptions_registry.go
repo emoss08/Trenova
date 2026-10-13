@@ -98,6 +98,9 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		gqlmodel.SelectOptionResourceFuelSurchargeProgram: {
 			Resolve: r.resolveFuelSurchargeProgramSelectOptions,
 		},
+		gqlmodel.SelectOptionResourceFactoringCompany: {
+			Resolve: r.resolveFactoringCompanySelectOptions,
+		},
 		gqlmodel.SelectOptionResourceFiscalYear: {
 			Resolve: r.resolveFiscalYearSelectOptions,
 		},

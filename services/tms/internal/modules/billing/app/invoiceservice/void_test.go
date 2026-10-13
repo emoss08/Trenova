@@ -1,11 +1,12 @@
 package invoiceservice
 
 import (
+	"context"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/latechargeportsmock"
-	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -19,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -183,6 +184,10 @@ func TestVoidInvoiceDraftRebillReleasesQueueItemsForRebilling(t *testing.T) {
 		Status: billingqueue.StatusApproved,
 	}
 	queueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
+	repo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
 	queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *billingqueueports.ReleaseForInvoiceRequest) bool {
 			return req.Rebill &&
@@ -224,6 +229,10 @@ func TestVoidInvoiceDraftDoNotRebillCancelsQueueItems(t *testing.T) {
 		Once()
 
 	queueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
+	repo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
 	queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *billingqueueports.ReleaseForInvoiceRequest) bool {
 			return !req.Rebill && req.InvoiceID == f.invoiceID
@@ -490,6 +499,10 @@ func TestVoidInvoiceProceedsWhenLateChargeMemosAreVoided(t *testing.T) {
 		Once()
 
 	queueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
+	repo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
 	queueRepo.EXPECT().ReleaseForInvoice(mock.Anything, mock.Anything).
 		Return([]*billingqueue.BillingQueueItem{}, nil).
 		Once()
@@ -501,4 +514,53 @@ func TestVoidInvoiceProceedsWhenLateChargeMemosAreVoided(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, invoice.StatusVoided, result.Invoice.Status)
+}
+
+type txMarker struct{}
+
+// markingInvoiceDB tags the context a transaction body runs in, so a test can
+// tell which writes shared it.
+type markingInvoiceDB struct{ fakeInvoiceDB }
+
+func (markingInvoiceDB) WithTx(
+	ctx context.Context,
+	_ kernelports.TxOptions,
+	fn func(context.Context, bun.Tx) error,
+) error {
+	return fn(context.WithValue(ctx, txMarker{}, true), bun.Tx{})
+}
+
+func inTx(ctx context.Context) bool {
+	marked, _ := ctx.Value(txMarker{}).(bool)
+	return marked
+}
+
+func TestVoidInvoicePostedRecordsTheReasonInTheReversalsTransaction(t *testing.T) {
+	t.Parallel()
+
+	f := newVoidFixture()
+	posted := f.invoice(invoice.StatusPosted)
+	refused := errortypes.NewBusinessError("The accounting period is closed")
+
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(posted, nil).Once()
+	repo.EXPECT().
+		Update(mock.MatchedBy(inTx), mock.Anything).
+		Return(posted, nil).
+		Once()
+
+	adjustments := invoiceadjustmentportsmock.NewMockInvoiceAdjustmentService(t)
+	adjustments.EXPECT().
+		Submit(mock.MatchedBy(inTx), mock.Anything, f.actor).
+		Return(nil, refused).
+		Once()
+
+	svc := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t))
+	svc.db = markingInvoiceDB{}
+	svc.adjustmentService = adjustments
+
+	result, err := svc.VoidInvoice(t.Context(), f.request(invoice.VoidDispositionRebill), f.actor)
+
+	require.ErrorIs(t, err, refused)
+	assert.Nil(t, result)
 }

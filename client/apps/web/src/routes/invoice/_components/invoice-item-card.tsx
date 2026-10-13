@@ -33,11 +33,15 @@ export function InvoiceItemCard({
   isSelected,
   onClick,
   onPost,
+  checked,
+  onCheckedChange,
 }: {
   invoice: InvoiceTableRowFieldsFragment;
   isSelected: boolean;
   onClick: () => void;
   onPost: () => void;
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
 }) {
   const t = useT();
 
@@ -100,6 +104,9 @@ export function InvoiceItemCard({
           }
           isSelected={isSelected}
           onClick={onClick}
+          checked={checked}
+          onCheckedChange={onCheckedChange}
+          checkLabel={t("Select {0}", invoice.number)}
         />
       </ContextMenuTrigger>
       <ContextMenuContent>

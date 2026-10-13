@@ -19,7 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "shipment-auto-delay",
 			Description:   "Automatically mark eligible shipments delayed across tenants",
-			Spec:          schedule.Every(5 * time.Minute),
+			Spec:          schedule.Every(15 * time.Minute),
 			Workflow:      AutoDelayShipmentsWorkflow,
 			TaskQueue:     temporaltype.TaskQueueSystem.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

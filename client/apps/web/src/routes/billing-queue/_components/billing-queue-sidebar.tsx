@@ -14,7 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@trenova/shared/components/ui/select";
+import { SelectionDock } from "@/components/selection-dock";
+import { useListSelection } from "@/hooks/use-list-selection";
+import { billingQueueItemLabel } from "@/lib/billing-queue-label";
+import {
+  BULK_CONCURRENCY,
+  type BulkOutcomeMessages,
+  notifyBulkOutcome,
+  settleAll,
+} from "@/lib/bulk-outcome";
 import { billTypeChoices, billingQueueStatusChoices } from "@/lib/choices";
+import type { DockAction } from "@trenova/shared/types/data-table";
 import type {
   GraphQLSelectOptionsConfig,
   SelectOption as GraphQLSelectOption,
@@ -28,14 +38,18 @@ import type {
 import type { User } from "@trenova/shared/types/user";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  CheckCircleIcon,
   FilterFunnel01Icon,
+  PauseIcon,
+  Send01Icon,
+  UserPlus01Icon,
   Save01Icon,
   SearchLgIcon,
   Trash01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
-import { useDeferredValue, useEffect, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import type { FieldValues } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -45,15 +59,25 @@ import {
   billingQueueListQuery,
 } from "../billing-queue-queries";
 import { queueSidebarSearchParamsParser } from "../use-billing-queue-state";
-import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
+import { BillingQueueAssignDialog, type BillingQueueTarget } from "./billing-queue-assign-dialog";
 import { BillingQueueCancelDialog } from "./billing-queue-cancel-dialog";
 import { BillingQueueItemCard } from "./billing-queue-item-card";
+import { BillingQueueApproveConfirm } from "./billing-queue-approve-confirm";
 import { BillingQueueSavePresetDialog } from "./billing-queue-save-preset-dialog";
+import { bulkEligibility } from "./billing-queue-bulk";
+import { useBulkApprove } from "./use-bulk-approve";
 
 /** The queue filters on the customer invoiced, which for a split shipment is not the shipper. */
 const CUSTOMER_SELECT_OPTIONS = { resource: "CUSTOMER" } satisfies GraphQLSelectOptionsConfig;
 
 const EMPTY_ITEMS: BillingQueueItem[] = [];
+
+const itemId = (item: BillingQueueItem) => item.id;
+
+const toTarget = (item: BillingQueueItem): BillingQueueTarget => ({
+  id: item.id,
+  label: billingQueueItemLabel(item),
+});
 
 function PresetSelector({
   selectedPresetId,
@@ -103,8 +127,9 @@ export function BillingQueueSidebar({
   } = searchParams;
   const deferredSearch = useDeferredValue(search);
 
-  const [assignItemId, setAssignItemId] = useState<string | null>(null);
-  const [cancelItemId, setCancelItemId] = useState<string | null>(null);
+  const [assignTargets, setAssignTargets] = useState<BillingQueueTarget[] | null>(null);
+  const [cancelTargets, setCancelTargets] = useState<BillingQueueTarget[] | null>(null);
+  const [approveConfirm, setApproveConfirm] = useState<BillingQueueItem[] | null>(null);
   const [savePresetOpen, setSavePresetOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -184,6 +209,109 @@ export function BillingQueueSidebar({
   });
 
   const items = data?.results ?? EMPTY_ITEMS;
+  const selection = useListSelection(items, itemId);
+  const eligible = useMemo(() => bulkEligibility(selection.selected), [selection.selected]);
+  const { approve, isStarting } = useBulkApprove();
+  const clearSelection = selection.clear;
+
+  const startApprove = useCallback(
+    async (targets: BillingQueueItem[], assignMe: boolean) => {
+      await approve(targets.map(itemId), assignMe);
+      setApproveConfirm(null);
+      clearSelection();
+    },
+    [approve, clearSelection],
+  );
+
+  const runBulk = useCallback(
+    async (
+      targets: BillingQueueItem[],
+      action: (item: BillingQueueItem) => Promise<unknown>,
+      messages: BulkOutcomeMessages,
+    ) => {
+      const result = await settleAll(targets, action, {
+        concurrency: BULK_CONCURRENCY,
+        label: billingQueueItemLabel,
+      });
+      void queryClient.invalidateQueries({ queryKey: [BILLING_QUEUE_LIST_KEY] });
+      void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
+      notifyBulkOutcome(result, messages);
+      if (result.failed.length === 0) {
+        clearSelection();
+      }
+    },
+    [queryClient, clearSelection],
+  );
+
+  const dockActions: DockAction<BillingQueueItem>[] = [];
+  if (eligible.approvable.length > 0) {
+    dockActions.push({
+      id: "approve",
+      label: t("Approve {0}", eligible.approvable.length),
+      icon: CheckCircleIcon,
+      onClick: async () => {
+        if (eligible.approvable.some((item) => !item.assignedBillerId)) {
+          setApproveConfirm(eligible.approvable);
+          return;
+        }
+        await startApprove(eligible.approvable, false);
+      },
+    });
+  }
+  if (eligible.postable.length > 0) {
+    dockActions.push({
+      id: "post",
+      label: t("Post {0}", eligible.postable.length),
+      loadingLabel: t("Posting..."),
+      icon: Send01Icon,
+      onClick: () =>
+        runBulk(eligible.postable, (item) => apiService.billingQueueService.post(item.id), {
+          succeeded: (count) =>
+            t("{0, plural, one {Posted # invoice} other {Posted # invoices}}", count),
+          partial: (succeeded, failed) =>
+            t("Posted {0}; {1} could not be posted", succeeded, failed),
+          allFailed: (failed) =>
+            t("{0, plural, one {# invoice} other {# invoices}} could not be posted", failed),
+        }),
+    });
+  }
+  if (eligible.holdable.length > 0) {
+    dockActions.push({
+      id: "hold",
+      label: t("Hold {0}", eligible.holdable.length),
+      loadingLabel: t("Holding..."),
+      icon: PauseIcon,
+      onClick: () =>
+        runBulk(
+          eligible.holdable,
+          (item) => apiService.billingQueueService.updateStatus(item.id, { status: "OnHold" }),
+          {
+            succeeded: (count) =>
+              t("{0, plural, one {Put # item on hold} other {Put # items on hold}}", count),
+            partial: (succeeded, failed) => t("Held {0}; {1} could not be held", succeeded, failed),
+            allFailed: (failed) =>
+              t("{0, plural, one {# item} other {# items}} could not be held", failed),
+          },
+        ),
+    });
+  }
+  if (eligible.open.length > 0) {
+    dockActions.push(
+      {
+        id: "assign",
+        label: t("Assign biller"),
+        icon: UserPlus01Icon,
+        onClick: () => setAssignTargets(eligible.open.map(toTarget)),
+      },
+      {
+        id: "cancel",
+        label: t("Cancel {0}", eligible.open.length),
+        icon: XCloseIcon,
+        variant: "destructive",
+        onClick: () => setCancelTargets(eligible.open.map(toTarget)),
+      },
+    );
+  }
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -405,6 +533,19 @@ export function BillingQueueSidebar({
           </PopoverContent>
         </Popover>
       </div>
+      {items.length > 0 && (
+        <label className="text-muted-foreground flex items-center gap-2 border-b px-3 py-1.5 text-xs">
+          <Checkbox
+            checked={selection.allState === "all"}
+            indeterminate={selection.allState === "some"}
+            onCheckedChange={(checked) => selection.setAll(checked === true)}
+            aria-label={t("Select all items")}
+          />
+          {selection.allState === "none"
+            ? t("{0, plural, one {# item} other {# items}}", items.length)
+            : t("{0} of {1} selected", selection.selected.length, items.length)}
+        </label>
+      )}
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-1.5 p-2">
           {isLoading && (
@@ -429,27 +570,45 @@ export function BillingQueueSidebar({
               item={item}
               isSelected={item.id === selectedItemId}
               onClick={() => onSelectItem(item.id)}
-              onAssignBiller={() => setAssignItemId(item.id)}
+              onAssignBiller={() => setAssignTargets([toTarget(item)])}
               onHold={() => updateStatus({ itemId: item.id, status: "OnHold" })}
-              onCancel={() => setCancelItemId(item.id)}
+              onCancel={() => setCancelTargets([toTarget(item)])}
+              checked={selection.isSelected(item.id)}
+              onCheckedChange={(checked) => selection.setSelected(item.id, checked)}
             />
           ))}
         </div>
       </ScrollArea>
-      {assignItemId && (
+      {assignTargets && (
         <BillingQueueAssignDialog
-          open={!!assignItemId}
-          onOpenChange={(open) => !open && setAssignItemId(null)}
-          itemId={assignItemId}
+          open
+          onOpenChange={(open) => !open && setAssignTargets(null)}
+          targets={assignTargets}
+          onDone={clearSelection}
         />
       )}
-      {cancelItemId && (
+      {cancelTargets && (
         <BillingQueueCancelDialog
-          open={!!cancelItemId}
-          onOpenChange={(open) => !open && setCancelItemId(null)}
-          itemId={cancelItemId}
+          open
+          onOpenChange={(open) => !open && setCancelTargets(null)}
+          targets={cancelTargets}
+          onDone={clearSelection}
         />
       )}
+      {approveConfirm && (
+        <BillingQueueApproveConfirm
+          items={approveConfirm}
+          isPending={isStarting}
+          onOpenChange={(open) => !open && setApproveConfirm(null)}
+          onApprove={(targets, assignMe) => void startApprove(targets, assignMe)}
+        />
+      )}
+      <SelectionDock
+        selectedCount={selection.selected.length}
+        actions={dockActions}
+        getSelected={() => selection.selected}
+        onClearSelection={clearSelection}
+      />
       <BillingQueueSavePresetDialog
         open={savePresetOpen}
         onOpenChange={setSavePresetOpen}

@@ -52,7 +52,7 @@ type ReleaseForInvoiceRequest struct {
 	CancelReason string                `json:"-"`
 	// RenumberFn mints a fresh billing number for each released item, since the
 	// voided invoice keeps the old one.
-	RenumberFn func(ctx context.Context, billType billingqueue.BillType) (string, error) `json:"-"`
+	RenumberFn func(ctx context.Context, item *billingqueue.BillingQueueItem) (string, error) `json:"-"`
 }
 
 // ListActiveInvoiceItemsRequest asks which shipments still have an invoice item

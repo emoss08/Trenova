@@ -15,16 +15,29 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-func refuseNonDraftUpdate(entity *invoice.Invoice) error {
-	if entity.Status == invoice.StatusDraft {
+func refuseDeliveryUpdate(
+	entity *invoice.Invoice,
+	req *invoiceports.UpdateInvoiceDraftRequest,
+) error {
+	switch entity.Status {
+	case invoice.StatusDraft:
 		return nil
+	case invoice.StatusPosted:
+		if req.Memo != nil || req.RemittanceInstructions != nil {
+			return errortypes.NewValidationError(
+				"status",
+				errortypes.ErrInvalid,
+				"The memo and remittance instructions print on the posted invoice and can only be changed on a draft",
+			)
+		}
+		return nil
+	default:
+		return errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalid,
+			"A voided invoice cannot be changed",
+		)
 	}
-
-	return errortypes.NewValidationError(
-		"status",
-		errortypes.ErrInvalid,
-		"Only draft invoices can be updated",
-	)
 }
 
 func applyDraftUpdate(entity *invoice.Invoice, req *invoiceports.UpdateInvoiceDraftRequest) {
@@ -70,7 +83,7 @@ func (s *Service) PreviewUpdateDraft(
 	if err != nil {
 		return nil, err
 	}
-	if err = refuseNonDraftUpdate(entity); err != nil {
+	if err = refuseDeliveryUpdate(entity, req); err != nil {
 		return nil, err
 	}
 
@@ -151,6 +164,10 @@ func autoSendsOnGeneration(cus *customer.Customer, entity *invoice.Invoice) bool
 	if cus == nil || cus.BillingProfile == nil ||
 		!cus.BillingProfile.AutoSendInvoiceOnGeneration ||
 		!cus.BillingProfile.EmailInvoiceEnabled {
+		return false
+	}
+
+	if entity.Status != invoice.StatusPosted {
 		return false
 	}
 

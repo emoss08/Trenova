@@ -55,6 +55,45 @@ type CustomerSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
 }
 
+// ReviewCustomerCreditRequest records a customer's open receivables and lets
+// its credit standing follow them.
+type ReviewCustomerCreditRequest struct {
+	TenantInfo    pagination.TenantInfo `json:"-"`
+	CustomerID    pulid.ID              `json:"-"`
+	ExposureMinor int64                 `json:"-"`
+	Now           int64                 `json:"-"`
+}
+
+// ReviewCustomerCreditResult is the profile after the review and what the
+// review did to it. Profile is nil when the customer has no billing profile.
+type ReviewCustomerCreditResult struct {
+	CustomerName string
+	CustomerCode string
+	Profile      *customer.CustomerBillingProfile
+	Outcome      customer.CreditReviewOutcome
+}
+
+// CreditReviewer brings a customer's credit standing up to date with its
+// receivables. Parties declares it because a limit changed on the customer
+// should take effect at once; billing, which owns the receivables, provides it.
+type CreditReviewer interface {
+	Review(ctx context.Context, tenant pagination.TenantInfo, customerIDs []pulid.ID) error
+}
+
+// ListCreditReviewCustomersRequest pages through every customer with a
+// billing profile, across organizations, in key order after After.
+type ListCreditReviewCustomersRequest struct {
+	After *CreditReviewCustomer `json:"-"`
+	Limit int                   `json:"-"`
+}
+
+// CreditReviewCustomer is one customer the credit sweep reviews, with the
+// tenant it belongs to.
+type CreditReviewCustomer struct {
+	TenantInfo pagination.TenantInfo
+	CustomerID pulid.ID
+}
+
 // AdvanceBilledPeriodRequest moves a customer's billing watermark past the
 // period a run just billed.
 //
@@ -129,6 +168,14 @@ func (d *DueBillingSchedule) Profile() *customer.CustomerBillingProfile {
 
 type CustomerRepository interface {
 	AdvanceBilledPeriod(ctx context.Context, req *AdvanceBilledPeriodRequest) error
+	ReviewCredit(
+		ctx context.Context,
+		req *ReviewCustomerCreditRequest,
+	) (*ReviewCustomerCreditResult, error)
+	ListCreditReviewCustomers(
+		ctx context.Context,
+		req *ListCreditReviewCustomersRequest,
+	) ([]CreditReviewCustomer, error)
 	ListDueBillingSchedules(
 		ctx context.Context,
 		req *ListBillingSchedulesRequest,

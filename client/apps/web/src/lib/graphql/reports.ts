@@ -48,6 +48,7 @@ import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { withCsrfHeader } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { filenameFromDisposition } from "@trenova/shared/lib/utils";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
 export type ReportCatalog = ReportCatalogQuery["reportCatalog"];
@@ -116,13 +117,11 @@ export async function exportDashboard(
 
   return {
     blob: await response.blob(),
-    fileName: filenameFromDisposition(response.headers.get("Content-Disposition")),
+    fileName: filenameFromDisposition(
+      response.headers.get("Content-Disposition"),
+      "dashboard.xlsx",
+    ),
   };
-}
-
-function filenameFromDisposition(header: string | null): string {
-  const match = header?.match(/filename="?([^"]+)"?/i);
-  return match?.[1] ?? "dashboard.xlsx";
 }
 
 export async function createReportDefinition(

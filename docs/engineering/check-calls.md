@@ -27,7 +27,7 @@ no-check-call-sweep (15 min) ─▶ ListOverdue per monitoring tenant ─▶ Rec
 | Entities and limits | `internal/modules/operations/domain/checkcall` (`CheckCall`, `TrackingLink`, `enums.go`) |
 | Ports | `operations/ports/checkcallports` (`CheckCallService`, `CheckCallObserver`, repositories) |
 | Service | `operations/app/checkcallservice` (`record.go`, `link.go`, `public.go`, `overdue.go`) |
-| Repositories and tables | `operations/adapters/postgres/checkcallrepository`, migration `20261231009040_check_calls` |
+| Repositories and tables | `operations/adapters/postgres/checkcallrepository`, migration `20261231009050_check_calls` |
 | Public routes | `internal/api/handlers/carriertrackingpublichandler` |
 | Link email | document template kind `carriertracking.link.email` |
 | Dead link purge | `operations/jobs/checkcalljobs` (schedule `carrier-tracking-link-retention`) |

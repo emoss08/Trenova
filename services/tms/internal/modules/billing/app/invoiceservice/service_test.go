@@ -2,11 +2,13 @@ package invoiceservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"image"
 	"image/color"
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
@@ -42,7 +44,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/testutil"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -524,29 +525,28 @@ func TestResolveBodyRendersDraftSnapshot(t *testing.T) {
 // columns are the first tier resolveSubject reads, so freezing a render there
 // would mean a later edit to the template never reached a re-sent invoice — and
 // the frozen copy would come back through the ad-hoc engine, losing the layout.
-func TestSendSnapshotDoesNotFreezeTemplateWording(t *testing.T) {
+func TestSendSnapshotLeavesTheDeliveryOverridesAlone(t *testing.T) {
 	t.Parallel()
 
-	fromTemplate := &invoice.Invoice{Number: "INV-1001"}
-	applySendSnapshot(fromTemplate, &invoiceports.InvoiceSendPlan{
-		Subject:      "Invoice INV-1001 from Trenova Freight",
-		Body:         "Invoice INV-1001 is attached.",
-		FromTemplate: true,
-		Recipients:   invoiceports.InvoiceSendRecipients{To: []string{"ap@example.com"}},
+	entity := &invoice.Invoice{
+		Number:          "INV-1001",
+		SendStatus:      invoice.SendStatusFailed,
+		LastSendError:   "Resend refused to send",
+		EmailToSnapshot: []string{"override@example.com"},
+	}
+	applySendSnapshot(entity, &invoiceports.InvoiceSendPlan{
+		Subject:    "Invoice INV-1001",
+		Body:       "Invoice INV-1001 is attached.",
+		Recipients: invoiceports.InvoiceSendRecipients{To: []string{"ap@example.com"}},
+		Warnings:   []string{"a warning"},
 	})
-	require.Empty(t, fromTemplate.EmailSubjectSnapshot)
-	require.Empty(t, fromTemplate.EmailBodySnapshot)
-	require.Equal(t, []string{"ap@example.com"}, fromTemplate.EmailToSnapshot)
 
-	// A draft or a customer profile comment is still frozen: that is what makes a
-	// re-send reproduce what the customer already received.
-	fromDraft := &invoice.Invoice{Number: "INV-1001"}
-	applySendSnapshot(fromDraft, &invoiceports.InvoiceSendPlan{
-		Subject: "Draft invoice INV-1001",
-		Body:    "Please review.",
-	})
-	require.Equal(t, "Draft invoice INV-1001", fromDraft.EmailSubjectSnapshot)
-	require.Equal(t, "Please review.", fromDraft.EmailBodySnapshot)
+	require.Equal(t, invoice.SendStatusSending, entity.SendStatus)
+	require.Empty(t, entity.LastSendError)
+	require.Equal(t, "a warning", entity.LastSendWarning)
+	require.Empty(t, entity.EmailSubjectSnapshot)
+	require.Empty(t, entity.EmailBodySnapshot)
+	require.Equal(t, []string{"override@example.com"}, entity.EmailToSnapshot)
 }
 
 func TestInvoicePDFAttachmentNameSanitizesAndForcesPDF(t *testing.T) {
@@ -956,6 +956,7 @@ func TestPlanSendRendersTemplatesAndOrganizationAlias(t *testing.T) {
 		BusinessUnitID: buID,
 		CustomerID:     customerID,
 		Number:         "INV-1001",
+		Status:         invoice.StatusPosted,
 		CurrencyCode:   "USD",
 		BillToName:     "Snapshot Customer",
 		PDFDocumentID:  documentID,
@@ -989,7 +990,8 @@ func TestPlanSendRendersTemplatesAndOrganizationAlias(t *testing.T) {
 			ID:         customerID,
 			TenantInfo: tenantInfo,
 			CustomerFilterOptions: customerports.CustomerFilterOptions{
-				IncludeEmailProfile: true,
+				IncludeEmailProfile:   true,
+				IncludeBillingProfile: true,
 			},
 		}).
 		Return(&customer.Customer{
@@ -1260,6 +1262,7 @@ func TestAutoSendInvoiceAfterPDFGenerationRecordsSendFailure(t *testing.T) {
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		CustomerID:     customerID,
+		Status:         invoice.StatusPosted,
 		SendStatus:     invoice.SendStatusNotSent,
 	}
 
@@ -1416,18 +1419,6 @@ func testInvoicePDFDeliveryProfile() *invoiceDeliveryProfile {
 			},
 		},
 	}
-}
-
-func TestResolveFromEmailRejectsInvalidCustomerOverride(t *testing.T) {
-	t.Parallel()
-
-	profile := &email.Profile{SenderEmail: "billing@example.com"}
-	customerProfile := &customer.CustomerEmailProfile{FromEmail: "not-an-email"}
-
-	fromEmail, err := resolveFromEmail(profile, customerProfile)
-
-	require.Error(t, err)
-	require.Equal(t, "billing@example.com", fromEmail)
 }
 
 func TestAppendShipmentDetailIncludesRouteAndCharges(t *testing.T) {
@@ -2033,4 +2024,69 @@ func TestCreateInvoiceJournalPostingSkipsWithoutAFiscalPeriodRepository(t *testi
 		)
 		require.NoError(t, err)
 	})
+}
+
+func TestRefuseSendInFlight(t *testing.T) {
+	t.Parallel()
+
+	now := int64(1_700_000_000)
+	sending := &invoice.Invoice{
+		Number:     "INV-1",
+		SendStatus: invoice.SendStatusSending,
+		UpdatedAt:  now - 60,
+	}
+	require.Error(t, refuseSendInFlight(sending, now))
+
+	stale := *sending
+	stale.UpdatedAt = now - int64(sendInFlightTimeout/time.Second)
+	require.NoError(t, refuseSendInFlight(&stale, now))
+
+	failed := *sending
+	failed.SendStatus = invoice.SendStatusFailed
+	require.NoError(t, refuseSendInFlight(&failed, now))
+}
+
+func TestSendEligibilityErrors(t *testing.T) {
+	t.Parallel()
+
+	posted := &invoice.Invoice{Status: invoice.StatusPosted}
+	draft := &invoice.Invoice{Status: invoice.StatusDraft}
+	emailOn := &customer.Customer{BillingProfile: &customer.CustomerBillingProfile{EmailInvoiceEnabled: true}}
+	emailOff := &customer.Customer{BillingProfile: &customer.CustomerBillingProfile{}}
+
+	require.Empty(t, sendEligibilityErrors(posted, emailOn))
+	require.Empty(t, sendEligibilityErrors(posted, nil))
+	require.Len(t, sendEligibilityErrors(draft, emailOn), 1)
+	require.Contains(t, sendEligibilityErrors(draft, emailOn)[0], "Post the invoice")
+	require.Len(t, sendEligibilityErrors(posted, emailOff), 1)
+	require.Len(t, sendEligibilityErrors(draft, emailOff), 2)
+}
+
+func TestBillingSenderEmailIsTheBillingProfileSender(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, "mailbox@trenova.app", billingSenderEmail(&email.Profile{SenderEmail: " mailbox@trenova.app "}))
+	require.Empty(t, billingSenderEmail(nil))
+}
+
+func TestAutoSendsOnGenerationOnlyForPostedInvoices(t *testing.T) {
+	t.Parallel()
+
+	cus := &customer.Customer{BillingProfile: &customer.CustomerBillingProfile{
+		AutoSendInvoiceOnGeneration: true,
+		EmailInvoiceEnabled:         true,
+	}}
+
+	require.False(t, autoSendsOnGeneration(cus, &invoice.Invoice{
+		Status:     invoice.StatusDraft,
+		SendStatus: invoice.SendStatusNotSent,
+	}))
+	require.True(t, autoSendsOnGeneration(cus, &invoice.Invoice{
+		Status:     invoice.StatusPosted,
+		SendStatus: invoice.SendStatusNotSent,
+	}))
+	require.False(t, autoSendsOnGeneration(cus, &invoice.Invoice{
+		Status:     invoice.StatusPosted,
+		SendStatus: invoice.SendStatusSent,
+	}))
 }

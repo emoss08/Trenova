@@ -7,8 +7,10 @@ import {
   buildSearchSections,
   buildSubjectSections,
   flattenSections,
+  MAX_ASK_MENTIONS,
   rankLocal,
   recordsFromGroups,
+  recordsNamedIn,
   scopeCounts,
   type HomeInput,
   type RemoteState,
@@ -43,6 +45,7 @@ function search(
   const query = rest.query ?? "";
   return {
     query,
+    recordQuery: rest.recordQuery ?? query,
     scope: "all",
     question: null,
     remote: IDLE_REMOTE,
@@ -123,6 +126,60 @@ const CUSTOMER_GROUP: GlobalSearchGroup = {
     },
   ],
 };
+
+describe("recordsNamedIn", () => {
+  it("hands Nova the records the question names, and not the looser matches beside them", () => {
+    expect(
+      recordsNamedIn("Why is S-1001 running late for Acme Foods?", [
+        SHIPMENT_GROUP,
+        CUSTOMER_GROUP,
+      ]),
+    ).toEqual([
+      { type: "shipment", id: "shp_1", label: "S-1001" },
+      { type: "customer", id: "cus_1", label: "Acme Foods" },
+    ]);
+  });
+
+  it("reads a name in any case and with a possessive, but never inside a longer word", () => {
+    expect(recordsNamedIn("what is acme foods's balance?", [CUSTOMER_GROUP])).toEqual([
+      { type: "customer", id: "cus_1", label: "Acme Foods" },
+    ]);
+    expect(recordsNamedIn("Tell me about Acme Foodservice", [CUSTOMER_GROUP])).toEqual([]);
+    expect(recordsNamedIn("Tell me about S-10011", [SHIPMENT_GROUP])).toEqual([]);
+  });
+
+  it("names each record once even when two groups return it", () => {
+    expect(
+      recordsNamedIn("Acme Foods?", [CUSTOMER_GROUP, { ...CUSTOMER_GROUP, label: "Again" }]),
+    ).toEqual([{ type: "customer", id: "cus_1", label: "Acme Foods" }]);
+  });
+
+  it("sends no more records than the server takes for one question", () => {
+    const many: GlobalSearchGroup = {
+      entityType: "shipment",
+      label: "Shipments",
+      hits: Array.from({ length: MAX_ASK_MENTIONS + 2 }, (_, index) => ({
+        id: `shp_${index}`,
+        entityType: "shipment",
+        title: `S-20${String(index).padStart(2, "0")}`,
+        href: `/shipments/shp_${index}`,
+      })),
+    };
+    const question = many.hits.map((hit) => hit.title).join(", ");
+
+    expect(recordsNamedIn(question, [many])).toHaveLength(MAX_ASK_MENTIONS);
+  });
+
+  it("skips a title too short to be told from an ordinary word", () => {
+    const short: GlobalSearchGroup = {
+      entityType: "worker",
+      label: "Workers",
+      hits: [{ id: "wrk_1", entityType: "worker", title: "Al", href: "/workers/wrk_1" }],
+    };
+
+    expect(recordsNamedIn("Can Al take a load today?", [short])).toEqual([]);
+  });
+});
 
 describe("recordsFromGroups", () => {
   it("prefers the enriched PRO number over the indexed title, and survives absent metadata", () => {
@@ -307,6 +364,23 @@ describe("buildSearchSections", () => {
     );
 
     expect(sections[0]).toMatchObject({ id: "nova" });
+    expect(flattenSections(sections).filter((item) => item.kind === "ask")).toHaveLength(1);
+  });
+
+  it("lists the records a question's search words found under Nova, ranked by those words", () => {
+    const { sections } = buildSearchSections(
+      search({
+        query: "Tell me about S-1002?",
+        recordQuery: "S-1002",
+        question: "Tell me about S-1002?",
+        remote: settled([SHIPMENT_GROUP]),
+      }),
+      t,
+    );
+
+    expect(sections[0]).toMatchObject({ id: "nova" });
+    expect(sections[1]).toMatchObject({ id: "top-hit" });
+    expect(sections[1]?.items[0]).toMatchObject({ kind: "record", record: { id: "shp_2" } });
     expect(flattenSections(sections).filter((item) => item.kind === "ask")).toHaveLength(1);
   });
 
@@ -498,7 +572,7 @@ describe("scopeCounts", () => {
     expect(counts.shipment).toBeUndefined();
   });
 
-  it("reads zero for the scopes command mode and a question never searched", () => {
+  it("reads zero for the scopes command mode never searched", () => {
     const theme = rankLocal(
       "theme",
       [page({ title: "Theme settings" })],
@@ -515,6 +589,9 @@ describe("scopeCounts", () => {
       worker: 0,
       document: 0,
     });
-    expect(scopeCounts(ranking, settled([SHIPMENT_GROUP]), "question").shipment).toBe(0);
+  });
+
+  it("counts the records a question's search words found", () => {
+    expect(scopeCounts(ranking, settled([SHIPMENT_GROUP])).shipment).toBe(7);
   });
 });

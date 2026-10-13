@@ -1,5 +1,5 @@
 {
-  "version": "sha256:4ca4ac1f8397f1cba1c122ced2308e3dee84c3d370209ef13171c23c5cc6d0e9",
+  "version": "sha256:64b0b377d5946b1eb16c8e90018b422bcef69987ddf8d659de13696c5b92f32b",
   "modules": [
     {
       "id": "home",
@@ -347,6 +347,125 @@
         "/accounting/ar/customer-ledger",
         "/accounting/ar/open-items",
         "/accounting"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/accounting/ar/collections",
+      "name": "Collections",
+      "module": "accounting",
+      "breadcrumb": [
+        "Accounting management",
+        "Accounts receivable",
+        "Collections"
+      ],
+      "description": "Customers with overdue receivables, ranked by who to call first. Open one to log a call, record a promise to pay, or schedule the next follow-up.",
+      "summary": "Collections lists every customer with an overdue invoice, ranked so the first row is the account to call next: a broken promise to pay or anything sixty days late comes first, an account waiting on an open promise or on a follow-up that has not come round yet comes last. Each row shows what is **Overdue**, the **Oldest** invoice's days past due, the **Promise** standing against the balance, the next **Follow-up**, the **Collector** and the **Last contact**.\n\nThe figures above the table give the total **Overdue**, **Follow-ups due**, **Broken promises** and **Unassigned** accounts. Select **Follow-ups due** or **Unassigned** to narrow the list to them.",
+      "requires": [
+        {
+          "resource": "accounts_receivable",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "collections worklist",
+        "dunning list",
+        "past due accounts",
+        "overdue customers",
+        "promise to pay",
+        "collector"
+      ],
+      "tasks": [
+        {
+          "title": "Chase today's overdue accounts",
+          "keywords": [
+            "who to call",
+            "follow-ups due",
+            "dunning"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections).",
+            "Choose **Mine** to see the accounts you collect, and turn on **Due today only**.",
+            "Select a customer to open their account."
+          ]
+        },
+        {
+          "title": "Log a call or email",
+          "keywords": [
+            "record call",
+            "collection note",
+            "contact log"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Under **Log a contact**, choose **Call**, **Email** or **Note**.",
+            "Fill in **Spoke with** and **What happened**, and optionally **Follow up on**.",
+            "Select **Log it**."
+          ]
+        },
+        {
+          "title": "Record a promise to pay",
+          "keywords": [
+            "promise to pay",
+            "payment commitment",
+            "PTP"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Under **Log a contact**, choose **Promise to pay**.",
+            "Fill in **Promised amount** and **Will pay by**, then select **Record promise**.",
+            "The account waits on the promise and comes back the day after the promised date. Payments posted since the promise count toward it: it shows **Kept** once paid in full and **Broken** if the date passes short."
+          ]
+        },
+        {
+          "title": "Send a payment reminder now",
+          "keywords": [
+            "email reminder",
+            "dunning letter",
+            "past due notice"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Select **Send reminder**.",
+            "Optionally write a **Note to the customer**, then select **Send reminder**.",
+            "The reminder lists every overdue invoice not in dispute and goes to the invoice recipients on the customer's email profile. It is recorded in the account's **History**."
+          ]
+        },
+        {
+          "title": "Send a customer its statement",
+          "keywords": [
+            "statement of account",
+            "account statement email",
+            "balance summary"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Under **Receivables**, select **Statement**.",
+            "Select **Email statement**, optionally write a **Note to the customer**, then select **Send statement**."
+          ]
+        },
+        {
+          "title": "Assign a collector or set the next follow-up",
+          "keywords": [
+            "assign collector",
+            "owner",
+            "next follow-up"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Under **Collector and follow-up**, choose the **Collector**. They are notified.",
+            "Choose the **Next follow-up** date and select **Save follow-up**, or clear the date and select **Clear follow-up**."
+          ]
+        }
+      ],
+      "notes": "Opening the page needs read access to accounts receivable; logging contacts, recording promises, assigning collectors and setting follow-ups needs permission to update accounts receivable. History is kept as it was recorded and cannot be edited.",
+      "related": [
+        "/accounting/ar/open-items",
+        "/accounting/ar/customer-ledger",
+        "/accounting/ar/aging"
       ],
       "covers": [],
       "createAction": null,
@@ -714,9 +833,24 @@
             "Open [Open items](/accounting/ar/open-items).",
             "Select the customer's name in the **Customer** column. Their customer statement opens."
           ]
+        },
+        {
+          "title": "Download or email a customer's statement",
+          "keywords": [
+            "statement PDF",
+            "send statement",
+            "statement of account email",
+            "account summary"
+          ],
+          "steps": [
+            "Open [Open items](/accounting/ar/open-items) and select the customer's name in the **Customer** column.",
+            "Optionally set the **Statement date** and **Start date**.",
+            "Select **Download PDF**, or select **Email statement**.",
+            "To email it, optionally write a **Note to the customer**, then select **Send statement**."
+          ]
         }
       ],
-      "notes": "Opening the page needs read access to accounts receivable. **Record payment** and **Apply payment** only appear for people who can create customer payments.",
+      "notes": "Opening the page needs read access to accounts receivable. **Record payment** and **Apply payment** only appear for people who can create customer payments.\n\nThe statement PDF shows the opening balance, every invoice, payment and credit in the period, the balance due, the open invoices and how late they are. **Email statement** sends it to the invoice recipients on the customer's email profile, needs permission to update accounts receivable, and is recorded in the customer's collections history and under **Statements sent** on the statement page. The statement uses your organization's customer statement template, which can be changed in document templates.",
       "related": [
         "/accounting/ar/payments",
         "/accounting/ar/aging",
@@ -3218,9 +3352,39 @@
             "Set the **Minimum late charge**; customers whose charges for a run add up to less are skipped.",
             "Select **Save changes**."
           ]
+        },
+        {
+          "title": "Email customers payment reminders",
+          "keywords": [
+            "dunning",
+            "overdue reminder",
+            "past due email",
+            "collection letter"
+          ],
+          "steps": [
+            "Open [Billing controls](/admin/billing-controls).",
+            "In **Payment reminders**, turn on **Send payment reminders**.",
+            "In **Remind on days past due**, list the days to send on, such as 1, 15, 30. The last one is sent as the final reminder.",
+            "Select **Save changes**."
+          ]
+        },
+        {
+          "title": "Email customers a monthly statement",
+          "keywords": [
+            "monthly statement",
+            "statement of account",
+            "account summary email",
+            "AR statement"
+          ],
+          "steps": [
+            "Open [Billing controls](/admin/billing-controls).",
+            "In **Monthly statements**, turn on **Send monthly statements**.",
+            "Set the **Day of the month to send**, from 1 to 28.",
+            "Select **Save changes**."
+          ]
         }
       ],
-      "notes": "Opening the page needs read access to billing control; saving needs update access. Late charge rates and grace periods are set on each customer's billing profile, not here. In **Preview only** the nightly run writes nothing, and memos are raised by hand on [Late charges](/accounting/ar/late-charges).",
+      "notes": "Opening the page needs read access to billing control; saving needs update access. Late charge rates and grace periods are set on each customer's billing profile, not here. In **Preview only** the nightly run writes nothing, and memos are raised by hand on [Late charges](/accounting/ar/late-charges).\n\nPayment reminders go out each morning: a customer with an invoice newly reaching one of the **Remind on days past due** days is emailed one reminder listing every overdue invoice it has. Disputed invoices are left off, and a customer waiting on an open promise to pay recorded in [Collections](/accounting/ar/collections) is not reminded until the promised date passes. Turn off **Send payment reminders** on a customer's billing profile to leave that customer out.\n\nMonthly statements cover the calendar month before the **Day of the month to send** and are sent once per customer and month. Customers with a balance, or with any invoice or payment in the month, receive one; a customer whose account was settled and quiet all month does not. Turn off **Send monthly statements** on a customer's billing profile to leave that customer out. Customers with no invoice email recipient are reported to the people who record customer payments.",
       "related": [
         "/billing/queue",
         "/billing/invoices",
@@ -6700,6 +6864,88 @@
       "covers": [],
       "createAction": {
         "label": "New document type",
+        "query": {
+          "panelType": "create"
+        }
+      },
+      "inNavigation": true
+    },
+    {
+      "path": "/billing/configuration-files/factoring-companies",
+      "name": "Factoring companies",
+      "module": "billing",
+      "breadcrumb": [
+        "Billing management",
+        "Configuration files",
+        "Factoring companies"
+      ],
+      "description": "The factors your receivables are sold to. Customers assigned to one are invoiced with its remit-to and notice of assignment.",
+      "summary": "Factoring companies lists the factors you sell receivables to. Each one holds the factor's **Code**, **Name** and remit-to address, how customers pay it (**Remittance instructions**) and the **Notice of assignment** printed on every invoice assigned to it.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.",
+      "requires": [
+        {
+          "resource": "factoring_company",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "factor",
+        "factoring",
+        "factored invoices",
+        "notice of assignment",
+        "remit to factor",
+        "invoice factoring"
+      ],
+      "tasks": [
+        {
+          "title": "Add a factoring company",
+          "keywords": [
+            "new factor",
+            "add factor",
+            "factoring agreement"
+          ],
+          "steps": [
+            "Open [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "Select **New factoring company**.",
+            "Fill in **Code**, **Name** and the remit-to address (**Address line 1**, **City**, **State**, **Postal code**), and optionally **Email** and **Phone**.",
+            "Fill in **Remittance instructions** with the factor's bank, lockbox or ACH details.",
+            "Optionally enter the **Notice of assignment** your agreement requires, then select **Save**."
+          ]
+        },
+        {
+          "title": "Factor a customer's invoices",
+          "keywords": [
+            "assign customer to factor",
+            "factored customer",
+            "notice of assignment"
+          ],
+          "steps": [
+            "Open [Customers](/billing/configuration-files/customers) and select the customer's row.",
+            "Open the **Billing profile** tab.",
+            "Under **Factoring**, choose the **Factoring company**, then select **Save**."
+          ]
+        },
+        {
+          "title": "Stop factoring a customer",
+          "keywords": [
+            "unassign factor",
+            "end factoring"
+          ],
+          "steps": [
+            "Open [Customers](/billing/configuration-files/customers) and select the customer's row.",
+            "Open the **Billing profile** tab.",
+            "Clear the **Factoring company**, then select **Save**."
+          ]
+        }
+      ],
+      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.",
+      "related": [
+        "/billing/configuration-files/customers",
+        "/billing/invoices"
+      ],
+      "covers": [],
+      "createAction": {
+        "label": "New factoring company",
         "query": {
           "panelType": "create"
         }

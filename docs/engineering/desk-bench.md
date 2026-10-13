@@ -221,10 +221,21 @@ wrote, and the transcript shows the draft after every step.
           formula: ["totalDistance", "totalStops"]
 ```
 
+A scenario with `palette: true` asks the way the command palette does: the case opens with
+`StartAsk` on its first message, so the palette's own choice of agent answers it (the
+general assistant; `agent` is refused), on a quick question's conversation holding every read
+the person may use, and every message is sent on the `Palette` surface. The conversation is
+retitled `[bench] …` like any other, so `desk clean` finds it. The palette sends the records
+its search found that the question names as `mentions`; give them on the step to test that
+path, or leave them out to test Nova finding the record itself.
+
 Every step also checks that each of its turns finished. A decide step takes `decide: approve`
 or `decide: reject`, an optional `note` (on a rejection, what the agent is told), `tool` to
 decide only that tool's proposals, and `modifications` to approve with changed arguments.
 `page` and `mentions` take the shapes the Desk sends (`agent.PageContext`, `agent.EntityRef`).
+A seeded record's id changes with every reseed, so a mention may give `find:` in place of `id`:
+one `SELECT` whose single row is the id, run before the message the way a fact query runs
+(`find: select id from shipments where pro_number = 'SEED-PAY-002'`).
 
 A fact query runs in a read-only transaction under the bench user's tenant, so row-level
 security applies and a query sees only that organization; it must be one `SELECT` (or `WITH`)

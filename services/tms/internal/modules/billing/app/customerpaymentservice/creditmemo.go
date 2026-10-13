@@ -216,6 +216,15 @@ func validateCreditTarget(
 			errortypes.ErrInvalid,
 			"Invoice customer must match the credit memo customer",
 		)
+	case !target.BilledIn(memo.CurrencyCode):
+		entry.Add(
+			"invoiceId",
+			errortypes.ErrInvalid,
+			"Invoice {0} is billed in {1}, but this credit memo is in {2}",
+			target.Number,
+			target.CurrencyCode,
+			memo.CurrencyCode,
+		)
 	case target.Status != invoice.StatusPosted:
 		entry.Add(
 			"invoiceId",

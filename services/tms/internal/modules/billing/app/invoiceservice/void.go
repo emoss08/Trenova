@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoid"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -20,7 +19,10 @@ import (
 	"github.com/uptrace/bun"
 )
 
-const maxVoidReasonLength = 1000
+const (
+	maxVoidReasonLength         = 1000
+	draftReturnedToReviewReason = "Billing queue item returned to review to correct charges"
+)
 
 // VoidInvoice takes an invoice out of circulation.
 //
@@ -80,8 +82,7 @@ func (s *Service) voidDraft(
 	req *invoiceports.VoidInvoiceRequest,
 	actor *permissionports.RequestActor,
 ) (*invoiceports.VoidInvoiceResult, error) {
-	result := &invoiceports.VoidInvoiceResult{}
-	auditActor := actor.AuditActor()
+	var result *invoiceports.VoidInvoiceResult
 
 	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.repo.LockForUpdate(txCtx, invoiceports.GetInvoiceByIDRequest{
@@ -99,43 +100,119 @@ func (s *Service) voidDraft(
 			)
 		}
 
-		previous := *entity
-		now := timeutils.NowUnix()
-		if txErr = s.markDraftVoided(txCtx, entity, req, actor, now); txErr != nil {
-			return txErr
-		}
-		updated, txErr := s.repo.Update(txCtx, entity)
-		if txErr != nil {
-			return txErr
-		}
-
-		released, txErr := invoicevoid.Release(
-			txCtx,
-			s.voidDeps(req.TenantInfo),
-			invoicevoid.Params{
-				Invoice:     updated,
-				Disposition: req.Disposition,
-				ActorUserID: actor.UserID,
-				Reason:      entity.VoidReason,
-				WasPosted:   false,
-				Now:         now,
-			},
-		)
-		if txErr != nil {
-			return txErr
-		}
-
-		result.Invoice = updated
-		result.ReleasedQueueItemIDs = released
-		s.logAction(updated, auditActor, permission.OpCancel, &previous, updated, "Invoice voided")
-		s.publishInvalidation(txCtx, updated, auditActor, "updated", updated)
-		return nil
+		result, txErr = s.voidLockedDraft(txCtx, entity, req, actor, "Invoice voided")
+		return txErr
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	return result, nil
+}
+
+// DiscardDraftForReview voids the draft an approved billing queue item produced
+// when the item goes back to review. The draft was priced from the charges as
+// they were at approval, so keeping it would let a re-approval hand back the
+// stale document instead of one built from the corrected charges. A posted
+// invoice is refused: it is on the ledger and only a void can take it back.
+func (s *Service) DiscardDraftForReview(
+	ctx context.Context,
+	req *invoiceports.DiscardDraftForReviewRequest,
+	actor *permissionports.RequestActor,
+) error {
+	return s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		existing, err := s.repo.GetByBillingQueueItemID(
+			txCtx,
+			invoiceports.GetInvoiceByBillingQueueItemIDRequest{
+				BillingQueueItemID: req.BillingQueueItemID,
+				TenantInfo:         req.TenantInfo,
+			},
+		)
+		if errortypes.IsNotFoundError(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		entity, err := s.repo.LockForUpdate(txCtx, invoiceports.GetInvoiceByIDRequest{
+			ID:         existing.ID,
+			TenantInfo: req.TenantInfo,
+		})
+		if err != nil {
+			return err
+		}
+		switch entity.Status {
+		case invoice.StatusVoided:
+			return nil
+		case invoice.StatusDraft:
+		default:
+			return errortypes.NewValidationError(
+				"status",
+				errortypes.ErrInvalidOperation,
+				"Invoice {0} is already {1}; void it to send the freight back to review",
+				entity.Number,
+				string(entity.Status),
+			)
+		}
+
+		_, err = s.voidLockedDraft(
+			txCtx,
+			entity,
+			&invoiceports.VoidInvoiceRequest{
+				InvoiceID:   entity.ID,
+				TenantInfo:  req.TenantInfo,
+				Reason:      draftReturnedToReviewReason,
+				Disposition: invoice.VoidDispositionRebill,
+			},
+			actor,
+			"Draft invoice discarded; billing queue item returned to review",
+		)
+		return err
+	})
+}
+
+func (s *Service) voidLockedDraft(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	req *invoiceports.VoidInvoiceRequest,
+	actor *permissionports.RequestActor,
+	message string,
+) (*invoiceports.VoidInvoiceResult, error) {
+	auditActor := actor.AuditActor()
+	previous := *entity
+	now := timeutils.NowUnix()
+	if err := s.markDraftVoided(ctx, entity, req, actor, now); err != nil {
+		return nil, err
+	}
+	updated, err := s.repo.Update(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	released, err := invoicevoid.Release(
+		ctx,
+		s.voidDeps(),
+		invoicevoid.Params{
+			Invoice:     updated,
+			Disposition: req.Disposition,
+			ActorUserID: actor.UserID,
+			Reason:      entity.VoidReason,
+			WasPosted:   false,
+			Now:         now,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logAction(updated, auditActor, permission.OpCancel, &previous, updated, message)
+	s.publishInvalidation(ctx, updated, auditActor, "updated", updated)
+
+	return &invoiceports.VoidInvoiceResult{
+		Invoice:              updated,
+		ReleasedQueueItemIDs: released,
+	}, nil
 }
 
 func (s *Service) voidPosted(
@@ -150,21 +227,31 @@ func (s *Service) voidPosted(
 
 	// The reason and disposition are recorded before the reversal runs, so an
 	// approver sees them and the engine has them when it marks the invoice.
+	// Both happen in one transaction: a reversal the engine refuses must not
+	// leave a posted invoice carrying a void reason it never got.
 	previous := *entity
-	entity.VoidReason = strings.TrimSpace(req.Reason)
-	entity.VoidDisposition = req.Disposition
-	if _, err := s.repo.Update(ctx, entity); err != nil {
-		return nil, err
-	}
+	var (
+		adjustment *invoiceadjustment.InvoiceAdjustment
+		reloaded   *invoice.Invoice
+	)
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		entity.VoidReason = strings.TrimSpace(req.Reason)
+		entity.VoidDisposition = req.Disposition
+		if _, txErr := s.repo.Update(txCtx, entity); txErr != nil {
+			return txErr
+		}
 
-	adjustment, err := s.adjustmentService.Submit(ctx, voidReversalRequest(entity, req), actor)
-	if err != nil {
-		return nil, err
-	}
+		var txErr error
+		adjustment, txErr = s.adjustmentService.Submit(txCtx, voidReversalRequest(entity, req), actor)
+		if txErr != nil {
+			return txErr
+		}
 
-	reloaded, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
-		ID:         entity.ID,
-		TenantInfo: req.TenantInfo,
+		reloaded, txErr = s.repo.GetByID(txCtx, invoiceports.GetInvoiceByIDRequest{
+			ID:         entity.ID,
+			TenantInfo: req.TenantInfo,
+		})
+		return txErr
 	})
 	if err != nil {
 		return nil, err
@@ -186,7 +273,7 @@ func (s *Service) voidPosted(
 	return result, nil
 }
 
-func (s *Service) voidDeps(tenantInfo pagination.TenantInfo) invoicevoid.Deps {
+func (s *Service) voidDeps() invoicevoid.Deps {
 	return invoicevoid.Deps{
 		BillingQueueRepo:     s.billingQueueRepo,
 		OrderRepo:            s.orderRepo,
@@ -195,44 +282,7 @@ func (s *Service) voidDeps(tenantInfo pagination.TenantInfo) invoicevoid.Deps {
 		InvoiceRepo:          s.repo,
 		OrderDerivation:      s.orderDerivation,
 		DetentionBilling:     s.detentionBilling,
-		Renumber: func(ctx context.Context, billType billingqueue.BillType) (string, error) {
-			return s.renumberBillingItem(ctx, tenantInfo, billType)
-		},
-	}
-}
-
-// renumberBillingItem mints a fresh billing number for an item released to be
-// billed again, because the voided invoice keeps the one it had.
-func (s *Service) renumberBillingItem(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	billType billingqueue.BillType,
-) (string, error) {
-	switch billType {
-	case billingqueue.BillTypeCreditMemo:
-		return s.sequenceGenerator.GenerateCreditMemoNumber(
-			ctx,
-			tenantInfo.OrgID,
-			tenantInfo.BuID,
-			"",
-			"",
-		)
-	case billingqueue.BillTypeDebitMemo:
-		return s.sequenceGenerator.GenerateDebitMemoNumber(
-			ctx,
-			tenantInfo.OrgID,
-			tenantInfo.BuID,
-			"",
-			"",
-		)
-	default:
-		return s.sequenceGenerator.GenerateInvoiceNumber(
-			ctx,
-			tenantInfo.OrgID,
-			tenantInfo.BuID,
-			"",
-			"",
-		)
+		Renumber:             s.numberer().ForItem,
 	}
 }
 

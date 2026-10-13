@@ -1,4 +1,4 @@
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { CommandItem } from "@trenova/shared/components/ui/command";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -334,7 +334,7 @@ function RowBody({ item }: { item: PaletteItem }) {
     case "ask":
       return (
         <>
-          <PaletteTile icon={AssistMark} className="text-foreground" />
+          <PaletteTile mark={<NovaMark className="size-3.5" />} />
           <TwoLines>
             <span className="text-foreground truncate text-base font-medium">
               {item.subject ? item.question : t("Ask Nova")}

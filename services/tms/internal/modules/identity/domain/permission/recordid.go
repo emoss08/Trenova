@@ -26,6 +26,7 @@ var recordIDPrefixes = map[Resource]string{
 	ResourceRecurringShipment: "rsh_",
 	ResourceServiceFailure:    "sf_",
 	ResourceCustomer:          "cus_",
+	ResourceFactoringCompany:  "fac_",
 	ResourceCarrier:           "car_",
 	ResourceLocation:          "loc_",
 	ResourceWorker:            "wrk_",

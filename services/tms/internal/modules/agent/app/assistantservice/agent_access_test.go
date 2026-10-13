@@ -264,12 +264,12 @@ func TestGetThread_CannotContinueWithoutTheAssistant(t *testing.T) {
 }
 
 /*
-A quick question goes only to an agent the person may use. The general
-assistant restricted to roles they do not hold is passed over for an open chat
-agent, the read is narrowed to their audience, and a person left with no agent
-at all is told an administrator can grant one rather than that none exists.
+A quick question goes only to the general assistant, and only when the person
+may use it. Restricted to roles they do not hold, it is not swapped for an open
+chat agent that would answer from its own desk's records: the person is told an
+administrator can grant it. The read is narrowed to their audience either way.
 */
-func TestAsk_ChoosesOnlyAnAgentThePersonMayUse(t *testing.T) {
+func TestAsk_ChoosesTheGeneralAssistantOnlyWhenThePersonMayUseIt(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
@@ -285,22 +285,17 @@ func TestAsk_ChoosesOnlyAnAgentThePersonMayUse(t *testing.T) {
 	svc.permissions = permissions
 	actor := testActor()
 
-	chosen, err := svc.askAgent(t.Context(), actor.TenantInfo(), actor)
-	require.NoError(t, err)
-	assert.Equal(t, dispatch.ID, chosen.ID, "the restricted general assistant is passed over")
-	require.NotNil(t, definitions.last.Audience, "the read is narrowed to the person's agents")
-	assert.Empty(t, definitions.last.Audience.GrantedAgentIDs)
+	_, err := svc.askAgent(t.Context(), actor.TenantInfo(), actor)
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err), "the open dispatch agent does not stand in")
+	chooser := definitions.requests[0]
+	require.NotNil(t, chooser.Audience, "the read is narrowed to the person's agents")
+	assert.Empty(t, chooser.Audience.GrantedAgentIDs)
 
 	permissions.granted = []pulid.ID{general.ID}
-	chosen, err = svc.askAgent(t.Context(), actor.TenantInfo(), actor)
+	chosen, err := svc.askAgent(t.Context(), actor.TenantInfo(), actor)
 	require.NoError(t, err)
 	assert.Equal(t, general.ID, chosen.ID, "once granted, the general assistant answers")
-
-	permissions.granted = nil
-	dispatch.AccessMode = agentdefinition.AccessRoles
-	_, err = svc.askAgent(t.Context(), actor.TenantInfo(), actor)
-	require.Error(t, err)
-	assert.True(t, errortypes.IsAuthorizationError(err))
 
 	permissions.allowed = map[string]bool{}
 	_, err = svc.askAgent(t.Context(), actor.TenantInfo(), actor)

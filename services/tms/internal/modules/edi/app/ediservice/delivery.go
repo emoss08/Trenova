@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -669,5 +670,32 @@ func (s *Service) syncInvoiceEDIStatus(
 			zap.String("messageId", message.ID.String()),
 			zap.Error(err),
 		)
+		return
 	}
+	s.publishInvoiceEDIStatus(ctx, message)
+}
+
+func (s *Service) publishInvoiceEDIStatus(ctx context.Context, message *edi.EDIMessage) {
+	if s.realtime == nil {
+		return
+	}
+	entity, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+		ID:         message.InvoiceID,
+		TenantInfo: messageTenantInfo(message),
+	})
+	if err != nil {
+		s.l.Warn(
+			"failed to load invoice to publish its EDI status",
+			zap.String("invoiceId", message.InvoiceID.String()),
+			zap.Error(err),
+		)
+		return
+	}
+	realtimeinvalidation.PublishAfterCommit(ctx, s.realtime, s.l, realtimeinvalidation.ChangeOf(
+		permission.ResourceInvoice.String(),
+		entity,
+		invoice.RealtimeActionEDIUpdated,
+		permissionports.SystemAuditActor(),
+		invoice.NewRealtimeSnapshot(entity),
+	))
 }

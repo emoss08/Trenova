@@ -133,11 +133,14 @@ const TILE_SIZE = {
 /** The square a row leads with. It says what the row is, never how urgent it is. */
 export function PaletteTile({
   icon: Icon,
+  mark,
   initials,
   className,
   size = "row",
 }: {
   icon?: PaletteIcon;
+  /** A mark drawn as it is, sized to the tile, for one that is not a plain icon. */
+  mark?: React.ReactNode;
   initials?: string;
   className?: string;
   size?: keyof typeof TILE_SIZE;
@@ -154,6 +157,8 @@ export function PaletteTile({
     >
       {initials ? (
         <span className="text-2xs font-medium tracking-tight">{initials}</span>
+      ) : mark ? (
+        mark
       ) : Icon ? (
         <Icon strokeWidth={1.75} />
       ) : null}

@@ -21,6 +21,9 @@ var notUpdatedOnConflict = map[string]string{
 	"version":                "incremented by expression, not taken from the row",
 	"created_at":             "set once on insert",
 	"last_billed_period_end": "billing watermark; advanced only inside the commit transaction",
+	"credit_balance":         "open receivables; written only by the credit review",
+	"credit_reviewed_at":     "written only by the credit review",
+	"credit_hold_automatic":  "kept unless the status changes, by expression rather than taken from the row",
 }
 
 // Every column a customer can edit has to be in the upsert's ON CONFLICT set, or

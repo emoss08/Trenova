@@ -19,7 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "stored-mileage-buffer-flush",
 			Description:   "Flush stored mileage candidates from Redis",
-			Spec:          schedule.Every(5 * time.Minute),
+			Spec:          schedule.Every(15 * time.Minute),
 			Workflow:      ScheduledStoredMileageFlushWorkflow,
 			TaskQueue:     temporaltype.DistanceMileageTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

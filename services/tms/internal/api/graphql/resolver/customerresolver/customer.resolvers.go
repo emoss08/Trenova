@@ -11,8 +11,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -151,4 +151,8 @@ func (r *QueryResolver) Customer(ctx context.Context, id string) (*customer.Cust
 			IncludeEmailProfile:   true,
 		},
 	})
+}
+
+func (r *CustomerEmailProfileResolver) FromEmail(ctx context.Context, obj *customer.CustomerEmailProfile) (string, error) {
+	return "", nil
 }

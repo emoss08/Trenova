@@ -1,19 +1,21 @@
 package latechargeservice
 
 import (
+	"context"
+	"errors"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/latechargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"context"
-	"errors"
+	"github.com/uptrace/bun"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -148,6 +150,7 @@ func newLateChargeFixture(t *testing.T, control *tenant.BillingControl) *lateCha
 	f.billingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(control, nil).Once()
 	f.svc = &Service{
 		l:              zap.NewNop(),
+		db:             markingDB{},
 		repo:           f.repo,
 		billingRepo:    f.billingRepo,
 		invoiceService: f.invoiceService,
@@ -161,8 +164,27 @@ func (f *lateChargeFixture) expectCandidates(
 	asOf int64,
 	candidates ...*latechargeports.LateChargeCandidate,
 ) {
+	customerIDs := make([]pulid.ID, 0, len(candidates))
+	seen := make(map[pulid.ID]struct{}, len(candidates))
+	for _, c := range candidates {
+		if _, ok := seen[c.CustomerID]; !ok {
+			seen[c.CustomerID] = struct{}{}
+			customerIDs = append(customerIDs, c.CustomerID)
+		}
+	}
 	f.repo.EXPECT().
-		ListCandidates(mock.Anything, &latechargeports.ListLateChargeCandidatesRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf}).
+		ListCandidateCustomers(mock.Anything, &latechargeports.ListLateChargeCustomersRequest{
+			TenantInfo: f.tenantInfo, AsOfDate: asOf, Limit: customerPageSize,
+		}).
+		Return(customerIDs, nil).
+		Once()
+	if len(customerIDs) == 0 {
+		return
+	}
+	f.repo.EXPECT().
+		ListCandidates(mock.Anything, &latechargeports.ListLateChargeCandidatesRequest{
+			TenantInfo: f.tenantInfo, CustomerIDs: customerIDs, AsOfDate: asOf,
+		}).
 		Return(candidates, nil).
 		Once()
 }
@@ -336,19 +358,13 @@ func TestAssessRollsBackAssessmentsWhenTheMemoFails(t *testing.T) {
 	)
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf, candidate(pulid.MustNew("cus_"), "AMD", "INV-2", 50_000))
-	var runKey string
-	f.repo.EXPECT().InsertAssessments(mock.Anything, mock.Anything).
+	f.repo.EXPECT().InsertAssessments(mock.MatchedBy(inTx), mock.Anything).
 		RunAndReturn(func(_ context.Context, rows []*latecharge.LateChargeAssessment) ([]*latecharge.LateChargeAssessment, error) {
-			runKey = rows[0].RunKey
 			return rows, nil
 		}).
 		Once()
-	f.invoiceService.EXPECT().CreateMemo(mock.Anything, mock.Anything, mock.Anything).
+	f.invoiceService.EXPECT().CreateMemo(mock.MatchedBy(inTx), mock.Anything, mock.Anything).
 		Return(nil, errors.New("sequence exhausted")).
-		Once()
-	f.repo.EXPECT().
-		DeleteByRunKey(mock.Anything, f.tenantInfo, mock.MatchedBy(func(key string) bool { return key == runKey })).
-		Return(1, nil).
 		Once()
 
 	result, err := f.svc.Assess(
@@ -363,6 +379,7 @@ func TestAssessRollsBackAssessmentsWhenTheMemoFails(t *testing.T) {
 	require.Len(t, result.Customers, 1)
 	assert.True(t, result.Customers[0].Skipped)
 	assert.Contains(t, result.Customers[0].SkipReason, "sequence exhausted")
+	f.repo.AssertNotCalled(t, "SetDebitMemoLines", mock.Anything, mock.Anything)
 }
 
 func TestAssessSkipsACustomerAnotherRunGotToFirst(t *testing.T) {
@@ -390,4 +407,91 @@ func TestAssessSkipsACustomerAnotherRunGotToFirst(t *testing.T) {
 	assert.Equal(t, int64(0), result.TotalChargeMinor)
 	assert.Contains(t, result.Customers[0].SkipReason, "Another run")
 	f.invoiceService.AssertNotCalled(t, "CreateMemo", mock.Anything, mock.Anything, mock.Anything)
+}
+
+type txMarker struct{}
+
+// markingDB tags the context a transaction body runs in, so a test can tell
+// that the assessment rows and the memo were written in the same transaction
+// and would roll back together.
+type markingDB struct{}
+
+func (markingDB) DB() *bun.DB                          { return nil }
+func (markingDB) DBForContext(context.Context) bun.IDB { return nil }
+func (markingDB) HealthCheck(context.Context) error    { return nil }
+func (markingDB) IsHealthy(context.Context) bool       { return true }
+func (markingDB) Close() error                         { return nil }
+
+func (markingDB) WithTx(
+	ctx context.Context,
+	_ kernelports.TxOptions,
+	fn func(context.Context, bun.Tx) error,
+) error {
+	return fn(context.WithValue(ctx, txMarker{}, true), bun.Tx{})
+}
+
+func inTx(ctx context.Context) bool {
+	marked, _ := ctx.Value(txMarker{}).(bool)
+	return marked
+}
+
+func TestBuildPlansSeparatesACustomersCurrencies(t *testing.T) {
+	t.Parallel()
+
+	customerID := pulid.MustNew("cus_")
+	usd := candidate(customerID, "Acme", "INV-1", 50_000)
+	cad := candidate(customerID, "Acme", "INV-2", 40_000)
+	cad.CurrencyCode = "CAD"
+
+	plans := buildPlans(
+		[]*latechargeports.LateChargeCandidate{usd, cad},
+		dueDate+5*day+1,
+		0,
+		testutil.NewSessionActor(pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("bu_")),
+	)
+
+	require.Len(t, plans, 2, "a charge on a CAD invoice is owed in CAD, on its own memo")
+	assert.Equal(t, "USD", plans[0].result.CurrencyCode)
+	assert.Equal(t, "CAD", plans[1].result.CurrencyCode)
+	assert.Equal(t, cad.InvoiceID, plans[1].result.Lines[0].InvoiceID)
+}
+
+func TestAssessReadsCustomersAPageAtATime(t *testing.T) {
+	t.Parallel()
+
+	f := newLateChargeFixture(
+		t,
+		&tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeDisabled},
+	)
+	asOf := dueDate + 5*day + 1
+	first := make([]pulid.ID, customerPageSize)
+	for i := range first {
+		first[i] = pulid.MustNew("cus_")
+	}
+	last := first[len(first)-1]
+	f.repo.EXPECT().
+		ListCandidateCustomers(mock.Anything, mock.MatchedBy(func(req *latechargeports.ListLateChargeCustomersRequest) bool {
+			return req.AfterCustomerID.IsNil()
+		})).
+		Return(first, nil).
+		Once()
+	f.repo.EXPECT().
+		ListCandidateCustomers(mock.Anything, mock.MatchedBy(func(req *latechargeports.ListLateChargeCustomersRequest) bool {
+			return req.AfterCustomerID == last
+		})).
+		Return(nil, nil).
+		Once()
+	f.repo.EXPECT().
+		ListCandidates(mock.Anything, mock.MatchedBy(func(req *latechargeports.ListLateChargeCandidatesRequest) bool {
+			return len(req.CustomerIDs) == customerPageSize
+		})).
+		Return([]*latechargeports.LateChargeCandidate{candidate(first[0], "AMD", "INV-2", 50_000)}, nil).
+		Once()
+
+	result, err := f.svc.Assess(t.Context(), &latechargeports.LateChargeAssessmentRequest{
+		TenantInfo: f.tenantInfo, AsOfDate: asOf, Preview: true,
+	}, f.actor)
+
+	require.NoError(t, err)
+	require.Len(t, result.Customers, 1)
 }

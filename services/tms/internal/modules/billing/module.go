@@ -11,15 +11,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuereviewrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingtransferrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/collectionrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/costingrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerstatementrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoiceadjustmentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicedisputerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerunrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicesharerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/latechargerepository"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/paymentreminderrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/recordversionrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountingdriftservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
@@ -30,8 +33,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueapprovalservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/collectionservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/creditreviewservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/customerstatementservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentionbillingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentioncreditservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice"
@@ -40,13 +46,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceshareservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/latechargeservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/paymentreminderservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"go.uber.org/fx"
 )
 
@@ -73,7 +84,22 @@ func SharedOptions() fx.Option {
 			bankreceiptworkitemrepository.New,
 			chargeallocationrepository.New,
 			customerpaymentrepository.New,
-			customerledgerrepository.New,
+			fx.Annotate(
+				customerledgerrepository.New,
+				fx.ResultTags(creditreviewservice.LedgerStoreName),
+			),
+			collectionrepository.New,
+			paymentreminderrepository.New,
+			paymentreminderservice.New,
+			func(s *paymentreminderservice.Service) paymentreminderports.Service { return s },
+			customerstatementrepository.New,
+			customerstatementservice.New,
+			func(s *customerstatementservice.Service) customerstatementports.Service { return s },
+			collectionservice.New,
+			func(s *collectionservice.Service) collectionports.Service { return s },
+			creditreviewservice.New,
+			func(s *creditreviewservice.Service) customerports.CreditReviewer { return s },
+			creditreviewservice.NewLedger,
 			invoiceadjustmentrepository.New,
 			invoicerepository.New,
 			invoicedisputerepository.New,

@@ -121,6 +121,11 @@ func billingQuickActions() []QuickActionDefinition {
 			permission.ResourceAccessorialCharge,
 		),
 		createQuickAction("create-customer", "Create Customer", permission.ResourceCustomer),
+		createQuickAction(
+			"create-factoring-company",
+			"Create Factoring Company",
+			permission.ResourceFactoringCompany,
+		),
 		createQuickAction("create-carrier", "Create Carrier", permission.ResourceCarrier),
 		createQuickAction(
 			"create-document-type",

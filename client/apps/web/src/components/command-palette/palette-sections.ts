@@ -1,3 +1,4 @@
+import { containsWholePhrase, foldPhrase } from "@/lib/whole-phrase";
 import type { GlobalSearchGroup } from "@/services/global-search";
 import { isGlobalSearchEntityType, type GlobalSearchEntityType } from "@/services/global-search";
 import type { AssistantEntityRef } from "@/types/assistant";
@@ -55,6 +56,8 @@ export interface LocalRanking {
 
 export interface SearchInput {
   query: string;
+  /** What the records were searched for: the query, or a question's search words. */
+  recordQuery: string;
   scope: PaletteScope;
   question: string | null;
   remote: RemoteState;
@@ -130,6 +133,43 @@ export function recordsFromGroups(
     byType.set(entityType, { records, total: Math.max(group.total ?? 0, records.length) });
   }
   return byType;
+}
+
+/** Records a question carries to Nova at most, as the server takes them. */
+export const MAX_ASK_MENTIONS = 10;
+const MIN_NAMED_TITLE_LENGTH = 3;
+
+/**
+ * The records a search found that a question names outright: a PRO number, a
+ * customer's or a driver's name, written in the question as the record carries
+ * it. Only those go to Nova as records the person named. A record the index
+ * found by a looser match, SEED-PAY-005 for "SEED-PAY-002", is left to Nova's
+ * own lookups rather than handed over as though it had been asked about.
+ */
+export function recordsNamedIn(
+  question: string,
+  groups: readonly GlobalSearchGroup[],
+): AssistantEntityRef[] {
+  const named: AssistantEntityRef[] = [];
+  const seen = new Set<string>();
+  for (const [, found] of recordsFromGroups(groups)) {
+    for (const record of found.records) {
+      const key = recordItemKey(record.entityType, record.id);
+      if (
+        foldPhrase(record.title).length < MIN_NAMED_TITLE_LENGTH ||
+        seen.has(key) ||
+        !containsWholePhrase(question, record.title)
+      ) {
+        continue;
+      }
+      seen.add(key);
+      named.push({ type: record.entityType, id: record.id, label: record.title });
+      if (named.length === MAX_ASK_MENTIONS) {
+        return named;
+      }
+    }
+  }
+  return named;
 }
 
 /**
@@ -335,7 +375,7 @@ export function buildSearchSections(input: SearchInput, t: TranslateFn): SearchR
       return { sections: [...sections, ...status], empty: false };
     }
     const found = recordsFromGroups(input.remote.groups).get(scope);
-    const ranked = rankRecords(query, found?.records ?? []);
+    const ranked = rankRecords(input.recordQuery, found?.records ?? []);
     const empty = input.remote.ready && !input.remote.loading && ranked.length === 0;
     sections.push(
       section(
@@ -358,7 +398,10 @@ export function buildSearchSections(input: SearchInput, t: TranslateFn): SearchR
 
   const found = recordsFromGroups(input.remote.groups);
   const recordsByType = new Map(
-    PALETTE_RECORD_TYPES.map((type) => [type, rankRecords(query, found.get(type)?.records ?? [])]),
+    PALETTE_RECORD_TYPES.map((type) => [
+      type,
+      rankRecords(input.recordQuery, found.get(type)?.records ?? []),
+    ]),
   );
 
   type Candidate = { item: PaletteItem; score: number };
@@ -487,13 +530,14 @@ export function buildSubjectSections(
   ]);
 }
 
-export type ScopeCountMode = "search" | "commands" | "question";
+export type ScopeCountMode = "search" | "commands";
 
 /**
  * What each scope tab counts for the query. A record type's count waits for
  * its search to settle, so a tab never shows a figure about to change. Command
- * mode searched only commands and a question searched no records, so the tabs
- * they skipped read zero rather than a count they never ran.
+ * mode searched only commands, so the tabs it skipped read zero rather than a
+ * count it never ran. A question searches records by its search words, so its
+ * tabs count what that found.
  */
 export function scopeCounts(
   ranking: LocalRanking,
@@ -505,7 +549,7 @@ export function scopeCounts(
     commands: ranking.commands.length,
   };
   let all = (counts.pages ?? 0) + ranking.commands.length;
-  if (mode !== "search") {
+  if (mode === "commands") {
     for (const type of PALETTE_RECORD_TYPES) {
       counts[type] = 0;
     }

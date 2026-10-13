@@ -1631,6 +1631,10 @@ type ARPaymentStats {
 type ARStatementTransaction {
   amountMinor: Int!
   chargeMinor: Int!
+  """
+  What moved the balance, in words a customer reads: Invoice, Payment, Credit memo.
+  """
+  description: String!
   documentNumber: String!
   eventType: String!
   paymentMinor: Int!
@@ -4355,7 +4359,7 @@ client; the message is the English fallback, with its arguments in order.
 type AgentPreviewWarning {
   args: [String!]!
   """
-  would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused, unpinned or rate_coverage.
+  would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused, unpinned, rate_coverage or recipient_skipped.
   """
   code: String!
   message: String!
@@ -6386,6 +6390,10 @@ input BillingTransferRunItemsFilterInput {
 enum BillingTransferRunScope {
   """Everything matching a search, resolved when the run starts."""
   AllMatching
+  """
+  Started by billing control on its own schedule, for shipments ready to bill.
+  """
+  Automatic
   """A second attempt at an earlier transfer."""
   Retry
   """The shipments were picked one by one."""
@@ -9721,9 +9729,18 @@ type CustomerBillingProfile {
   consolidationPeriodDays: Int! @deprecated(reason: "Replaced by billingCycle. Statements no longer use a sweep window, so this has no effect and is always 0. Removed in a later release.")
   countLateOnlyOnAppointmentStops: Boolean!
   createdAt: Timestamp!
+  """
+  Open receivables, net of unapplied cash and credits, as of creditReviewedAt. Kept by the credit review, not entered.
+  """
   creditBalance: Decimal!
+  """
+  True when the credit review placed the current Hold or Warning; only the review lifts it.
+  """
+  creditHoldAutomatic: Boolean!
   creditHoldReason: String!
   creditLimit: Decimal
+  """When creditBalance was last recomputed from the receivables ledger."""
+  creditReviewedAt: Timestamp
   creditStatus: CustomerCreditStatus!
   customerId: ID!
   customerInvoicePrefix: String!
@@ -9735,6 +9752,10 @@ type CustomerBillingProfile {
   emailInvoiceEnabled: Boolean!
   enforceCreditLimit: Boolean!
   enforceCustomerBillingReq: Boolean!
+  """
+  The factor this customer's invoices are assigned to; null when they are not factored.
+  """
+  factoringCompanyId: ID
   fuelSurchargeMode: CustomerFuelSurchargeMode!
   fuelSurchargeProgramId: ID
   gracePeriodDays: Int!
@@ -9762,6 +9783,14 @@ type CustomerBillingProfile {
   requirePONumber: Boolean!
   revenueAccountId: ID
   sectionBy: InvoiceSectionKey!
+  """
+  Whether the organization's payment reminders may email this customer about overdue invoices.
+  """
+  sendPaymentReminders: Boolean!
+  """
+  Whether the organization's monthly statements may be emailed to this customer.
+  """
+  sendStatements: Boolean!
   splitBy: InvoiceSplitKey!
   taxExempt: Boolean!
   taxExemptNumber: String!
@@ -9818,7 +9847,7 @@ type CustomerEmailProfile {
   comment: String!
   createdAt: Timestamp!
   customerId: ID!
-  fromEmail: String!
+  fromEmail: String! @deprecated(reason: "Invoices are always sent from the organization's Billing email profile")
   id: ID!
   includeShipmentDetail: Boolean!
   organizationId: ID!
@@ -13814,6 +13843,49 @@ enum FacilityType {
   StorageWarehouse
 }
 
+"""
+A factor an organization sells its receivables to. Customers assigned to it are invoiced with its remit-to and notice of assignment.
+"""
+type FactoringCompany {
+  addressLine1: String!
+  addressLine2: String
+  businessUnitId: ID!
+  city: String!
+  code: String!
+  createdAt: Timestamp!
+  email: String
+  id: ID!
+  name: String!
+  notes: String
+  """
+  The notice printed on assigned invoices. Blank prints the standard notice.
+  """
+  noticeOfAssignment: String
+  organizationId: ID!
+  phoneNumber: String
+  postalCode: String!
+  """
+  How the factor is paid: bank, lockbox or ACH details printed under its address.
+  """
+  remittanceInstructions: String
+  state: UsState
+  stateId: ID!
+  status: EntityStatus!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type FactoringCompanyConnection {
+  edges: [FactoringCompanyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FactoringCompanyEdge {
+  cursor: String!
+  node: FactoringCompany!
+}
+
 input FieldFilterInput {
   field: String!
   operator: String!
@@ -16435,6 +16507,10 @@ type Invoice {
   exchangeRate: Decimal
   """The day the exchange rate was quoted for."""
   exchangeRateDate: Timestamp
+  """
+  The factoring company the invoice was assigned to when it posted; null when it is not factored.
+  """
+  factoringCompanyId: ID
   id: ID!
   invoiceDate: Timestamp!
   isAdjustmentArtifact: Boolean!
@@ -21074,6 +21150,8 @@ type Query {
   extractionShadowResult(id: ID!): ExtractionShadowResult
   extractionShadowResults(input: DataTableConnectionInput!): ExtractionShadowResultConnection!
   extractionShadowSettings: ExtractionShadowSettings!
+  factoringCompanies(input: DataTableConnectionInput!): FactoringCompanyConnection!
+  factoringCompany(id: ID!): FactoringCompany
   fiscalYear(id: ID!): FiscalYear
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
   fleetCode(id: ID!): FleetCode
@@ -23318,6 +23396,7 @@ enum SelectOptionResource {
   EMAIL_PROFILE
   EQUIPMENT_MANUFACTURER
   EQUIPMENT_TYPE
+  FACTORING_COMPANY
   FISCAL_PERIOD
   FISCAL_YEAR
   FLEET_CODE

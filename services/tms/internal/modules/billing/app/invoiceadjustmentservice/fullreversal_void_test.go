@@ -1,9 +1,9 @@
 package invoiceadjustmentservice
 
 import (
+	"context"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -76,6 +76,10 @@ func TestVoidReversedInvoiceDefaultsToDoNotRebillWithTheAdjustmentReason(t *test
 			return updated, nil
 		}).
 		Once()
+	invoiceRepo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
 	queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *billingqueueports.ReleaseForInvoiceRequest) bool {
 			return !req.Rebill &&
@@ -114,12 +118,16 @@ func TestVoidReversedInvoiceHonoursTheRequestedDispositionAndReason(t *testing.T
 			return updated, nil
 		}).
 		Once()
+	invoiceRepo.EXPECT().
+		RevokeDocumentShareTokens(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
 	queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *billingqueueports.ReleaseForInvoiceRequest) bool {
 			if !req.Rebill || req.RenumberFn == nil {
 				return false
 			}
-			number, err := req.RenumberFn(t.Context(), billingqueue.BillTypeInvoice)
+			number, err := req.RenumberFn(t.Context(), &billingqueue.BillingQueueItem{BillType: billingqueue.BillTypeInvoice})
 			return err == nil && number == "INV-2"
 		})).
 		Return([]*billingqueue.BillingQueueItem{}, nil).

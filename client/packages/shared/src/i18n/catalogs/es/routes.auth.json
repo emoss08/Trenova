@@ -63,6 +63,5 @@
   "you@carrier.com": "usted@transportista.com",
   "{0, plural, one {# role} other {# roles}}{1}": "{0, plural, one {# rol} other {# roles}}{1}",
   "{0, plural, one {permission} other {permissions}}": "{0, plural, one {permiso} other {permisos}}",
-  "{0} of {1} selected": "{0} de {1} seleccionados",
   "· {0} {1, plural, one {permission} other {permissions}}": "· {0} {1, plural, one {permiso} other {permisos}}"
 }

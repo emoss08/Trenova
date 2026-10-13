@@ -42,6 +42,12 @@ type GetEmailMessageByProviderIDRequest struct {
 	TenantInfo        pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type ListEmailEventRecipientsRequest struct {
+	MessageID  pulid.ID              `json:"messageId"`
+	Type       email.EventType       `json:"type"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type ListEmailAttachmentsRequest struct {
 	MessageID  pulid.ID              `json:"messageId"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -104,6 +110,7 @@ type EmailRepository interface {
 		*ListEmailMessagesRequest,
 	) (*pagination.ListResult[*email.Message], error)
 	CreateEvent(context.Context, *email.Event) (bool, error)
+	ListEventRecipients(context.Context, ListEmailEventRecipientsRequest) ([]string, error)
 	ListSuppressions(
 		context.Context,
 		*ListEmailSuppressionsRequest,
