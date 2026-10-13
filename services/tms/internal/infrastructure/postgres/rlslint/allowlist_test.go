@@ -90,6 +90,7 @@ var allowed = map[string]string{
 	"internal/modules/operations/adapters/postgres/checkcallrepository/trackinglink.go:linkRepository.PurgeDead":                                                "purge dead carrier tracking links across every organization",
 	"internal/modules/operations/adapters/postgres/customertrackingrepository/link.go:linkRepository.GetByHash":                                                 "resolve a customer tracking link before its tenant is known",
 	"internal/modules/operations/adapters/postgres/customertrackingrepository/link.go:linkRepository.PurgeDead":                                                 "purge dead customer tracking links across every organization",
+	"internal/modules/billing/adapters/postgres/factoringrepository/tenants.go:invoiceStateRepository.ListSweepTenants":                                         "list organizations with factored invoices or open notices of assignment to sweep",
 	"internal/modules/operations/adapters/postgres/customertrackingrepository/facts.go:factRepository.ListNotifyingTenants":                                     "list organizations whose customers receive status emails",
 	"internal/modules/operations/adapters/postgres/customertrackingrepository/notification.go:notificationRepository.ListTenantsWithDue":                        "list organizations with customer status emails due",
 	"internal/modules/operations/adapters/postgres/dispatchcontrolrepository/dispatchcontrol.go:repository.ListHorizonPlanningTenants":                          "list organizations with horizon planning on",

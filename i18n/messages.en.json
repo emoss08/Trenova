@@ -4615,6 +4615,15 @@
       "go/other"
     ]
   },
+  "A customer's acknowledged notice of assignment expires within 30 days; once it lapses, its invoices stop being ready to factor until a new one is acknowledged.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A customer's balance": {
     "sites": 1,
     "scope": [
@@ -5419,6 +5428,15 @@
     ]
   },
   "A fallback quote must name the formula template that priced it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A fee tier must end after it starts": {
     "sites": 1,
     "scope": [
       "go"
@@ -7226,6 +7244,15 @@
       "go/other"
     ]
   },
+  "A posted invoice for a factored customer passed every readiness check: an agreement in force, an acknowledged notice of assignment, no dispute, and every document the factor asks for.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A posted invoice is voided through a full-reversal credit memo. The invoice keeps its number and stays readable, but nothing more is owed on it.": {
     "sites": 1,
     "scope": [
@@ -7891,6 +7918,15 @@
   },
   "A rejection reason is required": {
     "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A released notice needs its release time": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -8741,6 +8777,15 @@
     ]
   },
   "A sender is only named for a domain or an address": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A sent notice needs the time it was sent": {
     "sites": 1,
     "scope": [
       "go"
@@ -10885,7 +10930,7 @@
     ]
   },
   "ACH": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -11275,7 +11320,7 @@
     ]
   },
   "AP Contact": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -13221,6 +13266,15 @@
       "go/other"
     ]
   },
+  "Accounting treatment is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Accounting years and their close state": {
     "sites": 1,
     "scope": [
@@ -13758,6 +13812,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Acknowledgement": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.pdf"
     ]
   },
   "Acknowledgment": {
@@ -15512,6 +15575,15 @@
     ],
     "areas": [
       "routes/rate-matrix"
+    ]
+  },
+  "Add at least one fee tier": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Add at least one item": {
@@ -18243,7 +18315,43 @@
       "go/other"
     ]
   },
+  "Advance and reserve together cannot be more than 100%": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Advance has no outstanding balance to write off": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Advance rate cannot be more than 100%": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Advance rate is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Advance rate must be greater than zero": {
     "sites": 1,
     "scope": [
       "go"
@@ -18295,6 +18403,15 @@
     ],
     "areas": [
       "routes/pay-advance"
+    ]
+  },
+  "Advance, reserve, fee and recourse terms agreed with a factor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Advanced": {
@@ -21858,6 +21975,15 @@
       "go/other"
     ]
   },
+  "An acknowledged notice needs the date the customer signed it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An acknowledging user is required": {
     "sites": 1,
     "scope": [
@@ -22210,6 +22336,42 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "An agreement can have at most 20 fee tiers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An agreement can require at most 20 document types": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An agreement cannot move to another factor; draft a new one instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An agreement is in force": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "An agreement is required": {
@@ -22785,6 +22947,15 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "An ended agreement cannot be changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "An entry cannot be longer than a day — correct the clock-out": {
@@ -23802,6 +23973,15 @@
     ]
   },
   "Another active AS2 profile already uses this local and partner AS2 ID pair": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Another active agreement with this factor covers part of these dates": {
     "sites": 1,
     "scope": [
       "go"
@@ -29247,6 +29427,15 @@
       "routes/shipment"
     ]
   },
+  "Assigned to a factor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Assigned to me": {
     "sites": 1,
     "scope": [
@@ -30594,6 +30783,15 @@
       "routes/invoice"
     ]
   },
+  "Attach the customer's signed copy of the notice": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Attach the notice as a PDF": {
     "sites": 1,
     "scope": [
@@ -30631,7 +30829,7 @@
     ]
   },
   "Attached": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -30641,7 +30839,8 @@
       "go/other",
       "packages/shared/components",
       "routes/driver-expense",
-      "template/customer.statement.email"
+      "template/customer.statement.email",
+      "template/factoring.noa.email"
     ]
   },
   "Attached document": {
@@ -36149,6 +36348,15 @@
     ]
   },
   "Billing distance profile is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Billing documents and rates check out": {
     "sites": 1,
     "scope": [
       "go"
@@ -44636,6 +44844,15 @@
       "apps/web/components"
     ]
   },
+  "Change, activate and end factoring agreements": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Change, retire, restore or review a memory": {
     "sites": 1,
     "scope": [
@@ -45372,6 +45589,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Chargeback window cannot be longer than 730 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Chargeback window cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Charged in the first (lowest price) band.": {
@@ -62261,6 +62496,15 @@
       "go/other"
     ]
   },
+  "Credit memos are not factored": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Credit only": {
     "sites": 2,
     "scope": [
@@ -63895,7 +64139,7 @@
     ]
   },
   "Customer is required": {
-    "sites": 18,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -63964,7 +64208,7 @@
     ]
   },
   "Customer not found": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -65484,7 +65728,7 @@
     ]
   },
   "Date": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -65509,7 +65753,8 @@
       "routes/osha",
       "routes/shipment",
       "routes/worker",
-      "template/customer.statement.pdf"
+      "template/customer.statement.pdf",
+      "template/factoring.noa.pdf"
     ]
   },
   "Date & time": {
@@ -77044,6 +77289,15 @@
       "go/other"
     ]
   },
+  "Draft factoring agreements": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Draft figures move with the data. Finalized locks them. Filed is immutable; corrections open an amendment.": {
     "sites": 1,
     "scope": [
@@ -77079,6 +77333,15 @@
     "areas": [
       "routes/agent-control",
       "routes/formula-template"
+    ]
+  },
+  "Draft notices of assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Draft ready": {
@@ -82375,7 +82638,7 @@
     ]
   },
   "Effective": {
-    "sites": 6,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -82384,7 +82647,9 @@
       "apps/web/components",
       "go/other",
       "routes/shipment",
-      "routes/worker"
+      "routes/worker",
+      "template/factoring.noa.email",
+      "template/factoring.noa.pdf"
     ]
   },
   "Effective From": {
@@ -82552,6 +82817,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Effective {0}, {1} has assigned all of its present and future accounts receivable to {2}. The assignment covers every invoice {1} has issued to you that is still unpaid and every invoice it issues to you from that date on.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.pdf"
     ]
   },
   "Efs": {
@@ -82775,7 +83049,7 @@
     ]
   },
   "Email": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -84720,7 +84994,7 @@
     ]
   },
   "End date must be after the start date": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -85664,7 +85938,7 @@
     ]
   },
   "Enter a valid email address": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -86084,6 +86358,15 @@
     "areas": [
       "go/other",
       "routes/collections"
+    ]
+  },
+  "Enter the date the customer signed the notice; it cannot be in the future": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Enter the day the miles were run": {
@@ -94008,13 +94291,25 @@
     ]
   },
   "Factoring company": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/customer",
-      "routes/factoring-company"
+      "routes/factoring-company",
+      "template/factoring.noa.email",
+      "template/factoring.noa.pdf"
+    ]
+  },
+  "Factoring company is required": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Factoring company updated successfully": {
@@ -96624,6 +96919,24 @@
   },
   "Federation assurance level must be between 1 and 3": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Fee rate must be between 0% and 100%": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Fee tiers must start at day 0 and follow each other without gaps": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -99951,6 +100264,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Flat fee cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Flat pay for tarping flatbed loads.": {
@@ -103558,6 +103880,24 @@
     ],
     "areas": [
       "routes/escrow-account"
+    ]
+  },
+  "Funding days cannot be more than 60": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Funding days cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Funding target": {
@@ -107894,7 +108234,7 @@
     ]
   },
   "Hello {0},": {
-    "sites": 22,
+    "sites": 24,
     "scope": [
       "go"
     ],
@@ -107907,6 +108247,7 @@
       "template/customer.statement.email",
       "template/customertracking.link.email",
       "template/customertracking.status.email",
+      "template/factoring.noa.email",
       "template/invoice.email",
       "template/invoice.reminder.email",
       "template/tender.offer.email"
@@ -107922,7 +108263,7 @@
     ]
   },
   "Hello,": {
-    "sites": 22,
+    "sites": 24,
     "scope": [
       "go"
     ],
@@ -107935,6 +108276,7 @@
       "template/customer.statement.email",
       "template/customertracking.link.email",
       "template/customertracking.status.email",
+      "template/factoring.noa.email",
       "template/invoice.email",
       "template/invoice.reminder.email",
       "template/tender.offer.email"
@@ -117527,6 +117869,15 @@
       "go/other"
     ]
   },
+  "Invoice ready to factor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Invoice register": {
     "sites": 2,
     "scope": [
@@ -119645,12 +119996,14 @@
     ]
   },
   "Job title": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "template/factoring.noa.pdf"
     ]
   },
   "Job title must be 100 characters or fewer": {
@@ -130587,7 +130940,7 @@
     ]
   },
   "MC": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -136631,6 +136984,15 @@
     ]
   },
   "Minimum distance must be greater than 0": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Minimum fee cannot be negative": {
     "sites": 1,
     "scope": [
       "go"
@@ -147756,6 +148118,15 @@
       "routes/invoice"
     ]
   },
+  "No notice of assignment has been sent to the customer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "No notice required": {
     "sites": 2,
     "scope": [
@@ -147845,6 +148216,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No open dispute": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "No open dispute on this invoice.": {
@@ -153176,6 +153556,15 @@
       "routes/worker"
     ]
   },
+  "Notes cannot be longer than 2000 characters": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Notes due after one year": {
     "sites": 1,
     "scope": [
@@ -155158,16 +155547,46 @@
     ]
   },
   "Notice of assignment": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/factoring-company",
       "template/customer.statement.pdf",
+      "template/factoring.noa.email",
+      "template/factoring.noa.pdf",
       "template/invoice.email",
       "template/invoice.pdf"
+    ]
+  },
+  "Notice of assignment expiring": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Notice of assignment from {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.email"
+    ]
+  },
+  "Notice of assignment of accounts receivable": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.pdf"
     ]
   },
   "Notice overdue": {
@@ -155216,6 +155635,15 @@
       "packages/shared/lib"
     ]
   },
+  "Notice to": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.pdf"
+    ]
+  },
   "Notice window": {
     "sites": 1,
     "scope": [
@@ -155242,6 +155670,15 @@
     "areas": [
       "apps/web/components",
       "routes/detention-desk"
+    ]
+  },
+  "Notices telling customers to pay a factor instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Notification": {
@@ -158384,6 +158821,15 @@
       "go/other"
     ]
   },
+  "One of the required document types does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "One of the selected courses is invalid": {
     "sites": 1,
     "scope": [
@@ -159027,6 +159473,15 @@
       "go/other"
     ]
   },
+  "Only a draft agreement can be activated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only a draft can be deleted. A published version is the record of what was sent — archive it instead.": {
     "sites": 1,
     "scope": [
@@ -159073,6 +159528,24 @@
     ]
   },
   "Only a draft round can be finalised": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a drafted or sent notice can be acknowledged": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a drafted or sent notice can be sent; draft a new notice instead": {
     "sites": 1,
     "scope": [
       "go"
@@ -159739,6 +160212,15 @@
     ]
   },
   "Only an access key sign-in takes an access key ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only an active agreement can be ended": {
     "sites": 1,
     "scope": [
       "go"
@@ -160855,6 +161337,15 @@
     ]
   },
   "Only the last band may be open-ended": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only the last fee tier can be open-ended": {
     "sites": 1,
     "scope": [
       "go"
@@ -165676,6 +166167,15 @@
     "areas": [
       "template/detention.notice.email",
       "template/detention.notice.pdf"
+    ]
+  },
+  "Our invoices are now payable to {0}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.email"
     ]
   },
   "Our own authority": {
@@ -170861,6 +171361,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Pay every invoice from {0} only to the remittance address below. A payment sent anywhere else, including to {0} directly, will not discharge what you owe.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.pdf"
+    ]
+  },
   "Pay for one of your loads was placed on hold. Talk to dispatch for the details.": {
     "sites": 1,
     "scope": [
@@ -173781,7 +174290,7 @@
     ]
   },
   "Phone": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -176181,6 +176690,15 @@
       "routes/worker"
     ]
   },
+  "Please update your payment records, then sign the acknowledgement below and return a copy to us and to {0}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.pdf"
+    ]
+  },
   "Please wait a minute and open the link again.": {
     "sites": 2,
     "scope": [
@@ -177722,6 +178240,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Posted with an open balance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Posted {0} of {1, plural, one {# held row} other {# held rows}}": {
@@ -179755,6 +180282,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Printed name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.pdf"
     ]
   },
   "Printed on the card. Leave empty when the provider does not set one.": {
@@ -183554,6 +184090,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Questions? Reply to this message or write to {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.email"
     ]
   },
   "Queue": {
@@ -189484,7 +190029,7 @@
     ]
   },
   "Recipient must be a valid email address": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go"
     ],
@@ -191464,6 +192009,15 @@
       "routes/factoring-company"
     ]
   },
+  "Recourse is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Recovered": {
     "sites": 4,
     "scope": [
@@ -191995,7 +192549,7 @@
     ]
   },
   "Reference": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "go",
       "ts"
@@ -192016,7 +192570,8 @@
       "routes/inbox",
       "routes/journal-entry",
       "routes/pay-advance",
-      "routes/worker"
+      "routes/worker",
+      "template/factoring.noa.pdf"
     ]
   },
   "Reference #": {
@@ -193593,6 +194148,15 @@
       "routes/driver-pay-event"
     ]
   },
+  "Release reason cannot be longer than 500 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Release the hold to continue": {
     "sites": 1,
     "scope": [
@@ -193845,6 +194409,16 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Remit payment to": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.email",
+      "template/factoring.noa.pdf"
     ]
   },
   "Remit to": {
@@ -196916,7 +197490,7 @@
     ]
   },
   "Request is required": {
-    "sites": 54,
+    "sites": 55,
     "scope": [
       "go"
     ],
@@ -198429,6 +199003,24 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Reserve rate cannot be more than 100%": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Reserve rate cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Reset": {
@@ -208312,6 +208904,15 @@
       "go/other"
     ]
   },
+  "Say why the notice is released, such as the factor's release letter": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Say why the shipment is being taken off the invoice": {
     "sites": 1,
     "scope": [
@@ -215091,6 +215692,15 @@
     ]
   },
   "Send, confirm, and void rate confirmations": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Send, record and release notices of assignment": {
     "sites": 1,
     "scope": [
       "go"
@@ -222575,14 +223185,15 @@
     ]
   },
   "Signature": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/policies"
+      "routes/policies",
+      "template/factoring.noa.pdf"
     ]
   },
   "Signature cannot exceed 150 characters": {
@@ -222906,6 +223517,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Sincerely,": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.pdf"
     ]
   },
   "Single": {
@@ -226551,7 +227171,7 @@
     ]
   },
   "Start date is required": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -229748,6 +230368,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Submission time must be within the day": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Submit": {
@@ -236135,6 +236764,15 @@
       "packages/shared/components"
     ]
   },
+  "The address replies and the signed acknowledgement go to.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The address your email provider receives Trenova's mail on.": {
     "sites": 1,
     "scope": [
@@ -236396,6 +237034,24 @@
       "routes/rate-agreement"
     ]
   },
+  "The agreement has already ended; change its end date before activating it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The agreement must end after it took effect": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The agreement returns to active and its lanes price shipments again.": {
     "sites": 1,
     "scope": [
@@ -236403,6 +237059,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "The agreement terms are not valid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The all-in amount the carrier will be paid. This is the number a carrier invoice is matched against.": {
@@ -238846,6 +239511,15 @@
       "apps/web/components"
     ]
   },
+  "The customer acknowledged the notice of assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The customer cannot be changed while the order has legs; detach them first": {
     "sites": 1,
     "scope": [
@@ -238891,6 +239565,15 @@
       "go/other"
     ]
   },
+  "The customer has not returned the signed notice of assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The customer has rejected this charge. Work the claim before it is invoiced.": {
     "sites": 1,
     "scope": [
@@ -238909,6 +239592,24 @@
       "routes/shipment"
     ]
   },
+  "The customer is disputing the invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The customer is not factored": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The customer notice went out and was recorded as evidence.": {
     "sites": 1,
     "scope": [
@@ -238919,6 +239620,15 @@
     ]
   },
   "The customer of a leg of a {0} order cannot be changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The customer the notice is addressed to. Required: a notice with no addressee does not bind anyone to pay the factor.": {
     "sites": 1,
     "scope": [
       "go"
@@ -239215,6 +239925,24 @@
       "routes/worker"
     ]
   },
+  "The day the assignment takes effect, in the organization timezone.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The day the assignment takes effect. Required: a customer cannot know which payments belong to the factor without it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The day the course was finished; any expiry is counted from it.": {
     "sites": 1,
     "scope": [
@@ -239252,6 +239980,15 @@
     ]
   },
   "The day the new rates take effect is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The day the notice is dated, in the organization timezone.": {
     "sites": 1,
     "scope": [
       "go"
@@ -240680,6 +241417,15 @@
       "routes/factoring-company"
     ]
   },
+  "The factor has no active agreement in force": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The factor's legal name. It is printed as the payee on every invoice assigned to it.": {
     "sites": 1,
     "scope": [
@@ -240690,6 +241436,60 @@
     ]
   },
   "The factor's notice of assignment when the invoice is assigned to a factoring company, blank otherwise. Print it whenever it is set: a factored invoice without its notice can be paid to the wrong party.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The factor's remittance address, the only place payment may be sent.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The factor's remittance address, the only place payment may be sent. Required: without it the customer cannot pay the factor and a payment sent elsewhere is lost.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The factoring company does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The factoring company is inactive": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The factoring company the invoices are assigned to. Required: the message exists to tell the customer who to pay.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The factoring company the invoices are assigned to. Required: the notice exists to name it.": {
     "sites": 1,
     "scope": [
       "go"
@@ -240878,6 +241678,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The file name of the attached notice. Required: the customer is asked to sign and return the attachment, so the message must name it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The file name of the attached statement.": {
@@ -241628,7 +242437,34 @@
       "go/other"
     ]
   },
+  "The invoice has no open balance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The invoice has not been read yet, so it cannot be queued for carrier pay": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The invoice is excluded from factoring and stays on normal receivables": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The invoice is not posted yet": {
     "sites": 1,
     "scope": [
       "go"
@@ -241653,6 +242489,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "The invoice is voided": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The invoice memo, if one was entered.": {
@@ -242058,6 +242903,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The letter telling a customer that, from the effective date, every invoice is assigned to your factoring company and must be paid only to the factor's remittance address, with an acknowledgement for the customer to sign and return.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The licence or certificate this is about — a CDL, a medical card.": {
@@ -242533,6 +243387,15 @@
     ]
   },
   "The message a customer statement is attached to.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The message a notice of assignment is attached to.": {
     "sites": 1,
     "scope": [
       "go"
@@ -243416,6 +244279,60 @@
       "routes/worker"
     ]
   },
+  "The notice is already released": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The notice must expire after it was acknowledged": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The notice of assignment changed since you opened it; reload and try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The notice of assignment has expired": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The notice of assignment is attached. Please update your payment records, sign the acknowledgement on the notice and return it by replying to this message.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.email"
+    ]
+  },
+  "The notice of assignment is drafted but not sent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The notice of assignment must be at most 2,000 characters": {
     "sites": 2,
     "scope": [
@@ -243434,6 +244351,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "The notice's identifier, printed small so the factor can match a returned acknowledgement to it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The number of days this customer has to pay after an invoice is issued. Overrides the organization default when set.": {
@@ -246691,6 +247617,15 @@
       "routes/shipment"
     ]
   },
+  "The shipment's billing readiness could not be read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The shipment's charges could not be read": {
     "sites": 2,
     "scope": [
@@ -246827,6 +247762,15 @@
     ]
   },
   "The signed-rate agreement sent to an external carrier before it hauls a brokered move. This is the artifact a disputed carrier invoice is settled against.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The signer's job title. Blank when no one is named.": {
     "sites": 1,
     "scope": [
       "go"
@@ -249998,6 +250942,16 @@
       "routes/desk"
     ]
   },
+  "This assignment can be released, and these payment instructions changed, only by written notice from {0}. Disregard any other request to send payment elsewhere.": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.email",
+      "template/factoring.noa.pdf"
+    ]
+  },
   "This assignment has already ended": {
     "sites": 1,
     "scope": [
@@ -250789,6 +251743,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "This customer already has an open notice of assignment for this factor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This customer could not be found. It may have been removed.": {
@@ -256519,6 +257482,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "To the accounts payable department:": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.pdf"
     ]
   },
   "To weight must be greater than from weight": {
@@ -262323,6 +263295,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "USDOT": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "USDOT added": {
     "sites": 2,
     "scope": [
@@ -266039,6 +267020,15 @@
       "routes/billing-queue"
     ]
   },
+  "Upload the signed copy to this notice of assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Upload the statement before staging the import": {
     "sites": 1,
     "scope": [
@@ -269620,6 +270610,15 @@
       "apps/web/hooks"
     ]
   },
+  "View factoring agreements": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "View factoring companies": {
     "sites": 1,
     "scope": [
@@ -269861,6 +270860,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "View notices of assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "View only": {
@@ -275139,6 +276147,15 @@
       "routes/agent-control"
     ]
   },
+  "What the person sending the notice wrote. Print it when present.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "What the person sending the statement wrote. Print it when present.": {
     "sites": 1,
     "scope": [
@@ -278511,6 +279528,15 @@
     ]
   },
   "Who shared the invoice. Name them: a share from nobody gives the reader no reason to open it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Who signs the notice for your organization. Blank when no one is named.": {
     "sites": 1,
     "scope": [
       "go"
@@ -283962,6 +284988,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Your organization, as the party assigning its invoices.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Your organization, as the statement's issuer.": {
@@ -297746,6 +298781,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "{0} acknowledges receipt of this notice and will pay every invoice from {1} only to {2} until {2} releases the assignment in writing.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.pdf"
+    ]
+  },
   "{0} acknowledgments": {
     "sites": 1,
     "scope": [
@@ -299964,6 +301008,24 @@
       "routes/admin"
     ]
   },
+  "{0} has assigned its accounts receivable to {1}. From {2}, please pay every invoice from {0} only to the remittance address below.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.email"
+    ]
+  },
+  "{0} has assigned its accounts receivable to {1}. Please pay every invoice from {0} only to the remittance address below.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/factoring.noa.email"
+    ]
+  },
   "{0} has been turned off.": {
     "sites": 1,
     "scope": [
@@ -300079,6 +301141,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} has no invoice email recipients. Add one to the customer's email profile or enter a recipient.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} has no invoice email recipients. Add one to the customer's email profile to send reminders.": {

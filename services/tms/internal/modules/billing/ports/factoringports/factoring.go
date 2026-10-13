@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -161,7 +162,32 @@ type Summary struct {
 	ReadyUnsubmitted VerdictTotals `json:"readyUnsubmitted"`
 }
 
+type ShipmentContact struct {
+	ShipmentID   pulid.ID `json:"shipmentId"`
+	DriverName   string   `json:"driverName"`
+	DriverEmail  string   `json:"driverEmail"`
+	CarrierName  string   `json:"carrierName"`
+	CarrierEmail string   `json:"carrierEmail"`
+}
+
+type ListShipmentContactsRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	ShipmentIDs []pulid.ID            `json:"shipmentIds"`
+}
+
+type SetInvoiceOverrideRequest struct {
+	TenantInfo pagination.TenantInfo     `json:"-"`
+	InvoiceID  pulid.ID                  `json:"invoiceId"`
+	Override   invoice.FactoringOverride `json:"override"`
+}
+
 type InvoiceStateRepository interface {
+	SetInvoiceOverride(ctx context.Context, req SetInvoiceOverrideRequest) error
+	ListSweepTenants(ctx context.Context) ([]pagination.TenantInfo, error)
+	ListShipmentContacts(
+		ctx context.Context,
+		req *ListShipmentContactsRequest,
+	) (map[pulid.ID]*ShipmentContact, error)
 	Get(ctx context.Context, req GetInvoiceStateRequest) (*factoring.InvoiceState, error)
 	ListByInvoiceIDs(
 		ctx context.Context,

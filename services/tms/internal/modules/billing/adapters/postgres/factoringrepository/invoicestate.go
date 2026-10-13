@@ -40,6 +40,28 @@ func NewInvoiceStateRepository(p Params) factoringports.InvoiceStateRepository {
 	}
 }
 
+func (r *invoiceStateRepository) SetInvoiceOverride(
+	ctx context.Context,
+	req factoringports.SetInvoiceOverrideRequest,
+) error {
+	_, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (struct{}, error) {
+		inv := invoicecol.InvoiceColumns
+		res, err := r.db.DBForContext(ctx).NewUpdate().
+			Model((*invoice.Invoice)(nil)).
+			Set(inv.FactoringOverride.Set(), req.Override).
+			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return invoicecol.InvoiceScopeTenantUpdate(uq, req.TenantInfo).
+					Where(inv.ID.Eq(), req.InvoiceID)
+			}).
+			Exec(ctx)
+		if err != nil {
+			return struct{}{}, fmt.Errorf("set invoice factoring override: %w", err)
+		}
+		return struct{}{}, dberror.CheckFound(res, "Invoice")
+	})
+	return err
+}
+
 func (r *invoiceStateRepository) Get(
 	ctx context.Context,
 	req factoringports.GetInvoiceStateRequest,
