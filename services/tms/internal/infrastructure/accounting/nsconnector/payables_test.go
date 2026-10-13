@@ -249,6 +249,50 @@ func TestVoidVendorCreditUnappliesThenDeletes(t *testing.T) {
 	require.ErrorIs(t, err, errPurchaseDocumentType)
 }
 
+func TestVoidVendorCreditInAnAPLockedPeriodWritesAnOffsettingBill(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeNS{
+		respond: billStateResponder(
+			t,
+			map[string]any{"type": "VendCred", "aplocked": "T"},
+			func(call nsCall) reply {
+				switch {
+				case call.is(http.MethodGet, recordPath(recordVendorCredit, testBill)):
+					return fixtureReply(t, http.StatusOK, "vendor_credit.json")
+				case call.is(http.MethodPut, eidPath(recordVendorBill, testVoidRequest)):
+					return upserted(recordVendorBill, "1510")
+				}
+				return reply{}
+			},
+		),
+	}
+	conn := testConnector(t, fake)
+	result, err := conn.VoidPurchaseDocument(t.Context(), billRef(map[string]string{
+		accountingsync.ExternalRefCreditDocument: "true",
+	}))
+	require.NoError(t, err)
+	assert.Equal(t, "1510", result.Refs[refCorrective])
+	assert.Equal(
+		t,
+		[]string{"PUT " + eidPath(recordVendorBill, testVoidRequest)},
+		methods(fake.writes()),
+	)
+	find, ok := fake.query("t.externalid = ?")
+	require.True(t, ok)
+	assert.Equal(t, []any{typeVendorBill, testVoidRequest}, find.Params)
+	put, _ := fake.find(http.MethodPut, eidPath(recordVendorBill, testVoidRequest))
+	assert.Equal(t, testVendor, refID(t, put.Body, "entity"))
+	assert.Equal(t, "111", refID(t, put.Body, "account"))
+	assert.Equal(t, "Reverses VC-12", put.Body["memo"])
+	expense := items(t, put.Body, "expense")
+	require.Len(t, expense, 1)
+	assert.Equal(t, testExpense, expense[0]["account"].(map[string]any)["id"])
+	assert.InDelta(t, 900.0, expense[0]["amount"], 0)
+	assert.NotContains(t, put.Body, "apply")
+	assert.NotContains(t, put.Body, "item")
+}
+
 func TestPurchaseIsCreditReadsEitherRef(t *testing.T) {
 	t.Parallel()
 

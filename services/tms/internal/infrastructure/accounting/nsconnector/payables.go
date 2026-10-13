@@ -208,23 +208,28 @@ func (c *Connector) VoidPurchaseDocument(
 	}
 	result := newResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
+	var corrective string
 	switch {
 	case ref.Kind.IsBillPayment():
-		err = c.unwindRecord(ctx, s, &unwind{
+		_, err = c.unwindRecord(ctx, s, &unwind{
 			recordType: recordVendorPayment,
 			id:         ref.ExternalID,
 			locked:     purchaseLocked,
 			refused:    func() error { return reversalRefused() },
 		})
 	case credit:
-		err = c.unwindRecord(ctx, s, &unwind{
+		corrective, err = c.unwindRecord(ctx, s, &unwind{
 			recordType: recordVendorCredit,
 			id:         ref.ExternalID,
 			locked:     purchaseLocked,
 			refused:    func() error { return creditReversalRefused("vendor credit") },
+			offset: &creditOffset{
+				recordType: recordVendorBill,
+				typeCode:   typeVendorBill,
+				requestID:  ref.RequestID,
+			},
 		})
 	default:
-		var corrective string
 		corrective, err = c.retireDocument(ctx, s, &reversal{
 			recordType:  recordVendorBill,
 			reverseType: recordVendorCredit,
@@ -233,9 +238,9 @@ func (c *Connector) VoidPurchaseDocument(
 			requestID:   ref.RequestID,
 			locked:      purchaseLocked,
 		})
-		if corrective != "" {
-			result.Refs[refCorrective] = corrective
-		}
+	}
+	if corrective != "" {
+		result.Refs[refCorrective] = corrective
 	}
 	return result, err
 }

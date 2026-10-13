@@ -3,6 +3,7 @@ package nsconnector
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/shared/netsuite"
@@ -29,6 +30,7 @@ type reversal struct {
 	id          string
 	requestID   string
 	locked      func(*transactionRow) bool
+	offset      bool
 }
 
 func (c *Connector) retireDocument(ctx context.Context, s *session, r *reversal) (string, error) {
@@ -118,7 +120,7 @@ func (c *Connector) reverse(
 	}, &record); err != nil {
 		return "", err
 	}
-	body, err := c.reversalBody(&record, state, r.id)
+	body, err := c.reversalBody(&record, state, r)
 	if err != nil {
 		return "", err
 	}
@@ -136,7 +138,7 @@ func (c *Connector) reverse(
 func (c *Connector) reversalBody(
 	record *transactionRecord,
 	state *transactionRow,
-	id string,
+	r *reversal,
 ) (*transactionBody, error) {
 	body := &transactionBody{
 		Entity:     refOf(record.party().ID.Value()),
@@ -144,11 +146,15 @@ func (c *Connector) reversalBody(
 		Currency:   refOf(record.Currency.ID.Value()),
 		TranDate:   c.now().UTC().Format(dateLayout),
 		Memo:       cleanText(reversalNote+record.TranID, maxMemoLength),
-		Apply: &sublist[applyLine]{Items: []applyLine{{
-			Doc:    recordRef{ID: id},
+	}
+	if r.offset {
+		body.Account = refOf(record.Account.ID.Value())
+	} else {
+		body.Apply = &sublist[applyLine]{Items: []applyLine{{
+			Doc:    recordRef{ID: r.id},
 			Apply:  true,
 			Amount: amountOf(state.total()),
-		}}},
+		}}}
 	}
 	if record.ExchangeRate.IsPositive() {
 		body.ExchangeRate = amountOf(record.ExchangeRate)
@@ -221,26 +227,77 @@ type unwind struct {
 	id         string
 	locked     func(*transactionRow) bool
 	refused    func() error
+	offset     *creditOffset
 }
 
-func (c *Connector) unwindRecord(ctx context.Context, s *session, u *unwind) error {
+type creditOffset struct {
+	recordType string
+	typeCode   string
+	requestID  string
+}
+
+func (c *Connector) unwindRecord(ctx context.Context, s *session, u *unwind) (string, error) {
 	state, found, err := transactionState(ctx, s.client, u.id)
 	if err != nil {
 		if netsuite.IsNotFound(err) {
-			return nil
+			return "", nil
 		}
-		return err
+		return "", err
 	}
 	if !found || state.Voided.Value() {
-		return nil
+		return "", nil
 	}
 	if u.locked(state) {
-		return u.refused()
+		return c.offsetCredit(ctx, s, u, state)
 	}
 	if err = unapplyAll(ctx, s.client, u.recordType, u.id); err != nil {
-		return u.settle(err)
+		return "", u.settle(err)
 	}
-	return u.settle(s.client.Delete(ctx, u.recordType, u.id))
+	return "", u.settle(s.client.Delete(ctx, u.recordType, u.id))
+}
+
+func invoiceOffset(requestID string) *creditOffset {
+	return &creditOffset{recordType: recordInvoice, typeCode: typeInvoice, requestID: requestID}
+}
+
+func shortPayOffsetID(requestID, memo string) string {
+	if requestID == "" {
+		return ""
+	}
+	return requestID + "-" + memo
+}
+
+func shortPayCorrective(key string) string {
+	return refCorrective + "-" + strings.TrimPrefix(key, accountingsync.ExternalRefShortPayPrefix)
+}
+
+func (c *Connector) offsetCredit(
+	ctx context.Context,
+	s *session,
+	u *unwind,
+	state *transactionRow,
+) (string, error) {
+	if u.offset == nil || !validRequestID(u.offset.requestID) {
+		return "", u.refused()
+	}
+	held, ok, err := findByExternalID(ctx, s.client, u.offset.typeCode, u.offset.requestID)
+	if err != nil {
+		return "", err
+	}
+	if ok {
+		return held.id(), nil
+	}
+	if state.applied() {
+		return "", paidConflict()
+	}
+	return c.reverse(ctx, s, &reversal{
+		recordType:  u.recordType,
+		reverseType: u.offset.recordType,
+		reverseCode: u.offset.typeCode,
+		id:          u.id,
+		requestID:   u.offset.requestID,
+		offset:      true,
+	}, state)
 }
 
 func (u *unwind) settle(err error) error {

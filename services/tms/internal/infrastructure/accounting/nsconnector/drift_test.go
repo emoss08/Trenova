@@ -67,6 +67,74 @@ func TestReadDocumentsReadsTotalsBalancesAndVoids(t *testing.T) {
 	assert.Equal(t, []any{float64(1201), float64(1205), float64(1299)}, call.Params)
 }
 
+func TestReadDocumentsNamesTheLastEditorFromSystemNotes(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeNS{respond: func(call nsCall) reply {
+		switch {
+		case call.queries("FROM systemnote sn"):
+			return fixtureReply(t, http.StatusOK, "system_notes.json")
+		case call.queries("t.id IN ("):
+			return reply{status: http.StatusOK, body: rowsJSON(t, false,
+				stateRow(testInvoice, nil),
+				stateRow("1205", nil),
+			)}
+		}
+		return reply{}
+	}}
+	conn := testConnector(t, fake)
+	states, err := conn.ReadDocuments(
+		t.Context(),
+		&accountingsyncports.ReadAccountingDocumentsRequest{
+			Auth: testAuth(),
+			Kind: accountingsync.SyncObjectInvoice,
+			Targets: []accountingsyncports.AccountingDocumentTarget{
+				{ExternalID: testInvoice},
+				{ExternalID: "1205"},
+				{ExternalID: "1299"},
+			},
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, states, 3)
+	assert.Equal(t, "Dana Whitfield", states[0].ModifiedBy)
+	assert.Empty(t, states[1].ModifiedBy)
+	assert.Empty(t, states[2].ModifiedBy)
+
+	notes, ok := fake.query("FROM systemnote sn")
+	require.True(t, ok)
+	assert.Equal(t, []any{float64(1201), float64(1205)}, notes.Params, "only found documents")
+}
+
+func TestReadDocumentsLeavesTheEditorEmptyWhenSystemNotesAreUnreadable(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeNS{respond: func(call nsCall) reply {
+		switch {
+		case call.queries("FROM systemnote sn"):
+			return reply{status: http.StatusBadRequest, body: strings.ReplaceAll(
+				readFixture(t, "error_unsupported_table.json"), "'subsidiary'", "'systemnote'",
+			)}
+		case call.queries("t.id IN ("):
+			return reply{status: http.StatusOK, body: rowsJSON(t, false, stateRow(testInvoice, nil))}
+		}
+		return reply{}
+	}}
+	conn := testConnector(t, fake)
+	states, err := conn.ReadDocuments(
+		t.Context(),
+		&accountingsyncports.ReadAccountingDocumentsRequest{
+			Auth:    testAuth(),
+			Kind:    accountingsync.SyncObjectInvoice,
+			Targets: []accountingsyncports.AccountingDocumentTarget{{ExternalID: testInvoice}},
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, states, 1)
+	assert.True(t, states[0].Found)
+	assert.Empty(t, states[0].ModifiedBy)
+}
+
 func TestReadDocumentsBatchesFiveHundredIDsAQuery(t *testing.T) {
 	t.Parallel()
 

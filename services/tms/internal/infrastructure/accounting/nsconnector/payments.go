@@ -223,7 +223,7 @@ func (c *Connector) VoidPayment(
 	}
 	result := newResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
-	if err = c.unwindRecord(ctx, s, &unwind{
+	if _, err = c.unwindRecord(ctx, s, &unwind{
 		recordType: recordCustomerPayment,
 		id:         ref.ExternalID,
 		locked:     salesLocked,
@@ -239,13 +239,18 @@ func (c *Connector) VoidPayment(
 		if memo == "" {
 			continue
 		}
-		if err = c.unwindRecord(ctx, s, &unwind{
+		corrective, unwindErr := c.unwindRecord(ctx, s, &unwind{
 			recordType: recordCreditMemo,
 			id:         memo,
 			locked:     salesLocked,
 			refused:    func() error { return creditReversalRefused("short pay credit memo") },
-		}); err != nil {
-			return result, err
+			offset:     invoiceOffset(shortPayOffsetID(ref.RequestID, memo)),
+		})
+		if corrective != "" {
+			result.Refs[shortPayCorrective(key)] = corrective
+		}
+		if unwindErr != nil {
+			return result, unwindErr
 		}
 	}
 	return result, nil

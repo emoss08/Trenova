@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -64,6 +65,14 @@ func isAuthFault(err error) bool {
 
 func isPermissionFault(err error) bool {
 	return netsuite.IsForbidden(err) || netsuite.IsPermission(err)
+}
+
+func isQueryRefused(err error) bool {
+	if netsuite.IsUnsupportedTable(err) || isPermissionFault(err) {
+		return true
+	}
+	var apiErr *netsuite.APIError
+	return errors.As(err, &apiErr) && apiErr.Status == http.StatusBadRequest
 }
 
 func isTransientFault(err error) bool {

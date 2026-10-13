@@ -459,15 +459,113 @@ func TestVoidCreditMemoUnappliesThenDeletes(t *testing.T) {
 	assert.Equal(t, false, apply[0]["apply"])
 }
 
-func TestVoidCreditMemoInAClosedPeriodIsRefused(t *testing.T) {
+func creditOffsetResponder(
+	t *testing.T,
+	overrides map[string]any,
+	earlier string,
+) func(call nsCall) reply {
+	return func(call nsCall) reply {
+		switch {
+		case call.queries("LEFT JOIN accountingperiod ap"):
+			fields := map[string]any{"type": "CustCred", "closed": "T"}
+			for key, value := range overrides {
+				fields[key] = value
+			}
+			return reply{
+				status: http.StatusOK,
+				body:   rowsJSON(t, false, stateRow(testCreditMemo, fields)),
+			}
+		case call.queries("t.externalid = ?") && earlier != "":
+			return reply{status: http.StatusOK, body: rowsJSON(t, false, stateRow(earlier, nil))}
+		case call.is(http.MethodGet, recordPath(recordCreditMemo, testCreditMemo)):
+			return fixtureReply(t, http.StatusOK, "credit_memo.json")
+		case call.is(http.MethodPut, eidPath(recordInvoice, testVoidRequest)):
+			return upserted(recordInvoice, "1210")
+		}
+		return reply{}
+	}
+}
+
+func TestVoidCreditMemoInAClosedPeriodWritesAnOffsettingInvoice(t *testing.T) {
 	t.Parallel()
 
-	fake := &fakeNS{respond: stateResponder(t, "state_closed.json", nil)}
+	fake := &fakeNS{respond: creditOffsetResponder(t, nil, "")}
+	conn := testConnector(t, fake)
+	result, err := conn.VoidSalesDocument(
+		t.Context(),
+		voidRef(accountingsync.SyncObjectCreditMemo, testCreditMemo),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, "1210", result.Refs[refCorrective])
+	assert.Equal(
+		t,
+		[]string{"PUT " + eidPath(recordInvoice, testVoidRequest)},
+		methods(fake.writes()),
+	)
+
+	find, ok := fake.query("t.externalid = ?")
+	require.True(t, ok)
+	assert.Equal(t, []any{typeInvoice, testVoidRequest}, find.Params)
+	put, _ := fake.find(http.MethodPut, eidPath(recordInvoice, testVoidRequest))
+	assert.Equal(t, testCustomer, refID(t, put.Body, "entity"))
+	assert.Equal(t, testSubsidiary, refID(t, put.Body, "subsidiary"))
+	assert.Equal(t, "1", refID(t, put.Body, "currency"))
+	assert.Equal(t, "119", refID(t, put.Body, "account"))
+	assert.Equal(t, testNow.Format(dateLayout), put.Body["tranDate"])
+	assert.Equal(t, "Reverses CM-301", put.Body["memo"])
+	lines := items(t, put.Body, "item")
+	require.Len(t, lines, 2)
+	assert.Equal(t, "Rate correction DAL-HOU", lines[0]["description"])
+	assert.InDelta(t, 1000.0, lines[0]["amount"], 0)
+	assert.InDelta(t, 2.0, lines[1]["quantity"], 0)
+	assert.NotContains(t, put.Body, "apply")
+}
+
+func TestVoidCreditMemoInAClosedPeriodReusesAnEarlierOffset(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeNS{respond: creditOffsetResponder(
+		t,
+		map[string]any{"foreignamountremaining": "0"},
+		"1210",
+	)}
+	conn := testConnector(t, fake)
+	result, err := conn.VoidSalesDocument(
+		t.Context(),
+		voidRef(accountingsync.SyncObjectCreditMemo, testCreditMemo),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, "1210", result.Refs[refCorrective])
+	assert.Empty(t, fake.writes())
+}
+
+func TestVoidAppliedCreditMemoInAClosedPeriodIsAConflict(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeNS{respond: creditOffsetResponder(
+		t,
+		map[string]any{"foreignamountremaining": "250.00"},
+		"",
+	)}
 	conn := testConnector(t, fake)
 	_, err := conn.VoidSalesDocument(
 		t.Context(),
 		voidRef(accountingsync.SyncObjectCreditMemo, testCreditMemo),
 	)
+	syncErr := syncErrorOf(t, err)
+	assert.Equal(t, accountingsync.SyncErrorConflict, syncErr.Category)
+	assert.Equal(t, "document-applied", syncErr.Code)
+	assert.Empty(t, fake.writes())
+}
+
+func TestVoidCreditMemoInAClosedPeriodWithoutARequestIDIsRefused(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeNS{respond: creditOffsetResponder(t, nil, "")}
+	conn := testConnector(t, fake)
+	ref := voidRef(accountingsync.SyncObjectCreditMemo, testCreditMemo)
+	ref.RequestID = ""
+	_, err := conn.VoidSalesDocument(t.Context(), ref)
 	syncErr := syncErrorOf(t, err)
 	assert.Equal(t, accountingsync.SyncErrorConfiguration, syncErr.Category)
 	assert.Contains(t, syncErr.Resolution, "Reverse the credit memo in NetSuite")

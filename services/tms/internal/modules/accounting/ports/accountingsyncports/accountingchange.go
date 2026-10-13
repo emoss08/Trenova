@@ -78,6 +78,7 @@ type AccountingChangePage struct {
 	NextCursor    string
 	More          bool
 	CursorExpired bool
+	DeletesUnread bool
 }
 
 type AccountingChangeReader interface {

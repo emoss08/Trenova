@@ -43,25 +43,9 @@ func (c *Connector) ReadDocuments(
 			ids = append(ids, id)
 		}
 	}
-	found := make(map[string]*transactionRow, len(ids))
-	if len(ids) > 0 {
-		s, openErr := c.open(req.Auth)
-		if openErr != nil {
-			return nil, openErr
-		}
-		for start := 0; start < len(ids); start += maxIDsPerRead {
-			rows, readErr := readStates(
-				ctx,
-				s.client,
-				ids[start:min(start+maxIDsPerRead, len(ids))],
-			)
-			if readErr != nil {
-				return nil, readErr
-			}
-			for idx := range rows {
-				found[rows[idx].id()] = &rows[idx]
-			}
-		}
+	found, editors, err := c.readFound(ctx, req.Auth, ids)
+	if err != nil {
+		return nil, err
 	}
 	out := make([]*accountingsyncports.AccountingDocumentState, 0, len(req.Targets))
 	for idx := range req.Targets {
@@ -76,10 +60,44 @@ func (c *Connector) ReadDocuments(
 			state.Balance = &balance
 			state.CurrencyCode = strings.ToUpper(row.Currency.Value())
 			state.ModifiedAt = unixOrZero(row.modified())
+			state.ModifiedBy = editors[id]
 		}
 		out = append(out, state)
 	}
 	return out, nil
+}
+
+func (c *Connector) readFound(
+	ctx context.Context,
+	auth accountingsyncports.AccountingDocumentAuth,
+	ids []int64,
+) (found map[string]*transactionRow, editors map[string]string, err error) {
+	found = make(map[string]*transactionRow, len(ids))
+	if len(ids) == 0 {
+		return found, map[string]string{}, nil
+	}
+	s, openErr := c.open(auth)
+	if openErr != nil {
+		return nil, nil, openErr
+	}
+	hits := make([]int64, 0, len(ids))
+	for start := 0; start < len(ids); start += maxIDsPerRead {
+		rows, readErr := readStates(ctx, s.client, ids[start:min(start+maxIDsPerRead, len(ids))])
+		if readErr != nil {
+			return nil, nil, readErr
+		}
+		for idx := range rows {
+			found[rows[idx].id()] = &rows[idx]
+			if id, ok := parseInternalID(rows[idx].id()); ok {
+				hits = append(hits, id)
+			}
+		}
+	}
+	editors, err = (&editorBook{client: s.client}).names(ctx, hits)
+	if err != nil {
+		return nil, nil, err
+	}
+	return found, editors, nil
 }
 
 func readStates(
@@ -87,13 +105,8 @@ func readStates(
 	client *netsuite.Client,
 	ids []int64,
 ) ([]transactionRow, error) {
-	params := make([]any, 0, len(ids))
-	marks := make([]string, 0, len(ids))
-	for _, id := range ids {
-		params = append(params, id)
-		marks = append(marks, "?")
-	}
-	b := (&sqlBuilder{}).where("t.id IN ("+strings.Join(marks, ", ")+")", params...)
+	marks, params := idList(ids)
+	b := (&sqlBuilder{}).where("t.id IN ("+marks+")", params...)
 	var rows []transactionRow
 	if _, err := client.Query(ctx, netsuite.Query{
 		SQL:    b.sql(transactionSQL, "t.id"),
