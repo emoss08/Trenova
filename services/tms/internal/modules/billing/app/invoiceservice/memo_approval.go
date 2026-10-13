@@ -33,7 +33,8 @@ func memoNeedsApproval(control *tenant.InvoiceAdjustmentControl, entity *invoice
 	case tenant.ApprovalPolicyAlways:
 		return true
 	case tenant.ApprovalPolicyAmountThreshold:
-		return entity.TotalAmount.Abs().GreaterThanOrEqual(control.StandardAdjustmentApprovalThreshold)
+		return entity.TotalAmount.Abs().
+			GreaterThanOrEqual(control.StandardAdjustmentApprovalThreshold)
 	default:
 		return false
 	}
@@ -44,12 +45,12 @@ func (s *Service) adjustmentApprovalControl(
 	orgID pulid.ID,
 ) (*tenant.InvoiceAdjustmentControl, error) {
 	if s.adjustmentCtrlRepo == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // adjustment controls are not wired in this process
 	}
 
 	control, err := s.adjustmentCtrlRepo.GetByOrgID(ctx, orgID)
 	if errortypes.IsNotFoundError(err) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // the organization has no adjustment control
 	}
 
 	return control, err

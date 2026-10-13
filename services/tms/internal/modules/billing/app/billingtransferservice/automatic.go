@@ -47,7 +47,7 @@ func (s *Service) StartAutomatic(
 	if control == nil ||
 		control.BillingQueueTransferMode != tenant.BillingQueueTransferModeAutomaticWhenReady ||
 		s.shipments == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // automatic transfer is off for this organization
 	}
 
 	tenantInfo := pagination.TenantInfo{
@@ -61,15 +61,18 @@ func (s *Service) StartAutomatic(
 		return nil, err
 	}
 
-	active, err := s.runRepo.GetActive(ctx, &billingtransferports.GetActiveBillingTransferRunRequest{
-		TenantInfo:    tenantInfo,
-		RequestedByID: req.SystemUserID,
-	})
+	active, err := s.runRepo.GetActive(
+		ctx,
+		&billingtransferports.GetActiveBillingTransferRunRequest{
+			TenantInfo:    tenantInfo,
+			RequestedByID: req.SystemUserID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	if active != nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a transfer for this shipment is already running
 	}
 
 	limit := AutomaticBatchSize(control)
@@ -93,7 +96,7 @@ func (s *Service) StartAutomatic(
 		MarkCompletedReadyToInvoice: true,
 	})
 	if errortypes.IsConflictError(err) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // another transfer claimed the shipment first
 	}
 
 	return run, err
@@ -123,10 +126,13 @@ func (s *Service) automaticRunDue(
 		return true, nil
 	}
 
-	last, err := s.runRepo.LastQueuedAt(ctx, &billingtransferports.LastBillingTransferRunQueuedAtRequest{
-		TenantInfo: tenantInfo,
-		Scope:      billingtransfer.RunScopeAutomatic,
-	})
+	last, err := s.runRepo.LastQueuedAt(
+		ctx,
+		&billingtransferports.LastBillingTransferRunQueuedAtRequest{
+			TenantInfo: tenantInfo,
+			Scope:      billingtransfer.RunScopeAutomatic,
+		},
+	)
 	if err != nil {
 		return false, err
 	}

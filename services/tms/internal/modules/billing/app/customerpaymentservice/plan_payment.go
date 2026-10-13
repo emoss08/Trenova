@@ -302,7 +302,11 @@ func reversalJournal(
 		)
 	}
 
-	return paymentJournal{description: description, lines: lines, total: payment.AmountMinor + shortPay}
+	return paymentJournal{
+		description: description,
+		lines:       lines,
+		total:       payment.AmountMinor + shortPay,
+	}
 }
 
 func (j paymentJournal) preview(

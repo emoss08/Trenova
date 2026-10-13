@@ -30,15 +30,20 @@ type Handler struct {
 	pm      *middleware.PermissionMiddleware
 }
 
-//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Handler {
 	return &Handler{service: p.Service, eh: p.ErrorHandler, pm: p.PermissionMiddleware}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/accounting/accounts-receivable/customers/:customerID")
-	read := h.pm.RequirePermission(permission.ResourceAccountsReceivable.String(), permission.OpRead)
-	work := h.pm.RequirePermission(permission.ResourceAccountsReceivable.String(), permission.OpUpdate)
+	read := h.pm.RequirePermission(
+		permission.ResourceAccountsReceivable.String(),
+		permission.OpRead,
+	)
+	work := h.pm.RequirePermission(
+		permission.ResourceAccountsReceivable.String(),
+		permission.OpUpdate,
+	)
 
 	api.GET("/statement/pdf/", read, h.pdf)
 	api.POST("/statement/send/", work, h.send)

@@ -144,13 +144,15 @@ const activitiesSQL = `
 	LIMIT ?`
 
 type activityRecord struct {
-	collection.Activity `bun:",extend"`
+	collection.Activity `       bun:",extend"`
 	CreatedByName       string `bun:"created_by_name"`
 	CollectorName       string `bun:"collector_name"`
 	InvoiceNumber       string `bun:"invoice_number"`
 }
 
 // ListActivities pages a customer's history from newest to oldest.
+//
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
 func (r *repository) ListActivities(
 	ctx context.Context,
 	req collectionports.ListActivitiesRequest,
@@ -304,7 +306,10 @@ type worklistQuery struct {
 	limit      int
 }
 
-func (r *repository) readWorklist(ctx context.Context, q worklistQuery) ([]*worklistRecord, error) {
+func (r *repository) readWorklist(
+	ctx context.Context,
+	q *worklistQuery,
+) ([]*worklistRecord, error) {
 	args := []any{q.asOf, q.asOf, q.asOf, q.tenantOrg, q.tenantBU, q.tenantOrg, q.tenantBU}
 	args = append(args, q.args...)
 	args = append(args, q.limit)
@@ -330,11 +335,13 @@ func (r *repository) ListWorklist(
 ) (*collectionports.WorklistPage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*collectionports.WorklistPage, error) {
 		q := worklistQuery{
-			asOf:       req.AsOf,
-			tenantOrg:  req.TenantInfo.OrgID,
-			tenantBU:   req.TenantInfo.BuID,
-			conditions: []string{"(COALESCE(oi.overdue_minor, 0) > 0 OR (acc.id IS NOT NULL AND COALESCE(oi.open_minor, 0) > 0))"},
-			limit:      MaxWorklistAccounts,
+			asOf:      req.AsOf,
+			tenantOrg: req.TenantInfo.OrgID,
+			tenantBU:  req.TenantInfo.BuID,
+			conditions: []string{
+				"(COALESCE(oi.overdue_minor, 0) > 0 OR (acc.id IS NOT NULL AND COALESCE(oi.open_minor, 0) > 0))",
+			},
+			limit: MaxWorklistAccounts,
 		}
 		switch req.Scope {
 		case collectionports.CollectorScopeMine:
@@ -342,6 +349,7 @@ func (r *repository) ListWorklist(
 			q.args = append(q.args, req.TenantInfo.UserID)
 		case collectionports.CollectorScopeUnassigned:
 			q.conditions = append(q.conditions, "acc.collector_id IS NULL")
+		case collectionports.CollectorScopeAll:
 		}
 		if search := strings.TrimSpace(req.Search); search != "" {
 			q.conditions = append(q.conditions, "(cus.name ILIKE ? OR cus.code ILIKE ?)")
@@ -349,7 +357,7 @@ func (r *repository) ListWorklist(
 			q.args = append(q.args, pattern, pattern)
 		}
 
-		records, err := r.readWorklist(ctx, q)
+		records, err := r.readWorklist(ctx, &q)
 		if err != nil {
 			return nil, err
 		}
@@ -369,7 +377,7 @@ func (r *repository) GetWorklistRow(
 	asOf int64,
 ) (*collectionports.WorklistRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*collectionports.WorklistRow, error) {
-		records, err := r.readWorklist(ctx, worklistQuery{
+		records, err := r.readWorklist(ctx, &worklistQuery{
 			asOf:       asOf,
 			tenantOrg:  req.TenantInfo.OrgID,
 			tenantBU:   req.TenantInfo.BuID,
@@ -447,6 +455,8 @@ const awaitingPromiseSQL = `
 		), 0)`
 
 // ListAwaitingPromise names the customers waiting on an open promise to pay.
+//
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
 func (r *repository) ListAwaitingPromise(
 	ctx context.Context,
 	req collectionports.AwaitingPromiseRequest,
@@ -459,7 +469,7 @@ func (r *repository) ListAwaitingPromise(
 		ids := make([]pulid.ID, 0, len(req.CustomerIDs))
 		if err := r.db.DBForContext(ctx).
 			NewRaw(awaitingPromiseSQL,
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, bun.In(req.CustomerIDs), req.AsOf).
+				req.TenantInfo.OrgID, req.TenantInfo.BuID, bun.List(req.CustomerIDs), req.AsOf).
 			Scan(ctx, &ids); err != nil {
 			return nil, fmt.Errorf("list customers awaiting a promise: %w", err)
 		}

@@ -109,7 +109,7 @@ func (r *repository) ListCandidateCustomers(
 		args := []any{req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate}
 		if len(req.CustomerIDs) > 0 {
 			query += "\n\t  AND inv.customer_id IN (?)"
-			args = append(args, bun.In(req.CustomerIDs))
+			args = append(args, bun.List(req.CustomerIDs))
 		}
 		query += "\n) AS candidate"
 		if req.AfterCustomerID.IsNotNil() {
@@ -140,7 +140,7 @@ func (r *repository) ListCandidates(
 			args := []any{req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate}
 			if len(req.CustomerIDs) > 0 {
 				query += "\n\t  AND inv.customer_id IN (?)"
-				args = append(args, bun.In(req.CustomerIDs))
+				args = append(args, bun.List(req.CustomerIDs))
 			}
 			query += "\n\tORDER BY cus.name ASC, inv.due_date ASC, inv.number ASC"
 

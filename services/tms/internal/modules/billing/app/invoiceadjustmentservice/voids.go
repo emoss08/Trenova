@@ -2,8 +2,9 @@ package invoiceadjustmentservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoid"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"

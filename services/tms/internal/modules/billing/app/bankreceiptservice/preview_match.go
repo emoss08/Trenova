@@ -181,10 +181,13 @@ func (s *Service) refusePaymentMatchedElsewhere(
 	payment *customerpayment.Payment,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	matched, err := s.repo.ListMatchedToPayment(ctx, bankreceiptports.ListBankReceiptsMatchedToPaymentRequest{
-		PaymentID:  payment.ID,
-		TenantInfo: tenantInfo,
-	})
+	matched, err := s.repo.ListMatchedToPayment(
+		ctx,
+		bankreceiptports.ListBankReceiptsMatchedToPaymentRequest{
+			PaymentID:  payment.ID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return err
 	}

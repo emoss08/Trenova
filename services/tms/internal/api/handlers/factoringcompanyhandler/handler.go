@@ -316,10 +316,13 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), factoringcompanyports.GetFactoringCompanyByIDRequest{
-		ID:         factoringCompanyID,
-		TenantInfo: pagination.FromAuth(authCtx),
-	})
+	entity, err := h.service.Get(
+		c.Request.Context(),
+		factoringcompanyports.GetFactoringCompanyByIDRequest{
+			ID:         factoringCompanyID,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

@@ -49,11 +49,14 @@ func (a *Activities) AutomaticTransferSweepActivity(
 			OrganizationID: control.OrganizationID,
 			BusinessUnitID: control.BusinessUnitID,
 		})
-		run, startErr := a.transfers.StartAutomatic(tenantCtx, &billingtransferservice.AutomaticRunRequest{
-			Control:      control,
-			SystemUserID: system.ID,
-			Now:          now,
-		})
+		run, startErr := a.transfers.StartAutomatic(
+			tenantCtx,
+			&billingtransferservice.AutomaticRunRequest{
+				Control:      control,
+				SystemUserID: system.ID,
+				Now:          now,
+			},
+		)
 		if startErr != nil {
 			result.Failed++
 			a.l.Error("failed to start an automatic billing transfer",
@@ -126,14 +129,17 @@ func (a *Activities) automaticWording(
 			"Automatic transfer to billing failed",
 			fmt.Sprintf(
 				"%d of %d ready shipments moved into the billing queue before the automatic transfer failed. Open the report to retry the rest.",
-				run.TransferredCount, run.TotalCount,
+				run.TransferredCount,
+				run.TotalCount,
 			), true
 	case run.NotTransferredCount > 0:
 		return eventRunCompleted, notification.PriorityHigh,
 			"Automatic transfer to billing needs attention",
 			fmt.Sprintf(
 				"%d of %d ready shipments moved into the billing queue automatically. %d could not be moved.",
-				run.TransferredCount, run.TotalCount, run.NotTransferredCount,
+				run.TransferredCount,
+				run.TotalCount,
+				run.NotTransferredCount,
 			), true
 	case run.TransferredCount == 0 || !a.notifyOnAutoInvoices(ctx, run):
 		return "", "", "", "", false

@@ -2,10 +2,11 @@ package bankreceiptservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/uptrace/bun"
 	"sort"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/uptrace/bun"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -231,10 +232,13 @@ func (s *Service) ReleasePaymentMatch(
 	req *bankreceiptports.ReleasePaymentMatchRequest,
 	actor *permissionports.RequestActor,
 ) ([]*bankreceipt.BankReceipt, error) {
-	matched, err := s.repo.ListMatchedToPayment(ctx, bankreceiptports.ListBankReceiptsMatchedToPaymentRequest{
-		PaymentID:  req.PaymentID,
-		TenantInfo: req.TenantInfo,
-	})
+	matched, err := s.repo.ListMatchedToPayment(
+		ctx,
+		bankreceiptports.ListBankReceiptsMatchedToPaymentRequest{
+			PaymentID:  req.PaymentID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

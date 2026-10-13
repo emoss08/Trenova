@@ -155,7 +155,13 @@ func resolveDeliveryProfileWith(
 			result.BillingControl = control
 		}
 	}
-	factor, err := resolveFactor(ctx, repos.factoringRepo, entity, result.Customer, params.TenantInfo)
+	factor, err := resolveFactor(
+		ctx,
+		repos.factoringRepo,
+		entity,
+		result.Customer,
+		params.TenantInfo,
+	)
 	if err != nil {
 		return nil, err
 	}

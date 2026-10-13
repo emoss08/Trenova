@@ -39,7 +39,7 @@ func (k ActivityKind) IsValid() bool {
 // IsContact reports whether a person logs this kind of entry by hand; the
 // rest are written when the account's collector or follow-up changes.
 func (k ActivityKind) IsContact() bool {
-	switch k {
+	switch k { //nolint:exhaustive // entries written by the system are not contacts
 	case ActivityNote, ActivityCall, ActivityEmail, ActivityPromiseToPay:
 		return true
 	default:
@@ -107,7 +107,10 @@ func (a *Activity) Validate(multiErr *errortypes.MultiError) {
 				validation.Required.Error("Enter the amount the customer promised"),
 				validation.By(func(any) error {
 					if a.PromisedAmountMinor != nil && *a.PromisedAmountMinor <= 0 {
-						return validation.NewError("not_positive", "The promised amount must be more than zero")
+						return validation.NewError(
+							"not_positive",
+							"The promised amount must be more than zero",
+						)
 					}
 					return nil
 				}),

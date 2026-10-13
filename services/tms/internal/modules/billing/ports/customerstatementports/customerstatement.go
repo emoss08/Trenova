@@ -105,6 +105,10 @@ type Service interface {
 		req *SendRequest,
 		actor *permissionports.RequestActor,
 	) (*SendResult, error)
-	SendMonthly(ctx context.Context, control *tenant.BillingControl, now int64) (*SweepResult, error)
+	SendMonthly(
+		ctx context.Context,
+		control *tenant.BillingControl,
+		now int64,
+	) (*SweepResult, error)
 	ListSent(ctx context.Context, req ListSentRequest) ([]*SentStatement, error)
 }

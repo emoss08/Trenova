@@ -29,7 +29,7 @@ func TestPostmarkEventTypeMapsSupportedRecordTypes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, known := postmarkEventType(tt.payload)
+			got, known := postmarkEventType(&tt.payload)
 			require.Equal(t, tt.known, known)
 			require.Equal(t, tt.expected, got)
 		})
@@ -49,14 +49,14 @@ func TestPostmarkProviderEventIDFallsBackToDeterministicFields(t *testing.T) {
 	require.Equal(
 		t,
 		"Delivery:message-id:ops@example.com:2026-05-29T12:00:00Z",
-		postmarkProviderEventID(payload),
+		postmarkProviderEventID(&payload),
 	)
 }
 
 func TestPostmarkProviderEventIDUsesProviderIDWhenPresent(t *testing.T) {
 	t.Parallel()
 
-	require.Equal(t, "12345", postmarkProviderEventID(postmarkWebhookPayload{ID: float64(12345)}))
+	require.Equal(t, "12345", postmarkProviderEventID(&postmarkWebhookPayload{ID: float64(12345)}))
 }
 
 func TestPostmarkSuppressionReason(t *testing.T) {
@@ -103,7 +103,7 @@ func TestPostmarkSuppressionReason(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, tt.expected, postmarkSuppressionReason(tt.payload))
+			require.Equal(t, tt.expected, postmarkSuppressionReason(&tt.payload))
 		})
 	}
 }

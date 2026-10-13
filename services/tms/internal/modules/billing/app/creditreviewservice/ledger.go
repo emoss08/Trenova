@@ -49,9 +49,11 @@ func (r *reviewingLedger) AppendEntries(
 	for tenant, customerIDs := range customersByTenant(entries) {
 		kernelports.AfterCommit(ctx, func(committedCtx context.Context) {
 			if err := r.reviews.Review(committedCtx, tenant, customerIDs); err != nil {
-				r.l.Warn("credit review after a ledger posting failed; the nightly sweep will retry",
+				r.l.Warn(
+					"credit review after a ledger posting failed; the nightly sweep will retry",
 					zap.String("organizationId", tenant.OrgID.String()),
-					zap.Error(err))
+					zap.Error(err),
+				)
 			}
 		})
 	}

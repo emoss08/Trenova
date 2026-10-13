@@ -25,7 +25,10 @@ const (
 )
 
 type permittedNotifier interface {
-	NotifyPermitted(ctx context.Context, req notificationservice.NotifyPermittedRequest) (int, error)
+	NotifyPermitted(
+		ctx context.Context,
+		req notificationservice.NotifyPermittedRequest,
+	) (int, error)
 }
 
 // A scheduled run bills unattended, so when it cannot build, cannot commit, or
@@ -42,7 +45,12 @@ type scheduledRunProblem struct {
 	runID       string
 }
 
-func (s *Service) notifyBuildFailed(ctx context.Context, tenantInfo pagination.TenantInfo, key periodKey, cause error) {
+func (s *Service) notifyBuildFailed(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	key periodKey,
+	cause error,
+) {
 	s.notifyScheduledRunProblem(ctx, &scheduledRunProblem{
 		tenantInfo:  tenantInfo,
 		key:         key,
@@ -50,7 +58,9 @@ func (s *Service) notifyBuildFailed(ctx context.Context, tenantInfo pagination.T
 		title:       "A scheduled invoice run could not be built",
 		message: fmt.Sprintf(
 			"%s statements for the period ending %s were not billed: %s. The run is tried again every hour.",
-			key.cycle, periodEndLabel(key.periodEnd), cause.Error(),
+			key.cycle,
+			periodEndLabel(key.periodEnd),
+			cause.Error(),
 		),
 	})
 }
@@ -70,7 +80,9 @@ func (s *Service) notifyCommitFailed(
 		title:       "A scheduled invoice run could not be committed",
 		message: fmt.Sprintf(
 			"%s statements for the period ending %s were not billed: %s. Open the run to commit it by hand.",
-			key.cycle, periodEndLabel(key.periodEnd), cause.Error(),
+			key.cycle,
+			periodEndLabel(key.periodEnd),
+			cause.Error(),
 		),
 	})
 }
@@ -91,7 +103,10 @@ func (s *Service) notifyGroupsFailed(
 		key:         key,
 		correlation: "groups:" + runID,
 		runID:       runID,
-		title:       fmt.Sprintf("%d customers were not billed by a scheduled invoice run", commit.ErrorCount),
+		title: fmt.Sprintf(
+			"%d customers were not billed by a scheduled invoice run",
+			commit.ErrorCount,
+		),
 		message: fmt.Sprintf(
 			"%s statements for the period ending %s billed %d of %d customers. %s Their freight stays on their statements for the next run or for billing by hand.",
 			key.cycle,

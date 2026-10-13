@@ -66,13 +66,16 @@ func refuseDeactivatingAssigned(
 		if entity.Status != domaintypes.StatusInactive || entity.ID.IsNil() {
 			return nil
 		}
-		count, err := repo.CountAssignedCustomers(ctx, factoringcompanyports.CountAssignedCustomersRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
+		count, err := repo.CountAssignedCustomers(
+			ctx,
+			factoringcompanyports.CountAssignedCustomersRequest{
+				TenantInfo: pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
+				FactoringCompanyID: entity.ID,
 			},
-			FactoringCompanyID: entity.ID,
-		})
+		)
 		if err != nil {
 			return err
 		}

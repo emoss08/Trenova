@@ -51,11 +51,14 @@ func (s *Service) PreviewPostSummary(
 		summary.ShipmentsBilled = append(summary.ShipmentsBilled, leg.Before.ProNumber)
 	}
 	for _, destination := range preview.AccountingSync {
-		summary.AccountingSync = append(summary.AccountingSync, invoiceports.InvoicePostSyncDestination{
-			Integration:   destination.Integration,
-			Company:       destination.Company,
-			AwaitsRelease: destination.AwaitsRelease,
-		})
+		summary.AccountingSync = append(
+			summary.AccountingSync,
+			invoiceports.InvoicePostSyncDestination{
+				Integration:   destination.Integration,
+				Company:       destination.Company,
+				AwaitsRelease: destination.AwaitsRelease,
+			},
+		)
 	}
 	if plan := preview.EDI; plan != nil && plan.Enabled {
 		summary.EDI = &invoiceports.InvoicePostEDI{
@@ -114,7 +117,7 @@ func (s *Service) journalAccounts(
 	tenantInfo pagination.TenantInfo,
 ) (map[pulid.ID]accountName, error) {
 	if s.glAccounts == nil || len(journal.Lines) == 0 {
-		return nil, nil
+		return nil, nil //nolint:nilnil // no journal lines means no account names to look up
 	}
 
 	ids := make([]pulid.ID, 0, len(journal.Lines))

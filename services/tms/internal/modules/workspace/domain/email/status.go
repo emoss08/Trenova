@@ -1,12 +1,26 @@
 package email
 
-var messageStatusProgress = map[MessageStatus]int{
-	MessageStatusQueued:    0,
-	MessageStatusSending:   1,
-	MessageStatusSent:      2,
-	MessageStatusDelivered: 3,
-	MessageStatusOpened:    4,
-	MessageStatusClicked:   5,
+func (s MessageStatus) progress() int {
+	switch s {
+	case MessageStatusSending:
+		return 1
+	case MessageStatusSent:
+		return 2
+	case MessageStatusDelivered:
+		return 3
+	case MessageStatusOpened:
+		return 4
+	case MessageStatusClicked:
+		return 5
+	case MessageStatusQueued,
+		MessageStatusFailed,
+		MessageStatusBounced,
+		MessageStatusComplained,
+		MessageStatusSuppressed:
+		return 0
+	default:
+		return 0
+	}
 }
 
 func (s MessageStatus) IsFailure() bool {
@@ -16,6 +30,13 @@ func (s MessageStatus) IsFailure() bool {
 		MessageStatusComplained,
 		MessageStatusSuppressed:
 		return true
+	case MessageStatusQueued,
+		MessageStatusSending,
+		MessageStatusSent,
+		MessageStatusDelivered,
+		MessageStatusOpened,
+		MessageStatusClicked:
+		return false
 	default:
 		return false
 	}
@@ -56,14 +77,27 @@ func NextMessageStatus(current MessageStatus, eventType EventType) (MessageStatu
 		}
 		return next, true
 	case MessageStatusFailed:
-		if current.IsFailure() || messageStatusProgress[current] >= messageStatusProgress[MessageStatusDelivered] {
+		if current.IsFailure() ||
+			current.progress() >= MessageStatusDelivered.progress() {
 			return current, false
 		}
 		return next, true
+	case MessageStatusQueued,
+		MessageStatusSending,
+		MessageStatusSent,
+		MessageStatusDelivered,
+		MessageStatusOpened,
+		MessageStatusClicked,
+		MessageStatusSuppressed:
+		return advance(current, next)
 	default:
-		if current.IsFailure() || messageStatusProgress[next] <= messageStatusProgress[current] {
-			return current, false
-		}
-		return next, true
+		return advance(current, next)
 	}
+}
+
+func advance(current, next MessageStatus) (MessageStatus, bool) {
+	if current.IsFailure() || next.progress() <= current.progress() {
+		return current, false
+	}
+	return next, true
 }
