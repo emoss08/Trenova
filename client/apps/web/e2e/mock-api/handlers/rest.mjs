@@ -14,8 +14,6 @@ import { FORMULA_NOVA_ROUTES } from "./formula-nova.mjs";
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
 const ROUTES = [
-  ...FORMULA_NOVA_ROUTES,
-  ...FORMULA_ROUTES,
   ...DESK_CASE_ROUTES,
   ...DESK_THREAD_ROUTES,
   ...PALETTE_ROUTES,

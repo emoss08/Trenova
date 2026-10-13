@@ -105,7 +105,6 @@ type SendMessageRequest struct {
 type AskRequest struct {
 	Content    string
 	Page       *agent.PageContext
-	Surface    agent.Surface
 	Mentions   []agent.EntityRef
 	TenantInfo pagination.TenantInfo
 }
