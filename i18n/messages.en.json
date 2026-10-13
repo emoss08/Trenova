@@ -3433,6 +3433,15 @@
       "routes/rate-agreement"
     ]
   },
+  "A certificate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "A certificate of insurance has been received and verified for this policy.": {
     "sites": 1,
     "scope": [
@@ -8697,6 +8706,15 @@
       "go/other"
     ]
   },
+  "A sign-in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "A signature is pinned to the version label it was given for. Correcting the text under the same label keeps every signature; publishing a new label asks everybody it applies to to read and sign again from Dash.": {
     "sites": 1,
     "scope": [
@@ -12200,12 +12218,40 @@
     ]
   },
   "Account ID": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin",
+      "routes/edi"
+    ]
+  },
+  "Account ID is not valid. Copy it from Setup > Company > Company Information in {0}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Account ID is required": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/edi"
+      "routes/admin"
+    ]
+  },
+  "Account ID looks like 1234567, or 1234567_SB1 for a sandbox": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Account Name": {
@@ -21397,6 +21443,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "An administrator uploads a certificate once. It lasts two years and needs no sign-in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "An agent": {
@@ -32295,7 +32350,7 @@
     ]
   },
   "Back": {
-    "sites": 21,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -38858,7 +38913,7 @@
     ]
   },
   "Cancel": {
-    "sites": 291,
+    "sites": 293,
     "scope": [
       "ts"
     ],
@@ -42811,6 +42866,46 @@
       "apps/web/lib"
     ]
   },
+  "Certificate ID": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Certificate ID cannot be longer than 100 characters": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/admin"
+    ]
+  },
+  "Certificate ID is not valid. Copy it from the certificate's row in the mapping.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Certificate ID is required": {
+    "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/admin"
+    ]
+  },
   "Certificate PEM is required": {
     "sites": 1,
     "scope": [
@@ -42818,6 +42913,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Certificate expires": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Certificate generated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Certificate must be a valid PEM certificate": {
@@ -42836,6 +42949,24 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Certificate ready to upload": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Certificate renewed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Certificates": {
@@ -45240,7 +45371,7 @@
     ]
   },
   "Checking with {0}...": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -46475,6 +46606,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Choose the employee and role Trenova acts as, choose the {0} Trenova connects through, upload the certificate, and save.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Choose the first day documents are sent from": {
@@ -53957,7 +54097,34 @@
       "routes/admin"
     ]
   },
+  "Connect with a certificate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Connect with the certificate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Connect your Microsoft Dynamics 365 Business Central company so Trenova can send and post the invoices, credit memos, payments and bills it records. Trenova keeps Business Central's webhook subscriptions renewed and raises a Watchtower item when the connection needs attention.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Connect your Oracle NetSuite account, or one of its subsidiaries, so Trenova can send the invoices, credit memos, payments and bills it records and read back payments recorded in NetSuite. Connect by signing in, or with a certificate so the connection does not need a weekly sign-in. Trenova raises a Watchtower item when the connection needs attention.": {
     "sites": 1,
     "scope": [
       "go"
@@ -54078,6 +54245,15 @@
       "routes/admin"
     ]
   },
+  "Connected with": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Connected · polled {0}": {
     "sites": 1,
     "scope": [
@@ -54169,6 +54345,15 @@
     ]
   },
   "Connecting Business Central": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Connecting NetSuite": {
     "sites": 1,
     "scope": [
       "ts"
@@ -56504,6 +56689,24 @@
       "routes/admin"
     ]
   },
+  "Copy the certificate ID exactly as NetSuite shows it, without spaces": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Copy the certificate ID {0} shows for the new mapping into the form below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Copy the client ID and client secret for the same environment into this form.": {
     "sites": 1,
     "scope": [
@@ -57573,6 +57776,15 @@
       "routes/formula-template"
     ]
   },
+  "Could not generate a certificate. Try again.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Could not hold the authorization while you choose a company. Try connecting again.": {
     "sites": 1,
     "scope": [
@@ -57925,7 +58137,7 @@
     ]
   },
   "Could not start the connection. Try again.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -75253,6 +75465,15 @@
       "routes/desk"
     ]
   },
+  "Download certificate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Download document": {
     "sites": 2,
     "scope": [
@@ -75269,6 +75490,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Download it and upload it to {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Download raw X12": {
@@ -84457,6 +84687,15 @@
       "routes/collections"
     ]
   },
+  "Enter the redirect URI below exactly as written. NetSuite only accepts https addresses.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Enter the resource name or the endpoint's address, not both": {
     "sites": 1,
     "scope": [
@@ -92081,6 +92320,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Factoring Company ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Factoring companies": {
@@ -102161,6 +102409,15 @@
       "routes/carrier-settlement-control"
     ]
   },
+  "Generate a certificate here and download it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Generate a draft return for a quarter or amend a filed one": {
     "sites": 1,
     "scope": [
@@ -102168,6 +102425,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Generate a new one": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Generate a quarter's IFTA fuel tax return as a draft, computed from the jurisdiction miles and fuel purchases on file. It files nothing: a person finalizes and files it. Refused while a draft or finalized return exists for the quarter, and once one is filed; use recompute_ifta_return or amend_ifta_return.": {
@@ -102222,6 +102488,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Generate certificate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Generate credentials": {
@@ -102537,6 +102812,15 @@
       "template/report.pdf"
     ]
   },
+  "Generated {0}; expires {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Generates, approves, posts, and marks the settlement paid in one pass": {
     "sites": 1,
     "scope": [
@@ -102592,11 +102876,12 @@
     ]
   },
   "Generating...": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/ifta-return",
       "routes/shipment"
     ]
@@ -108325,6 +108610,15 @@
       "routes/customer"
     ]
   },
+  "How the mapping works": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "How the model is asked to return structured data.": {
     "sites": 1,
     "scope": [
@@ -108540,6 +108834,15 @@
     ],
     "areas": [
       "routes/rate-zone"
+    ]
+  },
+  "How to connect {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "How to pay, from billing control's default invoice terms.": {
@@ -110233,6 +110536,15 @@
       "routes/inbox"
     ]
   },
+  "In NetSuite, go to Setup > Integration > Manage Integrations > New. Turn off Token-Based Authentication, turn on Authorization Code Grant and Client Credentials (Machine to Machine) Grant, choose the REST Web Services scope, and turn on Auto-install.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "In Postmark, create a server webhook endpoint over HTTPS and use this URL:": {
     "sites": 1,
     "scope": [
@@ -110559,6 +110871,15 @@
       "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/accounting-sync"
+    ]
+  },
+  "In {0}, go to Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup and choose Create New.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "In-app only": {
@@ -122233,6 +122554,15 @@
     ]
   },
   "Ledger entry type is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Ledger mode for NetSuite is not available yet: journal entries through REST web services are unconfirmed. Send documents instead.": {
     "sites": 1,
     "scope": [
       "go"
@@ -138815,6 +139145,15 @@
       "go/other"
     ]
   },
+  "NetSuite integration record": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Network error": {
     "sites": 3,
     "scope": [
@@ -139104,6 +139443,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "New certificate ID": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "New commodity": {
@@ -156466,6 +156814,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Only a {0} connection made with a certificate can have its certificate renewed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Only accrued, unheld pay events can be held.": {
@@ -180643,6 +181000,15 @@
       "routes/admin"
     ]
   },
+  "Quick to set up. {0} ends each sign-in after a week, so someone signs in again every week.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Quiet days": {
     "sites": 1,
     "scope": [
@@ -191561,6 +191927,15 @@
       "packages/shared/lib"
     ]
   },
+  "Renew certificate": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Renew credential": {
     "sites": 1,
     "scope": [
@@ -191577,6 +191952,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Renew the {0} certificate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Renew your CDL": {
@@ -203608,6 +203992,15 @@
       "apps/web/components"
     ]
   },
+  "Save the record, then copy the client ID and client secret NetSuite shows once and enter both in this form.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Save the shipment first to assign workers": {
     "sites": 1,
     "scope": [
@@ -214568,6 +214961,15 @@
       "routes/onboarding"
     ]
   },
+  "Setup > Company > Company Information. Sandboxes end in _SB1.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Setup guide": {
     "sites": 2,
     "scope": [
@@ -218175,6 +218577,15 @@
       "routes/detention-policy"
     ]
   },
+  "Shown on the mapping after the certificate is uploaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Shown on the rota in this colour so the shift is recognisable at a glance.": {
     "sites": 1,
     "scope": [
@@ -218516,6 +218927,15 @@
       "go/other"
     ]
   },
+  "Sign in or use a certificate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Sign in to Trenova": {
     "sites": 1,
     "scope": [
@@ -218544,7 +218964,7 @@
     ]
   },
   "Sign in to {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -233717,6 +234137,15 @@
       "routes/rate-agreement"
     ]
   },
+  "The certificate Trenova connects to {0} with expires on {1}. Renew it before then to keep syncing without a gap.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The certification cannot arrive before it was asked for": {
     "sites": 1,
     "scope": [
@@ -234897,7 +235326,7 @@
     ]
   },
   "The customer's code.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -242514,7 +242943,7 @@
     ]
   },
   "The short pay write-off item is not mapped": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -243375,6 +243804,15 @@
     ]
   },
   "The time to choose an organisation ran out, so nothing was connected. Start the connection again from Integrations.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The time to choose ran out, so nothing was connected. Connect again.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -244463,6 +244901,33 @@
       "go/other"
     ]
   },
+  "The {0} certificate waiting to be connected has expired. Generate a new one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The {0} certificate's key could not be read. Generate a new certificate.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The {0} connection changed while the certificate was being checked. Try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The {0} connection could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -244826,6 +245291,15 @@
     ]
   },
   "There is no suspension to lift": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "There is no {0} certificate waiting to be connected. Generate a certificate, upload it to {0}, then try again.": {
     "sites": 1,
     "scope": [
       "go"
@@ -255907,6 +256381,15 @@
       "routes/admin"
     ]
   },
+  "Trenova finishes the connection NetSuite just approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Trenova finishes the connection QuickBooks Online just approved.": {
     "sites": 1,
     "scope": [
@@ -255917,6 +256400,15 @@
     ]
   },
   "Trenova finishes the connection Xero just approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Trenova generates a key pair and a certificate valid for two years. The private key never leaves Trenova; only the certificate is uploaded to {0}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -256034,6 +256526,15 @@
     ]
   },
   "Trenova sends {0} the invoices, memos, customer payments and settlement bills it posts, and {0} keeps the ledger.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Trenova signs every request to {0} with a certificate you upload there once, so no one has to sign in again until the certificate expires.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -261143,6 +261644,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Upload a new certificate to the same mapping in {0}. The current certificate keeps working until {0} accepts the new one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Upload a new version to replace the existing document.": {
@@ -292400,6 +292910,15 @@
       "routes/admin"
     ]
   },
+  "{0} accepted the new certificate.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} accidents · {1} preventable · {2} out of service · {3} points": {
     "sites": 1,
     "scope": [
@@ -293276,6 +293795,15 @@
       "routes/admin"
     ]
   },
+  "{0} certificate": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} changed": {
     "sites": 3,
     "scope": [
@@ -293361,7 +293889,7 @@
     ]
   },
   "{0} connected": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -293385,6 +293913,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} connections cannot be made with a certificate. Sign in instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} context": {
@@ -293707,6 +294244,15 @@
       "go/other"
     ]
   },
+  "{0} did not accept the certificate. Check that it is uploaded to the mapping for Trenova's application, that the mapping's role can use REST web services, and that the certificate ID and account ID are right.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} did not accept this client ID and secret. Check that both come from the same app and the environment you chose.": {
     "sites": 1,
     "scope": [
@@ -293744,6 +294290,15 @@
     ]
   },
   "{0} did not give Trenova access to any organisation, so nothing was connected.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "{0} did not offer any company to connect": {
     "sites": 1,
     "scope": [
       "ts"
@@ -294790,6 +295345,15 @@
     ]
   },
   "{0} has no webhook setting to fill in: Trenova subscribes to its changes itself once a company is connected, and renews the subscriptions every few days.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "{0} has no webhooks to set up: Trenova reads what changed every fifteen minutes.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -298750,6 +299314,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "{0} refused Trenova's certificate. If the account was refreshed from production, set up the certificate mapping again, then renew the certificate here. Nothing reaches {0} until then.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} regressed": {

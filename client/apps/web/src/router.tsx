@@ -2056,6 +2056,15 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
                 },
               },
               {
+                path: "integrations/netsuite/callback",
+                loader: createPermissionLoader(Resource.AccountingIntegration, Operation.Manage),
+                async lazy() {
+                  const { NetSuiteCallbackPage } =
+                    await import("@/routes/admin/integrations/netsuite-callback/page");
+                  return { Component: NetSuiteCallbackPage };
+                },
+              },
+              {
                 // Agents are configured from Agent Control; the old standalone
                 // page forwards so a saved link still lands somewhere useful.
                 path: "agents",

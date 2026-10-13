@@ -160,12 +160,12 @@ func (s *Service) PrepareCertificate(
 func validateCertificateID(field, certificateID string) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if strings.TrimSpace(certificateID) == "" {
-		multiErr.Add(field, errortypes.ErrRequired, "Certificate id is required")
+		multiErr.Add(field, errortypes.ErrRequired, "Certificate ID is required")
 	} else if !certificateIDPattern.MatchString(certificateID) {
 		multiErr.Add(
 			field,
 			errortypes.ErrInvalid,
-			"Certificate id is not valid. Copy it from the certificate's row in the mapping.",
+			"Certificate ID is not valid. Copy it from the certificate's row in the mapping.",
 		)
 	}
 	return multiErr
@@ -213,7 +213,7 @@ func (s *Service) heldPendingCertificate(
 
 func errCertificateRefused(provider string, err error) error {
 	return errortypes.NewBusinessError(
-		"{0} did not accept the certificate. Check that it is uploaded to the mapping for Trenova's application, that the mapping's role can use REST web services, and that the certificate id and account id are right.",
+		"{0} did not accept the certificate. Check that it is uploaded to the mapping for Trenova's application, that the mapping's role can use REST web services, and that the certificate ID and account ID are right.",
 		provider,
 	).WithInternal(err)
 }
@@ -249,7 +249,7 @@ func (s *Service) ConnectWithCertificate(
 		multiErr.Add(
 			"accountId",
 			errortypes.ErrInvalid,
-			"Account id is not valid. Copy it from Setup > Company > Company Information in {0}.",
+			"Account ID is not valid. Copy it from Setup > Company > Company Information in {0}.",
 			name,
 		)
 	}

@@ -1,11 +1,7 @@
-import { ChoiceButton } from "@/components/choice-button";
-import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { describeApiError } from "@/lib/api-error-message";
 import { accountingSetupPath, readAccountingCallback } from "@/lib/accounting-sync";
 import {
-  chooseAccountingCompany,
   finishAccountingAuthorization,
-  type AccountingAuthorizationResult,
   type AccountingConnection,
 } from "@/lib/graphql/accounting-sync";
 import { queries } from "@/lib/queries";
@@ -15,13 +11,11 @@ import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixTime } from "@trenova/shared/lib/date";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
+import { AccountingCompanyChoice } from "./accounting-company-choice";
 import type { AccountingVendor } from "./accounting-vendors";
-
-type CompanyChoice = Extract<AccountingAuthorizationResult, { kind: "choose" }>;
 
 export function AccountingAuthorizationCallback({ vendor }: { vendor: AccountingVendor }) {
   const t = useT();
@@ -115,12 +109,27 @@ export function AccountingAuthorizationCallback({ vendor }: { vendor: Accounting
 
   if (result?.kind === "choose") {
     return (
-      <AccountingCompanyChoiceStep
-        vendor={vendor}
-        choice={result}
-        setupPath={setupPath}
-        onConnected={connected}
-      />
+      <div className="mx-auto w-full max-w-lg">
+        <AccountingCompanyChoice
+          vendor={vendor}
+          choice={result}
+          onConnected={connected}
+          cancelAction={
+            <Button variant="outline" render={<Link to="/admin/integrations" replace />}>
+              {t("Back to integrations")}
+            </Button>
+          }
+          expired={
+            <CallbackFailure
+              vendor={vendor}
+              setupPath={setupPath}
+              message={t(
+                "The time to choose an organisation ran out, so nothing was connected. Start the connection again from Integrations.",
+              )}
+            />
+          }
+        />
+      </div>
     );
   }
 
@@ -157,105 +166,6 @@ function CallbackFailure({
           {t("Back to integrations")}
         </Button>
         <Button render={<Link to={setupPath} replace />}>{t("Try again")}</Button>
-      </div>
-    </div>
-  );
-}
-
-function AccountingCompanyChoiceStep({
-  vendor,
-  choice,
-  setupPath,
-  onConnected,
-}: {
-  vendor: AccountingVendor;
-  choice: CompanyChoice;
-  setupPath: string;
-  onConnected: (connection: AccountingConnection) => void;
-}) {
-  const t = useT();
-  const nowSeconds = useNowSeconds(15_000);
-  const [companyId, setCompanyId] = useState<string | null>(null);
-  const choose = useMutation({
-    mutationFn: (id: string) =>
-      chooseAccountingCompany({
-        integrationType: vendor.system,
-        choiceToken: choice.choiceToken,
-        companyId: id,
-      }),
-    onSuccess: onConnected,
-  });
-
-  const expired = choice.choiceExpiresAt !== null && nowSeconds >= choice.choiceExpiresAt;
-  if (expired && !choose.isPending && !choose.isSuccess) {
-    return (
-      <CallbackFailure
-        vendor={vendor}
-        setupPath={setupPath}
-        message={t(
-          "The time to choose an organisation ran out, so nothing was connected. Start the connection again from Integrations.",
-        )}
-      />
-    );
-  }
-
-  return (
-    <div className="mx-auto w-full max-w-lg space-y-4">
-      <div className="space-y-1">
-        <h2 className="text-base font-semibold">{t("Choose the organisation")}</h2>
-        <p className="text-foreground-muted text-sm">
-          {t(
-            "{0} gave Trenova access to more than one organisation. Choose the one whose books this Trenova organization keeps; Trenova gives up its access to the others.",
-            vendor.name,
-          )}
-        </p>
-        {choice.choiceExpiresAt !== null ? (
-          <p className="text-foreground-subtle text-xs">
-            {t(
-              "Choose by {0}. After that, start the connection again.",
-              formatUnixTime(choice.choiceExpiresAt),
-            )}
-          </p>
-        ) : null}
-      </div>
-      <div
-        role="radiogroup"
-        aria-label={t("Organisations in {0}", vendor.name)}
-        className="flex flex-col gap-2"
-      >
-        {choice.companies.map((company) => (
-          <ChoiceButton
-            key={company.id}
-            selected={companyId === company.id}
-            onClick={() => setCompanyId(company.id)}
-            disabled={choose.isPending || choose.isSuccess}
-          >
-            <span className="font-medium">{company.name || company.id}</span>
-          </ChoiceButton>
-        ))}
-      </div>
-      {choose.isError ? (
-        <Alert size="sm" variant="destructive">
-          <AlertDescription>{describeApiError(choose.error)}</AlertDescription>
-        </Alert>
-      ) : null}
-      <div className="flex justify-end gap-2 border-t pt-4">
-        <Button variant="outline" render={<Link to="/admin/integrations" replace />}>
-          {t("Back to integrations")}
-        </Button>
-        <Button
-          type="button"
-          disabled={companyId === null || choose.isSuccess}
-          isLoading={choose.isPending}
-          loadingText={t("Connecting...")}
-          onClick={() => {
-            if (companyId !== null) {
-              choose.mutate(companyId);
-            }
-          }}
-        >
-          {t("Connect this organisation")}
-        </Button>
       </div>
     </div>
   );

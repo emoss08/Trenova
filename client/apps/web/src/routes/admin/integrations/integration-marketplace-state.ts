@@ -20,6 +20,7 @@ export const integrationModalTypes = [
   "QuickBooksOnline",
   "Xero",
   "BusinessCentral",
+  "NetSuite",
 ] as const;
 
 export const integrationSetupStates = ["connected"] as const;

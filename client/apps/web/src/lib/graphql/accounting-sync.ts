@@ -2,6 +2,7 @@ import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-da
 import {
   AccountingAppSettingsFieldsFragmentDoc,
   AccountingConnectionFieldsFragmentDoc,
+  AccountingPreparedCertificateFieldsFragmentDoc,
   AccountingMappingFieldsFragmentDoc,
   AccountingMappingSummaryDocument,
   AccountingMappingsDocument,
@@ -16,12 +17,15 @@ import {
   ClearAccountingMappingDocument,
   CompleteAccountingSetupDocument,
   ConfirmAccountingMappingsDocument,
+  ConnectAccountingWithCertificateDocument,
   CreateAccountingReferenceRecordDocument,
   DisconnectAccountingSystemDocument,
   FinishAccountingAuthorizationDocument,
+  PrepareAccountingCertificateDocument,
   RefreshAccountingReferenceDataDocument,
   RejectAccountingMappingDocument,
   RemoveAccountingAppDocument,
+  RenewAccountingCertificateDocument,
   SaveAccountingAppDocument,
   SetAccountingMappingDocument,
   StartAccountingAuthorizationDocument,
@@ -30,6 +34,7 @@ import {
   type AccountingMappingFieldsFragment,
   type AccountingMappingFilterInput,
   type AccountingMappingTargetType,
+  type AccountingPreparedCertificateFieldsFragment,
   type AccountingProviderProfileFieldsFragment,
   type AccountingWebhookSubscriptionSummaryFieldsFragment,
   type AccountingReferenceKind,
@@ -38,7 +43,9 @@ import {
   type ChooseAccountingCompanyInput,
   type CompleteAccountingAuthorizationInput,
   type ConfirmAccountingMappingInput,
+  type ConnectAccountingWithCertificateInput,
   type CreateAccountingReferenceRecordInput,
+  type RenewAccountingCertificateInput,
   type SaveAccountingAppInput,
   type SetAccountingMappingInput,
   type StartAccountingAuthorizationMutation,
@@ -47,6 +54,7 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { chunk } from "@trenova/shared/lib/utils";
 
 export type AccountingConnection = AccountingConnectionFieldsFragment;
+export type AccountingPreparedCertificate = AccountingPreparedCertificateFieldsFragment;
 export type AccountingMapping = AccountingMappingFieldsFragment;
 export type AccountingReferenceObject = AccountingReferenceObjectFieldsFragment;
 export type AccountingMappingGroup = {
@@ -89,6 +97,7 @@ export type AccountingSyncStatus = {
   app: AccountingAppSettings;
   connection: AccountingConnection | null;
   webhookSubscriptions: AccountingWebhookSubscriptionSummary | null;
+  pendingCertificate: AccountingPreparedCertificate | null;
 };
 
 export type AccountingCompanyChoice = { id: string; name: string };
@@ -122,6 +131,9 @@ function toAccountingSyncStatus(
           AccountingWebhookSubscriptionSummaryFieldsFragmentDoc,
           status.webhookSubscriptions,
         )
+      : null,
+    pendingCertificate: status.pendingCertificate
+      ? getFragmentData(AccountingPreparedCertificateFieldsFragmentDoc, status.pendingCertificate)
       : null,
   };
 }
@@ -180,7 +192,17 @@ export async function finishAccountingAuthorization(
     operationName: "FinishAccountingAuthorization",
     variables: { input },
   });
-  const result = data.finishAccountingAuthorization;
+  return toAuthorizationResult(data.finishAccountingAuthorization);
+}
+
+type AuthorizationPayload = {
+  connection?: FragmentType<typeof AccountingConnectionFieldsFragmentDoc> | null;
+  companies: AccountingCompanyChoice[];
+  choiceToken?: string | null;
+  choiceExpiresAt?: number | null;
+};
+
+function toAuthorizationResult(result: AuthorizationPayload): AccountingAuthorizationResult {
   if (result.connection) {
     return {
       kind: "connected",
@@ -194,8 +216,44 @@ export async function finishAccountingAuthorization(
     kind: "choose",
     companies: result.companies,
     choiceToken: result.choiceToken,
-    choiceExpiresAt: result.choiceExpiresAt,
+    choiceExpiresAt: result.choiceExpiresAt ?? null,
   };
+}
+
+export async function prepareAccountingCertificate(
+  integrationType: AccountingSystem,
+): Promise<AccountingPreparedCertificate> {
+  const data = await requestGraphQL({
+    document: PrepareAccountingCertificateDocument,
+    operationName: "PrepareAccountingCertificate",
+    variables: { input: { integrationType } },
+  });
+  return getFragmentData(
+    AccountingPreparedCertificateFieldsFragmentDoc,
+    data.prepareAccountingCertificate,
+  );
+}
+
+export async function connectAccountingWithCertificate(
+  input: ConnectAccountingWithCertificateInput,
+): Promise<AccountingAuthorizationResult> {
+  const data = await requestGraphQL({
+    document: ConnectAccountingWithCertificateDocument,
+    operationName: "ConnectAccountingWithCertificate",
+    variables: { input },
+  });
+  return toAuthorizationResult(data.connectAccountingWithCertificate);
+}
+
+export async function renewAccountingCertificate(
+  input: RenewAccountingCertificateInput,
+): Promise<AccountingConnection> {
+  const data = await requestGraphQL({
+    document: RenewAccountingCertificateDocument,
+    operationName: "RenewAccountingCertificate",
+    variables: { input },
+  });
+  return getFragmentData(AccountingConnectionFieldsFragmentDoc, data.renewAccountingCertificate);
 }
 
 export async function chooseAccountingCompany(

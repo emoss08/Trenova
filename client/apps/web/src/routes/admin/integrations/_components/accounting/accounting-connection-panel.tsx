@@ -4,6 +4,7 @@ import {
   accountingConnectionPhase,
   hasReconnectDeadline,
   reconnectDeadlineNear,
+  reconnectWarningSeconds,
 } from "@/lib/accounting-sync";
 import { formatPreciseTimeAgo } from "@/lib/time-utils";
 import type { AccountingConnectionStatus } from "@trenova/graphql/generated/graphql";
@@ -31,10 +32,12 @@ import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { useState } from "react";
 import type {
   AccountingAppSettings,
+  AccountingPreparedCertificate,
   AccountingProviderProfile,
   AccountingWebhookSubscriptionSummary,
 } from "@/lib/graphql/accounting-sync";
 import { AccountingAppKeys } from "./accounting-app-keys";
+import { AccountingCertificateRenewDialog } from "./accounting-certificate";
 import { AccountingCompanyFacts } from "./accounting-company-facts";
 import { AccountingWebhookSubscriptions } from "./accounting-webhook-subscriptions";
 import { AccountingSyncSettings } from "./accounting-sync-settings";
@@ -46,6 +49,7 @@ type AccountingConnectionPanelProps = {
   profile: AccountingProviderProfile;
   connection: AccountingConnection;
   webhookSubscriptions: AccountingWebhookSubscriptionSummary | null;
+  pendingCertificate: AccountingPreparedCertificate | null;
   canUpdate: boolean;
   canManage: boolean;
   isChecking: boolean;
@@ -62,6 +66,7 @@ export function AccountingConnectionPanel({
   profile,
   connection,
   webhookSubscriptions,
+  pendingCertificate,
   canUpdate,
   canManage,
   isChecking,
@@ -73,6 +78,9 @@ export function AccountingConnectionPanel({
 }: AccountingConnectionPanelProps) {
   const t = useT();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [renewOpen, setRenewOpen] = useState(false);
+  const usesCertificate = connection.authMethod === "ClientCredentials";
+  const receivesNotices = profile.webhookSubscriptions || profile.webhookKeyLabel !== "";
 
   const statusLabels: Record<AccountingConnectionStatus, string> = {
     Connected: t("Connected"),
@@ -86,7 +94,12 @@ export function AccountingConnectionPanel({
     unixSeconds ? formatPreciseTimeAgo(unixSeconds * 1000, nowSeconds * 1000) : null;
   const revoked = connection.status === "Revoked";
   const deadlineNear =
-    !revoked && reconnectDeadlineNear(connection.refreshTokenAbsoluteExpiresAt, nowSeconds);
+    !revoked &&
+    reconnectDeadlineNear(
+      connection.refreshTokenAbsoluteExpiresAt,
+      reconnectWarningSeconds(connection, profile),
+      nowSeconds,
+    );
 
   return (
     <div className="space-y-4">
@@ -117,10 +130,15 @@ export function AccountingConnectionPanel({
         <Alert variant="destructive" size="sm">
           <AlertTitle>{t("{0} no longer accepts Trenova's access", vendor.name)}</AlertTitle>
           <AlertDescription>
-            {t(
-              "The authorization was revoked or has expired. Nothing reaches {0} until someone with manage access reconnects the same company.",
-              vendor.name,
-            )}
+            {usesCertificate
+              ? t(
+                  "{0} refused Trenova's certificate. If the account was refreshed from production, set up the certificate mapping again, then renew the certificate here. Nothing reaches {0} until then.",
+                  vendor.name,
+                )
+              : t(
+                  "The authorization was revoked or has expired. Nothing reaches {0} until someone with manage access reconnects the same company.",
+                  vendor.name,
+                )}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -139,11 +157,17 @@ export function AccountingConnectionPanel({
       {deadlineNear ? (
         <Alert variant="warning" size="sm">
           <AlertDescription>
-            {t(
-              "{0} ends this authorization on {1}. Reconnect before then to keep syncing without a gap.",
-              vendor.name,
-              formatUnixDateMedium(connection.refreshTokenAbsoluteExpiresAt),
-            )}
+            {usesCertificate
+              ? t(
+                  "The certificate Trenova connects to {0} with expires on {1}. Renew it before then to keep syncing without a gap.",
+                  vendor.name,
+                  formatUnixDateMedium(connection.refreshTokenAbsoluteExpiresAt),
+                )
+              : t(
+                  "{0} ends this authorization on {1}. Reconnect before then to keep syncing without a gap.",
+                  vendor.name,
+                  formatUnixDateMedium(connection.refreshTokenAbsoluteExpiresAt),
+                )}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -172,7 +196,15 @@ export function AccountingConnectionPanel({
         <DescriptionItem label={t("Connected on")} numeric>
           {formatUnixDateMedium(connection.connectedAt)}
         </DescriptionItem>
-        {hasReconnectDeadline(connection.refreshTokenAbsoluteExpiresAt) ? (
+        <DescriptionItem label={t("Connected with")}>
+          {usesCertificate ? t("A certificate") : t("A sign-in")}
+        </DescriptionItem>
+        {usesCertificate && connection.certificateExpiresAt != null ? (
+          <DescriptionItem label={t("Certificate expires")} numeric>
+            {formatUnixDateMedium(connection.certificateExpiresAt)}
+          </DescriptionItem>
+        ) : null}
+        {!usesCertificate && hasReconnectDeadline(connection.refreshTokenAbsoluteExpiresAt) ? (
           <DescriptionItem label={t("Reconnect by")} numeric>
             {formatUnixDateMedium(connection.refreshTokenAbsoluteExpiresAt)}
           </DescriptionItem>
@@ -186,9 +218,11 @@ export function AccountingConnectionPanel({
         <DescriptionItem label={t("Last failure")} numeric>
           {since(connection.lastFailureAt) ?? <DescriptionEmpty />}
         </DescriptionItem>
-        <DescriptionItem label={t("Last notice from {0}", vendor.name)} numeric>
-          {since(connection.lastWebhookAt) ?? <DescriptionEmpty />}
-        </DescriptionItem>
+        {receivesNotices ? (
+          <DescriptionItem label={t("Last notice from {0}", vendor.name)} numeric>
+            {since(connection.lastWebhookAt) ?? <DescriptionEmpty />}
+          </DescriptionItem>
+        ) : null}
       </DescriptionList>
 
       {connection.setupStep === "Complete" ? (
@@ -213,7 +247,15 @@ export function AccountingConnectionPanel({
           <Button type="button" variant="outline" onClick={() => setConfirmOpen(true)}>
             {t("Disconnect")}
           </Button>
-          {revoked || deadlineNear ? (
+          {usesCertificate ? (
+            <Button
+              type="button"
+              variant={revoked || deadlineNear ? "default" : "outline"}
+              onClick={() => setRenewOpen(true)}
+            >
+              {t("Renew certificate")}
+            </Button>
+          ) : revoked || deadlineNear ? (
             <Button
               type="button"
               onClick={onReconnect}
@@ -224,6 +266,18 @@ export function AccountingConnectionPanel({
             </Button>
           ) : null}
         </div>
+      ) : null}
+
+      {usesCertificate ? (
+        <AccountingCertificateRenewDialog
+          vendor={vendor}
+          appName={t(profile.appName)}
+          connection={connection}
+          pending={pendingCertificate}
+          canManage={canManage}
+          open={renewOpen}
+          onOpenChange={setRenewOpen}
+        />
       ) : null}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

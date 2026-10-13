@@ -2,6 +2,7 @@ import { recordPath, type RecordEntityType } from "@/config/record-links";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import type {
   AccountingAppliedObjectType,
+  AccountingAuthMethod,
   AccountingConnectionStatus,
   AccountingDriftKind,
   AccountingDriftStatus,
@@ -250,7 +251,9 @@ const MAPPING_RECORD_ENTITIES: Partial<Record<AccountingMappingTargetType, Recor
   Carrier: "carrier",
 };
 
-export const ACCOUNTING_RECONNECT_WARNING_SECONDS = 14 * 24 * 60 * 60;
+const CERTIFICATE_RENEWAL_WARNING_SECONDS = 14 * 24 * 60 * 60;
+const NETSUITE_ACCOUNT_ID = /^[A-Z0-9]+(_(SB\d+|RP))?$/;
+const NETSUITE_ACCOUNT_ID_MAX_LENGTH = 64;
 
 const CONNECTION_PHASES: Record<AccountingConnectionStatus, StatusPhase> = {
   Connected: "complete",
@@ -264,12 +267,14 @@ const AUTHORIZE_HOSTS: Record<AccountingSystem, readonly string[]> = {
   QuickBooksOnline: ["appcenter.intuit.com"],
   Xero: ["login.xero.com"],
   BusinessCentral: ["login.microsoftonline.com"],
+  NetSuite: ["system.netsuite.com"],
 };
 
 export const ACCOUNTING_SYSTEMS: readonly AccountingSystem[] = [
   "QuickBooksOnline",
   "Xero",
   "BusinessCentral",
+  "NetSuite",
 ];
 
 export const DEFAULT_ACCOUNTING_SYSTEM: AccountingSystem = "QuickBooksOnline";
@@ -345,7 +350,7 @@ export function readAccountingCallback(
 
   const code = params.get("code")?.trim() ?? "";
   const state = params.get("state")?.trim() ?? "";
-  const realmId = params.get("realmId")?.trim() ?? "";
+  const realmId = (params.get("realmId") ?? params.get("company"))?.trim() ?? "";
   if (code === "" || state === "" || (options.requireCompany && realmId === "")) {
     return { kind: "incomplete" };
   }
@@ -359,12 +364,29 @@ export function hasReconnectDeadline(absoluteExpiresAt: number): boolean {
 
 export function reconnectDeadlineNear(
   absoluteExpiresAt: number,
+  warningSeconds: number,
   nowSeconds = Math.floor(Date.now() / 1000),
 ): boolean {
   return (
-    hasReconnectDeadline(absoluteExpiresAt) &&
-    absoluteExpiresAt - nowSeconds <= ACCOUNTING_RECONNECT_WARNING_SECONDS
+    hasReconnectDeadline(absoluteExpiresAt) && absoluteExpiresAt - nowSeconds <= warningSeconds
   );
+}
+
+export function reconnectWarningSeconds(
+  connection: { authMethod: AccountingAuthMethod },
+  profile: { reconnectWarningSeconds: number },
+): number {
+  return connection.authMethod === "ClientCredentials"
+    ? CERTIFICATE_RENEWAL_WARNING_SECONDS
+    : profile.reconnectWarningSeconds;
+}
+
+export function normalizeNetSuiteAccountId(value: string): string | null {
+  const normalized = value.trim().toUpperCase();
+  if (normalized.length > NETSUITE_ACCOUNT_ID_MAX_LENGTH || !NETSUITE_ACCOUNT_ID.test(normalized)) {
+    return null;
+  }
+  return normalized;
 }
 
 export function accountingSetupPath(system: AccountingSystem): string {

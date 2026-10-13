@@ -1,5 +1,5 @@
 import type { AccountingSyncStatus } from "@/lib/graphql/accounting-sync";
-import { quickBooksProfile, xeroProfile } from "@/test/accounting-profiles";
+import { netSuiteProfile, quickBooksProfile, xeroProfile } from "@/test/accounting-profiles";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -8,7 +8,12 @@ import { StrictMode } from "react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountingAuthorizationCallback } from "../accounting-authorization-callback";
-import { quickBooksVendor, xeroVendor, type AccountingVendor } from "../accounting-vendors";
+import {
+  netSuiteVendor,
+  quickBooksVendor,
+  xeroVendor,
+  type AccountingVendor,
+} from "../accounting-vendors";
 
 const mocks = vi.hoisted(() => ({
   finishAccountingAuthorization: vi.fn(),
@@ -27,6 +32,7 @@ vi.mock("sonner", () => ({ toast: { success: mocks.toastSuccess, error: vi.fn() 
 
 const QUICKBOOKS_CALLBACK = "/admin/integrations/quickbooks/callback";
 const XERO_CALLBACK = "/admin/integrations/xero/callback";
+const NETSUITE_CALLBACK = "/admin/integrations/netsuite/callback";
 
 function Landing() {
   const location = useLocation();
@@ -88,6 +94,7 @@ function statusFor(system: "QuickBooksOnline" | "Xero"): AccountingSyncStatus {
     },
     connection: null,
     webhookSubscriptions: null,
+    pendingCertificate: null,
   };
 }
 
@@ -326,5 +333,47 @@ describe("AccountingAuthorizationCallback", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.queryByTestId("landed")).not.toBeInTheDocument();
+  });
+
+  it("finishes a NetSuite return with the account it names as company", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue({
+      ...statusFor("QuickBooksOnline"),
+      integrationType: "NetSuite",
+      providerName: "NetSuite",
+      profile: netSuiteProfile,
+    });
+    mocks.finishAccountingAuthorization.mockResolvedValue(connected);
+
+    renderCallback(
+      "?code=n1&state=s1&role=1032&entity=-5&company=1234567_SB1",
+      netSuiteVendor,
+      NETSUITE_CALLBACK,
+    );
+
+    expect(await screen.findByTestId("landed")).toHaveTextContent(
+      "/admin/integrations?type=NetSuite&setup=connected",
+    );
+    expect(mocks.finishAccountingAuthorization).toHaveBeenCalledWith({
+      integrationType: "NetSuite",
+      code: "n1",
+      state: "s1",
+      realmId: "1234567_SB1",
+    });
+  });
+
+  it("refuses a NetSuite return that names no account", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue({
+      ...statusFor("QuickBooksOnline"),
+      integrationType: "NetSuite",
+      providerName: "NetSuite",
+      profile: netSuiteProfile,
+    });
+
+    renderCallback("?code=n1&state=s1", netSuiteVendor, NETSUITE_CALLBACK);
+
+    expect(
+      await screen.findByText(/This page was opened without everything NetSuite sends back/),
+    ).toBeInTheDocument();
+    expect(mocks.finishAccountingAuthorization).not.toHaveBeenCalled();
   });
 });

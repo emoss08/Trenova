@@ -151,9 +151,9 @@ func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&c.ClientCertificateID,
 			validation.When(
 				c.UsesCertificate(),
-				validation.Required.Error("Certificate id is required"),
+				validation.Required.Error("Certificate ID is required"),
 			),
-			validation.Length(0, 100).Error("Certificate id must be at most 100 characters"),
+			validation.Length(0, 100).Error("Certificate ID cannot be longer than 100 characters"),
 		),
 		validation.Field(&c.ExternalHomeCurrency, validation.Length(0, 3)),
 		validation.Field(&c.LastErrorCategory,
