@@ -135,7 +135,7 @@ search:
   defaultLimit: 8 # Default number of hits returned per entity group
   meilisearch:
     url: http://localhost:7700 # Meilisearch base URL
-    apiKey: "" # Optional API key
+    apiKey: CErP8m5HUQUTaporAjiCsNNazOoACqS2bw3IGRsi94I # Matches MEILI_MASTER_KEY in dev/compose.yml
     timeout: 3s # Request timeout
     indexes:
       shipments: shipments
