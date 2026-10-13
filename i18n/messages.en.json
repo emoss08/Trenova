@@ -792,6 +792,15 @@
       "routes/agent-control"
     ]
   },
+  "1 to 30 days past due.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "1 tool": {
     "sites": 3,
     "scope": [
@@ -873,6 +882,15 @@
     ],
     "areas": [
       "routes/customer-statement"
+    ]
+  },
+  "1-30 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.pdf"
     ]
   },
   "1. Pay accrues": {
@@ -1332,6 +1350,15 @@
       "routes/edi"
     ]
   },
+  "31 to 60 days past due.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "31-60 Days": {
     "sites": 1,
     "scope": [
@@ -1339,6 +1366,15 @@
     ],
     "areas": [
       "routes/customer-statement"
+    ]
+  },
+  "31-60 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.pdf"
     ]
   },
   "34-hour restart": {
@@ -1523,6 +1559,15 @@
       "routes/fleet-safety"
     ]
   },
+  "61 to 90 days past due.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "61-90 Days": {
     "sites": 1,
     "scope": [
@@ -1530,6 +1575,15 @@
     ],
     "areas": [
       "routes/customer-statement"
+    ]
+  },
+  "61-90 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.pdf"
     ]
   },
   "7 days": {
@@ -4109,6 +4163,15 @@
     ],
     "areas": [
       "routes/billing-control"
+    ]
+  },
+  "A customer's account statement: opening balance, every invoice, payment and credit in the period, the closing balance, and the invoices still open, aged. Downloaded from the statement page, emailed by hand, or sent each month by billing control.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A customer's balance": {
@@ -8701,6 +8764,15 @@
       "packages/shared/types"
     ]
   },
+  "A statement cannot be dated in the future": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A statement, never a constraint. Dispatch can override it, and the rota shows where it did rather than hiding the override.": {
     "sites": 1,
     "scope": [
@@ -12030,7 +12102,7 @@
     ]
   },
   "Account": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -12041,7 +12113,8 @@
       "go/other",
       "routes/invoice",
       "routes/journal-entry",
-      "routes/trial-balance"
+      "routes/trial-balance",
+      "template/customer.statement.pdf"
     ]
   },
   "Account Category": {
@@ -12132,6 +12205,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Account activity": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.pdf"
     ]
   },
   "Account and product notices": {
@@ -18369,15 +18451,17 @@
     ]
   },
   "Aging": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/accounting-dashboard",
       "routes/customer-statement",
-      "routes/invoice"
+      "routes/invoice",
+      "template/customer.statement.pdf"
     ]
   },
   "Aging summary": {
@@ -29560,7 +29644,7 @@
     ]
   },
   "Attached": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -29569,7 +29653,8 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
-      "routes/driver-expense"
+      "routes/driver-expense",
+      "template/customer.statement.email"
     ]
   },
   "Attached document": {
@@ -32547,7 +32632,7 @@
     ]
   },
   "Balance": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -32557,7 +32642,8 @@
       "routes/customer-ledger",
       "routes/customer-statement",
       "routes/escrow-account",
-      "routes/worker"
+      "routes/worker",
+      "template/customer.statement.pdf"
     ]
   },
   "Balance (Minor)": {
@@ -32630,6 +32716,16 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Balance due": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.email",
+      "template/customer.statement.pdf"
     ]
   },
   "Balance sheet": {
@@ -38525,7 +38621,7 @@
     ]
   },
   "Cancel": {
-    "sites": 285,
+    "sites": 286,
     "scope": [
       "ts"
     ],
@@ -38548,6 +38644,7 @@
       "routes/carrier-sourcing",
       "routes/collections",
       "routes/customer-payments",
+      "routes/customer-statement",
       "routes/desk",
       "routes/detention-desk",
       "routes/dispatch-console",
@@ -43997,7 +44094,7 @@
     ]
   },
   "Charges": {
-    "sites": 13,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -44008,6 +44105,7 @@
       "routes/desk",
       "routes/edi",
       "routes/invoice",
+      "template/customer.statement.pdf",
       "template/invoice.pdf"
     ]
   },
@@ -45053,6 +45151,24 @@
       "routes/collections"
     ]
   },
+  "Choose a day between 1 and 28, so it falls in every month": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Choose a day from 1 to 28": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
   "Choose a dispute reason": {
     "sites": 1,
     "scope": [
@@ -45947,6 +46063,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Choose the day of the month to send statements on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
     ]
   },
   "Choose the document type that ticks it": {
@@ -57063,6 +57188,15 @@
       "routes/customer-statement"
     ]
   },
+  "Could not load the statements sent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
+    ]
+  },
   "Could not load this import batch. It may have been deleted or you may not have permission.": {
     "sites": 1,
     "scope": [
@@ -60655,7 +60789,7 @@
     ]
   },
   "Currency": {
-    "sites": 38,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -60675,7 +60809,8 @@
       "routes/order",
       "routes/rate-agreement",
       "routes/rate-matrix",
-      "routes/reports"
+      "routes/reports",
+      "template/customer.statement.pdf"
     ]
   },
   "Currency Code": {
@@ -60872,7 +61007,7 @@
     ]
   },
   "Current": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -60891,7 +61026,8 @@
       "routes/customer-statement",
       "routes/formula-template",
       "routes/invoice",
-      "routes/reconciliation-summary"
+      "routes/reconciliation-summary",
+      "template/customer.statement.pdf"
     ]
   },
   "Current Balance (Minor)": {
@@ -61947,7 +62083,7 @@
     ]
   },
   "Customer is required": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -62016,7 +62152,7 @@
     ]
   },
   "Customer not found": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -63500,7 +63636,7 @@
     ]
   },
   "Date": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -63524,7 +63660,8 @@
       "routes/invoice",
       "routes/osha",
       "routes/shipment",
-      "routes/worker"
+      "routes/worker",
+      "template/customer.statement.pdf"
     ]
   },
   "Date & time": {
@@ -63987,6 +64124,15 @@
       "go/other"
     ]
   },
+  "Day of the month to send": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
   "Day of week must be between 0 and 6": {
     "sites": 2,
     "scope": [
@@ -64174,11 +64320,12 @@
     ]
   },
   "Days late": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/customer.statement.pdf",
       "template/invoice.reminder.email"
     ]
   },
@@ -68924,7 +69071,7 @@
     ]
   },
   "Description": {
-    "sites": 179,
+    "sites": 180,
     "scope": [
       "go",
       "ts"
@@ -68985,6 +69132,7 @@
       "routes/training-course",
       "routes/worker-checklist-template",
       "routes/worker-credential-type",
+      "template/customer.statement.pdf",
       "template/invoice.pdf"
     ]
   },
@@ -73185,7 +73333,7 @@
     ]
   },
   "Document": {
-    "sites": 36,
+    "sites": 37,
     "scope": [
       "go",
       "ts"
@@ -73206,7 +73354,8 @@
       "routes/journal-review",
       "routes/shipment",
       "routes/worker",
-      "routes/worker-credential-type"
+      "routes/worker-credential-type",
+      "template/customer.statement.pdf"
     ]
   },
   "Document AI": {
@@ -74523,6 +74672,15 @@
       "routes/desk"
     ]
   },
+  "Download PDF": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
+    ]
+  },
   "Download Trenova Capture": {
     "sites": 2,
     "scope": [
@@ -74566,6 +74724,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Download failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "Download raw X12": {
@@ -76895,7 +77062,7 @@
     ]
   },
   "Due": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -76907,6 +77074,7 @@
       "routes/desk",
       "routes/worker",
       "routes/worker-checklist-template",
+      "template/customer.statement.pdf",
       "template/invoice.email",
       "template/invoice.pdf",
       "template/invoice.reminder.email"
@@ -80731,6 +80899,15 @@
       "go/other"
     ]
   },
+  "Email customers the statement of the month just closed": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Email delivery": {
     "sites": 2,
     "scope": [
@@ -80757,6 +80934,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Email each customer a PDF statement of the month just closed: the balance it opened with, every invoice, payment and credit, what it owes, and its open invoices, aged. Customers whose account was settled and quiet all month are left out.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
     ]
   },
   "Email each person who bundles notifications their daily digest": {
@@ -80952,6 +81138,15 @@
       "routes/organization"
     ]
   },
+  "Email statement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
+    ]
+  },
   "Email that arrived on a monitored address, and what was made of it": {
     "sites": 1,
     "scope": [
@@ -80997,6 +81192,15 @@
       "apps/web/components"
     ]
   },
+  "Email this customer a statement of its account each month when billing control sends monthly statements. A statement can still be emailed by hand from its statement page.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Email this customer when invoices go past due, on the schedule in billing control. Turn off for a customer who must never receive an automated reminder.": {
     "sites": 1,
     "scope": [
@@ -81022,6 +81226,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Email {0} this statement?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
     ]
   },
   "Emailed to the carrier's rate confirmation contacts.": {
@@ -86406,6 +86619,15 @@
       "go/other"
     ]
   },
+  "Every document that moved the balance in the period, oldest first, with the running balance after each.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Every draw, newest first. A draft can still be finalised or voided; a final round is the record and only opens.": {
     "sites": 1,
     "scope": [
@@ -86584,6 +86806,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Every invoice with money still owed on the statement date, oldest due date first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Every item is checked again. Only chunks whose text changed since they were indexed are embedded, so the estimate below is the most it could cost.": {
@@ -99177,6 +99408,15 @@
       "routes/org-structure"
     ]
   },
+  "From 1 to 28, so the day falls in every month. Statements are dated the last day of the month before.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
   "From Values": {
     "sites": 1,
     "scope": [
@@ -104715,7 +104955,7 @@
     ]
   },
   "Hello {0},": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "go"
     ],
@@ -104724,6 +104964,7 @@
       "template/agent.inbound_reply.email",
       "template/agent.proposal_reminder.email",
       "template/agent.request_missing_docs.email",
+      "template/customer.statement.email",
       "template/invoice.email",
       "template/invoice.reminder.email",
       "template/tender.offer.email"
@@ -104739,7 +104980,7 @@
     ]
   },
   "Hello,": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "go"
     ],
@@ -104748,6 +104989,7 @@
       "template/agent.inbound_reply.email",
       "template/agent.proposal_reminder.email",
       "template/agent.request_missing_docs.email",
+      "template/customer.statement.email",
       "template/invoice.email",
       "template/invoice.reminder.email",
       "template/tender.offer.email"
@@ -106873,6 +107115,15 @@
       "go/other"
     ]
   },
+  "How many invoices are still open.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "How many minutes the link is good for. Use this rather than writing a number into the copy, or the wording will drift from the real expiry.": {
     "sites": 1,
     "scope": [
@@ -107496,7 +107747,7 @@
     ]
   },
   "How to pay, from billing control's default invoice terms.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -108451,6 +108702,24 @@
       "template/driverportal.invitation.email"
     ]
   },
+  "If your records differ from this statement, reply to the message it came with and we will reconcile it with you.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.pdf"
+    ]
+  },
+  "If your records differ from this statement, reply to this message and we will reconcile it with you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.email"
+    ]
+  },
   "Ignore": {
     "sites": 9,
     "scope": [
@@ -109233,6 +109502,15 @@
     "areas": [
       "routes/accounting-drift",
       "routes/carrier-sourcing"
+    ]
+  },
+  "In dispute": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.pdf"
     ]
   },
   "In effect": {
@@ -113151,7 +113429,7 @@
     ]
   },
   "Invoice": {
-    "sites": 38,
+    "sites": 41,
     "scope": [
       "go",
       "ts"
@@ -113172,6 +113450,7 @@
       "routes/invoice-adjustment-batch",
       "routes/journal-entry",
       "routes/late-charges",
+      "template/customer.statement.pdf",
       "template/invoice.email",
       "template/invoice.pdf",
       "template/invoice.reminder.email",
@@ -114476,6 +114755,15 @@
       "go/other"
     ]
   },
+  "Invoices and debit memos in the period, with currency.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Invoices may be emailed to this customer. Auto-send after posting needs this on.": {
     "sites": 1,
     "scope": [
@@ -114812,7 +115100,7 @@
     ]
   },
   "Issued": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -114822,6 +115110,7 @@
       "routes/pay-advance",
       "routes/shipment",
       "routes/worker",
+      "template/customer.statement.pdf",
       "template/invoice.email",
       "template/invoice.pdf"
     ]
@@ -117304,7 +117593,7 @@
     ]
   },
   "Keep the note under 2,000 characters": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -134026,7 +134315,7 @@
     ]
   },
   "Monthly": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -134036,6 +134325,7 @@
       "go/other",
       "packages/shared/lib",
       "packages/shared/types",
+      "routes/customer-statement",
       "routes/recurring-deduction",
       "routes/recurring-earning"
     ]
@@ -134151,6 +134441,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Monthly statements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
+  "Monthly statements could not be sent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Months employed": {
@@ -134290,6 +134598,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "More than 90 days past due.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "More than one party": {
@@ -142653,6 +142970,15 @@
       "routes/invoice"
     ]
   },
+  "No invoice, payment or credit touched this account in the period.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.pdf"
+    ]
+  },
   "No invoices yet": {
     "sites": 2,
     "scope": [
@@ -145464,6 +145790,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "No statement has been emailed to this customer yet. Statements you email, and the monthly ones billing control sends, appear here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
     ]
   },
   "No steps are left to run.": {
@@ -148406,6 +148741,15 @@
       "apps/dash/routes"
     ]
   },
+  "Not yet due.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Not yet invoiced": {
     "sites": 1,
     "scope": [
@@ -148586,12 +148930,13 @@
     ]
   },
   "Note to the customer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/collections"
+      "routes/collections",
+      "routes/customer-statement"
     ]
   },
   "Noted on the delivery": {
@@ -156340,7 +156685,7 @@
     ]
   },
   "Open": {
-    "sites": 62,
+    "sites": 63,
     "scope": [
       "go",
       "ts"
@@ -156380,6 +156725,7 @@
       "routes/time-attendance",
       "routes/tractor",
       "routes/worker",
+      "template/customer.statement.pdf",
       "template/invoice.reminder.email"
     ]
   },
@@ -157189,6 +157535,16 @@
     ],
     "areas": [
       "template/invoice.share.email"
+    ]
+  },
+  "Open invoices": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.email",
+      "template/customer.statement.pdf"
     ]
   },
   "Open invoices less unapplied cash and credits, as of {0}. Kept up to date as invoices post and payments apply.": {
@@ -158193,13 +158549,15 @@
     ]
   },
   "Opening balance": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "packages/shared/types",
-      "routes/customer-statement"
+      "routes/customer-statement",
+      "template/customer.statement.pdf"
     ]
   },
   "Opening balances": {
@@ -161287,6 +161645,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Over 90 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.pdf"
     ]
   },
   "Over target": {
@@ -164725,7 +165092,7 @@
     ]
   },
   "Past due": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -164733,6 +165100,7 @@
     "areas": [
       "apps/web/components",
       "routes/invoice-register",
+      "template/customer.statement.email",
       "template/invoice.reminder.email"
     ]
   },
@@ -166197,13 +166565,15 @@
     ]
   },
   "Payment": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
       "apps/web/lib",
+      "go/other",
       "routes/accounting-inbound",
       "routes/desk",
       "routes/invoice"
@@ -166649,16 +167019,36 @@
     ]
   },
   "Payments": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/customer-statement",
-      "routes/invoice"
+      "routes/invoice",
+      "template/customer.statement.pdf"
     ]
   },
   "Payments From the Books": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Payments and credits": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.pdf"
+    ]
+  },
+  "Payments and credits in the period, with currency.": {
     "sites": 1,
     "scope": [
       "go"
@@ -167886,7 +168276,7 @@
     ]
   },
   "Period": {
-    "sites": 10,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -167899,6 +168289,8 @@
       "routes/random-testing",
       "routes/reconciliation-summary",
       "routes/settlement-batch",
+      "template/customer.statement.email",
+      "template/customer.statement.pdf",
       "template/invoice.pdf"
     ]
   },
@@ -173163,6 +173555,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Preparing PDF...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
     ]
   },
   "Preparing extraction": {
@@ -188340,11 +188741,12 @@
     ]
   },
   "Remit To": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/customer.statement.pdf",
       "template/invoice.pdf"
     ]
   },
@@ -188386,7 +188788,7 @@
     ]
   },
   "Remittance": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -188394,6 +188796,7 @@
     "areas": [
       "routes/carrier",
       "routes/carrier-settlement",
+      "template/customer.statement.email",
       "template/invoice.email",
       "template/invoice.reminder.email"
     ]
@@ -208607,6 +209010,16 @@
       "apps/web/hooks"
     ]
   },
+  "Send monthly statements": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control",
+      "routes/customer"
+    ]
+  },
   "Send next": {
     "sites": 1,
     "scope": [
@@ -208787,6 +209200,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Send statement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
     ]
   },
   "Send status updates": {
@@ -209332,7 +209754,7 @@
     ]
   },
   "Sending...": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -209340,6 +209762,7 @@
       "apps/dash/_components",
       "routes/admin",
       "routes/collections",
+      "routes/customer-statement",
       "routes/dispatch-console",
       "routes/formula-template",
       "routes/invoice",
@@ -209476,6 +209899,15 @@
       "routes/customer"
     ]
   },
+  "Sends the statement {0} as a PDF to the invoice recipients on the customer's email profile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
+    ]
+  },
   "Senior role is required": {
     "sites": 1,
     "scope": [
@@ -209580,6 +210012,15 @@
       "packages/shared/components",
       "routes/billing-queue",
       "routes/desk"
+    ]
+  },
+  "Sent by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
     ]
   },
   "Sent dated": {
@@ -220392,6 +220833,15 @@
       "go/other"
     ]
   },
+  "Start the statement on or before its statement date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Start the summary": {
     "sites": 1,
     "scope": [
@@ -221155,11 +221605,12 @@
     ]
   },
   "Statement": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/collections",
       "routes/customer-ledger",
       "routes/desk"
     ]
@@ -221183,12 +221634,32 @@
     ]
   },
   "Statement date": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/customer-statement"
+      "routes/customer-statement",
+      "template/customer.statement.email"
+    ]
+  },
+  "Statement dates cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Statement for": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.pdf"
     ]
   },
   "Statement imported": {
@@ -221209,6 +221680,25 @@
       "packages/shared/components"
     ]
   },
+  "Statement of account": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.email",
+      "template/customer.statement.pdf"
+    ]
+  },
+  "Statement of account from {0} as of {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.email"
+    ]
+  },
   "Statement received; waiting to be parsed.": {
     "sites": 1,
     "scope": [
@@ -221216,6 +221706,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Statement sent to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
     ]
   },
   "Statement totals": {
@@ -221246,6 +221745,15 @@
       "routes/billing-queue"
     ]
   },
+  "Statements go to the invoice recipients on each customer's email profile, from your Billing email profile. Each month is sent once.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
   "Statements identify a card by its last four digits, and that is all a purchase needs to be matched back to it. Storing the full number would make this table a payment-card record with the handling rules that come with one.": {
     "sites": 1,
     "scope": [
@@ -221262,6 +221770,15 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "Statements sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
     ]
   },
   "Stats request is required": {
@@ -230180,6 +230697,15 @@
       "routes/detention-policy"
     ]
   },
+  "The balance after it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The balance this correction is posted to.": {
     "sites": 1,
     "scope": [
@@ -231964,6 +232490,15 @@
       "go/other"
     ]
   },
+  "The currency the customer is billed in.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The currency the invoices are billed in.": {
     "sites": 1,
     "scope": [
@@ -232180,6 +232715,15 @@
       "go/other"
     ]
   },
+  "The customer the statement is for. Required: a statement with no addressee cannot be acted on.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The customer this agreement bills": {
     "sites": 1,
     "scope": [
@@ -232217,7 +232761,7 @@
     ]
   },
   "The customer's code.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -232496,6 +233040,15 @@
     ]
   },
   "The day the new rates take effect is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The day the statement is drawn up to, in the organization timezone. Required: a balance means nothing without the date it stood on.": {
     "sites": 1,
     "scope": [
       "go"
@@ -234042,6 +234595,15 @@
       "go/other"
     ]
   },
+  "The file name of the attached statement.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The filing date cannot be in the future": {
     "sites": 1,
     "scope": [
@@ -234121,6 +234683,15 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "The first day the statement covers. Blank when it runs from the account's first transaction.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The first day the worker is on this pattern.": {
@@ -234313,7 +234884,7 @@
     ]
   },
   "The footer text from the organization's billing settings.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -234789,6 +235360,15 @@
       "go/other"
     ]
   },
+  "The invoice number or payment reference.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The invoice reads Disputed until the case is resolved or withdrawn, and no late charge is assessed on it meanwhile.": {
     "sites": 1,
     "scope": [
@@ -234817,6 +235397,15 @@
     ]
   },
   "The invoice total, with currency. An invoice that does not state its total is one a customer can refuse to pay.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The invoice total.": {
     "sites": 1,
     "scope": [
       "go"
@@ -235538,6 +236127,15 @@
     ]
   },
   "The message a customer receives with their invoice attached.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The message a customer statement is attached to.": {
     "sites": 1,
     "scope": [
       "go"
@@ -236529,6 +237127,15 @@
       "packages/shared/lib"
     ]
   },
+  "The open amount across every listed invoice, with currency.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The operating authority is younger than the configured age.": {
     "sites": 1,
     "scope": [
@@ -236851,6 +237458,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "The part of the balance that is past its due date, with currency.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The part of the body affected; it goes in the 300 log description.": {
@@ -247557,13 +248173,14 @@
     ]
   },
   "Through {0}": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "routes/customer-statement",
       "routes/desk"
     ]
   },
@@ -249014,14 +249631,24 @@
     ]
   },
   "To {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/customer-statement",
       "routes/detention-desk",
       "routes/inbox",
       "routes/invoice"
+    ]
+  },
+  "To {0}, by {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
     ]
   },
   "Today": {
@@ -250068,7 +250695,7 @@
     ]
   },
   "Total": {
-    "sites": 39,
+    "sites": 40,
     "scope": [
       "go",
       "ts"
@@ -250091,6 +250718,7 @@
       "routes/rate-agreement",
       "routes/rate-confirmation-public",
       "routes/shipment",
+      "template/customer.statement.pdf",
       "template/invoice.email",
       "template/invoice.pdf"
     ]
@@ -250618,14 +251246,16 @@
     ]
   },
   "Total open": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/ar-aging",
       "routes/ar-open-items",
-      "routes/customer-statement"
+      "routes/customer-statement",
+      "template/customer.statement.pdf"
     ]
   },
   "Total paid": {
@@ -253337,6 +253967,15 @@
       "apps/web/types"
     ]
   },
+  "True for the statement sent each month, false for one a person sent.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "True on the last reminder the schedule sends. Say what happens next when it is.": {
     "sites": 1,
     "scope": [
@@ -253410,6 +254049,15 @@
     ]
   },
   "True when the text matches the regular expression. Anchor with ^ and $ to match the whole value.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "True while the customer disputes the invoice.": {
     "sites": 1,
     "scope": [
       "go"
@@ -266428,6 +267076,15 @@
       "routes/inbox"
     ]
   },
+  "What is open on the statement date, by how late it is.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "What is picking up today?": {
     "sites": 1,
     "scope": [
@@ -266444,6 +267101,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "What is still unpaid on it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "What is still unpaid on the invoice, with its currency.": {
@@ -266507,6 +267173,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "What it added to the balance. Blank for a payment or credit.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "What it asks the agent": {
@@ -266621,6 +267296,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "What it took off the balance. Blank for a charge.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "What it was about changed since, so it cannot continue. Start a new one to go on.": {
     "sites": 1,
     "scope": [
@@ -266646,6 +267330,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "What it was: Invoice, Payment, Credit memo.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "What it would do as proposed": {
@@ -267035,6 +267728,24 @@
       "routes/invoice"
     ]
   },
+  "What the customer owed before the period began, with currency.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "What the customer owes on the statement date, with currency. Required: it is the figure a statement exists to give.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "What the customer pays once free time is exhausted": {
     "sites": 1,
     "scope": [
@@ -267105,6 +267816,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "What the person sending the statement wrote. Print it when present.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "What the rate is per, so the figure reads correctly later.": {
@@ -268183,6 +268903,15 @@
       "go/other"
     ]
   },
+  "When it happened.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "When it runs": {
     "sites": 3,
     "scope": [
@@ -268255,6 +268984,15 @@
     ],
     "areas": [
       "routes/pay-code"
+    ]
+  },
+  "When payment is due.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "When payment is due. Blank when the billing settings hide it.": {
@@ -268528,7 +269266,7 @@
     ]
   },
   "When the invoice was issued.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -268871,6 +269609,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Where payment should be sent, with the remittance instructions from billing control.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Where payment should be sent. Required: without it a customer has nowhere to pay.": {
@@ -270449,6 +271196,15 @@
     ],
     "areas": [
       "routes/invoice-adjustment-control"
+    ]
+  },
+  "Whole days past the due date; zero when it is not yet due.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Whole days since the due date.": {
@@ -275262,6 +276018,15 @@
       "template/notification.dash.review_submitted"
     ]
   },
+  "Your monthly statement of account is attached.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.email"
+    ]
+  },
   "Your name (required)": {
     "sites": 1,
     "scope": [
@@ -275449,6 +276214,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Your organization, as the statement's issuer.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Your own answer": {
@@ -275685,6 +276459,15 @@
     ],
     "areas": [
       "routes/rate-confirmation-public"
+    ]
+  },
+  "Your statement of account is attached.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.email"
     ]
   },
   "Your sync settings apply these changes on every vetting without asking.": {
@@ -276448,12 +277231,13 @@
     ]
   },
   "as of {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/customer-statement",
       "routes/worker"
     ]
   },
@@ -279012,6 +279796,15 @@
       "routes/collections"
     ]
   },
+  "e.g., Here is the statement you asked for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
+    ]
+  },
   "e.g., Invoice #{number} from {company}": {
     "sites": 1,
     "scope": [
@@ -279674,6 +280467,15 @@
     "areas": [
       "apps/web/components",
       "routes/home"
+    ]
+  },
+  "from {0} to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
     ]
   },
   "from {0}{1}": {
@@ -290112,6 +290914,24 @@
       "routes/random-testing"
     ]
   },
+  "{0} due": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-statement"
+    ]
+  },
+  "{0} due as of {1}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/customer.statement.email"
+    ]
+  },
   "{0} due soon": {
     "sites": 2,
     "scope": [
@@ -290798,6 +291618,15 @@
     ]
   },
   "{0} has no invoice email recipients. Add one to the customer's email profile to send reminders.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} has no invoice email recipients. Add one to the customer's email profile to send statements.": {
     "sites": 1,
     "scope": [
       "go"
@@ -294397,13 +295226,16 @@
     ]
   },
   "{0} past due": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/accounting-dashboard",
-      "routes/desk"
+      "routes/customer-statement",
+      "routes/desk",
+      "template/customer.statement.pdf"
     ]
   },
   "{0} past the window": {
@@ -295953,14 +296785,17 @@
     ]
   },
   "{0} to {1}": {
-    "sites": 4,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "routes/customer-statement",
       "routes/desk",
       "routes/time-attendance",
+      "template/customer.statement.email",
+      "template/customer.statement.pdf",
       "template/invoice.email"
     ]
   },

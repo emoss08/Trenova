@@ -22,6 +22,11 @@ const (
 	KindInvoiceShareEmail Kind = "invoice.share.email"
 	// KindPaymentReminderEmail reminds a customer that invoices are past due.
 	KindPaymentReminderEmail Kind = "invoice.reminder.email"
+	// KindCustomerStatementPDF is a customer's account statement: what it was
+	// billed and paid over a period and what is still open.
+	KindCustomerStatementPDF Kind = "customer.statement.pdf"
+	// KindCustomerStatementEmail is the message that delivers a statement.
+	KindCustomerStatementEmail Kind = "customer.statement.email"
 
 	// Detention.
 
@@ -159,6 +164,8 @@ func AllKinds() []Kind {
 		KindInvoiceEmail,
 		KindInvoiceShareEmail,
 		KindPaymentReminderEmail,
+		KindCustomerStatementPDF,
+		KindCustomerStatementEmail,
 		KindDetentionNoticeEmail,
 		KindDetentionNoticePDF,
 		KindRateConfirmationPDF,

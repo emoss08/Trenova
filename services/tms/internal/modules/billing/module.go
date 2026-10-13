@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/costingrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerstatementrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoiceadjustmentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicedisputerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
@@ -36,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/creditreviewservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/customerstatementservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentionbillingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentioncreditservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice"
@@ -49,6 +51,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
@@ -89,6 +92,9 @@ func SharedOptions() fx.Option {
 			paymentreminderrepository.New,
 			paymentreminderservice.New,
 			func(s *paymentreminderservice.Service) paymentreminderports.Service { return s },
+			customerstatementrepository.New,
+			customerstatementservice.New,
+			func(s *customerstatementservice.Service) customerstatementports.Service { return s },
 			collectionservice.New,
 			func(s *collectionservice.Service) collectionports.Service { return s },
 			creditreviewservice.New,

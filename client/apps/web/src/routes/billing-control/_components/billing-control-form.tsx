@@ -31,6 +31,7 @@ import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { BillingControl } from "@/types/billing-control";
 import { billingControlSchema } from "@/types/billing-control";
+import { MonthlyStatementsCard } from "./monthly-statements-card";
 import { PaymentRemindersCard } from "./payment-reminders-card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -82,6 +83,7 @@ export default function BillingControlForm() {
           <RatingPolicyCard />
           <LateChargesCard />
           <PaymentRemindersCard />
+          <MonthlyStatementsCard />
           <FormSaveDock saveButtonContent={t("Save changes")} />
         </div>
       </Form>

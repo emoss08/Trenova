@@ -720,6 +720,8 @@ writes:
     pending: "Email a customer a reminder of every overdue invoice it has, with a note."
   "PUT /api/v1/accounting/collections/customers/:customerID/follow-up/":
     pending: "Schedule when a customer's overdue receivables are next chased, or clear the follow-up."
+  "POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/":
+    pending: "Email a customer its statement of account as a PDF, with a note."
 
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":

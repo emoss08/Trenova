@@ -49,6 +49,13 @@ Keywords: email reminder, dunning letter, past due notice
 4. The reminder lists every overdue invoice not in dispute and goes to the invoice recipients on the
    customer's email profile. It is recorded in the account's **History**.
 
+### Send a customer its statement
+Keywords: statement of account, account statement email, balance summary
+1. Open [Collections](/accounting/ar/collections) and select the customer.
+2. Under **Receivables**, select **Statement**.
+3. Select **Email statement**, optionally write a **Note to the customer**, then select
+   **Send statement**.
+
 ### Assign a collector or schedule a follow-up
 Keywords: assign collector, owner, next follow-up
 1. Open [Collections](/accounting/ar/collections) and select the customer.

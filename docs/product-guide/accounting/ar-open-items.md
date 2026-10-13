@@ -43,6 +43,21 @@ Keywords: statement of account
 1. Open [Open items](/accounting/ar/open-items).
 2. Select the customer's name in the **Customer** column. Their customer statement opens.
 
+### Download or email a customer's statement
+Keywords: statement PDF, send statement, statement of account email, account summary
+1. Open [Open items](/accounting/ar/open-items) and select the customer's name in the **Customer**
+   column.
+2. Optionally set the **Statement date** and **Start date**.
+3. Select **Download PDF**, or select **Email statement**.
+4. To email it, optionally write a **Note to the customer**, then select **Send statement**.
+
 ## Notes
 Opening the page needs read access to accounts receivable. **Record payment** and
 **Apply payment** only appear for people who can create customer payments.
+
+The statement PDF shows the opening balance, every invoice, payment and credit in the period, the
+balance due, the open invoices and how late they are. **Email statement** sends it to the invoice
+recipients on the customer's email profile, needs permission to update accounts receivable, and is
+recorded in the customer's collections history and under **Statements sent** on the statement page.
+The statement uses your organization's customer statement template, which can be changed in
+document templates.

@@ -53,6 +53,7 @@ const DEFAULT_VALUES: Customer = {
     hasBillingControlOverrides: false,
     autoSendInvoiceOnGeneration: true,
     sendPaymentReminders: true,
+    sendStatements: true,
     emailInvoiceEnabled: true,
     ediInvoiceEnabled: false,
     splitBy: "Customer",

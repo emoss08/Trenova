@@ -31,7 +31,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -183,7 +182,7 @@ func (s *Service) SendDue(
 				s.l.Warn("failed to send a payment reminder",
 					zap.String("customerId", customerID.String()), zap.Error(sendErr))
 			case len(sent) == 0:
-				result.NoRecipients = appendUnique(result.NoRecipients, displayName(cus))
+				result.NoRecipients = appendUnique(result.NoRecipients, cus.DisplayName())
 			default:
 				result.Sent++
 			}
@@ -216,7 +215,7 @@ func (s *Service) SendNow(
 	if cus.BillingProfile != nil && !cus.BillingProfile.SendPaymentReminders {
 		return nil, errortypes.NewBusinessError(
 			"{0} is set not to receive payment reminders. Turn reminders on in the customer's billing profile to send one.",
-			displayName(cus),
+			cus.DisplayName(),
 		)
 	}
 
@@ -233,7 +232,7 @@ func (s *Service) SendNow(
 	if len(invoices) == 0 {
 		return nil, errortypes.NewBusinessError(
 			"{0} has no overdue invoice that is not in dispute, so there is nothing to remind them of.",
-			displayName(cus),
+			cus.DisplayName(),
 		)
 	}
 
@@ -269,7 +268,7 @@ func (s *Service) SendNow(
 		if len(sent) == 0 {
 			return nil, errortypes.NewBusinessError(
 				"{0} has no invoice email recipients. Add one to the customer's email profile to send reminders.",
-				displayName(cus),
+				cus.DisplayName(),
 			)
 		}
 		results = append(results, &paymentreminderports.SendNowResult{
@@ -290,7 +289,7 @@ func (s *Service) SendNow(
 // It returns who the reminder went to; nobody when the customer has no
 // recipients.
 func (s *Service) send(ctx context.Context, from *sender, rem *reminder) ([]string, error) {
-	recipients := recipientsOf(rem.customer)
+	recipients := rem.customer.EmailProfile.Recipients()
 	if len(recipients.To) == 0 {
 		return nil, nil
 	}
@@ -533,23 +532,6 @@ func idempotencyKey(rem *reminder) string {
 	return "payment-reminder-" + hex.EncodeToString(sum[:16])
 }
 
-type recipientList struct {
-	To  []string
-	CC  []string
-	BCC []string
-}
-
-func recipientsOf(cus *customer.Customer) recipientList {
-	if cus == nil || cus.EmailProfile == nil {
-		return recipientList{}
-	}
-	return recipientList{
-		To:  stringutils.SplitEmailList(cus.EmailProfile.ToRecipients),
-		CC:  stringutils.SplitEmailList(cus.EmailProfile.CCRecipients),
-		BCC: stringutils.SplitEmailList(cus.EmailProfile.BCCRecipients),
-	}
-}
-
 func withoutDisputed(invoices []*paymentreminderports.OverdueInvoice) []*paymentreminderports.OverdueInvoice {
 	kept := make([]*paymentreminderports.OverdueInvoice, 0, len(invoices))
 	for _, inv := range invoices {
@@ -600,13 +582,6 @@ func invoiceNumbers(invoices []*paymentreminderports.OverdueInvoice) []string {
 		numbers = append(numbers, inv.InvoiceNumber)
 	}
 	return numbers
-}
-
-func displayName(cus *customer.Customer) string {
-	if cus.Name != "" {
-		return cus.Name
-	}
-	return cus.Code
 }
 
 func appendUnique(list []string, value string) []string {

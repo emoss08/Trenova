@@ -97,7 +97,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1090 writes: 582 GraphQL mutations and 508 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1091 writes: 582 GraphQL mutations and 509 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
@@ -112,10 +112,10 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Read-only | 51 |
 | — Attestation | 46 |
 | — Duplicate | 8 |
-| **Pending** | **31** |
-| Total | 1090 |
+| **Pending** | **32** |
+| Total | 1091 |
 
-Of the 420 writes an agent should be able to make, 389 have a tool (92%).
+Of the 421 writes an agent should be able to make, 389 have a tool (92%).
 
 ## Pending
 
@@ -130,6 +130,7 @@ The writes no tool performs yet, and what the tool would do.
 | collection | `POST /api/v1/accounting/collections/customers/:customerID/reminder/` | Email a customer a reminder of every overdue invoice it has, with a note. |
 | collection | `PUT /api/v1/accounting/collections/customers/:customerID/collector/` | Assign a customer's overdue receivables to a collector, or take them off whoever has them. |
 | collection | `PUT /api/v1/accounting/collections/customers/:customerID/follow-up/` | Schedule when a customer's overdue receivables are next chased, or clear the follow-up. |
+| customerstatement | `POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/` | Email a customer its statement of account as a PDF, with a note. |
 | inboundmessage | `mutation assignInboundMessages` | Assign inbound messages to a person, or take them off whoever has them. |
 | inboundmessage | `mutation handOffTriage` | Hand everything still waiting in Triage to the on-call person at the end of the day. |
 | inboundmessage | `mutation reopenInboundMessages` | Put settled inbound messages back in the Triage queue. |
@@ -199,6 +200,7 @@ The writes no tool performs yet, and what the tool would do.
 | costing | 2 | 0 | 2 | 0 |
 | customer | 4 | 4 | 0 | 0 |
 | customerpayment | 5 | 5 | 0 | 0 |
+| customerstatement | 1 | 0 | 0 | 1 |
 | customfield | 4 | 0 | 4 | 0 |
 | dataentrycontrol | 1 | 0 | 1 | 0 |
 | dataretention | 1 | 0 | 1 | 0 |
@@ -801,6 +803,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation postAndApplyCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/` | Tool: `post_customer_payment` |
 | `mutation reverseCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/:paymentID/reverse/` | Tool: `reverse_customer_payment` |
 | `mutation unapplyCreditMemoApplication`<br>twin `POST /api/v1/accounting/customer-payments/credit-memo-applications/:applicationID/unapply/` | Tool: `unapply_credit_memo` |
+
+### customerstatement
+
+| Write | Decision |
+| --- | --- |
+| `POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/`<br>customerstatementhandler.send | Pending: Email a customer its statement of account as a PDF, with a note. |
 
 ### customfield
 

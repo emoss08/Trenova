@@ -3,6 +3,7 @@ package accountsreceivableservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -149,6 +150,7 @@ func (s *Service) GetCustomerStatement(
 		txn := &customerledgerports.ARStatementTransaction{
 			TransactionDate: entry.TransactionDate,
 			EventType:       entry.EventType,
+			Description:     customerledger.EventLabel(entry.EventType),
 			DocumentNumber:  entry.DocumentNumber,
 			SourceObjectID:  entry.SourceObjectID,
 			AmountMinor:     entry.AmountMinor,

@@ -67,6 +67,7 @@
   "Email content preferences": "電子郵件內容偏好設定",
   "Email invoices": "以電子郵件寄送發票",
   "Email the invoice, and send the EDI 210 when it is on, as soon as the invoice is posted and its PDF is ready. Draft invoices are never sent.": "發票一經過帳且 PDF 就緒，即以電子郵件寄出，並在啟用時傳送 EDI 210。草稿發票一律不會寄出。",
+  "Email this customer a statement of its account each month when billing control sends monthly statements. A statement can still be emailed by hand from its statement page.": "當帳單控制寄送每月對帳單時，每月以電子郵件寄送此客戶的對帳單。仍可從對帳單頁面手動寄送。",
   "Email this customer when invoices go past due, on the schedule in billing control. Turn off for a customer who must never receive an automated reminder.": "發票逾期時依帳單控制的排程寄送電子郵件給此客戶。對於絕不應收到自動提醒的客戶請關閉。",
   "Enforce credit limit": "強制執行信用額度",
   "Enforce customer billing requirements": "強制執行客戶帳務要求",

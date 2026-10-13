@@ -774,6 +774,8 @@ var BillingControlColumns = struct {
 	LateChargeMinimumAmount               buncolgen.Column // "late_charge_minimum_amount" → qualified: "bc.late_charge_minimum_amount"
 	PaymentRemindersEnabled               buncolgen.Column // "payment_reminders_enabled" → qualified: "bc.payment_reminders_enabled"
 	PaymentReminderDays                   buncolgen.Column // "payment_reminder_days" → qualified: "bc.payment_reminder_days"
+	MonthlyStatementsEnabled              buncolgen.Column // "monthly_statements_enabled" → qualified: "bc.monthly_statements_enabled"
+	MonthlyStatementDay                   buncolgen.Column // "monthly_statement_day" → qualified: "bc.monthly_statement_day"
 	Version                               buncolgen.Column // "version" → qualified: "bc.version"
 	CreatedAt                             buncolgen.Column // "created_at" → qualified: "bc.created_at"
 	UpdatedAt                             buncolgen.Column // "updated_at" → qualified: "bc.updated_at"
@@ -808,6 +810,8 @@ var BillingControlColumns = struct {
 	LateChargeMinimumAmount:               buncolgen.NewColumn("late_charge_minimum_amount", "bc"),
 	PaymentRemindersEnabled:               buncolgen.NewColumn("payment_reminders_enabled", "bc"),
 	PaymentReminderDays:                   buncolgen.NewColumn("payment_reminder_days", "bc"),
+	MonthlyStatementsEnabled:              buncolgen.NewColumn("monthly_statements_enabled", "bc"),
+	MonthlyStatementDay:                   buncolgen.NewColumn("monthly_statement_day", "bc"),
 	Version:                               buncolgen.NewColumn("version", "bc"),
 	CreatedAt:                             buncolgen.NewColumn("created_at", "bc"),
 	UpdatedAt:                             buncolgen.NewColumn("updated_at", "bc"),
@@ -848,6 +852,8 @@ var BillingControlFieldMap = map[string]string{
 	"lateChargeMinimumAmount":               "late_charge_minimum_amount",
 	"paymentRemindersEnabled":               "payment_reminders_enabled",
 	"paymentReminderDays":                   "payment_reminder_days",
+	"monthlyStatementsEnabled":              "monthly_statements_enabled",
+	"monthlyStatementDay":                   "monthly_statement_day",
 	"version":                               "version",
 	"createdAt":                             "created_at",
 	"updatedAt":                             "updated_at",
@@ -886,6 +892,8 @@ var BillingControlInsertableColumns = []string{
 	"late_charge_minimum_amount",
 	"payment_reminders_enabled",
 	"payment_reminder_days",
+	"monthly_statements_enabled",
+	"monthly_statement_day",
 	"version",
 	"created_at",
 	"updated_at",
@@ -984,6 +992,8 @@ var BillingControlFilter = struct {
 	LateChargeMinimumAmount               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lateChargeMinimumAmount" → DB: "late_charge_minimum_amount"
 	PaymentRemindersEnabled               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentRemindersEnabled" → DB: "payment_reminders_enabled"
 	PaymentReminderDays                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentReminderDays" → DB: "payment_reminder_days"
+	MonthlyStatementsEnabled              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "monthlyStatementsEnabled" → DB: "monthly_statements_enabled"
+	MonthlyStatementDay                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "monthlyStatementDay" → DB: "monthly_statement_day"
 	Version                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1077,6 +1087,12 @@ var BillingControlFilter = struct {
 	},
 	PaymentReminderDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("paymentReminderDays", op, value)
+	},
+	MonthlyStatementsEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("monthlyStatementsEnabled", op, value)
+	},
+	MonthlyStatementDay: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("monthlyStatementDay", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)

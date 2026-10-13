@@ -4,18 +4,15 @@ package paymentreminderjobs
 
 import (
 	"context"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/billing/app/paymentreminderservice"
+	"github.com/emoss08/trenova/internal/modules/billing/jobs/receivablenotice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -29,11 +26,8 @@ import (
 )
 
 const (
-	SweepWorkflowName        = "PaymentReminderSweepWorkflow"
-	eventNoRecipients        = "payment_reminder_no_recipients"
-	maxNamedCustomers        = 5
-	maxNoticeRecipients      = 25
-	noRecipientNoticeRepeats = 7 * 24 * time.Hour
+	SweepWorkflowName = "PaymentReminderSweepWorkflow"
+	eventNoRecipients = "payment_reminder_no_recipients"
 )
 
 var Module = fx.Module("payment-reminder-jobs",
@@ -113,54 +107,22 @@ func (a *Activities) SweepActivity(ctx context.Context) (*SweepResult, error) {
 		}
 		result.Sent += sent.Sent
 		result.Failed += sent.Failed
-		a.reportNoRecipients(tenantCtx, pagination.TenantInfo{
-			OrgID: control.OrganizationID,
-			BuID:  control.BusinessUnitID,
-		}, sent.NoRecipients, now)
+		receivablenotice.Report(tenantCtx, a.notifier, a.l, &receivablenotice.Unreachable{
+			Tenant: pagination.TenantInfo{
+				OrgID: control.OrganizationID,
+				BuID:  control.BusinessUnitID,
+			},
+			Customers: sent.NoRecipients,
+			Now:       now,
+			EventType: eventNoRecipients,
+			Title:     "Payment reminders could not be sent",
+			Reason: "have overdue invoices but no invoice email recipient. " +
+				"Add one to each customer's email profile so reminders reach them.",
+			Source: "paymentreminderjobs",
+			Link:   "/accounting/ar/collections",
+		})
 	}
 	return result, nil
-}
-
-// reportNoRecipients tells the people who collect receivables which
-// customers a reminder could not reach, at most once a week for the same set.
-func (a *Activities) reportNoRecipients(
-	ctx context.Context,
-	tenant pagination.TenantInfo,
-	customers []string,
-	now int64,
-) {
-	if a.notifier == nil || len(customers) == 0 {
-		return
-	}
-	named := customers
-	if len(named) > maxNamedCustomers {
-		named = named[:maxNamedCustomers]
-	}
-	message := strings.Join(named, ", ")
-	if rest := len(customers) - len(named); rest > 0 {
-		message += " and " + strconv.Itoa(rest) + " more"
-	}
-	correlation := "payment-reminders:" + strings.Join(customers, "|")
-	if _, err := a.notifier.NotifyPermitted(ctx, notificationservice.NotifyPermittedRequest{
-		Tenant:      tenant,
-		Resource:    permission.ResourceCustomerPayment,
-		Operation:   permission.OpCreate,
-		Limit:       maxNoticeRecipients,
-		Now:         now,
-		DedupeSince: now - int64(noRecipientNoticeRepeats.Seconds()),
-		Notification: notification.Notification{
-			EventType: eventNoRecipients,
-			Priority:  notification.PriorityMedium,
-			Title:     "Payment reminders could not be sent",
-			Message: message + " have overdue invoices but no invoice email recipient. " +
-				"Add one to each customer's email profile so reminders reach them.",
-			Source:        "paymentreminderjobs",
-			CorrelationID: &correlation,
-			Data:          map[string]any{"link": "/accounting/ar/collections"},
-		},
-	}); err != nil {
-		a.l.Warn("failed to report customers with no reminder recipients", zap.Error(err))
-	}
 }
 
 var sweepActivityOptions = workflow.ActivityOptions{

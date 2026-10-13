@@ -30,6 +30,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Link } from "react-router";
+import { customerStatementPath } from "@/lib/ar-links";
 import { toast } from "sonner";
 import { Mail01Icon } from "@trenova/shared/components/icons";
 import { ActivityTimeline } from "./activity-timeline";
@@ -124,6 +125,12 @@ function AccountBody({ customerId, view }: { customerId: string; view: Collectio
               to={`/accounting/ar/open-items?customerId=${customerId}`}
             >
               {t("Open items")}
+            </Link>
+            <Link
+              className="ui-focus-ring text-brand rounded-control underline-offset-2 hover:underline"
+              to={customerStatementPath(customerId)}
+            >
+              {t("Statement")}
             </Link>
           </span>
         </DescriptionItem>

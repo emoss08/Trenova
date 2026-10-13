@@ -7,6 +7,7 @@ import (
 type ARStatementTransaction struct {
 	TransactionDate     int64  `json:"transactionDate"`
 	EventType           string `json:"eventType"`
+	Description         string `json:"description"`
 	DocumentNumber      string `json:"documentNumber"`
 	SourceObjectID      string `json:"sourceObjectId"`
 	AmountMinor         int64  `json:"amountMinor"`

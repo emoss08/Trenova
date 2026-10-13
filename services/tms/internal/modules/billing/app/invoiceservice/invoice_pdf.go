@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/shared/addressutils"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -289,13 +290,7 @@ func organizationPDFAddressBlock(org *tenant.Organization) invoicePDFAddressBloc
 	if org == nil {
 		return invoicePDFAddressBlock{}
 	}
-	lines := []string{
-		org.AddressLine1,
-		org.AddressLine2,
-		cityStatePostal(org.City, organizationState(org), org.PostalCode),
-		organizationCountry(org),
-	}
-	return invoicePDFAddressBlock{Name: org.Name, Lines: stringutils.FilterEmpty(lines)}
+	return invoicePDFAddressBlock{Name: org.Name, Lines: org.MailingAddress().Lines()}
 }
 
 func stopPDFAddressBlock(stop *shipment.Stop) invoicePDFAddressBlock {
@@ -590,17 +585,7 @@ func attachmentPDFNames(entity *invoice.Invoice) []string {
 }
 
 func cityStatePostal(city string, state string, postalCode string) string {
-	left := strings.TrimSpace(city)
-	statePostal := strings.TrimSpace(
-		strings.Join(stringutils.FilterEmpty([]string{state, postalCode}), " "),
-	)
-	if left == "" {
-		return statePostal
-	}
-	if statePostal == "" {
-		return left
-	}
-	return left + ", " + statePostal
+	return addressutils.CityStatePostal(city, state, postalCode)
 }
 
 func labeledPDFLine(label string, value string) string {
@@ -629,20 +614,6 @@ func customerCountry(cus *customer.Customer) string {
 		return ""
 	}
 	return cus.State.CountryName
-}
-
-func organizationState(org *tenant.Organization) string {
-	if org == nil || org.State == nil {
-		return ""
-	}
-	return org.State.Abbreviation
-}
-
-func organizationCountry(org *tenant.Organization) string {
-	if org == nil || org.State == nil {
-		return ""
-	}
-	return org.State.CountryName
 }
 
 func organizationDOT(org *tenant.Organization) string {

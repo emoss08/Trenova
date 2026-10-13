@@ -139,6 +139,7 @@ func (r *Registry) registerAll() {
 	r.registerBillingKinds()
 	r.registerInvoiceShareKinds()
 	r.registerPaymentReminderKinds()
+	r.registerCustomerStatementKinds()
 	r.registerDetentionKinds()
 	r.registerRateConfirmationKinds()
 	r.registerReportingKinds()

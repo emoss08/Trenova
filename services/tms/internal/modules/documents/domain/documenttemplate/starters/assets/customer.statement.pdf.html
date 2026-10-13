@@ -1,0 +1,170 @@
+<header class="masthead">
+  <div class="issuer">
+    {{ if .LogoDataURI }}<img class="logo" src="{{ .LogoDataURI }}" alt="{{ .Organization.Name }}">{{ end }}
+    <div class="issuer-name">{{ .Organization.Name }}</div>
+    {{ range .Organization.Lines }}<div class="issuer-line">{{ . }}</div>{{ end }}
+    {{ range .Organization.Details }}<div class="issuer-line">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+
+  <div class="statement-id">
+    <div class="doc-type">{{ t "Statement of account" }}</div>
+    <div class="statement-date">{{ .StatementDate }}</div>
+    <dl class="meta">
+      {{ if .PeriodStart }}<dt>{{ t "Period" }}</dt><dd>{{ t "{0} to {1}" .PeriodStart .StatementDate }}</dd>{{ end }}
+      {{ if .CustomerCode }}<dt>{{ t "Account" }}</dt><dd>{{ .CustomerCode }}</dd>{{ end }}
+      {{ if .CurrencyCode }}<dt>{{ t "Currency" }}</dt><dd>{{ .CurrencyCode }}</dd>{{ end }}
+    </dl>
+  </div>
+</header>
+
+<section class="parties">
+  <div class="party">
+    <h2>{{ t "Statement for" }}</h2>
+    <div class="party-name">{{ .Customer.Name }}</div>
+    {{ range .Customer.Lines }}<div>{{ . }}</div>{{ end }}
+    {{ range .Customer.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+
+  {{ if .RemitTo.Name }}
+  <div class="party">
+    <h2>{{ t "Remit To" }}</h2>
+    <div class="party-name">{{ .RemitTo.Name }}</div>
+    {{ range .RemitTo.Lines }}<div>{{ . }}</div>{{ end }}
+    {{ range .RemitTo.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+  {{ end }}
+</section>
+
+<section class="summary">
+  <div class="figure">
+    <div class="figure-label">{{ t "Opening balance" }}</div>
+    <div class="figure-value">{{ .OpeningBalance }}</div>
+  </div>
+  <div class="figure">
+    <div class="figure-label">{{ t "Charges" }}</div>
+    <div class="figure-value">{{ .TotalCharges }}</div>
+  </div>
+  <div class="figure">
+    <div class="figure-label">{{ t "Payments and credits" }}</div>
+    <div class="figure-value">{{ .TotalPayments }}</div>
+  </div>
+  <div class="figure figure-due">
+    <div class="figure-label">{{ t "Balance due" }}</div>
+    <div class="figure-value">{{ .EndingBalance }}</div>
+    {{ if .PastDue }}<div class="figure-note">{{ t "{0} past due" .PastDue }}</div>{{ end }}
+  </div>
+</section>
+
+{{ if .Note }}
+<section class="block notes">
+  <p>{{ nl2br .Note }}</p>
+</section>
+{{ end }}
+
+<section class="block">
+  <h2>{{ t "Account activity" }}</h2>
+  {{ if .Transactions }}
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>{{ t "Date" }}</th>
+        <th>{{ t "Document" }}</th>
+        <th>{{ t "Description" }}</th>
+        <th class="num">{{ t "Charges" }}</th>
+        <th class="num">{{ t "Payments" }}</th>
+        <th class="num">{{ t "Balance" }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ if .PeriodStart }}
+      <tr class="carried">
+        <td>{{ .PeriodStart }}</td>
+        <td></td>
+        <td>{{ t "Opening balance" }}</td>
+        <td class="num"></td>
+        <td class="num"></td>
+        <td class="num">{{ .OpeningBalance }}</td>
+      </tr>
+      {{ end }}
+      {{ range .Transactions }}
+      <tr>
+        <td>{{ .Date }}</td>
+        <td class="doc">{{ .Document }}</td>
+        <td>{{ .Description }}</td>
+        <td class="num">{{ .Charge }}</td>
+        <td class="num">{{ .Payment }}</td>
+        <td class="num">{{ .Balance }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ else }}
+  <p class="empty">{{ t "No invoice, payment or credit touched this account in the period." }}</p>
+  {{ end }}
+</section>
+
+{{ if .OpenItems }}
+<section class="block">
+  <h2>{{ t "Open invoices" }}</h2>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>{{ t "Invoice" }}</th>
+        <th>{{ t "Issued" }}</th>
+        <th>{{ t "Due" }}</th>
+        <th class="num">{{ t "Days late" }}</th>
+        <th class="num">{{ t "Total" }}</th>
+        <th class="num">{{ t "Open" }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .OpenItems }}
+      <tr>
+        <td class="doc">{{ .InvoiceNumber }}{{ if .Disputed }}<div class="party-detail">{{ t "In dispute" }}</div>{{ end }}</td>
+        <td>{{ .InvoiceDate }}</td>
+        <td>{{ .DueDate }}</td>
+        <td class="num">{{ if gt .DaysPastDue 0 }}{{ .DaysPastDue }}{{ end }}</td>
+        <td class="num">{{ .Total }}</td>
+        <td class="num">{{ .Open }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  <div class="totals">
+    <dl>
+      <dt class="grand">{{ t "Total open" }}</dt><dd class="grand">{{ .TotalOpen }}</dd>
+    </dl>
+  </div>
+</section>
+{{ end }}
+
+<section class="block aging">
+  <h2>{{ t "Aging" }}</h2>
+  <table class="grid aging-grid">
+    <thead>
+      <tr>
+        <th class="num">{{ t "Current" }}</th>
+        <th class="num">{{ t "1-30 days" }}</th>
+        <th class="num">{{ t "31-60 days" }}</th>
+        <th class="num">{{ t "61-90 days" }}</th>
+        <th class="num">{{ t "Over 90 days" }}</th>
+        <th class="num">{{ t "Balance due" }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="num">{{ .Aging.Current }}</td>
+        <td class="num">{{ .Aging.Days1To30 }}</td>
+        <td class="num">{{ .Aging.Days31To60 }}</td>
+        <td class="num">{{ .Aging.Days61To90 }}</td>
+        <td class="num">{{ .Aging.Over90 }}</td>
+        <td class="num strong">{{ .EndingBalance }}</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<footer class="closing">
+  <p>{{ t "If your records differ from this statement, reply to the message it came with and we will reconcile it with you." }}</p>
+  {{ if .InvoiceFooter }}<p>{{ .InvoiceFooter }}</p>{{ end }}
+</footer>

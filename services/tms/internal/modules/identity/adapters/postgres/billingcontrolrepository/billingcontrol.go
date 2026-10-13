@@ -92,6 +92,23 @@ func (r *repository) ListPaymentReminders(ctx context.Context) ([]*tenant.Billin
 	})
 }
 
+func (r *repository) ListMonthlyStatements(ctx context.Context) ([]*tenant.BillingControl, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations that email customers monthly statements")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.BillingControl, error) {
+		cols := tenantcol.BillingControlColumns
+		items := make([]*tenant.BillingControl, 0)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&items).
+			Where(cols.MonthlyStatementsEnabled.IsTrue()).
+			Scan(ctx); err != nil {
+			return nil, fmt.Errorf("list monthly statement billing controls: %w", err)
+		}
+
+		return items, nil
+	})
+}
+
 func (r *repository) Update(
 	ctx context.Context,
 	entity *tenant.BillingControl,

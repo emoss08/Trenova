@@ -457,7 +457,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 				SourceID:             pulid.MustNew("jsrc_"),
 				SourceObjectType:     "CustomerPayment",
 				SourceObjectID:       payment.ID.String(),
-				SourceEventType:      "CustomerPaymentApplied",
+				SourceEventType:      customerledger.EventPaymentApplied,
 				SourceStatus:         entryStatus,
 				SourceDocumentNumber: payment.ReferenceNumber,
 				SourceIdempotencyKey: "customer-payment-applied:" + payment.ID.String() + ":" + strconv.FormatInt(
@@ -475,7 +475,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 				applicationLedgerEntries(&applicationLedgerParams{
 					payment:         payment,
 					applications:    applications,
-					appliedEvent:    "CustomerPaymentApplied",
+					appliedEvent:    customerledger.EventPaymentApplied,
 					transactionDate: req.AccountingDate,
 					actorID:         actor.UserID,
 				}),

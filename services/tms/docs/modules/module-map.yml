@@ -635,10 +635,12 @@ modules:
       - costingcontrol
       - customerledger
       - customerpayment
+      - customerstatement
       - invoice
       - invoiceadjustment
       - invoicerun
       - latecharge
+      - paymentreminder
     service:
       - accountingdriftservice
       - accountsreceivableservice
@@ -655,6 +657,7 @@ modules:
       - costingservice
       - creditreviewservice
       - customerpaymentservice
+      - customerstatementservice
       - detentionbillingservice
       - detentioncreditservice
       - invoiceadjustmentservice
@@ -666,11 +669,14 @@ modules:
       - invoiceshareservice
       - invoicevoid
       - latechargeservice
+      - paymentreminderservice
     job:
       - billingqueuejobs
       - billingtransferjobs
       - creditreviewjobs
+      - customerstatementjobs
       - invoiceadjustmentjobs
+      - paymentreminderjobs
     repository:
       - accountsreceivablerepository
       - bankreceiptbatchrepository
@@ -685,6 +691,7 @@ modules:
       - costingrepository
       - customerledgerrepository
       - customerpaymentrepository
+      - customerstatementrepository
       - invoiceadjustmentrepository
       - invoicedisputerepository
       - invoicerepository
@@ -692,6 +699,7 @@ modules:
       - invoicesharerepository
       - journalrepairrepository
       - latechargerepository
+      - paymentreminderrepository
       - recordversionrepository
   settlement:
     level: 9

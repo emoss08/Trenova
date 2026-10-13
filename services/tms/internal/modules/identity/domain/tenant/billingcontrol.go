@@ -67,6 +67,11 @@ type BillingControl struct {
 	PaymentRemindersEnabled bool    `json:"paymentRemindersEnabled" bun:"payment_reminders_enabled,type:BOOLEAN,notnull,default:false"`
 	PaymentReminderDays     []int32 `json:"paymentReminderDays"     bun:"payment_reminder_days,type:INTEGER[],array,notnull"`
 
+	// MonthlyStatementsEnabled emails every customer with a balance or
+	// activity a statement of the month just closed, on MonthlyStatementDay.
+	MonthlyStatementsEnabled bool  `json:"monthlyStatementsEnabled" bun:"monthly_statements_enabled,type:BOOLEAN,notnull,default:false"`
+	MonthlyStatementDay      int16 `json:"monthlyStatementDay"      bun:"monthly_statement_day,type:SMALLINT,notnull,default:1"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -82,8 +87,16 @@ const MaxPaymentReminderSteps = 6
 // day late, two weeks late, a month late.
 var DefaultPaymentReminderDays = []int32{1, 15, 30}
 
+// MaxMonthlyStatementDay is the latest day of the month statements can go
+// out on, so the day exists in every month.
+const MaxMonthlyStatementDay = 28
+
 func (bc *BillingControl) Validate(multiErr *errortypes.MultiError) {
 	bc.validatePaymentReminderDays(multiErr)
+	if bc.MonthlyStatementDay < 0 || bc.MonthlyStatementDay > MaxMonthlyStatementDay {
+		multiErr.Add("monthlyStatementDay", errortypes.ErrInvalid,
+			"Choose a day between 1 and 28, so it falls in every month")
+	}
 	if bc.LateChargeMinimumAmount.LessThan(decimal.Zero) {
 		multiErr.Add(
 			"lateChargeMinimumAmount",
@@ -153,6 +166,9 @@ func (bc *BillingControl) BeforeAppendModel(_ context.Context, query bun.Query) 
 	now := timeutils.NowUnix()
 	if len(bc.PaymentReminderDays) == 0 {
 		bc.PaymentReminderDays = slices.Clone(DefaultPaymentReminderDays)
+	}
+	if bc.MonthlyStatementDay == 0 {
+		bc.MonthlyStatementDay = 1
 	}
 
 	switch query.(type) {

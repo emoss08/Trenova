@@ -48,3 +48,32 @@ func TestBillingControlStartsWithTheDefaultReminderSchedule(t *testing.T) {
 	assert.Equal(t, []int32{1, 15, 30}, bc.PaymentReminderDays,
 		"a save that leaves the schedule out keeps a usable one")
 }
+
+func TestMonthlyStatementDayMustFallInEveryMonth(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		day   int16
+		valid bool
+	}{
+		{day: 0, valid: true},
+		{day: 1, valid: true},
+		{day: 28, valid: true},
+		{day: 29, valid: false},
+		{day: -1, valid: false},
+	} {
+		bc := &BillingControl{MonthlyStatementsEnabled: true, MonthlyStatementDay: tc.day}
+		multiErr := errortypes.NewMultiError()
+		bc.Validate(multiErr)
+		assert.Equal(t, !tc.valid, hasFieldError(multiErr, "monthlyStatementDay"), "day %d", tc.day)
+	}
+}
+
+func hasFieldError(multiErr *errortypes.MultiError, field string) bool {
+	for _, fieldErr := range multiErr.Errors {
+		if fieldErr.Field == field {
+			return true
+		}
+	}
+	return false
+}

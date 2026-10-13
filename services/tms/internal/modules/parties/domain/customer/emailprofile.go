@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -110,3 +111,22 @@ const (
 	maxEmailSubjectLength   = 255
 	maxAttachmentNameLength = 255
 )
+
+// EmailRecipients is who a customer's billing email goes to.
+type EmailRecipients struct {
+	To  []string
+	CC  []string
+	BCC []string
+}
+
+// Recipients splits the profile's address lists. A nil profile has none.
+func (p *CustomerEmailProfile) Recipients() EmailRecipients {
+	if p == nil {
+		return EmailRecipients{}
+	}
+	return EmailRecipients{
+		To:  stringutils.SplitEmailList(p.ToRecipients),
+		CC:  stringutils.SplitEmailList(p.CCRecipients),
+		BCC: stringutils.SplitEmailList(p.BCCRecipients),
+	}
+}

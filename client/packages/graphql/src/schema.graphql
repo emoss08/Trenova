@@ -1631,6 +1631,10 @@ type ARPaymentStats {
 type ARStatementTransaction {
   amountMinor: Int!
   chargeMinor: Int!
+  """
+  What moved the balance, in words a customer reads: Invoice, Payment, Credit memo.
+  """
+  description: String!
   documentNumber: String!
   eventType: String!
   paymentMinor: Int!
@@ -9715,6 +9719,10 @@ type CustomerBillingProfile {
   Whether the organization's payment reminders may email this customer about overdue invoices.
   """
   sendPaymentReminders: Boolean!
+  """
+  Whether the organization's monthly statements may be emailed to this customer.
+  """
+  sendStatements: Boolean!
   splitBy: InvoiceSplitKey!
   taxExempt: Boolean!
   taxExemptNumber: String!

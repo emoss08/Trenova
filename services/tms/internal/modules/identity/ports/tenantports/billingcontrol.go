@@ -27,4 +27,7 @@ type BillingControlRepository interface {
 	// ListPaymentReminders lists, across every organization, the billing
 	// controls that email customers about overdue invoices.
 	ListPaymentReminders(ctx context.Context) ([]*tenant.BillingControl, error)
+	// ListMonthlyStatements lists, across every organization, the billing
+	// controls that email customers a statement each month.
+	ListMonthlyStatements(ctx context.Context) ([]*tenant.BillingControl, error)
 }

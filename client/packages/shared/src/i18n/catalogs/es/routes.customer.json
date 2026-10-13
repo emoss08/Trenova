@@ -67,6 +67,7 @@
   "Email content preferences": "Preferencias del contenido del correo electrónico",
   "Email invoices": "Enviar facturas por correo",
   "Email the invoice, and send the EDI 210 when it is on, as soon as the invoice is posted and its PDF is ready. Draft invoices are never sent.": "Envía la factura por correo, y el EDI 210 cuando esté activado, en cuanto la factura se contabilice y su PDF esté listo. Las facturas en borrador nunca se envían.",
+  "Email this customer a statement of its account each month when billing control sends monthly statements. A statement can still be emailed by hand from its statement page.": "Envíe a este cliente un estado de cuenta cada mes cuando el control de facturación envía estados de cuenta mensuales. Aún puede enviarse uno manualmente desde su página de estado de cuenta.",
   "Email this customer when invoices go past due, on the schedule in billing control. Turn off for a customer who must never receive an automated reminder.": "Enviar correos a este cliente cuando sus facturas venzan, según el calendario del control de facturación. Desactívelo para un cliente que nunca debe recibir un recordatorio automático.",
   "Enforce credit limit": "Exigir el límite de crédito",
   "Enforce customer billing requirements": "Exigir los requisitos de facturación del cliente",

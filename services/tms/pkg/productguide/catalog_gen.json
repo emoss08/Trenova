@@ -1,5 +1,5 @@
 {
-  "version": "sha256:2e8e377cc2c5cbc8aa74f5014ff38a3a7605a43b6d9100d2003ba5789f9a3f43",
+  "version": "sha256:25ef24f5987e57bc113d163ba2b6601cf0638cac16b1897ee57694166fdf633f",
   "modules": [
     {
       "id": "home",
@@ -435,6 +435,19 @@
           ]
         },
         {
+          "title": "Send a customer its statement",
+          "keywords": [
+            "statement of account",
+            "account statement email",
+            "balance summary"
+          ],
+          "steps": [
+            "Open [Collections](/accounting/ar/collections) and select the customer.",
+            "Under **Receivables**, select **Statement**.",
+            "Select **Email statement**, optionally write a **Note to the customer**, then select **Send statement**."
+          ]
+        },
+        {
           "title": "Assign a collector or schedule a follow-up",
           "keywords": [
             "assign collector",
@@ -820,9 +833,24 @@
             "Open [Open items](/accounting/ar/open-items).",
             "Select the customer's name in the **Customer** column. Their customer statement opens."
           ]
+        },
+        {
+          "title": "Download or email a customer's statement",
+          "keywords": [
+            "statement PDF",
+            "send statement",
+            "statement of account email",
+            "account summary"
+          ],
+          "steps": [
+            "Open [Open items](/accounting/ar/open-items) and select the customer's name in the **Customer** column.",
+            "Optionally set the **Statement date** and **Start date**.",
+            "Select **Download PDF**, or select **Email statement**.",
+            "To email it, optionally write a **Note to the customer**, then select **Send statement**."
+          ]
         }
       ],
-      "notes": "Opening the page needs read access to accounts receivable. **Record payment** and **Apply payment** only appear for people who can create customer payments.",
+      "notes": "Opening the page needs read access to accounts receivable. **Record payment** and **Apply payment** only appear for people who can create customer payments.\n\nThe statement PDF shows the opening balance, every invoice, payment and credit in the period, the balance due, the open invoices and how late they are. **Email statement** sends it to the invoice recipients on the customer's email profile, needs permission to update accounts receivable, and is recorded in the customer's collections history and under **Statements sent** on the statement page. The statement uses your organization's customer statement template, which can be changed in document templates.",
       "related": [
         "/accounting/ar/payments",
         "/accounting/ar/aging",
@@ -3339,9 +3367,24 @@
             "In **Remind on days past due**, list the days to send on, such as 1, 15, 30. The last one is sent as the final reminder.",
             "Select **Save changes**."
           ]
+        },
+        {
+          "title": "Email customers a monthly statement",
+          "keywords": [
+            "monthly statement",
+            "statement of account",
+            "account summary email",
+            "AR statement"
+          ],
+          "steps": [
+            "Open [Billing controls](/admin/billing-controls).",
+            "In **Monthly statements**, turn on **Send monthly statements**.",
+            "Set the **Day of the month to send**, from 1 to 28.",
+            "Select **Save changes**."
+          ]
         }
       ],
-      "notes": "Opening the page needs read access to billing control; saving needs update access. Late charge rates and grace periods are set on each customer's billing profile, not here. In **Preview only** the nightly run writes nothing, and memos are raised by hand on [Late charges](/accounting/ar/late-charges).\n\nPayment reminders go out each morning: a customer with an invoice newly reaching one of the **Remind on days past due** days is emailed one reminder listing every overdue invoice it has. Disputed invoices are left off, and a customer waiting on an open promise to pay recorded in [Collections](/accounting/ar/collections) is not reminded until the promised date passes. Turn off **Send payment reminders** on a customer's billing profile to leave that customer out.",
+      "notes": "Opening the page needs read access to billing control; saving needs update access. Late charge rates and grace periods are set on each customer's billing profile, not here. In **Preview only** the nightly run writes nothing, and memos are raised by hand on [Late charges](/accounting/ar/late-charges).\n\nPayment reminders go out each morning: a customer with an invoice newly reaching one of the **Remind on days past due** days is emailed one reminder listing every overdue invoice it has. Disputed invoices are left off, and a customer waiting on an open promise to pay recorded in [Collections](/accounting/ar/collections) is not reminded until the promised date passes. Turn off **Send payment reminders** on a customer's billing profile to leave that customer out.\n\nMonthly statements cover the calendar month before the **Day of the month to send** and are sent once per customer and month. Customers with a balance, or with any invoice or payment in the month, receive one; a customer whose account was settled and quiet all month does not. Turn off **Send monthly statements** on a customer's billing profile to leave that customer out. Customers with no invoice email recipient are reported to the people who record customer payments.",
       "related": [
         "/billing/queue",
         "/billing/invoices",

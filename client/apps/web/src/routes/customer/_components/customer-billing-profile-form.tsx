@@ -262,6 +262,16 @@ export function CustomerBillingProfileForm() {
               )}
             />
           </FormControl>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="billingProfile.sendStatements"
+              label={t("Send monthly statements")}
+              description={t(
+                "Email this customer a statement of its account each month when billing control sends monthly statements. A statement can still be emailed by hand from its statement page.",
+              )}
+            />
+          </FormControl>
           <FormControl cols="full">
             <div className="flex flex-col gap-2 rounded-md border p-3">
               <p className="text-xs font-medium">{t("Invoice delivery")}</p>

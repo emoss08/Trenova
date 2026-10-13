@@ -5208,6 +5208,8 @@ type ARLedgerEntry {
 type ARStatementTransaction {
   transactionDate: Timestamp!
   eventType: String!
+  "What moved the balance, in words a customer reads: Invoice, Payment, Credit memo."
+  description: String!
   documentNumber: String!
   sourceObjectId: String!
   amountMinor: Int!
@@ -13326,6 +13328,8 @@ type CustomerBillingProfile {
   autoSendInvoiceOnGeneration: Boolean!
   "Whether the organization's payment reminders may email this customer about overdue invoices."
   sendPaymentReminders: Boolean!
+  "Whether the organization's monthly statements may be emailed to this customer."
+  sendStatements: Boolean!
   "Whether invoices may be emailed to this customer."
   emailInvoiceEnabled: Boolean!
   "Whether invoices are sent to this customer's EDI partner as an 210."

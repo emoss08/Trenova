@@ -36,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/customerstatementhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
@@ -139,7 +140,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/requestid"
-
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -244,6 +244,7 @@ type RouterParams struct {
 	AccountingControlHandler        *accountingcontrolhandler.Handler
 	AccountsReceivableHandler       *accountsreceivablehandler.Handler
 	CollectionHandler               *collectionhandler.Handler
+	CustomerStatementHandler        *customerstatementhandler.Handler
 	AccountTypeHandler              *accounttypehandler.Handler
 	AssignmentHandler               *assignmenthandler.Handler
 	GLAccountHandler                *glaccounthandler.Handler
@@ -386,6 +387,7 @@ type Router struct {
 	accountingControlHandler        *accountingcontrolhandler.Handler
 	accountsReceivableHandler       *accountsreceivablehandler.Handler
 	collectionHandler               *collectionhandler.Handler
+	customerStatementHandler        *customerstatementhandler.Handler
 	accountTypeHandler              *accounttypehandler.Handler
 	assignmentHandler               *assignmenthandler.Handler
 	glAccountHandler                *glaccounthandler.Handler
@@ -530,6 +532,7 @@ func NewRouter(p RouterParams) *Router {
 		accountingControlHandler:        p.AccountingControlHandler,
 		accountsReceivableHandler:       p.AccountsReceivableHandler,
 		collectionHandler:               p.CollectionHandler,
+		customerStatementHandler:        p.CustomerStatementHandler,
 		accountTypeHandler:              p.AccountTypeHandler,
 		assignmentHandler:               p.AssignmentHandler,
 		glAccountHandler:                p.GLAccountHandler,
@@ -733,6 +736,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.accountingControlHandler.RegisterRoutes(protected)
 	r.accountsReceivableHandler.RegisterRoutes(protected)
 	r.collectionHandler.RegisterRoutes(protected)
+	r.customerStatementHandler.RegisterRoutes(protected)
 	r.accountTypeHandler.RegisterRoutes(protected)
 	r.assignmentHandler.RegisterRoutes(protected)
 	r.glAccountHandler.RegisterRoutes(protected)

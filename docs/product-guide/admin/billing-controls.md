@@ -83,6 +83,13 @@ Keywords: dunning, overdue reminder, past due email, collection letter
    sent as the final reminder.
 4. Select **Save changes**.
 
+### Email customers a monthly statement
+Keywords: monthly statement, statement of account, account summary email, AR statement
+1. Open [Billing controls](/admin/billing-controls).
+2. In **Monthly statements**, turn on **Send monthly statements**.
+3. Set the **Day of the month to send**, from 1 to 28.
+4. Select **Save changes**.
+
 ## Notes
 Opening the page needs read access to billing control; saving needs update access. Late charge
 rates and grace periods are set on each customer's billing profile, not here. In **Preview only**
@@ -94,3 +101,9 @@ Payment reminders go out each morning: a customer with an invoice newly reaching
 Disputed invoices are left off, and a customer waiting on an open promise to pay recorded in
 [Collections](/accounting/ar/collections) is not reminded until the promised date passes. Turn off
 **Send payment reminders** on a customer's billing profile to leave that customer out.
+
+Monthly statements cover the calendar month before the **Day of the month to send** and are sent
+once per customer and month. Customers with a balance, or with any invoice or payment in the month,
+receive one; a customer whose account was settled and quiet all month does not. Turn off **Send
+monthly statements** on a customer's billing profile to leave that customer out. Customers with no
+invoice email recipient are reported to the people who record customer payments.
