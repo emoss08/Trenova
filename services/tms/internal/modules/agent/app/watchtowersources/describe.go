@@ -733,13 +733,6 @@ func DescribeNoCheckCall(
 			"h check call window on this load."
 	}
 
-	path := pathDispatchConsole
-	if move.ShipmentID.IsNotNil() {
-		if recordPath, ok := productguide.RecordPath("shipment", move.ShipmentID.String()); ok {
-			path = recordPath
-		}
-	}
-
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
 		SourceKind:  watchtower.SourceNoCheckCall,
@@ -749,8 +742,9 @@ func DescribeNoCheckCall(
 		Summary:     summary,
 		SubjectType: agent.SubjectShipmentMove,
 		SubjectID:   move.MoveID,
-		Path:        path,
+		Path:        shipmentPath(move.ShipmentID),
 		OccurredAt:  move.LastContactAt + window,
+		OwnerID:     move.OwnerID,
 	}
 }
 
@@ -780,11 +774,6 @@ func DescribeEtaRisk(
 		summary += " The projection is working from old information."
 	}
 
-	path := pathDispatchConsole
-	if recordPath, ok := productguide.RecordPath("shipment", row.ShipmentID.String()); ok {
-		path = recordPath
-	}
-
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
 		SourceKind:  watchtower.SourceEtaAtRisk,
@@ -794,8 +783,9 @@ func DescribeEtaRisk(
 		Summary:     summary,
 		SubjectType: agent.SubjectShipment,
 		SubjectID:   row.ShipmentID,
-		Path:        path,
+		Path:        shipmentPath(row.ShipmentID),
 		OccurredAt:  etaRiskOccurredAt(row, late),
+		OwnerID:     stop.OwnerID,
 	}
 }
 

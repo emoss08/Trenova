@@ -1461,6 +1461,14 @@ export type AssignShiftInput = {
   workerId: string | number;
 };
 
+export type AssignWatchtowerItemInput = {
+  /** The new owner; omit to leave the exception with nobody. */
+  assigneeId?: string | number | null | undefined;
+  /** The version the person was looking at; a newer one refuses the change. */
+  expectedVersion?: number | null | undefined;
+  note?: string | null | undefined;
+};
+
 export type AssignWorkerPtoPolicyInput = {
   effectiveFrom: number;
   note?: string | null | undefined;
@@ -5692,6 +5700,11 @@ export type RemoveSettlementAdjustmentInput = {
   settlementId: string | number;
 };
 
+export type ReopenWatchtowerItemInput = {
+  expectedVersion?: number | null | undefined;
+  note?: string | null | undefined;
+};
+
 export type ReportBandInput = {
   edges?: Array<number> | null | undefined;
   width?: number | null | undefined;
@@ -5951,6 +5964,13 @@ export type ResolveSettlementDisputeInput = {
   approve: boolean;
   disputeId: string | number;
   resolutionNote: string;
+};
+
+export type ResolveWatchtowerItemInput = {
+  code: WatchtowerResolutionCode;
+  expectedVersion?: number | null | undefined;
+  /** Required when the code is Other. */
+  note?: string | null | undefined;
 };
 
 export type RespondToMyAssignmentInput = {
@@ -6367,6 +6387,13 @@ export type SetOrderChargeAllocationsInput = {
   allocations: Array<ChargeAllocationInput>;
   chargeId: string | number;
   orderId: string | number;
+};
+
+export type SetWatchtowerItemDueInput = {
+  /** The new due time; omit to clear it. */
+  dueAt?: number | null | undefined;
+  expectedVersion?: number | null | undefined;
+  note?: string | null | undefined;
 };
 
 export type SettlementBatchStatus =
@@ -6940,6 +6967,12 @@ export type SnoozeInboundMessagesInput = {
   event?: InboundSnoozeEvent | null | undefined;
   /** Until a time. Exactly one of until and event is set. */
   until?: number | null | undefined;
+};
+
+export type SnoozeWatchtowerItemInput = {
+  expectedVersion?: number | null | undefined;
+  note?: string | null | undefined;
+  until: number;
 };
 
 export type SortFieldInput = {
@@ -7913,18 +7946,79 @@ export type WaiveWorkerTrainingInput = {
   version?: number | null | undefined;
 };
 
+/** What happened to an exception, one line of its history. */
+export type WatchtowerItemEventKind =
+  | 'Acknowledged'
+  | 'Assigned'
+  | 'Commented'
+  | 'Created'
+  | 'DueChanged'
+  | 'Escalated'
+  | 'Reopened'
+  | 'Resolved'
+  | 'Snoozed'
+  | 'SourceReopened'
+  | 'SourceResolved'
+  | 'Started'
+  | 'Unassigned'
+  | 'Woke';
+
+/** Where an exception is in its owner's hands. */
+export type WatchtowerItemStatus =
+  | 'Acknowledged'
+  | 'InProgress'
+  | 'Open'
+  | 'Resolved'
+  | 'Snoozed';
+
 export type WatchtowerItemsInput = {
   after?: string | null | undefined;
+  /** Only what this reader owns. */
+  assignedToMe?: boolean | null | undefined;
+  /** Only what these people own. */
+  assigneeIds?: Array<string | number> | null | undefined;
   first?: number | null | undefined;
   /** Only these kinds; empty is every kind the reader may see. */
   kinds?: Array<WatchtowerSourceKind> | null | undefined;
+  /** Soonest due first, items without a due time last, instead of newest first. */
+  orderByDue?: boolean | null | undefined;
+  /** Only what is open, not snoozed and past its due time. */
+  overdueOnly?: boolean | null | undefined;
   /** Only these severities; empty is all three. */
   severities?: Array<WatchtowerSeverity> | null | undefined;
   /** Only what occurred at or after this instant. */
   since?: number | null | undefined;
+  /** Only these statuses; empty is all of them. */
+  statuses?: Array<WatchtowerItemStatus> | null | undefined;
+  /** Only items about this record. */
+  subjectId?: string | number | null | undefined;
+  /** Only what nobody owns; with assigneeIds, what nobody or one of them owns. */
+  unassigned?: boolean | null | undefined;
   /** Leave out what has already resolved. */
   unresolvedOnly?: boolean | null | undefined;
 };
+
+/**
+ * Why an exception was closed. Cleared is the system's own code for a source
+ * that stopped reporting the problem; a person picks one of the others, and
+ * Other needs a note.
+ */
+export type WatchtowerResolutionCode =
+  | 'CarrierDelay'
+  | 'Cleared'
+  | 'CustomerChange'
+  | 'DataCorrected'
+  | 'DocumentReceived'
+  | 'DriverIssue'
+  | 'Duplicate'
+  | 'Equipment'
+  | 'Fixed'
+  | 'NoActionNeeded'
+  | 'Other'
+  | 'ReceiverDelay'
+  | 'Rescheduled'
+  | 'ShipperDelay'
+  | 'Weather';
 
 /** How loudly an item asks to be looked at. */
 export type WatchtowerSeverity =
@@ -7952,10 +8046,14 @@ export type WatchtowerSourceKind =
   | 'HOSViolation'
   | 'InboundMessage'
   | 'Insight'
+  | 'MissedDelivery'
+  | 'MissedPickup'
   | 'MoveCoverage'
   | 'NoCheckCall'
+  | 'PodMissing'
   | 'ServiceFailure'
   | 'TelematicsStopVisit'
+  | 'TenderExhausted'
   | 'WeatherAlert'
   | 'WorkerCredential';
 
@@ -16156,9 +16254,11 @@ export type UserTableQueryVariables = Exact<{
 
 export type UserTableQuery = { users: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'UserTableRowFieldsFragment': UserTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type WatchtowerItemFieldsFragment = { id: string, sourceKind: WatchtowerSourceKind, sourceId: string, severity: WatchtowerSeverity, title: string, summary: string, subjectType: AgentSubjectType | null, subjectId: string | null, eventKind: string | null, path: string, occurredAt: number, resolvedAt: number | null, seen: boolean, kindLabel: string } & { ' $fragmentName'?: 'WatchtowerItemFieldsFragment' };
+export type WatchtowerItemFieldsFragment = { id: string, sourceKind: WatchtowerSourceKind, sourceId: string, severity: WatchtowerSeverity, title: string, summary: string, subjectType: AgentSubjectType | null, subjectId: string | null, eventKind: string | null, path: string, occurredAt: number, resolvedAt: number | null, seen: boolean, kindLabel: string, version: number, status: WatchtowerItemStatus, assigneeId: string | null, dueAt: number | null, overdue: boolean, snoozedUntil: number | null, acknowledgedAt: number | null, resolutionCode: WatchtowerResolutionCode | null, resolutionNote: string | null, resolvedById: string | null, sourceClearedAt: number | null, escalationLevel: number, lastEscalatedAt: number | null, assignee: { id: string, name: string } | null, resolvedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'WatchtowerItemFieldsFragment' };
 
-export type WatchtowerCountsFieldsFragment = { unresolved: number, critical: number, unseen: number, unseenCritical: number, seenAt: number, byKind: Array<{ kind: WatchtowerSourceKind, label: string, count: number }> } & { ' $fragmentName'?: 'WatchtowerCountsFieldsFragment' };
+export type WatchtowerItemEventFieldsFragment = { id: string, itemId: string, kind: WatchtowerItemEventKind, actorId: string | null, fromValue: string, toValue: string, note: string, createdAt: number, actor: { id: string, name: string } | null } & { ' $fragmentName'?: 'WatchtowerItemEventFieldsFragment' };
+
+export type WatchtowerCountsFieldsFragment = { unresolved: number, critical: number, unseen: number, unseenCritical: number, overdue: number, unassigned: number, mine: number, mineOverdue: number, seenAt: number, byKind: Array<{ kind: WatchtowerSourceKind, label: string, count: number }> } & { ' $fragmentName'?: 'WatchtowerCountsFieldsFragment' };
 
 export type WatchtowerFeedQueryVariables = Exact<{
   input: WatchtowerItemsInput;
@@ -16193,6 +16293,90 @@ export type HandOffWatchtowerItemMutationVariables = Exact<{
 
 
 export type HandOffWatchtowerItemMutation = { handOffWatchtowerItem: { templates: Array<string>, item: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } }, run: { id: string, status: AgentRunStatus } | null, subscribers: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }>, candidates: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }> } };
+
+export type WatchtowerItemDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type WatchtowerItemDetailQuery = { watchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
+
+export type WatchtowerItemHistoryQueryVariables = Exact<{
+  id: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type WatchtowerItemHistoryQuery = { watchtowerItemHistory: Array<{ ' $fragmentRefs'?: { 'WatchtowerItemEventFieldsFragment': WatchtowerItemEventFieldsFragment } }> };
+
+export type WatchtowerResolutionCodesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type WatchtowerResolutionCodesQuery = { watchtowerResolutionCodes: Array<{ code: WatchtowerResolutionCode, label: string, requiresNote: boolean }> };
+
+export type AssignWatchtowerItemMutationVariables = Exact<{
+  id: string | number;
+  input: AssignWatchtowerItemInput;
+}>;
+
+
+export type AssignWatchtowerItemMutation = { assignWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
+
+export type AcknowledgeWatchtowerItemMutationVariables = Exact<{
+  id: string | number;
+  expectedVersion?: number | null | undefined;
+}>;
+
+
+export type AcknowledgeWatchtowerItemMutation = { acknowledgeWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
+
+export type StartWatchtowerItemMutationVariables = Exact<{
+  id: string | number;
+  expectedVersion?: number | null | undefined;
+}>;
+
+
+export type StartWatchtowerItemMutation = { startWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
+
+export type SnoozeWatchtowerItemMutationVariables = Exact<{
+  id: string | number;
+  input: SnoozeWatchtowerItemInput;
+}>;
+
+
+export type SnoozeWatchtowerItemMutation = { snoozeWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
+
+export type SetWatchtowerItemDueMutationVariables = Exact<{
+  id: string | number;
+  input: SetWatchtowerItemDueInput;
+}>;
+
+
+export type SetWatchtowerItemDueMutation = { setWatchtowerItemDue: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
+
+export type CommentOnWatchtowerItemMutationVariables = Exact<{
+  id: string | number;
+  body: string;
+}>;
+
+
+export type CommentOnWatchtowerItemMutation = { commentOnWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemEventFieldsFragment': WatchtowerItemEventFieldsFragment } } };
+
+export type ResolveWatchtowerItemMutationVariables = Exact<{
+  id: string | number;
+  input: ResolveWatchtowerItemInput;
+}>;
+
+
+export type ResolveWatchtowerItemMutation = { resolveWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
+
+export type ReopenWatchtowerItemMutationVariables = Exact<{
+  id: string | number;
+  input: ReopenWatchtowerItemInput;
+}>;
+
+
+export type ReopenWatchtowerItemMutation = { reopenWatchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
 
 export type WorkerChecklistTemplateItemFieldsFragment = { id: string, templateId: string, label: string, description: string | null, kind: WorkerChecklistItemKind, required: boolean, dueOffsetDays: number, owner: WorkerChecklistOwner, credentialTypeId: string | null, documentTypeId: string | null, documentTypeName: string | null, sortOrder: number, credentialType: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'WorkerChecklistTemplateItemFieldsFragment' };
 
@@ -26809,14 +26993,55 @@ export const WatchtowerItemFieldsFragmentDoc = new TypedDocumentString(`
   resolvedAt
   seen
   kindLabel
+  version
+  status
+  assigneeId
+  assignee {
+    id
+    name
+  }
+  dueAt
+  overdue
+  snoozedUntil
+  acknowledgedAt
+  resolutionCode
+  resolutionNote
+  resolvedById
+  resolvedBy {
+    id
+    name
+  }
+  sourceClearedAt
+  escalationLevel
+  lastEscalatedAt
 }
     `, {"fragmentName":"WatchtowerItemFields"}) as unknown as TypedDocumentString<WatchtowerItemFieldsFragment, unknown>;
+export const WatchtowerItemEventFieldsFragmentDoc = new TypedDocumentString(`
+    fragment WatchtowerItemEventFields on WatchtowerItemEvent {
+  id
+  itemId
+  kind
+  actorId
+  actor {
+    id
+    name
+  }
+  fromValue
+  toValue
+  note
+  createdAt
+}
+    `, {"fragmentName":"WatchtowerItemEventFields"}) as unknown as TypedDocumentString<WatchtowerItemEventFieldsFragment, unknown>;
 export const WatchtowerCountsFieldsFragmentDoc = new TypedDocumentString(`
     fragment WatchtowerCountsFields on WatchtowerCounts {
   unresolved
   critical
   unseen
   unseenCritical
+  overdue
+  unassigned
+  mine
+  mineOverdue
   seenAt
   byKind {
     kind
@@ -28703,11 +28928,22 @@ export const DeskTractorPositionDocument = {"__meta__":{"kind":"query","name":"D
 export const DeskTractorInspectionsDocument = {"__meta__":{"kind":"query","name":"DeskTractorInspections","hash":"sha256:2742f209aa41823b96826c84706fea9b44f24df2dc30cb10b92e518b2f65a325"}} as unknown as TypedDocumentString<DeskTractorInspectionsQuery, DeskTractorInspectionsQueryVariables>;
 export const DeskTrailerCardDocument = {"__meta__":{"kind":"query","name":"DeskTrailerCard","hash":"sha256:0a228b3ed6cf7d63b60e5ab74e5316d0db769b5c08ecec9ccf5df21e0e74682c"}} as unknown as TypedDocumentString<DeskTrailerCardQuery, DeskTrailerCardQueryVariables>;
 export const UserTableDocument = {"__meta__":{"kind":"query","name":"UserTable","hash":"sha256:40300ce9b4742ab9f0008bfa9e6af539b18334e725df797823f41d75af2f3b48"}} as unknown as TypedDocumentString<UserTableQuery, UserTableQueryVariables>;
-export const WatchtowerFeedDocument = {"__meta__":{"kind":"query","name":"WatchtowerFeed","hash":"sha256:ceca8b044fbd37d9f5a5e86dbe6d66b6b6c8696ba19d2ac18418fde175b16e37"}} as unknown as TypedDocumentString<WatchtowerFeedQuery, WatchtowerFeedQueryVariables>;
-export const WatchtowerCountsDocument = {"__meta__":{"kind":"query","name":"WatchtowerCounts","hash":"sha256:9abddd9875a5ae7d5580f430cbfc811d4c5b7f7058e05d91b7555b02b5018b1e"}} as unknown as TypedDocumentString<WatchtowerCountsQuery, WatchtowerCountsQueryVariables>;
-export const MarkWatchtowerSeenDocument = {"__meta__":{"kind":"mutation","name":"MarkWatchtowerSeen","hash":"sha256:93e4737258bcf6abb3f847b3db83650975d88d250ddf6ddf82587f23ed165c3e"}} as unknown as TypedDocumentString<MarkWatchtowerSeenMutation, MarkWatchtowerSeenMutationVariables>;
-export const DismissWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"DismissWatchtowerItem","hash":"sha256:a4d52c1f24091bec9e7b5e7bd5c3de38363d559b903c74333c452e2f4331fbf6"}} as unknown as TypedDocumentString<DismissWatchtowerItemMutation, DismissWatchtowerItemMutationVariables>;
-export const HandOffWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"HandOffWatchtowerItem","hash":"sha256:49824f70ee0a28ce5164f83c692d2a33d019e4baa4f4b5d179dfda66fb2d7069"}} as unknown as TypedDocumentString<HandOffWatchtowerItemMutation, HandOffWatchtowerItemMutationVariables>;
+export const WatchtowerFeedDocument = {"__meta__":{"kind":"query","name":"WatchtowerFeed","hash":"sha256:3f52f13aec49b1128fc1b1955c6b7a0d8b8e47dd2a9a45224bb6e8dacdba582a"}} as unknown as TypedDocumentString<WatchtowerFeedQuery, WatchtowerFeedQueryVariables>;
+export const WatchtowerCountsDocument = {"__meta__":{"kind":"query","name":"WatchtowerCounts","hash":"sha256:073ddd4e0e470a06f6f7797fa05c60331d56ca83cb28ca00f524fa03a1b60444"}} as unknown as TypedDocumentString<WatchtowerCountsQuery, WatchtowerCountsQueryVariables>;
+export const MarkWatchtowerSeenDocument = {"__meta__":{"kind":"mutation","name":"MarkWatchtowerSeen","hash":"sha256:c9e3c936c6c704c21bf0a0022b6cf87f6fa6864b8c652baac631028a15cf4e53"}} as unknown as TypedDocumentString<MarkWatchtowerSeenMutation, MarkWatchtowerSeenMutationVariables>;
+export const DismissWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"DismissWatchtowerItem","hash":"sha256:2265958f7a1202fcb032882bcfe6804ff43d67833dd62196d6e0fc4f6315634a"}} as unknown as TypedDocumentString<DismissWatchtowerItemMutation, DismissWatchtowerItemMutationVariables>;
+export const HandOffWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"HandOffWatchtowerItem","hash":"sha256:52a2ecc5e41d8a8d7ac4c8ea7cce629852918d38036807e4c1d2e8c0cb048061"}} as unknown as TypedDocumentString<HandOffWatchtowerItemMutation, HandOffWatchtowerItemMutationVariables>;
+export const WatchtowerItemDetailDocument = {"__meta__":{"kind":"query","name":"WatchtowerItemDetail","hash":"sha256:cc3d15d2c55d2ff48138fcd5ecf077d59b9030a4abcf2e8c3356ff6c17c3ec1e"}} as unknown as TypedDocumentString<WatchtowerItemDetailQuery, WatchtowerItemDetailQueryVariables>;
+export const WatchtowerItemHistoryDocument = {"__meta__":{"kind":"query","name":"WatchtowerItemHistory","hash":"sha256:aea09d5f672bdffd15a7afaf61cae03a37f91c7b465b7b287acf22616d7b95a0"}} as unknown as TypedDocumentString<WatchtowerItemHistoryQuery, WatchtowerItemHistoryQueryVariables>;
+export const WatchtowerResolutionCodesDocument = {"__meta__":{"kind":"query","name":"WatchtowerResolutionCodes","hash":"sha256:dbad5d254c0ae5b5dbcbc14fe3f069b7633a380b7a33fe98cedd4dc96c4b06b2"}} as unknown as TypedDocumentString<WatchtowerResolutionCodesQuery, WatchtowerResolutionCodesQueryVariables>;
+export const AssignWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"AssignWatchtowerItem","hash":"sha256:85558f6c116fe2a920e4ea9c3fd7a274323293c2adf2da689bb16568fb303b15"}} as unknown as TypedDocumentString<AssignWatchtowerItemMutation, AssignWatchtowerItemMutationVariables>;
+export const AcknowledgeWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"AcknowledgeWatchtowerItem","hash":"sha256:83a4692566dc81cd27cd6a8e5fc189933065241fdea89876a0874e3af8f90809"}} as unknown as TypedDocumentString<AcknowledgeWatchtowerItemMutation, AcknowledgeWatchtowerItemMutationVariables>;
+export const StartWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"StartWatchtowerItem","hash":"sha256:778419af97106f28ecd08c9223e5f40463670d03b718d6439a7e3d35c4fce286"}} as unknown as TypedDocumentString<StartWatchtowerItemMutation, StartWatchtowerItemMutationVariables>;
+export const SnoozeWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"SnoozeWatchtowerItem","hash":"sha256:fee8fd7ed2e3939921f5aebbb33447c6f37c66b344f0ce4ada300817ac83a94c"}} as unknown as TypedDocumentString<SnoozeWatchtowerItemMutation, SnoozeWatchtowerItemMutationVariables>;
+export const SetWatchtowerItemDueDocument = {"__meta__":{"kind":"mutation","name":"SetWatchtowerItemDue","hash":"sha256:206d9151cd019cb96dd42fb8796f29c03c7fb48dd36eaf1f8f98d0ea5a45fc3e"}} as unknown as TypedDocumentString<SetWatchtowerItemDueMutation, SetWatchtowerItemDueMutationVariables>;
+export const CommentOnWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"CommentOnWatchtowerItem","hash":"sha256:6fa21a37926aefdbea27868a2cfbebd15eabcc154e4e5e3686b88b7c8d104599"}} as unknown as TypedDocumentString<CommentOnWatchtowerItemMutation, CommentOnWatchtowerItemMutationVariables>;
+export const ResolveWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"ResolveWatchtowerItem","hash":"sha256:911ba448d2c6a0ce8cfe68228e6905dba0b518669c6c59ef197ae996b3a61fae"}} as unknown as TypedDocumentString<ResolveWatchtowerItemMutation, ResolveWatchtowerItemMutationVariables>;
+export const ReopenWatchtowerItemDocument = {"__meta__":{"kind":"mutation","name":"ReopenWatchtowerItem","hash":"sha256:1f2401249714a045d22ebd98ecfa3cc8248ce33974e878463484f9c639a45287"}} as unknown as TypedDocumentString<ReopenWatchtowerItemMutation, ReopenWatchtowerItemMutationVariables>;
 export const WorkerChecklistTemplateTableDocument = {"__meta__":{"kind":"query","name":"WorkerChecklistTemplateTable","hash":"sha256:f2eda82e9be4f74f7c9dc81c979e31c50ed9bc54a77cbc16e0faeecbc20376e2"}} as unknown as TypedDocumentString<WorkerChecklistTemplateTableQuery, WorkerChecklistTemplateTableQueryVariables>;
 export const ActiveWorkerChecklistTemplatesDocument = {"__meta__":{"kind":"query","name":"ActiveWorkerChecklistTemplates","hash":"sha256:7ea423ffb6c8654acdf33a23df25d34a19e6af10a5300c0a6f3bf0f0f25a30ab"}} as unknown as TypedDocumentString<ActiveWorkerChecklistTemplatesQuery, ActiveWorkerChecklistTemplatesQueryVariables>;
 export const WorkerChecklistsDocument = {"__meta__":{"kind":"query","name":"WorkerChecklists","hash":"sha256:04a8feaf12d8632f22968dc84a503969e99a8a2475d5dd7db3f25cf26416fcea"}} as unknown as TypedDocumentString<WorkerChecklistsQuery, WorkerChecklistsQueryVariables>;

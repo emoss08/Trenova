@@ -45,6 +45,28 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			},
 		},
 		{
+			ID:            "exception-attention",
+			Description:   "Wake snoozed exceptions and escalate overdue ones",
+			Spec:          schedule.Every(5 * time.Minute),
+			Workflow:      ExceptionAttentionWorkflow,
+			TaskQueue:     temporaltype.TaskQueueSystem.String(),
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "exception-attention",
+			},
+		},
+		{
+			ID:            "shipment-exception-sweep",
+			Description:   "Raise and clear missed stops, missing PODs and exhausted tenders",
+			Spec:          schedule.Every(10 * time.Minute),
+			Workflow:      ShipmentExceptionSweepWorkflow,
+			TaskQueue:     temporaltype.TaskQueueSystem.String(),
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "shipment-exception-sweep",
+			},
+		},
+		{
 			ID:          "watchtower-retention",
 			Description: "Remove watchtower items resolved more than a month ago",
 			// Weekly is often enough for a month-long window, and it keeps

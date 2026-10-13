@@ -24,8 +24,10 @@ type ProjectorParams struct {
 
 	Logger        *zap.Logger
 	Repo          watchtowerports.WatchtowerRepository
-	Realtime      agentports.RealtimeService   `optional:"true"`
-	Notifications *notificationservice.Service `optional:"true"`
+	Router        *Router
+	Permissions   permissionports.PermissionEngine `optional:"true"`
+	Realtime      agentports.RealtimeService       `optional:"true"`
+	Notifications *notificationservice.Service     `optional:"true"`
 }
 
 // Projector is the watchtower's write face: what the sources put on the
@@ -44,6 +46,8 @@ type ProjectorParams struct {
 type Projector struct {
 	l             *zap.Logger
 	repo          watchtowerports.WatchtowerRepository
+	router        *Router
+	access        kindAccess
 	realtime      agentports.RealtimeService
 	notifications *notificationservice.Service
 	now           func() int64
@@ -53,6 +57,8 @@ func NewProjector(p ProjectorParams) *Projector {
 	return &Projector{
 		l:             p.Logger.Named("service.watchtower.projector"),
 		repo:          p.Repo,
+		router:        p.Router,
+		access:        kindAccess{permissions: p.Permissions},
 		realtime:      p.Realtime,
 		notifications: p.Notifications,
 		now:           timeutils.NowUnix,
@@ -115,6 +121,8 @@ func (p *Projector) upsert(
 	if err != nil {
 		return err
 	}
+
+	saved = p.route(ctx, saved, input.OwnerID, inserted)
 
 	action := agentports.ActivityUpdated
 	if inserted {
@@ -196,19 +204,13 @@ func (p *Projector) notifyCritical(ctx context.Context, item *watchtower.Item) {
 		Limit:     maxCriticalRecipients,
 		Now:       p.now(),
 		Notification: notification.Notification{
-			EventType:     EventCritical,
-			Priority:      notification.PriorityHigh,
-			Title:         item.Title,
-			Message:       item.Summary,
-			Source:        notificationSource,
-			CorrelationID: &correlation,
-			Data: map[string]any{
-				"link":       link,
-				"itemId":     item.ID.String(),
-				"sourceKind": string(item.SourceKind),
-				"sourceId":   item.SourceID,
-				"severity":   string(item.Severity),
-			},
+			EventType:       EventCritical,
+			Priority:        notification.PriorityHigh,
+			Title:           item.Title,
+			Message:         item.Summary,
+			Source:          notificationSource,
+			CorrelationID:   &correlation,
+			Data:            noticeData(item, link),
 			RelatedEntities: map[string]any{"watchtowerItemId": item.ID.String()},
 		},
 	}); err != nil {

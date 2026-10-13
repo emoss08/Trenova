@@ -1,4 +1,10 @@
 aliases:
+  WatchtowerItem:
+    assignee: assigneeId
+    resolvedBy: resolvedById
+    overdue: dueAt
+  WatchtowerItemEvent:
+    actor: actorId
   AgentToolRule:
     updatedBy: updatedById
   Shipment:
@@ -490,6 +496,9 @@ modelOverrides:
   ShipmentCommentEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
 
 always:
+  WatchtowerItem:
+    - status
+    - resolvedAt
   AgentMemory:
     - supersedesId
   AccountingDriftFinding:

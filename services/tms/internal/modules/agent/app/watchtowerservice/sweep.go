@@ -93,7 +93,7 @@ func (s *Service) sweep(
 		}
 		resolved, rErr := s.repo.ResolveMissing(
 			ctx,
-			watchtowerports.ResolveMissingWatchtowerItemsRequest{
+			&watchtowerports.ResolveMissingWatchtowerItemsRequest{
 				TenantInfo:    tenant,
 				SourceKind:    kind,
 				OpenSourceIDs: open,

@@ -92,17 +92,17 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 94 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 34 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 46 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 48 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 8 |
 
 ## Totals
 
-1103 writes: 585 GraphQL mutations and 518 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1111 writes: 593 GraphQL mutations and 518 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 390 |
-| Exempt | 679 |
+| Covered by a tool | 396 |
+| Exempt | 681 |
 | — Security | 80 |
 | — Configuration | 271 |
 | — User preference | 38 |
@@ -110,12 +110,12 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Agent administration | 94 |
 | — Counterparty | 34 |
 | — Read-only | 56 |
-| — Attestation | 46 |
+| — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1103 |
+| Total | 1111 |
 
-Of the 424 writes an agent should be able to make, 390 have a tool (91%).
+Of the 430 writes an agent should be able to make, 396 have a tool (92%).
 
 ## Pending
 
@@ -323,7 +323,7 @@ The writes no tool performs yet, and what the tool would do.
 | triage | 8 | 0 | 6 | 2 |
 | user | 20 | 0 | 20 | 0 |
 | version | 1 | 0 | 1 | 0 |
-| watchtower | 3 | 1 | 2 | 0 |
+| watchtower | 11 | 7 | 4 | 0 |
 | worker | 8 | 5 | 3 | 0 |
 | workerchecklist | 10 | 6 | 4 | 0 |
 | workercredential | 9 | 4 | 5 | 0 |
@@ -2173,9 +2173,17 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation acknowledgeWatchtowerItem` | Exempt, attestation: A person saying they have seen an exception, and taking it if nobody owns it; an agent cannot see on someone's behalf. |
+| `mutation assignWatchtowerItem` | Tool: `assign_exception` |
+| `mutation commentOnWatchtowerItem` | Tool: `comment_on_exception` |
 | `mutation dismissWatchtowerItem` | Tool: `dismiss_watchtower_item` |
 | `mutation handOffWatchtowerItem` | Exempt, agent-administration: Starts an agent on the item's subject, or publishes its event to the agents that subscribe; agents hand work to one another through delegate_task instead. |
 | `mutation markWatchtowerSeen` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+| `mutation reopenWatchtowerItem` | Tool: `reopen_exception` |
+| `mutation resolveWatchtowerItem` | Tool: `resolve_exception` |
+| `mutation setWatchtowerItemDue` | Tool: `set_exception_due` |
+| `mutation snoozeWatchtowerItem` | Tool: `snooze_exception` |
+| `mutation startWatchtowerItem` | Exempt, attestation: A person saying they are working an exception now, and taking it if nobody owns it; an agent cannot start work for them. |
 
 ### worker
 

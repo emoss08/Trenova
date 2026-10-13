@@ -51,6 +51,7 @@ func (s *Service) ListOverdue(
 			MoveID:        move.MoveID,
 			ShipmentID:    move.ShipmentID,
 			ProNumber:     move.ProNumber,
+			OwnerID:       move.OwnerID,
 			CarrierID:     move.CarrierID,
 			CarrierName:   move.CarrierName,
 			LastContactAt: move.LastContactAt,

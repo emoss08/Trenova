@@ -68,7 +68,6 @@ Loaded now:
 - open_page
 - wait_until
 - cancel_wait
-- get_dispatch_board
 - list_service_failures
 - list_service_failure_reason_codes
 - list_detention_desk
@@ -76,11 +75,13 @@ Loaded now:
 - notify_driver
 - email_customer
 - send_detention_notice
-- log_check_call
+- list_watchtower_items
+- resolve_exception
 - get_detention_occurrence
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
+- get_dispatch_board — The dispatch board: every move in the window with its urgency and coverage, and every driver with availability, hours remaining and last position.
 - get_shipment_tracking — Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate.
 - get_shipment — Retrieve one shipment (load) by its id, with its stops, the driver and equipment assigned to each move, the holds on it now and its newest comments.
 - list_vehicle_positions — Where every tractor is right now, from the telematics feed: its last known position, the nearest place name, speed, engine state and how old the reading is.
@@ -90,9 +91,14 @@ Callable after find_tools:
 - add_shipment_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - record_stop_actual — Record that a driver arrived at or departed from a stop.
+- log_check_call — Log a check call on a brokered load: where the carrier said the truck is, whether it is late, and when it expects the next stop.
+- comment_on_exception — Add a note to an exception's history, such as what the carrier said.
+- snooze_exception — Put an exception aside until a time when nothing can be done before then, such as a receiver that opens at 7.
+- assign_exception — Give an exception on the watchtower to a person, or to nobody, so someone owns getting it dealt with.
+- set_exception_due — Move when an exception must be dealt with, or clear its due time.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, evaluate_service_failures, resolve_service_failure, add_shipment_comment, notify_driver, email_customer, send_detention_notice, record_stop_actual, log_check_call
+- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, evaluate_service_failures, resolve_service_failure, add_shipment_comment, notify_driver, email_customer, send_detention_notice, record_stop_actual, log_check_call, comment_on_exception, snooze_exception, assign_exception, set_exception_due, resolve_exception
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
@@ -102,3 +108,8 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - send_detention_notice: get_detention_occurrence → send_detention_notice
 - record_stop_actual: search_shipments → get_shipment → record_stop_actual
 - log_check_call: search_shipments → get_shipment → log_check_call
+- comment_on_exception: list_watchtower_items → comment_on_exception
+- snooze_exception: list_watchtower_items → snooze_exception
+- assign_exception: list_watchtower_items → assign_exception
+- set_exception_due: list_watchtower_items → set_exception_due
+- resolve_exception: list_watchtower_items → resolve_exception

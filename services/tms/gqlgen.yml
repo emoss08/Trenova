@@ -2669,6 +2669,40 @@ models:
         resolver: true
       eventKind:
         resolver: true
+      assigneeId:
+        resolver: true
+      assignee:
+        resolver: true
+      resolvedById:
+        resolver: true
+      resolvedBy:
+        resolver: true
+      resolutionCode:
+        resolver: true
+      resolutionNote:
+        resolver: true
+      overdue:
+        resolver: true
+  WatchtowerItemEvent:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Event
+    fields:
+      actorId:
+        resolver: true
+      actor:
+        resolver: true
+  WatchtowerResolutionCodeOption:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.ResolutionCodeOption
+  WatchtowerItemStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Status
+  WatchtowerResolutionCode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.ResolutionCode
+  WatchtowerItemEventKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.EventKind
   WatchtowerSourceKind:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.SourceKind

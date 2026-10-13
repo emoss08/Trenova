@@ -115,3 +115,89 @@ func TestNoCheckCallSweepFailsWhenTenantsCannotBeListed(t *testing.T) {
 
 	require.Error(t, err)
 }
+
+type fakeAttentionRepo struct {
+	watchtowerports.WatchtowerRepository
+
+	tenants []pagination.TenantInfo
+	err     error
+}
+
+func (f *fakeAttentionRepo) ListTenantsNeedingAttention(
+	context.Context,
+	int64,
+) ([]pagination.TenantInfo, error) {
+	return f.tenants, f.err
+}
+
+type fakeSweeper struct {
+	calls   []kindCall
+	failOrg pulid.ID
+}
+
+func (f *fakeSweeper) SweepAttention(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	_ int64,
+) (*watchtowerports.ExceptionSweepResult, error) {
+	_, scoped := dbscope.TenantFrom(ctx)
+	f.calls = append(f.calls, kindCall{tenant: tenant, scoped: scoped})
+	if tenant.OrgID == f.failOrg {
+		return nil, assert.AnError
+	}
+
+	return &watchtowerports.ExceptionSweepResult{Woke: 1, Escalated: 2}, nil
+}
+
+func runExceptionAttention(t *testing.T, a *Activities) (*ExceptionAttentionResult, error) {
+	t.Helper()
+
+	suite := &testsuite.WorkflowTestSuite{}
+	env := suite.NewTestActivityEnvironment()
+	env.RegisterActivity(a)
+
+	value, err := env.ExecuteActivity(a.ExceptionAttentionActivity)
+	if err != nil {
+		return nil, err
+	}
+	result := new(ExceptionAttentionResult)
+	require.NoError(t, value.Get(result))
+
+	return result, nil
+}
+
+func TestExceptionAttentionSweepsEachTenantInItsScopeAndSurvivesOneFailing(t *testing.T) {
+	t.Parallel()
+
+	ok, broken := tenantInfo(), tenantInfo()
+	sweeper := &fakeSweeper{failOrg: broken.OrgID}
+	a := NewActivities(ActivitiesParams{
+		Exceptions: sweeper,
+		Repo:       &fakeAttentionRepo{tenants: []pagination.TenantInfo{ok, broken}},
+		Logger:     zap.NewNop(),
+	})
+
+	result, err := runExceptionAttention(t, a)
+	require.NoError(t, err)
+	assert.Equal(t, 1, result.OrganizationsProcessed)
+	assert.Equal(t, 1, result.Woke)
+	assert.Equal(t, 2, result.Escalated)
+	assert.Equal(t, []string{broken.OrgID.String()}, result.FailedOrganizations)
+	require.Len(t, sweeper.calls, 2)
+	for _, call := range sweeper.calls {
+		assert.True(t, call.scoped)
+	}
+}
+
+func TestExceptionAttentionFailsWhenTenantsCannotBeListed(t *testing.T) {
+	t.Parallel()
+
+	a := NewActivities(ActivitiesParams{
+		Exceptions: &fakeSweeper{},
+		Repo:       &fakeAttentionRepo{err: assert.AnError},
+		Logger:     zap.NewNop(),
+	})
+
+	_, err := runExceptionAttention(t, a)
+	require.Error(t, err)
+}

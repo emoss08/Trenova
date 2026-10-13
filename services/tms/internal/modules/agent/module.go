@@ -46,6 +46,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/roleagentgrantrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentbriefrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentimportchatrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/exceptionsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/watchtowerrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentaccessservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentactivityservice"
@@ -227,6 +228,7 @@ func SharedOptions() fx.Option {
 			conversationschedulerepository.New,
 			aiproviderrepository.New,
 			watchtowerrepository.New,
+			exceptionsourcerepository.New,
 			briefingrepository.New,
 			shipmentimportchatrepository.New,
 			shipmentbriefrepository.New,
@@ -286,7 +288,12 @@ func SharedOptions() fx.Option {
 			watchtowerservice.NewProjector,
 			watchtowerservice.New,
 			watchtowerservice.NewDismisser,
+			watchtowerservice.NewRouter,
+			watchtowerservice.NewExceptions,
+			watchtowerservice.AsExceptionService,
+			watchtowerservice.AsExceptionSweeper,
 			watchtowerservice.AsProjector,
+			watchtowerservice.AsSubjectReconciler,
 			watchtowerservice.AsService,
 			briefingwriter.New,
 			briefingservice.New,

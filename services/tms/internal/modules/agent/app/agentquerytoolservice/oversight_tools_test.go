@@ -633,3 +633,49 @@ func TestGetDailyBriefing_PolicyIsAPlainRead(t *testing.T) {
 	assert.Equal(t, agent.ExternalReadNever, policy.ReadsExternal)
 	assert.True(t, slices.Contains(briefingRoleValues(), "General"))
 }
+
+func TestListWatchtowerItems_FiltersByOwnerAndDueAndShowsTheWorkflow(t *testing.T) {
+	t.Parallel()
+
+	owned := towerItem(watchtower.SourceMissedPickup, "stp_1", 20)
+	owned.Status = watchtower.StatusInProgress
+	owned.AssigneeID = pulid.MustNew("usr_")
+	due := int64(1)
+	owned.DueAt = &due
+	owned.EscalationLevel = 2
+	fixture := newTowerFixture(owned)
+
+	params := personParams(permissionports.PrincipalTypeUser)
+	params.Params = map[string]any{
+		paramAssignedToMe: true,
+		paramOverdueOnly:  true,
+		paramOrderByDue:   true,
+		paramUnassigned:   false,
+	}
+	feed := queryFeed(t, fixture.tool(), params)
+
+	require.Len(t, fixture.feed.requests, 1)
+	req := fixture.feed.requests[0]
+	assert.True(t, req.AssignedToMe)
+	assert.True(t, req.OverdueOnly)
+	assert.True(t, req.OrderByDue)
+	require.Len(t, feed.Items, 1)
+	row := feed.Items[0]
+	assert.Equal(t, "InProgress", row.Status)
+	assert.Equal(t, owned.AssigneeID.String(), row.AssigneeID)
+	assert.True(t, row.Overdue)
+	assert.Equal(t, int16(2), row.Escalations)
+}
+
+func TestListWatchtowerItems_AssignedToMeIsIgnoredForAnAgent(t *testing.T) {
+	t.Parallel()
+
+	fixture := newTowerFixture(towerItem(watchtower.SourceServiceFailure, "sf_1", 10))
+	params := testParams(map[string]any{paramAssignedToMe: true})
+	params.Actor.PrincipalType = permissionports.PrincipalTypeAgent
+	feed := queryFeed(t, fixture.tool(), params)
+
+	require.Len(t, fixture.feed.requests, 1)
+	assert.False(t, fixture.feed.requests[0].AssignedToMe)
+	assert.Contains(t, feed.Notes, watchtowerAgentMineNote)
+}

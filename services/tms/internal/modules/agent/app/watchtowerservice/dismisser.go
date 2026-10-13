@@ -11,32 +11,21 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 )
 
 type DismisserParams struct {
 	fx.In
 
-	Repo        watchtowerports.WatchtowerRepository
-	Projector   *Projector
-	Permissions permissionports.PermissionEngine
+	Exceptions *Exceptions
 }
 
 type Dismisser struct {
-	repo      watchtowerports.WatchtowerRepository
-	projector *Projector
-	access    kindAccess
-	now       func() int64
+	exceptions *Exceptions
 }
 
 func NewDismisser(p DismisserParams) *Dismisser {
-	return &Dismisser{
-		repo:      p.Repo,
-		projector: p.Projector,
-		access:    kindAccess{permissions: p.Permissions},
-		now:       timeutils.NowUnix,
-	}
+	return &Dismisser{exceptions: p.Exceptions}
 }
 
 type kindAccess struct {
@@ -93,8 +82,9 @@ func (a kindAccess) visibleKinds(
 	return kinds, nil
 }
 
-// Dismiss resolves an item by hand. The source is untouched: a dismissed
-// failed run is still a failed run, it is just no longer on the tower.
+// Dismiss resolves an item by hand as needing no action. The source is
+// untouched: a dismissed failed run is still a failed run, it is just no
+// longer on the tower.
 func (d *Dismisser) Dismiss(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
@@ -109,17 +99,14 @@ func (d *Dismisser) Dismiss(
 		return change.Before, nil
 	}
 
-	resolved, err := d.repo.ResolveByID(
-		ctx,
-		watchtowerports.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
-		d.now(),
-	)
-	if err != nil {
-		return nil, err
-	}
-	d.projector.publish(ctx, resolved, "resolved")
-
-	return resolved, nil
+	return d.exceptions.ResolveException(ctx, &watchtowerports.ResolveExceptionRequest{
+		ExceptionTarget: watchtowerports.ExceptionTarget{
+			TenantInfo:      tenant,
+			ItemID:          id,
+			ExpectedVersion: change.Before.Version,
+		},
+		Code: watchtower.ResolutionNoActionNeeded,
+	}, actor)
 }
 
 func (d *Dismisser) PlanDismiss(
@@ -128,21 +115,25 @@ func (d *Dismisser) PlanDismiss(
 	id pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*kernelports.RecordChange[watchtower.Item], error) {
-	item, err := d.repo.GetByID(
+	item, err := d.exceptions.GetException(
 		ctx,
 		watchtowerports.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
+		actor,
 	)
 	if err != nil {
-		return nil, err
-	}
-	if err = d.access.assertMaySee(ctx, actor, item); err != nil {
 		return nil, err
 	}
 
 	dismissed := *item
 	if !dismissed.IsResolved() {
-		now := d.now()
-		dismissed.ResolvedAt = &now
+		if err = dismissed.Resolve(
+			watchtower.ResolutionNoActionNeeded,
+			"",
+			actorUserID(actor),
+			d.exceptions.now(),
+		); err != nil {
+			return nil, err
+		}
 	}
 
 	return &kernelports.RecordChange[watchtower.Item]{Before: item, After: &dismissed}, nil

@@ -1146,6 +1146,14 @@ type AssignShiftInput struct {
 	Notes            *string `json:"notes,omitempty"`
 }
 
+type AssignWatchtowerItemInput struct {
+	// The new owner; omit to leave the exception with nobody.
+	AssigneeID *string `json:"assigneeId,omitempty"`
+	Note       *string `json:"note,omitempty"`
+	// The version the person was looking at; a newer one refuses the change.
+	ExpectedVersion *int `json:"expectedVersion,omitempty"`
+}
+
 type AssignWorkerPTOPolicyInput struct {
 	PTOPolicyID     string                    `json:"ptoPolicyId"`
 	WorkerIds       []string                  `json:"workerIds"`
@@ -6147,6 +6155,11 @@ type RemoveSettlementAdjustmentInput struct {
 	LineID       string `json:"lineId"`
 }
 
+type ReopenWatchtowerItemInput struct {
+	Note            *string `json:"note,omitempty"`
+	ExpectedVersion *int    `json:"expectedVersion,omitempty"`
+}
+
 type ReportBand struct {
 	Width float64   `json:"width"`
 	Edges []float64 `json:"edges"`
@@ -6643,6 +6656,13 @@ type ResolveSettlementDisputeInput struct {
 	Adjustment *DisputeAdjustmentInput `json:"adjustment,omitempty"`
 }
 
+type ResolveWatchtowerItemInput struct {
+	Code watchtower.ResolutionCode `json:"code"`
+	// Required when the code is Other.
+	Note            *string `json:"note,omitempty"`
+	ExpectedVersion *int    `json:"expectedVersion,omitempty"`
+}
+
 type ResolvedCategoryRate struct {
 	Category        CostCategoryType    `json:"category"`
 	Name            string              `json:"name"`
@@ -7052,6 +7072,13 @@ type SetOrderChargeAllocationsInput struct {
 	OrderID     string                   `json:"orderId"`
 	ChargeID    string                   `json:"chargeId"`
 	Allocations []*ChargeAllocationInput `json:"allocations"`
+}
+
+type SetWatchtowerItemDueInput struct {
+	// The new due time; omit to clear it.
+	DueAt           *int    `json:"dueAt,omitempty"`
+	Note            *string `json:"note,omitempty"`
+	ExpectedVersion *int    `json:"expectedVersion,omitempty"`
 }
 
 type SettlementBatchConnection struct {
@@ -8979,6 +9006,12 @@ type SnoozeInboundMessagesInput struct {
 	DocumentTypeID *string `json:"documentTypeId,omitempty"`
 }
 
+type SnoozeWatchtowerItemInput struct {
+	Until           int     `json:"until"`
+	Note            *string `json:"note,omitempty"`
+	ExpectedVersion *int    `json:"expectedVersion,omitempty"`
+}
+
 type SortFieldInput struct {
 	Field     string `json:"field"`
 	Direction string `json:"direction"`
@@ -10083,12 +10116,20 @@ type WaiveWorkerTrainingInput struct {
 
 // The feed in numbers, for a badge and a set of filter chips.
 type WatchtowerCounts struct {
-	Unresolved     int                      `json:"unresolved"`
-	Critical       int                      `json:"critical"`
-	Unseen         int                      `json:"unseen"`
-	UnseenCritical int                      `json:"unseenCritical"`
-	ByKind         []*WatchtowerKindSummary `json:"byKind"`
-	SeenAt         int                      `json:"seenAt"`
+	Unresolved     int `json:"unresolved"`
+	Critical       int `json:"critical"`
+	Unseen         int `json:"unseen"`
+	UnseenCritical int `json:"unseenCritical"`
+	// Open, not snoozed and past their due time.
+	Overdue int `json:"overdue"`
+	// Open with nobody owning them.
+	Unassigned int `json:"unassigned"`
+	// Open and owned by this reader.
+	Mine int `json:"mine"`
+	// Owned by this reader and overdue.
+	MineOverdue int                      `json:"mineOverdue"`
+	ByKind      []*WatchtowerKindSummary `json:"byKind"`
+	SeenAt      int                      `json:"seenAt"`
 }
 
 // What a hand-off did. With a run, an agent is already working on the item;
@@ -10126,6 +10167,20 @@ type WatchtowerItemsInput struct {
 	UnresolvedOnly *bool `json:"unresolvedOnly,omitempty"`
 	// Only what occurred at or after this instant.
 	Since *int `json:"since,omitempty"`
+	// Only these statuses; empty is all of them.
+	Statuses []watchtower.Status `json:"statuses,omitempty"`
+	// Only what this reader owns.
+	AssignedToMe *bool `json:"assignedToMe,omitempty"`
+	// Only what these people own.
+	AssigneeIds []string `json:"assigneeIds,omitempty"`
+	// Only what nobody owns; with assigneeIds, what nobody or one of them owns.
+	Unassigned *bool `json:"unassigned,omitempty"`
+	// Only what is open, not snoozed and past its due time.
+	OverdueOnly *bool `json:"overdueOnly,omitempty"`
+	// Only items about this record.
+	SubjectID *string `json:"subjectId,omitempty"`
+	// Soonest due first, items without a due time last, instead of newest first.
+	OrderByDue *bool `json:"orderByDue,omitempty"`
 }
 
 type WatchtowerKindSummary struct {
