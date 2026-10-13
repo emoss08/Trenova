@@ -1002,6 +1002,8 @@ var InvoiceColumns = struct {
 	IsAdjustmentArtifact      buncolgen.Column // "is_adjustment_artifact" → qualified: "inv.is_adjustment_artifact"
 	ShipperCustomerID         buncolgen.Column // "shipper_customer_id" → qualified: "inv.shipper_customer_id"
 	FactoringCompanyID        buncolgen.Column // "factoring_company_id" → qualified: "inv.factoring_company_id"
+	FactoringAgreementID      buncolgen.Column // "factoring_agreement_id" → qualified: "inv.factoring_agreement_id"
+	FactoringOverride         buncolgen.Column // "factoring_override" → qualified: "inv.factoring_override"
 	IsSplitBill               buncolgen.Column // "is_split_bill" → qualified: "inv.is_split_bill"
 	VoidedAt                  buncolgen.Column // "voided_at" → qualified: "inv.voided_at"
 	VoidedByID                buncolgen.Column // "voided_by_id" → qualified: "inv.voided_by_id"
@@ -1087,6 +1089,8 @@ var InvoiceColumns = struct {
 	IsAdjustmentArtifact:      buncolgen.NewColumn("is_adjustment_artifact", "inv"),
 	ShipperCustomerID:         buncolgen.NewColumn("shipper_customer_id", "inv"),
 	FactoringCompanyID:        buncolgen.NewColumn("factoring_company_id", "inv"),
+	FactoringAgreementID:      buncolgen.NewColumn("factoring_agreement_id", "inv"),
+	FactoringOverride:         buncolgen.NewColumn("factoring_override", "inv"),
 	IsSplitBill:               buncolgen.NewColumn("is_split_bill", "inv"),
 	VoidedAt:                  buncolgen.NewColumn("voided_at", "inv"),
 	VoidedByID:                buncolgen.NewColumn("voided_by_id", "inv"),
@@ -1178,6 +1182,8 @@ var InvoiceFieldMap = map[string]string{
 	"isAdjustmentArtifact":      "is_adjustment_artifact",
 	"shipperCustomerId":         "shipper_customer_id",
 	"factoringCompanyId":        "factoring_company_id",
+	"factoringAgreementId":      "factoring_agreement_id",
+	"factoringOverride":         "factoring_override",
 	"isSplitBill":               "is_split_bill",
 	"voidedAt":                  "voided_at",
 	"voidedById":                "voided_by_id",
@@ -1267,6 +1273,8 @@ var InvoiceInsertableColumns = []string{
 	"is_adjustment_artifact",
 	"shipper_customer_id",
 	"factoring_company_id",
+	"factoring_agreement_id",
+	"factoring_override",
 	"is_split_bill",
 	"voided_at",
 	"voided_by_id",
@@ -1433,6 +1441,8 @@ var InvoiceFilter = struct {
 	IsAdjustmentArtifact      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isAdjustmentArtifact" → DB: "is_adjustment_artifact"
 	ShipperCustomerID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipperCustomerId" → DB: "shipper_customer_id"
 	FactoringCompanyID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringCompanyId" → DB: "factoring_company_id"
+	FactoringAgreementID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringAgreementId" → DB: "factoring_agreement_id"
+	FactoringOverride         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringOverride" → DB: "factoring_override"
 	IsSplitBill               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isSplitBill" → DB: "is_split_bill"
 	VoidedAt                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedAt" → DB: "voided_at"
 	VoidedByID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedById" → DB: "voided_by_id"
@@ -1650,6 +1660,12 @@ var InvoiceFilter = struct {
 	},
 	FactoringCompanyID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("factoringCompanyId", op, value)
+	},
+	FactoringAgreementID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("factoringAgreementId", op, value)
+	},
+	FactoringOverride: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("factoringOverride", op, value)
 	},
 	IsSplitBill: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("isSplitBill", op, value)
