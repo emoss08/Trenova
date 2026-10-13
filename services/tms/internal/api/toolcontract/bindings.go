@@ -16,6 +16,9 @@ const (
 	versionField  = "version"
 	readVersion   = "the tool sends the version of the record it reads, which the approved " +
 		"preview pins"
+	exceptionItemArg = "the mutation takes the exception as its id argument, beside the input"
+	resolutionCode   = "one value under two names: the input's code, and resolutionCode, " +
+		"the name the read tools hand it out under and the tool takes"
 )
 
 func stateCode(field string) string {
@@ -29,6 +32,35 @@ func namedID(param string) string {
 }
 
 var Bindings = []Binding{
+	{
+		Tool:  "assign_exception",
+		Input: "AssignWatchtowerItemInput",
+		Extra: map[string]string{"watchtowerItemId": exceptionItemArg},
+	},
+	{
+		Tool:  "snooze_exception",
+		Input: "SnoozeWatchtowerItemInput",
+		Extra: map[string]string{"watchtowerItemId": exceptionItemArg},
+	},
+	{
+		Tool:  "set_exception_due",
+		Input: "SetWatchtowerItemDueInput",
+		Extra: map[string]string{"watchtowerItemId": exceptionItemArg},
+	},
+	{
+		Tool:      "resolve_exception",
+		Input:     "ResolveWatchtowerItemInput",
+		Defaulted: map[string]string{"code": resolutionCode},
+		Extra: map[string]string{
+			"watchtowerItemId": exceptionItemArg,
+			"resolutionCode":   resolutionCode,
+		},
+	},
+	{
+		Tool:  "reopen_exception",
+		Input: "ReopenWatchtowerItemInput",
+		Extra: map[string]string{"watchtowerItemId": exceptionItemArg},
+	},
 	{
 		Tool:  "create_shipment",
 		Input: "ShipmentInput",
