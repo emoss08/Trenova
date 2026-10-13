@@ -19,6 +19,27 @@
   --fs-nova-c: var(--accent-rose);
 }
 
+/* The editor's chip in Nova's composer: it takes what is left of the row and
+   truncates, so the model picker and send never leave the composer. */
+.fs-page-chip {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+}
+
+.fs-studio .dk-cmp-b {
+  min-width: 0;
+}
+
+.fs-studio .dk-hint {
+  height: auto;
+  min-height: 14px;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
 /* Nova's hand-off button: an outline button whose edge lights in Nova's
    spectrum, with a faint wash of it, while the pointer is on it. */
 .fs-nova-btn {

@@ -330,3 +330,30 @@ describe("applyProposal", () => {
     ]);
   });
 });
+
+describe("applyProposal formatting", () => {
+  it("lands a proposal in the editor formatted, one statement per line", () => {
+    const next = applyProposal(
+      editor,
+      proposalWith({
+        expression:
+          "let linehaul = baseRate*totalDistance; let weekend = isWeekendPickup ? weekendFee : 0; linehaul+weekend",
+        variables: [
+          { name: "weekendFee", type: "Number", description: "Weekend fee", defaultValue: 125 },
+        ],
+      }),
+    );
+    expect(next.expression).toBe(
+      [
+        "let linehaul = baseRate * totalDistance;",
+        "let weekend = isWeekendPickup ? weekendFee : 0;",
+        "linehaul + weekend",
+      ].join("\n"),
+    );
+  });
+
+  it("keeps a proposal's expression as written when it does not parse", () => {
+    const next = applyProposal(editor, proposalWith({ expression: "baseRate * (", variables: [] }));
+    expect(next.expression).toBe("baseRate * (");
+  });
+});

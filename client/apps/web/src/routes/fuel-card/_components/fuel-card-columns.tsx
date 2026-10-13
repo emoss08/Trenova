@@ -1,5 +1,6 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
+import { FuelCardMark } from "@/components/fuel-card-mark";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { fuelCardProviderChoices, fuelCardStatusChoices } from "@/lib/choices";
 import type { TractorRow } from "@/lib/graphql/equipment-table";
@@ -60,9 +61,12 @@ export function getColumns(t: TranslateFn): ColumnDef<FuelCardRow>[] {
       accessorKey: "lastFour",
       header: t("Card"),
       cell: ({ row }) => (
-        <span className="font-table tabular-nums">{maskedCardNumber(row.original.lastFour)}</span>
+        <span className="flex items-center gap-2">
+          <FuelCardMark provider={row.original.provider} />
+          <span className="font-table tabular-nums">{maskedCardNumber(row.original.lastFour)}</span>
+        </span>
       ),
-      size: 110,
+      size: 140,
       meta: {
         apiField: "lastFour",
         filterable: true,

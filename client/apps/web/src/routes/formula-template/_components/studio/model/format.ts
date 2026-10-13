@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type {
   FormulaRoundingMode,
@@ -6,7 +7,12 @@ import type {
 
 const numberFormat = new Intl.NumberFormat(undefined, { maximumFractionDigits: 4 });
 
-/** A value as the studio prints it in mono: numbers grouped, flags as words, text as typed. */
+/**
+ * A value as the studio prints it in mono: numbers grouped, flags as words,
+ * text as typed, and a list or a record by its size rather than its JSON,
+ * since a shipment's commodities are read for their count or a field, never
+ * as a blob.
+ */
 export function formatStudioValue(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
   if (typeof value === "number") return numberFormat.format(value);
@@ -15,7 +21,18 @@ export function formatStudioValue(value: unknown): string {
     const asNumber = Number(value);
     return value.trim() !== "" && Number.isFinite(asNumber) ? numberFormat.format(asNumber) : value;
   }
-  return JSON.stringify(value);
+  if (Array.isArray(value)) {
+    return value.length === 0
+      ? translate("empty list")
+      : translate("{0, plural, one {# item} other {# items}}", value.length);
+  }
+  if (typeof value === "object") {
+    const keys = Object.keys(value as Record<string, unknown>);
+    return keys.length === 0
+      ? translate("empty record")
+      : translate("{0, plural, one {# field} other {# fields}}", keys.length);
+  }
+  return String(value);
 }
 
 /** Money at a given precision, for the places that show more than cents. */

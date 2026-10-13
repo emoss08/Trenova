@@ -66,7 +66,11 @@ export type StudioProps = {
   onTemplateChanged?: (template: FormulaTemplate) => void;
 };
 
-type StudioContextValue = StudioProps & {
+/**
+ * What changes as the person works: the analysis, the preview, the scenarios
+ * and the tab. A consumer of this re-renders on every keystroke in the editor.
+ */
+type StudioStateValue = {
   known: KnownIdentifiers;
   analysis: ExpressionAnalysis;
   preview: LivePreviewState;
@@ -80,15 +84,25 @@ type StudioContextValue = StudioProps & {
   /** The unsaved changes alter what the template computes, so saving demotes it. */
   material: boolean;
   tab: StudioTab;
+  novaRequest: PageRequest | null;
+  /** Nova is writing a reply in the rail. */
+  novaBusy: boolean;
+  activeSection: StudioSection;
+  /** The input whose row should take focus, once, after it was declared. */
+  focusInput: string | null;
+};
+
+/**
+ * What stays the same while the person works: the page's props, the
+ * callbacks and the refs. A consumer that needs only these never re-renders
+ * for a keystroke in the editor.
+ */
+type StudioActionsValue = StudioProps & {
   setTab: (tab: StudioTab) => void;
   /** Sends a question to Nova in the rail; without text it only opens the tab. */
   askNova: (text?: string) => void;
-  novaRequest: PageRequest | null;
   clearNovaRequest: (key: string) => void;
-  /** Nova is writing a reply in the rail. */
-  novaBusy: boolean;
   setNovaBusy: (busy: boolean) => void;
-  activeSection: StudioSection;
   setActiveSection: (section: StudioSection) => void;
   jumpTo: (section: StudioSection) => void;
   formViewport: RefObject<HTMLDivElement | null>;
@@ -97,19 +111,33 @@ type StudioContextValue = StudioProps & {
   save: () => void;
   /** Adds an input for a name the formula reads, and takes the person to its row. */
   declareInput: (name: string, type?: VariableValueType) => void;
-  /** The input whose row should take focus, once, after it was declared. */
-  focusInput: string | null;
   clearFocusInput: () => void;
+  /** Names Nova's conversation about a template not yet created, for the life of the page. */
+  unsavedNovaKey: string;
 };
 
-const StudioContext = createContext<StudioContextValue | null>(null);
+type StudioContextValue = StudioStateValue & StudioActionsValue;
 
-export function useStudio(): StudioContextValue {
-  const context = useContext(StudioContext);
+const StudioStateContext = createContext<StudioStateValue | null>(null);
+const StudioActionsContext = createContext<StudioActionsValue | null>(null);
+
+/** The studio's callbacks and refs alone; stable, so a keystroke never reaches the consumer. */
+export function useStudioActions(): StudioActionsValue {
+  const context = useContext(StudioActionsContext);
   if (!context) {
-    throw new Error("useStudio must be used inside the formula studio");
+    throw new Error("useStudioActions must be used inside the formula studio");
   }
   return context;
+}
+
+/** Everything the studio knows; the consumer follows every change in the editor. */
+export function useStudio(): StudioContextValue {
+  const state = useContext(StudioStateContext);
+  const actions = useStudioActions();
+  if (!state) {
+    throw new Error("useStudio must be used inside the formula studio");
+  }
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }
 
 function stringAmount(value: number | string | null | undefined): string | null {
@@ -124,18 +152,34 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   const { isDirty } = useFormState({ control: form.control });
   const user = useAuthStore((state) => state.user);
 
-  const [name, description, expression, schemaId, variableDefinitions, breakdownDefinitions] =
-    useWatch({
-      control: form.control,
-      name: [
-        "name",
-        "description",
-        "expression",
-        "schemaId",
-        "variableDefinitions",
-        "breakdownDefinitions",
-      ],
-    });
+  const [
+    name,
+    description,
+    expression,
+    schemaId,
+    variableDefinitions,
+    breakdownDefinitions,
+    type,
+    minCharge,
+    maxCharge,
+    roundingMode,
+    roundingPrecision,
+  ] = useWatch({
+    control: form.control,
+    name: [
+      "name",
+      "description",
+      "expression",
+      "schemaId",
+      "variableDefinitions",
+      "breakdownDefinitions",
+      "type",
+      "minCharge",
+      "maxCharge",
+      "roundingMode",
+      "roundingPrecision",
+    ],
+  });
 
   const known = useKnownIdentifiers(schemaId || "shipment", variableDefinitions ?? []);
   const analysis = useMemo(() => analyzeExpression(expression ?? "", known), [expression, known]);
@@ -167,11 +211,39 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     });
   }, [result]);
 
-  const values = useWatch({ control: form.control });
-  const material =
-    mode === "edit" && isDirty && template !== null
-      ? hasMaterialChange(template, values as FormulaTemplateFormValues)
-      : false;
+  // Only the fields that decide materiality are compared, and only when one
+  // of them changes: watching the whole form here re-ran the comparison, and
+  // re-rendered every consumer, for each character typed into the name.
+  const material = useMemo(
+    () =>
+      mode === "edit" && isDirty && template !== null
+        ? hasMaterialChange(template, {
+            expression,
+            schemaId,
+            type,
+            minCharge,
+            maxCharge,
+            roundingMode,
+            roundingPrecision,
+            variableDefinitions,
+            breakdownDefinitions,
+          } as FormulaTemplateFormValues)
+        : false,
+    [
+      mode,
+      isDirty,
+      template,
+      expression,
+      schemaId,
+      type,
+      minCharge,
+      maxCharge,
+      roundingMode,
+      roundingPrecision,
+      variableDefinitions,
+      breakdownDefinitions,
+    ],
+  );
 
   const readiness = useMemo(
     () =>
@@ -292,35 +364,86 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     onSave({ testCases: mode === "create" ? heldForCreate() : [] });
   }, [heldForCreate, mode, onSave]);
 
-  const value: StudioContextValue = {
-    ...props,
-    known,
-    analysis,
-    preview,
-    scenarios,
-    usage,
-    usageTotal,
-    readiness,
-    reconciliation,
-    dirty: isDirty,
-    material,
-    tab,
-    setTab,
-    askNova,
-    novaRequest,
-    clearNovaRequest,
-    novaBusy,
-    setNovaBusy,
-    activeSection,
-    setActiveSection,
-    jumpTo,
-    formViewport,
-    draftContent,
-    save,
-    declareInput,
-    focusInput,
-    clearFocusInput,
-  };
+  const [unsavedNovaKey] = useState(() => nanoid());
 
-  return <StudioContext.Provider value={value}>{children}</StudioContext.Provider>;
+  const { isSubmitting, onTemplateChanged } = props;
+  const actions = useMemo<StudioActionsValue>(
+    () => ({
+      mode,
+      template,
+      isSubmitting,
+      onSave,
+      onTemplateChanged,
+      setTab,
+      askNova,
+      clearNovaRequest,
+      setNovaBusy,
+      setActiveSection,
+      jumpTo,
+      formViewport,
+      draftContent,
+      save,
+      declareInput,
+      clearFocusInput,
+      unsavedNovaKey,
+    }),
+    [
+      mode,
+      template,
+      isSubmitting,
+      onSave,
+      onTemplateChanged,
+      askNova,
+      clearNovaRequest,
+      jumpTo,
+      draftContent,
+      save,
+      declareInput,
+      clearFocusInput,
+      unsavedNovaKey,
+    ],
+  );
+
+  const state = useMemo<StudioStateValue>(
+    () => ({
+      known,
+      analysis,
+      preview,
+      scenarios,
+      usage,
+      usageTotal,
+      readiness,
+      reconciliation,
+      dirty: isDirty,
+      material,
+      tab,
+      novaRequest,
+      novaBusy,
+      activeSection,
+      focusInput,
+    }),
+    [
+      known,
+      analysis,
+      preview,
+      scenarios,
+      usage,
+      usageTotal,
+      readiness,
+      reconciliation,
+      isDirty,
+      material,
+      tab,
+      novaRequest,
+      novaBusy,
+      activeSection,
+      focusInput,
+    ],
+  );
+
+  return (
+    <StudioActionsContext.Provider value={actions}>
+      <StudioStateContext.Provider value={state}>{children}</StudioStateContext.Provider>
+    </StudioActionsContext.Provider>
+  );
 }

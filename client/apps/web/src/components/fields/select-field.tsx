@@ -6,7 +6,7 @@ import type {
   SelectOptionGroup,
   WarningProps,
 } from "@trenova/shared/types/fields";
-import { CheckIcon, ChevronDownIcon, XCloseIcon } from "@trenova/shared/components/icons";
+import { ChevronDownIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import React, { useMemo, useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -16,6 +16,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandItemCheck,
   CommandList,
   CommandSeparator,
   SelectCommandItem,
@@ -111,8 +112,10 @@ export function SelectField<T extends FieldValues>({
                 onSelect={handleSelect}
                 disabled={option.disabled}
               >
-                {field.value === option.value && <CheckIcon className="size-3.5 shrink-0" />}
-                {renderOption(option, searchValue)}
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  {renderOption(option, searchValue)}
+                </div>
+                <CommandItemCheck checked={field.value === option.value} />
               </CommandItem>
             ) : (
               <SelectCommandItem

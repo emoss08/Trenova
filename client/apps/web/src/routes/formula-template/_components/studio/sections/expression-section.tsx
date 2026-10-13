@@ -1,3 +1,4 @@
+import { formatEditorDocument, type FormatResult } from "@/components/formula-editor/expr-format";
 import type { InlineValue } from "@/components/formula-editor/expr-inline-values";
 import { ExpressionEditor, selectEditorRange } from "@/components/formula-editor/expression-editor";
 import type { EditorRange } from "@/components/formula-editor/highlight-range";
@@ -8,12 +9,14 @@ import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatAltShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import type {
   FormulaStatement,
   FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
 import {
+  AlignLeftIcon,
   BookOpen01Icon,
   Code01Icon,
   EyeIcon,
@@ -24,6 +27,7 @@ import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { useFormContext } from "react-hook-form";
+import { toast } from "sonner";
 import { NovaButton } from "../ai/nova-button";
 import { engineErrorText } from "@/components/formula-editor/expr-check";
 import { formatMoney, formatStudioValue, numericAmount } from "../model/format";
@@ -169,6 +173,29 @@ export function ExpressionSection() {
     if (view) selectEditorRange(view, range);
   }, []);
 
+  // Formatting is refused, never approximated: a formula that does not parse
+  // would lose what the parser could not place, and a comment would be dropped.
+  const formatted = useCallback(
+    (outcome: FormatResult) => {
+      if (outcome.ok) {
+        if (!outcome.changed) toast(t("Already formatted"));
+        return;
+      }
+      if (outcome.reason === "syntax") {
+        toast.warning(t("Fix the syntax first, then format"));
+      } else if (outcome.reason === "comments") {
+        toast.warning(t("Formatting would drop a comment; take it out first"));
+      }
+    },
+    [t],
+  );
+  const format = useCallback(() => {
+    const view = editorRef.current?.view;
+    if (!view) return;
+    formatted(formatEditorDocument(view, { operators: known.operatorNames }));
+    view.focus();
+  }, [formatted, known.operatorNames]);
+
   return (
     <section className="flex flex-col gap-3">
       <SectionHead
@@ -216,6 +243,7 @@ export function ExpressionSection() {
           onCursorChange={setCursor}
           declareInput={declareInput}
           inlineValues={inlineValues}
+          onFormat={formatted}
         />
         <div className="bg-sunken text-foreground-muted flex flex-wrap items-center gap-x-3 gap-y-1 border-t px-3 py-1 text-xs">
           <span
@@ -238,6 +266,26 @@ export function ExpressionSection() {
             )}
           </span>
           <span className="flex-1" />
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={t("Format the formula")}
+                  disabled={empty}
+                  onClick={format}
+                  className="text-foreground-muted"
+                />
+              }
+            >
+              <AlignLeftIcon className="size-3.5" />
+            </TooltipTrigger>
+            <TooltipContent>
+              {t("Format")} <Kbd className="ml-1">{formatAltShortcut("⇧F")}</Kbd>
+            </TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger
               render={

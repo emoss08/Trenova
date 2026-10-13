@@ -78,7 +78,12 @@ const UNARY_PRECEDENCE: Record<string, number> = { not: 50, "!": 50, "-": 90, "+
 const TOKEN =
   /(\s+)|(\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|(\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?)|("(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?|`(?:\\.|[^`\\])*`?)|([A-Za-z_][A-Za-z0-9_]*)|(\?\?|\?\.|==|!=|<=|>=|&&|\|\||\*\*|\.\.|[-+*/%<>!?:^=|])|([(),;[\]{}.])|(#)|(.)/gy;
 
-export type Tokenized = { tokens: Token[]; diagnostics: SyntaxDiagnostic[] };
+export type Tokenized = {
+  tokens: Token[];
+  diagnostics: SyntaxDiagnostic[];
+  /** Where the comments were; the formatter refuses to drop one. */
+  comments: Range[];
+};
 
 export type SyntaxDiagnostic = Range & {
   message: string;
@@ -93,6 +98,7 @@ export function tokenize(
 ): Tokenized {
   const tokens: Token[] = [];
   const diagnostics: SyntaxDiagnostic[] = [];
+  const comments: Range[] = [];
   const pattern = new RegExp(TOKEN.source, "gy");
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(source)) !== null) {
@@ -101,8 +107,11 @@ export function tokenize(
     const to = from + text.length;
     if (text === "") break;
     if (match[1] !== undefined || match[2] !== undefined) {
-      if (match[2] !== undefined && text.startsWith("/*") && !text.endsWith("*/")) {
-        diagnostics.push({ from, to, message: translate("This comment is never closed") });
+      if (match[2] !== undefined) {
+        comments.push({ from, to });
+        if (text.startsWith("/*") && !text.endsWith("*/")) {
+          diagnostics.push({ from, to, message: translate("This comment is never closed") });
+        }
       }
       continue;
     }
@@ -136,10 +145,13 @@ export function tokenize(
     }
   }
   tokens.push({ kind: "eof", text: "", from: source.length, to: source.length });
-  return { tokens, diagnostics };
+  return { tokens, diagnostics, comments };
 }
 
-export type Node =
+/** How many pairs of parentheses the author wrote around a node; the formatter keeps them. */
+type Grouped = { grouped?: number };
+
+type NodeVariant =
   | (Range & { kind: "number"; value: number })
   | (Range & { kind: "string"; value: string })
   | (Range & { kind: "bool"; value: boolean })
@@ -165,6 +177,8 @@ export type Node =
   | (Range & { kind: "predicate"; body: Node })
   | (Range & { kind: "missing" });
 
+export type Node = NodeVariant & Grouped;
+
 export type Statement =
   | (Range & { kind: "let"; name: string; nameRange: Range; value: Node })
   | (Range & { kind: "result"; value: Node });
@@ -173,6 +187,7 @@ export type Program = {
   statements: Statement[];
   diagnostics: SyntaxDiagnostic[];
   tokens: Token[];
+  comments: Range[];
   empty: boolean;
 };
 
@@ -674,7 +689,12 @@ class Parser {
           if (inner.kind === "missing") this.report(token, translate("'()' is empty"));
           if (this.is("punct", ")")) {
             const close = this.advance();
-            return { ...inner, from: token.from, to: close.to } as Node;
+            return {
+              ...inner,
+              from: token.from,
+              to: close.to,
+              grouped: (inner.grouped ?? 0) + 1,
+            } as Node;
           }
           this.report(token, translate("'(' opened here is never closed"));
           return inner;
@@ -794,15 +814,15 @@ export function parseExpression(
   source: string,
   operators: ReadonlySet<string> = WORD_OPERATORS,
 ): Program {
-  const { tokens, diagnostics } = tokenize(source, operators);
+  const { tokens, diagnostics, comments } = tokenize(source, operators);
   const empty = tokens.length === 1;
   if (empty) {
-    return { statements: [], diagnostics, tokens, empty: true };
+    return { statements: [], diagnostics, tokens, comments, empty: true };
   }
   const parser = new Parser(tokens, operators);
   const statements = parser.parseProgram();
   const all = [...diagnostics, ...parser.diagnostics].sort((a, b) => a.from - b.from);
-  return { statements, diagnostics: all, tokens, empty: false };
+  return { statements, diagnostics: all, tokens, comments, empty: false };
 }
 
 /** Every node of a tree, parents before children. */

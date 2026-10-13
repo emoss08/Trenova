@@ -1,5 +1,6 @@
 import { ControlledShipmentAutocompleteField } from "@/components/autocomplete-fields";
 import { ReceiptView } from "@/components/formula-editor/receipt-view";
+import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import {
   Alert,
   AlertAction,
@@ -131,6 +132,44 @@ export function PreviewPane() {
   const rest = schemaNames.filter((name) => !reads.includes(name));
   const shown = showAll ? [...reads, ...rest] : reads;
   const overrideCount = Object.keys(preview.overrides).length;
+  const overrides = preview.overrides;
+  const valueOf = preview.valueOf;
+  const setOverride = preview.setOverride;
+
+  // The list is virtualized: with every shipment variable shown it runs to
+  // a few hundred rows, each with a field of its own.
+  const valueRows = useMemo(
+    (): VirtualRow[] =>
+      shown.map((name) => {
+        const doc = docs.get(name);
+        const type = doc?.type ?? "Number";
+        return {
+          key: name,
+          render: () => (
+            <div
+              className={cn(
+                "flex items-center gap-2 border-b py-1",
+                name in overrides && "bg-warning-subtle -mx-1.5 rounded-sm px-1.5",
+              )}
+            >
+              <span className="min-w-0 flex-1 truncate font-mono text-xs" title={doc?.description}>
+                {name}
+              </span>
+              <ValueEditor
+                name={name}
+                type={type}
+                value={valueOf(name)}
+                onChange={(value) => setOverride(name, value)}
+              />
+              <ValueSourceTag source={sourceOf(name)} />
+            </div>
+          ),
+        };
+      }),
+    // sourceOf reads only what the row's props already carry, so it is not a dependency of its own.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+    [shown, docs, overrides, valueOf, setOverride, receiptSources, customNames, usingShipment],
+  );
 
   const pinKey = amounts
     ? JSON.stringify([preview.source, preview.shipmentId, preview.overrides, amounts.billed])
@@ -369,41 +408,18 @@ export function PreviewPane() {
           </Button>
         )}
       </div>
-      {shown.length === 0 ? (
-        <p className="text-foreground-muted text-xs">
-          {t("Nothing yet. Values appear here as the expression names them.")}
-        </p>
-      ) : (
-        <div className="flex flex-col">
-          {shown.map((name) => {
-            const doc = docs.get(name);
-            const type = doc?.type ?? "Number";
-            return (
-              <div
-                key={name}
-                className={cn(
-                  "flex items-center gap-2 border-b py-1 last:border-b-0",
-                  name in preview.overrides && "bg-warning-subtle -mx-1.5 rounded-sm px-1.5",
-                )}
-              >
-                <span
-                  className="min-w-0 flex-1 truncate font-mono text-xs"
-                  title={doc?.description}
-                >
-                  {name}
-                </span>
-                <ValueEditor
-                  name={name}
-                  type={type}
-                  value={preview.valueOf(name)}
-                  onChange={(value) => preview.setOverride(name, value)}
-                />
-                <ValueSourceTag source={sourceOf(name)} />
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <VirtualRows
+        rows={valueRows}
+        estimateSize={33}
+        initialHeight={480}
+        className="max-h-120"
+        aria-label={showAll ? t("All variables") : t("Values this formula reads")}
+        empty={
+          <p className="text-foreground-muted text-xs">
+            {t("Nothing yet. Values appear here as the expression names them.")}
+          </p>
+        }
+      />
       <Button
         type="button"
         variant="quiet"
