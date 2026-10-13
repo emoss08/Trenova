@@ -3651,6 +3651,7 @@
   "Facility": "场站",
   "Facility Type": "场站类型",
   "Facility and occupancy costs": "设施与场地占用成本",
+  "Factoring Company ID": "保理公司 ID",
   "Factors that customers' invoices are assigned to": "客户发票转让的保理公司",
   "Fail billing transfer runs whose workflow is no longer running": "将工作流已停止运行的计费转移任务标记为失败",
   "Fail report runs whose workflows are no longer running": "将工作流已停止运行的报表运行标记为失败",
