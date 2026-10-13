@@ -13,8 +13,9 @@ Dispatcher (REST record-actual) ─┐
 Agent (record_stop_actual)  ─────┤ RecordReported ── RecordStopActual (strict) ─┐
 Driver (Dash recordMyStopAction) ┘   (one transaction)                          │
                                                                                 ▼
-Telematics (geofence, provider stop) ─┐                        tracking_events (one row per report,
-EDI 214 (every AT7)  ─────────────────┴ RecordObserved ──────▶  unique on org, bu, source, source_key)
+Carrier (tracking link)  ─────────────┐                        tracking_events (one row per report,
+Telematics (geofence, provider stop) ─┤                        unique on org, bu, source, source_key)
+EDI 214 (every AT7)  ─────────────────┴ RecordObserved ──────▶
                                                                                 │
                                                                                 ▼
                                     ReconcileStopActuals: lock move ─▶ Project(all events) ─▶ write
@@ -32,6 +33,7 @@ EDI 214 (every AT7)  ─────────────────┴ Reco
 | Telematics port | `workforce/ports/telematicsports.StopVisitRecorder` |
 | Driver portal port | `workforce/ports/driverportalports.StopReporter` |
 | EDI 214 parser and stop targeting | `edi/app/ediinboundservice/parse.go`, `edi/app/ediservice/stopactuals214.go`, `edi/domain/edi/x12time.go` |
+| Carrier tracking link and check calls | `checkcallservice`; see [check-calls.md](check-calls.md) |
 | GraphQL read | `shipmentTrackingEvents(shipmentId)` in `shipment.graphqls` |
 | Web | "Stop reports" under move details (`routes/shipment/_components/move/stop-reports.tsx`) |
 
@@ -53,6 +55,7 @@ does not reconcile again. The key per source:
 | Dispatcher | the request's scoped `Idempotency-Key`, else a new id |
 | Agent | the tool call's idempotency key |
 | Driver | `<user id>:<clientEventId>` from the device, else a new id |
+| Carrier | `ctl:<tracking link id>:<clientEventId>` from the page, else a new id |
 | Telematics | `<provider>:<event id>` |
 | EDI | `edi:<tender offer>:<stop>:<status code>:<event time>` |
 
@@ -71,7 +74,7 @@ test checks end to end with repeats.
 For each stop in sequence, arrival then departure:
 
 1. Candidates are ordered by source precedence (Dispatcher 50, Agent 40, Driver 30,
-   Telematics 20, EDI 10), then earliest event time, then source and key.
+   Carrier 25, Telematics 20, EDI 10), then earliest event time, then source and key.
 2. A load that is invoiced or in the billing queue is frozen: its candidates are
    `Superseded` (or `Applied` when they match what is on record). A canceled load refuses
    them.
@@ -102,7 +105,9 @@ transaction, so the strict checks people are used to (earlier stops first, no ar
 departure, holds) still answer them with a 422, and nothing is stored when they refuse. The
 reconcile that follows records the verdicts.
 
-**Machine sources** (Telematics, EDI) are reports Trenova has to make sense of. `RecordObserved`
+**Machine sources** (Carrier, Telematics, EDI) are reports Trenova has to make sense of. A
+carrier posting through its tracking link is a party outside the organization, so its report
+is weighed rather than obeyed, the same as a feed. `RecordObserved`
 inserts the event, then reconciles. A refusal from the move (a canceled load, a rule) marks
 that event `Refused` with the reason instead of failing the caller; any other error is
 returned and the event stays `Pending` for the next reconcile.
@@ -148,4 +153,4 @@ a tracking event. Refused and waiting statuses are warnings on the inbound file.
 - A module below operations declares its own narrow port and operations implements it in
   `module.go` (see the telematics and driver portal ports); do not add an upward import.
 - A new source needs a precedence in `trackingevent.sourcePrecedence`, the CHECK constraint on
-  `tracking_events.source`, the GraphQL enum and the web labels.
+  `tracking_events.source`, the GraphQL enum and the web labels (`use-tracking-event-labels.ts`).
