@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { askQuestion, commandModeQuery } from "../ask-question";
+import { askQuestion, commandModeQuery, questionSearchText } from "../ask-question";
 
 /**
  * The palette turns into a question when the entry reads as one: a question
@@ -31,5 +31,24 @@ describe("commandModeQuery", () => {
     expect(commandModeQuery(">theme")).toBe("theme");
     expect(commandModeQuery(">")).toBe("");
     expect(commandModeQuery("theme")).toBeNull();
+  });
+});
+
+describe("questionSearchText", () => {
+  it("keeps the words that name a record and drops the way the question is asked", () => {
+    expect(questionSearchText("Tell me about SEED-PAY-002?")).toBe("SEED-PAY-002");
+    expect(questionSearchText("HARBOR Line Foods?")).toBe("HARBOR Line Foods");
+    expect(questionSearchText("What's going on with HARBOR Line Foods?")).toBe("HARBOR Line Foods");
+    expect(questionSearchText("why is S-1001 running late?")).toBe("S-1001 running late");
+  });
+
+  it("drops a possessive and the punctuation around a word, not inside it", () => {
+    expect(questionSearchText("summarize Acme's open invoices")).toBe("Acme open invoices");
+    expect(questionSearchText("Where is #4471, and who’s driving?")).toBe("#4471 driving");
+  });
+
+  it("is empty when nothing but the asking is left", () => {
+    expect(questionSearchText("what is this?")).toBe("");
+    expect(questionSearchText("  ")).toBe("");
   });
 });

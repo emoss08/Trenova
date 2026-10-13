@@ -167,6 +167,10 @@ func (o ThreadOrigin) Keepable() bool {
 	return o == ThreadOriginAsk
 }
 
+func (o ThreadOrigin) ReadsEverything() bool {
+	return o == ThreadOriginAsk
+}
+
 func (o ThreadOrigin) PageBound() bool {
 	return o == ThreadOriginImport || o == ThreadOriginFormula
 }

@@ -191,3 +191,82 @@ describe("useAsk and sign-out", () => {
     expect(stopTurn).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * A question from the palette carries the records its search found that it
+ * names. Finding them is part of asking: closing the palette does not cancel
+ * it, a search that fails still asks the question, and only Stop withdraws it.
+ */
+describe("useAsk found mentions", () => {
+  const shipment = { type: "shipment", id: "shp_1", label: "SEED-PAY-002" };
+
+  it("asks with the records found while the question was on its way", async () => {
+    startAsk.mockResolvedValue(started);
+    attachTurn.mockResolvedValue(undefined);
+    const { result } = renderAsk();
+
+    act(() => {
+      void result.current.ask("Tell me about SEED-PAY-002?", {
+        findMentions: async () => [shipment],
+      });
+    });
+    await waitFor(() => expect(startAsk).toHaveBeenCalledTimes(1));
+
+    expect(startAsk.mock.calls[0][1]).toEqual({ context: undefined, mentions: [shipment] });
+    expect(result.current.turn?.mentions).toEqual([shipment]);
+  });
+
+  it("asks without them when finding them fails", async () => {
+    startAsk.mockResolvedValue(started);
+    attachTurn.mockResolvedValue(undefined);
+    const { result } = renderAsk();
+
+    act(() => {
+      void result.current.ask("Tell me about SEED-PAY-002?", {
+        findMentions: async () => {
+          throw new Error("search is down");
+        },
+      });
+    });
+    await waitFor(() => expect(startAsk).toHaveBeenCalledTimes(1));
+
+    expect(startAsk.mock.calls[0][1]).toEqual({ context: undefined, mentions: [] });
+  });
+
+  it("still asks when the palette closes while the records are being found", async () => {
+    startAsk.mockResolvedValue(started);
+    const found = deferred<(typeof shipment)[]>();
+    const { result } = renderAsk();
+
+    act(() => {
+      void result.current.ask("Tell me about SEED-PAY-002?", {
+        findMentions: () => found.promise,
+      });
+    });
+    act(() => result.current.reset());
+    await act(async () => {
+      found.resolve([shipment]);
+    });
+
+    await waitFor(() => expect(startAsk).toHaveBeenCalledTimes(1));
+    expect(startAsk.mock.calls[0][1]).toEqual({ context: undefined, mentions: [shipment] });
+  });
+
+  it("never asks a question stopped while its records were being found", async () => {
+    const found = deferred<(typeof shipment)[]>();
+    const { result } = renderAsk();
+
+    act(() => {
+      void result.current.ask("Tell me about SEED-PAY-002?", {
+        findMentions: () => found.promise,
+      });
+    });
+    act(() => result.current.stop());
+    await act(async () => {
+      found.resolve([shipment]);
+    });
+
+    expect(startAsk).not.toHaveBeenCalled();
+    expect(stopTurn).not.toHaveBeenCalled();
+  });
+});

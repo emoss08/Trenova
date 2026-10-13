@@ -5,16 +5,21 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-// askAgentPageLimit bounds the definitions read to pick the assistant a
-// quick question goes to; an organization has a handful of chat agents.
+// askAgentPageLimit bounds the general assistants read to pick the one a
+// quick question goes to; an organization has one, or a few.
 const askAgentPageLimit = 100
 
 // StartAsk opens the thread a quick question from the palette is answered on.
@@ -52,10 +57,10 @@ func (s *Service) StartAsk(
 	}, actor)
 }
 
-// askAgent picks who answers a quick question, among the chat agents the
-// person may use: the organization's general assistant when it is one of
-// them, else the first. A person with none to ask is told why rather than
-// handed a run that would refuse.
+// askAgent is who answers a quick question: the organization's general
+// assistant, when it is on and open to the person. No other agent stands in
+// for it, since each is built for its own desk and would answer every
+// question from that desk's records.
 func (s *Service) askAgent(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
@@ -69,60 +74,77 @@ func (s *Service) askAgent(
 		return nil, errAgentsWithheld()
 	}
 
-	result, err := s.definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: tenant,
-			Pagination: pagination.Info{Limit: askAgentPageLimit},
-		},
-		EnabledOnly: true,
-		ChatOnly:    true,
-		Audience:    usable.Audience(),
-	})
+	result, err := s.definitions.List(
+		ctx,
+		generalAssistants(tenant, askAgentPageLimit, usable.Audience()),
+	)
 	if err != nil {
 		return nil, err
 	}
-
-	var fallback *agentdefinition.Definition
 	for _, definition := range result.Items {
-		if definition == nil || !usable.Allows(definition) {
-			continue
-		}
-		if definition.Template == agentdefinition.TemplateGeneralAssistant {
+		if definition != nil && usable.Allows(definition) {
 			return definition, nil
 		}
-		if fallback == nil {
-			fallback = definition
-		}
-	}
-	if fallback == nil {
-		return nil, s.noAskAgent(ctx, tenant)
 	}
 
-	return fallback, nil
+	return nil, s.noAskAgent(ctx, tenant)
 }
 
-// noAskAgent says why there is nobody to ask: no chat agent is enabled at
-// all, or none of the enabled ones is open to the person.
+// noAskAgent says why there is nobody to ask: no general assistant is on, or
+// none that is on is open to the person.
 func (s *Service) noAskAgent(ctx context.Context, tenant pagination.TenantInfo) error {
-	enabled, err := s.definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: tenant,
-			Pagination: pagination.Info{Limit: 1},
-		},
-		EnabledOnly: true,
-		ChatOnly:    true,
-	})
+	enabled, err := s.definitions.List(ctx, generalAssistants(tenant, 1, nil))
 	if err != nil {
 		return err
 	}
 	if len(enabled.Items) > 0 {
 		return errortypes.NewAuthorizationError(
-			"None of the assistants is open to you for quick questions. An administrator can " +
-				"give one of your roles access to one.",
+			"Nova answers quick questions through the general assistant, which is not open to " +
+				"you. An administrator can give one of your roles access to it in AI Control.",
 		)
 	}
 
 	return errortypes.NewBusinessError(
-		"No assistant is enabled for quick questions. Enable a chat agent in AI Control.",
+		"Nova answers quick questions through the general assistant, which is turned off. " +
+			"Turn it on in AI Control.",
 	)
+}
+
+func generalAssistants(
+	tenant pagination.TenantInfo,
+	limit int,
+	audience *kernelports.AgentAudience,
+) *agentdefinitionports.ListAgentDefinitionRequest {
+	return &agentdefinitionports.ListAgentDefinitionRequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo: tenant,
+			Pagination: pagination.Info{Limit: limit},
+			FieldFilters: []domaintypes.FieldFilter{
+				agentdefinitioncol.DefinitionFilter.Template(
+					dbtype.OpEqual,
+					string(agentdefinition.TemplateGeneralAssistant),
+				),
+			},
+		},
+		EnabledOnly: true,
+		ChatOnly:    true,
+		Audience:    audience,
+	}
+}
+
+func (s *Service) everyRead() []string {
+	if s.queries == nil {
+		return nil
+	}
+
+	tools := s.queries.All()
+	reads := make([]string, 0, len(tools))
+	for _, tool := range tools {
+		if _, extension := agentextension.ExtensionForTool(tool.Name()); extension {
+			continue
+		}
+		reads = append(reads, tool.Name())
+	}
+
+	return reads
 }

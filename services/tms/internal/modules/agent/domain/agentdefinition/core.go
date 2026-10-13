@@ -69,3 +69,28 @@ func (d *Definition) EffectiveToolNames() []string {
 
 	return names
 }
+
+func (d *Definition) HoldingReads(reads []string) *Definition {
+	held := make(map[string]struct{}, len(d.ToolNames)+len(d.DisabledToolNames))
+	for _, name := range d.ToolNames {
+		held[name] = struct{}{}
+	}
+	for _, name := range d.DisabledToolNames {
+		held[name] = struct{}{}
+	}
+
+	names := make([]string, 0, len(d.ToolNames)+len(reads))
+	names = append(names, d.ToolNames...)
+	for _, name := range reads {
+		if _, skip := held[name]; skip || IsCoreTool(name) {
+			continue
+		}
+		held[name] = struct{}{}
+		names = append(names, name)
+	}
+
+	reading := *d
+	reading.ToolNames = names
+
+	return &reading
+}

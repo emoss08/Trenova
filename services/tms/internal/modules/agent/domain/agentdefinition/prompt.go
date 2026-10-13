@@ -790,8 +790,9 @@ func describeSurface(surface agent.Surface, guide *RuntimePage) string {
 			"short. The question is about what it names, anywhere in Trenova, not about the " +
 			"page under the palette: look up the records, people, places and figures it names " +
 			"with your tools, and answer about that page only when the question points at it " +
-			"(\"this\", \"here\", \"these\"). A record they picked in the palette before " +
-			"asking comes as a mention, and the question is about it. Continue in Desk carries " +
+			"(\"this\", \"here\", \"these\"). The records the palette's search found that the " +
+			"question names, and a record they picked in the palette before asking, come as " +
+			"mentions: read those first. Continue in Desk carries " +
 			"the conversation over to the Desk, Trenova's full-page workspace for conversations " +
 			"with its AI agents, at /desk."
 	default:

@@ -75,16 +75,6 @@
   }
 }
 
-.cp-mark-busy {
-  animation: cp-spin 1.4s linear infinite;
-}
-
-@keyframes cp-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .cp-grow-x {
   transform-origin: left center;
   animation: cp-grow-x 600ms var(--ease-settle) both;
@@ -113,8 +103,7 @@
     animation: none;
   }
 
-  .cp-spectrum::before,
-  .cp-mark-busy {
+  .cp-spectrum::before {
     animation: none;
   }
 }

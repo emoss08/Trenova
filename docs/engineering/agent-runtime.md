@@ -901,6 +901,32 @@ retried after a lost attempt closes the record it did not re-save; and a save
 that fails on every attempt is followed by `CloseTurnActivity`, which records
 the turn as Failed.
 
+### Quick questions from the palette
+
+`POST /ask/` is the command palette's, and its turns carry the `Palette` surface whatever the
+client sends: the prompt says the question came from the palette, is about what it names
+anywhere in Trenova, and treats the page under the palette as where the person was, querying
+its table only for a question that points at those rows.
+
+Only the organization's general assistant (`TemplateGeneralAssistant`) answers one
+(`assistantservice.askAgent`). When it is off, or not open to the person, the palette says so;
+no other chat agent stands in, because each is built for its own desk and answered every
+question from that desk's records (the Agent Activity Desk, first by name, answered every
+question from agent runs). On a quick question's conversation (`ThreadOrigin.ReadsEverything`)
+the agent holds every query tool besides the ones it was configured with
+(`Definition.HoldingReads`): the person's permissions narrow them as they narrow any tool,
+`find_tools` discloses them on demand, a tool switched off on the agent stays off, extension
+tools keep their own grant, and no write is added. The conversation keeps them after Continue
+in Desk.
+
+The palette searches records for the question's search words (`questionSearchText`: what is
+left once "tell me about", "what's going on with" and the like are taken away, since the
+index drops words from the end and would give up the record's name first) and lists them
+under the Nova row. A question carries the ones it names outright (`recordsNamedIn`: a PRO
+number or name written in the question as the record carries it) as mentions, found inside
+`useAsk`'s start under the withdraw signal, so closing the palette still asks and only Stop
+withdraws; a search that fails asks without them.
+
 ### The turn stream
 
 A run's events go to a **Workflow Stream** its own workflow hosts

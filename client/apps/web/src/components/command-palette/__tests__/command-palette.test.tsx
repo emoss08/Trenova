@@ -10,8 +10,10 @@ import type { PaletteIntent } from "../palette-model";
 import type { HomeInput, RemoteState } from "../palette-sections";
 import { command, page, record } from "./palette-test-fixtures";
 
-const { runIntent, remoteState, homeState, remoteArgs } = vi.hoisted(() => ({
+const { runIntent, remoteState, homeState, remoteArgs, ask, globalSearch } = vi.hoisted(() => ({
   runIntent: vi.fn<(intent: PaletteIntent) => void>(),
+  ask: vi.fn(),
+  globalSearch: vi.fn(),
   remoteArgs: [] as { enabled: boolean; query: string; scope: string }[],
   remoteState: { current: null as null | RemoteState },
   homeState: { current: null as null | HomeInput },
@@ -22,7 +24,11 @@ vi.mock("../use-palette-intents", () => ({
 }));
 
 vi.mock("@/components/assistant/use-ask", () => ({
-  useAsk: () => ({ turn: null, ask: vi.fn(), stop: vi.fn(), reset: vi.fn(), keep: vi.fn() }),
+  useAsk: () => ({ turn: null, ask, stop: vi.fn(), reset: vi.fn(), keep: vi.fn() }),
+}));
+
+vi.mock("@/services/api", () => ({
+  apiService: { globalSearchService: { search: globalSearch } },
 }));
 
 vi.mock("@/components/assistant/use-page-context", () => ({
@@ -52,7 +58,8 @@ const PAGES = [
 ];
 const COMMANDS = [command()];
 
-vi.mock("../use-palette-data", () => ({
+vi.mock("../use-palette-data", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../use-palette-data")>()),
   useUnreadCount: () => 0,
   usePaletteCatalog: () => ({
     pages: PAGES,
@@ -101,6 +108,8 @@ beforeAll(() => {
 
 beforeEach(() => {
   runIntent.mockReset();
+  ask.mockReset();
+  globalSearch.mockReset();
   remoteArgs.length = 0;
   remoteState.current = { groups: [], loading: false, error: false, ready: false };
   homeState.current = {
@@ -319,14 +328,56 @@ describe("CommandPalette", () => {
     expect(screen.getByRole("option", { name: /Workers/ })).toBeInTheDocument();
   });
 
-  it("takes a question to Nova instead of searching records with it", async () => {
+  it("searches records for a question's search words, under the way to ask Nova", async () => {
     const user = userEvent.setup();
     renderPalette();
 
-    await user.type(input(), "how many loads are late?");
+    await user.type(input(), "Tell me about SEED-PAY-002?");
 
     expect(screen.getByRole("option", { name: /Ask Nova/ })).toBeInTheDocument();
-    expect(remoteArgs.at(-1)?.enabled).toBe(false);
+    await waitFor(() =>
+      expect(remoteArgs.at(-1)).toEqual({ enabled: true, query: "SEED-PAY-002", scope: "all" }),
+    );
+  });
+
+  it("asks Nova with the records its search found that the question names", async () => {
+    const groups = [
+      {
+        entityType: "shipment",
+        label: "Shipments",
+        hits: [
+          {
+            id: "shp_2",
+            entityType: "shipment",
+            title: "SEED-PAY-002",
+            href: "/shipments/shp_2",
+          },
+          {
+            id: "shp_5",
+            entityType: "shipment",
+            title: "SEED-PAY-005",
+            href: "/shipments/shp_5",
+          },
+        ],
+      },
+    ];
+    globalSearch.mockResolvedValue({ query: "SEED-PAY-002", groups });
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "Tell me about SEED-PAY-002?");
+    await user.keyboard("{Enter}");
+
+    expect(ask).toHaveBeenCalledTimes(1);
+    const [question, options] = ask.mock.calls[0]!;
+    expect(question).toBe("Tell me about SEED-PAY-002?");
+    expect(options.mentions).toBeUndefined();
+    await expect(options.findMentions(new AbortController().signal)).resolves.toEqual([
+      { type: "shipment", id: "shp_2", label: "SEED-PAY-002" },
+    ]);
+    expect(globalSearch).toHaveBeenCalledWith("SEED-PAY-002", 5, undefined, {
+      signal: expect.any(AbortSignal),
+    });
   });
 
   it("ends every search with a way to ask Nova", async () => {

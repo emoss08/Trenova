@@ -15,7 +15,7 @@ import { isMacPlatform } from "@trenova/shared/lib/shortcuts";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { Pin01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { useLocation } from "react-router";
@@ -294,6 +294,34 @@ export function usePaletteHome({
 }
 
 /**
+ * The global index searched for one palette query, in one scope. The list and
+ * a question asked from it read the same cache, so asking right after the
+ * records appear sends what was drawn rather than searching again.
+ */
+export function isRemoteSearchable(query: string, scope: PaletteScope): boolean {
+  const trimmed = query.trim();
+  const recordScope = isRecordScope(scope);
+  if (scope !== "all" && !recordScope) {
+    return false;
+  }
+  return (recordScope && trimmed === "") || trimmed.length >= MIN_REMOTE_QUERY_LENGTH;
+}
+
+export function paletteSearchQuery(query: string, scope: PaletteScope) {
+  const trimmed = query.trim();
+  const recordScope = isRecordScope(scope);
+  const entityTypes = recordScope ? [scope] : undefined;
+  const limit = recordScope ? RECORD_SCOPE_LIMIT : ALL_SCOPE_LIMIT;
+
+  return queryOptions({
+    queryKey: ["global-search", trimmed, scope, limit, entityTypes] as const,
+    queryFn: ({ signal }) =>
+      apiService.globalSearchService.search(trimmed, limit, entityTypes, { signal }),
+    staleTime: REMOTE_STALE_TIME,
+  });
+}
+
+/**
  * Record search against the global index. A superseded query is cancelled
  * rather than left to land late, and what was last found stays on screen
  * while the next query is in flight so the list does not blink per key. A
@@ -304,25 +332,18 @@ export function usePaletteRemoteSearch({
   query,
   scope,
 }: {
-  /** Off while the palette is closed, taking a question, or asking about a record. */
+  /** Off while the palette is closed or asking about one record. */
   enabled: boolean;
+  /** What to search records for: what was typed, or a question's search words. */
   query: string;
   scope: PaletteScope;
 }): RemoteState & { retry: () => void } {
   const trimmed = query.trim();
-  const recordScope = isRecordScope(scope);
-  const searchable = scope === "all" || recordScope;
-  const browsing = recordScope && trimmed === "";
-  const ready = enabled && searchable && (browsing || trimmed.length >= MIN_REMOTE_QUERY_LENGTH);
-  const entityTypes = recordScope ? [scope] : undefined;
-  const limit = recordScope ? RECORD_SCOPE_LIMIT : ALL_SCOPE_LIMIT;
+  const ready = enabled && isRemoteSearchable(trimmed, scope);
 
   const result = useQuery({
-    queryKey: ["global-search", trimmed, scope, limit, entityTypes],
-    queryFn: ({ signal }) =>
-      apiService.globalSearchService.search(trimmed, limit, entityTypes, { signal }),
+    ...paletteSearchQuery(trimmed, scope),
     enabled: ready,
-    staleTime: REMOTE_STALE_TIME,
     placeholderData: (previous, previousQuery) =>
       previousQuery?.queryKey[2] === scope && previousQuery.queryKey[1] !== "" && trimmed !== ""
         ? previous
