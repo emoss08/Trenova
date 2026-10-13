@@ -211,12 +211,19 @@ func (fakeOrgs) GetByID(
 type fakeControls struct {
 	dispatchcontrolports.DispatchControlRepository
 	control *dispatchcontrol.DispatchControl
+	err     error
 }
 
 func (f *fakeControls) GetByOrgID(
 	context.Context,
 	dispatchcontrolports.GetDispatchControlRequest,
 ) (*dispatchcontrol.DispatchControl, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	if f.control == nil {
+		return nil, errortypes.NewNotFoundError("DispatchControl not found within your organization")
+	}
 	return f.control, nil
 }
 
@@ -890,4 +897,22 @@ func TestLog_RefusesACanceledLoad(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Empty(t, h.checkCalls.rows)
+}
+
+func TestListOverdue_AnOrganizationWithoutDispatchControlsIsNotMonitored(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.checkCalls.monitored = []*checkcallports.MonitoredMove{
+		{MoveID: pulid.MustNew("smv_"), LastContactAt: testNow - 30*3600},
+	}
+	h.controls.control = nil
+
+	overdue, err := h.svc.ListOverdue(t.Context(), h.tenant, testNow)
+	require.NoError(t, err)
+	assert.Empty(t, overdue)
+
+	h.controls.err = errors.New("connection reset")
+	_, err = h.svc.ListOverdue(t.Context(), h.tenant, testNow)
+	require.Error(t, err)
 }

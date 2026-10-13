@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -21,10 +22,10 @@ func (s *Service) ListOverdue(
 			TenantInfo: tenantInfo,
 		},
 	)
-	if err != nil {
+	if err != nil && !errortypes.IsNotFoundError(err) {
 		return nil, err
 	}
-	if control == nil || !control.EnableCheckCallMonitoring {
+	if err != nil || control == nil || !control.EnableCheckCallMonitoring {
 		return []*checkcallports.OverdueMove{}, nil
 	}
 
