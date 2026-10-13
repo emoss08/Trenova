@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -156,6 +157,20 @@ moves, the board for the driver, and a position nobody could reach at all.
 One call now reads the stops, the assignment, the tractor's position and the
 driver's hours, and says where the truck is and when it should arrive.
 */
+type fakeStopEtaReader struct {
+	rows      []*stopeta.StopETA
+	requested []pulid.ID
+}
+
+func (f *fakeStopEtaReader) ListByShipmentIDs(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	shipmentIDs []pulid.ID,
+) ([]*stopeta.StopETA, error) {
+	f.requested = append(f.requested, shipmentIDs...)
+	return f.rows, nil
+}
+
 func TestGetShipmentTracking_ComposesStopsAssignmentPositionAndHours(t *testing.T) {
 	t.Parallel()
 
@@ -190,7 +205,20 @@ func TestGetShipmentTracking_ComposesStopsAssignmentPositionAndHours(t *testing.
 			{WorkerID: workerID, DriveRemainingMs: 4 * 3_600_000, RecordedAt: 1_790_000_000 - 60},
 		},
 	}
-	tool := newGetShipmentTrackingTool(shipments, board, feed)
+	delivery := move.Stops[1]
+	arrival := int64(1_790_000_000 + 2*3600)
+	slack := int64(60)
+	etas := &fakeStopEtaReader{rows: []*stopeta.StopETA{{
+		ShipmentID:       sp.ID,
+		StopID:           delivery.ID,
+		EstimatedArrival: &arrival,
+		SlackMinutes:     &slack,
+		Verdict:          stopeta.VerdictOnTime,
+		Basis:            stopeta.BasisPosition,
+		DriveMethod:      stopeta.DriveMethodRouted,
+		ComputedAt:       1_790_000_000 - 30,
+	}}}
+	tool := newGetShipmentTrackingTool(shipments, board, feed, etas)
 
 	params := testParams(map[string]any{"shipmentId": sp.ID.String()})
 	params.Timezone = "America/Chicago"
@@ -213,7 +241,9 @@ func TestGetShipmentTracking_ComposesStopsAssignmentPositionAndHours(t *testing.
 	require.NotNil(t, snapshot.Driver)
 	assert.EqualValues(t, 240, snapshot.Driver.DriveRemainingMinutes)
 	require.NotNil(t, snapshot.Estimate)
-	assert.NotEqual(t, shipmenttracking.VerdictUnknown, snapshot.Estimate.Verdict)
+	assert.Equal(t, shipmenttracking.VerdictOnTime, snapshot.Estimate.Verdict)
+	assert.Equal(t, arrival, snapshot.Estimate.EstimatedArrival)
+	assert.Equal(t, []pulid.ID{sp.ID}, etas.requested)
 
 	require.NotNil(t, shipments.lastGet)
 	assert.True(t, shipments.lastGet.ExpandShipmentDetails)
@@ -231,7 +261,12 @@ func TestGetShipmentTracking_FindsAShipmentByExactProNumber(t *testing.T) {
 	other, _ := trackedShipment()
 	other.ProNumber = "S123456"
 	shipments := &fakeTrackingShipments{listed: []*shipment.Shipment{other, sp}}
-	tool := newGetShipmentTrackingTool(shipments, &fakeBoardMoves{}, &fakeTelematics{})
+	tool := newGetShipmentTrackingTool(
+		shipments,
+		&fakeBoardMoves{},
+		&fakeTelematics{},
+		&fakeStopEtaReader{},
+	)
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{"proNumber": "s12345"}))
 	require.NoError(t, err)
@@ -719,7 +754,12 @@ func TestMonitoringTools_RejectAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
 	tools := []agentports.AgentQueryTool{
-		newGetShipmentTrackingTool(&fakeTrackingShipments{}, &fakeBoardMoves{}, &fakeTelematics{}),
+		newGetShipmentTrackingTool(
+			&fakeTrackingShipments{},
+			&fakeBoardMoves{},
+			&fakeTelematics{},
+			&fakeStopEtaReader{},
+		),
 		newListVehiclePositionsTool(&fakeTelematics{}, &fakePermissions{}),
 		newGetWorkerHOSTool(&fakeTelematics{}),
 		newGetDispatchBoardTool(&fakeBoard{}),

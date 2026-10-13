@@ -24967,13 +24967,24 @@ enum ShipmentEntryMethod {
 }
 
 type ShipmentEta {
+  basis: StopEtaBasis
+  computedAt: Timestamp
   estimatedArrival: Timestamp
-  """Why the load is behind, when the tracking snapshot can say."""
+  inputStale: Boolean!
+  """
+  Why the load is behind: an open service failure's reason, else what the projection rests on.
+  """
   reason: String
   """
-  Minutes between the projected arrival and the end of the delivery window; negative when it will be missed.
+  Minutes between the projected arrival and the end of the stop's window; negative when it will be missed.
   """
   slackMinutes: Int
+  """
+  The stop the shipment's verdict comes from: the worst open stop, else the next one.
+  """
+  stopId: ID
+  """Every open stop's projected arrival, in route order."""
+  stops: [StopEta!]!
   verdict: EtaVerdict!
 }
 
@@ -26115,6 +26126,74 @@ input StartWorkerChecklistInput {
   startedAt: Timestamp
   templateId: ID!
   workerId: ID!
+}
+
+"""
+The projected arrival at one open stop, stored and refreshed as its inputs change.
+"""
+type StopEta {
+  """The truck is at the stop; the arrival is the recorded one."""
+  arrived: Boolean!
+  basis: StopEtaBasis!
+  computedAt: Timestamp!
+  driveMethod: StopEtaDriveMethod!
+  """Driving minutes from the starting point to this stop."""
+  driveMinutes: Int!
+  estimatedArrival: Timestamp
+  estimatedDeparture: Timestamp
+  id: ID!
+  """When the position, check call or departure it rests on was recorded."""
+  inputAt: Timestamp
+  """The input is older than it should be to trust the projection."""
+  inputStale: Boolean!
+  """Road miles from the projection's starting point to this stop."""
+  milesRemaining: Float!
+  moveSequence: Int!
+  """What the projection rests on, in words."""
+  reason: String
+  """Breaks, resets and restarts the driver's hours add before this stop."""
+  restMinutes: Int!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  """
+  Minutes between the projected arrival and the window end; negative when it will be missed.
+  """
+  slackMinutes: Int
+  stopId: ID!
+  stopSequence: Int!
+  """Slack under this many minutes is at risk."""
+  thresholdMinutes: Int!
+  verdict: EtaVerdict!
+  """The end of the stop's window, or its start when it has no end."""
+  windowEnd: Timestamp
+}
+
+"""What a projected arrival was worked out from."""
+enum StopEtaBasis {
+  """The truck has arrived at the stop and not yet left."""
+  AtStop
+  """The arrival the carrier gave on its latest check call."""
+  CarrierReported
+  """The position on the latest check call."""
+  CheckCall
+  """The last stop the truck left, with no position since."""
+  LastDeparture
+  """Nothing to estimate from."""
+  None
+  """The assigned tractor's telematics position."""
+  Position
+}
+
+"""How the drive time behind a projected arrival was found."""
+enum StopEtaDriveMethod {
+  """No drive was needed or none could be worked out."""
+  None
+  """Straight line widened for roads, at the planning speed."""
+  Planning
+  """Stated by the carrier."""
+  Reported
+  """Routed by the organization's routing integration."""
+  Routed
 }
 
 type StopKey {
@@ -28460,6 +28539,7 @@ enum WatchtowerSourceKind {
   CarrierIntelEvent
   DetentionOccurrence
   EDIInboundQuarantined
+  EtaAtRisk
   HOSViolation
   InboundMessage
   Insight

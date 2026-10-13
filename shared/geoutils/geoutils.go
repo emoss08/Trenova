@@ -3,9 +3,22 @@ package geoutils
 import "math"
 
 const (
-	earthRadiusMiles   = 3958.7613
-	RoadCircuityFactor = 1.2
+	earthRadiusMiles    = 3958.7613
+	RoadCircuityFactor  = 1.2
+	PlanningLinehaulMph = 50.0
+	secondsPerHour      = 3600.0
 )
+
+func PlanningRoadMiles(lat1, lon1, lat2, lon2 float64) float64 {
+	return HaversineMiles(lat1, lon1, lat2, lon2) * RoadCircuityFactor
+}
+
+func PlanningDriveSeconds(miles float64) int64 {
+	if miles <= 0 {
+		return 0
+	}
+	return int64(math.Round(miles / PlanningLinehaulMph * secondsPerHour))
+}
 
 func HaversineMiles(lat1, lon1, lat2, lon2 float64) float64 {
 	lat1Rad := lat1 * math.Pi / 180

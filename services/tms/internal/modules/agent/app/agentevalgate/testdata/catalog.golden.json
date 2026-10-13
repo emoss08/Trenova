@@ -13595,7 +13595,7 @@
     },
     {
       "name": "get_shipment_tracking",
-      "description": "Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate. It also shows who is on each move with what truck and the driver's remaining hours. The next-stop estimate is straight-line at a planning speed, so call it an estimate and never a promise. Start here for any \"where is\", \"is it late\" or \"when will it arrive\" question; get_shipment has the commercial detail instead.",
+      "description": "Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate. It also shows who is on each move with what truck and the driver's remaining hours. Each open stop carries its projected arrival, slack and verdict, worked out from the truck's position, the carrier's check calls or the last departure with routed drive time, dwell and the driver's hours; estimate.basis says what it rests on and estimate.inputStale says when that is old. Call it an estimate and never a promise. Start here for any \"where is\", \"is it late\" or \"when will it arrive\" question; get_shipment has the commercial detail instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -22457,7 +22457,8 @@
                 "TelematicsStopVisit",
                 "AgentQualityRegression",
                 "AccountingSync",
-                "NoCheckCall"
+                "NoCheckCall",
+                "EtaAtRisk"
               ],
               "type": "string",
               "x-enumOf": "watchtower.sourceKind"
@@ -25250,7 +25251,7 @@
     },
     {
       "name": "propose_formula",
-      "description": "Put a formula in front of the person for their editor, with its variables, a plain explanation and two or three sample loads priced by the engine. Nothing is saved: the person inserts it, tests it and saves it themselves.",
+      "description": "Change the formula in the person's editor: the expression, its variables, the charge policy, breakdown lines, and for a new template its name and description. The page applies the change the moment you call this; the person sees it in their editor, can undo it, and nothing is saved until they save. Call it for every change the person asks for — add, remove, fix, rename, set a default, change the minimum — with the whole formula as it should be after the change. Keep everything they did not ask to change exactly as the page draft shows it. Never describe a change without making it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -25300,6 +25301,45 @@
             "description": "Only when you draft a new template from scratch and the page draft has no name yet: a short name for the rating method, such as \"Linehaul per mile with fuel\". Leave it out when changing an existing formula.",
             "maxLength": 100,
             "type": "string"
+          },
+          "policy": {
+            "additionalProperties": false,
+            "description": "The charge policy the template applies after the expression. Always pass the page draft's policy here, changed only where the person asked (a minimum, a maximum, the rounding), so the amounts you quote match what the studio bills. Never write a minimum, a maximum or rounding into the expression.",
+            "properties": {
+              "maxCharge": {
+                "description": "The most the template bills for a load, whatever the expression comes to; null removes the maximum.",
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "minCharge": {
+                "description": "The least the template bills for a load, whatever the expression comes to; null removes the minimum.",
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "roundingMode": {
+                "description": "How the charge is rounded after the bounds; HalfUp unless the person chose otherwise.",
+                "enum": [
+                  "HalfUp",
+                  "HalfEven",
+                  "Up",
+                  "Down",
+                  "None"
+                ],
+                "type": "string",
+                "x-enumOf": "formula.roundingMode"
+              },
+              "roundingPrecision": {
+                "description": "The decimal places the charge is rounded to, 0 to 4; 2 is the cent.",
+                "maximum": 4,
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "type": "object"
           },
           "scenarios": {
             "description": "Loads to price, each named and described in a sentence, with the variable values that make it that load.",
@@ -25418,7 +25458,7 @@
         "idempotent": true,
         "readsExternal": "never",
         "carriesTaint": false,
-        "rationale": "Hands a formula to the person's own editor for them to insert, test and save; nothing is saved and nothing is sent."
+        "rationale": "Changes the person's own editor, which they can undo; nothing is saved and nothing is sent."
       }
     },
     {
@@ -33606,6 +33646,45 @@
           "expression": {
             "description": "The expression to price, such as the one in the page draft.",
             "type": "string"
+          },
+          "policy": {
+            "additionalProperties": false,
+            "description": "The page draft's charge policy, so the amounts match what is billed.",
+            "properties": {
+              "maxCharge": {
+                "description": "The most the template bills for a load, whatever the expression comes to; null removes the maximum.",
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "minCharge": {
+                "description": "The least the template bills for a load, whatever the expression comes to; null removes the minimum.",
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "roundingMode": {
+                "description": "How the charge is rounded after the bounds; HalfUp unless the person chose otherwise.",
+                "enum": [
+                  "HalfUp",
+                  "HalfEven",
+                  "Up",
+                  "Down",
+                  "None"
+                ],
+                "type": "string",
+                "x-enumOf": "formula.roundingMode"
+              },
+              "roundingPrecision": {
+                "description": "The decimal places the charge is rounded to, 0 to 4; 2 is the cent.",
+                "maximum": 4,
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "type": "object"
           },
           "scenarios": {
             "description": "Loads to price, each named and described in a sentence, with the variable values that make it that load.",

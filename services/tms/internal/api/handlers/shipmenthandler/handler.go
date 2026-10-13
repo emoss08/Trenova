@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
+
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
@@ -31,6 +33,7 @@ type Params struct {
 	HoldService          shipmentports.ShipmentHoldService
 	ImportAssistant      shipmentports.ShipmentImportAssistantService
 	PermitService        permitports.PermitService
+	Etas                 shipmenttrackingports.ShipmentEtaReader
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
@@ -42,6 +45,7 @@ type Handler struct {
 	holdService     shipmentports.ShipmentHoldService
 	importAssistant shipmentports.ShipmentImportAssistantService
 	permitService   permitports.PermitService
+	etas            shipmenttrackingports.ShipmentEtaReader
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
 	logger          *zap.Logger
@@ -54,6 +58,7 @@ func New(p Params) *Handler {
 		holdService:     p.HoldService,
 		importAssistant: p.ImportAssistant,
 		permitService:   p.PermitService,
+		etas:            p.Etas,
 		eh:              p.ErrorHandler,
 		pm:              p.PermissionMiddleware,
 		logger:          p.Logger.Named("api.shipment-handler"),
@@ -76,6 +81,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) { //nolint:funlen // legac
 		"/:shipmentID/billing-readiness/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
 		h.getBillingReadiness,
+	)
+	api.GET(
+		"/:shipmentID/eta/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
+		h.getEta,
 	)
 	api.GET(
 		"/:shipmentID/permit-assessment/",
@@ -391,6 +401,48 @@ func (h *Handler) getBillingReadiness(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, readiness)
+}
+
+// @Summary Get shipment ETA
+// @Description Returns the stored projected arrival at every open stop of a shipment and the shipment's verdict, taken from its worst open stop.
+// @ID getShipmentEta
+// @Tags Shipments
+// @Produce json
+// @Param shipmentID path string true "Shipment ID"
+// @Success 200 {object} shipmenttrackingports.ShipmentEta
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /shipments/{shipmentID}/eta/ [get]
+func (h *Handler) getEta(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	shipmentID, err := pulid.MustParse(c.Param("shipmentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	etas, err := h.etas.EtasByShipmentIDs(
+		c.Request.Context(),
+		pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+		[]pulid.ID{shipmentID},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	eta := etas[shipmentID]
+	if eta == nil {
+		eta = shipmenttrackingports.UnknownShipmentEta(shipmentID)
+	}
+	c.JSON(http.StatusOK, eta)
 }
 
 // @Summary Get shipment permit assessment

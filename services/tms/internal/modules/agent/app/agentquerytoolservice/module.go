@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
@@ -234,8 +235,9 @@ func provideGetShipmentTrackingTool(
 	shipments shipmentports.ShipmentRepository,
 	console shipmentports.DispatchConsoleRepository,
 	telematics *telematicsservice.Service,
+	stopEtas stopetaports.Repository,
 ) agentports.AgentQueryTool {
-	return newGetShipmentTrackingTool(shipments, console, telematics)
+	return newGetShipmentTrackingTool(shipments, console, telematics, stopEtas)
 }
 
 func provideListVehiclePositionsTool(

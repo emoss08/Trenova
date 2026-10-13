@@ -780,7 +780,6 @@
   "showing the {0} most recent": "顯示最近的 {0} 筆",
   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...",
   "{\"LTL\":\"M\"}": "{\"LTL\":\"M\"}",
-  "{0, plural, one {# warning} other {# warnings}}": "{0, plural, other {# 項警告}}",
   "{0, plural, one {Expires in # day} other {Expires in # days}} ({1})": "{0, plural, other {# 天後到期}}（{1}）",
   "{0, plural, one {No document moved through EDI in the last day. Look at everything to see older traffic, or wait for the next document to arrive.} other {No document moved through EDI in the last # days. Look at everything to see older traffic, or wait for the next document to arrive.}}": "{0, plural, other {過去 # 天內沒有任何文件經由 EDI 傳輸。請檢視全部以查看較早的流量，或等待下一份文件抵達。}}",
   "{0, plural, one {No document moved through EDI in the last hour. Look at everything to see older traffic, or wait for the next document to arrive.} other {No document moved through EDI in the last # hours. Look at everything to see older traffic, or wait for the next document to arrive.}}": "{0, plural, other {過去 # 小時內沒有任何文件經由 EDI 傳輸。請檢視全部以查看較早的流量，或等待下一份文件抵達。}}",

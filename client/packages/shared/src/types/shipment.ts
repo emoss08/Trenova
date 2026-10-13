@@ -44,11 +44,54 @@ export const shipmentStageSchema = z.enum([
 ]);
 export type ShipmentStage = z.infer<typeof shipmentStageSchema>;
 
+export const etaVerdictSchema = z.enum(["OnTime", "AtRisk", "Late", "Unknown"]);
+export type EtaVerdict = z.infer<typeof etaVerdictSchema>;
+
+export const stopEtaBasisSchema = z.enum([
+  "Position",
+  "CheckCall",
+  "CarrierReported",
+  "AtStop",
+  "LastDeparture",
+  "None",
+]);
+export type StopEtaBasis = z.infer<typeof stopEtaBasisSchema>;
+
+export const stopEtaDriveMethodSchema = z.enum(["Routed", "Planning", "Reported", "None"]);
+export type StopEtaDriveMethod = z.infer<typeof stopEtaDriveMethodSchema>;
+
+export const stopEtaSchema = z.object({
+  stopId: z.string(),
+  shipmentMoveId: z.string().nullish(),
+  arrived: z.boolean().default(false),
+  estimatedArrival: z.number().nullish(),
+  estimatedDeparture: z.number().nullish(),
+  windowEnd: z.number().nullish(),
+  slackMinutes: z.number().nullish(),
+  verdict: etaVerdictSchema,
+  basis: stopEtaBasisSchema,
+  driveMethod: stopEtaDriveMethodSchema,
+  milesRemaining: z.number().default(0),
+  driveMinutes: z.number().default(0),
+  restMinutes: z.number().default(0),
+  inputAt: z.number().nullish(),
+  inputStale: z.boolean().default(false),
+  thresholdMinutes: z.number().default(0),
+  reason: z.string().nullish(),
+  computedAt: z.number().nullish(),
+});
+export type StopEta = z.infer<typeof stopEtaSchema>;
+
 export const shipmentEtaSchema = z.object({
+  stopId: z.string().nullish(),
   estimatedArrival: z.number().nullish(),
   slackMinutes: z.number().nullish(),
-  verdict: z.enum(["OnTime", "AtRisk", "Late", "Unknown"]),
+  verdict: etaVerdictSchema,
+  basis: stopEtaBasisSchema.nullish(),
+  inputStale: z.boolean().nullish(),
+  computedAt: z.number().nullish(),
   reason: z.string().nullish(),
+  stops: z.array(stopEtaSchema).nullish(),
 });
 export type ShipmentEta = z.infer<typeof shipmentEtaSchema>;
 

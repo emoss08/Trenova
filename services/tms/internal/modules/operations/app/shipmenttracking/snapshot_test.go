@@ -3,12 +3,13 @@ package shipmenttracking
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -149,10 +150,8 @@ func TestBuild_EstimatesArrivalFromTheTractorsPosition(t *testing.T) {
 	assert.EqualValues(t, 300, snapshot.Driver.DriveRemainingMinutes)
 
 	require.NotNil(t, snapshot.Estimate)
-	assert.InDelta(t, 83, snapshot.Estimate.MilesRemaining, 8, "straight line widened for roads")
-	assert.Equal(t, VerdictOnTime, snapshot.Estimate.Verdict)
-	assert.Positive(t, snapshot.Estimate.SlackMinutes)
-	assert.Contains(t, snapshot.Estimate.Basis, "Not routed")
+	assert.Equal(t, VerdictUnknown, snapshot.Estimate.Verdict, "no stored projection yet")
+	assert.Contains(t, snapshot.Estimate.Basis, "No arrival has been projected")
 	assert.Equal(t, "driver", snapshot.Moves[0].Coverage)
 	assert.Len(
 		t,
@@ -162,13 +161,14 @@ func TestBuild_EstimatesArrivalFromTheTractorsPosition(t *testing.T) {
 	)
 }
 
-func TestBuild_CallsAnEstimatePastTheWindowLateAndAStalePositionStale(t *testing.T) {
+func TestBuild_ReadsTheStoredProjectionAndAStalePositionStale(t *testing.T) {
 	t.Parallel()
 
 	sp, move := inTransitShipment()
-	// The window closes in thirty minutes and the truck is 200 miles out.
-	sp.Moves[0].Stops[0].ScheduledWindowEnd = ptr(now + 1800)
+	delivery := sp.Moves[0].Stops[0]
 	tractorID := pulid.MustNew("trc_")
+	arrival := now + 4*3600
+	slack := int64(-60)
 	snapshot := Build(Input{
 		Shipment: sp,
 		Now:      now,
@@ -184,15 +184,43 @@ func TestBuild_CallsAnEstimatePastTheWindowLateAndAStalePositionStale(t *testing
 				RecordedAt: now - 2*3600,
 			},
 		},
+		StopETAs: map[pulid.ID]*stopeta.StopETA{
+			delivery.ID: {
+				StopID:           delivery.ID,
+				EstimatedArrival: &arrival,
+				SlackMinutes:     &slack,
+				Verdict:          stopeta.VerdictLate,
+				Basis:            stopeta.BasisPosition,
+				DriveMethod:      stopeta.DriveMethodRouted,
+				MilesRemaining:   240,
+				DriveMinutes:     240,
+				InputStale:       true,
+				Reason:           "From the truck's last position, which is 2h 00m old.",
+				ComputedAt:       now - 60,
+			},
+		},
 	})
 
 	require.NotNil(t, snapshot.Estimate)
 	assert.Equal(t, VerdictLate, snapshot.Estimate.Verdict)
-	assert.Negative(t, snapshot.Estimate.SlackMinutes)
+	assert.Equal(t, int64(-60), snapshot.Estimate.SlackMinutes)
+	assert.Equal(t, arrival, snapshot.Estimate.EstimatedArrival)
+	assert.Equal(t, "Position", snapshot.Estimate.Source)
+	assert.Equal(t, "Routed", snapshot.Estimate.DriveMethod)
+	assert.True(t, snapshot.Estimate.InputStale)
+	assert.Contains(t, snapshot.Estimate.Basis, "last position")
+
+	stop := snapshot.Moves[0].Stops[1]
+	assert.Equal(t, arrival, stop.EstimatedArrival)
+	assert.Equal(t, "Late", stop.EtaVerdict)
+	require.NotNil(t, stop.SlackMinutes)
+	assert.Equal(t, int64(-60), *stop.SlackMinutes)
+
 	require.NotNil(t, snapshot.Position)
 	assert.True(t, snapshot.Position.Stale)
 	assert.Contains(t, snapshot.Flags, "The last position is 120 minutes old")
 	assert.Contains(t, snapshot.Summary, "(stale)")
+	assert.Contains(t, snapshot.Summary, "60 minutes after the window closes")
 }
 
 func TestBuild_SaysWhenThereIsNothingToEstimateFrom(t *testing.T) {
@@ -211,7 +239,7 @@ func TestBuild_SaysWhenThereIsNothingToEstimateFrom(t *testing.T) {
 	assert.Nil(t, snapshot.Position)
 	require.NotNil(t, snapshot.Estimate)
 	assert.Equal(t, VerdictUnknown, snapshot.Estimate.Verdict)
-	assert.Contains(t, snapshot.Estimate.Basis, "no position on file")
+	assert.Contains(t, snapshot.Estimate.Basis, "No arrival has been projected")
 	assert.Contains(t, snapshot.Flags, "No telematics position is on file for the assigned tractor")
 }
 

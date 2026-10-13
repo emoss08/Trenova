@@ -51,6 +51,32 @@ describe("formulaDraftFromEditor", () => {
     });
   });
 
+  it("carries the name, description, breakdown lines and charge policy when the editor has them", () => {
+    const draft = formulaDraftFromEditor({
+      templateId: null,
+      schemaId: "shipment",
+      templateType: "FreightCharge",
+      name: "  Per mile  ",
+      description: "Linehaul per mile",
+      expression: "baseRate * totalDistance",
+      variables: [],
+      breakdown: [
+        { name: "linehaul", label: "Linehaul", expression: "baseRate * totalDistance" },
+        { name: "", label: "Dropped", expression: "1" },
+        { name: "empty", label: "Dropped too", expression: "  " },
+      ],
+      policy: { minCharge: 250, maxCharge: "", roundingMode: "HalfUp", roundingPrecision: 2 },
+    });
+
+    expect(pageDraftSchema.safeParse(draft).success).toBe(true);
+    expect(draft.formula).toMatchObject({
+      name: "Per mile",
+      description: "Linehaul per mile",
+      breakdown: [{ name: "linehaul", label: "Linehaul", expression: "baseRate * totalDistance" }],
+      policy: { minCharge: "250", maxCharge: null, roundingMode: "HalfUp", roundingPrecision: 2 },
+    });
+  });
+
   it("leaves the template out while it is unsaved, and falls back to the shipment schema", () => {
     const draft = formulaDraftFromEditor({
       templateId: null,
@@ -188,13 +214,35 @@ const editor: ProposalTarget = {
   breakdownDefinitions: [
     { name: "linehaul", label: "Linehaul", expression: "baseRate * totalDistance" },
   ],
+  minCharge: 250,
+  maxCharge: null,
+  roundingMode: "HalfUp",
+  roundingPrecision: 2,
 };
 
 describe("applyProposal", () => {
+  it("keeps the editor's charge policy unless the proposal sets one", () => {
+    const kept = applyProposal(editor, proposalWith({}));
+    expect([kept.minCharge, kept.maxCharge, kept.roundingMode]).toEqual([250, null, "HalfUp"]);
+
+    const moved = applyProposal(
+      editor,
+      proposalWith({ policy: { minCharge: "300", maxCharge: "2500", roundingMode: "Up" } }),
+    );
+    expect([moved.minCharge, moved.maxCharge, moved.roundingMode, moved.roundingPrecision]).toEqual(
+      [300, 2500, "Up", 2],
+    );
+
+    const cleared = applyProposal(editor, proposalWith({ policy: { minCharge: null } }));
+    expect(cleared.minCharge).toBeNull();
+    expect(cleared.maxCharge).toBeNull();
+  });
+
   it("keeps the editor's own variables and adds only the ones it lacks", () => {
     const next = applyProposal(
       editor,
       proposalWith({
+        expression: "baseRate * totalDistance + weekendFee + stopFee",
         variables: [
           { name: "weekendFee", type: "Number", description: "Weekend fee", defaultValue: 125 },
           { name: "reeferFee", type: "Number", description: "Reefer fee", defaultValue: 225 },
@@ -202,7 +250,7 @@ describe("applyProposal", () => {
       }),
     );
 
-    expect(next.expression).toBe("baseRate * totalDistance + weekendFee");
+    expect(next.expression).toBe("baseRate * totalDistance + weekendFee + stopFee");
     expect(next.variableDefinitions).toEqual([
       editor.variableDefinitions[0],
       editor.variableDefinitions[1],
@@ -214,6 +262,24 @@ describe("applyProposal", () => {
         defaultValue: 225,
       },
     ]);
+  });
+
+  it("lets go of an input the new formula and breakdown no longer read", () => {
+    const next = applyProposal(
+      editor,
+      proposalWith({ expression: "baseRate * totalDistance", variables: [] }),
+    );
+    expect(next.variableDefinitions).toEqual([]);
+
+    const stillRead = applyProposal(
+      editor,
+      proposalWith({
+        expression: "baseRate * totalDistance",
+        variables: [],
+        breakdown: [{ name: "stops", label: "Stops", expression: "stopFee" }],
+      }),
+    );
+    expect(stillRead.variableDefinitions.map((variable) => variable.name)).toEqual(["stopFee"]);
   });
 
   it("keeps the editor's breakdown unless the proposal itemizes, then takes its lines", () => {

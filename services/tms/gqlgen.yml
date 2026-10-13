@@ -4102,7 +4102,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.BoardGrouping
   EtaVerdict:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking.Verdict
+      - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.Verdict
   UncoveredPickupWindow:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.PickupWindow
@@ -5155,3 +5155,12 @@ models:
   CarrierTrackingLink:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.TrackingLink
+  StopEta:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.StopETA
+  StopEtaBasis:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.Basis
+  StopEtaDriveMethod:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.DriveMethod

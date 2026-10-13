@@ -35,7 +35,7 @@ type Params struct {
 	Templates           documenttemplateports.DocumentTemplateResolver `optional:"true"`
 	EmailService        emailports.EmailService                        `optional:"true"`
 	AuditService        auditports.AuditService                        `optional:"true"`
-	Observer            checkcallports.CheckCallObserver               `optional:"true"`
+	Observers           []checkcallports.CheckCallObserver             `                group:"check_call_observers"`
 }
 
 type Service struct {
@@ -54,7 +54,7 @@ type Service struct {
 	templates           documenttemplateports.DocumentTemplateResolver
 	emailService        emailports.EmailService
 	auditService        auditports.AuditService
-	observer            checkcallports.CheckCallObserver
+	observers           []checkcallports.CheckCallObserver
 	now                 func() int64
 }
 
@@ -75,7 +75,7 @@ func New(p Params) *Service { //nolint:gocritic // dependency injection
 		templates:           p.Templates,
 		emailService:        p.EmailService,
 		auditService:        p.AuditService,
-		observer:            p.Observer,
+		observers:           p.Observers,
 		now:                 timeutils.NowUnix,
 	}
 }

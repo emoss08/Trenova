@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -61,18 +62,33 @@ const (
 	maxHOSStates            = 500
 )
 
+type stopEtaReader interface {
+	ListByShipmentIDs(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		shipmentIDs []pulid.ID,
+	) ([]*stopeta.StopETA, error)
+}
+
 type getShipmentTrackingTool struct {
 	shipments  shipmentports.ShipmentRepository
 	board      boardMoveLister
 	telematics telematicsReader
+	stopEtas   stopEtaReader
 }
 
 func newGetShipmentTrackingTool(
 	shipments shipmentports.ShipmentRepository,
 	board boardMoveLister,
 	reader telematicsReader,
+	stopEtas stopEtaReader,
 ) agentports.AgentQueryTool {
-	return &getShipmentTrackingTool{shipments: shipments, board: board, telematics: reader}
+	return &getShipmentTrackingTool{
+		shipments:  shipments,
+		board:      board,
+		telematics: reader,
+		stopEtas:   stopEtas,
+	}
 }
 
 func (t *getShipmentTrackingTool) Name() string { return "get_shipment_tracking" }
@@ -81,8 +97,11 @@ func (t *getShipmentTrackingTool) Description() string {
 	return "Where a shipment is and whether it will be on time: each stop's window, actual " +
 		"arrival and lateness, the tractor's last position, and an arrival estimate. It " +
 		"also shows who is on each move with what truck and the driver's remaining " +
-		"hours. The next-stop estimate is straight-line at a planning speed, so call it " +
-		"an estimate and never a promise. Start here for any \"where is\", \"is it " +
+		"hours. Each open stop carries its projected arrival, slack and verdict, worked out " +
+		"from the truck's position, the carrier's check calls or the last departure with " +
+		"routed drive time, dwell and the driver's hours; estimate.basis says what it rests " +
+		"on and estimate.inputStale says when that is old. Call it an estimate and never a " +
+		"promise. Start here for any \"where is\", \"is it " +
 		"late\" or \"when will it arrive\" question; get_shipment has the commercial " +
 		"detail instead."
 }
@@ -157,11 +176,17 @@ func (t *getShipmentTrackingTool) Query(
 		return nil, err
 	}
 
+	etas, err := t.stopEtas.ListByShipmentIDs(ctx, tenant, []pulid.ID{sp.ID})
+	if err != nil {
+		return nil, err
+	}
+
 	return shipmenttracking.Build(shipmenttracking.Input{
 		Shipment:    sp,
 		Assignments: assignments,
 		Positions:   positions,
 		HOS:         hos,
+		StopETAs:    stopeta.IndexByStop(etas),
 		Now:         clockFor(params).Now,
 		Timezone:    params.Timezone,
 	}), nil

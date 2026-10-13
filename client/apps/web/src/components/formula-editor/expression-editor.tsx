@@ -3,18 +3,20 @@ import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import type { VariableDefinitionInput } from "@trenova/shared/types/formula-template";
-import type { EditorView } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import CodeMirror, {
   type ReactCodeMirrorProps,
   type ReactCodeMirrorRef,
 } from "@uiw/react-codemirror";
 import { useCallback, useEffect, useMemo, useRef, type Ref } from "react";
-import { highlightRangeExtension, setHighlightRange, type EditorRange } from "./highlight-range";
 import { Controller, type FieldValues } from "react-hook-form";
 import { useActiveEditorRegistration } from "./active-editor";
-import { usePreviewValues } from "./preview-values";
-import { darkTheme, lightTheme } from "./editor-theme";
+import { darkTheme, languageServiceTheme, lightTheme } from "./editor-theme";
+import { inlineValuesExtension, setInlineValues, type InlineValue } from "./expr-inline-values";
 import { buildKnownIdentifiers, type KnownIdentifiers } from "./expr-language";
+import type { DeclareInput } from "./expr-lint";
+import { highlightRangeExtension, setHighlightRange, type EditorRange } from "./highlight-range";
+import { usePreviewValues } from "./preview-values";
 import { useExprExtensions } from "./use-expr-extensions";
 
 type ExpressionEditorProps<T extends FieldValues> = FormControlProps<T> &
@@ -34,6 +36,10 @@ type ExpressionEditorProps<T extends FieldValues> = FormControlProps<T> &
     highlight?: EditorRange | null;
     /** Told where the cursor is, one-based, as it moves. */
     onCursorChange?: (position: { line: number; column: number }) => void;
+    /** Declares an unknown name as an input, from a quick fix in the editor. */
+    declareInput?: DeclareInput;
+    /** What each statement came to on the preview load, drawn at the end of its line. */
+    inlineValues?: readonly InlineValue[] | null;
   };
 
 function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
@@ -43,6 +49,18 @@ function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
   } else {
     (ref as { current: T | null }).current = value;
   }
+}
+
+/** Moves the cursor onto a span, scrolls it into view and focuses the editor. */
+export function selectEditorRange(view: EditorView, range: EditorRange) {
+  const length = view.state.doc.length;
+  const from = Math.max(0, Math.min(range.from, length));
+  const to = Math.max(from, Math.min(range.to, length));
+  view.dispatch({
+    selection: { anchor: from, head: to },
+    effects: EditorView.scrollIntoView(from, { y: "center" }),
+  });
+  view.focus();
 }
 
 export function ExpressionEditor<T extends FieldValues>({
@@ -58,12 +76,15 @@ export function ExpressionEditor<T extends FieldValues>({
   embedded = false,
   highlight = null,
   onCursorChange,
+  declareInput,
+  inlineValues = null,
   control,
   rules,
   ...props
 }: ExpressionEditorProps<T>) {
   const resolvedTheme = useResolvedTheme();
   const { setActive, setPrimary } = useActiveEditorRegistration();
+  const isMini = variant === "mini";
 
   const known = useMemo(
     () => knownIdentifiers ?? buildKnownIdentifiers(undefined, customVariables),
@@ -72,15 +93,28 @@ export function ExpressionEditor<T extends FieldValues>({
 
   const viewRef = useRef<EditorView | null>(null);
   const previewValues = usePreviewValues();
-  const exprExtensions = useExprExtensions(known, lint, viewRef, previewValues);
+  const exprExtensions = useExprExtensions(known, lint, viewRef, {
+    hoverValues: previewValues,
+    declareInput,
+    gutter: !isMini,
+  });
   const extensions = useMemo(
-    () => [...exprExtensions, highlightRangeExtension()],
+    () => [
+      ...exprExtensions,
+      highlightRangeExtension(),
+      inlineValuesExtension(),
+      languageServiceTheme,
+    ],
     [exprExtensions],
   );
 
   useEffect(() => {
     viewRef.current?.dispatch({ effects: setHighlightRange.of(highlight) });
   }, [highlight]);
+
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: setInlineValues.of(inlineValues ?? []) });
+  }, [inlineValues]);
 
   const cursorRef = useRef(onCursorChange);
   cursorRef.current = onCursorChange;
@@ -103,8 +137,6 @@ export function ExpressionEditor<T extends FieldValues>({
       setPrimary?.(viewRef.current);
     }
   });
-
-  const isMini = variant === "mini";
 
   return (
     <Controller<T>

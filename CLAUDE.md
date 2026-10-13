@@ -393,6 +393,16 @@ rows to their spans, and the known limits are in
 [docs/engineering/ai-tracing.md](docs/engineering/ai-tracing.md). Read it before adding a span,
 a trace attribute or a link column.
 
+## Formula Language Service
+
+The Formula Studio's editor parses and checks the formula language in the browser
+(`client/apps/web/src/components/formula-editor/expr-parser.ts`, `expr-check.ts`): every finding
+carries its span and, where one exists, its fix, and the same analysis feeds the editor's
+squiggles, the problems panel, the rate trace and Nova's cards. **Read
+[docs/engineering/formula-language-service.md](docs/engineering/formula-language-service.md)
+before changing the parser, a check, a diagnostic message, or anything that reads
+`analyzeExpression`.** Diagnostic messages are ICU patterns: never put a bare brace in one.
+
 ## Desk Bench
 
 `trenova desk ask "…"` and `trenova desk run` (`task desk-ask`, `task desk-bench`) drive the
@@ -488,6 +498,18 @@ organization's) raises a `NoCheckCall` watchtower item, swept every 15 minutes a
 moment a check call lands. **Read [docs/engineering/check-calls.md](docs/engineering/check-calls.md)
 before changing `checkcall`, `checkcallservice`, the carrier tracking link or its public page,
 or the no-check-call sweep.**
+
+## Projected Arrivals
+
+Every open stop of an active shipment has a stored projected arrival in `stop_etas`, worked out
+by the pure `etaprojection` package from the truck's position, the carrier's check calls or the
+last departure, with routed drive time (PC*MILER when configured, else the planning speed),
+dwell and the driver's hours. Stop, assignment and check call events signal a debounced
+per-shipment refresh workflow, and a five-minute sweep picks up positions and hours; the board,
+`Shipment.eta`, `GET /shipments/:id/eta/`, the agents and `etaSlip` all read the stored rows,
+and an at-risk load raises an `EtaAtRisk` watchtower item. **Read
+[docs/engineering/eta.md](docs/engineering/eta.md) before changing `stopeta`, `etaprojection`,
+`shipmentetaservice`, `etajobs`, `etatrigger`, the route estimator or the arrival settings.**
 
 ## AI Training Export
 

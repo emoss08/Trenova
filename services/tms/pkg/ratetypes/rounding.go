@@ -7,7 +7,11 @@
 // any dependency on the engine.
 package ratetypes
 
-import "github.com/shopspring/decimal"
+import (
+	"slices"
+
+	"github.com/shopspring/decimal"
+)
 
 // RoundingMode says how a computed charge is reduced to its billable precision.
 //
@@ -29,17 +33,18 @@ func (rm RoundingMode) String() string {
 	return string(rm)
 }
 
-func (rm RoundingMode) IsValid() bool {
-	switch rm {
-	case RoundingModeHalfUp,
+func AllRoundingModes() []RoundingMode {
+	return []RoundingMode{
+		RoundingModeHalfUp,
 		RoundingModeHalfEven,
 		RoundingModeUp,
 		RoundingModeDown,
-		RoundingModeNone:
-		return true
-	default:
-		return false
+		RoundingModeNone,
 	}
+}
+
+func (rm RoundingMode) IsValid() bool {
+	return slices.Contains(AllRoundingModes(), rm)
 }
 
 // Round applies the mode at the given number of decimal places.

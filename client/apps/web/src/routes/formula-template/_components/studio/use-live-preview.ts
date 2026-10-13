@@ -96,6 +96,7 @@ export function useLivePreview(): LivePreviewState {
           sampleValues: DEFAULT_TEST_VALUES,
           overrides,
           shipmentId: usingShipment ? shipmentId : undefined,
+          traceStatements: true,
         },
       ),
     [

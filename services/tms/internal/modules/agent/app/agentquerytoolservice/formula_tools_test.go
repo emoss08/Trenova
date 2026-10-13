@@ -149,6 +149,43 @@ func TestTestFormulaExpression_PricesScenariosWithTheEngine(t *testing.T) {
 	assert.Equal(t, "Long haul", workbench.tested.Scenarios[0].Name)
 	assert.Equal(t, 2.5, workbench.tested.Variables["ratePerMile"])
 	assert.True(t, workbench.tested.ShipmentID.IsNil())
+	assert.Nil(t, workbench.tested.Policy, "no policy given means the engine's default")
+}
+
+func TestTestFormulaExpression_PricesWithThePageDraftsPolicy(t *testing.T) {
+	t.Parallel()
+
+	workbench := &fakeWorkbench{}
+	tool := newTestFormulaExpressionTool(workbench, &fakePermissions{allowed: true})
+
+	_, err := tool.Query(t.Context(), chatParams(map[string]any{
+		"expression": "totalDistance * ratePerMile",
+		"policy": map[string]any{
+			"minCharge":         350.5,
+			"maxCharge":         nil,
+			"roundingMode":      "Down",
+			"roundingPrecision": 0,
+		},
+	}, ""))
+	require.NoError(t, err)
+
+	policy := workbench.tested.Policy
+	require.NotNil(t, policy)
+	require.NotNil(t, policy.MinCharge)
+	assert.Equal(t, "350.5", *policy.MinCharge)
+	assert.Nil(t, policy.MaxCharge, "null removes the maximum")
+	assert.Equal(t, "Down", policy.RoundingMode)
+	require.NotNil(t, policy.RoundingPrecision)
+	assert.Equal(t, 0, *policy.RoundingPrecision)
+
+	properties := tool.ParamSchema()["properties"].(map[string]any)
+	assert.Contains(t, properties, "policy")
+
+	_, err = tool.Query(t.Context(), chatParams(map[string]any{
+		"expression": "totalDistance * ratePerMile",
+		"policy":     map[string]any{"minCharge": "two hundred"},
+	}, ""))
+	require.Error(t, err, "a policy that is not the schema's shape is refused")
 }
 
 func TestTestFormulaExpression_PricesAShipmentOnlyForAPersonWhoMayReadIt(t *testing.T) {
@@ -211,6 +248,51 @@ func TestProposeFormula_HandsTheEnginesProposalToThePage(t *testing.T) {
 	require.Len(t, workbench.proposed.Variables, 2)
 	assert.Equal(t, pagedraft.VariableNumber, workbench.proposed.Variables[0].Type)
 	require.Len(t, workbench.proposed.Scenarios, 1)
+	assert.Nil(t, workbench.proposed.Details.Policy, "no policy given keeps the editor's")
+
+	edited := result.(pagedraft.EditResult)
+	assert.Equal(t, "The page applied this to the editor; the person can undo it. It shows "+
+		"in the page draft on your next turn. "+pricedByEngineNote, edited.Note)
+	assert.Contains(t, tool.Description(), "Never describe a change without making it.")
+}
+
+func TestProposeFormula_CarriesTheChargePolicyToTheProposal(t *testing.T) {
+	t.Parallel()
+
+	workbench := &fakeWorkbench{}
+	tool := newProposeFormulaTool(workbench,
+		&authorPermissions{operations: []permission.Operation{permission.OpUpdate}})
+
+	_, err := tool.Query(t.Context(), chatParams(map[string]any{
+		"expression":  "totalDistance * ratePerMile",
+		"explanation": "Per mile, never less than the minimum.",
+		"policy": map[string]any{
+			"minCharge":         250,
+			"maxCharge":         1999.99,
+			"roundingMode":      "HalfEven",
+			"roundingPrecision": 2,
+		},
+	}, ""))
+	require.NoError(t, err)
+
+	policy := workbench.proposed.Details.Policy
+	require.NotNil(t, policy)
+	require.NotNil(t, policy.MinCharge)
+	assert.Equal(t, "250", *policy.MinCharge)
+	require.NotNil(t, policy.MaxCharge)
+	assert.Equal(t, "1999.99", *policy.MaxCharge)
+	assert.Equal(t, "HalfEven", policy.RoundingMode)
+	require.NotNil(t, policy.RoundingPrecision)
+	assert.Equal(t, 2, *policy.RoundingPrecision)
+
+	schema := tool.ParamSchema()["properties"].(map[string]any)["policy"].(map[string]any)
+	assert.Equal(t, false, schema["additionalProperties"])
+	fields := schema["properties"].(map[string]any)
+	for _, name := range []string{"minCharge", "maxCharge", "roundingMode", "roundingPrecision"} {
+		assert.Contains(t, fields, name)
+	}
+	assert.Equal(t, []string{"number", "null"}, fields["minCharge"].(map[string]any)["type"])
+	assert.Equal(t, 4, fields["roundingPrecision"].(map[string]any)["maximum"])
 }
 
 func TestProposeFormula_PassesTheTemplateDetailsAndBreakdown(t *testing.T) {

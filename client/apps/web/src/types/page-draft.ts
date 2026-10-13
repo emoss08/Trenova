@@ -1,3 +1,4 @@
+import { MAX_ROUNDING_PRECISION } from "@trenova/shared/types/formula-template";
 import { z } from "zod";
 
 /**
@@ -66,12 +67,32 @@ export const formulaDraftVariableSchema = z.object({
   defaultValue: z.union([z.string(), z.number(), z.boolean()]).nullish(),
 });
 
+export const formulaRoundingModeSchema = z.enum(["HalfUp", "HalfEven", "Up", "Down", "None"]);
+
+/** The charge policy applied after the expression; a null bound means none. */
+export const formulaPolicySchema = z.object({
+  minCharge: z.string().nullish(),
+  maxCharge: z.string().nullish(),
+  roundingMode: formulaRoundingModeSchema.optional(),
+  roundingPrecision: z.number().int().min(0).max(MAX_ROUNDING_PRECISION).optional(),
+});
+
+export const formulaDraftBreakdownSchema = z.object({
+  name: z.string(),
+  label: z.string(),
+  expression: z.string(),
+});
+
 export const formulaDraftSchema = z.object({
   templateId: z.string().optional(),
   schemaId: z.string(),
   templateType: z.string(),
+  name: z.string().optional(),
+  description: z.string().optional(),
   expression: z.string(),
   variables: z.array(formulaDraftVariableSchema),
+  breakdown: z.array(formulaDraftBreakdownSchema).optional(),
+  policy: formulaPolicySchema.optional(),
 });
 
 export const pageDraftSchema = z.object({
@@ -120,6 +141,8 @@ export const formulaProposalSchema = z.object({
   templateType: z.enum(["FreightCharge", "AccessorialCharge"]).nullish(),
   /** Itemized lines, when the person asked for them. */
   breakdown: z.preprocess((value) => value ?? [], z.array(formulaProposalBreakdownSchema)),
+  /** The charge policy as it should be after the change; absent keeps the editor's. */
+  policy: formulaPolicySchema.nullish(),
   expression: z.string(),
   variables: z.preprocess((value) => value ?? [], z.array(formulaDraftVariableSchema)),
   explanation: z.string().optional().default(""),
@@ -147,6 +170,8 @@ export type ImportRequiredFieldKey = z.infer<typeof importRequiredFieldKeySchema
 export type ShipmentImportDraft = z.infer<typeof shipmentImportDraftSchema>;
 export type FormulaDraftVariable = z.infer<typeof formulaDraftVariableSchema>;
 export type FormulaDraft = z.infer<typeof formulaDraftSchema>;
+export type FormulaPolicy = z.infer<typeof formulaPolicySchema>;
+export type FormulaDraftBreakdown = z.infer<typeof formulaDraftBreakdownSchema>;
 export type PageDraft = z.infer<typeof pageDraftSchema>;
 export type PageDraftAction = z.infer<typeof pageDraftActionSchema>;
 export type PricedScenario = z.infer<typeof pricedScenarioSchema>;
