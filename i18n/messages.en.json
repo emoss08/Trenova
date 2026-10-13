@@ -253,6 +253,15 @@
       "routes/fuel-management"
     ]
   },
+  "$75 per stop after the first two": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "$shipment.bol": {
     "sites": 1,
     "scope": [
@@ -473,6 +482,15 @@
       "routes/pay-profile",
       "routes/shipment",
       "routes/worker"
+    ]
+  },
+  "+{0} more in Preview": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "+{0} on {1}": {
@@ -1484,15 +1502,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "500 mile hazmat load": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "51–250 trucks": {
@@ -2830,6 +2839,33 @@
     ]
   },
   "A break is recorded when the entry is closed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A breakdown line needs a label": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A breakdown line needs an expression": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A breakdown line's name is a camelCase identifier, such as fuelSurcharge": {
     "sites": 1,
     "scope": [
       "go"
@@ -5114,6 +5150,15 @@
       "go/other"
     ]
   },
+  "A formula has at most 20 breakdown lines": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A formula template named \"{0}\" already exists": {
     "sites": 1,
     "scope": [
@@ -5302,15 +5347,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "A guardrail moved the total to {0}, but the lines still add up to the raw {1}. An invoice built from these lines would not match the charge.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "A hand-off topic cannot be longer than 80 characters": {
@@ -5700,6 +5736,15 @@
       "go/other"
     ]
   },
+  "A material edit cancels the review and returns it to Draft.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "A matrix cannot have more than four dimensions": {
     "sites": 1,
     "scope": [
@@ -6064,6 +6109,15 @@
       "go/other"
     ]
   },
+  "A new template can carry at most 50 test scenarios": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A new webhook URL is ready": {
     "sites": 1,
     "scope": [
@@ -6080,6 +6134,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "A note for the reviewer cannot be longer than 4,000 characters": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A note for your team about this provider.": {
@@ -7974,15 +8037,6 @@
       "go/other"
     ]
   },
-  "A scenario pins the charge this formula must produce for a known set of inputs. It re-runs on demand and must pass before the template can be approved.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "A schedule is deleted by its owner": {
     "sites": 1,
     "scope": [
@@ -9178,7 +9232,7 @@
     ]
   },
   "A template cannot declare more than 50 custom variables": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -11727,7 +11781,7 @@
     ]
   },
   "Accessorial": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -11735,6 +11789,7 @@
     "areas": [
       "apps/web/lib",
       "go/other",
+      "routes/formula-template",
       "routes/rate-agreement"
     ]
   },
@@ -13413,7 +13468,7 @@
     ]
   },
   "Active": {
-    "sites": 88,
+    "sites": 89,
     "scope": [
       "go",
       "ts"
@@ -13433,6 +13488,7 @@
       "routes/cost-control",
       "routes/desk",
       "routes/edi",
+      "routes/formula-template",
       "routes/fuel-management",
       "routes/hold-reason",
       "routes/jurisdiction-rule",
@@ -13962,7 +14018,7 @@
     ]
   },
   "Add": {
-    "sites": 17,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -14534,6 +14590,15 @@
       "routes/reports"
     ]
   },
+  "Add a weekend pickup fee": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Add a widget": {
     "sites": 1,
     "scope": [
@@ -14700,6 +14765,15 @@
       "routes/admin"
     ]
   },
+  "Add at least one": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Add at least one PTO type": {
     "sites": 1,
     "scope": [
@@ -14767,6 +14841,15 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "Add at least one test scenario before approving, so the template's charge is pinned by an example.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Add axis": {
@@ -14889,15 +14972,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Add custom variables to use in your formula expression": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Add customer...": {
@@ -15162,24 +15236,23 @@
       "go/other"
     ]
   },
-  "Add item": {
-    "sites": 3,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template",
-      "routes/review-template",
-      "routes/worker-checklist-template"
-    ]
-  },
-  "Add items to break the calculated charge into labeled amounts": {
-    "sites": 1,
+  "Add input": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Add item": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/review-template",
+      "routes/worker-checklist-template"
     ]
   },
   "Add key": {
@@ -15228,13 +15301,14 @@
     ]
   },
   "Add line": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/bank-receipt-batch"
+      "routes/bank-receipt-batch",
+      "routes/formula-template"
     ]
   },
   "Add location category...": {
@@ -15588,15 +15662,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Add scenario": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Add schedule": {
@@ -15989,15 +16054,6 @@
       "routes/reports"
     ]
   },
-  "Add variable": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Add widget": {
     "sites": 1,
     "scope": [
@@ -16270,6 +16326,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Added {0} as an input. Set its default below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Added {0} by {1}": {
@@ -19431,6 +19496,15 @@
       "routes/admin"
     ]
   },
+  "All variables": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "All versions": {
     "sites": 1,
     "scope": [
@@ -22140,11 +22214,12 @@
     ]
   },
   "An expression is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "api/handlers",
       "go/other"
     ]
   },
@@ -23290,13 +23365,12 @@
     ]
   },
   "Any": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "go/other",
       "packages/shared/lib",
       "routes/carrier-sourcing",
@@ -23977,15 +24051,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Applied after guardrails; production, preview, and scenarios all round the same way": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Applied amount cannot be negative": {
@@ -26086,6 +26151,15 @@
       "routes/worker"
     ]
   },
+  "Archived · v{0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Archives the currently published version (if any)": {
     "sites": 1,
     "scope": [
@@ -26285,15 +26359,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Array": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Arrival": {
@@ -26725,12 +26790,13 @@
     ]
   },
   "Ask Nova": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/formula-template"
     ]
   },
   "Ask Nova about this": {
@@ -26767,6 +26833,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Ask a follow-up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Ask a scheduled request in the conversation it was made in": {
@@ -32398,7 +32473,7 @@
     ]
   },
   "Backtest": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -32423,6 +32498,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Backtest of recent shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Backtest version": {
@@ -34541,7 +34625,7 @@
     ]
   },
   "Billed": {
-    "sites": 9,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -34553,6 +34637,7 @@
       "packages/shared/lib",
       "routes/desk",
       "routes/detention-intelligence",
+      "routes/formula-template",
       "routes/rate-agreement",
       "routes/shipment"
     ]
@@ -36191,12 +36276,11 @@
     ]
   },
   "Boolean": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "apps/web/lib"
     ]
   },
@@ -36393,7 +36477,7 @@
     ]
   },
   "Breakdown": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -36405,6 +36489,33 @@
       "routes/formula-template"
     ]
   },
+  "Breakdown label or expression is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Breakdown line is repeated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Breakdown lines": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Breakdown names must be unique": {
     "sites": 1,
     "scope": [
@@ -36412,6 +36523,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Breakdown reconciles": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/formula-template"
     ]
   },
   "Breaks a tie between lanes written equally narrowly": {
@@ -38400,7 +38522,7 @@
     ]
   },
   "Cancel": {
-    "sites": 281,
+    "sites": 283,
     "scope": [
       "ts"
     ],
@@ -38822,15 +38944,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Cancel the review and save?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Cancel the wait": {
@@ -42999,6 +43112,15 @@
       "routes/worker"
     ]
   },
+  "Change the load in Preview": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Change the profile, credentials and status on the worker's page": {
     "sites": 1,
     "scope": [
@@ -43406,6 +43528,15 @@
       "routes/agent-control"
     ]
   },
+  "Changes saved": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Changes since approved v{0}": {
     "sites": 1,
     "scope": [
@@ -43413,6 +43544,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Changes since the last approved version": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Changes someone has picked up but not resolved show up here.": {
@@ -43742,15 +43882,6 @@
       "routes/detention-desk"
     ]
   },
-  "Charge breakdown": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Charge detail": {
     "sites": 1,
     "scope": [
@@ -43788,11 +43919,13 @@
     ]
   },
   "Charge policy": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/formula-template"
     ]
   },
@@ -43852,7 +43985,7 @@
     ]
   },
   "Charges": {
-    "sites": 13,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -43862,6 +43995,7 @@
       "routes/customer-statement",
       "routes/desk",
       "routes/edi",
+      "routes/formula-template",
       "routes/invoice",
       "template/invoice.pdf"
     ]
@@ -44522,6 +44656,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Checked against the shipment schema. Every name resolves.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Checked against the state permit office handbook, rev 2026-01": {
@@ -45269,6 +45412,16 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Choose an active reviewer, other than you, who can approve formula templates": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers",
+      "go/other"
     ]
   },
   "Choose an agent": {
@@ -46856,7 +47009,7 @@
       "routes/admin"
     ]
   },
-  "Clamp the calculated charge to a range, then round it to what gets billed": {
+  "Clamp the formula's result to a range, then round it to what gets billed. Preview, scenarios and production all apply it the same way.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -48049,15 +48202,6 @@
       "routes/shipment"
     ]
   },
-  "Click to insert": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Click to select a color": {
     "sites": 1,
     "scope": [
@@ -48655,6 +48799,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Close the explanation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Close the final tier before adding another; only the last rung may be open-ended.": {
@@ -50891,6 +51044,15 @@
       "routes/agent-control"
     ]
   },
+  "Comparing {0} with the editor…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Comparison": {
     "sites": 4,
     "scope": [
@@ -51551,15 +51713,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Computed charge": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Computed columns cannot carry an aggregation or date bucket": {
@@ -55212,15 +55365,6 @@
       "routes/desk"
     ]
   },
-  "Copied from {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Copied onto every training record this run creates.": {
     "sites": 1,
     "scope": [
@@ -55267,15 +55411,6 @@
       "apps/web/components",
       "routes/inbox",
       "routes/shipment"
-    ]
-  },
-  "Copies the formula and charge policy into this new template. The original is untouched and keeps its own history.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Copy": {
@@ -55535,6 +55670,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Copy of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Copy original line amounts": {
@@ -56443,7 +56587,7 @@
       "routes/fuel-management"
     ]
   },
-  "Could not add “{0}”": {
+  "Could not add the scenario": {
     "sites": 1,
     "scope": [
       "ts"
@@ -56507,7 +56651,7 @@
     ]
   },
   "Could not be priced": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -56777,15 +56921,6 @@
       "apps/web/components"
     ]
   },
-  "Could not load that template": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Could not load the calendar.": {
     "sites": 1,
     "scope": [
@@ -56847,6 +56982,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Could not pin the scenario": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Could not reach Trenova. Check the connection and try again.": {
@@ -57047,6 +57191,15 @@
       "routes/rate-matrix"
     ]
   },
+  "Could not save the scenario": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Could not send that. Try again.": {
     "sites": 1,
     "scope": [
@@ -57119,6 +57272,15 @@
       "routes/formula-template"
     ]
   },
+  "Could not submit the template": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Could not update event": {
     "sites": 1,
     "scope": [
@@ -57126,6 +57288,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Could not update the scenario": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Could not update the selection": {
@@ -59377,6 +59548,24 @@
       "apps/web/hooks"
     ]
   },
+  "Created “{0}” as a draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Created “{0}” as a draft with {1, plural, one {# scenario} other {# scenarios}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Creates Unapplied Credit": {
     "sites": 1,
     "scope": [
@@ -59481,11 +59670,12 @@
     ]
   },
   "Creating…": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/formula-template",
       "routes/inbox"
     ]
   },
@@ -60374,7 +60564,7 @@
       "go/other"
     ]
   },
-  "Ctrl+Space for autocomplete. Click a variable in the reference to insert it.": {
+  "Ctrl": {
     "sites": 1,
     "scope": [
       "ts"
@@ -60705,11 +60895,13 @@
     ]
   },
   "Current expression": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/formula-template"
     ]
   },
@@ -61322,7 +61514,7 @@
     ]
   },
   "Custom variables": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -63237,7 +63429,7 @@
     ]
   },
   "Date": {
-    "sites": 27,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -64686,11 +64878,12 @@
     ]
   },
   "Decimal places": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/formula-template",
       "routes/reports"
     ]
   },
@@ -64701,15 +64894,6 @@
     ],
     "areas": [
       "routes/fuel-management"
-    ]
-  },
-  "Decimal places kept, 0 to {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Decision": {
@@ -65290,7 +65474,7 @@
     ]
   },
   "Default": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -65301,6 +65485,7 @@
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
+      "routes/formula-template",
       "routes/pay-code",
       "routes/pto-policy",
       "routes/random-testing",
@@ -66068,6 +66253,15 @@
       "go/other"
     ]
   },
+  "Default value": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Default value must be a number, text or true/false": {
     "sites": 1,
     "scope": [
@@ -66238,15 +66432,6 @@
     ],
     "areas": [
       "routes/pay-code"
-    ]
-  },
-  "Define additional variables for your formula": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Define core operational rules for shipment creation, validation, and management throughout the shipment lifecycle. These settings establish system-wide behaviors that ensure data integrity, prevent duplications, and determine permissible operations for users across all departments.": {
@@ -67287,25 +67472,16 @@
       "go/other"
     ]
   },
-  "Delete scenario": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "Delete scenario \"{0}\"?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Delete scenario {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Delete scenario “{0}”?": {
     "sites": 1,
     "scope": [
       "ts"
@@ -68465,15 +68641,6 @@
       "routes/agent-control"
     ]
   },
-  "Describe how this template should price a shipment, or ask about the formula in the editor. A formula it proposes lands in the editor only when you insert it, and nothing is saved until you save the template.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Describe it for Nova to draft, or set it up yourself": {
     "sites": 1,
     "scope": [
@@ -68517,6 +68684,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Describe the method for Nova to draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Describe the method: “per mile, 18% fuel, $250 minimum, $50 a stop after two”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Describe the partner system, deployment target, or workflow using this key.": {
@@ -68613,7 +68798,7 @@
       "routes/admin"
     ]
   },
-  "Describe when this template applies and how it prices": {
+  "Describe {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -68623,7 +68808,7 @@
     ]
   },
   "Description": {
-    "sites": 179,
+    "sites": 176,
     "scope": [
       "go",
       "ts"
@@ -68732,6 +68917,15 @@
       "go/other"
     ]
   },
+  "Description cannot be longer than 4,000 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Description cannot be longer than 500 characters": {
     "sites": 4,
     "scope": [
@@ -68770,6 +68964,15 @@
       "packages/shared/types"
     ]
   },
+  "Description is missing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Description is required": {
     "sites": 23,
     "scope": [
@@ -68791,6 +68994,15 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "Description lanes see when they override it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Description marks and numbers": {
@@ -71182,7 +71394,7 @@
     ]
   },
   "Dismiss": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -71193,6 +71405,7 @@
       "routes/bank-receipt-queue",
       "routes/desk",
       "routes/driver-settlement",
+      "routes/formula-template",
       "routes/insights",
       "routes/journal-reversal",
       "routes/manual-journal",
@@ -71234,15 +71447,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Dismiss proposal": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Dismiss refresh notification": {
@@ -74100,7 +74304,7 @@
     ]
   },
   "Done": {
-    "sites": 32,
+    "sites": 33,
     "scope": [
       "ts"
     ],
@@ -74112,6 +74316,7 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/desk",
+      "routes/formula-template",
       "routes/fuel-purchase",
       "routes/home",
       "routes/inbox",
@@ -74176,7 +74381,7 @@
     ]
   },
   "Down": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -74185,6 +74390,7 @@
       "apps/web/lib",
       "go/other",
       "routes/edi",
+      "routes/formula-template",
       "routes/worker-checklist-template"
     ]
   },
@@ -74389,7 +74595,7 @@
     ]
   },
   "Draft": {
-    "sites": 42,
+    "sites": 43,
     "scope": [
       "go",
       "ts"
@@ -74404,6 +74610,7 @@
       "routes/admin",
       "routes/carrier-settlement-workspace",
       "routes/desk",
+      "routes/formula-template",
       "routes/inbox",
       "routes/jurisdiction-rule",
       "routes/late-charges",
@@ -74587,12 +74794,13 @@
     ]
   },
   "Draft it": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/formula-template"
     ]
   },
   "Draft ready": {
@@ -79514,24 +79722,6 @@
       "go/other"
     ]
   },
-  "Edit scenario": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "Edit scenario {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Edit schedule": {
     "sites": 1,
     "scope": [
@@ -79695,6 +79885,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Editing the formula returns it to Draft; shipments keep rating with v{0} until the new version is approved. Name and description edits are safe.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Effect": {
@@ -81355,7 +81554,7 @@
     ]
   },
   "Empty": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -81363,6 +81562,7 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/edi",
+      "routes/formula-template",
       "routes/ifta-jurisdiction-mileage"
     ]
   },
@@ -82431,6 +82631,15 @@
       "routes/desk"
     ]
   },
+  "Engine trace": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Engine version cannot be longer than 32 characters": {
     "sites": 1,
     "scope": [
@@ -83125,15 +83334,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Enter template name": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Enter the API key again: the endpoint changed, and the saved key is not sent to a new one": {
@@ -84250,15 +84450,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Error details": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Error in {0} stop": {
@@ -85811,6 +86002,15 @@
       "apps/web/components"
     ]
   },
+  "Every check passes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Every completed move in the quarter already has a jurisdiction breakdown. There is nothing to backfill.": {
     "sites": 1,
     "scope": [
@@ -86489,7 +86689,7 @@
       "routes/agent-control"
     ]
   },
-  "Every scenario passes against the current content": {
+  "Every scenario passes": {
     "sites": 1,
     "scope": [
       "ts"
@@ -86597,6 +86797,15 @@
     ],
     "areas": [
       "routes/recurring-deduction"
+    ]
+  },
+  "Every shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Every shipment attached to an order must belong to the order's customer": {
@@ -87990,6 +88199,15 @@
       "routes/worker"
     ]
   },
+  "Existing scenarios": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Exists": {
     "sites": 1,
     "scope": [
@@ -88108,6 +88326,15 @@
       "routes/agent-control"
     ]
   },
+  "Expect {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Expected": {
     "sites": 3,
     "scope": [
@@ -88184,7 +88411,7 @@
       "packages/shared/types"
     ]
   },
-  "Expected amounts were computed by the engine from the proposed formula. Scenarios you add will run against the template as you edit it.": {
+  "Expected amounts are the engine's, from the formula in the editor. Added scenarios keep running as you edit.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -88193,7 +88420,7 @@
       "routes/formula-template"
     ]
   },
-  "Expected charge ($)": {
+  "Expected amounts are the engine's, from the formula in the editor. They are saved with the template when you create it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -88325,13 +88552,12 @@
     ]
   },
   "Expects": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control",
-      "routes/formula-template"
+      "routes/agent-control"
     ]
   },
   "Expects a refusal": {
@@ -88341,15 +88567,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Expects {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Expense": {
@@ -89070,7 +89287,7 @@
       "go/other"
     ]
   },
-  "Explain formula": {
+  "Explain": {
     "sites": 1,
     "scope": [
       "ts"
@@ -89106,6 +89323,15 @@
       "apps/web/components"
     ]
   },
+  "Explain this formula, term by term": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Explain what I am looking at on this page: what the filters mean, what the figures say, and what stands out.": {
     "sites": 1,
     "scope": [
@@ -89122,15 +89348,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Explain what this formula charges, term by term.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Explain what this table is filtered to and what the rows have in common.": {
@@ -89962,23 +90179,16 @@
   "Expression": {
     "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/formula-template"
     ]
   },
-  "Expression and rate tables": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Expression cannot exceed 10,000 characters": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -90031,15 +90241,6 @@
       "go/other"
     ]
   },
-  "Expression invalid": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Expression is required": {
     "sites": 4,
     "scope": [
@@ -90052,20 +90253,13 @@
     ]
   },
   "Expression is valid": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Expression valid": {
-    "sites": 1,
-    "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/formula-template"
     ]
   },
@@ -90835,6 +91029,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Fail to rate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Failed": {
@@ -92426,15 +92629,6 @@
       "routes/edi"
     ]
   },
-  "Failed to save scenario": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Failed to save script libraries": {
     "sites": 1,
     "scope": [
@@ -92995,6 +93189,33 @@
       "routes/agent-control"
     ]
   },
+  "Fails": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Fails on the preview load": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Fails on this load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Failure": {
     "sites": 3,
     "scope": [
@@ -93525,6 +93746,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Fewer decimal places": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Fewer empty miles from the driver's projected location to the pickup.": {
@@ -96245,6 +96475,15 @@
       "routes/desk"
     ]
   },
+  "Fix instead": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Fix spelling and grammar": {
     "sites": 1,
     "scope": [
@@ -96263,6 +96502,24 @@
       "routes/agent-control"
     ]
   },
+  "Fix the blocking checks to submit.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Fix the highlighted fields to create the template": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Fix the values above to see what they would do.": {
     "sites": 1,
     "scope": [
@@ -96270,6 +96527,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Fix this problem in the formula: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Fix with Nova": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Fixed": {
@@ -97744,12 +98019,13 @@
     ]
   },
   "Formula": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/formula-template"
     ]
   },
   "Formula Fallback": {
@@ -97780,14 +98056,21 @@
     ]
   },
   "Formula assistant": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
-      "go",
-      "ts"
+      "go"
     ],
     "areas": [
       "api/handlers",
-      "go/other",
+      "go/other"
+    ]
+  },
+  "Formula editor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/formula-template"
     ]
   },
@@ -97809,15 +98092,6 @@
       "apps/web/lib"
     ]
   },
-  "Formula inserted into the editor": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Formula methods compute rates from parameters; table methods use explicit price bands.": {
     "sites": 1,
     "scope": [
@@ -97827,8 +98101,26 @@
       "routes/fuel-management"
     ]
   },
+  "Formula produced {0}; lowered to the {1} maximum": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Formula produced {0}; raised to the {1} minimum": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Formula template": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -97839,20 +98131,10 @@
       "routes/billing-queue",
       "routes/desk",
       "routes/edi",
-      "routes/formula-template",
       "routes/shipment"
     ]
   },
   "Formula template archived": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "Formula template created": {
     "sites": 1,
     "scope": [
       "ts"
@@ -97906,24 +98188,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Formula template saved": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "Formula template saved as a draft": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Formula template stats loader is not configured": {
@@ -98322,7 +98586,7 @@
     ]
   },
   "Freight": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -98332,6 +98596,7 @@
       "routes/billing-queue",
       "routes/desk",
       "routes/edi",
+      "routes/formula-template",
       "routes/invoice",
       "routes/order",
       "routes/shipment",
@@ -99982,6 +100247,15 @@
     ]
   },
   "Functions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Functions {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -102707,21 +102981,23 @@
     ]
   },
   "Half even": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
-  "Half up": {
     "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/formula-template"
+    ]
+  },
+  "Half up": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/formula-template"
     ]
   },
   "Hand a week over": {
@@ -104287,6 +104563,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Here's what each line of the formula does.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Here's where you stand.": {
@@ -106588,6 +106873,15 @@
       "routes/agent-control"
     ]
   },
+  "How should this price a load?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "How stale or missing intelligence is treated when a carrier is used.": {
     "sites": 1,
     "scope": [
@@ -108075,6 +108369,15 @@
       "routes/formula-template"
     ]
   },
+  "Impact on recent freight": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Impact on recent shipments": {
     "sites": 1,
     "scope": [
@@ -108727,7 +109030,7 @@
     ]
   },
   "In review": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -108739,6 +109042,7 @@
       "routes/bank-receipt-queue",
       "routes/billing-queue",
       "routes/desk",
+      "routes/formula-template",
       "routes/reconciliation-summary",
       "routes/settlement-dispute"
     ]
@@ -108768,6 +109072,15 @@
     ],
     "areas": [
       "routes/accounting-drift"
+    ]
+  },
+  "In the editor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "In the fleet since": {
@@ -108838,15 +109151,6 @@
       "routes/formula-template"
     ]
   },
-  "In use ({0})": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "In your email provider, forward <b>{0}</b> to this address. Keep a copy in the original inbox.": {
     "sites": 1,
     "scope": [
@@ -108866,7 +109170,7 @@
     ]
   },
   "In {0}": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -108874,8 +109178,7 @@
       "apps/web/components",
       "routes/accounting-drift",
       "routes/accounting-inbound",
-      "routes/accounting-sync",
-      "routes/formula-template"
+      "routes/accounting-sync"
     ]
   },
   "In-app only": {
@@ -110189,6 +110492,15 @@
       "go/other"
     ]
   },
+  "Input description": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Input hash is invalid": {
     "sites": 1,
     "scope": [
@@ -110205,6 +110517,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Input name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Input price": {
@@ -110234,13 +110555,33 @@
       "go/other"
     ]
   },
-  "Input values": {
+  "Input type": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Inputs": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/formula-template"
+    ]
+  },
+  "Inputs to describe": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Insert a band below this one": {
@@ -110288,6 +110629,15 @@
       "routes/admin"
     ]
   },
+  "Inserted into the editor. Test it, then save.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Inside the window": {
     "sites": 1,
     "scope": [
@@ -110295,6 +110645,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Inside {0} – {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Insight": {
@@ -111918,7 +112277,7 @@
     ]
   },
   "Invalid formula template ID": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -114727,15 +115086,6 @@
       "routes/inbox"
     ]
   },
-  "It starts as a draft. Submit it for review when it is ready.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "It starts in Pending compliance until someone reviews it.": {
     "sites": 1,
     "scope": [
@@ -115047,7 +115397,7 @@
       "apps/web/lib"
     ]
   },
-  "Itemize the total into named components for invoices and audit": {
+  "Itemize the total into named lines for invoices and disputes. Lines should add up to the formula's result.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -116383,14 +116733,13 @@
     ]
   },
   "Keep editing": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control",
-      "routes/formula-template"
+      "routes/agent-control"
     ]
   },
   "Keep entry": {
@@ -117595,7 +117944,7 @@
     ]
   },
   "Label": {
-    "sites": 23,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -117604,7 +117953,6 @@
       "go/other",
       "routes/admin",
       "routes/detention-policy",
-      "routes/formula-template",
       "routes/fuel-card",
       "routes/hold-reason",
       "routes/pay-profile",
@@ -121105,11 +121453,12 @@
     ]
   },
   "Lifecycle": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/formula-template",
       "routes/invoice"
     ]
   },
@@ -121507,6 +121856,15 @@
       "go/other"
     ]
   },
+  "Line expression": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Line haul": {
     "sites": 8,
     "scope": [
@@ -121544,6 +121902,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Line key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Line label": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Line number is required": {
@@ -121818,6 +122194,24 @@
       "routes/desk"
     ]
   },
+  "Lines add up to the formula's {0}, but the maximum bills {1}. An invoice built from these lines won't match the charge.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Lines add up to the formula's {0}, but the minimum bills {1}. An invoice built from these lines won't match the charge.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Lines are grouped by PO number.": {
     "sites": 1,
     "scope": [
@@ -121854,7 +122248,34 @@
       "apps/web/lib"
     ]
   },
-  "Lines exceed the total": {
+  "Lines don't add up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Lines don't add up to the formula": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Lines don't match the billed minimum": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Lines exceed the total by {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -122660,15 +123081,6 @@
       "routes/detention-policy"
     ]
   },
-  "Live Preview": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Live dwell clocks, detention billing, and contract terms": {
     "sites": 1,
     "scope": [
@@ -122733,14 +123145,13 @@
     ]
   },
   "Live preview": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
       "routes/detention-policy",
-      "routes/formula-template",
       "routes/reports"
     ]
   },
@@ -122805,6 +123216,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Ln {0}, Col {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Lng": {
@@ -125487,6 +125907,24 @@
       "routes/onboarding"
     ]
   },
+  "Looks intended": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Looks like a regression": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Looks like phishing. Ignore unless you know them.": {
     "sites": 1,
     "scope": [
@@ -125680,6 +126118,24 @@
     "areas": [
       "routes/admin",
       "routes/edi"
+    ]
+  },
+  "Lowered to maximum": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Lowered to the": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Lowest": {
@@ -129332,7 +129788,7 @@
     ]
   },
   "Maximum charge cannot be negative": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -131709,7 +132165,7 @@
     ]
   },
   "Minimum charge cannot be negative": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -131720,7 +132176,7 @@
     ]
   },
   "Minimum charge cannot exceed maximum charge": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -133417,6 +133873,15 @@
       "routes/formula-template"
     ]
   },
+  "More decimal places": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "More documents": {
     "sites": 2,
     "scope": [
@@ -134433,6 +134898,15 @@
       "apps/web/types"
     ]
   },
+  "Must be FreightCharge or AccessorialCharge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Must be a list of the proposed records": {
     "sites": 1,
     "scope": [
@@ -134784,7 +135258,7 @@
     ]
   },
   "Name": {
-    "sites": 165,
+    "sites": 162,
     "scope": [
       "go",
       "ts"
@@ -134936,6 +135410,17 @@
       "routes/review-template"
     ]
   },
+  "Name and description": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/formula-template"
+    ]
+  },
   "Name at least one credential to renew": {
     "sites": 1,
     "scope": [
@@ -134973,11 +135458,12 @@
     ]
   },
   "Name cannot be longer than 100 characters": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go"
     ],
     "areas": [
+      "api/handlers",
       "go/other"
     ]
   },
@@ -135064,8 +135550,17 @@
       "apps/web/components"
     ]
   },
+  "Name is missing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Name is required": {
-    "sites": 150,
+    "sites": 151,
     "scope": [
       "go",
       "ts"
@@ -135534,15 +136029,6 @@
       "apps/web/components"
     ]
   },
-  "Name, type, and description": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Name, username, or email": {
     "sites": 1,
     "scope": [
@@ -135889,11 +136375,12 @@
     ]
   },
   "Needs a look": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/formula-template",
       "routes/scheduling"
     ]
   },
@@ -136679,7 +137166,7 @@
     ]
   },
   "New": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -136695,6 +137182,7 @@
       "routes/agent-control",
       "routes/desk",
       "routes/edi",
+      "routes/formula-template",
       "routes/fuel-purchase",
       "routes/inbox",
       "routes/shipment"
@@ -137081,13 +137569,12 @@
     ]
   },
   "New formula template": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/config",
-      "routes/formula-template"
+      "apps/web/config"
     ]
   },
   "New from {0}": {
@@ -137429,6 +137916,15 @@
       "apps/web/config"
     ]
   },
+  "New rating method": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "New record": {
     "sites": 2,
     "scope": [
@@ -137499,15 +137995,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "New scenario": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "New service failure reason": {
@@ -138337,6 +138824,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No AI provider is configured for the formula assistant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "No AI provider is configured for {0}": {
@@ -139433,15 +139929,6 @@
       "routes/invoice"
     ]
   },
-  "No breakdown items": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "No calculation has been recorded for this stop yet.": {
     "sites": 1,
     "scope": [
@@ -140233,15 +140720,6 @@
       "routes/admin"
     ]
   },
-  "No custom variables": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "No customer": {
     "sites": 3,
     "scope": [
@@ -140479,15 +140957,6 @@
       "routes/admin",
       "routes/edi",
       "routes/reports"
-    ]
-  },
-  "No description available.": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "No description from telematics": {
@@ -141704,6 +142173,15 @@
       "routes/worker"
     ]
   },
+  "No inputs. Shipment variables cover most methods; add one for a fee or percentage lanes should set.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "No inspection on file": {
     "sites": 1,
     "scope": [
@@ -142040,6 +142518,15 @@
     ],
     "areas": [
       "routes/journal-entry"
+    ]
+  },
+  "No lines. The invoice shows one amount for this charge.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "No load has stopped here yet.": {
@@ -142421,6 +142908,15 @@
     ]
   },
   "No minimum": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "No minimum or maximum": {
     "sites": 1,
     "scope": [
       "ts"
@@ -143632,6 +144128,15 @@
       "routes/home"
     ]
   },
+  "No recent shipment would rate differently.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "No recipients": {
     "sites": 1,
     "scope": [
@@ -144129,8 +144634,8 @@
       "apps/web/components"
     ]
   },
-  "No scenarios yet. Add one to pin what this formula must produce — approval requires every scenario to pass. A green preview can be pinned in one click.": {
-    "sites": 1,
+  "No scenarios yet": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -144579,15 +145084,6 @@
     ],
     "areas": [
       "routes/intake"
-    ]
-  },
-  "No standards exist for this template type yet.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "No start date": {
@@ -145150,15 +145646,6 @@
       "routes/dispatch-console"
     ]
   },
-  "No unsaved changes": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "No unsettled pay events are waiting — there is nothing to generate": {
     "sites": 1,
     "scope": [
@@ -145447,6 +145934,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "Nobody else here can approve formula templates. Anyone with approve permission will see it in their notifications.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Nobody has asked it anything since {0} · it holds 1 tool": {
@@ -145789,7 +146285,7 @@
     ]
   },
   "None": {
-    "sites": 49,
+    "sites": 50,
     "scope": [
       "go",
       "ts"
@@ -146199,6 +146695,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Not a charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Not a document Trenova sent": {
@@ -146724,7 +147229,7 @@
     ]
   },
   "Not in use": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -147180,12 +147685,13 @@
     ]
   },
   "Not rounded": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/formula-template"
     ]
   },
   "Not run yet": {
@@ -147638,6 +148144,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Note for the reviewer": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Note from {0}": {
@@ -148287,6 +148802,15 @@
       "routes/customer-ledger"
     ]
   },
+  "Nothing has rated with this template yet, so no recent shipment would change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Nothing here": {
     "sites": 3,
     "scope": [
@@ -148606,15 +149130,6 @@
       "routes/shipment"
     ]
   },
-  "Nothing matches \"{0}\"": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Nothing matches that filter.": {
     "sites": 1,
     "scope": [
@@ -148645,12 +149160,13 @@
     ]
   },
   "Nothing matches “{0}”.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/formula-template"
     ]
   },
   "Nothing matches.": {
@@ -149567,6 +150083,15 @@
       "routes/billing-queue"
     ]
   },
+  "Nothing yet. Values appear here as the expression names them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Nothing — one invoice for the period": {
     "sites": 1,
     "scope": [
@@ -149975,13 +150500,14 @@
     ]
   },
   "Nova": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/formula-template",
       "routes/inbox",
       "routes/onboarding"
     ]
@@ -149993,6 +150519,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Nova can be wrong. Every amount it shows is the formula engine's.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Nova can only learn a rule for a known sender": {
@@ -150031,6 +150566,15 @@
       "go/other"
     ]
   },
+  "Nova could not describe the inputs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Nova could not draft a reply to this message. Write it by hand, or try again.": {
     "sites": 1,
     "scope": [
@@ -150049,6 +150593,33 @@
       "routes/agent-control"
     ]
   },
+  "Nova could not draft the note. Write one yourself.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Nova could not explain the formula.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Nova could not explain this scenario.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Nova could not reach an AI provider just now. Try again in a moment.": {
     "sites": 1,
     "scope": [
@@ -150065,6 +150636,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Nova could not suggest scenarios": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Nova could not tighten them.": {
@@ -150193,6 +150773,15 @@
       "routes/inbox"
     ]
   },
+  "Nova is reading the change and the backtest…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Nova learns from it": {
     "sites": 1,
     "scope": [
@@ -150308,6 +150897,24 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Nova reads the editor as it is, saved or not": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Nova reads the editor as it is, saved or not, and prices every draft with the formula engine. Nothing lands in the editor until you insert it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Nova replied": {
@@ -150446,13 +151053,12 @@
     ]
   },
   "Number": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "apps/web/lib",
       "apps/web/types",
       "go/other",
@@ -150940,15 +151546,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Object": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Object key is required": {
@@ -152199,6 +152796,51 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "On the preview load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "On the preview load the formula comes to {0} and bills {1}. Here's how each line gets there.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "On the preview load the formula comes to {0}, over the maximum, so it bills {1}. Here's how each line gets there.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "On the preview load the formula comes to {0}, under the minimum, so it bills {1}. Here's how each line gets there.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "On the preview load: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "On the shipment": {
@@ -157704,7 +158346,7 @@
     ]
   },
   "Optional": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -157715,7 +158357,6 @@
       "routes/bank-receipt-batch",
       "routes/desk",
       "routes/edi",
-      "routes/formula-template",
       "routes/intake",
       "routes/shipment",
       "routes/worker"
@@ -157839,12 +158480,11 @@
     ]
   },
   "Optional description": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/admin"
     ]
   },
@@ -158080,15 +158720,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Optional shipment fields": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Optional specific hazardous material": {
@@ -158352,15 +158983,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Or copy an existing template": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Or fetch the list this provider actually serves.": {
@@ -166201,6 +166823,15 @@
       "routes/my-team"
     ]
   },
+  "Per CWT, weight rounded up to the next 100 lb": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Per Day": {
     "sites": 1,
     "scope": [
@@ -166399,6 +167030,15 @@
     ],
     "areas": [
       "routes/jurisdiction-rule"
+    ]
+  },
+  "Per mile with an 18% fuel surcharge and a $250 minimum": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Per million prompt tokens served from the cache. Empty charges a tenth of the input price.": {
@@ -168237,6 +168877,15 @@
       "routes/worker"
     ]
   },
+  "Pick a shipment to price it with the editor's formula.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Pick a statement": {
     "sites": 1,
     "scope": [
@@ -168582,6 +169231,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Picked shipment": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Picked up": {
@@ -169164,6 +169822,15 @@
       "apps/web/components"
     ]
   },
+  "Pin the preview or ask Nova for edge cases. Each scenario pins what the formula must keep charging; approval needs every one to pass.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Pin to conversation": {
     "sites": 2,
     "scope": [
@@ -169192,13 +169859,14 @@
     ]
   },
   "Pinned": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/desk",
+      "routes/formula-template",
       "routes/shipment"
     ]
   },
@@ -172311,7 +172979,7 @@
     ]
   },
   "Preview": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -172319,6 +172987,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/edi",
+      "routes/formula-template",
       "routes/fuel-management",
       "routes/inbox",
       "routes/intake",
@@ -172405,6 +173074,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Preview load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Preview not available for this document": {
@@ -173159,6 +173837,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Priced by the formula engine": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Priced shipments": {
@@ -175145,12 +175832,13 @@
     ]
   },
   "Proposed change": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/formula-template"
     ]
   },
   "Proposed formula": {
@@ -177891,6 +178579,24 @@
       "routes/agent-control"
     ]
   },
+  "Raised to minimum": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Raised to the": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Raised to the minimum, up from {0}": {
     "sites": 1,
     "scope": [
@@ -177965,13 +178671,12 @@
     ]
   },
   "Ran {0}": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/formula-template",
       "routes/reports"
     ]
   },
@@ -179258,6 +179963,15 @@
       "apps/web/components"
     ]
   },
+  "Rate trace": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Rate type is invalid": {
     "sites": 2,
     "scope": [
@@ -180166,6 +180880,33 @@
       "routes/formula-template"
     ]
   },
+  "Re-rated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Re-rates recent shipments with the active version and with the editor's.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Re-rates {0} recent shipments with the active version and with the editor's.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Re-rating produces identical charges — this change is pricing-neutral for existing traffic.": {
     "sites": 1,
     "scope": [
@@ -180236,15 +180977,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Re-running scenarios against the editor": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Re-sync this document's search index entry. This will update the search projection with the latest document data.": {
@@ -180972,12 +181704,13 @@
     ]
   },
   "Readiness": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/edi"
+      "routes/edi",
+      "routes/formula-template"
     ]
   },
   "Readiness scan": {
@@ -181095,6 +181828,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Reading the formula and its inputs…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Reading the last inspection…": {
@@ -181225,12 +181967,13 @@
     ]
   },
   "Reads": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/formula-template"
     ]
   },
   "Reads a banded single-axis table as a curve: between two band floors the value is interpolated linearly between those bands' values. Below the first floor or past the last, the edge band's value is used.": {
@@ -181374,14 +182117,15 @@
     ]
   },
   "Ready for review": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "packages/shared/components",
-      "routes/desk"
+      "routes/desk",
+      "routes/formula-template"
     ]
   },
   "Ready now": {
@@ -181412,7 +182156,7 @@
     ]
   },
   "Ready to approve": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -181451,11 +182195,12 @@
     ]
   },
   "Ready to create": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/formula-template",
       "routes/shipment"
     ]
   },
@@ -182485,6 +183230,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Receipt · {0, plural, one {# value read} other {# values read}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Receipts": {
@@ -184577,11 +185331,12 @@
     ]
   },
   "Recorded by {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/formula-template",
       "routes/worker"
     ]
   },
@@ -186366,7 +187121,7 @@
     ]
   },
   "Reject": {
-    "sites": 32,
+    "sites": 31,
     "scope": [
       "ts"
     ],
@@ -186442,6 +187197,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Reject and archive": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Reject carrier invoice matches": {
@@ -187285,7 +188049,7 @@
     ]
   },
   "Remove": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "ts"
     ],
@@ -187297,6 +188061,7 @@
       "routes/detention-policy",
       "routes/dispatch-console",
       "routes/edi",
+      "routes/formula-template",
       "routes/holiday",
       "routes/home",
       "routes/rate-agreement",
@@ -187461,15 +188226,6 @@
     ],
     "areas": [
       "routes/pay-profile"
-    ]
-  },
-  "Remove breakdown item": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Remove briefings older than the window a reader can page back through": {
@@ -187654,6 +188410,15 @@
       "go/other"
     ]
   },
+  "Remove input {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Remove it": {
     "sites": 1,
     "scope": [
@@ -187692,13 +188457,14 @@
     ]
   },
   "Remove line {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/formula-template"
     ]
   },
   "Remove logo": {
@@ -188015,15 +188781,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Remove variable": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Remove view": {
@@ -190905,7 +191662,7 @@
     ]
   },
   "Required": {
-    "sites": 37,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -190921,6 +191678,7 @@
       "routes/desk",
       "routes/document-packet-rule",
       "routes/edi",
+      "routes/formula-template",
       "routes/reports",
       "routes/training-course",
       "routes/worker",
@@ -191743,6 +192501,15 @@
       "template/account.password_reset.email"
     ]
   },
+  "Reset {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Resets at midnight": {
     "sites": 1,
     "scope": [
@@ -192242,15 +193009,6 @@
     ],
     "areas": [
       "packages/shared/components"
-    ]
-  },
-  "Resolved variables ({0})": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Resolved {0}": {
@@ -193971,7 +194729,7 @@
     ]
   },
   "Revenue": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -193980,6 +194738,7 @@
       "apps/web/lib",
       "go/other",
       "routes/fiscal-year",
+      "routes/formula-template",
       "routes/home",
       "routes/shipment"
     ]
@@ -194623,7 +195382,7 @@
       "template/rateconfirmation.email"
     ]
   },
-  "Review and test it before saving.": {
+  "Review and test it, then save. Nothing is saved yet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -194666,6 +195425,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Review covers what is saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Review draft": {
@@ -195194,6 +195962,24 @@
       "routes/agent-control"
     ]
   },
+  "Reviewer": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Reviewers for formula templates cannot be listed on this server": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Reviewing user is required": {
     "sites": 2,
     "scope": [
@@ -195469,6 +196255,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Rewrite": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Rewrite a draft manual journal before it is submitted: its description, reason, day, currency or lines. Fields left out keep their value; lines, when given, replace every line. Only a draft can be revised; a journal sent back by its approver is drafted again with draft_manual_journal.": {
@@ -196334,7 +197129,7 @@
       "go/other"
     ]
   },
-  "Rounded {0} to {1} from": {
+  "Rounded {0} from {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -196344,7 +197139,7 @@
     ]
   },
   "Rounding": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -196354,15 +197149,7 @@
       "apps/web/lib",
       "go/other",
       "routes/desk",
-      "routes/detention-policy"
-    ]
-  },
-  "Rounding ({0}, {1}) made no change.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
+      "routes/detention-policy",
       "routes/formula-template"
     ]
   },
@@ -196384,8 +197171,17 @@
       "go/other"
     ]
   },
+  "Rounding made no change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Rounding mode": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -196405,7 +197201,7 @@
     ]
   },
   "Rounding mode is invalid": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -196423,7 +197219,7 @@
     ]
   },
   "Rounding precision": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -196479,6 +197275,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Rounding precision must be between 0 and 4": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Rounds": {
@@ -196542,6 +197347,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Rounds {0} to {1, plural, one {# place} other {# places}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Route": {
@@ -197462,15 +198276,6 @@
       "routes/agent-control"
     ]
   },
-  "Run all": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Run and finalise a selection round": {
     "sites": 1,
     "scope": [
@@ -197662,15 +198467,6 @@
       "routes/agent-control"
     ]
   },
-  "Run now ({0})": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Run number is required": {
     "sites": 1,
     "scope": [
@@ -197750,15 +198546,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Run preview now": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Run report": {
@@ -198081,7 +198868,7 @@
     ]
   },
   "Running...": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -198797,6 +199584,17 @@
       "routes/review-template"
     ]
   },
+  "Safe on every shipment": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/formula-template"
+    ]
+  },
   "Safe to retry": {
     "sites": 1,
     "scope": [
@@ -199188,6 +199986,42 @@
     "areas": [
       "apps/web/components",
       "routes/onboarding"
+    ]
+  },
+  "Sample load": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Sample load · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Sample load · {0} mi · {1, plural, one {# stop} other {# stops}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Sample load, {0} mi · {1} stops": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Sample price": {
@@ -199684,6 +200518,15 @@
       "routes/formula-template"
     ]
   },
+  "Save and return to Draft?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Save and test": {
     "sites": 2,
     "scope": [
@@ -199840,6 +200683,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Save first; review covers what is saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Save fixture": {
@@ -200167,33 +201019,6 @@
       "go/other"
     ]
   },
-  "Save the template before adding scenarios": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "Save the template first, then add these as scenarios.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "Save the template first, then pin its behaviour with test scenarios.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Save the turn": {
     "sites": 1,
     "scope": [
@@ -200201,15 +201026,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Save these inputs and this result as a scenario that must keep passing": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Save these recovery codes now": {
@@ -200249,15 +201065,6 @@
       "routes/reports"
     ]
   },
-  "Save your changes first; review always covers what is saved": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Save “{0}” as a new report on the {1} dataset.": {
     "sites": 1,
     "scope": [
@@ -200295,14 +201102,15 @@
     ]
   },
   "Saved": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/formula-template"
     ]
   },
   "Saved \"{0}\"": {
@@ -200333,12 +201141,22 @@
     ]
   },
   "Saved as v{0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk",
+      "routes/formula-template"
+    ]
+  },
+  "Saved as v{0} · back to Draft": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/formula-template"
     ]
   },
   "Saved dashboard": {
@@ -200586,6 +201404,24 @@
       "routes/agent-control"
     ]
   },
+  "Saving this edit cancels the review in progress and returns the template to <b>Draft</b>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Saving this edit returns the template to <b>Draft</b>. The {0, plural, one {# place} other {# places}} that use it keep rating with v{1} until a new version is approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Saving {0} as headquarters": {
     "sites": 1,
     "scope": [
@@ -200605,7 +201441,7 @@
     ]
   },
   "Saving...": {
-    "sites": 59,
+    "sites": 57,
     "scope": [
       "ts"
     ],
@@ -200632,13 +201468,14 @@
     ]
   },
   "Saving…": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/formula-template"
     ]
   },
   "Saw": {
@@ -201603,13 +202440,13 @@
       "apps/web/types"
     ]
   },
-  "Scenario added": {
+  "Scenario": {
     "sites": 1,
     "scope": [
-      "ts"
+      "go"
     ],
     "areas": [
-      "routes/formula-template"
+      "go/other"
     ]
   },
   "Scenario deleted": {
@@ -201621,7 +202458,16 @@
       "routes/formula-template"
     ]
   },
-  "Scenario results are from before your latest edit": {
+  "Scenario name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Scenario name, e.g. Short haul hits the minimum": {
     "sites": 1,
     "scope": [
       "ts"
@@ -201639,7 +202485,25 @@
       "go/other"
     ]
   },
-  "Scenario updated": {
+  "Scenario {0} has the same name as scenario {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Scenario “{0}” added": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Scenario “{0}” expects {1} but the formula now bills {2}. {3} Fix the formula so this scenario passes again without breaking the others.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -201649,13 +202513,49 @@
     ]
   },
   "Scenarios": {
-    "sites": 5,
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Scenarios hold": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Scenarios pass": {
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/formula-template"
+    ]
+  },
+  "Scenarios re-run against the editor on every change, saved or not. A failing scenario blocks approval until it passes or is deleted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Scenarios you add here are saved with the template when you create it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/formula-template"
     ]
   },
@@ -202126,7 +203026,7 @@
     ]
   },
   "Schema": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -203578,16 +204478,7 @@
     ]
   },
   "Search variables and functions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "Search variables and functions ({0})": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -203620,15 +204511,6 @@
     ],
     "areas": [
       "routes/home"
-    ]
-  },
-  "Search your templates...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Search {0}": {
@@ -208377,6 +209259,15 @@
       "routes/invoice"
     ]
   },
+  "Sent to {0} for review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Sent to {0}. Put the pages in the scanner.": {
     "sites": 1,
     "scope": [
@@ -211590,7 +212481,7 @@
     ]
   },
   "Shipment": {
-    "sites": 44,
+    "sites": 45,
     "scope": [
       "go",
       "ts"
@@ -211604,6 +212495,7 @@
       "routes/admin",
       "routes/desk",
       "routes/edi",
+      "routes/formula-template",
       "routes/inbox",
       "routes/invoice",
       "routes/journal-entry",
@@ -213800,6 +214692,15 @@
       "routes/shipment"
     ]
   },
+  "Show all {0} shipment variables": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Show all {0} tools": {
     "sites": 1,
     "scope": [
@@ -214044,6 +214945,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Show only what the formula reads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Show only workers in this fleet.": {
@@ -214299,7 +215209,7 @@
       "routes/agent-control"
     ]
   },
-  "Showing the built-in reference; the live schema could not be loaded, so newer variables may be missing and flagged as unknown.": {
+  "Showing the built-in reference; the live schema could not be loaded, so newer variables may be missing.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -217483,6 +218393,15 @@
       "routes/rate-zone"
     ]
   },
+  "Space": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Space-separated scopes requested during authentication.": {
     "sites": 1,
     "scope": [
@@ -218443,6 +219362,15 @@
       "go/other"
     ]
   },
+  "Standard library": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Standard service": {
     "sites": 1,
     "scope": [
@@ -218833,20 +219761,12 @@
     ]
   },
   "Start from": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Start from a standard": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
+      "routes/agent-control",
       "routes/formula-template"
     ]
   },
@@ -219061,15 +219981,6 @@
       "apps/web/components"
     ]
   },
-  "Start typing an expression and the result appears here.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Start typing to find one": {
     "sites": 1,
     "scope": [
@@ -219250,6 +220161,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Started from “{0}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Started notice": {
@@ -221638,15 +222558,6 @@
       "routes/edi"
     ]
   },
-  "String": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Strip phone punctuation.": {
     "sites": 1,
     "scope": [
@@ -221727,6 +222638,24 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Studio panes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Studio rail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Subject": {
@@ -221835,7 +222764,7 @@
     ]
   },
   "Submit": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -221844,6 +222773,7 @@
       "apps/web/lib",
       "routes/admin",
       "routes/billing-queue",
+      "routes/formula-template",
       "routes/manual-journal",
       "routes/worker"
     ]
@@ -221906,7 +222836,7 @@
     ]
   },
   "Submit for review": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -221940,6 +222870,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Submit it for review when it is ready.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Submit it when you are ready for the worker to sign off.": {
@@ -222083,12 +223022,13 @@
     ]
   },
   "Submitted for review": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/formula-template"
     ]
   },
   "Submitted for review and waiting on an approver.": {
@@ -222325,6 +223265,24 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "Suggest edge cases": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Suggest edge cases to test": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Suggested": {
@@ -224045,15 +225003,6 @@
       "routes/agent-control"
     ]
   },
-  "Take this template out of production?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Take {0} off the position": {
     "sites": 1,
     "scope": [
@@ -225318,12 +226267,14 @@
     ]
   },
   "Template": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/worker"
     ]
   },
@@ -225388,15 +226339,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "Template details": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Template duplicated successfully": {
@@ -225499,12 +226441,13 @@
     ]
   },
   "Template name": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/edi"
+      "routes/edi",
+      "routes/formula-template"
     ]
   },
   "Template name is required": {
@@ -225544,6 +226487,15 @@
     ]
   },
   "Template type is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Template type must be FreightCharge or AccessorialCharge": {
     "sites": 1,
     "scope": [
       "go"
@@ -228543,6 +229495,15 @@
       "routes/agent-control"
     ]
   },
+  "The approved version keeps rating shipments until this one is approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "The argument must be this value.": {
     "sites": 1,
     "scope": [
@@ -229686,15 +230647,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "The change returned it to Draft. Shipments cannot be rated with it until it is approved again.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "The change summary could not be loaded; open Version History to compare by hand.": {
@@ -231857,6 +232809,16 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "The editor's content is required to explain a scenario": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers",
+      "go/other"
+    ]
+  },
   "The effective end date must be after the start date": {
     "sites": 1,
     "scope": [
@@ -232068,6 +233030,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The engine could not run it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "The entitlement must be more than zero weeks": {
@@ -232356,6 +233327,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The expression has errors": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "The extended linehaul amount, unformatted.": {
@@ -232883,12 +233863,13 @@
     ]
   },
   "The formula assistant is not available on this server": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "api/handlers",
+      "go/other"
     ]
   },
   "The formula fields no longer apply. Nothing is saved until you save the program — switching the method back undoes this.": {
@@ -232900,7 +233881,7 @@
       "routes/fuel-management"
     ]
   },
-  "The formula produced {0} and was clamped to the {1} charge{2}.": {
+  "The formula returned {0}. It needs to return a number.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -232927,16 +233908,7 @@
       "routes/rate-agreement"
     ]
   },
-  "The formula that computes the charge": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "The formula, variables, lines, and charge policy are in the editor.": {
+  "The formula that turns shipment facts into the charge. Charge policy applies after it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -233195,6 +234167,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The impact could not be worked out right now. Review still covers what is saved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "The import assistant is not available on this server": {
@@ -237136,15 +238117,6 @@
       "routes/agent-control"
     ]
   },
-  "The result below is from the last successful run.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "The result cannot pre-date the collection": {
     "sites": 1,
     "scope": [
@@ -237280,6 +238252,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "The reviewer approves exactly what is saved. Approval makes this version rate shipments.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "The reviewer's note. Usually present on a denial and absent on an approval.": {
@@ -238346,7 +239327,7 @@
       "routes/worker"
     ]
   },
-  "The standard library could not be loaded. Write the formula by hand or copy an existing template below.": {
+  "The standard library is empty.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -240514,6 +241495,15 @@
       "apps/web/components"
     ]
   },
+  "These could not be loaded. Write the formula by hand or ask Nova to draft it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "These dates fall on a blackout: {0}": {
     "sites": 1,
     "scope": [
@@ -240622,6 +241612,15 @@
       "go/other"
     ]
   },
+  "These stopped rating with it when it was archived; reactivate it through review.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "These thresholds came from Trenova's researched baseline and have not been confirmed against the issuing authority by your organization. Verify them in jurisdiction rules before relying on them for a permit filing.": {
     "sites": 1,
     "scope": [
@@ -240638,6 +241637,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "These will rate with the new content once it is approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "They are in the purchases table now and will be counted the next time the quarter's return is computed.": {
@@ -240794,13 +241802,14 @@
     ]
   },
   "Thinking…": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/formula-template"
     ]
   },
   "Third Party": {
@@ -241427,7 +242436,7 @@
       "routes/desk"
     ]
   },
-  "This changes what the reviewer is looking at, so the template returns to Draft and must be submitted again.": {
+  "This changes what the reviewer is looking at, so the review in progress is cancelled and the template returns to Draft.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -241436,7 +242445,7 @@
       "routes/formula-template"
     ]
   },
-  "This changes what the template computes, so it returns to Draft and stops rating shipments until it is approved again. Name and description edits do not do this.": {
+  "This changes what the template computes. v{0} keeps rating shipments until the new version is approved.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -241671,7 +242680,7 @@
     ]
   },
   "This conversation has read text from outside your organization, so every change it proposes waits for your approval.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -247776,15 +248785,6 @@
       "apps/web/lib"
     ]
   },
-  "Tolerance ($)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Tolerance cannot be negative": {
     "sites": 3,
     "scope": [
@@ -248107,6 +249107,15 @@
     "areas": [
       "api/middleware",
       "packages/shared/components"
+    ]
+  },
+  "Too many sample values": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Too many selected identifiers": {
@@ -251963,7 +252972,7 @@
     ]
   },
   "Try again": {
-    "sites": 54,
+    "sites": 55,
     "scope": [
       "ts"
     ],
@@ -251978,6 +252987,7 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/detention-intelligence",
+      "routes/formula-template",
       "routes/inbox",
       "routes/intake",
       "routes/onboarding",
@@ -252653,7 +253663,7 @@
     ]
   },
   "Type": {
-    "sites": 56,
+    "sites": 55,
     "scope": [
       "go",
       "ts"
@@ -253357,15 +254367,6 @@
       "go/other"
     ]
   },
-  "Unallocated": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Unapplied": {
     "sites": 4,
     "scope": [
@@ -253922,7 +254923,7 @@
     ]
   },
   "Undo": {
-    "sites": 19,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -253932,6 +254933,7 @@
       "routes/agent-control",
       "routes/desk",
       "routes/dispatch-console",
+      "routes/formula-template",
       "routes/inbox",
       "routes/shipment"
     ]
@@ -255798,12 +256800,13 @@
     ]
   },
   "Untitled": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/formula-template"
     ]
   },
   "Untitled conversation": {
@@ -255814,6 +256817,15 @@
     "areas": [
       "apps/web/components",
       "routes/desk"
+    ]
+  },
+  "Untitled rating method": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Untitled report": {
@@ -255872,7 +256884,7 @@
     ]
   },
   "Up": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -255881,6 +256893,7 @@
       "apps/web/lib",
       "go/other",
       "routes/edi",
+      "routes/formula-template",
       "routes/worker-checklist-template"
     ]
   },
@@ -256283,15 +257296,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Updating": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Updating carriers requires carrier update permission.": {
@@ -257314,15 +258318,6 @@
       "routes/agent-control"
     ]
   },
-  "Use current sample data {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Use dark theme": {
     "sites": 1,
     "scope": [
@@ -257522,13 +258517,12 @@
     ]
   },
   "Use these values": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/formula-template"
+      "apps/web/components"
     ]
   },
   "Use this device's": {
@@ -258144,6 +259138,24 @@
       "routes/edi"
     ]
   },
+  "Uses the preview's values ({0} changed) and expects": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Uses the preview's values and expects": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Uses the record step {0} changes": {
     "sites": 1,
     "scope": [
@@ -258300,13 +259312,14 @@
     ]
   },
   "Valid": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/lib",
-      "packages/shared/types"
+      "packages/shared/types",
+      "routes/formula-template"
     ]
   },
   "Valid For (months)": {
@@ -258336,6 +259349,15 @@
       "routes/worker"
     ]
   },
+  "Valid · {0, plural, one {# warning} other {# warnings}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Validate": {
     "sites": 2,
     "scope": [
@@ -258362,24 +259384,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Validated against sample data": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "Validated against sample data — result {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Validation": {
@@ -258491,15 +259495,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Validation warning: {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Validity": {
@@ -258710,6 +259705,24 @@
       "routes/reports"
     ]
   },
+  "Values this formula reads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Values this template adds to the schema. Lanes and rate agreements can override each default.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Variable costs": {
     "sites": 1,
     "scope": [
@@ -258746,6 +259759,15 @@
       "go/other"
     ]
   },
+  "Variable name or description is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Variable type is invalid": {
     "sites": 1,
     "scope": [
@@ -258774,7 +259796,7 @@
       "apps/web/components"
     ]
   },
-  "Variables resolve from the selected shipment; sample data is ignored. Custom variable defaults still apply.": {
+  "Variables {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -261994,6 +263016,15 @@
       "apps/web/components"
     ]
   },
+  "Waiting for the preview": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Waiting for the result…": {
     "sites": 1,
     "scope": [
@@ -264500,6 +265531,15 @@
       "go/other"
     ]
   },
+  "What changed and what it does to charges": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "What changes": {
     "sites": 1,
     "scope": [
@@ -265228,6 +266268,15 @@
       "routes/agent-control"
     ]
   },
+  "What should we change?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "What sort of area this is, which is how somebody else reads it later": {
     "sites": 1,
     "scope": [
@@ -265714,6 +266763,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "What this charges": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "What this contract is written in, converted at the rating date when it differs from yours": {
@@ -266988,6 +268046,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "When this method applies and how it prices. Reviewers and rate agreement owners read this.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "When to use this pay package": {
@@ -268598,6 +269665,15 @@
       "go/other"
     ]
   },
+  "Who recorded it is not known": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Who sees it": {
     "sites": 5,
     "scope": [
@@ -268846,6 +269922,24 @@
       "apps/dash/_components"
     ]
   },
+  "Why did the short haul bill the minimum?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Why did {0} break?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Why do both sides stay as they are?": {
     "sites": 1,
     "scope": [
@@ -268988,6 +270082,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Why it broke": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Why it failed, when it failed. Print it: a failure with no cause becomes a support ticket.": {
@@ -269250,6 +270353,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "Why?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Wide": {
@@ -269829,22 +270941,23 @@
       "packages/shared/lib"
     ]
   },
-  "Within guardrails": {
+  "Within range": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/formula-template"
+    ]
+  },
+  "Within the charge policy": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "Within range": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Within tolerance": {
@@ -270870,6 +271983,15 @@
       "apps/web/components"
     ]
   },
+  "Would change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Would change {0}": {
     "sites": 1,
     "scope": [
@@ -270886,15 +272008,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "Would fail on some shipments": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Wrap": {
@@ -270969,6 +272082,15 @@
       "go/other"
     ]
   },
+  "Write a formula template: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Write a large AI audit trail export to object storage": {
     "sites": 1,
     "scope": [
@@ -271003,6 +272125,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Write an expression and the charge appears here as you type.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Write back from the source's address": {
@@ -271084,6 +272215,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Write or draft a formula to start the trace.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Write something before sending": {
@@ -271322,6 +272462,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Writing…": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Written Off": {
@@ -272407,7 +273556,7 @@
     ]
   },
   "You do not have access to {0}. An administrator can give one of your roles access to it.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -272578,7 +273727,7 @@
     ]
   },
   "You don't have permission to perform this action: {0} {1}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -272847,6 +273996,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "You'll be notified when it's reviewed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "You're all caught up": {
@@ -273608,6 +274766,15 @@
       "routes/fleet-safety"
     ]
   },
+  "Your organization has no templates yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Your organization has reached its {0} limit ({1}).": {
     "sites": 1,
     "scope": [
@@ -273878,6 +275045,15 @@
       "template/notification.dash.review_submitted"
     ]
   },
+  "Your review is requested": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Your role cannot view carrier intelligence. Ask an administrator for read access to Carrier Intelligence.": {
     "sites": 3,
     "scope": [
@@ -273995,6 +275171,15 @@
     ],
     "areas": [
       "routes/my-team"
+    ]
+  },
+  "Your templates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Your time-off request was approved. Enjoy!": {
@@ -274712,6 +275897,15 @@
       "go/other"
     ]
   },
+  "as input": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "as of {0}": {
     "sites": 2,
     "scope": [
@@ -274720,6 +275914,15 @@
     "areas": [
       "apps/web/components",
       "routes/worker"
+    ]
+  },
+  "asked {0} to review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "asks a person before": {
@@ -274891,6 +276094,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "baseRate * totalDistance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "being confirmed": {
@@ -276932,6 +278144,15 @@
       "routes/admin"
     ]
   },
+  "e.g. baseRate * totalDistance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "e.g. ch_robinson": {
     "sites": 2,
     "scope": [
@@ -277486,15 +278707,6 @@
       "routes/carrier"
     ]
   },
-  "e.g., round(baseRate * totalDistance, 2)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "e.g., status": {
     "sites": 1,
     "scope": [
@@ -277959,6 +279171,24 @@
       "routes/carrier"
     ]
   },
+  "half even": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "half up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "hand it to someone": {
     "sites": 2,
     "scope": [
@@ -278065,6 +279295,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "in a breakdown line": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "in the books": {
@@ -278507,12 +279746,13 @@
     ]
   },
   "market data": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/formula-template"
     ]
   },
   "matched by radius": {
@@ -278623,6 +279863,15 @@
       "routes/agent-control"
     ]
   },
+  "name taken": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "name@company.com": {
     "sites": 1,
     "scope": [
@@ -278684,6 +279933,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "new input": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "next try {0}": {
@@ -278765,6 +280023,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "no maximum": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "no minimum": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "no model": {
@@ -278857,6 +280133,15 @@
       "routes/agent-control"
     ]
   },
+  "not rounded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "not trusted": {
     "sites": 1,
     "scope": [
@@ -278929,6 +280214,15 @@
       "routes/desk"
     ]
   },
+  "nothing to bill yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "nothing waived": {
     "sites": 1,
     "scope": [
@@ -278936,6 +280230,15 @@
     ],
     "areas": [
       "routes/detention-intelligence"
+    ]
+  },
+  "nothing yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "of every billed detention dollar survives driver pay": {
@@ -278957,7 +280260,7 @@
     ]
   },
   "of {0}": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -278966,7 +280269,6 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/desk",
-      "routes/formula-template",
       "routes/my-team",
       "routes/scheduling"
     ]
@@ -279151,6 +280453,15 @@
       "routes/agent-control"
     ]
   },
+  "on save": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "on site,": {
     "sites": 1,
     "scope": [
@@ -279179,6 +280490,15 @@
       "routes/desk"
     ]
   },
+  "on the sample load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "on time": {
     "sites": 1,
     "scope": [
@@ -279198,12 +280518,13 @@
     ]
   },
   "on {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/formula-template"
     ]
   },
   "onTermination must be Forfeit or PayOut": {
@@ -279324,12 +280645,13 @@
     ]
   },
   "or start from": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/formula-template"
     ]
   },
   "order total": {
@@ -280312,6 +281634,15 @@
       "routes/desk"
     ]
   },
+  "the picked shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "the quarter": {
     "sites": 1,
     "scope": [
@@ -280328,6 +281659,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "the recording": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "the shipment": {
@@ -280655,15 +281995,6 @@
       "routes/accounting-dashboard"
     ]
   },
-  "totalDistance * 0.35": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "totalStops > 2": {
     "sites": 1,
     "scope": [
@@ -280873,6 +282204,15 @@
       "routes/agent-control"
     ]
   },
+  "v1 – v{0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "vLLM (self-hosted)": {
     "sites": 1,
     "scope": [
@@ -280966,16 +282306,17 @@
     ]
   },
   "vs {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/formula-template",
       "routes/reports"
     ]
   },
   "v{0}": {
-    "sites": 30,
+    "sites": 32,
     "scope": [
       "ts"
     ],
@@ -282025,15 +283366,6 @@
       "routes/late-charges"
     ]
   },
-  "{0, plural, one {# decimal} other {# decimals}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "{0, plural, one {# deduction paused} other {# deductions paused}}": {
     "sites": 1,
     "scope": [
@@ -282343,13 +283675,23 @@
       "routes/admin"
     ]
   },
-  "{0, plural, one {# error} other {# errors}}": {
+  "{0, plural, one {# error in the expression} other {# errors in the expression}}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/edi"
+      "routes/formula-template"
+    ]
+  },
+  "{0, plural, one {# error} other {# errors}}": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi",
+      "routes/formula-template"
     ]
   },
   "{0, plural, one {# escrow account closed} other {# escrow accounts closed}}": {
@@ -282592,6 +283934,24 @@
       "routes/reports"
     ]
   },
+  "{0, plural, one {# input defined but never read} other {# inputs defined but never read}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "{0, plural, one {# input} other {# inputs}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "{0, plural, one {# invoice created} other {# invoices created}}": {
     "sites": 1,
     "scope": [
@@ -282646,15 +284006,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0, plural, one {# issue} other {# issues}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "{0, plural, one {# item failed.} other {# items failed.}}": {
@@ -282758,13 +284109,23 @@
       "routes/admin"
     ]
   },
-  "{0, plural, one {# line} other {# lines}}": {
+  "{0, plural, one {# line fails} other {# lines fail}} on the preview load": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/formula-template"
+    ]
+  },
+  "{0, plural, one {# line} other {# lines}}": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin",
+      "routes/formula-template"
     ]
   },
   "{0, plural, one {# line} other {# lines}} into {1}{2} dated {3}": {
@@ -282774,6 +284135,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "{0, plural, one {# line} other {# lines}} · {1, plural, one {# input} other {# inputs}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "{0, plural, one {# line} other {# lines}} · {1} chars": {
@@ -283887,6 +285257,15 @@
       "routes/onboarding"
     ]
   },
+  "{0, plural, one {# scenario broke} other {# scenarios broke}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "{0, plural, one {# selected event was} other {# selected events were}} not open and left unchanged.": {
     "sites": 1,
     "scope": [
@@ -284381,6 +285760,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# value can be empty} other {# values can be empty}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "{0, plural, one {# value changed} other {# values changed}}": {
     "sites": 1,
     "scope": [
@@ -284397,6 +285785,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "{0, plural, one {# value} other {# values}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "{0, plural, one {# variable change} other {# variable changes}}": {
@@ -287601,6 +288998,15 @@
       "routes/inbox"
     ]
   },
+  "{0} could not answer just now. Try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} could not be re-rated with the current template": {
     "sites": 1,
     "scope": [
@@ -287893,6 +289299,15 @@
       "routes/admin"
     ]
   },
+  "{0} did not suggest any scenarios that could be priced. Try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} didn't go through": {
     "sites": 2,
     "scope": [
@@ -288146,6 +289561,15 @@
       "routes/desk"
     ]
   },
+  "{0} edited": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "{0} either side": {
     "sites": 1,
     "scope": [
@@ -288387,6 +289811,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} failing · approval is blocked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "{0} feasible": {
@@ -289155,6 +290588,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} in use": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "{0} in {1}": {
@@ -290129,7 +291571,7 @@
     ]
   },
   "{0} is turned off. An administrator can turn it on in AI Control.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -290821,6 +292263,15 @@
       "routes/driver-settlement"
     ]
   },
+  "{0} mi · {1} stops": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "{0} mi · {1} to go": {
     "sites": 1,
     "scope": [
@@ -291019,13 +292470,14 @@
     ]
   },
   "{0} ms": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/formula-template"
     ]
   },
   "{0} ms on average": {
@@ -291492,6 +292944,15 @@
       "routes/desk"
     ]
   },
+  "{0} of the total isn't on any line": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "{0} of {1, plural, one {# call} other {# calls}}": {
     "sites": 1,
     "scope": [
@@ -291601,7 +293062,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "ts"
     ],
@@ -291614,6 +293075,7 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/dispatch-console",
+      "routes/formula-template",
       "routes/inbox",
       "routes/intake",
       "routes/onboarding",
@@ -291958,15 +293420,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "{0} of {1} · {2}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "{0} of {1} · {2} changed · {3} failed": {
@@ -293259,7 +294712,7 @@
       "apps/web/hooks"
     ]
   },
-  "{0} scenario(s) fail; approval is blocked until they pass": {
+  "{0} scenarios added": {
     "sites": 1,
     "scope": [
       "ts"
@@ -293268,7 +294721,7 @@
       "routes/formula-template"
     ]
   },
-  "{0} scenarios added": {
+  "{0} schema · {1} inputs · {2} functions": {
     "sites": 1,
     "scope": [
       "ts"
@@ -294829,6 +296282,15 @@
       "routes/fleet-safety"
     ]
   },
+  "{0} · can be empty": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "{0} · ceiling {1}": {
     "sites": 1,
     "scope": [
@@ -295909,15 +297371,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "{0}/{1} passing": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "{0}/{1} ready": {
@@ -297042,15 +298495,6 @@
       "routes/reports"
     ]
   },
-  "· {0, plural, one {# line} other {# lines}} failed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "· {0, plural, one {# load} other {# loads}} assigned": {
     "sites": 1,
     "scope": [
@@ -297512,15 +298956,6 @@
       "routes/desk"
     ]
   },
-  "— got {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "— more than you have banked; your manager may still approve it if days accrue by then.": {
     "sites": 1,
     "scope": [
@@ -297600,6 +299035,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "“{0}” now expects {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "• Maximum file size: 50 MB per file": {
