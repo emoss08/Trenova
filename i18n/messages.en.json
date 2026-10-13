@@ -140220,15 +140220,6 @@
       "routes/desk"
     ]
   },
-  "No assistant is enabled for quick questions. Enable a chat agent in AI Control.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "No attachments or links": {
     "sites": 1,
     "scope": [
@@ -146851,15 +146842,6 @@
       "routes/worker"
     ]
   },
-  "None of the assistants is open to you for quick questions. An administrator can give one of your roles access to one.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "None of the selected carriers have a DOT number to monitor": {
     "sites": 2,
     "scope": [
@@ -151021,6 +151003,24 @@
       "routes/formula-template",
       "routes/inbox",
       "routes/onboarding"
+    ]
+  },
+  "Nova answers quick questions through the general assistant, which is not open to you. An administrator can give one of your roles access to it in AI Control.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Nova answers quick questions through the general assistant, which is turned off. Turn it on in AI Control.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Nova brings the next one here the moment it lands.": {
