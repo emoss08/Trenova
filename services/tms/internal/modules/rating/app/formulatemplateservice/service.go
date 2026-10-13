@@ -3,8 +3,10 @@ package formulatemplateservice
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
@@ -34,7 +36,8 @@ type Params struct {
 	ShipmentRepo   shipmentports.ShipmentRepository
 	FormulaService *formula.Service
 	AuditService   auditports.AuditService
-	Notifications  *notificationservice.Service `optional:"true"`
+	Notifications  *notificationservice.Service   `optional:"true"`
+	Roles          permissionports.RoleRepository `optional:"true"`
 }
 
 type Service struct {
@@ -48,6 +51,7 @@ type Service struct {
 	formulaService *formula.Service
 	auditService   auditports.AuditService
 	notifications  *notificationservice.Service
+	roles          permissionports.RoleRepository
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
@@ -62,6 +66,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 		formulaService: p.FormulaService,
 		auditService:   p.AuditService,
 		notifications:  p.Notifications,
+		roles:          p.Roles,
 	}
 }
 
@@ -69,6 +74,15 @@ func (s *Service) Create(
 	ctx context.Context,
 	entity *formulatemplate.FormulaTemplate,
 	userID pulid.ID,
+) (*formulatemplate.FormulaTemplate, error) {
+	return s.CreateWithTestCases(ctx, entity, userID, nil)
+}
+
+func (s *Service) CreateWithTestCases(
+	ctx context.Context,
+	entity *formulatemplate.FormulaTemplate,
+	userID pulid.ID,
+	testCases []*TestCaseInput,
 ) (*formulatemplate.FormulaTemplate, error) {
 	log := s.l.With(
 		zap.String("operation", "Create"),
@@ -82,6 +96,10 @@ func (s *Service) Create(
 	clearApprovalFields(entity)
 
 	if err := s.validateTemplate(ctx, entity); err != nil {
+		return nil, err
+	}
+
+	if err := validateHeldTestCases(testCases); err != nil {
 		return nil, err
 	}
 
@@ -99,6 +117,20 @@ func (s *Service) Create(
 			txCtx, created, 1, userID, "Initial version", nil,
 		); txErr != nil {
 			log.Error("failed to create version snapshot", zap.Error(txErr))
+			return txErr
+		}
+
+		if txErr = s.createRecordedTestCases(
+			txCtx,
+			created,
+			pagination.TenantInfo{
+				OrgID:  created.OrganizationID,
+				BuID:   created.BusinessUnitID,
+				UserID: userID,
+			},
+			testCases,
+		); txErr != nil {
+			log.Error("failed to create held test scenarios", zap.Error(txErr))
 			return txErr
 		}
 
@@ -462,6 +494,56 @@ func (s *Service) logAuditAction(
 	if err := s.auditService.LogAction(params, opts...); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
+}
+
+const MaxHeldTestCases = 50
+
+func validateHeldTestCases(testCases []*TestCaseInput) error {
+	multiErr := errortypes.NewMultiError()
+	if len(testCases) > MaxHeldTestCases {
+		multiErr.Add(
+			"testCases",
+			errortypes.ErrInvalid,
+			"A new template can carry at most 50 test scenarios",
+		)
+		return multiErr
+	}
+
+	pendingTemplateID := pulid.MustNew("ft_")
+	seen := make(map[string]int, len(testCases))
+	for index, input := range testCases {
+		caseErrs := multiErr.WithIndex("testCases", index)
+		if input == nil {
+			caseErrs.Add("name", errortypes.ErrRequired, "Name is required")
+			continue
+		}
+
+		entity := buildTestCaseEntity(pendingTemplateID, pagination.TenantInfo{}, input)
+		entity.Validate(caseErrs)
+		ValidateScenarioContent(caseErrs, "candidate", input.Candidate)
+
+		name := input.Name
+		if strings.TrimSpace(name) == "" {
+			continue
+		}
+		if first, dup := seen[name]; dup {
+			caseErrs.Add(
+				"name",
+				errortypes.ErrDuplicate,
+				"Scenario {0} has the same name as scenario {1}",
+				index+1,
+				first+1,
+			)
+			continue
+		}
+		seen[name] = index
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
 }
 
 // maxBulkTemplateIDs bounds the id lists bulk operations accept. A duplicate

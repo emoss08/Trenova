@@ -42,6 +42,9 @@ const (
 	MaxFormulaVariables   = 50
 	MaxVariableNameLength = 64
 	MaxVariableTextLength = 500
+	MaxTemplateNameLength = 100
+	MaxBreakdownLines     = 20
+	MaxBreakdownLabel     = 100
 	maxSchemaIDLength     = 100
 	maxTemplateTypeLength = 50
 )
@@ -350,6 +353,78 @@ func (f *Formula) validate(prefix string, multiErr *errortypes.MultiError) {
 				"Default value must be a number, text or true/false")
 		}
 	}
+}
+
+const (
+	TemplateTypeFreightCharge     = "FreightCharge"
+	TemplateTypeAccessorialCharge = "AccessorialCharge"
+)
+
+func (d *FormulaDetails) Validate(prefix string, multiErr *errortypes.MultiError) {
+	field := fieldNamer(prefix)
+
+	checkLength(multiErr, field("name"), d.Name, MaxTemplateNameLength)
+	checkLength(multiErr, field("description"), d.Description, MaxVariableTextLength)
+	if d.TemplateType != "" && d.TemplateType != TemplateTypeFreightCharge &&
+		d.TemplateType != TemplateTypeAccessorialCharge {
+		multiErr.Add(field("templateType"), errortypes.ErrInvalid,
+			"Template type must be FreightCharge or AccessorialCharge")
+	}
+
+	if len(d.Breakdown) > MaxBreakdownLines {
+		multiErr.Add(field("breakdown"), errortypes.ErrInvalid,
+			"A formula has at most 20 breakdown lines")
+		return
+	}
+	seen := make(map[string]struct{}, len(d.Breakdown))
+	for i := range d.Breakdown {
+		line := &d.Breakdown[i]
+		lineField := indexed(field("breakdown"), i)
+		if !ValidBreakdownName(line.Name) {
+			multiErr.Add(lineField+".name", errortypes.ErrInvalid,
+				"A breakdown line's name is a camelCase identifier, such as fuelSurcharge")
+		} else if _, dup := seen[line.Name]; dup {
+			multiErr.Add(lineField+".name", errortypes.ErrDuplicate, "Breakdown line is repeated")
+		}
+		seen[line.Name] = struct{}{}
+		if strings.TrimSpace(line.Label) == "" {
+			multiErr.Add(
+				lineField+".label",
+				errortypes.ErrRequired,
+				"A breakdown line needs a label",
+			)
+		}
+		checkLength(multiErr, lineField+".label", line.Label, MaxBreakdownLabel)
+		if strings.TrimSpace(line.Expression) == "" {
+			multiErr.Add(lineField+".expression", errortypes.ErrRequired,
+				"A breakdown line needs an expression")
+		}
+		checkLength(multiErr, lineField+".expression", line.Expression, MaxExpressionLength)
+	}
+}
+
+func (d *FormulaDetails) Normalized() FormulaDetails {
+	out := FormulaDetails{
+		Name:         strings.TrimSpace(d.Name),
+		Description:  strings.TrimSpace(d.Description),
+		TemplateType: strings.TrimSpace(d.TemplateType),
+	}
+	if len(d.Breakdown) > 0 {
+		out.Breakdown = make([]BreakdownLine, 0, len(d.Breakdown))
+		for _, line := range d.Breakdown {
+			out.Breakdown = append(out.Breakdown, BreakdownLine{
+				Name:       strings.TrimSpace(line.Name),
+				Label:      strings.TrimSpace(line.Label),
+				Expression: strings.TrimSpace(line.Expression),
+			})
+		}
+	}
+
+	return out
+}
+
+func ValidBreakdownName(name string) bool {
+	return ValidVariableName(name) && name[0] != '_'
 }
 
 func (d *Draft) Normalized() *Draft {

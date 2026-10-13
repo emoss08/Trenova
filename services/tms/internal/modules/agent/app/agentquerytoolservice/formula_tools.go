@@ -480,6 +480,56 @@ func (t *proposeFormulaTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "What the formula charges, in plain words, term by term.",
 			},
+			"name": map[string]any{
+				"type":      "string",
+				"maxLength": pagedraft.MaxTemplateNameLength,
+				"description": "Only when you draft a new template from scratch and the page " +
+					"draft has no name yet: a short name for the rating method, such as " +
+					"\"Linehaul per mile with fuel\". Leave it out when changing an existing " +
+					"formula.",
+			},
+			"description": map[string]any{
+				"type":      "string",
+				"maxLength": pagedraft.MaxVariableTextLength,
+				"description": "Only when you draft a new template from scratch and the page " +
+					"draft has no description yet: one or two sentences on what it prices and " +
+					"when it applies, for the reviewer who approves it.",
+			},
+			"templateType": agenttoolschema.Enum(
+				"Only when you draft a new template from scratch: FreightCharge for the "+
+					"linehaul price of a load, AccessorialCharge for an extra service or fee "+
+					"billed on top of it.",
+				formulaTemplateTypeSource,
+			),
+			"breakdown": map[string]any{
+				"type":     "array",
+				"maxItems": pagedraft.MaxBreakdownLines,
+				"description": "Only when the person asks for itemized lines on the invoice: " +
+					"each line prices one part of the charge with its own expression, and the " +
+					"lines add up to the formula's result. Leave it out otherwise.",
+				"items": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"name": map[string]any{
+							"type": "string",
+							"description": "A camelCase identifier, unique among the lines, " +
+								"such as fuelSurcharge.",
+						},
+						"label": map[string]any{
+							"type":        "string",
+							"maxLength":   pagedraft.MaxBreakdownLabel,
+							"description": "What the invoice line says, such as \"Fuel surcharge\".",
+						},
+						"expression": map[string]any{
+							"type": "string",
+							"description": "The line's amount, built from the same names as " +
+								"the formula.",
+						},
+					},
+					"required":             []string{"name", "label", "expression"},
+					"additionalProperties": false,
+				},
+			},
 			"scenarios": scenarioSchema(),
 		},
 		"required":             []string{"expression", "explanation"},
@@ -558,12 +608,23 @@ func (t *proposeFormulaTool) Query(
 	if err != nil {
 		return nil, err
 	}
+	details := pagedraft.FormulaDetails{
+		Name:         optionalString(params.Params, "name"),
+		Description:  optionalString(params.Params, "description"),
+		TemplateType: optionalString(params.Params, "templateType"),
+	}
+	if raw, ok := params.Params["breakdown"]; ok && raw != nil {
+		if err = decodeParam(params.Params, "breakdown", &details.Breakdown); err != nil {
+			return nil, err
+		}
+	}
 
 	proposal, err := t.workbench.Propose(ctx, &formulaassistantservice.ProposeRequest{
 		TenantInfo:  formulaTenant(params),
 		SchemaID:    optionalString(params.Params, "schemaId"),
 		Expression:  expression,
 		Variables:   variables,
+		Details:     details,
 		Explanation: explanation,
 		Scenarios:   scenarios,
 	})

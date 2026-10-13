@@ -2,18 +2,19 @@ package formulaassistantservice
 
 import (
 	"context"
+	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -345,6 +346,94 @@ func TestPropose_RefusesADraftTheStudioCouldNotHold(t *testing.T) {
 	assert.Contains(t, fields, "explanation")
 	assert.Contains(t, fields, "formula.variables[0].type")
 	assert.Contains(t, fields, "formula.variables[1].name")
+}
+
+func TestPropose_CarriesTheTemplateDetailsAndPricesTheBreakdown(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+
+	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * perMile + handling",
+		Variables: []pagedraft.FormulaVariable{
+			{Name: "perMile", Type: pagedraft.VariableNumber, DefaultValue: 2},
+			{Name: "handling", Type: pagedraft.VariableNumber, DefaultValue: 50},
+		},
+		Details: pagedraft.FormulaDetails{
+			Name:         "  Per mile with handling ",
+			Description:  "Linehaul by the mile plus a handling fee.",
+			TemplateType: pagedraft.TemplateTypeFreightCharge,
+			Breakdown: []pagedraft.BreakdownLine{
+				{Name: "linehaul", Label: "Linehaul", Expression: "totalDistance * perMile"},
+				{Name: "handlingFee", Label: "Handling", Expression: "handling"},
+			},
+		},
+		Explanation: "Per mile plus handling.",
+	})
+	require.NoError(t, err)
+
+	assert.True(t, proposal.Check.Valid, proposal.Check.Error)
+	assert.Equal(t, "Per mile with handling", proposal.Name)
+	assert.Equal(t, pagedraft.TemplateTypeFreightCharge, proposal.TemplateType)
+	require.Len(t, proposal.Breakdown, 2)
+	assert.Equal(t, "handlingFee", proposal.Breakdown[1].Name)
+}
+
+func TestPropose_ABreakdownLineThatFailsFailsTheCheck(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+
+	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * 2",
+		Details: pagedraft.FormulaDetails{
+			Breakdown: []pagedraft.BreakdownLine{
+				{Name: "fuel", Label: "Fuel surcharge", Expression: "unknownThing * 2"},
+			},
+		},
+		Explanation: "Two per mile.",
+	})
+	require.NoError(t, err)
+
+	assert.False(t, proposal.Check.Valid)
+	assert.Contains(t, proposal.Check.Error, `"Fuel surcharge" (fuel)`)
+}
+
+func TestPropose_RefusesDetailsTheStudioCouldNotHold(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+
+	_, err := svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance",
+		Details: pagedraft.FormulaDetails{
+			Name:         strings.Repeat("n", pagedraft.MaxTemplateNameLength+1),
+			TemplateType: "Discount",
+			Breakdown: []pagedraft.BreakdownLine{
+				{Name: "_hidden", Label: "", Expression: "1"},
+				{Name: "line", Label: "Line", Expression: ""},
+				{Name: "line", Label: "Again", Expression: "2"},
+			},
+		},
+		Explanation: "Distance.",
+	})
+	require.Error(t, err)
+
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	fields := make(map[string]bool, len(multiErr.Errors))
+	for _, fieldErr := range multiErr.Errors {
+		fields[fieldErr.Field] = true
+	}
+	assert.True(t, fields["name"])
+	assert.True(t, fields["templateType"])
+	assert.True(t, fields["breakdown[0].name"])
+	assert.True(t, fields["breakdown[0].label"])
+	assert.True(t, fields["breakdown[1].expression"])
+	assert.True(t, fields["breakdown[2].name"])
 }
 
 func TestAmountOf(t *testing.T) {

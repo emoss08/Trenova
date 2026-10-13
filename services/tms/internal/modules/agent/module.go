@@ -109,6 +109,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/casechecklistservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchautoassignservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/formulastudioservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/narrator"
 	"github.com/emoss08/trenova/internal/modules/agent/app/messagefileservice"
@@ -351,5 +352,10 @@ func SharedOptions() fx.Option {
 }
 
 func APIOptions() fx.Option {
-	return fx.Options()
+	return fx.Options(
+		fx.Provide(fx.Annotate(
+			formulastudioservice.New,
+			fx.As(new(agentports.FormulaStudioAssist)),
+		)),
+	)
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/shared/timeutils"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -378,6 +380,8 @@ func validateImportTestCases(indexed *errortypes.MultiError, testCases []*TestCa
 		if testCase.Tolerance.IsNegative() {
 			caseErrs.Add("tolerance", errortypes.ErrInvalid, "Tolerance cannot be negative")
 		}
+
+		ValidateScenarioContent(caseErrs, "candidate", testCase.Candidate)
 	}
 }
 
@@ -387,12 +391,23 @@ func (s *Service) createImportedTestCases(
 	tenantInfo pagination.TenantInfo,
 	testCases []*TestCaseInput,
 ) error {
+	return s.createRecordedTestCases(ctx, template, tenantInfo, testCases)
+}
+
+func (s *Service) createRecordedTestCases(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	tenantInfo pagination.TenantInfo,
+	testCases []*TestCaseInput,
+) error {
+	now := timeutils.NowUnix()
 	for _, testCase := range testCases {
 		if testCase == nil {
 			continue
 		}
 
 		entity := buildTestCaseEntity(template.ID, tenantInfo, testCase)
+		entity.Record(recordedContent(template, testCase.Candidate), 0, tenantInfo.UserID, now)
 		if _, err := s.testCaseRepo.Create(ctx, entity); err != nil {
 			return err
 		}

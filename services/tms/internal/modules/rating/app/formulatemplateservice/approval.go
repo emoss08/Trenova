@@ -20,41 +20,70 @@ type ApprovalActionRequest = approvalworkflow.Request
 
 type templateTransition = approvalworkflow.Transition[*formulatemplate.FormulaTemplate, formulatemplate.Status]
 
+type SubmitRequest struct {
+	ApprovalActionRequest
+	ReviewerID   pulid.ID
+	ReviewerNote string
+}
+
 func (s *Service) Submit(
 	ctx context.Context,
-	req *ApprovalActionRequest,
+	req *SubmitRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
-	submitted, err := s.approvals().Apply(ctx, req, templateTransition{
-		Operation:    "Submit",
-		From:         formulatemplate.StatusDraft,
-		AlsoFrom:     []formulatemplate.Status{formulatemplate.StatusInactive},
-		To:           formulatemplate.StatusInReview,
-		PermissionOp: permission.OpSubmit,
-		AuditComment: "Formula template submitted for review",
-		Apply: func(
-			template *formulatemplate.FormulaTemplate,
-			r *ApprovalActionRequest,
-			now int64,
-		) {
-			userID := r.TenantInfo.UserID
-			template.SubmittedByID = &userID
-			template.SubmittedAt = &now
-			template.ReviewComment = r.Comment
-		},
-		AfterSave: func(
-			aCtx context.Context,
-			updated *formulatemplate.FormulaTemplate,
-			r *ApprovalActionRequest,
-		) error {
-			return s.recordReview(aCtx, updated, r.TenantInfo, r.Comment,
-				formulatemplate.ReviewDecisionSubmitted)
-		},
+	var submitted *formulatemplate.FormulaTemplate
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		result, txErr := s.approvals().Apply(txCtx, &req.ApprovalActionRequest, templateTransition{
+			Operation:    "Submit",
+			From:         formulatemplate.StatusDraft,
+			AlsoFrom:     []formulatemplate.Status{formulatemplate.StatusInactive},
+			To:           formulatemplate.StatusInReview,
+			PermissionOp: permission.OpSubmit,
+			AuditComment: "Formula template submitted for review",
+			Validate: func(
+				vCtx context.Context,
+				template *formulatemplate.FormulaTemplate,
+				_ *ApprovalActionRequest,
+			) error {
+				return s.validateSubmission(vCtx, template, req)
+			},
+			Apply: func(
+				template *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+				now int64,
+			) {
+				userID := r.TenantInfo.UserID
+				template.SubmittedByID = &userID
+				template.SubmittedAt = &now
+				template.ReviewComment = r.Comment
+			},
+			AfterSave: func(
+				aCtx context.Context,
+				updated *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+			) error {
+				return s.recordReview(aCtx, updated, r.TenantInfo, &reviewRecord{
+					Comment:             r.Comment,
+					Decision:            formulatemplate.ReviewDecisionSubmitted,
+					RequestedReviewerID: req.ReviewerID,
+					ReviewerNote:        req.ReviewerNote,
+				})
+			},
+		})
+		if txErr != nil {
+			return txErr
+		}
+
+		submitted = result
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	s.notifySubmitted(ctx, req.TenantInfo, submitted)
+	if req.ReviewerID.IsNotNil() {
+		s.notifyRequestedReviewer(ctx, req.TenantInfo, submitted, req.ReviewerID)
+	}
 
 	return submitted, nil
 }
@@ -121,8 +150,10 @@ func (s *Service) Approve(
 				); err != nil {
 					return err
 				}
-				return s.recordReview(aCtx, updated, r.TenantInfo, r.Comment,
-					formulatemplate.ReviewDecisionApproved)
+				return s.recordReview(aCtx, updated, r.TenantInfo, &reviewRecord{
+					Comment:  r.Comment,
+					Decision: formulatemplate.ReviewDecisionApproved,
+				})
 			},
 		})
 		if txErr != nil {
@@ -191,8 +222,10 @@ func (s *Service) Reject(
 					zap.Int64("cleared", cleared),
 				)
 			}
-			return s.recordReview(aCtx, updated, r.TenantInfo, r.Comment,
-				formulatemplate.ReviewDecisionRejected)
+			return s.recordReview(aCtx, updated, r.TenantInfo, &reviewRecord{
+				Comment:  r.Comment,
+				Decision: formulatemplate.ReviewDecisionRejected,
+			})
 		},
 	})
 	if err != nil {

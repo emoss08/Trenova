@@ -25153,12 +25153,51 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "breakdown": {
+            "description": "Only when the person asks for itemized lines on the invoice: each line prices one part of the charge with its own expression, and the lines add up to the formula's result. Leave it out otherwise.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "expression": {
+                  "description": "The line's amount, built from the same names as the formula.",
+                  "type": "string"
+                },
+                "label": {
+                  "description": "What the invoice line says, such as \"Fuel surcharge\".",
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                "name": {
+                  "description": "A camelCase identifier, unique among the lines, such as fuelSurcharge.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "label",
+                "expression"
+              ],
+              "type": "object"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "description": {
+            "description": "Only when you draft a new template from scratch and the page draft has no description yet: one or two sentences on what it prices and when it applies, for the reviewer who approves it.",
+            "maxLength": 500,
+            "type": "string"
+          },
           "explanation": {
             "description": "What the formula charges, in plain words, term by term.",
             "type": "string"
           },
           "expression": {
             "description": "The expression, built only from describe_formula_schema's names and this formula's variables. Write every rate, fee, minimum, percentage and weight or mileage break as a variable, never as a number in the expression: one template prices every customer, and a figure written into it can only be changed by editing the formula. baseRate * totalDistance, not 2.85 * totalDistance; totalWeight < breakOne, not totalWeight < 500. Only a unit conversion such as / 100 for hundredweight stays a number. It returns the charge for the whole load, never a rate: a figure per mile, hour or stop is multiplied by totalDistance, the hours or the stops in the expression. Write it from the terms the person states, even when they say the terms are their contracts': open an agreement or program only when they ask you to take the terms from one. A quantity no shipment field holds, such as hours at a stop, is a variable with a default: declare it and propose rather than asking how it will arrive. So is a condition no field marks directly, such as team service: compare the nearest field to a variable (serviceType.code == teamServiceCode) or make it a yes/no variable, and say in the explanation what to set it to.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Only when you draft a new template from scratch and the page draft has no name yet: a short name for the rating method, such as \"Linehaul per mile with fuel\". Leave it out when changing an existing formula.",
+            "maxLength": 100,
             "type": "string"
           },
           "scenarios": {
@@ -25191,6 +25230,15 @@
           "schemaId": {
             "description": "The formula schema, as the page draft names it; shipment when it names none.",
             "type": "string"
+          },
+          "templateType": {
+            "description": "Only when you draft a new template from scratch: FreightCharge for the linehaul price of a load, AccessorialCharge for an extra service or fee billed on top of it.",
+            "enum": [
+              "FreightCharge",
+              "AccessorialCharge"
+            ],
+            "type": "string",
+            "x-enumOf": "formula.templateType"
           },
           "variables": {
             "description": "The formula's own variables: every rate, fee, minimum, percentage and break the expression uses, and any input no shipment variable holds, such as hours at a stop. Something billed per stop, per hour or per event is written for one occurrence from such an input, cap included; say so in the explanation rather than asking how the data arrives. Give the figure the person named as its default.",

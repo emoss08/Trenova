@@ -1,26 +1,27 @@
 package formulatemplatehandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"context"
 	"errors"
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -29,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -408,7 +410,16 @@ func (m *mockShipmentRepo) ListRatedByFormulaTemplate(
 
 type stubTestCaseRepo struct {
 	formulatemplateports.FormulaTemplateTestCaseRepository
-	cases []*formulatemplate.TestCase
+	cases   []*formulatemplate.TestCase
+	created []*formulatemplate.TestCase
+}
+
+func (s *stubTestCaseRepo) Create(
+	_ context.Context,
+	entity *formulatemplate.TestCase,
+) (*formulatemplate.TestCase, error) {
+	s.created = append(s.created, entity)
+	return entity, nil
 }
 
 func (s *stubTestCaseRepo) ListByTemplate(
@@ -416,6 +427,16 @@ func (s *stubTestCaseRepo) ListByTemplate(
 	_ formulatemplateports.ListTestCasesRequest,
 ) ([]*formulatemplate.TestCase, error) {
 	return s.cases, nil
+}
+
+func passingScenario() *formulatemplate.TestCase {
+	return &formulatemplate.TestCase{
+		ID:             pulid.MustNew("ftc_"),
+		Name:           "Hundred miles",
+		Variables:      map[string]any{"totalDistance": 100.0},
+		ExpectedAmount: decimal.NewFromInt(250),
+		Tolerance:      decimal.NewFromFloat(0.01),
+	}
 }
 
 type testDBConnection struct{}
@@ -476,7 +497,7 @@ func setupHandlerWithDeps(
 		DB:             testDBConnection{},
 		Repo:           repo,
 		VersionRepo:    versionRepo,
-		TestCaseRepo:   &stubTestCaseRepo{},
+		TestCaseRepo:   &stubTestCaseRepo{cases: []*formulatemplate.TestCase{passingScenario()}},
 		ReviewRepo:     &stubReviewRepo{},
 		ShipmentRepo:   shipmentRepo,
 		FormulaService: newTestFormulaService(t),
@@ -2543,6 +2564,7 @@ func newApprovalTemplateRepo(
 				OrganizationID:       testutil.TestOrgID,
 				BusinessUnitID:       testutil.TestBuID,
 				Name:                 "Approval Template",
+				Description:          "Prices a load by the mile",
 				Type:                 formulatemplate.TemplateTypeFreightCharge,
 				Expression:           "totalDistance * 2.5",
 				Status:               status,
@@ -3022,7 +3044,7 @@ func TestFormulaTemplateHandler_TestExpression_ReportsRounding(t *testing.T) {
 	assert.Equal(t, true, rounding["applied"])
 }
 
-func TestFormulaTemplateHandler_Readiness_DraftWithoutScenarios(t *testing.T) {
+func TestFormulaTemplateHandler_Readiness_DraftReadyToSubmit(t *testing.T) {
 	t.Parallel()
 
 	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusDraft)
@@ -3051,9 +3073,17 @@ func TestFormulaTemplateHandler_Readiness_DraftWithoutScenarios(t *testing.T) {
 		require.True(t, isMap)
 		byKey[check["key"].(string)] = check
 	}
+	assert.Equal(t, "pass", byKey["details"]["status"])
+	assert.Equal(t, "Name and description", byKey["details"]["label"])
 	assert.Equal(t, "pass", byKey["expression"]["status"])
-	assert.Equal(t, "warn", byKey["scenarios"]["status"])
-	assert.Equal(t, "warn", byKey["description"]["status"])
+	assert.Equal(t, "Expression is valid", byKey["expression"]["label"])
+	assert.Equal(t, "pass", byKey["scenarios"]["status"])
+	assert.Equal(t, "1 of 1 pass", byKey["scenarios"]["detail"])
+	assert.Equal(t, "Safe on every shipment", byKey["nullableFields"]["label"])
+	assert.NotContains(t, byKey, "breakdown", "breakdown is checked only when lines exist")
+	assert.Contains(t, byKey, "status")
+	assert.Contains(t, byKey, "reviewer")
+	assert.Contains(t, byKey, "submissionAge")
 }
 
 func (m *mockFormulaTemplateRepo) CountStatsByIDs(

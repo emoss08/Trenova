@@ -678,27 +678,31 @@ var ReviewTable = buncolgen.TableInfo{
 //	q.Where(ReviewColumns.ID.Eq(), id)           // WHERE ftr.id = ?
 //	q.Order(ReviewColumns.CreatedAt.OrderDesc())  // ORDER BY ftr.created_at DESC
 var ReviewColumns = struct {
-	ID                buncolgen.Column // "id" → qualified: "ftr.id"
-	TemplateID        buncolgen.Column // "template_id" → qualified: "ftr.template_id"
-	OrganizationID    buncolgen.Column // "organization_id" → qualified: "ftr.organization_id"
-	BusinessUnitID    buncolgen.Column // "business_unit_id" → qualified: "ftr.business_unit_id"
-	Round             buncolgen.Column // "round" → qualified: "ftr.round"
-	Decision          buncolgen.Column // "decision" → qualified: "ftr.decision"
-	ActorID           buncolgen.Column // "actor_id" → qualified: "ftr.actor_id"
-	Comment           buncolgen.Column // "comment" → qualified: "ftr.comment"
-	BaseVersionNumber buncolgen.Column // "base_version_number" → qualified: "ftr.base_version_number"
-	CreatedAt         buncolgen.Column // "created_at" → qualified: "ftr.created_at"
+	ID                  buncolgen.Column // "id" → qualified: "ftr.id"
+	TemplateID          buncolgen.Column // "template_id" → qualified: "ftr.template_id"
+	OrganizationID      buncolgen.Column // "organization_id" → qualified: "ftr.organization_id"
+	BusinessUnitID      buncolgen.Column // "business_unit_id" → qualified: "ftr.business_unit_id"
+	Round               buncolgen.Column // "round" → qualified: "ftr.round"
+	Decision            buncolgen.Column // "decision" → qualified: "ftr.decision"
+	ActorID             buncolgen.Column // "actor_id" → qualified: "ftr.actor_id"
+	Comment             buncolgen.Column // "comment" → qualified: "ftr.comment"
+	BaseVersionNumber   buncolgen.Column // "base_version_number" → qualified: "ftr.base_version_number"
+	RequestedReviewerID buncolgen.Column // "requested_reviewer_id" → qualified: "ftr.requested_reviewer_id"
+	ReviewerNote        buncolgen.Column // "reviewer_note" → qualified: "ftr.reviewer_note"
+	CreatedAt           buncolgen.Column // "created_at" → qualified: "ftr.created_at"
 }{
-	ID:                buncolgen.NewColumn("id", "ftr"),
-	TemplateID:        buncolgen.NewColumn("template_id", "ftr"),
-	OrganizationID:    buncolgen.NewColumn("organization_id", "ftr"),
-	BusinessUnitID:    buncolgen.NewColumn("business_unit_id", "ftr"),
-	Round:             buncolgen.NewColumn("round", "ftr"),
-	Decision:          buncolgen.NewColumn("decision", "ftr"),
-	ActorID:           buncolgen.NewColumn("actor_id", "ftr"),
-	Comment:           buncolgen.NewColumn("comment", "ftr"),
-	BaseVersionNumber: buncolgen.NewColumn("base_version_number", "ftr"),
-	CreatedAt:         buncolgen.NewColumn("created_at", "ftr"),
+	ID:                  buncolgen.NewColumn("id", "ftr"),
+	TemplateID:          buncolgen.NewColumn("template_id", "ftr"),
+	OrganizationID:      buncolgen.NewColumn("organization_id", "ftr"),
+	BusinessUnitID:      buncolgen.NewColumn("business_unit_id", "ftr"),
+	Round:               buncolgen.NewColumn("round", "ftr"),
+	Decision:            buncolgen.NewColumn("decision", "ftr"),
+	ActorID:             buncolgen.NewColumn("actor_id", "ftr"),
+	Comment:             buncolgen.NewColumn("comment", "ftr"),
+	BaseVersionNumber:   buncolgen.NewColumn("base_version_number", "ftr"),
+	RequestedReviewerID: buncolgen.NewColumn("requested_reviewer_id", "ftr"),
+	ReviewerNote:        buncolgen.NewColumn("reviewer_note", "ftr"),
+	CreatedAt:           buncolgen.NewColumn("created_at", "ftr"),
 }
 
 // ReviewFieldMap maps JSON API field names to database column names.
@@ -706,16 +710,18 @@ var ReviewColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Review.GetStaticFieldMap().
 var ReviewFieldMap = map[string]string{
-	"id":                "id",
-	"templateId":        "template_id",
-	"organizationId":    "organization_id",
-	"businessUnitId":    "business_unit_id",
-	"round":             "round",
-	"decision":          "decision",
-	"actorId":           "actor_id",
-	"comment":           "comment",
-	"baseVersionNumber": "base_version_number",
-	"createdAt":         "created_at",
+	"id":                  "id",
+	"templateId":          "template_id",
+	"organizationId":      "organization_id",
+	"businessUnitId":      "business_unit_id",
+	"round":               "round",
+	"decision":            "decision",
+	"actorId":             "actor_id",
+	"comment":             "comment",
+	"baseVersionNumber":   "base_version_number",
+	"requestedReviewerId": "requested_reviewer_id",
+	"reviewerNote":        "reviewer_note",
+	"createdAt":           "created_at",
 }
 
 // ReviewInsertableColumns lists column names suitable for INSERT statements on the "formula_template_reviews" table.
@@ -730,6 +736,8 @@ var ReviewInsertableColumns = []string{
 	"actor_id",
 	"comment",
 	"base_version_number",
+	"requested_reviewer_id",
+	"reviewer_note",
 	"created_at",
 }
 
@@ -739,9 +747,11 @@ var ReviewInsertableColumns = []string{
 //	q.Relation(ReviewRelations.Actor)
 //	// Bun eager-loads the Actor association via a separate query
 var ReviewRelations = struct {
-	Actor string
+	Actor             string
+	RequestedReviewer string
 }{
-	Actor: "Actor",
+	Actor:             "Actor",
+	RequestedReviewer: "RequestedReviewer",
 }
 
 // ReviewScopeTenant restricts a query to a single tenant by adding:
@@ -794,16 +804,18 @@ func ReviewApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.Sel
 //	ReviewFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var ReviewFilter = struct {
-	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	TemplateID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
-	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	Round             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "round" → DB: "round"
-	Decision          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decision" → DB: "decision"
-	ActorID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actorId" → DB: "actor_id"
-	Comment           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comment" → DB: "comment"
-	BaseVersionNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baseVersionNumber" → DB: "base_version_number"
-	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	TemplateID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
+	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Round               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "round" → DB: "round"
+	Decision            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decision" → DB: "decision"
+	ActorID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actorId" → DB: "actor_id"
+	Comment             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comment" → DB: "comment"
+	BaseVersionNumber   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baseVersionNumber" → DB: "base_version_number"
+	RequestedReviewerID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedReviewerId" → DB: "requested_reviewer_id"
+	ReviewerNote        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewerNote" → DB: "reviewer_note"
+	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -831,6 +843,12 @@ var ReviewFilter = struct {
 	},
 	BaseVersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("baseVersionNumber", op, value)
+	},
+	RequestedReviewerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("requestedReviewerId", op, value)
+	},
+	ReviewerNote: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("reviewerNote", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("createdAt", op, value)
@@ -863,33 +881,41 @@ var TestCaseTable = buncolgen.TableInfo{
 //	q.Where(TestCaseColumns.ID.Eq(), id)           // WHERE ftc.id = ?
 //	q.Order(TestCaseColumns.CreatedAt.OrderDesc())  // ORDER BY ftc.created_at DESC
 var TestCaseColumns = struct {
-	ID             buncolgen.Column // "id" → qualified: "ftc.id"
-	TemplateID     buncolgen.Column // "template_id" → qualified: "ftc.template_id"
-	OrganizationID buncolgen.Column // "organization_id" → qualified: "ftc.organization_id"
-	BusinessUnitID buncolgen.Column // "business_unit_id" → qualified: "ftc.business_unit_id"
-	Name           buncolgen.Column // "name" → qualified: "ftc.name"
-	Description    buncolgen.Column // "description" → qualified: "ftc.description"
-	Variables      buncolgen.Column // "variables" → qualified: "ftc.variables"
-	ExpectedAmount buncolgen.Column // "expected_amount" → qualified: "ftc.expected_amount"
-	Tolerance      buncolgen.Column // "tolerance" → qualified: "ftc.tolerance"
-	Version        buncolgen.Column // "version" → qualified: "ftc.version"
-	CreatedByID    buncolgen.Column // "created_by_id" → qualified: "ftc.created_by_id"
-	CreatedAt      buncolgen.Column // "created_at" → qualified: "ftc.created_at"
-	UpdatedAt      buncolgen.Column // "updated_at" → qualified: "ftc.updated_at"
+	ID                buncolgen.Column // "id" → qualified: "ftc.id"
+	TemplateID        buncolgen.Column // "template_id" → qualified: "ftc.template_id"
+	OrganizationID    buncolgen.Column // "organization_id" → qualified: "ftc.organization_id"
+	BusinessUnitID    buncolgen.Column // "business_unit_id" → qualified: "ftc.business_unit_id"
+	Name              buncolgen.Column // "name" → qualified: "ftc.name"
+	Description       buncolgen.Column // "description" → qualified: "ftc.description"
+	Variables         buncolgen.Column // "variables" → qualified: "ftc.variables"
+	ExpectedAmount    buncolgen.Column // "expected_amount" → qualified: "ftc.expected_amount"
+	Tolerance         buncolgen.Column // "tolerance" → qualified: "ftc.tolerance"
+	Version           buncolgen.Column // "version" → qualified: "ftc.version"
+	CreatedByID       buncolgen.Column // "created_by_id" → qualified: "ftc.created_by_id"
+	RecordedOnVersion buncolgen.Column // "recorded_on_version" → qualified: "ftc.recorded_on_version"
+	RecordedByID      buncolgen.Column // "recorded_by_id" → qualified: "ftc.recorded_by_id"
+	RecordedAt        buncolgen.Column // "recorded_at" → qualified: "ftc.recorded_at"
+	RecordedContent   buncolgen.Column // "recorded_content" → qualified: "ftc.recorded_content"
+	CreatedAt         buncolgen.Column // "created_at" → qualified: "ftc.created_at"
+	UpdatedAt         buncolgen.Column // "updated_at" → qualified: "ftc.updated_at"
 }{
-	ID:             buncolgen.NewColumn("id", "ftc"),
-	TemplateID:     buncolgen.NewColumn("template_id", "ftc"),
-	OrganizationID: buncolgen.NewColumn("organization_id", "ftc"),
-	BusinessUnitID: buncolgen.NewColumn("business_unit_id", "ftc"),
-	Name:           buncolgen.NewColumn("name", "ftc"),
-	Description:    buncolgen.NewColumn("description", "ftc"),
-	Variables:      buncolgen.NewColumn("variables", "ftc"),
-	ExpectedAmount: buncolgen.NewColumn("expected_amount", "ftc"),
-	Tolerance:      buncolgen.NewColumn("tolerance", "ftc"),
-	Version:        buncolgen.NewColumn("version", "ftc"),
-	CreatedByID:    buncolgen.NewColumn("created_by_id", "ftc"),
-	CreatedAt:      buncolgen.NewColumn("created_at", "ftc"),
-	UpdatedAt:      buncolgen.NewColumn("updated_at", "ftc"),
+	ID:                buncolgen.NewColumn("id", "ftc"),
+	TemplateID:        buncolgen.NewColumn("template_id", "ftc"),
+	OrganizationID:    buncolgen.NewColumn("organization_id", "ftc"),
+	BusinessUnitID:    buncolgen.NewColumn("business_unit_id", "ftc"),
+	Name:              buncolgen.NewColumn("name", "ftc"),
+	Description:       buncolgen.NewColumn("description", "ftc"),
+	Variables:         buncolgen.NewColumn("variables", "ftc"),
+	ExpectedAmount:    buncolgen.NewColumn("expected_amount", "ftc"),
+	Tolerance:         buncolgen.NewColumn("tolerance", "ftc"),
+	Version:           buncolgen.NewColumn("version", "ftc"),
+	CreatedByID:       buncolgen.NewColumn("created_by_id", "ftc"),
+	RecordedOnVersion: buncolgen.NewColumn("recorded_on_version", "ftc"),
+	RecordedByID:      buncolgen.NewColumn("recorded_by_id", "ftc"),
+	RecordedAt:        buncolgen.NewColumn("recorded_at", "ftc"),
+	RecordedContent:   buncolgen.NewColumn("recorded_content", "ftc"),
+	CreatedAt:         buncolgen.NewColumn("created_at", "ftc"),
+	UpdatedAt:         buncolgen.NewColumn("updated_at", "ftc"),
 }
 
 // TestCaseFieldMap maps JSON API field names to database column names.
@@ -897,19 +923,22 @@ var TestCaseColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by TestCase.GetStaticFieldMap().
 var TestCaseFieldMap = map[string]string{
-	"id":             "id",
-	"templateId":     "template_id",
-	"organizationId": "organization_id",
-	"businessUnitId": "business_unit_id",
-	"name":           "name",
-	"description":    "description",
-	"variables":      "variables",
-	"expectedAmount": "expected_amount",
-	"tolerance":      "tolerance",
-	"version":        "version",
-	"createdById":    "created_by_id",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":                "id",
+	"templateId":        "template_id",
+	"organizationId":    "organization_id",
+	"businessUnitId":    "business_unit_id",
+	"name":              "name",
+	"description":       "description",
+	"variables":         "variables",
+	"expectedAmount":    "expected_amount",
+	"tolerance":         "tolerance",
+	"version":           "version",
+	"createdById":       "created_by_id",
+	"recordedOnVersion": "recorded_on_version",
+	"recordedById":      "recorded_by_id",
+	"recordedAt":        "recorded_at",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
 }
 
 // TestCaseInsertableColumns lists column names suitable for INSERT statements on the "formula_template_test_cases" table.
@@ -926,8 +955,23 @@ var TestCaseInsertableColumns = []string{
 	"tolerance",
 	"version",
 	"created_by_id",
+	"recorded_on_version",
+	"recorded_by_id",
+	"recorded_at",
+	"recorded_content",
 	"created_at",
 	"updated_at",
+}
+
+// TestCaseRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(TestCaseRelations.RecordedBy)
+//	// Bun eager-loads the RecordedBy association via a separate query
+var TestCaseRelations = struct {
+	RecordedBy string
+}{
+	RecordedBy: "RecordedBy",
 }
 
 // TestCaseScopeTenant restricts a query to a single tenant by adding:
@@ -980,19 +1024,22 @@ func TestCaseApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.S
 //	TestCaseFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var TestCaseFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	TemplateID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Variables      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "variables" → DB: "variables"
-	ExpectedAmount func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedAmount" → DB: "expected_amount"
-	Tolerance      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tolerance" → DB: "tolerance"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedByID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	TemplateID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Name              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Variables         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "variables" → DB: "variables"
+	ExpectedAmount    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedAmount" → DB: "expected_amount"
+	Tolerance         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tolerance" → DB: "tolerance"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
+	RecordedOnVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordedOnVersion" → DB: "recorded_on_version"
+	RecordedByID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordedById" → DB: "recorded_by_id"
+	RecordedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordedAt" → DB: "recorded_at"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -1026,6 +1073,15 @@ var TestCaseFilter = struct {
 	},
 	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("createdById", op, value)
+	},
+	RecordedOnVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("recordedOnVersion", op, value)
+	},
+	RecordedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("recordedById", op, value)
+	},
+	RecordedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("recordedAt", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("createdAt", op, value)
