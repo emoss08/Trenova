@@ -58,10 +58,10 @@ func Options() fx.Option {
 
 func OptionsFor(e *edition.Edition) fx.Option {
 	return fx.Options(
-		// The worker serves the same metrics and health endpoints as the API
-		// (monitoring.metrics), so its Temporal activity, AI and database
-		// metrics can be scraped too. Each process listens in its own container.
-		apimodule.MonitoringServerModule,
+		// The worker serves its metrics (monitoring.metrics) when they are
+		// enabled, so its Temporal activity, AI and database metrics can be
+		// scraped too. Off, it opens no port and cannot collide with the API's.
+		apimodule.WorkerMonitoringServerModule,
 		temporaljobs.WorkerModule,
 		agentjobs.WorkerModule,
 		conversationschedulejobs.WorkerModule,
