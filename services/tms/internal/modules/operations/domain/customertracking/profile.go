@@ -19,14 +19,14 @@ type Profile struct {
 	OrganizationID         pulid.ID `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID         pulid.ID `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	CustomerID             pulid.ID `json:"customerId"             bun:"customer_id,type:VARCHAR(100),notnull"`
-	LinkEnabled            bool     `json:"linkEnabled"            bun:"link_enabled,type:BOOLEAN,notnull,default:true"`
+	LinkEnabled            bool     `json:"linkEnabled"            bun:"link_enabled,type:BOOLEAN,notnull"`
 	VisibleFields          []Field  `json:"visibleFields"          bun:"visible_fields,array,notnull"`
 	LinkTTLDays            int16    `json:"linkTtlDays"            bun:"link_ttl_days,type:SMALLINT,notnull,default:30"`
 	NotifyPickedUp         bool     `json:"notifyPickedUp"         bun:"notify_picked_up,type:BOOLEAN,notnull,default:false"`
 	NotifyDelayed          bool     `json:"notifyDelayed"          bun:"notify_delayed,type:BOOLEAN,notnull,default:false"`
 	NotifyDelivered        bool     `json:"notifyDelivered"        bun:"notify_delivered,type:BOOLEAN,notnull,default:false"`
 	NotifyPodReady         bool     `json:"notifyPodReady"         bun:"notify_pod_ready,type:BOOLEAN,notnull,default:false"`
-	IncludeLink            bool     `json:"includeLink"            bun:"include_link,type:BOOLEAN,notnull,default:true"`
+	IncludeLink            bool     `json:"includeLink"            bun:"include_link,type:BOOLEAN,notnull"`
 	Recipients             string   `json:"recipients"             bun:"recipients,type:TEXT,nullzero"`
 	NotificationsEnabledAt *int64   `json:"notificationsEnabledAt" bun:"notifications_enabled_at,type:BIGINT,nullzero"`
 	Version                int64    `json:"version"                bun:"version,type:BIGINT,notnull,default:0"`

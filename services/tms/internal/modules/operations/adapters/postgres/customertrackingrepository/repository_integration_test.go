@@ -131,6 +131,24 @@ func TestProfilesRoundTripTheirFieldsAndGuardTheVersion(t *testing.T) {
 	assert.Len(t, listed, 1)
 }
 
+func TestAProfileCreatedWithLinksOffStoresFalse(t *testing.T) {
+	h := newHarness(t)
+	graph := h.shipment(t, "PR-OFF", shipment.StatusInTransit)
+
+	profile := customertracking.DefaultProfile(h.tenant.OrgID, h.tenant.BuID, graph.Shipment.CustomerID)
+	profile.ID = customertracking.NewProfileID()
+	profile.CreatedAt, profile.UpdatedAt = h.now, h.now
+	profile.LinkEnabled = false
+	profile.IncludeLink = false
+	require.NoError(t, h.profiles.Create(h.ctx, profile))
+
+	read, err := h.profiles.GetByCustomer(h.ctx, h.tenant, graph.Shipment.CustomerID)
+	require.NoError(t, err)
+	require.NotNil(t, read)
+	assert.False(t, read.LinkEnabled)
+	assert.False(t, read.IncludeLink)
+}
+
 func TestTheDatabaseRefusesAProfileWithRulesButNoStartTime(t *testing.T) {
 	h := newHarness(t)
 	graph := h.shipment(t, "PR-2", shipment.StatusInTransit)
