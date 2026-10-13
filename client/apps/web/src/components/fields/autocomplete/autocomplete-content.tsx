@@ -6,6 +6,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandItemCheck,
   CommandList,
 } from "@trenova/shared/components/ui/command";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
@@ -17,10 +18,8 @@ import {
   selectOptionFiltersFromSearchParams,
   type GraphQLSelectOptionsConfig,
 } from "@/lib/graphql/select-options";
-import { cn } from "@trenova/shared/lib/utils";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { CheckIcon } from "@trenova/shared/components/icons";
 import type React from "react";
 import { useCallback, useMemo, useState } from "react";
 
@@ -339,19 +338,9 @@ export function AutocompleteCommandOption<TOption>({
   const isSelected = value === optionValue;
 
   return (
-    <CommandItem
-      className="cursor-pointer [&_svg]:size-3"
-      value={optionValue}
-      onSelect={handleSelect}
-    >
-      {renderOption(option)}
-      <CheckIcon
-        className={cn(
-          "size-3",
-          "absolute top-1/2 right-2 -translate-y-1/2",
-          isSelected ? "opacity-100" : "opacity-0",
-        )}
-      />
+    <CommandItem className="cursor-pointer" value={optionValue} onSelect={handleSelect}>
+      <div className="min-w-0 flex-1 overflow-hidden">{renderOption(option)}</div>
+      <CommandItemCheck checked={isSelected} />
     </CommandItem>
   );
 }

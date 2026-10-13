@@ -207,14 +207,21 @@
 }
 
 /* A filled control pressed by the pointer gives by a hair. One utility so the
-   button, the toggle and the icon button all give the same amount. */
+   button, the toggle and the icon button all give the same amount.
+
+   The give is the `scale` property, the one Tailwind's scale-* utilities set,
+   and the pressed rule is held at the weight of a plain utility by :where. A
+   control that must not give, such as a form field or a link, says so with
+   `active:scale-100`, and that wins. A transform here could not be undone that
+   way, and a field that shrank on press moved the anchor its popup is sized
+   from, which set the popup's width animating as it closed. */
 @utility ui-press {
-  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-property: color, background-color, border-color, box-shadow, scale, opacity;
   transition-duration: 140ms;
   transition-timing-function: var(--ease-swift);
 
-  &:active:not(:disabled, [aria-disabled="true"], [data-disabled]) {
-    transform: scale(0.975);
+  &:where(:active:not(:disabled, [aria-disabled="true"], [data-disabled])) {
+    scale: 0.975;
     transition-duration: 60ms;
   }
 }

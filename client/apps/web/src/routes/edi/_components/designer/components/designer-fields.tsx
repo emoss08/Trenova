@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AutocompleteCommandContent } from "@/components/fields/autocomplete/autocomplete-content";
 import { AutocompleteTrigger } from "@/components/fields/autocomplete/autocomplete-input";
+import { OptionStack } from "@/components/fields/autocomplete/option-stack";
 import { FieldWrapper } from "@/components/fields/field-components";
 import { SelectField } from "@/components/fields/select-field";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -8,7 +9,7 @@ import type { EDIPartnerSettingField, EDISourceContextField } from "@trenova/sha
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type { SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
 import { SearchLgIcon } from "@trenova/shared/components/icons";
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { insertPathReference } from "../utils/edi-designer-utils";
 
@@ -383,16 +384,5 @@ function PathInput({
         />
       </div>
     </FieldWrapper>
-  );
-}
-
-function OptionStack({ primary, secondary }: { primary: ReactNode; secondary?: ReactNode }) {
-  return (
-    <div className="flex size-full min-w-0 flex-col items-start pr-4">
-      <span className="w-full truncate">{primary}</span>
-      {secondary ? (
-        <span className="text-2xs text-muted-foreground w-full truncate">{secondary}</span>
-      ) : null}
-    </div>
   );
 }
