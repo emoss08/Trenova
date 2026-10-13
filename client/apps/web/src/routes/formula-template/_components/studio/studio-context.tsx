@@ -16,9 +16,11 @@ import type {
   FormulaTestCaseInput,
   ReadinessCheck,
   TemplateUsageResponse,
+  VariableValueType,
 } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
+import { toast } from "sonner";
 import {
   createContext,
   useCallback,
@@ -30,7 +32,11 @@ import {
   type RefObject,
 } from "react";
 import { useFormContext, useFormState, useWatch } from "react-hook-form";
-import { analyzeExpression, type ExpressionAnalysis } from "./model/expression-analysis";
+import {
+  analyzeExpression,
+  inferInputType,
+  type ExpressionAnalysis,
+} from "./model/expression-analysis";
 import { studioReadiness } from "./model/readiness";
 import { useLivePreview, type LivePreviewState } from "./use-live-preview";
 import { useStudioScenarios, type StudioScenariosState } from "./use-studio-scenarios";
@@ -89,6 +95,11 @@ type StudioContextValue = StudioProps & {
   /** The editor as it is, saved or not, in the shape Nova's calls read. */
   draftContent: () => FormulaDraftContent;
   save: () => void;
+  /** Adds an input for a name the formula reads, and takes the person to its row. */
+  declareInput: (name: string, type?: VariableValueType) => void;
+  /** The input whose row should take focus, once, after it was declared. */
+  focusInput: string | null;
+  clearFocusInput: () => void;
 };
 
 const StudioContext = createContext<StudioContextValue | null>(null);
@@ -127,14 +138,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     });
 
   const known = useKnownIdentifiers(schemaId || "shipment", variableDefinitions ?? []);
-  const customNames = useMemo(
-    () => new Set((variableDefinitions ?? []).map((variable) => variable.name).filter(Boolean)),
-    [variableDefinitions],
-  );
-  const analysis = useMemo(
-    () => analyzeExpression(expression ?? "", known, customNames),
-    [expression, known, customNames],
-  );
+  const analysis = useMemo(() => analyzeExpression(expression ?? "", known), [expression, known]);
 
   const preview = useLivePreview();
   const author = useMemo(
@@ -249,6 +253,40 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     };
   }, [form, template?.id]);
 
+  const [focusInput, setFocusInput] = useState<string | null>(null);
+  const clearFocusInput = useCallback(() => setFocusInput(null), []);
+  const declareInput = useCallback(
+    (name: string, type?: VariableValueType) => {
+      const current = form.getValues("variableDefinitions") ?? [];
+      const existing = current.findIndex((variable) => variable.name === name);
+      if (existing === -1) {
+        const kind = type ?? inferInputType(name);
+        form.setValue(
+          "variableDefinitions",
+          [
+            ...current,
+            {
+              name,
+              type: kind,
+              description: "",
+              required: false,
+              defaultValue: kind === "Boolean" ? false : kind === "String" ? "" : undefined,
+            },
+          ],
+          { shouldDirty: true, shouldValidate: true },
+        );
+        toast(t("Added {0} as an input", name), {
+          description: t(
+            "Give it a default under Inputs; lanes and rate agreements can override it.",
+          ),
+        });
+      }
+      setFocusInput(name);
+      jumpTo("inputs");
+    },
+    [form, jumpTo, t],
+  );
+
   const heldForCreate = scenarios.heldForCreate;
   const save = useCallback(() => {
     onSave({ testCases: mode === "create" ? heldForCreate() : [] });
@@ -279,6 +317,9 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     formViewport,
     draftContent,
     save,
+    declareInput,
+    focusInput,
+    clearFocusInput,
   };
 
   return <StudioContext.Provider value={value}>{children}</StudioContext.Provider>;

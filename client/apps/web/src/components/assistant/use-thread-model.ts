@@ -60,7 +60,8 @@ const NO_ARTIFACTS: readonly AssistantArtifactEvent[] = [];
 export type PageBinding = {
   surface: PageDraftSurface;
   readDraft: () => PageDraft | null;
-  onDraftEdit: (edit: PageDraftEdit) => void;
+  /** Applies a change the assistant made, named by the artifact it arrived as. */
+  onDraftEdit: (edit: PageDraftEdit, artifactId: string) => void;
 };
 
 /** A question the page asks on the person's behalf, sent once per key. */

@@ -3,7 +3,7 @@ import type { PageBinding } from "@/components/assistant/use-thread-model";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { pageDraftEditSchema, type FormulaProposal } from "@/types/page-draft";
+import { pageDraftEditSchema, type FormulaProposal, type PageDraftEdit } from "@/types/page-draft";
 import { Button } from "@trenova/shared/components/ui/button";
 import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -14,11 +14,11 @@ import { nanoid } from "nanoid";
 import { useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { formulaDraftFromEditor, type ProposalTarget } from "../ai/formula-draft";
+import { applyProposal, formulaDraftFromEditor, type ProposalTarget } from "../ai/formula-draft";
 import { ProposalCard, proposalTargetOf, type ProposalState } from "../ai/proposal-card";
 import { useStudio } from "../studio-context";
 
-type InsertRecord = { state: ProposalState; before: ProposalTarget | null };
+type ProposalRecord = { state: ProposalState; before: ProposalTarget | null };
 
 const TARGET_KEYS = [
   "name",
@@ -27,6 +27,10 @@ const TARGET_KEYS = [
   "expression",
   "variableDefinitions",
   "breakdownDefinitions",
+  "minCharge",
+  "maxCharge",
+  "roundingMode",
+  "roundingPrecision",
 ] as const;
 
 /** The editor, as Nova's composer names it: read-only, read at every send. */
@@ -64,14 +68,14 @@ function ReplyProposals({
   threadId,
   messageId,
   records,
-  onInsert,
+  onApply,
   onUndo,
   onDismiss,
 }: {
   threadId: string;
   messageId: string;
-  records: ReadonlyMap<string, InsertRecord>;
-  onInsert: (artifactId: string, next: ProposalTarget) => void;
+  records: ReadonlyMap<string, ProposalRecord>;
+  onApply: (artifactId: string, next: ProposalTarget) => void;
   onUndo: (artifactId: string) => void;
   onDismiss: (artifactId: string) => void;
 }) {
@@ -92,7 +96,7 @@ function ReplyProposals({
           threadId={threadId}
           artifactId={artifact.id}
           record={records.get(artifact.id)}
-          onInsert={(next) => onInsert(artifact.id, next)}
+          onApply={(next) => onApply(artifact.id, next)}
           onUndo={() => onUndo(artifact.id)}
           onDismiss={() => onDismiss(artifact.id)}
         />
@@ -105,14 +109,14 @@ function ReplyProposal({
   threadId,
   artifactId,
   record,
-  onInsert,
+  onApply,
   onUndo,
   onDismiss,
 }: {
   threadId: string;
   artifactId: string;
-  record: InsertRecord | undefined;
-  onInsert: (next: ProposalTarget) => void;
+  record: ProposalRecord | undefined;
+  onApply: (next: ProposalTarget) => void;
   onUndo: () => void;
   onDismiss: () => void;
 }) {
@@ -134,8 +138,8 @@ function ReplyProposal({
     <ProposalCard
       proposal={proposal}
       state={record?.state ?? "pending"}
-      before={record?.before?.expression ?? null}
-      onInsert={onInsert}
+      before={record?.before ?? null}
+      onApply={onApply}
       onUndo={onUndo}
       onDismiss={onDismiss}
     />
@@ -145,15 +149,16 @@ function ReplyProposal({
 /**
  * Nova in the rail: the formula assistant's conversation about this
  * template, in the Desk's compact thread with a composer that names only the
- * editor and the model. It reads the editor at every send, and what it
- * proposes lands under the reply as a diff to insert or dismiss.
+ * editor and the model. It reads the editor at every send; what it proposes
+ * lands in the editor the moment it arrives, with the diff under the reply
+ * and one click to undo it. Nothing is saved until the person saves.
  */
 export function NovaPane() {
   const t = useT();
   const { template, novaRequest, clearNovaRequest, setNovaBusy, analysis, askNova } = useStudio();
   const form = useFormContext<FormulaTemplateFormValues>();
   const [unsavedKey] = useState(() => nanoid());
-  const [records, setRecords] = useState<ReadonlyMap<string, InsertRecord>>(() => new Map());
+  const [records, setRecords] = useState<ReadonlyMap<string, ProposalRecord>>(() => new Map());
   const conversationKey = useMemo(
     () => ["formula", template?.id ?? unsavedKey] as const,
     [template?.id, unsavedKey],
@@ -177,17 +182,21 @@ export function NovaPane() {
       templateId: template?.id ?? null,
       schemaId: values.schemaId || "shipment",
       templateType: values.type ?? "FreightCharge",
+      name: values.name ?? "",
+      description: values.description ?? "",
       expression: values.expression ?? "",
       variables: values.variableDefinitions ?? [],
+      breakdown: values.breakdownDefinitions ?? [],
+      policy: {
+        minCharge: values.minCharge,
+        maxCharge: values.maxCharge,
+        roundingMode: values.roundingMode,
+        roundingPrecision: values.roundingPrecision,
+      },
     });
   }, [form, template?.id]);
 
-  const page = useMemo<PageBinding>(
-    () => ({ surface: "formula", readDraft, onDraftEdit: () => undefined }),
-    [readDraft],
-  );
-
-  const setRecord = useCallback((artifactId: string, record: InsertRecord) => {
+  const setRecord = useCallback((artifactId: string, record: ProposalRecord) => {
     setRecords((current) => new Map(current).set(artifactId, record));
   }, []);
 
@@ -209,12 +218,13 @@ export function NovaPane() {
     [records, restore, setRecord],
   );
 
-  const insert = useCallback(
-    (artifactId: string, next: ProposalTarget) => {
+  const apply = useCallback(
+    (artifactId: string, next: ProposalTarget, announce: string) => {
       const before = proposalTargetOf(form.getValues());
       restore(next);
-      setRecord(artifactId, { state: "inserted", before });
-      toast(t("Inserted into the editor. Test it, then save."), {
+      setRecord(artifactId, { state: "applied", before });
+      toast(announce, {
+        description: t("Test it, then save. Nothing is saved yet."),
         action: {
           label: t("Undo"),
           onClick: () => {
@@ -227,6 +237,37 @@ export function NovaPane() {
     [form, restore, setRecord, t],
   );
 
+  // A change Nova makes lands in the editor as it arrives; the card under
+  // the reply shows the diff and undoes it. One the engine could not run
+  // stays in the thread for the person to read, never in the editor.
+  const onDraftEdit = useCallback(
+    (edit: PageDraftEdit, artifactId: string) => {
+      if (edit.action !== "propose_formula" || !edit.formula) return;
+      const proposal = edit.formula;
+      if (!proposal.check.valid) {
+        setRecord(artifactId, { state: "pending", before: null });
+        toast.warning(t("Nova's change was not applied: the engine could not run it."), {
+          description: proposal.check.error || undefined,
+        });
+        return;
+      }
+      const current = proposalTargetOf(form.getValues());
+      apply(
+        artifactId,
+        applyProposal(current, proposal),
+        current.expression.trim() === ""
+          ? t("Nova drafted the formula")
+          : t("Nova changed the formula"),
+      );
+    },
+    [apply, form, setRecord, t],
+  );
+
+  const page = useMemo<PageBinding>(
+    () => ({ surface: "formula", readDraft, onDraftEdit }),
+    [readDraft, onDraftEdit],
+  );
+
   const presets = analysis.empty
     ? [
         t("Per mile with an 18% fuel surcharge and a $250 minimum"),
@@ -236,8 +277,8 @@ export function NovaPane() {
     : [
         t("Explain this formula, term by term"),
         t("Add a weekend pickup fee"),
+        t("Set a $250 minimum charge"),
         t("Suggest edge cases to test"),
-        t("Why did the short haul bill the minimum?"),
       ];
 
   return (
@@ -256,14 +297,14 @@ export function NovaPane() {
         presets,
         disclaimer: t("Nova can be wrong. Every amount it shows is the formula engine's."),
         emptyState: (dock) => (
-          <div className="flex flex-col items-center gap-2 px-4 pt-10 pb-4 text-center">
+          <div className="dk-c flex flex-col items-center gap-2 px-4 pt-10 pb-4 text-center">
             <NovaMark className="size-5.5" />
             <h3 className="text-xl font-semibold">
               {analysis.empty ? t("How should this price a load?") : t("What should we change?")}
             </h3>
             <p className="text-foreground-muted max-w-xs text-sm leading-relaxed">
               {t(
-                "Nova reads the editor as it is, saved or not, and prices every draft with the formula engine. Nothing lands in the editor until you insert it.",
+                "Nova reads the editor as it is and makes the changes you ask for — the formula, its inputs, the charge policy. Every change can be undone, and nothing is saved until you save.",
               )}
             </p>
             <div className="dk-sugg">
@@ -288,7 +329,7 @@ export function NovaPane() {
               threadId={threadId}
               messageId={messageId}
               records={records}
-              onInsert={insert}
+              onApply={(artifactId, next) => apply(artifactId, next, t("Applied to the editor"))}
               onUndo={undo}
               onDismiss={(artifactId) =>
                 setRecord(artifactId, { state: "dismissed", before: null })

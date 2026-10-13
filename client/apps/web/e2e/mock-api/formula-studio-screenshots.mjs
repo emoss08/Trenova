@@ -59,7 +59,10 @@ function shotsFor(colorScheme) {
       name: "create-started",
       path: NEW,
       act: async (page) => {
-        await page.getByRole("button", { name: /^Per Mile/ }).first().click();
+        await page
+          .getByRole("button", { name: /^Per Mile/ })
+          .first()
+          .click();
         await pause(page);
       },
     },
@@ -79,7 +82,10 @@ function shotsFor(colorScheme) {
       act: async (page) => {
         await page.getByRole("button", { name: "Explain", exact: true }).click();
         await pause(page);
-        await page.getByText(/^let fuel/).first().hover();
+        await page
+          .getByText(/^let fuel/)
+          .first()
+          .hover();
         await pause(page, 500);
       },
     },
@@ -89,6 +95,38 @@ function shotsFor(colorScheme) {
       act: async (page) => {
         await typeInEditor(page, " + weekendFee");
         await pause(page);
+      },
+    },
+    {
+      name: "problems-many",
+      path: DRAFT,
+      act: async (page) => {
+        await typeInEditor(
+          page,
+          "\n+ weekendFee * hasHazmat + rond(weight) + customer.nmae + pow(2) + liftgate + (totalStops ? 1 : 0)",
+        );
+        await pause(page, 1800);
+      },
+    },
+    {
+      name: "editor-hover",
+      path: DRAFT,
+      act: async (page) => {
+        await page
+          .locator(".cm-content")
+          .first()
+          .getByText("baseRate", { exact: true })
+          .first()
+          .hover();
+        await pause(page, 900);
+      },
+    },
+    {
+      name: "editor-signature",
+      path: DRAFT,
+      act: async (page) => {
+        await typeInEditor(page, "\n+ max(");
+        await pause(page, 800);
       },
     },
     {
@@ -132,7 +170,10 @@ function shotsFor(colorScheme) {
       act: async (page) => {
         await tab(/^Scenarios/)(page);
         await pause(page);
-        await page.getByRole("button", { name: /^Why did/ }).first().click();
+        await page
+          .getByRole("button", { name: /^Why did/ })
+          .first()
+          .click();
         await pause(page);
       },
     },
@@ -166,6 +207,22 @@ function shotsFor(colorScheme) {
         await page.keyboard.press("Enter");
         await pause(page, 7000);
       },
+    },
+    {
+      name: "nova-policy",
+      path: DRAFT,
+      act: async (page) => {
+        await tab(/^Nova/)(page);
+        await pause(page, 900);
+        await page.getByRole("textbox", { name: /^Message/ }).fill("Set a $300 minimum charge");
+        await page.keyboard.press("Enter");
+        await pause(page, 7000);
+      },
+    },
+    {
+      name: "trace-folded",
+      path: DRAFT,
+      act: (page) => page.getByRole("button", { name: /Hide sidebar/ }).click(),
     },
     {
       name: "submit-dialog",

@@ -33,9 +33,15 @@ Keywords: new formula, new rating method, write formula
 ### Get help from Nova
 Keywords: AI formula, generate formula, explain formula, ask about a formula, fix formula
 1. Open [Formula templates](/billing/configuration-files/formula-templates) and select a template, or start a new one.
-2. Select **Ask Nova** beside **Expression**, or the **Nova** tab, and describe how the template should price a shipment, or ask about the formula in the editor.
-3. Select **Explain** to have each line of the formula explained, priced on the preview load. Select **Fix with Nova** beside a problem to have Nova propose a fix. The Nova button under **Inputs** fills in descriptions the inputs are missing.
-4. When Nova writes a formula, the **Proposed change** shows what it adds and removes and what the formula engine bills the sample load and recent shipments. Select **Insert into editor**, or **Undo** after inserting. Nothing is saved until you save the template.
+2. Select **Ask Nova** beside **Expression**, or the **Nova** tab, and describe how the template should price a shipment, what to change, or ask about the formula in the editor.
+3. Select **Explain** to have each line of the formula explained, priced on the preview load. Select **Fix with Nova** beside a problem to have Nova fix it. The Nova button under **Inputs** fills in descriptions the inputs are missing.
+4. Ask for any change in words — add a fee, set a minimum, change an input's default, itemize the invoice — and Nova makes it in the editor the moment it answers. The card under the reply shows what it added and removed, the inputs it declared, the charge policy it moved, and what the formula engine bills the sample load and recent shipments; select **Undo** to put the editor back. A change the engine cannot run stays in the thread with **Apply to editor** instead. Nothing is saved until you save the template.
+
+### Read what the editor says about a formula
+Keywords: formula error, unknown variable, declare input, inline values, hover
+1. Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. The editor underlines anything wrong — a name it does not know, a function given the wrong number of arguments, a flag multiplied like a number, a field that can be empty — and lists each problem under the editor with its line and a fix beside it: declare the name as an input, change it to the field it meant, or give an empty field a fallback. Select a row to jump to it; a long list folds to its first rows and can be narrowed to errors or warnings.
+2. Hover a name to see what it is, whether it can be empty, and what it was worth on the preview load; type inside a function's parentheses to see its signature. Each line shows what it came to on the preview load at its end; the eye button under the editor hides these values.
+3. Press Ctrl+Space for suggestions.
 
 ### Test a template with scenarios
 Keywords: test formula, expected charge, backtest, pin scenario, edge cases

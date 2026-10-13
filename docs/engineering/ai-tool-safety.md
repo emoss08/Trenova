@@ -250,7 +250,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Open page (`open_page`) | Reads only | Automatic | — | — | Opens a page in the caller's own browser; nothing changes and nothing is sent. |
 | Plan dispatch (`plan_dispatch`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Preview report (`preview_report`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Propose formula (`propose_formula`) | Reads only | Automatic | — | — | Hands a formula to the person's own editor for them to insert, test and save; nothing is saved and nothing is sent. |
+| Propose formula (`propose_formula`) | Reads only | Automatic | — | — | Changes the person's own editor, which they can undo; nothing is saved and nothing is sent. |
 | Quote shipment (`quote_shipment`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Rank move candidates (`rank_move_candidates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Read attachment (`read_attachment`) | Reads only | Automatic | — | Always, from attachment | Reads text from a file the person attached to their own conversation; nothing changes and nothing is sent. |

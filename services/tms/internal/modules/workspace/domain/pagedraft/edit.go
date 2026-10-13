@@ -98,6 +98,7 @@ type FormulaDetails struct {
 	Description  string          `json:"description,omitempty"`
 	TemplateType string          `json:"templateType,omitempty"`
 	Breakdown    []BreakdownLine `json:"breakdown,omitempty"`
+	Policy       *FormulaPolicy  `json:"policy,omitempty"`
 }
 
 type FormulaProposal struct {
