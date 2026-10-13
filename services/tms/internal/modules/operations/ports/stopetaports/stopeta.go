@@ -37,13 +37,6 @@ type AttentionStop struct {
 	StateCode    string
 }
 
-type ShipmentsByEquipmentRequest struct {
-	TenantInfo pagination.TenantInfo
-	TractorIDs []pulid.ID
-	WorkerIDs  []pulid.ID
-	Statuses   []shipment.Status
-}
-
 type Repository interface {
 	ReplaceForShipments(ctx context.Context, req *ReplaceForShipmentsRequest) error
 	ListByShipmentIDs(
@@ -55,10 +48,6 @@ type Repository interface {
 	ListTrackedShipmentIDs(
 		ctx context.Context,
 		req *ListTrackedShipmentIDsRequest,
-	) ([]pulid.ID, error)
-	ListShipmentIDsByEquipment(
-		ctx context.Context,
-		req *ShipmentsByEquipmentRequest,
 	) ([]pulid.ID, error)
 	ListActiveTenants(
 		ctx context.Context,

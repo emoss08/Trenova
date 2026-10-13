@@ -199,13 +199,6 @@ func (m *memoryEtas) ListAttention(
 	return nil, nil
 }
 
-func (m *memoryEtas) ListShipmentIDsByEquipment(
-	context.Context,
-	*stopetaports.ShipmentsByEquipmentRequest,
-) ([]pulid.ID, error) {
-	return nil, nil
-}
-
 func (m *memoryEtas) ListTrackedShipmentIDs(
 	context.Context,
 	*stopetaports.ListTrackedShipmentIDsRequest,

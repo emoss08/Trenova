@@ -80,7 +80,7 @@ type DispatchControl struct {
 	CoverageRiskWindowHours              int16                      `json:"coverageRiskWindowHours"              bun:"coverage_risk_window_hours,type:SMALLINT,notnull,default:12"`
 	EnableCheckCallMonitoring            bool                       `json:"enableCheckCallMonitoring"            bun:"enable_check_call_monitoring,type:BOOLEAN,notnull,default:false"`
 	CheckCallIntervalHours               int16                      `json:"checkCallIntervalHours"               bun:"check_call_interval_hours,type:SMALLINT,notnull,default:4"`
-	EnableEtaAlerts                      bool                       `json:"enableEtaAlerts"                      bun:"enable_eta_alerts,type:BOOLEAN,notnull,default:true"`
+	EnableEtaAlerts                      bool                       `json:"enableEtaAlerts"                      bun:"enable_eta_alerts,type:BOOLEAN,notnull"`
 	EtaRiskThresholdMinutes              int16                      `json:"etaRiskThresholdMinutes"              bun:"eta_risk_threshold_minutes,type:SMALLINT,notnull,default:60"`
 	EtaDwellMinutes                      int16                      `json:"etaDwellMinutes"                      bun:"eta_dwell_minutes,type:SMALLINT,notnull,default:60"`
 	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
