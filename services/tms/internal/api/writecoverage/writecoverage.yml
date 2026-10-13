@@ -703,6 +703,11 @@ writes:
   "mutation voidCarrierSettlement":
     tools: [void_carrier_settlement]
 
+  # carriertrackingpublic
+  "POST /api/v1/carrier-tracking-links/:token/check-calls/":
+    exempt: counterparty
+    reason: "The carrier posting through its own tracking link; an agent acting for the organization must not report for the carrier."
+
   # casechecklist
   "DELETE /api/v1/case-checklists/:templateID/":
     exempt: configuration

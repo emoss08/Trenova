@@ -90,30 +90,30 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 94 |
-| `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
+| `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 34 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 51 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 46 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 8 |
 
 ## Totals
 
-1086 writes: 582 GraphQL mutations and 504 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1087 writes: 582 GraphQL mutations and 505 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 389 |
-| Exempt | 670 |
+| Exempt | 671 |
 | — Security | 80 |
 | — Configuration | 268 |
 | — User preference | 38 |
 | — Infrastructure | 52 |
 | — Agent administration | 94 |
-| — Counterparty | 33 |
+| — Counterparty | 34 |
 | — Read-only | 51 |
 | — Attestation | 46 |
 | — Duplicate | 8 |
 | **Pending** | **27** |
-| Total | 1086 |
+| Total | 1087 |
 
 Of the 416 writes an agent should be able to make, 389 have a tool (93%).
 
@@ -189,6 +189,7 @@ The writes no tool performs yet, and what the tool would do.
 | carriercapacity | 3 | 3 | 0 | 0 |
 | carrierintelligence | 15 | 9 | 6 | 0 |
 | carriersettlement | 16 | 15 | 1 | 0 |
+| carriertrackingpublic | 1 | 0 | 1 | 0 |
 | casechecklist | 2 | 0 | 2 | 0 |
 | commodity | 4 | 4 | 0 | 0 |
 | costing | 2 | 0 | 2 | 0 |
@@ -745,6 +746,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation submitCarrierSettlement` | Tool: `submit_carrier_settlement` |
 | `mutation updateCarrierSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 | `mutation voidCarrierSettlement` | Tool: `void_carrier_settlement` |
+
+### carriertrackingpublic
+
+| Write | Decision |
+| --- | --- |
+| `POST /api/v1/carrier-tracking-links/:token/check-calls/`<br>carriertrackingpublichandler.post | Exempt, counterparty: The carrier posting through its own tracking link; an agent acting for the organization must not report for the carrier. |
 
 ### casechecklist
 

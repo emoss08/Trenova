@@ -48,6 +48,12 @@ const (
 	// decline links.
 	KindTenderOfferEmail Kind = "tender.offer.email"
 
+	// Tracking.
+
+	// KindCarrierTrackingLinkEmail sends a carrier the link it posts check calls,
+	// arrivals and departures through for one brokered load.
+	KindCarrierTrackingLinkEmail Kind = "carriertracking.link.email"
+
 	// Portal.
 
 	// KindDriverPortalInvitationEmail invites a driver to the portal.
@@ -163,6 +169,7 @@ func AllKinds() []Kind {
 		KindReportPDF,
 		KindReportDeliveryEmail,
 		KindTenderOfferEmail,
+		KindCarrierTrackingLinkEmail,
 		KindDriverPortalInvitationEmail,
 		KindPasswordResetEmail,
 		KindAgentRequestMissingDocsEmail,

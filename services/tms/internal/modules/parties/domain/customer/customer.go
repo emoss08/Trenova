@@ -53,6 +53,7 @@ type Customer struct {
 	StatusUpdatePreference StatusUpdatePreference `json:"statusUpdatePreference" bun:"status_update_preference,type:VARCHAR(30),notnull,default:'None'"`
 	StatusUpdateRecipients string                 `json:"statusUpdateRecipients" bun:"status_update_recipients,type:TEXT,nullzero"`
 	BrokerVettingEnabled   bool                   `json:"brokerVettingEnabled"   bun:"broker_vetting_enabled,type:BOOLEAN,notnull"`
+	CheckCallIntervalHours *int16                 `json:"checkCallIntervalHours" bun:"check_call_interval_hours,type:SMALLINT,nullzero"`
 	Geom                   *postgis.Point         `json:"-"                      bun:"geom,type:geography,scanonly"`
 	AllowConsolidation     bool                   `json:"allowConsolidation"     bun:"allow_consolidation,type:BOOLEAN"`
 	ExclusiveConsolidation bool                   `json:"exclusiveConsolidation" bun:"exclusive_consolidation,type:BOOLEAN"`
@@ -139,6 +140,15 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&c.MCNumber,
 			validation.Length(0, 12).Error("MC number must be at most 12 characters"),
 			validation.Match(digitsPattern).Error("MC number must contain only digits"),
+		),
+		validation.Field(&c.CheckCallIntervalHours,
+			validation.When(
+				c.CheckCallIntervalHours != nil,
+				validation.Min(int16(1)).
+					Error("Check call interval must be between 1 and 72 hours"),
+				validation.Max(int16(72)).
+					Error("Check call interval must be between 1 and 72 hours"),
+			),
 		),
 	))
 

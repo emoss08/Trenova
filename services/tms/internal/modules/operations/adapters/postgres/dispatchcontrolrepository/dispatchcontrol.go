@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/dispatchcontrolcol"
+	"github.com/uptrace/bun"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -193,19 +194,39 @@ func (r *repository) ListHorizonPlanningTenants(
 	ctx context.Context,
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with horizon planning on")
+	cols := dispatchcontrolcol.DispatchControlColumns
+	return r.listTenantsWhere(ctx, func(q *bun.SelectQuery) *bun.SelectQuery {
+		return q.Where(cols.EnableAutoAssignment.Eq(), true).
+			Where(cols.PlanningMode.Eq(), dispatchcontrol.PlanningModeHorizon)
+	})
+}
+
+func (r *repository) ListCheckCallMonitoringTenants(
+	ctx context.Context,
+) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations that watch brokered loads for check calls")
+	cols := dispatchcontrolcol.DispatchControlColumns
+	return r.listTenantsWhere(ctx, func(q *bun.SelectQuery) *bun.SelectQuery {
+		return q.Where(cols.EnableCheckCallMonitoring.Eq(), true)
+	})
+}
+
+func (r *repository) listTenantsWhere(
+	ctx context.Context,
+	filter func(*bun.SelectQuery) *bun.SelectQuery,
+) ([]pagination.TenantInfo, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		cols := dispatchcontrolcol.DispatchControlColumns
 
 		rows := make([]horizonTenantRow, 0)
-		if err := r.db.DBForContext(ctx).
+		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*dispatchcontrol.DispatchControl)(nil)).
-			Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
-			Where(cols.EnableAutoAssignment.Eq(), true).
-			Where(cols.PlanningMode.Eq(), dispatchcontrol.PlanningModeHorizon).
+			Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare())
+		if err := filter(q).
 			Order(cols.OrganizationID.OrderAsc()).
 			Scan(ctx, &rows); err != nil {
-			r.l.Error("failed to list horizon planning tenants", zap.Error(err))
+			r.l.Error("failed to list dispatch control tenants", zap.Error(err))
 			return nil, err
 		}
 

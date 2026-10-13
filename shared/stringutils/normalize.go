@@ -70,3 +70,22 @@ func CollapseWhitespace(value string) string {
 func OneLine(value string, limit int) string {
 	return TruncateRunes(CollapseWhitespace(value), limit)
 }
+
+// IsCompactToken reports whether value is a non-empty identifier of at most
+// maxLength runes with no whitespace, such as a client-generated event id.
+func IsCompactToken(value string, maxLength int) bool {
+	if value == "" || maxLength <= 0 {
+		return false
+	}
+	count := 0
+	for _, r := range value {
+		if unicode.IsSpace(r) || !unicode.IsPrint(r) {
+			return false
+		}
+		count++
+		if count > maxLength {
+			return false
+		}
+	}
+	return true
+}

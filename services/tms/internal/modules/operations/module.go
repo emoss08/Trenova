@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/assignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/carrierassignmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/checkcallrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/detentionrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchconsolerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchcontrolrepository"
@@ -32,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/triageoverlaprepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/weatheralertrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/app/assignmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/checkcallservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
@@ -64,6 +66,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/triageshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/weatheralertservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -132,6 +135,8 @@ func SharedOptions() fx.Option {
 			routingguiderepository.New,
 			tenderrepository.New,
 			trackingeventrepository.New,
+			checkcallrepository.New,
+			checkcallrepository.NewTrackingLinks,
 			shipmentmovejurisdictionmilerepository.New,
 			detentionrepository.NewPolicyRepository,
 			detentionrepository.NewOccurrenceRepository,
@@ -179,6 +184,10 @@ func SharedOptions() fx.Option {
 				fx.As(new(servicefailureports.ServiceFailureEvaluator)),
 			),
 			shipmentmoveservice.New,
+			fx.Annotate(
+				checkcallservice.New,
+				fx.As(new(checkcallports.CheckCallService)),
+			),
 			fx.Annotate(
 				trackingeventservice.New,
 				fx.As(new(trackingeventports.TrackingEventService)),

@@ -32,6 +32,10 @@ const (
 	// about to leave.
 	DefaultCoverageRiskWindowHours = int16(12)
 	MaxCoverageRiskWindowHours     = int16(168)
+
+	DefaultCheckCallIntervalHours = int16(4)
+	MinCheckCallIntervalHours     = int16(1)
+	MaxCheckCallIntervalHours     = int16(72)
 )
 
 var defaultAutoAssignConfidenceThreshold = decimal.NewFromFloat(0.85)
@@ -69,6 +73,8 @@ type DispatchControl struct {
 	HorizonMaxMovesPerDriver             int16                      `json:"horizonMaxMovesPerDriver"             bun:"horizon_max_moves_per_driver,type:SMALLINT,notnull,default:3"`
 	HorizonSearchIterations              *int16                     `json:"horizonSearchIterations"              bun:"horizon_search_iterations,type:SMALLINT,nullzero"`
 	CoverageRiskWindowHours              int16                      `json:"coverageRiskWindowHours"              bun:"coverage_risk_window_hours,type:SMALLINT,notnull,default:12"`
+	EnableCheckCallMonitoring            bool                       `json:"enableCheckCallMonitoring"            bun:"enable_check_call_monitoring,type:BOOLEAN,notnull,default:false"`
+	CheckCallIntervalHours               int16                      `json:"checkCallIntervalHours"               bun:"check_call_interval_hours,type:SMALLINT,notnull,default:4"`
 	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
 	RecordServiceFailures                ServiceIncidentType        `json:"recordServiceFailures"                bun:"record_service_failures,type:service_incident_type_enum,notnull,default:'Never'"`
 	ServiceFailureTarget                 *float64                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero"`
@@ -104,6 +110,20 @@ func (dc *DispatchControl) CoverageWindowHours() int16 {
 	}
 
 	return dc.CoverageRiskWindowHours
+}
+
+func (dc *DispatchControl) CheckCallWindowHours(customerHours *int16) int16 {
+	if customerHours != nil && validCheckCallInterval(*customerHours) {
+		return *customerHours
+	}
+	if dc == nil || !validCheckCallInterval(dc.CheckCallIntervalHours) {
+		return DefaultCheckCallIntervalHours
+	}
+	return dc.CheckCallIntervalHours
+}
+
+func validCheckCallInterval(hours int16) bool {
+	return hours >= MinCheckCallIntervalHours && hours <= MaxCheckCallIntervalHours
 }
 
 func (dc *DispatchControl) StartsInsideCoverageWindow(startsAt, now int64) bool {
@@ -186,6 +206,9 @@ func (dc *DispatchControl) NormalizeAutoAssignmentSettings() {
 	}
 	if dc.CoverageRiskWindowHours <= 0 {
 		dc.CoverageRiskWindowHours = DefaultCoverageRiskWindowHours
+	}
+	if dc.CheckCallIntervalHours <= 0 {
+		dc.CheckCallIntervalHours = DefaultCheckCallIntervalHours
 	}
 }
 
@@ -284,6 +307,14 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 					return errors.New(
 						"Auto assign planning horizon must be between 1 and 336 hours",
 					)
+				}
+				return nil
+			}),
+		),
+		validation.Field(&dc.CheckCallIntervalHours,
+			validation.By(func(_ any) error {
+				if !validCheckCallInterval(dc.CheckCallIntervalHours) {
+					return errors.New("Check call interval must be between 1 and 72 hours")
 				}
 				return nil
 			}),

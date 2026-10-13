@@ -73,6 +73,8 @@ var DispatchControlColumns = struct {
 	HorizonMaxMovesPerDriver             buncolgen.Column // "horizon_max_moves_per_driver" → qualified: "dc.horizon_max_moves_per_driver"
 	HorizonSearchIterations              buncolgen.Column // "horizon_search_iterations" → qualified: "dc.horizon_search_iterations"
 	CoverageRiskWindowHours              buncolgen.Column // "coverage_risk_window_hours" → qualified: "dc.coverage_risk_window_hours"
+	EnableCheckCallMonitoring            buncolgen.Column // "enable_check_call_monitoring" → qualified: "dc.enable_check_call_monitoring"
+	CheckCallIntervalHours               buncolgen.Column // "check_call_interval_hours" → qualified: "dc.check_call_interval_hours"
 	ComplianceEnforcementLevel           buncolgen.Column // "compliance_enforcement_level" → qualified: "dc.compliance_enforcement_level"
 	RecordServiceFailures                buncolgen.Column // "record_service_failures" → qualified: "dc.record_service_failures"
 	ServiceFailureTarget                 buncolgen.Column // "service_failure_target" → qualified: "dc.service_failure_target"
@@ -104,6 +106,8 @@ var DispatchControlColumns = struct {
 	HorizonMaxMovesPerDriver:             buncolgen.NewColumn("horizon_max_moves_per_driver", "dc"),
 	HorizonSearchIterations:              buncolgen.NewColumn("horizon_search_iterations", "dc"),
 	CoverageRiskWindowHours:              buncolgen.NewColumn("coverage_risk_window_hours", "dc"),
+	EnableCheckCallMonitoring:            buncolgen.NewColumn("enable_check_call_monitoring", "dc"),
+	CheckCallIntervalHours:               buncolgen.NewColumn("check_call_interval_hours", "dc"),
 	ComplianceEnforcementLevel:           buncolgen.NewColumn("compliance_enforcement_level", "dc"),
 	RecordServiceFailures:                buncolgen.NewColumn("record_service_failures", "dc"),
 	ServiceFailureTarget:                 buncolgen.NewColumn("service_failure_target", "dc"),
@@ -141,6 +145,8 @@ var DispatchControlFieldMap = map[string]string{
 	"horizonMaxMovesPerDriver":             "horizon_max_moves_per_driver",
 	"horizonSearchIterations":              "horizon_search_iterations",
 	"coverageRiskWindowHours":              "coverage_risk_window_hours",
+	"enableCheckCallMonitoring":            "enable_check_call_monitoring",
+	"checkCallIntervalHours":               "check_call_interval_hours",
 	"complianceEnforcementLevel":           "compliance_enforcement_level",
 	"recordServiceFailures":                "record_service_failures",
 	"serviceFailureTarget":                 "service_failure_target",
@@ -176,6 +182,8 @@ var DispatchControlInsertableColumns = []string{
 	"horizon_max_moves_per_driver",
 	"horizon_search_iterations",
 	"coverage_risk_window_hours",
+	"enable_check_call_monitoring",
+	"check_call_interval_hours",
 	"compliance_enforcement_level",
 	"record_service_failures",
 	"service_failure_target",
@@ -258,6 +266,8 @@ var DispatchControlFilter = struct {
 	HorizonMaxMovesPerDriver             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "horizonMaxMovesPerDriver" → DB: "horizon_max_moves_per_driver"
 	HorizonSearchIterations              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "horizonSearchIterations" → DB: "horizon_search_iterations"
 	CoverageRiskWindowHours              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "coverageRiskWindowHours" → DB: "coverage_risk_window_hours"
+	EnableCheckCallMonitoring            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableCheckCallMonitoring" → DB: "enable_check_call_monitoring"
+	CheckCallIntervalHours               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "checkCallIntervalHours" → DB: "check_call_interval_hours"
 	ComplianceEnforcementLevel           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "complianceEnforcementLevel" → DB: "compliance_enforcement_level"
 	RecordServiceFailures                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordServiceFailures" → DB: "record_service_failures"
 	ServiceFailureTarget                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceFailureTarget" → DB: "service_failure_target"
@@ -334,6 +344,12 @@ var DispatchControlFilter = struct {
 	},
 	CoverageRiskWindowHours: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("coverageRiskWindowHours", op, value)
+	},
+	EnableCheckCallMonitoring: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("enableCheckCallMonitoring", op, value)
+	},
+	CheckCallIntervalHours: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("checkCallIntervalHours", op, value)
 	},
 	ComplianceEnforcementLevel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("complianceEnforcementLevel", op, value)
