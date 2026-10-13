@@ -243,7 +243,9 @@ func (f *fakeControls) GetByOrgID(
 		return nil, f.err
 	}
 	if f.control == nil {
-		return nil, errortypes.NewNotFoundError("DispatchControl not found within your organization")
+		return nil, errortypes.NewNotFoundError(
+			"DispatchControl not found within your organization",
+		)
 	}
 	return f.control, nil
 }
@@ -321,7 +323,7 @@ type observedCalls struct {
 func (o *observedCalls) CheckCallRecorded(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	moveID pulid.ID,
+	_, moveID pulid.ID,
 ) {
 	o.moves = append(o.moves, moveID)
 }
@@ -417,7 +419,7 @@ func newHarness(t *testing.T) *harness {
 		TrackingEvents:      h.tracking,
 		Templates:           h.templates,
 		EmailService:        h.email,
-		Observer:            h.observer,
+		Observers:           []checkcallports.CheckCallObserver{h.observer},
 	})
 	h.svc.now = func() int64 { return testNow }
 	return h

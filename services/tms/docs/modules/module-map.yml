@@ -481,6 +481,7 @@ modules:
       - dispatchguard
       - equipmentavailabilityhelper
       - etaprojection
+      - etatrigger
       - equipmentcontinuityhelper
       - globalsearchservice
       - internaledilifecycle
@@ -515,6 +516,7 @@ modules:
     job:
       - checkcalljobs
       - detentionjobs
+      - etajobs
       - recurringshipmentjobs
       - shipmentjobs
       - tenderjobs

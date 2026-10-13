@@ -22,9 +22,26 @@ type ListTrackedShipmentIDsRequest struct {
 }
 
 type ListAttentionRequest struct {
+	TenantInfo  pagination.TenantInfo
+	Statuses    []shipment.Status
+	ShipmentIDs []pulid.ID
+	Limit       int
+}
+
+type AttentionStop struct {
+	ETA          *stopeta.StopETA
+	ProNumber    string
+	StopType     shipment.StopType
+	LocationName string
+	City         string
+	StateCode    string
+}
+
+type ShipmentsByEquipmentRequest struct {
 	TenantInfo pagination.TenantInfo
+	TractorIDs []pulid.ID
+	WorkerIDs  []pulid.ID
 	Statuses   []shipment.Status
-	Limit      int
 }
 
 type Repository interface {
@@ -34,10 +51,14 @@ type Repository interface {
 		tenantInfo pagination.TenantInfo,
 		shipmentIDs []pulid.ID,
 	) ([]*stopeta.StopETA, error)
-	ListAttention(ctx context.Context, req *ListAttentionRequest) ([]*stopeta.StopETA, error)
+	ListAttention(ctx context.Context, req *ListAttentionRequest) ([]*AttentionStop, error)
 	ListTrackedShipmentIDs(
 		ctx context.Context,
 		req *ListTrackedShipmentIDsRequest,
+	) ([]pulid.ID, error)
+	ListShipmentIDsByEquipment(
+		ctx context.Context,
+		req *ShipmentsByEquipmentRequest,
 	) ([]pulid.ID, error)
 	ListActiveTenants(
 		ctx context.Context,

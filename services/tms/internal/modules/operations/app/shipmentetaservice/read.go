@@ -82,10 +82,7 @@ func (s *Service) TrackingSnapshots(
 
 	now := s.now().Unix()
 	for _, entity := range entities {
-		etas := make(map[pulid.ID]*stopeta.StopETA, len(byShipment[entity.ID]))
-		for _, row := range byShipment[entity.ID] {
-			etas[row.StopID] = row
-		}
+		etas := stopeta.IndexByStop(byShipment[entity.ID])
 		out[entity.ID] = shipmenttracking.Build(shipmenttracking.Input{
 			Shipment:    entity,
 			Assignments: sources.assignments,
@@ -136,7 +133,7 @@ func Summarize(
 		return nil
 	}
 
-	governing := Governing(rows)
+	governing := stopeta.Governing(rows)
 	eta := &shipmenttrackingports.ShipmentEta{
 		ShipmentID:       shipmentID,
 		StopID:           governing.StopID,
@@ -156,28 +153,4 @@ func Summarize(
 	}
 
 	return eta
-}
-
-func Governing(rows []*stopeta.StopETA) *stopeta.StopETA {
-	var next, worst *stopeta.StopETA
-	for _, row := range rows {
-		if row == nil || row.Arrived {
-			continue
-		}
-		if next == nil {
-			next = row
-		}
-		if row.NeedsAttention() && (worst == nil || row.Verdict.Rank() > worst.Verdict.Rank()) {
-			worst = row
-		}
-	}
-
-	switch {
-	case worst != nil:
-		return worst
-	case next != nil:
-		return next
-	default:
-		return rows[0]
-	}
 }

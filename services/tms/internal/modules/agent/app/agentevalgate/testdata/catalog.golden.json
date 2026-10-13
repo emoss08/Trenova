@@ -13595,7 +13595,7 @@
     },
     {
       "name": "get_shipment_tracking",
-      "description": "Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate. It also shows who is on each move with what truck and the driver's remaining hours. The next-stop estimate is straight-line at a planning speed, so call it an estimate and never a promise. Start here for any \"where is\", \"is it late\" or \"when will it arrive\" question; get_shipment has the commercial detail instead.",
+      "description": "Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate. It also shows who is on each move with what truck and the driver's remaining hours. Each open stop carries its projected arrival, slack and verdict, worked out from the truck's position, the carrier's check calls or the last departure with routed drive time, dwell and the driver's hours; estimate.basis says what it rests on and estimate.inputStale says when that is old. Call it an estimate and never a promise. Start here for any \"where is\", \"is it late\" or \"when will it arrive\" question; get_shipment has the commercial detail instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -22457,7 +22457,8 @@
                 "TelematicsStopVisit",
                 "AgentQualityRegression",
                 "AccountingSync",
-                "NoCheckCall"
+                "NoCheckCall",
+                "EtaAtRisk"
               ],
               "type": "string",
               "x-enumOf": "watchtower.sourceKind"

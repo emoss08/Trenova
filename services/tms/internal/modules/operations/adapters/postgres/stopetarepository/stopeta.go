@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/stopetacol"
+	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -172,39 +174,143 @@ func (r *repository) ListByShipmentIDs(
 func (r *repository) ListAttention(
 	ctx context.Context,
 	req *stopetaports.ListAttentionRequest,
-) ([]*stopeta.StopETA, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*stopeta.StopETA, error) {
-		cols := stopetacol.StopETAColumns
-		sp := shipmentcol.ShipmentColumns
-		spTable := shipmentcol.ShipmentTable
-
-		entities := make([]*stopeta.StopETA, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Join("JOIN "+spTable.As(spTable.Alias)).
-			JoinOn(sp.ID.EqColumn(cols.ShipmentID)).
-			JoinOn(sp.OrganizationID.EqColumn(cols.OrganizationID)).
-			JoinOn(sp.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return stopetacol.StopETAScopeTenant(sq, req.TenantInfo).
-					Where(cols.Verdict.In(), bun.List([]stopeta.Verdict{
-						stopeta.VerdictAtRisk,
-						stopeta.VerdictLate,
-					})).
-					Where(cols.Arrived.IsFalse()).
-					Where(sp.Status.In(), bun.List(req.Statuses))
-			}).
-			Order(
-				cols.ShipmentMoveID.OrderAsc(),
-				cols.StopSequence.OrderAsc(),
-			).
-			Limit(int64(boundedLimit(req.Limit, defaultAttentionLimit, maxAttentionLimit))).
-			Scan(ctx)
+) ([]*stopetaports.AttentionStop, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*stopetaports.AttentionStop, error) {
+		rows, err := r.attentionRows(ctx, req)
 		if err != nil {
-			return nil, fmt.Errorf("list stop etas needing attention: %w", err)
+			return nil, err
 		}
-		return entities, nil
+		if len(rows) == 0 {
+			return []*stopetaports.AttentionStop{}, nil
+		}
+
+		stopIDs := make([]pulid.ID, 0, len(rows))
+		for _, row := range rows {
+			stopIDs = append(stopIDs, row.StopID)
+		}
+		meta, err := r.stopMeta(ctx, req.TenantInfo, stopIDs)
+		if err != nil {
+			return nil, err
+		}
+
+		out := make([]*stopetaports.AttentionStop, 0, len(rows))
+		for _, row := range rows {
+			item := &stopetaports.AttentionStop{ETA: row}
+			if m, ok := meta[row.StopID]; ok {
+				item.ProNumber = m.ProNumber
+				item.StopType = m.StopType
+				item.LocationName = m.LocationName
+				item.City = m.City
+				item.StateCode = m.StateCode
+			}
+			out = append(out, item)
+		}
+		return out, nil
 	})
+}
+
+func (r *repository) attentionRows(
+	ctx context.Context,
+	req *stopetaports.ListAttentionRequest,
+) ([]*stopeta.StopETA, error) {
+	cols := stopetacol.StopETAColumns
+	sp := shipmentcol.ShipmentColumns
+	spTable := shipmentcol.ShipmentTable
+
+	entities := make([]*stopeta.StopETA, 0)
+	err := r.db.DBForContext(ctx).NewSelect().
+		Model(&entities).
+		Join("JOIN "+spTable.As(spTable.Alias)).
+		JoinOn(sp.ID.EqColumn(cols.ShipmentID)).
+		JoinOn(sp.OrganizationID.EqColumn(cols.OrganizationID)).
+		JoinOn(sp.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = stopetacol.StopETAScopeTenant(sq, req.TenantInfo).
+				Where(cols.Verdict.In(), bun.List([]stopeta.Verdict{
+					stopeta.VerdictAtRisk,
+					stopeta.VerdictLate,
+				})).
+				Where(cols.Arrived.IsFalse()).
+				Where(sp.Status.In(), bun.List(req.Statuses))
+			if len(req.ShipmentIDs) > 0 {
+				sq = sq.Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs))
+			}
+			return sq
+		}).
+		Order(
+			cols.ShipmentID.OrderAsc(),
+			cols.MoveSequence.OrderAsc(),
+			cols.StopSequence.OrderAsc(),
+		).
+		Limit(int64(boundedLimit(req.Limit, defaultAttentionLimit, maxAttentionLimit))).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list stop etas needing attention: %w", err)
+	}
+	return entities, nil
+}
+
+type stopMetaRow struct {
+	StopID       pulid.ID          `bun:"stop_id"`
+	StopType     shipment.StopType `bun:"stop_type"`
+	ProNumber    string            `bun:"pro_number"`
+	LocationName string            `bun:"location_name"`
+	City         string            `bun:"city"`
+	StateCode    string            `bun:"state_code"`
+}
+
+func (r *repository) stopMeta(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	stopIDs []pulid.ID,
+) (map[pulid.ID]stopMetaRow, error) {
+	stp := shipmentcol.StopColumns
+	sm := shipmentcol.ShipmentMoveColumns
+	sp := shipmentcol.ShipmentColumns
+	loc := locationcol.LocationColumns
+	ust := usstatecol.UsStateColumns
+	smTable := shipmentcol.ShipmentMoveTable
+	spTable := shipmentcol.ShipmentTable
+	locTable := locationcol.LocationTable
+	ustTable := usstatecol.UsStateTable
+
+	rows := make([]stopMetaRow, 0, len(stopIDs))
+	err := r.db.DBForContext(ctx).NewSelect().
+		Model((*shipment.Stop)(nil)).
+		ColumnExpr(stp.ID.As("stop_id")).
+		ColumnExpr(stp.Type.As("stop_type")).
+		ColumnExpr(sp.ProNumber.As("pro_number")).
+		ColumnExpr(loc.Name.Expr("COALESCE({}, '')")+" AS location_name").
+		ColumnExpr(loc.City.Expr("COALESCE({}, '')")+" AS city").
+		ColumnExpr(ust.Abbreviation.Expr("COALESCE({}, '')")+" AS state_code").
+		Join("JOIN "+smTable.As(smTable.Alias)).
+		JoinOn(sm.ID.EqColumn(stp.ShipmentMoveID)).
+		JoinOn(sm.OrganizationID.EqColumn(stp.OrganizationID)).
+		JoinOn(sm.BusinessUnitID.EqColumn(stp.BusinessUnitID)).
+		Join("JOIN "+spTable.As(spTable.Alias)).
+		JoinOn(sp.ID.EqColumn(sm.ShipmentID)).
+		JoinOn(sp.OrganizationID.EqColumn(sm.OrganizationID)).
+		JoinOn(sp.BusinessUnitID.EqColumn(sm.BusinessUnitID)).
+		Join("LEFT JOIN "+locTable.As(locTable.Alias)).
+		JoinOn(loc.ID.EqColumn(stp.LocationID)).
+		JoinOn(loc.OrganizationID.EqColumn(stp.OrganizationID)).
+		JoinOn(loc.BusinessUnitID.EqColumn(stp.BusinessUnitID)).
+		Join("LEFT JOIN "+ustTable.As(ustTable.Alias)).
+		JoinOn(ust.ID.EqColumn(loc.StateID)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return shipmentcol.StopScopeTenant(sq, tenantInfo).
+				Where(stp.ID.In(), bun.List(stopIDs))
+		}).
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, fmt.Errorf("list stop details for etas: %w", err)
+	}
+
+	out := make(map[pulid.ID]stopMetaRow, len(rows))
+	for _, row := range rows {
+		out[row.StopID] = row
+	}
+	return out, nil
 }
 
 type shipmentIDRow struct {
@@ -261,6 +367,72 @@ func (r *repository) ListTrackedShipmentIDs(
 			ids = append(ids, row.ShipmentID)
 		}
 		for _, row := range leftover {
+			ids = append(ids, row.ShipmentID)
+		}
+		return ids, nil
+	})
+}
+
+func (r *repository) ListShipmentIDsByEquipment(
+	ctx context.Context,
+	req *stopetaports.ShipmentsByEquipmentRequest,
+) ([]pulid.ID, error) {
+	if len(req.TractorIDs) == 0 && len(req.WorkerIDs) == 0 {
+		return []pulid.ID{}, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
+		as := shipmentcol.AssignmentColumns
+		sm := shipmentcol.ShipmentMoveColumns
+		sp := shipmentcol.ShipmentColumns
+		smTable := shipmentcol.ShipmentMoveTable
+		spTable := shipmentcol.ShipmentTable
+
+		rows := make([]shipmentIDRow, 0)
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model((*shipment.Assignment)(nil)).
+			DistinctOn(sp.ID.Qualified()).
+			ColumnExpr(sp.ID.As("shipment_id")).
+			Join("JOIN "+smTable.As(smTable.Alias)).
+			JoinOn(sm.ID.EqColumn(as.ShipmentMoveID)).
+			JoinOn(sm.OrganizationID.EqColumn(as.OrganizationID)).
+			JoinOn(sm.BusinessUnitID.EqColumn(as.BusinessUnitID)).
+			Join("JOIN "+spTable.As(spTable.Alias)).
+			JoinOn(sp.ID.EqColumn(sm.ShipmentID)).
+			JoinOn(sp.OrganizationID.EqColumn(sm.OrganizationID)).
+			JoinOn(sp.BusinessUnitID.EqColumn(sm.BusinessUnitID)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
+					Where(as.Status.In(), bun.List([]shipment.AssignmentStatus{
+						shipment.AssignmentStatusNew,
+						shipment.AssignmentStatusInProgress,
+					})).
+					Where(as.ArchivedAt.IsNull()).
+					Where(sm.Status.In(), bun.List([]shipment.MoveStatus{
+						shipment.MoveStatusNew,
+						shipment.MoveStatusAssigned,
+						shipment.MoveStatusInTransit,
+					})).
+					Where(sp.Status.In(), bun.List(req.Statuses)).
+					WhereGroup(" AND ", func(eq *bun.SelectQuery) *bun.SelectQuery {
+						if len(req.TractorIDs) > 0 {
+							eq = eq.WhereOr(as.TractorID.In(), bun.List(req.TractorIDs))
+						}
+						if len(req.WorkerIDs) > 0 {
+							eq = eq.WhereOr(as.PrimaryWorkerID.In(), bun.List(req.WorkerIDs))
+						}
+						return eq
+					})
+			}).
+			Order(sp.ID.OrderAsc()).
+			Limit(int64(MaxShipmentsPerRequest)).
+			Scan(ctx, &rows)
+		if err != nil {
+			return nil, fmt.Errorf("list shipments by equipment: %w", err)
+		}
+
+		ids := make([]pulid.ID, 0, len(rows))
+		for _, row := range rows {
 			ids = append(ids, row.ShipmentID)
 		}
 		return ids, nil

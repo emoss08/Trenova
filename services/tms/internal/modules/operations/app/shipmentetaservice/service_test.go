@@ -195,7 +195,14 @@ func sortRows(rows []*stopeta.StopETA) {
 func (m *memoryEtas) ListAttention(
 	context.Context,
 	*stopetaports.ListAttentionRequest,
-) ([]*stopeta.StopETA, error) {
+) ([]*stopetaports.AttentionStop, error) {
+	return nil, nil
+}
+
+func (m *memoryEtas) ListShipmentIDsByEquipment(
+	context.Context,
+	*stopetaports.ShipmentsByEquipmentRequest,
+) ([]pulid.ID, error) {
 	return nil, nil
 }
 
@@ -449,10 +456,10 @@ func TestGoverning(t *testing.T) {
 	risky := &stopeta.StopETA{StopID: pulid.MustNew("stp_"), Verdict: stopeta.VerdictAtRisk}
 	late := &stopeta.StopETA{StopID: pulid.MustNew("stp_"), Verdict: stopeta.VerdictLate}
 
-	assert.Same(t, next, Governing([]*stopeta.StopETA{arrived, next}))
-	assert.Same(t, risky, Governing([]*stopeta.StopETA{arrived, next, risky}))
-	assert.Same(t, late, Governing([]*stopeta.StopETA{next, risky, late}))
-	assert.Same(t, arrived, Governing([]*stopeta.StopETA{arrived}))
+	assert.Same(t, next, stopeta.Governing([]*stopeta.StopETA{arrived, next}))
+	assert.Same(t, risky, stopeta.Governing([]*stopeta.StopETA{arrived, next, risky}))
+	assert.Same(t, late, stopeta.Governing([]*stopeta.StopETA{next, risky, late}))
+	assert.Same(t, arrived, stopeta.Governing([]*stopeta.StopETA{arrived}))
 }
 
 func TestRowsDiffer(t *testing.T) {

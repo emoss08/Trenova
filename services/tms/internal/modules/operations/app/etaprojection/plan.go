@@ -1,7 +1,6 @@
 package etaprojection
 
 import (
-	"slices"
 	"sort"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
@@ -63,23 +62,9 @@ type Plan struct {
 	legs   []routeestimateports.Leg
 }
 
-func TrackedShipment(status shipment.Status) bool {
-	return slices.Contains(TrackedShipmentStatuses(), status)
-}
-
-func TrackedShipmentStatuses() []shipment.Status {
-	return []shipment.Status{
-		shipment.StatusPartiallyAssigned,
-		shipment.StatusAssigned,
-		shipment.StatusInTransit,
-		shipment.StatusDelayed,
-		shipment.StatusPartiallyCompleted,
-	}
-}
-
 func Prepare(in *Input) *Plan {
 	plan := &Plan{in: in}
-	if in == nil || in.Shipment == nil || !TrackedShipment(in.Shipment.Status) {
+	if in == nil || in.Shipment == nil || !stopeta.TrackedShipment(in.Shipment.Status) {
 		return plan
 	}
 

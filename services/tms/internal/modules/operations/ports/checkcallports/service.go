@@ -146,5 +146,9 @@ type CheckCallService interface {
 }
 
 type CheckCallObserver interface {
-	CheckCallRecorded(ctx context.Context, tenantInfo pagination.TenantInfo, moveID pulid.ID)
+	CheckCallRecorded(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		shipmentID, moveID pulid.ID,
+	)
 }

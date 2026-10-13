@@ -41,7 +41,7 @@ func (s *Service) RefreshTenant(
 
 	ids, err := s.stopEtas.ListTrackedShipmentIDs(ctx, &stopetaports.ListTrackedShipmentIDsRequest{
 		TenantInfo: tenantInfo,
-		Statuses:   etaprojection.TrackedShipmentStatuses(),
+		Statuses:   stopeta.TrackedShipmentStatuses(),
 		Limit:      maxTrackedShipments,
 	})
 	if err != nil {
@@ -113,7 +113,7 @@ func (s *Service) refreshBatch(ctx context.Context, b *refreshBatch) ([]pulid.ID
 
 	tracked := make([]*shipment.Shipment, 0, len(entities))
 	for _, entity := range entities {
-		if entity != nil && etaprojection.TrackedShipment(entity.Status) {
+		if entity != nil && stopeta.TrackedShipment(entity.Status) {
 			tracked = append(tracked, entity)
 		}
 	}

@@ -1,6 +1,9 @@
 package stopeta
 
 import (
+	"slices"
+
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -87,4 +90,54 @@ func (e *StopETA) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Computed time is required"),
 		),
 	))
+}
+
+func TrackedShipmentStatuses() []shipment.Status {
+	return []shipment.Status{
+		shipment.StatusPartiallyAssigned,
+		shipment.StatusAssigned,
+		shipment.StatusInTransit,
+		shipment.StatusDelayed,
+		shipment.StatusPartiallyCompleted,
+	}
+}
+
+func TrackedShipment(status shipment.Status) bool {
+	return slices.Contains(TrackedShipmentStatuses(), status)
+}
+
+func Governing(rows []*StopETA) *StopETA {
+	var next, worst *StopETA
+	for _, row := range rows {
+		if row == nil || row.Arrived {
+			continue
+		}
+		if next == nil {
+			next = row
+		}
+		if row.NeedsAttention() && (worst == nil || row.Verdict.Rank() > worst.Verdict.Rank()) {
+			worst = row
+		}
+	}
+
+	switch {
+	case worst != nil:
+		return worst
+	case next != nil:
+		return next
+	case len(rows) > 0:
+		return rows[0]
+	default:
+		return nil
+	}
+}
+
+func IndexByStop(rows []*StopETA) map[pulid.ID]*StopETA {
+	out := make(map[pulid.ID]*StopETA, len(rows))
+	for _, row := range rows {
+		if row != nil {
+			out[row.StopID] = row
+		}
+	}
+	return out
 }
