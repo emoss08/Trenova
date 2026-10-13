@@ -13687,6 +13687,10 @@ func init() {
 				FieldMapKey: "noticeOfAssignment",
 			},
 			{
+				Name:        "nonRecourse",
+				FieldMapKey: "nonRecourse",
+			},
+			{
 				Name:        "notes",
 				FieldMapKey: "notes",
 			},

@@ -16,6 +16,11 @@ describe("factoringCompanySchema", () => {
     expect(factoringCompanySchema.safeParse(valid).success).toBe(true);
   });
 
+  it("treats a factor as recourse unless it is marked non-recourse", () => {
+    expect(factoringCompanySchema.parse(valid).nonRecourse).toBe(false);
+    expect(factoringCompanySchema.parse({ ...valid, nonRecourse: true }).nonRecourse).toBe(true);
+  });
+
   it("accepts the nulls a table row carries for optional text", () => {
     const parsed = factoringCompanySchema.safeParse({
       ...valid,

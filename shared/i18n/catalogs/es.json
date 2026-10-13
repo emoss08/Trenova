@@ -3649,6 +3649,7 @@
   "Facility": "Instalación",
   "Facility Type": "Tipo de instalación",
   "Facility and occupancy costs": "Costos de instalaciones y ocupación",
+  "Factoring Company ID": "ID de la empresa de factoraje",
   "Factors that customers' invoices are assigned to": "Empresas de factoraje a las que se ceden las facturas de los clientes",
   "Fail billing transfer runs whose workflow is no longer running": "Marcar como fallidas las ejecuciones de transferencia a facturación cuyo flujo de trabajo ya no se está ejecutando",
   "Fail report runs whose workflows are no longer running": "Marcar como fallidas las ejecuciones de informes cuyos flujos de trabajo ya no se estén ejecutando",
