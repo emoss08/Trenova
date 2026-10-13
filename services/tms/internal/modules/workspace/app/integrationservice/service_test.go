@@ -223,7 +223,7 @@ func TestListCatalogIncludesQuickBooksUnderAccounting(t *testing.T) {
 	require.Equal(t, integration.CategoryAccounting, quickBooks.Category)
 	require.Equal(t, "Accounting", quickBooks.CategoryLabel)
 	require.Equal(t, "/integrations/logos/quickbooks-light.svg", quickBooks.LogoLightURL)
-	require.Equal(t, "/integrations/logos/quickbooks-dark.svg", quickBooks.LogoDarkURL)
+	require.Equal(t, "/integrations/logos/intuit-dark.svg", quickBooks.LogoDarkURL)
 	require.Equal(t, "Connect", quickBooks.PrimaryActionLabel)
 	require.True(t, quickBooks.Enabled)
 }
