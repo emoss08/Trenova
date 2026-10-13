@@ -1,5 +1,5 @@
 import { useUserTimezone } from "@/hooks/use-user-timezone";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import {
   boardGroupHeaders,
   boardGroupKey,
@@ -34,12 +34,12 @@ export function useBoardGrouping(): DataTableGrouping<Shipment> | undefined {
   const serverGrouping = isServerGrouping(group) ? group : null;
 
   const { data: summary = [] } = useQuery({
-    ...queries.shipmentBoard.stageSummary(scope),
+    ...shipmentBoard.stageSummary(scope),
     enabled: group === "stage",
     staleTime: SUMMARY_STALE_MS,
   });
   const { data: serverGroups = [] } = useQuery({
-    ...queries.shipmentBoard.groups(scope, SERVER_GROUPING[serverGrouping ?? "customer"]),
+    ...shipmentBoard.groups(scope, SERVER_GROUPING[serverGrouping ?? "customer"]),
     enabled: serverGrouping !== null,
     staleTime: SUMMARY_STALE_MS,
   });

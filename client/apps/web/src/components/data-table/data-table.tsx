@@ -48,7 +48,8 @@ import type { BulkEditJob } from "@/lib/graphql/bulk-edit";
 import type { BulkEditSelectionInput } from "@trenova/graphql/generated/graphql";
 import { groupedScope, groupedSort } from "@/lib/data-table-grouping";
 import { resolveGraphQLVariableSources } from "@/lib/data-table-variables";
-import { queries } from "@/lib/queries";
+import { bulkEdit } from "@/lib/queries/bulk-edit";
+import { tableConfiguration } from "@/lib/queries/table-configuration";
 import { stableStringify } from "@/lib/stable-stringify";
 import type {
   ActiveTableView,
@@ -211,7 +212,7 @@ export function DataTable<TData extends Record<string, any>>({
   const selectedRowsMapRef = useRef(new Map<string, TData>());
 
   const { data: defaultConfig, isPending: defaultConfigPending } = useQuery({
-    ...queries.tableConfiguration.default(name),
+    ...tableConfiguration.default(name),
     enabled: !!name,
     retry: false,
     staleTime: Infinity,
@@ -954,7 +955,7 @@ export function DataTable<TData extends Record<string, any>>({
   const restoreView = useLatestCallback(async (id: string) => {
     try {
       const view = await queryClient.fetchQuery({
-        ...queries.tableConfiguration.detail(id),
+        ...tableConfiguration.detail(id),
         staleTime: 60_000,
       });
       if (view) setActiveView({ id: view.id, name: view.name, config: view.tableConfig });
@@ -1116,7 +1117,7 @@ export function DataTable<TData extends Record<string, any>>({
   // Bulk edit is offered where the server has an editor for the table and the person
   // can change its rows; the server checks both again when the edit starts.
   const bulkEditFieldsQuery = useQuery({
-    ...queries.bulkEdit.fields(resource ?? ""),
+    ...bulkEdit.fields(resource ?? ""),
     enabled: !!resource && canUpdate && !!enableRowSelection,
     staleTime: Infinity,
     retry: false,

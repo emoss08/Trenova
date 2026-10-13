@@ -3,7 +3,7 @@ import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { queries } from "@/lib/queries";
+import { bankReceiptBatch } from "@/lib/queries/bank-receipt-batch";
 import type { BankReceiptBatch } from "@/types/bank-receipt-batch";
 import { useQuery } from "@tanstack/react-query";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
@@ -41,7 +41,7 @@ export function BankReceiptBatchPage() {
     isLoading,
     isError,
   } = useQuery({
-    ...queries.bankReceiptBatch.list(),
+    ...bankReceiptBatch.list(),
   });
 
   const stats = useMemo(() => {

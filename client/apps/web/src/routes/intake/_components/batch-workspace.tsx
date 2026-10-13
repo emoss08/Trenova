@@ -8,7 +8,7 @@ import {
   captureSourceLabel,
 } from "@/lib/capture";
 import type { CaptureBatchDetail } from "@/lib/graphql/capture";
-import { queries } from "@/lib/queries";
+import { capture } from "@/lib/queries/capture";
 import {
   DndContext,
   KeyboardSensor,
@@ -80,7 +80,7 @@ export function BatchWorkspace({
   onClose: () => void;
 }) {
   const t = useT();
-  const query = useQuery(queries.capture.batch(batchId));
+  const query = useQuery(capture.batch(batchId));
 
   if (query.isError) {
     const back = (

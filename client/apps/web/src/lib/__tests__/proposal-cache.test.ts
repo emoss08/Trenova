@@ -5,7 +5,9 @@ import {
   markProposalDecided,
   markProposalEdits,
 } from "@/lib/proposal-cache";
-import { queries } from "@/lib/queries";
+import { agentPreview } from "@/lib/queries/agent-preview";
+import { assistant } from "@/lib/queries/assistant";
+import { homeLayout } from "@/lib/queries/home-layout";
 import type { AssistantProposal } from "@/types/assistant";
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
@@ -88,7 +90,7 @@ const THREAD = "athr_1";
 
 function seededClient() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  client.setQueryData(queries.assistant.proposals(THREAD).queryKey, {
+  client.setQueryData(assistant.proposals(THREAD).queryKey, {
     results: [pending("prop_1"), pending("prop_2")],
   });
 
@@ -97,9 +99,8 @@ function seededClient() {
 
 function proposalsIn(client: QueryClient, threadId: string): AssistantProposal[] {
   return (
-    client.getQueryData<{ results: AssistantProposal[] }>(
-      queries.assistant.proposals(threadId).queryKey,
-    )?.results ?? []
+    client.getQueryData<{ results: AssistantProposal[] }>(assistant.proposals(threadId).queryKey)
+      ?.results ?? []
   );
 }
 
@@ -117,7 +118,7 @@ describe("markProposalDecided", () => {
   // scoped to the one that was clicked.
   it("reaches every thread's cached list", () => {
     const client = seededClient();
-    client.setQueryData(queries.assistant.proposals("athr_2").queryKey, {
+    client.setQueryData(assistant.proposals("athr_2").queryKey, {
       results: [pending("prop_1")],
     });
 
@@ -168,37 +169,37 @@ describe("invalidateProposalViews", () => {
   // assistant beside it, the page kept showing the old widgets until a reload.
   it("makes the home page stale", async () => {
     const client = seededClient();
-    client.setQueryData(queries.homeLayout.effective().queryKey, { homeLayout: null });
+    client.setQueryData(homeLayout.effective().queryKey, { homeLayout: null });
 
     await invalidateProposalViews(client, THREAD);
 
-    expect(invalidated(client, queries.homeLayout.effective().queryKey)).toBe(true);
+    expect(invalidated(client, homeLayout.effective().queryKey)).toBe(true);
   });
 
   it("makes the deciding thread's own views stale", async () => {
     const client = seededClient();
-    client.setQueryData(queries.assistant.plans(THREAD).queryKey, { results: [] });
-    client.setQueryData(queries.assistant.messages(THREAD).queryKey, { results: [] });
-    client.setQueryData(queries.assistant.artifacts(THREAD).queryKey, { results: [] });
+    client.setQueryData(assistant.plans(THREAD).queryKey, { results: [] });
+    client.setQueryData(assistant.messages(THREAD).queryKey, { results: [] });
+    client.setQueryData(assistant.artifacts(THREAD).queryKey, { results: [] });
 
     await invalidateProposalViews(client, THREAD);
 
-    expect(invalidated(client, queries.assistant.proposals(THREAD).queryKey)).toBe(true);
-    expect(invalidated(client, queries.assistant.plans(THREAD).queryKey)).toBe(true);
-    expect(invalidated(client, queries.assistant.messages(THREAD).queryKey)).toBe(true);
-    expect(invalidated(client, queries.assistant.artifacts(THREAD).queryKey)).toBe(true);
+    expect(invalidated(client, assistant.proposals(THREAD).queryKey)).toBe(true);
+    expect(invalidated(client, assistant.plans(THREAD).queryKey)).toBe(true);
+    expect(invalidated(client, assistant.messages(THREAD).queryKey)).toBe(true);
+    expect(invalidated(client, assistant.artifacts(THREAD).queryKey)).toBe(true);
   });
 
   // A decision made in AI Control has no thread. It still has to reach the
   // chat, which is why the thread-scoped keys fall back to their scope.
   it("makes every thread's views stale when the decision had no thread", async () => {
     const client = seededClient();
-    client.setQueryData(queries.assistant.proposals("athr_2").queryKey, { results: [] });
+    client.setQueryData(assistant.proposals("athr_2").queryKey, { results: [] });
 
     await invalidateProposalViews(client);
 
-    expect(invalidated(client, queries.assistant.proposals(THREAD).queryKey)).toBe(true);
-    expect(invalidated(client, queries.assistant.proposals("athr_2").queryKey)).toBe(true);
+    expect(invalidated(client, assistant.proposals(THREAD).queryKey)).toBe(true);
+    expect(invalidated(client, assistant.proposals("athr_2").queryKey)).toBe(true);
   });
 
   // The other side of the same complaint: a card approved in the chat left AI
@@ -233,9 +234,9 @@ describe("invalidateProposalViews", () => {
   it("makes every proposal and plan preview stale, whoever read it and with whatever draft", async () => {
     const client = seededClient();
     const previews = [
-      queries.agentPreview.proposal("mine", "prop_1").queryKey,
-      queries.agentPreview.proposal("approver", "prop_2", { status: "Late" }).queryKey,
-      queries.agentPreview.plan("approver", "plan_1").queryKey,
+      agentPreview.proposal("mine", "prop_1").queryKey,
+      agentPreview.proposal("approver", "prop_2", { status: "Late" }).queryKey,
+      agentPreview.plan("approver", "plan_1").queryKey,
     ];
     for (const key of previews) {
       client.setQueryData(key, { digest: "sha256:x", stale: false });

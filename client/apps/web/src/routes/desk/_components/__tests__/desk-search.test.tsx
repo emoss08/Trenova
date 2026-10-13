@@ -11,17 +11,16 @@ const search = vi.hoisted(() => ({
   results: (_query: string, _kind: string): unknown[] => [],
 }));
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    assistant: {
-      deskSearch: (query: string, kind: string) => ({
-        queryKey: ["assistant", "deskSearch", query, kind],
-        queryFn: () => {
-          search.calls.push([query, kind]);
-          return search.results(query, kind);
-        },
-      }),
-    },
+vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/queries/assistant")>()),
+  assistant: {
+    deskSearch: (query: string, kind: string) => ({
+      queryKey: ["assistant", "deskSearch", query, kind],
+      queryFn: () => {
+        search.calls.push([query, kind]);
+        return search.results(query, kind);
+      },
+    }),
   },
 }));
 
@@ -103,9 +102,7 @@ describe("DeskSearchPalette", () => {
     fireEvent.keyDown(input, { key: "ArrowDown" });
     fireEvent.keyDown(input, { key: "Enter" });
 
-    await waitFor(() =>
-      expect(screen.getByTestId("where")).toHaveTextContent("?a=aart_9"),
-    );
+    await waitFor(() => expect(screen.getByTestId("where")).toHaveTextContent("?a=aart_9"));
     expect(useDeskSettingsStore.getState().recentSearches[0]).toBe("work");
   });
 

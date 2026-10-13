@@ -6,7 +6,7 @@ import {
   type TwoFactorDialog,
 } from "@/components/navigation/two-factor-section";
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { user as userQueries } from "@/lib/queries/user";
 import {
   daysSince,
   describeSignIn,
@@ -297,7 +297,7 @@ function SessionsCard() {
   const feedback = useSettingsFeedback();
   const queryClient = useQueryClient();
   const now = useNow("minute");
-  const { data: sessions, isError, refetch } = useQuery(queries.user.mySessions());
+  const { data: sessions, isError, refetch } = useQuery(userQueries.mySessions());
   const [leaving, setLeaving] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const others = sessions?.filter((session) => !session.current) ?? [];
@@ -306,7 +306,7 @@ function SessionsCard() {
     setLeaving((current) => [...current, ...ids]);
     window.setTimeout(() => {
       queryClient.setQueryData<SessionSummary[]>(
-        queries.user.mySessions().queryKey,
+        userQueries.mySessions().queryKey,
         (current) => current?.filter((session) => !ids.includes(session.id)) ?? [],
       );
       setLeaving((current) => current.filter((id) => !ids.includes(id)));
@@ -448,7 +448,7 @@ function SignInsCard() {
   const t = useT();
   const user = useAuthStore((state) => state.user);
   const timezone = resolveUserTimezone(user?.timezone);
-  const { data: signIns, isError } = useQuery(queries.user.mySignIns());
+  const { data: signIns, isError } = useQuery(userQueries.mySignIns());
 
   const where = (signIn: SignInSummary) =>
     [signIn.label, signIn.ipAddress].filter(Boolean).join(" · ");

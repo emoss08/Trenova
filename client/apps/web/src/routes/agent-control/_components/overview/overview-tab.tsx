@@ -1,6 +1,7 @@
 import { usePermission } from "@/hooks/use-permission";
 import { agentControlQueryOptions } from "@/lib/graphql/agent-control";
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
@@ -46,14 +47,14 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
   const { allowed: canUpdateControl } = usePermission(Resource.AgentControl, Operation.Update);
 
   const summaryQuery = useQuery({
-    ...queries.aiControl.summary("Overview"),
+    ...aiControl.summary("Overview"),
     staleTime: SUMMARY_STALE_MS,
     refetchInterval: (query) => (query.state.data?.pending ? PENDING_REFRESH_MS : false),
   });
   const controlQuery = useQuery(agentControlQueryOptions());
-  const providersQuery = useQuery(queries.aiProvider.list());
-  const catalogQuery = useQuery(queries.aiProvider.catalog());
-  const usageQuery = useQuery(queries.aiProvider.usage(OVERVIEW_WINDOW_DAYS));
+  const providersQuery = useQuery(aiProvider.list());
+  const catalogQuery = useQuery(aiProvider.catalog());
+  const usageQuery = useQuery(aiProvider.usage(OVERVIEW_WINDOW_DAYS));
 
   const summary = summaryQuery.data;
   const facts = summary?.facts;

@@ -10,7 +10,7 @@ import type {
   AgentRunTranscript,
   AgentRunTranscriptMessage,
 } from "@/lib/graphql/agent-activity-tables";
-import { queries } from "@/lib/queries";
+import { agentRun } from "@/lib/queries/agent-run";
 import { AgentRunPanel } from "../agent-run-sheet";
 import { transcriptBlocks } from "../run-transcript";
 import { RunTranscriptView } from "../run-transcript-view";
@@ -206,7 +206,7 @@ describe("AgentRunPanel", () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false, staleTime: Infinity } },
     });
-    queryClient.setQueryData(queries.agentRun.detail(run.id).queryKey, { run, transcript });
+    queryClient.setQueryData(agentRun.detail(run.id).queryKey, { run, transcript });
     return queryClient;
   }
 

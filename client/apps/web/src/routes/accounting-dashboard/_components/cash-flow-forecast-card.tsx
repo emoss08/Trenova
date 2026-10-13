@@ -9,7 +9,7 @@ import {
   type ChartConfig,
 } from "@trenova/shared/components/ui/chart";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { formatCompactCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -34,7 +34,7 @@ const cashFlowChartConfig = {
 export function CashFlowForecastCard() {
   const t = useT();
 
-  const { data: points, isLoading } = useQuery(queries.ar.cashFlowForecast());
+  const { data: points, isLoading } = useQuery(ar.cashFlowForecast());
 
   const { chartData, nowLabel } = useMemo(() => {
     const data = (points ?? []).map((point) => ({

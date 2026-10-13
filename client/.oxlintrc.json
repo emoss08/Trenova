@@ -151,6 +151,10 @@
                     {
                         "name": "@untitledui/icons",
                         "message": "Import icons from @trenova/shared/components/icons, which names them with an Icon suffix and holds the custom set."
+                    },
+                    {
+                        "name": "@/lib/queries",
+                        "message": "Import the query key factory from its own module (import { shipment } from \"@/lib/queries/shipment\"). An object merging every factory puts every factory, service and GraphQL document in the download of each page that imports it."
                     }
                 ],
                 "patterns": [

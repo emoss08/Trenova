@@ -4,7 +4,7 @@ import { FinancialReportSection } from "@/components/accounting/financial-report
 import { FiscalPeriodSelector } from "@/components/accounting/fiscal-period-selector";
 import { KPI_VALUE_CLASS, KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { queries } from "@/lib/queries";
+import { accountingReport } from "@/lib/queries/accounting-report";
 import { useQuery } from "@tanstack/react-query";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Separator } from "@trenova/shared/components/ui/separator";
@@ -17,7 +17,7 @@ export function IncomeStatementPage() {
   const [periodId, setPeriodId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    ...queries.accountingReport.incomeStatement(periodId!),
+    ...accountingReport.incomeStatement(periodId!),
     enabled: Boolean(periodId),
   });
 

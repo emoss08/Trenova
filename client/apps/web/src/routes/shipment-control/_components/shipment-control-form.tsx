@@ -15,7 +15,7 @@ import {
 } from "@trenova/shared/components/ui/card";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
-import { queries } from "@/lib/queries";
+import { shipmentControl } from "@/lib/queries/shipment-control";
 import { apiService } from "@/services/api";
 import type { ShipmentControl } from "@/types/shipment-control";
 import { shipmentControlSchema } from "@/types/shipment-control";
@@ -28,7 +28,7 @@ export default function ShipmentControlForm() {
   const t = useT();
 
   const { data } = useSuspenseQuery({
-    ...queries.shipmentControl.get(),
+    ...shipmentControl.get(),
   });
 
   const form = useForm({
@@ -39,12 +39,12 @@ export default function ShipmentControlForm() {
   const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
-    queryKey: queries.shipmentControl.get._def,
+    queryKey: shipmentControl.get._def,
     mutationFn: async (values: ShipmentControl) => apiService.shipmentControlService.update(values),
     resourceName: "Shipment Control",
     resetForm: reset,
     form,
-    invalidateQueries: [queries.shipmentControl.get._def],
+    invalidateQueries: [shipmentControl.get._def],
   });
 
   const onSubmit = useCallback(

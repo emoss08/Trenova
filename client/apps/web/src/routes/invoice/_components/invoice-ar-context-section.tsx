@@ -5,7 +5,7 @@ import {
 } from "@trenova/shared/components/status-badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { invoicePanelPath } from "@/lib/invoice-links";
-import { queries } from "@/lib/queries";
+import { invoice as invoiceQueries } from "@/lib/queries/invoice";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { useQuery } from "@tanstack/react-query";
@@ -36,7 +36,7 @@ export function InvoiceArContextSection({ invoice }: { invoice: Invoice }) {
 
 function ArContextCard({ invoice }: { invoice: Invoice }) {
   const t = useT();
-  const { data, isLoading } = useQuery(queries.invoice.arContext(invoice.id));
+  const { data, isLoading } = useQuery(invoiceQueries.arContext(invoice.id));
 
   const shipper = data?.shipperCustomer ?? invoice.shipperCustomer ?? null;
   const related = (data?.relatedInvoices ?? []).filter((row) => row.id !== invoice.id);

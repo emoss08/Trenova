@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { VehiclePosition } from "@/lib/graphql/telematics";
-import { queries } from "@/lib/queries";
+import { telematics } from "@/lib/queries/telematics";
 import { formatTimeAgo } from "@/lib/time-utils";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { cn } from "@trenova/shared/lib/utils";
@@ -48,7 +48,7 @@ function engineStateLabel(engineState: string | null): string {
 
 export function VehiclePositionOverlay({ enabled = true }: { enabled?: boolean }) {
   const statusQuery = useQuery({
-    ...queries.telematics.status(),
+    ...telematics.status(),
     staleTime: 5 * 60 * 1000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -58,7 +58,7 @@ export function VehiclePositionOverlay({ enabled = true }: { enabled?: boolean }
   const fetchEnabled = enabled && telematicsEnabled;
 
   const positionsQuery = useQuery({
-    ...queries.telematics.vehiclePositions(POSITION_MAX_AGE_SECONDS),
+    ...telematics.vehiclePositions(POSITION_MAX_AGE_SECONDS),
     refetchInterval: 30_000,
     staleTime: 15_000,
     retry: false,

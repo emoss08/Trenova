@@ -25,7 +25,8 @@ import {
   updateCostingControlGraphQL,
   type CostingControl,
 } from "@/lib/graphql/cost-control";
-import { queries } from "@/lib/queries";
+import { costControl } from "@/lib/queries/cost-control";
+import { shipment } from "@/lib/queries/shipment";
 import { formatPerMile } from "@trenova/shared/lib/utils";
 import {
   costControlSchema,
@@ -125,7 +126,7 @@ export default function CostControlForm() {
   const t = useT();
 
   const { data } = useSuspenseQuery({
-    ...queries.costControl.get(),
+    ...costControl.get(),
   });
 
   const defaultValues = toFormValues(data);
@@ -139,15 +140,15 @@ export default function CostControlForm() {
   const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
-    queryKey: queries.costControl.get._def,
+    queryKey: costControl.get._def,
     mutationFn: async (values: CostControlFormValues) => submitCostControl(values, defaultValues),
     resourceName: "Cost Control",
     resetForm: reset,
     form,
     invalidateQueries: [
-      queries.costControl.get._def,
-      queries.costControl.resolvedProfile._def,
-      queries.shipment._def,
+      costControl.get._def,
+      costControl.resolvedProfile._def,
+      shipment._def,
       ["analytics"],
     ],
   });

@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { NovaMark } from "@trenova/shared/components/ui/nova-mark";
@@ -40,9 +40,9 @@ export function StartCard() {
   const [question, setQuestion] = useState("");
   const [library, setLibrary] = useState<"standard" | "org">("standard");
 
-  const standards = useQuery({ ...queries.formulaTemplate.standards, staleTime: Infinity });
+  const standards = useQuery({ ...formulaTemplate.standards, staleTime: Infinity });
   const recent = useQuery({
-    ...queries.formulaTemplate.recent(RECENT_TEMPLATES),
+    ...formulaTemplate.recent(RECENT_TEMPLATES),
     enabled: library === "org",
     staleTime: 60_000,
   });

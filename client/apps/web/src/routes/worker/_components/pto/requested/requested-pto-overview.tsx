@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { fetchUpcomingWorkerPTO } from "@/lib/queries/worker";
-import { queries } from "@/lib/queries";
+import { worker } from "@/lib/queries/worker";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { PTOFilter, PTOType } from "@trenova/shared/types/worker";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -27,7 +27,7 @@ export function RequestedPTOOverview() {
 
   const query = useInfiniteQuery({
     queryKey: [
-      ...queries.worker.listUpcomingPTO._def,
+      ...worker.listUpcomingPTO._def,
       {
         type: searchParams?.requestPTOFilters?.type,
         status: "Requested",

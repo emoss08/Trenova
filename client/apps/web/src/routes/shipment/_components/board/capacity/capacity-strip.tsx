@@ -14,7 +14,7 @@ import type { CapacityGroup, CapacityUnitKind } from "@trenova/graphql/generated
 import type { CapacityMatch, CapacityUnit, ShipmentCapacity } from "@/lib/graphql/shipment-board";
 import { shipmentBoardTableGraphQLConfig } from "@/lib/graphql/shipment";
 import { fetchAllRows } from "@/lib/data-table-export";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import {
   CAPACITY_PROVIDERS,
@@ -484,17 +484,17 @@ export function CapacityStrip() {
     providers.find((provider) => provider.kind === requested)?.kind ?? providers[0].kind;
   const provider = CAPACITY_PROVIDERS[kind];
   const driverCount = useQuery({
-    ...queries.shipmentBoard.capacity("Driver"),
+    ...shipmentBoard.capacity("Driver"),
     enabled: operationType === "both",
     staleTime: 15_000,
   });
   const carrierCount = useQuery({
-    ...queries.shipmentBoard.capacity("Carrier"),
+    ...shipmentBoard.capacity("Carrier"),
     enabled: operationType === "both",
     staleTime: 15_000,
   });
   const { data, isLoading } = useQuery({
-    ...queries.shipmentBoard.capacity(kind),
+    ...shipmentBoard.capacity(kind),
     staleTime: 15_000,
   });
 

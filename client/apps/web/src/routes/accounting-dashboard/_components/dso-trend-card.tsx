@@ -8,7 +8,7 @@ import {
 } from "@trenova/shared/components/ui/chart";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { AR_DSO_TARGET_DAYS } from "@/lib/accounting-constants";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from "recharts";
@@ -26,7 +26,7 @@ export function DsoTrendCard() {
   const t = useT();
 
   const [range, setRange] = useState<number>(13);
-  const { data: trend, isLoading } = useQuery(queries.ar.dsoTrend(range));
+  const { data: trend, isLoading } = useQuery(ar.dsoTrend(range));
 
   const chartData = useMemo(
     () =>

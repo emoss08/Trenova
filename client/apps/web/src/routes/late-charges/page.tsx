@@ -7,7 +7,8 @@ import {
   assessLateCharges,
   type LateChargeAssessmentResult,
 } from "@/lib/graphql/accounts-receivable";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
+import { billingControl } from "@/lib/queries/billing-control";
 import { invalidateInvoiceQueries } from "@/lib/queries/invoice";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import type { LateChargeAssessmentMode } from "@/types/billing-control";
@@ -42,7 +43,7 @@ type FilterValues = {
 };
 
 export const prefetch: RoutePrefetch = () => {
-  const list: RoutePrefetchQuery[] = [queries.ar.lateChargePreview(), queries.billingControl.get()];
+  const list: RoutePrefetchQuery[] = [ar.lateChargePreview(), billingControl.get()];
   return list;
 };
 
@@ -101,8 +102,8 @@ export function LateChargesPage() {
     [customerId, asOfUnix],
   );
 
-  const previewQuery = useQuery(queries.ar.lateChargePreview(input));
-  const controlQuery = useQuery(queries.billingControl.get());
+  const previewQuery = useQuery(ar.lateChargePreview(input));
+  const controlQuery = useQuery(billingControl.get());
   const mode = controlQuery.data?.lateChargeAssessmentMode;
   const notice = modeNotice(mode, t);
   const result = lastRun ?? previewQuery.data;
@@ -130,7 +131,7 @@ export function LateChargesPage() {
       setSelected({});
       setConfirming(false);
       invalidateInvoiceQueries(queryClient);
-      void queryClient.invalidateQueries({ queryKey: queries.ar.lateChargePreview._def });
+      void queryClient.invalidateQueries({ queryKey: ar.lateChargePreview._def });
       toast.success(
         t(
           "{0, plural, one {# debit memo} other {# debit memos}} raised for {1}",

@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import type { ShipmentBoardCapabilities } from "@/lib/graphql/shipment-board";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createContext, use, type ReactNode } from "react";
@@ -24,7 +24,7 @@ export function toBoardCapabilities(raw: ShipmentBoardCapabilities): BoardCapabi
  * capability on or off is one server fact rather than a branch per component.
  */
 export function ShipmentCapabilitiesProvider({ children }: { children: ReactNode }) {
-  const { data } = useSuspenseQuery({ ...queries.shipmentBoard.capabilities(), staleTime: 60_000 });
+  const { data } = useSuspenseQuery({ ...shipmentBoard.capabilities(), staleTime: 60_000 });
   return <BoardCapabilitiesProvider value={data}>{children}</BoardCapabilitiesProvider>;
 }
 

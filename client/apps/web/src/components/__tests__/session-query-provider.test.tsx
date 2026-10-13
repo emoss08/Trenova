@@ -1,12 +1,12 @@
 import type { KeyValueStore } from "@/lib/indexed-db-store";
-import { queries } from "@/lib/queries";
+import { sidebarPreferences } from "@/lib/queries/sidebar-preferences";
 import { createSessionPersistence } from "@/lib/session-cache";
 import { QueryClient, useIsRestoring } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { SessionQueryProvider } from "../session-query-provider";
 
-const SIDEBAR_KEY = queries.sidebarPreferences.effective().queryKey;
+const SIDEBAR_KEY = sidebarPreferences.effective().queryKey;
 
 function memoryStore(): KeyValueStore & { entries: Map<string, string> } {
   const entries = new Map<string, string>();

@@ -1,6 +1,6 @@
 import type { InboundAttachment, InboundMessageDetail } from "@/lib/graphql/inbox";
 import type { SelectOption } from "@/lib/graphql/select-options";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { inboxReferenceQuery } from "@/lib/queries/inbox";
 import { documentTypeName, documentTypeNamed } from "@/lib/triage/document-types";
 import { apiService } from "@/services/api";
@@ -233,7 +233,7 @@ function FileChip({
           documentTypes,
           shipments:
             queryClient.getQueryData<GenericLimitOffsetResponse<SelectOption>>(
-              queries.inbox.filingShipments().queryKey,
+              inbox.filingShipments().queryKey,
             )?.results ?? [],
           openFile: panel.openFile,
         }),
@@ -297,7 +297,7 @@ function FileChip({
 /** The files that came with the message, each opening its step or its document. */
 export function FileChips({ message }: { message: InboundMessageDetail }) {
   const t = useT();
-  useQuery(inboxReferenceQuery(queries.inbox.filingShipments()));
+  useQuery(inboxReferenceQuery(inbox.filingShipments()));
   if (message.attachments.length === 0) {
     return null;
   }

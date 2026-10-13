@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { agentQuality } from "@/lib/queries/agent-quality";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -39,8 +39,8 @@ const ExtractionView = lazy(() => import("./extraction/extraction-view"));
  */
 export default function QualityTab({ view }: { view: QualityView }) {
   const t = useT();
-  const overview = useQuery({ ...queries.agentQuality.overview(), staleTime: QUALITY_STALE_MS });
-  const control = useQuery(queries.agentQuality.control());
+  const overview = useQuery({ ...agentQuality.overview(), staleTime: QUALITY_STALE_MS });
+  const control = useQuery(agentQuality.control());
   const [{ [QUALITY_SHEET_PARAM]: openAgent, [SWEEP_SETTINGS_PARAM]: settingsOpen }, setDialogs] =
     useQueryStates(qualityDialogParsers);
   const setOpenAgent = useCallback(

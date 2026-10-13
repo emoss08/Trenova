@@ -9,7 +9,7 @@ import {
 } from "@trenova/shared/components/ui/chart";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { FuelDashboardEntry } from "@/lib/graphql/fuel-surcharge";
-import { queries } from "@/lib/queries";
+import { fuelSurcharge } from "@/lib/queries/fuel-surcharge";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { TrendDown01Icon, TrendUp01Icon } from "@trenova/shared/components/icons";
@@ -54,7 +54,7 @@ export default function FuelDashboard({ onOpenIndices }: { onOpenIndices?: () =>
   const t = useT();
   const rt = useRichT();
 
-  const { data: entries, isLoading } = useQuery(queries.fuelSurcharge.dashboard());
+  const { data: entries, isLoading } = useQuery(fuelSurcharge.dashboard());
   const [selectedIndexId, setSelectedIndexId] = useState<string | null>(null);
   const [range, setRange] = useState<number>(26);
 
@@ -209,7 +209,7 @@ function PriceTrendChart({
 }) {
   const t = useT();
 
-  const { data: history, isLoading } = useQuery(queries.fuelSurcharge.priceHistory(indexId, range));
+  const { data: history, isLoading } = useQuery(fuelSurcharge.priceHistory(indexId, range));
 
   const chartData = useMemo(
     () =>

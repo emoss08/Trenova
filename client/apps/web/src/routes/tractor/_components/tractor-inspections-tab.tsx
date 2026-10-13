@@ -1,7 +1,7 @@
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { VehicleInspection } from "@/lib/graphql/telematics";
-import { queries } from "@/lib/queries";
+import { telematics } from "@/lib/queries/telematics";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -228,14 +228,14 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
   const t = useT();
 
   const statusQuery = useQuery({
-    ...queries.telematics.status(),
+    ...telematics.status(),
     staleTime: 5 * 60 * 1000,
   });
   const telematicsEnabled = statusQuery.data?.enabled ?? false;
   const hasTractor = typeof tractorId === "string" && tractorId.length > 0;
 
   const inspectionsQuery = useQuery({
-    ...queries.telematics.vehicleInspections(tractorId, undefined, undefined, INSPECTION_LIMIT),
+    ...telematics.vehicleInspections(tractorId, undefined, undefined, INSPECTION_LIMIT),
     enabled: telematicsEnabled && hasTractor,
     staleTime: STALE_TIME_MS,
   });

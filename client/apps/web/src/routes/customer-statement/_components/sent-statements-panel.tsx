@@ -4,14 +4,14 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatMinor } from "@trenova/shared/lib/benefits";
 import { formatUnixDateMedium, formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
-import { queries } from "@/lib/queries";
+import { customerStatement } from "@/lib/queries/customer-statement";
 import type { SentStatement } from "@/types/customer-statement";
 import { useQuery } from "@tanstack/react-query";
 
 /** The statements this customer has been emailed, newest first. */
 export function SentStatementsPanel({ customerId }: { customerId: string }) {
   const t = useT();
-  const { data, isLoading, isError } = useQuery(queries.customerStatement.sent(customerId));
+  const { data, isLoading, isError } = useQuery(customerStatement.sent(customerId));
 
   return (
     <SectionPanel title={t("Statements sent")} count={data?.length}>

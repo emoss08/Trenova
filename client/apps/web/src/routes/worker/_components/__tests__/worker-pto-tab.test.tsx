@@ -10,16 +10,15 @@ const { fetchWorkerPTOHistory } = vi.hoisted(() => ({
 
 const permissionState = vi.hoisted(() => ({ create: true }));
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    worker: {
-      ptoHistory: (workerId: string) => ({
-        queryKey: ["worker", "pto-history", workerId],
-        queryFn: () => fetchWorkerPTOHistory(workerId),
-      }),
-      listUpcomingPTO: { _def: ["worker", "list-upcoming-pto"] },
-      ptoChartData: { _def: ["worker", "pto-chart-data"] },
-    },
+vi.mock("@/lib/queries/worker", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/queries/worker")>()),
+  worker: {
+    ptoHistory: (workerId: string) => ({
+      queryKey: ["worker", "pto-history", workerId],
+      queryFn: () => fetchWorkerPTOHistory(workerId),
+    }),
+    listUpcomingPTO: { _def: ["worker", "list-upcoming-pto"] },
+    ptoChartData: { _def: ["worker", "pto-chart-data"] },
   },
 }));
 

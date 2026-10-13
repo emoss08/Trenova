@@ -53,15 +53,11 @@ vi.mock("@/lib/queries/capture", () => ({
     initialPageParam: null,
     getNextPageParam: () => undefined,
   }),
-}));
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    capture: {
-      batchCount: (filter: unknown) => ({
-        queryKey: ["capture", "batchCount", filter],
-        queryFn: () => Promise.resolve(0),
-      }),
-    },
+  capture: {
+    batchCount: (filter: unknown) => ({
+      queryKey: ["capture", "batchCount", filter],
+      queryFn: () => Promise.resolve(0),
+    }),
   },
 }));
 

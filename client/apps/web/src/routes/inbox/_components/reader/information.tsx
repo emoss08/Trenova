@@ -1,7 +1,7 @@
 import { recordPath } from "@/config/record-links";
 import type { InboundMessageDetail, InboundShipmentRef } from "@/lib/graphql/inbox";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQuery } from "@tanstack/react-query";
 import { useContextMenuTrigger } from "@trenova/shared/components/context-menu/context-menu-host";
@@ -57,7 +57,7 @@ function ShipmentRow({
   const actions = useTriageActions();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const peek = useQuery(queries.inbox.shipmentPeek(shipment.id)).data;
+  const peek = useQuery(inbox.shipmentPeek(shipment.id)).data;
   const now = useNowSeconds();
   const openPeek = () =>
     useTriageStore

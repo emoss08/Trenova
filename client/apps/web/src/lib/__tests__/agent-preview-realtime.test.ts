@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { agentPreview } from "@/lib/queries/agent-preview";
 import { modificationsKey } from "@/lib/queries/agent-preview";
 import { RESOURCE_QUERY_KEY_MAP, queryKeyPrefix } from "@trenova/shared/hooks/realtime-patching";
 import { describe, expect, it } from "vitest";
@@ -19,19 +19,17 @@ carries is refused with a digest the server no longer agrees with.
 */
 describe("preview realtime invalidation", () => {
   it("reaches every proposal preview from a proposal event", () => {
-    expect(reaches("agent_proposal", queries.agentPreview.proposal("mine", "p").queryKey)).toBe(
-      true,
-    );
+    expect(reaches("agent_proposal", agentPreview.proposal("mine", "p").queryKey)).toBe(true);
     expect(
       reaches(
         "agent_proposal",
-        queries.agentPreview.proposal("approver", "p", { status: "Late" }).queryKey,
+        agentPreview.proposal("approver", "p", { status: "Late" }).queryKey,
       ),
     ).toBe(true);
   });
 
   it("reaches every plan preview from a plan event", () => {
-    expect(reaches("agent_plan", queries.agentPreview.plan("approver", "pl").queryKey)).toBe(true);
+    expect(reaches("agent_plan", agentPreview.plan("approver", "pl").queryKey)).toBe(true);
   });
 });
 
@@ -48,8 +46,8 @@ describe("modificationsKey", () => {
   it("keys an unchanged draft as the proposal as proposed", () => {
     expect(modificationsKey(null)).toBe("");
     expect(modificationsKey({})).toBe("");
-    expect(queries.agentPreview.proposal("mine", "p", {}).queryKey).toEqual(
-      queries.agentPreview.proposal("mine", "p").queryKey,
+    expect(agentPreview.proposal("mine", "p", {}).queryKey).toEqual(
+      agentPreview.proposal("mine", "p").queryKey,
     );
   });
 });

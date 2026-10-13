@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { detention } from "@/lib/queries/detention";
 import { useQuery } from "@tanstack/react-query";
 import {
   DESK_FILTER_IDS,
@@ -60,7 +60,7 @@ export function useDetentionDesk() {
   const [{ lane, sort, q, stop }, setDesk] = useQueryStates(deskParsers, URL_OPTIONS);
 
   const { data, isLoading, isError, isFetching, dataUpdatedAt, refetch } = useQuery({
-    ...queries.detention.desk(),
+    ...detention.desk(),
     refetchInterval: DESK_REFETCH_MS,
   });
 

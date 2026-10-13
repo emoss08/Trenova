@@ -23,7 +23,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { queries } from "@/lib/queries";
+import { user } from "@/lib/queries/user";
 import { NotificationsSection } from "./user-settings/notifications-section";
 import { PreferencesSection } from "./user-settings/preferences-section";
 import { ProfileSection } from "./user-settings/profile-section";
@@ -54,7 +54,7 @@ const SPY_OFFSET_PX = 160;
 
 function useIsPaused(): boolean {
   const now = useNow("minute");
-  const { data } = useQuery({ ...queries.user.myNotificationPreferences(), staleTime: 30_000 });
+  const { data } = useQuery({ ...user.myNotificationPreferences(), staleTime: 30_000 });
   return Boolean(data?.pausedUntil && data.pausedUntil > now);
 }
 

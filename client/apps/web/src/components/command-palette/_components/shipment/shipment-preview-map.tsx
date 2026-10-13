@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useMapId } from "@/hooks/use-map-id";
 import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
-import { queries } from "@/lib/queries";
+import { googleMaps } from "@/lib/queries/google-maps";
 import { cn, formatLocation } from "@trenova/shared/lib/utils";
 import type { ShipmentMove, Stop } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +22,7 @@ export function ShipmentRouteMap({
   moves: ShipmentMove[];
   containerClassName?: string;
 }) {
-  const { data: apiKeyData } = useQuery({ ...queries.googleMaps.getAPIKey() });
+  const { data: apiKeyData } = useQuery({ ...googleMaps.getAPIKey() });
   const stops = useMemo(() => {
     return moves
       .flatMap((m) => m.stops)

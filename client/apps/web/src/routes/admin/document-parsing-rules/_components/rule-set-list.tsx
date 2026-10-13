@@ -14,7 +14,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { documentParsingRule } from "@/lib/queries/document-parsing-rule";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { RuleSet } from "@/types/document-parsing-rule";
@@ -44,7 +44,7 @@ export function RuleSetList({ selectedId, onSelect }: RuleSetListProps) {
   const { allowed: canCreate } = usePermission(Resource.DocumentParsingRule, Operation.Create);
 
   const { data: ruleSets, isLoading } = useQuery({
-    ...queries.documentParsingRule.list(),
+    ...documentParsingRule.list(),
   });
 
   const filtered = useMemo(() => {
@@ -256,7 +256,7 @@ function CreateRuleSetDialog({
       }),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({
-        queryKey: queries.documentParsingRule.list._def,
+        queryKey: documentParsingRule.list._def,
       });
       onOpenChange(false);
       setName("");

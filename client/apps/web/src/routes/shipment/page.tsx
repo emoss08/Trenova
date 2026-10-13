@@ -3,7 +3,8 @@ import { DataTableLazyComponent, LazyComponent } from "@trenova/shared/component
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
+import { tableConfiguration } from "@/lib/queries/table-configuration";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import { ShipmentCapabilitiesProvider } from "@/lib/shipment-board/capabilities";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -27,8 +28,8 @@ const loadPanelSearch = createLoader(panelSearchParamsParser);
 
 export const prefetch: RoutePrefetch = ({ request }) => {
   const list: RoutePrefetchQuery[] = [
-    { ...queries.shipmentBoard.capabilities(), staleTime: 60_000 },
-    { ...queries.tableConfiguration.default(SHIPMENT_TABLE_RESOURCE_NAME), staleTime: Infinity },
+    { ...shipmentBoard.capabilities(), staleTime: 60_000 },
+    { ...tableConfiguration.default(SHIPMENT_TABLE_RESOURCE_NAME), staleTime: Infinity },
   ];
 
   const { panelType, panelEntityId } = loadPanelSearch(request);

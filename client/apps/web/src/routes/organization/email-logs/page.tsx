@@ -1,13 +1,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { queries } from "@/lib/queries";
+import { email } from "@/lib/queries/email";
 import { useQuery } from "@tanstack/react-query";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 
 export function EmailLogsPage() {
   const t = useT();
 
-  const logsQuery = useQuery(queries.email.logs());
+  const logsQuery = useQuery(email.logs());
   const logs = logsQuery.data?.results ?? [];
 
   return (

@@ -18,7 +18,7 @@ const pdfjsDistPath = path.dirname(require.resolve("pdfjs-dist/package.json"));
 const cMapsDir = normalizePath(path.join(pdfjsDistPath, "cmaps"));
 const dirname = import.meta.dirname;
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   envDir: path.resolve(dirname, "../.."),
   environments: {
     client: {
@@ -112,9 +112,14 @@ export default defineConfig({
       experimental: { lazyBarrel: true },
       preserveEntrySignatures: "strict",
       output: {
-        codeSplitting: {
-          groups: chunkGroups,
-        },
+        // The full-bundle dev server (pnpm dev:bundled) bundles with these options too. Its
+        // chunks place modules the entry shares with lazy routes in a chunk the entry imports,
+        // which runs before the entry's own body: React's refresh preamble, inlined from
+        // index.html into the entry, came after the components that check for it, and the page
+        // never rendered. Strict order runs every module in source order whatever its chunk;
+        // the production groups stay out of dev, where they only move the preamble further.
+        codeSplitting: command === "build" ? { groups: chunkGroups } : undefined,
+        strictExecutionOrder: command === "serve",
         entryFileNames: "assets/js/[name].[hash].js",
         chunkFileNames: "assets/js/[name].[hash].js",
         assetFileNames: (assetInfo) => {
@@ -126,4 +131,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

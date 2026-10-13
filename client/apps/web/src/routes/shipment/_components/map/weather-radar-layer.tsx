@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { weatherRadar } from "@/lib/queries/weather-radar";
 import { useShipmentMapStore } from "@/stores/shipment-map-store";
 import type { WeatherLayerId } from "@/types/shipment-map";
 import { useQuery } from "@tanstack/react-query";
@@ -17,7 +17,7 @@ function useWeatherRadar() {
   const hasInitialized = useRef(false);
 
   const { data } = useQuery({
-    ...queries.weatherRadar.weatherMaps(),
+    ...weatherRadar.weatherMaps(),
     refetchInterval: REFRESH_INTERVAL,
     retry: false,
   });

@@ -1,6 +1,6 @@
 import type { ThreadHistory } from "@/components/assistant/thread-history";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import type { AssistantMessage } from "@/types/assistant";
 import { useDeskStore } from "@/stores/desk-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -39,10 +39,7 @@ function agent(id: string, name: string, delegates: string[] = []): AgentChoice 
   };
 }
 
-function message(
-  sequence: number,
-  overrides: Partial<AssistantMessage>,
-): AssistantMessage {
+function message(sequence: number, overrides: Partial<AssistantMessage>): AssistantMessage {
   return {
     id: `amsg_${sequence}`,
     threadId: THREAD_ID,
@@ -74,7 +71,7 @@ function history(results: AssistantMessage[]): ThreadHistory {
 
 function renderMenu(current: AgentChoice, agents: AgentChoice[], messages: AssistantMessage[]) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  client.setQueryData(queries.assistant.messages(THREAD_ID).queryKey, history(messages));
+  client.setQueryData(assistant.messages(THREAD_ID).queryKey, history(messages));
   let renders = 0;
 
   render(
@@ -154,7 +151,7 @@ describe("DeskHandoffMenu", () => {
     // It is saved and the live turn goes; the history now says the same.
     act(() => {
       client.setQueryData(
-        queries.assistant.messages(THREAD_ID).queryKey,
+        assistant.messages(THREAD_ID).queryKey,
         history([
           message(1, { role: "User", content: "Mark it ready to invoice" }),
           message(2, { role: "Tool", toolName: "find_tools", handOffAgents: ["billing"] }),

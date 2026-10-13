@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { directoryIdParser } from "@/hooks/use-organization-setting-state";
-import { queries } from "@/lib/queries";
+import { organization } from "@/lib/queries/organization";
 import { apiService } from "@/services/api";
 import type { SCIMDirectory } from "@trenova/shared/types/iam";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,7 +27,7 @@ export function ProvisioningTab({
   const t = useT();
 
   const queryClient = useQueryClient();
-  const auditQuery = useQuery(queries.organization.provisioningAudit(organizationId));
+  const auditQuery = useQuery(organization.provisioningAudit(organizationId));
   const [directoryPanelMode, setDirectoryPanelMode] = useState<SCIMDirectoryPanelMode>("create");
   const [directoryPanelOpen, setDirectoryPanelOpen] = useState(false);
   const [editingDirectory, setEditingDirectory] = useState<SCIMDirectory | null>(null);
@@ -45,7 +45,7 @@ export function ProvisioningTab({
   const invalidateProvisioning = useCallback(async () => {
     await Promise.all([
       queryClient.invalidateQueries({
-        queryKey: queries.organization.scimDirectories(organizationId).queryKey,
+        queryKey: organization.scimDirectories(organizationId).queryKey,
       }),
       queryClient.invalidateQueries({
         queryKey: ["scim-tokens", organizationId, directoryId],
@@ -54,7 +54,7 @@ export function ProvisioningTab({
         queryKey: ["scim-mappings", organizationId, directoryId],
       }),
       queryClient.invalidateQueries({
-        queryKey: queries.organization.provisioningAudit(organizationId).queryKey,
+        queryKey: organization.provisioningAudit(organizationId).queryKey,
       }),
     ]);
   }, [directoryId, organizationId, queryClient]);

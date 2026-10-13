@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { queries } from "@/lib/queries";
+import { invoiceAdjustment } from "@/lib/queries/invoice-adjustment";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { LinkExternal01Icon } from "@trenova/shared/components/icons";
@@ -53,11 +53,11 @@ export function InvoiceReconciliationPage() {
   }, [deferredQuery, status]);
 
   const listQuery = useQuery({
-    ...queries["invoice-adjustment"].reconciliation(params),
+    ...invoiceAdjustment.reconciliation(params),
   });
 
   const summaryQuery = useQuery({
-    ...queries["invoice-adjustment"].summary(),
+    ...invoiceAdjustment.summary(),
   });
 
   const selectedRow =
@@ -66,7 +66,7 @@ export function InvoiceReconciliationPage() {
     null;
 
   const detailQuery = useQuery({
-    ...queries["invoice-adjustment"].get(selectedRow?.adjustmentId ?? ""),
+    ...invoiceAdjustment.get(selectedRow?.adjustmentId ?? ""),
     enabled: Boolean(selectedRow?.adjustmentId),
   });
 

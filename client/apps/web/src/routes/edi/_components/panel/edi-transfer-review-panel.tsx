@@ -4,7 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { EDITransferRow } from "@/lib/graphql/edi-table";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -55,7 +55,7 @@ export function EDITransferReviewPanel({
   );
   const isActionable = !!transfer && ACTIONABLE_TRANSFER_STATUSES.has(transfer.status);
   const { data: preview } = useQuery({
-    ...queries.edi.mappingPreview(transfer?.id ?? ""),
+    ...edi.mappingPreview(transfer?.id ?? ""),
     enabled: !!transfer && direction === "inbound" && isActionable,
   });
 

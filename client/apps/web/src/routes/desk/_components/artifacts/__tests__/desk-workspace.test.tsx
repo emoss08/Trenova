@@ -14,34 +14,33 @@ const state = vi.hoisted(() => ({
   lineage: null as null | ((id: string) => Promise<unknown>),
 }));
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    assistant: {
-      artifacts: (threadId: string) => ({
-        queryKey: ["assistant-artifacts", threadId],
-        queryFn: () => page(),
-        _ctx: {
-          summary: {
-            queryKey: ["assistant-artifacts", threadId, "summary"],
-            queryFn: () => summaryPage(),
-          },
-          lineage: (id: string) => ({
-            queryKey: ["assistant-artifacts", threadId, "lineage", id],
-            queryFn: () => {
-              state.lineageReads.push(id);
-              return state.lineage ? state.lineage(id) : Promise.resolve(lineageOf(id));
-            },
-          }),
-          browse: (filters: unknown) => ({
-            queryKey: ["assistant-artifacts", threadId, "browse", filters],
-          }),
+vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/queries/assistant")>()),
+  assistant: {
+    artifacts: (threadId: string) => ({
+      queryKey: ["assistant-artifacts", threadId],
+      queryFn: () => page(),
+      _ctx: {
+        summary: {
+          queryKey: ["assistant-artifacts", threadId, "summary"],
+          queryFn: () => summaryPage(),
         },
-      }),
-      proposals: (threadId: string) => ({
-        queryKey: ["assistant", "proposals", threadId],
-        queryFn: () => ({ results: [] }),
-      }),
-    },
+        lineage: (id: string) => ({
+          queryKey: ["assistant-artifacts", threadId, "lineage", id],
+          queryFn: () => {
+            state.lineageReads.push(id);
+            return state.lineage ? state.lineage(id) : Promise.resolve(lineageOf(id));
+          },
+        }),
+        browse: (filters: unknown) => ({
+          queryKey: ["assistant-artifacts", threadId, "browse", filters],
+        }),
+      },
+    }),
+    proposals: (threadId: string) => ({
+      queryKey: ["assistant", "proposals", threadId],
+      queryFn: () => ({ results: [] }),
+    }),
   },
 }));
 

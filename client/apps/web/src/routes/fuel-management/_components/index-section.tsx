@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { queries } from "@/lib/queries";
+import { fuelSurcharge } from "@/lib/queries/fuel-surcharge";
 import type { FuelDashboardEntry } from "@/lib/graphql/fuel-surcharge";
 import { useQuery } from "@tanstack/react-query";
 import { ClockRewindIcon, Edit02Icon, PlusIcon } from "@trenova/shared/components/icons";
@@ -14,7 +14,7 @@ import { PriceHistoryDrawer } from "./price-history-drawer";
 export default function IndexSection() {
   const t = useT();
 
-  const { data: entries, isLoading } = useQuery(queries.fuelSurcharge.dashboard());
+  const { data: entries, isLoading } = useQuery(fuelSurcharge.dashboard());
   const [panelOpen, setPanelOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<FuelDashboardEntry | null>(null);
   const [historyEntry, setHistoryEntry] = useState<FuelDashboardEntry | null>(null);

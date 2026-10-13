@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { worker } from "@/lib/queries/worker";
 import { PTOStatusBadge, PTOTypeBadge } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -75,7 +75,7 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
   const [requestOpen, setRequestOpen] = useState(false);
   const [rowAction, setRowAction] = useState<RowActionState | null>(null);
 
-  const { data, isLoading } = useQuery(queries.worker.ptoHistory(workerId));
+  const { data, isLoading } = useQuery(worker.ptoHistory(workerId));
   const entries = useMemo(() => data ?? [], [data]);
   const summary = useMemo(() => summarizeWorkerPTO(entries, getTodayDate()), [entries]);
 

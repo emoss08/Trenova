@@ -1,5 +1,6 @@
 import { describeToolCall } from "@/components/assistant/tool-presentation";
-import { queries } from "@/lib/queries";
+import { agentScorecard } from "@/lib/queries/agent-scorecard";
+import { assistant } from "@/lib/queries/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -19,8 +20,8 @@ type RecordBlockProps = {
 /** How a saved agent has done over the last 30 days. */
 export function RecordBlock({ agentId, toolNames, earnedAutonomy }: RecordBlockProps) {
   const t = useT();
-  const scorecardQuery = useQuery(queries.agentScorecard.detail(agentId, "Last30Days"));
-  const trustQuery = useQuery(queries.assistant.agentTrust(agentId));
+  const scorecardQuery = useQuery(agentScorecard.detail(agentId, "Last30Days"));
+  const trustQuery = useQuery(assistant.agentTrust(agentId));
   const card = scorecardQuery.data;
   const streak = useMemo(
     () => leadingStreak(trustQuery.data?.results ?? [], toolNames),

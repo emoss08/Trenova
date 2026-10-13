@@ -5,7 +5,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { CapacityMatch, CapacityUnit } from "@/lib/graphql/shipment-board";
 import type { CapacityProvider } from "@/lib/shipment-board/capacity-providers";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 
@@ -43,7 +43,7 @@ export function CapacityPopover({
 }: CapacityPopoverProps) {
   const t = useT();
   const { data: matches = [], isLoading } = useQuery({
-    ...queries.shipmentBoard.capacityMatches(unit.kind, unit.id, MATCH_LIMIT),
+    ...shipmentBoard.capacityMatches(unit.kind, unit.id, MATCH_LIMIT),
     enabled: open,
     staleTime: 15_000,
   });
@@ -54,17 +54,23 @@ export function CapacityPopover({
       <PopoverContent align="start" className="animate-pop-in w-[340px] gap-3 p-3">
         <div className="flex flex-col gap-0.5">
           <span className="text-sm font-semibold">{unit.name}</span>
-          <span className="text-muted-foreground font-mono text-xs">{provider.popoverMeta(unit, t, hos)}</span>
+          <span className="text-muted-foreground font-mono text-xs">
+            {provider.popoverMeta(unit, t, hos)}
+          </span>
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-xs font-medium">{provider.matchesTitle(unit, t)}</span>
+          <span className="text-muted-foreground text-xs font-medium">
+            {provider.matchesTitle(unit, t)}
+          </span>
           {isLoading ? (
             <>
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
             </>
           ) : matches.length === 0 ? (
-            <span className="text-muted-foreground text-sm">{t("Nothing uncovered fits right now.")}</span>
+            <span className="text-muted-foreground text-sm">
+              {t("Nothing uncovered fits right now.")}
+            </span>
           ) : (
             matches.map((match, index) => (
               <div key={match.shipmentId} className="flex items-center gap-2">

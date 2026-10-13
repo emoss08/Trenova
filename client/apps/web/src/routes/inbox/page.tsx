@@ -7,7 +7,7 @@ import { useUserTimezone } from "@/hooks/use-user-timezone";
 import type { InboundMessageFilter, TriageView } from "@/lib/graphql/inbox";
 import type { SelectOption } from "@/lib/graphql/select-options";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { inboxMessagesQuery } from "@/lib/queries/inbox";
 import type { RoutePrefetch, RoutePrefetchEntry } from "@/lib/route-prefetch";
 import { knownRow } from "@/lib/triage/cache";
@@ -122,16 +122,12 @@ const AI_CONTROL_PATH = "/admin/agent-control";
  */
 export const prefetch: RoutePrefetch = ({ request }) => {
   const location = parseTriageLocation(new URL(request.url).searchParams);
-  const entries: RoutePrefetchEntry[] = [
-    queries.inbox.counts(),
-    queries.inbox.mailboxes(),
-    queries.inbox.views(),
-  ];
+  const entries: RoutePrefetchEntry[] = [inbox.counts(), inbox.mailboxes(), inbox.views()];
   const folder = location.folder;
   if (folder.kind === "briefing") {
-    entries.push(queries.inbox.briefing());
+    entries.push(inbox.briefing());
   } else if (folder.kind === "rules") {
-    entries.push(queries.inbox.rules());
+    entries.push(inbox.rules());
   } else if (folder.kind !== "view") {
     const settled =
       folder.kind === "lane" && (folder.lane === "handled" || folder.lane === "ignored");
@@ -145,7 +141,7 @@ export const prefetch: RoutePrefetch = ({ request }) => {
     }
   }
   if (location.messageId !== null) {
-    entries.push(queries.inbox.message(location.messageId));
+    entries.push(inbox.message(location.messageId));
   }
 
   return entries;
@@ -409,10 +405,10 @@ function TriageWorkspace({
           message,
           selection,
           meId,
-          assignees: queryClient.getQueryData(queries.inbox.assignees().queryKey) ?? [],
+          assignees: queryClient.getQueryData(inbox.assignees().queryKey) ?? [],
           documentTypes:
             queryClient.getQueryData<GenericLimitOffsetResponse<SelectOption>>(
-              queries.inbox.documentTypes().queryKey,
+              inbox.documentTypes().queryKey,
             )?.results ?? [],
           time: { now: Math.floor(Date.now() / 1000), timeZone, format: USER_FORMATTERS },
           open: (target) => openMessage(target),

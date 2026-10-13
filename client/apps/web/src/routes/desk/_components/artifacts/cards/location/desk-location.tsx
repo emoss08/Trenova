@@ -11,7 +11,7 @@ import type {
   LocationDwell,
   LocationPolicies,
 } from "@/lib/graphql/location-card";
-import { queries } from "@/lib/queries";
+import { location as locationQueries } from "@/lib/queries/location";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -99,7 +99,7 @@ export function DeskLocation({
 }: LocationCardProps) {
   const t = useT();
   const query = useQuery({
-    ...queries.location.card(recordId),
+    ...locationQueries.card(recordId),
     retry: false,
     placeholderData: keepPreviousData,
   });
@@ -153,12 +153,12 @@ function LocationCard({
   const id = location.id;
 
   const dwell = useQuery({
-    ...queries.location.dwell(id, span),
+    ...locationQueries.dwell(id, span),
     retry: false,
     enabled: access.detention,
   });
   const policies = useQuery({
-    ...queries.location.policies(id, POLICY_ROWS),
+    ...locationQueries.policies(id, POLICY_ROWS),
     retry: false,
     enabled: access.detention,
   });

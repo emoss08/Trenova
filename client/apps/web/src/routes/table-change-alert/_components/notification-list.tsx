@@ -3,7 +3,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { formatTimestamp, getPriorityConfig, SOURCE_LABELS } from "@/lib/notification-helpers";
-import { queries } from "@/lib/queries";
+import { notification as notificationQueries } from "@trenova/shared/lib/queries/notification";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { Notification } from "@trenova/shared/types/notification";
@@ -91,13 +91,13 @@ export default function NotificationList() {
 
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery(queries.notification.feed({ first: 50 }));
-  const { data: unreadCount = 0 } = useQuery(queries.notification.unreadCount());
+  const { data, isLoading } = useQuery(notificationQueries.feed({ first: 50 }));
+  const { data: unreadCount = 0 } = useQuery(notificationQueries.unreadCount());
 
   const notifications = data?.results ?? [];
 
   const invalidate = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: queries.notification._def });
+    void queryClient.invalidateQueries({ queryKey: notificationQueries._def });
   }, [queryClient]);
 
   const handleMarkRead = useCallback(

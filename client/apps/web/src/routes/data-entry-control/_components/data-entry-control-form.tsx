@@ -11,7 +11,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { caseFormatChoices } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { dataEntryControl } from "@/lib/queries/data-entry-control";
 import { apiService } from "@/services/api";
 import { dataEntryControlSchema, type DataEntryControl } from "@/types/data-entry-control";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +23,7 @@ export default function DataEntryControlForm() {
   const t = useT();
 
   const { data } = useSuspenseQuery({
-    ...queries.dataEntryControl.get(),
+    ...dataEntryControl.get(),
   });
 
   const form = useForm<DataEntryControl>({
@@ -34,13 +34,13 @@ export default function DataEntryControlForm() {
   const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
-    queryKey: queries.dataEntryControl.get._def,
+    queryKey: dataEntryControl.get._def,
     mutationFn: async (values: DataEntryControl) =>
       apiService.dataEntryControlService.update(values),
     resourceName: "Data Entry Control",
     resetForm: reset,
     form,
-    invalidateQueries: [queries.dataEntryControl.get._def],
+    invalidateQueries: [dataEntryControl.get._def],
   });
 
   const onSubmit = useCallback(

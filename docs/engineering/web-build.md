@@ -36,14 +36,20 @@ Things that were on every page and are not any more, and how they were kept off:
 - The password and role gates with `react-hook-form`: `routes/session-gates.tsx`, loaded when
   a session meets one.
 - GraphQL fragment text and unused documents: see below.
-- The central `queries` object (`lib/queries/index.ts`): it merges every factory, and with them
-  every service, type and GraphQL document. The shell, the command palette (preloaded on every
-  page once the app is idle) and the Home page import the factory they need from its own module
-  (`import { pageFavorite } from "@/lib/queries/page-favorite"`); the keys are the same
-  (`lib/queries/__tests__/direct-factories.test.ts`, which lists every factory imported this
-  way). This cut the startup download from 610 to 560 kB gzip and a first visit to Home from
-  1,084 to 1,053 kB. One import of `queries` from any of them puts all of it back; name an
-  import (`insight as insightQueries`) where a local of the same name would shadow it.
+- The central `queries` object (`lib/queries/index.ts`), which merged every factory and with
+  them every service, type and GraphQL document. It is gone: every module imports the factory
+  it reads from that factory's own module (`import { pageFavorite } from
+  "@/lib/queries/page-favorite"`), aliased with a `Queries` suffix only where a local of the
+  same name would shadow it (`shipment as shipmentQueries`). The keys are unchanged, since each
+  factory builds its keys from its own scope. Dropping it from the shell, palette and Home cut
+  the startup download from 610 to 560 kB gzip; dropping it everywhere cut what a route page
+  downloads beyond startup from a median of 147 to 109 kB gzip (276 of 433 routes smaller). An
+  import of `@/lib/queries` fails lint (`no-restricted-imports`). A test that stubs a factory
+  mocks that factory's module, keeping the module's other exports with `importOriginal` when
+  the code under test reads them; `test/data-table-queries.ts` holds the factories a
+  `DataTable` reads, one entry per module. `hooks/__tests__/realtime-query-key-roots.test.ts`
+  finds every factory with `import.meta.glob` over `lib/queries/*.ts` and the shared package's,
+  so a new factory module is covered without being listed.
 
 `main.tsx` imports `@trenova/shared/styles/app.css` before anything else. A cascade layer is
 ranked by where its name first appears, and component stylesheets carry `@layer base` rules
@@ -149,6 +155,29 @@ The package declares `"sideEffects": false`. Import `getFragmentData` from
 `@trenova/graphql/fragment-data`, never from the `@trenova/graphql/generated` barrel, which
 re-exports `gql.ts` and its namespace import of every document.
 
+## Full-bundle dev server
+
+`pnpm --filter @trenova/web dev:bundled` (`vite --experimentalBundle`) serves the app bundled by
+Rolldown, as a build would, instead of as thousands of separate modules: a page loads a few
+large files rather than one request per module, and a component edit hot-swaps in about half a
+second with the page's state kept. The first page load bundles the shell (about 15 seconds
+cold); a route's chunk is bundled the first time something imports it. `pnpm dev` is unchanged
+and stays the default. An edit to a module that also exports something other than components
+(`sidebar-chrome.tsx` exports `formatAttentionCount`) reloads the page in both modes; that is
+Fast Refresh's rule, not the bundler's.
+
+The dev server bundles with `build.rolldownOptions`, so two of them are split by `command`:
+
+- **`strictExecutionOrder` is on in serve.** Without it a module the entry shares with a lazy
+  route is hoisted into a chunk the entry imports, and that chunk runs before the entry's own
+  body. React's refresh preamble is inlined from `index.html` into the entry's body, so the
+  components in the shared chunk checked for it first and threw "@vitejs/plugin-react can't
+  detect preamble"; which chunk failed changed with every rebundle (`page-*`, `use-reports-*`,
+  `route-command-data-*`). Strict order wraps each module so it runs in source order wherever
+  it lands. It costs bytes, so production leaves it off; a production build has no preamble.
+- **The chunk groups are build only.** The startup groups pull the shell's modules into chunks
+  ahead of the entry, which only moves more components in front of the preamble.
+
 ## Evaluated and not adopted
 
 - **`build.chunkImportMap`** stops one changed chunk from changing the hash of every chunk that
@@ -157,10 +186,6 @@ re-exports `gql.ts` and its namespace import of every document.
   blocks unless it lists the map's hash. Cloud's CSP (set by the `trenova` Worker) already lists
   `sha256-` hashes for inline scripts, so adopting it means adding the map's hash, which changes
   with every build, to that list at deploy; the self-hosted Caddy CSP would need the same.
-- **Full bundle mode in dev** (`vite --experimentalBundle`, `experimental.bundledDev`): as of
-  Vite 8.3.4 and `@vitejs/plugin-react` 6.1.2 the React refresh preamble is never injected and
-  the app does not render ("can't detect preamble"), with or without the compiler. Retry on
-  upgrades.
 - Rolldown `experimental.nativeMagicString` (slower here) and `tsc --checkers 8` (slower and
   9 GB, against 4 checkers' 6 GB).
 

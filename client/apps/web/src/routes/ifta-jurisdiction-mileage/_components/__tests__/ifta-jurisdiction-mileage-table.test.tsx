@@ -48,10 +48,19 @@ vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", async () => ({
-  queries: {
-    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
-  },
+vi.mock("@/lib/queries/bulk-edit", async () => ({
+  bulkEdit: (await import("@/test/data-table-queries")).dataTableQueryMocks.bulkEdit,
+}));
+vi.mock("@/lib/queries/table-layout", async () => ({
+  tableLayout: (await import("@/test/data-table-queries")).dataTableQueryMocks.tableLayout,
+}));
+vi.mock("@/lib/queries/data-table-insight", async () => ({
+  dataTableInsight: (await import("@/test/data-table-queries")).dataTableQueryMocks
+    .dataTableInsight,
+}));
+vi.mock("@/lib/queries/table-configuration", async () => ({
+  tableConfiguration: (await import("@/test/data-table-queries")).dataTableQueryMocks
+    .tableConfiguration,
 }));
 
 vi.mock("@trenova/shared/hooks/use-debounce", () => ({
@@ -59,7 +68,9 @@ vi.mock("@trenova/shared/hooks/use-debounce", () => ({
 }));
 
 function renderTable() {
-  const client = seedDataTableQueries(new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }));
+  const client = seedDataTableQueries(
+    new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }),
+  );
   render(
     <QueryClientProvider client={client}>
       <NuqsTestingAdapter hasMemory resetUrlUpdateQueueOnMount={false}>

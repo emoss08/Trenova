@@ -6,7 +6,8 @@ import {
   updateAgentControl,
 } from "@/lib/graphql/agent-control";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import { formatList } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -124,20 +125,20 @@ export default function AgentsTab() {
   const { allowed: canUpdateControl } = usePermission(Resource.AgentControl, Operation.Update);
 
   const summaryQuery = useQuery({
-    ...queries.aiControl.summary("Agents"),
+    ...aiControl.summary("Agents"),
     staleTime: SUMMARY_STALE_MS,
     refetchInterval: (state) => (state.state.data?.pending ? PENDING_REFRESH_MS : false),
   });
-  const agentsQuery = useQuery(queries.assistant.agents(false));
-  const rosterQuery = useQuery(queries.aiControl.roster());
-  const catalogQuery = useQuery(queries.assistant.toolCatalog());
-  const eventsQuery = useQuery(queries.assistant.eventKinds());
+  const agentsQuery = useQuery(assistant.agents(false));
+  const rosterQuery = useQuery(aiControl.roster());
+  const catalogQuery = useQuery(assistant.toolCatalog());
+  const eventsQuery = useQuery(assistant.eventKinds());
   const controlQuery = useQuery(agentControlQueryOptions());
   const facts = summaryQuery.data?.facts;
   const noProvider = facts ? facts.providersOn === 0 : false;
   const paused = facts?.paused ?? false;
   const runsQuery = useQuery({
-    ...queries.aiControl.workingRuns(),
+    ...aiControl.workingRuns(),
     refetchInterval: noProvider || paused ? false : WORKING_REFRESH_MS,
   });
 
@@ -177,8 +178,8 @@ export default function AgentsTab() {
 
   const refresh = useCallback(async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queries.assistant._def }),
-      queryClient.invalidateQueries({ queryKey: queries.aiControl._def }),
+      queryClient.invalidateQueries({ queryKey: assistant._def }),
+      queryClient.invalidateQueries({ queryKey: aiControl._def }),
     ]);
   }, [queryClient]);
 

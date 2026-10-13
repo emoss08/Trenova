@@ -13,7 +13,7 @@ import {
   type AgentCapabilityTool,
   type UpdateAgentCapabilitiesInput,
 } from "@/lib/graphql/agent-capabilities";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -70,7 +70,7 @@ export function DeskAgentPage({ agentId }: { agentId: string }) {
   const [search] = useSearchParams();
   const from = search.get("from");
   const queryClient = useQueryClient();
-  const query = queries.assistant.agentCapabilities(agentId);
+  const query = assistant.agentCapabilities(agentId);
   const capsQuery = useQuery(query);
   const caps = capsQuery.data;
 
@@ -78,7 +78,7 @@ export function DeskAgentPage({ agentId }: { agentId: string }) {
     mutationFn: (input: UpdateAgentCapabilitiesInput) => updateAgentCapabilities(agentId, input),
     onSuccess: (saved) => {
       queryClient.setQueryData(query.queryKey, saved);
-      void queryClient.invalidateQueries({ queryKey: queries.assistant.myAgents().queryKey });
+      void queryClient.invalidateQueries({ queryKey: assistant.myAgents().queryKey });
     },
     onError: () => {
       void queryClient.invalidateQueries({ queryKey: query.queryKey });

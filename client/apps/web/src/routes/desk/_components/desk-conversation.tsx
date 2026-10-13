@@ -6,7 +6,7 @@ import {
 import type { TurnHandoff } from "@/components/assistant/turn-stream";
 import { turnTime } from "@/components/desk-chat/turn-time";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { whenIdle } from "@/lib/when-idle";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskStore } from "@/stores/desk-store";
@@ -73,7 +73,7 @@ export function DeskConversation({
   }, [openWidget, setActiveThreadId, thread.id]);
 
   // The running turn's lookups are not counted until the reply keeps them.
-  const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id)._ctx.summary);
+  const artifactsQuery = useQuery(assistant.artifacts(thread.id)._ctx.summary);
   const { setArtifactCount, pendingLookups } = desk;
   const artifactTotal = useMemo(() => {
     const visible = withoutPendingLookups(
@@ -134,8 +134,8 @@ export function DeskConversation({
   const deskCase = useDeskCase(thread);
   const queryClient = useQueryClient();
   const refreshCase = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey });
-    void queryClient.invalidateQueries({ queryKey: queries.assistant.case(thread.id).queryKey });
+    void queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
+    void queryClient.invalidateQueries({ queryKey: assistant.case(thread.id).queryKey });
   }, [queryClient, thread.id]);
   const now = useSnoozeClock(
     thread.case?.state === "Snoozed" ? thread.case.snoozedUntil : null,
@@ -199,7 +199,7 @@ export function DeskConversation({
 /** The Desk's schedules for a conversation, in the shape the shared thread takes them. */
 function useDeskSchedules(threadId: string, timezone: string): DeskThreadSchedules {
   const scheduling = useCreateSchedule(threadId);
-  const schedulesQuery = useQuery(queries.assistant.schedules(threadId));
+  const schedulesQuery = useQuery(assistant.schedules(threadId));
   const actions = useScheduleActions(threadId);
   const [clock, setClock] = useState(() => Math.floor(Date.now() / 1000));
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { ACCOUNTING_INBOUND_PATH } from "@/lib/accounting-sync";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -8,7 +8,7 @@ import { Link } from "react-router";
 
 export function InboundPaymentsLink({ system }: { system: AccountingSystem }) {
   const t = useT();
-  const overview = useQuery(queries.accountingSync.inboundOverview(system));
+  const overview = useQuery(accountingSync.inboundOverview(system));
   const data = overview.data;
   if (!data) {
     return null;

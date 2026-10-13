@@ -11,7 +11,7 @@ import {
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import type { GeneratedFuelRow } from "@/lib/graphql/fuel-surcharge";
-import { queries } from "@/lib/queries";
+import { fuelSurcharge } from "@/lib/queries/fuel-surcharge";
 import { cn } from "@trenova/shared/lib/utils";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useQuery } from "@tanstack/react-query";
@@ -148,7 +148,7 @@ export function GenerateTableDialog({
   const tooMany = estimate > MAX_BANDS;
 
   const { data: preview, isFetching } = useQuery({
-    ...queries.fuelSurcharge.generateTable({
+    ...fuelSurcharge.generateTable({
       minPrice: String(debounced.minPrice),
       maxPrice: String(debounced.maxPrice),
       increment: String(debounced.increment),

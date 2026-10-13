@@ -1,6 +1,6 @@
 import { recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { queries } from "@/lib/queries";
+import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatNumber } from "@trenova/shared/i18n/format";
@@ -101,7 +101,7 @@ export function DeskShipment({
 }: ShipmentCardProps) {
   const t = useT();
   const query = useQuery({
-    ...queries.shipment.get(recordId),
+    ...shipmentQueries.get(recordId),
     retry: false,
     placeholderData: keepPreviousData,
   });
@@ -174,10 +174,10 @@ function ShipmentCard({
   const neighbors = neighborsIn(order, recordId);
 
   const { data: readiness } = useQuery({
-    ...queries.shipment.billingReadiness(recordId),
+    ...shipmentQueries.billingReadiness(recordId),
     enabled: billing === "readiness",
   });
-  const { data: events } = useQuery(queries.shipment.events(recordId, ACTIVITY_ROWS));
+  const { data: events } = useQuery(shipmentQueries.events(recordId, ACTIVITY_ROWS));
 
   const title =
     lane.from && lane.to

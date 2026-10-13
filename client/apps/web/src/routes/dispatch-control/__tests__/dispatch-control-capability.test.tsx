@@ -28,11 +28,9 @@ const control: DispatchControl = {
   recordServiceFailures: "Never",
 } as unknown as DispatchControl;
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    dispatchControl: {
-      get: () => ({ queryKey: ["dispatch-control"], queryFn: async () => control }),
-    },
+vi.mock("@/lib/queries/dispatch-control", () => ({
+  dispatchControl: {
+    get: () => ({ queryKey: ["dispatch-control"], queryFn: async () => control }),
   },
 }));
 

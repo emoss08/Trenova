@@ -4,7 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useMapId } from "@/hooks/use-map-id";
 import { locationGeofenceTypeChoices } from "@/lib/choices";
 import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { cn } from "@trenova/shared/lib/utils";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type {
@@ -245,7 +245,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
   } = useLocationGeofence();
 
   const googleMapsQuery = useQuery({
-    ...queries.integration.runtimeConfig("GoogleMaps"),
+    ...integration.runtimeConfig("GoogleMaps"),
     staleTime: 5 * 60 * 1000,
   });
 

@@ -5,7 +5,7 @@ import {
   accountingSetupPath,
   DEFAULT_ACCOUNTING_SYSTEM,
 } from "@/lib/accounting-sync";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -26,11 +26,11 @@ export function AccountingInboundPage() {
   const resolved = useConnectedAccountingSystem("syncSummary");
   const system = resolved.system ?? DEFAULT_ACCOUNTING_SYSTEM;
   const syncSummary = useQuery({
-    ...queries.accountingSync.syncSummary(system),
+    ...accountingSync.syncSummary(system),
     enabled: resolved.system !== null,
   });
   const overviewQuery = useQuery({
-    ...queries.accountingSync.inboundOverview(system),
+    ...accountingSync.inboundOverview(system),
     enabled: resolved.system !== null,
   });
   const providerName = syncSummary.data?.providerName ?? t("the accounting system");

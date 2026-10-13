@@ -4,7 +4,7 @@ import type { AgingBucketTotals } from "@/components/accounting/aging-buckets";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -73,7 +73,7 @@ export function ARAgingPage() {
     return getEndOfDay(new Date(asOfValue * 1000));
   }, [asOfValue]);
 
-  const { data: summary, isLoading } = useQuery(queries.ar.agingSummary(asOfUnix));
+  const { data: summary, isLoading } = useQuery(ar.agingSummary(asOfUnix));
 
   const filteredRows = useMemo(() => {
     const rows = summary?.rows ?? [];

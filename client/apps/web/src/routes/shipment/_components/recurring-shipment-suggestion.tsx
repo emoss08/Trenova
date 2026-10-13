@@ -9,7 +9,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { usePermissions } from "@/hooks/use-permission";
 import { describeCron } from "@/lib/cron";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
-import { queries } from "@/lib/queries";
+import { recurringShipment } from "@/lib/queries/recurring-shipment";
 import { apiService } from "@/services/api";
 import { Resource } from "@trenova/shared/types/permission";
 import type { RecurringShipment } from "@/types/recurring-shipment";
@@ -203,7 +203,7 @@ export function RecurringShipmentSuggestion() {
 
   const enabled = canRead && !!laneKey;
   const { data } = useQuery({
-    ...queries.recurringShipment.match(
+    ...recurringShipment.match(
       laneKey ?? { customerId: "", originLocationId: "", destinationLocationId: "" },
     ),
     enabled,

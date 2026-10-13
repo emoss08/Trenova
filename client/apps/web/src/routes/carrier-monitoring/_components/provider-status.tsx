@@ -6,7 +6,7 @@ import {
   resumeCarrierIntelMonitoring,
   type CarrierIntelMonitoringStatus,
 } from "@/lib/graphql/carrier-intel-settings";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -40,7 +40,7 @@ export function ProviderStatus({ status, canManage }: ProviderStatusProps) {
         description: t("Paused feeds poll again on their next scheduled run."),
       });
       await queryClient.invalidateQueries({
-        queryKey: queries.carrierIntelSettings.monitoringStatus().queryKey,
+        queryKey: carrierIntelSettings.monitoringStatus().queryKey,
       });
     },
   });

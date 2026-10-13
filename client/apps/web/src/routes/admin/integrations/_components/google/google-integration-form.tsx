@@ -15,7 +15,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +29,7 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
-    ...queries.integration.config("GoogleMaps"),
+    ...integration.config("GoogleMaps"),
     enabled: open,
   });
 
@@ -68,10 +68,10 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
       toast.success(t("Google Maps integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.integration.config("GoogleMaps").queryKey,
+          queryKey: integration.config("GoogleMaps").queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.integration.catalog().queryKey,
+          queryKey: integration.catalog().queryKey,
         }),
       ]);
     },

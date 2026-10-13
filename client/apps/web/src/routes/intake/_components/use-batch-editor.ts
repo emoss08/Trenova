@@ -8,7 +8,7 @@ import {
   type CaptureBatchDetail,
   type CaptureItem,
 } from "@/lib/graphql/capture";
-import { queries } from "@/lib/queries";
+import { capture } from "@/lib/queries/capture";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useMemo, useState } from "react";
@@ -107,12 +107,12 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
   const refresh = useCallback(
     (next?: CaptureBatchDetail) => {
       if (next !== undefined) {
-        queryClient.setQueryData(queries.capture.batch(next.id).queryKey, next);
+        queryClient.setQueryData(capture.batch(next.id).queryKey, next);
       }
       return Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.capture.batch(batch.id).queryKey }),
-        queryClient.invalidateQueries({ queryKey: queries.capture.batches._def }),
-        queryClient.invalidateQueries({ queryKey: queries.capture.batchCount._def }),
+        queryClient.invalidateQueries({ queryKey: capture.batch(batch.id).queryKey }),
+        queryClient.invalidateQueries({ queryKey: capture.batches._def }),
+        queryClient.invalidateQueries({ queryKey: capture.batchCount._def }),
       ]);
     },
     [batch.id, queryClient],
@@ -127,7 +127,7 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
       return batch;
     }
     const next = await editCaptureItems(batch.id, toEditInput(layout, saved, batch.version));
-    queryClient.setQueryData(queries.capture.batch(next.id).queryKey, next);
+    queryClient.setQueryData(capture.batch(next.id).queryKey, next);
     return next;
   }, [batch, dirty, layout, queryClient, saved]);
 

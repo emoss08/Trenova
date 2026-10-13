@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
@@ -52,12 +52,12 @@ export default function LoadEnvelopePanel() {
   const version = useWatch({ control, name: "version" });
   const moves = useWatch({ control, name: "moves" });
 
-  const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
+  const { data: shipmentUIPolicy } = useQuery({ ...shipment.uiPolicy() });
   const profile = getProfile(shipmentUIPolicy);
   const visible = isCapabilitySectionVisible(profile, CAPABILITIES.dimensionalCargo);
 
   const { data: assessment, isPending } = useQuery({
-    ...queries.shipment.permitAssessment(shipmentId as string, version),
+    ...shipment.permitAssessment(shipmentId as string, version),
     enabled: visible && !!shipmentId,
   });
 
@@ -126,11 +126,11 @@ function EnvelopeBody({
   // per-row actions read the persisted set instead. Falling back to the derived
   // list keeps the summary honest on a shipment saved before the engine ran.
   const { data: persisted } = useQuery({
-    ...queries.shipment.permitRequirements(shipmentId),
+    ...shipment.permitRequirements(shipmentId),
     enabled: !!shipmentId,
   });
   const { data: permits } = useQuery({
-    ...queries.shipment.permits(shipmentId),
+    ...shipment.permits(shipmentId),
     enabled: !!shipmentId,
   });
 

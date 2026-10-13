@@ -1,5 +1,5 @@
 import { useTrackingEventLabels } from "@/hooks/use-tracking-event-labels";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import { stopRouteLabel } from "@/lib/stop-labels";
 import {
   groupTrackingEventsByStop,
@@ -29,7 +29,7 @@ export function StopReports() {
   const moves = useWatch({ control, name: "moves" });
 
   const { data, isPending, isError, error } = useQuery({
-    ...queries.shipment.trackingEvents(shipmentId ?? ""),
+    ...shipment.trackingEvents(shipmentId ?? ""),
     enabled: !!shipmentId,
   });
 

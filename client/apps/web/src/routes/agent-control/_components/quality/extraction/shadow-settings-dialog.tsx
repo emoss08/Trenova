@@ -1,5 +1,5 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import {
   EXTRACTION_SHADOW_REPORT_KEY,
   EXTRACTION_SHADOW_SETTINGS_KEY,
@@ -66,7 +66,7 @@ export function ShadowSettingsDialog({ open, onOpenChange, settings }: ShadowSet
   const sampleId = useId();
   const limitId = useId();
   const queryClient = useQueryClient();
-  const providers = useQuery({ ...queries.aiProvider.list(), enabled: open });
+  const providers = useQuery({ ...aiProvider.list(), enabled: open });
   const [draft, setDraft] = useState<ShadowSettingsDraft>(() => draftOf(settings));
   const [openedFor, setOpenedFor] = useState({ open, version: settings.version });
 

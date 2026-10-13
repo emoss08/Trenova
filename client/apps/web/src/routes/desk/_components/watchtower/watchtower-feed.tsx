@@ -8,7 +8,9 @@ import {
   type WatchtowerSeverity,
   type WatchtowerSourceKind,
 } from "@/lib/graphql/watchtower";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
+import { attention } from "@/lib/queries/attention";
+import { watchtower } from "@/lib/queries/watchtower";
 import { apiService } from "@/services/api";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -52,17 +54,17 @@ export function WatchtowerFeed() {
   const [view, setView] = useState<ExceptionView>("all");
   const [openItemId, setOpenItemId] = useState<string | null>(null);
 
-  const countsQuery = useQuery(queries.watchtower.counts());
+  const countsQuery = useQuery(watchtower.counts());
   const filter = useMemo(
     () => ({ kinds, severities, unresolvedOnly: true, ...exceptionViewFilter(view) }),
     [kinds, severities, view],
   );
-  const feedQuery = useQuery(queries.watchtower.feed(filter));
+  const feedQuery = useQuery(watchtower.feed(filter));
 
   const refresh = useCallback(async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queries.watchtower._def }),
-      queryClient.invalidateQueries({ queryKey: queries.attention._def }),
+      queryClient.invalidateQueries({ queryKey: watchtower._def }),
+      queryClient.invalidateQueries({ queryKey: attention._def }),
     ]);
   }, [queryClient]);
 
@@ -80,7 +82,7 @@ export function WatchtowerFeed() {
     let cancelled = false;
     void markWatchtowerSeen().then((counts) => {
       if (!cancelled) {
-        queryClient.setQueryData(queries.watchtower.counts().queryKey, counts);
+        queryClient.setQueryData(watchtower.counts().queryKey, counts);
       }
     });
 
@@ -124,7 +126,7 @@ export function WatchtowerFeed() {
   // the agent starts with the subject rather than with the question "which
   // shipment?". The agent is the one the person last talked to, on the same
   // rule the ask box uses.
-  const agentsQuery = useQuery(queries.assistant.myAgents());
+  const agentsQuery = useQuery(assistant.myAgents());
   const lastAgentId = useAssistantStore((state) => state.lastAgentId);
   const askAgent =
     agentsQuery.data?.find((agent) => agent.id === lastAgentId) ?? agentsQuery.data?.[0] ?? null;

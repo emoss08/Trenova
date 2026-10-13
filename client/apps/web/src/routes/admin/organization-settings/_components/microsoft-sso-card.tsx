@@ -17,7 +17,7 @@ import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
-import { queries } from "@/lib/queries";
+import { organization } from "@/lib/queries/organization";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { type MicrosoftSSOConfig } from "@trenova/shared/types/organization";
@@ -84,7 +84,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
     typeof window !== "undefined" ? `${window.location.origin}/login/{loginSlug}` : "";
 
   const configQuery = useQuery({
-    ...queries.organization.microsoftSSO(organizationId),
+    ...organization.microsoftSSO(organizationId),
     enabled: Boolean(organizationId),
   });
 
@@ -148,7 +148,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
         redirectUrl: data.redirectUrl || redirectUrl,
       });
       await queryClient.invalidateQueries({
-        queryKey: queries.organization.microsoftSSO(organizationId).queryKey,
+        queryKey: organization.microsoftSSO(organizationId).queryKey,
       });
       toast.success(t("Microsoft Entra ID SSO settings updated"));
     },

@@ -2,7 +2,7 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { AuthEvent, RiskDecision } from "@trenova/shared/types/iam";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { securityTabParser, type SecurityTabValue } from "@/hooks/use-organization-setting-state";
-import { queries } from "@/lib/queries";
+import { organization } from "@/lib/queries/organization";
 import { formatIdentityProviderName } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
@@ -74,10 +74,10 @@ function SecurityOverviewSection({ organizationId }: { organizationId: string })
     queryKey: [identityProviderQueryKey(organizationId)],
     queryFn: async () => apiService.organizationService.listIdentityProviders(organizationId),
   });
-  const directoriesQuery = useQuery(queries.organization.scimDirectories(organizationId));
-  const policiesQuery = useQuery(queries.organization.accessPolicies(organizationId));
-  const authEventsQuery = useQuery(queries.organization.authEvents(organizationId));
-  const riskQuery = useQuery(queries.organization.riskDecisions(organizationId));
+  const directoriesQuery = useQuery(organization.scimDirectories(organizationId));
+  const policiesQuery = useQuery(organization.accessPolicies(organizationId));
+  const authEventsQuery = useQuery(organization.authEvents(organizationId));
+  const riskQuery = useQuery(organization.riskDecisions(organizationId));
 
   const providers = useMemo(() => providersQuery.data ?? [], [providersQuery.data]);
   const directories = useMemo(

@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import { formatCurrency, formatPerMile } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { toneVar } from "@/components/kpi/tone";
@@ -21,7 +21,7 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
   const t = useT();
 
   const { data, isLoading } = useQuery({
-    ...queries.shipment.profitability(shipmentId),
+    ...shipment.profitability(shipmentId),
     staleTime: 60_000,
   });
 

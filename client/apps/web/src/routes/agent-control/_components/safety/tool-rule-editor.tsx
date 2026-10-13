@@ -9,7 +9,7 @@ import {
   type AgentToolPolicy,
   type AgentToolRuleImpact,
 } from "@/lib/graphql/agent-safety";
-import { queries } from "@/lib/queries";
+import { agentSafety } from "@/lib/queries/agent-safety";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -74,7 +74,7 @@ export function ToolRuleEditor({ open, policy, holders, onClose, onSaved }: Tool
   const values = useWatch({ control: form.control }) as ToolRuleFormValues;
   const input = toToolRuleInput(values);
   const impact = useQuery({
-    ...queries.agentSafety.ruleImpact(policy.name, {
+    ...agentSafety.ruleImpact(policy.name, {
       maxTier: input.maxTier,
       readsExternal: input.readsExternal,
     }),
@@ -87,7 +87,7 @@ export function ToolRuleEditor({ open, policy, holders, onClose, onSaved }: Tool
       const saved = await saveAgentToolRule(policy.name, next.version, toToolRuleInput(next));
       onSaved?.(saved.tool);
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.agentSafety._def }),
+        queryClient.invalidateQueries({ queryKey: agentSafety._def }),
         queryClient.invalidateQueries({ queryKey: [AGENT_TOOL_RULE_LIST_KEY] }),
         queryClient.invalidateQueries({ queryKey: [AGENT_TOOL_SAFETY_LIST_KEY] }),
       ]);

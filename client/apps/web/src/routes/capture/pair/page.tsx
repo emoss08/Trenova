@@ -5,7 +5,8 @@ import {
   formatPairingCode,
   normalizePairingCode,
 } from "@/lib/capture";
-import { queries } from "@/lib/queries";
+import { capture } from "@/lib/queries/capture";
+import { userOrganization } from "@/lib/queries/user";
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
@@ -98,8 +99,8 @@ export function CapturePairPage() {
   });
   const [outcome, setOutcome] = useState<PairingOutcome | null>(null);
 
-  const accessQuery = useQuery(queries.capture.access());
-  const organizationsQuery = useQuery(queries.userOrganization.all());
+  const accessQuery = useQuery(capture.access());
+  const organizationsQuery = useQuery(userOrganization.all());
   const currentOrganization = organizationsQuery.data?.find((org) => org.isCurrent);
   const organization =
     currentOrganization === undefined
@@ -109,7 +110,7 @@ export function CapturePairPage() {
           switchable: (organizationsQuery.data?.length ?? 0) > 1,
         };
   const previewQuery = useQuery({
-    ...queries.capture.pairing(submitted ?? ""),
+    ...capture.pairing(submitted ?? ""),
     enabled: submitted !== null && outcome === null,
     retry: false,
   });

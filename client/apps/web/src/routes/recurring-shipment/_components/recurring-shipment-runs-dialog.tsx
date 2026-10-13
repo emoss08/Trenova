@@ -10,7 +10,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { RecurringShipmentRow } from "@/lib/graphql/recurring-shipment-table";
-import { queries } from "@/lib/queries";
+import { recurringShipment } from "@/lib/queries/recurring-shipment";
 import { cn } from "@trenova/shared/lib/utils";
 import type { RecurringShipmentRun, RecurringShipmentRunStatus } from "@/types/recurring-shipment";
 import { useQuery } from "@tanstack/react-query";
@@ -67,7 +67,7 @@ export function RecurringShipmentRunsDialog({
   const t = useT();
 
   const { data, isLoading } = useQuery({
-    ...queries.recurringShipment.listRuns(series?.id ?? "", { limit: 50 }),
+    ...recurringShipment.listRuns(series?.id ?? "", { limit: 50 }),
     enabled: open && !!series?.id,
   });
 

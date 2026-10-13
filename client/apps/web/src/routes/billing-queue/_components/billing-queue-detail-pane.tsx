@@ -8,7 +8,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { exceptionReasonLabels } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { billingQueue } from "@/lib/queries/billing-queue";
 import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { CommentsTabSkeleton } from "@/routes/shipment/_components/comments/comments-skeleton";
@@ -49,7 +49,7 @@ export default function BillingQueueDetailPane({
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
 
   const { data: item, isLoading } = useQuery({
-    ...queries.billingQueue.get(selectedItemId ?? ""),
+    ...billingQueue.get(selectedItemId ?? ""),
     enabled: !!selectedItemId,
   });
 

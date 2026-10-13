@@ -9,7 +9,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { accountingSyncObjectPath, accountingSyncRecordPhase } from "@/lib/accounting-sync";
 import type { AccountingSyncRecord } from "@/lib/graphql/accounting-sync-ledger";
 import type { AccountingSyncLedgerRow } from "@/lib/graphql/accounting-sync-ledger-table";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import { useQuery } from "@tanstack/react-query";
@@ -57,7 +57,7 @@ export function LedgerRecordPanel({
   const [{ panelEntityId }] = useQueryStates(panelSearchParamsParser);
   const recordId = row?.id ?? panelEntityId;
   const fetched = useQuery({
-    ...queries.accountingSync.syncRecord(recordId ?? ""),
+    ...accountingSync.syncRecord(recordId ?? ""),
     enabled: open && !row && !!recordId,
   });
   const record: AccountingSyncRecord | null = row ?? fetched.data ?? null;
@@ -110,7 +110,7 @@ function LedgerRecordDetail({
   const { allowed: canUpdate } = usePermission(Resource.AccountingSync, Operation.Update);
   const actions = useAccountingSyncActions(system, providerName);
   const [skipping, setSkipping] = useState(false);
-  const attempts = useQuery({ ...queries.accountingSync.syncAttempts(record.id), enabled: open });
+  const attempts = useQuery({ ...accountingSync.syncAttempts(record.id), enabled: open });
   const documentLink = accountingSyncObjectPath(record.objectType, record.objectId);
   const failed = record.status === "Blocked" || record.status === "DeadLettered";
 

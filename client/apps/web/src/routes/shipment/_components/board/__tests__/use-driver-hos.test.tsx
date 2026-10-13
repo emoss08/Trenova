@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { queries } from "@/lib/queries";
+import { telematics } from "@/lib/queries/telematics";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useDriverHos } from "../use-driver-hos";
@@ -11,7 +11,7 @@ vi.mock("@/lib/shipment-board/capabilities", () => ({
   useShipmentCapabilities: () => capabilities,
 }));
 
-const HOS_KEY = queries.telematics.workerHosStates().queryKey;
+const HOS_KEY = telematics.workerHosStates().queryKey;
 
 function seededClient(states: { workerId: string; driveRemainingMs: number }[]) {
   const queryClient = new QueryClient({

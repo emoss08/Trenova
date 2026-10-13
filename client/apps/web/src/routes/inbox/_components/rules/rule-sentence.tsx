@@ -1,5 +1,5 @@
 import type { InboundClassification, TriageRuleAction } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useRichT, type RichTags } from "@trenova/shared/i18n/rich";
@@ -246,7 +246,7 @@ export function RuleSentence({
   const [search, setSearch] = useState("");
   const settled = useDebounce(search.trim(), SEARCH_DEBOUNCE_MS);
   const domains = useQuery({
-    ...queries.inbox.senderDomains(settled),
+    ...inbox.senderDomains(settled),
     placeholderData: keepPreviousData,
     staleTime: 60_000,
   }).data;

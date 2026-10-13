@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { QueryLazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { queries } from "@/lib/queries";
+import { billingControl } from "@/lib/queries/billing-control";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { lazy } from "react";
@@ -19,7 +19,7 @@ export function BillingControlPage() {
       }}
     >
       <BillingControlAlert />
-      <QueryLazyComponent queryKey={queries.billingControl.get._def}>
+      <QueryLazyComponent queryKey={billingControl.get._def}>
         <BillingControlForm />
       </QueryLazyComponent>
     </PageLayout>

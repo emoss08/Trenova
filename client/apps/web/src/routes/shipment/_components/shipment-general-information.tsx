@@ -8,7 +8,8 @@ import {
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { CAPABILITIES, getProfile } from "@trenova/shared/lib/capability";
 import { ApiRequestError } from "@trenova/shared/lib/api";
-import { queries } from "@/lib/queries";
+import { customer } from "@/lib/queries/customer";
+import { shipment } from "@/lib/queries/shipment";
 import { apiService } from "@/services/api";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
@@ -32,7 +33,7 @@ export default function ShipmentGeneralInformation() {
   const t = useT();
 
   const { control } = useFormContext<Shipment>();
-  const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
+  const { data: shipmentUIPolicy } = useQuery({ ...shipment.uiPolicy() });
 
   const profile = getProfile(shipmentUIPolicy);
 
@@ -111,11 +112,11 @@ export function BOLField() {
 
   const customerId = useWatch({ control, name: "customerId" });
   const { data: billingProfile } = useQuery({
-    ...queries.customer.getBillingProfile(customerId),
+    ...customer.getBillingProfile(customerId),
     enabled: !!customerId,
   });
   const { data: shipmentUIPolicy } = useQuery({
-    ...queries.shipment.uiPolicy(),
+    ...shipment.uiPolicy(),
   });
 
   const bol = useWatch({ control, name: "bol" });

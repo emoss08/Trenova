@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { QueryLazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { queries } from "@/lib/queries";
+import { invoiceAdjustmentControl } from "@/lib/queries/invoice-adjustment-control";
 import { lazy } from "react";
 
 const InvoiceAdjustmentControlForm = lazy(
@@ -20,7 +20,7 @@ export function InvoiceAdjustmentControlPage() {
         ),
       }}
     >
-      <QueryLazyComponent queryKey={queries.invoiceAdjustmentControl.get._def}>
+      <QueryLazyComponent queryKey={invoiceAdjustmentControl.get._def}>
         <InvoiceAdjustmentControlForm />
       </QueryLazyComponent>
     </PageLayout>

@@ -5,7 +5,7 @@ import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { InboundMessageDetail } from "@/lib/graphql/inbox";
 import { agentRecency } from "@/lib/recent-agents";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
 import { useTriageStore } from "@/stores/triage-store";
@@ -63,7 +63,7 @@ function handedOver(message: InboundMessageDetail): AssistantEntityRef[] {
  */
 export function DeskHandoff({ messageId, onClose }: { messageId: string; onClose: () => void }) {
   const t = useT();
-  const message = useQuery(queries.inbox.message(messageId)).data;
+  const message = useQuery(inbox.message(messageId)).data;
 
   return (
     <Sheet open onOpenChange={(open) => (open ? undefined : onClose())}>

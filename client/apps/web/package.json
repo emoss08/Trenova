@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:bundled": "vite --experimentalBundle",
     "typecheck": "tsc -b",
     "build": "vite build",
     "bundle:check": "node scripts/bundle-budget.ts",

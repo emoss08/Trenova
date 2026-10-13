@@ -1,10 +1,11 @@
-import { queries } from "@/lib/queries";
+import { dataTableInsight } from "@/lib/queries/data-table-insight";
 import type { DataTableAggregatesQuery } from "@trenova/graphql/generated/graphql";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { DataTableQueryOptions } from "@trenova/shared/types/data-table";
 import { useMemo } from "react";
 
-export type DataTableAggregateValues = DataTableAggregatesQuery["dataTableAggregates"]["values"][number];
+export type DataTableAggregateValues =
+  DataTableAggregatesQuery["dataTableAggregates"]["values"][number];
 
 export type DataTableTotals = {
   count: number;
@@ -41,7 +42,7 @@ export function useDataTableInsights({
   dataVersion,
 }: UseDataTableInsightsParams) {
   const fieldsQuery = useQuery({
-    ...queries.dataTableInsight.fields(resource ?? ""),
+    ...dataTableInsight.fields(resource ?? ""),
     enabled: !!resource,
     staleTime: Infinity,
     retry: false,
@@ -71,7 +72,7 @@ export function useDataTableInsights({
   );
 
   const aggregatesQuery = useQuery({
-    ...queries.dataTableInsight.aggregates(
+    ...dataTableInsight.aggregates(
       { resource: resource ?? "", fields: totalled, filter, options },
       dataVersion,
     ),

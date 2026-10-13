@@ -1,8 +1,12 @@
 import { useUserTimezone } from "@/hooks/use-user-timezone";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { resolveCoverage } from "@/lib/shipment-board/coverage";
 import { quickFilterLabel } from "@/lib/shipment-board/quick-filters";
-import { getDestinationLocation, getDestinationStop, getOriginLocation } from "@/lib/shipment-utils";
+import {
+  getDestinationLocation,
+  getDestinationStop,
+  getOriginLocation,
+} from "@/lib/shipment-utils";
 import type { ShipmentQuickFilter } from "@trenova/graphql/generated/graphql";
 import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -36,7 +40,10 @@ function PreviewLoad({ shipment, onOpen }: { shipment: Shipment; onOpen: () => v
   const destination = getDestinationLocation(shipment);
   const stop = getDestinationStop(shipment);
   const arrival =
-    shipment.eta?.estimatedArrival ?? stop?.scheduledWindowEnd ?? stop?.scheduledWindowStart ?? null;
+    shipment.eta?.estimatedArrival ??
+    stop?.scheduledWindowEnd ??
+    stop?.scheduledWindowStart ??
+    null;
   const delta = useEtaDelta(shipment);
   const uncovered = resolveCoverage(shipment).kind === "uncovered";
 
@@ -95,7 +102,7 @@ export function BriefingLoadsPreview({
   const timezone = useUserTimezone();
   const openRecord = useOpenShipmentRecord();
   const { data, isLoading, isError } = useQuery({
-    ...queries.shipmentBoard.briefingLoads(filter, timezone, BRIEFING_PREVIEW_LOADS),
+    ...shipmentBoard.briefingLoads(filter, timezone, BRIEFING_PREVIEW_LOADS),
     staleTime: PREVIEW_STALE_MS,
   });
 
@@ -141,9 +148,7 @@ export function BriefingLoadsPreview({
         onClick={onShowAll}
         className="ui-focus-ring border-border text-muted-foreground hover:text-foreground border-t px-3 py-2 text-left text-xs transition-colors"
       >
-        {total > loads.length
-          ? t("Show all {0} on the board", total)
-          : t("Show on the board")}
+        {total > loads.length ? t("Show all {0} on the board", total) : t("Show on the board")}
       </button>
     </div>
   );
