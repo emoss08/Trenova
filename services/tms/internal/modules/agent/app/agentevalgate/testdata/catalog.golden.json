@@ -22456,7 +22456,8 @@
                 "MoveCoverage",
                 "TelematicsStopVisit",
                 "AgentQualityRegression",
-                "AccountingSync"
+                "AccountingSync",
+                "NoCheckCall"
               ],
               "type": "string",
               "x-enumOf": "watchtower.sourceKind"

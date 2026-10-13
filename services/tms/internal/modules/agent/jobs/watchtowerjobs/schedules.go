@@ -1,6 +1,8 @@
 package watchtowerjobs
 
 import (
+	"time"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
@@ -29,6 +31,17 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
 				"purpose": "watchtower-reconcile",
+			},
+		},
+		{
+			ID:            "no-check-call-sweep",
+			Description:   "Raise and clear watchtower items for brokered loads overdue a check call",
+			Spec:          schedule.Every(15 * time.Minute),
+			Workflow:      NoCheckCallSweepWorkflow,
+			TaskQueue:     temporaltype.TaskQueueSystem.String(),
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "no-check-call-sweep",
 			},
 		},
 		{

@@ -22,6 +22,9 @@ const (
 	// WatchtowerRetentionWorkflowName removes items resolved long enough ago
 	// that nobody is looking back at them.
 	WatchtowerRetentionWorkflowName = "WatchtowerRetentionWorkflow"
+	// NoCheckCallSweepWorkflowName raises and clears the items for brokered
+	// loads that have gone quiet past their check call window.
+	NoCheckCallSweepWorkflowName = "NoCheckCallSweepWorkflow"
 )
 
 // WatchtowerBackfillInput names the tenant to fill. An empty organization

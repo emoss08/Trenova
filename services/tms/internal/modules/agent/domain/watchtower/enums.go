@@ -26,6 +26,7 @@ const (
 	SourceTelematicsStopVisit    = SourceKind("TelematicsStopVisit")
 	SourceAgentQualityRegression = SourceKind("AgentQualityRegression")
 	SourceAccountingSync         = SourceKind("AccountingSync")
+	SourceNoCheckCall            = SourceKind("NoCheckCall")
 )
 
 // readResources is the permission a reader needs to be shown items of each
@@ -50,6 +51,7 @@ var readResources = map[SourceKind]permission.Resource{
 	SourceTelematicsStopVisit:    permission.ResourceShipmentMove,
 	SourceAgentQualityRegression: permission.ResourceAgentEvalSuite,
 	SourceAccountingSync:         permission.ResourceAccountingSync,
+	SourceNoCheckCall:            permission.ResourceShipmentMove,
 }
 
 func (k SourceKind) IsValid() bool {
@@ -104,6 +106,8 @@ func (k SourceKind) Label() string {
 		return "Agent quality regressed"
 	case SourceAccountingSync:
 		return "Accounting sync"
+	case SourceNoCheckCall:
+		return "No check call"
 	default:
 		return string(k)
 	}
@@ -129,6 +133,7 @@ func AllSourceKinds() []SourceKind {
 		SourceTelematicsStopVisit,
 		SourceAgentQualityRegression,
 		SourceAccountingSync,
+		SourceNoCheckCall,
 	}
 }
 
@@ -188,7 +193,8 @@ func (k SourceKind) OverseesAgents() bool {
 		SourceWorkerCredential,
 		SourceMoveCoverage,
 		SourceTelematicsStopVisit,
-		SourceAccountingSync:
+		SourceAccountingSync,
+		SourceNoCheckCall:
 		return false
 	default:
 		return false
