@@ -112,6 +112,10 @@ aliases:
 virtuals:
   CustomerEmailProfile:
     - fromEmail
+  LogCheckCallPayload:
+    - checkCall
+    - outcome
+    - outcomeReason
   AICorrection:
     - accuracy
   AITuneUp:

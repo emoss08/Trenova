@@ -214,6 +214,8 @@
   "Changing somebody's hours needs a reason": "Cambiar las horas de alguien requiere un motivo",
   "Chase again": "Reclamar de nuevo",
   "Cheapest": "Más barato",
+  "Check call interval cannot exceed 72 hours": "El intervalo de llamadas de control no puede superar las 72 horas",
+  "Check call interval must be at least 1 hour": "El intervalo de llamadas de control debe ser de al menos 1 hora",
   "Choose a course": "Elija un curso",
   "Choose a credential type": "Elija un tipo de credencial",
   "Choose a plan": "Elija un plan",

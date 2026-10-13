@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/jobs/checkcalljobs"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/detentionjobs"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/recurringshipmentjobs"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs"
@@ -11,6 +12,7 @@ import (
 
 func WorkerOptions() fx.Option {
 	return fx.Options(
+		checkcalljobs.Module,
 		detentionjobs.Module,
 		shipmentjobs.Module,
 		recurringshipmentjobs.Module,

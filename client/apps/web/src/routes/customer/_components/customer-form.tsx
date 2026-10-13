@@ -203,6 +203,30 @@ export function CustomerForm() {
       </FormSection>
 
       <FormSection
+        title={t("Check calls")}
+        description={t(
+          "How long this customer's brokered loads may go without word from the carrier before they are raised",
+        )}
+      >
+        <FormGroup cols={2}>
+          <FormControl>
+            <NumberField
+              control={control}
+              name="checkCallIntervalHours"
+              label={t("Check call window")}
+              placeholder={t("Organization default")}
+              description={t(
+                "From 1 to 72 hours. Leave empty to use the window set in dispatch controls.",
+              )}
+              sideText="hours"
+              min={1}
+              max={72}
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
+
+      <FormSection
         title={t("Shipment consolidation")}
         description={t(
           "Control whether multiple shipments for this customer can share trailer space",

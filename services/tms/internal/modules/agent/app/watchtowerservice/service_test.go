@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -613,4 +613,49 @@ func TestReconcile_FollowsTheSourcesAndSurvivesOneFailing(t *testing.T) {
 		[]watchtower.SourceKind{watchtower.SourceInsight, watchtower.SourceServiceFailure},
 		svc.RegisteredKinds(),
 	)
+}
+
+func TestReconcileKind_TouchesOnlyTheNamedKind(t *testing.T) {
+	t.Parallel()
+
+	repo := newStubRepo()
+	tenant := testActor().TenantInfo()
+	quiet := &stubSource{kind: watchtower.SourceNoCheckCall}
+	failures := &stubSource{kind: watchtower.SourceServiceFailure}
+	svc := newService(repo, &agenttest.StubPermissions{}, quiet, failures)
+	svc.projector.Upsert(
+		t.Context(),
+		input(tenant, watchtower.SourceNoCheckCall, "sm_1", watchtower.SeverityWarning, 100),
+	)
+	svc.projector.Upsert(
+		t.Context(),
+		input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100),
+	)
+
+	result, err := svc.ReconcileKind(t.Context(), tenant, watchtower.SourceNoCheckCall)
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, result.Resolved)
+	assert.NotNil(t, repo.items[repo.key(watchtower.SourceNoCheckCall, "sm_1")].ResolvedAt)
+	assert.Nil(
+		t,
+		repo.items[repo.key(watchtower.SourceServiceFailure, "sf_1")].ResolvedAt,
+		"another kind is left for the nightly reconcile",
+	)
+	require.Len(t, repo.resolved, 1)
+	assert.Equal(t, watchtower.SourceNoCheckCall, repo.resolved[0].SourceKind)
+}
+
+func TestReconcileKind_RefusesAnUnknownKind(t *testing.T) {
+	t.Parallel()
+
+	svc := newService(newStubRepo(), &agenttest.StubPermissions{})
+
+	_, err := svc.ReconcileKind(
+		t.Context(),
+		testActor().TenantInfo(),
+		watchtower.SourceKind("Nope"),
+	)
+
+	require.Error(t, err)
 }

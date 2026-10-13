@@ -311,6 +311,19 @@ record link means regenerating it** (`pnpm --filter @trenova/web guide:generate`
 otherwise. Record links are built from one registry, `client/apps/web/src/config/record-links.ts`
 (`recordPath`), never by hand. Read [docs/engineering/product-guide.md](docs/engineering/product-guide.md).
 
+## Integration Logos
+
+Every integration logo comes from Brandfetch, never drawn or traced by hand. Look the brand up
+with the Brand API (`GET https://api.brandfetch.io/v2/brands/{domain}`, `Authorization: Bearer
+<key>`), download the SVG it lists (PNG only when it has no SVG) unmodified into
+`client/apps/web/public/integrations/logos/`, and point both the client vendor entry and the
+server catalog (`integrationports`) at it. Brandfetch's `theme` is the tone of the logo itself,
+not of the background it sits on (Xero's `light` variant is the white mark), so its `dark`
+variant is our `*-light` file and its `light` variant our `*-dark` one. When Brandfetch has no mark for the product itself, or none for one of the two
+backgrounds, use the parent company's (Business Central uses Microsoft's; QuickBooks shows
+Intuit's in dark mode). The API key and client ID are the
+maintainer's: ask for them or read `BRANDFETCH_API_KEY`, and never commit them.
+
 ## GraphQL (gqlgen + gqlexec)
 
 - Schema lives in `services/tms/internal/api/graphql/schema/*.graphqls`; regenerate with `task gqlgen`. It runs `internal/api/graphql/gqlexec/gen`, which keeps gqlgen's binder, models and resolver stubs but writes the executor as one package per schema file (`internal/api/graphql/generated/exec/<file>exec`) on a shared runtime (`internal/api/graphql/gqlexec`). Never run `go tool gqlgen generate`; it writes gqlgen's single-package executor and breaks the build. Read [docs/engineering/graphql-executor.md](docs/engineering/graphql-executor.md) before changing the generator or runtime.
@@ -463,6 +476,18 @@ call `RecordStopActual` for a new source. **Read
 [docs/engineering/tracking-events.md](docs/engineering/tracking-events.md) before changing
 `trackingevent`, `trackingeventservice`, `ReconcileStopActuals`, the telematics stop-visit
 path, the EDI 214 parser, or adding anything that records a stop actual.**
+
+## Check Calls
+
+A brokered load is followed through `check_calls`: dispatchers log calls (`logCheckCall`), the
+load monitor logs them with `log_check_call`, and the carrier posts through a per-move token
+link at `/carrier-tracking/:token` without signing in. An arrival or departure also goes through
+tracking events (people strict, the carrier tolerant as source `Carrier`). With monitoring on in
+dispatch controls, an in-transit carrier load quiet past its window (customer override, else the
+organization's) raises a `NoCheckCall` watchtower item, swept every 15 minutes and cleared the
+moment a check call lands. **Read [docs/engineering/check-calls.md](docs/engineering/check-calls.md)
+before changing `checkcall`, `checkcallservice`, the carrier tracking link or its public page,
+or the no-check-call sweep.**
 
 ## AI Training Export
 

@@ -264,6 +264,7 @@ func (t Template) StarterTools() []string {
 			"email_customer",
 			"send_detention_notice",
 			"record_stop_actual",
+			"log_check_call",
 		}
 	case TemplateGeneralAssistant:
 		return nil

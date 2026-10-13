@@ -38,6 +38,7 @@ var toolMinutesSaved = map[string]int{
 	"place_shipment_hold":   4,
 	"release_shipment_hold": 4,
 	"record_stop_actual":    2,
+	"log_check_call":        3,
 	"cancel_shipment":       6,
 	"create_shipment":       15,
 	"quote_shipment":        8,

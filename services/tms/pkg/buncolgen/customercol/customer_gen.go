@@ -71,6 +71,7 @@ var CustomerColumns = struct {
 	StatusUpdatePreference buncolgen.Column // "status_update_preference" → qualified: "cus.status_update_preference"
 	StatusUpdateRecipients buncolgen.Column // "status_update_recipients" → qualified: "cus.status_update_recipients"
 	BrokerVettingEnabled   buncolgen.Column // "broker_vetting_enabled" → qualified: "cus.broker_vetting_enabled"
+	CheckCallIntervalHours buncolgen.Column // "check_call_interval_hours" → qualified: "cus.check_call_interval_hours"
 	Geom                   buncolgen.Column // "geom" → qualified: "cus.geom"
 	AllowConsolidation     buncolgen.Column // "allow_consolidation" → qualified: "cus.allow_consolidation"
 	ExclusiveConsolidation buncolgen.Column // "exclusive_consolidation" → qualified: "cus.exclusive_consolidation"
@@ -102,6 +103,7 @@ var CustomerColumns = struct {
 	StatusUpdatePreference: buncolgen.NewColumn("status_update_preference", "cus"),
 	StatusUpdateRecipients: buncolgen.NewColumn("status_update_recipients", "cus"),
 	BrokerVettingEnabled:   buncolgen.NewColumn("broker_vetting_enabled", "cus"),
+	CheckCallIntervalHours: buncolgen.NewColumn("check_call_interval_hours", "cus"),
 	Geom:                   buncolgen.NewColumn("geom", "cus"),
 	AllowConsolidation:     buncolgen.NewColumn("allow_consolidation", "cus"),
 	ExclusiveConsolidation: buncolgen.NewColumn("exclusive_consolidation", "cus"),
@@ -139,6 +141,7 @@ var CustomerFieldMap = map[string]string{
 	"statusUpdatePreference": "status_update_preference",
 	"statusUpdateRecipients": "status_update_recipients",
 	"brokerVettingEnabled":   "broker_vetting_enabled",
+	"checkCallIntervalHours": "check_call_interval_hours",
 	"allowConsolidation":     "allow_consolidation",
 	"exclusiveConsolidation": "exclusive_consolidation",
 	"consolidationPriority":  "consolidation_priority",
@@ -171,6 +174,7 @@ var CustomerInsertableColumns = []string{
 	"status_update_preference",
 	"status_update_recipients",
 	"broker_vetting_enabled",
+	"check_call_interval_hours",
 	"allow_consolidation",
 	"exclusive_consolidation",
 	"consolidation_priority",
@@ -269,6 +273,7 @@ var CustomerFilter = struct {
 	StatusUpdatePreference func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "statusUpdatePreference" → DB: "status_update_preference"
 	StatusUpdateRecipients func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "statusUpdateRecipients" → DB: "status_update_recipients"
 	BrokerVettingEnabled   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "brokerVettingEnabled" → DB: "broker_vetting_enabled"
+	CheckCallIntervalHours func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "checkCallIntervalHours" → DB: "check_call_interval_hours"
 	AllowConsolidation     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowConsolidation" → DB: "allow_consolidation"
 	ExclusiveConsolidation func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exclusiveConsolidation" → DB: "exclusive_consolidation"
 	ConsolidationPriority  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationPriority" → DB: "consolidation_priority"
@@ -338,6 +343,9 @@ var CustomerFilter = struct {
 	},
 	BrokerVettingEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("brokerVettingEnabled", op, value)
+	},
+	CheckCallIntervalHours: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("checkCallIntervalHours", op, value)
 	},
 	AllowConsolidation: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("allowConsolidation", op, value)

@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/checkcallcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
 	"github.com/emoss08/trenova/pkg/buncolgen/costingcontrolcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
@@ -248,7 +249,11 @@ var CarrierSettlementControlSpec TypeSpec
 
 var CarrierSettlementLineSpec TypeSpec
 
+var CarrierTrackingLinkSpec TypeSpec
+
 var ChargeAllocationSpec TypeSpec
+
+var CheckCallSpec TypeSpec
 
 var CommoditySpec TypeSpec
 
@@ -449,6 +454,8 @@ var LeaveControlSpec TypeSpec
 var LocationSpec TypeSpec
 
 var LocationCategorySpec TypeSpec
+
+var LogCheckCallPayloadSpec TypeSpec
 
 var ManualJournalSpec TypeSpec
 
@@ -8097,6 +8104,49 @@ func init() {
 		},
 	}
 
+	CarrierTrackingLinkSpec = TypeSpec{
+		TypeName: "CarrierTrackingLink",
+		FieldMap: checkcallcol.TrackingLinkFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "recipientEmail",
+				FieldMapKey: "recipientEmail",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "lastUsedAt",
+				FieldMapKey: "lastUsedAt",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
 	ChargeAllocationSpec = TypeSpec{
 		TypeName: "ChargeAllocation",
 		FieldMap: shipmentcol.ChargeAllocationFieldMap,
@@ -8179,6 +8229,93 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
+			},
+		},
+	}
+
+	CheckCallSpec = TypeSpec{
+		TypeName: "CheckCall",
+		FieldMap: checkcallcol.CheckCallFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "stopId",
+				FieldMapKey: "stopId",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "reportedAt",
+				FieldMapKey: "reportedAt",
+			},
+			{
+				Name:        "receivedAt",
+				FieldMapKey: "receivedAt",
+			},
+			{
+				Name:        "latitude",
+				FieldMapKey: "latitude",
+			},
+			{
+				Name:        "longitude",
+				FieldMapKey: "longitude",
+			},
+			{
+				Name:        "city",
+				FieldMapKey: "city",
+			},
+			{
+				Name:        "stateCode",
+				FieldMapKey: "stateCode",
+			},
+			{
+				Name:        "delayed",
+				FieldMapKey: "delayed",
+			},
+			{
+				Name:        "delayReason",
+				FieldMapKey: "delayReason",
+			},
+			{
+				Name:        "estimatedArrival",
+				FieldMapKey: "estimatedArrival",
+			},
+			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
+				Name:        "contactName",
+				FieldMapKey: "contactName",
+			},
+			{
+				Name:        "reportedById",
+				FieldMapKey: "reportedById",
+			},
+			{
+				Name:        "trackingEventId",
+				FieldMapKey: "trackingEventId",
 			},
 		},
 	}
@@ -16409,6 +16546,10 @@ func init() {
 				FieldMapKey: "shipperCustomerId",
 			},
 			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
 				Name:    "shipperCustomer",
 				Special: "shipperCustomer",
 			},
@@ -17802,6 +17943,29 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
+			},
+		},
+	}
+
+	LogCheckCallPayloadSpec = TypeSpec{
+		TypeName: "LogCheckCallPayload",
+		FieldMap: trackingeventcol.TrackingEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:    "checkCall",
+				Special: "checkCall",
+			},
+			{
+				Name:    "outcome",
+				Special: "outcome",
+			},
+			{
+				Name:    "outcomeReason",
+				Special: "outcomeReason",
 			},
 		},
 	}

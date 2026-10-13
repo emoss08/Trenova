@@ -7,8 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -84,14 +82,6 @@ func (h *Handler) openAssistantThread(c *gin.Context) {
 		}
 	}
 
-	actor := permissionports.RequestActor{
-		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
-		PrincipalID:    authCtx.PrincipalID,
-		UserID:         authCtx.UserID,
-		APIKeyID:       authCtx.APIKeyID,
-		BusinessUnitID: authCtx.BusinessUnitID,
-		OrganizationID: authCtx.OrganizationID,
-	}
 	opened, err := h.pageAssistant.OpenPageThread(
 		c.Request.Context(),
 		&agentports.OpenPageThreadRequest{
@@ -100,7 +90,7 @@ func (h *Handler) openAssistantThread(c *gin.Context) {
 			SubjectType: agent.SubjectFormulaTemplate,
 			SubjectID:   templateID,
 		},
-		&actor,
+		h.studioActor(authCtx),
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)

@@ -9,6 +9,7 @@ import CodeMirror, {
   type ReactCodeMirrorRef,
 } from "@uiw/react-codemirror";
 import { useCallback, useEffect, useMemo, useRef, type Ref } from "react";
+import { highlightRangeExtension, setHighlightRange, type EditorRange } from "./highlight-range";
 import { Controller, type FieldValues } from "react-hook-form";
 import { useActiveEditorRegistration } from "./active-editor";
 import { usePreviewValues } from "./preview-values";
@@ -27,6 +28,12 @@ type ExpressionEditorProps<T extends FieldValues> = FormControlProps<T> &
     editorRef?: Ref<ReactCodeMirrorRef>;
     /** The editor reference-pane inserts fall back to when nothing else was focused. */
     primary?: boolean;
+    /** Drawn inside a card that owns the frame: no border of its own. */
+    embedded?: boolean;
+    /** A range of the expression to light, such as the statement an explanation row is about. */
+    highlight?: EditorRange | null;
+    /** Told where the cursor is, one-based, as it moves. */
+    onCursorChange?: (position: { line: number; column: number }) => void;
   };
 
 function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
@@ -48,6 +55,9 @@ export function ExpressionEditor<T extends FieldValues>({
   lint = true,
   editorRef,
   primary = false,
+  embedded = false,
+  highlight = null,
+  onCursorChange,
   control,
   rules,
   ...props
@@ -62,7 +72,18 @@ export function ExpressionEditor<T extends FieldValues>({
 
   const viewRef = useRef<EditorView | null>(null);
   const previewValues = usePreviewValues();
-  const extensions = useExprExtensions(known, lint, viewRef, previewValues);
+  const exprExtensions = useExprExtensions(known, lint, viewRef, previewValues);
+  const extensions = useMemo(
+    () => [...exprExtensions, highlightRangeExtension()],
+    [exprExtensions],
+  );
+
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: setHighlightRange.of(highlight) });
+  }, [highlight]);
+
+  const cursorRef = useRef(onCursorChange);
+  cursorRef.current = onCursorChange;
 
   const handleRef = useCallback(
     (instance: ReactCodeMirrorRef | null) => {
@@ -100,16 +121,23 @@ export function ExpressionEditor<T extends FieldValues>({
           <div
             onFocusCapture={() => setActive?.(viewRef.current)}
             className={cn(
-              "border-input overflow-hidden rounded-md border transition-all duration-200",
-"ui-container-focus-ring",
+              "overflow-hidden transition-all duration-200",
+              embedded ? "rounded-none" : "border-input ui-container-focus-ring rounded-md border",
               fieldState.invalid &&
-"ui-container-focus-ring [--ring:var(--ring-danger)] border-destructive",
+                !embedded &&
+                "ui-container-focus-ring border-destructive [--ring:var(--ring-danger)]",
             )}
           >
             <CodeMirror
               ref={handleRef}
               value={field.value || ""}
               onChange={(value) => field.onChange(value)}
+              onUpdate={(update) => {
+                if (!cursorRef.current || (!update.selectionSet && !update.docChanged)) return;
+                const head = update.state.selection.main.head;
+                const line = update.state.doc.lineAt(head);
+                cursorRef.current({ line: line.number, column: head - line.from + 1 });
+              }}
               extensions={extensions}
               aria-invalid={fieldState.invalid ? "true" : "false"}
               minHeight={isMini ? "60px" : undefined}

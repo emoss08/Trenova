@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,6 +38,7 @@ type ActivitiesParams struct {
 	Watchtower watchtowerports.WatchtowerService
 	Repo       watchtowerports.WatchtowerRepository
 	Tenants    tenantports.TenantSyncRepository
+	Controls   dispatchcontrolports.DispatchControlRepository
 	Logger     *zap.Logger
 }
 
@@ -43,6 +46,7 @@ type Activities struct {
 	watchtower watchtowerports.WatchtowerService
 	repo       watchtowerports.WatchtowerRepository
 	tenants    tenantports.TenantSyncRepository
+	controls   dispatchcontrolports.DispatchControlRepository
 	l          *zap.Logger
 }
 
@@ -51,6 +55,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		watchtower: p.Watchtower,
 		repo:       p.Repo,
 		tenants:    p.Tenants,
+		controls:   p.Controls,
 		l:          p.Logger.Named("job.watchtower"),
 	}
 }
@@ -58,6 +63,55 @@ func NewActivities(p ActivitiesParams) *Activities {
 // ReconcileActivity corrects every tenant's feed against its sources.
 func (a *Activities) ReconcileActivity(ctx context.Context) (*WatchtowerSweepResult, error) {
 	return a.sweepAll(ctx, a.watchtower.Reconcile)
+}
+
+// NoCheckCallSweepActivity corrects the no-check-call items of every
+// organization that watches its brokered loads for check calls. A load goes
+// overdue because time passed, not because anything was written, so nothing
+// could project it live.
+func (a *Activities) NoCheckCallSweepActivity(
+	ctx context.Context,
+) (*WatchtowerSweepResult, error) {
+	tenants, err := a.controls.ListCheckCallMonitoringTenants(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list check call monitoring tenants: %w", err)
+	}
+
+	result := newSweepResult()
+	for _, tenant := range tenants {
+		activity.RecordHeartbeat(ctx, tenant.OrgID.String())
+
+		tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
+		swept, sErr := a.watchtower.ReconcileKind(
+			tenantCtx,
+			tenant,
+			watchtower.SourceNoCheckCall,
+		)
+		if sErr != nil {
+			a.l.Error("no check call sweep failed for organization",
+				zap.String("organization", tenant.OrgID.String()),
+				zap.Error(sErr),
+			)
+			result.FailedOrganizations = append(
+				result.FailedOrganizations,
+				tenant.OrgID.String(),
+			)
+
+			continue
+		}
+
+		result.OrganizationsProcessed++
+		absorb(result, swept)
+	}
+
+	a.l.Info("no check call sweep complete",
+		zap.Int("organizations", result.OrganizationsProcessed),
+		zap.Int("upserted", result.Upserted),
+		zap.Int("resolved", result.Resolved),
+		zap.Strings("failedSources", result.FailedSources),
+	)
+
+	return result, nil
 }
 
 // BackfillActivity fills the named tenant's feed from what its sources

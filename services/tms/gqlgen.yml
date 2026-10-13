@@ -5143,3 +5143,15 @@ models:
   StopVisitKind:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.VisitKind
+  CheckCall:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.CheckCall
+  CheckCallSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.Source
+  CheckCallKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.Kind
+  CarrierTrackingLink:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.TrackingLink

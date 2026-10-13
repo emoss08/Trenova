@@ -9,31 +9,37 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
-// Readiness check statuses. A failing check blocks the step it belongs to; a
-// warning is advice the author can act on but is not held to.
 const (
 	ReadinessPass = "pass"
 	ReadinessWarn = "warn"
 	ReadinessFail = "fail"
 )
 
-// Readiness check keys, stable so the Studio can map them to controls.
 const (
-	ReadinessCheckStatus      = "status"
-	ReadinessCheckReviewer    = "reviewer"
-	ReadinessCheckAge         = "submissionAge"
-	ReadinessCheckExpression  = "expression"
-	ReadinessCheckDescription = "description"
-	ReadinessCheckNullables   = "nullableFields"
-	ReadinessCheckScenarios   = "scenarios"
+	ReadinessCheckDetails    = "details"
+	ReadinessCheckExpression = "expression"
+	ReadinessCheckNullables  = "nullableFields"
+	ReadinessCheckScenarios  = "scenarios"
+	ReadinessCheckBreakdown  = "breakdown"
+	ReadinessCheckStatus     = "status"
+	ReadinessCheckReviewer   = "reviewer"
+	ReadinessCheckAge        = "submissionAge"
 )
+
+var reconcileTolerance = decimal.New(5, -3)
 
 type ReadinessRequest struct {
 	TenantInfo pagination.TenantInfo
@@ -45,11 +51,18 @@ type ReadinessCheck struct {
 	Label  string `json:"label"`
 	Status string `json:"status"`
 	Detail string `json:"detail,omitempty"`
+
+	refusal string
 }
 
-// ReadinessResponse is the review gate, computed ahead of time. It answers
-// what Submit and Approve would refuse and why, so the Studio can show the
-// author the list before they press the button instead of after.
+func (c *ReadinessCheck) refusalMessage() string {
+	if c.refusal != "" {
+		return c.refusal
+	}
+
+	return c.Detail
+}
+
 type ReadinessResponse struct {
 	CanSubmit       bool             `json:"canSubmit"`
 	CanApprove      bool             `json:"canApprove"`
@@ -59,9 +72,34 @@ type ReadinessResponse struct {
 	ScenarioFailing []string         `json:"scenarioFailing,omitempty"`
 }
 
-// Readiness runs every check Submit and Approve enforce, without changing
-// anything, and reports each one. The checks are the same code the
-// transitions call, so the list can never disagree with the gate.
+type submissionGate struct {
+	details    ReadinessCheck
+	expression ReadinessCheck
+	scenarios  ReadinessCheck
+}
+
+func (g *submissionGate) checks() []ReadinessCheck {
+	return []ReadinessCheck{g.details, g.expression, g.scenarios}
+}
+
+func (g *submissionGate) blocking() bool {
+	for _, check := range g.checks() {
+		if check.Status == ReadinessFail {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (g *submissionGate) addRefusals(multiErr *errortypes.MultiError) {
+	for _, check := range g.checks() {
+		if check.Status == ReadinessFail {
+			multiErr.Add(check.Key, errortypes.ErrInvalid, "{0}", check.refusalMessage())
+		}
+	}
+}
+
 func (s *Service) Readiness(
 	ctx context.Context,
 	req *ReadinessRequest,
@@ -77,31 +115,31 @@ func (s *Service) Readiness(
 		return nil, err
 	}
 
-	ctx = ratetablecache.With(ctx)
-	ctx = contextvariablecache.With(ctx)
+	ctx = contextvariablecache.With(ratetablecache.With(ctx))
 
-	resp := &ReadinessResponse{Checks: make([]ReadinessCheck, 0, 6)}
-	blocking := false
+	resp := &ReadinessResponse{Checks: make([]ReadinessCheck, 0, 8)}
 
-	statusCheck, reviewerCheck := reviewStateChecks(template, req.TenantInfo.UserID)
-	ageCheck := submissionAgeCheck(template, timeutils.NowUnix())
-	resp.Checks = append(resp.Checks, statusCheck, reviewerCheck, ageCheck)
-
-	expressionCheck := s.expressionReadiness(ctx, template)
-	resp.Checks = append(resp.Checks, expressionCheck)
-	blocking = blocking || expressionCheck.Status == ReadinessFail
-
-	resp.Checks = append(resp.Checks, descriptionReadiness(template))
-	resp.Checks = append(resp.Checks, s.nullableReadiness(ctx, template))
-
-	scenarioCheck, err := s.scenarioReadiness(ctx, template, req.TenantInfo, resp)
+	gate, err := s.evaluateSubmissionGate(ctx, template, req.TenantInfo, resp)
 	if err != nil {
 		log.Error("failed to evaluate scenarios for readiness", zap.Error(err))
 		return nil, err
 	}
-	resp.Checks = append(resp.Checks, scenarioCheck)
-	blocking = blocking || scenarioCheck.Status == ReadinessFail
 
+	statusCheck, reviewerCheck := reviewStateChecks(template, req.TenantInfo.UserID)
+	ageCheck := submissionAgeCheck(template, timeutils.NowUnix())
+
+	resp.Checks = append(resp.Checks,
+		gate.details,
+		gate.expression,
+		s.nullableReadiness(ctx, template),
+		gate.scenarios,
+	)
+	if breakdownCheck, ok := s.breakdownReadiness(ctx, template, req.TenantInfo); ok {
+		resp.Checks = append(resp.Checks, breakdownCheck)
+	}
+	resp.Checks = append(resp.Checks, statusCheck, reviewerCheck, ageCheck)
+
+	blocking := gate.blocking()
 	resp.CanSubmit = !blocking && submittable(template.Status)
 	resp.CanApprove = !blocking &&
 		template.Status == formulatemplate.StatusInReview &&
@@ -109,6 +147,24 @@ func (s *Service) Readiness(
 		ageCheck.Status != ReadinessFail
 
 	return resp, nil
+}
+
+func (s *Service) evaluateSubmissionGate(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	tenantInfo pagination.TenantInfo,
+	resp *ReadinessResponse,
+) (*submissionGate, error) {
+	scenarios, err := s.scenarioReadiness(ctx, template, tenantInfo, resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &submissionGate{
+		details:    detailsReadiness(template),
+		expression: s.expressionReadiness(ctx, template),
+		scenarios:  scenarios,
+	}, nil
 }
 
 func submittable(status formulatemplate.Status) bool {
@@ -151,14 +207,50 @@ func reviewStateChecks(
 	return status, reviewer
 }
 
+func detailsReadiness(template *formulatemplate.FormulaTemplate) ReadinessCheck {
+	check := ReadinessCheck{Key: ReadinessCheckDetails, Label: "Name and description"}
+
+	nameMissing := strings.TrimSpace(template.Name) == ""
+	descriptionMissing := strings.TrimSpace(template.Description) == ""
+	switch {
+	case nameMissing && descriptionMissing:
+		check.Status = ReadinessFail
+		check.Detail = "Name and description are missing"
+	case nameMissing:
+		check.Status = ReadinessFail
+		check.Detail = "Name is missing"
+	case descriptionMissing:
+		check.Status = ReadinessFail
+		check.Detail = "Description is missing"
+	default:
+		check.Status = ReadinessPass
+		check.Detail = "Named and described"
+	}
+
+	return check
+}
+
 func (s *Service) expressionReadiness(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 ) ReadinessCheck {
-	check := ReadinessCheck{Key: ReadinessCheckExpression, Label: "Expression and rate tables"}
+	check := ReadinessCheck{Key: ReadinessCheckExpression, Label: "Expression is valid"}
 
 	candidate := *template
-	if err := s.validateTemplate(ctx, &candidate); err != nil {
+	candidate.NormalizeRounding()
+
+	domainErrs := errortypes.NewMultiError()
+	candidate.Validate(domainErrs)
+	for _, fieldErr := range domainErrs.Errors {
+		if fieldErr.Field == "name" || fieldErr.Field == "description" {
+			continue
+		}
+		check.Status = ReadinessFail
+		check.Detail = fieldErr.Error()
+		return check
+	}
+
+	if err := s.validateExpression(ctx, &candidate); err != nil {
 		check.Status = ReadinessFail
 		check.Detail = expressionErrorMessage(err)
 		return check
@@ -169,31 +261,13 @@ func (s *Service) expressionReadiness(
 	return check
 }
 
-func descriptionReadiness(template *formulatemplate.FormulaTemplate) ReadinessCheck {
-	check := ReadinessCheck{Key: ReadinessCheckDescription, Label: "Description"}
-	if strings.TrimSpace(template.Description) == "" {
-		check.Status = ReadinessWarn
-		check.Detail = "Say what this template prices and when it applies; reviewers read this first"
-		return check
-	}
-
-	check.Status = ReadinessPass
-	check.Detail = "Present"
-	return check
-}
-
 func (s *Service) nullableReadiness(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 ) ReadinessCheck {
-	check := ReadinessCheck{Key: ReadinessCheckNullables, Label: "Optional shipment fields"}
+	check := ReadinessCheck{Key: ReadinessCheckNullables, Label: "Safe on every shipment"}
 
-	variables := make(map[string]any, len(template.VariableDefinitions))
-	for _, def := range template.VariableDefinitions {
-		if def != nil && def.DefaultValue != nil {
-			variables[def.Name] = def.DefaultValue
-		}
-	}
+	variables := template.ScenarioContent().VariableDefaults()
 
 	fields := make([]string, 0, 2)
 	expressions := []string{template.Expression}
@@ -220,7 +294,8 @@ func (s *Service) nullableReadiness(
 	if len(fields) > 0 {
 		check.Status = ReadinessWarn
 		check.Detail = fmt.Sprintf(
-			"%s can be empty on a shipment; guard with coalesce so those shipments still price",
+			"%s can be empty: %s",
+			stringutils.CountNoun(len(fields), "value", "values"),
 			strings.Join(fields, ", "),
 		)
 		return check
@@ -237,7 +312,7 @@ func (s *Service) scenarioReadiness(
 	tenantInfo pagination.TenantInfo,
 	resp *ReadinessResponse,
 ) (ReadinessCheck, error) {
-	check := ReadinessCheck{Key: ReadinessCheckScenarios, Label: "Scenarios"}
+	check := ReadinessCheck{Key: ReadinessCheckScenarios, Label: "Scenarios pass"}
 
 	cases, err := s.testCaseRepo.ListByTemplate(ctx, formulatemplateports.ListTestCasesRequest{
 		TenantInfo: tenantInfo,
@@ -248,27 +323,26 @@ func (s *Service) scenarioReadiness(
 	}
 
 	if len(cases) == 0 {
-		check.Status = ReadinessWarn
-		check.Detail = "No scenarios pin this template's behaviour; pin a preview so a future edit cannot silently change the price"
+		check.Status = ReadinessFail
+		check.Detail = "Add at least one"
+		check.refusal = "Add at least one test scenario before submitting"
 		return check, nil
 	}
 
-	run := s.runCasesAgainstCandidate(ctx, template.SchemaID, tenantInfo, cases, &TestCaseCandidate{
-		Expression:           template.Expression,
-		VariableDefinitions:  template.VariableDefinitions,
-		BreakdownDefinitions: template.BreakdownDefinitions,
-		MinCharge:            template.MinCharge,
-		MaxCharge:            template.MaxCharge,
-		RoundingMode:         template.RoundingMode,
-		RoundingPrecision:    template.RoundingPrecision,
-	})
+	run := s.runCasesAgainstCandidate(
+		ctx,
+		template.SchemaID,
+		tenantInfo,
+		cases,
+		template.ScenarioContent(),
+	)
 
 	resp.ScenarioTotal = run.Total
 	resp.ScenarioPassed = run.Passed
+	check.Detail = fmt.Sprintf("%d of %d pass", run.Passed, run.Total)
 
 	if run.Failed == 0 {
 		check.Status = ReadinessPass
-		check.Detail = fmt.Sprintf("%d of %d passing", run.Passed, run.Total)
 		return check, nil
 	}
 
@@ -278,13 +352,102 @@ func (s *Service) scenarioReadiness(
 		}
 	}
 	check.Status = ReadinessFail
-	check.Detail = fmt.Sprintf(
-		"%d of %d failing: %s",
-		run.Failed,
+	check.refusal = fmt.Sprintf(
+		"Only %d of %d test scenarios pass; fix the formula or the scenarios before submitting",
+		run.Passed,
 		run.Total,
-		strings.Join(resp.ScenarioFailing, ", "),
 	)
 	return check, nil
+}
+
+func (s *Service) breakdownReadiness(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	tenantInfo pagination.TenantInfo,
+) (ReadinessCheck, bool) {
+	lines := make([]*formulatypes.BreakdownDefinition, 0, len(template.BreakdownDefinitions))
+	for _, def := range template.BreakdownDefinitions {
+		if def != nil {
+			lines = append(lines, def)
+		}
+	}
+	if len(lines) == 0 {
+		return ReadinessCheck{}, false
+	}
+
+	check := ReadinessCheck{Key: ReadinessCheckBreakdown, Label: "Breakdown reconciles"}
+
+	req := candidateRequest(template.SchemaID, tenantInfo, template.ScenarioContent(), nil)
+	req.Breakdowns = lines
+	result := s.TestExpression(ctx, req)
+	if !result.Valid {
+		check.Status = ReadinessWarn
+		check.Detail = "The formula does not run on the sample load, so the lines cannot be checked"
+		return check, true
+	}
+
+	failed := 0
+	sum := decimal.Zero
+	for _, item := range result.Breakdown {
+		if item.Error != "" {
+			failed++
+			continue
+		}
+		sum = sum.Add(item.Amount)
+	}
+	if failed > 0 {
+		check.Status = ReadinessWarn
+		check.Detail = fmt.Sprintf(
+			"%s fail on the sample load",
+			stringutils.CountNoun(failed, "line", "lines"),
+		)
+		return check, true
+	}
+
+	raw := result.RawAmount()
+	if sum.Sub(raw).Abs().GreaterThan(reconcileTolerance) {
+		check.Status = ReadinessWarn
+		check.Detail = fmt.Sprintf(
+			"Lines don't add up to the formula: they come to %s and the formula to %s",
+			money.FormatDollars(sum),
+			money.FormatDollars(raw),
+		)
+		return check, true
+	}
+
+	if result.Guardrail != nil && result.Guardrail.Applied {
+		check.Status = ReadinessWarn
+		check.Detail = fmt.Sprintf(
+			"The %s moved the total from %s, so the invoice lines won't match it",
+			boundNoun(result.Guardrail),
+			money.FormatDollars(raw),
+		)
+		return check, true
+	}
+
+	check.Status = ReadinessPass
+	check.Detail = "Lines explain the total"
+	return check, true
+}
+
+func (r *TestExpressionResponse) RawAmount() decimal.Decimal {
+	switch {
+	case r.Guardrail != nil:
+		return r.Guardrail.RawAmount
+	case r.Rounding != nil:
+		return r.Rounding.UnroundedAmount
+	}
+
+	amount, _ := r.Result.(decimal.Decimal)
+	return amount
+}
+
+func boundNoun(guardrail *formulatemplatetypes.GuardrailResult) string {
+	if guardrail != nil && guardrail.Bound == "max" {
+		return "maximum"
+	}
+
+	return "minimum"
 }
 
 func appendUnique(values []string, value string) []string {
@@ -296,9 +459,6 @@ func appendUnique(values []string, value string) []string {
 
 const agingSubmissionAfter int64 = 7 * 24 * 60 * 60
 
-// submissionAgeCheck warns a reviewer that a submission has been waiting and
-// fails once it has waited past the expiry, when approval is refused and the
-// sweep will return it to draft.
 func submissionAgeCheck(template *formulatemplate.FormulaTemplate, now int64) ReadinessCheck {
 	check := ReadinessCheck{Key: ReadinessCheckAge, Label: "Submission age"}
 	if template.Status != formulatemplate.StatusInReview || template.SubmittedAt == nil {

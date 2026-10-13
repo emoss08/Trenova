@@ -1,0 +1,115 @@
+"Who logged a check call."
+enum CheckCallSource {
+  Dispatcher
+  Carrier
+  Agent
+}
+
+"What a check call reports: a position update, or reaching or leaving a stop."
+enum CheckCallKind {
+  Update
+  Arrival
+  Departure
+}
+
+"""
+One report of where a brokered load is, from a dispatcher who called the
+carrier, the carrier through its tracking link, or an agent. An arrival or
+departure also settles the stop's actual times through its tracking event.
+"""
+type CheckCall {
+  id: ID!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  "The stop reached or left, for an arrival or departure."
+  stopId: ID
+  source: CheckCallSource!
+  kind: CheckCallKind!
+  "When it happened, as reported."
+  reportedAt: Timestamp!
+  "When Trenova received it."
+  receivedAt: Timestamp!
+  latitude: Float
+  longitude: Float
+  city: String
+  stateCode: String
+  delayed: Boolean!
+  delayReason: String
+  "The arrival the reporter expects at the next stop."
+  estimatedArrival: Timestamp
+  note: String
+  "Who the dispatcher spoke to, or who posted through the link."
+  contactName: String
+  reportedById: ID
+  "The tracking event an arrival or departure settled the stop through."
+  trackingEventId: ID
+}
+
+"""
+The live link a carrier uses to post check calls on one move. Only its
+existence is shown here: the link itself is returned once, when it is issued.
+"""
+type CarrierTrackingLink {
+  id: ID!
+  shipmentMoveId: ID!
+  carrierId: ID!
+  recipientEmail: String
+  expiresAt: Timestamp!
+  lastUsedAt: Timestamp
+  createdById: ID
+  createdAt: Timestamp!
+}
+
+input LogCheckCallInput {
+  shipmentMoveId: ID!
+  kind: CheckCallKind!
+  "Required for an arrival or departure."
+  stopId: ID
+  "Defaults to now. A time in the future is refused."
+  reportedAt: Timestamp
+  latitude: Float
+  longitude: Float
+  city: String
+  stateCode: String
+  delayed: Boolean
+  delayReason: String
+  estimatedArrival: Timestamp
+  note: String
+  contactName: String
+}
+
+type LogCheckCallPayload {
+  checkCall: CheckCall!
+  "What became of an arrival or departure when the stop's times were settled."
+  outcome: TrackingEventOutcome
+  outcomeReason: String
+}
+
+input IssueCarrierTrackingLinkInput {
+  shipmentMoveId: ID!
+  "Where to email the link. Leave empty to copy it instead."
+  recipientEmail: String
+}
+
+type IssueCarrierTrackingLinkPayload {
+  link: CarrierTrackingLink!
+  "The link to share. It is not stored and cannot be shown again."
+  url: String!
+  emailed: Boolean!
+  "Why the email could not be sent, when one was asked for. The link still works."
+  emailError: String
+}
+
+extend type Query {
+  "Every check call on a shipment's moves, newest first."
+  shipmentCheckCalls(shipmentId: ID!): [CheckCall!]!
+  "The live carrier tracking link on a move, if one has been issued."
+  carrierTrackingLink(shipmentMoveId: ID!): CarrierTrackingLink
+}
+
+extend type Mutation {
+  logCheckCall(input: LogCheckCallInput!): LogCheckCallPayload!
+  "Issue a tracking link for the move's carrier, replacing any live one."
+  issueCarrierTrackingLink(input: IssueCarrierTrackingLinkInput!): IssueCarrierTrackingLinkPayload!
+  revokeCarrierTrackingLink(shipmentMoveId: ID!): Boolean!
+}

@@ -19,10 +19,12 @@ type ImpactedUser struct {
 // PermittedUser is an active user who holds an operation on a resource in an
 // organization, through any role they are assigned or that role's parents.
 type PermittedUser struct {
-	UserID       pulid.ID `bun:"user_id"`
-	Name         string   `bun:"name"`
-	EmailAddress string   `bun:"email_address"`
-	Locale       string   `bun:"locale"`
+	UserID        pulid.ID `bun:"user_id"`
+	Name          string   `bun:"name"`
+	Username      string   `bun:"username"`
+	EmailAddress  string   `bun:"email_address"`
+	ProfilePicURL string   `bun:"profile_pic_url"`
+	Locale        string   `bun:"locale"`
 }
 
 type ListUsersWithPermissionRequest struct {

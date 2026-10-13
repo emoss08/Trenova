@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
+	"go.uber.org/zap"
 )
 
 type TestExpressionRequest struct {
@@ -32,6 +34,7 @@ type TestExpressionRequest struct {
 	// mode means the default policy, exactly as it does on a stored template.
 	RoundingMode      ratetypes.RoundingMode
 	RoundingPrecision int32
+	TraceStatements   bool
 }
 
 func (r *TestExpressionRequest) chargePolicy() formulatypes.ChargePolicy {
@@ -75,6 +78,7 @@ type TestExpressionResponse struct {
 	Rounding          *formulatemplatetypes.RoundingResult   `json:"rounding,omitempty"`
 	Warnings          []ExpressionWarning                    `json:"warnings,omitempty"`
 	Receipt           *formulatypes.Receipt                  `json:"receipt,omitempty"`
+	Statements        []formulatemplatetypes.Statement       `json:"statements,omitempty"`
 }
 
 func (s *Service) DescribeSchema(
@@ -92,6 +96,20 @@ func (s *Service) TestExpression(
 		previewEvaluationTimeout,
 	)
 
+	resp := s.testExpression(ctx, req)
+	if req.TraceStatements && resp.Statements == nil {
+		if statements, err := formula.SplitStatements(req.Expression); err == nil {
+			resp.Statements = statements
+		}
+	}
+
+	return resp
+}
+
+func (s *Service) testExpression(
+	ctx context.Context,
+	req *TestExpressionRequest,
+) *TestExpressionResponse {
 	err := s.formulaService.ValidateLookupTables(ctx, req.Expression, req.TenantInfo)
 	if err != nil {
 		return &TestExpressionResponse{
@@ -232,6 +250,25 @@ func (s *Service) testExpressionAgainstShipment(
 		}
 	}
 
+	resp := s.evaluateAgainstShipment(ctx, req, entity)
+	if req.TraceStatements {
+		resp.Statements = s.traceStatements(ctx, &formula.TraceStatementsRequest{
+			Expression: req.Expression,
+			SchemaID:   req.SchemaID,
+			Entity:     entity,
+			Variables:  req.Variables,
+			TenantInfo: req.TenantInfo,
+		})
+	}
+
+	return resp
+}
+
+func (s *Service) evaluateAgainstShipment(
+	ctx context.Context,
+	req *TestExpressionRequest,
+	entity *shipment.Shipment,
+) *TestExpressionResponse {
 	resp, err := s.formulaService.EvaluateExpression(ctx, &formula.EvaluateExpressionRequest{
 		Expression: req.Expression,
 		Entity:     entity,
@@ -281,7 +318,39 @@ func (s *Service) testExpressionWithEnv(
 		}
 	}
 
-	if err = s.formulaService.ValidateExpressionWithEnv(ctx, req.Expression, env); err != nil {
+	resp := s.evaluateWithEnv(ctx, req, env, lookup)
+	if req.TraceStatements {
+		resp.Statements = s.traceStatements(ctx, &formula.TraceStatementsRequest{
+			Expression: req.Expression,
+			Env:        env,
+			Lookup:     lookup,
+			TenantInfo: req.TenantInfo,
+		})
+	}
+
+	return resp
+}
+
+func (s *Service) traceStatements(
+	ctx context.Context,
+	req *formula.TraceStatementsRequest,
+) []formulatemplatetypes.Statement {
+	statements, err := s.formulaService.TraceStatements(ctx, req)
+	if err != nil {
+		s.l.Debug("statements could not be traced", zap.Error(err))
+		return nil
+	}
+
+	return statements
+}
+
+func (s *Service) evaluateWithEnv(
+	ctx context.Context,
+	req *TestExpressionRequest,
+	env map[string]any,
+	lookup formulatemplatetypes.RateTableLookup,
+) *TestExpressionResponse {
+	if err := s.formulaService.ValidateExpressionWithEnv(ctx, req.Expression, env); err != nil {
 		return &TestExpressionResponse{
 			Valid:   false,
 			Error:   err.Error(),

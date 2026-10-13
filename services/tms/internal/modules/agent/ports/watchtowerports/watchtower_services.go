@@ -137,4 +137,9 @@ type WatchtowerService interface {
 	// do. Both run per tenant.
 	Backfill(ctx context.Context, tenant pagination.TenantInfo) (*WatchtowerSweepResult, error)
 	Reconcile(ctx context.Context, tenant pagination.TenantInfo) (*WatchtowerSweepResult, error)
+	ReconcileKind(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		kind watchtower.SourceKind,
+	) (*WatchtowerSweepResult, error)
 }

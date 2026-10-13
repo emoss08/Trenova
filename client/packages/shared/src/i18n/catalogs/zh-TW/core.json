@@ -214,6 +214,8 @@
   "Changing somebody's hours needs a reason": "變更他人的工時須填寫原因",
   "Chase again": "再次催辦",
   "Cheapest": "最便宜",
+  "Check call interval cannot exceed 72 hours": "追蹤電話間隔不能超過 72 小時",
+  "Check call interval must be at least 1 hour": "追蹤電話間隔至少為 1 小時",
   "Choose a course": "選擇課程",
   "Choose a credential type": "選擇證照類型",
   "Choose a plan": "選擇方案",

@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/carriertrackingpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/casechecklisthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/collectionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
@@ -218,6 +219,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	carrierhandler.New,
 	rateconfirmationhandler.New,
 	rateconfirmationpublichandler.New,
+	carriertrackingpublichandler.New,
 	customerhandler.New,
 	customerpaymenthandler.New,
 	googlemapshandler.New,

@@ -1,3 +1,4 @@
+import { getCarrierTrackingLink, listShipmentCheckCalls } from "@/lib/graphql/check-calls";
 import {
   getShipmentProfitabilityGraphQL,
   listShipmentTrackingEventsGraphQL,
@@ -55,6 +56,17 @@ export const shipment = createQueryKeys("shipment", {
   trackingEvents: (shipmentId: NonNullable<Shipment["id"]>) => ({
     queryKey: ["tracking-events", shipmentId],
     queryFn: async ({ signal }) => listShipmentTrackingEventsGraphQL(shipmentId, { signal }),
+  }),
+  // Every check call on the shipment's moves, newest first: dispatcher calls,
+  // carrier posts through the tracking link, and agent reports.
+  checkCalls: (shipmentId: NonNullable<Shipment["id"]>) => ({
+    queryKey: ["check-calls", shipmentId],
+    queryFn: async ({ signal }) => listShipmentCheckCalls(shipmentId, { signal }),
+  }),
+  // The live carrier tracking link on one move, or null when none is out.
+  trackingLink: (moveId: string) => ({
+    queryKey: ["tracking-link", moveId],
+    queryFn: async ({ signal }) => getCarrierTrackingLink(moveId, { signal }),
   }),
   listComments: (req: PaginationInfo & { shipmentId: Shipment["id"] }) => ({
     queryKey: ["comments", req.shipmentId, req],

@@ -18,6 +18,9 @@ function entry(
     baseVersionNumber,
     createdAt,
     actor: null,
+    requestedReviewerId: null,
+    requestedReviewer: null,
+    reviewerNote: "",
   };
 }
 

@@ -183,6 +183,17 @@ function lintBrackets(expression: string, diagnostics: ExprDiagnostic[]) {
   }
 }
 
+const LET_BINDING = /\blet\s+([A-Za-z_][A-Za-z0-9_]*)\s*=/g;
+
+/** Names the expression binds itself with `let`; they are known wherever they are read. */
+export function letBindings(expression: string): Set<string> {
+  const names = new Set<string>();
+  for (const match of expression.matchAll(LET_BINDING)) {
+    names.add(match[1]);
+  }
+  return names;
+}
+
 const TRAILING_OPERATOR = /(?:[+\-*/%^]|&&|\|\||==|!=|[<>]=?|\?|:|\b(?:and|or|not|in)\b)\s*$/;
 
 export function lintExpression(expression: string, known: KnownIdentifiers): ExprDiagnostic[] {
@@ -194,6 +205,7 @@ export function lintExpression(expression: string, known: KnownIdentifiers): Exp
   }
 
   lintBrackets(expression, diagnostics);
+  const bindings = letBindings(expression);
 
   if (TRAILING_OPERATOR.test(expression.trimEnd())) {
     const end = expression.trimEnd().length;
@@ -224,7 +236,7 @@ export function lintExpression(expression: string, known: KnownIdentifiers): Exp
       continue;
     }
 
-    if (!isKnownVariable(known, token.name)) {
+    if (!isKnownVariable(known, token.name) && !bindings.has(token.name.split(".")[0])) {
       const suggestion = nearestKnown(token.name, known.variablePaths);
       diagnostics.push({
         from: token.from,

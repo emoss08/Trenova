@@ -20,6 +20,7 @@ export function useTrackingEventLabels(): TrackingEventLabels {
       Dispatcher: t("Dispatcher"),
       Agent: t("Agent"),
       Driver: t("Driver"),
+      Carrier: t("Carrier"),
       Telematics: t("Telematics"),
       EDI: t("EDI"),
     };

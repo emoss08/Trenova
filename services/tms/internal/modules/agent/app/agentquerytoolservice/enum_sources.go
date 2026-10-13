@@ -85,6 +85,10 @@ var (
 		"formula.variableType",
 		[]string{"Number", "String", "Boolean"},
 	)
+	formulaTemplateTypeSource = agenttoolschema.Source(
+		"formula.templateType",
+		[]string{pagedraft.TemplateTypeFreightCharge, pagedraft.TemplateTypeAccessorialCharge},
+	)
 	ratingSides = agenttoolschema.Source(
 		"rating.side",
 		[]string{"Customer", "Carrier"},

@@ -703,6 +703,11 @@ writes:
   "mutation voidCarrierSettlement":
     tools: [void_carrier_settlement]
 
+  # carriertrackingpublic
+  "POST /api/v1/carrier-tracking-links/:token/check-calls/":
+    exempt: counterparty
+    reason: "The carrier posting through its own tracking link; an agent acting for the organization must not report for the carrier."
+
   # casechecklist
   "DELETE /api/v1/case-checklists/:templateID/":
     exempt: configuration
@@ -710,6 +715,14 @@ writes:
   "PUT /api/v1/case-checklists/":
     exempt: configuration
     reason: "How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it."
+
+  # checkcall
+  "mutation issueCarrierTrackingLink":
+    pending: "Issue a tracking link to the carrier on a brokered move and email it to them, replacing any live link."
+  "mutation logCheckCall":
+    tools: [log_check_call]
+  "mutation revokeCarrierTrackingLink":
+    pending: "Revoke the live carrier tracking link on a move, so the carrier can no longer post through it."
 
   # collection
   "POST /api/v1/accounting/collections/customers/:customerID/activities/":
@@ -1552,6 +1565,9 @@ writes:
   "POST /api/v1/formula-templates/:templateID/request-changes":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/:templateID/review-note":
+    exempt: read-only
+    reason: "Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes."
   "POST /api/v1/formula-templates/:templateID/rollback":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
@@ -1561,12 +1577,24 @@ writes:
   "POST /api/v1/formula-templates/:templateID/test-cases":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/:templateID/test-cases/:testCaseID/explain":
+    exempt: read-only
+    reason: "Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes."
   "POST /api/v1/formula-templates/:templateID/test-cases/run":
     exempt: read-only
     reason: "Evaluates a pricing formula against samples or past shipments and saves nothing."
   "POST /api/v1/formula-templates/:templateID/versions":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/ai/describe-inputs":
+    exempt: read-only
+    reason: "Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes."
+  "POST /api/v1/formula-templates/ai/explain":
+    exempt: read-only
+    reason: "Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes."
+  "POST /api/v1/formula-templates/ai/suggest-scenarios":
+    exempt: read-only
+    reason: "Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes."
   "POST /api/v1/formula-templates/ai/thread/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."

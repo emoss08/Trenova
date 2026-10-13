@@ -116,3 +116,22 @@ describe("lintExpression with expr string operators", () => {
     expect(lintExpression('code soundsLike "abc"', serverKnown)).toEqual([]);
   });
 });
+
+describe("let bindings", () => {
+  it("treats a name the expression binds with let as known wherever it is read", () => {
+    const known = buildKnownIdentifiers(undefined, []);
+    const diagnostics = lintExpression(
+      "let linehaul = baseRate * totalDistance;\nlet fuel = linehaul * 0.18;\nlinehaul + fuel",
+      known,
+    );
+    expect(diagnostics).toEqual([]);
+  });
+
+  it("still flags a name nothing binds", () => {
+    const known = buildKnownIdentifiers(undefined, []);
+    const diagnostics = lintExpression("let linehaul = baseRate;\nlinehaul + weekendFee", known);
+    expect(diagnostics.map((d) => d.message)).toEqual([
+      expect.stringContaining("weekendFee"),
+    ]);
+  });
+});

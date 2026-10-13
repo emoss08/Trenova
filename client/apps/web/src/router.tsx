@@ -2269,6 +2269,14 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
               return { Component: RateConfirmationPublicPage };
             },
           },
+          {
+            path: "/carrier-tracking/:token",
+            async lazy() {
+              const { CarrierTrackingPublicPage } =
+                await import("@/routes/carrier-tracking-public/page");
+              return { Component: CarrierTrackingPublicPage };
+            },
+          },
           ...edition.routes.public,
         ],
       },

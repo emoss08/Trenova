@@ -213,6 +213,43 @@ func TestProposeFormula_HandsTheEnginesProposalToThePage(t *testing.T) {
 	require.Len(t, workbench.proposed.Scenarios, 1)
 }
 
+func TestProposeFormula_PassesTheTemplateDetailsAndBreakdown(t *testing.T) {
+	t.Parallel()
+
+	workbench := &fakeWorkbench{}
+	tool := newProposeFormulaTool(workbench,
+		&authorPermissions{operations: []permission.Operation{permission.OpCreate}})
+
+	_, err := tool.Query(t.Context(), chatParams(map[string]any{
+		"expression":   "totalDistance * ratePerMile + handling",
+		"explanation":  "Per mile plus handling.",
+		"name":         "Per mile with handling",
+		"description":  "Linehaul by the mile plus a handling fee.",
+		"templateType": "FreightCharge",
+		"breakdown": []any{
+			map[string]any{
+				"name":       "linehaul",
+				"label":      "Linehaul",
+				"expression": "totalDistance * ratePerMile",
+			},
+			map[string]any{"name": "handlingFee", "label": "Handling", "expression": "handling"},
+		},
+	}, ""))
+	require.NoError(t, err)
+
+	details := workbench.proposed.Details
+	assert.Equal(t, "Per mile with handling", details.Name)
+	assert.Equal(t, "Linehaul by the mile plus a handling fee.", details.Description)
+	assert.Equal(t, "FreightCharge", details.TemplateType)
+	require.Len(t, details.Breakdown, 2)
+	assert.Equal(t, "handlingFee", details.Breakdown[1].Name)
+
+	properties := tool.ParamSchema()["properties"].(map[string]any)
+	for _, name := range []string{"name", "description", "templateType", "breakdown"} {
+		assert.Contains(t, properties, name)
+	}
+}
+
 func TestProposeFormula_TellsTheModelWhenTheEngineCouldNotRunIt(t *testing.T) {
 	t.Parallel()
 

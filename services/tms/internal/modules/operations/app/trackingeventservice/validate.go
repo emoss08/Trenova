@@ -20,7 +20,7 @@ func validateObserved(
 	}
 	addTarget(multiErr, params.TenantInfo, params.MoveID, params.StopID)
 	if params.Source.Interactive() || !params.Source.IsValid() {
-		multiErr.Add("source", errortypes.ErrInvalid, "Source must be Telematics or EDI")
+		multiErr.Add("source", errortypes.ErrInvalid, "Source must be Carrier, Telematics or EDI")
 	}
 	if params.Kind != shipment.VisitArrival && params.Kind != shipment.VisitDeparture {
 		multiErr.Add("kind", errortypes.ErrInvalid, "Kind must be Arrival or Departure")

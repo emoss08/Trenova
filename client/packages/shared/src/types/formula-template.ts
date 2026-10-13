@@ -288,8 +288,27 @@ export const testExpressionRequestSchema = z.object({
   maxCharge: z.string().optional(),
   roundingMode: formulaRoundingModeSchema.optional(),
   roundingPrecision: z.number().int().optional(),
+  /** Asks the engine to value every statement as well; the live preview leaves it off. */
+  traceStatements: z.boolean().optional(),
 });
 export type TestExpressionRequest = z.infer<typeof testExpressionRequestSchema>;
+
+/**
+ * One statement of an expression as the engine evaluated it: each `let`, then
+ * the final expression whose value is the raw amount. Offsets are UTF-16 code
+ * units into the expression, the units CodeMirror counts in.
+ */
+export const formulaStatementSchema = z.object({
+  index: z.number().int(),
+  kind: z.enum(["let", "result"]),
+  name: z.string().nullish(),
+  code: z.string(),
+  start: z.number().int(),
+  end: z.number().int(),
+  value: z.unknown().optional(),
+  error: z.string().nullish(),
+});
+export type FormulaStatement = z.output<typeof formulaStatementSchema>;
 
 export const guardrailResultSchema = z.object({
   applied: z.boolean(),
@@ -381,6 +400,7 @@ export const testExpressionResponseSchema = z.object({
   rounding: roundingResultSchema.nullish(),
   warnings: z.array(expressionWarningSchema).nullish(),
   receipt: formulaReceiptSchema.nullish(),
+  statements: z.array(formulaStatementSchema).nullish(),
 });
 export type TestExpressionResponse = z.infer<typeof testExpressionResponseSchema>;
 
@@ -892,6 +912,13 @@ export const formulaTestCaseSchema = z.object({
   tolerance: z.coerce.number(),
   version: z.number().optional(),
   createdById: z.string(),
+  /** The template's version number when the expected amount was recorded; 0 before any approval. */
+  recordedOnVersion: z.number().int().nullish(),
+  recordedById: z.string().nullish(),
+  recordedBy: z
+    .object({ id: z.string(), name: z.string(), username: z.string().nullish() })
+    .nullish(),
+  recordedAt: z.number().nullish(),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
@@ -911,6 +938,8 @@ export const formulaTestCaseInputSchema = z.object({
     .number()
     .min(0, { error: () => translate("Tolerance cannot be negative") })
     .default(0.01),
+  /** The editor content the expected amount was computed on, so a later break can be explained. */
+  candidate: z.custom<TestCaseCandidate>().optional(),
 });
 export type FormulaTestCaseInput = z.input<typeof formulaTestCaseInputSchema>;
 export type FormulaTestCaseValues = z.output<typeof formulaTestCaseInputSchema>;
@@ -1006,6 +1035,12 @@ export const formulaTemplateReviewSchema = z.object({
   baseVersionNumber: z.number().int().default(0),
   createdAt: z.number(),
   actor: userSchema.nullish(),
+  requestedReviewerId: z.string().nullish(),
+  requestedReviewer: userSchema.nullish(),
+  reviewerNote: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? ""),
 });
 export type FormulaTemplateReview = z.output<typeof formulaTemplateReviewSchema>;
 export const listFormulaTemplateReviewsResponseSchema = z.array(formulaTemplateReviewSchema);
@@ -1028,3 +1063,89 @@ export const installStandardsResponseSchema = z.object({
     .transform((v) => v ?? []),
 });
 export type InstallStandardsResponse = z.output<typeof installStandardsResponseSchema>;
+
+/** Someone who may approve a template: holds formula template approve, and is not the author asking. */
+export const formulaReviewerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  username: z.string().nullish(),
+  emailAddress: z.string().nullish(),
+  profilePicUrl: z.string().nullish(),
+});
+export type FormulaReviewer = z.output<typeof formulaReviewerSchema>;
+export const listFormulaReviewersResponseSchema = z.array(formulaReviewerSchema);
+
+/** What the studio sends Nova: the editor as it is, saved or not. */
+export type FormulaDraftContent = {
+  templateId?: string;
+  name?: string;
+  description?: string;
+  type?: FormulaTemplateType;
+  schemaId: string;
+  expression: string;
+  variableDefinitions: VariableDefinitionInput[];
+  breakdownDefinitions?: BreakdownDefinitionInput[];
+  minCharge?: string | null;
+  maxCharge?: string | null;
+  roundingMode?: FormulaRoundingMode;
+  roundingPrecision?: number;
+};
+
+export const formulaExplainResponseSchema = z.object({
+  statements: z
+    .array(formulaStatementSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  items: z
+    .array(z.object({ statementIndex: z.number().int(), says: z.string() }))
+    .nullish()
+    .transform((v) => v ?? []),
+  rawAmount: z.string().nullish(),
+  billedAmount: z.string().nullish(),
+  guardrail: guardrailResultSchema.nullish(),
+});
+export type FormulaExplainResponse = z.output<typeof formulaExplainResponseSchema>;
+
+export const describeInputsResponseSchema = z.object({
+  descriptions: z
+    .record(z.string(), z.string())
+    .nullish()
+    .transform((v) => v ?? {}),
+});
+export type DescribeInputsResponse = z.output<typeof describeInputsResponseSchema>;
+
+export const scenarioVerdictSchema = z.enum(["intended", "bug", "unclear"]);
+export type ScenarioVerdict = z.infer<typeof scenarioVerdictSchema>;
+
+export const scenarioTraceRowSchema = z.object({
+  kind: z.enum(["input", "term", "formula", "policy", "billed"]),
+  name: z.string(),
+  before: z.string().nullish(),
+  after: z.string().nullish(),
+});
+export type ScenarioTraceRow = z.output<typeof scenarioTraceRowSchema>;
+
+export const scenarioExplanationSchema = z.object({
+  verdict: scenarioVerdictSchema.catch("unclear"),
+  why: z.string(),
+  generated: z.boolean().default(false),
+  expected: z.coerce.number(),
+  actual: z.coerce.number().nullish(),
+  delta: z.coerce.number().nullish(),
+  baselineLabel: z.string(),
+  recordedOnVersion: z.number().int().nullish(),
+  recordedBy: z.object({ id: z.string(), name: z.string() }).nullish(),
+  error: z.string().nullish(),
+  rows: z
+    .array(scenarioTraceRowSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+});
+export type ScenarioExplanation = z.output<typeof scenarioExplanationSchema>;
+
+export const reviewNoteResponseSchema = z.object({
+  note: z.string(),
+  generated: z.boolean().default(false),
+  backtest: backtestSummarySchema.nullish(),
+});
+export type ReviewNoteResponse = z.output<typeof reviewNoteResponseSchema>;
