@@ -1,3 +1,4 @@
+import { escapeRegExp } from "@trenova/shared/lib/regexp";
 import type { AssistantEntityRef } from "@/types/assistant";
 
 export const CITE_HREF_PREFIX = "#palette-cite-";
@@ -10,10 +11,6 @@ export interface LinkedAnswer {
 }
 
 const PROTECTED = /(`[^`\n]*`|\[[^\]\n]*\]\([^)\n]*\)|https?:\/\/\S+)/g;
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 /**
  * Marks where an answer names a record its tools returned. The records come
