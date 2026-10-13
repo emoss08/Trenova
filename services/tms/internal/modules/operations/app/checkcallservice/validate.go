@@ -149,10 +149,3 @@ func visitKind(kind checkcall.Kind) shipment.VisitKind {
 	}
 	return shipment.VisitArrival
 }
-
-func stopActualAction(kind checkcall.Kind) shipmentports.StopActualAction {
-	if kind == checkcall.KindDeparture {
-		return shipmentports.StopActualActionDepart
-	}
-	return shipmentports.StopActualActionArrive
-}

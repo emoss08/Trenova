@@ -34,6 +34,10 @@ func (k Kind) IsValid() bool {
 	}
 }
 
+func KindValues() []Kind {
+	return []Kind{KindUpdate, KindArrival, KindDeparture}
+}
+
 func (k Kind) IsStopVisit() bool {
 	return k == KindArrival || k == KindDeparture
 }

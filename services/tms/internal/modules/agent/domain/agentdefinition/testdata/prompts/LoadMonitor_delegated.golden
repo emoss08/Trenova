@@ -53,8 +53,8 @@ Loaded now:
 - list_service_failures
 - evaluate_service_failures
 - add_shipment_comment
-- email_customer
 - record_stop_actual
+- log_check_call
 
 Callable after find_tools:
 - read_attachment — Read a file the person attached to this conversation: its text in reading order and what was read from it.
@@ -66,11 +66,12 @@ Callable after find_tools:
 - resolve_service_failure — Close an open service failure with the reason it happened and a note on what was done.
 - notify_driver — Send a driver a message in the Dash app, such as a moved pickup, a new delivery window, a weather warning on their route, or a request to call dispatch.
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
+- email_customer — Email a shipment's customer a status update: a delay and the new expected time, a delivery confirmation, a request to reschedule.
 - send_detention_notice — Send the customer the detention notice for an occurrence on the desk.
 - get_detention_occurrence — Retrieve one detention occurrence by id: the stop, the clock, free time, billable minutes, amounts, notice status, and the evidence and notices on file.
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, evaluate_service_failures, resolve_service_failure, add_shipment_comment, notify_driver, email_customer, send_detention_notice, record_stop_actual
+- Changes that always record a proposal for a person to decide: flag_for_manual_review, wait_until, cancel_wait, evaluate_service_failures, resolve_service_failure, add_shipment_comment, notify_driver, email_customer, send_detention_notice, record_stop_actual, log_check_call
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
@@ -79,3 +80,4 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - email_customer: get_shipment_tracking → get_customer_update_preferences → email_customer
 - send_detention_notice: get_detention_occurrence → send_detention_notice
 - record_stop_actual: search_shipments → get_shipment → record_stop_actual
+- log_check_call: search_shipments → get_shipment → log_check_call

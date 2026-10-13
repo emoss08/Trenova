@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -38,6 +40,18 @@ type CheckCallResult struct {
 	Outcome   trackingevent.Outcome
 	Reason    string
 	Replayed  bool
+}
+
+func StopActualAction(kind checkcall.Kind) shipmentports.StopActualAction {
+	if kind == checkcall.KindDeparture {
+		return shipmentports.StopActualActionDepart
+	}
+	return shipmentports.StopActualActionArrive
+}
+
+type CheckCallPreview struct {
+	CheckCall *checkcall.CheckCall
+	Move      *shipment.ShipmentMove
 }
 
 type IssueTrackingLinkRequest struct {
@@ -106,6 +120,7 @@ type OverdueMove struct {
 
 type CheckCallService interface {
 	Log(ctx context.Context, req *LogCheckCallRequest) (*CheckCallResult, error)
+	PreviewLog(ctx context.Context, req *LogCheckCallRequest) (*CheckCallPreview, error)
 	ListForShipment(
 		ctx context.Context,
 		req *ListCheckCallsByShipmentRequest,

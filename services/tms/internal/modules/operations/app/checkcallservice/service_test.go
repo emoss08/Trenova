@@ -835,3 +835,41 @@ func TestListOverdue(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, overdue)
 }
+
+func TestPreviewLog_BuildsTheRecordWithoutWriting(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	preview, err := h.svc.PreviewLog(t.Context(), &checkcallports.LogCheckCallRequest{
+		TenantInfo: h.tenant,
+		MoveID:     h.move.ID,
+		Source:     checkcall.SourceAgent,
+		SourceKey:  "run_1:call_3",
+		Details: checkcallports.CheckCallDetails{
+			Kind:       checkcall.KindArrival,
+			StopID:     h.delivery.ID,
+			ReportedAt: int64Ptr(testNow - 120),
+			StateCode:  "tx",
+		},
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, h.move.ID, preview.Move.ID)
+	assert.Equal(t, h.delivery.ID, preview.CheckCall.StopID)
+	assert.Equal(t, "TX", preview.CheckCall.StateCode)
+	assert.Equal(t, testNow-120, preview.CheckCall.ReportedAt)
+	assert.Empty(t, h.tracking.reported)
+	assert.Empty(t, h.checkCalls.rows)
+	assert.Empty(t, h.observer.moves)
+
+	_, err = h.svc.PreviewLog(t.Context(), &checkcallports.LogCheckCallRequest{
+		TenantInfo: h.tenant,
+		MoveID:     h.move.ID,
+		Source:     checkcall.SourceAgent,
+		Details: checkcallports.CheckCallDetails{
+			Kind:       checkcall.KindUpdate,
+			ReportedAt: int64Ptr(testNow + 3600),
+		},
+	})
+	require.Error(t, err)
+}

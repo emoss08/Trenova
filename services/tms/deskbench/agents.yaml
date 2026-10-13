@@ -67,6 +67,7 @@ agents:
       - unassign_moves
       - update_move_status
       - record_stop_actual
+      - log_check_call
       - place_shipment_hold
       - release_shipment_hold
       - add_shipment_comment

@@ -23115,6 +23115,106 @@
       }
     },
     {
+      "name": "log_check_call",
+      "description": "Log a check call on a brokered load: where the carrier said the truck is, whether it is late, and when it expects the next stop. Record what the carrier or driver said in their words. Use kind Update for a position or delay report; use Arrival or Departure only when you were told the truck reached or left a stop, which also records that stop's actual time. Get the move and stop ids from get_shipment. Only log what you were told — never infer a position, a delay or an arrival.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "city": {
+            "description": "The city the truck was in or near, as the caller said.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "contactName": {
+            "description": "Who gave the update, if you know.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "delayReason": {
+            "description": "Why the load is late, in the caller's words. Needs delayed.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "delayed": {
+            "description": "True only when the caller said the load is running late.",
+            "type": "boolean"
+          },
+          "estimatedArrival": {
+            "description": "When the caller expects to reach the next stop, if they said. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+            "examples": [
+              "2026-10-01T08:00"
+            ],
+            "format": "local-date-time",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Update for a position or delay report; Arrival or Departure when the truck reached or left a stop.",
+            "enum": [
+              "Update",
+              "Arrival",
+              "Departure"
+            ],
+            "type": "string",
+            "x-enumOf": "checkCall.kind"
+          },
+          "moveId": {
+            "description": "The move the check call is about, from get_shipment (its moves).",
+            "type": "string",
+            "x-recordOf": "shipment_move"
+          },
+          "note": {
+            "description": "Anything else the caller reported that a dispatcher should read.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "reportedAt": {
+            "description": "When the truck was where the caller said. Leave it out unless you were given a time: omitted means now. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+            "examples": [
+              "2026-10-01T08:00"
+            ],
+            "format": "local-date-time",
+            "type": "string"
+          },
+          "stateCode": {
+            "description": "The two-letter state or province code, such as TX.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "stopId": {
+            "description": "Required for Arrival and Departure: the stop reached or left, from the move's stops in get_shipment. Leave it out for an Update.",
+            "type": "string",
+            "x-recordOf": "shipment_stop"
+          }
+        },
+        "required": [
+          "moveId",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment_move",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Records a check call, and for an arrival or departure the stop's actual time; nothing leaves the organization."
+      }
+    },
+    {
       "name": "log_employment_verification_request",
       "description": "Record that a previous employer was asked for the driver's safety performance history today (Requested), or chased again when they have not answered (FollowUp). Each follow-up is counted and dated as the good-faith effort 49 CFR 391.23 asks for. Sending the request is done by the person; this keeps the date.",
       "parameters": {

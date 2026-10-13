@@ -145,7 +145,7 @@ func (s *Service) recordStopVisit(
 		TenantInfo:   in.tenant,
 		MoveID:       in.move.ID,
 		StopID:       d.StopID,
-		Action:       stopActualAction(d.Kind),
+		Action:       checkcallports.StopActualAction(d.Kind),
 		OccurredAt:   &reportedAt,
 		Source:       source,
 		SourceKey:    in.sourceKey,
@@ -159,6 +159,37 @@ func (s *Service) Log(
 	ctx context.Context,
 	req *checkcallports.LogCheckCallRequest,
 ) (*checkcallports.CheckCallResult, error) {
+	in, err := s.prepareLog(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.record(ctx, in)
+}
+
+func (s *Service) PreviewLog(
+	ctx context.Context,
+	req *checkcallports.LogCheckCallRequest,
+) (*checkcallports.CheckCallPreview, error) {
+	in, err := s.prepareLog(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	entity := s.newCheckCall(in)
+	multiErr := errortypes.NewMultiError()
+	entity.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	return &checkcallports.CheckCallPreview{CheckCall: entity, Move: in.move}, nil
+}
+
+func (s *Service) prepareLog(
+	ctx context.Context,
+	req *checkcallports.LogCheckCallRequest,
+) (*recordInput, error) {
 	if multiErr := validateLogRequest(req); multiErr != nil {
 		return nil, multiErr
 	}
@@ -192,7 +223,7 @@ func (s *Service) Log(
 		)
 	}
 
-	return s.record(ctx, &recordInput{
+	return &recordInput{
 		tenant:       req.TenantInfo,
 		move:         move,
 		source:       req.Source,
@@ -200,7 +231,7 @@ func (s *Service) Log(
 		reportedByID: req.ReportedByID,
 		details:      &details,
 		reportedAt:   reportedAt,
-	})
+	}, nil
 }
 
 func (s *Service) ListForShipment(
