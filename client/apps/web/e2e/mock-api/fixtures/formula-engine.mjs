@@ -178,7 +178,7 @@ function compileTrace(an) {
   const parts = statementJs(an);
   const declared = parts.filter((p) => p.name).map((p) => `L_${p.name}`);
   const body = parts
-    .map((p, i) => {
+    .map((p) => {
       const target = p.name ? `L_${p.name}` : "__r";
       return `try { ${target} = (${p.js}); __out.push({ value: ${target} }); } catch (e) { __out.push({ error: e }); return __out; }`;
     })

@@ -227,11 +227,6 @@ function suggestScenarios(state, _path, body) {
 
 // --- Explain a failing scenario -------------------------------------------------------------
 
-function amountText(value) {
-  const n = Number(value);
-  return value === null || value === undefined || Number.isNaN(n) ? "nothing" : money(n);
-}
-
 function valueText(value) {
   if (value === null || value === undefined) return "empty";
   const n = Number(value);
