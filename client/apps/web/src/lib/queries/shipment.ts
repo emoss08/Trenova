@@ -1,3 +1,7 @@
+import {
+  listCustomerStatusNotifications,
+  listCustomerTrackingLinks,
+} from "@/lib/graphql/customer-tracking";
 import { getCarrierTrackingLink, listShipmentCheckCalls } from "@/lib/graphql/check-calls";
 import {
   getShipmentProfitabilityGraphQL,
@@ -72,6 +76,16 @@ export const shipment = createQueryKeys("shipment", {
   trackingLink: (moveId: string) => ({
     queryKey: ["tracking-link", moveId],
     queryFn: async ({ signal }) => getCarrierTrackingLink(moveId, { signal }),
+  }),
+  // Every customer tracking link shared for the shipment, live or not.
+  customerTrackingLinks: (shipmentId: string) => ({
+    queryKey: ["customer-tracking-links", shipmentId],
+    queryFn: async ({ signal }) => listCustomerTrackingLinks(shipmentId, { signal }),
+  }),
+  // The status emails the shipment has owed its customer, and what became of each.
+  customerStatusNotifications: (shipmentId: string) => ({
+    queryKey: ["customer-status-notifications", shipmentId],
+    queryFn: async ({ signal }) => listCustomerStatusNotifications(shipmentId, { signal }),
   }),
   listComments: (req: PaginationInfo & { shipmentId: Shipment["id"] }) => ({
     queryKey: ["comments", req.shipmentId, req],

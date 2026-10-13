@@ -5,6 +5,7 @@ import {
   CreditCard01Icon,
   Mail01Icon,
   RadarIcon,
+  Share07Icon,
   User01Icon,
 } from "@trenova/shared/components/icons";
 import { parseAsString, useQueryState } from "nuqs";
@@ -12,6 +13,7 @@ import { CustomerBillingProfileForm } from "./customer-billing-profile-form";
 import { CustomerBrokerIntelligence } from "./customer-broker-intelligence";
 import { CustomerEmailProfileForm } from "./customer-email-profile-form";
 import { CustomerForm } from "./customer-form";
+import { CustomerTrackingSettingsTab } from "./customer-tracking-settings";
 
 export type CustomerTabbedFormProps = {
   customerId?: string;
@@ -43,6 +45,12 @@ export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
             {t("Email profile")}
           </TabsTab>
           {customerId ? (
+            <TabsTab value="tracking">
+              <Share07Icon className="size-4" />
+              {t("Tracking")}
+            </TabsTab>
+          ) : null}
+          {customerId ? (
             <TabsTab value="broker-vetting">
               <RadarIcon className="size-4" />
               {t("Broker vetting")}
@@ -62,6 +70,11 @@ export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
         <TabsContent value="email" className="p-4">
           <CustomerEmailProfileForm />
         </TabsContent>
+        {customerId ? (
+          <TabsContent value="tracking" className="p-4">
+            <CustomerTrackingSettingsTab customerId={customerId} />
+          </TabsContent>
+        ) : null}
         {customerId ? (
           <TabsContent value="broker-vetting" className="p-4">
             <CustomerBrokerIntelligence customerId={customerId} />

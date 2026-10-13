@@ -1,0 +1,28 @@
+fragment CustomerTrackingProfileFields on CustomerTrackingProfile {
+  id
+  customerId
+  linkEnabled
+  visibleFields
+  linkTtlDays
+  notifyPickedUp
+  notifyDelayed
+  notifyDelivered
+  notifyPodReady
+  includeLink
+  recipients
+  notificationsEnabledAt
+  version
+  updatedAt
+}
+
+query CustomerTrackingProfile($customerId: ID!) {
+  customerTrackingProfile(customerId: $customerId) {
+    ...CustomerTrackingProfileFields
+  }
+}
+
+mutation UpdateCustomerTrackingProfile($input: UpdateCustomerTrackingProfileInput!) {
+  updateCustomerTrackingProfile(input: $input) {
+    ...CustomerTrackingProfileFields
+  }
+}

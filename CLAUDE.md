@@ -511,6 +511,19 @@ and an at-risk load raises an `EtaAtRisk` watchtower item. **Read
 [docs/engineering/eta.md](docs/engineering/eta.md) before changing `stopeta`, `etaprojection`,
 `shipmentetaservice`, `etajobs`, `etatrigger`, the route estimator or the arrival settings.**
 
+## Customer Tracking
+
+A customer follows a shipment through a token link to `/shipment-tracking/:token`, which shows only
+the fields its `customer_tracking_profiles` row allows (holds and comments only when marked for the
+customer), and through status emails (picked up, delayed, delivered, POD ready) its rules turn on.
+Each owed email is one row in `customer_status_notifications`, unique per shipment, event and stop,
+sent with an idempotency key and settled only while pending, so it goes out exactly once however
+often the shipment is evaluated. Shipment events and ETA refreshes trigger a debounced evaluation,
+and a ten-minute sweep catches PODs and retries. **Read
+[docs/engineering/customer-tracking.md](docs/engineering/customer-tracking.md) before changing
+`customertracking`, `customertrackingservice`, `customerstatustrigger`, `customertrackingjobs`, the
+public tracking endpoints or page, or the customer tracking email templates.**
+
 ## Exception Queue
 
 Every watchtower item is an owned exception: a status (Open, Acknowledged, InProgress, Snoozed,

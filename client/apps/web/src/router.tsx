@@ -2290,6 +2290,14 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
               return { Component: CarrierTrackingPublicPage };
             },
           },
+          {
+            path: "/shipment-tracking/:token",
+            async lazy() {
+              const { ShipmentTrackingPublicPage } =
+                await import("@/routes/shipment-tracking-public/page");
+              return { Component: ShipmentTrackingPublicPage };
+            },
+          },
           ...edition.routes.public,
         ],
       },
