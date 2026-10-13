@@ -22,10 +22,13 @@ func (s *Service) ListOverdue(
 			TenantInfo: tenantInfo,
 		},
 	)
-	if err != nil && !errortypes.IsNotFoundError(err) {
+	if errortypes.IsNotFoundError(err) {
+		return []*checkcallports.OverdueMove{}, nil
+	}
+	if err != nil {
 		return nil, err
 	}
-	if err != nil || control == nil || !control.EnableCheckCallMonitoring {
+	if control == nil || !control.EnableCheckCallMonitoring {
 		return []*checkcallports.OverdueMove{}, nil
 	}
 
