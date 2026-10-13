@@ -207,6 +207,9 @@ func (s *Service) prepareLog(
 	if err != nil {
 		return nil, err
 	}
+	if move.Status == shipment.MoveStatusCanceled {
+		return nil, errortypes.NewBusinessError("This load is canceled, so it takes no check calls")
+	}
 	if details.Kind.IsStopVisit() && findStop(move, details.StopID) == nil {
 		return nil, errortypes.NewNotFoundError("Stop not found on this load")
 	}

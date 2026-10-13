@@ -15,6 +15,7 @@ import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { getProfile, getRule, RULE_KEYS } from "@trenova/shared/lib/capability";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { CarrierAssignmentCancelDialog } from "@/components/carrier-assignment/carrier-assignment-cancel-dialog";
+import { CarrierTrackingLink } from "@/components/carrier-assignment/carrier-tracking-link";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
 import { CarrierAssignmentStatusBadge } from "@trenova/shared/components/status-badge";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
@@ -356,6 +357,7 @@ export function MoveCard({
           carrierAssignment={carrierAssignment}
           moveId={move?.id}
           canCancel={canCancelCarrier}
+          canTrack={hasId && !isTerminal}
           onCancel={() => setCancelCarrierOpen(true)}
         />
       ) : (
@@ -704,11 +706,13 @@ function CarrierAssignmentDetails({
   carrierAssignment,
   moveId,
   canCancel,
+  canTrack,
   onCancel,
 }: {
   carrierAssignment: CarrierAssignment;
   moveId?: string;
   canCancel: boolean;
+  canTrack: boolean;
   onCancel: () => void;
 }) {
   const t = useT();
@@ -787,6 +791,12 @@ function CarrierAssignmentDetails({
       {moveId && carrierAssignment.id && (
         <div className="mt-2 border-t pt-2">
           <RateConfirmationActions moveId={moveId} carrierAssignmentId={carrierAssignment.id} />
+        </div>
+      )}
+
+      {moveId && canTrack && (
+        <div className="mt-2 border-t pt-2">
+          <CarrierTrackingLink moveId={moveId} carrierName={carrierAssignment.carrier?.name} />
         </div>
       )}
     </div>

@@ -873,3 +873,21 @@ func TestPreviewLog_BuildsTheRecordWithoutWriting(t *testing.T) {
 	})
 	require.Error(t, err)
 }
+
+func TestLog_RefusesACanceledLoad(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.move.Status = shipment.MoveStatusCanceled
+
+	_, err := h.svc.Log(t.Context(), &checkcallports.LogCheckCallRequest{
+		TenantInfo: h.tenant,
+		MoveID:     h.move.ID,
+		Source:     checkcall.SourceDispatcher,
+		Details:    checkcallports.CheckCallDetails{Kind: checkcall.KindUpdate},
+	})
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsBusinessError(err))
+	assert.Empty(t, h.checkCalls.rows)
+}
