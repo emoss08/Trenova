@@ -8,16 +8,11 @@
 <style>/*STYLE*/</style>
 </head>
 <body>
-<header class="masthead">
-  <img class="logo" src="/*LOGO*/" alt="" width="28" height="28">
-  <div class="masthead-text">
-    <h1>Trenova Capture</h1>
-    <p id="who" class="muted"></p>
-  </div>
-  <span id="connection" class="pill" role="status"></span>
-</header>
-<nav id="tabs" class="tabs" role="tablist" aria-label="Trenova Capture"></nav>
-<main id="app" aria-live="polite"></main>
+<img id="logo" class="logo-source" src="/*LOGO*/" alt="" width="28" height="28" hidden>
+<div id="shell" class="shell">
+  <nav id="rail" class="rail" aria-label="Trenova Capture"></nav>
+  <main id="app" class="main" aria-live="polite"></main>
+</div>
 <div id="viewer" hidden></div>
 <div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
 <noscript><p class="panel">Trenova Capture needs scripts turned on in this window.</p></noscript>

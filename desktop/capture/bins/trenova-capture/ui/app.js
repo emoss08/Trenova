@@ -1,19 +1,22 @@
 (() => {
   "use strict";
 
+  const shell = document.getElementById("shell");
+  const rail = document.getElementById("rail");
   const app = document.getElementById("app");
   const viewerHost = document.getElementById("viewer");
-  const who = document.getElementById("who");
-  const connection = document.getElementById("connection");
-  const tabs = document.getElementById("tabs");
   const toasts = document.getElementById("toasts");
+  const logoSource = document.getElementById("logo");
 
   // The address this build suggests, filled in when the page is built and
   // empty in public builds: every Trenova is somebody's own, so a person
-  // enters theirs. The example only shows the shape of one. The web app's dev
-  // server is offered when Trenova runs on this computer; it passes /api on
-  // to the API.
+  // enters theirs. The example only shows the shape of one. Trenova Cloud,
+  // the hosted service, is offered beside a self-hosted address so nobody
+  // has to know an address to use it; a build may offer none. The web app's
+  // dev server is offered when Trenova runs on this computer; it passes
+  // /api on to the API.
   const SUGGESTED_ADDRESS = "/*SUGGESTED_SERVER*/";
+  const CLOUD_ADDRESS = "/*CLOUD_SERVER*/";
   const EXAMPLE_ADDRESS = "https://trenova.example.com";
   const DEVELOPMENT_ADDRESS = "http://localhost:5173";
   // The namespace SVG elements are created in; nothing is fetched from it.
@@ -21,9 +24,9 @@
   const TOAST_MS = 6000;
   const RECENT_ON_HOME = 3;
   // Pages shown of a held batch before "Show all", and in a strip.
-  const HELD_PAGES_SHOWN = 12;
-  const STRIP_PAGES = 4;
-  const LIVE_PAGES = 6;
+  const HELD_PAGES_SHOWN = 18;
+  const STRIP_PAGES = 5;
+  const LIVE_PAGES = 8;
   // The most pictures asked for in one message, as the agent allows.
   const PICTURES_PER_ASK = 24;
   // How long before a picture asked for and not received is asked again.
@@ -33,17 +36,45 @@
   const VIEWS_KEPT = 12;
   // The shape of the batch being scanned, which only grows.
   const LIVE_SHAPE = "live";
+  // What this window remembers between runs, in its own storage: the
+  // appearance, and the scanner and settings last chosen.
+  const REMEMBERED = "trenova-capture";
+
+  function remembered() {
+    try {
+      const raw = window.localStorage.getItem(REMEMBERED);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function remember(changes) {
+    try {
+      window.localStorage.setItem(REMEMBERED, JSON.stringify({ ...remembered(), ...changes }));
+    } catch {
+      // Storage may be off; the choice holds for this run.
+    }
+  }
+
+  const kept = remembered();
 
   // What belongs to this window alone and survives a redraw: the tab shown,
   // choices made, text being typed, a question being asked, and buttons
   // already pressed.
   const local = {
     tab: "home",
-    scanner: null,
-    profile: null,
+    scanner: typeof kept.scanner === "string" ? kept.scanner : null,
+    profile: typeof kept.profile === "string" ? kept.profile : null,
+    theme: ["system", "light", "dark"].includes(kept.theme) ? kept.theme : "system",
     serverDraft: null,
+    // The first run's self-hosted form, or Settings changing the address.
+    selfHosted: false,
+    changingServer: false,
     confirmDiscard: null,
     copied: false,
+    copiedDiagnostics: false,
     pending: new Map(),
     // The newest message already seen, so only later ones become toasts.
     lastMessage: null,
@@ -52,7 +83,17 @@
     // Held batches showing all their pages, and the one being discarded.
     expanded: new Set(),
     confirmHeld: null,
+    confirmSignOut: false,
   };
+
+  function applyTheme() {
+    if (local.theme === "system") {
+      document.documentElement.removeAttribute("data-theme");
+    } else {
+      document.documentElement.setAttribute("data-theme", local.theme);
+    }
+  }
+  applyTheme();
 
   // Pictures the agent sent, by batch, size and page, and when each was
   // last asked for. A batch whose pages change (one taken out) is dropped,
@@ -160,17 +201,26 @@
   }
   let view = null;
 
+  // Untitled UI's line icons, drawn on a 24-pixel grid with a round stroke,
+  // as the web app draws them.
   const ICONS = {
     scan: "M3 7V5a2 2 0 0 1 2-2h2 M17 3h2a2 2 0 0 1 2 2v2 M21 17v2a2 2 0 0 1-2 2h-2 M7 21H5a2 2 0 0 1-2-2v-2 M7 12h10",
     print:
       "M6 9V2h12v7 M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2 M6 14h12v8H6z",
+    home: "M3 10.5 12 3l9 7.5 M5 9.5V21h14V9.5 M10 21v-6h4v6",
+    activity: "M22 12h-4l-3 9L9 3l-3 9H2",
+    settings:
+      "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z",
     check: "M20 6 9 17l-5-5",
     checkCircle: "M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4 12 14.01l-3-3",
     alert:
       "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z M12 9v4 M12 17h.01",
     xCircle: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M15 9l-6 6 M9 9l6 6",
+    cloud: "M17.5 19a4.5 4.5 0 0 0 .5-8.97A7 7 0 0 0 4.5 12 4 4 0 0 0 6 19.9h11.5",
     cloudOff:
       "M2 2l20 20 M5.78 5.78A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.31-.2 M21.53 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7 7 0 0 0 9.66 5.3",
+    server:
+      "M4 4h16v6H4z M4 14h16v6H4z M8 7h.01 M8 17h.01",
     clock: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M12 6v6l4 2",
     inbox:
       "M22 12h-6l-2 3h-4l-2-3H2 M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z",
@@ -186,6 +236,7 @@
     pause: "M10 4H6v16h4z M18 4h-4v16h4z",
     copy: "M20 9h-9a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2Z M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1",
     lock: "M5 11h14v10H5z M8 11V7a4 4 0 0 1 8 0v4",
+    logIn: "M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4 M10 17l5-5-5-5 M15 12H3",
     close: "M18 6 6 18 M6 6l12 12",
     stop: "M7 7h10v10H7z",
     tray: "M4 14h16v6H4z M8 10l4-4 4 4 M12 6v8",
@@ -195,7 +246,14 @@
     send: "M22 2 11 13 M22 2l-7 20-4-9-9-4 20-7z",
     chevronLeft: "M15 18l-6-6 6-6",
     chevronRight: "M9 18l6-6-6-6",
+    arrowRight: "M5 12h14 M13 6l6 6-6 6",
     review: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
+    monitor: "M4 4h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z M8 20h8 M12 16v4",
+    sun: "M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42",
+    moon: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z",
+    users: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75",
+    lifeBuoy:
+      "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4.93 4.93l4.24 4.24 M14.83 14.83l4.24 4.24 M14.83 9.17l4.24-4.24 M4.93 19.07l4.24-4.24",
   };
 
   function send(message) {
@@ -243,6 +301,11 @@
     path.setAttribute("d", ICONS[name]);
     svg.append(path);
     return svg;
+  }
+
+  function logo(size) {
+    const src = logoSource ? logoSource.getAttribute("src") : "";
+    return src ? el("img", { src, alt: "", width: size, height: size }) : null;
   }
 
   function pages(count) {
@@ -303,26 +366,28 @@
     }
   }
 
-  function button(label, props, iconName) {
+  function button(label, props, iconName, trailingIcon) {
     return el(
       "button",
       { type: "button", ...props },
       iconName ? icon(iconName) : null,
       label,
+      trailingIcon ? icon(trailingIcon) : null,
     );
   }
 
   function panel(title, options, ...body) {
-    const { count, aside, iconName } = options || {};
+    const { count, aside, iconName, hint, extra } = options || {};
     return el(
       "section",
-      { class: "panel", "aria-label": title },
+      { class: extra ? `panel ${extra}` : "panel", "aria-label": title },
       el(
         "div",
         { class: "panel-head" },
         iconName ? icon(iconName) : null,
         el("h2", { text: title }),
         count ? el("span", { class: "count", text: String(count) }) : null,
+        hint ? el("span", { class: "hint", text: hint }) : null,
         aside ? el("div", { class: "aside" }, aside) : null,
       ),
       ...body,
@@ -340,17 +405,33 @@
   function goTo(tab) {
     local.tab = tab;
     local.confirmDiscard = null;
+    local.confirmSignOut = false;
+    local.changingServer = false;
     draw();
-    window.scrollTo(0, 0);
+    const body = app.querySelector(".page-body");
+    if (body) {
+      body.scrollTo(0, 0);
+    }
   }
 
   function signedInStage(v) {
     return ["connecting", "online", "offline", "blocked"].includes(v.stage);
   }
 
-  // The masthead: who is signed in, and a pill for the connection.
+  function initials(name) {
+    const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+    const letters = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : (parts[0] || "?").slice(0, 2);
+    return letters.toUpperCase();
+  }
+
+  function serverTitle(account) {
+    return account.serverName || "Trenova";
+  }
+
+  // The rail: the brand, where to go, and who is signed in where.
   const CONNECTION = {
     needsServer: ["neutral", "Not connected"],
+    checking: ["neutral", "Checking"],
     signedOut: ["neutral", "Signed out"],
     pairing: ["info", "Signing in"],
     connecting: ["neutral", "Connecting"],
@@ -359,73 +440,103 @@
     blocked: ["danger", "Paused"],
   };
 
-  function drawMasthead(v) {
-    const account = v.account;
-    who.textContent = account.signedIn
-      ? [account.person, account.organization].filter(Boolean).join(" · ") || "Signed in"
-      : account.server || "Not connected";
+  function connectionPill(v) {
     const [tone, label] = CONNECTION[v.stage] || CONNECTION.connecting;
-    connection.className = `pill tone-${tone}`;
-    connection.title = v.status.detail || v.status.title;
-    connection.replaceChildren(el("span", { class: "dot", "aria-hidden": "true" }), label);
+    return el(
+      "span",
+      { class: `pill tone-${tone}`, role: "status", title: v.status.detail || v.status.title },
+      el("span", { class: "dot", "aria-hidden": "true" }),
+      el("span", { class: "label", text: label }),
+    );
   }
 
   function activityCount(v) {
     return v.refused.length + v.held.length + v.waiting.length;
   }
 
-  function drawTabs(v) {
+  function drawRail(v) {
+    const account = v.account;
+    const count = activityCount(v);
     const items = [
-      ["home", "Home", null],
-      ["activity", "Activity", activityCount(v)],
-      ["settings", "Settings", null],
+      ["home", "Home", "home", null],
+      ["activity", "Activity", "activity", count],
+      ["settings", "Settings", "settings", null],
     ];
-    tabs.replaceChildren(
-      ...items.map(([id, label, count]) =>
+    rail.replaceChildren(
+      el(
+        "div",
+        { class: "brand" },
+        logo(22),
+        el("div", { class: "wordmark" }, "Trenova ", el("span", { text: "Capture" })),
+      ),
+      el(
+        "div",
+        { class: "nav" },
+        items.map(([id, label, iconName, badge]) =>
+          el(
+            "button",
+            {
+              type: "button",
+              class: "nav-item",
+              id: `nav-${id}`,
+              "aria-current": local.tab === id ? "page" : null,
+              title: label,
+              onclick: () => goTo(id),
+            },
+            icon(iconName),
+            el("span", { class: "label", text: label }),
+            badge
+              ? el("span", {
+                  class: v.refused.length ? "count tone-danger" : "count",
+                  text: String(badge),
+                  "aria-label": v.refused.length ? `${badge} need attention` : `${badge} waiting`,
+                })
+              : null,
+          ),
+        ),
+      ),
+      el("div", { class: "rail-spacer" }),
+      el(
+        "div",
+        { class: "rail-foot" },
+        connectionPill(v),
         el(
           "button",
           {
             type: "button",
-            class: "tab",
-            role: "tab",
-            id: `tab-${id}`,
-            "aria-selected": String(local.tab === id),
-            tabindex: local.tab === id ? "0" : "-1",
-            onclick: () => goTo(id),
+            class: "account-chip",
+            title: [account.person, account.organization].filter(Boolean).join(" · ") || "Account",
+            onclick: () => goTo("settings"),
           },
-          label,
-          count
-            ? el("span", {
-                class: v.refused.length ? "count tone-danger" : "count",
-                text: String(count),
-                "aria-label": v.refused.length
-                  ? `${count} need attention`
-                  : `${count} waiting`,
-              })
-            : null,
+          el("span", { class: "avatar", "aria-hidden": "true", text: initials(account.person) }),
+          el(
+            "span",
+            { class: "who" },
+            el("span", { class: "name", text: account.person || "Signed in" }),
+            el("span", { class: "subtle", text: account.organization || serverTitle(account) }),
+          ),
         ),
       ),
     );
   }
 
-  tabs.addEventListener("keydown", (event) => {
-    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") {
-      return;
-    }
-    const order = ["home", "activity", "settings"];
-    const step = event.key === "ArrowRight" ? 1 : -1;
-    const next = order[(order.indexOf(local.tab) + step + order.length) % order.length];
-    goTo(next);
-    const focused = document.getElementById(`tab-${next}`);
-    if (focused) {
-      focused.focus();
-    }
-  });
+  // The page's title bar and its scrolling body.
+  function page(title, actions, ...body) {
+    return [
+      el(
+        "header",
+        { class: "page-head" },
+        el("h1", { text: title }),
+        actions && actions.filter(Boolean).length ? el("div", { class: "actions" }, actions) : null,
+      ),
+      el("div", { class: "page-body" }, el("div", { class: "stack" }, ...body)),
+    ];
+  }
 
-  // First run: where the person is among connect, sign in and scan.
+  // Before sign-in: where the person is among connect, sign in and scan.
   function drawSteps(v) {
-    const current = v.stage === "needsServer" ? 0 : 1;
-    const steps = ["Connect", "Sign in", "Scan and print"];
+    const current = v.stage === "needsServer" || v.stage === "checking" ? 0 : 1;
+    const steps = ["Connect", "Sign in", "Scan"];
     return el(
       "ol",
       { class: "steps", "aria-label": "Setting up" },
@@ -436,76 +547,86 @@
             class: index < current ? "done" : index === current ? "current" : null,
             "aria-current": index === current ? "step" : null,
           },
-          el(
-            "span",
-            { class: "marker" },
-            index < current ? icon("check") : String(index + 1),
-          ),
+          el("span", { class: "marker" }, index < current ? icon("check") : String(index + 1)),
           label,
         ),
       ),
     );
   }
 
-  function welcome(title, text) {
-    const logo = document.querySelector(".logo");
+  function heading(title, text) {
+    return el("div", { class: "auth-heading" }, el("h1", { text: title }), text ? el("p", { text }) : null);
+  }
+
+  function auth(v, ...card) {
     return el(
       "div",
-      { class: "welcome" },
-      logo ? el("img", { src: logo.getAttribute("src"), alt: "", width: 48, height: 48 }) : null,
-      el("h2", { text: title }),
-      el("p", { text }),
+      { class: "auth" },
+      el("div", { class: "auth-brand" }, logo(24), "Trenova ", el("span", { text: "Capture" })),
+      el("div", { class: "auth-stage" }, el("div", { class: "auth-card" }, ...card)),
+      el(
+        "div",
+        { class: "auth-foot" },
+        drawSteps(v),
+        el("span", { class: "numeric", text: `Version ${v.version}` }),
+      ),
     );
   }
 
-  function serverForm(v, submitLabel) {
-    const locked = v.account.serverLocked;
-    const value = local.serverDraft ?? v.account.server ?? SUGGESTED_ADDRESS;
+  // The field for a self-hosted address, with what the agent said about the
+  // last one tried.
+  function addressForm(v, submitLabel, onsubmit) {
+    const account = v.account;
+    const locked = account.serverLocked;
+    const value = local.serverDraft ?? account.server ?? SUGGESTED_ADDRESS;
+    const problem = local.serverDraft === null ? account.serverProblem : null;
     return el(
       "form",
       {
         class: "field",
         onsubmit: (event) => {
           event.preventDefault();
-          const address = (local.serverDraft ?? v.account.server ?? SUGGESTED_ADDRESS).trim();
+          const address = (local.serverDraft ?? account.server ?? SUGGESTED_ADDRESS).trim();
           if (!address) {
             return;
           }
           local.serverDraft = null;
-          press("server", () => false, { type: "setServer", address });
+          onsubmit(address);
         },
       },
       el("label", { for: "server-address", text: "Trenova address" }),
-      el(
-        "div",
-        { class: "row" },
-        el("input", {
-          id: "server-address",
-          class: "grow",
-          type: "url",
-          inputmode: "url",
-          autocomplete: "off",
-          spellcheck: "false",
-          placeholder: SUGGESTED_ADDRESS || EXAMPLE_ADDRESS,
-          required: true,
-          value,
-          disabled: locked,
-          oninput: (event) => {
-            local.serverDraft = event.target.value;
-          },
-        }),
-        button(submitLabel, {
-          class: "primary",
-          type: "submit",
-          disabled: locked || pressed("server"),
-        }),
-      ),
-      locked
-        ? el("p", { class: "subtle", text: "Your organization sets this address." })
+      el("input", {
+        id: "server-address",
+        type: "url",
+        inputmode: "url",
+        autocomplete: "off",
+        spellcheck: "false",
+        placeholder: SUGGESTED_ADDRESS || EXAMPLE_ADDRESS,
+        required: true,
+        value,
+        disabled: locked,
+        "aria-invalid": problem ? "true" : null,
+        "aria-describedby": problem ? "server-problem" : "server-help",
+        oninput: (event) => {
+          local.serverDraft = event.target.value;
+          draw();
+        },
+      }),
+      problem
+        ? el("p", { id: "server-problem", class: "callout tone-danger", role: "alert", text: problem })
         : el(
             "p",
+            { id: "server-help", class: "help" },
+            locked
+              ? "Your organization sets this address."
+              : "The address you open Trenova at in your browser. Trenova Capture finds the rest.",
+          ),
+      button(submitLabel, { class: "primary large block", type: "submit", disabled: pressed("server") }, null, "arrowRight"),
+      !locked
+        ? el(
+            "p",
             { class: "subtle" },
-            "The address you open Trenova at in your browser. Running Trenova on this computer for development? ",
+            "Running Trenova on this computer for development? ",
             button(`Use ${DEVELOPMENT_ADDRESS}`, {
               class: "link",
               onclick: () => {
@@ -513,137 +634,300 @@
                 draw();
               },
             }),
-          ),
+          )
+        : null,
     );
   }
 
-  function copyCode(code) {
+  // Connecting shows its effect as the stage changing (checking, then signed
+  // out or pairing) or as a problem with the address.
+  function connect(address) {
+    const stage = view ? view.stage : null;
+    const problem = view ? view.account.serverProblem : null;
+    press(
+      "server",
+      (next) => next.stage === stage && next.account.serverProblem === problem,
+      { type: "connect", address },
+    );
+  }
+
+  function cloudOption() {
+    if (!CLOUD_ADDRESS) {
+      return null;
+    }
+    return el(
+      "button",
+      {
+        type: "button",
+        class: "option",
+        id: "connect-cloud",
+        disabled: pressed("server"),
+        onclick: () => connect(CLOUD_ADDRESS),
+      },
+      el("span", { class: "tile ink" }, icon("cloud")),
+      el(
+        "span",
+        { class: "text" },
+        el("span", { class: "name", text: "Trenova Cloud" }),
+        el("p", { text: "Sign in with your Trenova Cloud account." }),
+      ),
+      icon("arrowRight", "trail"),
+    );
+  }
+
+  function selfHostedOption() {
+    return el(
+      "button",
+      {
+        type: "button",
+        class: "option",
+        id: "connect-self-hosted",
+        onclick: () => {
+          local.selfHosted = true;
+          draw();
+          const field = document.getElementById("server-address");
+          if (field) {
+            field.focus();
+          }
+        },
+      },
+      el("span", { class: "tile" }, icon("server")),
+      el(
+        "span",
+        { class: "text" },
+        el("span", { class: "name", text: "Self-hosted Trenova" }),
+        el("p", { text: "Enter the address your organization runs Trenova at." }),
+      ),
+      icon("arrowRight", "trail"),
+    );
+  }
+
+  function drawConnect(v) {
+    const account = v.account;
+    // A locked address, an address that failed, or a draft being typed goes
+    // straight to the field; otherwise the choice between Cloud and
+    // self-hosted comes first.
+    const showForm =
+      account.serverLocked ||
+      local.selfHosted ||
+      local.serverDraft !== null ||
+      Boolean(account.serverProblem) ||
+      !CLOUD_ADDRESS;
+    if (account.serverLocked) {
+      return auth(
+        v,
+        heading("Connect to Trenova", "Scan and print paper straight into Trenova from this computer."),
+        el(
+          "div",
+          { class: "server-card" },
+          el("span", { class: "kind" }, icon("lock")),
+          el(
+            "span",
+            { class: "text" },
+            el("span", { class: "name", text: "Your organization's Trenova" }),
+            el("span", { class: "subtle", text: account.server || "" }),
+          ),
+        ),
+        account.serverProblem
+          ? el("p", { class: "callout tone-danger", role: "alert", text: account.serverProblem })
+          : null,
+        button(
+          "Continue",
+          {
+            class: "primary large block",
+            disabled: !account.server || pressed("server"),
+            onclick: () => connect(account.server),
+          },
+          null,
+          "arrowRight",
+        ),
+      );
+    }
+    if (!showForm) {
+      return auth(
+        v,
+        heading("Connect to Trenova", "Scan and print paper straight into Trenova from this computer. Where is your Trenova?"),
+        el("div", { class: "options" }, cloudOption(), selfHostedOption()),
+      );
+    }
+    return auth(
+      v,
+      heading(
+        "Connect to Trenova",
+        account.serverProblem
+          ? "That address could not be used. Check it and try again."
+          : "Enter the address your organization runs Trenova at.",
+      ),
+      addressForm(v, "Continue", connect),
+      CLOUD_ADDRESS
+        ? el(
+            "div",
+            { class: "auth-foot" },
+            el("span", { class: "subtle" }, "Using the hosted service? "),
+            button("Sign in with Trenova Cloud instead", {
+              class: "link",
+              onclick: () => {
+                local.selfHosted = false;
+                local.serverDraft = null;
+                connect(CLOUD_ADDRESS);
+              },
+            }),
+          )
+        : null,
+    );
+  }
+
+  function drawChecking(v) {
+    return auth(
+      v,
+      heading("Connecting to Trenova", `Looking for Trenova at ${v.account.server || ""}.`),
+      el("div", { class: "waiting" }, el("span", { class: "spinner", "aria-hidden": "true" }), "One moment"),
+    );
+  }
+
+  function drawSignedOut(v) {
+    const account = v.account;
+    const cloud = account.serverShared;
+    const waitingPages = v.waiting.reduce((sum, b) => sum + b.pages, 0);
+    return auth(
+      v,
+      heading(
+        cloud ? "Sign in to Trenova Cloud" : `Sign in to ${serverTitle(account)}`,
+        "Your browser opens Trenova, where you approve this computer with a code. It then scans and prints as you.",
+      ),
+      el(
+        "div",
+        { class: "server-card" },
+        el("span", { class: "kind" }, icon(cloud ? "cloud" : "server")),
+        el(
+          "span",
+          { class: "text" },
+          el("span", { class: "name", text: serverTitle(account) }),
+          el("span", { class: "subtle", text: account.server || "" }),
+        ),
+        account.serverLocked
+          ? null
+          : button("Change", {
+              class: "ghost small",
+              onclick: () => {
+                local.changingServer = true;
+                local.selfHosted = false;
+                local.serverDraft = null;
+                draw();
+              },
+            }),
+      ),
+      button(
+        cloud ? "Sign in with Trenova Cloud" : "Sign in",
+        {
+          class: "primary large block",
+          id: "sign-in",
+          disabled: pressed("signIn"),
+          onclick: () => press("signIn", (next) => next.stage === "signedOut", { type: "signIn" }),
+        },
+        "logIn",
+      ),
+      waitingPages
+        ? el("p", {
+            class: "callout tone-neutral",
+            text: `${pages(waitingPages)} on this computer ${waitingPages === 1 ? "is" : "are"} sent once you sign in.`,
+          })
+        : null,
+    );
+  }
+
+  function drawChangeServer(v) {
+    return auth(
+      v,
+      heading("Change the Trenova address", "Pages waiting to be sent go to the address they were scanned for, so change it only once nothing is waiting."),
+      addressForm(v, "Use this address", (address) => {
+        local.changingServer = false;
+        connect(address);
+      }),
+      el(
+        "div",
+        { class: "actions" },
+        button("Keep the current address", {
+          class: "ghost",
+          onclick: () => {
+            local.changingServer = false;
+            local.serverDraft = null;
+            draw();
+          },
+        }),
+      ),
+    );
+  }
+
+  function copyText(text, mark) {
     const done = () => {
-      local.copied = true;
+      local[mark] = true;
       draw();
       setTimeout(() => {
-        local.copied = false;
+        local[mark] = false;
         draw();
       }, 2000);
     };
     if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
-      navigator.clipboard.writeText(code).then(done, () => {});
+      navigator.clipboard.writeText(text).then(done, () => {});
     }
   }
 
-  function drawSetup(v) {
+  function drawPairing(v) {
+    const code = v.pairingCode || "";
+    return auth(
+      v,
+      heading("Approve this computer", "Trenova opened in your browser. Check the code there matches this one, then approve it."),
+      el(
+        "div",
+        { class: "code", "aria-label": code },
+        [...code].map((c) => el("span", { class: c === "-" ? "sep" : null, "aria-hidden": "true", text: c })),
+      ),
+      el("div", { class: "waiting" }, el("span", { class: "spinner", "aria-hidden": "true" }), "Waiting for approval"),
+      el(
+        "div",
+        { class: "actions" },
+        button(
+          "Open the approval page",
+          { class: "primary grow", onclick: () => send({ type: "openApproval" }) },
+          "external",
+        ),
+        button(local.copied ? "Copied" : "Copy code", { onclick: () => copyText(code, "copied") }, local.copied ? "check" : "copy"),
+      ),
+      v.account.serverShared
+        ? el("p", {
+            class: "subtle",
+            text: "Approve it from the organization you want this computer to scan into. Switch organizations in Trenova first if you belong to more than one.",
+          })
+        : null,
+      el(
+        "div",
+        { class: "actions end" },
+        button("Cancel sign-in", { class: "ghost", onclick: () => send({ type: "cancelSignIn" }) }),
+      ),
+    );
+  }
+
+  function drawConnecting(v) {
+    return auth(
+      v,
+      heading("Connecting to Trenova", v.status.detail || v.account.server || ""),
+      el("div", { class: "waiting" }, el("span", { class: "spinner", "aria-hidden": "true" }), "One moment"),
+    );
+  }
+
+  function drawBeforeSignIn(v) {
     switch (v.stage) {
       case "needsServer":
-        return [
-          welcome(
-            "Welcome to Trenova Capture",
-            "Scan and print paper straight into Trenova from this computer. First, tell it where your Trenova is.",
-          ),
-          drawSteps(v),
-          el("section", { class: "panel" }, el("div", { class: "panel-body" }, serverForm(v, "Connect"))),
-        ];
+        return drawConnect(v);
+      case "checking":
+        return drawChecking(v);
       case "signedOut":
-        return [
-          welcome(
-            "Sign in to Trenova",
-            "Signing in links this computer to your Trenova account. You approve it once, in your browser.",
-          ),
-          drawSteps(v),
-          el(
-            "section",
-            { class: "panel" },
-            el(
-              "div",
-              { class: "panel-body" },
-              el(
-                "div",
-                { class: "row" },
-                icon("globe"),
-                el("span", { class: "grow name", text: v.account.server || "" }),
-                v.account.serverLocked
-                  ? null
-                  : button("Change", { class: "link", onclick: () => goTo("settings") }),
-              ),
-              button(
-                "Sign in",
-                {
-                  class: "primary large block",
-                  disabled: pressed("signIn"),
-                  onclick: () =>
-                    press("signIn", (next) => next.stage === "signedOut", { type: "signIn" }),
-                },
-                "lock",
-              ),
-              v.waiting.length
-                ? el("p", {
-                    class: "subtle",
-                    text: `${pages(v.waiting.reduce((sum, b) => sum + b.pages, 0))} on this computer are sent once you sign in.`,
-                  })
-                : null,
-            ),
-          ),
-        ];
-      case "pairing": {
-        const code = v.pairingCode || "";
-        return [
-          welcome(
-            "Approve this computer",
-            "Trenova opened in your browser. Check the code there matches this one, then approve it.",
-          ),
-          drawSteps(v),
-          el(
-            "section",
-            { class: "panel", "aria-label": "Your code" },
-            el(
-              "div",
-              { class: "panel-body" },
-              el(
-                "div",
-                { class: "code", "aria-label": code },
-                [...code].map((c) =>
-                  el("span", { class: c === "-" ? "sep" : null, "aria-hidden": "true", text: c }),
-                ),
-              ),
-              el(
-                "div",
-                { class: "waiting" },
-                el("span", { class: "spinner", "aria-hidden": "true" }),
-                "Waiting for approval",
-              ),
-              el(
-                "div",
-                { class: "actions" },
-                button(
-                  "Open the approval page",
-                  { class: "primary grow", onclick: () => send({ type: "openApproval" }) },
-                  "external",
-                ),
-                button(local.copied ? "Copied" : "Copy code", { onclick: () => copyCode(code) }, local.copied ? "check" : "copy"),
-              ),
-              el(
-                "div",
-                { class: "actions end" },
-                button("Cancel sign-in", {
-                  class: "ghost",
-                  onclick: () => send({ type: "cancelSignIn" }),
-                }),
-              ),
-            ),
-          ),
-        ];
-      }
+        return local.changingServer ? drawChangeServer(v) : drawSignedOut(v);
+      case "pairing":
+        return drawPairing(v);
       case "connecting":
-        return el(
-          "section",
-          { class: "panel" },
-          el(
-            "div",
-            { class: "empty" },
-            el("span", { class: "spinner", "aria-hidden": "true" }),
-            el("h2", { text: "Connecting to Trenova" }),
-            el("p", { text: v.status.detail || v.account.server || "" }),
-          ),
-        );
+        return drawConnecting(v);
       default:
         return null;
     }
@@ -841,15 +1125,30 @@
     );
   }
 
+  function chooseScanner(v) {
+    if (!v.scanners.some((s) => scannerKey(s) === local.scanner)) {
+      const preferred = v.scanners.find((s) => s.isDefault) || v.scanners[0];
+      local.scanner = preferred ? scannerKey(preferred) : null;
+    }
+    if (local.profile !== "" && !v.profiles.some((p) => p.id === local.profile)) {
+      const preferred = v.profiles.find((p) => p.isDefault) || v.profiles[0];
+      local.profile = preferred ? preferred.id : "";
+    }
+    return {
+      scanner: v.scanners.find((s) => scannerKey(s) === local.scanner),
+      profile: v.profiles.find((p) => p.id === local.profile),
+    };
+  }
+
   function drawScanCard(v) {
     if (v.scan) {
       return drawScanning(v);
     }
     const again = button("Look again", {
-      class: "link",
+      class: "ghost small",
       disabled: pressed("refresh"),
       onclick: () => press("refresh", () => false, { type: "refreshScanners" }),
-    });
+    }, "refresh");
     if (!v.scanners.length) {
       return panel(
         "Scan to Intake",
@@ -857,21 +1156,13 @@
         el(
           "div",
           { class: "empty" },
+          icon("scan"),
           el("h2", { text: "No scanner found" }),
-          el("p", { text: "Check the scanner is on and connected to this computer, then look again." }),
+          el("p", { text: "Check the scanner is on and connected to this computer, then look again. Settings lists test scanners for trying it without one." }),
         ),
       );
     }
-    if (!v.scanners.some((s) => scannerKey(s) === local.scanner)) {
-      const preferred = v.scanners.find((s) => s.isDefault) || v.scanners[0];
-      local.scanner = scannerKey(preferred);
-    }
-    if (local.profile !== "" && !v.profiles.some((p) => p.id === local.profile)) {
-      const preferred = v.profiles.find((p) => p.isDefault) || v.profiles[0];
-      local.profile = preferred ? preferred.id : "";
-    }
-    const chosen = v.scanners.find((s) => scannerKey(s) === local.scanner);
-    const profile = v.profiles.find((p) => p.id === local.profile);
+    const { scanner: chosen, profile } = chooseScanner(v);
     return panel(
       "Scan to Intake",
       { iconName: "scan", aside: again },
@@ -891,6 +1182,7 @@
                 id: "scanner",
                 onchange: (event) => {
                   local.scanner = event.target.value;
+                  remember({ scanner: local.scanner });
                   draw();
                 },
               },
@@ -910,6 +1202,7 @@
                 disabled: !v.profiles.length,
                 onchange: (event) => {
                   local.profile = event.target.value;
+                  remember({ profile: local.profile });
                   draw();
                 },
               },
@@ -925,27 +1218,32 @@
             ),
           ),
         ),
-        profile
-          ? el(
-              "div",
-              { class: "chips" },
-              profile.summary.split(", ").map((part) => el("span", { class: "badge", text: part })),
-            )
-          : null,
-        button(
-          "Scan",
-          {
-            class: "primary large block",
-            disabled: !v.canScan || !chosen || pressed("scan"),
-            onclick: () =>
-              press("scan", (next) => next.canScan, {
-                type: "scan",
-                scanner: chosen.name,
-                protocol: chosen.protocol,
-                profile: profile ? profile.id : null,
-              }),
-          },
-          "scan",
+        el(
+          "div",
+          { class: "row" },
+          profile
+            ? el(
+                "div",
+                { class: "chips grow" },
+                profile.summary.split(", ").map((part) => el("span", { class: "badge", text: part })),
+              )
+            : el("span", { class: "grow" }),
+          button(
+            "Scan",
+            {
+              class: "primary large",
+              id: "scan",
+              disabled: !v.canScan || !chosen || pressed("scan"),
+              onclick: () =>
+                press("scan", (next) => next.canScan, {
+                  type: "scan",
+                  scanner: chosen.name,
+                  protocol: chosen.protocol,
+                  profile: profile ? profile.id : null,
+                }),
+            },
+            "scan",
+          ),
         ),
       ),
     );
@@ -955,24 +1253,24 @@
     if (!v.printing) {
       return null;
     }
-    return el(
-      "section",
-      { class: "panel", "aria-label": "Print to Trenova" },
+    return panel(
+      "Print to Trenova",
+      { iconName: "print" },
       el(
         "div",
         { class: "panel-body" },
         el(
           "div",
           { class: "item" },
-          el("span", { class: v.printerMissing ? "kind tone-danger" : "kind" }, icon("print")),
+          el("span", { class: v.printerMissing ? "kind tone-danger" : "kind tone-success" }, icon(v.printerMissing ? "alert" : "check")),
           el(
             "div",
             { class: "item-text" },
-            el("h2", { text: "Print to Trenova" }),
+            el("div", { class: "name", text: v.printerMissing ? "The Trenova printer is not set up" : "The Trenova printer is ready" }),
             el("p", {
               class: "subtle wrap",
               text: v.printerMissing
-                ? "The Trenova printer is not set up on this computer yet."
+                ? "Adding it asks for administrator rights once."
                 : "Choose the Trenova printer in any program. What you print goes to Intake.",
             }),
           ),
@@ -1011,9 +1309,9 @@
           when(batch.at),
           batch.link
             ? button("Open", {
-                class: "link",
+                class: "ghost small",
                 onclick: () => send({ type: "openLink", link: batch.link }),
-              })
+              }, null, "external")
             : null,
         ),
       ),
@@ -1027,7 +1325,8 @@
     return panel(
       "Recently sent",
       {
-        aside: button("See all", { class: "link", onclick: () => goTo("activity") }),
+        iconName: "checkCircle",
+        aside: button("See all", { class: "ghost small", onclick: () => goTo("activity") }),
       },
       el("ul", { class: "list" }, v.recent.slice(0, RECENT_ON_HOME).map(sentItem)),
     );
@@ -1145,16 +1444,6 @@
     );
   }
 
-  function chosenScan(v) {
-    if (!v.scanners.some((s) => scannerKey(s) === local.scanner)) {
-      const preferred = v.scanners.find((s) => s.isDefault) || v.scanners[0];
-      local.scanner = preferred ? scannerKey(preferred) : null;
-    }
-    const scanner = v.scanners.find((s) => scannerKey(s) === local.scanner);
-    const profile = v.profiles.find((p) => p.id === local.profile);
-    return { scanner, profile };
-  }
-
   function drawHeldBatch(v, batch) {
     const editable = batch.editable;
     const all = local.expanded.has(batch.key);
@@ -1162,7 +1451,7 @@
     want(batch.key, "thumb", shown.map((p) => p.page));
     const unpictured = batch.pages - batch.pictures.length;
     const confirming = local.confirmHeld === batch.key;
-    const { scanner, profile } = chosenScan(v);
+    const { scanner, profile } = chooseScanner(v);
     return el(
       "section",
       { class: "panel review", "aria-label": `Look over ${batch.label}` },
@@ -1171,6 +1460,7 @@
         { class: "panel-head" },
         icon(batch.kind === "print" ? "print" : "scan"),
         el("h2", { class: "grow name", text: batch.label }),
+        el("span", { class: "badge tone-brand", text: "Ready to send" }),
         el("span", { class: "badge", text: pages(batch.pages) }),
       ),
       el(
@@ -1408,7 +1698,7 @@
                   draggable: "false",
                 }),
               )
-            : el("span", { class: "spinner", "aria-hidden": "true" }),
+            : el("span", { class: "spinner lg", "aria-hidden": "true" }),
         ),
         el(
           "div",
@@ -1463,12 +1753,21 @@
     }
   }
 
-  function drawHome(v) {
-    const setup = drawSetup(v);
-    if (setup) {
-      return setup;
+  function openTrenovaButton(v) {
+    if (!v.account.webBase) {
+      return null;
     }
-    return [
+    return button("Open Trenova", { class: "ghost small", onclick: () => send({ type: "openTrenova" }) }, null, "external");
+  }
+
+  function drawHome(v) {
+    return page(
+      "Home",
+      [
+        v.canOpenIntake
+          ? button("Open Intake", { class: "small", onclick: () => send({ type: "openIntake" }) }, null, "external")
+          : openTrenovaButton(v),
+      ],
       drawNotices(v),
       drawHeld(v),
       v.stage === "blocked" ? null : drawScanCard(v),
@@ -1480,7 +1779,7 @@
         icon("tray"),
         "Closing this window keeps Trenova Capture running in the notification area, where scans and prints still reach Trenova.",
       ),
-    ];
+    );
   }
 
   function drawRefused(v) {
@@ -1587,7 +1886,7 @@
         }),
       ),
       el("p", {
-        class: "subtle panel-note",
+        class: "panel-quiet",
         text: "Sending again puts it in Intake. Save a copy writes its pages as PDFs to your Downloads folder.",
       }),
     );
@@ -1635,7 +1934,7 @@
       {
         iconName: "checkCircle",
         aside: v.canOpenIntake
-          ? button("Open Intake", { class: "link", onclick: () => send({ type: "openIntake" }) })
+          ? button("Open Intake", { class: "ghost small", onclick: () => send({ type: "openIntake" }) }, null, "external")
           : null,
       },
       el("ul", { class: "list" }, v.recent.map(sentItem)),
@@ -1688,41 +1987,73 @@
       drawSent(v),
       drawMessages(v),
     ].filter(Boolean);
-    if (!sections.length) {
-      return el(
-        "section",
-        { class: "panel" },
-        el(
-          "div",
-          { class: "empty" },
-          icon("inbox"),
-          el("h2", { text: "Nothing yet" }),
-          el("p", { text: "What you scan and print shows here: waiting, sent, or needing a look." }),
-        ),
-      );
-    }
-    return sections;
+    return page(
+      "Activity",
+      [
+        v.canOpenIntake
+          ? button("Open Intake", { class: "small", onclick: () => send({ type: "openIntake" }) }, null, "external")
+          : null,
+      ],
+      sections.length
+        ? sections
+        : el(
+            "section",
+            { class: "panel" },
+            el(
+              "div",
+              { class: "empty" },
+              icon("inbox"),
+              el("h2", { text: "Nothing yet" }),
+              el("p", { text: "What you scan and print shows here: waiting, sent, or needing a look." }),
+            ),
+          ),
+    );
   }
 
-  function initials(name) {
-    const parts = (name || "").trim().split(/\s+/).filter(Boolean);
-    const letters = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : (parts[0] || "?").slice(0, 2);
-    return letters.toUpperCase();
+  function diagnostics(v) {
+    const account = v.account;
+    const lines = [
+      `Trenova Capture ${v.version}`,
+      `Connection: ${(CONNECTION[v.stage] || CONNECTION.connecting)[1]} (${v.status.title})`,
+      `Server: ${account.server || "none"}${account.serverName ? ` (${account.serverName})` : ""}`,
+      account.serverApi ? `API: ${account.serverApi}` : null,
+      account.webBase ? `Web app: ${account.webBase}` : null,
+      account.person ? `Signed in as: ${account.person}${account.organization ? ` at ${account.organization}` : ""}` : null,
+      account.deviceName ? `Computer: ${account.deviceName}` : null,
+      account.deviceId ? `Device ID: ${account.deviceId}` : null,
+      `Scanners: ${v.scanners.length ? v.scanners.map((s) => s.title).join(", ") : "none found"}`,
+      `Printing: ${!v.printing ? "not installed" : v.printerMissing ? "printer missing" : "ready"}`,
+      `Waiting: ${pages(v.waiting.reduce((sum, b) => sum + b.pages, 0))}, not sent: ${v.refused.length}`,
+      `Review before sending: ${v.reviewBeforeSending ? "on" : "off"}${v.reviewLocked ? " (by policy)" : ""}`,
+      v.update ? `Update: ${v.update.version} ${v.update.status}` : null,
+      v.updateRequired ? `Required version: ${v.updateRequired}` : null,
+    ];
+    return lines.filter(Boolean).join("\n");
+  }
+
+  function settingSwitch(id, checked, disabled, name, text, onchange) {
+    return el(
+      "label",
+      { class: "switch" },
+      el("input", { id, type: "checkbox", role: "switch", checked, disabled, onchange }),
+      el(
+        "span",
+        { class: "grow" },
+        el("span", { class: "name", text: name }),
+        el("p", { class: "subtle", text }),
+      ),
+    );
   }
 
   function drawSettings(v) {
     const account = v.account;
-    return [
-      signedInStage(v)
-        ? null
-        : el(
-            "div",
-            { class: "row" },
-            button("Back", { class: "link", onclick: () => goTo("home") }),
-          ),
+    const cloud = account.serverShared;
+    return page(
+      "Settings",
+      [],
       panel(
         "Account",
-        null,
+        { iconName: "users" },
         el(
           "div",
           { class: "panel-body" },
@@ -1730,14 +2061,38 @@
             ? el(
                 "div",
                 { class: "item" },
-                el("span", { class: "avatar", "aria-hidden": "true", text: initials(account.person) }),
+                el("span", { class: "avatar lg", "aria-hidden": "true", text: initials(account.person) }),
                 el(
                   "div",
                   { class: "item-text" },
                   el("div", { class: "name", text: account.person || "Signed in" }),
-                  el("p", { class: "subtle", text: account.organization || "" }),
+                  el("p", { class: "subtle", text: [account.organization, account.deviceName ? `this computer is ${account.deviceName}` : null].filter(Boolean).join(" · ") }),
                 ),
-                button("Sign out", { onclick: () => send({ type: "signOut" }) }),
+                local.confirmSignOut
+                  ? el(
+                      "div",
+                      { class: "actions" },
+                      button("Sign out", {
+                        class: "danger",
+                        onclick: () => {
+                          local.confirmSignOut = false;
+                          send({ type: "signOut" });
+                        },
+                      }),
+                      button("Keep me signed in", {
+                        class: "ghost",
+                        onclick: () => {
+                          local.confirmSignOut = false;
+                          draw();
+                        },
+                      }),
+                    )
+                  : button("Sign out", {
+                      onclick: () => {
+                        local.confirmSignOut = true;
+                        draw();
+                      },
+                    }),
               )
             : el(
                 "div",
@@ -1747,35 +2102,106 @@
                   ? button("Sign in", { class: "primary", onclick: () => send({ type: "signIn" }) })
                   : null,
               ),
+          account.signedIn
+            ? el("p", {
+                class: "subtle",
+                text: local.confirmSignOut
+                  ? "Signing out removes this computer from Trenova. Pages not yet sent are kept here until you sign in again."
+                  : cloud
+                    ? "This computer scans into the organization you approved it from. To scan into another of your organizations, sign out and sign in again from that one."
+                    : "This computer scans and prints as you, with your permissions, until it is signed out or revoked in Trenova.",
+              })
+            : null,
         ),
       ),
-      panel("Server", { iconName: "globe" }, el("div", { class: "panel-body" }, serverForm(v, "Save"))),
+      panel(
+        "Server",
+        { iconName: cloud ? "cloud" : "server" },
+        el(
+          "div",
+          { class: "panel-body" },
+          el(
+            "dl",
+            { class: "facts" },
+            el("dt", { text: "Trenova" }),
+            el("dd", { text: serverTitle(account) }),
+            el("dt", { text: "Address" }),
+            el("dd", { class: "mono", text: account.server || "Not set" }),
+            account.serverApi ? el("dt", { text: "API" }) : null,
+            account.serverApi ? el("dd", { class: "mono", text: account.serverApi }) : null,
+          ),
+          account.serverProblem
+            ? el("p", { class: "callout tone-danger", role: "alert", text: account.serverProblem })
+            : null,
+          el(
+            "div",
+            { class: "actions" },
+            account.webBase
+              ? button("Open Trenova", { onclick: () => send({ type: "openTrenova" }) }, null, "external")
+              : null,
+            account.serverLocked
+              ? el("span", { class: "subtle", text: "Your organization sets this address." })
+              : button("Change address", {
+                  class: "ghost",
+                  onclick: () => {
+                    local.changingServer = true;
+                    local.serverDraft = null;
+                    draw();
+                  },
+                }),
+          ),
+        ),
+      ),
+      panel(
+        "Appearance",
+        { iconName: local.theme === "dark" ? "moon" : "sun" },
+        el(
+          "div",
+          { class: "panel-body" },
+          el(
+            "div",
+            { class: "row" },
+            el(
+              "span",
+              { class: "grow" },
+              el("span", { class: "name", text: "Theme" }),
+              el("p", { class: "subtle", text: "Follow Windows, or choose one for this window." }),
+            ),
+            el(
+              "div",
+              { class: "segmented", role: "group", "aria-label": "Theme" },
+              [
+                ["system", "System"],
+                ["light", "Light"],
+                ["dark", "Dark"],
+              ].map(([value, label]) =>
+                button(label, {
+                  "aria-pressed": String(local.theme === value),
+                  onclick: () => {
+                    local.theme = value;
+                    remember({ theme: value });
+                    applyTheme();
+                    draw();
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+      ),
       panel(
         "Notifications",
         { iconName: "bell" },
         el(
           "div",
           { class: "panel-body" },
-          el(
-            "label",
-            { class: "switch" },
-            el("input", {
-              id: "routine-notifications",
-              type: "checkbox",
-              role: "switch",
-              checked: v.routineNotifications,
-              onchange: (event) =>
-                send({ type: "setNotifications", routine: Boolean(event.target.checked) }),
-            }),
-            el(
-              "span",
-              { class: "grow" },
-              el("span", { class: "name", text: "Tell me when things go well" }),
-              el("p", {
-                class: "subtle",
-                text: "Something sent, the connection back, an update installed. Problems are always shown.",
-              }),
-            ),
+          settingSwitch(
+            "routine-notifications",
+            v.routineNotifications,
+            false,
+            "Tell me when things go well",
+            "Something sent, the connection back, an update installed. Problems are always shown.",
+            (event) => send({ type: "setNotifications", routine: Boolean(event.target.checked) }),
           ),
         ),
       ),
@@ -1785,28 +2211,15 @@
         el(
           "div",
           { class: "panel-body" },
-          el(
-            "label",
-            { class: "switch" },
-            el("input", {
-              id: "review-before-sending",
-              type: "checkbox",
-              role: "switch",
-              checked: v.reviewBeforeSending,
-              disabled: v.reviewLocked,
-              onchange: (event) => send({ type: "setReview", on: Boolean(event.target.checked) }),
-            }),
-            el(
-              "span",
-              { class: "grow" },
-              el("span", { class: "name", text: "Let me look things over before they are sent" }),
-              el("p", {
-                class: "subtle",
-                text: v.reviewLocked
-                  ? "Your organization sets this on this computer."
-                  : "Scans and prints wait here until you choose Send, so you can turn a page, take one out, or scan more.",
-              }),
-            ),
+          settingSwitch(
+            "review-before-sending",
+            v.reviewBeforeSending,
+            v.reviewLocked,
+            "Let me look things over before they are sent",
+            v.reviewLocked
+              ? "Your organization sets this on this computer."
+              : "Scans and prints wait here until you choose Send, so you can turn a page, take one out, or scan more.",
+            (event) => send({ type: "setReview", on: Boolean(event.target.checked) }),
           ),
         ),
       ),
@@ -1840,7 +2253,7 @@
         : null,
       panel(
         "This computer",
-        null,
+        { iconName: "monitor" },
         el(
           "div",
           { class: "panel-body" },
@@ -1851,32 +2264,19 @@
             el("dd", { class: "numeric", text: v.version }),
             el("dt", { text: "Scanners" }),
             el("dd", {
+              class: "wrap",
               text: v.scanners.length ? v.scanners.map((s) => s.title).join(", ") : "None found",
             }),
           ),
-          el(
-            "label",
-            { class: "switch" },
-            el("input", {
-              id: "test-scanner",
-              type: "checkbox",
-              role: "switch",
-              checked: v.testScanner,
-              disabled: v.testScannerLocked,
-              onchange: (event) =>
-                send({ type: "setTestScanner", on: Boolean(event.target.checked) }),
-            }),
-            el(
-              "span",
-              { class: "grow" },
-              el("span", { class: "name", text: "Show test scanners" }),
-              el("p", {
-                class: "subtle",
-                text: v.testScannerLocked
-                  ? "Your organization has turned these off on this computer."
-                  : "Scanners that feed sample paperwork, including a paper jam and a double feed, for trying Trenova Capture without a scanner. What they scan goes to Intake like any scan.",
-              }),
-            ),
+          settingSwitch(
+            "test-scanner",
+            v.testScanner,
+            v.testScannerLocked,
+            "Show test scanners",
+            v.testScannerLocked
+              ? "Your organization has turned these off on this computer."
+              : "Scanners that feed sample paperwork, including a paper jam and a double feed, for trying Trenova Capture without a scanner. What they scan goes to Intake like any scan.",
+            (event) => send({ type: "setTestScanner", on: Boolean(event.target.checked) }),
           ),
           el(
             "div",
@@ -1893,12 +2293,29 @@
           ),
         ),
       ),
+      panel(
+        "Support",
+        { iconName: "lifeBuoy", hint: "What to send when asking for help" },
+        el(
+          "div",
+          { class: "panel-body" },
+          el("pre", { class: "diagnostics", id: "diagnostics", text: diagnostics(v) }),
+          el(
+            "div",
+            { class: "actions" },
+            button(local.copiedDiagnostics ? "Copied" : "Copy", {
+              onclick: () => copyText(diagnostics(v), "copiedDiagnostics"),
+            }, local.copiedDiagnostics ? "check" : "copy"),
+            el("span", { class: "subtle", text: "The log folder has the rest." }),
+          ),
+        ),
+      ),
       el(
         "div",
         { class: "actions end" },
         button("Quit Trenova Capture", { class: "ghost", onclick: () => send({ type: "quit" }) }, "power"),
       ),
-    ];
+    );
   }
 
   // New messages become toasts while the window is in front, since Windows
@@ -1963,7 +2380,7 @@
   // Keeps the field being typed in, and where in it, across a redraw.
   function captureFocus() {
     const active = document.activeElement;
-    if (!active || !active.id || !(app.contains(active) || viewerHost.contains(active))) {
+    if (!active || !active.id || !(app.contains(active) || viewerHost.contains(active) || rail.contains(active))) {
       return null;
     }
     const focus = { id: active.id };
@@ -1992,6 +2409,19 @@
     }
   }
 
+  // Keeps the page where it was scrolled to across a redraw.
+  function captureScroll() {
+    const body = app.querySelector(".page-body");
+    return body ? body.scrollTop : 0;
+  }
+
+  function restoreScroll(top) {
+    const body = app.querySelector(".page-body");
+    if (body && top) {
+      body.scrollTop = top;
+    }
+  }
+
   function draw() {
     if (!view) {
       return;
@@ -2002,27 +2432,26 @@
     trackShapes(v);
     prunePending();
     const focus = captureFocus();
-    drawMasthead(v);
-    if (signedInStage(v)) {
-      drawTabs(v);
+    const scrolled = captureScroll();
+    const signedIn = signedInStage(v);
+    shell.classList.toggle("alone", !signedIn);
+    if (signedIn) {
+      drawRail(v);
     } else {
-      tabs.replaceChildren();
-      if (local.tab === "activity") {
-        local.tab = "home";
-      }
-    }
-    if (!signedInStage(v) && local.tab === "settings" && v.stage !== "signedOut") {
+      rail.replaceChildren();
       local.tab = "home";
+      local.selfHosted = local.selfHosted && v.stage === "needsServer";
     }
-    const content =
-      local.tab === "settings" ? drawSettings(v) : local.tab === "activity" ? drawActivity(v) : drawHome(v);
-    if (signedInStage(v)) {
-      app.setAttribute("role", "tabpanel");
-      app.setAttribute("aria-labelledby", `tab-${local.tab}`);
-    } else {
-      app.removeAttribute("role");
-      app.removeAttribute("aria-labelledby");
+    if (v.stage !== "needsServer" && v.stage !== "signedOut") {
+      local.changingServer = false;
     }
+    const content = !signedIn
+      ? drawBeforeSignIn(v)
+      : local.tab === "settings"
+        ? drawSettings(v)
+        : local.tab === "activity"
+          ? drawActivity(v)
+          : drawHome(v);
     app.replaceChildren(...[content].flat(3).filter(Boolean));
     for (const id of tiles.keys()) {
       if (!tilesDrawn.has(id)) {
@@ -2031,6 +2460,7 @@
     }
     drawViewer(v);
     restoreFocus(focus);
+    restoreScroll(scrolled);
   }
 
   document.addEventListener("keydown", (event) => {
@@ -2055,6 +2485,16 @@
       draw();
     } else if (local.confirmDiscard) {
       local.confirmDiscard = null;
+      draw();
+    } else if (local.confirmSignOut) {
+      local.confirmSignOut = false;
+      draw();
+    } else if (local.changingServer) {
+      local.changingServer = false;
+      local.serverDraft = null;
+      draw();
+    } else if (local.selfHosted && local.serverDraft === null && CLOUD_ADDRESS) {
+      local.selfHosted = false;
       draw();
     } else if (local.tab !== "home") {
       goTo("home");

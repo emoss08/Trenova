@@ -52,15 +52,30 @@ pub struct Status {
 pub struct Account {
     pub person: Option<String>,
     pub organization: Option<String>,
+    /// The address as entered: what the person opens Trenova at.
     pub server: Option<String>,
+    /// What the server calls itself, once it has answered.
+    pub server_name: Option<String>,
+    /// Many organizations share it, as on Trenova Cloud.
+    pub server_shared: bool,
+    /// Where its API answers, when that is somewhere else.
+    pub server_api: Option<String>,
+    /// Why the address could not be used.
+    pub server_problem: Option<String>,
     pub server_locked: bool,
     pub signed_in: bool,
+    /// This computer as Trenova names it, once signed in.
+    pub device_name: Option<String>,
+    pub device_id: Option<String>,
+    /// The web app, for a link to open Trenova.
+    pub web_base: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Stage {
     NeedsServer,
+    Checking,
     SignedOut,
     Pairing,
     Connecting,
@@ -296,6 +311,7 @@ impl Snapshot {
     fn stage(&self) -> Stage {
         match self.connection {
             Connection::NeedsServer => Stage::NeedsServer,
+            Connection::Checking => Stage::Checking,
             Connection::SignedOut => Stage::SignedOut,
             Connection::Pairing { .. } => Stage::Pairing,
             Connection::Connecting => Stage::Connecting,
@@ -326,10 +342,22 @@ impl Snapshot {
             String::new()
         };
         match &self.connection {
-            Connection::NeedsServer => status(
-                Tone::Warning,
-                "Connect to Trenova",
-                "Enter the address your organization uses for Trenova to begin.".into(),
+            Connection::NeedsServer => match &self.server_problem {
+                Some(problem) => status(Tone::Danger, "Connect to Trenova", problem.clone()),
+                None => status(
+                    Tone::Warning,
+                    "Connect to Trenova",
+                    "Choose Trenova Cloud, or enter the address your organization uses for Trenova."
+                        .into(),
+                ),
+            },
+            Connection::Checking => status(
+                Tone::Neutral,
+                "Checking the address",
+                format!(
+                    "Looking for Trenova at {}.",
+                    self.server.as_deref().unwrap_or_default()
+                ),
             ),
             Connection::SignedOut => status(
                 Tone::Warning,
@@ -394,9 +422,10 @@ impl Snapshot {
             Connection::Connecting => "Waiting to connect",
             Connection::Offline { .. } => "Waiting for the connection",
             Connection::Blocked { .. } => "Paused",
-            Connection::NeedsServer | Connection::SignedOut | Connection::Pairing { .. } => {
-                "Waiting for you to sign in"
-            }
+            Connection::NeedsServer
+            | Connection::Checking
+            | Connection::SignedOut
+            | Connection::Pairing { .. } => "Waiting for you to sign in",
         }
     }
 
@@ -554,8 +583,15 @@ impl Snapshot {
                 person: self.person.clone(),
                 organization: self.organization.clone(),
                 server: self.server.clone(),
+                server_name: self.server_name.clone(),
+                server_shared: self.server_shared,
+                server_api: self.server_api.clone(),
+                server_problem: self.server_problem.clone(),
                 server_locked: self.server_locked,
                 signed_in: self.signed_in(),
+                device_name: self.device_name.clone(),
+                device_id: self.device_id.clone(),
+                web_base: self.web_base.clone(),
             },
             pairing_code: match &self.connection {
                 Connection::Pairing { code, .. } => Some(code.clone()),
@@ -721,6 +757,39 @@ impl Snapshot {
         }
     }
 
+    /// What a message about the server or the web app asks for.
+    fn resolve_server(&self, message: PageMessage) -> Option<WindowAction> {
+        match message {
+            PageMessage::SetServer { address } => {
+                let address = address.trim();
+                (!self.server_locked && !address.is_empty() && address.len() <= MAX_ADDRESS)
+                    .then(|| WindowAction::Command(Command::SetServer(address.to_owned())))
+            }
+            PageMessage::Connect { address } => {
+                let address = address.trim();
+                let allowed = !address.is_empty()
+                    && address.len() <= MAX_ADDRESS
+                    && (!self.server_locked || self.server.as_deref() == Some(address));
+                allowed.then(|| WindowAction::Command(Command::Connect(address.to_owned())))
+            }
+            PageMessage::OpenTrenova {} => self
+                .web_base
+                .clone()
+                .filter(|_| {
+                    !matches!(
+                        self.connection,
+                        Connection::NeedsServer | Connection::Checking
+                    )
+                })
+                .map(WindowAction::Open),
+            PageMessage::OpenApproval {} => match &self.connection {
+                Connection::Pairing { url, .. } => Some(WindowAction::Open(url.clone())),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
     /// What a message from the page asks for, checked against what the
     /// window shows. `None` when it names something that is not there.
     pub fn resolve(&self, message: PageMessage) -> Option<WindowAction> {
@@ -738,15 +807,10 @@ impl Snapshot {
             PageMessage::SignIn {} => command(Command::SignIn),
             PageMessage::CancelSignIn {} => command(Command::CancelSignIn),
             PageMessage::SignOut {} => command(Command::SignOut),
-            PageMessage::SetServer { address } => {
-                let address = address.trim();
-                (!self.server_locked && !address.is_empty() && address.len() <= MAX_ADDRESS)
-                    .then(|| WindowAction::Command(Command::SetServer(address.to_owned())))
-            }
-            PageMessage::OpenApproval {} => match &self.connection {
-                Connection::Pairing { url, .. } => Some(WindowAction::Open(url.clone())),
-                _ => None,
-            },
+            message @ (PageMessage::SetServer { .. }
+            | PageMessage::Connect { .. }
+            | PageMessage::OpenTrenova {}
+            | PageMessage::OpenApproval {}) => self.resolve_server(message),
             PageMessage::OpenIntake {} => self
                 .intake_link(None)
                 .filter(|_| self.signed_in())
@@ -828,7 +892,15 @@ pub enum PageMessage {
     SetServer {
         address: String,
     },
+    /// Use this address and sign in at once. With the address set by policy,
+    /// only that address is accepted.
+    #[serde(rename_all = "camelCase")]
+    Connect {
+        address: String,
+    },
     OpenApproval {},
+    /// Open the web app in the browser.
+    OpenTrenova {},
     OpenIntake {},
     #[serde(rename_all = "camelCase")]
     OpenLink {
@@ -1501,6 +1573,84 @@ mod tests {
             )),
             None,
             "not an inactive profile"
+        );
+    }
+
+    #[test]
+    fn connecting_takes_the_address_and_signs_in_and_a_policy_address_is_the_only_one() {
+        let mut snapshot = Snapshot::default();
+        assert_eq!(
+            snapshot.resolve(parse(
+                r#"{"type":"connect","address":" https://cloud.trenova.app "}"#
+            )),
+            Some(WindowAction::Command(Command::Connect(
+                "https://cloud.trenova.app".into()
+            )))
+        );
+        assert_eq!(
+            snapshot.resolve(parse(r#"{"type":"openTrenova"}"#)),
+            None,
+            "nothing to open before a server has answered"
+        );
+        snapshot.server = Some("https://tms.acme.test".into());
+        snapshot.server_locked = true;
+        assert_eq!(
+            snapshot.resolve(parse(r#"{"type":"connect","address":"https://x.test"}"#)),
+            None
+        );
+        assert_eq!(
+            snapshot.resolve(parse(
+                r#"{"type":"connect","address":"https://tms.acme.test"}"#
+            )),
+            Some(WindowAction::Command(Command::Connect(
+                "https://tms.acme.test".into()
+            )))
+        );
+        snapshot.connection = Connection::SignedOut;
+        snapshot.web_base = Some("https://tms.acme.test".into());
+        assert_eq!(
+            snapshot.resolve(parse(r#"{"type":"openTrenova"}"#)),
+            Some(WindowAction::Open("https://tms.acme.test".into()))
+        );
+    }
+
+    #[test]
+    fn a_checked_server_and_a_failed_check_reach_the_page() {
+        let mut snapshot = Snapshot {
+            server: Some("https://cloud.trenova.app".into()),
+            connection: Connection::Checking,
+            ..Snapshot::default()
+        };
+        let view = snapshot.view("1.0.0");
+        assert_eq!(view.stage, Stage::Checking);
+        assert_eq!(view.status.title, "Checking the address");
+        assert_eq!(
+            view.status.detail,
+            "Looking for Trenova at https://cloud.trenova.app."
+        );
+
+        snapshot.connection = Connection::NeedsServer;
+        snapshot.server_problem =
+            Some("nothing answered at https://cloud.trenova.app. Check the address.".into());
+        let view = snapshot.view("1.0.0");
+        assert_eq!(view.stage, Stage::NeedsServer);
+        assert_eq!(view.status.tone, Tone::Danger);
+        assert_eq!(
+            view.account.server_problem.as_deref(),
+            Some("nothing answered at https://cloud.trenova.app. Check the address.")
+        );
+
+        snapshot.connection = Connection::SignedOut;
+        snapshot.server_problem = None;
+        snapshot.server_name = Some("Trenova Cloud".into());
+        snapshot.server_shared = true;
+        snapshot.server_api = Some("https://api.trenova.app".into());
+        let view = snapshot.view("1.0.0");
+        assert_eq!(view.account.server_name.as_deref(), Some("Trenova Cloud"));
+        assert!(view.account.server_shared);
+        assert_eq!(
+            view.account.server_api.as_deref(),
+            Some("https://api.trenova.app")
         );
     }
 

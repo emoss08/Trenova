@@ -16,17 +16,48 @@ pub enum ServerUrlError {
     Credentials,
 }
 
-/// The server the agent talks to: an origin, plus the path prefix when the
-/// API is served below one. Only HTTPS is accepted, except on the machine
-/// itself, where a developer runs the server over plain HTTP.
+/// The server the agent talks to: the address a person gave, which names
+/// the computer's connection and its saved credential, and the address the
+/// API answers at, which discovery may move to another origin (Trenova
+/// Cloud serves its web app and its API apart). Only HTTPS is accepted,
+/// except on the machine itself, where a developer runs the server over
+/// plain HTTP.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Server {
-    base: Url,
+    entered: Url,
+    api: Url,
+}
+
+/// A URL with its query and fragment dropped and its path ending in `/`, so
+/// routes join below it.
+fn as_base(mut url: Url) -> Url {
+    url.set_query(None);
+    url.set_fragment(None);
+    let path = url.path().trim_end_matches('/').to_owned();
+    url.set_path(&format!("{path}/"));
+    url
+}
+
+fn check(url: &Url) -> Result<(), ServerUrlError> {
+    if url.host_str().is_none_or(str::is_empty) {
+        return Err(ServerUrlError::Invalid);
+    }
+    match url.scheme() {
+        "https" => {}
+        "http" if is_loopback(url) => {}
+        "http" => return Err(ServerUrlError::NotHttps),
+        _ => return Err(ServerUrlError::Invalid),
+    }
+    if !url.username().is_empty() || url.password().is_some() {
+        return Err(ServerUrlError::Credentials);
+    }
+    Ok(())
 }
 
 impl Server {
     /// Parses what a person or an installer typed. A bare host name is taken
-    /// as HTTPS.
+    /// as HTTPS. The API is taken to answer at the same address until
+    /// discovery says otherwise.
     pub fn parse(raw: &str) -> Result<Self, ServerUrlError> {
         let raw = raw.trim();
         if raw.is_empty() {
@@ -37,24 +68,30 @@ impl Server {
         } else {
             format!("https://{raw}")
         };
-        let mut url = Url::parse(&with_scheme).map_err(|_| ServerUrlError::Invalid)?;
-        if url.host_str().is_none_or(str::is_empty) {
-            return Err(ServerUrlError::Invalid);
+        let url = Url::parse(&with_scheme).map_err(|_| ServerUrlError::Invalid)?;
+        check(&url)?;
+        let base = as_base(url);
+        Ok(Self {
+            entered: base.clone(),
+            api: base,
+        })
+    }
+
+    /// The same connection with the API at `api_base`: an absolute address,
+    /// or one relative to the entered address, as the web app publishes it.
+    /// It must pass the same rules as an entered address.
+    pub fn with_api_base(mut self, api_base: &str) -> Result<Self, ServerUrlError> {
+        let api_base = api_base.trim();
+        if api_base.is_empty() {
+            return Err(ServerUrlError::Empty);
         }
-        match url.scheme() {
-            "https" => {}
-            "http" if is_loopback(&url) => {}
-            "http" => return Err(ServerUrlError::NotHttps),
-            _ => return Err(ServerUrlError::Invalid),
-        }
-        if !url.username().is_empty() || url.password().is_some() {
-            return Err(ServerUrlError::Credentials);
-        }
-        url.set_query(None);
-        url.set_fragment(None);
-        let path = url.path().trim_end_matches('/').to_owned();
-        url.set_path(&format!("{path}/"));
-        Ok(Self { base: url })
+        let url = self
+            .entered
+            .join(api_base)
+            .map_err(|_| ServerUrlError::Invalid)?;
+        check(&url)?;
+        self.api = as_base(url);
+        Ok(self)
     }
 
     /// A capture API route, `path` relative to `/api/v1/capture/`.
@@ -64,19 +101,42 @@ impl Server {
             API_PREFIX.trim_start_matches('/'),
             path.trim_start_matches('/')
         );
-        self.base
+        self.api
             .join(&relative)
-            .unwrap_or_else(|_| self.base.clone())
+            .unwrap_or_else(|_| self.api.clone())
     }
 
-    /// The address as stored and shown.
+    /// A path below the entered address: where the web app's files are.
+    pub fn entered_url(&self, path: &str) -> Url {
+        self.entered
+            .join(path.trim_start_matches('/'))
+            .unwrap_or_else(|_| self.entered.clone())
+    }
+
+    /// The address as entered, stored and shown.
     pub fn as_str(&self) -> &str {
-        self.base.as_str().trim_end_matches('/')
+        self.entered.as_str().trim_end_matches('/')
+    }
+
+    /// Where the API answers, as stored with the credential.
+    pub fn api_base(&self) -> &str {
+        self.api.as_str().trim_end_matches('/')
+    }
+
+    /// Whether the API answers somewhere other than the entered address.
+    pub fn api_elsewhere(&self) -> bool {
+        self.api != self.entered
     }
 
     /// The host, which names the stored credential.
     pub fn host(&self) -> &str {
-        self.base.host_str().unwrap_or_default()
+        self.entered.host_str().unwrap_or_default()
+    }
+
+    /// Whether the API is reached over HTTPS; plain HTTP is only ever this
+    /// machine.
+    pub fn api_is_https(&self) -> bool {
+        self.api.scheme() == "https"
     }
 }
 
@@ -115,9 +175,17 @@ mod tests {
     fn a_bare_host_is_https_and_routes_join_below_the_api_prefix() {
         let server = Server::parse("tms.acme-freight.com").expect("server");
         assert_eq!(server.as_str(), "https://tms.acme-freight.com");
+        assert_eq!(server.api_base(), "https://tms.acme-freight.com");
+        assert!(!server.api_elsewhere());
         assert_eq!(
             server.api("device/batches/").as_str(),
             "https://tms.acme-freight.com/api/v1/capture/device/batches/"
+        );
+        assert_eq!(
+            server
+                .entered_url("/.well-known/trenova-capture.json")
+                .as_str(),
+            "https://tms.acme-freight.com/.well-known/trenova-capture.json"
         );
     }
 
@@ -128,6 +196,61 @@ mod tests {
             server.api("pair/").as_str(),
             "https://acme.example/tms/api/v1/capture/pair/"
         );
+        assert_eq!(
+            server
+                .entered_url(".well-known/trenova-capture.json")
+                .as_str(),
+            "https://acme.example/tms/.well-known/trenova-capture.json"
+        );
+    }
+
+    #[test]
+    fn the_api_can_live_elsewhere_under_the_same_rules() {
+        let server = Server::parse("https://cloud.trenova.app")
+            .expect("server")
+            .with_api_base("https://api.trenova.app")
+            .expect("api");
+        assert_eq!(server.as_str(), "https://cloud.trenova.app");
+        assert_eq!(server.api_base(), "https://api.trenova.app");
+        assert!(server.api_elsewhere());
+        assert_eq!(
+            server.host(),
+            "cloud.trenova.app",
+            "the credential keeps its name"
+        );
+        assert_eq!(
+            server.api("pair/").as_str(),
+            "https://api.trenova.app/api/v1/capture/pair/"
+        );
+
+        let relative = Server::parse("https://acme.example/tms")
+            .expect("server")
+            .with_api_base("/")
+            .expect("api");
+        assert_eq!(relative.api_base(), "https://acme.example");
+        let mounted = Server::parse("https://acme.example/tms")
+            .expect("server")
+            .with_api_base("/backend/")
+            .expect("api");
+        assert_eq!(
+            mounted.api("pair/").as_str(),
+            "https://acme.example/backend/api/v1/capture/pair/"
+        );
+
+        let entered = Server::parse("https://cloud.trenova.app").expect("server");
+        assert_eq!(
+            entered.clone().with_api_base("http://api.trenova.app"),
+            Err(ServerUrlError::NotHttps)
+        );
+        assert_eq!(
+            entered.clone().with_api_base("https://u:p@api.trenova.app"),
+            Err(ServerUrlError::Credentials)
+        );
+        assert_eq!(
+            entered.clone().with_api_base("ftp://api.trenova.app"),
+            Err(ServerUrlError::Invalid)
+        );
+        assert_eq!(entered.with_api_base("  "), Err(ServerUrlError::Empty));
     }
 
     #[test]
@@ -139,6 +262,11 @@ mod tests {
         assert!(Server::parse("http://localhost:8080").is_ok());
         assert!(Server::parse("http://127.0.0.1:8080").is_ok());
         assert!(Server::parse("http://[::1]:8080").is_ok());
+        assert!(
+            !Server::parse("http://[::1]:8080")
+                .expect("server")
+                .api_is_https()
+        );
         assert_eq!(
             Server::parse("ftp://tms.acme.com"),
             Err(ServerUrlError::Invalid)

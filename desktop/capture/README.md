@@ -6,6 +6,40 @@ page; and a print service behind the "Trenova" printer, which hands what each pe
 to their agent. The design, and why it is Rust, is in
 [docs/design/document-capture.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/design/document-capture.md).
 
+Releases are on GitHub under the `capture-v*` tags
+([github.com/emoss08/Trenova/releases](https://github.com/emoss08/Trenova/releases?q=capture)),
+and a server that mirrors them offers the installer from My scanners and the admin
+Computers tab.
+
+## Finding the server
+
+People know Trenova by the address they open in a browser, and that is all the companion
+asks for: on the first run they choose **Trenova Cloud**, or enter the address of a
+self-hosted Trenova. Before it pairs, the agent finds where that Trenova's API answers:
+
+1. It reads `/.well-known/trenova-capture.json` below the entered address. The web app
+   publishes that file from its build (`client/apps/web/vite/capture-discovery.ts`, from the
+   same `VITE_API_URL` the app itself calls), naming where its API is:
+   `{"product":"trenova","apiBaseUrl":"https://api.trenova.app"}`. A relative address
+   (`"/"`, the self-hosted edge, where the API is proxied beside the app) resolves against the
+   entered one. Anything else at that path (nothing, the app's own HTML shell for an unknown
+   path, another site's page) means the API is taken to be at the entered address.
+2. It asks that API to describe itself at `GET /api/v1/capture/discovery/`, which answers
+   without authentication: the edition, what the server calls itself (Trenova Cloud, or
+   Trenova), its version, the web app's address and whether computers can be paired there. A
+   server from before this route still answers at `capture/releases/latest/`, and is taken as
+   a Trenova that says nothing about itself.
+
+The API address passes the same rules as an entered one (HTTPS, or plain HTTP to this
+machine only, no credentials in it), and is saved with the device credential, so a signed-in
+computer never discovers again. Trenova Cloud, which serves its web app at one origin and its
+API at another, works through this; so does any self-hosted install that puts the two apart.
+What the agent found is shown under Settings → Server and in the support summary there.
+
+Trenova Cloud's address is built into public builds (`https://cloud.trenova.app`). A build
+sets `TRENOVA_CAPTURE_CLOUD_SERVER` to another address, or to nothing to offer no hosted
+service at all.
+
 ## Layout
 
 | Crate | What it is | Runs on |
@@ -86,7 +120,9 @@ refused while it is unset.
 
 `--server` saves the address for this Windows user (`HKCU\SOFTWARE\Trenova\Capture\ServerUrl`);
 an address under `HKLM\SOFTWARE\Policies\Trenova\Capture` overrides it, and the installer
-writes one to `HKLM\SOFTWARE\Trenova\Capture`. `--sign-in` starts pairing at once, and `--show`
+writes one to `HKLM\SOFTWARE\Trenova\Capture`. An address given this way is still looked up
+(see "Finding the server") before it is used, and one nothing answers at is shown with the
+reason rather than saved. `--sign-in` starts pairing at once, and `--show`
 opens the window (in the copy already running, when there is one; the Start menu shortcut passes
 it). Plain HTTP is accepted only for `localhost`.
 
@@ -98,9 +134,15 @@ $loader = Get-ChildItem target\x86_64-pc-windows-msvc\release\build\webview2-com
 Copy-Item $loader target\x86_64-pc-windows-msvc\release\
 ```
 
-The window is a local page (`bins/trenova-capture/ui/`) drawn from a view the agent builds. To
-look at it without Windows, write it and views of it in several states, then open `page.html`
-in a browser and call `window.trenova.render(<a view>)`:
+The window is a local page (`bins/trenova-capture/ui/`) drawn from a view the agent builds,
+on the web app's design system (the Geist neutrals, the product drawn in ink, blue only for
+links and focus, flat surfaces parted by hairlines, two radii, three weights; see
+`docs/engineering/design-system.md`). Before sign-in it is one centred column, as the web
+app's sign-in is; once signed in, a rail (Home, Activity, Settings) beside the page. It
+follows Windows' light or dark theme unless Settings → Appearance picks one, and remembers
+that, and the scanner and settings last chosen, in its own storage. To look at it without
+Windows, write it and views of it in every state, then open `page.html` in a browser and
+call `window.trenova.render(<a view>)`:
 
 ```bash
 TRENOVA_CAPTURE_PREVIEW=/tmp/preview cargo test -p trenova-capture --test preview -- --ignored
@@ -238,14 +280,35 @@ pre-fill it: set `TRENOVA_CAPTURE_SUGGESTED_SERVER=https://…` while building t
 
 ## Releases and updates
 
-A release is a `capture-vX.Y.Z` tag on a commit whose `Cargo.toml` says `X.Y.Z`. The
-`native-capture.yml` workflow builds and signs the MSI, signs the release manifest with
-`trenova-capture-release` (the private key is the `TRENOVA_CAPTURE_SIGNING_KEY` secret),
-publishes both on that release, and copies the manifest to the rolling `capture-stable`
-release, which servers read (`update.captureManifestUrl`, verified with
-`update.capturePublicKey`) and mirror at `/api/v1/capture/releases/latest/`.
+A release is a GitHub release named `capture-vX.Y.Z` holding the MSI, its SHA-256, and the
+signed release manifest. There are two ways to cut one, and the `native-capture.yml`
+workflow does the same thing for both:
 
-The agent checks that address at sign-in and every six hours. When a newer release is
+- **Run the workflow by hand.** Actions → Trenova Capture → Run workflow, on the default
+  branch, with the version. The run sets the workspace version in `Cargo.toml` and
+  `Cargo.lock`, commits it, tags `capture-vX.Y.Z`, builds and signs the MSI, signs the
+  manifest, publishes the release, and copies the manifest to the rolling `capture-stable`
+  release. (A tag pushed by a workflow starts no workflow of its own, which is why the same
+  run carries on to build it.) Release notes can be given in the second field; the commit
+  message is used otherwise.
+- **Push a tag.** Set the version in `Cargo.toml` and `Cargo.lock` first (`cargo update
+  --workspace`), then push `capture-vX.Y.Z` at that commit.
+
+Servers read the `capture-stable` manifest (`update.captureManifestUrl`, verified with
+`update.capturePublicKey`) and mirror it at `/api/v1/capture/releases/latest/`, which is
+where the web app's Download button and the agent's update check look. A server with no key
+configured mirrors nothing; the web app then points at the GitHub releases instead.
+
+Signing is used when its secrets exist, and a release is published either way:
+
+| Secret | What it signs | Without it |
+|---|---|---|
+| `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `TRENOVA_SIGNING_ENDPOINT`, `TRENOVA_SIGNING_ACCOUNT`, `TRENOVA_SIGNING_PROFILE` | The executables and the MSI (Azure Trusted Signing, through `installer/sign.ps1`) | The installer is published unsigned: Windows SmartScreen warns before it installs, and the updater refuses it, so computers do not update themselves to it. |
+| `TRENOVA_CAPTURE_SIGNING_KEY` (with the `TRENOVA_CAPTURE_PUBLIC_KEY` repository variable) | The release manifest (ed25519, `trenova-capture-release sign`) | No manifest is published, so servers mirror nothing and computers do not update themselves; the installer is still on the release to download. |
+
+The release's notes say which of the two it carries.
+
+The agent checks the server's mirror at sign-in and every six hours. When a newer release is
 published, the organization allows self-update and the computer's policy does not forbid it,
 the agent starts the updater service, which verifies everything itself (the manifest's
 signature, the download's size and SHA-256, the MSI's Authenticode signature and that its

@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,6 +47,7 @@ type Params struct {
 	Service      *captureservice.Service
 	Releases     *capturereleaseservice.Service
 	Gateway      agentports.RealtimeGateway `optional:"true"`
+	Edition      ediports.EditionInfo
 	ErrorHandler *helpers.ErrorHandler
 	Config       *config.Config
 	Logger       *zap.Logger
@@ -55,8 +57,11 @@ type Handler struct {
 	service     *captureservice.Service
 	releases    *capturereleaseservice.Service
 	gateway     agentports.RealtimeGateway
+	edition     ediports.EditionInfo
 	eh          *helpers.ErrorHandler
 	maxLifetime int64
+	webBase     string
+	version     string
 	l           *zap.Logger
 }
 
@@ -65,8 +70,11 @@ func New(p Params) *Handler {
 		service:     p.Service,
 		releases:    p.Releases,
 		gateway:     p.Gateway,
+		edition:     p.Edition,
 		eh:          p.ErrorHandler,
 		maxLifetime: int64(p.Config.GetRealtimeConfig().GetMaxStreamLifetime().Seconds()),
+		webBase:     p.Config.App.GetWebBaseURL(),
+		version:     p.Config.App.Version,
 		l:           p.Logger.Named("handler.capture"),
 	}
 }
@@ -88,11 +96,12 @@ func PageContentPath(pageID pulid.ID, kind captureservice.PageContentKind) strin
 	return path + "?kind=" + url.QueryEscape(string(kind))
 }
 
-// RegisterPublicRoutes mounts pairing, token refresh, and the current
-// release, which an agent too old to refresh its token must still be able
-// to read.
+// RegisterPublicRoutes mounts discovery, pairing, token refresh, and the
+// current release, which an agent too old to refresh its token must still be
+// able to read.
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/capture/")
+	api.GET("discovery/", h.discovery)
 	api.GET("releases/latest/", h.latestRelease)
 	api.POST("pair/", h.startPairing)
 	api.POST("pair/token/", h.exchangePairing)
