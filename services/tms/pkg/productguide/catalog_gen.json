@@ -1,5 +1,5 @@
 {
-  "version": "sha256:8df389ff701193ae9494ecd1a2a65a16fd18ab1d669bf281b692b84cd2e4fe10",
+  "version": "sha256:5c1d86b370fe6f2ce388d6fcfbcf1236f9ca03f5782cd7da463ac253828ddccb",
   "modules": [
     {
       "id": "home",
@@ -7042,7 +7042,8 @@
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. The editor underlines anything wrong — a name it does not know, a function given the wrong number of arguments, a flag multiplied like a number, a field that can be empty — and lists each problem under the editor with its line and a fix beside it: declare the name as an input, change it to the field it meant, or give an empty field a fallback. Select a row to jump to it; a long list folds to its first rows and can be narrowed to errors or warnings.",
             "Hover a name to see what it is, whether it can be empty, and what it was worth on the preview load; type inside a function's parentheses to see its signature. Each line shows what it came to on the preview load at its end; the eye button under the editor hides these values.",
-            "Press Ctrl+Space for suggestions."
+            "Press Ctrl+Space for suggestions.",
+            "The format button under the editor (or Shift+Alt+F) lays the formula out one statement per line with a space around every operator, breaking a long sum one term per line; what Nova writes lands already formatted. A formula that does not parse is left as it is until it does."
           ]
         },
         {

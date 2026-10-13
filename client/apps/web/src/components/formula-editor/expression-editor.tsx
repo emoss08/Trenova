@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, type Ref } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { useActiveEditorRegistration } from "./active-editor";
 import { darkTheme, languageServiceTheme, lightTheme } from "./editor-theme";
+import type { FormatResult } from "./expr-format";
 import { inlineValuesExtension, setInlineValues, type InlineValue } from "./expr-inline-values";
 import { buildKnownIdentifiers, type KnownIdentifiers } from "./expr-language";
 import type { DeclareInput } from "./expr-lint";
@@ -40,6 +41,8 @@ type ExpressionEditorProps<T extends FieldValues> = FormControlProps<T> &
     declareInput?: DeclareInput;
     /** What each statement came to on the preview load, drawn at the end of its line. */
     inlineValues?: readonly InlineValue[] | null;
+    /** Told what formatting from the keyboard did. */
+    onFormat?: (result: FormatResult) => void;
   };
 
 function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
@@ -78,6 +81,7 @@ export function ExpressionEditor<T extends FieldValues>({
   onCursorChange,
   declareInput,
   inlineValues = null,
+  onFormat,
   control,
   rules,
   ...props
@@ -97,6 +101,7 @@ export function ExpressionEditor<T extends FieldValues>({
     hoverValues: previewValues,
     declareInput,
     gutter: !isMini,
+    onFormat,
   });
   const extensions = useMemo(
     () => [

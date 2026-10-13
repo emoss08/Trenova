@@ -7,7 +7,6 @@ import { queries } from "@/lib/queries";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { api } from "@trenova/shared/lib/api";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   DEFAULT_ROUNDING_MODE,
   DEFAULT_ROUNDING_PRECISION,
@@ -24,46 +23,7 @@ import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { SaveDemoteDialog } from "../_components/studio/dialogs/save-demote-dialog";
 import { FormulaStudio } from "../_components/studio/formula-studio";
-
-function StudioSkeleton() {
-  return (
-    <div className="bg-canvas flex h-full flex-col overflow-hidden" aria-busy>
-      <div className="flex h-13 items-center gap-3 border-b px-3">
-        <Skeleton className="size-7 rounded-md" />
-        <Skeleton className="h-5 w-48" />
-        <Skeleton className="h-5 w-64 rounded-full max-[760px]:hidden" />
-        <span className="flex-1" />
-        <Skeleton className="h-7 w-32" />
-        <Skeleton className="h-7 w-20" />
-      </div>
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1180px]:grid-cols-[248px_minmax(0,1fr)_minmax(360px,420px)]">
-        <div className="hidden flex-col gap-4 border-r p-4 min-[1180px]:flex">
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-3.5 w-40" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-20 w-full rounded-lg" />
-        </div>
-        <div className="mx-auto flex w-full max-w-200 flex-col gap-4 px-9 pt-7">
-          <Skeleton className="h-8 w-2/3" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-6 w-56" />
-          <Skeleton className="mt-6 h-5 w-32" />
-          <Skeleton className="h-40 w-full rounded-lg" />
-          <Skeleton className="mt-6 h-5 w-28" />
-          <Skeleton className="h-28 w-full rounded-lg" />
-        </div>
-        <div className="flex flex-col gap-3 border-l p-3">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-36 w-full rounded-lg" />
-          <Skeleton className="h-7 w-full" />
-          <Skeleton className="h-7 w-full" />
-          <Skeleton className="h-7 w-full" />
-        </div>
-      </div>
-    </div>
-  );
-}
+import { StudioSkeleton } from "../_components/studio/studio-skeletons";
 
 export function FormulaStudioEditPage() {
   const t = useT();
