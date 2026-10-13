@@ -153,6 +153,25 @@ function CommandShortcut({ className, ...props }: React.ComponentProps<"span">) 
     />
   );
 }
+/**
+ * The chosen mark at the end of a choice row. The slot is drawn on every row,
+ * chosen or not, so a long label stops before it instead of running under the
+ * mark, and every row's label ends at the same edge. Selection is one of the
+ * few things the brand colour is spent on.
+ */
+function CommandItemCheck({ checked, className }: { checked: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden
+      data-slot="command-item-check"
+      data-checked={checked || undefined}
+      className={cn("flex size-4 shrink-0 items-center justify-center", className)}
+    >
+      {checked ? <CheckIcon className="size-3.5 text-brand" /> : null}
+    </span>
+  );
+}
+
 function SelectCommandItem({
   className,
   color,
@@ -194,7 +213,7 @@ function SelectCommandItem({
       ) : color ? (
         <span className="block size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
       ) : null}
-      <div className="flex w-full flex-col truncate text-left leading-tight">
+      <div className="flex min-w-0 flex-1 flex-col truncate text-left leading-tight">
         <span className="">
           {searchValue ? <Highlight text={label || ""} highlight={searchValue} /> : label}
         </span>
@@ -207,7 +226,7 @@ function SelectCommandItem({
           </span>
         )}
       </div>
-      {checked && <CheckIcon className="ml-auto shrink-0" />}
+      <CommandItemCheck checked={Boolean(checked)} />
     </CommandPrimitive.Item>
   );
 }
@@ -219,6 +238,7 @@ export {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandItemCheck,
   CommandList,
   CommandSeparator,
   CommandShortcut,

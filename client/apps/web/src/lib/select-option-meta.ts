@@ -16,6 +16,16 @@ export function selectOptionMetaNumber(option: SelectOption, key: string): numbe
   return typeof value === "number" ? value : null;
 }
 
+/** The meta value when it is one of `values`, so a renamed or missing enum reads as absent rather than as a guess. */
+export function selectOptionMetaEnum<T extends string>(
+  option: SelectOption,
+  key: string,
+  values: readonly T[],
+): T | null {
+  const value = option.meta?.[key];
+  return values.find((candidate) => candidate === value) ?? null;
+}
+
 export function selectOptionMetaBoolean(option: SelectOption, key: string): boolean {
   return option.meta?.[key] === true;
 }

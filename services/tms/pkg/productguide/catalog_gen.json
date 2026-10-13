@@ -1,5 +1,5 @@
 {
-  "version": "sha256:fe2d287d48349b68ead3b22c3f152a8d1d42843427e0580a89fc564460dfaba2",
+  "version": "sha256:5c1d86b370fe6f2ce388d6fcfbcf1236f9ca03f5782cd7da463ac253828ddccb",
   "modules": [
     {
       "id": "home",
@@ -5764,7 +5764,7 @@
         "Sequence configuration"
       ],
       "description": "Configure sequence generation formats for shipments and billing workflows",
-      "summary": "Sequence configuration sets the format of the numbers the system generates: PRO numbers, consolidation, order and work order numbers, invoice numbers, journal batch and journal entry numbers, manual journal requests, driver settlement numbers and location codes.\n\nA list on the left groups the sequences under Operations, Billing, Accounting, Payroll and Locations. Selecting one shows its settings and a **Live preview** of a sample value. Administrators use it when setting up the organization or changing a numbering scheme.",
+      "summary": "Sequence configuration sets the format of the numbers the system generates: PRO numbers, consolidation, order and work order numbers, invoice and invoice run numbers, journal batch and journal entry numbers, manual journal requests, driver and carrier settlement numbers and location codes.\n\nA list on the left groups the sequences under Operations, Billing, Accounting, Settlements and Locations. Selecting one shows its settings and a **Live preview** of a sample value. Administrators use it when setting up the organization or changing a numbering scheme.",
       "requires": [
         {
           "resource": "sequence_config",
@@ -5776,6 +5776,7 @@
         "numbering",
         "PRO number format",
         "invoice number format",
+        "settlement number format",
         "auto numbering",
         "number sequence",
         "location code format"

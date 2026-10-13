@@ -3,11 +3,13 @@ import {
   BookOpen01Icon,
   ClipboardEditIcon,
   File06Icon,
+  HandshakeIcon,
   type IconComponent,
   LayersThree01Icon,
   MarkerPin01Icon,
   PackageIcon,
   ReceiptIcon,
+  Rows03Icon,
   Tool01Icon,
   Truck01Icon,
   Wallet02Icon,
@@ -25,6 +27,8 @@ export const sequenceTitles: Record<SequenceType, string> = defineLabels({
   manual_journal_request: "Manual Journal Request",
   location_code: "Location Code",
   driver_settlement: "Driver Settlement Number",
+  carrier_settlement: "Carrier Settlement Number",
+  invoice_run: "Invoice Run Number",
 });
 
 export const sequenceDescriptions: Record<SequenceType, string> = defineLabels({
@@ -38,6 +42,9 @@ export const sequenceDescriptions: Record<SequenceType, string> = defineLabels({
   manual_journal_request: "Controls manual journal request numbering before approval and posting.",
   location_code: "Controls generated location codes assigned during location creation.",
   driver_settlement: "Controls driver settlement numbering for pay period settlements.",
+  carrier_settlement:
+    "Controls carrier settlement numbering for paying carriers on brokered loads.",
+  invoice_run: "Controls invoice run numbering for batches of invoices billed together.",
 });
 
 export const sequenceIcons: Record<SequenceType, IconComponent> = {
@@ -51,6 +58,8 @@ export const sequenceIcons: Record<SequenceType, IconComponent> = {
   manual_journal_request: ClipboardEditIcon,
   location_code: MarkerPin01Icon,
   driver_settlement: Wallet02Icon,
+  carrier_settlement: HandshakeIcon,
+  invoice_run: Rows03Icon,
 };
 
 export type SidebarGroup = {
@@ -60,9 +69,9 @@ export type SidebarGroup = {
 
 export const sidebarGroups: SidebarGroup[] = [
   { label: "Operations", items: ["pro_number", "consolidation", "order", "work_order"] },
-  { label: "Billing", items: ["invoice"] },
+  { label: "Billing", items: ["invoice", "invoice_run"] },
   { label: "Accounting", items: ["journal_batch", "journal_entry", "manual_journal_request"] },
-  { label: "Payroll", items: ["driver_settlement"] },
+  { label: "Settlements", items: ["driver_settlement", "carrier_settlement"] },
   { label: "Locations", items: ["location_code"] },
 ];
 
@@ -117,6 +126,8 @@ const defaultPrefixes: Record<SequenceType, string> = {
   manual_journal_request: "MJR",
   location_code: "LOC",
   driver_settlement: "STL",
+  carrier_settlement: "CSTL",
+  invoice_run: "IRUN",
 };
 
 export function defaultConfigForType(

@@ -47,7 +47,7 @@ export function AutocompleteTrigger<TOption>({
       className={cn(
         fieldTriggerClass,
         "h-7 w-full gap-2 px-1.5 text-xs font-normal",
-        "cursor-default justify-between [&_svg]:size-3",
+        "cursor-default justify-between",
         disabled && "cursor-not-allowed opacity-50",
         isInvalid && fieldInvalidClass,
         triggerClassName,
@@ -155,7 +155,7 @@ export function AutocompleteInputActions({
       )}
       <ChevronDownIcon
         className={cn(
-          "size-7 opacity-50 transition-all duration-200 ease-in-out",
+          "size-3 opacity-50 transition-all duration-200 ease-in-out",
           open && "-rotate-180",
         )}
       />

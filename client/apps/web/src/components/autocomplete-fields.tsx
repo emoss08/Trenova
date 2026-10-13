@@ -11,6 +11,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import type { OperationDefinition, ResourceDefinition } from "@/lib/role-api";
 import {
   selectOptionMetaBoolean,
+  selectOptionMetaEnum,
   selectOptionMetaNumber,
   selectOptionMetaString,
 } from "@/lib/select-option-meta";
@@ -18,6 +19,10 @@ import { formatRange } from "@trenova/shared/lib/date";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
 import type { Document } from "@trenova/shared/types/document";
 import type { SelectOption as StaticSelectOption } from "@trenova/shared/types/fields";
+import {
+  FUEL_CARD_PROVIDER_LABELS,
+  fuelCardProviderSchema,
+} from "@trenova/shared/types/fuel-ifta-enums";
 import {
   TRAINING_DELIVERY_LABELS,
   type TrainingDelivery,
@@ -30,8 +35,10 @@ export type _ServerEndpointTypes = API_ENDPOINTS | SELECT_OPTIONS_ENDPOINTS;
 import type { Control, FieldPath, FieldValues, Path, RegisterOptions } from "react-hook-form";
 import { Autocomplete, AutocompleteField } from "./fields/autocomplete/autocomplete";
 import { FieldWrapper, type FieldLayout } from "./fields/field-components";
+import { OptionStack } from "./fields/autocomplete/option-stack";
 import { MultiSelectAutocompleteField } from "./fields/multi-select-field";
 import { ColorOptionValue } from "./fields/select-components";
+import { FuelCardMark } from "./fuel-card-mark";
 import { SelectField } from "./fields/select-field";
 
 type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
@@ -396,17 +403,6 @@ function ControlledAutocompleteField<TOption>({
   );
 }
 
-function EDIOptionStack({ primary, secondary }: { primary: ReactNode; secondary?: ReactNode }) {
-  return (
-    <div className="flex size-full min-w-0 flex-col items-start pr-4">
-      <span className="w-full truncate">{primary}</span>
-      {secondary ? (
-        <span className="text-2xs text-muted-foreground w-full truncate">{secondary}</span>
-      ) : null}
-    </div>
-  );
-}
-
 function aiProviderDisplay(option: GraphQLSelectOption) {
   return option.description ? `${option.label} · ${option.description}` : option.label;
 }
@@ -445,7 +441,7 @@ export function AIProviderAutocomplete({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={aiProviderDisplay}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label} secondary={option.description || ""} />
+        <OptionStack primary={option.label} secondary={option.description || ""} />
       )}
       placeholder={placeholder}
       disabled={!!disabled}
@@ -481,7 +477,7 @@ export function RoleSelectAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label || ""} secondary={option.description || ""} />
+        <OptionStack primary={option.label || ""} secondary={option.description || ""} />
       )}
       {...props}
     />
@@ -850,7 +846,7 @@ export function ShipmentAutocomplete({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label} secondary={option.description || ""} />
+        <OptionStack primary={option.label} secondary={option.description || ""} />
       )}
       placeholder={placeholder}
       disabled={!!disabled}
@@ -979,7 +975,7 @@ export function EDICommunicationProfileAutocompleteField<T extends FieldValues>(
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack
+        <OptionStack
           primary={option.label || ""}
           secondary={
             option.description ||
@@ -1002,7 +998,7 @@ export function EDIConnectionAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label || ""} secondary={option.description || ""} />
+        <OptionStack primary={option.label || ""} secondary={option.description || ""} />
       )}
       {...props}
     />
@@ -1020,7 +1016,7 @@ export function EDIMappingProfileAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label || ""} secondary={option.description || undefined} />
+        <OptionStack primary={option.label || ""} secondary={option.description || undefined} />
       )}
       {...props}
     />
@@ -1187,7 +1183,7 @@ export function EDIPartnerAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack
+        <OptionStack
           primary={option.label || ""}
           secondary={option.description || selectOptionMetaString(option, "code") || undefined}
         />
@@ -1207,7 +1203,7 @@ export function EDIDocumentTypeAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label || ""} secondary={option.description || undefined} />
+        <OptionStack primary={option.label || ""} secondary={option.description || undefined} />
       )}
       {...props}
     />
@@ -1224,7 +1220,7 @@ export function EDITransactionSetAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label || ""} secondary={option.description || undefined} />
+        <OptionStack primary={option.label || ""} secondary={option.description || undefined} />
       )}
       {...props}
     />
@@ -1261,7 +1257,7 @@ export function EDITemplateAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack
+        <OptionStack
           primary={option.label || ""}
           secondary={option.description || selectOptionMetaString(option, "status") || undefined}
         />
@@ -1305,7 +1301,7 @@ export function EDIDocumentProfileAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label || ""} secondary={option.description || undefined} />
+        <OptionStack primary={option.label || ""} secondary={option.description || undefined} />
       )}
       {...props}
     />
@@ -1322,7 +1318,7 @@ export function EmailProfileAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack
+        <OptionStack
           primary={option.label || ""}
           secondary={
             option.description ||
@@ -1362,7 +1358,7 @@ export function ControlledEDIPartnerAutocompleteField({
       initialLimit={50}
       placeholder={placeholder}
       renderOption={(option) => (
-        <EDIOptionStack
+        <OptionStack
           primary={option.label || ""}
           secondary={option.description || selectOptionMetaString(option, "code") || undefined}
         />
@@ -1401,7 +1397,7 @@ export function ControlledShipmentAutocompleteField({
       getOptionValue={(option) => option.id}
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
-        <EDIOptionStack
+        <OptionStack
           primary={option.label}
           secondary={
             selectOptionMetaString(option, "bol") || selectOptionMetaString(option, "status")
@@ -1499,7 +1495,7 @@ export function ControlledCaptureRecordAutocompleteField({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={picker.display}
       renderOption={(option) => (
-        <EDIOptionStack primary={picker.display(option)} secondary={picker.detail(option)} />
+        <OptionStack primary={picker.display(option)} secondary={picker.detail(option)} />
       )}
       {...props}
     />
@@ -1581,7 +1577,7 @@ export function ControlledEDITransferAutocompleteField({
       getOptionValue={(option) => option.id}
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
-        <EDIOptionStack
+        <OptionStack
           primary={option.label}
           secondary={
             selectOptionMetaString(option, "customerLabel") ||
@@ -1637,7 +1633,7 @@ export function ControlledEDITemplateAutocompleteField({
         ...extraSearchParams,
       }}
       renderOption={(option) => (
-        <EDIOptionStack
+        <OptionStack
           primary={option.label || ""}
           secondary={option.description || selectOptionMetaString(option, "status") || undefined}
         />
@@ -1695,7 +1691,7 @@ export function ControlledEDIDocumentProfileAutocompleteField({
         ...extraSearchParams,
       }}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label || ""} secondary={option.description || undefined} />
+        <OptionStack primary={option.label || ""} secondary={option.description || undefined} />
       )}
       getOptionValue={(option) => option.id}
       getDisplayValue={(option) => option.label || ""}
@@ -2477,18 +2473,33 @@ export function FuelCardAutocompleteField<T extends FieldValues>({
       graphql={fuelCardSelectOptionsGraphQL}
       popoutLink="/fuel/configuration-files/fuel-cards"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.label}
-      renderOption={(option) => (
-        <div className="flex size-full flex-col items-start">
-          <span>{t(option.label)}</span>
-          <span className="text-2xs text-muted-foreground w-full truncate">
-            {selectOptionMetaString(option, "provider")}
-            {selectOptionMetaString(option, "lastFour")
-              ? ` · •••• ${selectOptionMetaString(option, "lastFour")}`
-              : ""}
+      getDisplayValue={(option) => {
+        const provider = selectOptionMetaEnum(option, "provider", fuelCardProviderSchema.options);
+
+        return (
+          <span className="flex min-w-0 items-center gap-2">
+            {provider && <FuelCardMark provider={provider} size="sm" />}
+            <span className="truncate">{option.label}</span>
           </span>
-        </div>
-      )}
+        );
+      }}
+      renderOption={(option) => {
+        const provider = selectOptionMetaEnum(option, "provider", fuelCardProviderSchema.options);
+
+        return (
+          <div className="flex size-full min-w-0 items-center gap-2">
+            {provider && <FuelCardMark provider={provider} />}
+            <OptionStack
+              primary={t(option.label)}
+              secondary={
+                provider
+                  ? FUEL_CARD_PROVIDER_LABELS[provider]
+                  : selectOptionMetaString(option, "provider")
+              }
+            />
+          </div>
+        );
+      }}
       {...props}
     />
   );
@@ -2626,7 +2637,7 @@ export function ControlledPayCodeAutocompleteField({
       getOptionValue={(option) => option.id}
       getDisplayValue={(option) => payCodeOptionLabel(option, direction)}
       renderOption={(option) => (
-        <EDIOptionStack
+        <OptionStack
           primary={payCodeOptionLabel(option, direction)}
           secondary={direction ? undefined : selectOptionMetaString(option, "direction")}
         />

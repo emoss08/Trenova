@@ -1,6 +1,6 @@
 ---
 path: /admin/sequence-configs
-aliases: [numbering, PRO number format, invoice number format, auto numbering, number sequence, location code format]
+aliases: [numbering, PRO number format, invoice number format, settlement number format, auto numbering, number sequence, location code format]
 related:
   - /shipment-management/shipments
   - /billing/invoices
@@ -10,10 +10,11 @@ related:
 
 ## What it's for
 Sequence configuration sets the format of the numbers the system generates: PRO numbers,
-consolidation, order and work order numbers, invoice numbers, journal batch and journal entry
-numbers, manual journal requests, driver settlement numbers and location codes.
+consolidation, order and work order numbers, invoice and invoice run numbers, journal batch and
+journal entry numbers, manual journal requests, driver and carrier settlement numbers and location
+codes.
 
-A list on the left groups the sequences under Operations, Billing, Accounting, Payroll and
+A list on the left groups the sequences under Operations, Billing, Accounting, Settlements and
 Locations. Selecting one shows its settings and a **Live preview** of a sample value. Administrators
 use it when setting up the organization or changing a numbering scheme.
 

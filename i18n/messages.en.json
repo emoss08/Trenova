@@ -41471,6 +41471,15 @@
       "go/other"
     ]
   },
+  "Carrier Settlement Number": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Carrier Settlement Paid": {
     "sites": 1,
     "scope": [
@@ -56355,6 +56364,15 @@
       "routes/edi"
     ]
   },
+  "Controls carrier settlement numbering for paying carriers on brokered loads.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Controls consolidation number generation for grouped shipment operations.": {
     "sites": 1,
     "scope": [
@@ -56401,6 +56419,15 @@
     ]
   },
   "Controls invoice identifier generation for billing documents.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Controls invoice run numbering for batches of invoices billed together.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -115846,6 +115873,15 @@
       "go/other"
     ]
   },
+  "Invoice Run Number": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Invoice Total": {
     "sites": 1,
     "scope": [
@@ -170291,13 +170327,12 @@
     ]
   },
   "Payroll": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/types",
-      "routes/admin",
       "routes/time-attendance"
     ]
   },
@@ -216307,13 +216342,14 @@
     ]
   },
   "Settlements": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/admin",
       "routes/carrier-settlement-batch",
       "routes/desk",
       "routes/settlement-batch"
