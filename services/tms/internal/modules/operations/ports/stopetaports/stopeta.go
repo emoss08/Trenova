@@ -31,6 +31,7 @@ type ListAttentionRequest struct {
 type AttentionStop struct {
 	ETA          *stopeta.StopETA
 	ProNumber    string
+	OwnerID      pulid.ID
 	StopType     shipment.StopType
 	LocationName string
 	City         string

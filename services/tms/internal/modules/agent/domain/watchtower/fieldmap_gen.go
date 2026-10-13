@@ -11,6 +11,13 @@ func (e *Cursor) GetStaticFieldMap() map[string]string {
 	return watchtowercol.CursorFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Event].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [watchtowercol.EventFieldMap] instead of parsing struct tags via reflection.
+func (e *Event) GetStaticFieldMap() map[string]string {
+	return watchtowercol.EventFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Item].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [watchtowercol.ItemFieldMap] instead of parsing struct tags via reflection.

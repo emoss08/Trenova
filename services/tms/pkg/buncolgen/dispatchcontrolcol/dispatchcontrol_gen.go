@@ -78,6 +78,13 @@ var DispatchControlColumns = struct {
 	EnableEtaAlerts                      buncolgen.Column // "enable_eta_alerts" → qualified: "dc.enable_eta_alerts"
 	EtaRiskThresholdMinutes              buncolgen.Column // "eta_risk_threshold_minutes" → qualified: "dc.eta_risk_threshold_minutes"
 	EtaDwellMinutes                      buncolgen.Column // "eta_dwell_minutes" → qualified: "dc.eta_dwell_minutes"
+	ExceptionDueInfoMinutes              buncolgen.Column // "exception_due_info_minutes" → qualified: "dc.exception_due_info_minutes"
+	ExceptionDueWarningMinutes           buncolgen.Column // "exception_due_warning_minutes" → qualified: "dc.exception_due_warning_minutes"
+	ExceptionDueCriticalMinutes          buncolgen.Column // "exception_due_critical_minutes" → qualified: "dc.exception_due_critical_minutes"
+	ExceptionEscalationMinutes           buncolgen.Column // "exception_escalation_minutes" → qualified: "dc.exception_escalation_minutes"
+	ExceptionMaxEscalations              buncolgen.Column // "exception_max_escalations" → qualified: "dc.exception_max_escalations"
+	ExceptionDefaultAssigneeID           buncolgen.Column // "exception_default_assignee_id" → qualified: "dc.exception_default_assignee_id"
+	ExceptionEscalationContactID         buncolgen.Column // "exception_escalation_contact_id" → qualified: "dc.exception_escalation_contact_id"
 	ComplianceEnforcementLevel           buncolgen.Column // "compliance_enforcement_level" → qualified: "dc.compliance_enforcement_level"
 	RecordServiceFailures                buncolgen.Column // "record_service_failures" → qualified: "dc.record_service_failures"
 	ServiceFailureTarget                 buncolgen.Column // "service_failure_target" → qualified: "dc.service_failure_target"
@@ -114,6 +121,13 @@ var DispatchControlColumns = struct {
 	EnableEtaAlerts:                      buncolgen.NewColumn("enable_eta_alerts", "dc"),
 	EtaRiskThresholdMinutes:              buncolgen.NewColumn("eta_risk_threshold_minutes", "dc"),
 	EtaDwellMinutes:                      buncolgen.NewColumn("eta_dwell_minutes", "dc"),
+	ExceptionDueInfoMinutes:              buncolgen.NewColumn("exception_due_info_minutes", "dc"),
+	ExceptionDueWarningMinutes:           buncolgen.NewColumn("exception_due_warning_minutes", "dc"),
+	ExceptionDueCriticalMinutes:          buncolgen.NewColumn("exception_due_critical_minutes", "dc"),
+	ExceptionEscalationMinutes:           buncolgen.NewColumn("exception_escalation_minutes", "dc"),
+	ExceptionMaxEscalations:              buncolgen.NewColumn("exception_max_escalations", "dc"),
+	ExceptionDefaultAssigneeID:           buncolgen.NewColumn("exception_default_assignee_id", "dc"),
+	ExceptionEscalationContactID:         buncolgen.NewColumn("exception_escalation_contact_id", "dc"),
 	ComplianceEnforcementLevel:           buncolgen.NewColumn("compliance_enforcement_level", "dc"),
 	RecordServiceFailures:                buncolgen.NewColumn("record_service_failures", "dc"),
 	ServiceFailureTarget:                 buncolgen.NewColumn("service_failure_target", "dc"),
@@ -156,6 +170,13 @@ var DispatchControlFieldMap = map[string]string{
 	"enableEtaAlerts":                      "enable_eta_alerts",
 	"etaRiskThresholdMinutes":              "eta_risk_threshold_minutes",
 	"etaDwellMinutes":                      "eta_dwell_minutes",
+	"exceptionDueInfoMinutes":              "exception_due_info_minutes",
+	"exceptionDueWarningMinutes":           "exception_due_warning_minutes",
+	"exceptionDueCriticalMinutes":          "exception_due_critical_minutes",
+	"exceptionEscalationMinutes":           "exception_escalation_minutes",
+	"exceptionMaxEscalations":              "exception_max_escalations",
+	"exceptionDefaultAssigneeId":           "exception_default_assignee_id",
+	"exceptionEscalationContactId":         "exception_escalation_contact_id",
 	"complianceEnforcementLevel":           "compliance_enforcement_level",
 	"recordServiceFailures":                "record_service_failures",
 	"serviceFailureTarget":                 "service_failure_target",
@@ -196,6 +217,13 @@ var DispatchControlInsertableColumns = []string{
 	"enable_eta_alerts",
 	"eta_risk_threshold_minutes",
 	"eta_dwell_minutes",
+	"exception_due_info_minutes",
+	"exception_due_warning_minutes",
+	"exception_due_critical_minutes",
+	"exception_escalation_minutes",
+	"exception_max_escalations",
+	"exception_default_assignee_id",
+	"exception_escalation_contact_id",
 	"compliance_enforcement_level",
 	"record_service_failures",
 	"service_failure_target",
@@ -283,6 +311,13 @@ var DispatchControlFilter = struct {
 	EnableEtaAlerts                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableEtaAlerts" → DB: "enable_eta_alerts"
 	EtaRiskThresholdMinutes              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "etaRiskThresholdMinutes" → DB: "eta_risk_threshold_minutes"
 	EtaDwellMinutes                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "etaDwellMinutes" → DB: "eta_dwell_minutes"
+	ExceptionDueInfoMinutes              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionDueInfoMinutes" → DB: "exception_due_info_minutes"
+	ExceptionDueWarningMinutes           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionDueWarningMinutes" → DB: "exception_due_warning_minutes"
+	ExceptionDueCriticalMinutes          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionDueCriticalMinutes" → DB: "exception_due_critical_minutes"
+	ExceptionEscalationMinutes           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionEscalationMinutes" → DB: "exception_escalation_minutes"
+	ExceptionMaxEscalations              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionMaxEscalations" → DB: "exception_max_escalations"
+	ExceptionDefaultAssigneeID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionDefaultAssigneeId" → DB: "exception_default_assignee_id"
+	ExceptionEscalationContactID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionEscalationContactId" → DB: "exception_escalation_contact_id"
 	ComplianceEnforcementLevel           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "complianceEnforcementLevel" → DB: "compliance_enforcement_level"
 	RecordServiceFailures                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordServiceFailures" → DB: "record_service_failures"
 	ServiceFailureTarget                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceFailureTarget" → DB: "service_failure_target"
@@ -374,6 +409,27 @@ var DispatchControlFilter = struct {
 	},
 	EtaDwellMinutes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("etaDwellMinutes", op, value)
+	},
+	ExceptionDueInfoMinutes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("exceptionDueInfoMinutes", op, value)
+	},
+	ExceptionDueWarningMinutes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("exceptionDueWarningMinutes", op, value)
+	},
+	ExceptionDueCriticalMinutes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("exceptionDueCriticalMinutes", op, value)
+	},
+	ExceptionEscalationMinutes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("exceptionEscalationMinutes", op, value)
+	},
+	ExceptionMaxEscalations: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("exceptionMaxEscalations", op, value)
+	},
+	ExceptionDefaultAssigneeID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("exceptionDefaultAssigneeId", op, value)
+	},
+	ExceptionEscalationContactID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("exceptionEscalationContactId", op, value)
 	},
 	ComplianceEnforcementLevel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("complianceEnforcementLevel", op, value)

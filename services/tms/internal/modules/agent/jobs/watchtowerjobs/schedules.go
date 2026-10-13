@@ -45,6 +45,17 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			},
 		},
 		{
+			ID:            "exception-attention",
+			Description:   "Wake snoozed exceptions and escalate overdue ones",
+			Spec:          schedule.Every(5 * time.Minute),
+			Workflow:      ExceptionAttentionWorkflow,
+			TaskQueue:     temporaltype.TaskQueueSystem.String(),
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "exception-attention",
+			},
+		},
+		{
 			ID:          "watchtower-retention",
 			Description: "Remove watchtower items resolved more than a month ago",
 			// Weekly is often enough for a month-long window, and it keeps

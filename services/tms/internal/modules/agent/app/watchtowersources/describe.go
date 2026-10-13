@@ -751,6 +751,7 @@ func DescribeNoCheckCall(
 		SubjectID:   move.MoveID,
 		Path:        path,
 		OccurredAt:  move.LastContactAt + window,
+		OwnerID:     move.OwnerID,
 	}
 }
 
@@ -796,6 +797,7 @@ func DescribeEtaRisk(
 		SubjectID:   row.ShipmentID,
 		Path:        path,
 		OccurredAt:  etaRiskOccurredAt(row, late),
+		OwnerID:     stop.OwnerID,
 	}
 }
 

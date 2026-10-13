@@ -27,6 +27,7 @@ type stubRepo struct {
 	cursor   *watchtower.Cursor
 	lastList watchtowerports.ListWatchtowerItemsQuery
 	resolved []watchtowerports.ResolveMissingWatchtowerItemsRequest
+	events   []*watchtower.Event
 }
 
 func newStubRepo() *stubRepo {
@@ -48,8 +49,22 @@ func (r *stubRepo) Upsert(
 	existing, ok := r.items[key]
 	if ok {
 		item.ID = existing.ID
+		item.Version = existing.Version
+		item.AssigneeID = existing.AssigneeID
+		if existing.ResolvedAt == nil {
+			item.Status = existing.Status
+			item.DueAt = existing.DueAt
+			item.SnoozedUntil = existing.SnoozedUntil
+			item.AcknowledgedAt = existing.AcknowledgedAt
+			item.EscalationLevel = existing.EscalationLevel
+		} else {
+			item.Reopened = true
+		}
 	} else {
 		item.ID = pulid.MustNew("wt_")
+	}
+	if item.Status == "" || item.Reopened {
+		item.Status = watchtower.StatusOpen
 	}
 	item.ResolvedAt = nil
 	r.items[key] = item
@@ -71,26 +86,55 @@ func (r *stubRepo) Resolve(
 	return item, nil
 }
 
-func (r *stubRepo) ResolveByID(
+func (r *stubRepo) UpdateWorkflow(
 	_ context.Context,
-	req watchtowerports.GetWatchtowerItemRequest,
-	at int64,
+	req *watchtowerports.UpdateWatchtowerWorkflowRequest,
 ) (*watchtower.Item, error) {
-	for _, item := range r.items {
-		if item.ID == req.ID {
-			item.ResolvedAt = &at
-			return item, nil
+	key := r.key(req.Item.SourceKind, req.Item.SourceID)
+	existing, ok := r.items[key]
+	if !ok || existing.ID != req.Item.ID {
+		return nil, errortypes.NewNotFoundError("Watchtower item not found")
+	}
+	if existing.Version != req.ExpectedVersion {
+		return nil, errortypes.NewValidationError(
+			"version",
+			errortypes.ErrVersionMismatch,
+			"Version mismatch",
+		)
+	}
+	saved := *req.Item
+	saved.Version = existing.Version + 1
+	r.items[key] = &saved
+	r.events = append(r.events, req.Events...)
+
+	return &saved, nil
+}
+
+func (r *stubRepo) InsertEvents(_ context.Context, events []*watchtower.Event) error {
+	r.events = append(r.events, events...)
+
+	return nil
+}
+
+func (r *stubRepo) ListEvents(
+	_ context.Context,
+	req watchtowerports.ListWatchtowerEventsRequest,
+) ([]*watchtower.Event, error) {
+	out := []*watchtower.Event{}
+	for _, event := range r.events {
+		if event.ItemID == req.ItemID {
+			out = append(out, event)
 		}
 	}
 
-	return nil, errortypes.NewNotFoundError("Watchtower item not found")
+	return out, nil
 }
 
 func (r *stubRepo) ResolveMissing(
 	_ context.Context,
-	req watchtowerports.ResolveMissingWatchtowerItemsRequest,
+	req *watchtowerports.ResolveMissingWatchtowerItemsRequest,
 ) (int, error) {
-	r.resolved = append(r.resolved, req)
+	r.resolved = append(r.resolved, *req)
 	open := map[string]bool{}
 	for _, id := range req.OpenSourceIDs {
 		open[id] = true
@@ -268,6 +312,8 @@ func newService(
 	projector := NewProjector(ProjectorParams{Logger: zap.NewNop(), Repo: repo})
 	projector.now = func() int64 { return 1_700_000_000 }
 
+	exceptions := newExceptions(repo, perms, projector)
+
 	svc := New(Params{
 		Logger:      zap.NewNop(),
 		Repo:        repo,
@@ -275,10 +321,28 @@ func newService(
 		Permissions: perms,
 		Definitions: &stubDefinitions{},
 		Sources:     sources,
+		Dismisser:   NewDismisser(DismisserParams{Exceptions: exceptions}),
 	})
 	svc.now = func() int64 { return 1_700_000_000 }
 
 	return svc
+}
+
+func newExceptions(
+	repo *stubRepo,
+	perms *agenttest.StubPermissions,
+	projector *Projector,
+) *Exceptions {
+	exceptions := NewExceptions(ExceptionsParams{
+		Logger:      zap.NewNop(),
+		Repo:        repo,
+		Projector:   projector,
+		Router:      NewRouter(RouterParams{Logger: zap.NewNop()}),
+		Permissions: perms,
+	})
+	exceptions.now = func() int64 { return 1_700_000_000 }
+
+	return exceptions
 }
 
 func input(
@@ -658,4 +722,33 @@ func TestReconcileKind_RefusesAnUnknownKind(t *testing.T) {
 	)
 
 	require.Error(t, err)
+}
+
+func (r *stubRepo) ListSnoozeExpired(
+	_ context.Context,
+	req watchtowerports.ListAttentionWatchtowerItemsRequest,
+) ([]*watchtower.Item, error) {
+	out := []*watchtower.Item{}
+	for _, item := range r.items {
+		if item.ResolvedAt == nil && item.Status == watchtower.StatusSnoozed &&
+			item.SnoozedUntil != nil && *item.SnoozedUntil <= req.Now {
+			out = append(out, item)
+		}
+	}
+
+	return out, nil
+}
+
+func (r *stubRepo) ListOverdue(
+	_ context.Context,
+	req watchtowerports.ListAttentionWatchtowerItemsRequest,
+) ([]*watchtower.Item, error) {
+	out := []*watchtower.Item{}
+	for _, item := range r.items {
+		if item.IsOverdue(req.Now) && item.EscalationLevel < req.BelowEscalationCap {
+			out = append(out, item)
+		}
+	}
+
+	return out, nil
 }

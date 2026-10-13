@@ -41,6 +41,17 @@ const (
 	MaxEtaRiskThresholdMinutes     = int16(1440)
 	DefaultEtaDwellMinutes         = int16(60)
 	MaxEtaDwellMinutes             = int16(720)
+
+	DefaultExceptionDueInfoMinutes     = int32(1440)
+	DefaultExceptionDueWarningMinutes  = int32(240)
+	DefaultExceptionDueCriticalMinutes = int32(60)
+	DefaultExceptionEscalationMinutes  = int32(60)
+	DefaultExceptionMaxEscalations     = int16(3)
+	MinExceptionDueMinutes             = int32(5)
+	MaxExceptionDueMinutes             = int32(10080)
+	MinExceptionEscalationMinutes      = int32(5)
+	MaxExceptionEscalationMinutes      = int32(1440)
+	MaxExceptionEscalations            = int16(10)
 )
 
 var defaultAutoAssignConfidenceThreshold = decimal.NewFromFloat(0.85)
@@ -83,6 +94,13 @@ type DispatchControl struct {
 	EnableEtaAlerts                      bool                       `json:"enableEtaAlerts"                      bun:"enable_eta_alerts,type:BOOLEAN,notnull"`
 	EtaRiskThresholdMinutes              int16                      `json:"etaRiskThresholdMinutes"              bun:"eta_risk_threshold_minutes,type:SMALLINT,notnull,default:60"`
 	EtaDwellMinutes                      int16                      `json:"etaDwellMinutes"                      bun:"eta_dwell_minutes,type:SMALLINT,notnull,default:60"`
+	ExceptionDueInfoMinutes              int32                      `json:"exceptionDueInfoMinutes"              bun:"exception_due_info_minutes,type:INTEGER,notnull,default:1440"`
+	ExceptionDueWarningMinutes           int32                      `json:"exceptionDueWarningMinutes"           bun:"exception_due_warning_minutes,type:INTEGER,notnull,default:240"`
+	ExceptionDueCriticalMinutes          int32                      `json:"exceptionDueCriticalMinutes"          bun:"exception_due_critical_minutes,type:INTEGER,notnull,default:60"`
+	ExceptionEscalationMinutes           int32                      `json:"exceptionEscalationMinutes"           bun:"exception_escalation_minutes,type:INTEGER,notnull,default:60"`
+	ExceptionMaxEscalations              int16                      `json:"exceptionMaxEscalations"              bun:"exception_max_escalations,type:SMALLINT,notnull,default:3"`
+	ExceptionDefaultAssigneeID           pulid.ID                   `json:"exceptionDefaultAssigneeId"           bun:"exception_default_assignee_id,type:VARCHAR(100),nullzero"`
+	ExceptionEscalationContactID         pulid.ID                   `json:"exceptionEscalationContactId"         bun:"exception_escalation_contact_id,type:VARCHAR(100),nullzero"`
 	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
 	RecordServiceFailures                ServiceIncidentType        `json:"recordServiceFailures"                bun:"record_service_failures,type:service_incident_type_enum,notnull,default:'Never'"`
 	ServiceFailureTarget                 *float64                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero"`
@@ -153,6 +171,70 @@ func (dc *DispatchControl) EtaDwell() int16 {
 
 func (dc *DispatchControl) EtaAlertsEnabled() bool {
 	return dc == nil || dc.EnableEtaAlerts
+}
+
+type ExceptionPolicy struct {
+	DueInfoMinutes     int32
+	DueWarningMinutes  int32
+	DueCriticalMinutes int32
+	EscalationMinutes  int32
+	MaxEscalations     int16
+	DefaultAssigneeID  pulid.ID
+	EscalationContact  pulid.ID
+}
+
+func (dc *DispatchControl) ExceptionPolicy() ExceptionPolicy {
+	policy := ExceptionPolicy{
+		DueInfoMinutes:     DefaultExceptionDueInfoMinutes,
+		DueWarningMinutes:  DefaultExceptionDueWarningMinutes,
+		DueCriticalMinutes: DefaultExceptionDueCriticalMinutes,
+		EscalationMinutes:  DefaultExceptionEscalationMinutes,
+		MaxEscalations:     DefaultExceptionMaxEscalations,
+	}
+	if dc == nil {
+		return policy
+	}
+	if validExceptionDue(dc.ExceptionDueInfoMinutes) {
+		policy.DueInfoMinutes = dc.ExceptionDueInfoMinutes
+	}
+	if validExceptionDue(dc.ExceptionDueWarningMinutes) {
+		policy.DueWarningMinutes = dc.ExceptionDueWarningMinutes
+	}
+	if validExceptionDue(dc.ExceptionDueCriticalMinutes) {
+		policy.DueCriticalMinutes = dc.ExceptionDueCriticalMinutes
+	}
+	if validExceptionEscalation(dc.ExceptionEscalationMinutes) {
+		policy.EscalationMinutes = dc.ExceptionEscalationMinutes
+	}
+	if dc.ExceptionMaxEscalations >= 0 && dc.ExceptionMaxEscalations <= MaxExceptionEscalations {
+		policy.MaxEscalations = dc.ExceptionMaxEscalations
+	}
+	policy.DefaultAssigneeID = dc.ExceptionDefaultAssigneeID
+	policy.EscalationContact = dc.ExceptionEscalationContactID
+	return policy
+}
+
+func (dc *DispatchControl) NormalizeExceptionSettings() {
+	if dc.ExceptionDueInfoMinutes == 0 {
+		dc.ExceptionDueInfoMinutes = DefaultExceptionDueInfoMinutes
+	}
+	if dc.ExceptionDueWarningMinutes == 0 {
+		dc.ExceptionDueWarningMinutes = DefaultExceptionDueWarningMinutes
+	}
+	if dc.ExceptionDueCriticalMinutes == 0 {
+		dc.ExceptionDueCriticalMinutes = DefaultExceptionDueCriticalMinutes
+	}
+	if dc.ExceptionEscalationMinutes == 0 {
+		dc.ExceptionEscalationMinutes = DefaultExceptionEscalationMinutes
+	}
+}
+
+func validExceptionDue(minutes int32) bool {
+	return minutes >= MinExceptionDueMinutes && minutes <= MaxExceptionDueMinutes
+}
+
+func validExceptionEscalation(minutes int32) bool {
+	return minutes >= MinExceptionEscalationMinutes && minutes <= MaxExceptionEscalationMinutes
 }
 
 func validEtaRiskThreshold(minutes int16) bool {
@@ -252,6 +334,7 @@ func (dc *DispatchControl) NormalizeAutoAssignmentSettings() {
 func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 	dc.NormalizeServiceFailureSettings()
 	dc.NormalizeAutoAssignmentSettings()
+	dc.NormalizeExceptionSettings()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(dc,
 		validation.Field(
@@ -348,6 +431,42 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
+		validation.Field(&dc.ExceptionDueInfoMinutes,
+			validation.By(func(_ any) error {
+				if !validExceptionDue(dc.ExceptionDueInfoMinutes) {
+					return errors.New("Due time must be between 5 and 10080 minutes")
+				}
+				return nil
+			}),
+		),
+		validation.Field(&dc.ExceptionDueWarningMinutes,
+			validation.By(func(_ any) error {
+				if !validExceptionDue(dc.ExceptionDueWarningMinutes) {
+					return errors.New("Due time must be between 5 and 10080 minutes")
+				}
+				return nil
+			}),
+		),
+		validation.Field(&dc.ExceptionDueCriticalMinutes,
+			validation.By(func(_ any) error {
+				if !validExceptionDue(dc.ExceptionDueCriticalMinutes) {
+					return errors.New("Due time must be between 5 and 10080 minutes")
+				}
+				return nil
+			}),
+		),
+		validation.Field(&dc.ExceptionEscalationMinutes,
+			validation.By(func(_ any) error {
+				if !validExceptionEscalation(dc.ExceptionEscalationMinutes) {
+					return errors.New("Escalation interval must be between 5 and 1440 minutes")
+				}
+				return nil
+			}),
+		),
+		validation.Field(&dc.ExceptionMaxEscalations,
+			validation.Min(int16(0)).Error("Escalations must be between 0 and 10"),
+			validation.Max(MaxExceptionEscalations).Error("Escalations must be between 0 and 10"),
+		),
 		validation.Field(&dc.EtaRiskThresholdMinutes,
 			validation.By(func(_ any) error {
 				if !validEtaRiskThreshold(dc.EtaRiskThresholdMinutes) {
@@ -442,5 +561,10 @@ func NewDefaultDispatchControl(orgID, buID pulid.ID) *DispatchControl {
 		EnableEtaAlerts:                      true,
 		EtaRiskThresholdMinutes:              DefaultEtaRiskThresholdMinutes,
 		EtaDwellMinutes:                      DefaultEtaDwellMinutes,
+		ExceptionDueInfoMinutes:              DefaultExceptionDueInfoMinutes,
+		ExceptionDueWarningMinutes:           DefaultExceptionDueWarningMinutes,
+		ExceptionDueCriticalMinutes:          DefaultExceptionDueCriticalMinutes,
+		ExceptionEscalationMinutes:           DefaultExceptionEscalationMinutes,
+		ExceptionMaxEscalations:              DefaultExceptionMaxEscalations,
 	}
 }

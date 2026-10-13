@@ -26,6 +26,7 @@ type WatchtowerItemInput struct {
 	EventKind   agent.EventKind
 	Path        string
 	OccurredAt  int64
+	OwnerID     pulid.ID
 }
 
 // WatchtowerProjector is what a source calls as its records open and close.
@@ -57,6 +58,13 @@ type ListWatchtowerItemsRequest struct {
 	Since          int64
 	After          string
 	First          int
+	Statuses       []watchtower.Status
+	AssignedToMe   bool
+	AssigneeIDs    []pulid.ID
+	Unassigned     bool
+	OverdueOnly    bool
+	SubjectID      pulid.ID
+	OrderByDue     bool
 }
 
 type WatchtowerPage struct {
@@ -72,6 +80,10 @@ type WatchtowerCounts struct {
 	Critical       int
 	UnseenCritical int
 	Unseen         int
+	Overdue        int
+	Unassigned     int
+	Mine           int
+	MineOverdue    int
 	ByKind         map[watchtower.SourceKind]int
 	SeenAt         int64
 }
@@ -102,6 +114,100 @@ type WatchtowerSweepResult struct {
 	Resolved int
 	// Failed names the sources that could not be read.
 	Failed []string
+}
+
+type ExceptionTarget struct {
+	TenantInfo      pagination.TenantInfo
+	ItemID          pulid.ID
+	ExpectedVersion int64
+}
+
+type AssignExceptionRequest struct {
+	ExceptionTarget
+	AssigneeID pulid.ID
+	Note       string
+}
+
+type SnoozeExceptionRequest struct {
+	ExceptionTarget
+	Until int64
+	Note  string
+}
+
+type SetExceptionDueRequest struct {
+	ExceptionTarget
+	DueAt *int64
+	Note  string
+}
+
+type CommentOnExceptionRequest struct {
+	ExceptionTarget
+	Body string
+}
+
+type ResolveExceptionRequest struct {
+	ExceptionTarget
+	Code watchtower.ResolutionCode
+	Note string
+}
+
+type ReopenExceptionRequest struct {
+	ExceptionTarget
+	Note string
+}
+
+type ExceptionHistoryRequest struct {
+	TenantInfo pagination.TenantInfo
+	ItemID     pulid.ID
+	Limit      int
+}
+
+type ExceptionService interface {
+	AssignException(
+		ctx context.Context,
+		req *AssignExceptionRequest,
+		actor *permissionports.RequestActor,
+	) (*watchtower.Item, error)
+	AcknowledgeException(
+		ctx context.Context,
+		req *ExceptionTarget,
+		actor *permissionports.RequestActor,
+	) (*watchtower.Item, error)
+	StartException(
+		ctx context.Context,
+		req *ExceptionTarget,
+		actor *permissionports.RequestActor,
+	) (*watchtower.Item, error)
+	SnoozeException(
+		ctx context.Context,
+		req *SnoozeExceptionRequest,
+		actor *permissionports.RequestActor,
+	) (*watchtower.Item, error)
+	SetExceptionDue(
+		ctx context.Context,
+		req *SetExceptionDueRequest,
+		actor *permissionports.RequestActor,
+	) (*watchtower.Item, error)
+	CommentOnException(
+		ctx context.Context,
+		req *CommentOnExceptionRequest,
+		actor *permissionports.RequestActor,
+	) (*watchtower.Event, error)
+	ResolveException(
+		ctx context.Context,
+		req *ResolveExceptionRequest,
+		actor *permissionports.RequestActor,
+	) (*watchtower.Item, error)
+	ReopenException(
+		ctx context.Context,
+		req *ReopenExceptionRequest,
+		actor *permissionports.RequestActor,
+	) (*watchtower.Item, error)
+	ExceptionHistory(
+		ctx context.Context,
+		req *ExceptionHistoryRequest,
+		actor *permissionports.RequestActor,
+	) ([]*watchtower.Event, error)
 }
 
 type WatchtowerService interface {
@@ -142,4 +248,18 @@ type WatchtowerService interface {
 		tenant pagination.TenantInfo,
 		kind watchtower.SourceKind,
 	) (*WatchtowerSweepResult, error)
+}
+
+type ExceptionSweepResult struct {
+	Woke      int
+	Escalated int
+	Failed    int
+}
+
+type ExceptionSweeper interface {
+	SweepAttention(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		now int64,
+	) (*ExceptionSweepResult, error)
 }

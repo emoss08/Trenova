@@ -51,6 +51,7 @@ type Params struct {
 	Runs        agentports.AgentRunService         `optional:"true"`
 	Events      agentports.AgentEventPublisher     `optional:"true"`
 	Sources     []watchtowerports.WatchtowerSource `                group:"watchtower_sources"`
+	Dismisser   *Dismisser
 }
 
 // Service is the watchtower's read face: what a reader may see of it, where
@@ -92,19 +93,12 @@ func New(p Params) *Service {
 		runs:        p.Runs,
 		events:      p.Events,
 		sources:     sources,
+		dismisser:   p.Dismisser,
 		now:         timeutils.NowUnix,
-	}
-	svc.dismisser = &Dismisser{
-		repo:      p.Repo,
-		projector: p.Projector,
-		access:    access,
-		now:       svc.clock,
 	}
 
 	return svc
 }
-
-func (s *Service) clock() int64 { return s.now() }
 
 func AsService(s *Service) watchtowerports.WatchtowerService { return s }
 

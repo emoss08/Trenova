@@ -45,6 +45,14 @@ type ListWatchtowerItemsQuery struct {
 	BeforeOccurredAt int64
 	BeforeID         pulid.ID
 	Limit            int
+
+	Statuses    []watchtower.Status
+	AssigneeIDs []pulid.ID
+	Unassigned  bool
+	OverdueAt   int64
+	SubjectID   pulid.ID
+	OrderByDue  bool
+	BeforeDueAt int64
 }
 
 // CountWatchtowerItemsRequest asks how much is open, and how much of it is
@@ -53,6 +61,8 @@ type CountWatchtowerItemsRequest struct {
 	TenantInfo pagination.TenantInfo
 	Kinds      []watchtower.SourceKind
 	SeenAt     int64
+	AssigneeID pulid.ID
+	Now        int64
 }
 
 type WatchtowerKindCount struct {
@@ -65,7 +75,30 @@ type WatchtowerCountsRow struct {
 	Critical       int
 	UnseenCritical int
 	Unseen         int
+	Overdue        int
+	Unassigned     int
+	Mine           int
+	MineOverdue    int
 	ByKind         []WatchtowerKindCount
+}
+
+type UpdateWatchtowerWorkflowRequest struct {
+	Item            *watchtower.Item
+	ExpectedVersion int64
+	Events          []*watchtower.Event
+}
+
+type ListWatchtowerEventsRequest struct {
+	TenantInfo pagination.TenantInfo
+	ItemID     pulid.ID
+	Limit      int
+}
+
+type ListAttentionWatchtowerItemsRequest struct {
+	TenantInfo         pagination.TenantInfo
+	Now                int64
+	Limit              int
+	BelowEscalationCap int16
 }
 
 type GetWatchtowerItemRequest struct {
@@ -90,12 +123,22 @@ type WatchtowerRepository interface {
 	// was already there. It reports whether the row is new.
 	Upsert(ctx context.Context, item *watchtower.Item) (*watchtower.Item, bool, error)
 	Resolve(ctx context.Context, req ResolveWatchtowerItemRequest) (*watchtower.Item, error)
-	ResolveByID(
+	UpdateWorkflow(
 		ctx context.Context,
-		req GetWatchtowerItemRequest,
-		resolvedAt int64,
+		req *UpdateWatchtowerWorkflowRequest,
 	) (*watchtower.Item, error)
-	ResolveMissing(ctx context.Context, req ResolveMissingWatchtowerItemsRequest) (int, error)
+	InsertEvents(ctx context.Context, events []*watchtower.Event) error
+	ListEvents(ctx context.Context, req ListWatchtowerEventsRequest) ([]*watchtower.Event, error)
+	ListOverdue(
+		ctx context.Context,
+		req ListAttentionWatchtowerItemsRequest,
+	) ([]*watchtower.Item, error)
+	ListSnoozeExpired(
+		ctx context.Context,
+		req ListAttentionWatchtowerItemsRequest,
+	) ([]*watchtower.Item, error)
+	ListTenantsNeedingAttention(ctx context.Context, now int64) ([]pagination.TenantInfo, error)
+	ResolveMissing(ctx context.Context, req *ResolveMissingWatchtowerItemsRequest) (int, error)
 	GetByID(ctx context.Context, req GetWatchtowerItemRequest) (*watchtower.Item, error)
 	List(ctx context.Context, req ListWatchtowerItemsQuery) ([]*watchtower.Item, error)
 	Counts(ctx context.Context, req CountWatchtowerItemsRequest) (*WatchtowerCountsRow, error)

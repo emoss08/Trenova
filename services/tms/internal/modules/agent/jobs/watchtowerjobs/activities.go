@@ -36,6 +36,7 @@ type ActivitiesParams struct {
 	fx.In
 
 	Watchtower watchtowerports.WatchtowerService
+	Exceptions watchtowerports.ExceptionSweeper
 	Repo       watchtowerports.WatchtowerRepository
 	Tenants    tenantports.TenantSyncRepository
 	Controls   dispatchcontrolports.DispatchControlRepository
@@ -44,6 +45,7 @@ type ActivitiesParams struct {
 
 type Activities struct {
 	watchtower watchtowerports.WatchtowerService
+	exceptions watchtowerports.ExceptionSweeper
 	repo       watchtowerports.WatchtowerRepository
 	tenants    tenantports.TenantSyncRepository
 	controls   dispatchcontrolports.DispatchControlRepository
@@ -53,6 +55,7 @@ type Activities struct {
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		watchtower: p.Watchtower,
+		exceptions: p.Exceptions,
 		repo:       p.Repo,
 		tenants:    p.Tenants,
 		controls:   p.Controls,
@@ -110,6 +113,55 @@ func (a *Activities) NoCheckCallSweepActivity(
 		zap.Int("resolved", result.Resolved),
 		zap.Strings("failedSources", result.FailedSources),
 	)
+
+	return result, nil
+}
+
+// ExceptionAttentionActivity wakes every snoozed exception whose time has
+// come and escalates every overdue one below its organization's cap. Both
+// happen because time passed, so nothing written could trigger them.
+func (a *Activities) ExceptionAttentionActivity(
+	ctx context.Context,
+) (*ExceptionAttentionResult, error) {
+	now := timeutils.NowUnix()
+	tenants, err := a.repo.ListTenantsNeedingAttention(ctx, now)
+	if err != nil {
+		return nil, fmt.Errorf("list tenants needing exception attention: %w", err)
+	}
+
+	result := &ExceptionAttentionResult{FailedOrganizations: []string{}}
+	for _, tenant := range tenants {
+		activity.RecordHeartbeat(ctx, tenant.OrgID.String())
+
+		tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
+		swept, sErr := a.exceptions.SweepAttention(tenantCtx, tenant, now)
+		if sErr != nil {
+			a.l.Error("exception attention sweep failed for organization",
+				zap.String("organization", tenant.OrgID.String()),
+				zap.Error(sErr),
+			)
+			result.FailedOrganizations = append(
+				result.FailedOrganizations,
+				tenant.OrgID.String(),
+			)
+
+			continue
+		}
+
+		result.OrganizationsProcessed++
+		result.Woke += swept.Woke
+		result.Escalated += swept.Escalated
+		result.Failed += swept.Failed
+	}
+
+	if result.Woke > 0 || result.Escalated > 0 || result.Failed > 0 {
+		a.l.Info("exception attention sweep complete",
+			zap.Int("organizations", result.OrganizationsProcessed),
+			zap.Int("woke", result.Woke),
+			zap.Int("escalated", result.Escalated),
+			zap.Int("failed", result.Failed),
+		)
+	}
 
 	return result, nil
 }

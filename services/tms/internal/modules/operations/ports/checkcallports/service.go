@@ -111,6 +111,7 @@ type OverdueMove struct {
 	MoveID        pulid.ID
 	ShipmentID    pulid.ID
 	ProNumber     string
+	OwnerID       pulid.ID
 	CarrierID     pulid.ID
 	CarrierName   string
 	LastContactAt int64

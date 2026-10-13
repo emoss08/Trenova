@@ -25,6 +25,9 @@ const (
 	// NoCheckCallSweepWorkflowName raises and clears the items for brokered
 	// loads that have gone quiet past their check call window.
 	NoCheckCallSweepWorkflowName = "NoCheckCallSweepWorkflow"
+	// ExceptionAttentionWorkflowName wakes snoozed exceptions whose time has
+	// come and escalates the overdue ones.
+	ExceptionAttentionWorkflowName = "ExceptionAttentionWorkflow"
 )
 
 // WatchtowerBackfillInput names the tenant to fill. An empty organization
@@ -53,4 +56,14 @@ type WatchtowerSweepResult struct {
 // WatchtowerRetentionResult reports what the retention sweep removed.
 type WatchtowerRetentionResult struct {
 	Deleted int `json:"deleted"`
+}
+
+// ExceptionAttentionResult reports one pass over the exceptions needing
+// attention.
+type ExceptionAttentionResult struct {
+	OrganizationsProcessed int      `json:"organizationsProcessed"`
+	Woke                   int      `json:"woke"`
+	Escalated              int      `json:"escalated"`
+	Failed                 int      `json:"failed"`
+	FailedOrganizations    []string `json:"failedOrganizations"`
 }
