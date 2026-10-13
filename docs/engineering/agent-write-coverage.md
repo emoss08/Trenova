@@ -85,7 +85,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 80 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 83 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 271 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
@@ -97,13 +97,13 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1103 writes: 585 GraphQL mutations and 518 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1106 writes: 588 GraphQL mutations and 518 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 390 |
-| Exempt | 679 |
-| — Security | 80 |
+| Exempt | 682 |
+| — Security | 83 |
 | — Configuration | 271 |
 | — User preference | 38 |
 | — Infrastructure | 52 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 46 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1103 |
+| Total | 1106 |
 
 Of the 424 writes an agent should be able to make, 390 have a tool (91%).
 
@@ -164,7 +164,7 @@ The writes no tool performs yet, and what the tool would do.
 | --- | --- | --- | --- | --- |
 | accessorialcharge | 3 | 0 | 3 | 0 |
 | accountingcontrol | 1 | 0 | 1 | 0 |
-| accountingsync | 31 | 20 | 11 | 0 |
+| accountingsync | 34 | 20 | 14 | 0 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
 | agent | 16 | 2 | 14 | 0 |
@@ -379,6 +379,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation completeAccountingAuthorization` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
 | `mutation completeAccountingSetup` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation confirmAccountingMappings` | Tool: `confirm_accounting_mapping_proposals` |
+| `mutation connectAccountingWithCertificate` | Exempt, security: Connects with a certificate an administrator uploaded in the accounting system's console; a person sets up the credential, never an agent. |
 | `mutation createAccountingReferenceRecord` | Tool: `create_accounting_reference_record` |
 | `mutation disconnectAccountingSystem` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation dismissAccountingDrift` | Tool: `dismiss_accounting_drift` |
@@ -386,11 +387,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation finishAccountingAuthorization` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
 | `mutation ignoreAccountingInboundChange` | Tool: `ignore_accounting_inbound_change` |
 | `mutation pauseAccountingSync` | Tool: `pause_accounting_sync` |
+| `mutation prepareAccountingCertificate` | Exempt, security: Generates the key pair and certificate a person uploads in the accounting system's console to let Trenova act there. |
 | `mutation redateAccountingSync` | Tool: `redate_accounting_sync` |
 | `mutation refreshAccountingReferenceData` | Tool: `refresh_accounting_reference_data` |
 | `mutation rejectAccountingMapping` | Tool: `reject_accounting_mapping_proposal` |
 | `mutation releaseAccountingSync` | Tool: `release_accounting_sync` |
 | `mutation removeAccountingApp` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
+| `mutation renewAccountingCertificate` | Exempt, security: Swaps in a certificate a person uploaded in the accounting system's console; the credential is a person's act, never an agent's. |
 | `mutation requestAccountingBackfill` | Tool: `request_accounting_backfill` |
 | `mutation resolveAccountingDrift` | Tool: `resolve_accounting_drift` |
 | `mutation resumeAccountingSync` | Tool: `resume_accounting_sync` |

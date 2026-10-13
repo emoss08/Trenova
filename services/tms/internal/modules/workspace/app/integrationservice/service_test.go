@@ -20,7 +20,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const expectedCatalogItems = 19
+const expectedCatalogItems = 20
 
 type stubIntegrationRepo struct {
 	listByTenantResult []*integration.Integration
@@ -202,6 +202,25 @@ func TestListCatalogSortedBySortOrderThenName(t *testing.T) {
 	require.Equal(t, integration.TypeQuickBooksOnline, resp.Items[16].Type)
 	require.Equal(t, integration.TypeXero, resp.Items[17].Type)
 	require.Equal(t, integration.TypeBusinessCentral, resp.Items[18].Type)
+	require.Equal(t, integration.TypeNetSuite, resp.Items[19].Type)
+}
+
+func TestListCatalogIncludesNetSuiteUnderAccounting(t *testing.T) {
+	t.Parallel()
+
+	svc := New(Params{
+		Logger: zap.NewNop(),
+		Repo:   &stubIntegrationRepo{},
+	})
+
+	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
+	require.NoError(t, err)
+
+	netSuite := findCatalogItem(t, resp.Items, integration.TypeNetSuite)
+	require.Equal(t, integration.CategoryAccounting, netSuite.Category)
+	require.Equal(t, "/integrations/logos/netsuite-light.svg", netSuite.LogoLightURL)
+	require.Equal(t, "/integrations/logos/netsuite-dark.svg", netSuite.LogoDarkURL)
+	require.Equal(t, "Connect", netSuite.PrimaryActionLabel)
 }
 
 func TestListCatalogIncludesQuickBooksUnderAccounting(t *testing.T) {

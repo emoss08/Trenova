@@ -154,12 +154,7 @@ func (s *Service) PrepareCertificate(
 		return nil, err
 	}
 
-	return &accountingsyncports.AccountingPreparedCertificate{
-		IntegrationType: req.IntegrationType,
-		CertificatePEM:  pending.CertificatePEM,
-		ExpiresAt:       pending.ExpiresAt,
-		PreparedAt:      pending.PreparedAt,
-	}, nil
+	return preparedCertificateOf(pending), nil
 }
 
 func validateCertificateID(field, certificateID string) *errortypes.MultiError {
@@ -503,4 +498,36 @@ func (s *Service) consumePendingCertificate(
 		},
 		IntegrationType: conn.IntegrationType,
 	})
+}
+
+func (s *Service) pendingCertificate(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	typ integration.Type,
+) (*accountingsyncports.AccountingPreparedCertificate, error) {
+	if s.certificates == nil || !accountingsync.MustProfile(typ).ClientCredentials {
+		return nil, nil //nolint:nilnil // no certificate is waiting
+	}
+	pending, err := s.certificates.GetByType(ctx, accountingsyncports.GetAccountingConnectionRequest{
+		TenantInfo:      tenantInfo,
+		IntegrationType: typ,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // no certificate is waiting
+		}
+		return nil, err
+	}
+	return preparedCertificateOf(pending), nil
+}
+
+func preparedCertificateOf(
+	pending *accountingsync.AccountingPendingCertificate,
+) *accountingsyncports.AccountingPreparedCertificate {
+	return &accountingsyncports.AccountingPreparedCertificate{
+		IntegrationType: pending.IntegrationType,
+		CertificatePEM:  pending.CertificatePEM,
+		ExpiresAt:       pending.ExpiresAt,
+		PreparedAt:      pending.PreparedAt,
+	}
 }

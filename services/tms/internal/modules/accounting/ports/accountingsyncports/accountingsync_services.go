@@ -17,6 +17,7 @@ type AccountingSyncStatus struct {
 	App                  *AccountingAppSettings
 	Connection           *accountingsync.AccountingConnection
 	WebhookSubscriptions *AccountingWebhookSubscriptionSummary
+	PendingCertificate   *AccountingPreparedCertificate
 }
 
 type AccountingWebhookSubscriptionSummary struct {

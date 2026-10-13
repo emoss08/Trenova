@@ -1771,6 +1771,31 @@ type AccountingConfig struct {
 	QuickBooks      QuickBooksConfig      `mapstructure:"quickbooks"`
 	Xero            XeroConfig            `mapstructure:"xero"`
 	BusinessCentral BusinessCentralConfig `mapstructure:"businessCentral"`
+	NetSuite        NetSuiteConfig        `mapstructure:"netSuite"`
+}
+
+type NetSuiteConfig struct {
+	ClientID     string `mapstructure:"clientId"`
+	ClientSecret string `mapstructure:"clientSecret"`
+	RedirectURL  string `mapstructure:"redirectUrl"  validate:"omitempty,url"`
+}
+
+const netSuiteCallbackPath = "/admin/integrations/netsuite/callback"
+
+func (c *NetSuiteConfig) GetRedirectURL(app *AppConfig) string {
+	if c.RedirectURL != "" {
+		return c.RedirectURL
+	}
+	if base := app.GetWebBaseURL(); base != "" {
+		return base + netSuiteCallbackPath
+	}
+	return ""
+}
+
+func (c *NetSuiteConfig) IsConfigured(app *AppConfig) bool {
+	return strings.TrimSpace(c.ClientID) != "" &&
+		strings.TrimSpace(c.ClientSecret) != "" &&
+		c.GetRedirectURL(app) != ""
 }
 
 type BusinessCentralConfig struct {

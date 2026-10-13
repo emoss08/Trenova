@@ -263,14 +263,11 @@ func (c *AccountingConnection) AccessTokenExpiresWithin(now, window int64) bool 
 }
 
 func (c *AccountingConnection) ReconnectWarningSeconds() int64 {
-	warning := defaultReconnectWarning
 	if c.UsesCertificate() {
-		return int64(warning / time.Second)
+		return int64(defaultReconnectWarning / time.Second)
 	}
-	if profile, ok := Profile(c.IntegrationType); ok && profile.ReconnectWarning > 0 {
-		warning = profile.ReconnectWarning
-	}
-	return int64(warning / time.Second)
+	profile := MustProfile(c.IntegrationType)
+	return int64(profile.ReconnectWarningSeconds())
 }
 
 func (c *AccountingConnection) RefreshTokenNearAbsoluteExpiry(now int64) bool {

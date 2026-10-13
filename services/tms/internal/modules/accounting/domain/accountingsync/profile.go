@@ -239,6 +239,14 @@ func ProfileByWebhookSlug(slug string) (ProviderProfile, bool) {
 	return ProviderProfile{}, false
 }
 
+func (p *ProviderProfile) ReconnectWarningSeconds() int {
+	warning := p.ReconnectWarning
+	if warning <= 0 {
+		warning = defaultReconnectWarning
+	}
+	return int(warning / time.Second)
+}
+
 func (p *ProviderProfile) Has(kind ReferenceKind) bool {
 	return slices.Contains(p.ReferenceKinds, kind)
 }

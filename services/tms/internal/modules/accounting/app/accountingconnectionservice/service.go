@@ -171,6 +171,9 @@ func (s *Service) Status(
 			return nil, err
 		}
 	}
+	if status.PendingCertificate, err = s.pendingCertificate(ctx, tenantInfo, typ); err != nil {
+		return nil, err
+	}
 
 	return status, nil
 }

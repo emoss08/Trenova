@@ -364,7 +364,7 @@ func TestRetryAccountingSync_RefusesWhatItCannotRetry(t *testing.T) {
 	}
 	for _, params := range []map[string]any{
 		{"system": "QuickBooksOnline"},
-		{"system": "NetSuite", "errorCategories": []any{"Transient"}},
+		{"system": "SageIntacct", "errorCategories": []any{"Transient"}},
 		{"system": "QuickBooksOnline", "errorCategories": []any{"Timeout"}},
 		{"system": "QuickBooksOnline", "syncRecordIds": []any{"nope"}},
 		{"system": "QuickBooksOnline", "syncRecordIds": tooMany},

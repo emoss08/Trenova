@@ -44,6 +44,7 @@ go_initialisms:
     - LTL
     - OOS
     - USDOT
+    - PKCE
 
 omit_complexity: true
 omit_gqlgen_version_in_file_notice: true
@@ -4838,6 +4839,10 @@ models:
         resolver: true
       pausedBy:
         resolver: true
+      certificateId:
+        fieldName: ClientCertificateID
+      certificateExpiresAt:
+        fieldName: ClientCertificateExpiresAt
   AccountingSyncStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingSyncStatus
@@ -4849,6 +4854,12 @@ models:
         fieldName: Ledger
       inboundPaymentsAvailable:
         fieldName: InboundPayments
+  AccountingPreparedCertificate:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingPreparedCertificate
+  AccountingAuthMethod:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AuthMethod
   AccountingWebhookSubscriptionSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingWebhookSubscriptionSummary

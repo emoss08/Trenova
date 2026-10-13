@@ -2039,6 +2039,14 @@ type ConfirmDeskMemoryInput struct {
 	Version int               `json:"version"`
 }
 
+type ConnectAccountingWithCertificateInput struct {
+	IntegrationType integration.Type `json:"integrationType"`
+	// The accounting system's account id, such as 1234567 or 1234567_SB1.
+	AccountID string `json:"accountId"`
+	// The id the accounting system gave the uploaded certificate.
+	CertificateID string `json:"certificateId"`
+}
+
 type CostCategory struct {
 	ID                   string                       `json:"id"`
 	Category             CostCategoryType             `json:"category"`
@@ -5698,6 +5706,10 @@ type PostCustomerPaymentInput struct {
 	Applications    []*CustomerPaymentApplicationInput `json:"applications,omitempty"`
 }
 
+type PrepareAccountingCertificateInput struct {
+	IntegrationType integration.Type `json:"integrationType"`
+}
+
 type ProfileChangeFilterInput struct {
 	WorkerID *string                      `json:"workerId,omitempty"`
 	Statuses []worker.ProfileChangeStatus `json:"statuses,omitempty"`
@@ -6145,6 +6157,12 @@ type RemoveOrderChargeInput struct {
 type RemoveSettlementAdjustmentInput struct {
 	SettlementID string `json:"settlementId"`
 	LineID       string `json:"lineId"`
+}
+
+type RenewAccountingCertificateInput struct {
+	ConnectionID string `json:"connectionId"`
+	// The id the accounting system gave the newly uploaded certificate.
+	CertificateID string `json:"certificateId"`
 }
 
 type ReportBand struct {
