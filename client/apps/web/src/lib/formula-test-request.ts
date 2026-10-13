@@ -23,6 +23,8 @@ export type FormulaPricingInputs = {
   overrides?: Readonly<Record<string, unknown>>;
   /** A saved shipment to price instead of the sample values. */
   shipmentId?: string;
+  /** Asks the engine for what each statement came to, for the editor's inline values. */
+  traceStatements?: boolean;
 };
 
 /**
@@ -68,5 +70,6 @@ export function formulaTestRequest(
     ...(maxCharge != null ? { maxCharge: String(maxCharge) } : {}),
     ...(roundingMode ? { roundingMode } : {}),
     ...(roundingPrecision != null ? { roundingPrecision } : {}),
+    ...(inputs.traceStatements ? { traceStatements: true } : {}),
   };
 }

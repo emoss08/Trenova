@@ -21,37 +21,47 @@ export const claimDraftEdit = createOnceClaimer("trenova-assistant-applied-draft
  * assistant made them. Only this page's changes are claimed, so a change for
  * another page is left for it.
  */
-export function nextDraftEdits(
+export type DraftEditEntry = { artifactId: string; edit: PageDraftEdit };
+
+export function nextDraftEditEntries(
   artifacts: readonly AssistantArtifactEvent[],
   surface: PageDraftSurface,
   claim: (id: string) => boolean,
-): PageDraftEdit[] {
-  const edits: PageDraftEdit[] = [];
+): DraftEditEntry[] {
+  const entries: DraftEditEntry[] = [];
   for (const artifact of artifacts) {
     const draft = artifact.draft;
     if (artifact.kind !== "draft_edit" || !draft || draft.surface !== surface) {
       continue;
     }
     if (claim(artifact.id)) {
-      edits.push(draft);
+      entries.push({ artifactId: artifact.id, edit: draft });
     }
   }
 
-  return edits;
+  return entries;
 }
 
-/** Applies each change a live turn hands the page, once. */
+export function nextDraftEdits(
+  artifacts: readonly AssistantArtifactEvent[],
+  surface: PageDraftSurface,
+  claim: (id: string) => boolean,
+): PageDraftEdit[] {
+  return nextDraftEditEntries(artifacts, surface, claim).map((entry) => entry.edit);
+}
+
+/** Applies each change a live turn hands the page, once, naming the artifact it came as. */
 export function useApplyDraftEdits(
   artifacts: readonly AssistantArtifactEvent[],
   surface: PageDraftSurface | undefined,
-  onEdit: ((edit: PageDraftEdit) => void) | undefined,
+  onEdit: ((edit: PageDraftEdit, artifactId: string) => void) | undefined,
 ) {
   useEffect(() => {
     if (surface === undefined || onEdit === undefined) {
       return;
     }
-    for (const edit of nextDraftEdits(artifacts, surface, claimDraftEdit)) {
-      onEdit(edit);
+    for (const entry of nextDraftEditEntries(artifacts, surface, claimDraftEdit)) {
+      onEdit(entry.edit, entry.artifactId);
     }
   }, [artifacts, onEdit, surface]);
 }

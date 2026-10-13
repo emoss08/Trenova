@@ -780,7 +780,6 @@
   "showing the {0} most recent": "显示最近的 {0} 条",
   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...",
   "{\"LTL\":\"M\"}": "{\"LTL\":\"M\"}",
-  "{0, plural, one {# warning} other {# warnings}}": "{0, plural, other {# 项警告}}",
   "{0, plural, one {Expires in # day} other {Expires in # days}} ({1})": "{0, plural, other {# 天后到期}}（{1}）",
   "{0, plural, one {No document moved through EDI in the last day. Look at everything to see older traffic, or wait for the next document to arrive.} other {No document moved through EDI in the last # days. Look at everything to see older traffic, or wait for the next document to arrive.}}": "{0, plural, other {过去 # 天内没有任何文档经由 EDI 传输。请查看全部记录以了解更早的往来，或等待下一份文档到达。}}",
   "{0, plural, one {No document moved through EDI in the last hour. Look at everything to see older traffic, or wait for the next document to arrive.} other {No document moved through EDI in the last # hours. Look at everything to see older traffic, or wait for the next document to arrive.}}": "{0, plural, other {过去 # 小时内没有任何文档经由 EDI 传输。请查看全部记录以了解更早的往来，或等待下一份文档到达。}}",
