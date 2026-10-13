@@ -81,6 +81,7 @@ var allowed = map[string]string{
 	"internal/modules/parties/adapters/postgres/customerrepository/billingschedule.go:repository.ListDueBillingSchedules":                                       "list billing schedules due across every organization",
 	"internal/modules/identity/adapters/postgres/datarententionrepository/dataretention.go:repository.List":                                                     "read every organization's retention settings for retention sweeps",
 	"internal/modules/operations/adapters/postgres/dispatchcontrolrepository/dispatchcontrol.go:repository.ListCheckCallMonitoringTenants":                      "list organizations that watch brokered loads for check calls",
+	"internal/modules/operations/adapters/postgres/stopetarepository/stopeta.go:repository.ListActiveTenants":                                                   "list organizations with shipments whose arrivals are projected",
 	"internal/modules/operations/adapters/postgres/checkcallrepository/trackinglink.go:linkRepository.GetByHash":                                                "resolve a carrier tracking link before its tenant is known",
 	"internal/modules/operations/adapters/postgres/checkcallrepository/trackinglink.go:linkRepository.PurgeDead":                                                "purge dead carrier tracking links across every organization",
 	"internal/modules/operations/adapters/postgres/dispatchcontrolrepository/dispatchcontrol.go:repository.ListHorizonPlanningTenants":                          "list organizations with horizon planning on",

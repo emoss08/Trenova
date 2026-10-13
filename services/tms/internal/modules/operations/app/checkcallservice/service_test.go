@@ -82,6 +82,27 @@ func (r *memoryCheckCalls) LatestForMove(
 	return latest, nil
 }
 
+func (r *memoryCheckCalls) LatestForMoves(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	moveIDs []pulid.ID,
+) (map[pulid.ID]*checkcall.CheckCall, error) {
+	wanted := make(map[pulid.ID]struct{}, len(moveIDs))
+	for _, id := range moveIDs {
+		wanted[id] = struct{}{}
+	}
+	out := make(map[pulid.ID]*checkcall.CheckCall, len(moveIDs))
+	for _, row := range r.rows {
+		if _, ok := wanted[row.ShipmentMoveID]; !ok {
+			continue
+		}
+		if latest := out[row.ShipmentMoveID]; latest == nil || row.ReportedAt > latest.ReportedAt {
+			out[row.ShipmentMoveID] = row
+		}
+	}
+	return out, nil
+}
+
 func (r *memoryCheckCalls) ListMonitoredMoves(
 	_ context.Context,
 	_ pagination.TenantInfo,

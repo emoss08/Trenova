@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentsuggestionrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmenttrackingrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/stopetarepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/tenderrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/trackingeventrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/triagelookuprepository"
@@ -138,6 +139,7 @@ func SharedOptions() fx.Option {
 			trackingeventrepository.New,
 			checkcallrepository.New,
 			checkcallrepository.NewTrackingLinks,
+			stopetarepository.New,
 			shipmentmovejurisdictionmilerepository.New,
 			detentionrepository.NewPolicyRepository,
 			detentionrepository.NewOccurrenceRepository,
@@ -217,6 +219,7 @@ func SharedOptions() fx.Option {
 			shipmentsuggestionservice.NewCandidates,
 			shipmentetaservice.New,
 			shipmentetaservice.NewTrackingReader,
+			shipmentetaservice.NewRefresher,
 			shipmentwatchlistservice.New,
 			dispatchcontrolservice.New,
 			func(s *detentionservice.Service) detentionports.DetentionNoticeService { return s },

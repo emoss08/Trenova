@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
+const MaxLegsPerEstimate = 500
+
 type Point struct {
 	Latitude  float64
 	Longitude float64

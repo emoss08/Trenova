@@ -29,8 +29,8 @@ func TestFacts_DateWhatTheTruckReported(t *testing.T) {
 			Name: "Jane Doe", DutyStatus: "OnDuty", DriveRemainingMinutes: 125, RecordedAt: 400,
 		},
 		Estimate: &ArrivalEstimate{
-			StopLabel: "Chicago DC", EstimatedArrivalText: "Oct 6 15:10", SlackMinutes: 50,
-			Verdict: VerdictOnTime,
+			StopLabel: "Chicago DC", EstimatedArrival: 900, EstimatedArrivalText: "Oct 6 15:10",
+			SlackMinutes: 50, Verdict: VerdictOnTime, InputAt: 500, ComputedAt: 700,
 		},
 	}
 
@@ -62,7 +62,13 @@ func TestFacts_SayWhenNobodyIsOnTheLoad(t *testing.T) {
 		ProNumber: "SEED-SHP-010",
 		Status:    "Delayed",
 		Moves:     []MoveSnapshot{{ID: "sm_1"}},
-		NextStop:  &StopSnapshot{MoveID: "sm_1", Type: "Delivery", City: "Los Angeles", Overdue: true, LateMinutes: 90},
+		NextStop: &StopSnapshot{
+			MoveID:      "sm_1",
+			Type:        "Delivery",
+			City:        "Los Angeles",
+			Overdue:     true,
+			LateMinutes: 90,
+		},
 	}
 
 	facts := snapshot.Facts()

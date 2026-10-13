@@ -4099,7 +4099,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.BoardGrouping
   EtaVerdict:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking.Verdict
+      - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.Verdict
   UncoveredPickupWindow:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.PickupWindow

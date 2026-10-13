@@ -38,6 +38,11 @@ type CheckCallRepository interface {
 		tenantInfo pagination.TenantInfo,
 		moveID pulid.ID,
 	) (*checkcall.CheckCall, error)
+	LatestForMoves(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		moveIDs []pulid.ID,
+	) (map[pulid.ID]*checkcall.CheckCall, error)
 	ListMonitoredMoves(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

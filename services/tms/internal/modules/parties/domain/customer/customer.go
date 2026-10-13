@@ -32,37 +32,38 @@ type Customer struct {
 
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID                     pulid.ID               `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID         pulid.ID               `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID         pulid.ID               `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	StateID                pulid.ID               `json:"stateId"                bun:"state_id,type:VARCHAR(100),notnull"`
-	Status                 domaintypes.Status     `json:"status"                 bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code                   string                 `json:"code"                   bun:"code,type:VARCHAR(10),notnull"`
-	Name                   string                 `json:"name"                   bun:"name,type:VARCHAR(255),nullzero"`
-	AddressLine1           string                 `json:"addressLine1"           bun:"address_line_1,type:VARCHAR(150),nullzero"`
-	AddressLine2           string                 `json:"addressLine2"           bun:"address_line_2,type:VARCHAR(150),nullzero"`
-	City                   string                 `json:"city"                   bun:"city,type:VARCHAR(100),nullzero"`
-	PostalCode             string                 `json:"postalCode"             bun:"postal_code,type:us_postal_code,notnull"`
-	IsGeocoded             bool                   `json:"isGeocoded"             bun:"is_geocoded,type:BOOLEAN"`
-	Longitude              *float64               `json:"longitude"              bun:"longitude,type:FLOAT,nullzero"`
-	Latitude               *float64               `json:"latitude"               bun:"latitude,type:FLOAT,nullzero"`
-	PlaceID                string                 `json:"placeId"                bun:"place_id,type:TEXT,nullzero"`
-	ExternalID             string                 `json:"externalId"             bun:"external_id,type:TEXT,nullzero"`
-	DOTNumber              string                 `json:"dotNumber"              bun:"dot_number,type:VARCHAR(12),nullzero"`
-	MCNumber               string                 `json:"mcNumber"               bun:"mc_number,type:VARCHAR(12),nullzero"`
-	StatusUpdatePreference StatusUpdatePreference `json:"statusUpdatePreference" bun:"status_update_preference,type:VARCHAR(30),notnull,default:'None'"`
-	StatusUpdateRecipients string                 `json:"statusUpdateRecipients" bun:"status_update_recipients,type:TEXT,nullzero"`
-	BrokerVettingEnabled   bool                   `json:"brokerVettingEnabled"   bun:"broker_vetting_enabled,type:BOOLEAN,notnull"`
-	CheckCallIntervalHours *int16                 `json:"checkCallIntervalHours" bun:"check_call_interval_hours,type:SMALLINT,nullzero"`
-	Geom                   *postgis.Point         `json:"-"                      bun:"geom,type:geography,scanonly"`
-	AllowConsolidation     bool                   `json:"allowConsolidation"     bun:"allow_consolidation,type:BOOLEAN"`
-	ExclusiveConsolidation bool                   `json:"exclusiveConsolidation" bun:"exclusive_consolidation,type:BOOLEAN"`
-	ConsolidationPriority  int                    `json:"consolidationPriority"  bun:"consolidation_priority,type:INTEGER,default:1"`
-	SearchVector           string                 `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                   string                 `json:"-"                      bun:"rank,type:VARCHAR(100),scanonly"`
-	Version                int64                  `json:"version"                bun:"version,type:BIGINT"`
-	CreatedAt              int64                  `json:"createdAt"              bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64                  `json:"updatedAt"              bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                      pulid.ID               `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID          pulid.ID               `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID          pulid.ID               `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	StateID                 pulid.ID               `json:"stateId"                bun:"state_id,type:VARCHAR(100),notnull"`
+	Status                  domaintypes.Status     `json:"status"                 bun:"status,type:status_enum,notnull,default:'Active'"`
+	Code                    string                 `json:"code"                   bun:"code,type:VARCHAR(10),notnull"`
+	Name                    string                 `json:"name"                   bun:"name,type:VARCHAR(255),nullzero"`
+	AddressLine1            string                 `json:"addressLine1"           bun:"address_line_1,type:VARCHAR(150),nullzero"`
+	AddressLine2            string                 `json:"addressLine2"           bun:"address_line_2,type:VARCHAR(150),nullzero"`
+	City                    string                 `json:"city"                   bun:"city,type:VARCHAR(100),nullzero"`
+	PostalCode              string                 `json:"postalCode"             bun:"postal_code,type:us_postal_code,notnull"`
+	IsGeocoded              bool                   `json:"isGeocoded"             bun:"is_geocoded,type:BOOLEAN"`
+	Longitude               *float64               `json:"longitude"              bun:"longitude,type:FLOAT,nullzero"`
+	Latitude                *float64               `json:"latitude"               bun:"latitude,type:FLOAT,nullzero"`
+	PlaceID                 string                 `json:"placeId"                bun:"place_id,type:TEXT,nullzero"`
+	ExternalID              string                 `json:"externalId"             bun:"external_id,type:TEXT,nullzero"`
+	DOTNumber               string                 `json:"dotNumber"              bun:"dot_number,type:VARCHAR(12),nullzero"`
+	MCNumber                string                 `json:"mcNumber"               bun:"mc_number,type:VARCHAR(12),nullzero"`
+	StatusUpdatePreference  StatusUpdatePreference `json:"statusUpdatePreference" bun:"status_update_preference,type:VARCHAR(30),notnull,default:'None'"`
+	StatusUpdateRecipients  string                 `json:"statusUpdateRecipients" bun:"status_update_recipients,type:TEXT,nullzero"`
+	BrokerVettingEnabled    bool                   `json:"brokerVettingEnabled"   bun:"broker_vetting_enabled,type:BOOLEAN,notnull"`
+	CheckCallIntervalHours  *int16                 `json:"checkCallIntervalHours" bun:"check_call_interval_hours,type:SMALLINT,nullzero"`
+	EtaRiskThresholdMinutes *int16                 `json:"etaRiskThresholdMinutes" bun:"eta_risk_threshold_minutes,type:SMALLINT,nullzero"`
+	Geom                    *postgis.Point         `json:"-"                      bun:"geom,type:geography,scanonly"`
+	AllowConsolidation      bool                   `json:"allowConsolidation"     bun:"allow_consolidation,type:BOOLEAN"`
+	ExclusiveConsolidation  bool                   `json:"exclusiveConsolidation" bun:"exclusive_consolidation,type:BOOLEAN"`
+	ConsolidationPriority   int                    `json:"consolidationPriority"  bun:"consolidation_priority,type:INTEGER,default:1"`
+	SearchVector            string                 `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank                    string                 `json:"-"                      bun:"rank,type:VARCHAR(100),scanonly"`
+	Version                 int64                  `json:"version"                bun:"version,type:BIGINT"`
+	CreatedAt               int64                  `json:"createdAt"              bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt               int64                  `json:"updatedAt"              bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit   *tenant.BusinessUnit    `json:"businessUnit,omitempty"   bun:"rel:belongs-to,join:business_unit_id=id"`
@@ -148,6 +149,15 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 					Error("Check call interval must be between 1 and 72 hours"),
 				validation.Max(int16(72)).
 					Error("Check call interval must be between 1 and 72 hours"),
+			),
+		),
+		validation.Field(&c.EtaRiskThresholdMinutes,
+			validation.When(
+				c.EtaRiskThresholdMinutes != nil,
+				validation.Min(int16(0)).
+					Error("ETA risk threshold must be between 0 and 1440 minutes"),
+				validation.Max(int16(1440)).
+					Error("ETA risk threshold must be between 0 and 1440 minutes"),
 			),
 		),
 	))

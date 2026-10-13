@@ -36,6 +36,11 @@ const (
 	DefaultCheckCallIntervalHours = int16(4)
 	MinCheckCallIntervalHours     = int16(1)
 	MaxCheckCallIntervalHours     = int16(72)
+
+	DefaultEtaRiskThresholdMinutes = int16(60)
+	MaxEtaRiskThresholdMinutes     = int16(1440)
+	DefaultEtaDwellMinutes         = int16(60)
+	MaxEtaDwellMinutes             = int16(720)
 )
 
 var defaultAutoAssignConfidenceThreshold = decimal.NewFromFloat(0.85)
@@ -75,6 +80,9 @@ type DispatchControl struct {
 	CoverageRiskWindowHours              int16                      `json:"coverageRiskWindowHours"              bun:"coverage_risk_window_hours,type:SMALLINT,notnull,default:12"`
 	EnableCheckCallMonitoring            bool                       `json:"enableCheckCallMonitoring"            bun:"enable_check_call_monitoring,type:BOOLEAN,notnull,default:false"`
 	CheckCallIntervalHours               int16                      `json:"checkCallIntervalHours"               bun:"check_call_interval_hours,type:SMALLINT,notnull,default:4"`
+	EnableEtaAlerts                      bool                       `json:"enableEtaAlerts"                      bun:"enable_eta_alerts,type:BOOLEAN,notnull,default:true"`
+	EtaRiskThresholdMinutes              int16                      `json:"etaRiskThresholdMinutes"              bun:"eta_risk_threshold_minutes,type:SMALLINT,notnull,default:60"`
+	EtaDwellMinutes                      int16                      `json:"etaDwellMinutes"                      bun:"eta_dwell_minutes,type:SMALLINT,notnull,default:60"`
 	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
 	RecordServiceFailures                ServiceIncidentType        `json:"recordServiceFailures"                bun:"record_service_failures,type:service_incident_type_enum,notnull,default:'Never'"`
 	ServiceFailureTarget                 *float64                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero"`
@@ -124,6 +132,35 @@ func (dc *DispatchControl) CheckCallWindowHours(customerHours *int16) int16 {
 
 func validCheckCallInterval(hours int16) bool {
 	return hours >= MinCheckCallIntervalHours && hours <= MaxCheckCallIntervalHours
+}
+
+func (dc *DispatchControl) EtaThresholdMinutes(customerMinutes *int16) int16 {
+	if customerMinutes != nil && validEtaRiskThreshold(*customerMinutes) {
+		return *customerMinutes
+	}
+	if dc == nil || !validEtaRiskThreshold(dc.EtaRiskThresholdMinutes) {
+		return DefaultEtaRiskThresholdMinutes
+	}
+	return dc.EtaRiskThresholdMinutes
+}
+
+func (dc *DispatchControl) EtaDwell() int16 {
+	if dc == nil || !validEtaDwell(dc.EtaDwellMinutes) {
+		return DefaultEtaDwellMinutes
+	}
+	return dc.EtaDwellMinutes
+}
+
+func (dc *DispatchControl) EtaAlertsEnabled() bool {
+	return dc == nil || dc.EnableEtaAlerts
+}
+
+func validEtaRiskThreshold(minutes int16) bool {
+	return minutes >= 0 && minutes <= MaxEtaRiskThresholdMinutes
+}
+
+func validEtaDwell(minutes int16) bool {
+	return minutes >= 0 && minutes <= MaxEtaDwellMinutes
 }
 
 func (dc *DispatchControl) StartsInsideCoverageWindow(startsAt, now int64) bool {
@@ -311,6 +348,22 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
+		validation.Field(&dc.EtaRiskThresholdMinutes,
+			validation.By(func(_ any) error {
+				if !validEtaRiskThreshold(dc.EtaRiskThresholdMinutes) {
+					return errors.New("ETA risk threshold must be between 0 and 1440 minutes")
+				}
+				return nil
+			}),
+		),
+		validation.Field(&dc.EtaDwellMinutes,
+			validation.By(func(_ any) error {
+				if !validEtaDwell(dc.EtaDwellMinutes) {
+					return errors.New("Stop dwell time must be between 0 and 720 minutes")
+				}
+				return nil
+			}),
+		),
 		validation.Field(&dc.CheckCallIntervalHours,
 			validation.By(func(_ any) error {
 				if !validCheckCallInterval(dc.CheckCallIntervalHours) {
@@ -386,5 +439,8 @@ func NewDefaultDispatchControl(orgID, buID pulid.ID) *DispatchControl {
 		AutoAssignConfidenceThreshold:        defaultAutoAssignConfidenceThreshold,
 		AutoAssignPlanningHorizonHours:       DefaultAutoAssignPlanningHorizonHours,
 		CoverageRiskWindowHours:              DefaultCoverageRiskWindowHours,
+		EnableEtaAlerts:                      true,
+		EtaRiskThresholdMinutes:              DefaultEtaRiskThresholdMinutes,
+		EtaDwellMinutes:                      DefaultEtaDwellMinutes,
 	}
 }

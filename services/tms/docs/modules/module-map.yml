@@ -465,6 +465,7 @@ modules:
       - tender
       - trackingevent
       - checkcall
+      - stopeta
       - weatheralert
     service:
       - allocationcheck
@@ -479,6 +480,7 @@ modules:
       - dispatcheligibility
       - dispatchguard
       - equipmentavailabilityhelper
+      - etaprojection
       - equipmentcontinuityhelper
       - globalsearchservice
       - internaledilifecycle
@@ -543,6 +545,7 @@ modules:
       - tenderrepository
       - trackingeventrepository
       - checkcallrepository
+      - stopetarepository
       - triageoverlaprepository
       - weatheralertrepository
   edi:

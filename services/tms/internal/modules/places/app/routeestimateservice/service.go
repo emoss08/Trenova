@@ -22,12 +22,11 @@ import (
 )
 
 const (
-	routedLegTTL       = 6 * time.Hour
-	routedLegCapacity  = 50_000
-	runtimeTTL         = 5 * time.Minute
-	runtimeCapacity    = 5_000
-	coordinatePlaces   = 3
-	maxLegsPerEstimate = 500
+	routedLegTTL      = 6 * time.Hour
+	routedLegCapacity = 50_000
+	runtimeTTL        = 5 * time.Minute
+	runtimeCapacity   = 5_000
+	coordinatePlaces  = 3
 )
 
 type mileageClient interface {
@@ -108,11 +107,11 @@ func (s *service) EstimateLegs(
 	tenantInfo pagination.TenantInfo,
 	legs []routeestimateports.Leg,
 ) ([]routeestimateports.LegEstimate, error) {
-	if len(legs) > maxLegsPerEstimate {
+	if len(legs) > routeestimateports.MaxLegsPerEstimate {
 		return nil, fmt.Errorf(
 			"estimate %d legs: at most %d per call",
 			len(legs),
-			maxLegsPerEstimate,
+			routeestimateports.MaxLegsPerEstimate,
 		)
 	}
 

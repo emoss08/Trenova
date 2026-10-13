@@ -50,69 +50,71 @@ var CustomerTable = buncolgen.TableInfo{
 //	q.Where(CustomerColumns.ID.Eq(), id)           // WHERE cus.id = ?
 //	q.Order(CustomerColumns.CreatedAt.OrderDesc())  // ORDER BY cus.created_at DESC
 var CustomerColumns = struct {
-	ID                     buncolgen.Column // "id" → qualified: "cus.id"
-	BusinessUnitID         buncolgen.Column // "business_unit_id" → qualified: "cus.business_unit_id"
-	OrganizationID         buncolgen.Column // "organization_id" → qualified: "cus.organization_id"
-	StateID                buncolgen.Column // "state_id" → qualified: "cus.state_id"
-	Status                 buncolgen.Column // "status" → qualified: "cus.status"
-	Code                   buncolgen.Column // "code" → qualified: "cus.code"
-	Name                   buncolgen.Column // "name" → qualified: "cus.name"
-	AddressLine1           buncolgen.Column // "address_line_1" → qualified: "cus.address_line_1"
-	AddressLine2           buncolgen.Column // "address_line_2" → qualified: "cus.address_line_2"
-	City                   buncolgen.Column // "city" → qualified: "cus.city"
-	PostalCode             buncolgen.Column // "postal_code" → qualified: "cus.postal_code"
-	IsGeocoded             buncolgen.Column // "is_geocoded" → qualified: "cus.is_geocoded"
-	Longitude              buncolgen.Column // "longitude" → qualified: "cus.longitude"
-	Latitude               buncolgen.Column // "latitude" → qualified: "cus.latitude"
-	PlaceID                buncolgen.Column // "place_id" → qualified: "cus.place_id"
-	ExternalID             buncolgen.Column // "external_id" → qualified: "cus.external_id"
-	DOTNumber              buncolgen.Column // "dot_number" → qualified: "cus.dot_number"
-	MCNumber               buncolgen.Column // "mc_number" → qualified: "cus.mc_number"
-	StatusUpdatePreference buncolgen.Column // "status_update_preference" → qualified: "cus.status_update_preference"
-	StatusUpdateRecipients buncolgen.Column // "status_update_recipients" → qualified: "cus.status_update_recipients"
-	BrokerVettingEnabled   buncolgen.Column // "broker_vetting_enabled" → qualified: "cus.broker_vetting_enabled"
-	CheckCallIntervalHours buncolgen.Column // "check_call_interval_hours" → qualified: "cus.check_call_interval_hours"
-	Geom                   buncolgen.Column // "geom" → qualified: "cus.geom"
-	AllowConsolidation     buncolgen.Column // "allow_consolidation" → qualified: "cus.allow_consolidation"
-	ExclusiveConsolidation buncolgen.Column // "exclusive_consolidation" → qualified: "cus.exclusive_consolidation"
-	ConsolidationPriority  buncolgen.Column // "consolidation_priority" → qualified: "cus.consolidation_priority"
-	SearchVector           buncolgen.Column // "search_vector" → qualified: "cus.search_vector"
-	Rank                   buncolgen.Column // "rank" → qualified: "cus.rank"
-	Version                buncolgen.Column // "version" → qualified: "cus.version"
-	CreatedAt              buncolgen.Column // "created_at" → qualified: "cus.created_at"
-	UpdatedAt              buncolgen.Column // "updated_at" → qualified: "cus.updated_at"
+	ID                      buncolgen.Column // "id" → qualified: "cus.id"
+	BusinessUnitID          buncolgen.Column // "business_unit_id" → qualified: "cus.business_unit_id"
+	OrganizationID          buncolgen.Column // "organization_id" → qualified: "cus.organization_id"
+	StateID                 buncolgen.Column // "state_id" → qualified: "cus.state_id"
+	Status                  buncolgen.Column // "status" → qualified: "cus.status"
+	Code                    buncolgen.Column // "code" → qualified: "cus.code"
+	Name                    buncolgen.Column // "name" → qualified: "cus.name"
+	AddressLine1            buncolgen.Column // "address_line_1" → qualified: "cus.address_line_1"
+	AddressLine2            buncolgen.Column // "address_line_2" → qualified: "cus.address_line_2"
+	City                    buncolgen.Column // "city" → qualified: "cus.city"
+	PostalCode              buncolgen.Column // "postal_code" → qualified: "cus.postal_code"
+	IsGeocoded              buncolgen.Column // "is_geocoded" → qualified: "cus.is_geocoded"
+	Longitude               buncolgen.Column // "longitude" → qualified: "cus.longitude"
+	Latitude                buncolgen.Column // "latitude" → qualified: "cus.latitude"
+	PlaceID                 buncolgen.Column // "place_id" → qualified: "cus.place_id"
+	ExternalID              buncolgen.Column // "external_id" → qualified: "cus.external_id"
+	DOTNumber               buncolgen.Column // "dot_number" → qualified: "cus.dot_number"
+	MCNumber                buncolgen.Column // "mc_number" → qualified: "cus.mc_number"
+	StatusUpdatePreference  buncolgen.Column // "status_update_preference" → qualified: "cus.status_update_preference"
+	StatusUpdateRecipients  buncolgen.Column // "status_update_recipients" → qualified: "cus.status_update_recipients"
+	BrokerVettingEnabled    buncolgen.Column // "broker_vetting_enabled" → qualified: "cus.broker_vetting_enabled"
+	CheckCallIntervalHours  buncolgen.Column // "check_call_interval_hours" → qualified: "cus.check_call_interval_hours"
+	EtaRiskThresholdMinutes buncolgen.Column // "eta_risk_threshold_minutes" → qualified: "cus.eta_risk_threshold_minutes"
+	Geom                    buncolgen.Column // "geom" → qualified: "cus.geom"
+	AllowConsolidation      buncolgen.Column // "allow_consolidation" → qualified: "cus.allow_consolidation"
+	ExclusiveConsolidation  buncolgen.Column // "exclusive_consolidation" → qualified: "cus.exclusive_consolidation"
+	ConsolidationPriority   buncolgen.Column // "consolidation_priority" → qualified: "cus.consolidation_priority"
+	SearchVector            buncolgen.Column // "search_vector" → qualified: "cus.search_vector"
+	Rank                    buncolgen.Column // "rank" → qualified: "cus.rank"
+	Version                 buncolgen.Column // "version" → qualified: "cus.version"
+	CreatedAt               buncolgen.Column // "created_at" → qualified: "cus.created_at"
+	UpdatedAt               buncolgen.Column // "updated_at" → qualified: "cus.updated_at"
 }{
-	ID:                     buncolgen.NewColumn("id", "cus"),
-	BusinessUnitID:         buncolgen.NewColumn("business_unit_id", "cus"),
-	OrganizationID:         buncolgen.NewColumn("organization_id", "cus"),
-	StateID:                buncolgen.NewColumn("state_id", "cus"),
-	Status:                 buncolgen.NewColumn("status", "cus"),
-	Code:                   buncolgen.NewColumn("code", "cus"),
-	Name:                   buncolgen.NewColumn("name", "cus"),
-	AddressLine1:           buncolgen.NewColumn("address_line_1", "cus"),
-	AddressLine2:           buncolgen.NewColumn("address_line_2", "cus"),
-	City:                   buncolgen.NewColumn("city", "cus"),
-	PostalCode:             buncolgen.NewColumn("postal_code", "cus"),
-	IsGeocoded:             buncolgen.NewColumn("is_geocoded", "cus"),
-	Longitude:              buncolgen.NewColumn("longitude", "cus"),
-	Latitude:               buncolgen.NewColumn("latitude", "cus"),
-	PlaceID:                buncolgen.NewColumn("place_id", "cus"),
-	ExternalID:             buncolgen.NewColumn("external_id", "cus"),
-	DOTNumber:              buncolgen.NewColumn("dot_number", "cus"),
-	MCNumber:               buncolgen.NewColumn("mc_number", "cus"),
-	StatusUpdatePreference: buncolgen.NewColumn("status_update_preference", "cus"),
-	StatusUpdateRecipients: buncolgen.NewColumn("status_update_recipients", "cus"),
-	BrokerVettingEnabled:   buncolgen.NewColumn("broker_vetting_enabled", "cus"),
-	CheckCallIntervalHours: buncolgen.NewColumn("check_call_interval_hours", "cus"),
-	Geom:                   buncolgen.NewColumn("geom", "cus"),
-	AllowConsolidation:     buncolgen.NewColumn("allow_consolidation", "cus"),
-	ExclusiveConsolidation: buncolgen.NewColumn("exclusive_consolidation", "cus"),
-	ConsolidationPriority:  buncolgen.NewColumn("consolidation_priority", "cus"),
-	SearchVector:           buncolgen.NewColumn("search_vector", "cus"),
-	Rank:                   buncolgen.NewColumn("rank", "cus"),
-	Version:                buncolgen.NewColumn("version", "cus"),
-	CreatedAt:              buncolgen.NewColumn("created_at", "cus"),
-	UpdatedAt:              buncolgen.NewColumn("updated_at", "cus"),
+	ID:                      buncolgen.NewColumn("id", "cus"),
+	BusinessUnitID:          buncolgen.NewColumn("business_unit_id", "cus"),
+	OrganizationID:          buncolgen.NewColumn("organization_id", "cus"),
+	StateID:                 buncolgen.NewColumn("state_id", "cus"),
+	Status:                  buncolgen.NewColumn("status", "cus"),
+	Code:                    buncolgen.NewColumn("code", "cus"),
+	Name:                    buncolgen.NewColumn("name", "cus"),
+	AddressLine1:            buncolgen.NewColumn("address_line_1", "cus"),
+	AddressLine2:            buncolgen.NewColumn("address_line_2", "cus"),
+	City:                    buncolgen.NewColumn("city", "cus"),
+	PostalCode:              buncolgen.NewColumn("postal_code", "cus"),
+	IsGeocoded:              buncolgen.NewColumn("is_geocoded", "cus"),
+	Longitude:               buncolgen.NewColumn("longitude", "cus"),
+	Latitude:                buncolgen.NewColumn("latitude", "cus"),
+	PlaceID:                 buncolgen.NewColumn("place_id", "cus"),
+	ExternalID:              buncolgen.NewColumn("external_id", "cus"),
+	DOTNumber:               buncolgen.NewColumn("dot_number", "cus"),
+	MCNumber:                buncolgen.NewColumn("mc_number", "cus"),
+	StatusUpdatePreference:  buncolgen.NewColumn("status_update_preference", "cus"),
+	StatusUpdateRecipients:  buncolgen.NewColumn("status_update_recipients", "cus"),
+	BrokerVettingEnabled:    buncolgen.NewColumn("broker_vetting_enabled", "cus"),
+	CheckCallIntervalHours:  buncolgen.NewColumn("check_call_interval_hours", "cus"),
+	EtaRiskThresholdMinutes: buncolgen.NewColumn("eta_risk_threshold_minutes", "cus"),
+	Geom:                    buncolgen.NewColumn("geom", "cus"),
+	AllowConsolidation:      buncolgen.NewColumn("allow_consolidation", "cus"),
+	ExclusiveConsolidation:  buncolgen.NewColumn("exclusive_consolidation", "cus"),
+	ConsolidationPriority:   buncolgen.NewColumn("consolidation_priority", "cus"),
+	SearchVector:            buncolgen.NewColumn("search_vector", "cus"),
+	Rank:                    buncolgen.NewColumn("rank", "cus"),
+	Version:                 buncolgen.NewColumn("version", "cus"),
+	CreatedAt:               buncolgen.NewColumn("created_at", "cus"),
+	UpdatedAt:               buncolgen.NewColumn("updated_at", "cus"),
 }
 
 // CustomerFieldMap maps JSON API field names to database column names.
@@ -120,34 +122,35 @@ var CustomerColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Customer.GetStaticFieldMap().
 var CustomerFieldMap = map[string]string{
-	"id":                     "id",
-	"businessUnitId":         "business_unit_id",
-	"organizationId":         "organization_id",
-	"stateId":                "state_id",
-	"status":                 "status",
-	"code":                   "code",
-	"name":                   "name",
-	"addressLine1":           "address_line_1",
-	"addressLine2":           "address_line_2",
-	"city":                   "city",
-	"postalCode":             "postal_code",
-	"isGeocoded":             "is_geocoded",
-	"longitude":              "longitude",
-	"latitude":               "latitude",
-	"placeId":                "place_id",
-	"externalId":             "external_id",
-	"dotNumber":              "dot_number",
-	"mcNumber":               "mc_number",
-	"statusUpdatePreference": "status_update_preference",
-	"statusUpdateRecipients": "status_update_recipients",
-	"brokerVettingEnabled":   "broker_vetting_enabled",
-	"checkCallIntervalHours": "check_call_interval_hours",
-	"allowConsolidation":     "allow_consolidation",
-	"exclusiveConsolidation": "exclusive_consolidation",
-	"consolidationPriority":  "consolidation_priority",
-	"version":                "version",
-	"createdAt":              "created_at",
-	"updatedAt":              "updated_at",
+	"id":                      "id",
+	"businessUnitId":          "business_unit_id",
+	"organizationId":          "organization_id",
+	"stateId":                 "state_id",
+	"status":                  "status",
+	"code":                    "code",
+	"name":                    "name",
+	"addressLine1":            "address_line_1",
+	"addressLine2":            "address_line_2",
+	"city":                    "city",
+	"postalCode":              "postal_code",
+	"isGeocoded":              "is_geocoded",
+	"longitude":               "longitude",
+	"latitude":                "latitude",
+	"placeId":                 "place_id",
+	"externalId":              "external_id",
+	"dotNumber":               "dot_number",
+	"mcNumber":                "mc_number",
+	"statusUpdatePreference":  "status_update_preference",
+	"statusUpdateRecipients":  "status_update_recipients",
+	"brokerVettingEnabled":    "broker_vetting_enabled",
+	"checkCallIntervalHours":  "check_call_interval_hours",
+	"etaRiskThresholdMinutes": "eta_risk_threshold_minutes",
+	"allowConsolidation":      "allow_consolidation",
+	"exclusiveConsolidation":  "exclusive_consolidation",
+	"consolidationPriority":   "consolidation_priority",
+	"version":                 "version",
+	"createdAt":               "created_at",
+	"updatedAt":               "updated_at",
 }
 
 // CustomerInsertableColumns lists column names suitable for INSERT statements on the "customers" table.
@@ -175,6 +178,7 @@ var CustomerInsertableColumns = []string{
 	"status_update_recipients",
 	"broker_vetting_enabled",
 	"check_call_interval_hours",
+	"eta_risk_threshold_minutes",
 	"allow_consolidation",
 	"exclusive_consolidation",
 	"consolidation_priority",
@@ -252,34 +256,35 @@ func CustomerApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.S
 //	CustomerFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var CustomerFilter = struct {
-	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	StateID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stateId" → DB: "state_id"
-	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Code                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
-	Name                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	AddressLine1           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine1" → DB: "address_line_1"
-	AddressLine2           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine2" → DB: "address_line_2"
-	City                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "city" → DB: "city"
-	PostalCode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postalCode" → DB: "postal_code"
-	IsGeocoded             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isGeocoded" → DB: "is_geocoded"
-	Longitude              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "longitude" → DB: "longitude"
-	Latitude               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latitude" → DB: "latitude"
-	PlaceID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "placeId" → DB: "place_id"
-	ExternalID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
-	DOTNumber              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dotNumber" → DB: "dot_number"
-	MCNumber               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mcNumber" → DB: "mc_number"
-	StatusUpdatePreference func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "statusUpdatePreference" → DB: "status_update_preference"
-	StatusUpdateRecipients func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "statusUpdateRecipients" → DB: "status_update_recipients"
-	BrokerVettingEnabled   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "brokerVettingEnabled" → DB: "broker_vetting_enabled"
-	CheckCallIntervalHours func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "checkCallIntervalHours" → DB: "check_call_interval_hours"
-	AllowConsolidation     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowConsolidation" → DB: "allow_consolidation"
-	ExclusiveConsolidation func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exclusiveConsolidation" → DB: "exclusive_consolidation"
-	ConsolidationPriority  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationPriority" → DB: "consolidation_priority"
-	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	StateID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stateId" → DB: "state_id"
+	Status                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Code                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Name                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	AddressLine1            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine1" → DB: "address_line_1"
+	AddressLine2            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine2" → DB: "address_line_2"
+	City                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "city" → DB: "city"
+	PostalCode              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postalCode" → DB: "postal_code"
+	IsGeocoded              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isGeocoded" → DB: "is_geocoded"
+	Longitude               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "longitude" → DB: "longitude"
+	Latitude                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latitude" → DB: "latitude"
+	PlaceID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "placeId" → DB: "place_id"
+	ExternalID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
+	DOTNumber               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dotNumber" → DB: "dot_number"
+	MCNumber                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mcNumber" → DB: "mc_number"
+	StatusUpdatePreference  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "statusUpdatePreference" → DB: "status_update_preference"
+	StatusUpdateRecipients  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "statusUpdateRecipients" → DB: "status_update_recipients"
+	BrokerVettingEnabled    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "brokerVettingEnabled" → DB: "broker_vetting_enabled"
+	CheckCallIntervalHours  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "checkCallIntervalHours" → DB: "check_call_interval_hours"
+	EtaRiskThresholdMinutes func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "etaRiskThresholdMinutes" → DB: "eta_risk_threshold_minutes"
+	AllowConsolidation      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowConsolidation" → DB: "allow_consolidation"
+	ExclusiveConsolidation  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exclusiveConsolidation" → DB: "exclusive_consolidation"
+	ConsolidationPriority   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationPriority" → DB: "consolidation_priority"
+	Version                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -346,6 +351,9 @@ var CustomerFilter = struct {
 	},
 	CheckCallIntervalHours: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("checkCallIntervalHours", op, value)
+	},
+	EtaRiskThresholdMinutes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("etaRiskThresholdMinutes", op, value)
 	},
 	AllowConsolidation: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("allowConsolidation", op, value)

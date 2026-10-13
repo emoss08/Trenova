@@ -4,19 +4,24 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
-
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/routeestimateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 const positionLookbackSeconds = int64(24 * 60 * 60)
@@ -26,6 +31,14 @@ type BoardMoveLister interface {
 		ctx context.Context,
 		filter *shipmentports.DispatchBoardFilter,
 	) ([]*shipmentports.BoardMove, error)
+}
+
+type WorkerLister interface {
+	ListWorkersByIDs(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		workerIDs []pulid.ID,
+	) ([]*worker.Worker, error)
 }
 
 type TelematicsReader interface {
@@ -46,354 +59,148 @@ type ServiceFailureLister interface {
 	) ([]*servicefailure.ServiceFailure, error)
 }
 
-type Params struct {
+type CheckCallReader interface {
+	LatestForMoves(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		moveIDs []pulid.ID,
+	) (map[pulid.ID]*checkcall.CheckCall, error)
+}
+
+type ControlReader interface {
+	GetByOrgID(
+		ctx context.Context,
+		req dispatchcontrolports.GetDispatchControlRequest,
+	) (*dispatchcontrol.DispatchControl, error)
+}
+
+type ReaderParams struct {
 	fx.In
 
 	Shipments       shipmentports.ShipmentTrackingRepository
 	Console         shipmentports.DispatchConsoleRepository
 	Telematics      telematicsports.TelematicsRepository
 	ServiceFailures servicefailureports.ServiceFailureRepository
+	StopEtas        stopetaports.Repository
+}
+
+type RefresherParams struct {
+	fx.In
+
+	Shipments        shipmentports.ShipmentTrackingRepository
+	Console          shipmentports.DispatchConsoleRepository
+	Telematics       telematicsports.TelematicsRepository
+	ServiceFailures  servicefailureports.ServiceFailureRepository
+	StopEtas         stopetaports.Repository
+	CheckCalls       checkcallports.CheckCallRepository
+	DispatchControls dispatchcontrolports.DispatchControlRepository
+	Routes           routeestimateports.RouteEstimator
+	Realtime         agentports.RealtimeService `optional:"true"`
+	Observers        []stopetaports.Observer    `group:"stop_eta_observers"`
+	Logger           *zap.Logger
 }
 
 type Dependencies struct {
 	Shipments       shipmentports.ShipmentTrackingRepository
 	Board           BoardMoveLister
+	Workers         WorkerLister
 	Telematics      TelematicsReader
 	ServiceFailures ServiceFailureLister
+	StopEtas        stopetaports.Repository
+	CheckCalls      CheckCallReader
+	Controls        ControlReader
+	Routes          routeestimateports.RouteEstimator
+	Realtime        agentports.RealtimeService
+	Observers       []stopetaports.Observer
+	Logger          *zap.Logger
 	Now             func() time.Time
 }
 
 type Service struct {
 	shipments shipmentports.ShipmentTrackingRepository
 	board     BoardMoveLister
+	workers   WorkerLister
 	telem     TelematicsReader
 	failures  ServiceFailureLister
+	stopEtas  stopetaports.Repository
+	calls     CheckCallReader
+	controls  ControlReader
+	routes    routeestimateports.RouteEstimator
+	realtime  agentports.RealtimeService
+	observers []stopetaports.Observer
+	l         *zap.Logger
 	now       func() time.Time
 }
 
 var (
 	_ shipmenttrackingports.ShipmentEtaReader      = (*Service)(nil)
 	_ shipmenttrackingports.ShipmentTrackingReader = (*Service)(nil)
+	_ stopetaports.Refresher                       = (*Service)(nil)
 )
 
-func New(p Params) shipmenttrackingports.ShipmentEtaReader {
-	return fromParams(p)
+func New(p ReaderParams) shipmenttrackingports.ShipmentEtaReader {
+	return fromReaderParams(p)
 }
 
-func NewTrackingReader(p Params) shipmenttrackingports.ShipmentTrackingReader {
-	return fromParams(p)
+func NewTrackingReader(p ReaderParams) shipmenttrackingports.ShipmentTrackingReader {
+	return fromReaderParams(p)
 }
 
-func fromParams(p Params) *Service {
+func NewRefresher(
+	p RefresherParams,
+) stopetaports.Refresher { //nolint:gocritic // dependency injection
 	return NewWithDependencies(&Dependencies{
 		Shipments:       p.Shipments,
 		Board:           p.Console,
+		Workers:         p.Console,
 		Telematics:      p.Telematics,
 		ServiceFailures: p.ServiceFailures,
+		StopEtas:        p.StopEtas,
+		CheckCalls:      p.CheckCalls,
+		Controls:        p.DispatchControls,
+		Routes:          p.Routes,
+		Realtime:        p.Realtime,
+		Observers:       p.Observers,
+		Logger:          p.Logger,
+		Now:             time.Now,
+	})
+}
+
+func fromReaderParams(p ReaderParams) *Service { //nolint:gocritic // dependency injection
+	return NewWithDependencies(&Dependencies{
+		Shipments:       p.Shipments,
+		Board:           p.Console,
+		Workers:         p.Console,
+		Telematics:      p.Telematics,
+		ServiceFailures: p.ServiceFailures,
+		StopEtas:        p.StopEtas,
 		Now:             time.Now,
 	})
 }
 
 func NewWithDependencies(d *Dependencies) *Service {
+	logger := d.Logger
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+	now := d.Now
+	if now == nil {
+		now = time.Now
+	}
+
 	return &Service{
 		shipments: d.Shipments,
 		board:     d.Board,
+		workers:   d.Workers,
 		telem:     d.Telematics,
 		failures:  d.ServiceFailures,
-		now:       d.Now,
+		stopEtas:  d.StopEtas,
+		calls:     d.CheckCalls,
+		controls:  d.Controls,
+		routes:    d.Routes,
+		realtime:  d.Realtime,
+		observers: d.Observers,
+		l:         logger.Named("shipment-eta-service"),
+		now:       now,
 	}
-}
-
-type trackingSources struct {
-	assignments map[pulid.ID]*shipmentports.BoardMove
-	positions   map[pulid.ID]*telematics.VehiclePosition
-	hos         map[pulid.ID]*telematics.WorkerHOSState
-	reasons     map[pulid.ID]string
-}
-
-func (s *Service) EtasByShipmentIDs(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	shipmentIDs []pulid.ID,
-) (map[pulid.ID]*shipmenttrackingports.ShipmentEta, error) {
-	out := make(map[pulid.ID]*shipmenttrackingports.ShipmentEta, len(shipmentIDs))
-	err := s.eachSnapshot(ctx, &snapshotRequest{
-		tenant:   tenantInfo,
-		ids:      shipmentIDs,
-		timezone: time.UTC.String(),
-	}, func(entity *shipment.Shipment, snapshot *shipmenttracking.Snapshot, reason string) {
-		if eta := EtaOf(entity, snapshot, reason); eta != nil {
-			out[entity.ID] = eta
-		}
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return out, nil
-}
-
-func (s *Service) TrackingSnapshots(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	shipmentIDs []pulid.ID,
-	timezone string,
-) (map[pulid.ID]*shipmenttracking.Snapshot, error) {
-	out := make(map[pulid.ID]*shipmenttracking.Snapshot, len(shipmentIDs))
-	err := s.eachSnapshot(ctx, &snapshotRequest{
-		tenant:   tenantInfo,
-		ids:      shipmentIDs,
-		timezone: timezone,
-	}, func(entity *shipment.Shipment, snapshot *shipmenttracking.Snapshot, _ string) {
-		out[entity.ID] = snapshot
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return out, nil
-}
-
-type snapshotRequest struct {
-	tenant   pagination.TenantInfo
-	ids      []pulid.ID
-	timezone string
-}
-
-func (s *Service) eachSnapshot(
-	ctx context.Context,
-	req *snapshotRequest,
-	visit func(*shipment.Shipment, *shipmenttracking.Snapshot, string),
-) error {
-	if len(req.ids) == 0 {
-		return nil
-	}
-
-	entities, err := s.shipments.ListTrackingShipments(
-		ctx,
-		&shipmentports.ListTrackingShipmentsRequest{
-			TenantInfo:  req.tenant,
-			ShipmentIDs: req.ids,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	sources, err := s.collect(ctx, req.tenant, entities)
-	if err != nil {
-		return err
-	}
-
-	now := s.now().Unix()
-	for _, entity := range entities {
-		snapshot := shipmenttracking.Build(shipmenttracking.Input{
-			Shipment:    entity,
-			Assignments: sources.assignments,
-			Positions:   sources.positions,
-			HOS:         sources.hos,
-			Now:         now,
-			Timezone:    req.timezone,
-		})
-		visit(entity, snapshot, sources.reasons[entity.ID])
-	}
-
-	return nil
-}
-
-func (s *Service) collect(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	entities []*shipment.Shipment,
-) (*trackingSources, error) {
-	sources := &trackingSources{
-		assignments: make(map[pulid.ID]*shipmentports.BoardMove),
-		positions:   make(map[pulid.ID]*telematics.VehiclePosition),
-		hos:         make(map[pulid.ID]*telematics.WorkerHOSState),
-		reasons:     make(map[pulid.ID]string),
-	}
-
-	moveIDs := make([]pulid.ID, 0, len(entities))
-	shipmentIDs := make([]pulid.ID, 0, len(entities))
-	for _, entity := range entities {
-		shipmentIDs = append(shipmentIDs, entity.ID)
-		for _, move := range entity.Moves {
-			if move != nil && move.Status != shipment.MoveStatusCanceled {
-				moveIDs = append(moveIDs, move.ID)
-			}
-		}
-	}
-	if len(shipmentIDs) == 0 {
-		return sources, nil
-	}
-
-	if err := s.collectAssignments(ctx, tenantInfo, moveIDs, sources); err != nil {
-		return nil, err
-	}
-	if err := s.collectTelematics(ctx, tenantInfo, sources); err != nil {
-		return nil, err
-	}
-
-	failures, err := s.failures.ListUnresolvedByShipmentIDs(
-		ctx,
-		&servicefailureports.ServiceFailuresByShipmentIDsRequest{
-			TenantInfo:  tenantInfo,
-			ShipmentIDs: shipmentIDs,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	for _, failure := range failures {
-		if _, seen := sources.reasons[failure.ShipmentID]; seen {
-			continue
-		}
-		if reason := FailureReason(failure); reason != "" {
-			sources.reasons[failure.ShipmentID] = reason
-		}
-	}
-
-	return sources, nil
-}
-
-func (s *Service) collectAssignments(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	moveIDs []pulid.ID,
-	sources *trackingSources,
-) error {
-	if len(moveIDs) == 0 {
-		return nil
-	}
-
-	moves, err := s.board.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
-		TenantInfo:     tenantInfo,
-		MoveIDs:        moveIDs,
-		MoveStatuses:   shipment.MoveStatuses(),
-		IncludeCovered: true,
-		Limit:          len(moveIDs),
-	})
-	if err != nil {
-		return err
-	}
-	for _, move := range moves {
-		if move != nil {
-			sources.assignments[move.MoveID] = move
-		}
-	}
-
-	return nil
-}
-
-func (s *Service) collectTelematics(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	sources *trackingSources,
-) error {
-	tractorIDs := make([]pulid.ID, 0, len(sources.assignments))
-	workerIDs := make([]pulid.ID, 0, len(sources.assignments))
-	for _, move := range sources.assignments {
-		if move.AssignedTractorID.IsNotNil() {
-			tractorIDs = append(tractorIDs, move.AssignedTractorID)
-		}
-		if move.AssignedWorkerID.IsNotNil() {
-			workerIDs = append(workerIDs, move.AssignedWorkerID)
-		}
-	}
-
-	if len(tractorIDs) > 0 {
-		positions, err := s.telem.ListVehiclePositions(
-			ctx,
-			&telematicsports.ListVehiclePositionsRequest{
-				TenantInfo:    tenantInfo,
-				TractorIDs:    tractorIDs,
-				MaxAgeSeconds: positionLookbackSeconds,
-			},
-		)
-		if err != nil {
-			return err
-		}
-		for _, position := range positions {
-			if position != nil {
-				sources.positions[position.TractorID] = position
-			}
-		}
-	}
-
-	if len(workerIDs) > 0 {
-		states, err := s.telem.ListWorkerHOSStates(ctx, &telematicsports.ListWorkerHOSStatesRequest{
-			TenantInfo: tenantInfo,
-			WorkerIDs:  workerIDs,
-			Limit:      len(workerIDs),
-		})
-		if err != nil {
-			return err
-		}
-		for _, state := range states {
-			if state != nil {
-				sources.hos[state.WorkerID] = state
-			}
-		}
-	}
-
-	return nil
-}
-
-func FailureReason(failure *servicefailure.ServiceFailure) string {
-	if failure == nil {
-		return ""
-	}
-	label := ""
-	if failure.ReasonCode != nil {
-		label = failure.ReasonCode.Label
-	}
-
-	return stringutils.FirstNonEmptyTrimmed(label, failure.Notes)
-}
-
-func EtaOf(
-	entity *shipment.Shipment,
-	snapshot *shipmenttracking.Snapshot,
-	failureReason string,
-) *shipmenttrackingports.ShipmentEta {
-	if snapshot == nil || snapshot.NextStop == nil || entity.Status == shipment.StatusCanceled {
-		return nil
-	}
-
-	eta := &shipmenttrackingports.ShipmentEta{
-		ShipmentID: entity.ID,
-		Verdict:    shipmenttracking.VerdictUnknown,
-	}
-	if estimate := snapshot.Estimate; estimate != nil {
-		eta.Verdict = estimate.Verdict
-		if estimate.EstimatedArrival > 0 {
-			arrival := estimate.EstimatedArrival
-			eta.EstimatedArrival = &arrival
-			if estimate.WindowEnd > 0 {
-				slack := estimate.SlackMinutes
-				eta.SlackMinutes = &slack
-			}
-		}
-	}
-
-	if snapshot.NextStop.Overdue {
-		eta.Verdict = shipmenttracking.VerdictLate
-		if eta.SlackMinutes == nil {
-			slack := -snapshot.NextStop.LateMinutes
-			eta.SlackMinutes = &slack
-		}
-	}
-	if entity.Status == shipment.StatusDelayed && eta.Verdict == shipmenttracking.VerdictUnknown {
-		eta.Verdict = shipmenttracking.VerdictLate
-	}
-
-	if eta.Verdict == shipmenttracking.VerdictLate ||
-		eta.Verdict == shipmenttracking.VerdictAtRisk {
-		eta.Reason = failureReason
-		if eta.Reason == "" && len(snapshot.Flags) > 0 {
-			eta.Reason = snapshot.Flags[0]
-		}
-	}
-
-	return eta
 }

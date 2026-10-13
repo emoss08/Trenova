@@ -16,10 +16,10 @@ import (
 )
 
 type fakeMileage struct {
-	calls  [][]pcmiler.RouteRequest
-	miles  float64
-	drive  int64
-	err    error
+	calls [][]pcmiler.RouteRequest
+	miles float64
+	drive int64
+	err   error
 }
 
 func (f *fakeMileage) Mileage(
@@ -70,7 +70,12 @@ func TestEstimateLegsUsesThePlanningSpeedWithoutPCMiler(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, got, 1)
-	miles := geoutils.PlanningRoadMiles(dallas.Latitude, dallas.Longitude, houston.Latitude, houston.Longitude)
+	miles := geoutils.PlanningRoadMiles(
+		dallas.Latitude,
+		dallas.Longitude,
+		houston.Latitude,
+		houston.Longitude,
+	)
 	assert.InDelta(t, miles, got[0].Miles, 0.001)
 	assert.Equal(t, geoutils.PlanningDriveSeconds(miles), got[0].DriveSeconds)
 	assert.False(t, got[0].Routed)
@@ -163,7 +168,7 @@ func TestEstimateLegsRefusesAnOversizedBatch(t *testing.T) {
 	_, err := svc.EstimateLegs(
 		t.Context(),
 		tenant(),
-		make([]routeestimateports.Leg, maxLegsPerEstimate+1),
+		make([]routeestimateports.Leg, routeestimateports.MaxLegsPerEstimate+1),
 	)
 	require.Error(t, err)
 }
