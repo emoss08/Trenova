@@ -3,9 +3,10 @@ package shipmentresolver
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"math"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 

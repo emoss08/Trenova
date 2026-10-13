@@ -168,9 +168,10 @@ func (o *EtaAtRiskObserver) StopEtasRefreshed(
 			o.l.Warn("could not read stop etas needing attention", zap.Error(lErr))
 			return
 		}
-		for _, item := range DescribeEtaRisks(tenant, stops) {
-			o.projector.Upsert(ctx, item)
-			raised[item.SourceID] = struct{}{}
+		items := DescribeEtaRisks(tenant, stops)
+		for i := range items {
+			o.projector.Upsert(ctx, items[i])
+			raised[items[i].SourceID] = struct{}{}
 		}
 	}
 

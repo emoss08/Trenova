@@ -78,14 +78,14 @@ func (s *Service) RefreshShipments(
 	changed := make([]pulid.ID, 0, len(ids))
 	for start := 0; start < len(ids); start += RefreshBatchSize {
 		batch := ids[start:min(start+RefreshBatchSize, len(ids))]
-		batchChanged, err := s.refreshBatch(ctx, &refreshBatch{
+		batchChanged, bErr := s.refreshBatch(ctx, &refreshBatch{
 			tenant:   tenantInfo,
 			ids:      batch,
 			settings: settings,
 			result:   result,
 		})
-		if err != nil {
-			return nil, err
+		if bErr != nil {
+			return nil, bErr
 		}
 		changed = append(changed, batchChanged...)
 	}
@@ -220,7 +220,7 @@ func (s *Service) loadSettings(
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, nil
+			return dispatchcontrol.NewDefaultDispatchControl(tenantInfo.OrgID, tenantInfo.BuID), nil
 		}
 		return nil, err
 	}

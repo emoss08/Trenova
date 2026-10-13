@@ -3,9 +3,10 @@ package shipmenthandler
 
 import (
 	"errors"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 	"io"
 	"net/http"
+
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"

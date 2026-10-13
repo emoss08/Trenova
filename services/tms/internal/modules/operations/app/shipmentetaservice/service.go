@@ -138,17 +138,21 @@ var (
 	_ stopetaports.Refresher                       = (*Service)(nil)
 )
 
-func New(p ReaderParams) shipmenttrackingports.ShipmentEtaReader {
+func New(
+	p ReaderParams, //nolint:gocritic // fx params are passed by value
+) shipmenttrackingports.ShipmentEtaReader {
 	return fromReaderParams(p)
 }
 
-func NewTrackingReader(p ReaderParams) shipmenttrackingports.ShipmentTrackingReader {
+func NewTrackingReader(
+	p ReaderParams, //nolint:gocritic // fx params are passed by value
+) shipmenttrackingports.ShipmentTrackingReader {
 	return fromReaderParams(p)
 }
 
 func NewRefresher(
-	p RefresherParams,
-) stopetaports.Refresher { //nolint:gocritic // dependency injection
+	p RefresherParams, //nolint:gocritic // fx params are passed by value
+) stopetaports.Refresher {
 	return NewWithDependencies(&Dependencies{
 		Shipments:       p.Shipments,
 		Board:           p.Console,

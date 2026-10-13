@@ -49,6 +49,22 @@ func Refreshes(eventType shipmentevent.Type) bool {
 		shipmentevent.TypeCarrierUnassigned,
 		shipmentevent.TypeTenderAccepted:
 		return true
+	case shipmentevent.TypeOwnershipTransferred,
+		shipmentevent.TypeTenderOffered,
+		shipmentevent.TypeTenderDeclined,
+		shipmentevent.TypeTenderExpired,
+		shipmentevent.TypeTenderWithdrawn,
+		shipmentevent.TypeTenderNeedsReview,
+		shipmentevent.TypeRoutingGuideExhausted,
+		shipmentevent.TypeTenderLateResponse,
+		shipmentevent.TypeTenderDeliveryFailed,
+		shipmentevent.TypeTenderEntrySkipped,
+		shipmentevent.TypeTenderEntryWarned,
+		shipmentevent.TypeHoldPlaced,
+		shipmentevent.TypeHoldUpdated,
+		shipmentevent.TypeHoldReleased,
+		shipmentevent.TypeCommentPosted:
+		return false
 	default:
 		return false
 	}

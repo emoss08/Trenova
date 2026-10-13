@@ -35,7 +35,7 @@ type Params struct {
 	Templates           documenttemplateports.DocumentTemplateResolver `optional:"true"`
 	EmailService        emailports.EmailService                        `optional:"true"`
 	AuditService        auditports.AuditService                        `optional:"true"`
-	Observers           []checkcallports.CheckCallObserver             `group:"check_call_observers"`
+	Observers           []checkcallports.CheckCallObserver             `                group:"check_call_observers"`
 }
 
 type Service struct {
