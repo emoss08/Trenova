@@ -48,6 +48,8 @@ func changesResponder(t *testing.T) func(call nsCall) reply {
 			return fixtureReply(t, http.StatusOK, "customers.json")
 		case call.queries("FROM deletedrecord dr"):
 			return fixtureReply(t, http.StatusOK, "deleted_records.json")
+		case call.queries("FROM systemnote sn"):
+			return fixtureReply(t, http.StatusOK, "system_notes.json")
 		case call.is(http.MethodGet, recordPath(recordCustomerPayment, testPayment)):
 			return fixtureReply(t, http.StatusOK, "customer_payment.json")
 		}
@@ -79,6 +81,7 @@ func TestReadChangesReadsPaymentsBackWithTheirApplications(t *testing.T) {
 	assert.Equal(t, "ACH", payment.MethodName)
 	assert.Equal(t, testDeposit, payment.AccountExternalID)
 	assert.Equal(t, "ACH-5521", payment.ReferenceNumber)
+	assert.Equal(t, "Lee Ortega", payment.ModifiedBy)
 	assert.Equal(t, []accountingsyncports.AccountingInboundLine{
 		{
 			DocumentKind:       accountingsync.InboundDocInvoice,
@@ -103,7 +106,10 @@ func TestReadChangesReadsPaymentsBackWithTheirApplications(t *testing.T) {
 		accountingsync.SyncObjectInvoice,
 		accountingsync.SyncObjectDebitMemo,
 	}, page.Documents[0].ObjectTypes)
+	assert.Equal(t, "Dana Whitfield", page.Documents[0].ModifiedBy)
 	assert.Equal(t, accountingsyncports.AccountingChangeVoid, page.Documents[1].Operation)
+	assert.Empty(t, page.Documents[1].ModifiedBy, "no system note names who voided 1205")
+	assert.False(t, page.DeletesUnread)
 	assert.True(t, page.More, "the invoice target said it has more")
 	assert.Empty(t, page.References, "targets after an unfinished one wait for the next read")
 
@@ -114,6 +120,70 @@ func TestReadChangesReadsPaymentsBackWithTheirApplications(t *testing.T) {
 	assert.Equal(t, int64(1205), invoices.id)
 	assert.Equal(t, time.Date(2026, 10, 13, 14, 6, 0, 0, time.UTC), invoices.at)
 	assert.Equal(t, int64(1401), cursor.positions[targetCustPayments].id)
+}
+
+func TestReadChangesAsksSystemNotesForEachTransactionPage(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeNS{respond: changesResponder(t)}
+	conn := testConnector(t, fake)
+	_, err := conn.ReadChanges(t.Context(), changesRequest(""))
+	require.NoError(t, err)
+
+	var notes []nsCall
+	for _, call := range fake.all() {
+		if call.queries("FROM systemnote sn") {
+			notes = append(notes, call)
+		}
+	}
+	require.Len(t, notes, 2)
+	assert.Contains(t, notes[0].SQL, "n.recordtypeid = -30")
+	assert.Contains(t, notes[0].SQL, "SELECT MAX(n.id) FROM systemnote n")
+	assert.Equal(t, []any{float64(1401)}, notes[0].Params)
+	assert.Equal(t, []any{float64(1201), float64(1205)}, notes[1].Params)
+}
+
+func TestReadChangesLeavesEditorsEmptyWhenSystemNotesAreUnreadable(t *testing.T) {
+	t.Parallel()
+
+	responder := changesResponder(t)
+	fake := &fakeNS{respond: func(call nsCall) reply {
+		if call.queries("FROM systemnote sn") {
+			return fixtureReply(t, http.StatusForbidden, "error_permission.json")
+		}
+		return responder(call)
+	}}
+	conn := testConnector(t, fake)
+	page, err := conn.ReadChanges(t.Context(), changesRequest(""))
+	require.NoError(t, err)
+	require.Len(t, page.Payments, 1)
+	assert.Empty(t, page.Payments[0].ModifiedBy)
+	require.Len(t, page.Documents, 2)
+	assert.Empty(t, page.Documents[0].ModifiedBy)
+
+	asked := 0
+	for _, call := range fake.all() {
+		if call.queries("FROM systemnote sn") {
+			asked++
+		}
+	}
+	assert.Equal(t, 1, asked, "a refused system note read is not repeated within a read")
+}
+
+func TestReadChangesFailsWhenSystemNotesAreBusy(t *testing.T) {
+	t.Parallel()
+
+	responder := changesResponder(t)
+	fake := &fakeNS{respond: func(call nsCall) reply {
+		if call.queries("FROM systemnote sn") {
+			return fixtureReply(t, http.StatusTooManyRequests, "error_429_concurrency.json")
+		}
+		return responder(call)
+	}}
+	conn := testConnector(t, fake)
+	_, err := conn.ReadChanges(t.Context(), changesRequest(""))
+	require.Error(t, err)
+	assert.True(t, netsuite.IsConcurrencyLimit(err))
 }
 
 func normalizeLines(
@@ -183,6 +253,7 @@ func TestReadChangesFinishesWithReferencesAndDeletes(t *testing.T) {
 	page, err := conn.ReadChanges(t.Context(), changesRequest(""))
 	require.NoError(t, err)
 	assert.False(t, page.More)
+	assert.False(t, page.DeletesUnread)
 
 	require.Len(t, page.References, 3)
 	assert.Equal(t, "Acme Freight", page.References[0].Object.Name)
@@ -224,7 +295,8 @@ func TestReadChangesSkipsDeletedRecordsWhenTheRoleCannotReadThem(t *testing.T) {
 	page, err := conn.ReadChanges(t.Context(), changesRequest(""))
 	require.NoError(t, err)
 	assert.False(t, page.More)
-	assert.False(t, conn.ChangeFeedLimits().ReportsDeletes)
+	assert.True(t, page.DeletesUnread)
+	assert.True(t, conn.ChangeFeedLimits().ReportsDeletes)
 	assert.Equal(t, 1000, conn.ChangeFeedLimits().MaxPerRead)
 }
 

@@ -19,6 +19,7 @@ type AccountingChangesPollResult struct {
 	Held          bool
 	More          bool
 	CursorExpired bool
+	DeletesUnread bool
 	Payments      int
 	Recorded      int
 	References    int

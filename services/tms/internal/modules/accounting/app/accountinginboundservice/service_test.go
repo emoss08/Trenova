@@ -361,6 +361,28 @@ func TestPollAppliesReferenceChangesAndAsksForARefreshWhenTheCursorExpired(t *te
 	assert.Equal(t, 1, h.refresher.requested)
 }
 
+func TestPollSaysWhenTheReadCouldNotSeeDeletions(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h.connector.pages = []*accountingsyncports.AccountingChangePage{
+		{NextCursor: "first", DeletesUnread: true},
+		{NextCursor: "second"},
+	}
+	poll := &accountingsyncports.PollAccountingChangesRequest{
+		TenantInfo:   h.tenant,
+		ConnectionID: h.conn.ID,
+	}
+
+	result, err := h.svc.PollChanges(t.Context(), poll)
+	require.NoError(t, err)
+	assert.True(t, result.DeletesUnread)
+	assert.Equal(t, "first", h.conns.current().ChangeCursor, "the cursor still advances")
+
+	result, err = h.svc.PollChanges(t.Context(), poll)
+	require.NoError(t, err)
+	assert.False(t, result.DeletesUnread)
+}
+
 func TestPollRecordsAReadFailureAndKeepsTheCursor(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t, accountingsync.InboundPaymentsPropose)
