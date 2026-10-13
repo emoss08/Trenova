@@ -1,7 +1,7 @@
 import { StreamedText, type StreamedSegment } from "@/components/streamed-text";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { firstNameOf } from "@/lib/onboarding-copy";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { quickFilterLabel } from "@/lib/shipment-board/quick-filters";
 import type { ShipmentQuickFilter } from "@trenova/graphql/generated/graphql";
@@ -29,7 +29,7 @@ export function ShipmentBriefing() {
   const userName = useAuthStore((state) => state.user?.name);
   const [, setUrl] = useShipmentBoardUrl();
   const { data, isLoading, isError } = useQuery({
-    ...queries.shipmentBoard.briefing(timezone),
+    ...shipmentBoard.briefing(timezone),
     enabled: ai,
     staleTime: BRIEFING_STALE_MS,
   });

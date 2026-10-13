@@ -61,12 +61,10 @@ vi.mock("@tanstack/react-query", () => ({
       : { data: briefing.current, isLoading: false, isError: false },
 }));
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    shipmentBoard: {
-      briefing: () => ({ queryKey: ["briefing"] }),
-      briefingLoads: (filter: string) => ({ queryKey: ["briefing-loads", filter] }),
-    },
+vi.mock("@/lib/queries/shipment-board", () => ({
+  shipmentBoard: {
+    briefing: () => ({ queryKey: ["briefing"] }),
+    briefingLoads: (filter: string) => ({ queryKey: ["briefing-loads", filter] }),
   },
 }));
 
@@ -125,13 +123,21 @@ describe("ShipmentBriefing", () => {
     expect(openRecord).toHaveBeenCalledWith("shp_2");
 
     fireEvent.click(screen.getByRole("button", { name: "Show all 3 on the board" }));
-    expect(setUrl).toHaveBeenCalledWith({ qf: [{ filter: "Late" }], view: "table", expanded: null });
+    expect(setUrl).toHaveBeenCalledWith({
+      qf: [{ filter: "Late" }],
+      view: "table",
+      expanded: null,
+    });
   });
 
   it("filters the board when a phrase is clicked", () => {
     render(<ShipmentBriefing />);
 
     fireEvent.click(screen.getByRole("button", { name: "Show Late" }));
-    expect(setUrl).toHaveBeenCalledWith({ qf: [{ filter: "Late" }], view: "table", expanded: null });
+    expect(setUrl).toHaveBeenCalledWith({
+      qf: [{ filter: "Late" }],
+      view: "table",
+      expanded: null,
+    });
   });
 });

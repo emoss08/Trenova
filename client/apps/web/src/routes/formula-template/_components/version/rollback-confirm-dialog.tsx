@@ -21,7 +21,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { cn } from "@trenova/shared/lib/utils";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import type {
   FormulaTemplate,
   FieldChange,
@@ -193,7 +193,7 @@ export function RollbackConfirmDialog({
   const [confirmed, setConfirmed] = useState(false);
 
   const { data: diff, isLoading: isLoadingDiff } = useQuery({
-    ...queries.formulaTemplate.versionDiff(templateId, targetVersion, currentVersion),
+    ...formulaTemplate.versionDiff(templateId, targetVersion, currentVersion),
     enabled: open && !!templateId && currentVersion > 0 && targetVersion > 0,
   });
 

@@ -25,7 +25,7 @@ import {
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -48,7 +48,7 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
-    ...queries.integration.config("Postmark"),
+    ...integration.config("Postmark"),
     enabled: open,
   });
 
@@ -99,10 +99,10 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
       toast.success(t("Postmark integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.integration.config("Postmark").queryKey,
+          queryKey: integration.config("Postmark").queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.integration.catalog().queryKey,
+          queryKey: integration.catalog().queryKey,
         }),
       ]);
     },

@@ -1,6 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { applyCreditMemo } from "@/lib/graphql/invoice";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { invalidateInvoiceQueries } from "@/lib/queries/invoice";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
@@ -55,7 +55,7 @@ export function ApplyCreditMemoDialog({
   const [allocations, setAllocations] = useState<Record<string, Allocation>>({});
 
   const openItems = useQuery({
-    ...queries.ar.openItems({ customerId: creditMemo.customerId }),
+    ...ar.openItems({ customerId: creditMemo.customerId }),
     enabled: open,
   });
   const items = useMemo(

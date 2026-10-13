@@ -7,7 +7,7 @@ import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { isCarrierIntelNotFound } from "@/lib/carrier-intelligence";
 import { fetchCarrierIntelEvent, type CarrierIntelEvent } from "@/lib/graphql/carrier-intelligence";
 import { CARRIER_INTEL_EVENT_LIST_KEY } from "@/lib/graphql/carrier-monitoring-table";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
@@ -162,7 +162,7 @@ export function EventInbox({ canUpdate, scopeCounts }: EventInboxProps) {
   const { events, hasNextPage, isFetchingNextPage, fetchNextPage } = eventsQuery;
 
   const ruleCatalogQuery = useQuery({
-    ...queries.carrierIntelSettings.settings(),
+    ...carrierIntelSettings.settings(),
     select: (data) => data.carrierIntelRuleCatalog,
   });
   const ruleDescriptions = useMemo(

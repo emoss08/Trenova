@@ -6,7 +6,8 @@ import {
   type AgentControl,
 } from "@/lib/graphql/agent-control";
 import type { ToolPromotion } from "@/lib/graphql/ai-control";
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
+import { assistant } from "@/lib/queries/assistant";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formatList } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -55,7 +56,7 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
   const values = useWatch({ control: form.control }) as PolicyFormValues;
   const promotes = promotesOnSave(values, form.formState.defaultValues as PolicyFormValues);
   const preview = useQuery({
-    ...queries.aiControl.promotionPreview(values.promotionThreshold),
+    ...aiControl.promotionPreview(values.promotionThreshold),
     enabled: open && promotes,
     staleTime: 30_000,
   });
@@ -67,8 +68,8 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
       const saved = await updateAgentControl(toControlInput(next, before, control.shadowMode));
       queryClient.setQueryData(AGENT_CONTROL_QUERY_KEY, saved);
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.aiControl._def }),
-        queryClient.invalidateQueries({ queryKey: queries.assistant._def }),
+        queryClient.invalidateQueries({ queryKey: aiControl._def }),
+        queryClient.invalidateQueries({ queryKey: assistant._def }),
       ]);
       toast.success(
         moved > 0

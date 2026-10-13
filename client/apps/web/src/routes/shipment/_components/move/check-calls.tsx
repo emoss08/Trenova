@@ -1,7 +1,7 @@
 import { useCheckCallLabels } from "@/hooks/use-check-call-labels";
 import { checkCallPlace, loggableMoves, sortCheckCalls } from "@/lib/check-calls";
 import type { CheckCallRow } from "@/lib/graphql/check-calls";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import { stopRouteLabel } from "@/lib/stop-labels";
 import { PlusIcon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -25,7 +25,7 @@ export function CheckCalls() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data, isPending, isError, error } = useQuery({
-    ...queries.shipment.checkCalls(shipmentId ?? ""),
+    ...shipment.checkCalls(shipmentId ?? ""),
     enabled: !!shipmentId,
   });
 

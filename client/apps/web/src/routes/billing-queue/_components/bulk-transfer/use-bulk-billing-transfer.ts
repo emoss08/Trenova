@@ -5,7 +5,7 @@ import {
   type BillingTransferCandidateFilters,
   type BillingTransferRun,
 } from "@/lib/graphql/billing-transfer";
-import { queries } from "@/lib/queries";
+import { billingQueue } from "@/lib/queries/billing-queue";
 import { SHIPMENT_LIST_KEY } from "@/routes/shipment/_components/shipment-queries";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -57,7 +57,7 @@ export function useBulkBillingTransfer(runId: string | null, onRunIdChange: (id:
 
   const invalidateBillingViews = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: [BILLING_QUEUE_LIST_KEY] });
-    void queryClient.invalidateQueries({ queryKey: queries.billingQueue._def });
+    void queryClient.invalidateQueries({ queryKey: billingQueue._def });
     void queryClient.invalidateQueries({ queryKey: [BILLING_TRANSFER_CANDIDATES_KEY] });
     void queryClient.invalidateQueries({ queryKey: [SHIPMENT_LIST_KEY] });
     invalidateStatements(queryClient);

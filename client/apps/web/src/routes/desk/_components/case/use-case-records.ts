@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import type { MentionCandidateRecord, MentionPageKind } from "@/types/assistant";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
@@ -21,7 +21,7 @@ const NO_RECORDS: MentionCandidateRecord[] = [];
 export function useCaseRecords(search: string, kind: MentionPageKind) {
   const query = useDebounce(search.trim(), SEARCH_DEBOUNCE_MS);
   const result = useInfiniteQuery({
-    queryKey: queries.assistant.caseRecords(query, kind).queryKey,
+    queryKey: assistant.caseRecords(query, kind).queryKey,
     queryFn: ({ pageParam, signal }) =>
       apiService.assistantService.searchMentionPage(query, kind, {
         offset: pageParam,

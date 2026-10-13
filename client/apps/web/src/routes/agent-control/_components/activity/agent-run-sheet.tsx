@@ -1,7 +1,7 @@
 import type { AgentRunDetail, AgentRunRow } from "@/lib/graphql/agent-activity-tables";
 import { AGENT_EVALUATION_LIST_KEY, replayAgentRun } from "@/lib/graphql/agent-evaluations";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { agentRun } from "@/lib/queries/agent-run";
 import { downloadAgentRunTranscript } from "@/services/agent-run";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -35,7 +35,7 @@ type AgentRunSheetProps = {
 export function AgentRunSheet({ runId, row, onClose }: AgentRunSheetProps) {
   const t = useT();
   const detail = useQuery({
-    ...queries.agentRun.detail(runId ?? ""),
+    ...agentRun.detail(runId ?? ""),
     enabled: runId !== null,
   });
   const run = detail.data?.run ?? row ?? null;

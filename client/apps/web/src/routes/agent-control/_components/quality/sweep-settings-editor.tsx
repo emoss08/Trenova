@@ -6,7 +6,7 @@ import {
   updateAgentQualityControl,
   type AgentQualityControl,
 } from "@/lib/graphql/agent-quality";
-import { queries } from "@/lib/queries";
+import { agentQuality } from "@/lib/queries/agent-quality";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -74,8 +74,8 @@ export function SweepSettingsEditor({ open, control, onClose }: SweepSettingsEdi
   const save = useCallback(
     async (next: QualityControlFormValues) => {
       const saved = await updateAgentQualityControl(toUpdateInput(next));
-      queryClient.setQueryData(queries.agentQuality.control().queryKey, saved);
-      await queryClient.invalidateQueries({ queryKey: queries.agentQuality.overview().queryKey });
+      queryClient.setQueryData(agentQuality.control().queryKey, saved);
+      await queryClient.invalidateQueries({ queryKey: agentQuality.overview().queryKey });
       toast.success(t("Sweep settings saved"));
       return toFormValues(saved);
     },

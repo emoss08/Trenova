@@ -2,7 +2,7 @@ import { CarrierIntelUsageSummaryView } from "@/components/carrier-intelligence/
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { formatUsageMonth, recentUsageMonths, shiftUsageMonth } from "@/lib/carrier-intel-usage";
 import { CARRIER_INTEL_INTEGRATIONS_PATH } from "@/lib/carrier-links";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -31,7 +31,7 @@ export function UsagePanel() {
   const isCurrentMonth = selectedMonth === currentMonth;
 
   const usageQuery = useQuery({
-    ...queries.carrierIntelSettings.usage(isCurrentMonth ? undefined : selectedMonth),
+    ...carrierIntelSettings.usage(isCurrentMonth ? undefined : selectedMonth),
   });
 
   const goToMonth = (next: number) => {

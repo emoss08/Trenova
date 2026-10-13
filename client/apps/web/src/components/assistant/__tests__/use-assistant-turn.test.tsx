@@ -4,7 +4,7 @@ import type { AssistantMessage, SendMessageResult } from "@/types/assistant";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useAssistantTurn } from "../use-assistant-turn";
@@ -154,7 +154,7 @@ describe("useAssistantTurn showing the question", () => {
   it("skips the check when the live list, kept current, says the conversation is quiet", async () => {
     startTurn.mockReturnValue(new Promise(() => undefined));
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    client.setQueryData(queries.assistant.activeTurns().queryKey, {
+    client.setQueryData(assistant.activeTurns().queryKey, {
       items: [
         {
           turnId: "atrn_9",
@@ -185,14 +185,14 @@ describe("useAssistantTurn showing the question", () => {
     activeTurn.mockResolvedValue(null);
     startTurn.mockReturnValue(new Promise(() => undefined));
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    client.setQueryData(queries.assistant.activeTurns().queryKey, {
+    client.setQueryData(assistant.activeTurns().queryKey, {
       items: [
         { turnId: "atrn_9", threadId: liveThread, threadTitle: "", origin: "Person", startedAt: 1 },
       ],
     });
     if (invalidated) {
       await client.invalidateQueries({
-        queryKey: queries.assistant.activeTurns().queryKey,
+        queryKey: assistant.activeTurns().queryKey,
         refetchType: "none",
       });
     }
@@ -256,7 +256,7 @@ describe("useAssistantTurn handing over to the saved thread", () => {
     });
 
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    client.setQueryData(queries.assistant.messages("athr_1").queryKey, {
+    client.setQueryData(assistant.messages("athr_1").queryKey, {
       pages: [
         { results: [savedMessage(0), savedMessage(1)], hasMore: false, total: 2, limit: 400 },
       ],
@@ -268,8 +268,8 @@ describe("useAssistantTurn handing over to the saved thread", () => {
     const hung = () => new Promise<never>(() => undefined);
     const { result: hook } = renderHook(
       () => {
-        useQuery({ queryKey: queries.assistant.activeTurns().queryKey, queryFn: hung });
-        useQuery({ queryKey: queries.assistant.threads().queryKey, queryFn: hung });
+        useQuery({ queryKey: assistant.activeTurns().queryKey, queryFn: hung });
+        useQuery({ queryKey: assistant.threads().queryKey, queryFn: hung });
         return useAssistantTurn("athr_1", () => null);
       },
       { wrapper },
@@ -281,7 +281,7 @@ describe("useAssistantTurn handing over to the saved thread", () => {
 
     await waitFor(() => expect(hook.current.turn).toBeNull());
     const history = client.getQueryData<{ pages: { results: AssistantMessage[] }[] }>(
-      queries.assistant.messages("athr_1").queryKey,
+      assistant.messages("athr_1").queryKey,
     );
     expect(history?.pages[0]?.results.map((message) => message.sequence)).toEqual([0, 1, 2, 3]);
   });
@@ -460,7 +460,7 @@ describe("useAssistantTurn following the queue", () => {
     });
 
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    client.setQueryData(queries.assistant.queue("athr_1").queryKey, {
+    client.setQueryData(assistant.queue("athr_1").queryKey, {
       items: [
         {
           id: "aqm_1",

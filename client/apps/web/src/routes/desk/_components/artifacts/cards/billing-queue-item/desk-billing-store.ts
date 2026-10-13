@@ -1,4 +1,5 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
+import { billingQueue } from "@/lib/queries/billing-queue";
 import type { AssistantArtifact } from "@/types/assistant";
 import type { QueryClient } from "@tanstack/react-query";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
@@ -36,7 +37,7 @@ export function isBillingCard(artifact: AssistantArtifact): boolean {
 /** The conversation's newest billing item artifact, if it has one, by lineage. */
 export function billingCardLineage(queryClient: QueryClient, threadId: string): string | null {
   const list = queryClient.getQueryData<{ results: AssistantArtifact[] }>(
-    queries.assistant.artifacts(threadId)._ctx.summary.queryKey,
+    assistant.artifacts(threadId)._ctx.summary.queryKey,
   );
   const cards = (list?.results ?? []).filter(isBillingCard);
   if (cards.length === 0) return null;
@@ -57,9 +58,7 @@ export function useBillingItemSlug(
   const selected = useDeskBillingStore((state) => state.itemByLineage[lineageId]);
   if (!isBillingCard(artifact)) return null;
   const itemId = selected ?? entityCardFrom(artifact).recordId;
-  const item = queryClient.getQueryData<BillingQueueItem>(
-    queries.billingQueue.get(itemId).queryKey,
-  );
+  const item = queryClient.getQueryData<BillingQueueItem>(billingQueue.get(itemId).queryKey);
 
   return (item?.number || itemId).toLowerCase();
 }

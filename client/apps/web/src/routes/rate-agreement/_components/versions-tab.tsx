@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { queries } from "@/lib/queries";
+import { rateAgreement } from "@/lib/queries/rate-agreement";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import {
@@ -29,7 +29,7 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
   const t = useT();
 
   const { data: versions } = useQuery({
-    ...queries.rateAgreement.versions(rateAgreementId ?? ""),
+    ...rateAgreement.versions(rateAgreementId ?? ""),
     enabled: Boolean(rateAgreementId),
   });
 

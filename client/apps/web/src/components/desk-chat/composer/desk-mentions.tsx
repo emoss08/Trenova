@@ -1,3 +1,4 @@
+import { escapeRegExp } from "@trenova/shared/lib/regexp";
 import { mentionToken } from "@/components/assistant/composer-types";
 import { apiService } from "@/services/api";
 import {
@@ -466,10 +467,6 @@ export function DeskMentionPicker({ mentions }: { mentions: DeskMentions }) {
       </div>
     </div>
   );
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /** Splits text at each named record's @label. */

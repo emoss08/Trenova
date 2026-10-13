@@ -34,7 +34,8 @@ import {
   reconciliationModeChoices,
   revenueRecognitionPolicyChoices,
 } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { accountingControl } from "@/lib/queries/accounting-control";
+import { integration } from "@/lib/queries/integration";
 import { OANDAExchangeRatesIntegrationModal } from "@/routes/admin/integrations/_components/oanda/oanda-integration-modal";
 import { apiService } from "@/services/api";
 import type { AccountingControl, JournalSourceEvent } from "@/types/accounting-control";
@@ -65,7 +66,7 @@ export default function AccountingControlForm() {
   const t = useT();
 
   const { data } = useSuspenseQuery({
-    ...queries.accountingControl.get(),
+    ...accountingControl.get(),
   });
 
   const form = useForm<AccountingControl>({
@@ -76,13 +77,13 @@ export default function AccountingControlForm() {
   const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
-    queryKey: queries.accountingControl.get._def,
+    queryKey: accountingControl.get._def,
     mutationFn: async (values: AccountingControl) =>
       apiService.accountingControlService.update(values),
     resourceName: "Accounting Control",
     resetForm: reset,
     form,
-    invalidateQueries: [queries.accountingControl.get._def],
+    invalidateQueries: [accountingControl.get._def],
   });
 
   const onSubmit = useCallback(
@@ -607,7 +608,7 @@ function CurrencyAndAccountsCard() {
   const canReadIntegrations = integrationPermissions.canRead;
 
   const runtimeConfigQuery = useQuery({
-    ...queries.integration.runtimeConfig(OANDA_INTEGRATION_TYPE),
+    ...integration.runtimeConfig(OANDA_INTEGRATION_TYPE),
     enabled: isMultiCurrency,
     throwOnError: false,
   });

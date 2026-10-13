@@ -3,7 +3,7 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
-import { queries } from "@/lib/queries";
+import { fuelSurcharge } from "@/lib/queries/fuel-surcharge";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FuelSurchargeProgramFormValues } from "@/types/fuel-surcharge";
 import { useQuery } from "@tanstack/react-query";
@@ -517,7 +517,7 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
 
   const meta = useMemo(() => valueMetaForMethod(method), [method]);
 
-  const { data: dashboard } = useQuery(queries.fuelSurcharge.dashboard());
+  const { data: dashboard } = useQuery(fuelSurcharge.dashboard());
   const currentPrice = useMemo(() => {
     if (!fuelIndexId || !dashboard) return null;
     const entry = dashboard.find((item) => item.index.id === fuelIndexId);

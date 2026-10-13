@@ -44,7 +44,9 @@ import { formatUnixDateMedium, getTodayDate } from "@trenova/shared/lib/date";
 import { formatExchangeRate } from "@/components/accounting/exchange-rate-line";
 import type { CustomerPaymentDetail } from "@/lib/graphql/customer-payment";
 import { reverseCustomerPayment } from "@/lib/graphql/customer-payment";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
+import { customerPayment } from "@/lib/queries/customer-payment";
+import { journalEntry } from "@/lib/queries/journal-entry";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { CustomerPaymentStatus } from "@trenova/shared/types/customer-payment";
 import type { SettlementStatus } from "@trenova/shared/types/invoice";
@@ -67,7 +69,7 @@ export function PaymentDetail({ paymentId, onClose }: { paymentId: string; onClo
   const t = useT();
 
   const [view, setView] = useState<"detail" | "apply">("detail");
-  const { data: payment, isLoading } = useQuery(queries.customerPayment.detail(paymentId));
+  const { data: payment, isLoading } = useQuery(customerPayment.detail(paymentId));
 
   if (isLoading || !payment) {
     return <ComponentLoader message={t("Loading payment...")} />;
@@ -371,7 +373,7 @@ function GLActivitySection({ paymentId }: { paymentId: string }) {
   const t = useT();
 
   const { data: entries, isLoading } = useQuery(
-    queries.journalEntry.bySource("CustomerPayment", paymentId),
+    journalEntry.bySource("CustomerPayment", paymentId),
   );
   const postings = (entries ?? []) as PostingEntry[];
 
@@ -469,11 +471,11 @@ function ReversePaymentButton({ payment }: { payment: CustomerPaymentDetail }) {
       });
       void queryClient.invalidateQueries({ queryKey: ["customer-payment-list"] });
       void queryClient.invalidateQueries({
-        queryKey: queries.customerPayment.detail(payment.id).queryKey,
+        queryKey: customerPayment.detail(payment.id).queryKey,
       });
-      void queryClient.invalidateQueries({ queryKey: queries.ar._def });
+      void queryClient.invalidateQueries({ queryKey: ar._def });
       void queryClient.invalidateQueries({
-        queryKey: queries.journalEntry.bySource("CustomerPayment", payment.id).queryKey,
+        queryKey: journalEntry.bySource("CustomerPayment", payment.id).queryKey,
       });
       setOpen(false);
     },

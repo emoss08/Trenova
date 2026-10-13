@@ -3,7 +3,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { startBulkEdit, type BulkEditJob } from "@/lib/graphql/bulk-edit";
 import type { SelectOption as RecordOption } from "@/lib/graphql/select-options";
-import { queries } from "@/lib/queries";
+import { bulkEdit } from "@/lib/queries/bulk-edit";
 import { recordOptionLabel } from "@/lib/select-option-meta";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type {
@@ -73,7 +73,7 @@ export function BulkEditDialog({
   }, [open, reset]);
 
   const fieldsQuery = useQuery({
-    ...queries.bulkEdit.fields(resource),
+    ...bulkEdit.fields(resource),
     enabled: open,
     staleTime: Infinity,
   });
@@ -85,7 +85,7 @@ export function BulkEditDialog({
   }, [fieldName, fields, setValue]);
 
   const previewQuery = useQuery({
-    ...queries.bulkEdit.preview({ resource, field: "", value: "", selection }),
+    ...bulkEdit.preview({ resource, field: "", value: "", selection }),
     enabled: open,
     staleTime: 10_000,
   });
@@ -117,92 +117,92 @@ export function BulkEditDialog({
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
-        <Form onSubmit={handleSubmit((values) => mutateAsync(values))}>
-          <FormGroup cols={1} className="pb-4">
-            <FormControl cols="full">
-              <SelectField
-                name="field"
-                control={control}
-                label={t("Field")}
-                placeholder={fieldsQuery.isPending ? t("Loading fields...") : t("Choose a field")}
-                options={fields.map((entry) => ({ value: entry.name, label: t(entry.label) }))}
-                rules={{ required: true }}
-                onValueChange={() => setValue("value", "")}
-              />
-            </FormControl>
-            {field ? (
+          <Form onSubmit={handleSubmit((values) => mutateAsync(values))}>
+            <FormGroup cols={1} className="pb-4">
               <FormControl cols="full">
-                {field.kind === "record" && field.record ? (
-                  <AutocompleteField<RecordOption, BulkEditFormValues>
-                    name="value"
-                    control={control}
-                    label={t("New value")}
-                    placeholder={t("Choose a record")}
-                    graphql={{ resource: field.record as SelectOptionResource }}
-                    getOptionValue={(option) => option.id}
-                    getDisplayValue={recordOptionLabel}
-                    renderOption={(option) => (
-                      <span className="truncate">{recordOptionLabel(option)}</span>
-                    )}
-                    rules={{ required: true }}
-                  />
-                ) : (
-                  <SelectField
-                    name="value"
-                    control={control}
-                    label={t("New value")}
-                    placeholder={t("Choose a value")}
-                    options={field.options.map((option) => ({
-                      value: option.value,
-                      label: t(option.label),
-                    }))}
-                    rules={{ required: true }}
-                  />
-                )}
+                <SelectField
+                  name="field"
+                  control={control}
+                  label={t("Field")}
+                  placeholder={fieldsQuery.isPending ? t("Loading fields...") : t("Choose a field")}
+                  options={fields.map((entry) => ({ value: entry.name, label: t(entry.label) }))}
+                  rules={{ required: true }}
+                  onValueChange={() => setValue("value", "")}
+                />
               </FormControl>
-            ) : null}
-            <FormControl cols="full">
-              {previewQuery.isPending ? (
-                <Skeleton className="h-4 w-40" />
-              ) : preview?.tooMany ? (
-                <Alert size="sm" variant="destructive">
-                  <AlertDescription>
-                    {t(
-                      "{0} rows match, more than one bulk edit can change. Narrow the filters first.",
-                      preview.count.toLocaleString(),
-                    )}
-                  </AlertDescription>
-                </Alert>
-              ) : preview ? (
-                <p className="text-muted-foreground text-sm">
-                  {t(
-                    "{0, plural, one {This changes # row.} other {This changes # rows.}}",
-                    preview.count,
+              {field ? (
+                <FormControl cols="full">
+                  {field.kind === "record" && field.record ? (
+                    <AutocompleteField<RecordOption, BulkEditFormValues>
+                      name="value"
+                      control={control}
+                      label={t("New value")}
+                      placeholder={t("Choose a record")}
+                      graphql={{ resource: field.record as SelectOptionResource }}
+                      getOptionValue={(option) => option.id}
+                      getDisplayValue={recordOptionLabel}
+                      renderOption={(option) => (
+                        <span className="truncate">{recordOptionLabel(option)}</span>
+                      )}
+                      rules={{ required: true }}
+                    />
+                  ) : (
+                    <SelectField
+                      name="value"
+                      control={control}
+                      label={t("New value")}
+                      placeholder={t("Choose a value")}
+                      options={field.options.map((option) => ({
+                        value: option.value,
+                        label: t(option.label),
+                      }))}
+                      rules={{ required: true }}
+                    />
                   )}
-                </p>
-              ) : previewQuery.isError ? (
-                <Alert size="sm" variant="destructive">
-                  <AlertDescription>{t("The rows could not be counted.")}</AlertDescription>
-                </Alert>
+                </FormControl>
               ) : null}
-            </FormControl>
-          </FormGroup>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              {t("Cancel")}
-            </Button>
-            <Button
-              type="submit"
-              disabled={!preview || preview.tooMany || preview.count === 0}
-              isLoading={form.formState.isSubmitting}
-              loadingText={t("Starting...")}
-            >
-              {preview && !preview.tooMany
-                ? t("{0, plural, one {Change # row} other {Change # rows}}", preview.count)
-                : t("Change rows")}
-            </Button>
-          </DialogFooter>
-        </Form>
+              <FormControl cols="full">
+                {previewQuery.isPending ? (
+                  <Skeleton className="h-4 w-40" />
+                ) : preview?.tooMany ? (
+                  <Alert size="sm" variant="destructive">
+                    <AlertDescription>
+                      {t(
+                        "{0} rows match, more than one bulk edit can change. Narrow the filters first.",
+                        preview.count.toLocaleString(),
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                ) : preview ? (
+                  <p className="text-muted-foreground text-sm">
+                    {t(
+                      "{0, plural, one {This changes # row.} other {This changes # rows.}}",
+                      preview.count,
+                    )}
+                  </p>
+                ) : previewQuery.isError ? (
+                  <Alert size="sm" variant="destructive">
+                    <AlertDescription>{t("The rows could not be counted.")}</AlertDescription>
+                  </Alert>
+                ) : null}
+              </FormControl>
+            </FormGroup>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                {t("Cancel")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={!preview || preview.tooMany || preview.count === 0}
+                isLoading={form.formState.isSubmitting}
+                loadingText={t("Starting...")}
+              >
+                {preview && !preview.tooMany
+                  ? t("{0, plural, one {Change # row} other {Change # rows}}", preview.count)
+                  : t("Change rows")}
+              </Button>
+            </DialogFooter>
+          </Form>
         </FormProvider>
       </DialogContent>
     </Dialog>

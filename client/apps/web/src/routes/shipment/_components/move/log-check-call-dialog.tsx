@@ -8,7 +8,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCheckCallLabels } from "@/hooks/use-check-call-labels";
 import type { LoggableMove } from "@/lib/check-calls";
 import { logCheckCall } from "@/lib/graphql/check-calls";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import {
   CHECK_CALL_LIMITS,
   checkCallKindSchema,
@@ -112,11 +112,11 @@ export function LogCheckCallDialog({
     form,
     onSuccess: (result) => {
       void queryClient.invalidateQueries({
-        queryKey: queries.shipment.checkCalls(shipmentId).queryKey,
+        queryKey: shipment.checkCalls(shipmentId).queryKey,
       });
       if (isStopVisit(result.checkCall.kind)) {
         void queryClient.invalidateQueries({
-          queryKey: queries.shipment.trackingEvents(shipmentId).queryKey,
+          queryKey: shipment.trackingEvents(shipmentId).queryKey,
         });
         void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       }

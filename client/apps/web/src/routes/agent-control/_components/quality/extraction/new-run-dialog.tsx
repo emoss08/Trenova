@@ -1,5 +1,5 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import {
   EXTRACTION_ACCURACY_KEY,
   EXTRACTION_EVAL_RUN_LIST_KEY,
@@ -48,7 +48,7 @@ export function NewRunDialog({ open, onOpenChange, activeCases, onStarted }: New
   const providerFieldId = useId();
   const limitFieldId = useId();
   const queryClient = useQueryClient();
-  const providers = useQuery({ ...queries.aiProvider.list(), enabled: open });
+  const providers = useQuery({ ...aiProvider.list(), enabled: open });
   const [providerId, setProviderId] = useState<string>("");
   const [caseLimit, setCaseLimit] = useState(String(DEFAULT_CASE_LIMIT));
 

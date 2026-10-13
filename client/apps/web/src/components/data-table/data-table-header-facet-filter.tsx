@@ -1,5 +1,5 @@
 import type { FilterableField } from "@/lib/data-table";
-import { queries } from "@/lib/queries";
+import { dataTableInsight } from "@/lib/queries/data-table-insight";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { FilterFunnel01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -89,7 +89,7 @@ function FacetList({
     (filter) => filter.field !== field.apiField,
   );
   const { data, isPending, isError } = useQuery({
-    ...queries.dataTableInsight.facets({
+    ...dataTableInsight.facets({
       resource: facets.resource,
       field: field.apiField,
       limit: FACET_LIMIT,

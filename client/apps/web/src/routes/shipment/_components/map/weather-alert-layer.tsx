@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { weatherAlert } from "@/lib/queries/weather-alert";
 import type { WeatherAlertFeature } from "@/types/weather-alert";
 import { useQuery } from "@tanstack/react-query";
 import { useMap } from "@vis.gl/react-google-maps";
@@ -41,7 +41,7 @@ function getBoundsForFeature(feature: WeatherAlertFeature): google.maps.LatLngBo
 export function WeatherAlertLayer() {
   const map = useMap();
   const { data } = useQuery({
-    ...queries.weatherAlert.alerts(),
+    ...weatherAlert.alerts(),
     staleTime: 2 * 60 * 1000,
     refetchInterval: 2 * 60 * 1000,
   });

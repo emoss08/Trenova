@@ -16,7 +16,7 @@ import {
   type CaptureDevice,
   type CaptureRequestMode,
 } from "@/lib/graphql/capture";
-import { queries } from "@/lib/queries";
+import { capture } from "@/lib/queries/capture";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -73,7 +73,7 @@ export function CaptureRequestDialog({
 }) {
   const t = useT();
   const queryClient = useQueryClient();
-  const devicesQuery = useQuery({ ...queries.capture.myDevices("Active"), enabled: open });
+  const devicesQuery = useQuery({ ...capture.myDevices("Active"), enabled: open });
   const devices = devicesQuery.data ?? [];
 
   const form = useForm<CaptureRequestFormValues>({
@@ -131,7 +131,7 @@ export function CaptureRequestDialog({
       );
       onOpenChange(false);
       await queryClient.invalidateQueries({
-        queryKey: queries.capture.requests(kind, recordId).queryKey,
+        queryKey: capture.requests(kind, recordId).queryKey,
       });
     },
   });

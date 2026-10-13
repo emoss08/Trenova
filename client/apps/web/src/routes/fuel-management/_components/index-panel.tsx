@@ -13,7 +13,7 @@ import {
   updateFuelIndex,
   type FuelDashboardEntry,
 } from "@/lib/graphql/fuel-surcharge";
-import { queries } from "@/lib/queries";
+import { fuelSurcharge } from "@/lib/queries/fuel-surcharge";
 import { fuelIndexSchema, type FuelIndex } from "@/types/fuel-surcharge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
@@ -85,7 +85,7 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
         isEdit ? translate("Fuel index updated") : translate("Custom fuel index created"),
       );
       void queryClient.invalidateQueries({
-        queryKey: queries.fuelSurcharge.dashboard().queryKey,
+        queryKey: fuelSurcharge.dashboard().queryKey,
       });
       reset();
       onOpenChange(false);

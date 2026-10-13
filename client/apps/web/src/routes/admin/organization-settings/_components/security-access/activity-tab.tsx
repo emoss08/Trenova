@@ -17,7 +17,7 @@ import {
 } from "@trenova/shared/components/ui/table";
 import { activityViewParser, type ActivityViewValue } from "@/hooks/use-organization-setting-state";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
-import { queries } from "@/lib/queries";
+import { organization } from "@/lib/queries/organization";
 import { cn, formatIdentityProviderName, toTitleCase } from "@trenova/shared/lib/utils";
 import type {
   AuthEvent,
@@ -147,10 +147,10 @@ const ActivityViewControls = memo(function ActivityViewControls({
   activeView: ActivityViewValue;
   onViewChange: (value: ActivityViewValue) => void;
 }) {
-  const authEventsQuery = useQuery(queries.organization.authEvents(organizationId));
-  const riskQuery = useQuery(queries.organization.riskDecisions(organizationId));
-  const externalIdentityQuery = useQuery(queries.organization.externalIdentities(organizationId));
-  const mfaQuery = useQuery(queries.organization.mfaAuthenticators(organizationId));
+  const authEventsQuery = useQuery(organization.authEvents(organizationId));
+  const riskQuery = useQuery(organization.riskDecisions(organizationId));
+  const externalIdentityQuery = useQuery(organization.externalIdentities(organizationId));
+  const mfaQuery = useQuery(organization.mfaAuthenticators(organizationId));
 
   return (
     <div className="grid gap-3 md:grid-cols-4">
@@ -240,7 +240,7 @@ function ActivityTableSection({
 function AuthEventsSection({ organizationId, search }: { organizationId: string; search: string }) {
   const t = useT();
 
-  const authEventsQuery = useQuery(queries.organization.authEvents(organizationId));
+  const authEventsQuery = useQuery(organization.authEvents(organizationId));
   const records = useMemo(
     () =>
       (authEventsQuery.data ?? []).filter((item) =>
@@ -268,7 +268,7 @@ function RiskDecisionsSection({
 }) {
   const t = useT();
 
-  const riskQuery = useQuery(queries.organization.riskDecisions(organizationId));
+  const riskQuery = useQuery(organization.riskDecisions(organizationId));
   const records = useMemo(
     () =>
       (riskQuery.data ?? []).filter((item) =>
@@ -296,7 +296,7 @@ function ExternalIdentitiesSection({
 }) {
   const t = useT();
 
-  const externalIdentityQuery = useQuery(queries.organization.externalIdentities(organizationId));
+  const externalIdentityQuery = useQuery(organization.externalIdentities(organizationId));
   const records = useMemo(
     () =>
       (externalIdentityQuery.data ?? []).filter((item) =>
@@ -324,7 +324,7 @@ function MFAAuthenticatorsSection({
 }) {
   const t = useT();
 
-  const mfaQuery = useQuery(queries.organization.mfaAuthenticators(organizationId));
+  const mfaQuery = useQuery(organization.mfaAuthenticators(organizationId));
   const records = useMemo(
     () =>
       (mfaQuery.data ?? []).filter((item) =>

@@ -1,5 +1,5 @@
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -67,7 +67,7 @@ export function CarrierIntelligenceModal({
   const { allowed: canManage } = usePermission(Resource.CarrierIntelligence, Operation.Manage);
 
   const settingsQuery = useQuery({
-    ...queries.carrierIntelSettings.settings(),
+    ...carrierIntelSettings.settings(),
     enabled: open && canRead,
   });
 

@@ -3,7 +3,7 @@ import { EntityRedirectLink } from "@/components/link";
 import { KpiStrip } from "@/components/kpi/kpi-strip";
 import { DeltaValue, StatTile } from "@/components/metric-tiles";
 import { downloadCsv, exportFilename } from "@/lib/data-table-export";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -210,7 +210,7 @@ function VersionPicker({
   const t = useT();
 
   const versions = useQuery({
-    ...queries.formulaTemplate.versions(templateId, VERSION_PICKER_LIMIT),
+    ...formulaTemplate.versions(templateId, VERSION_PICKER_LIMIT),
     staleTime: 30_000,
   });
   const options = versions.data?.results ?? [];

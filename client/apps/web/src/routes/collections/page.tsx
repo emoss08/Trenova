@@ -10,7 +10,7 @@ import { SegmentedControl } from "@trenova/shared/components/ui/segmented-contro
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { formatMinor } from "@trenova/shared/lib/benefits";
-import { queries } from "@/lib/queries";
+import { collection } from "@/lib/queries/collection";
 import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
@@ -47,7 +47,7 @@ export function CollectionsPage() {
   const search = useDeferredValue(state.query);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    ...queries.collection.worklist({
+    ...collection.worklist({
       scope: state.scope,
       dueOnly: state.due,
       search,

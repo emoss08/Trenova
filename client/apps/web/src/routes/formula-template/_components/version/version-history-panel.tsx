@@ -39,7 +39,7 @@ import {
   downloadJson,
   getVersionExportFilename,
 } from "@/lib/formula-template-export";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
@@ -105,12 +105,12 @@ export function VersionHistoryPanel({
   const [selectedForCompare, setSelectedForCompare] = useState<number | null>(null);
 
   const { data, isLoading, error } = useQuery({
-    ...queries.formulaTemplate.versions(template?.id),
+    ...formulaTemplate.versions(template?.id),
     enabled: open && !!template?.id,
   });
 
   const { data: usageData, isLoading: isLoadingUsage } = useQuery({
-    ...queries.formulaTemplate.usage(template?.id ?? ""),
+    ...formulaTemplate.usage(template?.id ?? ""),
     enabled: rollbackDialogOpen && !!template?.id,
   });
 

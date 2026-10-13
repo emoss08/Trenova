@@ -4,7 +4,7 @@ import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -63,12 +63,12 @@ export function CustomerLedgerPage() {
   }, [customerId, searchParams, setSearchParams]);
 
   const { data: entries, isLoading: ledgerLoading } = useQuery({
-    ...queries.ar.customerLedger(customerId),
+    ...ar.customerLedger(customerId),
     enabled: Boolean(customerId),
   });
 
   const { data: profile, isLoading: profileLoading } = useQuery({
-    ...queries.ar.customerProfile(customerId),
+    ...ar.customerProfile(customerId),
     enabled: Boolean(customerId),
   });
 

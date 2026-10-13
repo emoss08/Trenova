@@ -35,7 +35,10 @@ import { useAIControlStats } from "./_components/overview/use-ai-control-stats";
 import { extensionState } from "./_components/extensions/extension-roster";
 import { RETRIEVAL_STALE_MS, retrievalRailState } from "./_components/retrieval/retrieval-model";
 import { useAIControlNavigation } from "./use-ai-control-navigation";
-import { queries } from "@/lib/queries";
+import { agentExtension } from "@/lib/queries/agent-extension";
+import { agentQuality } from "@/lib/queries/agent-quality";
+import { aiAudit } from "@/lib/queries/ai-audit";
+import { aiRetrieval } from "@/lib/queries/ai-retrieval";
 
 const OverviewTab = lazy(() => import("./_components/overview/overview-tab"));
 const AgentsTab = lazy(() => import("./_components/agents/agents-tab"));
@@ -79,22 +82,22 @@ export function AgentControlPage() {
 
   const stats = useAIControlStats();
   const extensionsQuery = useQuery({
-    ...queries.agentExtension.catalog(),
+    ...agentExtension.catalog(),
     enabled: canReadExtensions,
   });
   const qualityQuery = useQuery({
-    ...queries.agentQuality.overview(),
+    ...agentQuality.overview(),
     enabled: canReadQuality,
     staleTime: 60_000,
   });
   const qualityRegressions = qualityQuery.data?.openRegressions ?? 0;
   const retrievalQuery = useQuery({
-    ...queries.aiRetrieval.status(),
+    ...aiRetrieval.status(),
     enabled: canReadProviders,
     staleTime: RETRIEVAL_STALE_MS,
   });
   const auditChainQuery = useQuery({
-    ...queries.aiAudit.chainStatus(),
+    ...aiAudit.chainStatus(),
     enabled: canReadAudit,
     staleTime: 60_000,
   });

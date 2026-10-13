@@ -3,7 +3,7 @@ import { recordPath } from "@/config/record-links";
 import { usePermission } from "@/hooks/use-permission";
 import { accountingSyncNeedsAction, accountingSyncRecordPhase } from "@/lib/accounting-sync";
 import type { AccountingSyncObjectState } from "@/lib/graphql/accounting-sync-ledger";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import type { AccountingSyncRecordStatus } from "@trenova/graphql/generated/graphql";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -24,7 +24,7 @@ export function AccountingSyncStateLine({ objectId, className }: AccountingSyncS
   const { allowed } = usePermission(Resource.AccountingSync, Operation.Read);
   const ids = objectId ? [objectId] : [];
   const query = useQuery({
-    ...queries.accountingSync.syncObjectStates(ids),
+    ...accountingSync.syncObjectStates(ids),
     enabled: allowed && ids.length > 0,
   });
   const state = query.data?.find((item) => item.objectId === objectId);

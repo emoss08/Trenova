@@ -1,10 +1,10 @@
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 export function useCarrierIntelRuleLabels(enabled: boolean): Readonly<Record<string, string>> {
   const settingsQuery = useQuery({
-    ...queries.carrierIntelSettings.settings(),
+    ...carrierIntelSettings.settings(),
     enabled,
   });
 

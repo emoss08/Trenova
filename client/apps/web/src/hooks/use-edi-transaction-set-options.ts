@@ -1,5 +1,5 @@
 import { toEDITransactionSetFilterOptions } from "@/lib/edi-transaction-set-options";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import { useQuery } from "@tanstack/react-query";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import { useMemo } from "react";
@@ -11,7 +11,7 @@ const TRANSACTION_SET_OPTIONS_STALE_TIME = 5 * 60 * 1000;
 
 export function useEDITransactionSetOptions(fallback: readonly SelectOption[]): SelectOption[] {
   const { data } = useQuery({
-    ...queries.edi.transactionSetOptions(),
+    ...edi.transactionSetOptions(),
     staleTime: TRANSACTION_SET_OPTIONS_STALE_TIME,
   });
 

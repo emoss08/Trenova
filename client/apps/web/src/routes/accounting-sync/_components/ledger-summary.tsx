@@ -10,7 +10,7 @@ import { useAccountingSyncLabels } from "@/hooks/use-accounting-sync-labels";
 import { usePermission } from "@/hooks/use-permission";
 import { recordPath } from "@/config/record-links";
 import { ACCOUNTING_DRIFT_PATH } from "@/lib/accounting-sync";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import { useQuery } from "@tanstack/react-query";
 import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import type { AccountingSyncSummary } from "@/lib/graphql/accounting-sync-ledger";
@@ -80,7 +80,7 @@ export function LedgerSummary({ summary }: { summary: AccountingSyncSummary }) {
 
 function LedgerDriftItem({ system }: { system: AccountingSystem }) {
   const t = useT();
-  const overview = useQuery(queries.accountingSync.driftOverview(system));
+  const overview = useQuery(accountingSync.driftOverview(system));
   const open = overview.data?.summary.open;
 
   return (

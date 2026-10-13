@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
-import { queries } from "@/lib/queries";
+import { fuelSurcharge } from "@/lib/queries/fuel-surcharge";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FuelSurchargeProgramFormValues } from "@/types/fuel-surcharge";
 import { useQuery } from "@tanstack/react-query";
@@ -134,7 +134,7 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
   const fuelIndexId = useWatch({ control, name: "fuelIndexId" });
   const [convertOpen, setConvertOpen] = useState(false);
 
-  const { data: dashboard } = useQuery(queries.fuelSurcharge.dashboard());
+  const { data: dashboard } = useQuery(fuelSurcharge.dashboard());
   const currentPrice = useMemo(() => {
     if (!fuelIndexId || !dashboard) return null;
     const entry = dashboard.find((item) => item.index.id === fuelIndexId);

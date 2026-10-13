@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { toneVar } from "@/components/kpi/tone";
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import { useQuery } from "@tanstack/react-query";
 import type { ShipmentProfitabilityQuery } from "@trenova/graphql/generated/graphql";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -32,7 +32,7 @@ export function ProfitabilityBreakdownPopover({
   const [open, setOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
-    ...queries.shipment.profitability(shipmentId),
+    ...shipment.profitability(shipmentId),
     enabled: open,
     staleTime: 60_000,
   });

@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { listEdiTemplatesGraphQL } from "@/lib/graphql/edi-templates";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import {
   getChangedTemplateUrlStatePatch,
   getTemplateDesignerSelectionPatch,
@@ -73,7 +73,7 @@ export function useTemplateDesignerTemplateListInfiniteQuery() {
 
   return useInfiniteQuery({
     queryKey: [
-      ...queries.edi.templates._def,
+      ...edi.templates._def,
       {
         query: templateSearch,
         status: templateStatus,
@@ -117,15 +117,15 @@ export function useSelectedTemplateDesignerData() {
   const { selectedTemplateId, selectedVersionId } = useSelectedTemplateDesignerIds();
   const templatesQuery = useTemplateDesignerTemplateListInfiniteQuery();
   const templateQuery = useQuery({
-    ...queries.edi.template(selectedTemplateId),
+    ...edi.template(selectedTemplateId),
     enabled: !!selectedTemplateId,
   });
   const versionsQuery = useQuery({
-    ...queries.edi.templateVersions(selectedTemplateId),
+    ...edi.templateVersions(selectedTemplateId),
     enabled: !!selectedTemplateId,
   });
   const versionQuery = useQuery({
-    ...queries.edi.templateVersion(selectedTemplateId, selectedVersionId),
+    ...edi.templateVersion(selectedTemplateId, selectedVersionId),
     enabled: !!selectedTemplateId && !!selectedVersionId,
   });
 

@@ -5,7 +5,7 @@ import {
   HoverCardTrigger,
 } from "@trenova/shared/components/ui/hover-card";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { truncateText } from "@trenova/shared/lib/utils";
 import { decimalStringSchema, optionalStringSchema } from "@trenova/shared/types/helpers";
 import { useQuery } from "@tanstack/react-query";
@@ -33,7 +33,7 @@ export function GeocodedBadge({ longitude, latitude, placeId }: GeocodeBadgeSche
   };
 
   const googleMapsData = useQuery({
-    ...queries.integration.runtimeConfig("GoogleMaps"),
+    ...integration.runtimeConfig("GoogleMaps"),
   });
 
   if (!googleMapsData.data?.config.apiKey) {

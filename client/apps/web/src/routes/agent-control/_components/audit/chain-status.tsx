@@ -1,5 +1,5 @@
 import { verifyAIAuditChain, type AIAuditChainStatus } from "@/lib/graphql/ai-audit";
-import { queries } from "@/lib/queries";
+import { aiAudit } from "@/lib/queries/ai-audit";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useRichT } from "@trenova/shared/i18n/rich";
@@ -36,7 +36,7 @@ const TONE_CLASS: Partial<Record<ReturnType<typeof verificationTone>, string>> =
 export function ChainStatusHeader() {
   const t = useT();
   const queryClient = useQueryClient();
-  const statusQuery = queries.aiAudit.chainStatus();
+  const statusQuery = aiAudit.chainStatus();
   const [request, setRequest] = useState<VerificationRequest | null>(null);
   const [now] = useState(() => Date.now());
 

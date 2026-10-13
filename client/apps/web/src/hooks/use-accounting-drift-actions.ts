@@ -6,7 +6,7 @@ import {
 } from "@/lib/graphql/accounting-drift";
 import { ACCOUNTING_DRIFT_TABLE_KEY } from "@/lib/graphql/accounting-drift-table";
 import { ACCOUNTING_SYNC_LEDGER_KEY } from "@/lib/graphql/accounting-sync-ledger-table";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import type {
   AccountingDriftDirection,
   AccountingSystem,
@@ -23,7 +23,7 @@ export function useAccountingDriftActions() {
   const refresh = useCallback(
     () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.accountingSync._def }),
+        queryClient.invalidateQueries({ queryKey: accountingSync._def }),
         queryClient.invalidateQueries({ queryKey: [ACCOUNTING_DRIFT_TABLE_KEY] }),
         queryClient.invalidateQueries({ queryKey: [ACCOUNTING_SYNC_LEDGER_KEY] }),
       ]),

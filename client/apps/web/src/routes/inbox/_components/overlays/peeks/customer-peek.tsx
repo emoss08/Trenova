@@ -2,7 +2,7 @@ import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { recordPath } from "@/config/record-links";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import type { TriageCustomerPeek } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -40,7 +40,7 @@ export function CustomerPeek({
   onOpenWaiting: (customerName: string) => void;
 }) {
   const t = useT();
-  const query = useQuery(queries.inbox.customerPeek(customerId));
+  const query = useQuery(inbox.customerPeek(customerId));
   const customer = query.data;
 
   return (

@@ -1,6 +1,7 @@
 import { usePermission } from "@/hooks/use-permission";
 import type { AIRetrievalSourceType } from "@/lib/graphql/ai-retrieval";
-import { queries } from "@/lib/queries";
+import { aiProvider } from "@/lib/queries/ai-provider";
+import { aiRetrieval } from "@/lib/queries/ai-retrieval";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -44,11 +45,11 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
   const patch = useRetrievalPatch();
 
   const status = useQuery({
-    ...queries.aiRetrieval.status(),
+    ...aiRetrieval.status(),
     staleTime: RETRIEVAL_STALE_MS,
     refetchInterval: (query) => retrievalRefetchInterval(query.state.data),
   });
-  const providers = useQuery(queries.aiProvider.list());
+  const providers = useQuery(aiProvider.list());
   const routedTo =
     [...(providers.data ?? [])]
       .sort((a, b) => a.priority - b.priority)

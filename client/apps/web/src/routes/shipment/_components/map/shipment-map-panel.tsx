@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useMapId } from "@/hooks/use-map-id";
 import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
+import { location as locationQueries } from "@/lib/queries/location";
 import { formatElapsedTime } from "@/lib/time-utils";
 import { cn } from "@trenova/shared/lib/utils";
 import { useRealtimeStore } from "@/stores/realtime-store";
@@ -42,13 +43,13 @@ export default function ShipmentMapPanel({
 
   const mapId = useMapId();
   const { data } = useSuspenseQuery({
-    ...queries.integration.runtimeConfig("GoogleMaps"),
+    ...integration.runtimeConfig("GoogleMaps"),
   });
   const mapShipmentsQuery = useMapShipments(backgroundEnabled);
   const [selectedGeofenceId, setSelectedGeofenceId] = useState<string | null>(null);
 
   const locationsQuery = useQuery({
-    ...queries.location.geofences(),
+    ...locationQueries.geofences(),
     staleTime: 5 * 60 * 1000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -74,7 +75,7 @@ export default function ShipmentMapPanel({
   } = useMapUIState();
 
   const owmQuery = useQuery({
-    ...queries.integration.runtimeConfig("OpenWeatherMap"),
+    ...integration.runtimeConfig("OpenWeatherMap"),
     staleTime: 5 * 60 * 1000,
     retry: false,
     refetchOnWindowFocus: false,

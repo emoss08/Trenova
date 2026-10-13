@@ -1,6 +1,6 @@
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { CAPTURE_RELEASES_URL, windowsRequirement } from "@/lib/capture-release";
-import { queries } from "@/lib/queries";
+import { capture } from "@/lib/queries/capture";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -38,7 +38,7 @@ export function CaptureDownloadPanel({
 }: CaptureDownloadPanelProps) {
   const t = useT();
   // A release changes rarely and the server caches it; an hour is fine.
-  const releaseQuery = useQuery({ ...queries.capture.agentRelease(), staleTime: 60 * 60 * 1000 });
+  const releaseQuery = useQuery({ ...capture.agentRelease(), staleTime: 60 * 60 * 1000 });
 
   if (releaseQuery.isLoading) {
     return <Skeleton className="h-24 w-full" aria-busy="true" />;

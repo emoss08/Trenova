@@ -1,5 +1,5 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import { apiService } from "@/services/api";
 import type {
   EDIDocumentPreview,
@@ -81,7 +81,7 @@ export function useInvalidateEDIDocumentProfiles() {
     }
 
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queries.edi.documentProfiles._def }),
+      queryClient.invalidateQueries({ queryKey: edi.documentProfiles._def }),
       queryClient.invalidateQueries({
         queryKey: ["autocomplete-search", "/edi/document-profiles/select-options/"],
       }),
@@ -94,5 +94,5 @@ export function useInvalidateEDIDocumentProfiles() {
 
 export function useInvalidateEDIMessageArchive() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: queries.edi.messages._def });
+  return () => queryClient.invalidateQueries({ queryKey: edi.messages._def });
 }

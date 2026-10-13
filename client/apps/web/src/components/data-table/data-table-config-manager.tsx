@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
-import { queries } from "@/lib/queries";
+import { tableConfiguration } from "@/lib/queries/table-configuration";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermission } from "@/hooks/use-permission";
@@ -41,7 +41,7 @@ export default function DataTableConfigManager({
   const [open, setOpen] = useState(false);
   const currentUserId = useAuthStore((s) => s.user?.id);
   const { allowed: canManageOrgDefaults } = usePermission(Resource.Organization, Operation.Update);
-  const { data } = useSuspenseQuery(queries.tableConfiguration.all({ resource, limit: 50 }));
+  const { data } = useSuspenseQuery(tableConfiguration.all({ resource, limit: 50 }));
 
   const { myViews, teamViews } = useMemo(() => {
     const results = data?.results ?? [];

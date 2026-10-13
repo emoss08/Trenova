@@ -7,7 +7,7 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import { usePermission } from "@/hooks/use-permission";
 import { usePendingActions } from "@/hooks/use-pending-actions";
 import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
-import { queries } from "@/lib/queries";
+import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import {
   hasPendingDocumentWork,
   PENDING_DOCUMENTS_REFETCH_MS,
@@ -156,10 +156,10 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     return metadata;
   }, [isShipment, replacementLineageId, selectedDocumentTypeId]);
 
-  const shipmentDetailsQuery = queries.shipment.get(resourceId, {
+  const shipmentDetailsQuery = shipmentQueries.get(resourceId, {
     expandShipmentDetails: "true",
   });
-  const billingReadinessQuery = queries.shipment.billingReadiness(resourceId);
+  const billingReadinessQuery = shipmentQueries.billingReadiness(resourceId);
 
   const { data: shipment } = useQuery({
     queryKey: shipmentDetailsQuery.queryKey,

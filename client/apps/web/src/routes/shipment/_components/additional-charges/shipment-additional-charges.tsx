@@ -2,7 +2,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ChargePayerControl } from "@/components/billing/charge-payer-control";
 import { EmptyState } from "@/components/empty-state";
-import { queries } from "@/lib/queries";
+import { detention } from "@/lib/queries/detention";
 import { OccurrenceDetailSheet } from "@/routes/detention-desk/_components/occurrence-detail-sheet";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -117,7 +117,7 @@ export default function AdditionalChargesSection() {
   const defaultPayer = useShipmentDefaultPayer();
 
   const { data: occurrences, refetch: refetchOccurrences } = useQuery({
-    ...queries.detention.byShipment(shipmentId as string),
+    ...detention.byShipment(shipmentId as string),
     enabled: Boolean(shipmentId) && hasDetentionCharges,
   });
 

@@ -10,7 +10,7 @@ import type { ShipmentSuggestionTone } from "@trenova/graphql/generated/graphql"
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import type { ShipmentSuggestion } from "@/lib/graphql/shipment-board";
 import { isTypingTarget, isWithinDialog } from "@/lib/dom";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
@@ -54,7 +54,7 @@ export function ActionQueue() {
   const [, setUrl] = useShipmentBoardUrl();
   const actions = useBoardActions();
   const { data, isLoading } = useQuery({
-    ...queries.shipmentBoard.suggestions(timezone),
+    ...shipmentBoard.suggestions(timezone),
     staleTime: 15_000,
   });
   const [handled, setHandled] = useState<Handled[]>([]);

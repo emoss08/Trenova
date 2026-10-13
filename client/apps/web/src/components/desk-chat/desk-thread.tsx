@@ -23,7 +23,7 @@ import {
 import { ArtifactLinkContext, type ArtifactLinkRenderer } from "@/components/elements/ai-markdown";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
 import { useDeskSetting } from "@/stores/desk-settings-store";
 import { useDeskStore } from "@/stores/desk-store";
@@ -308,8 +308,8 @@ export function DeskThread({
           onOpeningQuestionSent: givenOpeningSent ?? NO_OP,
         }
       : storedOpening;
-  const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id)._ctx.summary);
-  const budgetQuery = useQuery({ ...queries.assistant.threadBudget(thread.id), staleTime: 60_000 });
+  const artifactsQuery = useQuery(assistant.artifacts(thread.id)._ctx.summary);
+  const budgetQuery = useQuery({ ...assistant.threadBudget(thread.id), staleTime: 60_000 });
   const artifacts = useMemo(() => artifactsQuery.data?.results ?? [], [artifactsQuery.data]);
   const compact = density === "compact";
 

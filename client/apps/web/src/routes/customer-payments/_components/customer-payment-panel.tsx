@@ -7,7 +7,7 @@ import { computeApplicationTotals, toMinor } from "@/lib/cash-application";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import type { CustomerPaymentRow } from "@/lib/graphql/customer-payment";
 import { postAndApplyCustomerPayment } from "@/lib/graphql/customer-payment";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
@@ -136,7 +136,7 @@ function RecordPaymentPanel({
         ),
       });
       void queryClient.invalidateQueries({ queryKey: ["customer-payment-list"] });
-      void queryClient.invalidateQueries({ queryKey: queries.ar._def });
+      void queryClient.invalidateQueries({ queryKey: ar._def });
       clearPrefill();
       reset(buildDefaults(""));
       onOpenChange(false);

@@ -5,7 +5,7 @@ import {
   updateCarrierIntelControl,
   type CarrierIntelCostEstimate,
 } from "@/lib/graphql/carrier-intel-settings";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CarrierIntelControlPatchInput } from "@trenova/graphql/generated/graphql";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -102,7 +102,7 @@ export function CarrierIntelSettingsForm({
       setIsEstimating(true);
       try {
         const estimate = await queryClient.fetchQuery(
-          queries.carrierIntelSettings.costEstimate({
+          carrierIntelSettings.costEstimate({
             policy: values.enrollmentPolicy,
             recentUsageDays: recentlyUsed ? values.recentUsageDays : undefined,
             includeOpenTenders: recentlyUsed ? values.includeOpenTenders : undefined,
@@ -123,12 +123,12 @@ export function CarrierIntelSettingsForm({
     onSuccess: async (control: CarrierIntelControl) => {
       setPending(null);
       queryClient.setQueryData<CarrierIntelSettings>(
-        queries.carrierIntelSettings.settings().queryKey,
+        carrierIntelSettings.settings().queryKey,
         (previous) => (previous ? { ...previous, carrierIntelControl: control } : previous),
       );
       reset(toSettingsFormValues(control, catalog));
       toast.success(t("Carrier intelligence settings saved"));
-      await queryClient.invalidateQueries({ queryKey: queries.carrierIntelSettings._def });
+      await queryClient.invalidateQueries({ queryKey: carrierIntelSettings._def });
     },
     onError: (error, variables) => {
       if (isCostConfirmationRequiredError(error) && !variables.input.confirmEstimatedCost) {

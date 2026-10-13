@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
-import { queries } from "@/lib/queries";
+import { billingQueue } from "@/lib/queries/billing-queue";
 import { useQuery } from "@tanstack/react-query";
 
 type StatMetric = {
@@ -20,7 +20,7 @@ export function BillingQueueKPIStrip({
 }) {
   const t = useT();
 
-  const { data: stats } = useQuery(queries.billingQueue.stats());
+  const { data: stats } = useQuery(billingQueue.stats());
 
   const toggle = (status: string) => {
     onFilterChange(statusFilter === status ? null : status);

@@ -23,7 +23,7 @@ import {
   PROMISE_STATUS_TONE,
   promisePaidShare,
 } from "@/lib/collection-labels";
-import { queries } from "@/lib/queries";
+import { collection } from "@/lib/queries/collection";
 import { apiService } from "@/services/api";
 import type { CollectionAccountView, CollectionActivity } from "@/types/collection";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -50,7 +50,7 @@ export function CollectionAccountSheet({
 }) {
   const t = useT();
   const { data: view, isLoading } = useQuery({
-    ...queries.collection.account(customerId ?? ""),
+    ...collection.account(customerId ?? ""),
     enabled: customerId !== null,
   });
 

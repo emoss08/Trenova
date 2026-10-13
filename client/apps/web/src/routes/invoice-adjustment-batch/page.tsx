@@ -4,7 +4,7 @@ import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-l
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { SectionPanel } from "@/components/section-panel";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
-import { queries } from "@/lib/queries";
+import { invoiceAdjustment } from "@/lib/queries/invoice-adjustment";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -57,11 +57,11 @@ export function InvoiceAdjustmentBatchPage() {
   }, [deferredQuery, status]);
 
   const listQuery = useQuery({
-    ...queries["invoice-adjustment"].batches(params),
+    ...invoiceAdjustment.batches(params),
   });
 
   const summaryQuery = useQuery({
-    ...queries["invoice-adjustment"].summary(),
+    ...invoiceAdjustment.summary(),
   });
 
   const selectedRow =
@@ -70,7 +70,7 @@ export function InvoiceAdjustmentBatchPage() {
     null;
 
   const detailQuery = useQuery({
-    ...queries["invoice-adjustment"].batch(selectedRow?.batchId ?? ""),
+    ...invoiceAdjustment.batch(selectedRow?.batchId ?? ""),
     enabled: Boolean(selectedRow?.batchId),
   });
 

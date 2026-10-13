@@ -5,7 +5,7 @@ import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useGuardedRowActions } from "@/hooks/use-pending-actions";
 import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
-import { queries } from "@/lib/queries";
+import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { PanelMode, Row, RowAction } from "@trenova/shared/types/data-table";
@@ -102,7 +102,7 @@ export function ShipmentRecordActionsProvider({ children }: { children: ReactNod
     if (!uploadDocumentType) return {};
     return { documentTypeId: uploadDocumentType.documentTypeId };
   }, [uploadDocumentType]);
-  const uploadBillingReadinessQuery = queries.shipment.billingReadiness(uploadShipmentId);
+  const uploadBillingReadinessQuery = shipmentQueries.billingReadiness(uploadShipmentId);
 
   const isPanelOpen = panelType === "edit" || panelType === "create";
 

@@ -1,6 +1,6 @@
 import type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
@@ -50,8 +50,8 @@ export function useStartConversation({
         setOpeningQuestion({ threadId: thread.id, text: question });
       }
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
-        queryClient.invalidateQueries({ queryKey: queries.assistant.thread._def }),
+        queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey }),
+        queryClient.invalidateQueries({ queryKey: assistant.thread._def }),
       ]);
       onStarted(thread);
     },

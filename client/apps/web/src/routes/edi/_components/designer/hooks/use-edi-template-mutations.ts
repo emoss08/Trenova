@@ -1,5 +1,5 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import { apiService } from "@/services/api";
 import type {
   CreateEDITemplateDraftRequest,
@@ -29,18 +29,18 @@ export function useInvalidateEDITemplateQueries(templateId: string, versionId: s
   const queryClient = useQueryClient();
 
   return async () => {
-    await queryClient.invalidateQueries({ queryKey: queries.edi.templates._def });
+    await queryClient.invalidateQueries({ queryKey: edi.templates._def });
     if (templateId) {
       await queryClient.invalidateQueries({
-        queryKey: queries.edi.template(templateId).queryKey,
+        queryKey: edi.template(templateId).queryKey,
       });
       await queryClient.invalidateQueries({
-        queryKey: queries.edi.templateVersions(templateId).queryKey,
+        queryKey: edi.templateVersions(templateId).queryKey,
       });
     }
     if (templateId && versionId) {
       await queryClient.invalidateQueries({
-        queryKey: queries.edi.templateVersion(templateId, versionId).queryKey,
+        queryKey: edi.templateVersion(templateId, versionId).queryKey,
       });
     }
   };

@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { FormulaTemplateReview } from "@trenova/shared/types/formula-template";
@@ -77,7 +77,7 @@ export function ReviewHistory({ templateId }: { templateId: string }) {
   const t = useT();
 
   const { data, isLoading, isError } = useQuery({
-    ...queries.formulaTemplate.reviews(templateId),
+    ...formulaTemplate.reviews(templateId),
     enabled: !!templateId,
     staleTime: 0,
   });

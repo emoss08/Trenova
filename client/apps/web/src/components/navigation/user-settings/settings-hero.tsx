@@ -1,6 +1,6 @@
 import "@fontsource-variable/newsreader/opsz-italic.css";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
-import { queries } from "@/lib/queries";
+import { user as userQueries, userOrganization } from "@/lib/queries/user";
 import { greetingPeriod, hourIn } from "@/lib/user-settings";
 import { useQuery } from "@tanstack/react-query";
 import { BellOff01Icon, Camera01Icon, ClockIcon } from "@trenova/shared/components/icons";
@@ -68,9 +68,9 @@ export function SettingsHero({
   const t = useT();
   const user = useAuthStore((state) => state.user);
   const now = useNow("minute");
-  const { data: organizations } = useQuery(queries.userOrganization.all());
+  const { data: organizations } = useQuery(userOrganization.all());
   const { data: preferences } = useQuery({
-    ...queries.user.myNotificationPreferences(),
+    ...userQueries.myNotificationPreferences(),
     staleTime: 30_000,
   });
 

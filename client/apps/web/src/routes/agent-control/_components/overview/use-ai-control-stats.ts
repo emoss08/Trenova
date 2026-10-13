@@ -1,4 +1,5 @@
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { fetchAgentActivityCounts } from "@/lib/graphql/agent-activity";
 import { type QueryClient, useQuery } from "@tanstack/react-query";
 
@@ -11,7 +12,7 @@ const COUNTS_QUERY_KEY = ["ai-control", "activity-counts"] as const;
  * COUNT and no rows.
  */
 export function useAIControlStats() {
-  const providersQuery = useQuery(queries.aiProvider.list());
+  const providersQuery = useQuery(aiProvider.list());
   const countsQuery = useQuery({
     queryKey: COUNTS_QUERY_KEY,
     queryFn: ({ signal }) => fetchAgentActivityCounts({ signal }),
@@ -19,7 +20,7 @@ export function useAIControlStats() {
   });
 
   const usageQuery = useQuery({
-    ...queries.aiProvider.usage(USAGE_WINDOW_DAYS),
+    ...aiProvider.usage(USAGE_WINDOW_DAYS),
     refetchInterval: 60_000,
   });
 
@@ -39,7 +40,6 @@ export function useAIControlStats() {
 /** The overview reads a week: long enough to smooth a quiet weekend. */
 export const USAGE_WINDOW_DAYS = 7;
 
-
 /**
  * Refreshes what counts the organization's agent work: the rail's figures and the facts
  * each tab's sentence is made of. Call it after anything that decides, adds or removes work.
@@ -47,6 +47,6 @@ export const USAGE_WINDOW_DAYS = 7;
 export function invalidateAIControlCounts(queryClient: QueryClient): Promise<unknown> {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: COUNTS_QUERY_KEY }),
-    queryClient.invalidateQueries({ queryKey: queries.aiControl._def }),
+    queryClient.invalidateQueries({ queryKey: aiControl._def }),
   ]);
 }

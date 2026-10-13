@@ -11,7 +11,7 @@ import { fetchGraphQLData } from "@/hooks/data-table/use-data-table-query";
 import { usePermission } from "@/hooks/use-permission";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { auditLogTableGraphQLConfig, type AuditEntryRow } from "@/lib/graphql/audit-log-table";
-import { queries } from "@/lib/queries";
+import { audit } from "@/lib/queries/audit";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   formatAuditValueWithDates,
@@ -42,7 +42,7 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
   const t = useT();
 
   const query = useInfiniteQuery({
-    queryKey: [...queries.audit.history(resourceId).queryKey],
+    queryKey: [...audit.history(resourceId).queryKey],
     queryFn: async ({ pageParam, signal }) =>
       fetchGraphQLData(
         PAGE_SIZE,

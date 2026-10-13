@@ -21,7 +21,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { queries } from "@/lib/queries";
+import { documentParsingRule } from "@/lib/queries/document-parsing-rule";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type {
@@ -166,7 +166,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
   const t = useT();
 
   const { data: versions, isLoading } = useQuery({
-    ...queries.documentParsingRule.versions(ruleSetId),
+    ...documentParsingRule.versions(ruleSetId),
   });
 
   const [selectedVersionId, setSelectedVersionId] = useState<string>("");

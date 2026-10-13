@@ -8,7 +8,8 @@ import {
   type AITaskRoute,
   type AIProviderEndpoint,
 } from "@/lib/graphql/ai-provider";
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { FormPanelSection, type ChangeFields } from "@/components/form-changes";
@@ -309,8 +310,8 @@ export function ProviderEditor({
         ? await apiService.aiProviderService.update(saved.id, request)
         : await apiService.aiProviderService.create(request);
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.aiProvider._def }),
-        queryClient.invalidateQueries({ queryKey: queries.aiControl._def }),
+        queryClient.invalidateQueries({ queryKey: aiProvider._def }),
+        queryClient.invalidateQueries({ queryKey: aiControl._def }),
       ]);
       if (saved) {
         const fresh = await fetchAIProvider(result.id);
@@ -1196,7 +1197,7 @@ function useEndpointModels(
     autoFetch && !unlisted ? { key: endpointKey, endpoint } : null,
   );
   const query = useQuery({
-    ...queries.aiProvider.models(asked?.endpoint ?? endpoint),
+    ...aiProvider.models(asked?.endpoint ?? endpoint),
     enabled: asked !== null && !unlisted,
     staleTime: 60_000,
     retry: false,
@@ -1431,7 +1432,7 @@ function RouteImpact({
     ROUTE_PREVIEW_DEBOUNCE_MS,
   );
   const preview = useQuery({
-    ...queries.aiProvider.routePreview(draft),
+    ...aiProvider.routePreview(draft),
     placeholderData: (previous) => previous,
     staleTime: 30_000,
   });

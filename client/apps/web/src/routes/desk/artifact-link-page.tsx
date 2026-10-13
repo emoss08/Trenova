@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -13,7 +13,7 @@ export function DeskArtifactLinkPage() {
   const t = useT();
   const { threadId = "", slug = "" } = useParams<{ threadId: string; slug: string }>();
   const lineageQuery = useQuery({
-    ...queries.assistant.artifacts(threadId)._ctx.slug(slug),
+    ...assistant.artifacts(threadId)._ctx.slug(slug),
     enabled: threadId !== "" && slug !== "",
     retry: false,
   });

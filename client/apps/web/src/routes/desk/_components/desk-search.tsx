@@ -1,6 +1,6 @@
 import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import type { DeskSearchKind, DeskSearchResult } from "@/types/assistant";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -126,7 +126,7 @@ export function DeskSearchPalette({
   const typed = text.trim();
   const query = useDebounce(typed, SEARCH_DEBOUNCE_MS);
   const searchQuery = useQuery({
-    ...queries.assistant.deskSearch(query, filter),
+    ...assistant.deskSearch(query, filter),
     placeholderData: keepPreviousData,
     staleTime: 15_000,
   });

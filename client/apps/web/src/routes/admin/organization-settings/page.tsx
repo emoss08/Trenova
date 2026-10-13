@@ -1,5 +1,5 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { queries } from "@/lib/queries";
+import { organization } from "@/lib/queries/organization";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { SuspenseLoader } from "@trenova/shared/components/component-loader";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -12,7 +12,7 @@ const OrganizationSettingsForm = lazy(() => import("./_components/organization-s
 // logo URL is resolved only once the form holds a logo value, so it is left to the form.
 export const prefetch: RoutePrefetch = () => {
   const organizationId = useAuthStore.getState().user?.currentOrganizationId;
-  return organizationId ? [queries.organization.detail(organizationId)] : [];
+  return organizationId ? [organization.detail(organizationId)] : [];
 };
 
 export function OrganizationSettingsPage() {

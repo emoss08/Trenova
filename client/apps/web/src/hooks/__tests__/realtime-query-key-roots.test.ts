@@ -1,4 +1,3 @@
-import { queries } from "@/lib/queries";
 import {
   RESOURCE_QUERY_KEY_MAP,
   queryKeyPrefix,
@@ -14,7 +13,7 @@ having sent anything.
 
 Five resources were addressing rows that way. `createQueryKeys("assistant", {
 proposals })` does not cache under the root it is handed: it prepends its scope
-and the method name, so a component reading `queries.assistant.proposals(id)`
+and the method name, so a component reading `assistant.proposals(id)`
 reads ["assistant", "proposals", "assistant-proposals", id]. The map named
 "assistant-proposals", TanStack matched from the start of the key, and an
 approval made anywhere else never reached an open thread.
@@ -25,18 +24,40 @@ literals true: one reads the factories and rejects a root that can only miss,
 the other pins every array root to a prefix a factory actually produces.
 */
 
+const factoryModules = import.meta.glob<Record<string, unknown>>(
+  ["@/lib/queries/*.ts", "!@/lib/queries/*.test.ts", "@trenova/shared/lib/queries/*.ts"],
+  { eager: true },
+);
+
+/**
+ * Every query key factory the app declares, by the scope it caches under: each module's
+ * exports that createQueryKeys built, which carry their scope as a one-element `_def`.
+ */
+function appFactories(): Map<string, Record<string, unknown>> {
+  const factories = new Map<string, Record<string, unknown>>();
+  for (const exports of Object.values(factoryModules)) {
+    for (const value of Object.values(exports)) {
+      if (typeof value !== "object" || value === null) {
+        continue;
+      }
+      const def = (value as { _def?: unknown })._def;
+      if (Array.isArray(def) && def.length === 1 && typeof def[0] === "string") {
+        factories.set(def[0], value as Record<string, unknown>);
+      }
+    }
+  }
+  return factories;
+}
+
 /** Every scope the app's factories own, and every inner key declared under one. */
 function factoryKeys() {
   const scopes = new Set<string>();
   const declared = new Map<string, string>();
 
-  for (const [scope, group] of Object.entries(queries as Record<string, unknown>)) {
+  for (const [scope, group] of appFactories()) {
     scopes.add(scope);
-    if (typeof group !== "object" || group === null) {
-      continue;
-    }
 
-    for (const [method, entry] of Object.entries(group as Record<string, unknown>)) {
+    for (const [method, entry] of Object.entries(group)) {
       if (method === "_def") {
         continue;
       }
@@ -77,6 +98,13 @@ function describeRoot(resource: string, root: QueryKeyRoot): string {
 }
 
 describe("RESOURCE_QUERY_KEY_MAP addresses keys the app actually caches under", () => {
+  it("reads every factory module, the app's and the shared package's", () => {
+    const scopes = appFactories();
+    expect(scopes.get("shipment")?._def).toEqual(["shipment"]);
+    expect(scopes.get("invoice-share")?._def).toEqual(["invoice-share"]);
+    expect(scopes.get("notification")?._def).toEqual(["notification"]);
+  });
+
   it("never names a factory's inner key, which matches nothing on its own", () => {
     const { scopes, declared } = factoryKeys();
     const unreachable: string[] = [];
@@ -98,8 +126,8 @@ describe("RESOURCE_QUERY_KEY_MAP addresses keys the app actually caches under", 
 
   it("spells every prefix the way the factory that owns it does", () => {
     const prefixes = new Set<string>();
-    for (const group of Object.values(queries as Record<string, unknown>)) {
-      for (const entry of Object.values((group ?? {}) as Record<string, unknown>)) {
+    for (const group of appFactories().values()) {
+      for (const entry of Object.values(group)) {
         const def = (entry as { _def?: unknown })?._def;
         if (Array.isArray(def)) {
           prefixes.add(def.join("\u0000"));

@@ -5,7 +5,7 @@ import type {
   DeskTractorInspection,
   DeskTractorPosition,
 } from "@/lib/graphql/tractor-card";
-import { queries } from "@/lib/queries";
+import { tractor as tractorQueries } from "@/lib/queries/tractor";
 import { tractorInspectionsQuery } from "@/lib/queries/tractor";
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
@@ -91,7 +91,7 @@ export function DeskTractor({
 }: TractorCardProps) {
   const t = useT();
   const query = useQuery({
-    ...queries.tractor.card(recordId),
+    ...tractorQueries.card(recordId),
     retry: false,
     placeholderData: keepPreviousData,
   });
@@ -144,7 +144,7 @@ function TractorCard({
   const [now] = useState(() => Math.floor(Date.now() / 1000));
   const id = tractor.id;
 
-  const position = useQuery({ ...queries.tractor.position(id), retry: false });
+  const position = useQuery({ ...tractorQueries.position(id), retry: false });
   const inspections = useInfiniteQuery({
     ...tractorInspectionsQuery(id, INSPECTION_ROWS),
     retry: false,

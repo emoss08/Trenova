@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import type { AssistantArtifact, AssistantProposal } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -27,7 +27,7 @@ function stepState(proposal: AssistantProposal | undefined): "done" | "wait" | "
 export function DeskPlanBody({ artifact }: { artifact: AssistantArtifact }) {
   const t = useT();
   const plan = useMemo(() => planFrom(artifact), [artifact]);
-  const proposalsQuery = useQuery(queries.assistant.proposals(artifact.threadId));
+  const proposalsQuery = useQuery(assistant.proposals(artifact.threadId));
   const byId = new Map(
     (proposalsQuery.data?.results ?? []).map((proposal) => [proposal.id, proposal]),
   );

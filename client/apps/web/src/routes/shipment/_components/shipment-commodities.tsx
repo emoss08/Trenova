@@ -21,7 +21,7 @@ import {
   TooltipTrigger,
 } from "@trenova/shared/components/ui/tooltip";
 import { CapabilityExplainer } from "@trenova/shared/components/capability-explainer";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import { cn, findDuplicateIds, truncateText } from "@trenova/shared/lib/utils";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import {
@@ -243,7 +243,7 @@ export default function CommoditiesSection() {
     keyName: "fieldId",
   });
   const { data: shipmentUIPolicy } = useQuery({
-    ...queries.shipment.uiPolicy(),
+    ...shipment.uiPolicy(),
   });
 
   const [dialogOpen, setDialogOpen] = useState(false);

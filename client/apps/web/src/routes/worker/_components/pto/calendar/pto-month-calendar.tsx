@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { worker } from "@/lib/queries/worker";
 import { fetchUpcomingWorkerPTO } from "@/lib/queries/worker";
 import { badgeVariants } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -104,7 +104,7 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
 
   const query = useQuery({
     queryKey: [
-      ...queries.worker.listUpcomingPTO._def,
+      ...worker.listUpcomingPTO._def,
       "calendar",
       {
         startDate: rangeStart,

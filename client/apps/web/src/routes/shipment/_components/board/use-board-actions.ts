@@ -12,7 +12,7 @@ import {
   tenderShipmentsGraphQL,
   undoShipmentSuggestionDecisionGraphQL,
 } from "@/lib/graphql/shipment-board";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { apiService } from "@/services/api";
 import type {
   ShipmentSuggestionDecision,
@@ -46,7 +46,7 @@ export function useBoardActions() {
   const refresh = useCallback(async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: [SHIPMENT_LIST_KEY] }),
-      queryClient.invalidateQueries({ queryKey: queries.shipmentBoard._def }),
+      queryClient.invalidateQueries({ queryKey: shipmentBoard._def }),
       queryClient.invalidateQueries({ queryKey: ["shipment-events"] }),
     ]);
   }, [queryClient]);

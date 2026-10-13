@@ -45,7 +45,7 @@ function UserNameCell({ user, isOnline }: { user: UserRow; isOnline: boolean }) 
         name={user.name}
         profilePicUrl={user.profilePicUrl}
         thumbnailUrl={user.thumbnailUrl}
-        className="bg-muted size-8 rounded-md"
+        className="bg-muted size-7 rounded-md"
         imageClassName="rounded-md bg-muted"
         fallbackClassName="text-xs"
       />

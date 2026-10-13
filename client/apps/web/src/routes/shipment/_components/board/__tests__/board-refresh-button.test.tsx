@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SHIPMENT_LIST_KEY } from "../../shipment-queries";
 import { BoardRefreshButton } from "../toolbar/board-refresh-button";
@@ -46,7 +46,7 @@ describe("BoardRefreshButton", () => {
 
   it("spins while a board query loads", async () => {
     const { queryClient, button } = renderButton();
-    await startLoading(queryClient, [...queries.shipmentBoard._def, "summary"]);
+    await startLoading(queryClient, [...shipmentBoard._def, "summary"]);
     expect(isSpinning(button)).toBe(true);
   });
 
@@ -63,7 +63,7 @@ describe("BoardRefreshButton", () => {
     fireEvent.click(button);
 
     expect(invalidate).toHaveBeenCalledWith({ queryKey: [SHIPMENT_LIST_KEY] });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: queries.shipmentBoard._def });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: shipmentBoard._def });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ["shipment-events"] });
   });
 });

@@ -5,7 +5,8 @@ import {
   startWatchtowerItem,
   type WatchtowerItem,
 } from "@/lib/graphql/watchtower";
-import { queries } from "@/lib/queries";
+import { attention } from "@/lib/queries/attention";
+import { watchtower } from "@/lib/queries/watchtower";
 import { toneVar } from "@/components/kpi/tone";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -79,9 +80,9 @@ function ExceptionPanel({ itemId }: { itemId: string }) {
   const [action, setAction] = useState<ExceptionAction | null>(null);
   const [comment, setComment] = useState("");
 
-  const itemQuery = useQuery(queries.watchtower.item(itemId));
-  const historyQuery = useQuery(queries.watchtower.history(itemId));
-  const codesQuery = useQuery({ ...queries.watchtower.resolutionCodes(), staleTime: Infinity });
+  const itemQuery = useQuery(watchtower.item(itemId));
+  const historyQuery = useQuery(watchtower.history(itemId));
+  const codesQuery = useQuery({ ...watchtower.resolutionCodes(), staleTime: Infinity });
   const codes = useMemo(() => codesQuery.data ?? [], [codesQuery.data]);
   const codeLabels = useMemo(
     () => new Map(codes.map((option) => [option.code as string, option.label])),
@@ -91,11 +92,11 @@ function ExceptionPanel({ itemId }: { itemId: string }) {
   const refresh = useCallback(
     async (saved?: WatchtowerItem) => {
       if (saved) {
-        queryClient.setQueryData(queries.watchtower.item(itemId).queryKey, saved);
+        queryClient.setQueryData(watchtower.item(itemId).queryKey, saved);
       }
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.watchtower._def }),
-        queryClient.invalidateQueries({ queryKey: queries.attention._def }),
+        queryClient.invalidateQueries({ queryKey: watchtower._def }),
+        queryClient.invalidateQueries({ queryKey: attention._def }),
       ]);
     },
     [queryClient, itemId],

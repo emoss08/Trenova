@@ -1,7 +1,7 @@
 import "../../../_styles/triage-overlays.css";
 import { recordPath } from "@/config/record-links";
 import type { TriageShipmentPeek } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { useQuery } from "@tanstack/react-query";
 import {
   CheckIcon,
@@ -77,7 +77,7 @@ function moments(t: TranslateFn, shipment: TriageShipmentPeek): Moment[] {
  */
 export function ShipmentPeek({ shipmentId, onClose }: { shipmentId: string; onClose: () => void }) {
   const t = useT();
-  const query = useQuery(queries.inbox.shipmentPeek(shipmentId));
+  const query = useQuery(inbox.shipmentPeek(shipmentId));
   const shipment = query.data;
 
   return (

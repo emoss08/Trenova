@@ -3,7 +3,7 @@ import {
   FALLBACK_SCHEMA,
   type KnownIdentifiers,
 } from "@/components/formula-editor/known-identifiers";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import type {
   FormulaSchemaResponse,
   VariableDefinitionInput,
@@ -19,7 +19,7 @@ const FALLBACK_RESPONSE: FormulaSchemaResponse = {
 
 export function useFormulaSchema(schemaId = "shipment") {
   return useQuery({
-    ...queries.formulaTemplate.schema(schemaId),
+    ...formulaTemplate.schema(schemaId),
     staleTime: Infinity,
     placeholderData: FALLBACK_RESPONSE,
   });
