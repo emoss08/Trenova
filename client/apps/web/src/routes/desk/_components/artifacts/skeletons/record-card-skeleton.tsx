@@ -59,8 +59,8 @@ export function CardHeadSkeleton({
   /** The facts after the status pill, as widths in pixels. */
   meta: readonly number[];
   stepper?: boolean;
-  /** The head opens with a person's or a company's initials. */
-  lead?: boolean;
+  /** True for a person's or a company's initials; any other node is drawn as the mark's outline. */
+  lead?: ReactNode;
 }) {
   return (
     <div className="dk-rec-head">
@@ -72,7 +72,7 @@ export function CardHeadSkeleton({
         {stepper && <SkeletonBar w="64px" className="dk-rec-sk-kick dk-rec-sk-step" />}
       </div>
       <div className="dk-rec-hrow">
-        {lead && <i className="dk-sk dk-rec-av dk-lg" />}
+        {lead === true ? <i className="dk-sk dk-rec-av dk-lg" /> : lead || null}
         <div className="dk-rec-who dk-rec-sk-who">
           <SkeletonBar w={title} className="dk-rec-sk-title" />
           {subtitle !== undefined && <SkeletonBar w={subtitle} className="dk-rec-sk-sub" />}

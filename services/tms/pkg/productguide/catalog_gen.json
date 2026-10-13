@@ -1,5 +1,5 @@
 {
-  "version": "sha256:90d810743bf31b4b13453a623444e780a7fb9743e94a792df820e9c6d3b5ed72",
+  "version": "sha256:5c1d86b370fe6f2ce388d6fcfbcf1236f9ca03f5782cd7da463ac253828ddccb",
   "modules": [
     {
       "id": "home",
@@ -5849,7 +5849,7 @@
         "Sequence configuration"
       ],
       "description": "Configure sequence generation formats for shipments and billing workflows",
-      "summary": "Sequence configuration sets the format of the numbers the system generates: PRO numbers, consolidation, order and work order numbers, invoice numbers, journal batch and journal entry numbers, manual journal requests, driver settlement numbers and location codes.\n\nA list on the left groups the sequences under Operations, Billing, Accounting, Payroll and Locations. Selecting one shows its settings and a **Live preview** of a sample value. Administrators use it when setting up the organization or changing a numbering scheme.",
+      "summary": "Sequence configuration sets the format of the numbers the system generates: PRO numbers, consolidation, order and work order numbers, invoice and invoice run numbers, journal batch and journal entry numbers, manual journal requests, driver and carrier settlement numbers and location codes.\n\nA list on the left groups the sequences under Operations, Billing, Accounting, Settlements and Locations. Selecting one shows its settings and a **Live preview** of a sample value. Administrators use it when setting up the organization or changing a numbering scheme.",
       "requires": [
         {
           "resource": "sequence_config",
@@ -5861,6 +5861,7 @@
         "numbering",
         "PRO number format",
         "invoice number format",
+        "settlement number format",
         "auto numbering",
         "number sequence",
         "location code format"
@@ -7126,7 +7127,8 @@
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. The editor underlines anything wrong — a name it does not know, a function given the wrong number of arguments, a flag multiplied like a number, a field that can be empty — and lists each problem under the editor with its line and a fix beside it: declare the name as an input, change it to the field it meant, or give an empty field a fallback. Select a row to jump to it; a long list folds to its first rows and can be narrowed to errors or warnings.",
             "Hover a name to see what it is, whether it can be empty, and what it was worth on the preview load; type inside a function's parentheses to see its signature. Each line shows what it came to on the preview load at its end; the eye button under the editor hides these values.",
-            "Press Ctrl+Space for suggestions."
+            "Press Ctrl+Space for suggestions.",
+            "The format button under the editor (or Shift+Alt+F) lays the formula out one statement per line with a space around every operator, breaking a long sum one term per line; what Nova writes lands already formatted. A formula that does not parse is left as it is until it does."
           ]
         },
         {
@@ -17506,7 +17508,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "formula_template",

@@ -27,6 +27,10 @@ vi.mock("../../../cards/rate-agreement/desk-rate-agreement", () => ({
     <p>Rate agreement {recordId}</p>
   ),
 }));
+vi.mock("../../../cards/edi-message/desk-edi-message", () => ({
+  DeskEdiMessage: () => null,
+  DeskEdiMessageArtifact: ({ recordId }: { recordId: string }) => <p>EDI message {recordId}</p>,
+}));
 vi.mock("../../../cards/trailer/desk-trailer", () => ({
   DeskTrailer: () => null,
   DeskTrailerArtifact: ({ recordId }: { recordId: string }) => <p>Trailer {recordId}</p>,
@@ -175,6 +179,16 @@ describe("a looked-up record with a card of its own", () => {
     expect(await screen.findByText("Rate agreement ra_1")).toBeInTheDocument();
     expect(deskArtKind(artifact)).toBe("agreement");
     expect(deskArtKindName("agreement", t as never)).toBe("Rate agreement");
+  });
+
+  it("draws an EDI message the agent looked up as the EDI message card, with its own mark", async () => {
+    const artifact = card("edi_message", { recordId: "edimsg_1", tool: "list_edi_messages" });
+
+    draw(artifact);
+
+    expect(await screen.findByText("EDI message edimsg_1")).toBeInTheDocument();
+    expect(deskArtKind(artifact)).toBe("edi");
+    expect(deskArtKindName("edi", t as never)).toBe("EDI message");
   });
 
   it("draws a tractor the agent looked up as the tractor card, with its own mark", async () => {

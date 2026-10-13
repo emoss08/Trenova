@@ -46,7 +46,6 @@
   "No provider is connected, so nothing new is being detected.": "No hay ningún proveedor conectado, por lo que no se está detectando nada nuevo.",
   "None of these rows are carriers": "Ninguna de estas filas corresponde a transportistas",
   "Nothing awaiting review": "Nada en espera de revisión",
-  "Nothing to acknowledge": "Nada que confirmar",
   "Only open events can be acknowledged.": "Solo puede acusarse recibo de los eventos abiertos.",
   "Paused feeds poll again on their next scheduled run.": "Las fuentes en pausa vuelven a sondear en su próxima ejecución programada.",
   "Paused since {0}": "En pausa desde {0}",

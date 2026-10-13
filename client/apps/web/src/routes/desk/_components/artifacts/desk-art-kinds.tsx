@@ -59,6 +59,12 @@ const ICONS = {
       <path d="M10.5 8.5v4.2l2.8 1.8M19.5 4v5M19.5 12v.01" />
     </>
   ),
+  edi: (
+    <>
+      <path d="M3.5 6.5h17v11h-17z" />
+      <path d="M3.5 7.5l8.5 5.5 8.5-5.5M7 15h2.5M14.5 15H17" />
+    </>
+  ),
   agreement: (
     <>
       <path d="M6 3.5h12v17H6z" />
@@ -249,7 +255,8 @@ export type DeskArtKind =
   | "carrier"
   | "order"
   | "failure"
-  | "agreement";
+  | "agreement"
+  | "edi";
 
 const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   table: "Table",
@@ -275,6 +282,7 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   order: "Order",
   failure: "Service failure",
   agreement: "Rate agreement",
+  edi: "EDI message",
 });
 
 /**
@@ -288,7 +296,8 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
  * qualifies and pays, an order as the business a customer service rep and a
  * biller follow from taken to billed, a service failure as the miss a customer
  * service rep explains and settles, a rate agreement as the terms a pricing
- * analyst holds freight to.
+ * analyst holds freight to, an EDI message as the document an EDI coordinator
+ * follows to and from a trading partner.
  */
 const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   billing_queue_item: "bill",
@@ -303,6 +312,7 @@ const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   order: "order",
   service_failure: "failure",
   rate_agreement: "agreement",
+  edi_message: "edi",
 };
 
 export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload">): DeskArtKind {
@@ -396,6 +406,8 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("Service failure");
     case "agreement":
       return t("Rate agreement");
+    case "edi":
+      return t("EDI message");
   }
 }
 

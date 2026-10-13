@@ -240,13 +240,15 @@ export class EDIService {
     return safeParse(ediMessageListSchema, response, "EDIMessageList");
   }
 
-  public async getMessage(messageId: string) {
-    const response = await api.get(`/edi/messages/${messageId}/`);
+  public async getMessage(messageId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/edi/messages/${messageId}/`, { signal: options?.signal });
     return safeParse(ediMessageSchema, response, "EDIMessage");
   }
 
-  public async inspectMessage(messageId: string) {
-    const response = await api.get(`/edi/messages/${messageId}/inspect/`);
+  public async inspectMessage(messageId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/edi/messages/${messageId}/inspect/`, {
+      signal: options?.signal,
+    });
     return safeParse(ediMessageInspectionSchema, response, "EDIMessageInspection");
   }
 

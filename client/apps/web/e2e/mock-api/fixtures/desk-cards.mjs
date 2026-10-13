@@ -2,6 +2,8 @@
 // agent's get_ lookup would have left in a conversation, and the data behind
 // each card. Every time is relative to the scenario's anchor.
 
+import { DESK_EDI_CONVERSATIONS } from "./desk-edi.mjs";
+
 export const DESK_THREAD_ID = "thr_desk_cards";
 
 const DAY = 86_400;
@@ -112,6 +114,12 @@ export function deskCardArtifacts(anchor) {
       "service_failure",
       "sf_999",
       "Service failure SF-2608-0007",
+    ),
+    ...Object.fromEntries(
+      Object.entries(DESK_EDI_CONVERSATIONS).map(([slug, entry]) => [
+        slug,
+        artifact(slug, "edi_message", entry.recordId, entry.title),
+      ]),
     ),
   };
 }
@@ -1935,6 +1943,12 @@ const TURNS = {
     "Did Mia log the missed pickup at the overflow lot?",
     "Yes, SF-2610-0064 was logged by hand three hours ago for S2610-1402; it has no reason or review yet. [Service failure SF-2610-0064](artifact:art_failure-new) shows what is there.",
   ],
+  ...Object.fromEntries(
+    Object.entries(DESK_EDI_CONVERSATIONS).map(([slug, entry]) => [
+      slug,
+      [entry.question, entry.reply],
+    ]),
+  ),
   "failure-gone": [
     "Pull up SF-2608-0007.",
     "That service failure has been removed since I looked it up. [Service failure SF-2608-0007](artifact:art_failure-gone) is what I found then.",

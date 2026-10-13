@@ -1,3 +1,4 @@
+import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import { describeApiError } from "@/lib/api-error-message";
 import { apiService } from "@/services/api";
 import type { PricedScenario } from "@/types/page-draft";
@@ -27,7 +28,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { NovaButton } from "../ai/nova-button";
 import { ProposedScenariosCard, scenarioInputsLine } from "../ai/proposed-scenarios-card";
@@ -249,6 +250,23 @@ export function ScenariosPane() {
       toast.error(t("Nova could not suggest scenarios"), { description: describeApiError(error) }),
   });
 
+  const list = scenarios.scenarios;
+  const rows = useMemo(
+    (): VirtualRow[] =>
+      list.map((scenario) => ({
+        key: scenario.id,
+        render: () => (
+          <ScenarioRow
+            scenario={scenario}
+            onDelete={() => (scenario.saved ? setPendingDelete(scenario) : remove.mutate(scenario))}
+          />
+        ),
+      })),
+    // The delete mutation is stable for the pane's life; naming it would rebuild the rows on every run.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+    [list],
+  );
+
   const remove = useMutation({
     mutationFn: (scenario: StudioScenario) => scenarios.remove(scenario.id),
     onSuccess: () => {
@@ -321,17 +339,13 @@ export function ScenariosPane() {
           <Skeleton className="h-12 w-full" />
         </div>
       ) : total > 0 ? (
-        <div className="bg-card overflow-hidden rounded-lg border">
-          {scenarios.scenarios.map((scenario) => (
-            <ScenarioRow
-              key={scenario.id}
-              scenario={scenario}
-              onDelete={() =>
-                scenario.saved ? setPendingDelete(scenario) : remove.mutate(scenario)
-              }
-            />
-          ))}
-        </div>
+        <VirtualRows
+          rows={rows}
+          estimateSize={58}
+          initialHeight={520}
+          className="bg-card max-h-[60vh] rounded-lg border"
+          aria-label={t("Scenarios")}
+        />
       ) : (
         <p className="text-foreground-muted rounded-lg border border-dashed px-3 py-4 text-center text-sm">
           {t(

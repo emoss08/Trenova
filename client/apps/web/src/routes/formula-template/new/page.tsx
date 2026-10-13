@@ -13,7 +13,8 @@ import {
 } from "@trenova/shared/types/formula-template";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { FormProvider, useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm, useFormState } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { FormulaStudio, type StudioSaveExtras } from "../_components/studio/formula-studio";
@@ -24,6 +25,7 @@ export function FormulaStudioCreatePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   useBreadcrumbLabel("New Formula Template");
+  const [createdId, setCreatedId] = useState<string | null>(null);
 
   const form = useForm<FormulaTemplateFormValues>({
     resolver: zodResolver(formulaTemplateSchema),
@@ -67,18 +69,24 @@ export function FormulaStudioCreatePage() {
         { description: t("Submit it for review when it is ready.") },
       );
       await invalidateFormulaTemplate(queryClient);
-      // Reset onto the saved record before navigating so the unsaved-changes
-      // guard sees a clean form and lets the redirect through.
+      // Reset onto the saved record, then leave once the form has reported
+      // itself clean: navigating in the same tick found the unsaved-changes
+      // guard still armed, which flashed its dialog and cancelled the
+      // redirect, so the next save created the template a second time.
       form.reset(created as FormulaTemplateFormValues);
-      if (created.id) {
-        void navigate(formulaTemplateRoutes.edit(created.id), { replace: true });
-      } else {
-        void navigate(formulaTemplateRoutes.list);
-      }
+      setCreatedId(created.id ?? "");
     },
     form,
     resourceName: "Formula Template",
   });
+
+  const { isDirty } = useFormState({ control: form.control });
+  useEffect(() => {
+    if (createdId === null || isDirty) return;
+    void navigate(createdId ? formulaTemplateRoutes.edit(createdId) : formulaTemplateRoutes.list, {
+      replace: true,
+    });
+  }, [createdId, isDirty, navigate]);
 
   // `mutate` reports failure through the hook's error handling; `mutateAsync`
   // would also reject, and a rejection nobody awaits is an unhandled promise.

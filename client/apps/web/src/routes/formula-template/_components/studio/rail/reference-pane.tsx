@@ -9,6 +9,7 @@ import {
   categoryLabel,
 } from "@/components/formula-editor/schema-labels";
 import { useActiveEditorInsert } from "@/components/formula-editor/active-editor";
+import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import { useFormulaSchema } from "@/hooks/use-formula-schema";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -20,8 +21,12 @@ import { PlusIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useStudio } from "../studio-context";
+import { REFERENCE_SEARCH_ID } from "./reference-search";
 
-export const REFERENCE_SEARCH_ID = "formula-reference-search";
+export { REFERENCE_SEARCH_ID } from "./reference-search";
+
+const ROW_HEIGHT = 44;
+const HEADING_HEIGHT = 24;
 
 function groupBy<T>(items: readonly T[], key: (item: T) => string): [string, T[]][] {
   const groups = new Map<string, T[]>();
@@ -72,10 +77,18 @@ function ReferenceRow({
   );
 }
 
+function GroupHeading({ label }: { label: string }) {
+  return (
+    <div className="bg-card text-foreground-subtle px-2 pt-2 pb-1 text-xs font-medium">{label}</div>
+  );
+}
+
 /**
  * Every name the formula can use: the schema's variables, the template's
  * inputs and the functions, searchable with `/`. A row drops its name at the
- * cursor of the editor touched last.
+ * cursor of the editor touched last. The list is virtualized, with each
+ * category's heading pinned while its rows scroll under it, so a schema of
+ * hundreds of fields costs the same as one of ten.
  */
 export function ReferencePane() {
   const t = useT();
@@ -110,19 +123,63 @@ export function ReferencePane() {
     [known.functions, query],
   );
 
-  const variableGroups = useMemo(
-    () => groupBy<VariableDoc>(variables, (variable) => variable.category || "shipment"),
-    [variables],
-  );
-  const functionGroups = useMemo(
-    () => groupBy<FunctionDoc>(functions, (fn) => fn.category ?? ""),
-    [functions],
-  );
-  const groups = tab === "variables" ? variableGroups : functionGroups;
+  const rows = useMemo((): VirtualRow[] => {
+    if (tab === "variables") {
+      return groupBy<VariableDoc>(variables, (variable) => variable.category || "shipment").flatMap(
+        ([category, items]) => [
+          {
+            key: `heading:${category}`,
+            sticky: true,
+            render: () => <GroupHeading label={categoryLabel(category, CATEGORY_LABELS)} />,
+          },
+          ...items.map((variable): VirtualRow => ({
+            key: `variable:${variable.name}`,
+            render: () => (
+              <ReferenceRow
+                label={variable.name}
+                meta={
+                  variable.nullable ? t("{0} · can be empty", t(variable.type)) : t(variable.type)
+                }
+                description={variable.description}
+                onInsert={() => insert(variable.name)}
+              />
+            ),
+          })),
+        ],
+      );
+    }
+    return groupBy<FunctionDoc>(functions, (fn) => fn.category ?? "").flatMap(
+      ([category, items]) => [
+        {
+          key: `heading:${category || "general"}`,
+          sticky: true,
+          render: () => (
+            <GroupHeading
+              label={categoryLabel(category, FUNCTION_CATEGORY_LABELS) || t("Functions")}
+            />
+          ),
+        },
+        ...items.map((fn): VirtualRow => ({
+          key: `function:${fn.name}`,
+          render: () => (
+            <ReferenceRow
+              label={fn.signature}
+              description={fn.description}
+              example={fn.example}
+              onInsert={() => {
+                const insertion = functionInsertion(fn);
+                insert(insertion.text, insertion.cursor);
+              }}
+            />
+          ),
+        })),
+      ],
+    );
+  }, [tab, variables, functions, insert, t]);
 
   return (
-    <div className="flex flex-col">
-      <div className="bg-card sticky top-0 z-10 flex flex-col gap-2 border-b px-3 pt-3 pb-2.5">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="bg-card flex shrink-0 flex-col gap-2 border-b px-3 pt-3 pb-2.5">
         <Input
           id={REFERENCE_SEARCH_ID}
           value={search}
@@ -158,53 +215,18 @@ export function ReferencePane() {
           </Alert>
         )}
       </div>
-      <div className="flex flex-col gap-3 p-2">
-        {tab === "variables"
-          ? variableGroups.map(([category, items]) => (
-              <div key={category} className="flex flex-col">
-                <div className="text-foreground-subtle px-2 pb-1 text-xs font-medium">
-                  {categoryLabel(category, CATEGORY_LABELS)}
-                </div>
-                {items.map((variable) => (
-                  <ReferenceRow
-                    key={variable.name}
-                    label={variable.name}
-                    meta={
-                      variable.nullable
-                        ? t("{0} · can be empty", t(variable.type))
-                        : t(variable.type)
-                    }
-                    description={variable.description}
-                    onInsert={() => insert(variable.name)}
-                  />
-                ))}
-              </div>
-            ))
-          : functionGroups.map(([category, items]) => (
-              <div key={category || "general"} className="flex flex-col">
-                <div className="text-foreground-subtle px-2 pb-1 text-xs font-medium">
-                  {categoryLabel(category, FUNCTION_CATEGORY_LABELS) || t("Functions")}
-                </div>
-                {items.map((fn) => (
-                  <ReferenceRow
-                    key={fn.name}
-                    label={fn.signature}
-                    description={fn.description}
-                    example={fn.example}
-                    onInsert={() => {
-                      const insertion = functionInsertion(fn);
-                      insert(insertion.text, insertion.cursor);
-                    }}
-                  />
-                ))}
-              </div>
-            ))}
-        {groups.length === 0 && (
-          <p className="text-foreground-muted px-2 py-6 text-center text-xs">
+      <VirtualRows
+        rows={rows}
+        estimateSize={tab === "variables" ? ROW_HEIGHT : ROW_HEIGHT + HEADING_HEIGHT}
+        initialHeight={640}
+        className="min-h-0 flex-1 px-2 pb-2"
+        aria-label={tab === "variables" ? t("Variables") : t("Functions")}
+        empty={
+          <p className="text-foreground-muted px-4 py-6 text-center text-xs">
             {t("Nothing matches “{0}”.", search)}
           </p>
-        )}
-      </div>
+        }
+      />
     </div>
   );
 }

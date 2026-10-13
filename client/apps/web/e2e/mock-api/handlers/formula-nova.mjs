@@ -638,26 +638,45 @@ function proposal(editor, next, explanation, extra = {}) {
   };
 }
 
-/** The editor's formula with a new input and a term added to its result line. */
-function extend(editor, name, defaultValue, description, term) {
+/**
+ * The editor's formula with a new input and the charge it pays for bound on
+ * its own `let` line, the way Nova writes a formula, added to the sum on the
+ * result line. A one-line formula becomes `let linehaul = …;` first.
+ */
+function extend(editor, name, defaultValue, description, charge) {
   const variables = editor.variables.some((v) => v.name === name)
     ? editor.variables
     : [...editor.variables, { name, type: "Number", description, defaultValue }];
-  if (!editor.expression.trim())
-    return { expression: `baseRate * totalDistance + ${term}`, variables };
+  const bind = `let ${charge.name} = ${charge.expression};`;
+  if (!editor.expression.trim()) {
+    return {
+      expression: `let linehaul = baseRate * totalDistance;\n${bind}\nlinehaul + ${charge.name}`,
+      variables,
+    };
+  }
   const lines = editor.expression.replace(/\s+$/, "").split("\n");
-  lines[lines.length - 1] = `${lines[lines.length - 1]} + ${term}`;
-  return { expression: lines.join("\n"), variables };
+  const result = lines.pop();
+  if (lines.length === 0 && !/\blet\b/.test(result) && !/[+-]/.test(result)) {
+    return {
+      expression: `let linehaul = ${result.trim()};\n${bind}\nlinehaul + ${charge.name}`,
+      variables,
+    };
+  }
+  return { expression: [...lines, bind, `${result} + ${charge.name}`].join("\n"), variables };
 }
 
 /** The editor's formula without every term that reads a name, and without the input itself. */
 function removeTerm(editor, name) {
+  let expression = editor.expression;
+  // A `let` that reads the name goes, and so does the binding's own name
+  // wherever the sum adds it.
+  const bound = new RegExp(String.raw`\blet\s+(\w+)\s*=[^;]*\b${name}\b[^;]*;\s*\n?`, "g");
+  for (const match of expression.matchAll(bound)) {
+    expression = expression.replace(new RegExp(String.raw`\s*\+\s*\b${match[1]}\b`, "g"), "");
+  }
+  expression = expression.replace(bound, "");
   const pattern = new RegExp(String.raw`\s*\+\s*\(?[^+\n;]*\b${name}\b[^+\n;]*\)?`, "g");
-  let expression = editor.expression.replace(pattern, "").replace(/[ \t]*\+[ \t]*/g, " + ");
-  expression = expression.replace(
-    new RegExp(String.raw`\blet\s+\w+\s*=[^;]*\b${name}\b[^;]*;\s*\n?`, "g"),
-    "",
-  );
+  expression = expression.replace(pattern, "").replace(/[ \t]*\+[ \t]*/g, " + ");
   const variables = editor.variables.filter((v) => v.name !== name);
   return { expression, variables };
 }
@@ -762,7 +781,7 @@ const FEES = [
     name: "weekendFee",
     def: 125,
     desc: "Fee when the first pickup is on a weekend",
-    term: "(isWeekendPickup ? weekendFee : 0)",
+    charge: { name: "weekendCharge", expression: "isWeekendPickup ? weekendFee : 0" },
     line: {
       name: "weekend",
       label: "Weekend pickup",
@@ -775,7 +794,7 @@ const FEES = [
     name: "reeferFee",
     def: 225,
     desc: "Fee when a commodity needs temperature control",
-    term: "(requiresTemperatureControl ? reeferFee : 0)",
+    charge: { name: "reeferCharge", expression: "requiresTemperatureControl ? reeferFee : 0" },
     line: {
       name: "reefer",
       label: "Temperature control",
@@ -788,7 +807,7 @@ const FEES = [
     name: "hazmatFee",
     def: 175,
     desc: "Fee when any commodity on the load is hazardous",
-    term: "(hasHazmat ? hazmatFee : 0)",
+    charge: { name: "hazmatCharge", expression: "hasHazmat ? hazmatFee : 0" },
     line: { name: "hazmat", label: "Hazmat", expression: "hasHazmat ? hazmatFee : 0" },
     says: "a hazmat fee that applies when any commodity on the load is hazardous",
   },
@@ -797,16 +816,25 @@ const FEES = [
     name: "liftgateFee",
     def: 85,
     desc: "Fee when a liftgate is needed at a stop",
-    term: "(requiresLiftgate ? liftgateFee : 0)",
+    charge: { name: "liftgateCharge", expression: "requiresLiftgate ? liftgateFee : 0" },
     line: { name: "liftgate", label: "Liftgate", expression: "requiresLiftgate ? liftgateFee : 0" },
     says: "a liftgate fee as a yes/no input lanes can set",
+    extra: {
+      name: "requiresLiftgate",
+      type: "Boolean",
+      def: false,
+      desc: "Whether a liftgate is needed at a stop; no shipment field marks it",
+    },
   },
   {
     key: /fuel/,
     name: "fuelSurchargePercent",
     def: 18,
     desc: "Fuel surcharge as a percent of linehaul",
-    term: "(baseRate * totalDistance * (fuelSurchargePercent / 100))",
+    charge: {
+      name: "fuelSurcharge",
+      expression: "baseRate * totalDistance * (fuelSurchargePercent / 100)",
+    },
     line: {
       name: "fuel",
       label: "Fuel surcharge",
@@ -819,7 +847,7 @@ const FEES = [
     name: "stopFee",
     def: 50,
     desc: "Fee for each stop past the included ones",
-    term: "(max(totalStops - includedStops, 0) * stopFee)",
+    charge: { name: "stopCharge", expression: "max(totalStops - includedStops, 0) * stopFee" },
     line: {
       name: "stops",
       label: "Additional stops",
@@ -1051,9 +1079,21 @@ function planTurn(state, entry, body) {
   const fee = FEES.find((f) => f.key.test(q));
   if (
     fee &&
+    has(/add|include|charge|with/) &&
+    editor.variables.some((v) => v.name === fee.name) &&
+    new RegExp(String.raw`\b${fee.name}\b`).test(editor.expression)
+  ) {
+    return {
+      reasoning: reading,
+      tools: [schemaStep],
+      reply: `The formula already charges ${code(fee.name)}${fee.charge.expression.includes("?") ? ` when ${code(fee.charge.expression.match(/^(\w+) \?/)[1])} is true` : ""}, with a default of ${money(fee.def)}. Say what to change about it — the amount, when it applies, or its own invoice line — and I'll make the change.`,
+    };
+  }
+  if (
+    fee &&
     (has(/add|write|draft|create|build|include|charge|with/) || !editor.expression.trim())
   ) {
-    let next = extend(editor, fee.name, fee.def, fee.desc, fee.term);
+    let next = extend(editor, fee.name, fee.def, fee.desc, fee.charge);
     if (fee.extra && !next.variables.some((v) => v.name === fee.extra.name)) {
       next = {
         ...next,
@@ -1061,7 +1101,7 @@ function planTurn(state, entry, body) {
           ...next.variables,
           {
             name: fee.extra.name,
-            type: "Number",
+            type: fee.extra.type ?? "Number",
             description: fee.extra.desc,
             defaultValue: fee.extra.def,
           },
@@ -1083,7 +1123,7 @@ function planTurn(state, entry, body) {
         };
     return propose(
       next,
-      `Adds ${code(fee.name)}${fee.term.includes("?") ? ` when ${code(fee.term.match(/\((\w+) \?/)[1])} is true` : ""}.`,
+      `Adds ${code(fee.charge.name)}${fee.charge.expression.includes("?") ? ` when ${code(fee.charge.expression.match(/^(\w+) \?/)[1])} is true` : ""}, on its own line.`,
       `I added ${fee.says}.`,
       extra,
     );

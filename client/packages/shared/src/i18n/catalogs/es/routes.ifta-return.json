@@ -67,7 +67,6 @@
   "No return for {0} yet": "Aún no hay declaración para {0}",
   "No tractor ran miles in the quarter, so there is no average to take and no taxable gallons on any line.": "Ningún tractocamión recorrió millas en el trimestre, así que no hay promedio que calcular ni galones gravables en ninguna línea.",
   "Not computed yet — recompute to build the lines": "Aún no calculado: recalcule para generar las líneas",
-  "Not generated": "No generado",
   "Nothing else changed: the miles, fuel and rates it was built from are kept.": "Nada más cambió: se conservan las millas, el combustible y los tipos con los que se construyó.",
   "One line per jurisdiction and fuel type. Gallons and miles are whole as the form prints them; money is in {0}, and a negative figure is a credit.": "Una línea por jurisdicción y tipo de combustible. Los galones y las millas son números enteros tal como los imprime el formulario; el dinero está en {0}, y una cifra negativa es un crédito.",
   "Only a draft can be deleted. This return is {0}.": "Solo se puede eliminar un borrador. Esta declaración está {0}.",

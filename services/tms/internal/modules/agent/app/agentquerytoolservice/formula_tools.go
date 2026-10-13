@@ -527,7 +527,10 @@ func (t *proposeFormulaTool) ParamSchema() map[string]any {
 					"how it will arrive. So is a condition no field marks directly, such as team " +
 					"service: compare the nearest field to a variable (serviceType.code == " +
 					"teamServiceCode) or make it a yes/no variable, and say in the explanation " +
-					"what to set it to.",
+					"what to set it to. Lay it out as the editor does: for more than two " +
+					"terms, one let per charge on its own line, named for what it is and " +
+					"ending with a semicolon (let fuelSurcharge = …;), then the sum of the " +
+					"names on the last line; never one long line or one chain of ternaries.",
 			},
 			"schemaId": map[string]any{"type": "string", "description": schemaIDDescription},
 			"variables": map[string]any{

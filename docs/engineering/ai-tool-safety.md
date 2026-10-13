@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 574.
+Tools listed: 575.
 
 ## The model
 
@@ -59,7 +59,7 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 196 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 197 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 8 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 233 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
@@ -107,6 +107,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get DOT random draw (`get_dot_random_draw`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get driver settlement (`get_driver_settlement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get EDI inbound file (`get_edi_inbound_file`) | Reads only | Automatic | — | Always, from EDI | Reads an EDI file a trading partner sent, raw X12 included on request; nothing changes and nothing is sent. |
+| Get EDI message (`get_edi_message`) | Reads only | Automatic | — | Always, from EDI | Reads one EDI document, the errors and acknowledgment a partner's system returned for it, and its raw X12 on request; nothing changes and nothing is sent. |
 | Get EDI partner (`get_edi_partner`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get EDI transfer (`get_edi_transfer`) | Reads only | Automatic | — | Always, from EDI | Reads a load tender a trading partner wrote, stops and references included; nothing changes and nothing is sent. |
 | Get fiscal close blockers (`get_fiscal_close_blockers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

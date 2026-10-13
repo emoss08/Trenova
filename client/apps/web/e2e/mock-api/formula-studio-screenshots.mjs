@@ -23,7 +23,11 @@ const REVIEW = `${BASE}/fmt_studio_review/edit`;
 const ACTIVE = `${BASE}/fmt_studio_active/edit`;
 const NEW = `${BASE}/new`;
 
-const tab = (name) => (page) => page.getByRole("tab", { name }).click();
+// A pane's module is read the first time its tab opens, so the click waits for it.
+const tab = (name) => async (page) => {
+  await page.getByRole("tab", { name }).click();
+  await page.waitForTimeout(1500);
+};
 const pause = (page, ms = STEP_MS) => page.waitForTimeout(ms);
 
 async function typeInEditor(page, text) {
@@ -196,7 +200,79 @@ function shotsFor(colorScheme) {
         await pause(page, 600);
       },
     },
+    {
+      name: "editor-formatted",
+      path: NEW,
+      act: async (page) => {
+        await typeInEditor(
+          page,
+          "let linehaul = mileRate*totalDistance; let weightCharge = max(0, totalWeight - weightFreeLbs) / 100 * weightRatePerCwt; let stopCharge = max(0, totalStops - stopsIncluded) * stopRate; let hazmatCharge = hasHazmat?hazmatFee:0; linehaul+weightCharge+stopCharge+hazmatCharge",
+        );
+        await pause(page, 600);
+        await page.keyboard.press("Shift+Alt+F");
+        await pause(page, 1200);
+      },
+    },
+    {
+      name: "reference-functions",
+      path: DRAFT,
+      act: async (page) => {
+        await tab(/^Reference/)(page);
+        await pause(page, 600);
+        await page.getByRole("radio", { name: /^Functions/ }).click();
+        await pause(page, 600);
+      },
+    },
+    {
+      name: "preview-all-values",
+      path: DRAFT,
+      act: async (page) => {
+        await page.getByRole("button", { name: /^Show all/ }).click();
+        await pause(page, 900);
+      },
+    },
+    {
+      name: "submit-after-signature",
+      path: DRAFT,
+      act: async (page) => {
+        await typeInEditor(page, "\n+ max(");
+        await pause(page, 800);
+        await page.keyboard.press("Control+Z");
+        await page.keyboard.press("Control+Z");
+        await pause(page, 600);
+        await page.getByRole("button", { name: "Submit for review" }).click();
+        await pause(page, 2500);
+      },
+    },
     { name: "nova-empty", path: DRAFT, act: tab(/^Nova/) },
+    {
+      name: "nova-let",
+      path: DRAFT,
+      act: async (page) => {
+        await tab(/^Nova/)(page);
+        await pause(page, 900);
+        await page.getByRole("textbox", { name: /^Message/ }).fill("Add a liftgate fee");
+        await page.keyboard.press("Enter");
+        await pause(page, 7000);
+      },
+    },
+    {
+      name: "nova-return",
+      path: DRAFT,
+      act: async (page) => {
+        await tab(/^Nova/)(page);
+        await pause(page, 900);
+        await page
+          .getByRole("textbox", { name: /^Message/ })
+          .fill("Explain this formula, term by term");
+        await page.keyboard.press("Enter");
+        await pause(page, 6000);
+        await tab(/^Preview/)(page);
+        await pause(page, 800);
+        await tab(/^Nova/)(page);
+        await pause(page, 800);
+      },
+    },
     {
       name: "nova-proposal",
       path: DRAFT,

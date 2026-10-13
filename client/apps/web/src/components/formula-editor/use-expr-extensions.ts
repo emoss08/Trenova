@@ -1,12 +1,16 @@
 import { lintGutter } from "@codemirror/lint";
-import { Compartment, type Extension } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
+import { Compartment, Prec, type Extension } from "@codemirror/state";
+import { EditorView, keymap } from "@codemirror/view";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
+import { formatEditorDocument, type FormatResult } from "./expr-format";
 import { createExprHover, type HoverVariable } from "./expr-hover";
 import { exprLanguageSupport } from "./expr-language";
 import { createExprLinter, type DeclareInput } from "./expr-lint";
 import { createSignatureHelp } from "./expr-signature";
 import type { KnownIdentifiers } from "./known-identifiers";
+
+/** The key that formats the document, as VS Code binds it. */
+export const FORMAT_KEY = "Shift-Alt-f";
 
 export type ExprExtensionOptions = {
   /** What the last preview resolved each name to, for the hover card. */
@@ -15,6 +19,8 @@ export type ExprExtensionOptions = {
   declareInput?: DeclareInput;
   /** Draws the gutter's markers; off for a one-line editor. */
   gutter?: boolean;
+  /** Told what formatting from the keyboard did, so the page can say why it was refused. */
+  onFormat?: (result: FormatResult) => void;
 };
 
 /**
@@ -48,6 +54,20 @@ export function useExprExtensions(
       EditorView.lineWrapping,
       createExprHover(() => optionsRef.current.hoverValues?.() ?? new Map(), getKnown),
       createSignatureHelp(getKnown),
+      Prec.high(
+        keymap.of([
+          {
+            key: FORMAT_KEY,
+            run: (view) => {
+              const result = formatEditorDocument(view, {
+                operators: getKnown().operatorNames,
+              });
+              optionsRef.current.onFormat?.(result);
+              return true;
+            },
+          },
+        ]),
+      ),
     ];
     if (lint) {
       list.push(createExprLinter(getKnown, () => optionsRef.current.declareInput));

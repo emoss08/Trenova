@@ -18,6 +18,7 @@ import {
   deskOrders,
   deskWorkers,
 } from "../fixtures/desk-cards.mjs";
+import { deskEdiMessages } from "../fixtures/desk-edi.mjs";
 import { hash } from "../state.mjs";
 import { userSelectOptions } from "./settings.mjs";
 
@@ -396,7 +397,62 @@ function threadSlug(state) {
   return state.scenario.deskSlug ?? "tractor-t-101";
 }
 
+/** Where an EDI message came from, as the inspector reports it. */
+function provenance({ message }) {
+  return {
+    messageId: message.id,
+    profileId: message.partnerDocumentProfileId,
+    templateId: message.templateId,
+    templateVersionId: message.templateVersionId,
+    generatedAt: message.generatedAt,
+    generatedById: message.generatedById,
+  };
+}
+
+/** The EDI message a route names, or the 404 the API answers for one that is gone. */
+function ediRoute(state, path) {
+  const id = path.match(/edi\/messages\/([a-z0-9_]+)/)?.[1] ?? "";
+  const fixture = deskEdiMessages(state.anchor)[id];
+  return fixture
+    ? { fixture }
+    : {
+        missing: {
+          __status: 404,
+          body: { title: "Not Found", status: 404, detail: "EDI message not found" },
+        },
+      };
+}
+
 export const DESK_CARD_ROUTES = [
+  [
+    "GET",
+    /^\/api\/v1\/edi\/messages\/[a-z0-9_]+\/inspect\/?$/,
+    (state, path) => {
+      if (held(state)) return HOLD;
+      const { fixture, missing } = ediRoute(state, path);
+      if (missing) return missing;
+      if (!fixture.inspection) {
+        return {
+          __status: 422,
+          body: { title: "Unprocessable", status: 422, detail: "The raw X12 was purged" },
+        };
+      }
+      return {
+        message: fixture.message,
+        inspection: fixture.inspection,
+        provenance: provenance(fixture),
+      };
+    },
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/edi\/messages\/[a-z0-9_]+\/?$/,
+    (state, path) => {
+      if (held(state)) return HOLD;
+      const { fixture, missing } = ediRoute(state, path);
+      return missing ?? fixture.message;
+    },
+  ],
   [
     "GET",
     /^\/api\/v1\/rate-agreements\/[a-z0-9_]+\/lanes\/summary\/?$/,

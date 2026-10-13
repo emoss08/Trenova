@@ -346,7 +346,12 @@ func (t Template) StarterInstructions() string {
 			"as the page draft shows it; " +
 			"when the engine check fails, fix it and propose again before you reply. A " +
 			"minimum, a maximum or rounding belongs in the charge policy, never in the " +
-			"expression.\n\n" +
+			"expression. Write a formula the way the editor lays it out: one charge per " +
+			"line, each bound with let and named for what it is (let fuelSurcharge = …;), " +
+			"and the sum of them on the last line. A formula of more than two terms never " +
+			"goes on one line or into one chain of ternaries, and a condition is its own " +
+			"let (let hazmatCharge = hasHazmat ? hazmatFee : 0;). The engine runs let " +
+			"lines; each ends with a semicolon.\n\n" +
 			"You also keep rate agreements, drafted from a rate sheet or a quote the person " +
 			"agreed with, or copied from last year's. Replay past shipments against a draft " +
 			"before it goes for review. Approving or rejecting an agreement is its reviewer's " +

@@ -1,6 +1,7 @@
 import type { SelectOption } from "@/lib/graphql/select-options";
 import {
   selectOptionMetaBoolean,
+  selectOptionMetaEnum,
   selectOptionMetaNumber,
   selectOptionMetaString,
 } from "@/lib/select-option-meta";
@@ -54,5 +55,28 @@ describe("selectOptionMetaBoolean", () => {
     expect(selectOptionMetaBoolean(option({ taxable: "true" }), "taxable")).toBe(false);
     expect(selectOptionMetaBoolean(option({ taxable: 1 }), "taxable")).toBe(false);
     expect(selectOptionMetaBoolean(option(null), "taxable")).toBe(false);
+  });
+});
+
+describe("selectOptionMetaEnum", () => {
+  const PROVIDERS = ["Comdata", "EFS", "WEX", "Other"] as const;
+
+  it("returns the value when it is one the caller knows", () => {
+    expect(selectOptionMetaEnum(option({ provider: "EFS" }), "provider", PROVIDERS)).toBe("EFS");
+  });
+
+  // A value the client does not know (a network added on the server first, or
+  // a different casing) must not be passed on as though it were one it does.
+  it("returns null for a value outside the set", () => {
+    expect(
+      selectOptionMetaEnum(option({ provider: "Fleetcor" }), "provider", PROVIDERS),
+    ).toBeNull();
+    expect(selectOptionMetaEnum(option({ provider: "wex" }), "provider", PROVIDERS)).toBeNull();
+  });
+
+  it("returns null for a missing key or a value that is not a string", () => {
+    expect(selectOptionMetaEnum(option({}), "provider", PROVIDERS)).toBeNull();
+    expect(selectOptionMetaEnum(option(null), "provider", PROVIDERS)).toBeNull();
+    expect(selectOptionMetaEnum(option({ provider: 3 }), "provider", PROVIDERS)).toBeNull();
   });
 });

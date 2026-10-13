@@ -10,7 +10,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
-import { nanoid } from "nanoid";
 import { useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -44,7 +43,7 @@ function FormulaPageChip() {
   const lines = expression.split("\n").filter((line) => line.trim() !== "").length;
 
   return (
-    <span className="dk-pc" title={t("Nova reads the editor as it is, saved or not")}>
+    <span className="fs-page-chip" title={t("Nova reads the editor as it is, saved or not")}>
       <span className="text-dsk-muted flex h-7 min-w-0 items-center gap-1.5 rounded-full pr-2 text-sm">
         <span className="dk-pc-ic">
           <DeskIcon name="file" size={12} stroke={2} />
@@ -155,13 +154,20 @@ function ReplyProposal({
  */
 export function NovaPane() {
   const t = useT();
-  const { template, novaRequest, clearNovaRequest, setNovaBusy, analysis, askNova } = useStudio();
+  const {
+    template,
+    novaRequest,
+    clearNovaRequest,
+    setNovaBusy,
+    analysis,
+    askNova,
+    unsavedNovaKey,
+  } = useStudio();
   const form = useFormContext<FormulaTemplateFormValues>();
-  const [unsavedKey] = useState(() => nanoid());
   const [records, setRecords] = useState<ReadonlyMap<string, ProposalRecord>>(() => new Map());
   const conversationKey = useMemo(
-    () => ["formula", template?.id ?? unsavedKey] as const,
-    [template?.id, unsavedKey],
+    () => ["formula", template?.id ?? unsavedNovaKey] as const,
+    [template?.id, unsavedNovaKey],
   );
 
   const open = useCallback(
@@ -294,7 +300,8 @@ export function NovaPane() {
       thread={{
         composerKit: "page",
         composerChip: <FormulaPageChip />,
-        presets,
+        // The presets are offered once, in the empty state; typed out in the
+        // composer they would loop a caret on a working screen.
         disclaimer: t("Nova can be wrong. Every amount it shows is the formula engine's."),
         emptyState: (dock) => (
           <div className="dk-c flex flex-col items-center gap-2 px-4 pt-10 pb-4 text-center">

@@ -76,6 +76,20 @@ const CARDS = [
     empty: "failure-new",
     gone: "failure-gone",
   },
+  {
+    card: "edi-message",
+    loaded: "edi-214-tyson",
+    attention: "edi-210-acme",
+    empty: "edi-214-old",
+    gone: "edi-gone",
+  },
+  {
+    card: "edi-inbound",
+    loaded: "edi-204-acme",
+    attention: "edi-997-rejected",
+    empty: "edi-990-acme",
+    gone: "edi-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {
