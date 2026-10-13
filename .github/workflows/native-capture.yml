@@ -3,9 +3,26 @@ name: Trenova Capture
 # The Windows companion under desktop/capture. Every push checks the workspace
 # on Linux (where everything that is not Windows runs and is tested) and on
 # Windows (where it all compiles, links and runs, for both targets, and the
-# MSI is built). A tag capture-vX.Y.Z publishes a signed release: the MSI, its
-# signed manifest, and the rolling capture-stable manifest the server and the
-# updater read.
+# MSI is built).
+#
+# A release is cut one of two ways, and both end the same: the MSI, its
+# signed manifest and the rolling capture-stable manifest the server and the
+# updater read are published on a GitHub release named capture-vX.Y.Z.
+#
+#   - Run this workflow by hand (Actions → Trenova Capture → Run workflow) on
+#     the default branch with a version. The run sets the workspace version in
+#     Cargo.toml and Cargo.lock, commits it, tags capture-vX.Y.Z, and builds and
+#     publishes that commit. (A tag pushed by a workflow starts no workflow of
+#     its own, which is why the same run carries on to build it.)
+#   - Push a capture-vX.Y.Z tag at a commit whose Cargo.toml already says X.Y.Z.
+#
+# Signing is used when the secrets for it exist: Azure Trusted Signing for the
+# executables and the MSI, and TRENOVA_CAPTURE_SIGNING_KEY for the manifest.
+# Without the Authenticode secrets the installer is published unsigned, which
+# Windows SmartScreen warns about and the updater refuses, so people install
+# it by hand. Without the manifest key no manifest is published, so servers
+# mirror nothing and computers do not update themselves; the installer is
+# still on the release for people to download.
 
 on:
   push:
@@ -30,10 +47,19 @@ on:
       - "client/apps/web/public/logo.ico"
       - ".github/workflows/native-capture.yml"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Release this version (MAJOR.MINOR.PATCH). Leave empty to only build."
+        required: false
+        type: string
+      notes:
+        description: "Release notes, shown on the release and in Trenova. Defaults to the commit message."
+        required: false
+        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.version }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') && inputs.version == '' }}
 
 permissions:
   contents: read
@@ -51,11 +77,98 @@ defaults:
     working-directory: desktop/capture
 
 jobs:
+  prepare:
+    name: Decide what this run builds
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release: ${{ steps.decide.outputs.release }}
+      version: ${{ steps.decide.outputs.version }}
+      sha: ${{ steps.decide.outputs.sha }}
+      authenticode: ${{ steps.decide.outputs.authenticode }}
+      manifest: ${{ steps.decide.outputs.manifest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@master
+        if: inputs.version != ''
+        with:
+          toolchain: 1.94.0
+
+      - name: Decide
+        id: decide
+        env:
+          REQUESTED: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+          AUTHENTICODE: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.TRENOVA_SIGNING_ENDPOINT != '' }}
+          MANIFEST: ${{ secrets.TRENOVA_CAPTURE_SIGNING_KEY != '' }}
+        run: |
+          set -euo pipefail
+          current="$(sed -nE '/^\[workspace\.package\]/,/^\[/{s/^version *= *"([^"]+)"/\1/p}' Cargo.toml | head -n 1)"
+          [ -n "$current" ] || { echo "::error::Cargo.toml has no workspace version"; exit 1; }
+          echo "authenticode=$AUTHENTICODE" >> "$GITHUB_OUTPUT"
+          echo "manifest=$MANIFEST" >> "$GITHUB_OUTPUT"
+
+          if [[ "$GITHUB_REF" == refs/tags/capture-v* ]]; then
+            version="${GITHUB_REF_NAME#capture-v}"
+            if [ "$version" != "$current" ]; then
+              echo "::error::The tag names $version but Cargo.toml says $current."
+              exit 1
+            fi
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+            echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "$REQUESTED" ]; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "version=$current" >> "$GITHUB_OUTPUT"
+            echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          version="${REQUESTED#v}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::The version must be MAJOR.MINOR.PATCH, not '$REQUESTED'."
+            exit 1
+          fi
+          default="$(gh api "repos/$GITHUB_REPOSITORY" --jq .default_branch)"
+          if [ "$GITHUB_REF_NAME" != "$default" ]; then
+            echo "::error::Release from the default branch ($default), not $GITHUB_REF_NAME."
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/capture-v$version" >/dev/null; then
+            echo "::error::capture-v$version is already released."
+            exit 1
+          fi
+
+          if [ "$version" != "$current" ]; then
+            sed -i -E "/^\[workspace\.package\]/,/^\[/s/^version *= *\"[^\"]+\"/version = \"$version\"/" Cargo.toml
+            cargo update --workspace --offline || cargo update --workspace
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add Cargo.toml Cargo.lock
+            git commit -m "Trenova Capture $version"
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi
+          git tag -a "capture-v$version" -m "Trenova Capture $version"
+          git push origin "capture-v$version"
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
   linux:
     name: Linux (fmt, clippy for every target, tests)
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
 
       - uses: dtolnay/rust-toolchain@master
         with:
@@ -100,11 +213,17 @@ jobs:
 
   windows:
     name: Windows (build, tests, MSI)
+    needs: prepare
     runs-on: windows-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
+    env:
+      RELEASE: ${{ needs.prepare.outputs.release }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+      AUTHENTICODE: ${{ needs.prepare.outputs.release == 'true' && needs.prepare.outputs.authenticode == 'true' }}
+      MANIFEST: ${{ needs.prepare.outputs.release == 'true' && needs.prepare.outputs.manifest == 'true' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
 
       - uses: dtolnay/rust-toolchain@master
         with:
@@ -117,17 +236,12 @@ jobs:
           workspaces: desktop/capture
 
       - name: Version
-        id: version
         shell: pwsh
         run: |
           $manifest = Get-Content Cargo.toml -Raw
           if ($manifest -notmatch '(?m)^\[workspace\.package\][^\[]*?^version\s*=\s*"([^"]+)"') { throw 'no workspace version' }
-          $version = $Matches[1]
-          if ('${{ github.ref }}' -like 'refs/tags/capture-v*') {
-            $tag = '${{ github.ref_name }}'.Substring('capture-v'.Length)
-            if ($tag -ne $version) { throw "The tag names $tag but Cargo.toml says $version." }
-          }
-          "version=$version" >> $env:GITHUB_OUTPUT
+          if ($Matches[1] -ne $env:VERSION) { throw "This run builds $env:VERSION but Cargo.toml says $($Matches[1])." }
+          Write-Host "Trenova Capture $env:VERSION (release: $env:RELEASE, Authenticode: $env:AUTHENTICODE, manifest: $env:MANIFEST)"
 
       - name: Test (everything runs here, Windows code included)
         run: cargo test --workspace --target x86_64-pc-windows-msvc
@@ -146,7 +260,7 @@ jobs:
           wix extension add -g WixToolset.UI.wixext/5.0.2
 
       - name: Sign in to Azure for Trusted Signing
-        if: startsWith(github.ref, 'refs/tags/capture-v')
+        if: env.AUTHENTICODE == 'true'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -154,7 +268,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Trusted Signing client
-        if: startsWith(github.ref, 'refs/tags/capture-v')
+        if: env.AUTHENTICODE == 'true'
         shell: pwsh
         run: |
           nuget install Microsoft.Trusted.Signing.Client -Version 1.0.60 -OutputDirectory $env:RUNNER_TEMP\tsc -x
@@ -162,76 +276,135 @@ jobs:
           if (-not $dlib) { throw 'Azure.CodeSigning.Dlib.dll not found' }
           "TRENOVA_SIGNING_DLIB=$($dlib.FullName)" >> $env:GITHUB_ENV
 
-      - name: Build the MSI (unsigned, on a branch)
-        if: ${{ !startsWith(github.ref, 'refs/tags/capture-v') }}
+      - name: Build the MSI
+        if: env.AUTHENTICODE != 'true'
         shell: pwsh
-        run: ./installer/build.ps1 -Version ${{ steps.version.outputs.version }}
+        run: |
+          if ($env:RELEASE -eq 'true') {
+            Write-Host '::warning::No Authenticode signing secrets are set; this release installer is unsigned. Windows warns before installing it and computers will not update themselves to it.'
+          }
+          ./installer/build.ps1 -Version $env:VERSION
 
-      - name: Build and sign the MSI (release)
-        if: startsWith(github.ref, 'refs/tags/capture-v')
+      - name: Build and sign the MSI
+        if: env.AUTHENTICODE == 'true'
         shell: pwsh
         env:
           TRENOVA_SIGNING: trusted-signing
           TRENOVA_SIGNING_ENDPOINT: ${{ secrets.TRENOVA_SIGNING_ENDPOINT }}
           TRENOVA_SIGNING_ACCOUNT: ${{ secrets.TRENOVA_SIGNING_ACCOUNT }}
           TRENOVA_SIGNING_PROFILE: ${{ secrets.TRENOVA_SIGNING_PROFILE }}
-        run: ./installer/build.ps1 -Version ${{ steps.version.outputs.version }} -Sign
+        run: ./installer/build.ps1 -Version $env:VERSION -Sign
+
+      - name: Release notes
+        if: env.RELEASE == 'true'
+        shell: pwsh
+        env:
+          NOTES: ${{ inputs.notes }}
+        run: |
+          $notes = if ($env:NOTES) { $env:NOTES } else { (git log -1 --pretty=%B) }
+          $notes = ($notes -replace '\r', '').Trim()
+          Set-Content -Path "installer/out/notes.md" -Value $notes -NoNewline
+          Write-Host $notes
 
       - name: Sign the release manifest
-        if: startsWith(github.ref, 'refs/tags/capture-v')
+        if: env.MANIFEST == 'true'
         shell: pwsh
         env:
           TRENOVA_CAPTURE_SIGNING_KEY: ${{ secrets.TRENOVA_CAPTURE_SIGNING_KEY }}
         run: |
-          $version = '${{ steps.version.outputs.version }}'
-          $msi = "installer/out/TrenovaCapture-$version-x64.msi"
-          $url = "https://github.com/${{ github.repository }}/releases/download/capture-v$version/TrenovaCapture-$version-x64.msi"
-          $notes = "$env:RUNNER_TEMP\notes.md"
-          git log -1 --pretty=%B | Set-Content $notes
-          ./target/x86_64-pc-windows-msvc/release/trenova-capture-release.exe sign --msi $msi --version $version --url $url --notes $notes --out installer/out/trenova-capture-manifest.json
+          $msi = "installer/out/TrenovaCapture-$env:VERSION-x64.msi"
+          $url = "https://github.com/${{ github.repository }}/releases/download/capture-v$env:VERSION/TrenovaCapture-$env:VERSION-x64.msi"
+          ./target/x86_64-pc-windows-msvc/release/trenova-capture-release.exe sign --msi $msi --version $env:VERSION --url $url --notes installer/out/notes.md --out installer/out/trenova-capture-manifest.json
           ./target/x86_64-pc-windows-msvc/release/trenova-capture-release.exe verify --manifest installer/out/trenova-capture-manifest.json --public-key $env:TRENOVA_CAPTURE_PUBLIC_KEY
+
+      - name: No manifest key
+        if: env.RELEASE == 'true' && env.MANIFEST != 'true'
+        shell: pwsh
+        run: Write-Host '::warning::TRENOVA_CAPTURE_SIGNING_KEY is not set; no release manifest is published, so servers mirror nothing and computers will not update themselves. Make a key pair with trenova-capture-release keygen (see desktop/capture/README.md).'
+
+      - name: Checksum
+        shell: pwsh
+        run: |
+          $msi = Get-Item "installer/out/TrenovaCapture-$env:VERSION-x64.msi"
+          $hash = (Get-FileHash $msi -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($msi.Name)" | Set-Content -Path "installer/out/TrenovaCapture-$env:VERSION-x64.msi.sha256" -NoNewline
+          Write-Host "$($msi.Name): $hash ($([math]::Round($msi.Length / 1MB, 1)) MB)"
 
       - uses: actions/upload-artifact@v4
         with:
           name: trenova-capture-msi
           path: |
             desktop/capture/installer/out/*.msi
+            desktop/capture/installer/out/*.sha256
             desktop/capture/installer/out/*.json
+            desktop/capture/installer/out/notes.md
           if-no-files-found: error
 
   release:
     name: Publish the release
-    if: startsWith(github.ref, 'refs/tags/capture-v')
-    needs: [linux, windows]
+    if: needs.prepare.outputs.release == 'true'
+    needs: [prepare, linux, windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     defaults:
       run:
         working-directory: .
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: trenova-capture-msi
           path: out
 
-      - name: Release capture-v${{ needs.windows.outputs.version }}
+      - name: Release capture-v${{ needs.prepare.outputs.version }}
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ needs.windows.outputs.version }}
+          SIGNED: ${{ needs.prepare.outputs.authenticode }}
+          MANIFEST: ${{ needs.prepare.outputs.manifest }}
         run: |
           set -euo pipefail
+          msi="out/TrenovaCapture-$VERSION-x64.msi"
+          sha="$(cut -d' ' -f1 "$msi.sha256")"
+          size="$(du -h "$msi" | cut -f1)"
+          {
+            echo "## Trenova Capture $VERSION"
+            echo
+            cat out/notes.md
+            echo
+            echo
+            echo "### Install"
+            echo
+            echo "Download \`TrenovaCapture-$VERSION-x64.msi\` and run it with administrator rights on each Windows computer that scans or prints into Trenova, or deploy it silently:"
+            echo
+            echo '```powershell'
+            echo "msiexec /i TrenovaCapture-$VERSION-x64.msi /qn TRENOVAURL=https://your-trenova AUTOUPDATE=0"
+            echo '```'
+            echo
+            echo "Then open Trenova Capture from the Start menu, choose Trenova Cloud or enter your Trenova's address, and approve the computer in your browser."
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Size | $size |"
+            echo "| SHA-256 | \`$sha\` |"
+            echo "| Authenticode | $([ "$SIGNED" = true ] && echo signed || echo 'not signed: Windows warns before installing, and computers do not update themselves to this build') |"
+            echo "| Manifest | $([ "$MANIFEST" = true ] && echo 'signed; servers configured with the release key mirror it at /api/v1/capture/releases/latest/' || echo 'not published: no release key was set') |"
+          } > out/release.md
+          files=("$msi" "$msi.sha256")
+          if [ -f out/trenova-capture-manifest.json ]; then
+            files+=(out/trenova-capture-manifest.json)
+          fi
           gh release create "capture-v$VERSION" \
             --repo "$GITHUB_REPOSITORY" \
             --title "Trenova Capture $VERSION" \
-            --notes "Trenova Capture $VERSION for Windows. The manifest is signed; the server and the updater verify it before acting on it." \
-            "out/TrenovaCapture-$VERSION-x64.msi" \
-            "out/trenova-capture-manifest.json"
+            --notes-file out/release.md \
+            "${files[@]}"
 
       - name: Point capture-stable at it
+        if: needs.prepare.outputs.manifest == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ needs.windows.outputs.version }}
         run: |
           set -euo pipefail
           if ! gh release view capture-stable --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
@@ -239,7 +412,7 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --title "Trenova Capture (current)" \
               --notes "The manifest of the current Trenova Capture release. Servers read it from here; the tag moves with each release." \
-              --target "$GITHUB_SHA"
+              --target "${{ needs.prepare.outputs.sha }}"
           fi
           gh release upload capture-stable "out/trenova-capture-manifest.json" --clobber --repo "$GITHUB_REPOSITORY"
           gh release edit capture-stable --repo "$GITHUB_REPOSITORY" \

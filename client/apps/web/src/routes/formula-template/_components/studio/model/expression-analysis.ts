@@ -1,34 +1,23 @@
 import {
-  collectIdentifierTokens,
-  letBindings,
-  lintExpression,
-} from "@/components/formula-editor/expr-lint";
-import {
-  EXPR_KEYWORDS,
-  isKnownFunction,
-  isKnownVariable,
-  isOperatorWord,
-  type KnownIdentifiers,
-} from "@/components/formula-editor/known-identifiers";
-import type { VariableValueType } from "@trenova/shared/types/formula-template";
+  checkExpression,
+  engineErrorRange,
+  engineErrorText,
+  type ExprDiagnostic,
+  type ExprType,
+} from "@/components/formula-editor/expr-check";
+import type { Program } from "@/components/formula-editor/expr-parser";
+import type { KnownIdentifiers } from "@/components/formula-editor/known-identifiers";
+import type { FormulaStatement } from "@trenova/shared/types/formula-template";
 
-export type ExpressionProblemKind = "unknown-variable" | "error";
-
-/** One thing wrong with the expression, as the editor's own linter reads it. */
-export type ExpressionProblem = {
-  kind: ExpressionProblemKind;
-  from: number;
-  to: number;
-  message: string;
-  /** The identifier an unknown-variable problem is about. */
-  name?: string;
-};
+export { inferInputType } from "@/components/formula-editor/expr-check";
 
 export type ExpressionAnalysis = {
   empty: boolean;
-  problems: ExpressionProblem[];
-  /** Problems that stop the expression from compiling: syntax, unknown names. */
+  /** Everything the language service found, errors first by position. */
+  problems: ExprDiagnostic[];
+  /** Problems that stop the expression from running. */
   errorCount: number;
+  warningCount: number;
   /** Shipment schema variables the expression reads, by root path. */
   schemaReads: ReadonlySet<string>;
   /** The template's own inputs the expression reads. */
@@ -38,87 +27,58 @@ export type ExpressionAnalysis = {
   reads: readonly string[];
   /** Names bound with `let`; they are the expression's own and never inputs. */
   bindings: ReadonlySet<string>;
+  program: Program;
+  resultType: ExprType;
 };
+
+const EMPTY_SET: ReadonlySet<string> = new Set();
 
 /**
  * What the expression reads and what is wrong with it, from the same
- * tokenizer and linter the editor draws with, so the problems list, the
+ * language service the editor underlines with, so the problems list, the
  * status bar and the rate trace never disagree with the squiggles.
  */
-export function analyzeExpression(
-  expression: string,
-  known: KnownIdentifiers,
-  customNames: ReadonlySet<string>,
-): ExpressionAnalysis {
-  const empty = expression.trim() === "";
-  const bindings = letBindings(expression);
-  const problems: ExpressionProblem[] = [];
-  const schemaReads = new Set<string>();
-  const inputReads = new Set<string>();
-  const functionCalls = new Set<string>();
-  const order: string[] = [];
-
-  if (!empty) {
-    for (const diagnostic of lintExpression(expression, known)) {
-      const name = expression.slice(diagnostic.from, diagnostic.to);
-      if (diagnostic.severity === "warning") {
-        problems.push({
-          kind: "unknown-variable",
-          from: diagnostic.from,
-          to: diagnostic.to,
-          message: diagnostic.message,
-          name,
-        });
-      } else {
-        problems.push({
-          kind: "error",
-          from: diagnostic.from,
-          to: diagnostic.to,
-          message: diagnostic.message,
-        });
-      }
-    }
-
-    for (const token of collectIdentifierTokens(expression)) {
-      if (EXPR_KEYWORDS.has(token.name) || isOperatorWord(known, token.name)) continue;
-      if (token.isCall) {
-        if (isKnownFunction(known, token.name)) functionCalls.add(token.name);
-        continue;
-      }
-      const root = token.name.split(".")[0];
-      if (bindings.has(root)) continue;
-      if (customNames.has(root)) {
-        if (!inputReads.has(root)) order.push(root);
-        inputReads.add(root);
-      } else if (isKnownVariable(known, token.name)) {
-        if (!schemaReads.has(token.name)) order.push(token.name);
-        schemaReads.add(token.name);
-      }
-    }
-  }
-
-  const inputsFirst = [
-    ...order.filter((name) => inputReads.has(name)),
-    ...order.filter((name) => !inputReads.has(name)),
-  ];
-
+export function analyzeExpression(expression: string, known: KnownIdentifiers): ExpressionAnalysis {
+  const analysis = checkExpression(expression, known);
+  const empty = analysis.program.empty;
+  const problems = empty ? [] : analysis.diagnostics;
   return {
     empty,
     problems,
-    errorCount: problems.length,
-    schemaReads,
-    inputReads,
-    functionCalls,
-    reads: inputsFirst,
-    bindings,
+    errorCount: problems.filter((problem) => problem.severity === "error").length,
+    warningCount: problems.filter((problem) => problem.severity === "warning").length,
+    schemaReads: empty ? EMPTY_SET : analysis.schemaReads,
+    inputReads: empty ? EMPTY_SET : analysis.inputReads,
+    functionCalls: empty ? EMPTY_SET : analysis.functionCalls,
+    reads: empty ? [] : analysis.reads,
+    bindings: new Set(analysis.bindings.keys()),
+    program: analysis.program,
+    resultType: analysis.resultType,
   };
 }
 
-const BOOLEAN_PREFIX = /^(is|has|requires|uses)[A-Z_]/;
-
-/** The type an input added from an unknown name starts as: a flag for is/has/requires names. */
-export function inferInputType(name: string): VariableValueType {
-  return BOOLEAN_PREFIX.test(name) ? "Boolean" : "Number";
+/**
+ * What the engine said when it ran the expression on the preview load, as a
+ * problem anchored where it happened: on the statement the trace blames, or
+ * at the position expr writes into its message, or on the whole expression.
+ */
+export function engineProblem(
+  expression: string,
+  error: string,
+  statements: readonly FormulaStatement[] | null | undefined,
+): ExprDiagnostic {
+  const failed = statements?.find((statement) => statement.error);
+  const text = engineErrorText(failed?.error ?? error);
+  const range = failed
+    ? { from: failed.start, to: failed.end }
+    : (engineErrorRange(error, expression) ?? { from: 0, to: expression.length });
+  return {
+    ...range,
+    severity: "error",
+    code: "engine",
+    message: text,
+    fixes: [],
+  };
 }
 
 /** A breakdown line's key, followed from its label until the person types their own. */

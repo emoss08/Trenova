@@ -2923,7 +2923,7 @@
   },
   {
    "name": "propose_formula",
-   "description": "Put a formula in front of the person for their editor, with its variables, a plain explanation and two or three sample loads priced by the engine. Nothing is saved: the person inserts it, tests it and saves it themselves.",
+   "description": "Change the formula in the person's editor: the expression, its variables, the charge policy, breakdown lines, and for a new template its name and description. The page applies the change the moment you call this; the person sees it in their editor, can undo it, and nothing is saved until they save. Call it for every change the person asks for — add, remove, fix, rename, set a default, change the minimum — with the whole formula as it should be after the change. Keep everything they did not ask to change exactly as the page draft shows it. Never describe a change without making it.",
    "kind": "query",
    "resource": "formula_template",
    "operation": "read",

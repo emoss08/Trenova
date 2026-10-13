@@ -5,14 +5,12 @@ import { analyzeExpression, inferInputType, keyFromLabel } from "../expression-a
 const known = buildKnownIdentifiers(undefined, [
   { name: "fuelSurchargePercent", type: "Number", description: "", required: false },
 ]);
-const customs = new Set(["fuelSurchargePercent"]);
 
 describe("analyzeExpression", () => {
   it("separates schema reads, input reads and functions, and never counts a let as a read", () => {
     const analysis = analyzeExpression(
       "let linehaul = baseRate * totalDistance;\nmax(linehaul * (1 + fuelSurchargePercent / 100), 250)",
       known,
-      customs,
     );
 
     expect(analysis.errorCount).toBe(0);
@@ -24,14 +22,14 @@ describe("analyzeExpression", () => {
   });
 
   it("reports an unknown name as a problem the studio can turn into an input", () => {
-    const analysis = analyzeExpression("baseRate * weekendFee", known, customs);
+    const analysis = analyzeExpression("baseRate * weekendFee", known);
     expect(analysis.problems).toHaveLength(1);
-    expect(analysis.problems[0]).toMatchObject({ kind: "unknown-variable", name: "weekendFee" });
+    expect(analysis.problems[0]).toMatchObject({ code: "unknown-variable", name: "weekendFee" });
     expect(analysis.errorCount).toBe(1);
   });
 
   it("treats a blank expression as empty with nothing wrong", () => {
-    const analysis = analyzeExpression("   ", known, customs);
+    const analysis = analyzeExpression("   ", known);
     expect(analysis.empty).toBe(true);
     expect(analysis.problems).toEqual([]);
   });

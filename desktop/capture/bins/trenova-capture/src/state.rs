@@ -24,9 +24,11 @@ pub const MESSAGES: usize = 20;
 /// Where the agent stands with the server.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum Connection {
-    /// No server address yet.
+    /// No server address yet, or one nothing answered at.
     #[default]
     NeedsServer,
+    /// An address was given; finding the Trenova at it.
+    Checking,
     SignedOut,
     /// Waiting for the person to approve this computer.
     Pairing {
@@ -136,10 +138,23 @@ pub struct Message {
 
 #[derive(Clone, Debug, Default)]
 pub struct Snapshot {
+    /// The address as entered: what the person opens Trenova at.
     pub server: Option<String>,
+    /// What the server at it calls itself (Trenova Cloud, Trenova), once it
+    /// has answered.
+    pub server_name: Option<String>,
+    /// Many organizations share the server, as on Trenova Cloud.
+    pub server_shared: bool,
+    /// Where its API answers, when that is not the address entered.
+    pub server_api: Option<String>,
+    /// Why the address entered could not be used, until another is tried.
+    pub server_problem: Option<String>,
     pub connection: Connection,
     pub person: Option<String>,
     pub organization: Option<String>,
+    /// This computer as Trenova knows it, once signed in.
+    pub device_name: Option<String>,
+    pub device_id: Option<String>,
     pub web_base: Option<String>,
     pub sources: Vec<SourceInfo>,
     pub profiles: Vec<CaptureProfile>,
@@ -262,7 +277,10 @@ pub enum PrinterAttempt {
 /// What the tray asks the agent to do.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
+    /// Use this server address, from Settings.
     SetServer(String),
+    /// Use this server address and sign in at once, from the first run.
+    Connect(String),
     SignIn,
     CancelSignIn,
     SignOut,

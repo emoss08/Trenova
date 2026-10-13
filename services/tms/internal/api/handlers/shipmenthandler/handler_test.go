@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -200,6 +201,7 @@ type handlerDeps struct {
 	holdService     shipmentports.ShipmentHoldService
 	importAssistant shipmentports.ShipmentImportAssistantService
 	permitService   permitports.PermitService
+	etas            shipmenttrackingports.ShipmentEtaReader
 }
 
 func buildShipmentHandler(t *testing.T, deps handlerDeps) *shipmenthandler.Handler {
@@ -228,6 +230,7 @@ func buildShipmentHandler(t *testing.T, deps handlerDeps) *shipmenthandler.Handl
 		HoldService:          deps.holdService,
 		ImportAssistant:      deps.importAssistant,
 		PermitService:        deps.permitService,
+		Etas:                 deps.etas,
 		ErrorHandler:         errorHandler,
 		PermissionMiddleware: pm,
 		Logger:               logger,

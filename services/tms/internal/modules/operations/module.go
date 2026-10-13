@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentsuggestionrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmenttrackingrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/stopetarepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/tenderrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/trackingeventrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/triagelookuprepository"
@@ -40,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/etatrigger"
 	"github.com/emoss08/trenova/internal/modules/operations/app/globalsearchservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderderivation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
@@ -66,6 +68,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/triageshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/weatheralertservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/jobs/etajobs/etacontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
@@ -138,6 +141,7 @@ func SharedOptions() fx.Option {
 			trackingeventrepository.New,
 			checkcallrepository.New,
 			checkcallrepository.NewTrackingLinks,
+			stopetarepository.New,
 			shipmentmovejurisdictionmilerepository.New,
 			detentionrepository.NewPolicyRepository,
 			detentionrepository.NewOccurrenceRepository,
@@ -217,6 +221,17 @@ func SharedOptions() fx.Option {
 			shipmentsuggestionservice.NewCandidates,
 			shipmentetaservice.New,
 			shipmentetaservice.NewTrackingReader,
+			shipmentetaservice.NewRefresher,
+			etacontract.NewRequester,
+			etatrigger.New,
+			fx.Annotate(
+				func(t *etatrigger.Trigger) shipmenteventports.ShipmentEventObserver { return t },
+				fx.ResultTags(`group:"shipment_event_observers"`),
+			),
+			fx.Annotate(
+				func(t *etatrigger.Trigger) checkcallports.CheckCallObserver { return t },
+				fx.ResultTags(`group:"check_call_observers"`),
+			),
 			shipmentwatchlistservice.New,
 			dispatchcontrolservice.New,
 			func(s *detentionservice.Service) detentionports.DetentionNoticeService { return s },

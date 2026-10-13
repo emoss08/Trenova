@@ -60,17 +60,25 @@ func (s *Snapshot) Facts() []Fact {
 			Stale:  s.Driver.Stale,
 		})
 	}
-	if s.Estimate != nil && s.Estimate.Verdict != VerdictUnknown && s.Position != nil {
+	if s.Estimate != nil && s.Estimate.Verdict != VerdictUnknown &&
+		s.Estimate.EstimatedArrival > 0 {
 		facts = append(facts, Fact{
 			Name: "estimated arrival",
-			Value: fmt.Sprintf("%s at %s, %s; from that position",
+			Value: fmt.Sprintf("%s at %s, %s",
 				s.Estimate.EstimatedArrivalText, s.Estimate.StopLabel, verdictText(s.Estimate)),
-			SeenAt: s.Position.RecordedAt,
-			Stale:  s.Position.Stale,
+			SeenAt: estimateSeenAt(s.Estimate),
+			Stale:  s.Estimate.InputStale,
 		})
 	}
 
 	return facts
+}
+
+func estimateSeenAt(e *ArrivalEstimate) int64 {
+	if e.InputAt > 0 {
+		return e.InputAt
+	}
+	return e.ComputedAt
 }
 
 func nextStopText(stop *StopSnapshot) string {

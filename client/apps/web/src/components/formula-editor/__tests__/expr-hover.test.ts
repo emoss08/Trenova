@@ -9,6 +9,7 @@ describe("findHoveredIdentifier", () => {
       name: "weight",
       from: doc.indexOf("weight"),
       to: doc.indexOf("weight") + "weight".length,
+      isCall: false,
     });
   });
 
@@ -17,8 +18,8 @@ describe("findHoveredIdentifier", () => {
     expect(findHoveredIdentifier(doc, start + 10)?.name).toBe("customer.rate");
   });
 
-  it("ignores function names, operators, and whitespace", () => {
-    expect(findHoveredIdentifier(doc, 2)).toBeNull();
+  it("names a function as a call, and ignores operators and whitespace", () => {
+    expect(findHoveredIdentifier(doc, 2)).toMatchObject({ name: "coalesce", isCall: true });
     expect(findHoveredIdentifier(doc, doc.indexOf("*"))).toBeNull();
     expect(findHoveredIdentifier(doc, doc.indexOf(" +"))).toBeNull();
   });

@@ -23,15 +23,6 @@ import { useStudio, type StudioSection } from "./studio-context";
 
 type MarkerState = "ok" | "warn" | "bad" | "todo";
 
-/** The trace's breakdown colours, one categorical accent per line in turn. */
-export const LINE_ACCENTS = [
-  "bg-accent-indigo",
-  "bg-accent-teal",
-  "bg-accent-amber",
-  "bg-accent-rose",
-  "bg-accent-violet",
-] as const;
-
 function Marker({ state, current }: { state: MarkerState; current: boolean }) {
   return (
     <span
@@ -141,7 +132,7 @@ export function RateTrace({ className }: { className?: string }) {
   const amounts = previewAmounts(result);
   const ok = amounts !== null;
   const empty = analysis.empty;
-  const runtimeError = result && !result.valid ? (result.error ?? result.message) : null;
+  const runtimeError = result && !result.valid;
 
   const reads = ok
     ? (result?.receipt?.variables ?? []).map((variable) => ({
@@ -300,14 +291,7 @@ export function RateTrace({ className }: { className?: string }) {
             ) : empty ? (
               <Note>{t("Write or draft a formula to start the trace.")}</Note>
             ) : (
-              <Note tone="bad">
-                {analysis.errorCount > 0
-                  ? t(
-                      "{0, plural, one {# error in the expression} other {# errors in the expression}}",
-                      analysis.errorCount,
-                    )
-                  : (runtimeError ?? t("Waiting for the preview"))}
-              </Note>
+              <div className="text-foreground-subtle font-mono text-lg tabular-nums">—</div>
             )}
           </Step>
 
@@ -366,36 +350,22 @@ export function RateTrace({ className }: { className?: string }) {
               meta={t("{0, plural, one {# line} other {# lines}}", breakdownCount)}
             >
               {lines.length > 0 && (
-                <>
-                  <div className="bg-sunken flex h-1.5 gap-px overflow-hidden rounded-full">
-                    {lines.map((line, index) => (
-                      <span
-                        key={line.name}
-                        title={`${line.label || line.name} · ${formatMoney(line.amount)}`}
-                        className={LINE_ACCENTS[index % LINE_ACCENTS.length]}
-                        style={{ flexGrow: line.amount }}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    {lines.slice(0, 4).map((line, index) => (
-                      <div key={line.name} className="flex items-center gap-1.5 text-xs">
-                        <span
-                          className={cn(
-                            "size-1.5 shrink-0 rounded-full",
-                            LINE_ACCENTS[index % LINE_ACCENTS.length],
-                          )}
-                        />
-                        <span className="text-foreground-muted min-w-0 flex-1 truncate">
-                          {line.label || line.name}
-                        </span>
-                        <span className="font-mono tabular-nums">
-                          {lineSum > 0 ? Math.round((line.amount / lineSum) * 100) : 0}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </>
+                <div className="flex flex-col gap-0.5">
+                  {lines.slice(0, 4).map((line) => (
+                    <div
+                      key={line.name}
+                      className="flex items-center justify-between gap-2 text-xs"
+                      title={formatMoney(line.amount)}
+                    >
+                      <span className="text-foreground-muted min-w-0 flex-1 truncate">
+                        {line.label || line.name}
+                      </span>
+                      <span className="font-mono tabular-nums">
+                        {lineSum > 0 ? Math.round((line.amount / lineSum) * 100) : 0}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
               )}
               {ok && reconciliation && !reconciliation.balanced && (
                 <Note tone="warn">{t("Lines don't add up to the formula")}</Note>
@@ -455,19 +425,6 @@ export function RateTrace({ className }: { className?: string }) {
                     )}
             </span>
             {total > 0 && (
-              <span className="flex items-center gap-0.5" aria-hidden>
-                {scenarios.scenarios.slice(0, 10).map((scenario) => (
-                  <span
-                    key={scenario.id}
-                    className={cn(
-                      "h-2.5 w-1 rounded-full",
-                      scenarios.runs.get(scenario.id)?.passed ? "bg-success" : "bg-danger",
-                    )}
-                  />
-                ))}
-              </span>
-            )}
-            {total > 0 && (
               <span className="font-mono tabular-nums">
                 {passed}/{total}
               </span>
@@ -483,20 +440,6 @@ export function RateTrace({ className }: { className?: string }) {
             <span className="text-foreground-subtle font-mono text-2xs tabular-nums">
               {checks.length - open.length}/{checks.length}
             </span>
-          </div>
-          <div className="flex h-1 gap-0.5" aria-hidden>
-            {checks.map((check) => (
-              <span
-                key={check.key}
-                title={check.label}
-                className={cn(
-                  "flex-1 rounded-full",
-                  check.status === "pass" && "bg-success",
-                  check.status === "warn" && "bg-warning",
-                  check.status === "fail" && "bg-danger",
-                )}
-              />
-            ))}
           </div>
           {open.length === 0 ? (
             <p className="text-success flex items-center gap-1.5 text-xs">

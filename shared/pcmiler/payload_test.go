@@ -252,3 +252,60 @@ func TestBuildRouteReportsPayloadShape(t *testing.T) {
 		reportTypes[0]["__type"],
 	)
 }
+
+func TestParseMileageResponseReadsTheRoutedDriveTime(t *testing.T) {
+	t.Parallel()
+
+	results := parseMileageResponse([]routeReport{{
+		Type:    "MileageReport:http://pcmiler.alk.com/APIs/v1.0",
+		RouteID: "leg-1",
+		ReportLines: []reportLine{
+			{TMiles: "0.0", THours: "0:00", LHours: "0:00"},
+			{TMiles: "212.4", THours: "3:47", LHours: "3:47"},
+			{TMiles: "301.9", THours: "5:22", LHours: "1:35"},
+		},
+	}})
+
+	if len(results) != 1 {
+		t.Fatalf("expected one route, got %d", len(results))
+	}
+	if results[0].DriveSeconds != 5*3600+22*60 {
+		t.Fatalf("expected the cumulative THours of the last line, got %d", results[0].DriveSeconds)
+	}
+	if results[0].Distance != 301.9 {
+		t.Fatalf("expected 301.9 miles, got %v", results[0].Distance)
+	}
+}
+
+func TestParseHours(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]int64{
+		"3:47":   3*3600 + 47*60,
+		" 12:05": 12*3600 + 5*60,
+		"1.5":    5400,
+		"":       0,
+		"0:00":   0,
+		"2:75":   0,
+		"x:10":   0,
+		"-1:10":  0,
+	}
+	for input, want := range cases {
+		got, ok := parseHours(input)
+		if got != want || ok != (want > 0) {
+			t.Errorf("parseHours(%q) = %d, %v; want %d", input, got, ok, want)
+		}
+	}
+}
+
+func TestDriveSecondsFallsBackToTheLegHours(t *testing.T) {
+	t.Parallel()
+
+	got := driveSecondsFromLines([]reportLine{
+		{LHours: "1:00"},
+		{LHours: "0:30"},
+	})
+	if got != 5400 {
+		t.Fatalf("expected the summed legs, got %d", got)
+	}
+}

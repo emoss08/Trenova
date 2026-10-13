@@ -75,6 +75,9 @@ var DispatchControlColumns = struct {
 	CoverageRiskWindowHours              buncolgen.Column // "coverage_risk_window_hours" → qualified: "dc.coverage_risk_window_hours"
 	EnableCheckCallMonitoring            buncolgen.Column // "enable_check_call_monitoring" → qualified: "dc.enable_check_call_monitoring"
 	CheckCallIntervalHours               buncolgen.Column // "check_call_interval_hours" → qualified: "dc.check_call_interval_hours"
+	EnableEtaAlerts                      buncolgen.Column // "enable_eta_alerts" → qualified: "dc.enable_eta_alerts"
+	EtaRiskThresholdMinutes              buncolgen.Column // "eta_risk_threshold_minutes" → qualified: "dc.eta_risk_threshold_minutes"
+	EtaDwellMinutes                      buncolgen.Column // "eta_dwell_minutes" → qualified: "dc.eta_dwell_minutes"
 	ComplianceEnforcementLevel           buncolgen.Column // "compliance_enforcement_level" → qualified: "dc.compliance_enforcement_level"
 	RecordServiceFailures                buncolgen.Column // "record_service_failures" → qualified: "dc.record_service_failures"
 	ServiceFailureTarget                 buncolgen.Column // "service_failure_target" → qualified: "dc.service_failure_target"
@@ -108,6 +111,9 @@ var DispatchControlColumns = struct {
 	CoverageRiskWindowHours:              buncolgen.NewColumn("coverage_risk_window_hours", "dc"),
 	EnableCheckCallMonitoring:            buncolgen.NewColumn("enable_check_call_monitoring", "dc"),
 	CheckCallIntervalHours:               buncolgen.NewColumn("check_call_interval_hours", "dc"),
+	EnableEtaAlerts:                      buncolgen.NewColumn("enable_eta_alerts", "dc"),
+	EtaRiskThresholdMinutes:              buncolgen.NewColumn("eta_risk_threshold_minutes", "dc"),
+	EtaDwellMinutes:                      buncolgen.NewColumn("eta_dwell_minutes", "dc"),
 	ComplianceEnforcementLevel:           buncolgen.NewColumn("compliance_enforcement_level", "dc"),
 	RecordServiceFailures:                buncolgen.NewColumn("record_service_failures", "dc"),
 	ServiceFailureTarget:                 buncolgen.NewColumn("service_failure_target", "dc"),
@@ -147,6 +153,9 @@ var DispatchControlFieldMap = map[string]string{
 	"coverageRiskWindowHours":              "coverage_risk_window_hours",
 	"enableCheckCallMonitoring":            "enable_check_call_monitoring",
 	"checkCallIntervalHours":               "check_call_interval_hours",
+	"enableEtaAlerts":                      "enable_eta_alerts",
+	"etaRiskThresholdMinutes":              "eta_risk_threshold_minutes",
+	"etaDwellMinutes":                      "eta_dwell_minutes",
 	"complianceEnforcementLevel":           "compliance_enforcement_level",
 	"recordServiceFailures":                "record_service_failures",
 	"serviceFailureTarget":                 "service_failure_target",
@@ -184,6 +193,9 @@ var DispatchControlInsertableColumns = []string{
 	"coverage_risk_window_hours",
 	"enable_check_call_monitoring",
 	"check_call_interval_hours",
+	"enable_eta_alerts",
+	"eta_risk_threshold_minutes",
+	"eta_dwell_minutes",
 	"compliance_enforcement_level",
 	"record_service_failures",
 	"service_failure_target",
@@ -268,6 +280,9 @@ var DispatchControlFilter = struct {
 	CoverageRiskWindowHours              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "coverageRiskWindowHours" → DB: "coverage_risk_window_hours"
 	EnableCheckCallMonitoring            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableCheckCallMonitoring" → DB: "enable_check_call_monitoring"
 	CheckCallIntervalHours               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "checkCallIntervalHours" → DB: "check_call_interval_hours"
+	EnableEtaAlerts                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableEtaAlerts" → DB: "enable_eta_alerts"
+	EtaRiskThresholdMinutes              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "etaRiskThresholdMinutes" → DB: "eta_risk_threshold_minutes"
+	EtaDwellMinutes                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "etaDwellMinutes" → DB: "eta_dwell_minutes"
 	ComplianceEnforcementLevel           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "complianceEnforcementLevel" → DB: "compliance_enforcement_level"
 	RecordServiceFailures                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordServiceFailures" → DB: "record_service_failures"
 	ServiceFailureTarget                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceFailureTarget" → DB: "service_failure_target"
@@ -350,6 +365,15 @@ var DispatchControlFilter = struct {
 	},
 	CheckCallIntervalHours: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("checkCallIntervalHours", op, value)
+	},
+	EnableEtaAlerts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("enableEtaAlerts", op, value)
+	},
+	EtaRiskThresholdMinutes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("etaRiskThresholdMinutes", op, value)
+	},
+	EtaDwellMinutes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("etaDwellMinutes", op, value)
 	},
 	ComplianceEnforcementLevel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("complianceEnforcementLevel", op, value)

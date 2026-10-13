@@ -126,8 +126,10 @@ rewritten every fifteen minutes.
   `ListCheckCallMonitoringTenants`: overdue moves are upserted, the rest resolved.
 - The nightly reconcile reads the same source, which also clears the items of an organization
   that turned monitoring off.
-- A check call resolves its move's item at once: `checkcallservice` calls the agent module's
-  `CheckCallObserver` after commit. A tracking event from telematics or EDI counts as contact
+- A check call resolves its move's item at once: `checkcallservice` calls every
+  `CheckCallObserver` in the `check_call_observers` group after commit, among them the agent
+  module's resolver and the ETA trigger that refreshes the shipment's projected arrivals (see
+  [eta.md](eta.md)). A tracking event from telematics or EDI counts as contact
   too, and its move clears on the next sweep.
 
 ## Changing it

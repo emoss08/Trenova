@@ -1,5 +1,6 @@
 import type { BreakdownReconciliation } from "@/components/formula-editor/breakdown-reconcile";
 import { ExpressionEditor } from "@/components/formula-editor/expression-editor";
+import type { DeclareInput } from "@/components/formula-editor/expr-lint";
 import type { KnownIdentifiers } from "@/components/formula-editor/known-identifiers";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -40,6 +41,8 @@ type BreakdownDefinitionEditorProps = {
   pricing: BreakdownPricing | null;
   /** The section's head, handed the editor's own add so both stay one field array. */
   head?: (controls: { add: () => void; atLimit: boolean }) => ReactNode;
+  /** Declares an unknown name as an input, from a quick fix in a line's editor. */
+  declareInput?: DeclareInput;
 };
 
 function Reconcile({ pricing }: { pricing: BreakdownPricing }) {
@@ -99,6 +102,7 @@ export function BreakdownDefinitionEditor({
   knownIdentifiers,
   pricing,
   head,
+  declareInput,
 }: BreakdownDefinitionEditorProps) {
   const t = useT();
   const { fields, append, remove } = useFieldArray({ control, name: "breakdownDefinitions" });
@@ -192,6 +196,7 @@ export function BreakdownDefinitionEditor({
                 control={control as never}
                 variant="mini"
                 knownIdentifiers={knownIdentifiers}
+                declareInput={declareInput}
                 placeholder="baseRate * totalDistance"
                 aria-label={t("Line expression")}
               />

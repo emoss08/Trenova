@@ -26,9 +26,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -77,6 +79,7 @@ type Params struct {
 	Formulas          formulatemplateports.FormulaTemplateRepository         `optional:"true"`
 	Invoices          invoiceports.InvoiceRepository                         `optional:"true"`
 	Disputes          invoiceports.InvoiceDisputeRepository                  `optional:"true"`
+	StopEtas          stopetaports.Repository                                `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
@@ -106,6 +109,7 @@ type Service struct {
 	formulas          formulatemplateports.FormulaTemplateRepository
 	invoices          invoiceports.InvoiceRepository
 	disputes          invoiceports.InvoiceDisputeRepository
+	stopEtas          stopetaports.Repository
 	logger            *zap.Logger
 }
 
@@ -134,6 +138,7 @@ func New(p Params) agentports.AgentSubjectDescriber {
 		formulas:          p.Formulas,
 		invoices:          p.Invoices,
 		disputes:          p.Disputes,
+		stopEtas:          p.StopEtas,
 		logger:            p.Logger.Named("service.agentsubject"),
 	}
 }
@@ -394,6 +399,7 @@ func (s *Service) shipment(
 	snapshot := shipmenttracking.Build(shipmenttracking.Input{
 		Shipment:    entity,
 		Assignments: assignments,
+		StopETAs:    s.stopEtasFor(ctx, tenant, entity.ID),
 		Now:         timeutils.NowUnix(),
 		Timezone:    "UTC",
 	})
@@ -1233,4 +1239,20 @@ func (s *Service) accountingDriftFinding(
 	})
 
 	return subject, nil
+}
+
+func (s *Service) stopEtasFor(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	shipmentID pulid.ID,
+) map[pulid.ID]*stopeta.StopETA {
+	if s.stopEtas == nil {
+		return nil
+	}
+	rows, err := s.stopEtas.ListByShipmentIDs(ctx, tenant, []pulid.ID{shipmentID})
+	if err != nil {
+		s.logger.Warn("shipment subject: projected arrivals unavailable", zap.Error(err))
+		return nil
+	}
+	return stopeta.IndexByStop(rows)
 }

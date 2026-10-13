@@ -74,11 +74,12 @@ func CreateControls(ctx context.Context, db bun.IDB, scope Scope) error {
 	}
 
 	dispatchControl := &dispatchcontrol.DispatchControl{
-		ID:             pulid.MustNew("dc_"),
-		OrganizationID: scope.OrganizationID,
-		BusinessUnitID: scope.BusinessUnitID,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:              pulid.MustNew("dc_"),
+		OrganizationID:  scope.OrganizationID,
+		BusinessUnitID:  scope.BusinessUnitID,
+		EnableEtaAlerts: true,
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}
 	if _, err := db.NewInsert().Model(dispatchControl).Exec(ctx); err != nil {
 		return fmt.Errorf("create dispatch control: %w", err)

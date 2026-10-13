@@ -10,8 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -47,6 +48,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ShipmentSuggestionQueue", Implementors: []string{"ShipmentSuggestionQueue"}},
 		{Name: "ShipmentUncoveredWatch", Implementors: []string{"ShipmentUncoveredWatch"}},
 		{Name: "ShipmentWatchlist", Implementors: []string{"ShipmentWatchlist"}},
+		{Name: "StopEta", Implementors: []string{"StopEta"}},
 		{Name: "TenderShipmentFailure", Implementors: []string{"TenderShipmentFailure"}},
 		{Name: "TenderShipmentSuccess", Implementors: []string{"TenderShipmentSuccess"}},
 		{Name: "TenderShipmentsResult", Implementors: []string{"TenderShipmentsResult"}},
@@ -1400,6 +1402,15 @@ var Shard = &gqlexec.Shard{
 		}},
 		{Object: "ShipmentEta", Fields: []*gqlexec.Field{
 			{
+				Name:     "stopId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentEta)
+					return obj.StopID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
 				Name:     "estimatedArrival",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -1425,7 +1436,35 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ShipmentEta)
 					return obj.Verdict, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEtaVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋappᚋshipmenttrackingᚐVerdict),
+				Marshal: gqlexec.Marshal(marshalNEtaVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐVerdict),
+			},
+			{
+				Name:     "basis",
+				ChildErr: errNoChild12,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentEta)
+					return obj.Basis, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOStopEtaBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐBasis),
+			},
+			{
+				Name:     "inputStale",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentEta)
+					return obj.InputStale, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "computedAt",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentEta)
+					return obj.ComputedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
 			{
 				Name:     "reason",
@@ -1435,6 +1474,17 @@ var Shard = &gqlexec.Shard{
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:      "stops",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "StopEta",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentEta)
+					return obj.Stops, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNStopEta2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐStopETAᚄ),
 			},
 		}},
 		{Object: "ShipmentQuickFilterCount", Fields: []*gqlexec.Field{
@@ -1463,7 +1513,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stage",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStageSummary)
 					return obj.Stage, nil
@@ -1515,7 +1565,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentSuggestion)
 					return obj.Kind, nil
@@ -1525,7 +1575,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "tone",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentSuggestion)
 					return obj.Tone, nil
@@ -1625,7 +1675,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild15,
+				ChildErr: errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentSuggestionAction)
 					return obj.Type, nil
@@ -1819,6 +1869,222 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNShipmentBillingWatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingWatch),
 			},
 		}},
+		{Object: "StopEta", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "shipmentId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.ShipmentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "shipmentMoveId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.ShipmentMoveID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "stopId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.StopID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "moveSequence",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.MoveSequence, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "stopSequence",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.StopSequence, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "arrived",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.Arrived, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "estimatedArrival",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.EstimatedArrival, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "estimatedDeparture",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.EstimatedDeparture, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "windowEnd",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.WindowEnd, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "slackMinutes",
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.SlackMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "verdict",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.Verdict, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNEtaVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐVerdict),
+			},
+			{
+				Name:     "basis",
+				NonNull:  true,
+				ChildErr: errNoChild12,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.Basis, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNStopEtaBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐBasis),
+			},
+			{
+				Name:     "driveMethod",
+				NonNull:  true,
+				ChildErr: errNoChild17,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.DriveMethod, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNStopEtaDriveMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐDriveMethod),
+			},
+			{
+				Name:     "milesRemaining",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.MilesRemaining, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "driveMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.DriveMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "restMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.RestMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "inputAt",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.InputAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "inputStale",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.InputStale, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "thresholdMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.ThresholdMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "reason",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.Reason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "computedAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*stopeta.StopETA)
+					return obj.ComputedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
 		{Object: "TenderShipmentFailure", Fields: []*gqlexec.Field{
 			{
 				Name:     "shipmentId",
@@ -1909,7 +2175,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "window",
 				NonNull:  true,
-				ChildErr: errNoChild16,
+				ChildErr: errNoChild18,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.UncoveredWindowSummary)
 					return obj.Window, nil
@@ -2004,11 +2270,13 @@ var (
 	errNoChild9  = errors.New("field of type OperationType does not have child fields")
 	errNoChild10 = errors.New("field of type ShipmentQuickFilter does not have child fields")
 	errNoChild11 = errors.New("field of type EtaVerdict does not have child fields")
-	errNoChild12 = errors.New("field of type ShipmentStage does not have child fields")
-	errNoChild13 = errors.New("field of type ShipmentSuggestionKind does not have child fields")
-	errNoChild14 = errors.New("field of type ShipmentSuggestionTone does not have child fields")
-	errNoChild15 = errors.New("field of type ShipmentSuggestionActionType does not have child fields")
-	errNoChild16 = errors.New("field of type UncoveredPickupWindow does not have child fields")
+	errNoChild12 = errors.New("field of type StopEtaBasis does not have child fields")
+	errNoChild13 = errors.New("field of type ShipmentStage does not have child fields")
+	errNoChild14 = errors.New("field of type ShipmentSuggestionKind does not have child fields")
+	errNoChild15 = errors.New("field of type ShipmentSuggestionTone does not have child fields")
+	errNoChild16 = errors.New("field of type ShipmentSuggestionActionType does not have child fields")
+	errNoChild17 = errors.New("field of type StopEtaDriveMethod does not have child fields")
+	errNoChild18 = errors.New("field of type UncoveredPickupWindow does not have child fields")
 )
 
 func field_Mutation_tenderShipments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -2705,7 +2973,7 @@ func marshalNDriverCoverageSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "DriverCoverageSuggestion", v)
 }
 
-func marshalNEtaVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋappᚋshipmenttrackingᚐVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipmenttracking.Verdict) graphql.Marshaler {
+func marshalNEtaVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v stopeta.Verdict) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2721,6 +2989,14 @@ func marshalNFloat2float64(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
+func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalID(v)
 	if res == graphql.Null {
@@ -2731,6 +3007,14 @@ func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 
 func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -2973,6 +3257,38 @@ func marshalNShipmentWatchlist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "ShipmentWatchlist", v)
 }
 
+func marshalNStopEta2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐStopETAᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*stopeta.StopETA) graphql.Marshaler {
+	return gqlexec.List[*stopeta.StopETA]{
+		Elem:        marshalNStopEta2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐStopETA,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNStopEta2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐStopETA(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *stopeta.StopETA) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "StopEta", v)
+}
+
+func marshalNStopEtaBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐBasis(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v stopeta.Basis) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNStopEtaDriveMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐDriveMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v stopeta.DriveMethod) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
@@ -3032,6 +3348,14 @@ func marshalNTenderShipmentsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 
 func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -3115,6 +3439,14 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
+func marshalOInt2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt64(*v)
+	return res
+}
+
 func marshalONextUncoveredPickup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐNextUncoveredPickup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.NextUncoveredPickup) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -3127,6 +3459,19 @@ func marshalOShipmentQuickFilter2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		return graphql.Null
 	}
 	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOStopEtaBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋstopetaᚐBasis(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *stopeta.Basis) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
 	return res
 }
 
@@ -3143,5 +3488,13 @@ func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 		return graphql.Null
 	}
 	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt64(*v)
 	return res
 }

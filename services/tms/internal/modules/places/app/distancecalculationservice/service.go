@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/app/pcmilerruntime"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
@@ -805,45 +806,18 @@ func (s *Service) pcmilerRuntime(
 	control *distancecontrol.DistanceControl,
 	purpose string,
 ) (*pcmiler.Client, pcmiler.RouteOptions, *distanceprofile.DistanceProfile, bool) {
-	tenantInfo := pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	}
-	var profile *distanceprofile.DistanceProfile
-	var err error
-	if control != nil {
-		profileID := control.ProfileIDForPurpose(purpose)
-		profile, err = s.distanceProfileRepo.GetByID(
-			ctx,
-			distanceprofileports.GetDistanceProfileByIDRequest{
-				ID:         profileID,
-				TenantInfo: tenantInfo,
-			},
-		)
-	} else {
-		profile, err = s.distanceProfileRepo.EnsureDefault(ctx, tenantInfo)
-	}
-	if err != nil || profile.Status != distanceprofile.StatusActive {
-		return nil, pcmiler.RouteOptions{}, nil, false
-	}
-
-	cfg, err := s.integrationService.GetRuntimeConfig(ctx, pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	}, integration.TypePCMiler)
-	if err != nil || !cfg.Ready {
-		return nil, profile.RouteOptions(), profile, false
-	}
-
-	pcClient, err := pcmiler.New(pcmiler.Config{
-		APIKey:  cfg.Config["apiKey"],
-		BaseURL: cfg.Config["baseUrl"],
+	runtime := pcmilerruntime.Resolve(ctx, &pcmilerruntime.ResolveParams{
+		Profiles:     s.distanceProfileRepo,
+		Integrations: s.integrationService,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		Control: control,
+		Purpose: purpose,
 	})
-	if err != nil {
-		return nil, profile.RouteOptions(), profile, false
-	}
 
-	return pcClient, profile.RouteOptions(), profile, true
+	return runtime.Client, runtime.Options, runtime.Profile, runtime.Ready
 }
 
 func (s *Service) runtimeForPurpose(

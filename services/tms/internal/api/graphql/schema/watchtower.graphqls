@@ -23,6 +23,7 @@ enum WatchtowerSourceKind {
   AgentQualityRegression
   AccountingSync
   NoCheckCall
+  EtaAtRisk
 }
 
 "How loudly an item asks to be looked at."

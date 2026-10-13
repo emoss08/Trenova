@@ -427,6 +427,8 @@
   "E85 (85% ethanol)": "E85（85% 乙醇）",
   "EDI": "EDI",
   "EFS": "EFS",
+  "ETA risk threshold cannot be negative": "ETA 风险阈值不能为负数",
+  "ETA risk threshold cannot exceed 1440 minutes": "ETA 风险阈值不能超过 1440 分钟",
   "Each PTO type may only have one rule": "每种带薪休假类别仅能设置一条规则",
   "Each employee's own year. Same stacking risk as the calendar year, spread across the roster.": "按每位员工各自的年度计算。与日历年度有相同的叠加风险，只是分散在全体员工中。",
   "Earned but not yet on a settlement — waiting in the unsettled pool.": "已赚得但尚未列入结算 — 仍在未结算池中。",

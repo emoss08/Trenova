@@ -44,7 +44,7 @@ export function DetailsHero() {
               aria-invalid={fieldState.invalid || undefined}
               placeholder={t("Untitled rating method")}
               className={cn(
-                "placeholder:text-foreground-subtle rounded-md px-1.5 py-0.5 text-3xl font-medium md:text-3xl",
+                "placeholder:text-foreground-subtle rounded-md px-1.5 py-0.5 text-2xl font-medium md:text-2xl",
                 fieldState.invalid && "bg-danger-subtle",
               )}
             />
@@ -72,7 +72,7 @@ export function DetailsHero() {
               "When this method applies and how it prices. Reviewers and rate agreement owners read this.",
             )}
             className={cn(
-              "text-foreground-muted placeholder:text-foreground-subtle rounded-md px-1.5 py-0.5 text-base leading-relaxed md:text-base",
+              "text-foreground-muted placeholder:text-foreground-subtle rounded-md px-1.5 py-0.5 text-sm leading-relaxed md:text-sm",
               errors.description && "bg-danger-subtle",
             )}
           />

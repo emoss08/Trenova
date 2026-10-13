@@ -19,7 +19,7 @@ const (
 	FeasibilityVerdictInfeasible = telematics.FeasibilityVerdictInfeasible
 	FeasibilityVerdictUnknown    = telematics.FeasibilityVerdictUnknown
 
-	averageLinehaulMph        = float64(50)
+	averageLinehaulMph        = geoutils.PlanningLinehaulMph
 	feasibilityBufferMs       = int64(30 * 60 * 1000)
 	feasibilityTightMarginMs  = int64(90 * 60 * 1000)
 	feasibilityStaleSeconds   = int64(12 * 3600)

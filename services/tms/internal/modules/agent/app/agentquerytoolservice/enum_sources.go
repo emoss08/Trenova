@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 )
 
 const (
@@ -88,6 +89,10 @@ var (
 	formulaTemplateTypeSource = agenttoolschema.Source(
 		"formula.templateType",
 		[]string{pagedraft.TemplateTypeFreightCharge, pagedraft.TemplateTypeAccessorialCharge},
+	)
+	formulaRoundingModes = agenttoolschema.Source(
+		"formula.roundingMode",
+		ratetypes.AllRoundingModes(),
 	)
 	ratingSides = agenttoolschema.Source(
 		"rating.side",

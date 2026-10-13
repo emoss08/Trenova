@@ -122,6 +122,125 @@ func TestDraft_BoundsEveryText(t *testing.T) {
 	}, got)
 }
 
+func TestFormulaPolicy_IsCheckedOnTheDraftAndTheProposal(t *testing.T) {
+	t.Parallel()
+
+	minCharge, maxCharge, badAmount := "250", "1000", "two fifty"
+	negative, precision, tooPrecise := "-5", 2, 5
+
+	sound := &pagedraft.FormulaPolicy{
+		MinCharge:         &minCharge,
+		MaxCharge:         &maxCharge,
+		RoundingMode:      "HalfEven",
+		RoundingPrecision: &precision,
+	}
+	assert.Empty(t, fieldsOf(t, &pagedraft.Draft{
+		Surface: pagedraft.SurfaceFormula,
+		Formula: &pagedraft.Formula{
+			SchemaID:    "shipment",
+			Name:        "Per mile",
+			Description: "Linehaul by the mile.",
+			Expression:  "totalDistance * perMile",
+			Breakdown: []pagedraft.BreakdownLine{
+				{Name: "linehaul", Label: "Linehaul", Expression: "totalDistance * perMile"},
+			},
+			Policy: sound,
+		},
+	}))
+
+	got := fieldsOf(t, &pagedraft.Draft{
+		Surface: pagedraft.SurfaceFormula,
+		Formula: &pagedraft.Formula{
+			SchemaID:    "shipment",
+			Name:        strings.Repeat("n", pagedraft.MaxTemplateNameLength+1),
+			Description: strings.Repeat("d", pagedraft.MaxVariableTextLength+1),
+			Breakdown: []pagedraft.BreakdownLine{
+				{Name: "_hidden", Label: "", Expression: "1"},
+				{Name: "line", Label: "Line", Expression: ""},
+				{Name: "line", Label: "Again", Expression: "2"},
+			},
+			Policy: &pagedraft.FormulaPolicy{
+				MinCharge:         &badAmount,
+				MaxCharge:         &negative,
+				RoundingMode:      "Nearest",
+				RoundingPrecision: &tooPrecise,
+			},
+		},
+	})
+	assert.ElementsMatch(t, []string{
+		"context.draft.formula.name",
+		"context.draft.formula.description",
+		"context.draft.formula.breakdown[0].name",
+		"context.draft.formula.breakdown[0].label",
+		"context.draft.formula.breakdown[1].expression",
+		"context.draft.formula.breakdown[2].name",
+		"context.draft.formula.policy.minCharge",
+		"context.draft.formula.policy.maxCharge",
+		"context.draft.formula.policy.roundingMode",
+		"context.draft.formula.policy.roundingPrecision",
+	}, got)
+
+	multiErr := errortypes.NewMultiError()
+	(&pagedraft.FormulaDetails{Policy: &pagedraft.FormulaPolicy{
+		MinCharge: &maxCharge,
+		MaxCharge: &minCharge,
+	}}).Validate("", multiErr)
+	require.Len(t, multiErr.Errors, 1)
+	assert.Equal(t, "policy.minCharge", multiErr.Errors[0].Field,
+		"a minimum above the maximum is refused once, on the minimum")
+
+	multiErr = errortypes.NewMultiError()
+	(&pagedraft.FormulaDetails{Policy: &pagedraft.FormulaPolicy{RoundingMode: "None"}}).
+		Validate("", multiErr)
+	assert.False(t, multiErr.HasErrors(), "every rounding mode the engine knows is accepted")
+}
+
+func TestFormulaPolicy_ResolvesToWhatTheEngineApplies(t *testing.T) {
+	t.Parallel()
+
+	var none *pagedraft.FormulaPolicy
+	two := 2
+	assert.Equal(t, &pagedraft.FormulaPolicy{RoundingMode: "HalfUp", RoundingPrecision: &two},
+		none.Resolved(), "no policy is the default rounding and no bounds")
+
+	minCharge, zero := " 250.00 ", 0
+	resolved := (&pagedraft.FormulaPolicy{
+		MinCharge:         &minCharge,
+		RoundingMode:      "Up",
+		RoundingPrecision: &zero,
+	}).Resolved()
+	require.NotNil(t, resolved.MinCharge)
+	assert.Equal(t, "250", *resolved.MinCharge)
+	assert.Nil(t, resolved.MaxCharge)
+	assert.Equal(t, "Up", resolved.RoundingMode)
+	require.NotNil(t, resolved.RoundingPrecision)
+	assert.Equal(t, 0, *resolved.RoundingPrecision, "zero places next to a chosen mode is kept")
+
+	charge := (&pagedraft.FormulaPolicy{MaxCharge: &minCharge}).ChargePolicy()
+	assert.False(t, charge.MinCharge.Valid)
+	assert.True(t, charge.MaxCharge.Valid)
+	assert.Equal(t, "250", charge.MaxCharge.Decimal.String())
+	assert.Equal(t, "HalfUp", charge.RoundingMode.String())
+	assert.Equal(t, int32(2), charge.RoundingPrecision)
+
+	normalized := (&pagedraft.Draft{
+		Surface: pagedraft.SurfaceFormula,
+		Formula: &pagedraft.Formula{
+			SchemaID: "shipment",
+			Name:     " Per mile ",
+			Breakdown: []pagedraft.BreakdownLine{
+				{Name: " linehaul ", Label: " Linehaul ", Expression: " totalDistance "},
+			},
+			Policy: &pagedraft.FormulaPolicy{MinCharge: &minCharge, RoundingMode: " Down "},
+		},
+	}).Normalized()
+	assert.Equal(t, "Per mile", normalized.Formula.Name)
+	assert.Equal(t, "linehaul", normalized.Formula.Breakdown[0].Name)
+	assert.Equal(t, "250.00", *normalized.Formula.Policy.MinCharge)
+	assert.Equal(t, "Down", normalized.Formula.Policy.RoundingMode)
+	assert.Nil(t, normalized.Formula.Policy.RoundingPrecision)
+}
+
 func TestImportStop_HasSchedule(t *testing.T) {
 	t.Parallel()
 

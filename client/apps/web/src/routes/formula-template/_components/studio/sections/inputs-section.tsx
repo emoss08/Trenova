@@ -20,7 +20,7 @@ import type {
 } from "@trenova/shared/types/formula-template";
 import { PlusIcon, Trash01Icon, VariableIcon } from "@trenova/shared/components/icons";
 import { useMutation } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { NovaButton } from "../ai/nova-button";
@@ -30,14 +30,14 @@ import { SectionHead } from "./section-head";
 
 const INPUT_TYPES: readonly VariableValueType[] = ["Number", "String", "Boolean"];
 
-function Tag({ tone, children }: { tone: "neutral" | "danger"; children: string }) {
+function Tag({ tone, children }: { tone: "neutral" | "danger" | "warning"; children: string }) {
   return (
     <span
       className={cn(
         "shrink-0 rounded-full px-1.5 text-2xs",
-        tone === "danger"
-          ? "bg-danger-subtle text-danger-subtle-foreground"
-          : "bg-surface-hover text-foreground-muted",
+        tone === "danger" && "bg-danger-subtle text-danger-subtle-foreground",
+        tone === "warning" && "bg-warning-subtle text-warning-subtle-foreground",
+        tone === "neutral" && "bg-surface-hover text-foreground-muted",
       )}
     >
       {children}
@@ -58,7 +58,7 @@ function defaultText(value: unknown): string {
  */
 export function InputsSection() {
   const t = useT();
-  const { known, analysis, draftContent } = useStudio();
+  const { known, analysis, draftContent, focusInput, clearFocusInput } = useStudio();
   const form = useFormContext<FormulaTemplateFormValues>();
   const { control } = form;
   const { fields, append, remove } = useFieldArray({ control, name: "variableDefinitions" });
@@ -96,6 +96,19 @@ export function InputsSection() {
 
   const add = () =>
     append({ name: "", type: "Number", description: "", required: false, defaultValue: undefined });
+
+  // An input declared from the editor lands with its default ready to type,
+  // the one thing it still needs.
+  const rowsRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!focusInput || !rowsRef.current) return;
+    const row = rowsRef.current.querySelector<HTMLElement>(`[data-input="${focusInput}"]`);
+    if (!row) return;
+    const target = row.querySelector<HTMLElement>("[data-default]") ?? row;
+    target.focus();
+    row.classList.add("fs-settle");
+    clearFocusInput();
+  }, [focusInput, clearFocusInput, fields.length]);
 
   return (
     <section className="flex flex-col gap-3">
@@ -135,7 +148,7 @@ export function InputsSection() {
           </Button>
         </div>
       ) : (
-        <div className="bg-card overflow-hidden rounded-lg border">
+        <div ref={rowsRef} className="bg-card overflow-hidden rounded-lg border">
           <div className="bg-sunken text-foreground-subtle grid grid-cols-[minmax(0,1.6fr)_7rem_minmax(0,1fr)_4.5rem_1.75rem] items-center gap-2 border-b px-3 py-1.5 text-xs font-medium">
             <span>{t("Name")}</span>
             <span>{t("Type")}</span>
@@ -151,9 +164,17 @@ export function InputsSection() {
               name !== "" &&
               (schemaNames.has(name) ||
                 variables.filter((other) => other.name === name).length > 1);
+            const noDefault =
+              name !== "" &&
+              variable.type !== "Boolean" &&
+              !variable.required &&
+              (variable.defaultValue === undefined ||
+                variable.defaultValue === null ||
+                variable.defaultValue === "");
             return (
               <div
                 key={field.id}
+                data-input={name || undefined}
                 className="flex flex-col gap-1 border-b px-3 py-2 last:border-b-0"
               >
                 <div className="grid grid-cols-[minmax(0,1.6fr)_7rem_minmax(0,1fr)_4.5rem_1.75rem] items-center gap-2">
@@ -177,8 +198,9 @@ export function InputsSection() {
                         />
                       )}
                     />
-                    {unused && <Tag tone="neutral">{t("unused")}</Tag>}
+                    {unused && <Tag tone="neutral">{t("not read")}</Tag>}
                     {taken && <Tag tone="danger">{t("name taken")}</Tag>}
+                    {noDefault && !taken && <Tag tone="warning">{t("needs a default")}</Tag>}
                   </div>
                   <Controller
                     control={control}
@@ -231,6 +253,7 @@ export function InputsSection() {
                         </span>
                       ) : (
                         <Input
+                          data-default
                           value={defaultText(defaultField.value)}
                           onBlur={defaultField.onBlur}
                           onChange={(event) =>

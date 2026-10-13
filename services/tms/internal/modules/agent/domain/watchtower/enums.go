@@ -27,6 +27,7 @@ const (
 	SourceAgentQualityRegression = SourceKind("AgentQualityRegression")
 	SourceAccountingSync         = SourceKind("AccountingSync")
 	SourceNoCheckCall            = SourceKind("NoCheckCall")
+	SourceEtaAtRisk              = SourceKind("EtaAtRisk")
 )
 
 // readResources is the permission a reader needs to be shown items of each
@@ -52,6 +53,7 @@ var readResources = map[SourceKind]permission.Resource{
 	SourceAgentQualityRegression: permission.ResourceAgentEvalSuite,
 	SourceAccountingSync:         permission.ResourceAccountingSync,
 	SourceNoCheckCall:            permission.ResourceShipmentMove,
+	SourceEtaAtRisk:              permission.ResourceShipment,
 }
 
 func (k SourceKind) IsValid() bool {
@@ -108,6 +110,8 @@ func (k SourceKind) Label() string {
 		return "Accounting sync"
 	case SourceNoCheckCall:
 		return "No check call"
+	case SourceEtaAtRisk:
+		return "ETA at risk"
 	default:
 		return string(k)
 	}
@@ -134,6 +138,7 @@ func AllSourceKinds() []SourceKind {
 		SourceAgentQualityRegression,
 		SourceAccountingSync,
 		SourceNoCheckCall,
+		SourceEtaAtRisk,
 	}
 }
 
@@ -194,7 +199,8 @@ func (k SourceKind) OverseesAgents() bool {
 		SourceMoveCoverage,
 		SourceTelematicsStopVisit,
 		SourceAccountingSync,
-		SourceNoCheckCall:
+		SourceNoCheckCall,
+		SourceEtaAtRisk:
 		return false
 	default:
 		return false

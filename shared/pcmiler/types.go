@@ -59,6 +59,7 @@ type JurisdictionDistance struct {
 type RouteMileage struct {
 	RouteID               string
 	Distance              float64
+	DriveSeconds          int64
 	DataVersion           string
 	Warnings              []string
 	RawSummary            map[string]any
