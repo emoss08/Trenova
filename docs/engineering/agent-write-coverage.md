@@ -86,7 +86,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 80 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 268 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 271 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 94 |
@@ -97,14 +97,14 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1091 writes: 582 GraphQL mutations and 509 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1094 writes: 582 GraphQL mutations and 512 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 389 |
-| Exempt | 670 |
+| Exempt | 673 |
 | — Security | 80 |
-| — Configuration | 268 |
+| — Configuration | 271 |
 | — User preference | 38 |
 | — Infrastructure | 52 |
 | — Agent administration | 94 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 46 |
 | — Duplicate | 8 |
 | **Pending** | **32** |
-| Total | 1091 |
+| Total | 1094 |
 
 Of the 421 writes an agent should be able to make, 389 have a tool (92%).
 
@@ -230,6 +230,7 @@ The writes no tool performs yet, and what the tool would do.
 | extractioneval | 5 | 0 | 5 | 0 |
 | extractionrollout | 1 | 0 | 1 | 0 |
 | extractionshadow | 1 | 0 | 1 | 0 |
+| factoringcompany | 3 | 0 | 3 | 0 |
 | fiscalperiod | 9 | 5 | 4 | 0 |
 | fiscalyear | 7 | 0 | 7 | 0 |
 | fleetcode | 3 | 0 | 3 | 0 |
@@ -1186,6 +1187,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation updateExtractionShadowSettings` | Exempt, agent-administration: Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against. |
+
+### factoringcompany
+
+| Write | Decision |
+| --- | --- |
+| `PATCH /api/v1/factoring-companies/:factoringCompanyID/`<br>factoringcompanyhandler.patch | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
+| `POST /api/v1/factoring-companies/`<br>factoringcompanyhandler.create | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
+| `PUT /api/v1/factoring-companies/:factoringCompanyID/`<br>factoringcompanyhandler.update | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
 
 ### fiscalperiod
 

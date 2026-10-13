@@ -1,5 +1,5 @@
 {
-  "version": "sha256:25ef24f5987e57bc113d163ba2b6601cf0638cac16b1897ee57694166fdf633f",
+  "version": "sha256:d14d4af9a27b87633556348cbd2913aa4d301dabc7acd48eef33ce6443551136",
   "modules": [
     {
       "id": "home",
@@ -6864,6 +6864,88 @@
       "covers": [],
       "createAction": {
         "label": "New document type",
+        "query": {
+          "panelType": "create"
+        }
+      },
+      "inNavigation": true
+    },
+    {
+      "path": "/billing/configuration-files/factoring-companies",
+      "name": "Factoring companies",
+      "module": "billing",
+      "breadcrumb": [
+        "Billing management",
+        "Configuration files",
+        "Factoring companies"
+      ],
+      "description": "The factors your receivables are sold to. Customers assigned to one are invoiced with its remit-to and notice of assignment.",
+      "summary": "Factoring companies lists the factors you sell receivables to. Each one holds the factor's **Code**, **Name** and remit-to address, how customers pay it (**Remittance instructions**) and the **Notice of assignment** printed on every invoice assigned to it.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.",
+      "requires": [
+        {
+          "resource": "factoring_company",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "factor",
+        "factoring",
+        "factored invoices",
+        "notice of assignment",
+        "remit to factor",
+        "invoice factoring"
+      ],
+      "tasks": [
+        {
+          "title": "Add a factoring company",
+          "keywords": [
+            "new factor",
+            "add factor",
+            "factoring agreement"
+          ],
+          "steps": [
+            "Open [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "Select **New factoring company**.",
+            "Fill in **Code**, **Name** and the remit-to address (**Address line 1**, **City**, **State**, **Postal code**), and optionally **Email** and **Phone**.",
+            "Fill in **Remittance instructions** with the factor's bank, lockbox or ACH details.",
+            "Optionally enter the **Notice of assignment** your agreement requires, then select **Save**."
+          ]
+        },
+        {
+          "title": "Factor a customer's invoices",
+          "keywords": [
+            "assign customer to factor",
+            "factored customer",
+            "notice of assignment"
+          ],
+          "steps": [
+            "Open [Customers](/billing/configuration-files/customers) and select the customer's row.",
+            "Open the **Billing profile** tab.",
+            "Under **Factoring**, choose the **Factoring company**, then select **Save**."
+          ]
+        },
+        {
+          "title": "Stop factoring a customer",
+          "keywords": [
+            "unassign factor",
+            "end factoring"
+          ],
+          "steps": [
+            "Open [Customers](/billing/configuration-files/customers) and select the customer's row.",
+            "Open the **Billing profile** tab.",
+            "Clear the **Factoring company**, then select **Save**."
+          ]
+        }
+      ],
+      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.",
+      "related": [
+        "/billing/configuration-files/customers",
+        "/billing/invoices"
+      ],
+      "covers": [],
+      "createAction": {
+        "label": "New factoring company",
         "query": {
           "panelType": "create"
         }
