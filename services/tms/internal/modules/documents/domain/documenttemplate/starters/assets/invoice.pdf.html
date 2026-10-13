@@ -36,6 +36,13 @@
   </div>
 </section>
 
+{{ if .NoticeOfAssignment }}
+<section class="assignment">
+  <h2>{{ t "Notice of assignment" }}</h2>
+  <p>{{ .NoticeOfAssignment }}</p>
+</section>
+{{ end }}
+
 {{ if not .ShipmentRows }}
 <section class="parties">
   <div class="party">

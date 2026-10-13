@@ -25,7 +25,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -74,6 +76,7 @@ type Params struct {
 	EmailService    emailports.EmailService
 	Templates       documenttemplateports.DocumentTemplateResolver
 	Inliner         documenttemplateports.AssetInliner
+	Factors         factoringcompanyports.FactoringCompanyRepository
 	Logger          *zap.Logger
 }
 
@@ -89,6 +92,7 @@ type Service struct {
 	emailService    emailports.EmailService
 	templates       documenttemplateports.DocumentTemplateResolver
 	inliner         documenttemplateports.AssetInliner
+	factors         factoringcompanyports.FactoringCompanyRepository
 	l               *zap.Logger
 }
 
@@ -108,6 +112,7 @@ func New(p Params) *Service {
 		emailService:    p.EmailService,
 		templates:       p.Templates,
 		inliner:         p.Inliner,
+		factors:         p.Factors,
 		l:               p.Logger.Named("service.customer-statement"),
 	}
 }
@@ -130,6 +135,9 @@ type prepared struct {
 	pastDue   int64
 	fileName  string
 	document  *documenttemplateports.RenderedDocument
+	// factor is who the customer's invoices are assigned to, nil when they
+	// are not factored.
+	factor *factoringcompany.FactoringCompany
 }
 
 // Render draws up a customer's statement as a PDF.
@@ -346,6 +354,9 @@ func (s *Service) prepare(
 		currency:  cus.BillingCurrencyCode(),
 		pastDue:   pastDueOf(statement.Aging),
 	}
+	if out.factor, err = s.factorOf(ctx, from.tenant, cus); err != nil {
+		return nil, err
+	}
 	statementDate := timeutils.FormatUnixDateIn(period.End, from.org.Timezone)
 	out.fileName = fileutils.SanitizeDisplayFilename(
 		"Statement-"+customerLabel(cus)+"-"+statementDate+".pdf",
@@ -515,6 +526,27 @@ func (s *Service) recordDocument(
 		s.l.Warn("could not record the generated customer statement",
 			zap.String("statementId", record.ID.String()), zap.Error(err))
 	}
+}
+
+// factorOf is the factor the customer's invoices are assigned to now.
+func (s *Service) factorOf(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	cus *customer.Customer,
+) (*factoringcompany.FactoringCompany, error) {
+	if s.factors == nil || cus.BillingProfile == nil || cus.BillingProfile.FactoringCompanyID == nil ||
+		cus.BillingProfile.FactoringCompanyID.IsNil() {
+		return nil, nil
+	}
+	factor, err := s.factors.GetByID(ctx, factoringcompanyports.GetFactoringCompanyByIDRequest{
+		ID:           *cus.BillingProfile.FactoringCompanyID,
+		TenantInfo:   tenantInfo,
+		IncludeState: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return factor, nil
 }
 
 func (s *Service) issuerFor(

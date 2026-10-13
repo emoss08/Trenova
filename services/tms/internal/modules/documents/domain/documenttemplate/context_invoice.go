@@ -63,6 +63,10 @@ type InvoiceContext struct {
 	InvoiceFooter string
 	Notes         []string
 	Attachments   []string
+
+	// NoticeOfAssignment is set when the invoice is assigned to a factor:
+	// RemitTo is then the factor, and the notice must be printed.
+	NoticeOfAssignment string
 }
 
 // AddressBlock is a named party with its address lines and any extra detail.
@@ -138,6 +142,8 @@ type InvoiceEmailContext struct {
 	ShipmentServiceDate string
 
 	RemittanceInstructions string
+	// NoticeOfAssignment is set when the invoice is assigned to a factor.
+	NoticeOfAssignment string
 
 	// PartLabel is set when a large invoice is split across messages, so the
 	// template can say "2 of 3" rather than sending three identical-looking emails.
@@ -517,6 +523,7 @@ func (r *Registry) registerBillingKinds() {
 				Type:        VariableStringList,
 				Description: "Filenames of the documents accompanying this invoice.",
 			},
+			noticeOfAssignmentVariable(),
 		},
 	})
 
@@ -562,8 +569,9 @@ func (r *Registry) registerBillingKinds() {
 			{
 				Path:        "RemittanceInstructions",
 				Type:        VariableString,
-				Description: "How to pay, from the invoice.",
+				Description: "How to pay, from the invoice. For an invoice assigned to a factor, the factor's name, address and payment details.",
 			},
+			noticeOfAssignmentVariable(),
 			{
 				Path:        "PartLabel",
 				Type:        VariableString,

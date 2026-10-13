@@ -54,6 +54,7 @@ const DEFAULT_VALUES: Customer = {
     autoSendInvoiceOnGeneration: true,
     sendPaymentReminders: true,
     sendStatements: true,
+    factoringCompanyId: null,
     emailInvoiceEnabled: true,
     ediInvoiceEnabled: false,
     splitBy: "Customer",

@@ -45,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/extractionevalcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/extractionrolloutcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/extractionshadowcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
@@ -364,6 +365,8 @@ var ExtractionRolloutSpec TypeSpec
 var ExtractionShadowResultSpec TypeSpec
 
 var ExtractionShadowSettingsSpec TypeSpec
+
+var FactoringCompanySpec TypeSpec
 
 var FiscalPeriodSpec TypeSpec
 
@@ -8999,6 +9002,10 @@ func init() {
 				FieldMapKey: "fuelSurchargeProgramId",
 			},
 			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
 				Name:    "documentTypes",
 				Special: "documentTypes",
 			},
@@ -13470,6 +13477,100 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	FactoringCompanySpec = TypeSpec{
+		TypeName: "FactoringCompany",
+		FieldMap: factoringcompanycol.FactoringCompanyFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "addressLine1",
+				FieldMapKey: "addressLine1",
+			},
+			{
+				Name:        "addressLine2",
+				FieldMapKey: "addressLine2",
+			},
+			{
+				Name:        "city",
+				FieldMapKey: "city",
+			},
+			{
+				Name:        "stateId",
+				FieldMapKey: "stateId",
+			},
+			{
+				Name:        "postalCode",
+				FieldMapKey: "postalCode",
+			},
+			{
+				Name:        "email",
+				FieldMapKey: "email",
+			},
+			{
+				Name:        "phoneNumber",
+				FieldMapKey: "phoneNumber",
+			},
+			{
+				Name:        "remittanceInstructions",
+				FieldMapKey: "remittanceInstructions",
+			},
+			{
+				Name:        "noticeOfAssignment",
+				FieldMapKey: "noticeOfAssignment",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "state",
+				FieldMapKey: "stateId",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
 			},
 		},
 	}

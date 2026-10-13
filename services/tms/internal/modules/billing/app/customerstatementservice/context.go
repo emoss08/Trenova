@@ -37,7 +37,7 @@ func pdfContext(from *issuer, p *prepared, note string) *documenttemplate.Custom
 			Name:  p.customer.DisplayName(),
 			Lines: p.customer.MailingAddress().Lines(),
 		},
-		RemitTo:        remitTo(from),
+		RemitTo:        remitTo(from, p),
 		LogoDataURI:    from.logo,
 		OpeningBalance: format(st.OpeningBalanceMinor),
 		TotalCharges:   format(st.TotalChargesMinor),
@@ -51,10 +51,11 @@ func pdfContext(from *issuer, p *prepared, note string) *documenttemplate.Custom
 			Days61To90: format(st.Aging.Days61To90Minor),
 			Over90:     format(st.Aging.DaysOver90Minor),
 		},
-		Transactions:  make([]documenttemplate.StatementTransaction, 0, len(st.Transactions)),
-		OpenItems:     make([]documenttemplate.StatementOpenItem, 0, len(st.OpenItems)),
-		Note:          note,
-		InvoiceFooter: invoiceFooter(from.control),
+		Transactions:       make([]documenttemplate.StatementTransaction, 0, len(st.Transactions)),
+		OpenItems:          make([]documenttemplate.StatementOpenItem, 0, len(st.OpenItems)),
+		Note:               note,
+		InvoiceFooter:      invoiceFooter(from.control),
+		NoticeOfAssignment: p.factor.Notice(),
 	}
 	for _, txn := range st.Transactions {
 		if txn == nil {
@@ -111,18 +112,30 @@ func emailContext(
 		PastDue:                pastDue,
 		OpenItemCount:          len(p.statement.OpenItems),
 		IsMonthly:              d.monthly,
-		RemittanceInstructions: remittanceInstructions(from.control),
+		RemittanceInstructions: statementRemittance(from, p),
 		Note:                   d.note,
 		AttachmentName:         p.fileName,
 	}
 }
 
-// remitTo is the organization's address with the remittance instructions
-// from billing control beneath it, as the invoice prints it.
-func remitTo(from *issuer) documenttemplate.AddressBlock {
+// remitTo is where the statement says to pay: the factor when the
+// customer's invoices are assigned to one, otherwise the organization with
+// the remittance instructions from billing control beneath it, as the
+// invoice prints it.
+func remitTo(from *issuer, p *prepared) documenttemplate.AddressBlock {
+	if p.factor != nil {
+		return documenttemplate.AddressBlock{Name: p.factor.Name, Lines: p.factor.RemitLines()}
+	}
 	lines := from.org.MailingAddress().Lines()
 	lines = append(lines, stringutils.FilterEmpty(strings.Split(remittanceInstructions(from.control), "\n"))...)
 	return documenttemplate.AddressBlock{Name: from.org.Name, Lines: lines}
+}
+
+func statementRemittance(from *issuer, p *prepared) string {
+	if p.factor != nil {
+		return p.factor.RemittanceText()
+	}
+	return remittanceInstructions(from.control)
 }
 
 func remittanceInstructions(control *tenant.BillingControl) string {

@@ -749,6 +749,17 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
+            path: "/billing/configuration-files/factoring-companies",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FactoringCompany),
+            ),
+            async lazy() {
+              const { FactoringCompaniesPage } = await import("@/routes/factoring-company/page");
+              return { Component: FactoringCompaniesPage };
+            },
+          },
+          {
             path: "/billing/configuration-files/document-types",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.DocumentType)),
             async lazy() {

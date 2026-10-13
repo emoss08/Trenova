@@ -197,6 +197,8 @@ type CustomerBillingProfile {
   billingNotes: String!
   fuelSurchargeMode: CustomerFuelSurchargeMode!
   fuelSurchargeProgramId: ID
+  "The factor this customer's invoices are assigned to; null when they are not factored."
+  factoringCompanyId: ID
   documentTypes: [DocumentType!]
   version: Int!
   createdAt: Timestamp!

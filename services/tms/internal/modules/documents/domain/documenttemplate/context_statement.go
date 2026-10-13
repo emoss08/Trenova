@@ -34,6 +34,9 @@ type CustomerStatementContext struct {
 
 	Note          string
 	InvoiceFooter string
+	// NoticeOfAssignment is set when the customer's invoices are assigned to
+	// a factor; RemitTo is then the factor.
+	NoticeOfAssignment string
 }
 
 // StatementAging is what is open, by how late it is.
@@ -169,9 +172,10 @@ func newCustomerStatementSampleContext() any {
 				Disputed:      false,
 			},
 		},
-		TotalOpen:     "USD 4,102.36",
-		Note:          "",
-		InvoiceFooter: "Thank you for your business.",
+		TotalOpen:          "USD 4,102.36",
+		Note:               "",
+		InvoiceFooter:      "Thank you for your business.",
+		NoticeOfAssignment: "",
 	}
 }
 
@@ -279,7 +283,7 @@ func (r *Registry) registerCustomerStatementKinds() {
 			{
 				Path:        "RemitTo",
 				Type:        VariableObject,
-				Description: "Where payment should be sent, with the remittance instructions from billing control.",
+				Description: "Where payment should be sent: the factor when the customer's invoices are assigned to one, otherwise your organization with the remittance instructions from billing control.",
 				Fields:      addressBlockFields(),
 			},
 			logoVariable(),
@@ -350,6 +354,7 @@ func (r *Registry) registerCustomerStatementKinds() {
 				Type:        VariableString,
 				Description: "The footer text from the organization's billing settings.",
 			},
+			noticeOfAssignmentVariable(),
 		},
 	})
 

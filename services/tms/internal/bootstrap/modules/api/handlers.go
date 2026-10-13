@@ -57,6 +57,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/exchangeratehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/factoringcompanyhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcodehandler"
@@ -231,6 +232,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	locationhandler.New,
 	documenttypehandler.New,
 	holdreasonhandler.New,
+	factoringcompanyhandler.New,
 	recurringshipmenthandler.New,
 	detentionpolicyhandler.New,
 	rateagreementhandler.New,

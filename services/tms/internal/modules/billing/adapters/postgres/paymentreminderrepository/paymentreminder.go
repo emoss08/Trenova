@@ -55,6 +55,7 @@ const overdueInvoicesSQL = `
 		AND inv.total_amount_minor > inv.applied_amount_minor
 		AND inv.due_date IS NOT NULL
 		AND inv.due_date < ?
+		AND inv.factoring_company_id IS NULL
 		%s
 	ORDER BY inv.customer_id, inv.due_date, inv.number`
 
@@ -72,6 +73,7 @@ type overdueRecord struct {
 
 // ListOverdueInvoices reads every posted invoice past due with money open,
 // oldest first within each customer, with the scheduled step it last drew.
+// Invoices assigned to a factor are left out: the factor collects them.
 func (r *repository) ListOverdueInvoices(
 	ctx context.Context,
 	req paymentreminderports.ListOverdueInvoicesRequest,

@@ -60,6 +60,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/extractionevalresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/extractionrolloutresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/extractionshadowresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/factoringcompanyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalyearresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fleetsafetyresolver"
@@ -677,6 +678,10 @@ func FromServices(s *Services) *Resolver {
 		Core:                    s.Core,
 		ExtractionShadowService: s.ExtractionShadowService,
 	}
+	factoringcompanyDeps := &factoringcompanyresolver.Deps{
+		Core:                    s.Core,
+		FactoringCompanyService: s.FactoringCompanyService,
+	}
 	fiscalyearDeps := &fiscalyearresolver.Deps{
 		Core:              s.Core,
 		FiscalYearService: s.FiscalYearService,
@@ -852,6 +857,7 @@ func FromServices(s *Services) *Resolver {
 		CommodityService:             s.CommodityService,
 		FleetCodeService:             s.FleetCodeService,
 		HazardousMaterialService:     s.HazardousMaterialService,
+		FactoringCompanyRepo:         s.FactoringCompanyRepo,
 		LocationService:              s.LocationService,
 		LocationCategoryService:      s.LocationCategoryService,
 		DocumentTypeService:          s.DocumentTypeService,
@@ -1381,6 +1387,7 @@ func FromServices(s *Services) *Resolver {
 			extractionevalQuery:           &extractionevalQuery{Deps: extractionevalDeps},
 			extractionrolloutQuery:        &extractionrolloutQuery{Deps: extractionrolloutDeps},
 			extractionshadowQuery:         &extractionshadowQuery{Deps: extractionshadowDeps},
+			factoringcompanyQuery:         &factoringcompanyQuery{Deps: factoringcompanyDeps},
 			fiscalyearQuery:               &fiscalyearQuery{Deps: fiscalyearDeps},
 			fleetcodeQuery:                &fleetcodeQuery{Deps: fleetcodeDeps},
 			fleetsafetyQuery:              &fleetsafetyQuery{Deps: fleetsafetyDeps},
@@ -2428,6 +2435,7 @@ type queryResolver struct {
 	*extractionevalQuery
 	*extractionrolloutQuery
 	*extractionshadowQuery
+	*factoringcompanyQuery
 	*fiscalyearQuery
 	*fleetcodeQuery
 	*fleetsafetyQuery
@@ -2900,6 +2908,7 @@ type (
 	extractionevalQuery             = extractionevalresolver.QueryResolver
 	extractionrolloutQuery          = extractionrolloutresolver.QueryResolver
 	extractionshadowQuery           = extractionshadowresolver.QueryResolver
+	factoringcompanyQuery           = factoringcompanyresolver.QueryResolver
 	fiscalyearQuery                 = fiscalyearresolver.QueryResolver
 	fleetcodeQuery                  = fleetcoderesolver.QueryResolver
 	fleetsafetyQuery                = fleetsafetyresolver.QueryResolver

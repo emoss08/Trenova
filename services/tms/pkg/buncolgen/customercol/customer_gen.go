@@ -441,6 +441,7 @@ var CustomerBillingProfileColumns = struct {
 	BillingNotes                    buncolgen.Column // "billing_notes" → qualified: "cbp.billing_notes"
 	FuelSurchargeMode               buncolgen.Column // "fuel_surcharge_mode" → qualified: "cbp.fuel_surcharge_mode"
 	FuelSurchargeProgramID          buncolgen.Column // "fuel_surcharge_program_id" → qualified: "cbp.fuel_surcharge_program_id"
+	FactoringCompanyID              buncolgen.Column // "factoring_company_id" → qualified: "cbp.factoring_company_id"
 	Version                         buncolgen.Column // "version" → qualified: "cbp.version"
 	CreatedAt                       buncolgen.Column // "created_at" → qualified: "cbp.created_at"
 	UpdatedAt                       buncolgen.Column // "updated_at" → qualified: "cbp.updated_at"
@@ -501,6 +502,7 @@ var CustomerBillingProfileColumns = struct {
 	BillingNotes:                    buncolgen.NewColumn("billing_notes", "cbp"),
 	FuelSurchargeMode:               buncolgen.NewColumn("fuel_surcharge_mode", "cbp"),
 	FuelSurchargeProgramID:          buncolgen.NewColumn("fuel_surcharge_program_id", "cbp"),
+	FactoringCompanyID:              buncolgen.NewColumn("factoring_company_id", "cbp"),
 	Version:                         buncolgen.NewColumn("version", "cbp"),
 	CreatedAt:                       buncolgen.NewColumn("created_at", "cbp"),
 	UpdatedAt:                       buncolgen.NewColumn("updated_at", "cbp"),
@@ -567,6 +569,7 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"billingNotes":                    "billing_notes",
 	"fuelSurchargeMode":               "fuel_surcharge_mode",
 	"fuelSurchargeProgramId":          "fuel_surcharge_program_id",
+	"factoringCompanyId":              "factoring_company_id",
 	"version":                         "version",
 	"createdAt":                       "created_at",
 	"updatedAt":                       "updated_at",
@@ -631,6 +634,7 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"billing_notes",
 	"fuel_surcharge_mode",
 	"fuel_surcharge_program_id",
+	"factoring_company_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -648,6 +652,7 @@ var CustomerBillingProfileRelations = struct {
 	RevenueAccount       string
 	ARAccount            string
 	FuelSurchargeProgram string
+	FactoringCompany     string
 }{
 	BusinessUnit:         "BusinessUnit",
 	Organization:         "Organization",
@@ -655,6 +660,7 @@ var CustomerBillingProfileRelations = struct {
 	RevenueAccount:       "RevenueAccount",
 	ARAccount:            "ARAccount",
 	FuelSurchargeProgram: "FuelSurchargeProgram",
+	FactoringCompany:     "FactoringCompany",
 }
 
 // CustomerBillingProfileScopeTenant restricts a query to a single tenant by adding:
@@ -763,6 +769,7 @@ var CustomerBillingProfileFilter = struct {
 	BillingNotes                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingNotes" → DB: "billing_notes"
 	FuelSurchargeMode               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeMode" → DB: "fuel_surcharge_mode"
 	FuelSurchargeProgramID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeProgramId" → DB: "fuel_surcharge_program_id"
+	FactoringCompanyID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringCompanyId" → DB: "factoring_company_id"
 	Version                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -934,6 +941,9 @@ var CustomerBillingProfileFilter = struct {
 	},
 	FuelSurchargeProgramID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("fuelSurchargeProgramId", op, value)
+	},
+	FactoringCompanyID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("factoringCompanyId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)

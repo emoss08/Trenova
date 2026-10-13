@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   DocumentTypeMultiSelectField,
+  FactoringCompanyAutocompleteField,
   FuelSurchargeProgramAutocompleteField,
   GLAccountAutocompleteField,
   UserAutocompleteField,
@@ -566,6 +567,27 @@ export function CustomerBillingProfileForm() {
               />
             </FormControl>
           )}
+        </FormGroup>
+      </FormSection>
+      <FormSection
+        title={t("Factoring")}
+        description={t(
+          "Assign this customer's invoices to a factoring company you sell your receivables to",
+        )}
+      >
+        <FormGroup cols={1}>
+          <FormControl className="min-h-[3em] max-w-[400px]">
+            <FactoringCompanyAutocompleteField
+              control={control}
+              name="billingProfile.factoringCompanyId"
+              label={t("Factoring company")}
+              placeholder={t("Not factored")}
+              clearable
+              description={t(
+                "Invoices posted from now on are remitted to this factor, print its notice of assignment, and are left out of payment reminders. Invoices already posted keep the factor they were posted with.",
+              )}
+            />
+          </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection

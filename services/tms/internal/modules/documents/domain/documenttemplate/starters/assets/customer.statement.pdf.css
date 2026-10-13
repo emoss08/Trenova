@@ -311,3 +311,18 @@ h2 {
 .closing p {
   margin: 0 0 4px;
 }
+
+.assignment {
+  margin-top: 14px;
+  padding: 8px 10px;
+  border: 1.5px solid #111827;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.assignment p {
+  margin: 0;
+  font-size: 8.5pt;
+  font-weight: 600;
+  white-space: pre-line;
+}

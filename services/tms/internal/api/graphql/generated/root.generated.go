@@ -63,6 +63,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionevalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionrolloutexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionshadowexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/factoringcompanyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalperiodexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalyearexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetcodeexec"
@@ -218,6 +219,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
@@ -2638,6 +2640,8 @@ type QueryResolver interface {
 	ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*extractionshadowports.ExtractionShadowReport, error)
 	ExtractionShadowResults(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionShadowResultConnection, error)
 	ExtractionShadowResult(ctx context.Context, id string) (*extractionshadow.ShadowResult, error)
+	FactoringCompanies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FactoringCompanyConnection, error)
+	FactoringCompany(ctx context.Context, id string) (*factoringcompany.FactoringCompany, error)
 	FiscalYears(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalYearConnection, error)
 	FiscalYear(ctx context.Context, id string) (*fiscalyear.FiscalYear, error)
 	FleetCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FleetCodeConnection, error)
@@ -3410,6 +3414,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		extractionevalexec.Shard,
 		extractionrolloutexec.Shard,
 		extractionshadowexec.Shard,
+		factoringcompanyexec.Shard,
 		fiscalperiodexec.Shard,
 		fiscalyearexec.Shard,
 		fleetcodeexec.Shard,
@@ -13374,6 +13379,8 @@ type CustomerBillingProfile {
   billingNotes: String!
   fuelSurchargeMode: CustomerFuelSurchargeMode!
   fuelSurchargeProgramId: ID
+  "The factor this customer's invoices are assigned to; null when they are not factored."
+  factoringCompanyId: ID
   documentTypes: [DocumentType!]
   version: Int!
   createdAt: Timestamp!
@@ -19074,6 +19081,48 @@ extend type Query {
 extend type Mutation {
   "Chooses the candidate provider that shadows production document extraction, and how much of it."
   updateExtractionShadowSettings(input: UpdateExtractionShadowSettingsInput!): ExtractionShadowSettings!
+}
+`, BuiltIn: false},
+	{Name: "../schema/factoring_company.graphqls", Input: `"A factor an organization sells its receivables to. Customers assigned to it are invoiced with its remit-to and notice of assignment."
+type FactoringCompany {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  status: EntityStatus!
+  code: String!
+  name: String!
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  stateId: ID!
+  postalCode: String!
+  email: String
+  phoneNumber: String
+  "How the factor is paid: bank, lockbox or ACH details printed under its address."
+  remittanceInstructions: String
+  "The notice printed on assigned invoices. Blank prints the standard notice."
+  noticeOfAssignment: String
+  notes: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  state: UsState
+}
+
+type FactoringCompanyEdge {
+  node: FactoringCompany!
+  cursor: String!
+}
+
+type FactoringCompanyConnection {
+  edges: [FactoringCompanyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  factoringCompanies(input: DataTableConnectionInput!): FactoringCompanyConnection!
+  factoringCompany(id: ID!): FactoringCompany
 }
 `, BuiltIn: false},
 	{Name: "../schema/fiscal_period.graphqls", Input: `enum PeriodType {
@@ -25850,6 +25899,7 @@ extend type Query {
   EDI_TRANSFER
   EQUIPMENT_MANUFACTURER
   EQUIPMENT_TYPE
+  FACTORING_COMPANY
   FLEET_CODE
   FORMULA_TEMPLATE
   FISCAL_PERIOD

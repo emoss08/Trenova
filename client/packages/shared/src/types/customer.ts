@@ -112,6 +112,7 @@ export const customerBillingProfileSchema = z
     autoSendInvoiceOnGeneration: z.boolean().default(true),
     sendPaymentReminders: z.boolean().default(true),
     sendStatements: z.boolean().default(true),
+    factoringCompanyId: nullableStringSchema,
     emailInvoiceEnabled: z.boolean().default(true),
     ediInvoiceEnabled: z.boolean().default(false),
     splitBy: invoiceSplitKeySchema.default("Customer"),

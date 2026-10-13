@@ -269,11 +269,13 @@ modules:
       - carriercapacity
       - carrierintel
       - customer
+      - factoringcompany
     service:
       - carriercapacityservice
       - carrierintelservice
       - carrierservice
       - customerservice
+      - factoringcompanyservice
     job:
       - carrierintelligencejobs
     repository:
@@ -281,6 +283,7 @@ modules:
       - carrierintelrepository
       - carrierrepository
       - customerrepository
+      - factoringcompanyrepository
   workforce:
     level: 5
     domain:

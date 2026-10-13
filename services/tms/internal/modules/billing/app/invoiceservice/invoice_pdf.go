@@ -55,6 +55,10 @@ type invoicePDFData struct {
 	InvoiceFooter string
 	Notes         []string
 	Attachments   []string
+
+	// NoticeOfAssignment is printed on an invoice assigned to a factor, and
+	// blank otherwise.
+	NoticeOfAssignment string
 }
 
 type invoicePDFAddressBlock struct {
@@ -154,6 +158,10 @@ func buildInvoicePDFData(
 	}
 
 	applyInvoicePDFFreight(&data, entity, shp, summaries)
+	if deliveryProfile != nil && deliveryProfile.Factor != nil {
+		data.RemitTo = factorRemitPDFAddressBlock(deliveryProfile.Factor)
+		data.NoticeOfAssignment = deliveryProfile.Factor.Notice()
+	}
 
 	return data
 }

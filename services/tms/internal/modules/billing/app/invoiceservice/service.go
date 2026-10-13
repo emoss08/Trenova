@@ -4,12 +4,12 @@ package invoiceservice
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingcontrolpolicyservice"
@@ -39,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -72,6 +73,7 @@ type Params struct {
 	OrderRepo            orderports.OrderRepository
 	CustomerRepo         customerports.CustomerRepository
 	OrganizationRepo     tenantports.OrganizationRepository
+	FactoringRepo        factoringcompanyports.FactoringCompanyRepository
 	DocumentTypeRepo     documenttypeports.DocumentTypeRepository
 	CustomerLedgerRepo   customerledgerports.CustomerLedgerProjectionRepository
 	BillingRepo          tenantports.BillingControlRepository
@@ -119,6 +121,7 @@ type Service struct {
 	orderRepo            orderports.OrderRepository
 	customerRepo         customerports.CustomerRepository
 	organizationRepo     tenantports.OrganizationRepository
+	factoringRepo        factoringcompanyports.FactoringCompanyRepository
 	documentTypeRepo     documenttypeports.DocumentTypeRepository
 	customerLedgerRepo   customerledgerports.CustomerLedgerProjectionRepository
 	billingRepo          tenantports.BillingControlRepository
@@ -198,6 +201,7 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		orderRepo:                   p.OrderRepo,
 		customerRepo:                p.CustomerRepo,
 		organizationRepo:            p.OrganizationRepo,
+		factoringRepo:               p.FactoringRepo,
 		documentTypeRepo:            p.DocumentTypeRepo,
 		customerLedgerRepo:          p.CustomerLedgerRepo,
 		billingRepo:                 p.BillingRepo,

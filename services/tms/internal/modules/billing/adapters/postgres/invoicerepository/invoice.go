@@ -196,6 +196,7 @@ func (r *repository) GetByID(
 			Where("inv.business_unit_id = ?", req.TenantInfo.BuID).
 			Relation("Customer").
 			Relation("ShipperCustomer").
+			Relation("FactoringCompany").
 			Relation("Shipment").
 			Relation("BillingQueueItem").
 			Relation("PDFDocument").
@@ -663,6 +664,7 @@ func (r *repository) Update(
 			Set("last_send_warning = ?", entity.LastSendWarning).
 			Set("memo = ?", entity.Memo).
 			Set("remittance_instructions = ?", entity.RemittanceInstructions).
+			Set("factoring_company_id = ?", entity.FactoringCompanyID).
 			Set("email_subject_snapshot = ?", entity.EmailSubjectSnapshot).
 			Set("email_body_snapshot = ?", entity.EmailBodySnapshot).
 			Set("email_to_snapshot = ?", pgdialect.Array(entity.EmailToSnapshot)).

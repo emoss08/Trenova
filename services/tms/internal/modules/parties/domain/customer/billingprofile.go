@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -100,8 +101,9 @@ type CustomerBillingProfile struct {
 	BillingNotes                    string            `json:"billingNotes"                    bun:"billing_notes,type:TEXT,nullzero"`
 	FuelSurchargeMode               FuelSurchargeMode `json:"fuelSurchargeMode"               bun:"fuel_surcharge_mode,type:customer_fuel_surcharge_mode_enum,notnull,default:'None'"`
 	FuelSurchargeProgramID          *pulid.ID         `json:"fuelSurchargeProgramId"          bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero"`
-	// UseFactoring                bool                 `json:"useFactoring"                bun:"use_factoring,type:BOOLEAN,notnull,default:false"`
-	// FactoringCompanyID          *pulid.ID            `json:"factoringCompanyId"          bun:"factoring_company_id,type:VARCHAR(100),nullzero"`
+	// FactoringCompanyID names the factor this customer's invoices are
+	// assigned to: they post remitted to it, with its notice of assignment.
+	FactoringCompanyID *pulid.ID `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -115,7 +117,7 @@ type CustomerBillingProfile struct {
 	ARAccount            *glaccount.GLAccount                `json:"arAccount"                      bun:"rel:belongs-to,join:ar_account_id=id"`
 	DocumentTypes        []*documenttype.DocumentType        `json:"documentTypes"                  bun:"m2m:customer_billing_profile_document_types,join:BillingProfile=DocumentType"`
 	FuelSurchargeProgram *fuelsurcharge.FuelSurchargeProgram `json:"fuelSurchargeProgram,omitempty" bun:"rel:belongs-to,join:fuel_surcharge_program_id=id"`
-	// FactoringCompany     *FactoringCompany            `json:"factoringCompany" bun:"rel:belongs-to,join:factoring_company_id=id"`
+	FactoringCompany     *factoringcompany.FactoringCompany  `json:"factoringCompany,omitempty"     bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }
 
 func (b *CustomerBillingProfile) GetID() string {

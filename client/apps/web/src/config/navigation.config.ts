@@ -597,6 +597,13 @@ const billingModule: NavModule = {
           resource: Resource.Customer,
         },
         {
+          id: "factoring-companies",
+          label: "Factoring companies",
+          path: "/billing/configuration-files/factoring-companies",
+          keywords: ["factor", "factoring", "notice of assignment", "remit to"],
+          resource: Resource.FactoringCompany,
+        },
+        {
           id: "document-types",
           label: "Document types",
           path: "/billing/configuration-files/document-types",
@@ -1169,6 +1176,16 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["customer"],
+    },
+    {
+      id: "create-factoring-company",
+      label: "New factoring company",
+      description: "Add a factor your receivables are sold to",
+      path: "/billing/configuration-files/factoring-companies",
+      resource: Resource.FactoringCompany,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["factor", "factoring"],
     },
     {
       id: "create-document-type",

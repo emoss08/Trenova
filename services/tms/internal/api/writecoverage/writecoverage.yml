@@ -1701,6 +1701,17 @@ writes:
     exempt: configuration
     reason: "Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them."
 
+  # factoringcompany
+  "PATCH /api/v1/factoring-companies/:factoringCompanyID/":
+    exempt: configuration
+    reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
+  "POST /api/v1/factoring-companies/":
+    exempt: configuration
+    reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
+  "PUT /api/v1/factoring-companies/:factoringCompanyID/":
+    exempt: configuration
+    reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
+
   # holdreason
   "PATCH /api/v1/hold-reasons/:holdReasonID/":
     exempt: configuration

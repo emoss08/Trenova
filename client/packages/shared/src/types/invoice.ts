@@ -406,6 +406,14 @@ export const generateInvoicePdfResultSchema = z.object({
 });
 export type GenerateInvoicePdfResult = z.infer<typeof generateInvoicePdfResultSchema>;
 
+/** The factor an invoice is assigned to, as an invoice carries it. */
+export const invoiceFactorSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  name: z.string(),
+  remittanceInstructions: nullableStringSchema,
+});
+
 export const invoiceSchema = z.object({
   ...tenantInfoSchema.shape,
   id: z.string(),
@@ -453,6 +461,9 @@ export const invoiceSchema = z.object({
   /** The customer who ordered the freight when somebody else is billed for it. */
   shipperCustomerId: nullableStringSchema,
   shipperCustomer: customerSchema.nullish().transform((value) => value ?? undefined),
+  /** The factoring company the invoice was assigned to when it posted. */
+  factoringCompanyId: nullableStringSchema,
+  factoringCompany: invoiceFactorSchema.nullish().transform((value) => value ?? undefined),
   /** Whether this invoice bills only part of what its shipments charged. */
   isSplitBill: z.boolean().default(false),
   subtotalAmount: decimalStringSchema,

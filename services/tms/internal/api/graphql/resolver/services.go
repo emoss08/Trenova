@@ -86,8 +86,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/factoringcompanyservice"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/internal/modules/places/app/distanceoverrideservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/distanceprofileservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
@@ -205,6 +207,8 @@ type Params struct {
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HazmatSegregationRuleService *hazmatsegregationruleservice.Service
 	HoldReasonService            *holdreasonservice.Service
+	FactoringCompanyService      *factoringcompanyservice.Service
+	FactoringCompanyRepo         factoringcompanyports.FactoringCompanyRepository
 	JurisdictionRuleService      jurisdictionruleports.JurisdictionRuleService
 	JurisdictionRuleRepo         permitports.JurisdictionRuleRepository
 	RecurringShipmentService     *recurringshipmentservice.Service
@@ -418,6 +422,8 @@ type Services struct {
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HazmatSegregationRuleService *hazmatsegregationruleservice.Service
 	HoldReasonService            *holdreasonservice.Service
+	FactoringCompanyService      *factoringcompanyservice.Service
+	FactoringCompanyRepo         factoringcompanyports.FactoringCompanyRepository
 	JurisdictionRuleService      jurisdictionruleports.JurisdictionRuleService
 	JurisdictionRuleRepo         permitports.JurisdictionRuleRepository
 	RecurringShipmentService     *recurringshipmentservice.Service
@@ -636,6 +642,8 @@ func newServices(p *Params) *Services {
 		HazardousMaterialService:     p.HazardousMaterialService,
 		HazmatSegregationRuleService: p.HazmatSegregationRuleService,
 		HoldReasonService:            p.HoldReasonService,
+		FactoringCompanyService:      p.FactoringCompanyService,
+		FactoringCompanyRepo:         p.FactoringCompanyRepo,
 		JurisdictionRuleService:      p.JurisdictionRuleService,
 		JurisdictionRuleRepo:         p.JurisdictionRuleRepo,
 		RecurringShipmentService:     p.RecurringShipmentService,

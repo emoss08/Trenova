@@ -80,6 +80,23 @@ export function InvoiceOverviewTab({
               </div>
             </div>
 
+            {invoice.factoringCompany ? (
+              <div className="bg-card rounded-lg border p-3">
+                <SectionLabel>{t("Factored")}</SectionLabel>
+                <div className="mt-1.5">
+                  <p className="text-sm font-medium">{invoice.factoringCompany.name}</p>
+                  <p className="text-2xs text-muted-foreground mt-0.5">
+                    {invoice.factoringCompany.code}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {t(
+                      "Assigned to this factor when it posted. The invoice is remitted to the factor and carries its notice of assignment.",
+                    )}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
             <InvoiceArContextSection invoice={invoice} />
 
             {invoice.scope === "Memo" ? <MemoDetailsCard invoice={invoice} /> : null}

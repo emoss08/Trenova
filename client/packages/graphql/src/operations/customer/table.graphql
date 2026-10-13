@@ -19,6 +19,7 @@ fragment CustomerBillingProfileFields on CustomerBillingProfile {
   autoSendInvoiceOnGeneration
   sendPaymentReminders
   sendStatements
+  factoringCompanyId
   creditHoldAutomatic
   creditReviewedAt
   emailInvoiceEnabled
