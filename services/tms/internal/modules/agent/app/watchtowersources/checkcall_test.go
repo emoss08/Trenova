@@ -139,8 +139,8 @@ func TestNoCheckCallObserver_ResolvesTheMoveItem(t *testing.T) {
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	moveID := pulid.MustNew("smv_")
 
-	observer.CheckCallRecorded(t.Context(), tenant, moveID)
-	observer.CheckCallRecorded(t.Context(), tenant, pulid.Nil)
+	observer.CheckCallRecorded(t.Context(), tenant, pulid.MustNew("shp_"), moveID)
+	observer.CheckCallRecorded(t.Context(), tenant, pulid.MustNew("shp_"), pulid.Nil)
 
 	require.Len(t, projector.resolved, 1)
 	assert.Equal(t, resolveCall{

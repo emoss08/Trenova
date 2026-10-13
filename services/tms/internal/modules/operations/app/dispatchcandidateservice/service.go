@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	averageLinehaulMph = 50.0
+	averageLinehaulMph = geoutils.PlanningLinehaulMph
 
 	roadCircuityFactor = 1.2
 

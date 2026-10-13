@@ -227,6 +227,30 @@ export function CustomerForm() {
       </FormSection>
 
       <FormSection
+        title={t("Arrival projections")}
+        description={t(
+          "How much slack under a stop's window counts as at risk for this customer's loads",
+        )}
+      >
+        <FormGroup cols={2}>
+          <FormControl>
+            <NumberField
+              control={control}
+              name="etaRiskThresholdMinutes"
+              label={t("At-risk threshold")}
+              placeholder={t("Organization default")}
+              description={t(
+                "From 0 to 1440 minutes. Leave empty to use the threshold set in dispatch controls.",
+              )}
+              sideText="minutes"
+              min={0}
+              max={1440}
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
+
+      <FormSection
         title={t("Shipment consolidation")}
         description={t(
           "Control whether multiple shipments for this customer can share trailer space",

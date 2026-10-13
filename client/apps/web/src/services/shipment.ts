@@ -46,6 +46,7 @@ import {
   shipmentBillingReadinessSchema,
   shipmentCreateSchema,
   shipmentDistanceResponseSchema,
+  shipmentEtaSchema,
   shipmentSchema,
   shipmentTotalsResponseSchema,
   shipmentUIPolicySchema,
@@ -203,6 +204,14 @@ export class ShipmentService {
   public async getBillingReadiness(shipmentId: Shipment["id"]) {
     const response = await getShipmentBillingReadinessGraphQL(shipmentId);
     return safeParse(shipmentBillingReadinessSchema, response, "Shipment Billing Readiness");
+  }
+
+  public async getEta(
+    shipmentId: NonNullable<Shipment["id"]>,
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const response = await api.get<unknown>(`/shipments/${shipmentId}/eta/`, { signal });
+    return safeParse(shipmentEtaSchema, response, "Shipment ETA");
   }
 
   public async getPermitAssessment(shipmentId: NonNullable<Shipment["id"]>) {

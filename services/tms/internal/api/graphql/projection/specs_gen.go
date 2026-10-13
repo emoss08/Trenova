@@ -85,6 +85,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmenteventcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmenttypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/stopetacol"
 	"github.com/emoss08/trenova/pkg/buncolgen/storedmileagecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/tablechangealertcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/tableconfigurationcol"
@@ -583,6 +584,8 @@ var ShipmentCommodityDetailSpec TypeSpec
 
 var ShipmentCustomerSpec TypeSpec
 
+var ShipmentEtaSpec TypeSpec
+
 var ShipmentFormulaTemplateSpec TypeSpec
 
 var ShipmentHoldEventSpec TypeSpec
@@ -602,6 +605,8 @@ var ShipmentStopSpec TypeSpec
 var ShipmentTenderEventSpec TypeSpec
 
 var ShipmentTypeSpec TypeSpec
+
+var StopEtaSpec TypeSpec
 
 var StoredMileageSpec TypeSpec
 
@@ -23199,6 +23204,52 @@ func init() {
 		},
 	}
 
+	ShipmentEtaSpec = TypeSpec{
+		TypeName: "ShipmentEta",
+		FieldMap: stopetacol.StopETAFieldMap,
+		AlwaysColumns: []string{
+			"id",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "stopId",
+				FieldMapKey: "stopId",
+			},
+			{
+				Name:        "estimatedArrival",
+				FieldMapKey: "estimatedArrival",
+			},
+			{
+				Name:        "slackMinutes",
+				FieldMapKey: "slackMinutes",
+			},
+			{
+				Name:        "verdict",
+				FieldMapKey: "verdict",
+			},
+			{
+				Name:        "basis",
+				FieldMapKey: "basis",
+			},
+			{
+				Name:        "inputStale",
+				FieldMapKey: "inputStale",
+			},
+			{
+				Name:        "computedAt",
+				FieldMapKey: "computedAt",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:    "stops",
+				Special: "stops",
+			},
+		},
+	}
+
 	ShipmentFormulaTemplateSpec = TypeSpec{
 		TypeName: "ShipmentFormulaTemplate",
 		FieldMap: formulatemplatecol.FormulaTemplateFieldMap,
@@ -24109,6 +24160,104 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
+			},
+		},
+	}
+
+	StopEtaSpec = TypeSpec{
+		TypeName: "StopEta",
+		FieldMap: stopetacol.StopETAFieldMap,
+		AlwaysColumns: []string{
+			"id",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "stopId",
+				FieldMapKey: "stopId",
+			},
+			{
+				Name:        "moveSequence",
+				FieldMapKey: "moveSequence",
+			},
+			{
+				Name:        "stopSequence",
+				FieldMapKey: "stopSequence",
+			},
+			{
+				Name:        "arrived",
+				FieldMapKey: "arrived",
+			},
+			{
+				Name:        "estimatedArrival",
+				FieldMapKey: "estimatedArrival",
+			},
+			{
+				Name:        "estimatedDeparture",
+				FieldMapKey: "estimatedDeparture",
+			},
+			{
+				Name:        "windowEnd",
+				FieldMapKey: "windowEnd",
+			},
+			{
+				Name:        "slackMinutes",
+				FieldMapKey: "slackMinutes",
+			},
+			{
+				Name:        "verdict",
+				FieldMapKey: "verdict",
+			},
+			{
+				Name:        "basis",
+				FieldMapKey: "basis",
+			},
+			{
+				Name:        "driveMethod",
+				FieldMapKey: "driveMethod",
+			},
+			{
+				Name:        "milesRemaining",
+				FieldMapKey: "milesRemaining",
+			},
+			{
+				Name:        "driveMinutes",
+				FieldMapKey: "driveMinutes",
+			},
+			{
+				Name:        "restMinutes",
+				FieldMapKey: "restMinutes",
+			},
+			{
+				Name:        "inputAt",
+				FieldMapKey: "inputAt",
+			},
+			{
+				Name:        "inputStale",
+				FieldMapKey: "inputStale",
+			},
+			{
+				Name:        "thresholdMinutes",
+				FieldMapKey: "thresholdMinutes",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "computedAt",
+				FieldMapKey: "computedAt",
 			},
 		},
 	}

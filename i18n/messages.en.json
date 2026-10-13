@@ -6015,6 +6015,15 @@
       "apps/web/lib"
     ]
   },
+  "A load projected to arrive with less slack than the threshold raises an ETA at risk item; one projected past its window is critical.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "A load was taken off your schedule.": {
     "sites": 1,
     "scope": [
@@ -9288,6 +9297,24 @@
     "areas": [
       "go/other",
       "routes/desk"
+    ]
+  },
+  "A stop ETA belongs to another organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A stop ETA names a shipment outside the refresh": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A stop no longer on this shipment": {
@@ -26993,6 +27020,16 @@
       "apps/web/hooks"
     ]
   },
+  "Arrival projections": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer",
+      "routes/dispatch-control"
+    ]
+  },
   "Arrival recorded": {
     "sites": 2,
     "scope": [
@@ -29786,6 +29823,15 @@
       "routes/agent-control"
     ]
   },
+  "At most %d shipments can be refreshed at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "At most 10 agents can be compared at once": {
     "sites": 1,
     "scope": [
@@ -30004,12 +30050,13 @@
     ]
   },
   "At risk": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
@@ -30081,6 +30128,16 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "At-risk threshold": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer",
+      "routes/dispatch-control"
     ]
   },
   "Atlanta": {
@@ -34080,6 +34137,15 @@
     "areas": [
       "routes/late-charges",
       "routes/shipment"
+    ]
+  },
+  "Basis is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Batch": {
@@ -38191,7 +38257,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 136,
+    "sites": 137,
     "scope": [
       "go"
     ],
@@ -42283,6 +42349,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Carrier's estimate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Carrier-defined component — describe it so drivers recognize it.": {
     "sites": 1,
     "scope": [
@@ -45280,6 +45355,15 @@
     ],
     "areas": [
       "routes/dispatch-control"
+    ]
+  },
+  "Check call position": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Check call window": {
@@ -52922,6 +53006,15 @@
     "areas": [
       "apps/web/components",
       "packages/shared/types"
+    ]
+  },
+  "Computed time is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Computed {0}": {
@@ -76601,6 +76694,24 @@
       "routes/dispatch-console"
     ]
   },
+  "Drive method is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Drive minutes cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Drive one carrier tender through dispatch, expiry, and response": {
     "sites": 1,
     "scope": [
@@ -79881,6 +79992,24 @@
       "routes/shipment"
     ]
   },
+  "ETA Risk Threshold Minutes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "ETA at risk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "ETA out-of-route": {
     "sites": 1,
     "scope": [
@@ -79890,8 +80019,37 @@
       "routes/admin"
     ]
   },
+  "ETA risk threshold cannot be negative": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "packages/shared/types"
+    ]
+  },
+  "ETA risk threshold cannot exceed 1440 minutes": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "packages/shared/types"
+    ]
+  },
+  "ETA risk threshold must be between 0 and 1440 minutes": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "ETA {0}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -84630,7 +84788,25 @@
       "routes/dispatch-control"
     ]
   },
+  "Enter how long a stop takes once the truck is there": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Enter how many hours a load may go without a check call": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Enter how many minutes of slack count as at risk": {
     "sites": 1,
     "scope": [
       "ts"
@@ -88019,6 +88195,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Every open stop on an active shipment carries a projected arrival, worked out from the truck's position, the carrier's check calls or the last departure, with routed drive time and the driver's hours.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Every open title has at least one person in it.": {
@@ -100632,6 +100817,15 @@
       "routes/org-structure"
     ]
   },
+  "From 0 to 1440 minutes. Leave empty to use the threshold set in dispatch controls.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "From 1 to 28, so the day falls in every month. Statements are dated the last day of the month before.": {
     "sites": 1,
     "scope": [
@@ -100937,6 +101131,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "From: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Front escort": {
@@ -108233,6 +108436,15 @@
       "routes/jurisdiction-rule"
     ]
   },
+  "How long a stop takes once the truck is there, used to chain later stops, from 0 to 720 minutes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "How long a worker has once the course is assigned. 0 = no due date.": {
     "sites": 1,
     "scope": [
@@ -108540,6 +108752,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "How much slack under a stop's window counts as at risk for this customer's loads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "How much the % of charge goes up from one band to the next.": {
@@ -111744,6 +111965,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Includes {0} of rest for hours of service": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Income Statement": {
@@ -120843,6 +121073,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Last departure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Last error": {
@@ -134084,6 +134323,15 @@
       "apps/web/components"
     ]
   },
+  "Miles remaining cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Miles the return could not place, and everything the computation flagged while it ran.": {
     "sites": 1,
     "scope": [
@@ -136657,7 +136905,7 @@
     ]
   },
   "Move is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -143617,6 +143865,15 @@
       "routes/accounting-drift"
     ]
   },
+  "No drive": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "No driver expenses yet": {
     "sites": 1,
     "scope": [
@@ -146205,6 +146462,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "No projection": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "No proposal is expected.": {
@@ -152346,6 +152612,15 @@
       "routes/inbox"
     ]
   },
+  "Nothing to estimate from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Nothing to file: every page is set aside": {
     "sites": 1,
     "scope": [
@@ -155527,12 +155802,13 @@
     ]
   },
   "On time": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "routes/desk"
     ]
   },
@@ -162213,7 +162489,7 @@
     ]
   },
   "Organization default": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -162272,7 +162548,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 135,
+    "sites": 136,
     "scope": [
       "go"
     ],
@@ -173204,6 +173480,15 @@
       "go/other"
     ]
   },
+  "Planning speed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Plans": {
     "sites": 1,
     "scope": [
@@ -178065,6 +178350,15 @@
       "apps/web/types"
     ]
   },
+  "Projected late": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Promise": {
     "sites": 2,
     "scope": [
@@ -181505,6 +181799,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Raise at-risk loads in the watchtower": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Raise it": {
@@ -185431,6 +185734,15 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "Reason cannot be longer than 500 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Reason cannot exceed 2000 characters": {
@@ -193613,6 +193925,15 @@
       "routes/hazardous-material"
     ]
   },
+  "Reported by the carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Reported mileage compared with peers of the same fleet size.": {
     "sites": 1,
     "scope": [
@@ -196541,6 +196862,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Rest minutes cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Rest of day": {
@@ -199637,6 +199967,15 @@
       "routes/admin"
     ]
   },
+  "Risk threshold must be between 0 and 1440 minutes": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Risk unknown": {
     "sites": 1,
     "scope": [
@@ -200683,6 +201022,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Routed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Routed miles are captured from every completed move automatically. A manual entry is for travel the system did not see, such as bobtailing to a shop or repositioning between customers, and is added to the jurisdiction's line on the quarter's return at its next recompute. Manual miles are never subtracted, so do not enter miles a move already carries unless the entry names that move.": {
@@ -216969,7 +217317,7 @@
     ]
   },
   "Shipment is required": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "go"
     ],
@@ -220046,6 +220394,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Slack under this many minutes counts as at risk, from 0 to 1440. A customer can set its own threshold.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Slash (/)": {
@@ -225360,6 +225717,33 @@
       "apps/web/components"
     ]
   },
+  "Stop dwell time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Stop dwell time cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Stop dwell time cannot exceed 720 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "Stop field": {
     "sites": 1,
     "scope": [
@@ -225370,7 +225754,7 @@
     ]
   },
   "Stop is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -257035,6 +257419,15 @@
       "go/other"
     ]
   },
+  "Truck at the stop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Truck count is required": {
     "sites": 1,
     "scope": [
@@ -257069,6 +257462,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Truck position": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Truck stop": {
@@ -264561,6 +264963,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Verdict is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Verification": {
@@ -276525,6 +276936,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Working from old information": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Working late, <em>{0}</em>.": {
@@ -299383,12 +299803,13 @@
     ]
   },
   "{0} past the window": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/shipment"
     ]
   },
   "{0} payable": {
@@ -300939,12 +301360,13 @@
     ]
   },
   "{0} to spare": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/shipment"
     ]
   },
   "{0} to {1}": {

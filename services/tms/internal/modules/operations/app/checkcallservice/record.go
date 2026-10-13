@@ -69,10 +69,14 @@ func (s *Service) record(
 		return nil, err
 	}
 
-	if s.observer != nil {
-		tenant, moveID := in.tenant, in.move.ID
+	if len(s.observers) > 0 {
+		tenant, shipmentID, moveID := in.tenant, in.move.ShipmentID, in.move.ID
 		kernelports.AfterCommit(ctx, func(runCtx context.Context) {
-			s.observer.CheckCallRecorded(runCtx, tenant, moveID)
+			for _, observer := range s.observers {
+				if observer != nil {
+					observer.CheckCallRecorded(runCtx, tenant, shipmentID, moveID)
+				}
+			}
 		})
 	}
 	return result, nil

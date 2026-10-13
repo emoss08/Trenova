@@ -29,6 +29,7 @@ import type {
   ShipmentMove,
   Stop,
   StopActualAction,
+  StopEta,
   StopStatus,
   StopType,
 } from "@trenova/shared/types/shipment";
@@ -53,6 +54,7 @@ import { toast } from "sonner";
 import { AssignmentDialog } from "../assignment-dialog";
 import { SplitMoveDialog } from "../shipment-split-move-dialog";
 import { RecordStopActualDialog } from "./record-stop-actual-dialog";
+import { StopEtaLine } from "./stop-eta";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export function MoveCard({
@@ -78,6 +80,11 @@ export function MoveCard({
   const moveRemovalRule = getRule(getProfile(shipmentUIPolicy), RULE_KEYS.moveRemoval);
   const move = useWatch({ control, name: `moves.${moveIndex}` });
   const shipmentId = useWatch({ control, name: "id" });
+  const { data: shipmentEta } = useQuery({
+    ...queries.shipment.eta(shipmentId ?? ""),
+    enabled: !!shipmentId,
+  });
+  const stopEtas = new Map((shipmentEta?.stops ?? []).map((eta) => [eta.stopId, eta]));
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [cancelCarrierOpen, setCancelCarrierOpen] = useState(false);
   const [splitOpen, setSplitOpen] = useState(false);
@@ -339,6 +346,7 @@ export function MoveCard({
                 hasErrors={stopHasErrors}
                 errorMessages={stopErrorMessages}
                 checkCallAction={checkCallAction}
+                eta={stop.id ? stopEtas.get(stop.id) : undefined}
                 onCheckCall={() => {
                   if (!checkCallAction || !stop.id) return;
                   setStopActualTarget({
@@ -567,6 +575,7 @@ function StopTimelineItem({
   hasErrors,
   errorMessages,
   checkCallAction,
+  eta,
   onCheckCall,
 }: {
   stop: Stop;
@@ -577,6 +586,7 @@ function StopTimelineItem({
   hasErrors?: boolean;
   errorMessages?: string[];
   checkCallAction?: StopActualAction | null;
+  eta?: StopEta;
   onCheckCall?: () => void;
 }) {
   const t = useT();
@@ -678,6 +688,8 @@ function StopTimelineItem({
           </span>
         )}
       </div>
+
+      <StopEtaLine eta={eta} />
 
       {checkCallAction && onCheckCall && (
         <Button

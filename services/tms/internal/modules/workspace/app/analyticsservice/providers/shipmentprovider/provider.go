@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/lanequery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -603,7 +604,16 @@ func (p *Provider) getAtRisk(
 
 		err = p.db.DBForContext(ctx).NewRaw(
 			`WITH risky_shipments AS (
-			SELECT DISTINCT sp.id, sp.created_at, sp.temperature_min, sp.temperature_max
+			SELECT DISTINCT sp.id, sp.created_at, sp.temperature_min, sp.temperature_max,
+				EXISTS (
+					SELECT 1
+					FROM stop_etas seta
+					WHERE seta.shipment_id = sp.id
+						AND seta.organization_id = sp.organization_id
+						AND seta.business_unit_id = sp.business_unit_id
+						AND seta.verdict IN (?)
+						AND NOT seta.arrived
+				) AS eta_slipping
 			FROM shipments sp
 			LEFT JOIN shipment_moves sm
 				ON sm.shipment_id = sp.id
@@ -623,6 +633,15 @@ func (p *Provider) getAtRisk(
 						AND stp.scheduled_window_start > 0
 						AND stp.scheduled_window_start < ?
 					)
+					OR EXISTS (
+						SELECT 1
+						FROM stop_etas seta
+						WHERE seta.shipment_id = sp.id
+							AND seta.organization_id = sp.organization_id
+							AND seta.business_unit_id = sp.business_unit_id
+							AND seta.verdict IN (?)
+							AND NOT seta.arrived
+					)
 				)
 		),
 		active_weather AS (
@@ -637,18 +656,20 @@ func (p *Provider) getAtRisk(
 			COUNT(*)::int AS count,
 			COUNT(*) FILTER (WHERE rs.created_at >= ? AND rs.created_at <= ?)::int AS created_today,
 			COUNT(*) FILTER (WHERE rs.created_at >= ? AND rs.created_at <= ?)::int AS created_yesterday,
-			COUNT(*)::int AS eta_slip,
+			COUNT(*) FILTER (WHERE rs.eta_slipping)::int AS eta_slip,
 			active_weather.weather,
 			COUNT(*) FILTER (WHERE rs.temperature_min IS NOT NULL OR rs.temperature_max IS NOT NULL)::int AS reefer
 		FROM active_weather
 		LEFT JOIN risky_shipments rs ON true
 		GROUP BY active_weather.weather`,
+			bun.List(etaAttentionVerdicts),
 			orgID,
 			buID,
 			bun.List(activeStatuses),
 			shipment.StatusDelayed,
 			shipment.StopStatusCompleted,
 			window.Now,
+			bun.List(etaAttentionVerdicts),
 			orgID,
 			buID,
 			window.Now,
@@ -670,6 +691,8 @@ func (p *Provider) getAtRisk(
 		}, nil
 	})
 }
+
+var etaAttentionVerdicts = []stopeta.Verdict{stopeta.VerdictAtRisk, stopeta.VerdictLate}
 
 func (p *Provider) getUnassigned(
 	ctx context.Context,
