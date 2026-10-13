@@ -2,16 +2,17 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"unicode/utf8"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -253,4 +254,216 @@ func TestGetEDIPartner_GivesReadinessWithoutTransportCredentials(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, string(encoded), "hunter2")
 	assert.NotContains(t, string(encoded), "tok_live_secret")
+}
+
+type fakeEDIMessages struct {
+	message *edi.EDIMessage
+	asked   ediports.GetEDIMessageByIDRequest
+}
+
+func (f *fakeEDIMessages) GetMessage(
+	_ context.Context,
+	req ediports.GetEDIMessageByIDRequest,
+) (*edi.EDIMessage, error) {
+	f.asked = req
+
+	return f.message, nil
+}
+
+func deadLetteredInvoice(raw string) *edi.EDIMessage {
+	sent := int64(1_760_000_000)
+	return &edi.EDIMessage{
+		ID:                       pulid.MustNew("edimsg_"),
+		EDIPartnerID:             pulid.MustNew("edip_"),
+		InvoiceID:                pulid.MustNew("inv_"),
+		ShipmentID:               pulid.MustNew("shp_"),
+		Direction:                edi.DocumentDirectionOutbound,
+		TransactionSet:           edi.TransactionSet210,
+		X12Version:               "004010",
+		Status:                   edi.MessageStatusGenerated,
+		InterchangeControlNumber: "000000209",
+		GroupControlNumber:       "209",
+		TransactionControlNumber: "0001",
+		SegmentCount:             13,
+		RawX12:                   raw,
+		DeliveryStatus:           edi.MessageDeliveryStatusDeadLettered,
+		DeliveryAttempts:         5,
+		DeliveryLastAttemptAt:    &sent,
+		DeliveryLastError:        "SFTP upload refused: 553 file name not allowed",
+		DeliveryRemotePath:       "sftp://edi.acme.example/inbound/210",
+		AckStatus:                edi.MessageAcknowledgmentStatusPending,
+		GeneratedAt:              sent - 3600,
+		PayloadSnapshot: edi.DocumentPayload{
+			TransactionSet: edi.TransactionSet210,
+			FreightInvoice: &edi.FreightInvoicePayload{
+				InvoiceNumber: "INV-2610-0042",
+				BOL:           "BOL-88213",
+			},
+		},
+		Partner: &edi.EDIPartner{
+			Code: "ACME",
+			Name: "Acme Foods",
+		},
+		ValidationErrors: []*edi.EDIMessageValidationError{{
+			Severity:        edi.ValidationSeverityError,
+			Code:            "N4_POSTAL",
+			SegmentID:       "N4",
+			ElementPosition: 3,
+			Path:            "N4[0].03",
+			Message:         "Postal code is required",
+			SuggestedFix:    "Add the bill-to postal code",
+		}},
+	}
+}
+
+func TestGetEDIMessage_ReadsTheDocumentItsDeliveryAndItsFindings(t *testing.T) {
+	t.Parallel()
+
+	message := deadLetteredInvoice("ISA*00*~")
+	reader := &fakeEDIMessages{message: message}
+	tool := newGetEDIMessageTool(reader, &fakePermissions{})
+	params := agentParams(
+		map[string]any{"messageId": message.ID.String()},
+		permission.SensitivityRestricted,
+	)
+
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+
+	assert.Equal(t, message.ID, reader.asked.ID)
+	assert.Equal(t, params.OrganizationID, reader.asked.TenantInfo.OrgID)
+	view := result.(*ediMessageView)
+	assert.Equal(t, "210 to Acme Foods", view.Title)
+	assert.Equal(t, "Acme Foods", view.Partner)
+	assert.Equal(t, "ACME", view.PartnerCode)
+	assert.Equal(t, "DeadLettered", view.DeliveryStatus)
+	assert.Equal(t, int64(5), view.DeliveryAttempts)
+	assert.Equal(t, "SFTP upload refused: 553 file name not allowed", view.DeliveryError)
+	assert.Equal(t, "sftp://edi.acme.example/inbound/210", view.RemotePath)
+	assert.Equal(t, message.InvoiceID.String(), view.InvoiceID)
+	assert.Equal(t, "INV-2610-0042", view.Decoded.FreightInvoice.InvoiceNumber)
+	assert.Equal(t, 1, view.DiagnosticCount)
+	assert.Equal(t, []ediDiagnosticRow{{
+		Severity:     "Error",
+		Code:         "N4_POSTAL",
+		Segment:      "N4",
+		Element:      3,
+		Path:         "N4[0].03",
+		Message:      "Postal code is required",
+		SuggestedFix: "Add the bill-to postal code",
+	}}, view.Diagnostics)
+	assert.Empty(t, view.Raw, "raw X12 is opt-in")
+	assert.Equal(t,
+		[]agent.RecordRef{{EntityType: ediMessageEntity, ID: message.ID.String()}},
+		view.TaintedRecords(),
+	)
+
+	encoded, err := sonic.Marshal(result)
+	require.NoError(t, err)
+	assert.Contains(t, string(encoded), `"ackReceivedAt":"no acknowledgment received"`)
+	assert.Contains(t, string(encoded), `"title":"210 to Acme Foods"`)
+}
+
+func TestGetEDIMessage_NamesAnInboundDocumentByWhoSentIt(t *testing.T) {
+	t.Parallel()
+
+	message := deadLetteredInvoice("")
+	message.Direction = edi.DocumentDirectionInbound
+	message.TransactionSet = edi.TransactionSet997
+	message.DeliveryStatus = ""
+	message.AckStatus = edi.MessageAcknowledgmentStatusNotExpected
+	message.PayloadSnapshot = edi.DocumentPayload{}
+	tool := newGetEDIMessageTool(&fakeEDIMessages{message: message}, &fakePermissions{})
+
+	result, err := tool.Query(t.Context(), agentParams(
+		map[string]any{"messageId": message.ID.String()},
+		permission.SensitivityRestricted,
+	))
+	require.NoError(t, err)
+
+	view := result.(*ediMessageView)
+	assert.Equal(t, "997 from Acme Foods", view.Title)
+	assert.Nil(t, view.Decoded, "no decoded copy is said as none, not as an empty one")
+	encoded, err := sonic.Marshal(result)
+	require.NoError(t, err)
+	assert.Contains(t, string(encoded),
+		`"ackReceivedAt":"inbound documents are not acknowledged to us"`)
+	assert.NotContains(t, string(encoded), `"decoded"`)
+
+	message.Partner = nil
+	orphan, err := tool.Query(t.Context(), agentParams(
+		map[string]any{"messageId": message.ID.String()},
+		permission.SensitivityRestricted,
+	))
+	require.NoError(t, err)
+	assert.Equal(t, "997 inbound", orphan.(*ediMessageView).Title)
+}
+
+func TestGetEDIMessage_ReturnsRawX12OnlyWhenAskedAndAtRestricted(t *testing.T) {
+	t.Parallel()
+
+	raw := strings.Repeat("€", maxRawX12Bytes)
+	message := deadLetteredInvoice(raw)
+	tool := newGetEDIMessageTool(&fakeEDIMessages{message: message}, &fakePermissions{})
+	asked := map[string]any{"messageId": message.ID.String(), "includeRaw": true}
+
+	internal, err := tool.Query(t.Context(), agentParams(asked, ""))
+	require.NoError(t, err)
+	withheld := internal.(*ediMessageView)
+	assert.Empty(t, withheld.Raw)
+	assert.Equal(t, []string{"rawX12"}, withheld.Withheld)
+
+	restricted, err := tool.Query(t.Context(), agentParams(asked, permission.SensitivityRestricted))
+	require.NoError(t, err)
+	view := restricted.(*ediMessageView)
+	assert.LessOrEqual(t, len(view.Raw), maxRawX12Bytes)
+	assert.True(t, utf8.ValidString(view.Raw), "the cap never splits a character")
+	assert.True(t, view.RawTruncated)
+	assert.Equal(t, fmt.Sprintf(
+		"The raw X12 is %d bytes; only the first %d are shown.", len(raw), len(view.Raw),
+	), view.Note)
+}
+
+func TestGetEDIMessage_SaysThePurgedX12IsGoneAndWhatRemains(t *testing.T) {
+	t.Parallel()
+
+	purged := int64(1_760_000_000)
+	message := deadLetteredInvoice("")
+	message.RawPurgedAt = &purged
+	tool := newGetEDIMessageTool(&fakeEDIMessages{message: message}, &fakePermissions{})
+
+	result, err := tool.Query(t.Context(), agentParams(
+		map[string]any{"messageId": message.ID.String(), "includeRaw": true},
+		permission.SensitivityRestricted,
+	))
+	require.NoError(t, err)
+
+	view := result.(*ediMessageView)
+	assert.Empty(t, view.Raw)
+	assert.True(t, view.RawPurged)
+	assert.Equal(t, "The raw X12 was purged under the retention policy; the decoded "+
+		"document and its findings remain.", view.Note)
+}
+
+func TestGetEDIMessage_CapsTheFindingsAndCountsTheRest(t *testing.T) {
+	t.Parallel()
+
+	message := deadLetteredInvoice("")
+	finding := message.ValidationErrors[0]
+	message.ValidationErrors = make([]*edi.EDIMessageValidationError, 0, maxMessageDiagnostics+7)
+	for range maxMessageDiagnostics + 7 {
+		message.ValidationErrors = append(message.ValidationErrors, finding)
+	}
+	tool := newGetEDIMessageTool(&fakeEDIMessages{message: message}, &fakePermissions{})
+
+	result, err := tool.Query(t.Context(), agentParams(
+		map[string]any{"messageId": message.ID.String()},
+		permission.SensitivityRestricted,
+	))
+	require.NoError(t, err)
+
+	view := result.(*ediMessageView)
+	assert.Equal(t, maxMessageDiagnostics+7, view.DiagnosticCount)
+	assert.Len(t, view.Diagnostics, maxMessageDiagnostics)
+	assert.Equal(t, 7, view.DiagnosticsOmitted)
 }

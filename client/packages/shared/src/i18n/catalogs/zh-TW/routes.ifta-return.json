@@ -67,7 +67,6 @@
   "No return for {0} yet": "尚無 {0} 的申報書",
   "No tractor ran miles in the quarter, so there is no average to take and no taxable gallons on any line.": "本季沒有任何牽引車行駛里程，因此無法計算平均值，各行亦無應稅加侖數。",
   "Not computed yet — recompute to build the lines": "尚未計算 — 請重新計算以建立明細",
-  "Not generated": "未產生",
   "Nothing else changed: the miles, fuel and rates it was built from are kept.": "其餘內容皆未變更：其據以建立的英里數、燃油與稅率均予保留。",
   "One line per jurisdiction and fuel type. Gallons and miles are whole as the form prints them; money is in {0}, and a negative figure is a credit.": "每個管轄區與燃油類型各一行。加侖數與英里數依表格列印方式取整數；金額以 {0} 表示，負數代表抵減。",
   "Only a draft can be deleted. This return is {0}.": "只有草稿可以刪除。此申報書目前為 {0}。",

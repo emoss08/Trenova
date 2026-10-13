@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a9b12433bfb42b1764da846ac8a908cc506e8ff70dcfcd49f328f7615898c1c0",
+  "version": "sha256:341cb900c11cb64facde6756f9ef287d0d338a5d2fedeed932f65d07f772ede1",
   "modules": [
     {
       "id": "home",
@@ -17405,7 +17405,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "formula_template",

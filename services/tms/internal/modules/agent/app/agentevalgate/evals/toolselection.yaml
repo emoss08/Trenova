@@ -356,6 +356,10 @@ cases:
     expect: [get_edi_inbound_file]
   - request: show the raw X12 of the EDI file
     expect: [get_edi_inbound_file]
+  - request: why did the partner reject this EDI message
+    expect: [get_edi_message]
+  - request: what validation findings does this outbound 210 EDI message have
+    expect: [get_edi_message]
   - request: which EDI load tenders are pending approval
     expect: [list_edi_transfers]
   - request: why was the EDI tender transfer rejected

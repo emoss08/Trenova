@@ -5816,6 +5816,9 @@ th.dk-cb .dk-ax-cb:hover {
 .dk-ax-ki.dk-k-failure {
   color: var(--warning);
 }
+.dk-ax-ki.dk-k-edi {
+  color: var(--accent-violet);
+}
 /* The shipment card */
 .dk-sh-nowsec {
   padding: 16px 16px 4px;
@@ -8250,11 +8253,7 @@ a.dk-wk-way:focus-visible {
   background: var(--dsk-b-strong);
 }
 .dk-svf-gap.dk-grace > i {
-  background: repeating-linear-gradient(
-    -45deg,
-    var(--dsk-warn) 0 3px,
-    var(--dsk-warn-sub) 3px 6px
-  );
+  background: repeating-linear-gradient(-45deg, var(--dsk-warn) 0 3px, var(--dsk-warn-sub) 3px 6px);
 }
 .dk-svf-gap.dk-late > i {
   background: var(--danger);
@@ -9423,6 +9422,624 @@ button.dk-ra-tpl:hover {
 @media (prefers-reduced-motion: reduce) {
   .dk-ra-done,
   .dk-ra-lane {
+    animation: none;
+  }
+}
+/* The EDI message card */
+.dk-edi {
+  container: dkedi / inline-size;
+}
+/* the message's stamp: its transaction set, franked with the way it travels */
+.dk-edi-stamp {
+  position: relative;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  align-self: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 6px;
+  outline: 1.5px dashed var(--dsk-b-strong);
+  outline-offset: -4px;
+  color: var(--dsk-fg);
+  background: var(--dsk-sunken);
+}
+.dk-edi-stamp b {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.dk-edi-stamp svg {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
+  padding: 1px;
+  border-radius: 999px;
+  background: var(--dsk-card);
+  color: var(--accent-violet);
+}
+.dk-rec-hrow > .dk-edi-stamp + .dk-rec-who {
+  flex: 1;
+}
+/* the way the message travels: a wire between its stops, the envelope resting where it got to */
+.dk-edi-way {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-edi-stop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 36px;
+}
+.dk-edi-stop::before {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: 32px;
+  right: -2px;
+  border-top: 2px dashed var(--dsk-b);
+}
+.dk-edi-stop:last-child::before {
+  display: none;
+}
+.dk-edi-stop.dk-travelled:has(+ .dk-edi-stop.dk-travelled)::before {
+  border-top-style: solid;
+  border-top-color: var(--dsk-fg2);
+}
+.dk-edi-node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1.5px solid var(--dsk-b-strong);
+  color: var(--dsk-subtle);
+  background: var(--dsk-card);
+}
+.dk-edi-stop.dk-done .dk-edi-node {
+  border-color: var(--dsk-fg2);
+  color: var(--dsk-fg2);
+}
+.dk-edi-stop.dk-skipped .dk-edi-node {
+  border-style: dashed;
+  border-color: var(--dsk-b);
+}
+.dk-edi-stop.dk-failed .dk-edi-node {
+  border-color: var(--danger);
+  color: var(--dsk-on-solid);
+  background: var(--danger);
+}
+.dk-edi-stop.dk-here:not(.dk-failed) .dk-edi-node {
+  border-color: var(--dsk-ink);
+  color: var(--dsk-ink-fg);
+  background: var(--dsk-ink);
+  animation: dk-edi-arrive 420ms var(--dk-settle) both;
+}
+@keyframes dk-edi-arrive {
+  from {
+    transform: translateX(-14px);
+    opacity: 0;
+  }
+}
+.dk-edi-stop > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edi-stop > span {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+  overflow-wrap: anywhere;
+}
+.dk-edi-stop > time {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 11px;
+  color: var(--dsk-faint);
+}
+.dk-edi-stop.dk-failed > b,
+.dk-edi-stop.dk-failed > span {
+  color: var(--danger);
+}
+.dk-edi-stop.dk-skipped > b,
+.dk-edi-stop.dk-skipped > span {
+  color: var(--dsk-faint);
+}
+.dk-edi-why {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--danger);
+  background: color-mix(in oklch, var(--danger) 8%, var(--dsk-card));
+}
+.dk-edi-why svg {
+  flex: none;
+  margin-top: 2px;
+}
+/* what the message says, decoded: the headline, then the stub its facts are written on */
+.dk-edi-read {
+  --dk-edi-tone: var(--dsk-subtle);
+  --dk-edi-tone-sub: var(--dsk-sunken);
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-card);
+  overflow: hidden;
+}
+.dk-edi-read.dk-ok {
+  --dk-edi-tone: var(--dsk-success-fg);
+  --dk-edi-tone-sub: var(--dsk-success-sub);
+}
+.dk-edi-read.dk-warn {
+  --dk-edi-tone: var(--dsk-warn-fg);
+  --dk-edi-tone-sub: var(--dsk-warn-sub);
+}
+.dk-edi-read.dk-bad {
+  --dk-edi-tone: var(--danger);
+  --dk-edi-tone-sub: color-mix(in oklch, var(--danger) 10%, var(--dsk-card));
+}
+.dk-edi-read-h {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+.dk-edi-read-i {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: var(--dk-edi-tone);
+  background: var(--dk-edi-tone-sub);
+}
+.dk-edi-read-t {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-edi-read-t > b {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--dsk-fg);
+}
+.dk-edi-read-t > span {
+  font-size: 12.5px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-read-fig {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--dsk-fg);
+}
+.dk-edi-stops,
+.dk-edi-lines,
+.dk-edi-faults {
+  margin: 0;
+  padding: 0 16px 12px 56px;
+  list-style: none;
+}
+.dk-edi-stops > li {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  padding: 4px 0;
+}
+.dk-edi-stops > li > i {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 4px;
+  border-radius: 999px;
+  border: 1.5px solid var(--dsk-fg2);
+  background: var(--dsk-card);
+}
+.dk-edi-stops > li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 17px;
+  bottom: -6px;
+  left: 4px;
+  border-left: 1px dotted var(--dsk-b-strong);
+}
+.dk-edi-stops > li > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.dk-edi-stops b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edi-stops b + span {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-lines > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12.5px;
+}
+.dk-edi-lines > div::after {
+  content: "";
+  order: 1;
+  flex: 1;
+  border-bottom: 1px dotted var(--dsk-b-strong);
+}
+.dk-edi-lines dt {
+  color: var(--dsk-fg2);
+}
+.dk-edi-lines dd {
+  order: 2;
+  margin: 0;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-edi-faults > li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-edi-faults code {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-family: var(--dk-plex);
+  font-size: 11px;
+  color: var(--danger);
+  background: color-mix(in oklch, var(--danger) 10%, var(--dsk-card));
+}
+.dk-edi-pass {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0 16px;
+  margin: 0;
+  padding: 10px 16px 12px;
+  border-top: 1px dashed var(--dsk-b);
+  background: var(--dsk-sunken);
+}
+.dk-edi-pass > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+  min-width: 0;
+}
+.dk-edi-pass dt {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-pass dd {
+  margin: 0;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-edi-read-sk .dk-edi-read-i {
+  display: block;
+}
+/* the X12 envelope as envelopes inside one another: interchange, group, transaction set */
+.dk-edi-nest {
+  padding: 10px 12px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-card);
+}
+.dk-edi-nest .dk-edi-nest {
+  margin-top: 10px;
+}
+.dk-edi-nest.dk-edi-gs {
+  background: var(--dsk-sunken);
+}
+.dk-edi-nest.dk-edi-st {
+  border-style: dashed;
+  border-color: var(--dsk-b-strong);
+  background: var(--dsk-card);
+}
+.dk-edi-flap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.dk-edi-pair {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-family: var(--dk-plex);
+  font-size: 10.5px;
+  white-space: nowrap;
+  color: var(--dsk-subtle);
+  background: var(--dsk-sunken);
+}
+.dk-edi-nest.dk-edi-gs > .dk-edi-flap .dk-edi-pair {
+  background: var(--dsk-card);
+}
+.dk-edi-flap > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edi-flap > code {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--dsk-fg);
+}
+.dk-edi-flap-d {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.dk-edi-close.dk-ok {
+  color: var(--dsk-success-fg);
+}
+.dk-edi-close.dk-bad {
+  color: var(--danger);
+}
+.dk-edi-path {
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--dk-plex);
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+/* the X12 itself as a tape of segments, every element apart, every finding pinned to its segment */
+.dk-edi-aside {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+.dk-edi-aside .dk-bad {
+  color: var(--danger);
+}
+.dk-edi-paper {
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-sunken);
+  overflow: hidden;
+}
+.dk-edi-tape {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+.dk-edi-seg {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  column-gap: 10px;
+  padding: 1px 12px 1px 0;
+}
+.dk-edi-n {
+  justify-self: end;
+  min-width: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  text-align: right;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 10.5px;
+  line-height: 20px;
+  user-select: none;
+  color: var(--dsk-faint);
+}
+.dk-edi-seg > code {
+  font-family: var(--dk-plex);
+  font-size: 12px;
+  line-height: 20px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg2);
+}
+.dk-edi-seg > code b {
+  font-weight: 600;
+  color: var(--dsk-fg);
+}
+.dk-edi-seg > code i {
+  padding: 0 1px;
+  font-style: normal;
+  color: var(--dsk-faint);
+}
+.dk-edi-seg.dk-envelope > code,
+.dk-edi-seg.dk-envelope > code b {
+  color: var(--dsk-subtle);
+}
+.dk-edi-seg.dk-envelope > code b {
+  font-weight: 500;
+}
+.dk-edi-seg .dk-flag {
+  text-decoration: underline wavy var(--danger);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+.dk-edi-seg.dk-warn .dk-flag {
+  text-decoration-color: var(--dsk-warn);
+}
+.dk-edi-seg.dk-bad {
+  background: color-mix(in oklch, var(--danger) 6%, transparent);
+}
+.dk-edi-seg.dk-warn {
+  background: color-mix(in oklch, var(--dsk-warn) 8%, transparent);
+}
+.dk-edi-seg.dk-bad .dk-edi-n {
+  color: var(--dsk-on-solid);
+  background: var(--danger);
+}
+.dk-edi-seg.dk-warn .dk-edi-n {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-edi-seg.dk-malformed > code {
+  text-decoration: line-through;
+  text-decoration-color: var(--danger);
+}
+.dk-edi-mark {
+  grid-column: 2;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 8px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  background: var(--dsk-card);
+}
+.dk-edi-mark > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-mark.dk-bad > svg {
+  color: var(--danger);
+}
+.dk-edi-mark.dk-warn > svg {
+  color: var(--dsk-warn-fg);
+}
+.dk-edi-mark > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.dk-edi-mark b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-edi-mark b + span {
+  color: var(--dsk-subtle);
+}
+.dk-edi-loose {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  column-gap: 10px;
+  padding: 8px 12px 0 0;
+}
+.dk-edi-fold {
+  align-self: flex-start;
+  margin: 3px 0 3px 44px;
+  padding: 1px 10px;
+  border: 1px dashed var(--dsk-b-strong);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-fold:hover {
+  color: var(--dsk-fg);
+  background: var(--dsk-hover);
+}
+.dk-edi-unfold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px;
+  border-top: 1px dashed var(--dsk-b);
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-edi-unfold:hover {
+  color: var(--dsk-fg);
+  background: var(--dsk-hover);
+}
+.dk-edi-tape-sk {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 12px 12px 0;
+}
+.dk-edi-tape-sk .dk-edi-seg {
+  align-items: center;
+  padding: 0;
+}
+@container dkedi (max-width: 460px) {
+  .dk-edi-way {
+    grid-auto-flow: row;
+    gap: 10px;
+  }
+  .dk-edi-stop {
+    padding: 4px 0 0 40px;
+  }
+  .dk-edi-stop::before {
+    top: 32px;
+    bottom: -8px;
+    left: 13px;
+    right: auto;
+    border-top: 0;
+    border-left: 2px dashed var(--dsk-b);
+  }
+  .dk-edi-stop.dk-travelled:has(+ .dk-edi-stop.dk-travelled)::before {
+    border-left-style: solid;
+    border-left-color: var(--dsk-fg2);
+  }
+  .dk-edi-read-h {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+  .dk-edi-read-fig {
+    grid-column: 2;
+  }
+  .dk-edi-stops,
+  .dk-edi-lines,
+  .dk-edi-faults {
+    padding-left: 16px;
+  }
+  .dk-edi-close {
+    margin-left: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-edi-stop.dk-here:not(.dk-failed) .dk-edi-node {
     animation: none;
   }
 }

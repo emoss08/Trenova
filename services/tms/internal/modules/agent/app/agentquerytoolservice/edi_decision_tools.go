@@ -36,6 +36,7 @@ const (
 	ediChargesField        = "charges"
 	ediTenderPayloadField  = "tenderPayload"
 	absentNoWindowEnd      = "no closing time"
+	absentNotSent          = "not sent"
 	maxChangedValueRunes   = 120
 	nestedChangeDescriptor = "changed"
 )
@@ -499,6 +500,27 @@ type ediMessageListRow struct {
 	RawPurged        bool         `json:"rawPurged"`
 }
 
+func ediMessageListRowFrom(message *edi.EDIMessage) ediMessageListRow {
+	row := ediMessageListRow{
+		ediMessageRow:    ediMessageRowFrom(message),
+		PartnerID:        pulidString(message.EDIPartnerID),
+		DeliveryStatus:   string(message.DeliveryStatus),
+		DeliveryAttempts: message.DeliveryAttempts,
+		DeliveryError:    message.DeliveryLastError,
+		SentAt: expectedDate(
+			typeutils.ValueOrZero(message.DeliverySentAt),
+			absentNotSent,
+		),
+		InterchangeCtrl: message.InterchangeControlNumber,
+		RawPurged:       message.RawPurgedAt != nil,
+	}
+	if message.Partner != nil {
+		row.Partner = message.Partner.Name
+	}
+
+	return row
+}
+
 func (t *listEDIMessagesTool) Query(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
@@ -565,23 +587,7 @@ func (t *listEDIMessagesTool) Query(
 		if message == nil {
 			continue
 		}
-		row := ediMessageListRow{
-			ediMessageRow:    ediMessageRowFrom(message),
-			PartnerID:        pulidString(message.EDIPartnerID),
-			DeliveryStatus:   string(message.DeliveryStatus),
-			DeliveryAttempts: message.DeliveryAttempts,
-			DeliveryError:    message.DeliveryLastError,
-			SentAt: expectedDate(
-				typeutils.ValueOrZero(message.DeliverySentAt),
-				"not sent",
-			),
-			InterchangeCtrl: message.InterchangeControlNumber,
-			RawPurged:       message.RawPurgedAt != nil,
-		}
-		if message.Partner != nil {
-			row.Partner = message.Partner.Name
-		}
-		rows = append(rows, row)
+		rows = append(rows, ediMessageListRowFrom(message))
 		refs = append(refs, agent.RecordRef{EntityType: ediMessageEntity, ID: message.ID.String()})
 	}
 

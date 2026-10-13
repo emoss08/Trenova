@@ -454,6 +454,7 @@ const implementationAcknowledgmentPayloadSchema = functionalAcknowledgmentPayloa
 
 export const ediDocumentPayloadSchema = z.object({
   transactionSet: ediTransactionSetSchema.nullish(),
+  purposeCode: z.string().nullish(),
   loadTender: loadTenderPayloadSchema.nullish(),
   shipment: loadTenderPayloadSchema.nullish(),
   invoice: freightInvoicePayloadSchema.nullish(),
@@ -946,6 +947,7 @@ export const ediMessageSchema = z.object({
   templateId: z.string().nullish(),
   templateVersionId: z.string().nullish(),
   shipmentId: z.string().nullish(),
+  invoiceId: z.string().nullish(),
   transferId: z.string().nullish(),
   inboundFileId: z.string().nullish(),
   direction: ediDocumentDirectionSchema,

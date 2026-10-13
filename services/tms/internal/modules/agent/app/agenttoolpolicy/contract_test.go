@@ -100,6 +100,7 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 		"get_customer":                 agent.ExternalReadNever,
 		"list_edi_inbound_files":       agent.ExternalReadAlways,
 		"get_edi_inbound_file":         agent.ExternalReadAlways,
+		"get_edi_message":              agent.ExternalReadAlways,
 		"list_edi_transfers":           agent.ExternalReadAlways,
 		"get_edi_partner":              agent.ExternalReadNever,
 		"get_settlement_dispute":       agent.ExternalReadMarked,
@@ -123,6 +124,7 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 	for _, name := range []string{
 		"list_edi_inbound_files",
 		"get_edi_inbound_file",
+		"get_edi_message",
 		"list_edi_transfers",
 		"list_carrier_invoice_matches",
 	} {

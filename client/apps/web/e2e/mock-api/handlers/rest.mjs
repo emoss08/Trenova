@@ -94,9 +94,12 @@ const ROUTES = [
 
 /** A handler's answer as the server sends it; a handler may answer later with a promise. */
 function respond(payload) {
+  if (payload && payload.__hold) return { known: true, hold: true };
   if (payload && payload.__stream) return { known: true, stream: true };
-  if (payload && payload.__raw) return { known: true, raw: payload.__raw, contentType: payload.contentType };
-  if (payload && payload.__sse) return { known: true, sse: payload.__sse, sseHold: payload.__sseHold };
+  if (payload && payload.__raw)
+    return { known: true, raw: payload.__raw, contentType: payload.contentType };
+  if (payload && payload.__sse)
+    return { known: true, sse: payload.__sse, sseHold: payload.__sseHold };
   if (payload && payload.__status) {
     return { known: true, status: payload.__status, payload: payload.body };
   }
@@ -107,7 +110,9 @@ export function handleRest(state, { method, path, query, body }) {
   for (const [routeMethod, pattern, handler] of ROUTES) {
     if (routeMethod === method && pattern.test(path)) {
       const payload = handler(state, path, body, query);
-      return payload && typeof payload.then === "function" ? payload.then(respond) : respond(payload);
+      return payload && typeof payload.then === "function"
+        ? payload.then(respond)
+        : respond(payload);
     }
   }
   if (method === "GET") {
