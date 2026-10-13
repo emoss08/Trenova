@@ -28,6 +28,10 @@ const (
 	// ExceptionAttentionWorkflowName wakes snoozed exceptions whose time has
 	// come and escalates the overdue ones.
 	ExceptionAttentionWorkflowName = "ExceptionAttentionWorkflow"
+	// ShipmentExceptionSweepWorkflowName raises and clears the missed
+	// pickups, missed deliveries, missing PODs and exhausted tenders that
+	// only the clock can raise.
+	ShipmentExceptionSweepWorkflowName = "ShipmentExceptionSweepWorkflow"
 )
 
 // WatchtowerBackfillInput names the tenant to fill. An empty organization

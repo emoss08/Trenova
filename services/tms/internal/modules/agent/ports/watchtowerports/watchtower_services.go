@@ -42,6 +42,20 @@ type WatchtowerProjector interface {
 	)
 }
 
+type ReconcileSubjectRequest struct {
+	TenantInfo pagination.TenantInfo
+	SourceKind watchtower.SourceKind
+	SubjectID  pulid.ID
+	Open       []WatchtowerItemInput
+}
+
+// WatchtowerSubjectReconciler settles one record's items of a kind at once:
+// what is open is raised, and what that record no longer reports is
+// resolved. It is best effort, like the projector.
+type WatchtowerSubjectReconciler interface {
+	ReconcileSubject(ctx context.Context, req *ReconcileSubjectRequest)
+}
+
 // WatchtowerSource is a source that can say what is open right now, so the
 // watchtower can be filled in when it is switched on and corrected each
 // night against the record.

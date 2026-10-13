@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
@@ -127,4 +129,37 @@ func TestUpsert_LeavesARoutedItemAloneOnTheNextReport(t *testing.T) {
 	require.NoError(t, projector.upsert(t.Context(), in))
 	assert.Equal(t, first, *repo.items["ServiceFailure:sf_1"].DueAt)
 	assert.Len(t, repo.events, events)
+}
+
+func TestReconcileSubject_RaisesWhatIsOpenAndResolvesTheRest(t *testing.T) {
+	t.Parallel()
+
+	repo := newStubRepo()
+	projector, _ := newRoutingProjector(repo, &agenttest.StubPermissions{}, nil)
+	tenant := testActor().TenantInfo()
+	shipmentID := pulid.MustNew("shp_")
+
+	stale := input(tenant, watchtower.SourceMissedPickup, "stp_old", watchtower.SeverityWarning, 100)
+	stale.SubjectType = agent.SubjectShipment
+	stale.SubjectID = shipmentID
+	require.NoError(t, projector.upsert(t.Context(), stale))
+
+	other := input(tenant, watchtower.SourceMissedPickup, "stp_other", watchtower.SeverityWarning, 100)
+	other.SubjectType = agent.SubjectShipment
+	other.SubjectID = pulid.MustNew("shp_")
+	require.NoError(t, projector.upsert(t.Context(), other))
+
+	fresh := input(tenant, watchtower.SourceMissedPickup, "stp_new", watchtower.SeverityWarning, 200)
+	fresh.SubjectType = agent.SubjectShipment
+	fresh.SubjectID = shipmentID
+	projector.ReconcileSubject(t.Context(), &watchtowerports.ReconcileSubjectRequest{
+		TenantInfo: tenant,
+		SourceKind: watchtower.SourceMissedPickup,
+		SubjectID:  shipmentID,
+		Open:       []watchtowerports.WatchtowerItemInput{fresh},
+	})
+
+	assert.NotNil(t, repo.items["MissedPickup:stp_old"].ResolvedAt)
+	assert.Nil(t, repo.items["MissedPickup:stp_new"].ResolvedAt)
+	assert.Nil(t, repo.items["MissedPickup:stp_other"].ResolvedAt)
 }

@@ -6,11 +6,14 @@
 ALTER TABLE "dispatch_controls"
     DROP CONSTRAINT IF EXISTS "fk_dispatch_controls_exception_escalation_contact",
     DROP CONSTRAINT IF EXISTS "fk_dispatch_controls_exception_default_assignee",
+    DROP CONSTRAINT IF EXISTS "ck_dispatch_controls_exception_sources",
     DROP CONSTRAINT IF EXISTS "ck_dispatch_controls_exception_escalation",
     DROP CONSTRAINT IF EXISTS "ck_dispatch_controls_exception_due";
 
 --bun:split
 ALTER TABLE "dispatch_controls"
+    DROP COLUMN IF EXISTS "exception_pod_grace_hours",
+    DROP COLUMN IF EXISTS "exception_missed_stop_grace_minutes",
     DROP COLUMN IF EXISTS "exception_escalation_contact_id",
     DROP COLUMN IF EXISTS "exception_default_assignee_id",
     DROP COLUMN IF EXISTS "exception_max_escalations",

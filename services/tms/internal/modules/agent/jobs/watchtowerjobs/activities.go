@@ -32,6 +32,13 @@ const retentionBatch = 5000
 // continues where it stopped.
 const retentionPasses = 20
 
+var shipmentExceptionKinds = []watchtower.SourceKind{
+	watchtower.SourceMissedPickup,
+	watchtower.SourceMissedDelivery,
+	watchtower.SourcePodMissing,
+	watchtower.SourceTenderExhausted,
+}
+
 type ActivitiesParams struct {
 	fx.In
 
@@ -164,6 +171,31 @@ func (a *Activities) ExceptionAttentionActivity(
 	}
 
 	return result, nil
+}
+
+// ShipmentExceptionSweepActivity corrects every organization's missed
+// pickups, missed deliveries, missing PODs and exhausted tenders. A window
+// closing or a POD grace running out happens because time passed, so
+// nothing written could project it live.
+func (a *Activities) ShipmentExceptionSweepActivity(
+	ctx context.Context,
+) (*WatchtowerSweepResult, error) {
+	return a.sweepAll(ctx, func(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (*watchtowerports.WatchtowerSweepResult, error) {
+		merged := &watchtowerports.WatchtowerSweepResult{}
+		for _, kind := range shipmentExceptionKinds {
+			swept, err := a.watchtower.ReconcileKind(ctx, tenant, kind)
+			if err != nil {
+				return nil, err
+			}
+			merged.Upserted += swept.Upserted
+			merged.Resolved += swept.Resolved
+			merged.Failed = append(merged.Failed, swept.Failed...)
+		}
+		return merged, nil
+	})
 }
 
 // BackfillActivity fills the named tenant's feed from what its sources

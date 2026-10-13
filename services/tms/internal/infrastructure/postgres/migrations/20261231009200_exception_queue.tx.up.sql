@@ -107,7 +107,9 @@ CREATE TRIGGER "trg_watchtower_item_events_append_only"
 --bun:split
 -- How long an exception has before it is overdue, by severity, how often an
 -- overdue one escalates and how many times, and who takes what no rule
--- assigns and who hears about escalations.
+-- assigns and who hears about escalations. A stop is missed once its window
+-- has been closed past the grace, and a delivered load is missing its POD once
+-- the POD grace has passed since the delivery.
 ALTER TABLE "dispatch_controls"
     ADD COLUMN IF NOT EXISTS "exception_due_info_minutes" integer NOT NULL DEFAULT 1440,
     ADD COLUMN IF NOT EXISTS "exception_due_warning_minutes" integer NOT NULL DEFAULT 240,
@@ -115,7 +117,9 @@ ALTER TABLE "dispatch_controls"
     ADD COLUMN IF NOT EXISTS "exception_escalation_minutes" integer NOT NULL DEFAULT 60,
     ADD COLUMN IF NOT EXISTS "exception_max_escalations" smallint NOT NULL DEFAULT 3,
     ADD COLUMN IF NOT EXISTS "exception_default_assignee_id" varchar(100),
-    ADD COLUMN IF NOT EXISTS "exception_escalation_contact_id" varchar(100);
+    ADD COLUMN IF NOT EXISTS "exception_escalation_contact_id" varchar(100),
+    ADD COLUMN IF NOT EXISTS "exception_missed_stop_grace_minutes" smallint NOT NULL DEFAULT 30,
+    ADD COLUMN IF NOT EXISTS "exception_pod_grace_hours" smallint NOT NULL DEFAULT 24;
 
 --bun:split
 ALTER TABLE "dispatch_controls"
@@ -127,6 +131,10 @@ ALTER TABLE "dispatch_controls"
     ADD CONSTRAINT "ck_dispatch_controls_exception_escalation" CHECK (
         "exception_escalation_minutes" BETWEEN 5 AND 1440
         AND "exception_max_escalations" BETWEEN 0 AND 10
+    ),
+    ADD CONSTRAINT "ck_dispatch_controls_exception_sources" CHECK (
+        "exception_missed_stop_grace_minutes" BETWEEN 0 AND 1440
+        AND "exception_pod_grace_hours" BETWEEN 1 AND 720
     ),
     ADD CONSTRAINT "fk_dispatch_controls_exception_default_assignee" FOREIGN KEY ("exception_default_assignee_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE SET NULL,
     ADD CONSTRAINT "fk_dispatch_controls_exception_escalation_contact" FOREIGN KEY ("exception_escalation_contact_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE SET NULL;

@@ -7952,10 +7952,14 @@ export type WatchtowerSourceKind =
   | 'HOSViolation'
   | 'InboundMessage'
   | 'Insight'
+  | 'MissedDelivery'
+  | 'MissedPickup'
   | 'MoveCoverage'
   | 'NoCheckCall'
+  | 'PodMissing'
   | 'ServiceFailure'
   | 'TelematicsStopVisit'
+  | 'TenderExhausted'
   | 'WeatherAlert'
   | 'WorkerCredential';
 

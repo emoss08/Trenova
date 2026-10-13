@@ -51,6 +51,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Wake snoozed exceptions and escalate overdue ones",
 		},
 		{
+			Name:        ShipmentExceptionSweepWorkflowName,
+			Fn:          ShipmentExceptionSweepWorkflow,
+			TaskQueue:   temporaltype.TaskQueueSystem.String(),
+			Description: "Raise and clear missed stops, missing PODs and exhausted tenders",
+		},
+		{
 			Name:        WatchtowerRetentionWorkflowName,
 			Fn:          WatchtowerRetentionWorkflow,
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
@@ -129,6 +135,21 @@ func ExceptionAttentionWorkflow(ctx workflow.Context) (*ExceptionAttentionResult
 	if err := workflow.ExecuteActivity(ctx, a.ExceptionAttentionActivity).
 		Get(ctx, result); err != nil {
 		workflow.GetLogger(ctx).Error("Exception attention workflow failed", "error", err)
+
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func ShipmentExceptionSweepWorkflow(ctx workflow.Context) (*WatchtowerSweepResult, error) {
+	ctx = workflow.WithActivityOptions(ctx, watchtowerActivityOptions)
+
+	var a *Activities
+	result := new(WatchtowerSweepResult)
+	if err := workflow.ExecuteActivity(ctx, a.ShipmentExceptionSweepActivity).
+		Get(ctx, result); err != nil {
+		workflow.GetLogger(ctx).Error("Shipment exception sweep workflow failed", "error", err)
 
 		return nil, err
 	}

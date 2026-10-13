@@ -24,6 +24,10 @@ enum WatchtowerSourceKind {
   AccountingSync
   NoCheckCall
   EtaAtRisk
+  MissedPickup
+  MissedDelivery
+  PodMissing
+  TenderExhausted
 }
 
 "How loudly an item asks to be looked at."

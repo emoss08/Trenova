@@ -175,7 +175,8 @@ func (r *stubRepo) List(
 	}
 	out := []*watchtower.Item{}
 	for _, item := range r.items {
-		if allowed[item.SourceKind] && (!req.UnresolvedOnly || item.ResolvedAt == nil) {
+		if allowed[item.SourceKind] && (!req.UnresolvedOnly || item.ResolvedAt == nil) &&
+			(req.SubjectID.IsNil() || item.SubjectID == req.SubjectID) {
 			out = append(out, item)
 		}
 	}

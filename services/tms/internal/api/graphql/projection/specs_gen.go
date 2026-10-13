@@ -83,7 +83,6 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentbriefcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmenteventcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmenttypecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/stopetacol"
 	"github.com/emoss08/trenova/pkg/buncolgen/storedmileagecol"
@@ -22397,7 +22396,7 @@ func init() {
 
 	ShipmentAssignmentEventSpec = TypeSpec{
 		TypeName: "ShipmentAssignmentEvent",
-		FieldMap: shipmenteventcol.EventFieldMap,
+		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -22526,7 +22525,7 @@ func init() {
 
 	ShipmentCarrierEventSpec = TypeSpec{
 		TypeName: "ShipmentCarrierEvent",
-		FieldMap: shipmenteventcol.EventFieldMap,
+		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -22805,7 +22804,7 @@ func init() {
 
 	ShipmentCommentEventSpec = TypeSpec{
 		TypeName: "ShipmentCommentEvent",
-		FieldMap: shipmenteventcol.EventFieldMap,
+		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -23331,7 +23330,7 @@ func init() {
 
 	ShipmentHoldEventSpec = TypeSpec{
 		TypeName: "ShipmentHoldEvent",
-		FieldMap: shipmenteventcol.EventFieldMap,
+		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -23421,7 +23420,7 @@ func init() {
 
 	ShipmentLifecycleEventSpec = TypeSpec{
 		TypeName: "ShipmentLifecycleEvent",
-		FieldMap: shipmenteventcol.EventFieldMap,
+		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -23626,7 +23625,7 @@ func init() {
 
 	ShipmentMoveEventSpec = TypeSpec{
 		TypeName: "ShipmentMoveEvent",
-		FieldMap: shipmenteventcol.EventFieldMap,
+		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -23787,7 +23786,7 @@ func init() {
 
 	ShipmentOwnershipEventSpec = TypeSpec{
 		TypeName: "ShipmentOwnershipEvent",
-		FieldMap: shipmenteventcol.EventFieldMap,
+		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -23975,7 +23974,7 @@ func init() {
 
 	ShipmentTenderEventSpec = TypeSpec{
 		TypeName: "ShipmentTenderEvent",
-		FieldMap: shipmenteventcol.EventFieldMap,
+		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",

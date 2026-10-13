@@ -22458,7 +22458,11 @@
                 "AgentQualityRegression",
                 "AccountingSync",
                 "NoCheckCall",
-                "EtaAtRisk"
+                "EtaAtRisk",
+                "MissedPickup",
+                "MissedDelivery",
+                "PodMissing",
+                "TenderExhausted"
               ],
               "type": "string",
               "x-enumOf": "watchtower.sourceKind"
