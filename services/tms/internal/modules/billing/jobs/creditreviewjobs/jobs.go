@@ -64,9 +64,9 @@ type SweepResult struct {
 	Failed    int `json:"failed"`
 }
 
-// SweepActivity reviews every customer's credit. Organizations that fail are
+// CreditReviewSweepActivity reviews every customer's credit. Organizations that fail are
 // logged and skipped so one cannot hold up the rest.
-func (a *Activities) SweepActivity(ctx context.Context) (*SweepResult, error) {
+func (a *Activities) CreditReviewSweepActivity(ctx context.Context) (*SweepResult, error) {
 	result, err := a.reviews.Sweep(ctx, func(detail string) {
 		activity.RecordHeartbeat(ctx, detail)
 	})
@@ -97,7 +97,7 @@ func CustomerCreditSweepWorkflow(ctx workflow.Context) (*SweepResult, error) {
 
 	var a *Activities
 	var result *SweepResult
-	if err := workflow.ExecuteActivity(ctx, a.SweepActivity).Get(ctx, &result); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.CreditReviewSweepActivity).Get(ctx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil

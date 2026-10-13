@@ -82,9 +82,9 @@ type SweepResult struct {
 	Failed        int `json:"failed"`
 }
 
-// SweepActivity gives every organization with reminders on its turn. One
+// PaymentReminderSweepActivity gives every organization with reminders on its turn. One
 // organization's failure is logged and the sweep moves on.
-func (a *Activities) SweepActivity(ctx context.Context) (*SweepResult, error) {
+func (a *Activities) PaymentReminderSweepActivity(ctx context.Context) (*SweepResult, error) {
 	controls, err := a.controls.ListPaymentReminders(ctx)
 	if err != nil {
 		return nil, err
@@ -142,7 +142,7 @@ func PaymentReminderSweepWorkflow(ctx workflow.Context) (*SweepResult, error) {
 
 	var a *Activities
 	var result *SweepResult
-	if err := workflow.ExecuteActivity(ctx, a.SweepActivity).Get(ctx, &result); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.PaymentReminderSweepActivity).Get(ctx, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
