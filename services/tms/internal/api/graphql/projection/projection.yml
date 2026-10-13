@@ -30,6 +30,8 @@ aliases:
     isOpen: status
   AccountingConnection:
     syncsDriverSettlements: driverSettlementsEnabledAt
+    certificateId: clientCertificateId
+    certificateExpiresAt: clientCertificateExpiresAt
   AccountingInboundChange:
     referenceNumber: document
     methodName: document
