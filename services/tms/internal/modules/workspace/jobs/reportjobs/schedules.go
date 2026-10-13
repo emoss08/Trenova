@@ -21,7 +21,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "report-schedule-dispatch",
 			Description:   "Dispatch report runs for due user schedules",
-			Spec:          schedule.Every(time.Minute),
+			Spec:          schedule.Every(5 * time.Minute),
 			Workflow:      DispatchDueReportSchedulesWorkflow,
 			TaskQueue:     temporaltype.ReportTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

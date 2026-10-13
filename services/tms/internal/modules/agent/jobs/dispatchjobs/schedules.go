@@ -17,7 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "horizon-plan-sweep",
 			Description:   "Re-plan the dispatch horizon for organizations running horizon planning",
-			Spec:          schedule.Cron("*/30 * * * *"),
+			Spec:          schedule.Cron("50 * * * *"),
 			Workflow:      HorizonPlanSweepWorkflow,
 			TaskQueue:     temporaltype.TaskQueueSystem.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
