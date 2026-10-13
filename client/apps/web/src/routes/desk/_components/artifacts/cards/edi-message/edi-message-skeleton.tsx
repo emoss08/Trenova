@@ -77,7 +77,7 @@ export function TapeSkeleton() {
     <div className="dk-edi-paper dk-edi-tape-sk" aria-busy>
       {TAPE_LINES.map((width, index) => (
         // oxlint-disable-next-line react/no-array-index-key -- a fixed outline that never reorders
-        <div key={index} className="dk-edi-seg">
+        <div key={index} className="dk-edi-line">
           <SkeletonBar w={14} className="dk-rec-sk-label" />
           <SkeletonBar w={`${width}%`} className="dk-rec-sk-label" />
         </div>

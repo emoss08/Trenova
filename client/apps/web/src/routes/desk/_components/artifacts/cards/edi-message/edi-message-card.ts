@@ -262,6 +262,77 @@ export function journeyPosition(stations: readonly JourneyStation[]): number {
   return position;
 }
 
+/**
+ * Why the message's way stopped where it did: the stop it failed at, what to
+ * call the reason, the attempt it gave up on and when, and the words the
+ * connection or the partner's system sent back.
+ */
+export type WayHalt = {
+  station: JourneyStation["key"];
+  label: string;
+  attempt: number | null;
+  at: number | null;
+  text: string;
+};
+
+/**
+ * What stopped an outbound message, when something did and said why: a
+ * delivery that failed or was dead-lettered, or an acknowledgment that
+ * rejected it or could not be read. A message still on its way, or one whose
+ * failure left no words, has nothing to say here.
+ */
+export function wayHalt(message: EDIMessage, t: TranslateFn): WayHalt | null {
+  const delivery = message.deliveryLastError?.trim() ?? "";
+  if (delivery && message.deliveryStatus === "DeadLettered") {
+    return deliveryHalt(message, t("Why delivery gave up"), delivery);
+  }
+  if (delivery && message.deliveryStatus === "Failed") {
+    return deliveryHalt(message, t("Why the last attempt failed"), delivery);
+  }
+  const answer = message.ackLastError?.trim() ?? "";
+  if (answer && message.ackStatus === "Rejected") {
+    return answerHalt(message, t("Why the partner rejected it"), answer);
+  }
+  if (answer && message.ackStatus === "Failed") {
+    return answerHalt(message, t("Why its acknowledgment could not be read"), answer);
+  }
+  return null;
+}
+
+function deliveryHalt(message: EDIMessage, label: string, text: string): WayHalt {
+  return {
+    station: "sent",
+    label,
+    attempt: message.deliveryAttempts > 0 ? message.deliveryAttempts : null,
+    at: message.deliveryLastAttemptAt ?? null,
+    text,
+  };
+}
+
+function answerHalt(message: EDIMessage, label: string, text: string): WayHalt {
+  return { station: "answered", label, attempt: null, at: message.ackReceivedAt ?? null, text };
+}
+
+/**
+ * Where along the way a stop's node sits, for pointing at it: the first stop
+ * rests on the start edge, the last on the end edge, and any between them at
+ * the middle of its column, as the share of the way's width that middle is.
+ */
+export type WayAnchor = { edge: "start" | "end" } | { share: number };
+
+export function wayAnchor(index: number, count: number): WayAnchor | null {
+  if (index < 0 || index >= count) {
+    return null;
+  }
+  if (index === 0) {
+    return { edge: "start" };
+  }
+  if (index === count - 1) {
+    return { edge: "end" };
+  }
+  return { share: (index + 0.5) / count };
+}
+
 /** One layer of the X12 envelope the message travels in, from the interchange in. */
 export type EnvelopeLayer = {
   key: "isa" | "gs" | "st";

@@ -30530,12 +30530,13 @@
     ]
   },
   "Attempt {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Attempt {0} of {1}": {
@@ -275481,6 +275482,15 @@
       "apps/dash/_components"
     ]
   },
+  "Why delivery gave up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Why did {0} break?": {
     "sites": 1,
     "scope": [
@@ -275715,6 +275725,15 @@
       "routes/inbox"
     ]
   },
+  "Why its acknowledgment could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Why only the last four": {
     "sites": 2,
     "scope": [
@@ -275752,6 +275771,15 @@
       "routes/worker"
     ]
   },
+  "Why the last attempt failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Why the memo is being raised": {
     "sites": 1,
     "scope": [
@@ -275768,6 +275796,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Why the partner rejected it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Why the values changed, for the audit trail.": {

@@ -9427,6 +9427,8 @@ button.dk-ra-tpl:hover {
 }
 /* The EDI message card */
 .dk-edi {
+  --dk-edi-gap: 16px;
+  --dk-edi-node: 28px;
   container: dkedi / inline-size;
 }
 /* the message's stamp: its transaction set, franked with the way it travels */
@@ -9465,12 +9467,13 @@ button.dk-ra-tpl:hover {
 .dk-rec-hrow > .dk-edi-stamp + .dk-rec-who {
   flex: 1;
 }
-/* the way the message travels: a wire between its stops, the envelope resting where it got to */
+/* the way the message travels, edge to edge: the first stop on the start edge, the last on the
+   end edge, any between them centred in its column, a wire from each node to the next */
 .dk-edi-way {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
-  gap: 0 8px;
+  gap: 0 var(--dk-edi-gap);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -9482,15 +9485,29 @@ button.dk-ra-tpl:hover {
   align-items: flex-start;
   gap: 2px;
   min-width: 0;
-  padding-top: 36px;
+  padding-top: calc(var(--dk-edi-node) + 8px);
+}
+.dk-edi-stop:not(:first-child):not(:last-child) {
+  align-items: center;
+  text-align: center;
+}
+.dk-edi-stop:last-child:not(:first-child) {
+  align-items: flex-end;
+  text-align: right;
 }
 .dk-edi-stop::before {
   content: "";
   position: absolute;
-  top: 13px;
-  left: 32px;
-  right: -2px;
+  top: calc(var(--dk-edi-node) / 2 - 1px);
+  left: calc(var(--dk-edi-node) + 4px);
+  right: calc(var(--dk-edi-node) / 2 + 4px - 50% - var(--dk-edi-gap));
   border-top: 2px dashed var(--dsk-b);
+}
+.dk-edi-stop:not(:first-child)::before {
+  left: calc(50% + var(--dk-edi-node) / 2 + 4px);
+}
+.dk-edi-stop:nth-last-child(2)::before {
+  right: calc(var(--dk-edi-node) + 4px - 100% - var(--dk-edi-gap));
 }
 .dk-edi-stop:last-child::before {
   display: none;
@@ -9505,12 +9522,20 @@ button.dk-ra-tpl:hover {
   left: 0;
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: var(--dk-edi-node);
+  height: var(--dk-edi-node);
   border-radius: 999px;
   border: 1.5px solid var(--dsk-b-strong);
   color: var(--dsk-subtle);
   background: var(--dsk-card);
+}
+.dk-edi-stop:not(:first-child):not(:last-child) .dk-edi-node {
+  left: 50%;
+  translate: -50% 0;
+}
+.dk-edi-stop:last-child:not(:first-child) .dk-edi-node {
+  left: auto;
+  right: 0;
 }
 .dk-edi-stop.dk-done .dk-edi-node {
   border-color: var(--dsk-fg2);
@@ -9561,21 +9586,68 @@ button.dk-ra-tpl:hover {
 .dk-edi-stop.dk-skipped > span {
   color: var(--dsk-faint);
 }
-.dk-edi-why {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 14px 0 0;
-  padding: 8px 12px;
+/* why the way stopped: a slip pinned under the stop it stopped at, the words sent back kept as sent */
+.dk-edi-halt {
+  --dk-edi-halt-b: color-mix(in oklch, var(--danger) 32%, var(--dsk-b-sub));
+  --dk-edi-halt-bg: color-mix(in oklch, var(--danger) 5%, var(--dsk-card));
+  position: relative;
+  margin: 16px 0 0;
+  border: 1px solid var(--dk-edi-halt-b);
   border-radius: 8px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--danger);
-  background: color-mix(in oklch, var(--danger) 8%, var(--dsk-card));
+  background: var(--dk-edi-halt-bg);
 }
-.dk-edi-why svg {
+.dk-edi-halt.dk-pointed::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: calc((100% + var(--dk-edi-gap)) * var(--dk-edi-at, 0) - var(--dk-edi-gap) / 2 - 5px);
+  width: 10px;
+  height: 10px;
+  border-top: 1px solid var(--dk-edi-halt-b);
+  border-left: 1px solid var(--dk-edi-halt-b);
+  border-top-left-radius: 2px;
+  background: var(--dk-edi-halt-bg);
+  rotate: 45deg;
+}
+.dk-edi-halt.dk-pointed[data-edge="start"]::before {
+  left: calc(var(--dk-edi-node) / 2 - 5px);
+}
+.dk-edi-halt.dk-pointed[data-edge="end"]::before {
+  left: auto;
+  right: calc(var(--dk-edi-node) / 2 - 5px);
+}
+.dk-edi-halt-h {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 0;
+  padding: 9px 12px 0;
+  font-size: 12px;
+  color: var(--danger);
+}
+.dk-edi-halt-h > svg {
   flex: none;
-  margin-top: 2px;
+}
+.dk-edi-halt-h > b {
+  font-weight: 500;
+}
+.dk-edi-halt-h > span {
+  margin-left: auto;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-halt-t {
+  margin: 0;
+  padding: 6px 12px 10px 32px;
+  font-family: var(--dk-plex);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--dsk-fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 /* what the message says, decoded: the headline, then the stub its facts are written on */
 .dk-edi-read {
@@ -9854,8 +9926,13 @@ button.dk-ra-tpl:hover {
   padding: 8px 0;
 }
 .dk-edi-seg {
+  display: flex;
+  flex-direction: column;
+}
+.dk-edi-line {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr);
+  align-items: start;
   column-gap: 10px;
   padding: 1px 12px 1px 0;
 }
@@ -9863,7 +9940,6 @@ button.dk-ra-tpl:hover {
   justify-self: end;
   min-width: 20px;
   padding: 0 5px;
-  border-radius: 999px;
   text-align: right;
   font-family: var(--dk-plex);
   font-feature-settings: "tnum";
@@ -9872,7 +9948,7 @@ button.dk-ra-tpl:hover {
   user-select: none;
   color: var(--dsk-faint);
 }
-.dk-edi-seg > code {
+.dk-edi-line > code {
   font-family: var(--dk-plex);
   font-size: 12px;
   line-height: 20px;
@@ -9880,20 +9956,20 @@ button.dk-ra-tpl:hover {
   overflow-wrap: anywhere;
   color: var(--dsk-fg2);
 }
-.dk-edi-seg > code b {
+.dk-edi-line > code b {
   font-weight: 600;
   color: var(--dsk-fg);
 }
-.dk-edi-seg > code i {
+.dk-edi-line > code i {
   padding: 0 1px;
   font-style: normal;
   color: var(--dsk-faint);
 }
-.dk-edi-seg.dk-envelope > code,
-.dk-edi-seg.dk-envelope > code b {
+.dk-edi-seg.dk-envelope > .dk-edi-line > code,
+.dk-edi-seg.dk-envelope > .dk-edi-line > code b {
   color: var(--dsk-subtle);
 }
-.dk-edi-seg.dk-envelope > code b {
+.dk-edi-seg.dk-envelope > .dk-edi-line > code b {
   font-weight: 500;
 }
 .dk-edi-seg .dk-flag {
@@ -9904,11 +9980,26 @@ button.dk-ra-tpl:hover {
 .dk-edi-seg.dk-warn .dk-flag {
   text-decoration-color: var(--dsk-warn);
 }
-.dk-edi-seg.dk-bad {
-  background: color-mix(in oklch, var(--danger) 6%, transparent);
+.dk-edi-seg.dk-bad > .dk-edi-line {
+  background: color-mix(in oklch, var(--danger) 7%, transparent);
 }
-.dk-edi-seg.dk-warn {
-  background: color-mix(in oklch, var(--dsk-warn) 8%, transparent);
+.dk-edi-seg.dk-warn > .dk-edi-line {
+  background: color-mix(in oklch, var(--dsk-warn) 9%, transparent);
+}
+/* a flagged line's number is a badge: a circle around one digit, a pill around more, the
+   digits centred in it */
+.dk-edi-seg.dk-bad .dk-edi-n,
+.dk-edi-seg.dk-warn .dk-edi-n {
+  display: inline-grid;
+  place-items: center;
+  height: 18px;
+  margin-top: 1px;
+  padding: 0 4px;
+  border-radius: 999px;
+  min-width: 18px;
+  line-height: 1;
+  text-align: center;
+  font-weight: 500;
 }
 .dk-edi-seg.dk-bad .dk-edi-n {
   color: var(--dsk-on-solid);
@@ -9918,52 +10009,93 @@ button.dk-ra-tpl:hover {
   color: var(--dsk-warn-fg);
   background: var(--dsk-warn-sub);
 }
-.dk-edi-seg.dk-malformed > code {
+.dk-edi-seg.dk-malformed > .dk-edi-line > code {
   text-decoration: line-through;
   text-decoration-color: var(--danger);
 }
+/* what was said of a segment, under it: the finding, where it is and its code, then the fix */
 .dk-edi-mark {
-  grid-column: 2;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 4px 0 8px;
-  padding: 7px 10px;
+  --dk-edi-mark-tone: var(--dsk-subtle);
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  column-gap: 10px;
+  margin: 6px 12px 10px 44px;
+  padding: 9px 12px;
   border: 1px solid var(--dsk-b-sub);
   border-radius: 8px;
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.45;
   background: var(--dsk-card);
 }
-.dk-edi-mark > svg {
-  flex: none;
-  margin-top: 2px;
-  color: var(--dsk-subtle);
+.dk-edi-mark.dk-bad {
+  --dk-edi-mark-tone: var(--danger);
+  border-color: color-mix(in oklch, var(--danger) 28%, var(--dsk-b-sub));
 }
-.dk-edi-mark.dk-bad > svg {
-  color: var(--danger);
+.dk-edi-mark.dk-warn {
+  --dk-edi-mark-tone: var(--dsk-warn-fg);
+  border-color: color-mix(in oklch, var(--dsk-warn) 60%, var(--dsk-b-sub));
 }
-.dk-edi-mark.dk-warn > svg {
-  color: var(--dsk-warn-fg);
+.dk-edi-mark-i {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  color: var(--dk-edi-mark-tone);
+  background: color-mix(in oklch, var(--dk-edi-mark-tone) 12%, transparent);
 }
-.dk-edi-mark > span {
+.dk-edi-mark-b {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
   min-width: 0;
 }
-.dk-edi-mark b {
+.dk-edi-mark-b > b {
   font-weight: 500;
   color: var(--dsk-fg);
 }
-.dk-edi-mark b + span {
+.dk-edi-mark-at {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 11.5px;
   color: var(--dsk-subtle);
 }
+.dk-edi-mark-el {
+  padding: 0 7px;
+  border-radius: 999px;
+  line-height: 18px;
+  color: var(--dk-edi-mark-tone);
+  background: color-mix(in oklch, var(--dk-edi-mark-tone) 10%, transparent);
+}
+.dk-edi-mark-at > code {
+  font-family: var(--dk-plex);
+  font-size: 11px;
+  color: var(--dsk-faint);
+}
+.dk-edi-mark-fix {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--dsk-b);
+  color: var(--dsk-fg2);
+}
+.dk-edi-mark-fix > svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--dsk-subtle);
+}
+.dk-edi-loose > .dk-edi-mark {
+  margin: 0;
+}
 .dk-edi-loose {
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  column-gap: 10px;
-  padding: 8px 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px 2px 44px;
 }
 .dk-edi-fold {
   align-self: flex-start;
@@ -9999,7 +10131,7 @@ button.dk-ra-tpl:hover {
   gap: 6px;
   padding: 12px 12px 12px 0;
 }
-.dk-edi-tape-sk .dk-edi-seg {
+.dk-edi-tape-sk .dk-edi-line {
   align-items: center;
   padding: 0;
 }
@@ -10008,16 +10140,38 @@ button.dk-ra-tpl:hover {
     grid-auto-flow: row;
     gap: 10px;
   }
-  .dk-edi-stop {
-    padding: 4px 0 0 40px;
+  .dk-edi-stop,
+  .dk-edi-stop:not(:first-child):not(:last-child),
+  .dk-edi-stop:last-child:not(:first-child) {
+    align-items: flex-start;
+    padding: 4px 0 0 calc(var(--dk-edi-node) + 12px);
+    text-align: left;
   }
-  .dk-edi-stop::before {
-    top: 32px;
+  .dk-edi-stop .dk-edi-node,
+  .dk-edi-stop:not(:first-child):not(:last-child) .dk-edi-node,
+  .dk-edi-stop:last-child:not(:first-child) .dk-edi-node {
+    left: 0;
+    right: auto;
+    translate: none;
+  }
+  .dk-edi-stop::before,
+  .dk-edi-stop:not(:first-child)::before,
+  .dk-edi-stop:nth-last-child(2)::before {
+    top: calc(var(--dk-edi-node) + 4px);
     bottom: -8px;
-    left: 13px;
+    left: calc(var(--dk-edi-node) / 2 - 1px);
     right: auto;
     border-top: 0;
     border-left: 2px dashed var(--dsk-b);
+  }
+  .dk-edi-halt.dk-pointed::before {
+    display: none;
+  }
+  .dk-edi-mark {
+    margin-left: 12px;
+  }
+  .dk-edi-loose {
+    padding-left: 12px;
   }
   .dk-edi-stop.dk-travelled:has(+ .dk-edi-stop.dk-travelled)::before {
     border-left-style: solid;

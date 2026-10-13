@@ -104,7 +104,7 @@ ask what the record looks like to the person who reads it, and draw that:
 | Location | amenity chips under the map, a dwell ruler with median, average and p90 pins and the share that ran past free time, an address card, terms as tickets |
 | Carrier | a verdict banner for whether it can be tendered, insurance as coverage tiles, authority as pills over the CSA BASICs as columns against their thresholds, contacts with initials |
 | Service failure | its clock along one track, each stretch as wide as it ran (before the cutoff, in grace, late) with its moments beneath, the 214's codes as tiles |
-| EDI message | its transaction set as a stamp, its way as a relay (generated, delivered, acknowledged; or received, read, tendered) with the envelope resting at the furthest stop, what it says read in plain words over a stub of its fields, the ISA/GS/ST envelope nested with each trailer's check, the X12 as a tape with every finding pinned to its segment and element |
+| EDI message | its transaction set as a stamp, its way as a relay edge to edge (generated, delivered, acknowledged; or received, read, tendered) with the envelope resting at the furthest stop and, where it stopped, a slip pointing at that stop with why, the attempt and the words sent back, what it says read in plain words over a stub of its fields, the ISA/GS/ST envelope nested with each trailer's check, the X12 as a tape with every finding pinned to its segment and element |
 
 Tone is carried by the part's own fill, icon or text, never by an accent bar down or across
 its edge. A part only one card draws stays in that card's folder; it moves to `record-card/` when a

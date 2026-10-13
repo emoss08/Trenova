@@ -235,9 +235,11 @@ describe("DeskEdiMessage", () => {
       "dk-failed",
       "dk-here",
     );
-    expect(
-      within(section("Its way")).getByText("AS2 MDN signature did not verify"),
-    ).toBeInTheDocument();
+    const halt = within(section("Its way")).getByRole("note", { name: "Why delivery gave up" });
+    expect(within(halt).getByText("AS2 MDN signature did not verify")).toBeInTheDocument();
+    expect(within(halt).getByText(/^Attempt 5 · /u)).toBeInTheDocument();
+    expect(halt).toHaveClass("dk-pointed");
+    expect(halt.style.getPropertyValue("--dk-edi-at")).toBe("0.5");
 
     const x12 = section("The X12");
     expect(await within(x12).findByText("1 error · 1 warning")).toHaveClass("dk-bad");
@@ -245,11 +247,13 @@ describe("DeskEdiMessage", () => {
     const segment = flagged.closest('[role="listitem"]');
     expect(segment).toHaveClass("dk-bad");
     expect(within(segment as HTMLElement).getByText("X1")).toHaveClass("dk-flag");
-    expect(
-      within(segment as HTMLElement).getByText(
-        "AT7, element 1 · X12_INVALID_CODE · Fix: Map X1 to AF",
-      ),
-    ).toBeInTheDocument();
+    const mark = within(segment as HTMLElement)
+      .getByText("Shipment status code is not in the partner's list")
+      .closest(".dk-edi-mark") as HTMLElement;
+    expect(mark).toHaveClass("dk-bad");
+    expect(within(mark).getByText("AT7, element 1")).toHaveClass("dk-edi-mark-el");
+    expect(within(mark).getByText("X12_INVALID_CODE").tagName).toBe("CODE");
+    expect(within(mark).getByText("Fix: Map X1 to AF")).toBeInTheDocument();
     expect(
       within(x12)
         .getByText("The repetition separator repeats the component separator")

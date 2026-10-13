@@ -12,6 +12,8 @@ import {
   plainReading,
   tapeSegments,
   transactionName,
+  wayAnchor,
+  wayHalt,
 } from "../edi-message-card";
 import { HOUR, NOW, ediInspection, ediMessage } from "./fixtures";
 
@@ -206,6 +208,103 @@ describe("messageJourney", () => {
       ["received", "done", "In an inbound file"],
       ["read", "failed", "It could not be read"],
     ]);
+  });
+});
+
+describe("wayHalt", () => {
+  it("says why delivery gave up or failed, on which attempt and when, at the delivered stop", () => {
+    expect(
+      wayHalt(
+        ediMessage({
+          deliveryStatus: "DeadLettered",
+          deliveryAttempts: 5,
+          deliveryLastAttemptAt: NOW - HOUR,
+          deliveryLastError: "  SFTP upload refused: 553 file name not allowed\n",
+          ackStatus: "Pending",
+        }),
+        t,
+      ),
+    ).toEqual({
+      station: "sent",
+      label: "Why delivery gave up",
+      attempt: 5,
+      at: NOW - HOUR,
+      text: "SFTP upload refused: 553 file name not allowed",
+    });
+    expect(
+      wayHalt(
+        ediMessage({
+          deliveryStatus: "Failed",
+          deliveryAttempts: 0,
+          deliveryLastAttemptAt: null,
+          deliveryLastError: "Connection reset",
+          ackStatus: "Pending",
+        }),
+        t,
+      ),
+    ).toEqual({
+      station: "sent",
+      label: "Why the last attempt failed",
+      attempt: null,
+      at: null,
+      text: "Connection reset",
+    });
+  });
+
+  it("says why the partner rejected it, or why its answer could not be read, at the acknowledged stop", () => {
+    expect(
+      wayHalt(
+        ediMessage({ ackStatus: "Rejected", ackLastError: "AK5*R*5", ackReceivedAt: NOW }),
+        t,
+      ),
+    ).toEqual({
+      station: "answered",
+      label: "Why the partner rejected it",
+      attempt: null,
+      at: NOW,
+      text: "AK5*R*5",
+    });
+    expect(
+      wayHalt(ediMessage({ ackStatus: "Failed", ackLastError: "No AK1 segment" }), t)?.label,
+    ).toBe("Why its acknowledgment could not be read");
+  });
+
+  it("has nothing to say of a message on its way, or of a failure that left no words", () => {
+    expect(wayHalt(ediMessage(), t)).toBeNull();
+    expect(
+      wayHalt(
+        ediMessage({
+          deliveryStatus: "DeadLettered",
+          deliveryLastError: "   ",
+          ackStatus: "Pending",
+        }),
+        t,
+      ),
+    ).toBeNull();
+    expect(
+      wayHalt(ediMessage({ deliveryStatus: "Sent", deliveryLastError: "an old retry's error" }), t),
+    ).toBeNull();
+    expect(wayHalt(ediMessage({ ackStatus: "Accepted", ackLastError: "stale" }), t)).toBeNull();
+  });
+});
+
+describe("wayAnchor", () => {
+  it("rests on the start and end edges, and on the middle of any column between", () => {
+    expect([0, 1, 2].map((index) => wayAnchor(index, 3))).toEqual([
+      { edge: "start" },
+      { share: 0.5 },
+      { edge: "end" },
+    ]);
+    expect([1, 2].map((index) => wayAnchor(index, 4))).toEqual([
+      { share: 0.375 },
+      { share: 0.625 },
+    ]);
+    expect(wayAnchor(1, 2)).toEqual({ edge: "end" });
+  });
+
+  it("points nowhere for a stop that is not on the way", () => {
+    expect(wayAnchor(-1, 3)).toBeNull();
+    expect(wayAnchor(3, 3)).toBeNull();
   });
 });
 

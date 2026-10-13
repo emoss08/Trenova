@@ -4,16 +4,18 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
 import type { EDIInspectionDiagnostic, EDIMessage } from "@trenova/shared/types/edi";
-import { useState, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { CardIcon, type CardCheckState } from "../../record-card/record-card";
 import { cardMoment } from "../../record-card/record-card-values";
 import {
+  type EnvelopeLayer,
   foldTape,
   journeyPosition,
-  type EnvelopeLayer,
   type JourneyStation,
   type PlainReading,
   type TapeSegment,
+  wayAnchor,
+  type WayHalt,
 } from "./edi-message-card";
 
 /** The segments the tape shows before it folds the rest away. */
@@ -85,6 +87,47 @@ export function MessageWay({ stations }: { stations: readonly JourneyStation[] }
         );
       })}
     </ol>
+  );
+}
+
+/**
+ * Why the way stopped, as a slip pinned under the stop it stopped at: what to
+ * call it, the attempt it gave up on and when, and the words the connection or
+ * the partner's system sent back, as they were sent.
+ */
+export function WayHaltSlip({
+  halt,
+  stations,
+}: {
+  halt: WayHalt;
+  stations: readonly JourneyStation[];
+}) {
+  const t = useT();
+  const anchor = wayAnchor(
+    stations.findIndex((station) => station.key === halt.station),
+    stations.length,
+  );
+  const meta = [
+    halt.attempt ? t("Attempt {0}", formatNumber(halt.attempt)) : "",
+    halt.at ? cardMoment(halt.at) : "",
+  ].filter(Boolean);
+  return (
+    <div
+      className={cn("dk-edi-halt", anchor && "dk-pointed")}
+      role="note"
+      aria-label={halt.label}
+      data-edge={anchor && "edge" in anchor ? anchor.edge : undefined}
+      style={
+        anchor && "share" in anchor ? ({ "--dk-edi-at": anchor.share } as CSSProperties) : undefined
+      }
+    >
+      <p className="dk-edi-halt-h">
+        <CardIcon name="warn" size={12} />
+        <b>{halt.label}</b>
+        {meta.length > 0 && <span>{meta.join(" · ")}</span>}
+      </p>
+      <p className="dk-edi-halt-t">{halt.text}</p>
+    </div>
   );
 }
 
@@ -206,36 +249,36 @@ function severityOf(diagnostic: EDIInspectionDiagnostic): "bad" | "warn" | "info
 /** What the validator said of a segment, pinned under it, with the fix it suggests. */
 function SegmentMark({ diagnostic }: { diagnostic: EDIInspectionDiagnostic }) {
   const t = useT();
+  const severity = severityOf(diagnostic);
   const where =
     diagnostic.elementPosition > 0
       ? t("{0}, element {1}", diagnostic.segmentId ?? "", formatNumber(diagnostic.elementPosition))
       : "";
   return (
-    <p className={cn("dk-edi-mark", `dk-${severityOf(diagnostic)}`)}>
-      <CardIcon
-        name={
-          severityOf(diagnostic) === "bad"
-            ? "x"
-            : severityOf(diagnostic) === "warn"
-              ? "warn"
-              : "info"
-        }
-        size={11}
-        stroke={2.6}
-      />
-      <span>
-        <b>{diagnostic.message}</b>
-        <span>
-          {[
-            where,
-            diagnostic.code,
-            diagnostic.suggestedFix ? t("Fix: {0}", diagnostic.suggestedFix) : "",
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </span>
+    <div className={cn("dk-edi-mark", `dk-${severity}`)}>
+      <span className="dk-edi-mark-i" aria-hidden>
+        <CardIcon
+          name={severity === "bad" ? "x" : severity === "warn" ? "warn" : "info"}
+          size={10}
+          stroke={2.8}
+        />
       </span>
-    </p>
+      <span className="dk-edi-mark-b">
+        <b>{diagnostic.message}</b>
+        {(where || diagnostic.code) && (
+          <span className="dk-edi-mark-at">
+            {where && <span className="dk-edi-mark-el">{where}</span>}
+            {diagnostic.code && <code>{diagnostic.code}</code>}
+          </span>
+        )}
+        {diagnostic.suggestedFix && (
+          <span className="dk-edi-mark-fix">
+            <CardIcon name="forward" size={11} stroke={2.4} />
+            <span>{t("Fix: {0}", diagnostic.suggestedFix)}</span>
+          </span>
+        )}
+      </span>
+    </div>
   );
 }
 
@@ -258,24 +301,29 @@ function TapeLine({ row }: { row: TapeSegment }) {
         row.malformed && "dk-malformed",
       )}
     >
-      <span className="dk-edi-n" aria-hidden>
-        {formatNumber(row.index + 1)}
-      </span>
-      <code title={row.name}>
-        <b>{row.id}</b>
-        {row.elements.map((element) => (
-          <span key={element.position}>
-            <i aria-hidden>*</i>
-            <span
-              className={cn(element.empty && "dk-empty", marked.has(element.position) && "dk-flag")}
-              title={element.label}
-            >
-              {element.value}
+      <span className="dk-edi-line">
+        <span className="dk-edi-n" aria-hidden>
+          {formatNumber(row.index + 1)}
+        </span>
+        <code title={row.name}>
+          <b>{row.id}</b>
+          {row.elements.map((element) => (
+            <span key={element.position}>
+              <i aria-hidden>*</i>
+              <span
+                className={cn(
+                  element.empty && "dk-empty",
+                  marked.has(element.position) && "dk-flag",
+                )}
+                title={element.label}
+              >
+                {element.value}
+              </span>
             </span>
-          </span>
-        ))}
-        <i aria-hidden>~</i>
-      </code>
+          ))}
+          <i aria-hidden>~</i>
+        </code>
+      </span>
       {row.marks.map((mark, index) => (
         // oxlint-disable-next-line react/no-array-index-key -- a segment's diagnostics never reorder
         <SegmentMark key={`${mark.code}-${index}`} diagnostic={mark} />

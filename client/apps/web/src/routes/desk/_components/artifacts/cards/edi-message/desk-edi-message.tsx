@@ -36,12 +36,14 @@ import {
   tapeSegments,
   transactionName,
   type MessageLink,
+  wayHalt,
 } from "./edi-message-card";
 import {
   EnvelopeNest,
   MessageStamp,
   MessageWay,
   PlainReadingView,
+  WayHaltSlip,
   X12Tape,
 } from "./edi-message-parts";
 import { EDI_MESSAGE_SECTIONS } from "./edi-message-sections";
@@ -159,12 +161,7 @@ function EdiMessageCard({
       (link.entity !== "shipment" || access.shipment) &&
       (link.entity !== "invoice" || access.invoice),
   );
-  const lastError =
-    message.deliveryStatus === "Failed" || message.deliveryStatus === "DeadLettered"
-      ? message.deliveryLastError?.trim()
-      : message.ackStatus === "Rejected" || message.ackStatus === "Failed"
-        ? message.ackLastError?.trim()
-        : "";
+  const halt = wayHalt(message, t);
 
   const backToMessage = t("Back to {0}", transactionName(message.transactionSet, t));
   const shipmentIds = useIds(links, "shipment");
@@ -246,12 +243,7 @@ function EdiMessageCard({
 
       <CardSection title={t("Its way")}>
         <MessageWay stations={journey} />
-        {lastError && (
-          <p className="dk-edi-why">
-            <CardIcon name="warn" size={12} />
-            <span>{lastError}</span>
-          </p>
-        )}
+        {halt && <WayHaltSlip halt={halt} stations={journey} />}
       </CardSection>
 
       <CardSection title={t("What it says")}>
