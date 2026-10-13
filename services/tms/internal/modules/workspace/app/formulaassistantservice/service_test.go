@@ -231,6 +231,71 @@ func TestTest_PricesALoadWhoseValuesAreAllOnTheLoad(t *testing.T) {
 	assert.Equal(t, "270", outcome.Scenarios[0].Amount)
 }
 
+func TestTest_PricesUnderThePageDraftsChargePolicy(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+	minCharge, maxCharge, precision := "300", "2000.00", 0
+
+	outcome, err := svc.Test(t.Context(), &TestRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * baseRate",
+		Variables:  map[string]any{"totalDistance": 100, "baseRate": 2.555},
+		Scenarios: []Scenario{
+			{Name: "Short", Variables: map[string]any{"totalDistance": 10}},
+			{Name: "Long", Variables: map[string]any{"totalDistance": 1000}},
+		},
+		Policy: &pagedraft.FormulaPolicy{
+			MinCharge:         &minCharge,
+			MaxCharge:         &maxCharge,
+			RoundingMode:      "Up",
+			RoundingPrecision: &precision,
+		},
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, pagedraft.FormulaCheck{Valid: true, Result: "300"}, outcome.Check,
+		"255.5 is lifted to the minimum")
+	require.Len(t, outcome.Scenarios, 2)
+	assert.Equal(t, "300", outcome.Scenarios[0].Amount)
+	assert.Equal(t, "2000", outcome.Scenarios[1].Amount, "2555 is held to the maximum")
+	require.NotNil(t, outcome.Policy)
+	assert.Equal(t, "300", *outcome.Policy.MinCharge)
+	assert.Equal(t, "2000", *outcome.Policy.MaxCharge)
+	assert.Equal(t, "Up", outcome.Policy.RoundingMode)
+	assert.Equal(t, 0, *outcome.Policy.RoundingPrecision)
+
+	outcome, err = svc.Test(t.Context(), &TestRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * baseRate",
+		Variables:  map[string]any{"totalDistance": 100, "baseRate": 2.555},
+		Policy:     &pagedraft.FormulaPolicy{RoundingMode: "Up", RoundingPrecision: &precision},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "256", outcome.Check.Result, "rounded up to whole dollars")
+
+	outcome, err = svc.Test(t.Context(), &TestRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * baseRate",
+		Variables:  map[string]any{"totalDistance": 100, "baseRate": 2.555},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "255.5", outcome.Check.Result, "no policy is the default rounding")
+	assert.Equal(t, "HalfUp", outcome.Policy.RoundingMode)
+	assert.Equal(t, 2, *outcome.Policy.RoundingPrecision)
+
+	bad := "lots"
+	_, err = svc.Test(t.Context(), &TestRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance",
+		Policy:     &pagedraft.FormulaPolicy{MinCharge: &bad},
+	})
+	require.Error(t, err)
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	assert.Equal(t, "policy.minCharge", multiErr.Errors[0].Field)
+}
+
 func TestTest_ReportsAnExpressionThatWillNotEvaluate(t *testing.T) {
 	t.Parallel()
 
@@ -378,6 +443,58 @@ func TestPropose_CarriesTheTemplateDetailsAndPricesTheBreakdown(t *testing.T) {
 	assert.Equal(t, pagedraft.TemplateTypeFreightCharge, proposal.TemplateType)
 	require.Len(t, proposal.Breakdown, 2)
 	assert.Equal(t, "handlingFee", proposal.Breakdown[1].Name)
+	assert.Nil(t, proposal.Policy, "no policy proposed leaves the editor's alone")
+}
+
+func TestPropose_PricesTheSampleLoadsUnderTheProposedPolicy(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+	minCharge, precision := " 350 ", 1
+
+	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * perMile",
+		Variables: []pagedraft.FormulaVariable{
+			{Name: "perMile", Type: pagedraft.VariableNumber, DefaultValue: 2.85},
+		},
+		Details: pagedraft.FormulaDetails{
+			Breakdown: []pagedraft.BreakdownLine{
+				{Name: "linehaul", Label: "Linehaul", Expression: "totalDistance * perMile"},
+			},
+			Policy: &pagedraft.FormulaPolicy{
+				MinCharge:         &minCharge,
+				RoundingMode:      "HalfEven",
+				RoundingPrecision: &precision,
+			},
+		},
+		Explanation: "Per mile, never less than the minimum.",
+		Scenarios: []Scenario{
+			{Name: "Short run", Variables: map[string]any{"totalDistance": 10}},
+			{Name: "Long run", Variables: map[string]any{"totalDistance": 1001}},
+		},
+	})
+	require.NoError(t, err)
+
+	assert.True(t, proposal.Check.Valid, proposal.Check.Error)
+	require.Len(t, proposal.Scenarios, 2)
+	assert.Equal(t, "350", proposal.Scenarios[0].Amount, "the policy's minimum holds")
+	assert.Equal(t, "2852.8", proposal.Scenarios[1].Amount, "2852.85 rounded half even to 1 place")
+	require.NotNil(t, proposal.Policy)
+	assert.Equal(t, "350", *proposal.Policy.MinCharge, "the proposal carries the policy, trimmed")
+	assert.Equal(t, "HalfEven", proposal.Policy.RoundingMode)
+
+	bad := "-1"
+	_, err = svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo:  tenant(),
+		Expression:  "totalDistance",
+		Details:     pagedraft.FormulaDetails{Policy: &pagedraft.FormulaPolicy{MaxCharge: &bad}},
+		Explanation: "Distance.",
+	})
+	require.Error(t, err)
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	assert.Equal(t, "policy.maxCharge", multiErr.Errors[0].Field)
 }
 
 func TestPropose_ABreakdownLineThatFailsFailsTheCheck(t *testing.T) {

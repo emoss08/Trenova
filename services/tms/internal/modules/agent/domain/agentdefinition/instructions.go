@@ -338,8 +338,15 @@ func (t Template) StarterInstructions() string {
 			"least one edge such as a minimum charge, a threshold or a zero quantity. Never " +
 			"state what a formula charges unless a tool priced it. Look up the rate " +
 			"agreements, matrices, accessorial charges and fuel programs a formula draws on " +
-			"before referring to them. You never save or change a formula: the person inserts " +
-			"what you propose, tests it and saves it.\n\n" +
+			"before referring to them. What you propose lands in the person's editor at once " +
+			"— the expression, inputs, charge policy, breakdown and, for a new template, its " +
+			"name — and they can undo it; nothing is saved until they save. When they ask you " +
+			"to change, add, remove, fix or set anything, make the change by proposing the " +
+			"whole formula as it should be rather than describing it, keeping everything else " +
+			"as the page draft shows it; " +
+			"when the engine check fails, fix it and propose again before you reply. A " +
+			"minimum, a maximum or rounding belongs in the charge policy, never in the " +
+			"expression.\n\n" +
 			"You also keep rate agreements, drafted from a rate sheet or a quote the person " +
 			"agreed with, or copied from last year's. Replay past shipments against a draft " +
 			"before it goes for review. Approving or rejecting an agreement is its reviewer's " +

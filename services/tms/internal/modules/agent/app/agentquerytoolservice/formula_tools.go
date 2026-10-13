@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -14,9 +15,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -24,6 +27,9 @@ const (
 		"it names none."
 	pricedByEngineNote = "Every amount here was computed by Trenova's formula engine. Quote " +
 		"these amounts; never state an amount you did not get from a tool."
+	proposalAppliedNote = "The page applied this to the editor; the person can undo it. It " +
+		"shows in the page draft on your next turn. "
+	paramPolicy = "policy"
 )
 
 type formulaWorkbench interface {
@@ -264,6 +270,72 @@ func decodeScenarios(params map[string]any) ([]formulaassistantservice.Scenario,
 	return scenarios, nil
 }
 
+type policyParam struct {
+	MinCharge         *float64 `json:"minCharge"`
+	MaxCharge         *float64 `json:"maxCharge"`
+	RoundingMode      string   `json:"roundingMode"`
+	RoundingPrecision *int     `json:"roundingPrecision"`
+}
+
+func policySchema(description string) map[string]any {
+	return map[string]any{
+		"type":        "object",
+		"description": description,
+		"properties": map[string]any{
+			"minCharge": map[string]any{
+				"type": []string{"number", "null"},
+				"description": "The least the template bills for a load, whatever the " +
+					"expression comes to; null removes the minimum.",
+			},
+			"maxCharge": map[string]any{
+				"type": []string{"number", "null"},
+				"description": "The most the template bills for a load, whatever the " +
+					"expression comes to; null removes the maximum.",
+			},
+			"roundingMode": agenttoolschema.Enum(
+				"How the charge is rounded after the bounds; HalfUp unless the person "+
+					"chose otherwise.",
+				formulaRoundingModes,
+			),
+			"roundingPrecision": map[string]any{
+				"type":    "integer",
+				"minimum": 0,
+				"maximum": int(formulatypes.MaxRoundingPrecision),
+				"description": "The decimal places the charge is rounded to, 0 to " +
+					strconv.Itoa(int(formulatypes.MaxRoundingPrecision)) + "; 2 is the cent.",
+			},
+		},
+		"additionalProperties": false,
+	}
+}
+
+func decodePolicy(params map[string]any) (*pagedraft.FormulaPolicy, error) {
+	if raw, ok := params[paramPolicy]; !ok || raw == nil {
+		return nil, nil
+	}
+
+	var decoded policyParam
+	if err := decodeParam(params, paramPolicy, &decoded); err != nil {
+		return nil, err
+	}
+
+	return &pagedraft.FormulaPolicy{
+		MinCharge:         amountString(decoded.MinCharge),
+		MaxCharge:         amountString(decoded.MaxCharge),
+		RoundingMode:      decoded.RoundingMode,
+		RoundingPrecision: decoded.RoundingPrecision,
+	}, nil
+}
+
+func amountString(value *float64) *string {
+	if value == nil {
+		return nil
+	}
+	text := decimal.NewFromFloat(*value).String()
+
+	return &text
+}
+
 type testFormulaExpressionTool struct {
 	workbench formulaWorkbench
 	access    fieldAccess
@@ -306,6 +378,8 @@ func (t *testFormulaExpressionTool) ParamSchema() map[string]any {
 					"every load unless a load sets its own.",
 			},
 			"scenarios": scenarioSchema(),
+			paramPolicy: policySchema("The page draft's charge policy, so the amounts " +
+				"match what is billed."),
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"Optional: price a saved shipment instead of sample loads, "+
 					"from list_shipments or search_shipments."),
@@ -351,6 +425,10 @@ func (t *testFormulaExpressionTool) Query(
 	if err != nil {
 		return nil, err
 	}
+	policy, err := decodePolicy(params.Params)
+	if err != nil {
+		return nil, err
+	}
 
 	shipmentID := pulid.Nil
 	if raw := optionalString(params.Params, "shipmentId"); raw != "" {
@@ -373,6 +451,7 @@ func (t *testFormulaExpressionTool) Query(
 		Variables:  optionalObject(params.Params, "variables"),
 		ShipmentID: shipmentID,
 		Scenarios:  scenarios,
+		Policy:     policy,
 	})
 	if err != nil {
 		return nil, err
@@ -416,9 +495,14 @@ func (t *proposeFormulaTool) Recipe() []string {
 }
 
 func (t *proposeFormulaTool) Description() string {
-	return "Put a formula in front of the person for their editor, with its variables, a " +
-		"plain explanation and two or three sample loads priced by the engine. Nothing is " +
-		"saved: the person inserts it, tests it and saves it themselves."
+	return "Change the formula in the person's editor: the expression, its variables, the " +
+		"charge policy, breakdown lines, and for a new template its name and description. " +
+		"The page applies the change the moment you call this; the person sees " +
+		"it in their editor, can undo it, and nothing is saved until they save. Call it for " +
+		"every change the person asks for — add, remove, fix, rename, set a default, change " +
+		"the minimum — with the whole formula as it should be after the change. Keep " +
+		"everything they did not ask to change exactly as the page draft shows it. Never " +
+		"describe a change without making it."
 }
 
 func (t *proposeFormulaTool) ParamSchema() map[string]any {
@@ -530,6 +614,11 @@ func (t *proposeFormulaTool) ParamSchema() map[string]any {
 					"additionalProperties": false,
 				},
 			},
+			paramPolicy: policySchema("The charge policy the template applies after the " +
+				"expression. Always pass the page draft's policy here, changed only where the " +
+				"person asked (a minimum, a maximum, the rounding), so the amounts you quote " +
+				"match what the studio bills. Never write a minimum, a maximum or rounding " +
+				"into the expression."),
 			"scenarios": scenarioSchema(),
 		},
 		"required":             []string{"expression", "explanation"},
@@ -542,8 +631,8 @@ func (t *proposeFormulaTool) Policy() agentports.ToolPolicy {
 		resource: permission.ResourceFormulaTemplate,
 		scope:    agent.ToolScopeSelf,
 		effect:   agent.ToolEffectPresent,
-		rationale: "Hands a formula to the person's own editor for them to insert, test and " +
-			"save; nothing is saved and nothing is sent.",
+		rationale: "Changes the person's own editor, which they can undo; nothing is saved " +
+			"and nothing is sent.",
 	})
 }
 
@@ -618,6 +707,9 @@ func (t *proposeFormulaTool) Query(
 			return nil, err
 		}
 	}
+	if details.Policy, err = decodePolicy(params.Params); err != nil {
+		return nil, err
+	}
 
 	proposal, err := t.workbench.Propose(ctx, &formulaassistantservice.ProposeRequest{
 		TenantInfo:  formulaTenant(params),
@@ -632,7 +724,7 @@ func (t *proposeFormulaTool) Query(
 		return nil, err
 	}
 
-	note := "The formula is in front of the person with its sample loads. " + pricedByEngineNote
+	note := proposalAppliedNote + pricedByEngineNote
 	if !proposal.Check.Valid {
 		note = "The engine could not run this formula: " + proposal.Check.Error +
 			". Tell the person, fix it and propose it again."

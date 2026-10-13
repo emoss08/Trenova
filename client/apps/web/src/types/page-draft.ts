@@ -1,3 +1,4 @@
+import { MAX_ROUNDING_PRECISION } from "@trenova/shared/types/formula-template";
 import { z } from "zod";
 
 /**
@@ -73,7 +74,7 @@ export const formulaPolicySchema = z.object({
   minCharge: z.string().nullish(),
   maxCharge: z.string().nullish(),
   roundingMode: formulaRoundingModeSchema.optional(),
-  roundingPrecision: z.number().int().min(0).max(6).optional(),
+  roundingPrecision: z.number().int().min(0).max(MAX_ROUNDING_PRECISION).optional(),
 });
 
 export const formulaDraftBreakdownSchema = z.object({
