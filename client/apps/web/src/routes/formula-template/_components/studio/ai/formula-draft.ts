@@ -1,3 +1,4 @@
+import { formatExpression } from "@/components/formula-editor/expr-format";
 import type {
   FormulaDraftBreakdown,
   FormulaDraftVariable,
@@ -165,13 +166,19 @@ export function formulaDraftFromEditor(editor: FormulaEditorState): PageDraft {
   };
 }
 
+/** The expression as the editor formats it, or as written when it does not parse. */
+export function formattedOrAsWritten(expression: string): string {
+  const result = formatExpression(expression);
+  return result.ok ? result.text : expression;
+}
+
 /** A formula the assistant proposed, as the editor takes it when the person inserts it. */
 export function proposalForEditor(proposal: FormulaProposal): {
   expression: string;
   variableDefinitions: VariableDefinition[];
 } {
   return {
-    expression: proposal.expression,
+    expression: formattedOrAsWritten(proposal.expression),
     variableDefinitions: proposal.variables.map((variable) => ({
       name: variable.name,
       type: variable.type,
@@ -252,7 +259,7 @@ export function applyProposal(current: ProposalTarget, proposal: FormulaProposal
       ? proposal.breakdown.map((line) => ({
           name: line.name,
           label: line.label,
-          expression: line.expression,
+          expression: formattedOrAsWritten(line.expression),
         }))
       : current.breakdownDefinitions;
   const proposed = new Set(fromProposal.variableDefinitions.map((variable) => variable.name));

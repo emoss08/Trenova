@@ -1,5 +1,5 @@
-import { StateField, type EditorState } from "@codemirror/state";
-import { showTooltip, type Tooltip } from "@codemirror/view";
+import { StateEffect, StateField, type EditorState, type Extension } from "@codemirror/state";
+import { EditorView, showTooltip, type Tooltip } from "@codemirror/view";
 import { nodePath, parseExpression, memberPath, type Node } from "./expr-parser";
 import type { FunctionDoc, KnownIdentifiers } from "./known-identifiers";
 
@@ -121,14 +121,45 @@ function tooltipFor(state: EditorState, getKnown: () => KnownIdentifiers): Toolt
   };
 }
 
-/** Signature help, kept in step with the cursor and the document. */
-export function createSignatureHelp(getKnown: () => KnownIdentifiers) {
-  return StateField.define<Tooltip | null>({
-    create: (state) => tooltipFor(state, getKnown),
+/** The editor gained or lost focus; a tooltip belongs only to a focused editor. */
+export const setEditorFocused = StateEffect.define<boolean>();
+
+/** Carries focus changes into the state, for every tooltip that must leave with the focus. */
+export const editorFocusTracking: Extension = EditorView.focusChangeEffect.of((_state, focusing) =>
+  setEditorFocused.of(focusing),
+);
+
+/** Whether a transaction says the editor lost focus. */
+export function lostFocus(transaction: { effects: readonly StateEffect<unknown>[] }): boolean {
+  return transaction.effects.some((effect) => effect.is(setEditorFocused) && !effect.value);
+}
+
+type SignatureState = { focused: boolean; tooltip: Tooltip | null };
+
+/**
+ * Signature help, kept in step with the cursor and the document, and shown
+ * only while the editor has focus: a dialog opening over the editor takes
+ * the focus with it, and the help must not stay on screen above the dialog.
+ */
+export function createSignatureHelp(getKnown: () => KnownIdentifiers): Extension {
+  const field = StateField.define<SignatureState>({
+    create: () => ({ focused: false, tooltip: null }),
     update: (value, transaction) => {
-      if (!transaction.docChanged && !transaction.selection) return value;
-      return tooltipFor(transaction.state, getKnown);
+      let focused = value.focused;
+      for (const effect of transaction.effects) {
+        if (effect.is(setEditorFocused)) focused = effect.value;
+      }
+      if (!focused) {
+        return value.tooltip === null && focused === value.focused
+          ? value
+          : { focused, tooltip: null };
+      }
+      if (!transaction.docChanged && !transaction.selection && focused === value.focused) {
+        return value;
+      }
+      return { focused, tooltip: tooltipFor(transaction.state, getKnown) };
     },
-    provide: (field) => showTooltip.from(field),
+    provide: (field) => showTooltip.from(field, (value) => value.tooltip),
   });
+  return [field, editorFocusTracking];
 }

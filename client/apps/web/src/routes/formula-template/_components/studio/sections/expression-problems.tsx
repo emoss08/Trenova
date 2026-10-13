@@ -129,8 +129,15 @@ export function ExpressionProblems({
     const sorted = [...analysis.problems].sort(
       (a, b) => order[a.severity] - order[b.severity] || a.from - b.from,
     );
+    // Two findings can share a span (a `let` missing both its name and its
+    // value), so the key carries the message, and a repeat gets its index:
+    // React keeps a stale row on screen when keys collide.
+    const seen = new Map<string, number>();
     for (const problem of sorted) {
-      list.push(diagnosticRow(problem, `${problem.code}:${problem.from}:${problem.to}`));
+      const base = `${problem.code}:${problem.from}:${problem.to}:${problem.message}`;
+      const repeat = seen.get(base) ?? 0;
+      seen.set(base, repeat + 1);
+      list.push(diagnosticRow(problem, repeat === 0 ? base : `${base}#${repeat}`));
     }
 
     if (analysis.errorCount === 0 && result && !result.valid && !analysis.empty) {

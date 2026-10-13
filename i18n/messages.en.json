@@ -20082,7 +20082,7 @@
     ]
   },
   "All variables": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -20769,6 +20769,15 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "Already formatted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Already imported": {
@@ -98354,6 +98363,15 @@
       "routes/formula-template"
     ]
   },
+  "Fix the syntax first, then format": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Fix the values above to see what they would do.": {
     "sites": 1,
     "scope": [
@@ -99725,7 +99743,7 @@
     ]
   },
   "Format": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -99734,6 +99752,7 @@
       "apps/web/components",
       "go/other",
       "routes/agent-control",
+      "routes/formula-template",
       "routes/reports"
     ]
   },
@@ -99818,6 +99837,15 @@
       "go/other"
     ]
   },
+  "Format the formula": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Format time": {
     "sites": 1,
     "scope": [
@@ -99897,6 +99925,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Formatting would drop a comment; take it out first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Former user": {
@@ -102182,7 +102219,7 @@
     ]
   },
   "Functions": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -206089,7 +206126,7 @@
     ]
   },
   "Scenarios": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -264559,7 +264596,7 @@
     ]
   },
   "Values this formula reads": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -264631,7 +264668,7 @@
     ]
   },
   "Variables": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -284197,6 +284234,24 @@
       "go/other"
     ]
   },
+  "empty list": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "empty record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "endDate must not be before startDate": {
     "sites": 1,
     "scope": [
@@ -289332,7 +289387,7 @@
     ]
   },
   "{0, plural, one {# field} other {# fields}}": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -289340,6 +289395,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
+      "routes/formula-template",
       "routes/worker"
     ]
   },
@@ -289603,7 +289659,7 @@
     ]
   },
   "{0, plural, one {# item} other {# items}}": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -289611,7 +289667,8 @@
       "apps/web/components",
       "routes/ar-open-items",
       "routes/billing-queue",
-      "routes/desk"
+      "routes/desk",
+      "routes/formula-template"
     ]
   },
   "{0, plural, one {# item} other {# items}} assigned": {

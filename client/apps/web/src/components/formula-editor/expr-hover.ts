@@ -3,6 +3,7 @@ import { hoverTooltip, type Tooltip } from "@codemirror/view";
 import type { FormulaValueSource } from "@trenova/shared/types/formula-template";
 import { normalizeType, typeWords } from "./expr-check";
 import { collectIdentifierTokens, letBindings } from "./expr-lint";
+import { lostFocus } from "./expr-signature";
 import { isKnownFunction, type KnownIdentifiers } from "./known-identifiers";
 
 export type HoverVariable = {
@@ -39,7 +40,16 @@ function formatValue(value: unknown): string {
   if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
     return String(value);
   }
-  return JSON.stringify(value);
+  if (Array.isArray(value)) {
+    return translate("{0, plural, one {# item} other {# items}}", value.length);
+  }
+  if (typeof value === "object") {
+    return translate(
+      "{0, plural, one {# field} other {# fields}}",
+      Object.keys(value as Record<string, unknown>).length,
+    );
+  }
+  return String(value);
 }
 
 /** One line: what the variable was in the last preview and where it came from. */
@@ -150,7 +160,8 @@ export function renderHoverCard(
 /**
  * Shows, on hover, what a name is and what it resolved to in the most recent
  * preview. The getters are read at hover time so the extension is built once
- * and stays current as previews run and inputs change.
+ * and stays current as previews run and inputs change. The card leaves with
+ * the editor's focus, so it never floats over a dialog.
  */
 export function createExprHover(
   getValues: () => ReadonlyMap<string, HoverVariable>,
@@ -175,6 +186,6 @@ export function createExprHover(
         create: () => ({ dom: card }),
       };
     },
-    { hoverTime: 250 },
+    { hoverTime: 250, hideOn: lostFocus },
   );
 }

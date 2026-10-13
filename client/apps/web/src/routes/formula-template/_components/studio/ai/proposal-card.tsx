@@ -25,7 +25,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { analyzeExpression } from "../model/expression-analysis";
 import { formatMoney, formatStudioValue, numericAmount, roundingSentence } from "../model/format";
 import { lineDiff } from "../model/line-diff";
@@ -127,19 +127,74 @@ export function ProposalCard({
   onDismiss: () => void;
 }) {
   const t = useT();
-  const form = useFormContext<FormulaTemplateFormValues>();
-  const values = form.watch();
-  const current = proposalTargetOf(values);
+  const { control } = useFormContext<FormulaTemplateFormValues>();
+  // Only the fields a proposal can change are watched, so a card does not
+  // redo its diff and its check on every keystroke elsewhere in the form.
+  const [
+    name,
+    description,
+    type,
+    expression,
+    variableDefinitions,
+    breakdownDefinitions,
+    minCharge,
+    maxCharge,
+    roundingMode,
+    roundingPrecision,
+    schemaId,
+  ] = useWatch({
+    control,
+    name: [
+      "name",
+      "description",
+      "type",
+      "expression",
+      "variableDefinitions",
+      "breakdownDefinitions",
+      "minCharge",
+      "maxCharge",
+      "roundingMode",
+      "roundingPrecision",
+      "schemaId",
+    ],
+  });
+  const current = useMemo(
+    () =>
+      proposalTargetOf({
+        name,
+        description,
+        type,
+        expression,
+        variableDefinitions,
+        breakdownDefinitions,
+        minCharge,
+        maxCharge,
+        roundingMode,
+        roundingPrecision,
+      } as FormulaTemplateFormValues),
+    [
+      name,
+      description,
+      type,
+      expression,
+      variableDefinitions,
+      breakdownDefinitions,
+      minCharge,
+      maxCharge,
+      roundingMode,
+      roundingPrecision,
+    ],
+  );
   const base = state === "applied" && before ? before : current;
-  const next = applyProposal(base, proposal);
+  const next = useMemo(() => applyProposal(base, proposal), [base, proposal]);
   const diff = useMemo(
-    () => lineDiff(base.expression, proposal.expression),
-    [base.expression, proposal.expression],
+    () => lineDiff(base.expression, next.expression),
+    [base.expression, next.expression],
   );
   const added = newProposalVariables(base.variableDefinitions, proposal);
   const movedPolicy = policyChanged(base, next);
 
-  const { data: schema } = useFormulaSchema(values.schemaId || "shipment");
+  const { data: schema } = useFormulaSchema(schemaId || "shipment");
   const analysis = useMemo(() => {
     const nextKnown = buildKnownIdentifiers(schema, next.variableDefinitions);
     return analyzeExpression(next.expression, nextKnown);
@@ -158,7 +213,7 @@ export function ProposalCard({
 
   const content = {
     expression: next.expression,
-    schemaId: values.schemaId || "shipment",
+    schemaId: schemaId || "shipment",
     variableDefinitions: next.variableDefinitions,
     breakdownDefinitions: next.breakdownDefinitions,
     minCharge: next.minCharge,

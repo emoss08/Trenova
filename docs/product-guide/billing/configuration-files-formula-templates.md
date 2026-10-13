@@ -42,6 +42,7 @@ Keywords: formula error, unknown variable, declare input, inline values, hover
 1. Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. The editor underlines anything wrong — a name it does not know, a function given the wrong number of arguments, a flag multiplied like a number, a field that can be empty — and lists each problem under the editor with its line and a fix beside it: declare the name as an input, change it to the field it meant, or give an empty field a fallback. Select a row to jump to it; a long list folds to its first rows and can be narrowed to errors or warnings.
 2. Hover a name to see what it is, whether it can be empty, and what it was worth on the preview load; type inside a function's parentheses to see its signature. Each line shows what it came to on the preview load at its end; the eye button under the editor hides these values.
 3. Press Ctrl+Space for suggestions.
+4. The format button under the editor (or Shift+Alt+F) lays the formula out one statement per line with a space around every operator, breaking a long sum one term per line; what Nova writes lands already formatted. A formula that does not parse is left as it is until it does.
 
 ### Test a template with scenarios
 Keywords: test formula, expected charge, backtest, pin scenario, edge cases

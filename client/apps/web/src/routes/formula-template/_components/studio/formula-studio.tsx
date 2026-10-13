@@ -17,27 +17,15 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
-import { ApprovalActionDialog, type ApprovalAction } from "../approval-action-dialog";
-import { ForkLineageDialog } from "../fork-lineage-dialog";
-import { ForkTemplateDialog } from "../fork-template-dialog";
-import { VersionHistoryPanel } from "../version/version-history-panel";
-import { BacktestSheet } from "./backtest-sheet";
-import { BacktestDialog } from "./dialogs/backtest-dialog";
-import { SubmitReviewDialog } from "./dialogs/submit-review-dialog";
+import type { ApprovalAction } from "../approval-action-dialog";
 import "./formula-studio.css";
-import { ImportTemplateDialog } from "./import-template-dialog";
 import { RateTrace } from "./rate-trace";
-import { NovaPane } from "./rail/nova-pane";
-import { PreviewPane } from "./rail/preview-pane";
-import { REFERENCE_SEARCH_ID, ReferencePane } from "./rail/reference-pane";
-import { ScenariosPane } from "./rail/scenarios-pane";
-import { BreakdownSection } from "./sections/breakdown-section";
+import { REFERENCE_SEARCH_ID } from "./rail/reference-search";
 import { DetailsHero } from "./sections/details-hero";
-import { ExpressionSection } from "./sections/expression-section";
 import { InputsSection } from "./sections/inputs-section";
 import { PolicySection } from "./sections/policy-section";
 import {
@@ -45,14 +33,109 @@ import {
   StudioProvider,
   sectionDomId,
   useStudio,
+  useStudioActions,
   type StudioProps,
   type StudioTab,
 } from "./studio-context";
+import {
+  BreakdownSectionSkeleton,
+  ExpressionSectionSkeleton,
+  NovaPaneSkeleton,
+  PreviewPaneSkeleton,
+  ReferencePaneSkeleton,
+  ScenariosPaneSkeleton,
+} from "./studio-skeletons";
 import { StudioTopBar } from "./studio-top-bar";
 
 export type { StudioSaveExtras } from "./studio-context";
 
+/*
+ * The heavy parts of the studio arrive on their own: the editor (CodeMirror
+ * and the language service), each rail pane, and every dialog, so the page
+ * paints its frame, name and inputs first and the rest lands in place behind
+ * a skeleton of its own shape. A dialog's module is read the first time it
+ * opens and kept mounted after, so it closes with its animation.
+ */
+const ExpressionSection = lazy(() =>
+  import("./sections/expression-section").then((module) => ({
+    default: module.ExpressionSection,
+  })),
+);
+const BreakdownSection = lazy(() =>
+  import("./sections/breakdown-section").then((module) => ({
+    default: module.BreakdownSection,
+  })),
+);
+const PreviewPane = lazy(() =>
+  import("./rail/preview-pane").then((module) => ({ default: module.PreviewPane })),
+);
+const ScenariosPane = lazy(() =>
+  import("./rail/scenarios-pane").then((module) => ({ default: module.ScenariosPane })),
+);
+const ReferencePane = lazy(() =>
+  import("./rail/reference-pane").then((module) => ({ default: module.ReferencePane })),
+);
+const NovaPane = lazy(() =>
+  import("./rail/nova-pane").then((module) => ({ default: module.NovaPane })),
+);
+const ApprovalActionDialog = lazy(() =>
+  import("../approval-action-dialog").then((module) => ({
+    default: module.ApprovalActionDialog,
+  })),
+);
+const SubmitReviewDialog = lazy(() =>
+  import("./dialogs/submit-review-dialog").then((module) => ({
+    default: module.SubmitReviewDialog,
+  })),
+);
+const BacktestDialog = lazy(() =>
+  import("./dialogs/backtest-dialog").then((module) => ({ default: module.BacktestDialog })),
+);
+const BacktestSheet = lazy(() =>
+  import("./backtest-sheet").then((module) => ({ default: module.BacktestSheet })),
+);
+const VersionHistoryPanel = lazy(() =>
+  import("../version/version-history-panel").then((module) => ({
+    default: module.VersionHistoryPanel,
+  })),
+);
+const ForkTemplateDialog = lazy(() =>
+  import("../fork-template-dialog").then((module) => ({ default: module.ForkTemplateDialog })),
+);
+const ForkLineageDialog = lazy(() =>
+  import("../fork-lineage-dialog").then((module) => ({ default: module.ForkLineageDialog })),
+);
+const ImportTemplateDialog = lazy(() =>
+  import("./import-template-dialog").then((module) => ({
+    default: module.ImportTemplateDialog,
+  })),
+);
+
 const SPY_OFFSET = 140;
+const WARM_AFTER_MS = 1500;
+
+/**
+ * Reads the modules a tab or a button will need once the page has painted
+ * and the browser is idle, so the first switch to Scenarios, Reference or
+ * Nova and the first Submit land without a skeleton. A failed read is left
+ * to the real open, which reports it.
+ */
+function warmStudioModules(): () => void {
+  const warm = () => {
+    void Promise.allSettled([
+      import("./rail/scenarios-pane"),
+      import("./rail/reference-pane"),
+      import("./rail/nova-pane"),
+      import("./dialogs/submit-review-dialog"),
+    ]);
+  };
+  if ("requestIdleCallback" in window) {
+    const handle = window.requestIdleCallback(warm, { timeout: WARM_AFTER_MS * 2 });
+    return () => window.cancelIdleCallback(handle);
+  }
+  const timer = window.setTimeout(warm, WARM_AFTER_MS);
+  return () => window.clearTimeout(timer);
+}
 
 /**
  * The formula template's create and edit form: a top bar over the rate
@@ -66,6 +149,13 @@ export function FormulaStudio(props: StudioProps) {
       </StudioProvider>
     </ActiveEditorProvider>
   );
+}
+
+/** True from the first time a flag is raised, so a piece opened once stays mounted. */
+function useOnceOpened(open: boolean): boolean {
+  const [opened, setOpened] = useState(open);
+  if (open && !opened) setOpened(true);
+  return opened;
 }
 
 function RailTabs() {
@@ -132,17 +222,44 @@ function RailTabs() {
   );
 }
 
+/**
+ * The pane the tab shows. Nova's stays mounted once it has been opened and
+ * is only hidden behind another tab, so the conversation, a reply under
+ * way and what it applied are all there when the person comes back to it.
+ * The reference pane scrolls itself: its list is virtualized.
+ */
 function RailBody() {
   const { tab } = useStudio();
-  if (tab === "nova") {
-    return <NovaPane />;
-  }
+  const novaOpened = useOnceOpened(tab === "nova");
   return (
-    <ScrollArea maskVariant="card" className="min-h-0 flex-1">
-      {tab === "preview" && <PreviewPane />}
-      {tab === "scenarios" && <ScenariosPane />}
-      {tab === "reference" && <ReferencePane />}
-    </ScrollArea>
+    <>
+      {(tab === "preview" || tab === "scenarios") && (
+        <ScrollArea maskVariant="card" className="min-h-0 flex-1">
+          {tab === "preview" && (
+            <Suspense fallback={<PreviewPaneSkeleton />}>
+              <PreviewPane />
+            </Suspense>
+          )}
+          {tab === "scenarios" && (
+            <Suspense fallback={<ScenariosPaneSkeleton />}>
+              <ScenariosPane />
+            </Suspense>
+          )}
+        </ScrollArea>
+      )}
+      {tab === "reference" && (
+        <Suspense fallback={<ReferencePaneSkeleton />}>
+          <ReferencePane />
+        </Suspense>
+      )}
+      {novaOpened && (
+        <div className={cn("flex min-h-0 flex-1 flex-col", tab !== "nova" && "hidden")}>
+          <Suspense fallback={<NovaPaneSkeleton />}>
+            <NovaPane />
+          </Suspense>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -150,16 +267,20 @@ function FormColumn() {
   return (
     <div className="mx-auto flex w-full max-w-200 flex-col gap-7 px-8 pt-5 pb-32 max-[900px]:px-4">
       <DetailsHero />
-      <ExpressionSection />
+      <Suspense fallback={<ExpressionSectionSkeleton />}>
+        <ExpressionSection />
+      </Suspense>
       <InputsSection />
       <PolicySection />
-      <BreakdownSection />
+      <Suspense fallback={<BreakdownSectionSkeleton />}>
+        <BreakdownSection />
+      </Suspense>
     </div>
   );
 }
 
 function useSectionSpy() {
-  const { formViewport, setActiveSection } = useStudio();
+  const { formViewport, setActiveSection } = useStudioActions();
   useEffect(() => {
     const viewport = formViewport.current;
     if (!viewport) return;
@@ -212,7 +333,16 @@ function StudioLayout() {
   const [backtestOpen, setBacktestOpen] = useState(false);
   const [backtestDetailsOpen, setBacktestDetailsOpen] = useState(false);
 
+  const submitOpened = useOnceOpened(submitOpen);
+  const versionHistoryOpened = useOnceOpened(versionHistoryOpen);
+  const forkOpened = useOnceOpened(forkOpen);
+  const lineageOpened = useOnceOpened(lineageOpen);
+  const importOpened = useOnceOpened(importOpen);
+  const backtestOpened = useOnceOpened(backtestOpen);
+  const backtestDetailsOpened = useOnceOpened(backtestDetailsOpen);
+
   useSectionSpy();
+  useEffect(() => warmStudioModules(), []);
 
   // A reviewer following a notification lands on the decision, not the
   // editor: the approve dialog opens itself, then the marker leaves the URL so
@@ -314,74 +444,90 @@ function StudioLayout() {
           </div>
         )}
 
-        {approvalAction && (
-          <ApprovalActionDialog
-            open={approvalAction !== null}
-            onOpenChange={(open) => {
-              if (!open) setApprovalAction(null);
-            }}
-            action={approvalAction}
-            template={template}
-          />
-        )}
+        <Suspense fallback={null}>
+          {approvalAction && (
+            <ApprovalActionDialog
+              open={approvalAction !== null}
+              onOpenChange={(open) => {
+                if (!open) setApprovalAction(null);
+              }}
+              action={approvalAction}
+              template={template}
+            />
+          )}
 
-        {template && (
-          <SubmitReviewDialog open={submitOpen} onOpenChange={setSubmitOpen} template={template} />
-        )}
+          {template && submitOpened && (
+            <SubmitReviewDialog
+              open={submitOpen}
+              onOpenChange={setSubmitOpen}
+              template={template}
+            />
+          )}
 
-        {template && (
-          <BacktestDialog
-            open={backtestOpen}
-            onOpenChange={setBacktestOpen}
-            template={template}
-            expression={expression}
-            onOpenDetails={() => setBacktestDetailsOpen(true)}
-          />
-        )}
+          {template && backtestOpened && (
+            <BacktestDialog
+              open={backtestOpen}
+              onOpenChange={setBacktestOpen}
+              template={template}
+              expression={expression}
+              onOpenDetails={() => setBacktestDetailsOpen(true)}
+            />
+          )}
 
-        <BacktestSheet
-          open={backtestDetailsOpen}
-          onOpenChange={setBacktestDetailsOpen}
-          form={form}
-          template={template}
-        />
+          {backtestDetailsOpened && (
+            <BacktestSheet
+              open={backtestDetailsOpen}
+              onOpenChange={setBacktestDetailsOpen}
+              form={form}
+              template={template}
+            />
+          )}
 
-        <VersionHistoryPanel
-          open={versionHistoryOpen}
-          onOpenChange={setVersionHistoryOpen}
-          template={template}
-          onRollback={(updated) => {
-            form.reset(updated as unknown as FormulaTemplateFormValues);
-            onTemplateChanged?.(updated);
-          }}
-        />
+          {versionHistoryOpened && (
+            <VersionHistoryPanel
+              open={versionHistoryOpen}
+              onOpenChange={setVersionHistoryOpen}
+              template={template}
+              onRollback={(updated) => {
+                form.reset(updated as unknown as FormulaTemplateFormValues);
+                onTemplateChanged?.(updated);
+              }}
+            />
+          )}
 
-        <ForkTemplateDialog
-          open={forkOpen}
-          onOpenChange={setForkOpen}
-          template={template}
-          onForkSuccess={(forked) => {
-            setForkOpen(false);
-            if (forked.id) void navigate(formulaTemplateRoutes.edit(forked.id));
-          }}
-        />
+          {forkOpened && (
+            <ForkTemplateDialog
+              open={forkOpen}
+              onOpenChange={setForkOpen}
+              template={template}
+              onForkSuccess={(forked) => {
+                setForkOpen(false);
+                if (forked.id) void navigate(formulaTemplateRoutes.edit(forked.id));
+              }}
+            />
+          )}
 
-        <ForkLineageDialog
-          open={lineageOpen}
-          onOpenChange={setLineageOpen}
-          templateId={template?.id}
-          currentTemplateId={template?.id}
-          onNavigateToTemplate={(templateId) => {
-            setLineageOpen(false);
-            if (templateId) void navigate(formulaTemplateRoutes.edit(templateId));
-          }}
-        />
+          {lineageOpened && (
+            <ForkLineageDialog
+              open={lineageOpen}
+              onOpenChange={setLineageOpen}
+              templateId={template?.id}
+              currentTemplateId={template?.id}
+              onNavigateToTemplate={(templateId) => {
+                setLineageOpen(false);
+                if (templateId) void navigate(formulaTemplateRoutes.edit(templateId));
+              }}
+            />
+          )}
 
-        <ImportTemplateDialog
-          open={importOpen}
-          onOpenChange={setImportOpen}
-          onImported={(response) => void navigate(importLandingRoute(response))}
-        />
+          {importOpened && (
+            <ImportTemplateDialog
+              open={importOpen}
+              onOpenChange={setImportOpen}
+              onImported={(response) => void navigate(importLandingRoute(response))}
+            />
+          )}
+        </Suspense>
       </div>
     </PreviewValuesProvider>
   );
