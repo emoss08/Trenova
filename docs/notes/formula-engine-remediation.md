@@ -42,8 +42,8 @@ workstreams follows from that.
 
 | Workstream | State |
 |---|---|
-| WS0. Relation fields reach a real shipment's environment | done, ships with WS1 |
-| WS1. Rate with the relations the schema needs, and fail on what didn't resolve | done, in review with WS0 |
+| WS0. Relation fields reach a real shipment's environment | done, on `master` as `a7b2653e` (landed ahead of WS1) |
+| WS1. Rate with the relations the schema needs, and fail on what didn't resolve | done, in review |
 | WS2. Data-contract defects (silent mispricing) | open |
 | WS3. Data-contract defects (loud failures the preview hides) | open |
 | WS4. Engine hardening and money arithmetic | open |
@@ -74,7 +74,9 @@ in preview and in billing.
 
 **Why it cannot ship alone.** Shipment create and update rate an entity whose relations are not
 loaded (WS1). Before WS0 a formula reading `serviceType` failed loudly there; after WS0 it reads
-nil, so `serviceType.code == "EXP" ? 75 : 0` silently prices 0.
+nil, so `serviceType.code == "EXP" ? 75 : 0` silently prices 0. WS0 reached `master` on its own
+(`a7b2653e`, the same change plus the regenerated i18n catalogs), so `master` has this defect until
+WS1 merges.
 
 ---
 
