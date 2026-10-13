@@ -19251,6 +19251,8 @@ type FactoringCompany {
   remittanceInstructions: String
   "The notice printed on assigned invoices. Blank prints the standard notice."
   noticeOfAssignment: String
+  "True when the factor buys invoices without recourse and carries the credit risk. Its invoices leave collections and stop counting toward credit exposure."
+  nonRecourse: Boolean!
   notes: String
   version: Int!
   createdAt: Timestamp!

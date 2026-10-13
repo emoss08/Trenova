@@ -625,25 +625,15 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 			}
 		}
 		if s.customerLedgerRepo != nil {
-			reverseAmount := payment.AppliedAmountMinor + payment.ShortPayAmountMinor()
 			if txErr := s.customerLedgerRepo.AppendEntries(
 				txCtx,
-				[]*customerledger.CustomerLedgerEntry{
-					{
-						ID:               pulid.MustNew("cledg_"),
-						OrganizationID:   payment.OrganizationID,
-						BusinessUnitID:   payment.BusinessUnitID,
-						CustomerID:       payment.CustomerID,
-						SourceObjectType: "CustomerPayment",
-						SourceObjectID:   payment.ID.String(),
-						SourceEventType:  tenant.JournalSourceEventCustomerPaymentReversed.String(),
-						DocumentNumber:   payment.ReferenceNumber,
-						TransactionDate:  req.AccountingDate,
-						LineNumber:       1,
-						AmountMinor:      reverseAmount,
-						CreatedByID:      actor.UserID,
-					},
-				},
+				applicationLedgerEntries(&applicationLedgerParams{
+					payment:         payment,
+					applications:    payment.Applications,
+					transactionDate: req.AccountingDate,
+					actorID:         actor.UserID,
+					reversal:        true,
+				}),
 			); txErr != nil {
 				return txErr
 			}
@@ -822,12 +812,17 @@ func (s *Service) logInvoiceAudit(
 	}
 }
 
+// applicationLedgerParams describes the subledger entries for a payment's
+// applications. Each entry names the invoice it settles, so anything that
+// reads the ledger per invoice sees the payment against the right invoice.
+// A reversal writes the same entries with the sign flipped.
 type applicationLedgerParams struct {
 	payment         *customerpayment.Payment
 	applications    []*customerpayment.Application
 	appliedEvent    string
 	transactionDate int64
 	actorID         pulid.ID
+	reversal        bool
 }
 
 func applicationLedgerEntries(
@@ -835,6 +830,11 @@ func applicationLedgerEntries(
 ) []*customerledger.CustomerLedgerEntry {
 	entries := make([]*customerledger.CustomerLedgerEntry, 0, len(params.applications)*2)
 	appendEntry := func(app *customerpayment.Application, event string, amount int64) {
+		amountMinor := -amount
+		if params.reversal {
+			event = tenant.JournalSourceEventCustomerPaymentReversed.String()
+			amountMinor = amount
+		}
 		entries = append(entries, &customerledger.CustomerLedgerEntry{
 			ID:               pulid.MustNew("cledg_"),
 			OrganizationID:   params.payment.OrganizationID,
@@ -847,7 +847,7 @@ func applicationLedgerEntries(
 			DocumentNumber:   params.payment.ReferenceNumber,
 			TransactionDate:  params.transactionDate,
 			LineNumber:       len(entries) + 1,
-			AmountMinor:      -amount,
+			AmountMinor:      amountMinor,
 			CreatedByID:      params.actorID,
 		})
 	}

@@ -113,6 +113,26 @@ func (r *repository) SumBalanceAsOf(
 	})
 }
 
+// nonRecourseFactoredEntryFilter drops an entry whose invoice was sold to a
+// non-recourse factor. An invoice's own entry names it as its source; a
+// payment, credit memo or write-off applied to it names it as the related
+// invoice.
+const nonRecourseFactoredEntryFilter = `NOT EXISTS (
+	SELECT 1
+	FROM invoices AS inv
+	JOIN factoring_companies AS fac
+		ON fac.id = inv.factoring_company_id
+		AND fac.organization_id = inv.organization_id
+		AND fac.business_unit_id = inv.business_unit_id
+	WHERE inv.organization_id = cle.organization_id
+		AND inv.business_unit_id = cle.business_unit_id
+		AND inv.id = COALESCE(
+			cle.related_invoice_id,
+			CASE WHEN cle.source_object_type = 'Invoice' THEN cle.source_object_id END
+		)
+		AND fac.non_recourse
+)`
+
 // SumCustomerBalances totals each named customer's subledger. A customer with
 // no entries is absent from the result, which reads as a zero balance.
 func (r *repository) SumCustomerBalances(
@@ -129,16 +149,18 @@ func (r *repository) SumCustomerBalances(
 			Balance    int64    `bun:"balance"`
 		}
 		rows := make([]row, 0, len(req.CustomerIDs))
-		err := r.db.DBForContext(ctx).
+		q := r.db.DBForContext(ctx).
 			NewSelect().
 			TableExpr("customer_ledger_entries AS cle").
 			ColumnExpr("cle.customer_id").
 			ColumnExpr("COALESCE(SUM(cle.amount_minor), 0) AS balance").
 			Where("cle.organization_id = ?", req.TenantInfo.OrgID).
 			Where("cle.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("cle.customer_id IN (?)", bun.List(req.CustomerIDs)).
-			GroupExpr("cle.customer_id").
-			Scan(ctx, &rows)
+			Where("cle.customer_id IN (?)", bun.List(req.CustomerIDs))
+		if req.ExcludeNonRecourseFactored {
+			q = q.Where(nonRecourseFactoredEntryFilter)
+		}
+		err := q.GroupExpr("cle.customer_id").Scan(ctx, &rows)
 		if err != nil {
 			r.l.Error("failed to sum customer balances", zap.Error(err))
 			return nil, err

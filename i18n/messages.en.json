@@ -19039,11 +19039,12 @@
     ]
   },
   "Agreement": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/factoring-company",
       "routes/rate-agreement"
     ]
   },
@@ -149001,6 +149002,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "Non-recourse": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "Non-urgent emails arrive together at 8:00 AM. Urgent ones still come right away.": {
     "sites": 1,
     "scope": [
@@ -188964,6 +188974,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Recourse": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
     ]
   },
   "Recovered": {
@@ -237622,6 +237641,15 @@
       "routes/shipment"
     ]
   },
+  "The factor buys invoices outright and carries the credit risk. Its invoices leave the collections worklist and stop counting toward the customer's credit limit. Leave off for recourse factoring, where an unpaid invoice comes back to you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "The factor's legal name. It is printed as the payee on every invoice assigned to it.": {
     "sites": 1,
     "scope": [
@@ -274611,6 +274639,15 @@
       "routes/fuel-card"
     ]
   },
+  "Who carries the risk when a customer does not pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "Who customers and your team reach at the factor": {
     "sites": 1,
     "scope": [
@@ -283653,6 +283690,15 @@
       "routes/factoring-company"
     ]
   },
+  "e.g., 90-day chargeback, 3% fee": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/factoring-company"
+    ]
+  },
   "e.g., 90210": {
     "sites": 4,
     "scope": [
@@ -284000,15 +284046,6 @@
     ]
   },
   "e.g., RTSFIN": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/factoring-company"
-    ]
-  },
-  "e.g., Recourse agreement, 90-day chargeback": {
     "sites": 1,
     "scope": [
       "ts"

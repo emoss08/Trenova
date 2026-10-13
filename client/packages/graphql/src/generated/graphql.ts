@@ -12629,7 +12629,7 @@ export type UpdateExtractionShadowSettingsMutationVariables = Exact<{
 
 export type UpdateExtractionShadowSettingsMutation = { updateExtractionShadowSettings: { ' $fragmentRefs'?: { 'ExtractionShadowSettingsFieldsFragment': ExtractionShadowSettingsFieldsFragment } } };
 
-export type FactoringCompanyTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string | null, city: string, stateId: string, postalCode: string, email: string | null, phoneNumber: string | null, remittanceInstructions: string | null, noticeOfAssignment: string | null, notes: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FactoringCompanyTableRowFieldsFragment' };
+export type FactoringCompanyTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string | null, city: string, stateId: string, postalCode: string, email: string | null, phoneNumber: string | null, remittanceInstructions: string | null, noticeOfAssignment: string | null, nonRecourse: boolean, notes: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FactoringCompanyTableRowFieldsFragment' };
 
 export type FactoringCompanyTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -22263,6 +22263,7 @@ export const FactoringCompanyTableRowFieldsFragmentDoc = new TypedDocumentString
   phoneNumber
   remittanceInstructions
   noticeOfAssignment
+  nonRecourse
   notes
   version
   createdAt
@@ -28284,7 +28285,7 @@ export const ExtractionShadowReportDocument = {"__meta__":{"kind":"query","name"
 export const ExtractionShadowResultTableDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowResultTable","hash":"sha256:0f8c34e7b121c16ddc8ab00931306ec12ff556d65f7e01d96d8b3e4a9c713e06"}} as unknown as TypedDocumentString<ExtractionShadowResultTableQuery, ExtractionShadowResultTableQueryVariables>;
 export const ExtractionShadowResultDetailDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowResultDetail","hash":"sha256:f8ab396ade746603c58d63653a216371ce02b7632d660ff73ffee7a5059cbad3"}} as unknown as TypedDocumentString<ExtractionShadowResultDetailQuery, ExtractionShadowResultDetailQueryVariables>;
 export const UpdateExtractionShadowSettingsDocument = {"__meta__":{"kind":"mutation","name":"UpdateExtractionShadowSettings","hash":"sha256:557a7473030ad51dbabe9d39f6b844ccd2f4d64917eda8cff73c2eb6c7de4f51"}} as unknown as TypedDocumentString<UpdateExtractionShadowSettingsMutation, UpdateExtractionShadowSettingsMutationVariables>;
-export const FactoringCompanyTableDocument = {"__meta__":{"kind":"query","name":"FactoringCompanyTable","hash":"sha256:0e23148b59caf9e99f3b13e6ff1466760d462dfdccd38f7dd96e1bdd8c5cb5be"}} as unknown as TypedDocumentString<FactoringCompanyTableQuery, FactoringCompanyTableQueryVariables>;
+export const FactoringCompanyTableDocument = {"__meta__":{"kind":"query","name":"FactoringCompanyTable","hash":"sha256:8bfc1b2a7ef617601e52fb0c214c84b0b48345b604b1f178343b7e06b8b8a376"}} as unknown as TypedDocumentString<FactoringCompanyTableQuery, FactoringCompanyTableQueryVariables>;
 export const FiscalYearTableDocument = {"__meta__":{"kind":"query","name":"FiscalYearTable","hash":"sha256:b71efb13dab593e5639accbcbd43154e83864413588b315ef028c1029087a5b7"}} as unknown as TypedDocumentString<FiscalYearTableQuery, FiscalYearTableQueryVariables>;
 export const FleetCodeTableDocument = {"__meta__":{"kind":"query","name":"FleetCodeTable","hash":"sha256:aa2917e7de6d4a5981909b298d418eeaa9d673b8eef470e6ed424667aa344b43"}} as unknown as TypedDocumentString<FleetCodeTableQuery, FleetCodeTableQueryVariables>;
 export const FleetSafetyDocument = {"__meta__":{"kind":"query","name":"FleetSafety","hash":"sha256:6e9a229e80256b02928afbbb05c93d141f6955ef63bf3b19a4bfb228954c1334"}} as unknown as TypedDocumentString<FleetSafetyQuery, FleetSafetyQueryVariables>;

@@ -24,6 +24,7 @@ type fakeLedger struct {
 	customerledgerports.CustomerLedgerProjectionRepository
 	balances map[pulid.ID]int64
 	asked    [][]pulid.ID
+	excluded []bool
 	appended int
 }
 
@@ -32,6 +33,7 @@ func (f *fakeLedger) SumCustomerBalances(
 	req customerledgerports.SumCustomerBalancesRequest,
 ) (map[pulid.ID]int64, error) {
 	f.asked = append(f.asked, req.CustomerIDs)
+	f.excluded = append(f.excluded, req.ExcludeNonRecourseFactored)
 	out := make(map[pulid.ID]int64, len(req.CustomerIDs))
 	for _, id := range req.CustomerIDs {
 		if balance, ok := f.balances[id]; ok {
@@ -133,6 +135,12 @@ func TestReview_HoldsAnOverLimitCustomerAndTellsReceivables(t *testing.T) {
 		Review(t.Context(), tenant, []pulid.ID{held, fine, held}))
 
 	assert.Equal(t, [][]pulid.ID{{held, fine}}, ledger.asked, "each customer is summed once")
+	assert.Equal(
+		t,
+		[]bool{true},
+		ledger.excluded,
+		"invoices sold to a non-recourse factor are not the customer's credit risk",
+	)
 	require.Len(t, standings.reviewed, 2)
 	assert.Equal(t, int64(1_500_000), standings.reviewed[0].ExposureMinor)
 	assert.Equal(t, int64(0), standings.reviewed[1].ExposureMinor,
