@@ -24,7 +24,7 @@ const (
 	// averageLinehaulMph and roadCircuityFactor are the planning assumptions
 	// dispatch already scores candidates with; the estimate here uses the
 	// same ones so a monitoring agent and the board do not disagree.
-	averageLinehaulMph = 50.0
+	averageLinehaulMph = geoutils.PlanningLinehaulMph
 	roadCircuityFactor = geoutils.RoadCircuityFactor
 
 	// positionStaleAfterSeconds is how old a position may be before it is

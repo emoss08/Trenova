@@ -229,6 +229,8 @@ modules:
       - jurisdictionruleservice
       - locationcategoryservice
       - locationservice
+      - pcmilerruntime
+      - routeestimateservice
       - storedmileageservice
     job:
       - distancemileagejobs

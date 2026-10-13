@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/adapters/postgres/locationrepository"
 	"github.com/emoss08/trenova/internal/modules/places/adapters/postgres/storedmileagerepository"
 	"github.com/emoss08/trenova/internal/modules/places/app/distancecalculationservice"
+	"github.com/emoss08/trenova/internal/modules/places/app/routeestimateservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/distancecontrolservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/distanceoverrideservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/distanceprofileservice"
@@ -37,6 +38,7 @@ func SharedOptions() fx.Option {
 			locationservice.New,
 			jurisdictionruleservice.NewService,
 			distancecalculationservice.New,
+			routeestimateservice.New,
 			distancecontrolservice.New,
 			distanceoverrideservice.New,
 			distanceprofileservice.New,
