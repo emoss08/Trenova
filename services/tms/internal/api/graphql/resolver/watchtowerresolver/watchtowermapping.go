@@ -1,27 +1,19 @@
 package watchtowerresolver
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/shared/pulid"
 )
-
-// watchtowerCursor is the edge cursor for one row, on the same keyset the
-// feed pages by, so a client can resume from any edge it holds rather than
-// only from the end of a page.
-func watchtowerCursor(item *watchtower.Item) string {
-	encoded, err := pagination.EncodeCursor(pagination.Cursor{
-		CreatedAt: item.OccurredAt,
-		ID:        item.ID,
-	})
-	if err != nil {
-		return ""
-	}
-
-	return encoded
-}
 
 // watchtowerCountsModel renders the counts, listing the kinds in the order
 // the feed's filters show them rather than whatever order the aggregate
@@ -45,6 +37,10 @@ func watchtowerCountsModel(counts *watchtowerports.WatchtowerCounts) *gqlmodel.W
 		Critical:       counts.Critical,
 		Unseen:         counts.Unseen,
 		UnseenCritical: counts.UnseenCritical,
+		Overdue:        counts.Overdue,
+		Unassigned:     counts.Unassigned,
+		Mine:           counts.Mine,
+		MineOverdue:    counts.MineOverdue,
 		ByKind:         byKind,
 		SeenAt:         int(counts.SeenAt),
 	}
@@ -75,4 +71,34 @@ func definitionsOrEmpty(definitions []*agentdefinition.Definition) []*agentdefin
 	}
 
 	return definitions
+}
+
+func (r *MutationResolver) exceptionTarget(
+	ctx context.Context,
+	id string,
+	expectedVersion *int,
+) (*authctx.AuthContext, watchtowerports.ExceptionTarget, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWatchtower, permission.OpUpdate)
+	if err != nil {
+		return nil, watchtowerports.ExceptionTarget{}, err
+	}
+	itemID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, watchtowerports.ExceptionTarget{}, err
+	}
+
+	target := watchtowerports.ExceptionTarget{TenantInfo: base.TenantInfo(authCtx), ItemID: itemID}
+	if expectedVersion != nil {
+		target.ExpectedVersion = int64(*expectedVersion)
+	}
+
+	return authCtx, target, nil
+}
+
+func optionalUser(ctx context.Context, id pulid.ID) (*tenant.User, error) {
+	if id.IsNil() {
+		return nil, nil //nolint:nilnil // no person behind the change is no user and no error
+	}
+
+	return base.OptionalMatch(loaders.UserByID(ctx, id.String()))
 }

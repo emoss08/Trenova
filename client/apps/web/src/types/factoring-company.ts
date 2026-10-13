@@ -48,6 +48,7 @@ export const factoringCompanySchema = z.object({
     translate("The notice of assignment must be at most 2,000 characters"),
   ),
   notes: optionalText(MAX_FACTOR_TEXT, () => translate("Notes must be at most 2,000 characters")),
+  nonRecourse: z.boolean().default(false),
 });
 
 export type FactoringCompany = z.infer<typeof factoringCompanySchema>;

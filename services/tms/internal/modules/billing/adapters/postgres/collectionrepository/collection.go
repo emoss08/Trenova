@@ -188,8 +188,9 @@ func (r *repository) ListActivities(
 }
 
 // worklistSQL reads every customer collections should see: anyone with an
-// overdue invoice, plus anyone already being worked. %s narrows by collector,
-// customer and search.
+// overdue invoice, plus anyone already being worked. An invoice sold to a
+// non-recourse factor is the factor's to collect, so it is left out. %s
+// narrows by collector, customer and search.
 const worklistSQL = `
 	WITH open_invoices AS (
 		SELECT inv.customer_id,
@@ -206,6 +207,13 @@ const worklistSQL = `
 			AND inv.status = 'Posted'
 			AND inv.bill_type IN ('Invoice', 'DebitMemo')
 			AND inv.total_amount_minor > inv.applied_amount_minor
+			AND NOT EXISTS (
+				SELECT 1 FROM factoring_companies AS fac
+				WHERE fac.id = inv.factoring_company_id
+					AND fac.organization_id = inv.organization_id
+					AND fac.business_unit_id = inv.business_unit_id
+					AND fac.non_recourse
+			)
 		GROUP BY inv.customer_id
 	)
 	SELECT

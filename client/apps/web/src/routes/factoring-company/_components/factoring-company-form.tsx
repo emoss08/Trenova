@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
+import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { statusChoices } from "@/lib/choices";
@@ -141,6 +142,24 @@ export function FactoringCompanyForm() {
       </FormSection>
 
       <FormSection
+        title={t("Agreement")}
+        description={t("Who carries the risk when a customer does not pay")}
+      >
+        <FormGroup cols={1}>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="nonRecourse"
+              label={t("Non-recourse")}
+              description={t(
+                "The factor buys invoices outright and carries the credit risk. Its invoices leave the collections worklist and stop counting toward the customer's credit limit. Leave off for recourse factoring, where an unpaid invoice comes back to you.",
+              )}
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
+
+      <FormSection
         title={t("Invoice wording")}
         description={t("What every invoice assigned to this factor prints")}
       >
@@ -178,7 +197,7 @@ export function FactoringCompanyForm() {
               control={control}
               name="notes"
               label={t("Notes")}
-              placeholder={t("e.g., Recourse agreement, 90-day chargeback")}
+              placeholder={t("e.g., 90-day chargeback, 3% fee")}
               description={t("For your team only. Never printed.")}
               maxLength={MAX_FACTOR_TEXT}
               rows={3}

@@ -200,6 +200,17 @@ export const complianceEnforcementLevelSchema = z.enum(["Warning", "Block", "Aud
 
 export type ComplianceEnforcementLevel = z.infer<typeof complianceEnforcementLevelSchema>;
 
+function exceptionDueMinutes(fallback: number) {
+  return z
+    .number({
+      error: () => translate("Enter how many minutes an exception has before it is overdue"),
+    })
+    .int()
+    .min(5, { error: () => translate("Due time must be at least 5 minutes") })
+    .max(10080, { error: () => translate("Due time cannot exceed 10080 minutes") })
+    .default(fallback);
+}
+
 export const dispatchControlSchema = z
   .object({
     id: optionalStringSchema,
@@ -270,6 +281,35 @@ export const dispatchControlSchema = z
       .min(0, { error: () => translate("Stop dwell time cannot be negative") })
       .max(720, { error: () => translate("Stop dwell time cannot exceed 720 minutes") })
       .default(60),
+    exceptionDueInfoMinutes: exceptionDueMinutes(1440),
+    exceptionDueWarningMinutes: exceptionDueMinutes(240),
+    exceptionDueCriticalMinutes: exceptionDueMinutes(60),
+    exceptionEscalationMinutes: z
+      .number({ error: () => translate("Enter how often an overdue exception escalates") })
+      .int()
+      .min(5, { error: () => translate("Escalation interval must be at least 5 minutes") })
+      .max(1440, { error: () => translate("Escalation interval cannot exceed 1440 minutes") })
+      .default(60),
+    exceptionMaxEscalations: z
+      .number({ error: () => translate("Enter how many times an exception may escalate") })
+      .int()
+      .min(0, { error: () => translate("Escalations cannot be negative") })
+      .max(10, { error: () => translate("Escalations cannot exceed 10") })
+      .default(3),
+    exceptionDefaultAssigneeId: z.string().nullish(),
+    exceptionEscalationContactId: z.string().nullish(),
+    exceptionMissedStopGraceMinutes: z
+      .number({ error: () => translate("Enter how long after a stop window closes it is missed") })
+      .int()
+      .min(0, { error: () => translate("Missed stop grace cannot be negative") })
+      .max(1440, { error: () => translate("Missed stop grace cannot exceed 1440 minutes") })
+      .default(30),
+    exceptionPodGraceHours: z
+      .number({ error: () => translate("Enter how long after delivery a POD is due") })
+      .int()
+      .min(1, { error: () => translate("POD grace must be at least 1 hour") })
+      .max(720, { error: () => translate("POD grace cannot exceed 720 hours") })
+      .default(24),
   })
   .refine(
     (data) => {

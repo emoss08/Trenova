@@ -1,15 +1,31 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
+  AcknowledgeWatchtowerItemDocument,
+  AssignWatchtowerItemDocument,
+  CommentOnWatchtowerItemDocument,
   DismissWatchtowerItemDocument,
   HandOffWatchtowerItemDocument,
   MarkWatchtowerSeenDocument,
+  ReopenWatchtowerItemDocument,
+  ResolveWatchtowerItemDocument,
+  SetWatchtowerItemDueDocument,
+  SnoozeWatchtowerItemDocument,
+  StartWatchtowerItemDocument,
   WatchtowerCountsDocument,
   WatchtowerCountsFieldsFragmentDoc,
   WatchtowerFeedDocument,
+  WatchtowerItemDetailDocument,
+  WatchtowerItemEventFieldsFragmentDoc,
   WatchtowerItemFieldsFragmentDoc,
+  WatchtowerItemHistoryDocument,
+  WatchtowerResolutionCodesDocument,
   type WatchtowerCountsFieldsFragment,
+  type WatchtowerItemEventFieldsFragment,
+  type WatchtowerItemEventKind,
   type WatchtowerItemFieldsFragment,
+  type WatchtowerItemStatus,
   type WatchtowerItemsInput,
+  type WatchtowerResolutionCode,
   type WatchtowerSeverity,
   type WatchtowerSourceKind,
 } from "@trenova/graphql/generated/graphql";
@@ -17,7 +33,20 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type WatchtowerItem = WatchtowerItemFieldsFragment;
 export type WatchtowerCounts = WatchtowerCountsFieldsFragment;
-export type { WatchtowerSeverity, WatchtowerSourceKind };
+export type WatchtowerItemEvent = WatchtowerItemEventFieldsFragment;
+export type {
+  WatchtowerItemEventKind,
+  WatchtowerItemStatus,
+  WatchtowerResolutionCode,
+  WatchtowerSeverity,
+  WatchtowerSourceKind,
+};
+
+export type WatchtowerResolutionOption = {
+  code: WatchtowerResolutionCode;
+  label: string;
+  requiresNote: boolean;
+};
 
 type RequestOptions = { signal?: AbortSignal };
 
@@ -35,6 +64,12 @@ export type WatchtowerFilter = {
   unresolvedOnly?: boolean;
   after?: string | null;
   first?: number;
+  statuses?: WatchtowerItemStatus[];
+  assignedToMe?: boolean;
+  unassigned?: boolean;
+  overdueOnly?: boolean;
+  subjectId?: string | null;
+  orderByDue?: boolean;
 };
 
 /** How much of the feed one request asks for. */
@@ -50,6 +85,12 @@ export async function fetchWatchtowerFeed(
     kinds: filter.kinds ?? [],
     severities: filter.severities ?? [],
     unresolvedOnly: filter.unresolvedOnly ?? true,
+    statuses: filter.statuses ?? [],
+    assignedToMe: filter.assignedToMe ?? false,
+    unassigned: filter.unassigned ?? false,
+    overdueOnly: filter.overdueOnly ?? false,
+    subjectId: filter.subjectId ?? null,
+    orderByDue: filter.orderByDue ?? false,
   };
 
   const data = await requestGraphQL({
@@ -148,4 +189,184 @@ export async function handOffWatchtowerItem(
     })),
     templates: result.templates,
   };
+}
+
+export async function fetchWatchtowerItem(
+  id: string,
+  options?: RequestOptions,
+): Promise<WatchtowerItem> {
+  const data = await requestGraphQL({
+    document: WatchtowerItemDetailDocument,
+    operationName: "WatchtowerItemDetail",
+    variables: { id },
+    signal: options?.signal,
+  });
+
+  return getFragmentData(WatchtowerItemFieldsFragmentDoc, data.watchtowerItem);
+}
+
+/** An item's history, oldest first, as the server keeps it: never edited. */
+export async function fetchWatchtowerItemHistory(
+  id: string,
+  options?: RequestOptions,
+): Promise<WatchtowerItemEvent[]> {
+  const data = await requestGraphQL({
+    document: WatchtowerItemHistoryDocument,
+    operationName: "WatchtowerItemHistory",
+    variables: { id, limit: null },
+    signal: options?.signal,
+  });
+
+  return data.watchtowerItemHistory.map((event) =>
+    getFragmentData(WatchtowerItemEventFieldsFragmentDoc, event),
+  );
+}
+
+export async function fetchWatchtowerResolutionCodes(
+  options?: RequestOptions,
+): Promise<WatchtowerResolutionOption[]> {
+  const data = await requestGraphQL({
+    document: WatchtowerResolutionCodesDocument,
+    operationName: "WatchtowerResolutionCodes",
+    variables: {},
+    signal: options?.signal,
+  });
+
+  return data.watchtowerResolutionCodes.map((option) => ({
+    code: option.code,
+    label: option.label,
+    requiresNote: option.requiresNote,
+  }));
+}
+
+/**
+ * The version a person was looking at travels with every change, so a
+ * change made on a stale screen is refused rather than silently applied over
+ * someone else's.
+ */
+type ExceptionChange = { id: string; version: number };
+
+const noteOrNull = (note?: string): string | null => {
+  const trimmed = note?.trim() ?? "";
+  return trimmed === "" ? null : trimmed;
+};
+
+export async function assignWatchtowerItem(
+  change: ExceptionChange & { assigneeId: string | null; note?: string },
+): Promise<WatchtowerItem> {
+  const data = await requestGraphQL({
+    document: AssignWatchtowerItemDocument,
+    operationName: "AssignWatchtowerItem",
+    variables: {
+      id: change.id,
+      input: {
+        assigneeId: change.assigneeId,
+        note: noteOrNull(change.note),
+        expectedVersion: change.version,
+      },
+    },
+  });
+
+  return getFragmentData(WatchtowerItemFieldsFragmentDoc, data.assignWatchtowerItem);
+}
+
+export async function acknowledgeWatchtowerItem(change: ExceptionChange): Promise<WatchtowerItem> {
+  const data = await requestGraphQL({
+    document: AcknowledgeWatchtowerItemDocument,
+    operationName: "AcknowledgeWatchtowerItem",
+    variables: { id: change.id, expectedVersion: change.version },
+  });
+
+  return getFragmentData(WatchtowerItemFieldsFragmentDoc, data.acknowledgeWatchtowerItem);
+}
+
+export async function startWatchtowerItem(change: ExceptionChange): Promise<WatchtowerItem> {
+  const data = await requestGraphQL({
+    document: StartWatchtowerItemDocument,
+    operationName: "StartWatchtowerItem",
+    variables: { id: change.id, expectedVersion: change.version },
+  });
+
+  return getFragmentData(WatchtowerItemFieldsFragmentDoc, data.startWatchtowerItem);
+}
+
+export async function snoozeWatchtowerItem(
+  change: ExceptionChange & { until: number; note?: string },
+): Promise<WatchtowerItem> {
+  const data = await requestGraphQL({
+    document: SnoozeWatchtowerItemDocument,
+    operationName: "SnoozeWatchtowerItem",
+    variables: {
+      id: change.id,
+      input: {
+        until: change.until,
+        note: noteOrNull(change.note),
+        expectedVersion: change.version,
+      },
+    },
+  });
+
+  return getFragmentData(WatchtowerItemFieldsFragmentDoc, data.snoozeWatchtowerItem);
+}
+
+export async function setWatchtowerItemDue(
+  change: ExceptionChange & { dueAt: number | null; note?: string },
+): Promise<WatchtowerItem> {
+  const data = await requestGraphQL({
+    document: SetWatchtowerItemDueDocument,
+    operationName: "SetWatchtowerItemDue",
+    variables: {
+      id: change.id,
+      input: {
+        dueAt: change.dueAt,
+        note: noteOrNull(change.note),
+        expectedVersion: change.version,
+      },
+    },
+  });
+
+  return getFragmentData(WatchtowerItemFieldsFragmentDoc, data.setWatchtowerItemDue);
+}
+
+export async function commentOnWatchtowerItem(
+  id: string,
+  body: string,
+): Promise<WatchtowerItemEvent> {
+  const data = await requestGraphQL({
+    document: CommentOnWatchtowerItemDocument,
+    operationName: "CommentOnWatchtowerItem",
+    variables: { id, body },
+  });
+
+  return getFragmentData(WatchtowerItemEventFieldsFragmentDoc, data.commentOnWatchtowerItem);
+}
+
+export async function resolveWatchtowerItem(
+  change: ExceptionChange & { code: WatchtowerResolutionCode; note?: string },
+): Promise<WatchtowerItem> {
+  const data = await requestGraphQL({
+    document: ResolveWatchtowerItemDocument,
+    operationName: "ResolveWatchtowerItem",
+    variables: {
+      id: change.id,
+      input: { code: change.code, note: noteOrNull(change.note), expectedVersion: change.version },
+    },
+  });
+
+  return getFragmentData(WatchtowerItemFieldsFragmentDoc, data.resolveWatchtowerItem);
+}
+
+export async function reopenWatchtowerItem(
+  change: ExceptionChange & { note?: string },
+): Promise<WatchtowerItem> {
+  const data = await requestGraphQL({
+    document: ReopenWatchtowerItemDocument,
+    operationName: "ReopenWatchtowerItem",
+    variables: {
+      id: change.id,
+      input: { note: noteOrNull(change.note), expectedVersion: change.version },
+    },
+  });
+
+  return getFragmentData(WatchtowerItemFieldsFragmentDoc, data.reopenWatchtowerItem);
 }

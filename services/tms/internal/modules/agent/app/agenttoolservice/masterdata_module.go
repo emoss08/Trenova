@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
@@ -82,6 +83,12 @@ func masterDataToolProviders() []any {
 		provideSetTableChangeAlertStatusTool,
 		provideDeleteTableChangeAlertTool,
 		provideDismissWatchtowerItemTool,
+		provideAssignExceptionTool,
+		provideSnoozeExceptionTool,
+		provideSetExceptionDueTool,
+		provideResolveExceptionTool,
+		provideReopenExceptionTool,
+		provideCommentOnExceptionTool,
 		provideFileCaptureItemsTool,
 		provideDiscardCaptureItemTool,
 		provideDiscardCaptureBatchTool,
@@ -242,6 +249,32 @@ func provideDeleteTableChangeAlertTool(
 	alerts *tablechangealertservice.Service,
 ) agentports.AgentTool {
 	return alerttools.NewDeleteTableChangeAlertTool(alerts)
+}
+
+func provideAssignExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+	return receivabletools.NewAssignExceptionTool(exceptions)
+}
+
+func provideSnoozeExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+	return receivabletools.NewSnoozeExceptionTool(exceptions)
+}
+
+func provideSetExceptionDueTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+	return receivabletools.NewSetExceptionDueTool(exceptions)
+}
+
+func provideResolveExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+	return receivabletools.NewResolveExceptionTool(exceptions)
+}
+
+func provideReopenExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
+	return receivabletools.NewReopenExceptionTool(exceptions)
+}
+
+func provideCommentOnExceptionTool(
+	exceptions watchtowerports.ExceptionService,
+) agentports.AgentTool {
+	return receivabletools.NewCommentOnExceptionTool(exceptions)
 }
 
 func provideDismissWatchtowerItemTool(

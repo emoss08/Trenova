@@ -322,6 +322,7 @@ type Params struct {
 	AgentSafetyService           agentports.AgentSafetyService
 	AgentToolRuleService         agentports.AgentToolRuleService
 	WatchtowerService            watchtowerports.WatchtowerService
+	WatchtowerExceptions         watchtowerports.ExceptionService
 	InboundMessageService        *inboundmessageservice.Service
 	InboundReplyService          *inboundreplyservice.Service
 	TriageWorkService            *triageworkservice.Service
@@ -537,6 +538,7 @@ type Services struct {
 	AgentSafetyService           agentports.AgentSafetyService
 	AgentToolRuleService         agentports.AgentToolRuleService
 	WatchtowerService            watchtowerports.WatchtowerService
+	WatchtowerExceptions         watchtowerports.ExceptionService
 	InboundMessageService        *inboundmessageservice.Service
 	InboundReplyService          *inboundreplyservice.Service
 	TriageWorkService            *triageworkservice.Service
@@ -758,6 +760,7 @@ func newServices(p *Params) *Services {
 		AgentSafetyService:           p.AgentSafetyService,
 		AgentToolRuleService:         p.AgentToolRuleService,
 		WatchtowerService:            p.WatchtowerService,
+		WatchtowerExceptions:         p.WatchtowerExceptions,
 		InboundMessageService:        p.InboundMessageService,
 		InboundReplyService:          p.InboundReplyService,
 		TriageWorkService:            p.TriageWorkService,

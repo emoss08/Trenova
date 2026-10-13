@@ -264,9 +264,9 @@ func (r *repository) Update(
 			results, err := r.db.DBForContext(ctx).
 				NewUpdate().
 				Model(entity).
+				ExcludeColumn(factoringcompanycol.FactoringCompanyColumns.CreatedAt.Bare()).
 				WherePK().
 				Where("version = ?", ov).
-				OmitZero().
 				Returning("*").
 				Exec(ctx)
 			if err != nil {

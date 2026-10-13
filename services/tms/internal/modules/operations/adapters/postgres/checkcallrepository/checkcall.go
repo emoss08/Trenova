@@ -193,6 +193,7 @@ type monitoredMoveRow struct {
 	MoveID                pulid.ID `bun:"move_id"`
 	ShipmentID            pulid.ID `bun:"shipment_id"`
 	ProNumber             string   `bun:"pro_number"`
+	OwnerID               pulid.ID `bun:"owner_id"`
 	CarrierID             pulid.ID `bun:"carrier_id"`
 	CarrierName           string   `bun:"carrier_name"`
 	CustomerIntervalHours *int16   `bun:"customer_interval_hours"`
@@ -237,6 +238,7 @@ func (r *repository) ListMonitoredMoves(
 				MoveID:                row.MoveID,
 				ShipmentID:            row.ShipmentID,
 				ProNumber:             row.ProNumber,
+				OwnerID:               row.OwnerID,
 				CarrierID:             row.CarrierID,
 				CarrierName:           row.CarrierName,
 				CustomerIntervalHours: row.CustomerIntervalHours,
@@ -272,6 +274,7 @@ func (r *repository) listMonitoredRows(
 		ColumnExpr(sm.ID.As("move_id")).
 		ColumnExpr(sm.ShipmentID.As("shipment_id")).
 		ColumnExpr(sp.ProNumber.As("pro_number")).
+		ColumnExpr(sp.OwnerID.As("owner_id")).
 		ColumnExpr(ca.CarrierID.As("carrier_id")).
 		ColumnExpr(car.Name.Expr("COALESCE({}, '')")+" AS carrier_name").
 		ColumnExpr(cus.CheckCallIntervalHours.As("customer_interval_hours")).

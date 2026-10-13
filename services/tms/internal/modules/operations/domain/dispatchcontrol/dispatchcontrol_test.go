@@ -946,3 +946,32 @@ func TestValidate_HorizonSearchIterationsBounds(t *testing.T) {
 		})
 	}
 }
+
+func TestExceptionSettings_DefaultWhenUnsetAndRejectOutOfRange(t *testing.T) {
+	t.Parallel()
+
+	dc := NewDefaultDispatchControl(pulid.MustNew("org_"), pulid.MustNew("bu_"))
+	dc.ExceptionDueInfoMinutes = 0
+	dc.ExceptionEscalationMinutes = 0
+	multiErr := errortypes.NewMultiError()
+	dc.Validate(multiErr)
+	require.False(t, multiErr.HasErrors())
+	assert.Equal(t, DefaultExceptionDueInfoMinutes, dc.ExceptionDueInfoMinutes)
+	assert.Equal(t, DefaultExceptionEscalationMinutes, dc.ExceptionEscalationMinutes)
+
+	dc.ExceptionDueCriticalMinutes = 2
+	dc.ExceptionMaxEscalations = 11
+	multiErr = errortypes.NewMultiError()
+	dc.Validate(multiErr)
+	assert.True(t, multiErr.HasErrors())
+}
+
+func TestExceptionPolicy_FallsBackForAMissingRecord(t *testing.T) {
+	t.Parallel()
+
+	var dc *DispatchControl
+	policy := dc.ExceptionPolicy()
+	assert.Equal(t, DefaultExceptionDueCriticalMinutes, policy.DueCriticalMinutes)
+	assert.Equal(t, DefaultExceptionMaxEscalations, policy.MaxEscalations)
+	assert.True(t, policy.DefaultAssigneeID.IsNil())
+}

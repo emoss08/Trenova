@@ -57,6 +57,20 @@ export function getColumns(t: TranslateFn): ColumnDef<FactoringCompany>[] {
       },
     },
     {
+      accessorKey: "nonRecourse",
+      header: t("Recourse"),
+      cell: ({ row }) => (row.original.nonRecourse ? t("Non-recourse") : t("Recourse")),
+      size: 140,
+      minSize: 120,
+      maxSize: 180,
+      meta: {
+        label: t("Recourse"),
+        apiField: "nonRecourse",
+        filterable: false,
+        sortable: false,
+      },
+    },
+    {
       accessorKey: "city",
       header: t("City"),
       cell: ({ row }) => row.original.city,

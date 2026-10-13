@@ -9,11 +9,14 @@ import (
 
 type Deps struct {
 	*base.Core
-	WatchtowerService watchtowerports.WatchtowerService
+	WatchtowerService    watchtowerports.WatchtowerService
+	WatchtowerExceptions watchtowerports.ExceptionService
 }
 
 type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }
+
+type WatchtowerItemEventResolver struct{ *Deps }
 
 type WatchtowerItemResolver struct{ *Deps }
