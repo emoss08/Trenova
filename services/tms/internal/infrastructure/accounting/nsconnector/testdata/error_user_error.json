@@ -1,0 +1,1 @@
+{"type":"https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.1","title":"Bad Request","status":400,"o:errorDetails":[{"detail":"Error while accessing a resource. This record cannot be deleted because it has dependent records.","o:errorCode":"USER_ERROR"}]}

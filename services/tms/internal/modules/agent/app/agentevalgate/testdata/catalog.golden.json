@@ -4297,7 +4297,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -4398,7 +4399,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -4442,7 +4444,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -4512,7 +4515,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -5591,7 +5595,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -11673,7 +11678,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -11780,7 +11786,7 @@
     },
     {
       "name": "get_accounting_sync_status",
-      "description": "Get whether the accounting system is connected, to which company, and why it last failed. It also says when it last answered, when the authorization must be renewed, and whether documents are being sent: sending is NotStarted, Paused, Automatic, or OnRelease when each document waits for a person to release it, with the start date. Once sending has started, queue counts how many documents are in each sync status and groups those needing attention by cause. Use it before explaining why something did not reach the books. It returns status and dates, never credentials.",
+      "description": "Get whether the accounting system is connected, to which company, and why it last failed. It also says when it last answered, when the authorization must be renewed, whether it was connected by sign-in or with a certificate and when that certificate expires, and whether documents are being sent: sending is NotStarted, Paused, Automatic, or OnRelease when each document waits for a person to release it, with the start date. Once sending has started, queue counts how many documents are in each sync status and groups those needing attention by cause. Use it before explaining why something did not reach the books. It returns status and dates, never credentials.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -11789,7 +11795,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -14746,7 +14753,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -14863,7 +14871,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -14919,7 +14928,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -15085,7 +15095,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -24333,7 +24344,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -27881,7 +27893,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -28328,7 +28341,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -29032,7 +29046,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -30232,7 +30247,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -30364,7 +30380,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"
@@ -32365,7 +32382,8 @@
             "enum": [
               "QuickBooksOnline",
               "Xero",
-              "BusinessCentral"
+              "BusinessCentral",
+              "NetSuite"
             ],
             "type": "string",
             "x-enumOf": "integration.accountingSystem"

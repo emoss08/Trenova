@@ -390,3 +390,11 @@ accounting:
   businessCentral:
     redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/business-central/callback
     webhookBaseUrl: "" # Public https API origin with /api/v1; defaults to app.webBaseUrl + /api/v1
+  # NetSuite signs in through an integration record in your own NetSuite account: in Setup >
+  # Integration > Manage Integrations, create one with Token-Based Authentication off, the
+  # Authorization Code Grant and Client Credentials (Machine to Machine) Grant on, the scope REST
+  # Web Services, the redirect URI <webBaseUrl>/admin/integrations/netsuite/callback, and
+  # auto-install on. NetSuite has no webhooks; Trenova reads changes on a schedule. Instance
+  # secrets come from TRENOVA_NETSUITE_CLIENT_ID and TRENOVA_NETSUITE_CLIENT_SECRET.
+  netSuite:
+    redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/netsuite/callback

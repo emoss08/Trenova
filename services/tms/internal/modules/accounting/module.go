@@ -43,6 +43,7 @@ func SharedOptions() fx.Option {
 			accountingsyncrepository.NewConnectionRepository,
 			accountingsyncrepository.NewAppCredentialRepository,
 			accountingsyncrepository.NewSubscriptionRepository,
+			accountingsyncrepository.NewPendingCertificateRepository,
 			accountingsyncrepository.NewReferenceRepository,
 			accountingsyncrepository.NewMappingRepository,
 			accountingsyncrepository.NewSyncRecordRepository,

@@ -1794,6 +1794,18 @@ enum AccountingAppliedObjectType {
   DriverSettlement
 }
 
+"""How a connection proves itself to the accounting system."""
+enum AccountingAuthMethod {
+  """
+  A person signed in and authorized Trenova. The authorization lasts as long as the system allows, then someone signs in again.
+  """
+  Authorization
+  """
+  Trenova signs each request with a certificate an administrator uploaded to the accounting system. No sign-in is needed until the certificate expires.
+  """
+  ClientCredentials
+}
+
 """
 Where to send the person to authorize Trenova, and until when that link works.
 """
@@ -1864,10 +1876,20 @@ type AccountingConnection {
   Whose app the connection was authorized through. Its tokens only work with that app.
   """
   appSource: AccountingAppSource!
+  """How the connection proves itself to the accounting system."""
+  authMethod: AccountingAuthMethod!
   """
   Whether posted documents are sent on their own, or wait for a person to release them.
   """
   autoSync: Boolean!
+  """
+  When the certificate expires and must be renewed. Absent unless the connection uses a certificate.
+  """
+  certificateExpiresAt: Timestamp
+  """
+  The certificate's id in the accounting system. Absent unless the connection uses a certificate.
+  """
+  certificateId: String
   """Why the last read of changes failed. Empty when it succeeded."""
   changesErrorMessage: String!
   """When Trenova last read what changed in the accounting system."""
@@ -1926,7 +1948,7 @@ type AccountingConnection {
   """When the reference data was last pulled in full."""
   referenceRefreshedAt: Timestamp
   """
-  When the authorization's five-year limit runs out and someone must reconnect.
+  When the authorization's limit runs out and someone must reconnect. For a certificate connection, when the certificate expires. Zero when the system sets no limit.
   """
   refreshTokenAbsoluteExpiresAt: Timestamp!
   """How far setup has got. Syncing waits until it is Complete."""
@@ -2464,6 +2486,21 @@ enum AccountingMappingTargetType {
 }
 
 """
+A certificate Trenova generated for a certificate connection, waiting to be uploaded to the
+accounting system and connected. Its private key never leaves the server.
+"""
+type AccountingPreparedCertificate {
+  """
+  The X.509 certificate, PEM encoded, to upload to the accounting system.
+  """
+  certificatePem: String!
+  """When the certificate expires."""
+  expiresAt: Timestamp!
+  integrationType: AccountingSystem!
+  preparedAt: Timestamp!
+}
+
+"""
 What an accounting system supports, which decides the steps and choices setup offers.
 """
 type AccountingProviderProfile {
@@ -2473,6 +2510,10 @@ type AccountingProviderProfile {
   callbackCarriesCompany: Boolean!
   """The web app path the provider sends people back to."""
   callbackPath: String!
+  """
+  Whether a connection can be made with a certificate instead of a sign-in.
+  """
+  clientCredentials: Boolean!
   """The environments the provider's apps run in."""
   environments: [AccountingAppEnvironment!]!
   """Whether payments recorded in this system can be brought into Trenova."""
@@ -2487,6 +2528,12 @@ type AccountingProviderProfile {
   ledgerUnavailableReason: String
   """What an invoice line is mapped to in this system."""
   lineKind: AccountingReferenceKind!
+  """Whether the sign-in is protected with a PKCE code challenge."""
+  pkce: Boolean!
+  """
+  How long before a sign-in's limit runs out Trenova asks someone to reconnect, in seconds.
+  """
+  reconnectWarningSeconds: Int!
   """The kinds of records Trenova reads from this system."""
   referenceKinds: [AccountingReferenceKind!]!
   """
@@ -2815,6 +2862,10 @@ type AccountingSyncStatus {
   """Absent until the organization first connects."""
   connection: AccountingConnection
   integrationType: AccountingSystem!
+  """
+  The certificate waiting to be uploaded and connected. Absent when there is none.
+  """
+  pendingCertificate: AccountingPreparedCertificate
   profile: AccountingProviderProfile!
   providerName: String!
   """
@@ -2845,6 +2896,7 @@ type AccountingSyncSummary {
 """An accounting system Trenova keeps its books in step with."""
 enum AccountingSystem {
   BusinessCentral
+  NetSuite
   QuickBooksOnline
   Xero
 }
@@ -9221,6 +9273,14 @@ input ConfirmDeskMemoryInput {
   roleId: ID
   scope: AgentMemoryScope!
   version: Int!
+}
+
+input ConnectAccountingWithCertificateInput {
+  """The accounting system's account id, such as 1234567 or 1234567_SB1."""
+  accountId: String!
+  """The id the accounting system gave the uploaded certificate."""
+  certificateId: String!
+  integrationType: AccountingSystem!
 }
 
 enum CostBehavior {
@@ -18081,6 +18141,10 @@ type Mutation {
   """Accepts a memory an agent offered in the person's conversation."""
   confirmDeskMemory(id: ID!, input: ConfirmDeskMemoryInput!): DeskMemory!
   """
+  Connects with the uploaded certificate, or offers the companies to choose between when the account has several.
+  """
+  connectAccountingWithCertificate(input: ConnectAccountingWithCertificateInput!): CompleteAccountingAuthorizationPayload!
+  """
   Says what kind of message it really is. Nova reads mail from the sender that way from now on.
   """
   correctInboundClassification(classification: InboundClassification!, id: ID!): InboundMessage!
@@ -18453,6 +18517,10 @@ type Mutation {
   """
   postJournalEntries(input: JournalReviewInput!): JournalReviewResult!
   """
+  Generates a key pair and certificate for a certificate connection and returns the certificate to upload. Replaces a certificate still waiting to be connected.
+  """
+  prepareAccountingCertificate(input: PrepareAccountingCertificateInput!): AccountingPreparedCertificate!
+  """
   Asks the rate agreements what they would charge for a shipment, without
   writing anything. This is what the billing panel offers before anyone commits
   to a contract rate.
@@ -18537,6 +18605,10 @@ type Mutation {
   removeDriverSettlementAdjustment(input: RemoveSettlementAdjustmentInput!): DriverSettlement!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
   renameMyTriageView(id: ID!, name: String!): TriageView!
+  """
+  Switches a certificate connection to a newly uploaded certificate once the accounting system accepts it.
+  """
+  renewAccountingCertificate(input: RenewAccountingCertificateInput!): AccountingConnection!
   """
   Returns a Finalized return to Draft. The reason, at least ten characters, is audited.
   """
@@ -20642,6 +20714,10 @@ input PostCustomerPaymentInput {
   referenceNumber: String
 }
 
+input PrepareAccountingCertificateInput {
+  integrationType: AccountingSystem!
+}
+
 input ProfileChangeFilterInput {
   limit: Int
   statuses: [ProfileChangeStatus!]
@@ -22394,6 +22470,12 @@ input RemoveOrderChargeInput {
 input RemoveSettlementAdjustmentInput {
   lineId: ID!
   settlementId: ID!
+}
+
+input RenewAccountingCertificateInput {
+  """The id the accounting system gave the newly uploaded certificate."""
+  certificateId: String!
+  connectionId: ID!
 }
 
 input ReopenWatchtowerItemInput {

@@ -1,0 +1,1 @@
+{"type":"https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.1","title":"Bad Request","status":400,"o:errorDetails":[{"detail":"Error while accessing a resource. You have entered an invalid field value 2026-13-45 for the following field: tranDate","o:errorCode":"INVALID_CONTENT"}]}

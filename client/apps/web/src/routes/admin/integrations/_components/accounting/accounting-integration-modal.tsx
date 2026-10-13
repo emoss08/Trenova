@@ -117,7 +117,13 @@ function AccountingIntegrationBody({
   const summaryQuery = useAccountingMappingSummary(vendor.system, open && canRead && mapping);
 
   const steps: IntegrationSetupStep[] = [
-    { id: "connect", label: t("Connect"), detail: t("Sign in to {0}", vendor.name) },
+    {
+      id: "connect",
+      label: t("Connect"),
+      detail: statusQuery.data?.profile.clientCredentials
+        ? t("Sign in or use a certificate")
+        : t("Sign in to {0}", vendor.name),
+    },
     { id: "review", label: t("Review company"), detail: t("Confirm what was connected") },
     { id: "mode", label: t("What is sent"), detail: t("Documents or journal entries") },
     { id: "map", label: t("Match records"), detail: t("Confirm what each record is sent as") },
@@ -182,6 +188,7 @@ function AccountingIntegrationBody({
           app={status.app}
           profile={status.profile}
           connection={connection ?? null}
+          pendingCertificate={status.pendingCertificate}
           connectedElsewhere={connectedElsewhere}
           canManage={canManage}
           previousCompanyName={connection?.externalCompanyName ?? ""}
@@ -286,6 +293,7 @@ function AccountingIntegrationBody({
       profile={status.profile}
       connection={connection}
       webhookSubscriptions={status.webhookSubscriptions}
+      pendingCertificate={status.pendingCertificate}
       canUpdate={canUpdate}
       canManage={canManage}
       isChecking={check.isPending}

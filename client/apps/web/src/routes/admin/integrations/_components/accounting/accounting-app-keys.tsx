@@ -464,6 +464,17 @@ function AccountingAppRegistration({
         "Copy the application (client) ID, add a client secret under Certificates & secrets, and enter both in this form.",
       ),
     },
+    NetSuite: {
+      create: t(
+        "In NetSuite, go to Setup > Integration > Manage Integrations > New. Turn off Token-Based Authentication, turn on Authorization Code Grant and Client Credentials (Machine to Machine) Grant, choose the REST Web Services scope, and turn on Auto-install.",
+      ),
+      redirect: t(
+        "Enter the redirect URI below exactly as written. NetSuite only accepts https addresses.",
+      ),
+      keys: t(
+        "Save the record, then copy the client ID and client secret NetSuite shows once and enter both in this form.",
+      ),
+    },
   };
   const step = steps[vendor.system];
 
@@ -484,21 +495,26 @@ function AccountingAppRegistration({
           </ExternalLink>
         </li>
         <li>
-          {subscribes
+          {!subscribes && webhookKeyLabel === ""
             ? t(
-                "{0} has no webhook setting to fill in: Trenova subscribes to its changes itself once a company is connected, and renews the subscriptions every few days.",
+                "{0} has no webhooks to set up: Trenova reads what changed every fifteen minutes.",
                 vendor.name,
               )
-            : webhookUrl
+            : subscribes
               ? t(
-                  "To have {0} tell Trenova about changes, add the webhook endpoint below to the app's webhooks and enter its {1} here.",
+                  "{0} has no webhook setting to fill in: Trenova subscribes to its changes itself once a company is connected, and renews the subscriptions every few days.",
                   vendor.name,
-                  toSentenceFragment(webhookKeyLabel),
                 )
-              : t(
-                  "To have {0} tell Trenova about changes, save the keys first: the webhook endpoint for your app appears here once they are saved.",
-                  vendor.name,
-                )}
+              : webhookUrl
+                ? t(
+                    "To have {0} tell Trenova about changes, add the webhook endpoint below to the app's webhooks and enter its {1} here.",
+                    vendor.name,
+                    toSentenceFragment(webhookKeyLabel),
+                  )
+                : t(
+                    "To have {0} tell Trenova about changes, save the keys first: the webhook endpoint for your app appears here once they are saved.",
+                    vendor.name,
+                  )}
         </li>
       </ol>
       {app.redirectUrl ? <CopyRow label={t("Redirect URI")} value={app.redirectUrl} /> : null}

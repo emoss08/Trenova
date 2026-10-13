@@ -96,6 +96,28 @@ func (s AppSource) IsValid() bool {
 	}
 }
 
+type AuthMethod string
+
+const (
+	AuthMethodAuthorization     = AuthMethod("Authorization")
+	AuthMethodClientCredentials = AuthMethod("ClientCredentials")
+)
+
+func (m AuthMethod) String() string { return string(m) }
+
+func AllAuthMethods() []AuthMethod {
+	return []AuthMethod{AuthMethodAuthorization, AuthMethodClientCredentials}
+}
+
+func (m AuthMethod) IsValid() bool {
+	switch m {
+	case AuthMethodAuthorization, AuthMethodClientCredentials:
+		return true
+	default:
+		return false
+	}
+}
+
 type AppEnvironment string
 
 const (
@@ -116,7 +138,6 @@ func (e AppEnvironment) IsValid() bool {
 
 const (
 	FailingAfterConsecutiveFailures = 3
-	RefreshTokenWarningWindow       = int64(14 * 24 * 60 * 60)
 	maxPausedReasonLength           = 500
 	maxChangesErrorMessage          = 2000
 	maxErrorMessageLength           = 2000

@@ -1,13 +1,17 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   checkAccountingConnection,
+  connectAccountingWithCertificate,
   disconnectAccountingSystem,
+  prepareAccountingCertificate,
   removeAccountingApp,
+  renewAccountingCertificate,
   saveAccountingApp,
   startAccountingAuthorization,
+  type AccountingConnection,
   type AccountingSyncStatus,
 } from "@/lib/graphql/accounting-sync";
-import { isTrustedAuthorizeUrl } from "@/lib/accounting-sync";
+import { isTrustedAuthorizeUrl, normalizeNetSuiteAccountId } from "@/lib/accounting-sync";
 import { queries } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -20,6 +24,10 @@ import {
   updateAccountingSyncSettings,
 } from "@/lib/graphql/accounting-sync-ledger";
 import type { AccountingAppFormValues } from "./accounting-app-schema";
+import type {
+  AccountingCertificateConnectValues,
+  AccountingCertificateRenewValues,
+} from "./accounting-certificate-schema";
 import {
   accountingModeInput,
   type AccountingModeValues,
@@ -241,4 +249,74 @@ export function useAccountingSyncSettingsAction(
       toast.success(t("Sync settings saved"));
     },
   });
+}
+
+export function useAccountingCertificateActions(
+  vendor: AccountingVendor,
+  forms?: {
+    connect?: UseFormReturn<AccountingCertificateConnectValues>;
+    renew?: UseFormReturn<AccountingCertificateRenewValues>;
+  },
+) {
+  const t = useT();
+  const queryClient = useQueryClient();
+  const connectForm = forms?.connect;
+  const renewForm = forms?.renew;
+
+  const refresh = useCallback(
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queries.accountingSync.status(vendor.system).queryKey,
+        }),
+        queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey }),
+      ]),
+    [queryClient, vendor.system],
+  );
+
+  const prepare = useApiMutation({
+    mutationFn: () => prepareAccountingCertificate(vendor.system),
+    resourceName: t("{0} certificate", vendor.name),
+    onSuccess: async () => {
+      await refresh();
+      toast.success(t("Certificate generated"), {
+        description: t("Download it and upload it to {0}.", vendor.name),
+      });
+    },
+  });
+
+  const connect = useApiMutation({
+    mutationFn: (values: AccountingCertificateConnectValues) =>
+      connectAccountingWithCertificate({
+        integrationType: vendor.system,
+        accountId: normalizeNetSuiteAccountId(values.accountId) ?? values.accountId.trim(),
+        certificateId: values.certificateId.trim(),
+      }),
+    form: connectForm,
+    resourceName: vendor.name,
+  });
+
+  const renew = useApiMutation({
+    mutationFn: ({
+      connection,
+      values,
+    }: {
+      connection: AccountingConnection;
+      values: AccountingCertificateRenewValues;
+    }) =>
+      renewAccountingCertificate({
+        connectionId: connection.id,
+        certificateId: values.certificateId.trim(),
+      }),
+    form: renewForm,
+    resourceName: t("{0} certificate", vendor.name),
+    onSuccess: async () => {
+      await refresh();
+      toast.success(t("Certificate renewed"), {
+        description: t("{0} accepted the new certificate.", vendor.name),
+      });
+    },
+  });
+
+  return { prepare, connect, renew, refresh };
 }

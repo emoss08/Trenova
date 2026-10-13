@@ -1962,6 +1962,18 @@ func init() {
 				FieldMapKey: "refreshTokenAbsoluteExpiresAt",
 			},
 			{
+				Name:        "authMethod",
+				FieldMapKey: "authMethod",
+			},
+			{
+				Name:        "certificateId",
+				FieldMapKey: "clientCertificateId",
+			},
+			{
+				Name:        "certificateExpiresAt",
+				FieldMapKey: "clientCertificateExpiresAt",
+			},
+			{
 				Name:        "connectedAt",
 				FieldMapKey: "connectedAt",
 			},

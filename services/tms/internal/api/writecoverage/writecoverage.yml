@@ -54,6 +54,9 @@ writes:
     tools: [confirm_accounting_mapping_proposals]
   "mutation createAccountingReferenceRecord":
     tools: [create_accounting_reference_record]
+  "mutation connectAccountingWithCertificate":
+    exempt: security
+    reason: "Connects with a certificate an administrator uploaded in the accounting system's console; a person sets up the credential, never an agent."
   "mutation disconnectAccountingSystem":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -69,6 +72,9 @@ writes:
     tools: [ignore_accounting_inbound_change]
   "mutation pauseAccountingSync":
     tools: [pause_accounting_sync]
+  "mutation prepareAccountingCertificate":
+    exempt: security
+    reason: "Generates the key pair and certificate a person uploads in the accounting system's console to let Trenova act there."
   "mutation redateAccountingSync":
     tools: [redate_accounting_sync]
   "mutation refreshAccountingReferenceData":
@@ -80,6 +86,9 @@ writes:
   "mutation removeAccountingApp":
     exempt: security
     reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
+  "mutation renewAccountingCertificate":
+    exempt: security
+    reason: "Swaps in a certificate a person uploaded in the accounting system's console; the credential is a person's act, never an agent's."
   "mutation requestAccountingBackfill":
     tools: [request_accounting_backfill]
   "mutation resolveAccountingDrift":

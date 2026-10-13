@@ -1,0 +1,1 @@
+{"type":"https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.2","title":"Unauthorized","status":401,"o:errorDetails":[{"detail":"Invalid login attempt. For more details, see the Login Audit Trail in the NetSuite UI at Setup > Users/Roles > User Management > View Login Audit Trail.","o:errorCode":"INVALID_LOGIN"}]}

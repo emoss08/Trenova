@@ -29,7 +29,12 @@ type ProviderProfile struct {
 	InboundUnavailableReason     string
 	WebhookSubscriptions         bool
 	RevokesTokens                bool
+	PKCE                         bool
+	ClientCredentials            bool
+	ReconnectWarning             time.Duration
 }
+
+const defaultReconnectWarning = 14 * 24 * time.Hour
 
 var providerProfiles = []ProviderProfile{
 	{
@@ -71,6 +76,7 @@ var providerProfiles = []ProviderProfile{
 		CallbackCarriesCompany:       true,
 		InboundPayments:              true,
 		RevokesTokens:                true,
+		ReconnectWarning:             defaultReconnectWarning,
 	},
 	{
 		Type:            integration.TypeXero,
@@ -104,6 +110,7 @@ var providerProfiles = []ProviderProfile{
 		CallbackCarriesCompany: false,
 		InboundPayments:        true,
 		RevokesTokens:          true,
+		ReconnectWarning:       defaultReconnectWarning,
 	},
 	{
 		Type:            integration.TypeBusinessCentral,
@@ -143,6 +150,45 @@ var providerProfiles = []ProviderProfile{
 			"drift page.",
 		WebhookSubscriptions: true,
 		RevokesTokens:        false,
+		ReconnectWarning:     defaultReconnectWarning,
+	},
+	{
+		Type:            integration.TypeNetSuite,
+		Name:            "NetSuite",
+		WebhookSlug:     "",
+		CallbackPath:    "/admin/integrations/netsuite/callback",
+		AppName:         "NetSuite integration record",
+		WebhookKeyLabel: "",
+		LineKind:        ReferenceKindItem,
+		ReferenceKinds: []ReferenceKind{
+			ReferenceKindAccount,
+			ReferenceKindItem,
+			ReferenceKindCustomer,
+			ReferenceKindVendor,
+			ReferenceKindTerm,
+		},
+		AccountRoles: []string{
+			AccountRoleDeposit,
+			AccountRolePurchasedTransportation,
+		},
+		RequiredAccountRoles: []string{
+			AccountRoleDeposit,
+		},
+		Environments: []AppEnvironment{
+			AppEnvironmentProduction,
+		},
+		RefreshTokenLifetime:         7 * 24 * time.Hour,
+		RefreshTokenAbsoluteLifetime: 7 * 24 * time.Hour,
+		Ledger:                       false,
+		LedgerUnavailableReason: "Ledger mode for NetSuite is not available yet: journal " +
+			"entries through REST web services are unconfirmed. Send documents instead.",
+		CallbackCarriesCompany: true,
+		InboundPayments:        true,
+		WebhookSubscriptions:   false,
+		RevokesTokens:          true,
+		PKCE:                   true,
+		ClientCredentials:      true,
+		ReconnectWarning:       2 * 24 * time.Hour,
 	},
 }
 
@@ -171,13 +217,34 @@ func AccountingSystems() []integration.Type {
 	return systems
 }
 
+func ClientCredentialsSystems() []integration.Type {
+	systems := make([]integration.Type, 0, len(providerProfiles))
+	for idx := range providerProfiles {
+		if providerProfiles[idx].ClientCredentials {
+			systems = append(systems, providerProfiles[idx].Type)
+		}
+	}
+	return systems
+}
+
 func ProfileByWebhookSlug(slug string) (ProviderProfile, bool) {
+	if slug == "" {
+		return ProviderProfile{}, false
+	}
 	for idx := range providerProfiles {
 		if providerProfiles[idx].WebhookSlug == slug {
 			return providerProfiles[idx], true
 		}
 	}
 	return ProviderProfile{}, false
+}
+
+func (p *ProviderProfile) ReconnectWarningSeconds() int {
+	warning := p.ReconnectWarning
+	if warning <= 0 {
+		warning = defaultReconnectWarning
+	}
+	return int(warning / time.Second)
 }
 
 func (p *ProviderProfile) Has(kind ReferenceKind) bool {

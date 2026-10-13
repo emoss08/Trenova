@@ -65,7 +65,7 @@ func TestConfiguredInstanceAppAndAddresses(t *testing.T) {
 	conn, err := provider.Bind(again)
 	require.NoError(t, err)
 	assert.Equal(t, integration.TypeBusinessCentral, conn.IntegrationType())
-	raw, err := conn.AuthorizeURL("state-1")
+	raw, err := conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state-1"})
 	require.NoError(t, err)
 	assert.True(t, strings.HasPrefix(raw,
 		"https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?"))
@@ -105,12 +105,12 @@ func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	require.NoError(t, err)
 	conn, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
-	_, err = conn.AuthorizeURL("state")
+	_, err = conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state"})
 	require.ErrorIs(t, err, errNoRedirect)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
-	_, err = conn.ExchangeCode(t.Context(), "code")
+	_, err = conn.ExchangeCode(t.Context(), &accountingsyncports.AccountingCodeExchange{Code: "code"})
 	require.ErrorIs(t, err, errNoRedirect)
-	_, err = conn.Refresh(t.Context(), "refresh")
+	_, err = conn.Refresh(t.Context(), &accountingsyncports.AccountingRefreshRequest{RefreshToken: "refresh"})
 	require.ErrorIs(t, err, errNoRedirect)
 	require.ErrorIs(t, conn.VerifyApp(t.Context()), errNoRedirect)
 }
@@ -126,13 +126,13 @@ func TestExchangeCodeAndRefreshReportTheTokenLifetimes(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	grant, err := conn.ExchangeCode(t.Context(), "code-1")
+	grant, err := conn.ExchangeCode(t.Context(), &accountingsyncports.AccountingCodeExchange{Code: "code-1"})
 	require.NoError(t, err)
 	assert.Equal(t, "0.AQoA-rotated-refresh", grant.RefreshToken)
 	assert.Equal(t, 4307*time.Second, grant.AccessTokenTTL)
 	assert.Equal(t, 90*24*time.Hour, grant.RefreshTokenTTL)
 
-	refreshed, err := conn.Refresh(t.Context(), "r0")
+	refreshed, err := conn.Refresh(t.Context(), &accountingsyncports.AccountingRefreshRequest{RefreshToken: "r0"})
 	require.NoError(t, err)
 	assert.Equal(t, grant.AccessToken, refreshed.AccessToken)
 	assert.Equal(t, 2, fake.count(http.MethodPost, "/organizations/oauth2/v2.0/token"))
@@ -143,7 +143,7 @@ func TestRevokeSucceedsWithoutACall(t *testing.T) {
 
 	fake := &fakeBC{}
 	conn := testConnector(t, fake)
-	require.NoError(t, conn.Revoke(t.Context(), "refresh-token"))
+	require.NoError(t, conn.Revoke(t.Context(), &accountingsyncports.AccountingRevokeRequest{Token: "refresh-token"}))
 	require.NoError(t, conn.ReleaseCompanies(t.Context(), nil, []accountingsyncports.AccountingCompany{{ID: "x"}}))
 	assert.Empty(t, fake.all())
 }

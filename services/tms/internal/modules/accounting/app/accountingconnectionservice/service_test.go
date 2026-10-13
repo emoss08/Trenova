@@ -39,6 +39,7 @@ type harness struct {
 	watchtower   *fakeWatchtower
 	refresher    *fakeRefresher
 	poller       *fakePoller
+	certificates *fakeCertificates
 	events       *agenteventstest.Recorder
 	encryption   *encryptionservice.Service
 	tenant       pagination.TenantInfo
@@ -57,6 +58,7 @@ func newHarness(t *testing.T) *harness {
 		watchtower:   newFakeWatchtower(),
 		refresher:    &fakeRefresher{},
 		poller:       &fakePoller{},
+		certificates: newFakeCertificates(),
 		events:       &agenteventstest.Recorder{},
 		encryption: encryptionservice.New(encryptionservice.Params{Config: &config.Config{
 			Security: config.SecurityConfig{Encryption: config.EncryptionConfig{
@@ -80,6 +82,7 @@ func newHarness(t *testing.T) *harness {
 		Publisher:    h.events,
 		Refresher:    h.refresher,
 		Poller:       h.poller,
+		Certificates: h.certificates,
 	})
 	return h
 }

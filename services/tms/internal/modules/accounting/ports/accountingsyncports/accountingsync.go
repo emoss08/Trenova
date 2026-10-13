@@ -37,6 +37,7 @@ type StoreAccountingTokensRequest struct {
 	AccessTokenExpiresAt   int64
 	RefreshTokenCiphertext string
 	RefreshTokenExpiresAt  int64
+	ClientKeyCiphertext    string
 	RefreshedAt            *int64
 	At                     int64
 }
@@ -136,6 +137,8 @@ type AccountingOAuthState struct {
 	AppSource       accountingsync.AppSource `json:"appSource"`
 	AppFingerprint  string                   `json:"appFingerprint"`
 	SealedGrant     string                   `json:"sealedGrant,omitempty"`
+	SealedVerifier  string                   `json:"sealedVerifier,omitempty"`
+	GrantRealmID    string                   `json:"grantRealmId,omitempty"`
 	Companies       []AccountingOAuthCompany `json:"companies,omitempty"`
 }
 
@@ -153,6 +156,18 @@ type AccountingOAuthStateRepository interface {
 type GetAccountingAppCredentialRequest struct {
 	TenantInfo      pagination.TenantInfo
 	IntegrationType integration.Type
+}
+
+type AccountingPendingCertificateRepository interface {
+	GetByType(
+		ctx context.Context,
+		req GetAccountingConnectionRequest,
+	) (*accountingsync.AccountingPendingCertificate, error)
+	Replace(
+		ctx context.Context,
+		entity *accountingsync.AccountingPendingCertificate,
+	) (*accountingsync.AccountingPendingCertificate, error)
+	Delete(ctx context.Context, req GetAccountingConnectionRequest) error
 }
 
 type AccountingAppCredentialRepository interface {

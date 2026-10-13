@@ -13,10 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -1105,5 +1105,60 @@ func (r *QueryResolver) AccountingReferenceObjects(ctx context.Context, integrat
 		Query:           strings.TrimSpace(base.StringValue(query)),
 		UsableOnly:      base.BoolValue(usableOnly),
 		Limit:           base.IntValue(limit),
+	})
+}
+
+func (r *MutationResolver) PrepareAccountingCertificate(ctx context.Context, input gqlmodel.PrepareAccountingCertificateInput) (*accountingsyncports.AccountingPreparedCertificate, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.UserID.IsNil() {
+		return nil, errAccountingNeedsAPerson()
+	}
+
+	return r.AccountingConnections.PrepareCertificate(ctx, &accountingsyncports.PrepareAccountingCertificateRequest{
+		TenantInfo:      base.TenantInfo(authCtx),
+		UserID:          authCtx.UserID,
+		IntegrationType: input.IntegrationType,
+	})
+}
+
+func (r *MutationResolver) ConnectAccountingWithCertificate(ctx context.Context, input gqlmodel.ConnectAccountingWithCertificateInput) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.UserID.IsNil() {
+		return nil, errAccountingNeedsAPerson()
+	}
+
+	return r.AccountingConnections.ConnectWithCertificate(ctx, &accountingsyncports.ConnectAccountingWithCertificateRequest{
+		TenantInfo:      base.TenantInfo(authCtx),
+		UserID:          authCtx.UserID,
+		IntegrationType: input.IntegrationType,
+		AccountID:       input.AccountID,
+		CertificateID:   input.CertificateID,
+	})
+}
+
+func (r *MutationResolver) RenewAccountingCertificate(ctx context.Context, input gqlmodel.RenewAccountingCertificateInput) (*accountingsync.AccountingConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.UserID.IsNil() {
+		return nil, errAccountingNeedsAPerson()
+	}
+	connectionID, err := pulid.MustParse(input.ConnectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AccountingConnections.RenewCertificate(ctx, &accountingsyncports.RenewAccountingCertificateRequest{
+		TenantInfo:    base.TenantInfo(authCtx),
+		UserID:        authCtx.UserID,
+		ConnectionID:  connectionID,
+		CertificateID: input.CertificateID,
 	})
 }

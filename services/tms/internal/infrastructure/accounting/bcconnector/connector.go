@@ -232,21 +232,23 @@ func (c *Connector) client(
 	return businesscentral.New(ref, auth.AccessToken, c.options()...)
 }
 
-func (c *Connector) AuthorizeURL(state string) (string, error) {
+func (c *Connector) AuthorizeURL(
+	req accountingsyncports.AccountingAuthorizeRequest,
+) (string, error) {
 	if c.oauth == nil {
 		return "", errNoRedirect
 	}
-	return c.oauth.AuthorizeURL(state)
+	return c.oauth.AuthorizeURL(req.State)
 }
 
 func (c *Connector) ExchangeCode(
 	ctx context.Context,
-	code string,
+	req *accountingsyncports.AccountingCodeExchange,
 ) (*accountingsyncports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
 		return nil, errNoRedirect
 	}
-	token, err := c.oauth.ExchangeCode(ctx, code)
+	token, err := c.oauth.ExchangeCode(ctx, req.Code)
 	if err != nil {
 		return nil, err
 	}
@@ -255,19 +257,22 @@ func (c *Connector) ExchangeCode(
 
 func (c *Connector) Refresh(
 	ctx context.Context,
-	refreshToken string,
+	req *accountingsyncports.AccountingRefreshRequest,
 ) (*accountingsyncports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
 		return nil, errNoRedirect
 	}
-	token, err := c.oauth.Refresh(ctx, refreshToken)
+	token, err := c.oauth.Refresh(ctx, req.RefreshToken)
 	if err != nil {
 		return nil, err
 	}
 	return grantOf(token), nil
 }
 
-func (c *Connector) Revoke(_ context.Context, _ string) error {
+func (c *Connector) Revoke(
+	_ context.Context,
+	_ *accountingsyncports.AccountingRevokeRequest,
+) error {
 	return nil
 }
 

@@ -500,6 +500,10 @@ var AccountingConnectionColumns = struct {
 	AppSource                     buncolgen.Column // "app_source" → qualified: "acctc.app_source"
 	AppEnvironment                buncolgen.Column // "app_environment" → qualified: "acctc.app_environment"
 	AppFingerprint                buncolgen.Column // "app_fingerprint" → qualified: "acctc.app_fingerprint"
+	AuthMethod                    buncolgen.Column // "auth_method" → qualified: "acctc.auth_method"
+	ClientKeyCiphertext           buncolgen.Column // "client_key_ciphertext" → qualified: "acctc.client_key_ciphertext"
+	ClientCertificateID           buncolgen.Column // "client_certificate_id" → qualified: "acctc.client_certificate_id"
+	ClientCertificateExpiresAt    buncolgen.Column // "client_certificate_expires_at" → qualified: "acctc.client_certificate_expires_at"
 	ExternalCompanyName           buncolgen.Column // "external_company_name" → qualified: "acctc.external_company_name"
 	ExternalShortCode             buncolgen.Column // "external_short_code" → qualified: "acctc.external_short_code"
 	ExternalLegalName             buncolgen.Column // "external_legal_name" → qualified: "acctc.external_legal_name"
@@ -560,6 +564,10 @@ var AccountingConnectionColumns = struct {
 	AppSource:                     buncolgen.NewColumn("app_source", "acctc"),
 	AppEnvironment:                buncolgen.NewColumn("app_environment", "acctc"),
 	AppFingerprint:                buncolgen.NewColumn("app_fingerprint", "acctc"),
+	AuthMethod:                    buncolgen.NewColumn("auth_method", "acctc"),
+	ClientKeyCiphertext:           buncolgen.NewColumn("client_key_ciphertext", "acctc"),
+	ClientCertificateID:           buncolgen.NewColumn("client_certificate_id", "acctc"),
+	ClientCertificateExpiresAt:    buncolgen.NewColumn("client_certificate_expires_at", "acctc"),
 	ExternalCompanyName:           buncolgen.NewColumn("external_company_name", "acctc"),
 	ExternalShortCode:             buncolgen.NewColumn("external_short_code", "acctc"),
 	ExternalLegalName:             buncolgen.NewColumn("external_legal_name", "acctc"),
@@ -625,6 +633,9 @@ var AccountingConnectionFieldMap = map[string]string{
 	"externalRealmId":               "external_realm_id",
 	"appSource":                     "app_source",
 	"appEnvironment":                "app_environment",
+	"authMethod":                    "auth_method",
+	"clientCertificateId":           "client_certificate_id",
+	"clientCertificateExpiresAt":    "client_certificate_expires_at",
 	"externalCompanyName":           "external_company_name",
 	"externalShortCode":             "external_short_code",
 	"externalLegalName":             "external_legal_name",
@@ -686,6 +697,10 @@ var AccountingConnectionInsertableColumns = []string{
 	"app_source",
 	"app_environment",
 	"app_fingerprint",
+	"auth_method",
+	"client_key_ciphertext",
+	"client_certificate_id",
+	"client_certificate_expires_at",
 	"external_company_name",
 	"external_short_code",
 	"external_legal_name",
@@ -815,6 +830,9 @@ var AccountingConnectionFilter = struct {
 	ExternalRealmID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalRealmId" → DB: "external_realm_id"
 	AppSource                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appSource" → DB: "app_source"
 	AppEnvironment                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appEnvironment" → DB: "app_environment"
+	AuthMethod                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "authMethod" → DB: "auth_method"
+	ClientCertificateID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "clientCertificateId" → DB: "client_certificate_id"
+	ClientCertificateExpiresAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "clientCertificateExpiresAt" → DB: "client_certificate_expires_at"
 	ExternalCompanyName           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalCompanyName" → DB: "external_company_name"
 	ExternalShortCode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalShortCode" → DB: "external_short_code"
 	ExternalLegalName             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalLegalName" → DB: "external_legal_name"
@@ -886,6 +904,15 @@ var AccountingConnectionFilter = struct {
 	},
 	AppEnvironment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("appEnvironment", op, value)
+	},
+	AuthMethod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("authMethod", op, value)
+	},
+	ClientCertificateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("clientCertificateId", op, value)
+	},
+	ClientCertificateExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("clientCertificateExpiresAt", op, value)
 	},
 	ExternalCompanyName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("externalCompanyName", op, value)
@@ -2007,6 +2034,198 @@ var AccountingMappingFilter = struct {
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// AccountingPendingCertificate — table "accounting_pending_certificates", alias "acctpc"
+// ---------------------------------------------------------------------------
+
+// AccountingPendingCertificateTable holds the table name, alias, and primary key columns
+// for the "accounting_pending_certificates" table. The alias "acctpc" is used in all generated
+// SQL fragments (e.g. "acctpc.id = ?").
+var AccountingPendingCertificateTable = buncolgen.TableInfo{
+	Name:       "accounting_pending_certificates",
+	Alias:      "acctpc",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AccountingPendingCertificateColumns provides type-safe column references for the "accounting_pending_certificates" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AccountingPendingCertificateColumns.ID.String())
+//	// SELECT acctpc.id FROM accounting_pending_certificates AS acctpc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AccountingPendingCertificateColumns.ID.Eq(), id)           // WHERE acctpc.id = ?
+//	q.Order(AccountingPendingCertificateColumns.CreatedAt.OrderDesc())  // ORDER BY acctpc.created_at DESC
+var AccountingPendingCertificateColumns = struct {
+	ID                   buncolgen.Column // "id" → qualified: "acctpc.id"
+	BusinessUnitID       buncolgen.Column // "business_unit_id" → qualified: "acctpc.business_unit_id"
+	OrganizationID       buncolgen.Column // "organization_id" → qualified: "acctpc.organization_id"
+	IntegrationType      buncolgen.Column // "integration_type" → qualified: "acctpc.integration_type"
+	PrivateKeyCiphertext buncolgen.Column // "private_key_ciphertext" → qualified: "acctpc.private_key_ciphertext"
+	CertificatePEM       buncolgen.Column // "certificate_pem" → qualified: "acctpc.certificate_pem"
+	ExpiresAt            buncolgen.Column // "expires_at" → qualified: "acctpc.expires_at"
+	PreparedByID         buncolgen.Column // "prepared_by_id" → qualified: "acctpc.prepared_by_id"
+	PreparedAt           buncolgen.Column // "prepared_at" → qualified: "acctpc.prepared_at"
+	CreatedAt            buncolgen.Column // "created_at" → qualified: "acctpc.created_at"
+	UpdatedAt            buncolgen.Column // "updated_at" → qualified: "acctpc.updated_at"
+}{
+	ID:                   buncolgen.NewColumn("id", "acctpc"),
+	BusinessUnitID:       buncolgen.NewColumn("business_unit_id", "acctpc"),
+	OrganizationID:       buncolgen.NewColumn("organization_id", "acctpc"),
+	IntegrationType:      buncolgen.NewColumn("integration_type", "acctpc"),
+	PrivateKeyCiphertext: buncolgen.NewColumn("private_key_ciphertext", "acctpc"),
+	CertificatePEM:       buncolgen.NewColumn("certificate_pem", "acctpc"),
+	ExpiresAt:            buncolgen.NewColumn("expires_at", "acctpc"),
+	PreparedByID:         buncolgen.NewColumn("prepared_by_id", "acctpc"),
+	PreparedAt:           buncolgen.NewColumn("prepared_at", "acctpc"),
+	CreatedAt:            buncolgen.NewColumn("created_at", "acctpc"),
+	UpdatedAt:            buncolgen.NewColumn("updated_at", "acctpc"),
+}
+
+// AccountingPendingCertificateFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AccountingPendingCertificate.GetStaticFieldMap().
+var AccountingPendingCertificateFieldMap = map[string]string{
+	"id":              "id",
+	"businessUnitId":  "business_unit_id",
+	"organizationId":  "organization_id",
+	"integrationType": "integration_type",
+	"certificatePem":  "certificate_pem",
+	"expiresAt":       "expires_at",
+	"preparedById":    "prepared_by_id",
+	"preparedAt":      "prepared_at",
+	"createdAt":       "created_at",
+	"updatedAt":       "updated_at",
+}
+
+// AccountingPendingCertificateInsertableColumns lists column names suitable for INSERT statements on the "accounting_pending_certificates" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AccountingPendingCertificateInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"integration_type",
+	"private_key_ciphertext",
+	"certificate_pem",
+	"expires_at",
+	"prepared_by_id",
+	"prepared_at",
+	"created_at",
+	"updated_at",
+}
+
+// AccountingPendingCertificateRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(AccountingPendingCertificateRelations.Organization)
+//	// Bun eager-loads the Organization association via a separate query
+var AccountingPendingCertificateRelations = struct {
+	Organization string
+	BusinessUnit string
+	PreparedBy   string
+}{
+	Organization: "Organization",
+	BusinessUnit: "BusinessUnit",
+	PreparedBy:   "PreparedBy",
+}
+
+// AccountingPendingCertificateScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE acctpc.organization_id = ? AND acctpc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	accountingsynccol.AccountingPendingCertificateScopeTenant(sq, ti).
+//		Where(accountingsynccol.AccountingPendingCertificateColumns.ID.Eq(), id)
+func AccountingPendingCertificateScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, AccountingPendingCertificateColumns.OrganizationID, AccountingPendingCertificateColumns.BusinessUnitID, ti)
+}
+
+// AccountingPendingCertificateScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return accountingsynccol.AccountingPendingCertificateScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(accountingsynccol.AccountingPendingCertificateColumns.ID.In(), bun.List(ids))
+//	})
+func AccountingPendingCertificateScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, AccountingPendingCertificateColumns.OrganizationID, AccountingPendingCertificateColumns.BusinessUnitID, ti)
+}
+
+// AccountingPendingCertificateScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return accountingsynccol.AccountingPendingCertificateScopeTenantDelete(dq, req.TenantInfo).
+//			Where(accountingsynccol.AccountingPendingCertificateColumns.ID.Eq(), id)
+//	})
+func AccountingPendingCertificateScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, AccountingPendingCertificateColumns.OrganizationID, AccountingPendingCertificateColumns.BusinessUnitID, ti)
+}
+
+// AccountingPendingCertificateApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(accountingsynccol.AccountingPendingCertificateApplyTenant(tenantInfo))
+func AccountingPendingCertificateApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(AccountingPendingCertificateColumns.OrganizationID, AccountingPendingCertificateColumns.BusinessUnitID, ti)
+}
+
+// AccountingPendingCertificateFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "accounting_pending_certificates" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AccountingPendingCertificateFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AccountingPendingCertificateFilter = struct {
+	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	IntegrationType func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "integrationType" → DB: "integration_type"
+	CertificatePEM  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "certificatePem" → DB: "certificate_pem"
+	ExpiresAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	PreparedByID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preparedById" → DB: "prepared_by_id"
+	PreparedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preparedAt" → DB: "prepared_at"
+	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	IntegrationType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("integrationType", op, value)
+	},
+	CertificatePEM: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("certificatePem", op, value)
+	},
+	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("expiresAt", op, value)
+	},
+	PreparedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("preparedById", op, value)
+	},
+	PreparedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("preparedAt", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("createdAt", op, value)

@@ -245,3 +245,49 @@ func TestDriftIsCheckedOnlyWhileSendingAndRecordsTheOutcome(t *testing.T) {
 	assert.Empty(t, conn.DriftErrorCategory)
 	assert.Empty(t, conn.DriftErrorMessage)
 }
+
+func TestReconnectWarningComesFromTheProviderProfile(t *testing.T) {
+	t.Parallel()
+
+	const day = int64(24 * 60 * 60)
+	tests := []struct {
+		name     string
+		typ      integration.Type
+		left     int64
+		expected bool
+	}{
+		{name: "quickbooks within 14 days", typ: integration.TypeQuickBooksOnline, left: 10 * day, expected: true},
+		{name: "quickbooks beyond 14 days", typ: integration.TypeQuickBooksOnline, left: 15 * day, expected: false},
+		{name: "netsuite beyond 2 days", typ: integration.TypeNetSuite, left: 3 * day, expected: false},
+		{name: "netsuite within 2 days", typ: integration.TypeNetSuite, left: day, expected: true},
+		{name: "netsuite at exactly 2 days", typ: integration.TypeNetSuite, left: 2 * day, expected: true},
+		{name: "unknown provider uses 14 days", typ: integration.Type("Unknown"), left: 10 * day, expected: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			conn := &accountingsync.AccountingConnection{
+				IntegrationType:               tt.typ,
+				RefreshTokenAbsoluteExpiresAt: now + tt.left,
+			}
+			assert.Equal(t, tt.expected, conn.RefreshTokenNearAbsoluteExpiry(now))
+		})
+	}
+}
+
+func TestReconnectWarningIsOffWithoutAnAbsoluteExpiry(t *testing.T) {
+	t.Parallel()
+
+	conn := &accountingsync.AccountingConnection{IntegrationType: integration.TypeNetSuite}
+	assert.False(t, conn.RefreshTokenNearAbsoluteExpiry(now))
+	assert.Equal(t, int64(2*24*60*60), conn.ReconnectWarningSeconds())
+}
+
+func TestNetSuiteConnectSetsASevenDayAbsoluteExpiry(t *testing.T) {
+	t.Parallel()
+
+	conn := &accountingsync.AccountingConnection{IntegrationType: integration.TypeNetSuite}
+	conn.Connect(pulid.MustNew("usr_"), accountingsync.TokenGrant{}, now)
+	assert.Equal(t, now+7*24*60*60, conn.RefreshTokenAbsoluteExpiresAt)
+}

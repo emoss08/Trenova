@@ -57,7 +57,9 @@ const (
 	PurposeAccountingAppSecret         Purpose = "accounting_app_secret"       // #nosec G101 -- AAD label, not a credential.
 	PurposeAccountingPendingGrant      Purpose = "accounting_pending_grant"    // #nosec G101 -- AAD label, not a credential.
 	PurposeAccountingWebhookState      Purpose = "accounting_webhook_state"
-	PurposeMFATOTPSecret               Purpose = "mfa_totp_secret" // #nosec G101 -- AAD label, not a credential.
+	PurposeAccountingOAuthVerifier     Purpose = "accounting_oauth_verifier"
+	PurposeAccountingClientKey         Purpose = "accounting_client_key" // #nosec G101 -- AAD label, not a credential.
+	PurposeMFATOTPSecret               Purpose = "mfa_totp_secret"       // #nosec G101 -- AAD label, not a credential.
 
 	CryptoModeEnvelopeV1 = "envelope_v1"
 

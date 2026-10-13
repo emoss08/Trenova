@@ -1600,6 +1600,9 @@ type MutationResolver interface {
 	CompleteAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsync.AccountingConnection, error)
 	FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsyncports.AccountingAuthorizationCompletion, error)
 	ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingsync.AccountingConnection, error)
+	PrepareAccountingCertificate(ctx context.Context, input gqlmodel.PrepareAccountingCertificateInput) (*accountingsyncports.AccountingPreparedCertificate, error)
+	ConnectAccountingWithCertificate(ctx context.Context, input gqlmodel.ConnectAccountingWithCertificateInput) (*accountingsyncports.AccountingAuthorizationCompletion, error)
+	RenewAccountingCertificate(ctx context.Context, input gqlmodel.RenewAccountingCertificateInput) (*accountingsync.AccountingConnection, error)
 	DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
 	CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
 	ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingsync.AccountingMapping, error)
@@ -3890,6 +3893,7 @@ enum AccountingSystem {
   QuickBooksOnline
   Xero
   BusinessCentral
+  NetSuite
 }
 
 "How the link to the accounting system is doing right now."
@@ -4126,6 +4130,14 @@ enum AccountingAppSource {
   Tenant
 }
 
+"How a connection proves itself to the accounting system."
+enum AccountingAuthMethod {
+  "A person signed in and authorized Trenova. The authorization lasts as long as the system allows, then someone signs in again."
+  Authorization
+  "Trenova signs each request with a certificate an administrator uploaded to the accounting system. No sign-in is needed until the certificate expires."
+  ClientCredentials
+}
+
 "Which of the accounting system's environments an app's keys are for."
 enum AccountingAppEnvironment {
   "Development keys, which work only with test companies."
@@ -4175,8 +4187,14 @@ type AccountingConnection {
   "The last failure in plain language. Empty when the last check succeeded."
   lastErrorMessage: String!
   lastWebhookAt: Timestamp
-  "When the authorization's five-year limit runs out and someone must reconnect."
+  "When the authorization's limit runs out and someone must reconnect. For a certificate connection, when the certificate expires. Zero when the system sets no limit."
   refreshTokenAbsoluteExpiresAt: Timestamp!
+  "How the connection proves itself to the accounting system."
+  authMethod: AccountingAuthMethod!
+  "The certificate's id in the accounting system. Absent unless the connection uses a certificate."
+  certificateId: String
+  "When the certificate expires and must be renewed. Absent unless the connection uses a certificate."
+  certificateExpiresAt: Timestamp
   connectedAt: Timestamp!
   disconnectedAt: Timestamp
   "How far setup has got. Syncing waits until it is Complete."
@@ -4280,6 +4298,43 @@ type AccountingProviderProfile {
   webhookSubscriptions: Boolean!
   "Whether disconnecting withdraws Trenova's access at the provider. When false, an administrator removes the app's consent there."
   revokesTokens: Boolean!
+  "Whether the sign-in is protected with a PKCE code challenge."
+  pkce: Boolean!
+  "Whether a connection can be made with a certificate instead of a sign-in."
+  clientCredentials: Boolean!
+  "How long before a sign-in's limit runs out Trenova asks someone to reconnect, in seconds."
+  reconnectWarningSeconds: Int!
+}
+
+"""
+A certificate Trenova generated for a certificate connection, waiting to be uploaded to the
+accounting system and connected. Its private key never leaves the server.
+"""
+type AccountingPreparedCertificate {
+  integrationType: AccountingSystem!
+  "The X.509 certificate, PEM encoded, to upload to the accounting system."
+  certificatePem: String!
+  "When the certificate expires."
+  expiresAt: Timestamp!
+  preparedAt: Timestamp!
+}
+
+input PrepareAccountingCertificateInput {
+  integrationType: AccountingSystem!
+}
+
+input ConnectAccountingWithCertificateInput {
+  integrationType: AccountingSystem!
+  "The accounting system's account id, such as 1234567 or 1234567_SB1."
+  accountId: String!
+  "The id the accounting system gave the uploaded certificate."
+  certificateId: String!
+}
+
+input RenewAccountingCertificateInput {
+  connectionId: ID!
+  "The id the accounting system gave the newly uploaded certificate."
+  certificateId: String!
 }
 
 "The webhook subscriptions Trenova keeps at an accounting system that requires them."
@@ -4307,6 +4362,8 @@ type AccountingSyncStatus {
   connection: AccountingConnection
   "Absent unless the system requires subscriptions and the organization has connected."
   webhookSubscriptions: AccountingWebhookSubscriptionSummary
+  "The certificate waiting to be uploaded and connected. Absent when there is none."
+  pendingCertificate: AccountingPreparedCertificate
 }
 
 """
@@ -5142,6 +5199,12 @@ extend type Mutation {
   finishAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): CompleteAccountingAuthorizationPayload!
   "Connects the company the person chose after a sign-in that authorized several. The choice can be made once; the other companies are released."
   chooseAccountingCompany(input: ChooseAccountingCompanyInput!): AccountingConnection!
+  "Generates a key pair and certificate for a certificate connection and returns the certificate to upload. Replaces a certificate still waiting to be connected."
+  prepareAccountingCertificate(input: PrepareAccountingCertificateInput!): AccountingPreparedCertificate!
+  "Connects with the uploaded certificate, or offers the companies to choose between when the account has several."
+  connectAccountingWithCertificate(input: ConnectAccountingWithCertificateInput!): CompleteAccountingAuthorizationPayload!
+  "Switches a certificate connection to a newly uploaded certificate once the accounting system accepts it."
+  renewAccountingCertificate(input: RenewAccountingCertificateInput!): AccountingConnection!
   "Disconnects the accounting system and revokes Trenova's access to it."
   disconnectAccountingSystem(integrationType: AccountingSystem!): AccountingConnection!
   "Checks the connection now instead of waiting for the next scheduled check."

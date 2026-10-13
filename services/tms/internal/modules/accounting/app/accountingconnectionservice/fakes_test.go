@@ -20,7 +20,7 @@ import (
 )
 
 type storedTokens struct {
-	access, refresh               string
+	access, refresh, clientKey    string
 	accessExpires, refreshExpires int64
 }
 
@@ -45,6 +45,7 @@ func (f *fakeConnections) withoutTokens(conn *accountingsync.AccountingConnectio
 	out := *conn
 	out.AccessTokenCiphertext = ""
 	out.RefreshTokenCiphertext = ""
+	out.ClientKeyCiphertext = ""
 	return &out
 }
 
@@ -53,6 +54,7 @@ func (f *fakeConnections) withTokens(conn *accountingsync.AccountingConnection) 
 	tokens := f.tokens[conn.ID]
 	out.AccessTokenCiphertext = tokens.access
 	out.RefreshTokenCiphertext = tokens.refresh
+	out.ClientKeyCiphertext = tokens.clientKey
 	out.AccessTokenExpiresAt = tokens.accessExpires
 	out.RefreshTokenExpiresAt = tokens.refreshExpires
 	return &out
@@ -179,6 +181,7 @@ func (f *fakeConnections) Create(
 	f.tokens[entity.ID] = storedTokens{
 		access:         entity.AccessTokenCiphertext,
 		refresh:        entity.RefreshTokenCiphertext,
+		clientKey:      entity.ClientKeyCiphertext,
 		accessExpires:  entity.AccessTokenExpiresAt,
 		refreshExpires: entity.RefreshTokenExpiresAt,
 	}
@@ -216,6 +219,7 @@ func (f *fakeConnections) StoreTokens(
 	f.tokens[req.ID] = storedTokens{
 		access:         req.AccessTokenCiphertext,
 		refresh:        req.RefreshTokenCiphertext,
+		clientKey:      req.ClientKeyCiphertext,
 		accessExpires:  req.AccessTokenExpiresAt,
 		refreshExpires: req.RefreshTokenExpiresAt,
 	}
@@ -420,6 +424,8 @@ var errProvider = errors.New("provider failure")
 
 type fakeConnector struct {
 	mu             sync.Mutex
+	typ            integration.Type
+	cc             *fakeClientCredentials
 	available      bool
 	exchangeGrant  *accountingsyncports.AccountingTokenGrant
 	exchangeErr    error
@@ -431,6 +437,10 @@ type fakeConnector struct {
 	facts          accountingsync.CompanyFacts
 	revoked        []string
 	exchangedCodes []string
+	exchanges      []accountingsyncports.AccountingCodeExchange
+	authorizations []accountingsyncports.AccountingAuthorizeRequest
+	refreshRealms  []string
+	revokeRealms   []string
 	webhookErr     error
 	webhookRealms  []string
 	errCategories  map[error]accountingsync.ErrorCategory
@@ -454,6 +464,7 @@ const instanceVerifier = "instance-verifier"
 
 func newFakeConnector() *fakeConnector {
 	return &fakeConnector{
+		typ:         integration.TypeQuickBooksOnline,
 		available:   true,
 		redirectURL: "https://app.example.com/admin/integrations/quickbooks/callback",
 		exchangeGrant: &accountingsyncports.AccountingTokenGrant{
@@ -478,7 +489,7 @@ func newFakeConnector() *fakeConnector {
 	}
 }
 
-func (f *fakeConnector) IntegrationType() integration.Type { return integration.TypeQuickBooksOnline }
+func (f *fakeConnector) IntegrationType() integration.Type { return f.typ }
 
 func (f *fakeConnector) InstanceApp() (*accountingsyncports.AccountingApp, bool) {
 	if !f.available {
@@ -523,17 +534,23 @@ func (b *boundConnector) VerifyWebhook(signature string, body []byte) error {
 	return nil
 }
 
-func (f *fakeConnector) AuthorizeURL(state string) (string, error) {
-	return "https://appcenter.intuit.com/connect/oauth2?state=" + state, nil
+func (f *fakeConnector) AuthorizeURL(
+	req accountingsyncports.AccountingAuthorizeRequest,
+) (string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.authorizations = append(f.authorizations, req)
+	return "https://appcenter.intuit.com/connect/oauth2?state=" + req.State, nil
 }
 
 func (f *fakeConnector) ExchangeCode(
 	_ context.Context,
-	code string,
+	req *accountingsyncports.AccountingCodeExchange,
 ) (*accountingsyncports.AccountingTokenGrant, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.exchangedCodes = append(f.exchangedCodes, code)
+	f.exchangedCodes = append(f.exchangedCodes, req.Code)
+	f.exchanges = append(f.exchanges, *req)
 	if f.exchangeErr != nil {
 		return nil, f.exchangeErr
 	}
@@ -542,11 +559,12 @@ func (f *fakeConnector) ExchangeCode(
 
 func (f *fakeConnector) Refresh(
 	_ context.Context,
-	refreshToken string,
+	req *accountingsyncports.AccountingRefreshRequest,
 ) (*accountingsyncports.AccountingTokenGrant, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.refreshedWith = append(f.refreshedWith, refreshToken)
+	f.refreshedWith = append(f.refreshedWith, req.RefreshToken)
+	f.refreshRealms = append(f.refreshRealms, req.RealmID)
 	if len(f.refreshErrs) > 0 {
 		err := f.refreshErrs[0]
 		f.refreshErrs = f.refreshErrs[1:]
@@ -557,10 +575,14 @@ func (f *fakeConnector) Refresh(
 	return f.refreshGrant, nil
 }
 
-func (f *fakeConnector) Revoke(_ context.Context, token string) error {
+func (f *fakeConnector) Revoke(
+	_ context.Context,
+	req *accountingsyncports.AccountingRevokeRequest,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.revoked = append(f.revoked, token)
+	f.revoked = append(f.revoked, req.Token)
+	f.revokeRealms = append(f.revokeRealms, req.RealmID)
 	return nil
 }
 
@@ -633,7 +655,7 @@ type fakeRegistry struct {
 
 func (r fakeRegistry) For(typ integration.Type) (accountingsyncports.AccountingProvider, bool) {
 	switch {
-	case typ == integration.TypeQuickBooksOnline:
+	case typ == r.connector.typ:
 		return r.connector, true
 	case typ == integration.TypeBusinessCentral && r.bc != nil:
 		return r.bc, true

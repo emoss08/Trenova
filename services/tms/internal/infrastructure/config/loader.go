@@ -303,6 +303,9 @@ func (l *Loader) bindAccountingEnv() {
 		"accounting.businessCentral.webhookBaseUrl",
 		"TRENOVA_BUSINESSCENTRAL_WEBHOOK_BASE_URL",
 	)
+	_ = l.viper.BindEnv("accounting.netSuite.clientId", "TRENOVA_NETSUITE_CLIENT_ID")
+	_ = l.viper.BindEnv("accounting.netSuite.clientSecret", "TRENOVA_NETSUITE_CLIENT_SECRET")
+	_ = l.viper.BindEnv("accounting.netSuite.redirectUrl", "TRENOVA_NETSUITE_REDIRECT_URL")
 }
 
 func (l *Loader) setDefaults() { //nolint:funlen // sets default configs

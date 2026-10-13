@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   accountingWebhookUrl,
   ACCOUNTING_MAPPINGS_PATH,
-  ACCOUNTING_RECONNECT_WARNING_SECONDS,
   accountingConnectionPhase,
   accountingReferenceDetail,
   accountingMappingCreatable,
@@ -29,6 +28,9 @@ import {
   resolveAccountingSystem,
   DEFAULT_ACCOUNTING_SYSTEM,
   hasReconnectDeadline,
+  normalizeNetSuiteAccountId,
+  reconnectWarningSeconds,
+  ACCOUNTING_SYSTEMS,
 } from "../accounting-sync";
 
 const DAY = 24 * 60 * 60;
@@ -67,6 +69,36 @@ describe("hasLiveAccountingConnection", () => {
 
   it("keeps a failing connection", () => {
     expect(hasLiveAccountingConnection({ status: "Failing" })).toBe(true);
+  });
+});
+
+describe("isTrustedAuthorizeUrl for NetSuite", () => {
+  it("accepts NetSuite's account-free authorize page", () => {
+    expect(
+      isTrustedAuthorizeUrl(
+        "NetSuite",
+        "https://system.netsuite.com/app/login/oauth2/authorize.nl?client_id=abc&state=xyz",
+      ),
+    ).toBe(true);
+  });
+
+  it("refuses an account host, another system's host and plain http", () => {
+    expect(
+      isTrustedAuthorizeUrl(
+        "NetSuite",
+        "https://1234567.app.netsuite.com/app/login/oauth2/authorize.nl?state=xyz",
+      ),
+    ).toBe(false);
+    expect(
+      isTrustedAuthorizeUrl("NetSuite", "https://appcenter.intuit.com/connect/oauth2?state=xyz"),
+    ).toBe(false);
+    expect(
+      isTrustedAuthorizeUrl("NetSuite", "http://system.netsuite.com/app/login/oauth2/authorize.nl"),
+    ).toBe(false);
+  });
+
+  it("lists NetSuite among the systems a tenant can connect", () => {
+    expect(ACCOUNTING_SYSTEMS).toContain("NetSuite");
   });
 });
 
@@ -187,6 +219,24 @@ describe("readAccountingCallback", () => {
     });
   });
 
+  it("reads the account NetSuite returns as company when there is no realmId", () => {
+    expect(
+      readAccountingCallback(
+        new URLSearchParams("code=c1&state=s1&company=1234567_SB1&role=3&entity=-5"),
+        withCompany,
+      ),
+    ).toEqual({ kind: "authorized", code: "c1", state: "s1", realmId: "1234567_SB1" });
+  });
+
+  it("prefers realmId over company when both are present", () => {
+    expect(
+      readAccountingCallback(
+        new URLSearchParams("code=c1&state=s1&realmId=9130348&company=other"),
+        withCompany,
+      ),
+    ).toEqual({ kind: "authorized", code: "c1", state: "s1", realmId: "9130348" });
+  });
+
   it("accepts a return with only the code and state when the provider names no company", () => {
     expect(readAccountingCallback(new URLSearchParams("code=c1&state=s1"), withoutCompany)).toEqual(
       { kind: "authorized", code: "c1", state: "s1", realmId: null },
@@ -252,29 +302,72 @@ describe("resolveAccountingSystem", () => {
 
 describe("reconnectDeadlineNear", () => {
   const now = 1_800_000_000;
+  const window = 14 * DAY;
 
   it("is not near while the limit is further off than the warning window", () => {
-    expect(reconnectDeadlineNear(now + ACCOUNTING_RECONNECT_WARNING_SECONDS + DAY, now)).toBe(
-      false,
-    );
+    expect(reconnectDeadlineNear(now + window + DAY, window, now)).toBe(false);
   });
 
   it("is near inside the warning window", () => {
-    expect(reconnectDeadlineNear(now + 3 * DAY, now)).toBe(true);
+    expect(reconnectDeadlineNear(now + 3 * DAY, window, now)).toBe(true);
   });
 
   it("is near once the limit has passed", () => {
-    expect(reconnectDeadlineNear(now - DAY, now)).toBe(true);
+    expect(reconnectDeadlineNear(now - DAY, window, now)).toBe(true);
   });
 
   it("is never near when the provider sets no limit", () => {
-    expect(reconnectDeadlineNear(0, now)).toBe(false);
+    expect(reconnectDeadlineNear(0, window, now)).toBe(false);
     expect(hasReconnectDeadline(0)).toBe(false);
     expect(hasReconnectDeadline(now)).toBe(true);
   });
 
-  it("warns fourteen days out, the same window the server raises its Watchtower item at", () => {
-    expect(ACCOUNTING_RECONNECT_WARNING_SECONDS).toBe(14 * DAY);
+  it("follows the window it is given, so a week-long sign-in warns two days out", () => {
+    expect(reconnectDeadlineNear(now + 3 * DAY, 2 * DAY, now)).toBe(false);
+    expect(reconnectDeadlineNear(now + 2 * DAY, 2 * DAY, now)).toBe(true);
+  });
+});
+
+describe("reconnectWarningSeconds", () => {
+  it("uses the provider's window for a sign-in", () => {
+    expect(
+      reconnectWarningSeconds(
+        { authMethod: "Authorization" },
+        { reconnectWarningSeconds: 2 * DAY },
+      ),
+    ).toBe(2 * DAY);
+  });
+
+  it("warns fourteen days before a certificate expires, as the server's Watchtower item does", () => {
+    expect(
+      reconnectWarningSeconds(
+        { authMethod: "ClientCredentials" },
+        { reconnectWarningSeconds: 2 * DAY },
+      ),
+    ).toBe(14 * DAY);
+  });
+});
+
+describe("normalizeNetSuiteAccountId", () => {
+  it("accepts production, sandbox and release preview account ids", () => {
+    expect(normalizeNetSuiteAccountId("1234567")).toBe("1234567");
+    expect(normalizeNetSuiteAccountId("1234567_SB1")).toBe("1234567_SB1");
+    expect(normalizeNetSuiteAccountId("1234567_SB12")).toBe("1234567_SB12");
+    expect(normalizeNetSuiteAccountId("1234567_RP")).toBe("1234567_RP");
+    expect(normalizeNetSuiteAccountId("TSTDRV1234567")).toBe("TSTDRV1234567");
+  });
+
+  it("upper-cases and trims what was typed", () => {
+    expect(normalizeNetSuiteAccountId(" 1234567_sb1 ")).toBe("1234567_SB1");
+  });
+
+  it("refuses the host form, separators and anything else", () => {
+    expect(normalizeNetSuiteAccountId("1234567-sb1")).toBeNull();
+    expect(normalizeNetSuiteAccountId("1234567_SB")).toBeNull();
+    expect(normalizeNetSuiteAccountId("1234567_XX1")).toBeNull();
+    expect(normalizeNetSuiteAccountId("1234567.app.netsuite.com")).toBeNull();
+    expect(normalizeNetSuiteAccountId("")).toBeNull();
+    expect(normalizeNetSuiteAccountId("1".repeat(65))).toBeNull();
   });
 });
 

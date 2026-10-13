@@ -45,7 +45,11 @@ func NewConnectionRepository(
 
 func tokenColumns() []string {
 	cols := accountingsynccol.AccountingConnectionColumns
-	return []string{cols.AccessTokenCiphertext.String(), cols.RefreshTokenCiphertext.String()}
+	return []string{
+		cols.AccessTokenCiphertext.String(),
+		cols.RefreshTokenCiphertext.String(),
+		cols.ClientKeyCiphertext.String(),
+	}
 }
 
 func refreshColumns() []string {
@@ -350,6 +354,7 @@ func (r *connectionRepository) StoreTokens(
 
 		query = setOrNull(query, cols.AccessTokenCiphertext, req.AccessTokenCiphertext)
 		query = setOrNull(query, cols.RefreshTokenCiphertext, req.RefreshTokenCiphertext)
+		query = setOrNull(query, cols.ClientKeyCiphertext, req.ClientKeyCiphertext)
 
 		results, err := query.Exec(ctx)
 		if err != nil {

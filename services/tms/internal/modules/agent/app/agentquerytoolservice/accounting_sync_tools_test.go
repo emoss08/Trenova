@@ -133,7 +133,7 @@ func TestGetAccountingSyncStatus_RefusesUnknownSystemsAndForeignTenants(t *testi
 	t.Parallel()
 
 	tool := newGetAccountingSyncStatusTool(&fakeAccountingStatus{}, &fakeSyncLedger{}, nil)
-	_, err := tool.Query(t.Context(), accountingQueryParams("NetSuite"))
+	_, err := tool.Query(t.Context(), accountingQueryParams("SageIntacct"))
 	require.Error(t, err)
 
 	params := accountingQueryParams("QuickBooksOnline")
@@ -148,4 +148,56 @@ func TestGetAccountingSyncStatus_ReadsTheIntegrationResource(t *testing.T) {
 	policy := newGetAccountingSyncStatusTool(&fakeAccountingStatus{}, &fakeSyncLedger{}, nil).Policy()
 	assert.Equal(t, permission.ResourceAccountingIntegration, policy.Resource)
 	assert.Equal(t, permission.OpRead, policy.Operation)
+}
+
+func TestGetAccountingSyncStatus_ReportsACertificateConnection(t *testing.T) {
+	t.Parallel()
+
+	expires := int64(1_830_000_000)
+	reader := &fakeAccountingStatus{status: &accountingsyncports.AccountingSyncStatus{
+		IntegrationType: integration.TypeNetSuite,
+		ProviderName:    "NetSuite",
+		Available:       true,
+		Connection: &accountingsync.AccountingConnection{
+			ID:                            pulid.MustNew("acctc_"),
+			IntegrationType:               integration.TypeNetSuite,
+			Status:                        accountingsync.ConnectionStatusConnected,
+			AuthMethod:                    accountingsync.AuthMethodClientCredentials,
+			ClientCertificateID:           "cert-1",
+			ClientCertificateExpiresAt:    &expires,
+			RefreshTokenAbsoluteExpiresAt: expires,
+		},
+	}}
+	tool := newGetAccountingSyncStatusTool(reader, &fakeSyncLedger{}, nil)
+
+	out, err := tool.Query(t.Context(), accountingQueryParams("NetSuite"))
+	require.NoError(t, err)
+	row := out.(accountingSyncStatusRow)
+	assert.Equal(t, "ClientCredentials", row.ConnectedWith)
+	assert.Equal(t, expectedDate(expires, absentNoCertificate), row.CertificateExpires)
+}
+
+func TestGetAccountingSyncStatus_SaysASignInHasNoCertificate(t *testing.T) {
+	t.Parallel()
+
+	reader := &fakeAccountingStatus{status: &accountingsyncports.AccountingSyncStatus{
+		IntegrationType: integration.TypeNetSuite,
+		ProviderName:    "NetSuite",
+		Available:       true,
+		Connection: &accountingsync.AccountingConnection{
+			ID:              pulid.MustNew("acctc_"),
+			IntegrationType: integration.TypeNetSuite,
+			Status:          accountingsync.ConnectionStatusConnected,
+			AuthMethod:      accountingsync.AuthMethodAuthorization,
+		},
+	}}
+	tool := newGetAccountingSyncStatusTool(reader, &fakeSyncLedger{}, nil)
+
+	out, err := tool.Query(t.Context(), accountingQueryParams("NetSuite"))
+	require.NoError(t, err)
+	row := out.(accountingSyncStatusRow)
+	assert.Equal(t, "Authorization", row.ConnectedWith)
+	raw, err := row.CertificateExpires.MarshalJSON()
+	require.NoError(t, err)
+	assert.JSONEq(t, `"connected by sign-in"`, string(raw))
 }

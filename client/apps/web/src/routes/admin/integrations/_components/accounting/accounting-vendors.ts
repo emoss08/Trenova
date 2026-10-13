@@ -51,10 +51,25 @@ export const businessCentralVendor: AccountingVendor = {
     "https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-develop-connect-apps",
 };
 
+export const netSuiteVendor: AccountingVendor = {
+  system: "NetSuite",
+  name: "NetSuite",
+  logoLight: "/integrations/logos/netsuite-light.svg",
+  logoDark: "/integrations/logos/netsuite-dark.svg",
+  docsUrl: "https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/chapter_1540391670.html",
+  appName: "NetSuite integration record",
+  developer: "NetSuite",
+  developerPortalUrl:
+    "https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_4389727047.html",
+  appKeysHelpUrl:
+    "https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_157771733782.html",
+};
+
 const ACCOUNTING_VENDORS: Record<AccountingSystem, AccountingVendor> = {
   QuickBooksOnline: quickBooksVendor,
   Xero: xeroVendor,
   BusinessCentral: businessCentralVendor,
+  NetSuite: netSuiteVendor,
 };
 
 export const accountingVendors: readonly AccountingVendor[] = Object.values(ACCOUNTING_VENDORS);

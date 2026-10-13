@@ -104,6 +104,9 @@ const connected: AccountingConnection = {
   lastErrorMessage: "",
   lastWebhookAt: null,
   refreshTokenAbsoluteExpiresAt: 4_102_444_800,
+  authMethod: "Authorization",
+  certificateId: null,
+  certificateExpiresAt: null,
   connectedAt: 1_780_000_000,
   disconnectedAt: null,
   setupStep: "Complete",
@@ -241,6 +244,7 @@ function status(overrides: Partial<AccountingSyncStatus> = {}): AccountingSyncSt
     app: instanceApp,
     connection: null,
     webhookSubscriptions: null,
+    pendingCertificate: null,
     ...overrides,
   };
 }
@@ -1086,6 +1090,9 @@ describe("AccountingIntegrationModal for Xero", () => {
     integrationType: "Xero",
     appEnvironment: "Production",
     refreshTokenAbsoluteExpiresAt: 0,
+    authMethod: "Authorization",
+    certificateId: null,
+    certificateExpiresAt: null,
   };
   const xeroApp: AccountingAppSettings = {
     ...noApp,
@@ -1116,6 +1123,7 @@ describe("AccountingIntegrationModal for Xero", () => {
       app: instanceApp,
       connection: null,
       webhookSubscriptions: null,
+      pendingCertificate: null,
       ...overrides,
     };
   }

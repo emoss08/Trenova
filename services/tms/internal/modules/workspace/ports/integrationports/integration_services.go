@@ -544,6 +544,36 @@ var CatalogDefinitions = []CatalogItem{
 		SortOrder:          72,
 		PrimaryActionLabel: "Connect",
 	},
+	{
+		Type:          integration.TypeNetSuite,
+		Name:          "NetSuite",
+		Description:   "Connect your Oracle NetSuite account, or one of its subsidiaries, so Trenova can send the invoices, credit memos, payments and bills it records and read back payments recorded in NetSuite. Connect by signing in, or with a certificate so the connection does not need a weekly sign-in. Trenova raises a Watchtower item when the connection needs attention.",
+		Category:      integration.CategoryAccounting,
+		CategoryLabel: catalogAccountingLabel,
+		LogoURL:       "/integrations/logos/netsuite-light.svg",
+		LogoLightURL:  "/integrations/logos/netsuite-light.svg",
+		LogoDarkURL:   "/integrations/logos/netsuite-dark.svg",
+		DocsURL:       "https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/chapter_1540391670.html",
+		WebsiteURL:    "https://www.netsuite.com/",
+		Color:         "#125580",
+		GlowFrom:      "#125580",
+		GlowTo:        "#5FB9B5",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: catalogDocsLabel,
+				URL:   "https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/chapter_1540391670.html",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: catalogWebsiteLabel,
+				URL:   "https://www.netsuite.com/",
+			},
+		},
+		Featured:           true,
+		SortOrder:          73,
+		PrimaryActionLabel: "Connect",
+	},
 }
 
 type plannedEmailCatalogItemParams struct {

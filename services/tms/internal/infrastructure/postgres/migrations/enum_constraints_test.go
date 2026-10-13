@@ -128,6 +128,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(accountingsync.AccountingSystems()),
 		},
 		{
+			name:   "ck_accounting_connections_auth_method",
+			values: stringsOf(accountingsync.AllAuthMethods()),
+		},
+		{
+			name:   "ck_accounting_pending_certificates_integration_type",
+			values: stringsOf(accountingsync.ClientCredentialsSystems()),
+		},
+		{
 			name:   "ck_accounting_webhook_subscriptions_status",
 			values: stringsOf(accountingsync.AllWebhookSubscriptionStatuses()),
 		},

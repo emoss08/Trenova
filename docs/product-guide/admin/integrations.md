@@ -1,6 +1,6 @@
 ---
 path: /admin/integrations
-aliases: [connected apps, marketplace, third-party connections, API keys for services, Samsara, PC*Miler, Google Maps, telematics setup, email provider, fuel card feed, CarrierOk, FMCSA, QuickBooks, QuickBooks Online, accounting sync, Intuit, ledger mode, send journal entries, opening balances, Xero, Xero organisation, Xero app, Xero webhook key, choose organisation, Business Central, Dynamics 365 Business Central, Microsoft Entra app, Business Central environment, Business Central company, webhook subscriptions]
+aliases: [connected apps, marketplace, third-party connections, API keys for services, Samsara, PC*Miler, Google Maps, telematics setup, email provider, fuel card feed, CarrierOk, FMCSA, QuickBooks, QuickBooks Online, accounting sync, Intuit, ledger mode, send journal entries, opening balances, Xero, Xero organisation, Xero app, Xero webhook key, choose organisation, Business Central, Dynamics 365 Business Central, Microsoft Entra app, Business Central environment, Business Central company, webhook subscriptions, NetSuite, Oracle NetSuite, NetSuite integration record, NetSuite certificate, client credentials, OneWorld subsidiary, NetSuite sandbox]
 related:
   - /accounting/sync
   - /admin/inbound-mailboxes
@@ -13,6 +13,7 @@ covers:
   - /admin/integrations/quickbooks/callback
   - /admin/integrations/xero/callback
   - /admin/integrations/business-central/callback
+  - /admin/integrations/netsuite/callback
 ---
 
 ## What it's for
@@ -22,8 +23,8 @@ Financial Data, Fuel Cards, Carrier Compliance and Accounting) with its descript
 its docs, a button to open its settings and a switch showing whether it is connected. Services
 include Resend and Postmark (email), Samsara (telematics), Google Maps and PC*Miler (mileage and
 routing), OpenWeatherMap, OANDA Exchange Rates, EIA Fuel Prices, the WEX, Comdata and Ramp fuel
-card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), QuickBooks Online, Xero and
-Business Central (accounting). Some cards describe planned providers that cannot be configured yet. An
+card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), QuickBooks Online, Xero,
+Business Central and NetSuite (accounting). Some cards describe planned providers that cannot be configured yet. An
 organization keeps its books in one accounting system at a time.
 
 ## Tasks
@@ -263,6 +264,88 @@ Keywords: Business Central not syncing, Business Central connection failing, rec
    withdraw the consent from Trenova's side, so to remove it an administrator removes the app
    from Enterprise applications in Microsoft Entra.
 
+### Connect NetSuite
+Keywords: NetSuite setup, connect NetSuite, Oracle NetSuite, NetSuite sign in, NetSuite subsidiary, OneWorld, NetSuite sandbox, account ID
+1. In NetSuite, an administrator turns on Setup > Company > Enable Features > SuiteCloud >
+   OAuth 2.0 and REST Web Services. The role Trenova connects as needs the permissions
+   "Log in using OAuth 2.0 Access Tokens" and "REST Web Services", plus access to the invoices,
+   credit memos, customer payments, vendor bills, vendor credits, vendor payments, customers,
+   vendors, items, accounts and accounting periods Trenova reads and writes. A role that manages
+   OAuth 2.0 authorized applications cannot be used.
+2. Open [Integrations](/admin/integrations) and open the NetSuite card. When another accounting
+   system is still connected, disconnect it first: an organization sends to one accounting system
+   at a time.
+3. Choose how to connect. Signing in is quickest, but NetSuite ends each sign-in after a week, so
+   someone has to sign in again every week. **Connect with a certificate** needs an administrator
+   once and then lasts two years; see the next task.
+4. To sign in, select the connect button. Trenova sends you to NetSuite's sign-in page; sign in,
+   choose the account and role, and allow access. Trenova never sees the password.
+5. NetSuite sends you back to Trenova. In a OneWorld account Trenova lists the active
+   subsidiaries, each named with its account and marked (Sandbox) for a sandbox account; select
+   the one whose books this Trenova organization keeps, then select **Connect this
+   organisation**. Each subsidiary is connected on its own, so two Trenova organizations can keep
+   two subsidiaries of one account. An account without subsidiaries connects straight away.
+6. Trenova shows the company it connected, with **Home currency** (the subsidiary's base
+   currency), **Multicurrency** and **Books closed through** (the end of the last closed or
+   locked accounting period). Check it, then select **Continue**.
+7. On **What is sent**, keep **Send documents**: journal entries cannot be sent to NetSuite yet,
+   and the option says why. On **Match records**, match each charge type to a NetSuite item and
+   choose the deposit account; only records assigned to the connected subsidiary are offered.
+   Then select **Finish setup**, choose the **Start date** and select **Start sending**.
+8. NetSuite has no webhooks: Trenova reads what changed every fifteen minutes. Payments recorded
+   in NetSuite against invoices and bills Trenova sent are brought in, as for QuickBooks Online.
+   A sandbox is a separate account, with an account ID ending in _SB1 or similar; connect it the
+   same way.
+
+### Connect NetSuite with a certificate
+Keywords: NetSuite certificate, client credentials, machine to machine, M2M, NetSuite certificate ID, no weekly sign-in, NetSuite mapping
+1. Open the NetSuite card, select **Connect with a certificate**, then select **Generate
+   certificate**. Trenova makes a key pair and a certificate valid for two years; the private
+   key never leaves Trenova. Select **Download certificate** to save the certificate file.
+2. In NetSuite, go to Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup and create a
+   mapping: choose the employee and role Trenova acts as, choose the NetSuite integration record
+   Trenova connects through, upload the certificate file and save.
+3. Back in Trenova, enter the **Account ID** (from Setup > Company > Company Information; a
+   sandbox ends in _SB1) and the **Certificate ID** NetSuite shows on the mapping, then select
+   **Connect with the certificate**. Trenova asks NetSuite for access with the certificate before
+   it connects anything, then continues as for a sign-in.
+4. A certificate that waits to be connected stays on the card, so you can download it again
+   later. Select **Generate a new one** to replace it.
+
+### Use your own NetSuite integration record
+Keywords: NetSuite app keys, NetSuite integration record, client ID, client secret, redirect URI, self-hosted NetSuite
+1. In NetSuite, go to Setup > Integration > Manage Integrations > New. Turn off Token-Based
+   Authentication, turn on Authorization Code Grant and Client Credentials (Machine to Machine)
+   Grant, choose the REST Web Services scope, and turn on Auto-install.
+2. Open [Integrations](/admin/integrations) and open the NetSuite card. When this server has no
+   NetSuite integration record of its own the keys form is already open; otherwise select **Use
+   your own app**.
+3. Enter the **Redirect URI** Trenova shows into the integration record exactly as written, then
+   save it. NetSuite shows the client ID and client secret only once.
+4. Enter the **Client ID** and **Client secret**, then select **Save keys**. NetSuite has no way
+   to check the keys before an account is connected, so a wrong secret shows when you connect.
+
+### Check, renew or disconnect NetSuite
+Keywords: NetSuite not syncing, NetSuite connection failing, reconnect NetSuite, renew NetSuite certificate, NetSuite certificate expired, sandbox refresh, disconnect NetSuite
+1. Open [Integrations](/admin/integrations) and open the NetSuite card to see the connection's
+   status, what it is **Connected with**, when it was **Last checked** and its **Last successful
+   call**. A sign-in shows the date to **Reconnect by**; a certificate shows when the
+   **Certificate expires**.
+2. A sign-in lasts a week. Two days before it ends, the card and Watchtower ask for a reconnect:
+   select **Reconnect** and sign in again to the same account. Records keep queueing while the
+   connection is down and go out once it is back.
+3. To replace a certificate, select **Renew certificate**. Generate and download a new
+   certificate, upload it to the same mapping in NetSuite, enter its **New certificate ID**, then
+   select **Renew certificate** in the dialog. The current certificate keeps working until
+   NetSuite accepts the new one. Watchtower reminds you fourteen days before a certificate
+   expires.
+4. Refreshing a sandbox from production clears its certificate mappings, so NetSuite refuses the
+   certificate and the connection needs reconnecting. Set up the mapping again and renew the
+   certificate.
+5. To stop, select **Disconnect** and confirm. Trenova revokes its sign-in; nothing already in
+   NetSuite is changed. A certificate connection holds no sign-in to revoke, so remove the
+   mapping in NetSuite as well.
+
 ### Check or disconnect QuickBooks Online
 Keywords: QuickBooks not syncing, QuickBooks connection failing, reconnect QuickBooks, revoke QuickBooks
 1. Open [Integrations](/admin/integrations) and open the QuickBooks Online card to see the
@@ -283,9 +366,9 @@ Seeing the QuickBooks Online connection needs read access to the accounting inte
 update access, and connecting, reconnecting or disconnecting needs manage access and must be done
 by a signed-in person, as do saving or removing the Intuit app keys, choosing what is sent,
 choosing the start date and changing the sync settings.
-Seeing, connecting and disconnecting Xero or Business Central need the same access as QuickBooks
-Online.
-A QuickBooks company, Xero organisation or Business Central company can be connected to only one Trenova organization at a
+Seeing, connecting and disconnecting Xero, Business Central or NetSuite need the same access as
+QuickBooks Online, as do generating, connecting and renewing a NetSuite certificate.
+A QuickBooks company, Xero organisation, Business Central company or NetSuite subsidiary can be connected to only one Trenova organization at a
 time, and a Trenova organization sends to only one accounting system at a time: disconnect one
 before connecting the other. When the connection fails or its authorization is about to run out, Watchtower raises an
 item that links back here.

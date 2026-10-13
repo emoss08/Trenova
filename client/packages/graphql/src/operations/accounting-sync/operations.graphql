@@ -18,6 +18,9 @@ fragment AccountingConnectionFields on AccountingConnection {
   lastErrorMessage
   lastWebhookAt
   refreshTokenAbsoluteExpiresAt
+  authMethod
+  certificateId
+  certificateExpiresAt
   connectedAt
   disconnectedAt
   setupStep
@@ -125,6 +128,16 @@ fragment AccountingProviderProfileFields on AccountingProviderProfile {
   inboundUnavailableReason
   webhookSubscriptions
   revokesTokens
+  pkce
+  clientCredentials
+  reconnectWarningSeconds
+}
+
+fragment AccountingPreparedCertificateFields on AccountingPreparedCertificate {
+  integrationType
+  certificatePem
+  expiresAt
+  preparedAt
 }
 
 fragment AccountingWebhookSubscriptionSummaryFields on AccountingWebhookSubscriptionSummary {
@@ -151,6 +164,9 @@ fragment AccountingSyncStatusFields on AccountingSyncStatus {
   }
   webhookSubscriptions {
     ...AccountingWebhookSubscriptionSummaryFields
+  }
+  pendingCertificate {
+    ...AccountingPreparedCertificateFields
   }
 }
 
@@ -298,6 +314,32 @@ mutation FinishAccountingAuthorization($input: CompleteAccountingAuthorizationIn
 
 mutation ChooseAccountingCompany($input: ChooseAccountingCompanyInput!) {
   chooseAccountingCompany(input: $input) {
+    ...AccountingConnectionFields
+  }
+}
+
+mutation PrepareAccountingCertificate($input: PrepareAccountingCertificateInput!) {
+  prepareAccountingCertificate(input: $input) {
+    ...AccountingPreparedCertificateFields
+  }
+}
+
+mutation ConnectAccountingWithCertificate($input: ConnectAccountingWithCertificateInput!) {
+  connectAccountingWithCertificate(input: $input) {
+    connection {
+      ...AccountingConnectionFields
+    }
+    companies {
+      id
+      name
+    }
+    choiceToken
+    choiceExpiresAt
+  }
+}
+
+mutation RenewAccountingCertificate($input: RenewAccountingCertificateInput!) {
+  renewAccountingCertificate(input: $input) {
     ...AccountingConnectionFields
   }
 }

@@ -109,6 +109,6 @@ func TestCheckAccountingConnection_RejectsUnknownSystems(t *testing.T) {
 	tool := newCheckAccountingConnectionTool(&fakeAccountingChecker{
 		status: connectedStatus(accountingsync.ConnectionStatusConnected),
 	})
-	require.Error(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{"system": "NetSuite"})))
+	require.Error(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{"system": "SageIntacct"})))
 	require.Error(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{})))
 }

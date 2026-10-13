@@ -38,8 +38,9 @@ const (
 	sendingAutomatic  = "Automatic"
 	sendingOnRelease  = "OnRelease"
 
-	absentNotChosen = "not chosen"
-	absentNotPaused = "not paused"
+	absentNotChosen     = "not chosen"
+	absentNotPaused     = "not paused"
+	absentNoCertificate = "connected by sign-in"
 
 	queueWithheldReason = "Queue depth needs permission to read the accounting sync ledger."
 )
@@ -91,6 +92,8 @@ type accountingSyncStatusRow struct {
 	LastErrorCategory   string                  `json:"lastErrorCategory,omitempty"`
 	LastError           string                  `json:"lastError,omitempty"`
 	ReconnectBy         optionalDate            `json:"reconnectBy"`
+	ConnectedWith       string                  `json:"connectedWith,omitempty"`
+	CertificateExpires  optionalDate            `json:"certificateExpires"`
 	LastWebhookOn       optionalDate            `json:"lastWebhookOn"`
 	Sending             string                  `json:"sending"`
 	Mode                string                  `json:"mode,omitempty"`
@@ -136,7 +139,9 @@ func (t *getAccountingSyncStatusTool) Name() string { return "get_accounting_syn
 
 func (t *getAccountingSyncStatusTool) Description() string {
 	return "Get whether the accounting system is connected, to which company, and why it last failed. " +
-		"It also says when it last answered, when the authorization must be renewed, and " +
+		"It also says when it last answered, when the authorization must be renewed, " +
+		"whether it was connected by sign-in or with a certificate and when that " +
+		"certificate expires, and " +
 		"whether documents are being sent: sending is NotStarted, Paused, Automatic, or " +
 		"OnRelease when each document waits for a person to release it, with the start " +
 		"date. Once sending has started, queue counts how many documents are in each sync " +
@@ -282,6 +287,11 @@ func accountingSyncStatusRowFrom(
 	row.LastErrorCategory = string(conn.LastErrorCategory)
 	row.LastError = conn.AgentErrorSummary()
 	row.ReconnectBy = recordedDate(conn.RefreshTokenAbsoluteExpiresAt)
+	row.ConnectedWith = string(conn.AuthMethod)
+	row.CertificateExpires = expectedDate(
+		typeutils.ValueOrZero(conn.ClientCertificateExpiresAt),
+		absentNoCertificate,
+	)
 	row.LastWebhookOn = pointerDate(conn.LastWebhookAt)
 	row.Sending = accountingSending(conn)
 	row.Mode = string(conn.Mode())
