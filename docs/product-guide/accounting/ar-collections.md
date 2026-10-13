@@ -9,7 +9,7 @@ related:
 
 ## What it's for
 Collections lists every customer with an overdue invoice, ranked so the first row is the account to
-work next: a broken promise to pay or anything sixty days late comes first, an account waiting on an
+call next: a broken promise to pay or anything sixty days late comes first, an account waiting on an
 open promise or on a follow-up that has not come round yet comes last. Each row shows what is
 **Overdue**, the **Oldest** invoice's days past due, the **Promise** standing against the balance,
 the next **Follow-up**, the **Collector** and the **Last contact**.
@@ -19,7 +19,7 @@ The figures above the table give the total **Overdue**, **Follow-ups due**, **Br
 
 ## Tasks
 
-### Work today's accounts
+### Chase today's overdue accounts
 Keywords: who to call, follow-ups due, dunning
 1. Open [Collections](/accounting/ar/collections).
 2. Choose **Mine** to see the accounts you collect, and turn on **Due today only**.
@@ -56,7 +56,7 @@ Keywords: statement of account, account statement email, balance summary
 3. Select **Email statement**, optionally write a **Note to the customer**, then select
    **Send statement**.
 
-### Assign a collector or schedule a follow-up
+### Assign a collector or set the next follow-up
 Keywords: assign collector, owner, next follow-up
 1. Open [Collections](/accounting/ar/collections) and select the customer.
 2. Under **Collector and follow-up**, choose the **Collector**. They are notified.
@@ -65,4 +65,4 @@ Keywords: assign collector, owner, next follow-up
 
 ## Notes
 Opening the page needs read access to accounts receivable; logging contacts, recording promises,
-assigning collectors and scheduling follow-ups needs permission to update accounts receivable. History is kept as it was recorded and cannot be edited.
+assigning collectors and setting follow-ups needs permission to update accounts receivable. History is kept as it was recorded and cannot be edited.

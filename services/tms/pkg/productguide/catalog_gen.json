@@ -1,5 +1,5 @@
 {
-  "version": "sha256:ac2da8674c293ffe95fc4626de90b5990448c48295cb01a4cf811287a89ccf4f",
+  "version": "sha256:64b0b377d5946b1eb16c8e90018b422bcef69987ddf8d659de13696c5b92f32b",
   "modules": [
     {
       "id": "home",
@@ -362,7 +362,7 @@
         "Collections"
       ],
       "description": "Customers with overdue receivables, ranked by who to call first. Open one to log a call, record a promise to pay, or schedule the next follow-up.",
-      "summary": "Collections lists every customer with an overdue invoice, ranked so the first row is the account to work next: a broken promise to pay or anything sixty days late comes first, an account waiting on an open promise or on a follow-up that has not come round yet comes last. Each row shows what is **Overdue**, the **Oldest** invoice's days past due, the **Promise** standing against the balance, the next **Follow-up**, the **Collector** and the **Last contact**.\n\nThe figures above the table give the total **Overdue**, **Follow-ups due**, **Broken promises** and **Unassigned** accounts. Select **Follow-ups due** or **Unassigned** to narrow the list to them.",
+      "summary": "Collections lists every customer with an overdue invoice, ranked so the first row is the account to call next: a broken promise to pay or anything sixty days late comes first, an account waiting on an open promise or on a follow-up that has not come round yet comes last. Each row shows what is **Overdue**, the **Oldest** invoice's days past due, the **Promise** standing against the balance, the next **Follow-up**, the **Collector** and the **Last contact**.\n\nThe figures above the table give the total **Overdue**, **Follow-ups due**, **Broken promises** and **Unassigned** accounts. Select **Follow-ups due** or **Unassigned** to narrow the list to them.",
       "requires": [
         {
           "resource": "accounts_receivable",
@@ -380,7 +380,7 @@
       ],
       "tasks": [
         {
-          "title": "Work today's accounts",
+          "title": "Chase today's overdue accounts",
           "keywords": [
             "who to call",
             "follow-ups due",
@@ -448,7 +448,7 @@
           ]
         },
         {
-          "title": "Assign a collector or schedule a follow-up",
+          "title": "Assign a collector or set the next follow-up",
           "keywords": [
             "assign collector",
             "owner",
@@ -461,7 +461,7 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to accounts receivable; logging contacts, recording promises, assigning collectors and scheduling follow-ups needs permission to update accounts receivable. History is kept as it was recorded and cannot be edited.",
+      "notes": "Opening the page needs read access to accounts receivable; logging contacts, recording promises, assigning collectors and setting follow-ups needs permission to update accounts receivable. History is kept as it was recorded and cannot be edited.",
       "related": [
         "/accounting/ar/open-items",
         "/accounting/ar/customer-ledger",
