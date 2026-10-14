@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/formulavisibility"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -178,13 +179,18 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
-			return h.service.List(
+			result, err := h.service.List(
 				c.Request.Context(),
 				&billingqueueports.ListBillingQueueItemsRequest{
 					Filter:        req,
 					IncludePosted: helpers.QueryBool(c, "includePosted"),
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
+
+			return h.visibleItemPage(c, result)
 		},
 	)
 }
@@ -251,7 +257,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	h.respondItem(c, http.StatusOK, entity)
 }
 
 type transferRequest struct {
@@ -300,7 +306,7 @@ func (h *Handler) transfer(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	h.respondItem(c, http.StatusCreated, created)
 }
 
 type assignRequest struct {
@@ -352,7 +358,7 @@ func (h *Handler) assign(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	h.respondItem(c, http.StatusOK, updated)
 }
 
 type updateChargesRequest struct {
@@ -434,7 +440,7 @@ func (h *Handler) updateCharges(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	h.respondItem(c, http.StatusOK, updated)
 }
 
 type updateStatusRequest struct {
@@ -497,7 +503,7 @@ func (h *Handler) updateStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	h.respondItem(c, http.StatusOK, updated)
 }
 
 // @Summary List billing queue filter presets
@@ -734,5 +740,12 @@ func (h *Handler) reassignCharge(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	formulavisibility.Respond(
+		c,
+		h.pm,
+		h.eh,
+		http.StatusOK,
+		result,
+		(*billingqueueports.ReassignChargeResult).WithoutFormulaContent,
+	)
 }

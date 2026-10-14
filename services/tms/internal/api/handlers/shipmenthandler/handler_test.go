@@ -202,6 +202,7 @@ type handlerDeps struct {
 	importAssistant shipmentports.ShipmentImportAssistantService
 	permitService   permitports.PermitService
 	etas            shipmenttrackingports.ShipmentEtaReader
+	permissions     permissionports.PermissionEngine
 }
 
 func buildShipmentHandler(t *testing.T, deps handlerDeps) *shipmenthandler.Handler {
@@ -219,8 +220,13 @@ func buildShipmentHandler(t *testing.T, deps handlerDeps) *shipmenthandler.Handl
 		Config: cfg,
 	})
 
+	permissions := deps.permissions
+	if permissions == nil {
+		permissions = &mocks.AllowAllPermissionEngine{}
+	}
+
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
-		PermissionEngine: &mocks.AllowAllPermissionEngine{},
+		PermissionEngine: permissions,
 		ErrorHandler:     errorHandler,
 	})
 
