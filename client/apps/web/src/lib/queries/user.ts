@@ -1,5 +1,6 @@
 import { apiService } from "@/services/api";
 import { loadUserAvatar } from "@/lib/user-avatars";
+import { fetchUserDetail } from "@/lib/graphql/users";
 import { notificationPreferencesService } from "@trenova/shared/services/notification-preferences";
 
 import type { User } from "@trenova/shared/types/user";
@@ -17,6 +18,10 @@ export const user = createQueryKeys("user", {
   detail: (id: User["id"]) => ({
     queryKey: ["detail", id],
     queryFn: async () => apiService.userService.get(id),
+  }),
+  account: (id: string) => ({
+    queryKey: ["account", id],
+    queryFn: ({ signal }) => fetchUserDetail(id, { signal }),
   }),
   profilePicture: (id: User["id"], variant: "thumbnail" | "full" = "thumbnail") => ({
     queryKey: ["profile-picture", id, variant],

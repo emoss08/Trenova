@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
+const organizationIDsKey = "organizationIds"
+
 type membershipChange struct {
 	actorID        pulid.ID
 	userID         pulid.ID
@@ -39,8 +41,8 @@ func (s *Service) recordMembershipChange(ctx context.Context, change *membership
 		}).AuditActor(),
 		OrganizationID: change.organizationID,
 		BusinessUnitID: change.businessUnitID,
-		Before:         map[string]any{"organizationIds": before},
-		After:          map[string]any{"organizationIds": after},
+		Before:         map[string]any{organizationIDsKey: before},
+		After:          map[string]any{organizationIDsKey: after},
 		Comment:        "Organization memberships changed",
 		Metadata: map[string]any{
 			"addedOrganizationIds":   sliceutils.Difference(after, before),

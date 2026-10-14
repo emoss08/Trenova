@@ -31,7 +31,8 @@ type PasswordResetTokenRepository interface {
 	// reset so nothing else is left redeemable.
 	InvalidateOutstanding(ctx context.Context, userID pulid.ID, now int64) error
 
-	// CountSince counts the tokens issued to a user since a cutoff, so a request can
-	// be refused before it becomes a way to flood somebody's inbox.
+	// CountSince counts the reset links issued to a user since a cutoff, so a request can
+	// be refused before it becomes a way to flood somebody's inbox. Invitations are not
+	// counted: an administrator sends those, not a stranger.
 	CountSince(ctx context.Context, userID pulid.ID, since int64) (int, error)
 }

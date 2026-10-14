@@ -10,6 +10,12 @@ package documenttemplate
 // sees one report rather than three.
 const sampleReportTitle = "Revenue by Customer"
 
+const (
+	sampleUserFirstName = "Dana"
+	sampleUserFullName  = "Dana Whitfield"
+	expiresInDaysPath   = "ExpiresInDays"
+)
+
 func logoVariable() VariableDefinition {
 	return VariableDefinition{
 		Path:        "LogoDataURI",

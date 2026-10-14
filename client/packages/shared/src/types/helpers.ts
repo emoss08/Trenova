@@ -41,6 +41,9 @@ export const nullableTextSchema = z
   .transform((value) => value ?? "");
 export const versionSchema = z.number().int().min(0).optional();
 export const timestampSchema = z.number().int().positive().optional();
+// An instant that may never have happened, such as a first sign-in. GraphQL sends
+// it as null, which timestampSchema's optional() refuses.
+export const nullableTimestampSchema = z.number().int().positive().nullish();
 // Server-managed audit timestamps. They are round-tripped through the form for
 // display but stripped before submit, so they must never block validation — a
 // record with an unset (0) timestamp still has to be editable.

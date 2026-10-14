@@ -1,7 +1,9 @@
 import { DEFAULT_LOCALE, LOCALES } from "@trenova/shared/i18n/generated/locales";
 import { z } from "zod";
 import {
+  auditTimestampSchema,
   capabilityFlagSchema,
+  nullableTimestampSchema,
   optionalStringSchema,
   statusSchema,
   stringArraySchema,
@@ -71,8 +73,8 @@ export type ReplaceOrganizationMembershipsRequest = z.infer<
 export const userSchema = z.object({
   id: optionalStringSchema,
   version: versionSchema,
-  createdAt: timestampSchema,
-  updatedAt: timestampSchema,
+  createdAt: auditTimestampSchema,
+  updatedAt: auditTimestampSchema,
   businessUnitId: optionalStringSchema,
   currentOrganizationId: optionalStringSchema,
 
@@ -87,7 +89,7 @@ export const userSchema = z.object({
   locale: z.enum(LOCALES).default(DEFAULT_LOCALE),
   isLocked: z.boolean().default(false),
   mustChangePassword: z.boolean().default(true),
-  lastLoginAt: timestampSchema.optional(),
+  lastLoginAt: nullableTimestampSchema,
   jobTitle: z.string().catch("").default(""),
   phoneNumber: z.string().catch("").default(""),
   avatarStyle: z.string().catch("auto").default("auto"),
@@ -96,13 +98,47 @@ export const userSchema = z.object({
   awayBackOn: z.number().nullish(),
   awayDelegateUserId: z.string().nullish(),
   awayNote: z.string().catch("").default(""),
-  passwordChangedAt: z.number().nullish(),
+  passwordChangedAt: nullableTimestampSchema,
 
   assignments: z.array(userRoleAssignmentSchema).nullish(),
   memberships: z.array(userOrganizationMembershipSchema).nullish(),
 });
 
 export type User = z.infer<typeof userSchema>;
+
+// The fields an administrator sets on any account. Both forms derive from userSchema,
+// so a rule changed there reaches create and edit alike.
+const userAccountShape = {
+  status: true,
+  name: true,
+  username: true,
+  emailAddress: true,
+  timezone: true,
+  timeFormat: true,
+  locale: true,
+} as const;
+
+export const userCreateSchema = userSchema.pick(userAccountShape).extend({
+  roleIds: z.array(z.string()),
+});
+
+export type UserCreateFormValues = z.infer<typeof userCreateSchema>;
+
+export const userEditSchema = userSchema.pick({
+  ...userAccountShape,
+  id: true,
+  version: true,
+  isLocked: true,
+  mustChangePassword: true,
+  jobTitle: true,
+  phoneNumber: true,
+  lastLoginAt: true,
+  passwordChangedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type UserEditFormValues = z.infer<typeof userEditSchema>;
 
 export const userResponseSchema = createLimitOffsetResponse(userSchema);
 

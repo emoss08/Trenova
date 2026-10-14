@@ -28,3 +28,6 @@ types:
     skip: true
   AgentControl:
     skip: true
+  User:
+    exclude:
+      - timeFormat

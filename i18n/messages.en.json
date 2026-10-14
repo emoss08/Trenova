@@ -6358,6 +6358,15 @@
       "routes/agent-control"
     ]
   },
+  "A locked account cannot sign in until it is unlocked.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "A long task": {
     "sites": 1,
     "scope": [
@@ -8576,6 +8585,15 @@
       "go/other"
     ]
   },
+  "A role was selected more than once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A rollout extraction settles with a final outcome": {
     "sites": 1,
     "scope": [
@@ -10537,6 +10555,24 @@
     ]
   },
   "A user notification must name its recipient": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A user with this email address already exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A user with this username already exists": {
     "sites": 1,
     "scope": [
       "go"
@@ -13179,6 +13215,15 @@
       "go/other"
     ]
   },
+  "Account invitation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
+    ]
+  },
   "Account locked": {
     "sites": 1,
     "scope": [
@@ -13214,6 +13259,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Account setup": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
     ]
   },
   "Account type": {
@@ -14386,6 +14440,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Activate the account before sending it a sign-in link.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Activate {0, plural, one {# role} other {# roles}}": {
@@ -22138,6 +22201,15 @@
       "routes/accounting-drift"
     ]
   },
+  "An account has been created for you at {0}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
+    ]
+  },
   "An account with this email address already exists. Contact your carrier to resolve this.": {
     "sites": 1,
     "scope": [
@@ -23544,6 +23616,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An invitation to set up their account was sent to {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "An invitation token is required": {
@@ -40127,7 +40208,7 @@
     ]
   },
   "Cancel": {
-    "sites": 294,
+    "sites": 293,
     "scope": [
       "ts"
     ],
@@ -43305,6 +43386,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Carries the single-use link a new user follows to choose their first password and finish setting up the account an administrator created for them. Not customer-scoped: the recipient is a user.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Carries the single-use link that lets somebody who has lost their password choose a new one. Not customer-scoped: the recipient is a user.": {
@@ -47170,6 +47260,15 @@
       "template/account.password_reset.email"
     ]
   },
+  "Choose a password": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Choose a password to finish setting up your account for": {
     "sites": 1,
     "scope": [
@@ -47177,6 +47276,15 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "Choose a password to finish setting up your account.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
     ]
   },
   "Choose a password you are not already using": {
@@ -48170,6 +48278,15 @@
       "routes/edi"
     ]
   },
+  "Choose the password you will sign in with. This link works once.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Choose the period end": {
     "sites": 1,
     "scope": [
@@ -48580,6 +48697,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "Choose your Trenova password": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
     ]
   },
   "Choose…": {
@@ -50943,6 +51069,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Close the panel and open it again. If it keeps failing, the user may have been removed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Close the turn's record": {
@@ -54982,12 +55117,13 @@
     ]
   },
   "Confirm password": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/dash/routes"
+      "apps/dash/routes",
+      "routes/auth"
     ]
   },
   "Confirm password is required": {
@@ -83990,7 +84126,16 @@
       "routes/collections"
     ]
   },
-  "Emails this user a single-use link to choose their own password. Their current password keeps working until they use it, and you never see the new one.": {
+  "Emails {0} a new link to choose a password. Any earlier invitation stops working.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Emails {0} a single-use link to choose a new password. Their current password keeps working until they use it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -86437,15 +86582,6 @@
       "routes/formula-template"
     ]
   },
-  "Enter new password": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Enter one of the recovery codes you saved when you set up two-factor authentication.": {
     "sites": 1,
     "scope": [
@@ -86769,6 +86905,15 @@
       "routes/auth"
     ]
   },
+  "Enter their full name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Enter threshold in days": {
     "sites": 1,
     "scope": [
@@ -86848,15 +86993,6 @@
     ],
     "areas": [
       "apps/dash/routes"
-    ]
-  },
-  "Enter your full name": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Enter your password": {
@@ -108768,11 +108904,12 @@
     ]
   },
   "Hi {0},": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/account.invite.email",
       "template/account.password_reset.email",
       "template/driverportal.invitation.email",
       "template/invoice.share.email"
@@ -108788,11 +108925,12 @@
     ]
   },
   "Hi,": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/account.invite.email",
       "template/account.password_reset.email",
       "template/driverportal.invitation.email",
       "template/invoice.share.email"
@@ -110861,6 +110999,15 @@
       "routes/scheduling"
     ]
   },
+  "How many hours the link is good for.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "How many hours the offer is good for. Use this rather than writing a number into the copy, or the wording will drift from the real expiry.": {
     "sites": 1,
     "scope": [
@@ -110967,6 +111114,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "How many whole days the link is good for, or zero when the expiry is not a whole number of days. Use this rather than writing a number into the copy.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "How much fuel price each band covers — 5¢ is the industry standard.": {
@@ -111858,7 +112014,7 @@
     ]
   },
   "ID must not be set on create": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -112545,6 +112701,15 @@
     ],
     "areas": [
       "template/invoice.reminder.email"
+    ]
+  },
+  "If you were not expecting this invitation, you can ignore this email. Nobody can sign in to the account until a password is chosen.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
     ]
   },
   "If you were not expecting this, you can ignore it.": {
@@ -117394,6 +117559,15 @@
       "routes/worker"
     ]
   },
+  "Invitation sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Invitation sent to <b>{0}</b> — expires {1}.": {
     "sites": 1,
     "scope": [
@@ -120418,15 +120592,25 @@
     ]
   },
   "Job title": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Job title must be 100 characters or fewer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Job title must be at most 100 characters": {
     "sites": 1,
     "scope": [
       "go"
@@ -123135,12 +123319,13 @@
     ]
   },
   "Language": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Language is required": {
@@ -136540,6 +136725,15 @@
       "routes/desk"
     ]
   },
+  "Menus, labels and the emails Trenova sends them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Menus, labels and the emails Trenova sends you.": {
     "sites": 1,
     "scope": [
@@ -143527,13 +143721,12 @@
     ]
   },
   "New password": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
       "routes/auth"
     ]
   },
@@ -148140,6 +148333,15 @@
       "routes/agent-control"
     ]
   },
+  "No invitation was sent to {0} because the account is inactive.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "No invoice #": {
     "sites": 3,
     "scope": [
@@ -152258,6 +152460,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Nobody, including you, ever sees this user's password.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Nobody; it only reads": {
@@ -159750,6 +159961,15 @@
       "api/graphql"
     ]
   },
+  "One of the selected roles was not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "One of the selected workers is invalid": {
     "sites": 1,
     "scope": [
@@ -165576,11 +165796,12 @@
     ]
   },
   "Or paste this link into your browser:": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go"
     ],
     "areas": [
+      "template/account.invite.email",
       "template/account.password_reset.email",
       "template/carriertracking.link.email",
       "template/customertracking.link.email",
@@ -170948,7 +171169,7 @@
     ]
   },
   "Password": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -175236,11 +175457,12 @@
     ]
   },
   "Phone number": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/worker"
     ]
   },
@@ -175272,7 +175494,7 @@
     ]
   },
   "Phone number must be at most 30 characters": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -198787,6 +199009,15 @@
       "routes/edi"
     ]
   },
+  "Require a password change at next sign-in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Require a separate approver": {
     "sites": 1,
     "scope": [
@@ -198902,15 +199133,6 @@
     ],
     "areas": [
       "routes/accounting-control"
-    ]
-  },
-  "Require password change on first login": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Require period close approval": {
@@ -199756,6 +199978,15 @@
     ]
   },
   "Resend integration updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Resend invitation": {
     "sites": 1,
     "scope": [
       "ts"
@@ -216058,6 +216289,15 @@
       "routes/admin"
     ]
   },
+  "Send password reset link": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Send payment reminders": {
     "sites": 2,
     "scope": [
@@ -216130,15 +216370,6 @@
     "areas": [
       "apps/dash/_components",
       "routes/worker"
-    ]
-  },
-  "Send reset email": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Send reset link": {
@@ -218707,12 +218938,11 @@
     ]
   },
   "Set new password": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/auth"
     ]
   },
@@ -218741,6 +218971,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Set password": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
     ]
   },
   "Set prices": {
@@ -218890,21 +219129,34 @@
     ]
   },
   "Set up your account": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "routes/auth",
+      "template/account.invite.email",
       "template/driverportal.invitation.email"
     ]
   },
   "Set up your account:": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email",
+      "template/driverportal.invitation.email"
+    ]
+  },
+  "Set up your {0} account": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "template/driverportal.invitation.email"
+      "template/account.invite.email"
     ]
   },
   "Set up {0}": {
@@ -223918,6 +224170,15 @@
     ]
   },
   "Sign-in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Sign-in access": {
     "sites": 1,
     "scope": [
       "ts"
@@ -229410,7 +229671,7 @@
     ]
   },
   "Status is required": {
-    "sites": 145,
+    "sites": 146,
     "scope": [
       "go",
       "ts"
@@ -229520,7 +229781,7 @@
     ]
   },
   "Status must be either Active or Inactive": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go"
     ],
@@ -232952,15 +233213,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "System access permissions and privileges": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "System accounts cannot be deleted": {
@@ -237586,6 +237838,15 @@
       "packages/shared/components"
     ]
   },
+  "The address the user signs in with, which is where this message is sent.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The address your email provider receives Trenova's mail on.": {
     "sites": 1,
     "scope": [
@@ -241576,6 +241837,15 @@
       "routes/edi"
     ]
   },
+  "The email went to {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The embedding provider is failing": {
     "sites": 1,
     "scope": [
@@ -241898,7 +242168,7 @@
     ]
   },
   "The exact moment the link stops working.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -244562,6 +244832,15 @@
       "routes/account-type"
     ]
   },
+  "The name of the administrator who created the account. Empty when it is not known.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The name of the commodity.": {
     "sites": 1,
     "scope": [
@@ -244695,6 +244974,33 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The new user will be emailed a link to choose a password and finish setting up the account. You never see or set it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The new user's first name.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The new user's full name.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The newest active cases first, up to {0}. {1, plural, one {# case is active.} other {# cases are active.}}": {
@@ -248377,6 +248683,15 @@
       "go/other"
     ]
   },
+  "The single-use link that sets the first password. Required: without it the message has no purpose.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The single-use reset link. Required: without it the message has no purpose.": {
     "sites": 1,
     "scope": [
@@ -249769,6 +250084,15 @@
       "routes/edi"
     ]
   },
+  "The username the account was created with.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The validation share cannot be negative": {
     "sites": 1,
     "scope": [
@@ -250635,6 +250959,15 @@
       "routes/desk"
     ]
   },
+  "There is no account to invite.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "There is no artifact kind by that name": {
     "sites": 1,
     "scope": [
@@ -250717,6 +251050,15 @@
     ]
   },
   "There is no suspension to lift": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "There is no user to create.": {
     "sites": 1,
     "scope": [
       "go"
@@ -251041,6 +251383,15 @@
       "routes/org-structure"
     ]
   },
+  "They choose a new password before they can continue.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "They declined the cover": {
     "sites": 1,
     "scope": [
@@ -251077,6 +251428,15 @@
       "routes/inbox"
     ]
   },
+  "They set their own password": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "They show on the rota with no rostered days until they are.": {
     "sites": 1,
     "scope": [
@@ -251084,6 +251444,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "They sign in with this address.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "They stay open until somebody records the outcome.": {
@@ -251279,16 +251648,16 @@
       "go/other"
     ]
   },
-  "This account has been locked due to too many failed login attempts.": {
+  "This account is not active, so a reset link would be unusable.": {
     "sites": 1,
     "scope": [
-      "ts"
+      "go"
     ],
     "areas": [
-      "routes/admin"
+      "go/other"
     ]
   },
-  "This account is not active, so a reset link would be unusable.": {
+  "This account is not active, so an invitation would be unusable.": {
     "sites": 1,
     "scope": [
       "go"
@@ -253820,6 +254189,15 @@
       "routes/auth"
     ]
   },
+  "This link is no longer valid. Request a new one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This link is shown once. Send a new one if it is lost.": {
     "sites": 1,
     "scope": [
@@ -253836,6 +254214,42 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This link works once and expires in {0, plural, one {# day} other {# days}}, on {1}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
+    ]
+  },
+  "This link works once and expires in {0, plural, one {# day} other {# days}}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
+    ]
+  },
+  "This link works once and expires in {0, plural, one {# hour} other {# hours}}, at {1}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
+    ]
+  },
+  "This link works once and expires in {0, plural, one {# hour} other {# hours}}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
     ]
   },
   "This link works once and expires in {0, plural, one {# minute} other {# minutes}}, at {1}.": {
@@ -254489,15 +254903,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "This password reset link is no longer valid. Request a new one.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "This pay is on hold — check with your fleet manager.": {
@@ -256015,6 +256420,24 @@
       "routes/shipment"
     ]
   },
+  "This user could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "This user has not set up their account yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "This user is not an active member of your organization": {
     "sites": 1,
     "scope": [
@@ -257148,6 +257571,15 @@
       "routes/time-attendance"
     ]
   },
+  "Time Format cannot be cleared": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Time Off": {
     "sites": 1,
     "scope": [
@@ -257212,12 +257644,13 @@
     ]
   },
   "Time format": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Time format is required": {
@@ -257230,11 +257663,12 @@
     ]
   },
   "Time format must be either 12-hour or 24-hour": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
+      "api/graphql",
       "go/other"
     ]
   },
@@ -268922,6 +269356,15 @@
       "go/other"
     ]
   },
+  "User created": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "User is not a member of this organization": {
     "sites": 1,
     "scope": [
@@ -269014,15 +269457,6 @@
       "go/other"
     ]
   },
-  "User will be prompted to set a new password after signing in": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Username": {
     "sites": 6,
     "scope": [
@@ -269034,6 +269468,15 @@
       "go/other",
       "routes/admin",
       "routes/edi"
+    ]
+  },
+  "Username cannot be changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Username is required": {
@@ -283976,6 +284419,15 @@
       "go/other"
     ]
   },
+  "You can only grant access you hold yourself.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "You can only keep a memory for a role you hold": {
     "sites": 1,
     "scope": [
@@ -284085,6 +284537,24 @@
     ]
   },
   "You can't schedule requests to this agent any more": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "You cannot deactivate your own account": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "You cannot lock your own account": {
     "sites": 1,
     "scope": [
       "go"
@@ -284925,6 +285395,15 @@
       "go/other"
     ]
   },
+  "Your account is ready": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Your account is set to require a password change before you can continue.": {
     "sites": 1,
     "scope": [
@@ -285682,6 +286161,15 @@
       "apps/web/lib"
     ]
   },
+  "Your password is set. Sign in to get started.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Your password must be changed before you can continue.": {
     "sites": 1,
     "scope": [
@@ -286024,6 +286512,15 @@
     ],
     "areas": [
       "routes/carrier-tracking-public"
+    ]
+  },
+  "Your username is {0}. Choose a password to finish setting up your account.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
     ]
   },
   "Your work, your numbers, and where to go next": {
@@ -301943,6 +302440,15 @@
       "routes/shipment"
     ]
   },
+  "{0} has invited you to {1}.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/account.invite.email"
+    ]
+  },
   "{0} has its books closed through {1}. Documents dated on or before that day will be held until the books are reopened or the documents are skipped.": {
     "sites": 1,
     "scope": [
@@ -308126,6 +308632,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "{0} will be emailed a link to choose a password and finish setting up the account. You never see or set it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} will be indexed": {

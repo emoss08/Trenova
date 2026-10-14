@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ResetPasswordForm } from "./reset-password-form";
+import { ResetPasswordDone, ResetPasswordForm, setPasswordPurpose } from "./reset-password-form";
 
 const mocks = vi.hoisted(() => ({
   resetPassword: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock("@trenova/shared/services/auth", () => ({
   authService: { resetPassword: mocks.resetPassword },
 }));
 
-function renderForm(token = "raw-token") {
+function renderForm(token = "raw-token", purpose: "reset" | "invite" = "reset") {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -23,6 +23,7 @@ function renderForm(token = "raw-token") {
     <QueryClientProvider client={queryClient}>
       <ResetPasswordForm
         token={token}
+        purpose={purpose}
         onDone={mocks.onDone}
         onRequestNewLink={mocks.onRequestNewLink}
       />
@@ -100,5 +101,53 @@ describe("ResetPasswordForm with a token", () => {
   it("shows both password fields", () => {
     expect(screen.getByLabelText(/^new password/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/confirm new password/i)).toBeInTheDocument();
+  });
+});
+
+describe("ResetPasswordForm for an invitation", () => {
+  beforeEach(() => {
+    Object.values(mocks).forEach((mock) => mock.mockClear());
+    mocks.resetPassword.mockResolvedValue({ message: "ok" });
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("asks a new user to set up their account rather than reset a password", () => {
+    renderForm("raw-token", "invite");
+
+    expect(screen.getByText("Set up your account")).toBeInTheDocument();
+    expect(screen.queryByText("Choose a new password")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^confirm password/i)).toBeInTheDocument();
+  });
+
+  it("redeems the invitation through the same reset endpoint", async () => {
+    renderForm("invite-token", "invite");
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/^password/i), "a-good-password");
+    await user.type(screen.getByLabelText(/^confirm password/i), "a-good-password");
+    await user.click(screen.getByRole("button", { name: /^set password/i }));
+
+    await waitFor(() =>
+      expect(mocks.resetPassword).toHaveBeenCalledWith("invite-token", "a-good-password"),
+    );
+    expect(mocks.onDone).toHaveBeenCalled();
+  });
+
+  it("tells the new user their account is ready", () => {
+    render(<ResetPasswordDone purpose="invite" onSignIn={() => {}} />);
+
+    expect(screen.getByText("Your account is ready")).toBeInTheDocument();
+  });
+});
+
+describe("setPasswordPurpose", () => {
+  it("reads only an explicit invite as an invitation", () => {
+    expect(setPasswordPurpose("invite")).toBe("invite");
+    expect(setPasswordPurpose(null)).toBe("reset");
+    expect(setPasswordPurpose("reset")).toBe("reset");
+    expect(setPasswordPurpose("anything")).toBe("reset");
   });
 });

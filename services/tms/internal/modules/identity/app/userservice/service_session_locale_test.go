@@ -24,13 +24,18 @@ func expectSettingsSave(deps *testDeps, user *tenant.User) pagination.TenantInfo
 	deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
-	}).Return(user, nil)
-	deps.repo.On("Update", mock.Anything, mock.Anything).
-		Return(func(_ context.Context, updated *tenant.User) *tenant.User {
-			return updated
-		}, func(context.Context, *tenant.User) error {
+	}).Return(user, nil).Once()
+	deps.repo.On("UpdateColumns", mock.Anything, mock.Anything).
+		Return(func(_ context.Context, req tenantports.UpdateUserColumnsRequest) *tenant.User {
+			return req.Entity
+		}, func(context.Context, tenantports.UpdateUserColumnsRequest) error {
 			return nil
 		}).Once()
+	deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
+		TenantInfo:         tenantInfo,
+		LookupUserID:       user.ID,
+		IncludeMemberships: true,
+	}).Return(user, nil).Once()
 	return tenantInfo
 }
 

@@ -69,6 +69,7 @@ type stubUserRepo struct {
 	tenantports.UserRepository
 
 	user       *tenant.User
+	actor      *tenant.User
 	findErr    error
 	getErr     error
 	lookedUp   pulid.ID
@@ -81,7 +82,12 @@ func (r *stubUserRepo) GetByID(
 	_ context.Context,
 	req tenantports.GetUserByIDRequest,
 ) (*tenant.User, error) {
-	r.lookedUp = req.LookupUserID
+	if req.LookupUserID.IsNil() && r.actor != nil {
+		return r.actor, nil
+	}
+	if req.LookupUserID.IsNotNil() {
+		r.lookedUp = req.LookupUserID
+	}
 	if r.getErr != nil {
 		return nil, r.getErr
 	}
@@ -348,7 +354,7 @@ func TestResetURL_RefusesToGuessTheOrigin(t *testing.T) {
 	svc := newService(t, &stubUserRepo{}, &stubTokenRepo{}, &stubSessionRepo{})
 	svc.cfg.Security.PasswordReset.BaseURL = ""
 
-	_, err := svc.resetURL("raw-token")
+	_, err := svc.linkURL("raw-token", tenant.PasswordResetPurposeReset)
 
 	require.ErrorIs(t, err, errNoResetBaseURL)
 }
@@ -358,7 +364,7 @@ func TestResetURL_BuildsTheLinkFromTheConfiguredOrigin(t *testing.T) {
 
 	svc := newService(t, &stubUserRepo{}, &stubTokenRepo{}, &stubSessionRepo{})
 
-	url, err := svc.resetURL("raw-token")
+	url, err := svc.linkURL("raw-token", tenant.PasswordResetPurposeReset)
 
 	require.NoError(t, err)
 	assert.Equal(t, "https://app.example.com/auth/reset?token=raw-token", url)

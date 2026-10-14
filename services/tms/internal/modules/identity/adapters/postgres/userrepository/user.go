@@ -703,41 +703,6 @@ func (ur *repository) GetUserOrganizationSummaries(
 	})
 }
 
-func (ur *repository) Update(ctx context.Context, entity *tenant.User) (*tenant.User, error) {
-	return dbtx.Write(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
-		log := ur.l.With(
-			zap.String("operation", "Update"),
-			zap.String("userID", entity.ID.String()),
-		)
-
-		ov := entity.Version
-		entity.Version++
-
-		result, err := ur.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("usr.id = ?", entity.ID).
-					Where("usr.version = ?", ov).
-					Where("usr.current_organization_id = ?", entity.CurrentOrganizationID).
-					Where("usr.business_unit_id = ?", entity.BusinessUnitID)
-			}).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update user", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(result, "User", entity.ID.String()); err != nil {
-			return nil, err
-		}
-
-		return entity, nil
-	})
-}
-
 func (ur *repository) UpdatePassword(
 	ctx context.Context,
 	req tenantports.UpdateUserPasswordRequest,

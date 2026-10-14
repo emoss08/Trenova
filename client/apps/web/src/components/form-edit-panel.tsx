@@ -56,6 +56,8 @@ type FormEditPanelProps<
   /** More at the left of the footer, such as a test button. */
   footerLeading?: React.ReactNode;
   mutationFn?: (values: TSubmitValues, row: TData) => Promise<TMutationData>;
+  /** Shown in place of the form until the record is loaded. */
+  placeholder?: React.ReactNode;
 };
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
@@ -87,6 +89,7 @@ export function FormEditPanel<
   changeFields,
   footerProblem,
   footerLeading,
+  placeholder,
 }: FormEditPanelProps<TFieldValues, TData, TSubmitValues, TMutationData>) {
   const t = useT();
 
@@ -179,8 +182,11 @@ export function FormEditPanel<
     resourceName: title,
   });
 
+  // A failed save has already been reported by useApiMutation (field errors on the
+  // form, anything else as a toast); letting the rejection escape the submit handler
+  // only leaves an unhandled rejection behind.
   const onSubmit = async (values: TSubmitValues, action: EditPanelSaveAction) => {
-    await mutateAsync({ values, action });
+    await mutateAsync({ values, action }).catch(() => undefined);
   };
 
   const handleOptionSelect = (action: EditPanelSaveAction) => {
@@ -267,7 +273,7 @@ export function FormEditPanel<
       }
     >
       {!row ? (
-        <ComponentLoader message={t("Loading {0}...", title)} />
+        (placeholder ?? <ComponentLoader message={t("Loading {0}...", title)} />)
       ) : (
         <FormFieldsProvider registry={fieldRegistry}>
           <FormProvider {...form}>

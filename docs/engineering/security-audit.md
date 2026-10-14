@@ -14,6 +14,7 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | SSO callback, success or failure | `auth_events` | `authservice.HandleSSOCallback` | — |
 | Sign-out | `auth_events` | `authservice.Logout` | — |
 | Password reset requested or redeemed | `auth_events` | `passwordresetservice` | — |
+| Account invitation redeemed (a new user chose their first password) | `auth_events` | `passwordresetservice` | — |
 | Sign-in throttled (account or IP failure limit) | `auth_events` | `authservice.Login` | — |
 | Cloud signup requested, rejected, verified, provisioned (Cloud edition) | `auth_events` | `internal/cloud/signup/cloudsignupservice` | — |
 | Cloud signup owner granted Organization Administrator (Cloud edition) | `audit_entries` | `internal/cloud/signup/cloudsignupservice` | yes |
@@ -22,7 +23,9 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | Role created or updated, assigned or unassigned, inheritance, separation of duty constraints, resource permissions | `audit_entries` | `roleservice` | yes |
 | Identity providers, SCIM directories, tokens and group mappings, access policies | `audit_entries` | `iamservice` | yes |
 | Organization memberships replaced | `audit_entries` | `userservice` | yes |
-| Password changed, reset link sent by an administrator | `audit_entries` | `userservice`, `passwordresetservice` | yes |
+| User created by an administrator, with the roles granted and whether the invitation went out | `audit_entries` | `userservice` | yes |
+| User status, lock, email address or forced password change changed by an administrator | `audit_entries` | `userservice` | yes |
+| Password changed, reset link or account invitation sent by an administrator | `audit_entries` | `userservice`, `passwordresetservice` | yes |
 | Two-factor code at sign-in, success or failure | `auth_events` | `authservice.VerifyMFAChallenge` | — |
 | Authenticator app enrolled, confirmed or turned off; recovery codes regenerated; two-factor reset by an administrator | `audit_entries` | `mfaservice` | yes |
 | Trenova support access allowed, changed or revoked (Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice` | yes |
@@ -58,7 +61,8 @@ balancer, list it there, or every row records the balancer's address.
 attempt. The caller fills an `AuthEventRecord` (provider, outcome, user,
 organization, assurance levels, an error code) and the recorder adds the request
 metadata. `provider` names the method: `password`, `sso.<provider>`,
-`session.logout`, `mfa` (the second step of a sign-in), `password_reset.request`, `password_reset.confirm`, `login_throttled`,
+`session.logout`, `mfa` (the second step of a sign-in), `password_reset.request`, `password_reset.confirm`,
+`invite.accept` (a new user redeeming the invitation link and choosing their first password), `login_throttled`,
 and for cloud signup `signup_requested`, `signup_rejected`, `signup_verified`,
 `signup_provisioned`. Signup rows carry no user until provisioning; a rejection names
 its reason in `error_code` (`honeypot`, `turnstile_rejected`, `turnstile_unavailable`,
@@ -115,7 +119,12 @@ hashes are `json:"-"`, API keys are recorded through their response shape, and
 tokens are identified by prefix only.
 
 Adding a security-relevant mutation means calling the service's `recordChange`
-helper after the write succeeds, never before, and never for a refused change.
+helper after the write succeeds, never before, and never for a refused change. A
+method that can run inside a caller's transaction records through
+`kernelports.AfterCommit`, so the entry is written only once that transaction
+commits: `roleservice.AssignRole` does this, which is what lets user creation grant
+its roles in the same transaction as the user and leave no "Role assigned" entry when
+a later grant is refused and the whole creation rolls back.
 
 ## Trenova support sessions
 

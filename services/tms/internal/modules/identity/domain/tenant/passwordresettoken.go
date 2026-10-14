@@ -10,6 +10,17 @@ import (
 
 var _ bun.BeforeAppendModelHook = (*PasswordResetToken)(nil)
 
+type PasswordResetPurpose string
+
+const (
+	PasswordResetPurposeReset  PasswordResetPurpose = "reset"
+	PasswordResetPurposeInvite PasswordResetPurpose = "invite"
+)
+
+func (p PasswordResetPurpose) IsInvite() bool {
+	return p == PasswordResetPurposeInvite
+}
+
 // PasswordResetToken is one outstanding "forgot password" link.
 //
 // The row is the entire record of a reset request: nothing on the user changes until
@@ -23,15 +34,16 @@ var _ bun.BeforeAppendModelHook = (*PasswordResetToken)(nil)
 type PasswordResetToken struct {
 	bun.BaseModel `bun:"table:password_reset_tokens,alias:prt" json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
-	TokenHash      string   `json:"-"              bun:"token_hash,type:VARCHAR(64),notnull"`
-	ExpiresAt      int64    `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull"`
-	UsedAt         *int64   `json:"usedAt"         bun:"used_at,type:BIGINT,nullzero"`
-	InvalidatedAt  *int64   `json:"invalidatedAt"  bun:"invalidated_at,type:BIGINT,nullzero"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID             `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
+	UserID         pulid.ID             `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
+	BusinessUnitID pulid.ID             `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
+	OrganizationID pulid.ID             `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
+	TokenHash      string               `json:"-"              bun:"token_hash,type:VARCHAR(64),notnull"`
+	Purpose        PasswordResetPurpose `json:"purpose"        bun:"purpose,type:VARCHAR(20),notnull,default:'reset'"`
+	ExpiresAt      int64                `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull"`
+	UsedAt         *int64               `json:"usedAt"         bun:"used_at,type:BIGINT,nullzero"`
+	InvalidatedAt  *int64               `json:"invalidatedAt"  bun:"invalidated_at,type:BIGINT,nullzero"`
+	CreatedAt      int64                `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	User *User `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
 }
@@ -49,6 +61,9 @@ func (t *PasswordResetToken) BeforeAppendModel(_ context.Context, query bun.Quer
 		}
 		if t.CreatedAt == 0 {
 			t.CreatedAt = timeutils.NowUnix()
+		}
+		if t.Purpose == "" {
+			t.Purpose = PasswordResetPurposeReset
 		}
 	}
 	return nil

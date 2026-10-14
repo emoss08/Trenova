@@ -31,6 +31,9 @@ func TestRunGeneratesSafeGlobalMappers(t *testing.T) {
   Worker:
     model:
       - example.com/app/internal/modules/workforce/domain/worker.Worker
+  User:
+    model:
+      - example.com/app/internal/modules/identity/domain/tenant.User
 `)
 	writeTestFile(t, root, "internal/api/graphql/gqlmodel/models_gen.go", `package gqlmodel
 
@@ -83,6 +86,11 @@ type OrganizationInput struct {
 
 type WorkerPatchInput struct {
 	Type graphql.Omittable[*worker.WorkerType] `+"`json:\"type,omitempty\"`"+`
+}
+
+type UserPatchInput struct {
+	Name     graphql.Omittable[*string] `+"`json:\"name,omitempty\"`"+`
+	IsLocked graphql.Omittable[*bool]   `+"`json:\"isLocked,omitempty\"`"+`
 }
 `)
 	writeTestFile(
@@ -158,6 +166,18 @@ type Organization struct {
 	ID             pulid.ID `+"`json:\"id\"`"+`
 	BusinessUnitID pulid.ID `+"`json:\"businessUnitId\"`"+`
 	Name           string   `+"`json:\"name\"`"+`
+}
+`)
+	writeTestFile(t, root, "internal/modules/identity/domain/tenant/user.go", `package tenant
+
+import "example.com/app/shared/pulid"
+
+type User struct {
+	ID                    pulid.ID `+"`json:\"id\"`"+`
+	BusinessUnitID        pulid.ID `+"`json:\"businessUnitId\"`"+`
+	CurrentOrganizationID pulid.ID `+"`json:\"currentOrganizationId\"`"+`
+	Name                  string   `+"`json:\"name\" bun:\"name,type:VARCHAR(255),notnull\"`"+`
+	IsLocked              bool     `+"`json:\"isLocked\" bun:\"is_locked,type:BOOLEAN,notnull\"`"+`
 }
 `)
 	writeTestFile(t, root, "internal/modules/workforce/domain/worker/worker.go", `package worker
@@ -302,6 +322,15 @@ func equipmentTypeFromInput() {}
 	mustContain(t, workerGenerated, `"Type cannot be cleared",`)
 	mustContain(t, workerGenerated, "entity.Type = *typeValue")
 	mustContain(t, workerGenerated, `"example.com/app/pkg/errortypes"`)
+
+	userOutput, err := os.ReadFile(filepath.Join(outputDir, "user_mapping_gen.go"))
+	if err != nil {
+		t.Fatalf("reading user output: %v", err)
+	}
+	userGenerated := string(userOutput)
+	mustContain(t, userGenerated, "func ApplyUserPatch(")
+	mustContain(t, userGenerated, "entity.IsLocked = *isLockedValue")
+	mustNotContain(t, userGenerated, "func UserFromInput(")
 
 	_, err = os.Stat(filepath.Join(outputDir, "organization_mapping_gen.go"))
 	if !os.IsNotExist(err) {

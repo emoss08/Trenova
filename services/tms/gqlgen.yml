@@ -4059,6 +4059,12 @@ models:
     fields:
       logoUrl:
         fieldName: LogoURL
+  AvatarStyle:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.AvatarStyle
+  AvailabilityStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.AvailabilityStatus
   User:
     model:
       - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.User

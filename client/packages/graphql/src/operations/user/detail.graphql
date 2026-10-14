@@ -1,0 +1,78 @@
+# Fields are inlined rather than spread: a fragment beside other selections comes back
+# masked, and the user panel reads the values directly. The detail selects every field
+# the edit form shows, so saving never writes a default over a value the form never saw.
+query UserDetail($id: ID!) {
+  user(id: $id) {
+    id
+    businessUnitId
+    currentOrganizationId
+    status
+    name
+    username
+    emailAddress
+    profilePicUrl
+    thumbnailUrl
+    timezone
+    timeFormat
+    locale
+    isLocked
+    mustChangePassword
+    jobTitle
+    phoneNumber
+    avatarStyle
+    availabilityStatus
+    version
+    createdAt
+    updatedAt
+    lastLoginAt
+    passwordChangedAt
+  }
+}
+
+mutation CreateUser($input: CreateUserInput!) {
+  createUser(input: $input) {
+    id
+    status
+    name
+    username
+    emailAddress
+    timezone
+    timeFormat
+    locale
+    isLocked
+    mustChangePassword
+    version
+    createdAt
+    updatedAt
+    lastLoginAt
+    passwordChangedAt
+  }
+}
+
+mutation PatchUser($id: ID!, $input: UserPatchInput!) {
+  patchUser(id: $id, input: $input) {
+    id
+    businessUnitId
+    currentOrganizationId
+    status
+    name
+    username
+    emailAddress
+    profilePicUrl
+    thumbnailUrl
+    timezone
+    timeFormat
+    locale
+    isLocked
+    mustChangePassword
+    jobTitle
+    phoneNumber
+    avatarStyle
+    availabilityStatus
+    version
+    createdAt
+    updatedAt
+    lastLoginAt
+    passwordChangedAt
+  }
+}
