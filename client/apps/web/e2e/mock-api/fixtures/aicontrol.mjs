@@ -50,21 +50,226 @@ function tiersFor(toolNames, [, propose, act]) {
 }
 
 const AGENT_SPECS = [
-  { key: "billing", name: "Billing exceptions", trig: "Chat", icon: "receipt", accent: "amber", template: "BillingAssistant", d: "Works blocked billing queue items and proposes what to do about them.", res: ["billing_queue", "invoice", "accessorial"], tools: 56, tiers: [38, 16, 2], pend: 3, open: 1, last: 12 * 60, runs: [3, 9], rec: { approved: 41, modified: 6, rejected: 2, failed: 1, streak: 7 } },
-  { key: "compliance", name: "Compliance desk", trig: "Chat", icon: "shield", accent: "emerald", template: "ComplianceAssistant", d: "Answers questions about driver qualification and what is expiring.", res: ["worker_credential", "qualification", "worker_dot", "dot_random", "worker"], tools: 55, tiers: [49, 6, 0], last: HOUR, runs: [7, 4] },
-  { key: "dispatch", name: "Dispatch desk", trig: "Chat", icon: "truck", accent: "indigo", template: "DispatchAssistant", d: "Looks up shipments and drivers for the dispatch team.", res: ["shipment", "tractor", "trailer", "tender"], tools: 56, tiers: [40, 14, 2], pend: 4, open: 4, last: 3 * 60, runs: [11, 14], rec: { approved: 88, modified: 11, rejected: 4, failed: 0, streak: 9 } },
-  { key: "fuel", name: "Fuel and IFTA clerk", trig: "Chat", icon: "gauge", accent: "amber", d: "Keeps the fuel tax record: fuel purchases, card statements, state miles, and the quarter's IFTA return for a person to file.", res: ["fuel", "ifta"], tools: 33, tiers: [21, 12, 0], last: DAY, runs: [5, 2] },
-  { key: "help", name: "Help", trig: "Chat", icon: "compass", accent: "slate", d: "Explains how to do things in Trenova. Cannot read or change records.", res: [], tools: 0, tiers: [0, 0, 0], last: 8 * 60, runs: [13, 6] },
-  { key: "mds", name: "Master data steward", trig: "Chat", icon: "clipboard", accent: "slate", d: "Keeps carriers, customers, commodities, hazmat, locations and equipment right; files scanned paperwork and clears the attention feed.", res: ["carrier", "customer", "commodity", "hazardous", "location", "equipment"], tools: 55, tiers: [33, 22, 0], last: null, runs: [1, 0] },
-  { key: "recv", name: "Receivables", trig: "Chat", icon: "banknote", accent: "teal", d: "Works what customers owe once an invoice is out: payments, credit, disputes, late charges, and who to chase first.", res: ["accounts_receivable", "customer_payment", "bank_receipt", "invoice_dispute"], tools: 27, tiers: [17, 10, 0], last: 2 * HOUR, runs: [17, 3] },
-  { key: "report", name: "Report analyst", trig: "Chat", icon: "search", accent: "violet", d: "Builds, runs and explains reports and dashboards, and proposes scheduled emails for a person to approve.", res: ["report", "dashboard"], tools: 23, tiers: [19, 4, 0], last: DAY, runs: [19, 2], rec: { approved: 12, modified: 0, rejected: 0, failed: 0, streak: 12 } },
-  { key: "settle", name: "Settlements clerk", trig: "Chat", icon: "wallet", accent: "emerald", d: "Runs driver and carrier settlements: drafts the period's pay, matches carrier invoices, and puts every payment in front of a person.", res: ["driver_settlement", "carrier_settlement", "carrier_invoice", "pay_"], tools: 56, tiers: [36, 20, 0], last: 2 * DAY, runs: [23, 2] },
-  { key: "workforce", name: "Workforce coordinator", trig: "Chat", icon: "headset", accent: "violet", d: "Handles time off, leave, injuries, reviews, safety records, random testing and permits, and proposes each change.", res: ["worker_", "permit", "performance"], tools: 55, tiers: [30, 25, 0], last: null, runs: [2, 0], roles: ["Dispatch manager", "Safety", "HR"] },
-  { key: "cs", name: "Customer service", trig: "Chat", icon: "headset", accent: "sky", template: "CustomerAssistant", d: "Shipment status for the customer-facing team. Off until reviewed.", res: ["shipment", "customer"], tools: 53, tiers: [50, 3, 0], off: true, last: null, runs: [4, 0] },
-  { key: "digest", name: "Morning operations digest", trig: "Scheduled", icon: "bell", accent: "amber", d: "A weekday summary of what is stuck, late or unassigned, ready before the desk opens.", res: ["shipment"], tools: 5, tiers: [5, 0, 0], cron: "0 6 * * 1-5", tz: "America/Los_Angeles", last: 5.5 * HOUR, runs: null },
-  { key: "billev", name: "Billing exception agent", trig: "Event", icon: "receipt", accent: "amber", template: "BillingException", d: "Diagnoses blocked billing items as they appear and proposes how to clear them.", res: ["billing_queue"], tools: 14, tiers: [10, 4, 0], shadow: true, system: "billing_exception", events: ["billing_queue.item_on_hold", "billing_queue.item_exception"], last: 40 * 60, runs: [29, 5] },
-  { key: "coverage", name: "Dispatch coverage agent", trig: "Event", icon: "route", accent: "indigo", template: "DispatchAssignment", d: "Reviews uncovered moves and proposes driver assignments.", res: ["shipment_move", "shipment"], tools: 20, tiers: [14, 6, 0], shadow: true, system: "dispatch_assignment", events: ["shipment_move.unassigned", "shipment_move.coverage_at_risk"], last: 6 * 60, runs: [31, 8] },
-  { key: "inbox", name: "Inbox desk", trig: "Event", icon: "inbox", accent: "sky", d: "Works the inbox: files what arrives against the right load, attaches paperwork, answers status questions and puts tenders in front of a person.", res: ["inbound", "document", "shipment"], tools: 25, tiers: [15, 10, 0], shadow: true, events: ["inbound_message.classified", "edi.tender_received"], last: 60, runs: [37, 11] },
+  {
+    key: "billing",
+    name: "Billing exceptions",
+    trig: "Chat",
+    icon: "receipt",
+    accent: "amber",
+    template: "BillingAssistant",
+    d: "Works blocked billing queue items and proposes what to do about them.",
+    res: ["billing_queue", "invoice", "accessorial"],
+    tools: 56,
+    tiers: [38, 16, 2],
+    pend: 3,
+    open: 1,
+    last: 12 * 60,
+    runs: [3, 9],
+    rec: { approved: 41, modified: 6, rejected: 2, failed: 1, streak: 7 },
+  },
+  {
+    key: "compliance",
+    name: "Compliance desk",
+    trig: "Chat",
+    icon: "shield",
+    accent: "emerald",
+    template: "ComplianceAssistant",
+    d: "Answers questions about driver qualification and what is expiring.",
+    res: ["worker_credential", "qualification", "worker_dot", "dot_random", "worker"],
+    tools: 55,
+    tiers: [49, 6, 0],
+    last: HOUR,
+    runs: [7, 4],
+  },
+  {
+    key: "dispatch",
+    name: "Dispatch desk",
+    trig: "Chat",
+    icon: "truck",
+    accent: "indigo",
+    template: "DispatchAssistant",
+    d: "Looks up shipments and drivers for the dispatch team.",
+    res: ["shipment", "tractor", "trailer", "tender"],
+    tools: 56,
+    tiers: [40, 14, 2],
+    pend: 4,
+    open: 4,
+    last: 3 * 60,
+    runs: [11, 14],
+    rec: { approved: 88, modified: 11, rejected: 4, failed: 0, streak: 9 },
+  },
+  {
+    key: "fuel",
+    name: "Fuel and IFTA clerk",
+    trig: "Chat",
+    icon: "gauge",
+    accent: "amber",
+    d: "Keeps the fuel tax record: fuel purchases, card statements, state miles, and the quarter's IFTA return for a person to file.",
+    res: ["fuel", "ifta"],
+    tools: 33,
+    tiers: [21, 12, 0],
+    last: DAY,
+    runs: [5, 2],
+  },
+  {
+    key: "help",
+    name: "Help",
+    trig: "Chat",
+    icon: "compass",
+    accent: "slate",
+    d: "Explains how to do things in Trenova. Cannot read or change records.",
+    res: [],
+    tools: 0,
+    tiers: [0, 0, 0],
+    last: 8 * 60,
+    runs: [13, 6],
+  },
+  {
+    key: "mds",
+    name: "Master data steward",
+    trig: "Chat",
+    icon: "clipboard",
+    accent: "slate",
+    d: "Keeps carriers, customers, commodities, hazmat, locations and equipment right; files scanned paperwork and clears the attention feed.",
+    res: ["carrier", "customer", "commodity", "hazardous", "location", "equipment"],
+    tools: 55,
+    tiers: [33, 22, 0],
+    last: null,
+    runs: [1, 0],
+  },
+  {
+    key: "recv",
+    name: "Receivables",
+    trig: "Chat",
+    icon: "banknote",
+    accent: "teal",
+    d: "Works what customers owe once an invoice is out: payments, credit, disputes, late charges, and who to chase first.",
+    res: ["accounts_receivable", "customer_payment", "bank_receipt", "invoice_dispute"],
+    tools: 27,
+    tiers: [17, 10, 0],
+    last: 2 * HOUR,
+    runs: [17, 3],
+  },
+  {
+    key: "report",
+    name: "Report analyst",
+    trig: "Chat",
+    icon: "search",
+    accent: "violet",
+    d: "Builds, runs and explains reports and dashboards, and proposes scheduled emails for a person to approve.",
+    res: ["report", "dashboard"],
+    tools: 23,
+    tiers: [19, 4, 0],
+    last: DAY,
+    runs: [19, 2],
+    rec: { approved: 12, modified: 0, rejected: 0, failed: 0, streak: 12 },
+  },
+  {
+    key: "settle",
+    name: "Settlements clerk",
+    trig: "Chat",
+    icon: "wallet",
+    accent: "emerald",
+    d: "Runs driver and carrier settlements: drafts the period's pay, matches carrier invoices, and puts every payment in front of a person.",
+    res: ["driver_settlement", "carrier_settlement", "carrier_invoice", "pay_"],
+    tools: 56,
+    tiers: [36, 20, 0],
+    last: 2 * DAY,
+    runs: [23, 2],
+  },
+  {
+    key: "workforce",
+    name: "Workforce coordinator",
+    trig: "Chat",
+    icon: "headset",
+    accent: "violet",
+    d: "Handles time off, leave, injuries, reviews, safety records, random testing and permits, and proposes each change.",
+    res: ["worker_", "permit", "performance"],
+    tools: 55,
+    tiers: [30, 25, 0],
+    last: null,
+    runs: [2, 0],
+    roles: ["Dispatch manager", "Safety", "HR"],
+  },
+  {
+    key: "cs",
+    name: "Customer service",
+    trig: "Chat",
+    icon: "headset",
+    accent: "sky",
+    template: "CustomerAssistant",
+    d: "Shipment status for the customer-facing team. Off until reviewed.",
+    res: ["shipment", "customer"],
+    tools: 53,
+    tiers: [50, 3, 0],
+    off: true,
+    last: null,
+    runs: [4, 0],
+  },
+  {
+    key: "digest",
+    name: "Morning operations digest",
+    trig: "Scheduled",
+    icon: "bell",
+    accent: "amber",
+    d: "A weekday summary of what is stuck, late or unassigned, ready before the desk opens.",
+    res: ["shipment"],
+    tools: 5,
+    tiers: [5, 0, 0],
+    cron: "0 6 * * 1-5",
+    tz: "America/Los_Angeles",
+    last: 5.5 * HOUR,
+    runs: null,
+  },
+  {
+    key: "billev",
+    name: "Billing exception agent",
+    trig: "Event",
+    icon: "receipt",
+    accent: "amber",
+    template: "BillingException",
+    d: "Diagnoses blocked billing items as they appear and proposes how to clear them.",
+    res: ["billing_queue"],
+    tools: 14,
+    tiers: [10, 4, 0],
+    shadow: true,
+    system: "billing_exception",
+    events: ["billing_queue.item_on_hold", "billing_queue.item_exception"],
+    last: 40 * 60,
+    runs: [29, 5],
+  },
+  {
+    key: "coverage",
+    name: "Dispatch coverage agent",
+    trig: "Event",
+    icon: "route",
+    accent: "indigo",
+    template: "DispatchAssignment",
+    d: "Reviews uncovered moves and proposes driver assignments.",
+    res: ["shipment_move", "shipment"],
+    tools: 20,
+    tiers: [14, 6, 0],
+    shadow: true,
+    system: "dispatch_assignment",
+    events: ["shipment_move.unassigned", "shipment_move.coverage_at_risk"],
+    last: 6 * 60,
+    runs: [31, 8],
+  },
+  {
+    key: "inbox",
+    name: "Inbox desk",
+    trig: "Event",
+    icon: "inbox",
+    accent: "sky",
+    d: "Works the inbox: files what arrives against the right load, attaches paperwork, answers status questions and puts tenders in front of a person.",
+    res: ["inbound", "document", "shipment"],
+    tools: 25,
+    tiers: [15, 10, 0],
+    shadow: true,
+    events: ["inbound_message.classified", "edi.tender_received"],
+    last: 60,
+    runs: [37, 11],
+  },
 ];
 
 export const SHADOW_RECORDED = { billev: 18, coverage: 31, inbox: 12 };
@@ -112,7 +317,10 @@ function buildAgents(anchor, { paused }) {
         icon: spec.icon,
         accent: spec.accent,
         instructions: `You are ${spec.name}. ${spec.d}\n\nAnswer from the records you can read and say which record each fact comes from. When a change is needed, propose it and explain why.`,
-        guardrails: ["Never change a record a person is editing.", "Never send anything outside the company without approval."],
+        guardrails: [
+          "Never change a record a person is editing.",
+          "Never send anything outside the company without approval.",
+        ],
         toolNames,
         toolTiers: tiersFor(toolNames, spec.tiers),
         autonomyCeiling: spec.tiers[2] > 0 ? "AutoExecute" : "ActWithApproval",
@@ -158,20 +366,160 @@ function buildAgents(anchor, { paused }) {
 
 const PROVIDER_SPECS = {
   configured: [
-    { key: "anthropic", name: "Anthropic", kind: "AnthropicMessages", model: "claude-sonnet-5", on: false, key2: false, trusted: true, tasks: ["BillingDiagnosis", "AssistantChat"], priority: 10, price: [3, 15], cap: 200 },
-    { key: "ollama", name: "Local Ollama", kind: "Ollama", model: "qwen2.5:14b", on: true, trusted: false, priv: true, base: "http://localhost:11434", tasks: ["ScopeClassification", "DocumentClassification", "OperationalInsights", "DailyBriefing", "General"], priority: 20, test: [true, "Connected", 386, 6 * HOUR], week: { calls: 672, failed: 5, ms: 410, tokens: 900000 } },
-    { key: "vllm", name: "Workstation vLLM", kind: "OpenAIChat", model: "meta-llama/Llama-3.3-70B-Instruct", on: true, trusted: false, priv: true, base: "http://localhost:8000/v1", tasks: ["AssistantChat", "DocumentExtraction", "FormulaAssistant", "OperationalInsights", "General"], priority: 30, test: [false, "Could not connect", 0, 6.2 * HOUR], week: { calls: 612, failed: 24, ms: 1420, tokens: 2200000 }, failing: 24 },
+    {
+      key: "anthropic",
+      name: "Anthropic",
+      kind: "AnthropicMessages",
+      model: "claude-sonnet-5",
+      on: false,
+      key2: false,
+      trusted: true,
+      tasks: ["BillingDiagnosis", "AssistantChat"],
+      priority: 10,
+      price: [3, 15],
+      cap: 200,
+    },
+    {
+      key: "ollama",
+      name: "Local Ollama",
+      kind: "Ollama",
+      model: "qwen2.5:14b",
+      on: true,
+      trusted: false,
+      priv: true,
+      base: "http://localhost:11434",
+      tasks: [
+        "ScopeClassification",
+        "DocumentClassification",
+        "OperationalInsights",
+        "DailyBriefing",
+        "General",
+      ],
+      priority: 20,
+      test: [true, "Connected", 386, 6 * HOUR],
+      week: { calls: 672, failed: 5, ms: 410, tokens: 900000 },
+    },
+    {
+      key: "vllm",
+      name: "Workstation vLLM",
+      kind: "OpenAIChat",
+      model: "meta-llama/Llama-3.3-70B-Instruct",
+      on: true,
+      trusted: false,
+      priv: true,
+      base: "http://localhost:8000/v1",
+      tasks: [
+        "AssistantChat",
+        "DocumentExtraction",
+        "FormulaAssistant",
+        "OperationalInsights",
+        "General",
+      ],
+      priority: 30,
+      test: [false, "Could not connect", 0, 6.2 * HOUR],
+      week: { calls: 612, failed: 24, ms: 1420, tokens: 2200000 },
+      failing: 24,
+    },
   ],
   many: [
-    { key: "openai", name: "OpenAI", kind: "OpenAIResponses", model: "gpt-5.1-mini", on: true, key2: "sk-proj-", cap: 200, spent: 76.4, trusted: true, tasks: ["DocumentClassification", "ScopeClassification"], priority: 10, price: [0.4, 1.6], test: [true, "Connected", 290, 3.5 * HOUR], week: { calls: 1840, failed: 2, ms: 310, tokens: 1400000 } },
-    { key: "groq", name: "Groq", kind: "OpenAIChat", model: "llama-3.3-70b-versatile", on: true, key2: true, base: "https://api.groq.com/openai/v1", tasks: ["OperationalInsights", "General"], priority: 20, price: [0.59, 0.79], test: [true, "Connected", 120, 4 * HOUR], week: { calls: 960, failed: 0, ms: 140, tokens: 800000 } },
-    { key: "azure", name: "Azure OpenAI", kind: "OpenAIChat", model: "gpt-5.1", on: true, key2: true, trusted: true, base: "https://trenova.openai.azure.com/openai/v1", tasks: ["DocumentExtraction", "BillingDiagnosis", "AssistantChat"], priority: 30, price: [1.25, 10], test: [true, "Connected", 520, DAY], week: { calls: 412, failed: 1, ms: 980, tokens: 1100000 } },
-    { key: "gemini", name: "Google Gemini", kind: "OpenAIChat", model: "gemini-3-flash", on: false, key2: true, base: "https://generativelanguage.googleapis.com/v1beta/openai", tasks: ["DailyBriefing"], priority: 40, test: [true, "Connected", 340, 4 * DAY] },
-    { key: "mistral", name: "Mistral", kind: "OpenAIChat", model: "mistral-large-3", on: false, base: "https://api.mistral.ai/v1", tasks: [], priority: 50 },
-    { key: "bedrock", name: "AWS Bedrock", kind: "AnthropicMessages", model: "anthropic.claude-sonnet-5", on: false, key2: true, trusted: true, platform: "Bedrock", platformSettings: { auth: "AccessKey", region: "us-east-1", projectId: "", workspaceId: "", accessKeyId: "AKIAIOSFODNN7EXAMPLE", resource: "", tenantId: "", clientId: "" }, tasks: ["AssistantChat"], priority: 60, test: [false, "Access denied", 0, 5 * DAY] },
+    {
+      key: "openai",
+      name: "OpenAI",
+      kind: "OpenAIResponses",
+      model: "gpt-5.1-mini",
+      on: true,
+      key2: "sk-proj-",
+      cap: 200,
+      spent: 76.4,
+      trusted: true,
+      tasks: ["DocumentClassification", "ScopeClassification"],
+      priority: 10,
+      price: [0.4, 1.6],
+      test: [true, "Connected", 290, 3.5 * HOUR],
+      week: { calls: 1840, failed: 2, ms: 310, tokens: 1400000 },
+    },
+    {
+      key: "groq",
+      name: "Groq",
+      kind: "OpenAIChat",
+      model: "llama-3.3-70b-versatile",
+      on: true,
+      key2: true,
+      base: "https://api.groq.com/openai/v1",
+      tasks: ["OperationalInsights", "General"],
+      priority: 20,
+      price: [0.59, 0.79],
+      test: [true, "Connected", 120, 4 * HOUR],
+      week: { calls: 960, failed: 0, ms: 140, tokens: 800000 },
+    },
+    {
+      key: "azure",
+      name: "Azure OpenAI",
+      kind: "OpenAIChat",
+      model: "gpt-5.1",
+      on: true,
+      key2: true,
+      trusted: true,
+      base: "https://trenova.openai.azure.com/openai/v1",
+      tasks: ["DocumentExtraction", "BillingDiagnosis", "AssistantChat"],
+      priority: 30,
+      price: [1.25, 10],
+      test: [true, "Connected", 520, DAY],
+      week: { calls: 412, failed: 1, ms: 980, tokens: 1100000 },
+    },
+    {
+      key: "gemini",
+      name: "Google Gemini",
+      kind: "OpenAIChat",
+      model: "gemini-3-flash",
+      on: false,
+      key2: true,
+      base: "https://generativelanguage.googleapis.com/v1beta/openai",
+      tasks: ["DailyBriefing"],
+      priority: 40,
+      test: [true, "Connected", 340, 4 * DAY],
+    },
+    {
+      key: "mistral",
+      name: "Mistral",
+      kind: "OpenAIChat",
+      model: "mistral-large-3",
+      on: false,
+      base: "https://api.mistral.ai/v1",
+      tasks: [],
+      priority: 50,
+    },
+    {
+      key: "bedrock",
+      name: "AWS Bedrock",
+      kind: "AnthropicMessages",
+      model: "anthropic.claude-sonnet-5",
+      on: false,
+      key2: true,
+      trusted: true,
+      platform: "Bedrock",
+      platformSettings: {
+        auth: "AccessKey",
+        region: "us-east-1",
+        projectId: "",
+        workspaceId: "",
+        accessKeyId: "AKIAIOSFODNN7EXAMPLE",
+        resource: "",
+        tenantId: "",
+        clientId: "",
+      },
+      tasks: ["AssistantChat"],
+      priority: 60,
+      test: [false, "Access denied", 0, 5 * DAY],
+    },
   ],
   none: [],
 };
+
+PROVIDER_SPECS.all = [
+  ...PROVIDER_SPECS.configured,
+  ...PROVIDER_SPECS.many.map((spec) => ({ ...spec, priority: spec.priority + 30 })),
+];
 
 function buildProviders(anchor, mode) {
   return (PROVIDER_SPECS[mode] ?? []).map((spec) => ({
@@ -210,7 +558,12 @@ function buildProviders(anchor, mode) {
       monthSpendUsd: String(spec.spent ?? 0),
       apiKey: spec.key2
         ? {
-            prefix: typeof spec.key2 === "string" ? spec.key2 : spec.kind === "AnthropicMessages" ? "sk-ant-" : "sk-",
+            prefix:
+              typeof spec.key2 === "string"
+                ? spec.key2
+                : spec.kind === "AnthropicMessages"
+                  ? "sk-ant-"
+                  : "sk-",
             lastFour: "4f2a",
             addedAt: anchor - 26 * DAY,
             addedBy: { id: "usr_sarah", name: "Sarah Alvarez" },
@@ -258,7 +611,9 @@ const WEEK = [
 
 function buildUsage(anchor, providers) {
   if (providers.length === 0) return { days: [], features: [] };
-  const priced = providers.some((provider) => provider.node.enabled && provider.node.inputCostPerMillion);
+  const priced = providers.some(
+    (provider) => provider.node.enabled && provider.node.inputCostPerMillion,
+  );
   const today = anchor - (anchor % DAY);
   const days = WEEK.map(([calls, failed], index) => ({
     day: new Date((today - (WEEK.length - 1 - index) * DAY) * 1000).toISOString().slice(0, 10),
@@ -297,7 +652,14 @@ function buildRuns(anchor, agents) {
   WORKING.forEach(([key, status, summary], index) => {
     const agent = agents.find((candidate) => candidate.key === key);
     if (!agent || !agent.node.enabled) return;
-    runs.push(runNode(anchor, agent, { id: `run_live_${index}`, status, summary, startedAt: anchor - 40 * (index + 1) }));
+    runs.push(
+      runNode(anchor, agent, {
+        id: `run_live_${index}`,
+        status,
+        summary,
+        startedAt: anchor - 40 * (index + 1),
+      }),
+    );
   });
   agents.forEach((agent, agentIndex) => {
     for (let index = 0; index < 4; index += 1) {
@@ -306,7 +668,9 @@ function buildRuns(anchor, agents) {
         runNode(anchor, agent, {
           id: `run_${agent.key}_${index}`,
           status: failed ? "Failed" : agent.node.shadowMode ? "ShadowCompleted" : "Completed",
-          summary: failed ? "The model did not answer in time" : `Answered a question about ${agent.node.name.toLowerCase()}`,
+          summary: failed
+            ? "The model did not answer in time"
+            : `Answered a question about ${agent.node.name.toLowerCase()}`,
           startedAt: anchor - (index + 1) * 3 * HOUR - agentIndex * 400,
           completedAt: anchor - (index + 1) * 3 * HOUR - agentIndex * 400 + 42,
           errorMessage: failed ? "provider timed out after 60s" : "",
@@ -320,7 +684,12 @@ function buildRuns(anchor, agents) {
 function runNode(anchor, agent, values) {
   return {
     ...TENANT,
-    agentType: agent.node.template === "BillingException" ? "BillingException" : agent.node.template === "DispatchAssignment" ? "DispatchAssignment" : "General",
+    agentType:
+      agent.node.template === "BillingException"
+        ? "BillingException"
+        : agent.node.template === "DispatchAssignment"
+          ? "DispatchAssignment"
+          : "General",
     agentDefinitionId: agent.node.id,
     trigger: agent.node.triggerMode === "Chat" ? "Chat" : agent.node.triggerMode,
     subjectType: "Organization",
@@ -417,32 +786,57 @@ function buildTuneUps(anchor, agents, providers) {
     ([, tier]) => tier === "ActWithApproval",
   );
   if (raised) {
-    add("raise", "RaiseToolTier", { agentKey: "dispatch", toolName: raised[0] }, {
-      fromTier: raised[1],
-      toTier: raised[1] === "Propose" ? "ActWithApproval" : "AutoExecute",
-      streak: 9,
-      approvals: 88,
-      approvalsPerWeek: 20.5,
-      rejections: 0,
-    });
+    add(
+      "raise",
+      "RaiseToolTier",
+      { agentKey: "dispatch", toolName: raised[0] },
+      {
+        fromTier: raised[1],
+        toTier: raised[1] === "Propose" ? "ActWithApproval" : "AutoExecute",
+        streak: 9,
+        approvals: 88,
+        approvalsPerWeek: 20.5,
+        rejections: 0,
+      },
+    );
   }
   if (provider("ollama") && provider("vllm")) {
-    add("order", "ReorderProviders", { providerKey: "ollama", otherProviderKey: "vllm" }, {
-      calls: 672,
-      failed: 24,
-      rescued: 24,
-      tasks: ["OperationalInsights", "General"],
-    });
+    add(
+      "order",
+      "ReorderProviders",
+      { providerKey: "ollama", otherProviderKey: "vllm" },
+      {
+        calls: 672,
+        failed: 24,
+        rescued: 24,
+        tasks: ["OperationalInsights", "General"],
+      },
+    );
   }
-  add("live", "LeaveShadow", { agentKey: "coverage" }, { recorded: 31, matchRate: 0.87, wouldFail: 0 });
+  add(
+    "live",
+    "LeaveShadow",
+    { agentKey: "coverage" },
+    { recorded: 31, matchRate: 0.87, wouldFail: 0 },
+  );
   if (provider("ollama")) {
-    add("embed", "AssignTask", { providerKey: "ollama", task: "Embedding" }, { model: "nomic-embed-text" });
+    add(
+      "embed",
+      "AssignTask",
+      { providerKey: "ollama", task: "Embedding" },
+      { model: "nomic-embed-text" },
+    );
   }
   const steward = agent("mds");
-  add("idle", "TurnOffIdleAgent", { agentKey: "mds" }, {
-    lastRunAt: anchor - 14 * 24 * HOUR,
-    idleSince: anchor - 14 * 24 * HOUR,
-    tools: steward.node.toolNames.length,
-  });
+  add(
+    "idle",
+    "TurnOffIdleAgent",
+    { agentKey: "mds" },
+    {
+      lastRunAt: anchor - 14 * 24 * HOUR,
+      idleSince: anchor - 14 * 24 * HOUR,
+      tools: steward.node.toolNames.length,
+    },
+  );
   return out;
 }

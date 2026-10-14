@@ -93,8 +93,9 @@ var noMessage = map[string]struct{}{
 }
 
 var translatorCalls = map[string]int{
-	"T":         1,
-	"Translate": 1,
+	"T":             1,
+	"Translate":     1,
+	"TranslateRich": 1,
 }
 
 var labelledGeneratedFiles = map[string]struct{}{

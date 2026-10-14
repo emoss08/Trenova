@@ -18,6 +18,8 @@ export const SCENARIO_DEFAULTS = {
   aiProviders: process.env.MOCK_AI_PROVIDERS ?? "configured",
   // every agent paused in shadow
   aiPaused: process.env.MOCK_AI_PAUSED === "1",
+  // AI control's Analytics query: ok | error (every read fails, for the error state)
+  aiAnalytics: process.env.MOCK_AI_ANALYTICS ?? "ok",
   // Triage: live (the prototype's queue, a new message every 26s) | firstDay | noMailbox | deskOff
   triage: process.env.MOCK_TRIAGE ?? "live",
   // Triage clock: afternoon (13:39, the prototype's NOW) | endOfDay (17:20, after the 17:00 wrap-up)

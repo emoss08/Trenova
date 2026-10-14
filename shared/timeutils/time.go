@@ -26,6 +26,10 @@ func NowUnix() int64 {
 	return time.Now().Unix()
 }
 
+func NowUnixMilli() int64 {
+	return time.Now().UnixMilli()
+}
+
 func CeilSeconds(d time.Duration) int {
 	if d <= 0 {
 		return 0

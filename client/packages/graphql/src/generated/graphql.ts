@@ -4,6 +4,47 @@ type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
+/** What the analytics put side by side. */
+export type AiAnalyticsCompareBy =
+  /** Each model, wherever it was served. */
+  | 'Model'
+  /** Each provider, whatever models it served. */
+  | 'Provider';
+
+/** A change worth marking on a trend. */
+export type AiAnalyticsEventKind =
+  | 'LostAccess'
+  | 'ModelChanged'
+  | 'Recovered'
+  | 'StoppedAnswering'
+  | 'TurnedOff'
+  | 'TurnedOn';
+
+export type AiAnalyticsInput = {
+  /** Only this agent's work. */
+  agentDefinitionId?: string | number | null | undefined;
+  compareBy: AiAnalyticsCompareBy;
+  /** Only this task's work. */
+  task?: AiTask | null | undefined;
+  /** The IANA timezone days are read in; UTC when absent. */
+  timezone?: string | null | undefined;
+  window: AiAnalyticsWindow;
+};
+
+/** What a sentence segment opens: a series' sheet or a provider. */
+export type AiAnalyticsTarget =
+  | 'Provider'
+  | 'Series';
+
+/** How far back the analytics look. */
+export type AiAnalyticsWindow =
+  /** The last 24 hours, in hourly points. */
+  | 'Day'
+  /** The last 30 days, in daily points. */
+  | 'Month'
+  /** The last 7 days, in six-hour points. */
+  | 'Week';
+
 /** What an AI audit event records. */
 export type AiAuditEventKind =
   | 'DelegationEnded'
@@ -176,6 +217,18 @@ export type AiProviderEndpointInput = {
   platformSettings?: AiProviderPlatformSettingsInput | null | undefined;
   providerId?: string | number | null | undefined;
 };
+
+/** What went wrong before a model could answer. */
+export type AiProviderErrorKind =
+  /** The provider no longer accepts the key (HTTP 401 or 403). */
+  | 'AccessDenied'
+  /** The connection failed or was refused. */
+  | 'CouldNotConnect'
+  /** The provider rationed calls (HTTP 429). */
+  | 'RateLimited'
+  /** The provider failed or was unavailable. */
+  | 'ServerError'
+  | 'TimedOut';
 
 export type AiProviderKind =
   | 'AnthropicMessages'
@@ -355,6 +408,20 @@ export type AiThinkingStyle =
   | 'Budget'
   | 'Effort';
 
+/** Who a failed tool call is on: the model that asked, or the tool or rule that refused or broke. */
+export type AiToolFailureBlame =
+  | 'Model'
+  | 'Tool';
+
+/** Why a tool call failed. */
+export type AiToolFailureCause =
+  | 'BlockedByRule'
+  | 'RepeatedCall'
+  | 'ToolError'
+  | 'ToolNotHeld'
+  | 'ToolTimedOut'
+  | 'WrongArguments';
+
 /** What a tune-up would change. */
 export type AiTuneUpKind =
   /** Give a task nothing serves to a provider that can take it. */
@@ -383,6 +450,22 @@ export type AiUsageFeature =
   | 'FormulaGenerate'
   | 'ShipmentImportChat'
   | 'TableQuery';
+
+/** How a unit of AI work ended. */
+export type AiWorkOutcome =
+  | 'Completed'
+  | 'Failed'
+  /** The agent gave the work to a person to finish. */
+  | 'HandedOff'
+  /** It reached its tool budget, went round in circles, or a person pressed Stop. */
+  | 'Stopped';
+
+/** What a unit of AI work was. */
+export type AiWorkSource =
+  | 'AgentRun'
+  | 'AssistantTurn'
+  /** A call a feature made on its own, such as reading a document. */
+  | 'Call';
 
 export type AccessorialMethod =
   | 'Flat'
@@ -9218,6 +9301,36 @@ export type AiAgentRosterQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type AiAgentRosterQuery = { aiAgentRoster: Array<{ agentId: string, runsByDay: Array<number>, runs: number, approved: number, modified: number, rejected: number, failed: number, shadowRecorded: number, approvalRate: number | null }> };
 
+export type AiAnalyticsProviderFieldsFragment = { id: string | null, name: string, shortName: string, kind: AiProviderKind | null, baseUrl: string, enabled: boolean, removed: boolean } & { ' $fragmentName'?: 'AiAnalyticsProviderFieldsFragment' };
+
+export type AiAnalyticsSegmentFieldsFragment = { text: string, strong: boolean, tone: string | null, target: AiAnalyticsTarget | null, seriesKey: string | null, providerId: string | null } & { ' $fragmentName'?: 'AiAnalyticsSegmentFieldsFragment' };
+
+export type AiAnalyticsSeriesFieldsFragment = { key: string, label: string, shortLabel: string, modelKey: string | null, providerId: string | null, few: boolean, colorSlot: number, models: Array<string>, runs: number, completed: number, handedOff: number, stopped: number, failed: number, completedRate: number | null, medianRunMs: number | null, p95RunMs: number | null, modelCalls: number, toolCalls: number, toolCallsFailed: number, toolFailuresModel: number, toolFailureRate: number | null, modelMistakeRate: number | null, costUsd: string, pricedRuns: number, costPerCompletedRun: string | null, firstTokenMedianMs: number | null, lastRanAt: number | null, quiet: boolean, decided: number, accepted: number, modified: number, rejected: number, approvalRate: number | null, rated: number, helpful: number, helpfulRate: number | null, providers: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } }>, toolFailuresByCause: Array<{ cause: AiToolFailureCause, blame: AiToolFailureBlame, calls: number }>, runTimes: Array<{ outcome: AiWorkOutcome, runs: number, p25Ms: number, medianMs: number, p75Ms: number, p95Ms: number }> } & { ' $fragmentName'?: 'AiAnalyticsSeriesFieldsFragment' };
+
+export type AgentAnalyticsQueryVariables = Exact<{
+  input: AiAnalyticsInput;
+}>;
+
+
+export type AgentAnalyticsQuery = { agentAnalytics: { window: AiAnalyticsWindow, compareBy: AiAnalyticsCompareBy, since: number, until: number, bucketSeconds: number, trendBuckets: Array<number>, refreshedAt: number | null, summary: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsSegmentFieldsFragment': AiAnalyticsSegmentFieldsFragment } }>, runTimeNote: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsSegmentFieldsFragment': AiAnalyticsSegmentFieldsFragment } }>, totals: { runs: number, modelCalls: number, completed: number, handedOff: number, stopped: number, failed: number, completedRate: number | null, medianRunMs: number | null, p95RunMs: number | null, toolCalls: number, toolCallsFailed: number, toolFailuresModel: number, toolFailureRate: number | null, modelShareOfToolFailures: number | null, costUsd: string, pricedRuns: number, costPerCompletedRun: string | null, toolFailureAlarm: boolean }, series: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsSeriesFieldsFragment': AiAnalyticsSeriesFieldsFragment } }>, deployments: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsSeriesFieldsFragment': AiAnalyticsSeriesFieldsFragment } }>, trend: Array<{ seriesKey: string, bucketStart: number, runs: number, completedRate: number | null, toolFailureRate: number | null, medianRunMs: number | null }>, events: Array<{ at: number, kind: AiAnalyticsEventKind, label: string, provider: { ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } } }>, tools: Array<{ name: string, calls: number, failed: number, failureRate: number | null, cells: Array<{ seriesKey: string, few: boolean, calls: number, failed: number, failureRate: number | null }> }>, tasks: Array<{ task: AiTask, currentSeriesKey: string | null, bestSeriesKey: string | null, current: { ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } } | null, cells: Array<{ seriesKey: string, few: boolean, runs: number, completed: number, completedRate: number | null }>, suggestion: { seriesKey: string, gainPoints: number, provider: { ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } } } | null }>, providers: Array<{ key: string, modelKey: string, model: string, lastCalledAt: number | null, quiet: boolean, calls: number, errors: number, errorRate: number | null, errorAlarm: boolean, fellToNext: number, fellToNextAlarm: boolean, firstTokenMedianMs: number | null, provider: { ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } }, errorsByKind: Array<{ kind: AiProviderErrorKind, calls: number }> }>, sameModel: { modelKey: string, betterKey: string, worseKey: string } | null } };
+
+export type AgentAnalyticsToolFailuresQueryVariables = Exact<{
+  input: AiAnalyticsInput;
+  seriesKey: string;
+  toolName: string;
+}>;
+
+
+export type AgentAnalyticsToolFailuresQuery = { agentAnalyticsToolFailures: { seriesKey: string, toolName: string, calls: number, failed: number, causes: Array<{ cause: AiToolFailureCause, blame: AiToolFailureBlame, calls: number }>, recent: Array<{ unitId: string, source: AiWorkSource, toolName: string, message: string, agentId: string | null, agentName: string | null, at: number }>, providers: Array<{ ' $fragmentRefs'?: { 'AiAnalyticsProviderFieldsFragment': AiAnalyticsProviderFieldsFragment } }> } };
+
+export type RouteAiTaskMutationVariables = Exact<{
+  task: AiTask;
+  providerId: string | number;
+}>;
+
+
+export type RouteAiTaskMutation = { routeAITask: Array<{ id: string, tasks: Array<AiTask>, priority: number, version: number }> };
+
 export type AiAuditEventRowFieldsFragment = { id: string, seq: number, occurredAt: number, recordedAt: number, kind: AiAuditEventKind, outcome: AiAuditEventOutcome, purpose: AiAuditPurpose, principalType: AiAuditPrincipalType, principalId: string | null, onBehalfOfUserId: string | null, onBehalfOfUserName: string | null, decidedByUserId: string | null, decidedByUserName: string | null, agentDefinitionId: string | null, agentDefinitionVersion: number | null, agentName: string | null, ownerKind: AgentRunEventOwnerKind | null, ownerId: string | null, runId: string | null, turnId: string | null, threadId: string | null, proposalId: string | null, toolName: string | null, tier: string | null, heldBy: Array<string>, model: string | null, providerKind: string | null, inputTokens: number, outputTokens: number, costUsd: string | null, latencyMs: number | null, entityType: string | null, entityId: string | null, reason: string | null, resultSummary: string | null, tainted: boolean, externalContent: boolean, simulated: boolean, reconstructed: boolean, traceId: string | null, traceUrl: string | null } & { ' $fragmentName'?: 'AiAuditEventRowFieldsFragment' };
 
 export type AiAuditEventDetailFieldsFragment = (
@@ -17516,6 +17629,7 @@ export { ArAgingSummaryDocument, ArOpenItemsDocument, ArCustomerLedgerDocument, 
 export { AgentScorecardFieldsFragmentDoc, AgentScorecardDocument } from "./documents/agent-scorecard/scorecard";
 export { MyAgentFieldsFragmentDoc, AgentAccessRoleFieldsFragmentDoc, AgentAccessFieldsFragmentDoc, RoleAgentAccessFieldsFragmentDoc, MyAgentsDocument, DecideMyPlanDocument, DecideMyProposalDocument, AgentAccessDocument, SetAgentAccessDocument, RoleAgentAccessDocument, SetRoleAgentAccessDocument, AgentAccessPreviewDocument, SuggestedAgentAudienceDocument, DecideMyProposalsDocument, UndoMyDecisionDocument, CommitMyDecisionNowDocument } from "./documents/agent/access";
 export { AiProviderFailureFieldsFragmentDoc, AiTuneUpFieldsFragmentDoc, AiControlSummaryDocument, DismissAiProviderFailureDocument, RestoreAiProviderFailureDocument, AgentPromotionPreviewDocument, AiUsageDailyDocument, AiUsageFeaturesDocument, AiTuneUpsDocument, ApplyAiTuneUpDocument, DismissAiTuneUpDocument, RestoreAiTuneUpDocument, AiAgentRosterDocument } from "./documents/agent/ai-control";
+export { AiAnalyticsSegmentFieldsFragmentDoc, AiAnalyticsProviderFieldsFragmentDoc, AiAnalyticsSeriesFieldsFragmentDoc, AgentAnalyticsDocument, AgentAnalyticsToolFailuresDocument, RouteAiTaskDocument } from "./documents/agent/analytics";
 export { AiAuditEventRowFieldsFragmentDoc, AiAuditEventDetailFieldsFragmentDoc, AiAuditChainStatusFieldsFragmentDoc, AiAuditExportFieldsFragmentDoc, AiAuditEventTableDocument, AiAuditEventDetailDocument, AiAuditChainStatusDocument, AiAuditExportTableDocument, AiAuditExportDetailDocument, RequestAiAuditExportDocument, AiAuditExportDownloadDocument, VerifyAiAuditChainDocument } from "./documents/agent/audit";
 export { AgentInstructionLintDocument, AgentShadowReportDocument, AgentDefinitionVersionsDocument, AgentDefinitionVersionDraftDocument, AgentDefinitionCardDocument, AgentDraftingAvailableDocument, DraftAgentFromDescriptionDocument, TightenAgentInstructionsDocument } from "./documents/agent/builder";
 export { AgentCapabilityToolFieldsFragmentDoc, AgentCapabilitiesFieldsFragmentDoc, AgentCapabilitiesDocument, UpdateAgentCapabilitiesDocument } from "./documents/agent/capabilities";

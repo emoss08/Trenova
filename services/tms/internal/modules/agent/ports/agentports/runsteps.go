@@ -3,6 +3,8 @@ package agentports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -79,8 +81,9 @@ type RunStepOutcome struct {
 	Taint []agent.TaintMark `json:"taint,omitempty"`
 	// Reason is why a call that did not run was refused, in words fit for
 	// the audit trail: the permission it lacked, the argument it got wrong.
-	Reason  string `json:"reason,omitempty"`
-	Verdict string `json:"verdict,omitempty"`
+	Reason  string            `json:"reason,omitempty"`
+	Verdict string            `json:"verdict,omitempty"`
+	Cause   aianalytics.Cause `json:"cause,omitempty"`
 }
 
 // StepState is what a claim found.

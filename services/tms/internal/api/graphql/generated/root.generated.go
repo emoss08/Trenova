@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentruneventexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentsafetyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentscorecardexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aianalyticsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aiauditexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aicontrolexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aifeedbackexec"
@@ -1678,6 +1679,7 @@ type MutationResolver interface {
 	ClearMyAIFeedback(ctx context.Context, input gqlmodel.AIFeedbackTargetInput) (bool, error)
 	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*agentports.TestAIProviderResult, error)
 	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
+	RouteAITask(ctx context.Context, task aiprovider.Task, providerID string) ([]*aiprovider.Provider, error)
 	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
 	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*agentports.AIRetrievalStatus, error)
 	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalStatus, error)
@@ -2421,6 +2423,8 @@ type QueryResolver interface {
 	AgentSafetySummary(ctx context.Context) (*agentports.AgentSafetySummary, error)
 	AgentSafety(ctx context.Context, agentIds []string) ([]*agentports.AgentSafetySubject, error)
 	AgentScorecard(ctx context.Context, input gqlmodel.AgentScorecardInput) (*gqlmodel.AgentScorecard, error)
+	AgentAnalytics(ctx context.Context, input gqlmodel.AIAnalyticsInput) (*gqlmodel.AgentAnalytics, error)
+	AgentAnalyticsToolFailures(ctx context.Context, input gqlmodel.AIAnalyticsInput, seriesKey string, toolName string) (*gqlmodel.AgentAnalyticsToolFailures, error)
 	AiAuditEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditEventConnection, error)
 	AiAuditEvent(ctx context.Context, id string) (*aiaudit.AIAuditEvent, error)
 	AiAuditChainStatus(ctx context.Context) (*aiauditports.AIAuditChainStatus, error)
@@ -3422,6 +3426,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		agentruneventexec.Shard,
 		agentsafetyexec.Shard,
 		agentscorecardexec.Shard,
+		aianalyticsexec.Shard,
 		aiauditexec.Shard,
 		aicontrolexec.Shard,
 		aifeedbackexec.Shard,
@@ -8417,6 +8422,393 @@ extend type Query {
   agentScorecard(input: AgentScorecardInput!): AgentScorecard!
 }
 `, BuiltIn: false},
+	{Name: "../schema/aianalytics.graphqls", Input: `"How far back the analytics look."
+enum AIAnalyticsWindow {
+  "The last 24 hours, in hourly points."
+  Day
+  "The last 7 days, in six-hour points."
+  Week
+  "The last 30 days, in daily points."
+  Month
+}
+
+"What the analytics put side by side."
+enum AIAnalyticsCompareBy {
+  "Each model, wherever it was served."
+  Model
+  "Each provider, whatever models it served."
+  Provider
+}
+
+"How a unit of AI work ended."
+enum AIWorkOutcome {
+  Completed
+  "The agent gave the work to a person to finish."
+  HandedOff
+  "It reached its tool budget, went round in circles, or a person pressed Stop."
+  Stopped
+  Failed
+}
+
+"What a unit of AI work was."
+enum AIWorkSource {
+  AgentRun
+  AssistantTurn
+  "A call a feature made on its own, such as reading a document."
+  Call
+}
+
+"Why a tool call failed."
+enum AIToolFailureCause {
+  WrongArguments
+  ToolTimedOut
+  RepeatedCall
+  BlockedByRule
+  ToolError
+  ToolNotHeld
+}
+
+"Who a failed tool call is on: the model that asked, or the tool or rule that refused or broke."
+enum AIToolFailureBlame {
+  Model
+  Tool
+}
+
+"What went wrong before a model could answer."
+enum AIProviderErrorKind {
+  "The provider rationed calls (HTTP 429)."
+  RateLimited
+  TimedOut
+  "The connection failed or was refused."
+  CouldNotConnect
+  "The provider no longer accepts the key (HTTP 401 or 403)."
+  AccessDenied
+  "The provider failed or was unavailable."
+  ServerError
+}
+
+"A change worth marking on a trend."
+enum AIAnalyticsEventKind {
+  TurnedOff
+  TurnedOn
+  ModelChanged
+  StoppedAnswering
+  LostAccess
+  Recovered
+}
+
+"What a sentence segment opens: a series' sheet or a provider."
+enum AIAnalyticsTarget {
+  Series
+  Provider
+}
+
+input AIAnalyticsInput {
+  window: AIAnalyticsWindow!
+  compareBy: AIAnalyticsCompareBy!
+  "Only this agent's work."
+  agentDefinitionId: ID
+  "Only this task's work."
+  task: AITask
+  "The IANA timezone days are read in; UTC when absent."
+  timezone: String
+}
+
+"A provider the analytics name. Removed is a provider that has since been deleted."
+type AIAnalyticsProvider {
+  id: ID
+  name: String!
+  "A name short enough for a chart label, distinct among the organization's providers."
+  shortName: String!
+  kind: AIProviderKind
+  baseUrl: String!
+  enabled: Boolean!
+  removed: Boolean!
+}
+
+"How long runs that ended one way took, in milliseconds."
+type AIAnalyticsRunTime {
+  outcome: AIWorkOutcome!
+  runs: Int!
+  p25Ms: Int!
+  medianMs: Int!
+  p75Ms: Int!
+  p95Ms: Int!
+}
+
+"""
+One model, provider or deployment (a model on a provider) over the window. Rates
+are 0 to 1 and absent when there is nothing to divide by.
+"""
+type AIAnalyticsSeries {
+  "The canonical model id, the provider id, or model|provider for a deployment."
+  key: String!
+  label: String!
+  shortLabel: String!
+  "The canonical model id when the series is one model."
+  modelKey: String
+  "The provider when the series is one provider."
+  providerId: ID
+  "Too few runs to rank against the others."
+  few: Boolean!
+  """
+  The series' hue in the comparison palette, 0 to 11. It is held by the model or
+  provider across every scope, so a model keeps its colour whatever is filtered;
+  a deployment takes its provider's.
+  """
+  colorSlot: Int!
+  "The models a provider served; empty when comparing models."
+  models: [String!]!
+  "The providers that served the model, busiest first, or the provider itself."
+  providers: [AIAnalyticsProvider!]!
+  runs: Int!
+  completed: Int!
+  handedOff: Int!
+  stopped: Int!
+  failed: Int!
+  completedRate: Float
+  "Median run time of completed runs."
+  medianRunMs: Int
+  p95RunMs: Int
+  modelCalls: Int!
+  toolCalls: Int!
+  toolCallsFailed: Int!
+  "Failed tool calls that were the model's mistake."
+  toolFailuresModel: Int!
+  toolFailureRate: Float
+  "Share of the failed tool calls that were the model's mistake."
+  modelMistakeRate: Float
+  "Failed tool calls by why they failed, in cause order."
+  toolFailuresByCause: [AIAnalyticsCauseCount!]!
+  "What the provider charged, over the runs that carried a price."
+  costUsd: Decimal!
+  pricedRuns: Int!
+  "Cost over completed runs; absent when nothing was priced or completed."
+  costPerCompletedRun: Decimal
+  firstTokenMedianMs: Int
+  lastRanAt: Timestamp
+  "Nothing ran for longer than a day before the end of the window."
+  quiet: Boolean!
+  runTimes: [AIAnalyticsRunTime!]!
+  "Proposals people decided in the window."
+  decided: Int!
+  accepted: Int!
+  modified: Int!
+  rejected: Int!
+  "Approved as proposed, of every decided proposal."
+  approvalRate: Float
+  rated: Int!
+  helpful: Int!
+  helpfulRate: Float
+}
+
+type AIAnalyticsTotals {
+  runs: Int!
+  modelCalls: Int!
+  completed: Int!
+  handedOff: Int!
+  stopped: Int!
+  failed: Int!
+  completedRate: Float
+  medianRunMs: Int
+  p95RunMs: Int
+  toolCalls: Int!
+  toolCallsFailed: Int!
+  toolFailuresModel: Int!
+  toolFailureRate: Float
+  modelShareOfToolFailures: Float
+  costUsd: Decimal!
+  pricedRuns: Int!
+  costPerCompletedRun: Decimal
+  "Tool calls fail often enough to call out."
+  toolFailureAlarm: Boolean!
+}
+
+"One series in one hour or day."
+type AIAnalyticsTrendPoint {
+  seriesKey: String!
+  bucketStart: Timestamp!
+  runs: Int!
+  completedRate: Float
+  toolFailureRate: Float
+  medianRunMs: Int
+}
+
+"A provider change or health change to mark on the trend."
+type AIAnalyticsEvent {
+  at: Timestamp!
+  kind: AIAnalyticsEventKind!
+  label: String!
+  provider: AIAnalyticsProvider!
+}
+
+type AIAnalyticsToolCell {
+  seriesKey: String!
+  "Too few calls to rank against the others."
+  few: Boolean!
+  calls: Int!
+  failed: Int!
+  failureRate: Float
+}
+
+"One tool's calls by series; the tools that fail most often, at most twelve."
+type AIAnalyticsTool {
+  name: String!
+  calls: Int!
+  failed: Int!
+  failureRate: Float
+  cells: [AIAnalyticsToolCell!]!
+}
+
+type AIAnalyticsTaskCell {
+  seriesKey: String!
+  "Too few runs to rank against the others."
+  few: Boolean!
+  runs: Int!
+  completed: Int!
+  completedRate: Float
+}
+
+"A deployment that would finish more of a task's runs, by how many points."
+type AIAnalyticsRouteSuggestion {
+  provider: AIAnalyticsProvider!
+  seriesKey: String!
+  gainPoints: Float!
+}
+
+"""
+A task's completed runs per series, counting only the series it was routed to,
+where it goes now, which series does it best (with enough runs to say), and the
+provider to route it to when that is clearly better.
+"""
+type AIAnalyticsTask {
+  task: AITask!
+  current: AIAnalyticsProvider
+  currentSeriesKey: String
+  bestSeriesKey: String
+  cells: [AIAnalyticsTaskCell!]!
+  suggestion: AIAnalyticsRouteSuggestion
+}
+
+type AIAnalyticsErrorCount {
+  kind: AIProviderErrorKind!
+  calls: Int!
+}
+
+"Errors that happened before a model could answer, by deployment (a model on a provider)."
+type AIAnalyticsProviderHealth {
+  "model|provider, the same key as the deployment."
+  key: String!
+  provider: AIAnalyticsProvider!
+  modelKey: String!
+  model: String!
+  lastCalledAt: Timestamp
+  "Nothing was called for longer than a day before the end of the window."
+  quiet: Boolean!
+  calls: Int!
+  errors: Int!
+  errorRate: Float
+  "The error rate is high enough to call out."
+  errorAlarm: Boolean!
+  "Failed calls another provider then answered."
+  fellToNext: Int!
+  "Enough calls fell to the next provider to call out."
+  fellToNextAlarm: Boolean!
+  firstTokenMedianMs: Int
+  "In the order of the kinds."
+  errorsByKind: [AIAnalyticsErrorCount!]!
+}
+
+"One run of a sentence. A target makes it a link."
+type AIAnalyticsSegment {
+  text: String!
+  strong: Boolean!
+  tone: String
+  target: AIAnalyticsTarget
+  seriesKey: String
+  providerId: ID
+}
+
+"""
+How the organization's models and providers compare over a window, worked out
+from the analytics refresh every few minutes.
+"""
+type AgentAnalytics {
+  window: AIAnalyticsWindow!
+  compareBy: AIAnalyticsCompareBy!
+  since: Timestamp!
+  until: Timestamp!
+  "The width of one trend point in seconds."
+  bucketSeconds: Int!
+  "Where every trend point starts, oldest first, at the viewer's local boundaries."
+  trendBuckets: [Timestamp!]!
+  "When the analytics were last worked out; absent before the first time."
+  refreshedAt: Timestamp
+  summary: [AIAnalyticsSegment!]!
+  "What stands out about run times; empty when nothing does."
+  runTimeNote: [AIAnalyticsSegment!]!
+  totals: AIAnalyticsTotals!
+  "Busiest first."
+  series: [AIAnalyticsSeries!]!
+  "Each model on each provider, busiest first."
+  deployments: [AIAnalyticsSeries!]!
+  trend: [AIAnalyticsTrendPoint!]!
+  events: [AIAnalyticsEvent!]!
+  tools: [AIAnalyticsTool!]!
+  tasks: [AIAnalyticsTask!]!
+  providers: [AIAnalyticsProviderHealth!]!
+  "The model that ran on two providers to compare, when one did."
+  sameModel: AIAnalyticsSameModel
+}
+
+"One model on two providers: the deployment that completed more, and the one that completed less."
+type AIAnalyticsSameModel {
+  modelKey: String!
+  betterKey: String!
+  worseKey: String!
+}
+
+type AIAnalyticsCauseCount {
+  cause: AIToolFailureCause!
+  blame: AIToolFailureBlame!
+  calls: Int!
+}
+
+"A recent failed call, with what the model was told."
+type AIAnalyticsFailureExample {
+  "The run or turn it happened in."
+  unitId: String!
+  source: AIWorkSource!
+  toolName: String!
+  message: String!
+  "The agent whose run or turn it was, when there was one."
+  agentId: ID
+  agentName: String
+  at: Timestamp!
+}
+
+"Why one tool's calls failed for one series, and the newest failures."
+type AgentAnalyticsToolFailures {
+  seriesKey: String!
+  toolName: String!
+  calls: Int!
+  failed: Int!
+  causes: [AIAnalyticsCauseCount!]!
+  recent: [AIAnalyticsFailureExample!]!
+  providers: [AIAnalyticsProvider!]!
+}
+
+extend type Query {
+  "How the organization's models and providers compare."
+  agentAnalytics(input: AIAnalyticsInput!): AgentAnalytics!
+  "Why one tool's calls failed for one model or provider."
+  agentAnalyticsToolFailures(
+    input: AIAnalyticsInput!
+    seriesKey: String!
+    toolName: String!
+  ): AgentAnalyticsToolFailures!
+}
+`, BuiltIn: false},
 	{Name: "../schema/aiaudit.graphqls", Input: `"""
 What an AI audit event records.
 """
@@ -9506,6 +9898,12 @@ extend type Mutation {
   testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderDraftTestResult!
   "Sets the routing order: the first ID takes work first. Every provider must be listed once."
   reorderAIProviders(ids: [ID!]!): [AIProvider!]!
+  """
+  Makes a provider the first to take a task: assigns the task to it and takes
+  it from the providers ahead of it in the routing order, leaving every other
+  task where it goes. Returns the providers in routing order.
+  """
+  routeAITask(task: AITask!, providerId: ID!): [AIProvider!]!
   patchAIProvider(id: ID!, version: Int!, input: AIProviderPatchInput!): AIProvider!
 }
 `, BuiltIn: false},

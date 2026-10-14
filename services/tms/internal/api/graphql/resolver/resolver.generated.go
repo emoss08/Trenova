@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentruneventresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentsafetyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentscorecardresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/aianalyticsresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/aiauditresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/aicontrolresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/aifeedbackresolver"
@@ -467,6 +468,10 @@ func FromServices(s *Services) *Resolver {
 	agentscorecardDeps := &agentscorecardresolver.Deps{
 		Core:                  s.Core,
 		AgentScorecardService: s.AgentScorecardService,
+	}
+	aianalyticsDeps := &aianalyticsresolver.Deps{
+		Core:               s.Core,
+		AiAnalyticsService: s.AiAnalyticsService,
 	}
 	aiauditDeps := &aiauditresolver.Deps{
 		Core:           s.Core,
@@ -1361,6 +1366,7 @@ func FromServices(s *Services) *Resolver {
 			agentruneventQuery:            &agentruneventQuery{Deps: agentruneventDeps},
 			agentsafetyQuery:              &agentsafetyQuery{Deps: agentsafetyDeps},
 			agentscorecardQuery:           &agentscorecardQuery{Deps: agentscorecardDeps},
+			aianalyticsQuery:              &aianalyticsQuery{Deps: aianalyticsDeps},
 			aiauditQuery:                  &aiauditQuery{Deps: aiauditDeps},
 			aicontrolQuery:                &aicontrolQuery{Deps: aicontrolDeps},
 			aifeedbackQuery:               &aifeedbackQuery{Deps: aifeedbackDeps},
@@ -2419,6 +2425,7 @@ type queryResolver struct {
 	*agentruneventQuery
 	*agentsafetyQuery
 	*agentscorecardQuery
+	*aianalyticsQuery
 	*aiauditQuery
 	*aicontrolQuery
 	*aifeedbackQuery
@@ -2904,6 +2911,7 @@ type (
 	agentruneventQuery              = agentruneventresolver.QueryResolver
 	agentsafetyQuery                = agentsafetyresolver.QueryResolver
 	agentscorecardQuery             = agentscorecardresolver.QueryResolver
+	aianalyticsQuery                = aianalyticsresolver.QueryResolver
 	aiauditQuery                    = aiauditresolver.QueryResolver
 	aicontrolQuery                  = aicontrolresolver.QueryResolver
 	aifeedbackQuery                 = aifeedbackresolver.QueryResolver

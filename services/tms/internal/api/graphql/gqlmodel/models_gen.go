@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
@@ -150,6 +151,252 @@ type AIAgentRosterStat struct {
 	ShadowRecorded int `json:"shadowRecorded"`
 	// Approved or changed, of every decided proposal, 0 to 1. Absent until someone has decided.
 	ApprovalRate *float64 `json:"approvalRate,omitempty"`
+}
+
+type AIAnalyticsCauseCount struct {
+	Cause aianalytics.Cause `json:"cause"`
+	Blame aianalytics.Blame `json:"blame"`
+	Calls int               `json:"calls"`
+}
+
+type AIAnalyticsErrorCount struct {
+	Kind  aianalytics.ProviderError `json:"kind"`
+	Calls int                       `json:"calls"`
+}
+
+// A provider change or health change to mark on the trend.
+type AIAnalyticsEvent struct {
+	At       int                   `json:"at"`
+	Kind     aianalytics.EventKind `json:"kind"`
+	Label    string                `json:"label"`
+	Provider *AIAnalyticsProvider  `json:"provider"`
+}
+
+// A recent failed call, with what the model was told.
+type AIAnalyticsFailureExample struct {
+	// The run or turn it happened in.
+	UnitID   string             `json:"unitId"`
+	Source   aianalytics.Source `json:"source"`
+	ToolName string             `json:"toolName"`
+	Message  string             `json:"message"`
+	// The agent whose run or turn it was, when there was one.
+	AgentID   *string `json:"agentId,omitempty"`
+	AgentName *string `json:"agentName,omitempty"`
+	At        int     `json:"at"`
+}
+
+type AIAnalyticsInput struct {
+	Window    aianalytics.Window    `json:"window"`
+	CompareBy aianalytics.CompareBy `json:"compareBy"`
+	// Only this agent's work.
+	AgentDefinitionID *string `json:"agentDefinitionId,omitempty"`
+	// Only this task's work.
+	Task *aiprovider.Task `json:"task,omitempty"`
+	// The IANA timezone days are read in; UTC when absent.
+	Timezone *string `json:"timezone,omitempty"`
+}
+
+// A provider the analytics name. Removed is a provider that has since been deleted.
+type AIAnalyticsProvider struct {
+	ID   *string `json:"id,omitempty"`
+	Name string  `json:"name"`
+	// A name short enough for a chart label, distinct among the organization's providers.
+	ShortName string           `json:"shortName"`
+	Kind      *aiprovider.Kind `json:"kind,omitempty"`
+	BaseURL   string           `json:"baseUrl"`
+	Enabled   bool             `json:"enabled"`
+	Removed   bool             `json:"removed"`
+}
+
+// Errors that happened before a model could answer, by deployment (a model on a provider).
+type AIAnalyticsProviderHealth struct {
+	// model|provider, the same key as the deployment.
+	Key          string               `json:"key"`
+	Provider     *AIAnalyticsProvider `json:"provider"`
+	ModelKey     string               `json:"modelKey"`
+	Model        string               `json:"model"`
+	LastCalledAt *int                 `json:"lastCalledAt,omitempty"`
+	// Nothing was called for longer than a day before the end of the window.
+	Quiet     bool     `json:"quiet"`
+	Calls     int      `json:"calls"`
+	Errors    int      `json:"errors"`
+	ErrorRate *float64 `json:"errorRate,omitempty"`
+	// The error rate is high enough to call out.
+	ErrorAlarm bool `json:"errorAlarm"`
+	// Failed calls another provider then answered.
+	FellToNext int `json:"fellToNext"`
+	// Enough calls fell to the next provider to call out.
+	FellToNextAlarm    bool `json:"fellToNextAlarm"`
+	FirstTokenMedianMs *int `json:"firstTokenMedianMs,omitempty"`
+	// In the order of the kinds.
+	ErrorsByKind []*AIAnalyticsErrorCount `json:"errorsByKind"`
+}
+
+// A deployment that would finish more of a task's runs, by how many points.
+type AIAnalyticsRouteSuggestion struct {
+	Provider   *AIAnalyticsProvider `json:"provider"`
+	SeriesKey  string               `json:"seriesKey"`
+	GainPoints float64              `json:"gainPoints"`
+}
+
+// How long runs that ended one way took, in milliseconds.
+type AIAnalyticsRunTime struct {
+	Outcome  aianalytics.Outcome `json:"outcome"`
+	Runs     int                 `json:"runs"`
+	P25Ms    int                 `json:"p25Ms"`
+	MedianMs int                 `json:"medianMs"`
+	P75Ms    int                 `json:"p75Ms"`
+	P95Ms    int                 `json:"p95Ms"`
+}
+
+// One model on two providers: the deployment that completed more, and the one that completed less.
+type AIAnalyticsSameModel struct {
+	ModelKey  string `json:"modelKey"`
+	BetterKey string `json:"betterKey"`
+	WorseKey  string `json:"worseKey"`
+}
+
+// One run of a sentence. A target makes it a link.
+type AIAnalyticsSegment struct {
+	Text       string             `json:"text"`
+	Strong     bool               `json:"strong"`
+	Tone       *string            `json:"tone,omitempty"`
+	Target     *AIAnalyticsTarget `json:"target,omitempty"`
+	SeriesKey  *string            `json:"seriesKey,omitempty"`
+	ProviderID *string            `json:"providerId,omitempty"`
+}
+
+// One model, provider or deployment (a model on a provider) over the window. Rates
+// are 0 to 1 and absent when there is nothing to divide by.
+type AIAnalyticsSeries struct {
+	// The canonical model id, the provider id, or model|provider for a deployment.
+	Key        string `json:"key"`
+	Label      string `json:"label"`
+	ShortLabel string `json:"shortLabel"`
+	// The canonical model id when the series is one model.
+	ModelKey *string `json:"modelKey,omitempty"`
+	// The provider when the series is one provider.
+	ProviderID *string `json:"providerId,omitempty"`
+	// Too few runs to rank against the others.
+	Few bool `json:"few"`
+	// The series' hue in the comparison palette, 0 to 11. It is held by the model or
+	// provider across every scope, so a model keeps its colour whatever is filtered;
+	// a deployment takes its provider's.
+	ColorSlot int `json:"colorSlot"`
+	// The models a provider served; empty when comparing models.
+	Models []string `json:"models"`
+	// The providers that served the model, busiest first, or the provider itself.
+	Providers     []*AIAnalyticsProvider `json:"providers"`
+	Runs          int                    `json:"runs"`
+	Completed     int                    `json:"completed"`
+	HandedOff     int                    `json:"handedOff"`
+	Stopped       int                    `json:"stopped"`
+	Failed        int                    `json:"failed"`
+	CompletedRate *float64               `json:"completedRate,omitempty"`
+	// Median run time of completed runs.
+	MedianRunMs     *int `json:"medianRunMs,omitempty"`
+	P95RunMs        *int `json:"p95RunMs,omitempty"`
+	ModelCalls      int  `json:"modelCalls"`
+	ToolCalls       int  `json:"toolCalls"`
+	ToolCallsFailed int  `json:"toolCallsFailed"`
+	// Failed tool calls that were the model's mistake.
+	ToolFailuresModel int      `json:"toolFailuresModel"`
+	ToolFailureRate   *float64 `json:"toolFailureRate,omitempty"`
+	// Share of the failed tool calls that were the model's mistake.
+	ModelMistakeRate *float64 `json:"modelMistakeRate,omitempty"`
+	// Failed tool calls by why they failed, in cause order.
+	ToolFailuresByCause []*AIAnalyticsCauseCount `json:"toolFailuresByCause"`
+	// What the provider charged, over the runs that carried a price.
+	CostUsd    string `json:"costUsd"`
+	PricedRuns int    `json:"pricedRuns"`
+	// Cost over completed runs; absent when nothing was priced or completed.
+	CostPerCompletedRun *string `json:"costPerCompletedRun,omitempty"`
+	FirstTokenMedianMs  *int    `json:"firstTokenMedianMs,omitempty"`
+	LastRanAt           *int    `json:"lastRanAt,omitempty"`
+	// Nothing ran for longer than a day before the end of the window.
+	Quiet    bool                  `json:"quiet"`
+	RunTimes []*AIAnalyticsRunTime `json:"runTimes"`
+	// Proposals people decided in the window.
+	Decided  int `json:"decided"`
+	Accepted int `json:"accepted"`
+	Modified int `json:"modified"`
+	Rejected int `json:"rejected"`
+	// Approved as proposed, of every decided proposal.
+	ApprovalRate *float64 `json:"approvalRate,omitempty"`
+	Rated        int      `json:"rated"`
+	Helpful      int      `json:"helpful"`
+	HelpfulRate  *float64 `json:"helpfulRate,omitempty"`
+}
+
+// A task's completed runs per series, counting only the series it was routed to,
+// where it goes now, which series does it best (with enough runs to say), and the
+// provider to route it to when that is clearly better.
+type AIAnalyticsTask struct {
+	Task             aiprovider.Task             `json:"task"`
+	Current          *AIAnalyticsProvider        `json:"current,omitempty"`
+	CurrentSeriesKey *string                     `json:"currentSeriesKey,omitempty"`
+	BestSeriesKey    *string                     `json:"bestSeriesKey,omitempty"`
+	Cells            []*AIAnalyticsTaskCell      `json:"cells"`
+	Suggestion       *AIAnalyticsRouteSuggestion `json:"suggestion,omitempty"`
+}
+
+type AIAnalyticsTaskCell struct {
+	SeriesKey string `json:"seriesKey"`
+	// Too few runs to rank against the others.
+	Few           bool     `json:"few"`
+	Runs          int      `json:"runs"`
+	Completed     int      `json:"completed"`
+	CompletedRate *float64 `json:"completedRate,omitempty"`
+}
+
+// One tool's calls by series; the tools that fail most often, at most twelve.
+type AIAnalyticsTool struct {
+	Name        string                 `json:"name"`
+	Calls       int                    `json:"calls"`
+	Failed      int                    `json:"failed"`
+	FailureRate *float64               `json:"failureRate,omitempty"`
+	Cells       []*AIAnalyticsToolCell `json:"cells"`
+}
+
+type AIAnalyticsToolCell struct {
+	SeriesKey string `json:"seriesKey"`
+	// Too few calls to rank against the others.
+	Few         bool     `json:"few"`
+	Calls       int      `json:"calls"`
+	Failed      int      `json:"failed"`
+	FailureRate *float64 `json:"failureRate,omitempty"`
+}
+
+type AIAnalyticsTotals struct {
+	Runs                     int      `json:"runs"`
+	ModelCalls               int      `json:"modelCalls"`
+	Completed                int      `json:"completed"`
+	HandedOff                int      `json:"handedOff"`
+	Stopped                  int      `json:"stopped"`
+	Failed                   int      `json:"failed"`
+	CompletedRate            *float64 `json:"completedRate,omitempty"`
+	MedianRunMs              *int     `json:"medianRunMs,omitempty"`
+	P95RunMs                 *int     `json:"p95RunMs,omitempty"`
+	ToolCalls                int      `json:"toolCalls"`
+	ToolCallsFailed          int      `json:"toolCallsFailed"`
+	ToolFailuresModel        int      `json:"toolFailuresModel"`
+	ToolFailureRate          *float64 `json:"toolFailureRate,omitempty"`
+	ModelShareOfToolFailures *float64 `json:"modelShareOfToolFailures,omitempty"`
+	CostUsd                  string   `json:"costUsd"`
+	PricedRuns               int      `json:"pricedRuns"`
+	CostPerCompletedRun      *string  `json:"costPerCompletedRun,omitempty"`
+	// Tool calls fail often enough to call out.
+	ToolFailureAlarm bool `json:"toolFailureAlarm"`
+}
+
+// One series in one hour or day.
+type AIAnalyticsTrendPoint struct {
+	SeriesKey       string   `json:"seriesKey"`
+	BucketStart     int      `json:"bucketStart"`
+	Runs            int      `json:"runs"`
+	CompletedRate   *float64 `json:"completedRate,omitempty"`
+	ToolFailureRate *float64 `json:"toolFailureRate,omitempty"`
+	MedianRunMs     *int     `json:"medianRunMs,omitempty"`
 }
 
 type AIAuditEventConnection struct {
@@ -529,6 +776,47 @@ type AgentActivitySummary struct {
 	Decided *int `json:"decided,omitempty"`
 	// The share of those approved exactly as proposed; null when none was decided or it may not be read.
 	ApprovedAsProposed *float64 `json:"approvedAsProposed,omitempty"`
+}
+
+// How the organization's models and providers compare over a window, worked out
+// from the analytics refresh every few minutes.
+type AgentAnalytics struct {
+	Window    aianalytics.Window    `json:"window"`
+	CompareBy aianalytics.CompareBy `json:"compareBy"`
+	Since     int                   `json:"since"`
+	Until     int                   `json:"until"`
+	// The width of one trend point in seconds.
+	BucketSeconds int `json:"bucketSeconds"`
+	// Where every trend point starts, oldest first, at the viewer's local boundaries.
+	TrendBuckets []int `json:"trendBuckets"`
+	// When the analytics were last worked out; absent before the first time.
+	RefreshedAt *int                  `json:"refreshedAt,omitempty"`
+	Summary     []*AIAnalyticsSegment `json:"summary"`
+	// What stands out about run times; empty when nothing does.
+	RunTimeNote []*AIAnalyticsSegment `json:"runTimeNote"`
+	Totals      *AIAnalyticsTotals    `json:"totals"`
+	// Busiest first.
+	Series []*AIAnalyticsSeries `json:"series"`
+	// Each model on each provider, busiest first.
+	Deployments []*AIAnalyticsSeries         `json:"deployments"`
+	Trend       []*AIAnalyticsTrendPoint     `json:"trend"`
+	Events      []*AIAnalyticsEvent          `json:"events"`
+	Tools       []*AIAnalyticsTool           `json:"tools"`
+	Tasks       []*AIAnalyticsTask           `json:"tasks"`
+	Providers   []*AIAnalyticsProviderHealth `json:"providers"`
+	// The model that ran on two providers to compare, when one did.
+	SameModel *AIAnalyticsSameModel `json:"sameModel,omitempty"`
+}
+
+// Why one tool's calls failed for one series, and the newest failures.
+type AgentAnalyticsToolFailures struct {
+	SeriesKey string                       `json:"seriesKey"`
+	ToolName  string                       `json:"toolName"`
+	Calls     int                          `json:"calls"`
+	Failed    int                          `json:"failed"`
+	Causes    []*AIAnalyticsCauseCount     `json:"causes"`
+	Recent    []*AIAnalyticsFailureExample `json:"recent"`
+	Providers []*AIAnalyticsProvider       `json:"providers"`
 }
 
 // How much of an agent one role could use, and whether it is granted the agent.
@@ -10555,6 +10843,62 @@ type WorkerSafetyEventInput struct {
 type WriteOffPayAdvanceInput struct {
 	AdvanceID string `json:"advanceId"`
 	Reason    string `json:"reason"`
+}
+
+// What a sentence segment opens: a series' sheet or a provider.
+type AIAnalyticsTarget string
+
+const (
+	AIAnalyticsTargetSeries   AIAnalyticsTarget = "Series"
+	AIAnalyticsTargetProvider AIAnalyticsTarget = "Provider"
+)
+
+var AllAIAnalyticsTarget = []AIAnalyticsTarget{
+	AIAnalyticsTargetSeries,
+	AIAnalyticsTargetProvider,
+}
+
+func (e AIAnalyticsTarget) IsValid() bool {
+	switch e {
+	case AIAnalyticsTargetSeries, AIAnalyticsTargetProvider:
+		return true
+	}
+	return false
+}
+
+func (e AIAnalyticsTarget) String() string {
+	return string(e)
+}
+
+func (e *AIAnalyticsTarget) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AIAnalyticsTarget(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AIAnalyticsTarget", str)
+	}
+	return nil
+}
+
+func (e AIAnalyticsTarget) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AIAnalyticsTarget) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AIAnalyticsTarget) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 // Where a model's listed price came from.

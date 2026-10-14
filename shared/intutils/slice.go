@@ -14,3 +14,11 @@ func IntSliceValue(v any) []int {
 	}
 	return out
 }
+
+func Ints[T ~int8 | ~int16 | ~int32 | ~int64](items []T) []int {
+	out := make([]int, len(items))
+	for idx, item := range items {
+		out[idx] = int(item)
+	}
+	return out
+}

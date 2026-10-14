@@ -59,6 +59,7 @@ describe("buildRailItems", () => {
       "retrieval",
       "safety",
       "quality",
+      "analytics",
       "activity",
       "audit",
     ]);
@@ -69,8 +70,9 @@ describe("buildRailItems", () => {
     expect(items[5].status).toBe("");
     expect(items[6].status).toBe("");
     expect(items[7].status).toBe("");
-    expect(items[8].status).toBe("12 runs today");
-    expect(items[8].children.map((child) => child.view)).toEqual([
+    expect(items[8].status).toBe("");
+    expect(items[9].status).toBe("12 runs today");
+    expect(items[9].children.map((child) => child.view)).toEqual([
       "runs",
       "proposals",
       "plans",
@@ -84,8 +86,8 @@ describe("buildRailItems", () => {
   it("calls for attention when proposals wait on a person", () => {
     const items = buildRailItems({ ...counts, pendingProposals: 2 }, all, t);
 
-    expect(items[8].status).toBe("2 awaiting decision");
-    expect(items[8].attention).toBe(true);
+    expect(items[9].status).toBe("2 awaiting decision");
+    expect(items[9].attention).toBe(true);
   });
 
   it("calls for attention when no provider is on", () => {
@@ -114,8 +116,8 @@ describe("buildRailItems", () => {
       t,
     );
 
-    expect(items.map((item) => item.tab)).toEqual(["overview", "agents", "activity"]);
-    expect(items[2].children.map((child) => child.view)).toEqual([
+    expect(items.map((item) => item.tab)).toEqual(["overview", "agents", "analytics", "activity"]);
+    expect(items[3].children.map((child) => child.view)).toEqual([
       "runs",
       "proposals",
       "plans",
@@ -128,11 +130,20 @@ describe("buildRailItems", () => {
   it("lists plans only where proposals may be read", () => {
     const items = buildRailItems(counts, { ...all, proposals: false }, t);
 
-    expect(items[8].children.map((child) => child.view)).toEqual([
+    expect(items[9].children.map((child) => child.view)).toEqual([
       "runs",
       "evaluations",
       "exceptions",
     ]);
+  });
+
+  // Analytics reads every run, so it is a section only for someone who may read runs.
+  it("offers analytics only to readers of runs", () => {
+    const tabs = (permissions: RailPermissions) =>
+      buildRailItems(counts, permissions, t).map((item) => item.tab);
+
+    expect(tabs(all)).toContain("analytics");
+    expect(tabs({ ...all, runs: false })).not.toContain("analytics");
   });
 
   // An empty memory is worth saying: the section exists so someone records

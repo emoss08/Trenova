@@ -55,6 +55,8 @@ type SegProps<T extends string | number> = {
   label?: string;
   /** Options shown but not open to choose, with why in their title. */
   disabled?: (value: T) => string | null;
+  /** Called when the pointer or focus reaches an option, to warm what choosing it would load. */
+  onHover?: (value: T) => void;
 };
 
 /** A segmented choice between a few options. */
@@ -65,6 +67,7 @@ export function Seg<T extends string | number>({
   className,
   label,
   disabled,
+  onHover,
 }: SegProps<T>) {
   return (
     <div className={cn("seg", className)} role="radiogroup" aria-label={label}>
@@ -83,6 +86,8 @@ export function Seg<T extends string | number>({
               event.stopPropagation();
               onChange(key);
             }}
+            onMouseEnter={onHover ? () => onHover(key) : undefined}
+            onFocus={onHover ? () => onHover(key) : undefined}
           >
             {text}
           </button>

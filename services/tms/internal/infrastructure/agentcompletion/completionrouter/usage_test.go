@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -192,6 +193,23 @@ func TestClassifyError(t *testing.T) {
 	assert.Equal(t, "cancelled", classifyError(context.Canceled))
 	assert.Equal(t, "timeout", classifyError(netTimeout))
 	assert.Equal(t, "provider_error", classifyError(errors.New("bad request")))
+	assert.Equal(t, "rate_limited", classifyError(&modeladapter.TransportError{
+		StatusCode: http.StatusTooManyRequests,
+		Retryable:  true,
+	}))
+	assert.Equal(t, "auth", classifyError(&modeladapter.TransportError{
+		StatusCode: http.StatusUnauthorized,
+	}))
+	assert.Equal(t, "auth", classifyError(&modeladapter.TransportError{
+		StatusCode: http.StatusForbidden,
+	}))
+	assert.Equal(t, "provider_unavailable", classifyError(&modeladapter.TransportError{
+		StatusCode: http.StatusBadGateway,
+		Retryable:  true,
+	}))
+	assert.Equal(t, "provider_error", classifyError(&modeladapter.TransportError{
+		StatusCode: http.StatusBadRequest,
+	}))
 }
 
 func (f *fakeUsage) RecentFailures(

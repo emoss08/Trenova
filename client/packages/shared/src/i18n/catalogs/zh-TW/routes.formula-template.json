@@ -404,7 +404,6 @@
   "Untitled rating method": "未命名計價方式",
   "Use a previously saved version snapshot": "使用先前儲存的版本快照",
   "Use the expression currently in the editor": "使用編輯器中目前的運算式",
-  "Use {0}": "使用 {0}",
   "Uses the preview's values ({0} changed) and expects": "使用預覽的值（已變更 {0} 個），並預期",
   "Uses the preview's values and expects": "使用預覽的值，並預期",
   "Valid · {0, plural, one {# warning} other {# warnings}}": "有效 · {0, plural, one {# 個警告} other {# 個警告}}",

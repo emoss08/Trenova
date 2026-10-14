@@ -62,6 +62,16 @@ describe("formatMessage — plurals", () => {
     expect(formatMessage("zh-CN", "{0, plural, other {# 个运单}}", [1])).toBe("1 个运单");
   });
 
+  it("writes the count the way the locale writes numbers, as format.go does", () => {
+    const runs = "{0, plural, one {# run} other {# runs}}";
+    expect(formatMessage("en", runs, [21375])).toBe("21,375 runs");
+    expect(formatMessage("es", runs, [1234567])).toBe("1,234,567 runs");
+    expect(formatMessage("zh-CN", runs, [2.5])).toBe("2.5 runs");
+    expect(formatMessage("zh-TW", runs, [-1234])).toBe("-1,234 runs");
+    expect(formatMessage("en", runs, [999])).toBe("999 runs");
+    expect(formatMessage("en", runs, [0.12345])).toBe("0.123 runs");
+  });
+
   it("falls back to the other-form when one is absent", () => {
     expect(formatMessage("en", "{0, plural, other {# items}}", [1])).toBe("1 items");
   });

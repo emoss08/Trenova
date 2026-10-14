@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -32,7 +33,10 @@ func newChainRepo(providers ...*aiprovider.Provider) *chainRepo {
 	return repo
 }
 
-func (r *chainRepo) ListOrdered(context.Context, pagination.TenantInfo) ([]*aiprovider.Provider, error) {
+func (r *chainRepo) ListOrdered(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*aiprovider.Provider, error) {
 	out := make([]*aiprovider.Provider, 0, len(r.order))
 	for _, id := range r.order {
 		copied := *r.providers[id]
@@ -54,7 +58,10 @@ func (r *chainRepo) GetByID(
 	return &copied, nil
 }
 
-func (r *chainRepo) Update(_ context.Context, entity *aiprovider.Provider) (*aiprovider.Provider, error) {
+func (r *chainRepo) Update(
+	_ context.Context,
+	entity *aiprovider.Provider,
+) (*aiprovider.Provider, error) {
 	saved := *entity
 	saved.Version++
 	r.providers[saved.ID] = &saved
@@ -129,7 +136,12 @@ func TestReorderWritesOnlyTheProvidersWhosePlaceChanged(t *testing.T) {
 	assert.Len(t, repo.updated, 2, "the first provider kept its place")
 	assert.Len(t, versions.created, 2)
 	assert.Equal(t, 2, audit.comments)
-	assert.Equal(t, "encrypted-aip_c", repo.providers["aip_c"].APIKey, "the stored key survives the move")
+	assert.Equal(
+		t,
+		"encrypted-aip_c",
+		repo.providers["aip_c"].APIKey,
+		"the stored key survives the move",
+	)
 	for _, provider := range ordered {
 		assert.Empty(t, provider.APIKey)
 	}
@@ -191,4 +203,61 @@ func TestAssignTaskRefusesAnUnknownTask(t *testing.T) {
 	}, nil)
 	require.Error(t, err)
 	assert.Empty(t, repo.updated)
+}
+
+type analyticsEpochs struct {
+	aianalyticsports.AnalyticsCache
+	bumped []pagination.TenantInfo
+}
+
+func (a *analyticsEpochs) BumpEpoch(_ context.Context, tenant pagination.TenantInfo) error {
+	a.bumped = append(a.bumped, tenant)
+	return nil
+}
+
+func TestRoutingChangesForgetCachedAnalytics(t *testing.T) {
+	t.Parallel()
+
+	repo := newChainRepo(
+		chainProvider("aip_a", 10, aiprovider.TaskGeneral, aiprovider.TaskAssistantChat),
+		chainProvider("aip_b", 20, aiprovider.TaskGeneral),
+	)
+	svc, _, _ := chainService(repo)
+	epochs := &analyticsEpochs{}
+	svc.analytics = epochs
+	actor := &permissionports.RequestActor{UserID: pulid.ID("usr_1")}
+
+	_, err := svc.RouteTask(t.Context(), &agentports.RouteAIProviderTaskRequest{
+		TenantInfo: chainTenant,
+		Task:       aiprovider.TaskAssistantChat,
+		ProviderID: pulid.ID("aip_b"),
+	}, actor)
+	require.NoError(t, err)
+	_, err = svc.Reorder(t.Context(), &agentports.ReorderAIProvidersRequest{
+		TenantInfo:  chainTenant,
+		ProviderIDs: []pulid.ID{"aip_b", "aip_a"},
+	}, actor)
+	require.NoError(t, err)
+
+	assert.Equal(t, []pagination.TenantInfo{chainTenant, chainTenant}, epochs.bumped)
+}
+
+func TestAReorderThatMovesNothingKeepsCachedAnalytics(t *testing.T) {
+	t.Parallel()
+
+	repo := newChainRepo(
+		chainProvider("aip_a", 10, aiprovider.TaskGeneral),
+		chainProvider("aip_b", 20, aiprovider.TaskGeneral),
+	)
+	svc, _, _ := chainService(repo)
+	epochs := &analyticsEpochs{}
+	svc.analytics = epochs
+
+	_, err := svc.Reorder(t.Context(), &agentports.ReorderAIProvidersRequest{
+		TenantInfo:  chainTenant,
+		ProviderIDs: []pulid.ID{"aip_a", "aip_b"},
+	}, &permissionports.RequestActor{UserID: pulid.ID("usr_1")})
+	require.NoError(t, err)
+
+	assert.Empty(t, epochs.bumped)
 }

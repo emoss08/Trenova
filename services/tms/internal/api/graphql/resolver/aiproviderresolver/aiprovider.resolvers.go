@@ -233,3 +233,21 @@ func (r *QueryResolver) AiProviderModels(ctx context.Context, input gqlmodel.AIP
 func (r *AIProviderKeyInfoResolver) AddedBy(ctx context.Context, obj *aiprovider.KeyInfo) (*tenant.User, error) {
 	return base.LoadUser(ctx, obj.AddedByID)
 }
+
+func (r *MutationResolver) RouteAITask(ctx context.Context, task aiprovider.Task, providerID string) ([]*aiprovider.Provider, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(providerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AiProviderService.RouteTask(ctx, &agentports.RouteAIProviderTaskRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		ProviderID: id,
+		Task:       task,
+	}, actorutil.FromAuthContext(authCtx))
+}

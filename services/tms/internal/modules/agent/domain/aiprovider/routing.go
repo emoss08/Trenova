@@ -2,6 +2,7 @@ package aiprovider
 
 import (
 	"cmp"
+	"errors"
 	"slices"
 
 	"github.com/emoss08/trenova/shared/pulid"
@@ -105,4 +106,58 @@ func choiceOf(provider, draft *Provider) *RouteChoice {
 		Name:       provider.Name,
 		Draft:      draft != nil && provider == draft,
 	}
+}
+
+type TaskRoutePlan struct {
+	Target   *Provider
+	Assign   bool
+	Unassign []*Provider
+}
+
+var (
+	ErrRouteTargetMissing = errors.New("the provider is not one of the organization's providers")
+	ErrRouteUnchanged     = errors.New("the task already goes to this provider")
+)
+
+type RouteRefusal struct {
+	Reason string
+}
+
+func (r *RouteRefusal) Error() string {
+	return r.Reason
+}
+
+func PlanRouteTo(ordered []*Provider, task Task, targetID pulid.ID) (*TaskRoutePlan, error) {
+	targetIndex := slices.IndexFunc(ordered, func(provider *Provider) bool {
+		return provider.ID == targetID
+	})
+	if targetIndex < 0 {
+		return nil, ErrRouteTargetMissing
+	}
+
+	target := ordered[targetIndex]
+	candidate := *target
+	if !candidate.ServesTask(task) {
+		candidate.Tasks = append(slices.Clone(target.Tasks), task)
+	}
+	if ok, reason := candidate.CanServeTask(task); !ok {
+		return nil, &RouteRefusal{Reason: reason}
+	}
+
+	plan := &TaskRoutePlan{Target: target, Assign: !target.ServesTask(task)}
+	for _, provider := range ordered[:targetIndex] {
+		if ok, _ := provider.CanServeTask(task); !ok {
+			continue
+		}
+		if len(provider.Tasks) == 1 {
+			return nil, &RouteRefusal{Reason: provider.Name +
+				" takes no other task, so it can't give this one up; turn it off or move it behind instead"}
+		}
+		plan.Unassign = append(plan.Unassign, provider)
+	}
+	if !plan.Assign && len(plan.Unassign) == 0 {
+		return nil, ErrRouteUnchanged
+	}
+
+	return plan, nil
 }

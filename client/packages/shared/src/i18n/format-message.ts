@@ -6,6 +6,7 @@
 // the supported syntax small — positional placeholders and plurals — is what makes that
 // agreement checkable by reading both files.
 import type { Locale } from "@trenova/shared/i18n/generated/locales";
+import { intlTag } from "@trenova/shared/i18n/intl-tags";
 
 type PluralForm = "one" | "other";
 
@@ -39,6 +40,19 @@ function stringify(value: unknown): string {
   // An object reaching a placeholder is a caller mistake; "[object Object]" in the UI hides
   // it, so serialize enough to make it obvious in a screenshot or a bug report.
   return JSON.stringify(value) ?? "";
+}
+
+// A plural's # is the count as the locale writes numbers, grouped and with at most three
+// decimals, as ICU does; format.go's formatCount writes the same digits.
+const countFormatters = new Map<Locale, Intl.NumberFormat>();
+
+function formatCount(locale: Locale, value: number): string {
+  let formatter = countFormatters.get(locale);
+  if (formatter === undefined) {
+    formatter = new Intl.NumberFormat(intlTag(locale), { maximumFractionDigits: 3 });
+    countFormatters.set(locale, formatter);
+  }
+  return formatter.format(value);
 }
 
 function pluralBranch(forms: string, want: PluralForm): string | null {
@@ -87,7 +101,7 @@ function renderPlaceholder(locale: Locale, body: string, args: unknown[]): strin
   const chosen = pluralBranch(rest.slice(kindEnd + 1), selectPlural(locale, value));
   if (chosen === null) return stringify(value);
 
-  return chosen.split("#").join(stringify(value));
+  return chosen.split("#").join(formatCount(locale, value));
 }
 
 export function formatMessage(locale: Locale, message: string, args: unknown[]): string {

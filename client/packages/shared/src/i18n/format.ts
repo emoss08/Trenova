@@ -4,19 +4,11 @@
 // Spanish or Chinese user still saw 1,234.56 and March 3, 2026. Numbers, dates and
 // currency are as much a part of a translation as the words are.
 import { DEFAULT_LOCALE, type Locale } from "@trenova/shared/i18n/generated/locales";
+import { intlTag } from "@trenova/shared/i18n/intl-tags";
 import { getLocale } from "@trenova/shared/i18n/runtime";
 
-// The product's English is US English, so `en` resolves to en-US rather than the bare tag.
-// The others are already region- or script-qualified.
-const INTL_TAGS: Record<Locale, string> = {
-  en: "en-US",
-  es: "es-419",
-  "zh-TW": "zh-TW",
-  "zh-CN": "zh-CN",
-};
-
 export function intlLocale(locale?: Locale): string {
-  return INTL_TAGS[locale ?? getLocale()] ?? INTL_TAGS[DEFAULT_LOCALE];
+  return intlTag(locale ?? getLocale());
 }
 
 // Building an Intl formatter costs far more than using one, and a table cell
