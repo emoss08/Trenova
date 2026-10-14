@@ -1,20 +1,14 @@
-import {
-  QueryErrorResetBoundary,
-  type QueryKey,
-  useQueryErrorResetBoundary,
-} from "@tanstack/react-query";
+import { useQueryErrorResetBoundary } from "@tanstack/react-query";
 import type React from "react";
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { Suspense, useCallback, useState } from "react";
 import { ErrorBoundary as ReactErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { isRouteErrorResponse, useLocation, useNavigate, useRouteError } from "react-router";
-import { SuspenseLoader, type ComponentLoaderProps } from "./component-loader";
 import { DataTableSkeleton } from "./data-table/data-table-skeleton";
 import { ErrorState, type ErrorStateLayout } from "./errors/error-state";
 import { NotFoundPage, NotFoundState } from "./errors/not-found";
 import { StatusScreen } from "./errors/status-screen";
 import { Button } from "./ui/button";
-import { Skeleton } from "./ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Home02Icon } from "@trenova/shared/components/icons";
 
@@ -70,24 +64,26 @@ export function ErrorStateBoundary({
   );
 }
 
+/**
+ * The boundary around a data table: a failure draws ErrorState in place, and while the table's
+ * code or first page loads it draws the table's own skeleton. It is for tables only;
+ * `pnpm lint:skeletons` fails when anything inside it does not render a `DataTable`. Anything
+ * else takes `LazyComponent` with a skeleton of its own layout.
+ */
 export function DataTableLazyComponent({
   children,
   onError,
-  fallback,
   columnCount = 10,
   rowCount = 10,
 }: {
   children: React.ReactNode;
   onError?: (error: Error, info: React.ErrorInfo) => void;
-  fallback?: ReactNode;
   columnCount?: number;
   rowCount?: number;
 }) {
   return (
     <ErrorStateBoundary onError={onError}>
-      <Suspense
-        fallback={fallback ?? <DataTableSkeleton columnCount={columnCount} rowCount={rowCount} />}
-      >
+      <Suspense fallback={<DataTableSkeleton columnCount={columnCount} rowCount={rowCount} />}>
         {children}
       </Suspense>
     </ErrorStateBoundary>
@@ -183,40 +179,26 @@ export function NotFoundRoute({ homePath = "/" }: { homePath?: string }) {
   return <NotFoundState path={path} onGoHome={goHome} onGoBack={goBack} className="min-h-full" />;
 }
 
+/**
+ * The boundary around anything that loads and is not a data table: a failure draws ErrorState in
+ * place, and while its code or suspense queries load it draws `fallback`. The fallback is
+ * required and is the skeleton of what loads, laid out where the real thing lands, so the first
+ * paint is the page's own shape rather than a generic block that jumps when the answer arrives.
+ * `null` is the right fallback only for what is not on screen yet, such as a closed dialog.
+ */
 export function LazyComponent({
   children,
+  fallback,
   onError,
 }: {
   children: React.ReactNode;
+  fallback: ReactElement | null;
   onError?: (error: Error, info: React.ErrorInfo) => void;
 }) {
   return (
     <ErrorStateBoundary onError={onError}>
-      <Suspense fallback={<Skeleton className="size-full rounded-md" />}>{children}</Suspense>
+      <Suspense fallback={fallback}>{children}</Suspense>
     </ErrorStateBoundary>
-  );
-}
-
-type QueryLazyComponentProps = {
-  children: React.ReactNode;
-  queryKey: QueryKey;
-  componentLoaderProps?: ComponentLoaderProps;
-};
-
-/**
- * QueryLazyComponent is a wrapper component that allows for lazy loading of components that
- * use react-query. A failure draws ErrorState in place, and retrying resets the failed
- * queries inside it along with the boundary.
- */
-export function QueryLazyComponent({ children, componentLoaderProps }: QueryLazyComponentProps) {
-  return (
-    <QueryErrorResetBoundary>
-      {() => (
-        <ErrorStateBoundary>
-          <SuspenseLoader componentLoaderProps={componentLoaderProps}>{children}</SuspenseLoader>
-        </ErrorStateBoundary>
-      )}
-    </QueryErrorResetBoundary>
   );
 }
 

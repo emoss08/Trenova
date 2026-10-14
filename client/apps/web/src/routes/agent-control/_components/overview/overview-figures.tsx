@@ -8,6 +8,7 @@ import { useMemo } from "react";
 import { Ic } from "../kit/ic";
 import { Figs } from "../kit/layout";
 import { DailyCallBars } from "./daily-call-bars";
+import { OverviewFiguresSkeleton } from "./overview-skeleton";
 
 /** The window the overview's figures cover. */
 export const OVERVIEW_WINDOW_DAYS = 7;
@@ -36,22 +37,24 @@ export function OverviewFigures({ onSetPrices }: OverviewFiguresProps) {
     staleTime: FIGURES_STALE_MS,
   });
 
+  if (usageQuery.isLoading) {
+    return <OverviewFiguresSkeleton />;
+  }
+
   const usage = usageQuery.data;
-  const loading = usageQuery.isLoading;
   const calls = usage?.calls ?? 0;
   const failed = usage?.failed ?? 0;
   const okShare = calls > 0 ? ((calls - failed) / calls) * 100 : 100;
   const priced = (usage?.pricedCalls ?? 0) > 0;
   const inputTokens = usage?.inputTokens ?? 0;
   const outputTokens = usage?.outputTokens ?? 0;
-  const pending = "…";
 
   return (
     <Figs
       items={[
         {
           label: t("Model calls · {0} days", OVERVIEW_WINDOW_DAYS),
-          value: loading ? pending : calls.toLocaleString(),
+          value: calls.toLocaleString(),
           sub: (
             <span className="fsub">
               {dailyQuery.data && <DailyCallBars days={dailyQuery.data} />}
@@ -69,16 +72,15 @@ export function OverviewFigures({ onSetPrices }: OverviewFiguresProps) {
         },
         {
           label: t("Median response"),
-          value: loading ? (
-            pending
-          ) : calls > 0 ? (
-            <>
-              {seconds(usage?.latencyP50Ms ?? 0, 2)}
-              <small>s</small>
-            </>
-          ) : (
-            "—"
-          ),
+          value:
+            calls > 0 ? (
+              <>
+                {seconds(usage?.latencyP50Ms ?? 0, 2)}
+                <small>s</small>
+              </>
+            ) : (
+              "—"
+            ),
           sub:
             calls > 0
               ? t("Slowest 5% took {0}s or more", seconds(usage?.latencyP95Ms ?? 0, 1))
@@ -86,9 +88,7 @@ export function OverviewFigures({ onSetPrices }: OverviewFiguresProps) {
         },
         {
           label: t("Tokens"),
-          value: loading ? (
-            pending
-          ) : (
+          value: (
             <>
               {formatMillions(inputTokens + outputTokens)}
               <small>M</small>
@@ -98,9 +98,7 @@ export function OverviewFigures({ onSetPrices }: OverviewFiguresProps) {
         },
         {
           label: t("Spend"),
-          value: loading ? (
-            pending
-          ) : priced ? (
+          value: priced ? (
             (formatUsd(usage?.costUsd) ?? "—")
           ) : onSetPrices ? (
             <button type="button" className="fset" onClick={onSetPrices}>

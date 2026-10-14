@@ -11,7 +11,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   deleteFuelSurchargeProgram,
   type FuelProgramCurrentRate,
@@ -24,6 +23,7 @@ import { AlertTriangleIcon, PlusIcon, Trash01Icon } from "@trenova/shared/compon
 import { useState } from "react";
 import { toast } from "sonner";
 import { FuelProgramsEmpty } from "./fuel-management-empty";
+import { ProgramCardsSkeleton } from "./fuel-management-skeleton";
 import { ProgramPanel } from "./program-panel";
 
 function methodLabel(method: string) {
@@ -76,11 +76,7 @@ export default function ProgramSection() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-40" />
-          ))}
-        </div>
+        <ProgramCardsSkeleton />
       ) : !entries || entries.length === 0 ? (
         <FuelProgramsEmpty
           title={t("No programs yet")}

@@ -81972,7 +81972,7 @@
     ]
   },
   "Each shipment runs the billing readiness check before it moves into the queue. Completed shipments that pass are marked Ready to Invoice first.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -113005,7 +113005,7 @@
     ]
   },
   "Import from rate confirmation": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -128697,15 +128697,6 @@
       "routes/time-attendance"
     ]
   },
-  "Loading AI activity panel...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "Loading EDI designer workspace": {
     "sites": 1,
     "scope": [
@@ -128715,7 +128706,7 @@
       "routes/edi"
     ]
   },
-  "Loading EDI operations summary": {
+  "Loading EDI operations": {
     "sites": 1,
     "scope": [
       "ts"
@@ -128742,6 +128733,16 @@
       "apps/web/components"
     ]
   },
+  "Loading activity": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/shipment"
+    ]
+  },
   "Loading activity...": {
     "sites": 1,
     "scope": [
@@ -128752,7 +128753,7 @@
     ]
   },
   "Loading agents": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -128767,6 +128768,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Loading analytics": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Loading archive messages.": {
@@ -128814,6 +128824,15 @@
       "routes/benefits"
     ]
   },
+  "Loading capacity": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Loading carrier": {
     "sites": 1,
     "scope": [
@@ -128821,6 +128840,24 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "Loading carrier invoice matching": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
+    ]
+  },
+  "Loading carrier invoices": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
     ]
   },
   "Loading carrier override...": {
@@ -128914,23 +128951,13 @@
       "routes/accounting-drift"
     ]
   },
-  "Loading document preview": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/billing-queue",
-      "routes/shipment"
-    ]
-  },
-  "Loading document preview...": {
+  "Loading document preview and archive": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/shipment"
+      "routes/edi"
     ]
   },
   "Loading document type...": {
@@ -128959,6 +128986,15 @@
     ],
     "areas": [
       "routes/journal-entry"
+    ]
+  },
+  "Loading extensions": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Loading extracted content...": {
@@ -128997,6 +129033,15 @@
       "routes/reports"
     ]
   },
+  "Loading figures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Loading fleet safety": {
     "sites": 1,
     "scope": [
@@ -129004,6 +129049,24 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "Loading fuel indices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fuel-management"
+    ]
+  },
+  "Loading fuel prices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fuel-management"
     ]
   },
   "Loading fuel surcharge program...": {
@@ -129022,6 +129085,15 @@
     ],
     "areas": [
       "routes/hold-reason"
+    ]
+  },
+  "Loading indices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fuel-management"
     ]
   },
   "Loading instructions": {
@@ -129096,6 +129168,24 @@
       "routes/location"
     ]
   },
+  "Loading matches": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
+    ]
+  },
+  "Loading memory": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Loading message details.": {
     "sites": 1,
     "scope": [
@@ -129160,7 +129250,7 @@
       "routes/inbox"
     ]
   },
-  "Loading notifications...": {
+  "Loading notifications": {
     "sites": 1,
     "scope": [
       "ts"
@@ -129187,15 +129277,6 @@
       "routes/customer-payments"
     ]
   },
-  "Loading organization settings...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Loading organization sign-in…": {
     "sites": 1,
     "scope": [
@@ -129203,6 +129284,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Loading organization-wide settings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Loading organizations...": {
@@ -129242,6 +129332,42 @@
       "routes/policies"
     ]
   },
+  "Loading price history": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fuel-management"
+    ]
+  },
+  "Loading programs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fuel-management"
+    ]
+  },
+  "Loading providers": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Loading quality": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Loading random testing": {
     "sites": 1,
     "scope": [
@@ -129278,15 +129404,6 @@
       "routes/service-failure-reason-code"
     ]
   },
-  "Loading reconciliation workspace...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "Loading record...": {
     "sites": 1,
     "scope": [
@@ -129294,6 +129411,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Loading retrieval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Loading role...": {
@@ -129314,6 +129440,15 @@
       "routes/admin"
     ]
   },
+  "Loading rule sets": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Loading run console...": {
     "sites": 1,
     "scope": [
@@ -129321,6 +129456,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Loading safety": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Loading scheduling": {
@@ -129341,6 +129485,25 @@
       "routes/service-failure"
     ]
   },
+  "Loading settings": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/admin"
+    ]
+  },
+  "Loading settlements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Loading shipment draft...": {
     "sites": 1,
     "scope": [
@@ -129348,6 +129511,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Loading shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Loading suggested actions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Loading supporting documents...": {
@@ -129359,6 +129540,15 @@
       "routes/billing-queue"
     ]
   },
+  "Loading surcharge programs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fuel-management"
+    ]
+  },
   "Loading sync record...": {
     "sites": 1,
     "scope": [
@@ -129368,7 +129558,7 @@
       "routes/accounting-sync"
     ]
   },
-  "Loading template designer": {
+  "Loading templates": {
     "sites": 1,
     "scope": [
       "ts"
@@ -129404,6 +129594,24 @@
       "apps/web/components"
     ]
   },
+  "Loading the assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Loading the audit trail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Loading the billing item…": {
     "sites": 1,
     "scope": [
@@ -129413,6 +129621,15 @@
       "routes/desk"
     ]
   },
+  "Loading the billing queue item": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Loading the board": {
     "sites": 1,
     "scope": [
@@ -129420,6 +129637,33 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Loading the brief": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Loading the brief and activity": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Loading the calendar for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/holiday"
     ]
   },
   "Loading the carrier…": {
@@ -129449,12 +129693,31 @@
       "routes/desk"
     ]
   },
+  "Loading the details": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
+    ]
+  },
   "Loading the detention claim file": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Loading the document": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue",
       "routes/shipment"
     ]
   },
@@ -129465,6 +129728,33 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the holiday calendar": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/holiday"
+    ]
+  },
+  "Loading the import": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Loading the invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Loading the location…": {
@@ -129503,6 +129793,15 @@
       "routes/org-structure"
     ]
   },
+  "Loading the overview": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Loading the rate agreement…": {
     "sites": 1,
     "scope": [
@@ -129510,6 +129809,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the reconciliation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Loading the record…": {
@@ -129530,6 +129838,15 @@
       "routes/ifta-return"
     ]
   },
+  "Loading the roster": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Loading the service failure…": {
     "sites": 1,
     "scope": [
@@ -129539,6 +129856,15 @@
       "routes/desk"
     ]
   },
+  "Loading the settlement workspace": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Loading the shipment…": {
     "sites": 1,
     "scope": [
@@ -129546,6 +129872,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the statement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Loading the summary": {
@@ -129575,13 +129910,22 @@
       "routes/desk"
     ]
   },
-  "Loading the transfer...": {
+  "Loading the transfer": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Loading the watchlist": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Loading the worker…": {
@@ -129591,6 +129935,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading time and attendance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/time-attendance"
     ]
   },
   "Loading tracking link…": {
@@ -129609,6 +129962,24 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "Loading tune-ups": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Loading users and roles": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Loading versions...": {
@@ -129647,6 +130018,15 @@
       "routes/admin"
     ]
   },
+  "Loading your DOT profile": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fleet-safety"
+    ]
+  },
   "Loading your team": {
     "sites": 1,
     "scope": [
@@ -129657,11 +130037,12 @@
     ]
   },
   "Loading {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/edi",
       "routes/onboarding"
     ]
   },
@@ -195982,15 +196363,6 @@
       "routes/fuel-management"
     ]
   },
-  "Rendering document": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "Rendering preview...": {
     "sites": 1,
     "scope": [
@@ -201198,7 +201570,7 @@
     ]
   },
   "Retrieval": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -206853,7 +207225,7 @@
     ]
   },
   "Safety": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -261064,7 +261436,7 @@
     ]
   },
   "Transfer to billing": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -267045,7 +267417,7 @@
     ]
   },
   "Upload a rate confirmation to extract shipment details.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],

@@ -1,63 +1,20 @@
-import { InputFieldSkeleton } from "@/components/fields/input-field";
-import { SwitchFieldSkeleton } from "@/components/fields/switch-field";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+  SettingsFormSkeleton,
+  type SettingsSectionSpec,
+} from "@/components/settings-form-skeleton";
 
-export function PageSkeleton() {
-  return (
-    <div className="flex flex-col gap-y-4 p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Skeleton className="h-6 w-37.5" />
-          </CardTitle>
-          <CardDescription>
-            <Skeleton className="h-10 w-full" />
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <InputFieldSkeleton />
-          <SwitchFieldSkeleton />
-          <SwitchFieldSkeleton />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Skeleton className="h-6 w-37.5" />
-          </CardTitle>
-          <CardDescription>
-            <Skeleton className="h-10 w-full" />
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <InputFieldSkeleton />
-          <InputFieldSkeleton />
-          <InputFieldSkeleton />
-          <InputFieldSkeleton />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Skeleton className="h-6 w-37.5" />
-          </CardTitle>
-          <CardDescription>
-            <Skeleton className="h-10 w-full" />
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <InputFieldSkeleton />
-          <InputFieldSkeleton />
-          <InputFieldSkeleton />
-        </CardContent>
-      </Card>
-    </div>
-  );
+const categoryRow = {
+  cols: 2,
+  fields: ["switch", "switch", { kind: "input", full: true }],
+} as const;
+
+const sections: readonly SettingsSectionSpec[] = [
+  { title: "sm", narrow: true, fields: ["switch", "input", "switch", "input"] },
+  { title: "sm", description: 2, width: "full", groups: [{ ...categoryRow, rows: 6 }] },
+  { title: "sm", description: 2, width: "full", groups: [{ ...categoryRow, rows: 4 }] },
+  { title: "sm", description: 2, narrow: true, fields: ["switch"] },
+];
+
+export function CostControlSkeleton() {
+  return <SettingsFormSkeleton sections={sections} />;
 }

@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { ActionQueue } from "./action-queue";
 import { ActivityTimeline } from "./activity/activity-timeline";
+import { SIDE_PANEL_FRAME_CLASS } from "./side-panel-skeleton";
 import { Watchlist } from "./watchlist";
 import { type PanelTab, useShipmentBoardUrl } from "../url-state";
 
@@ -32,10 +33,7 @@ export function ShipmentSidePanel({ onClose }: { onClose: () => void }) {
   const openCount = suggestions?.items.length ?? 0;
 
   return (
-    <aside
-      aria-label={t("Brief and activity")}
-      className="animate-panel-in bg-raised border-border-strong absolute top-2 right-3 bottom-3 z-30 flex w-[min(372px,calc(100%-28px))] flex-col overflow-hidden rounded-lg border @max-[820px]/board:inset-x-2 @max-[820px]/board:w-auto"
-    >
+    <aside aria-label={t("Brief and activity")} className={SIDE_PANEL_FRAME_CLASS}>
       <Tabs
         value={tab}
         onValueChange={(value) => void setUrl({ tab: value as PanelTab })}

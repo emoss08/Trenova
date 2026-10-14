@@ -5,7 +5,6 @@ import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { quickFilterLabel } from "@/lib/shipment-board/quick-filters";
 import type { ShipmentQuickFilter } from "@trenova/graphql/generated/graphql";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -13,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useShipmentBoardUrl } from "../url-state";
 import { BriefingLoadsPreview } from "./briefing-loads-preview";
+import { ShipmentBriefingSkeleton } from "./shipment-briefing-skeleton";
 
 const BRIEFING_STALE_MS = 60_000;
 
@@ -60,7 +60,7 @@ export function ShipmentBriefing() {
 
   if (!ai || isError) return null;
   if (isLoading || !data) {
-    return <Skeleton className="h-5 w-2/3" />;
+    return <ShipmentBriefingSkeleton />;
   }
 
   const firstName = firstNameOf(userName);

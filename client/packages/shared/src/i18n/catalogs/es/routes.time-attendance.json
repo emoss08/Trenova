@@ -39,6 +39,7 @@
   "Kept with the voided run so the reopened weeks can be explained later.": "Se conserva con la corrida anulada para poder explicar después las semanas reabiertas.",
   "Last two weeks": "Últimas dos semanas",
   "Later period": "Período posterior",
+  "Loading time and attendance": "Cargando el control de asistencia",
   "Longest running: {0}, {1}": "De mayor duración: {0}, {1}",
   "No approved week in this period is waiting to be sent. Move the period, or approve some weeks first.": "No hay ninguna semana aprobada en este período pendiente de enviar. Cambie el período o apruebe algunas semanas primero.",
   "No open weeks": "No hay semanas abiertas",

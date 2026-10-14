@@ -7,7 +7,6 @@ import {
 } from "@/lib/graphql/extraction-eval";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -21,6 +20,7 @@ import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
 import { formatDelta, formatShare } from "../quality-model";
 import { EXTRACTION_STALE_MS } from "./extraction-model";
+import { PanelRowsSkeleton } from "./extraction-skeleton";
 import { TREND_STATE, trendChange, trendPoints, trendState } from "./provider-trend-model";
 
 const TREND_WEEKS = 12;
@@ -123,7 +123,7 @@ export function ProviderTrendsPanel() {
           {t("Accuracy by provider could not be loaded. Try again shortly.")}
         </SectionPanelQuiet>
       ) : !trends.data ? (
-        <Skeleton className="m-3 h-24" aria-busy />
+        <PanelRowsSkeleton rows={3} columns={6} />
       ) : trends.data.providers.length === 0 ? (
         <SectionPanelQuiet>
           {t(

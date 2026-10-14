@@ -10,6 +10,11 @@ import {
 } from "@trenova/shared/components/ui/sheet";
 import { useQueryStates } from "nuqs";
 import { lazy, useCallback, useState } from "react";
+import { BillingQueueDocumentPreviewSkeleton } from "../billing-queue/_components/billing-queue-document-preview-skeleton";
+import {
+  InvoiceDetailSkeleton,
+  InvoiceDetailUnselected,
+} from "./_components/invoice-detail-skeleton";
 import { InvoiceSidebar } from "./_components/invoice-sidebar";
 import { invoiceSelectionSearchParamsParser } from "./use-invoice-state";
 
@@ -56,7 +61,9 @@ export function InvoicesPage() {
           />
         }
         detail={
-          <LazyComponent>
+          <LazyComponent
+            fallback={selectedInvoiceId ? <InvoiceDetailSkeleton /> : <InvoiceDetailUnselected />}
+          >
             <InvoiceDetailPane
               selectedInvoiceId={selectedInvoiceId}
               selectedDocumentId={selectedDocumentId}
@@ -83,7 +90,7 @@ export function InvoicesPage() {
             </SheetDescription>
           </SheetHeader>
           <div className="h-[calc(100%-73px)]">
-            <LazyComponent>
+            <LazyComponent fallback={<BillingQueueDocumentPreviewSkeleton />}>
               <BillingQueueDocumentPreview
                 documentId={selectedDocumentId}
                 fileName={selectedDocumentName}

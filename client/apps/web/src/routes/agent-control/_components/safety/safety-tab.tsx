@@ -2,7 +2,7 @@ import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import type { AgentEgressClass } from "@/lib/graphql/agent-safety";
 import { agentSafety } from "@/lib/queries/agent-safety";
 import { useQuery } from "@tanstack/react-query";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { DataTableLazyComponent, LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueryStates } from "nuqs";
 import { lazy } from "react";
@@ -10,10 +10,10 @@ import type { SafetyView } from "../../ai-control-tabs";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { Ic } from "../kit/ic";
 import { Figs, SecH, Seg } from "../kit/layout";
-import { NovaSummary } from "../nova/nova-summary";
 import { EgressMap } from "./egress-map";
 import { SAFETY_SUMMARY_STALE_MS } from "./safety-figures";
 import { SafetyHero } from "./safety-hero";
+import { ByAgentSkeleton, SafetyHeadSkeleton, TOOL_RULE_COLUMNS } from "./safety-skeleton";
 import { EGRESS_ORDER, REVIEWED_AT_ONCE, safetyFacts } from "./safety-model";
 
 const ToolRulesTable = lazy(() => import("./tool-rules-table"));
@@ -86,7 +86,7 @@ export default function SafetyTab({ view }: { view: SafetyView }) {
           }
         />
       ) : (
-        <NovaSummary context={t("Safety")} segments={undefined} loading onTarget={() => {}} />
+        <SafetyHeadSkeleton />
       )}
       {facts && summary.data && (
         <>
@@ -148,10 +148,16 @@ export default function SafetyTab({ view }: { view: SafetyView }) {
           onChange={(next) => navigate({ tab: "safety", view: next })}
         />
       </div>
-      <DataTableLazyComponent>
-        {view === "rules" && <ToolRulesTable />}
-        {view === "agents" && <ByAgentView />}
-      </DataTableLazyComponent>
+      {view === "rules" && (
+        <DataTableLazyComponent columnCount={TOOL_RULE_COLUMNS}>
+          <ToolRulesTable />
+        </DataTableLazyComponent>
+      )}
+      {view === "agents" && (
+        <LazyComponent fallback={<ByAgentSkeleton />}>
+          <ByAgentView />
+        </LazyComponent>
+      )}
     </div>
   );
 }

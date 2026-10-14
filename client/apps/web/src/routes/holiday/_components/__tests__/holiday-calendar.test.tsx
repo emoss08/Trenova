@@ -119,4 +119,18 @@ describe("HolidayCalendar", () => {
     await waitFor(() => expect(deleteOrgHoliday).toHaveBeenCalledWith("ohol_2"));
     expect(toast.success).toHaveBeenCalled();
   });
+
+  // While a year is read the months are drawn as their outline, under the
+  // real toolbar, so the year lands where its outline was.
+  it("outlines the year's months while the year is read", () => {
+    fetchOrgHolidays.mockReturnValue(new Promise<never>(() => {}));
+    renderCalendar();
+
+    expect(screen.getByLabelText(`Loading the calendar for ${YEAR}`)).toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Next year" })).toBeInTheDocument();
+    expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
+  });
 });

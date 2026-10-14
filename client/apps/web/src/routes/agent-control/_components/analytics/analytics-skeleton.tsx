@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { CSSProperties } from "react";
 
 const FIGURES = 5;
@@ -52,8 +53,10 @@ export function AnalyticsBodySkeleton() {
 
 /** The whole tab while its code is read: Nova's sentence, the scope, and the body. */
 export function AnalyticsTabSkeleton() {
+  const t = useT();
+
   return (
-    <div className="an-sk an-sk-tab" aria-busy="true">
+    <div className="an-sk an-sk-tab" aria-busy="true" aria-label={t("Loading analytics")}>
       <div className="an-sk-hero">
         <span className="an-sk-line ui-shimmer" style={{ width: 120, height: 12 }} />
         <span className="an-sk-line ui-shimmer" style={{ width: "88%", height: 24 }} />

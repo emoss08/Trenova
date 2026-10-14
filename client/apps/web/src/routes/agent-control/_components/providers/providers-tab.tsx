@@ -52,6 +52,7 @@ import {
 } from "./provider-model";
 import { ProviderRouting } from "./provider-routing";
 import { ProvidersEmpty } from "./providers-empty";
+import { ProvidersBodySkeleton } from "./providers-skeleton";
 
 const WEEK_DAYS = 7;
 
@@ -483,6 +484,7 @@ export default function ProvidersTab() {
     return (
       <div className="tabp" aria-busy>
         <NovaSummary context={t("Providers")} segments={undefined} loading onTarget={onTarget} />
+        <ProvidersBodySkeleton />
       </div>
     );
   }
