@@ -20,10 +20,11 @@ import {
   HoverCardTrigger,
 } from "@trenova/shared/components/ui/hover-card";
 import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
-import type { ReactNode } from "react";
+import { useRef, useState, type ReactElement, type ReactNode } from "react";
 import { Link } from "react-router";
 import { GO_CHORD_KEY, MODULE_GO_KEYS } from "@/components/navigation/rail-shortcuts";
 
@@ -65,6 +66,63 @@ function ActiveMark() {
   );
 }
 
+/**
+ * A folded tile's pages, beside the rail on hover or keyboard focus. A press
+ * is already a choice of where to go, so it puts the pages away and keeps
+ * them away until the pointer leaves the tile; the card is no taller than the
+ * window and scrolls its pages when a module has more than fit.
+ */
+function RailFlyout({
+  link,
+  label,
+  letter,
+  children,
+}: {
+  link: ReactElement;
+  label: string;
+  letter?: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const pressed = useRef(false);
+
+  const press = () => {
+    pressed.current = true;
+    setOpen(false);
+  };
+
+  return (
+    <HoverCard
+      open={open}
+      onOpenChange={(next) => {
+        if (next && pressed.current) return;
+        setOpen(next);
+      }}
+    >
+      <HoverCardTrigger
+        render={link}
+        onPointerDown={press}
+        onClick={press}
+        onPointerLeave={() => {
+          pressed.current = false;
+        }}
+      />
+      <HoverCardContent side="right" align="start" sideOffset={8} className="w-60 p-1.5">
+        <div className="flex items-center justify-between px-2 pt-1 pb-1.5">
+          <span className="text-sm font-semibold">{label}</span>
+          {letter && <ChordHint letter={letter} />}
+        </div>
+        <ScrollArea
+          viewportClassName="max-h-[calc(var(--available-height)-3rem)] overscroll-contain"
+          maskVariant="popover"
+        >
+          {children}
+        </ScrollArea>
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
 function RailTile({
   to,
   label,
@@ -101,16 +159,9 @@ function RailTile({
 
   if (flyout) {
     return (
-      <HoverCard>
-        <HoverCardTrigger render={link} />
-        <HoverCardContent side="right" align="start" sideOffset={8} className="w-60 p-1.5">
-          <div className="flex items-center justify-between px-2 pt-1 pb-1.5">
-            <span className="text-sm font-semibold">{label}</span>
-            {letter && <ChordHint letter={letter} />}
-          </div>
-          {flyout}
-        </HoverCardContent>
-      </HoverCard>
+      <RailFlyout link={link} label={label} letter={letter}>
+        {flyout}
+      </RailFlyout>
     );
   }
 
