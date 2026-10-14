@@ -1,0 +1,89 @@
+<header class="masthead">
+  <div class="issuer">
+    {{ if .LogoDataURI }}<img class="logo" src="{{ .LogoDataURI }}" alt="{{ .Organization.Name }}">{{ end }}
+    <div class="issuer-name">{{ .Organization.Name }}</div>
+    {{ range .Organization.Lines }}<div class="issuer-line">{{ . }}</div>{{ end }}
+    {{ range .Organization.Details }}<div class="issuer-line">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+
+  <div class="notice-id">
+    <div class="doc-type">{{ t "Notice of assignment" }}</div>
+    <div class="notice-date">{{ .LetterDate }}</div>
+    <dl class="meta">
+      <dt>{{ t "Effective" }}</dt><dd>{{ .EffectiveDate }}</dd>
+    </dl>
+  </div>
+</header>
+
+<section class="parties">
+  <div class="party">
+    <h2>{{ t "Notice to" }}</h2>
+    <div class="party-name">{{ .Customer.Name }}</div>
+    {{ range .Customer.Lines }}<div>{{ . }}</div>{{ end }}
+    {{ range .Customer.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+
+  <div class="party">
+    <h2>{{ t "Factoring company" }}</h2>
+    <div class="party-name">{{ .Factor.Name }}</div>
+    {{ range .Factor.Lines }}<div>{{ . }}</div>{{ end }}
+    {{ range .Factor.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+</section>
+
+<section class="letter">
+  <p class="subject">{{ t "Notice of assignment of accounts receivable" }}</p>
+  <p>{{ t "To the accounts payable department:" }}</p>
+  <p>{{ t "Effective {0}, {1} has assigned all of its present and future accounts receivable to {2}. The assignment covers every invoice {1} has issued to you that is still unpaid and every invoice it issues to you from that date on." .EffectiveDate .Organization.Name .Factor.Name }}</p>
+  <p class="instruction">{{ t "Pay every invoice from {0} only to the remittance address below. A payment sent anywhere else, including to {0} directly, will not discharge what you owe." .Organization.Name }}</p>
+</section>
+
+<section class="remit">
+  <h2>{{ t "Remit payment to" }}</h2>
+  <div class="party-name">{{ .RemitTo.Name }}</div>
+  {{ range .RemitTo.Lines }}<div>{{ . }}</div>{{ end }}
+  {{ range .RemitTo.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
+</section>
+
+<section class="letter">
+  <p>{{ t "This assignment can be released, and these payment instructions changed, only by written notice from {0}. Disregard any other request to send payment elsewhere." .Factor.Name }}</p>
+  <p>{{ t "Please update your payment records, then sign the acknowledgement below and return a copy to us and to {0}." .Factor.Name }}</p>
+  {{ if .Note }}<p class="note">{{ nl2br .Note }}</p>{{ end }}
+</section>
+
+<section class="signoff">
+  <p>{{ t "Sincerely," }}</p>
+  <div class="signer-line"></div>
+  {{ if .SignerName }}<div class="party-name">{{ .SignerName }}</div>{{ end }}
+  {{ if .SignerTitle }}<div>{{ .SignerTitle }}</div>{{ end }}
+  <div>{{ .Organization.Name }}</div>
+</section>
+
+<section class="acknowledgement">
+  <h2>{{ t "Acknowledgement" }}</h2>
+  <p>{{ t "{0} acknowledges receipt of this notice and will pay every invoice from {1} only to {2} until {2} releases the assignment in writing." .Customer.Name .Organization.Name .Factor.Name }}</p>
+  <div class="sign-grid">
+    <div class="sign-field">
+      <div class="sign-line"></div>
+      <div class="sign-label">{{ t "Printed name" }}</div>
+    </div>
+    <div class="sign-field">
+      <div class="sign-line"></div>
+      <div class="sign-label">{{ t "Job title" }}</div>
+    </div>
+    <div class="sign-field">
+      <div class="sign-line"></div>
+      <div class="sign-label">{{ t "Signature" }}</div>
+    </div>
+    <div class="sign-field">
+      <div class="sign-line"></div>
+      <div class="sign-label">{{ t "Date" }}</div>
+    </div>
+  </div>
+</section>
+
+{{ if .Reference }}
+<footer class="closing">
+  <p>{{ t "Reference" }}: {{ .Reference }}</p>
+</footer>
+{{ end }}

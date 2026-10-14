@@ -2,6 +2,7 @@ package canned
 
 import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 )
 
@@ -389,6 +390,39 @@ func orderRevenueSummary() *Entry {
 			Filters:    andFilters(windowFilter(createdAtFieldKey)),
 			Sort:       []report.SortSpec{desc("order_total")},
 			Parameters: []report.ParameterDef{windowParam(90)},
+		},
+	}
+}
+
+func invoicesReadyToFactor() *Entry {
+	return &Entry{
+		Key:     "invoices-ready-to-factor",
+		Version: initialVersion,
+		Name:    "Invoices Ready to Factor",
+		Description: "Factored invoices that pass every readiness check and are waiting to be " +
+			"submitted, with their factor, open balance and how long they have been ready, " +
+			"oldest first",
+		Category:      categoryBilling,
+		Tags:          []string{"invoices", tagAR, "factoring"},
+		DefaultFormat: report.FormatXLSX,
+		Definition: &report.Definition{
+			IRVersion: report.CurrentIRVersion,
+			Entity:    entityFactoringState,
+			Columns: []report.ColumnSpec{
+				dimCol("invoice_number", "Invoice Number", "number", invoiceEdge),
+				dimCol(customerColumnID, customerLabel, nameField, customerEdge),
+				dimCol("factor", "Factor", nameField, factorCompanyEdge),
+				dateDim("invoice_date", "Invoice Date", "invoiceDate", invoiceEdge),
+				dateDim("due_date", "Due Date", "dueDate", invoiceEdge),
+				dateDim("ready_since", "Ready Since", "readySince"),
+				sumMinor(openBalanceColumnID, "Open Balance", "openBalanceMinor"),
+			},
+			Filters: andFilters(report.FieldFilter{
+				Ref:      report.FieldRef{Field: "verdict"},
+				Operator: dbtype.OpEqual,
+				Value:    verdictReady,
+			}),
+			Sort: []report.SortSpec{asc("ready_since")},
 		},
 	}
 }

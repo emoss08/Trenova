@@ -45,6 +45,7 @@ func (r *Registry) registerCustomerResources() {
 			{Operation: OpRead, DisplayName: "Read", Description: "View factoring companies"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add factoring companies"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify factoring companies"},
+			{Operation: OpExport, DisplayName: "Export", Description: "Export factoring companies"},
 		},
 		DefaultSensitivity: SensitivityConfidential,
 	})

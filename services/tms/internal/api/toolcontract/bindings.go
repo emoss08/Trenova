@@ -24,6 +24,7 @@ const (
 
 const (
 	watchtowerItemIDParam = "watchtowerItemId"
+	noaIDParam            = "noaId"
 	exceptionIDArg        = "the mutation takes the exception as its id argument, beside the input"
 )
 
@@ -38,6 +39,27 @@ func namedID(param string) string {
 }
 
 var Bindings = []Binding{
+	{Tool: "draft_factoring_noa", Input: "DraftFactoringNoaInput"},
+	{
+		Tool:      "send_factoring_noa",
+		Input:     "SendFactoringNoaInput",
+		Defaulted: map[string]string{"id": namedID(noaIDParam)},
+		Extra:     map[string]string{noaIDParam: namedID(noaIDParam)},
+	},
+	{
+		Tool:      "record_factoring_noa_acknowledgement",
+		Input:     "AcknowledgeFactoringNoaInput",
+		Defaulted: map[string]string{"id": namedID(noaIDParam)},
+		Extra:     map[string]string{noaIDParam: namedID(noaIDParam)},
+	},
+	{
+		Tool:      "release_factoring_noa",
+		Input:     "ReleaseFactoringNoaInput",
+		Defaulted: map[string]string{"id": namedID(noaIDParam)},
+		Extra:     map[string]string{noaIDParam: namedID(noaIDParam)},
+	},
+	{Tool: "set_invoice_factoring_override", Input: "SetInvoiceFactoringOverrideInput"},
+	{Tool: "request_missing_factoring_document", Input: "RequestMissingFactoringDocumentsInput"},
 	{
 		Tool:  "assign_exception",
 		Input: "AssignWatchtowerItemInput",

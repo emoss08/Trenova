@@ -1,0 +1,16 @@
+{
+  "Checks": "檢查項目",
+  "Every check an invoice must pass before it can be sold to the factor. A failed check names what clears it.": "發票出售給承購公司前必須通過的所有檢查。未通過的檢查會註明如何解決。",
+  "Factoring readiness": "承購就緒狀態",
+  "Factoring summary": "承購摘要",
+  "Failed checks": "未通過的檢查",
+  "Loading factoring readiness...": "正在載入承購就緒狀態...",
+  "No invoices are ready to factor": "沒有可承購的發票",
+  "No invoices are waiting on a fix": "沒有等待修正的發票",
+  "Posted invoices assigned to a factor, split by whether they are ready to sell. Open one to see the checks it failed and fix them.": "已轉讓給承購公司的已過帳發票，依是否可出售分類。開啟發票即可查看未通過的檢查並加以修正。",
+  "Ready over a day": "就緒超過一天",
+  "The factoring summary could not be loaded.": "無法載入承購摘要。",
+  "This invoice's factoring readiness could not be loaded.": "無法載入此發票的承購就緒狀態。",
+  "Verdict": "判定",
+  "{0, plural, one {# invoice} other {# invoices}} not yet submitted": "{0, plural, one {# 張發票} other {# 張發票}}尚未提交"
+}

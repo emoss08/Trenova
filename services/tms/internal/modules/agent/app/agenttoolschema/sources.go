@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -55,6 +58,12 @@ var (
 	AccountingSystems = Source(
 		"integration.accountingSystem",
 		accountingsync.AccountingSystems(),
+	)
+	FactoringQueueVerdicts = Source("factoring.verdict", factoring.QueueVerdicts())
+	FactoringNoaStatuses   = Source("factoring.noaStatus", factoring.AllNoaStatuses())
+	FactoringOverrides     = Source(
+		"invoice.factoringOverride",
+		invoice.FactoringOverrideValues(),
 	)
 	MappingTargetTypes = Source(
 		"accountingSync.mappingTargetType",

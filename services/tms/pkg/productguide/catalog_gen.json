@@ -1,5 +1,5 @@
 {
-  "version": "sha256:b40edf6773969f694b0e5d2c3518f5319a7671e7558c6e16db59a4a688b2e24d",
+  "version": "sha256:3a19819d8aad4a3a4656b0427c6d40c6c5d6aaa2ea89390a5c5bede388bc3f9a",
   "modules": [
     {
       "id": "home",
@@ -6823,6 +6823,21 @@
             "Tick the rows you want to change.",
             "Use **Update status** in the action bar that appears and pick **Active** or **Inactive**."
           ]
+        },
+        {
+          "title": "Send a factored customer its notice of assignment",
+          "keywords": [
+            "send NOA",
+            "notice of assignment",
+            "factored customer",
+            "tell the customer to pay the factor"
+          ],
+          "steps": [
+            "Open [Customers](/billing/configuration-files/customers) and select the customer's row.",
+            "Open the **Billing profile** tab. Under **Factoring**, the **Notice of assignment** box shows where the customer's notice to its factor stands.",
+            "Select **Send NOA**. A notice is drafted first when the customer has none.",
+            "Optionally enter a **Recipient**, then select **Send notice**."
+          ]
         }
       ],
       "notes": "Viewing the page needs read access to customers; adding one needs create access and changing one needs update access. The **Broker vetting** tab needs a carrier intelligence provider connected under integrations.\n\nA statement customer's shipments collect in the **Statements** view of the [Billing queue](/billing/queue) until their period is billed.",
@@ -6830,7 +6845,8 @@
         "/billing/queue",
         "/billing/invoices",
         "/billing/rate-agreements",
-        "/billing/configuration-files/document-types"
+        "/billing/configuration-files/document-types",
+        "/billing/factoring"
       ],
       "covers": [],
       "createAction": {
@@ -7001,7 +7017,7 @@
         "Factoring companies"
       ],
       "description": "The factors your receivables are sold to. Customers assigned to one are invoiced with its remit-to and notice of assignment.",
-      "summary": "Factoring companies lists the factors you sell receivables to. Each one holds the factor's **Code**, **Name** and remit-to address, how customers pay it (**Remittance instructions**) and the **Notice of assignment** printed on every invoice assigned to it.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.\n\nA factor is either recourse or **Non-recourse**. With recourse, the usual arrangement, an invoice the customer never pays comes back to you, so factored invoices stay on the [Collections](/accounting/ar/collections) worklist and still count toward the customer's credit limit. A non-recourse factor buys the invoices outright and carries the risk, so its invoices leave the worklist and stop counting toward the credit limit.",
+      "summary": "Factoring companies lists the factors you sell receivables to. Each one holds the factor's **Code**, **Name** and remit-to address, how customers pay it (**Remittance instructions**) and the **Notice of assignment** printed on every invoice assigned to it.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.\n\nA factor is either recourse or **Non-recourse**. With recourse, the usual arrangement, an invoice the customer never pays comes back to you, so factored invoices stay on the [Collections](/accounting/ar/collections) worklist and still count toward the customer's credit limit. A non-recourse factor buys the invoices outright and carries the risk, so its invoices leave the worklist and stop counting toward the credit limit.\n\nEach factor's panel also holds its **Agreements** and its **Notices of assignment**. The agreement records the terms: advance and reserve rates, the fee by days outstanding, the chargeback window, funding days and the documents the factor needs with every invoice. A notice of assignment tells one customer to pay the factor. A customer's invoices are only ready to factor on the [Factoring](/billing/factoring) page once the factor has an active agreement and the customer has acknowledged a notice.",
       "requires": [
         {
           "resource": "factoring_company",
@@ -7073,12 +7089,86 @@
             "Open the **Billing profile** tab.",
             "Clear the **Factoring company**, then select **Save**."
           ]
+        },
+        {
+          "title": "Set up a factoring agreement",
+          "keywords": [
+            "factoring terms",
+            "advance rate",
+            "reserve",
+            "fee schedule",
+            "chargeback window",
+            "factoring contract"
+          ],
+          "steps": [
+            "Open [Factoring companies](/billing/configuration-files/factoring-companies) and select the factor's row.",
+            "Under **Agreements**, select **New agreement**.",
+            "Fill in **Starts**, **Advance rate**, **Reserve rate**, **Chargeback window**, **Recourse** and **Accounting treatment**.",
+            "Under **Fees**, enter each band's **Until day**, **Fee rate** and **Flat fee**. Select **Add tier** for another band and leave the last one open-ended.",
+            "Fill in **Funding days** and **Daily schedule time**, and pick the **Documents the factor needs**.",
+            "Select **Save draft**, then **Activate** once the contract is signed."
+          ]
+        },
+        {
+          "title": "End a factoring agreement",
+          "keywords": [
+            "stop factoring with a factor",
+            "terminate agreement"
+          ],
+          "steps": [
+            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "Under **Agreements**, select **End** on the active agreement.",
+            "Optionally choose when it **Ends**, then select **End agreement**."
+          ]
+        },
+        {
+          "title": "Send a notice of assignment",
+          "keywords": [
+            "NOA",
+            "send NOA",
+            "notice of assignment letter",
+            "tell the customer to pay the factor"
+          ],
+          "steps": [
+            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "Under **Notices of assignment**, select **New notice**, choose the **Customer**, then select **Save draft**.",
+            "In the dialog that opens, optionally enter a **Recipient**, then select **Send notice**."
+          ]
+        },
+        {
+          "title": "Record a signed notice of assignment",
+          "keywords": [
+            "NOA acknowledged",
+            "signed NOA",
+            "upload signed notice",
+            "acknowledgement"
+          ],
+          "steps": [
+            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "Under **Notices of assignment**, select **Record acknowledgement** on the customer's notice.",
+            "Choose **Acknowledged on**, upload the signed copy or pick it under **Signed copy**, and optionally set when it **Expires**.",
+            "Select **Record acknowledgement**."
+          ]
+        },
+        {
+          "title": "Release a notice of assignment",
+          "keywords": [
+            "release NOA",
+            "stop the factor collecting",
+            "customer pays us again"
+          ],
+          "steps": [
+            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "Under **Notices of assignment**, select **Release** on the notice.",
+            "Enter the **Reason**, then select **Release notice**."
+          ]
         }
       ],
-      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nRecourse is a property of the agreement, so it applies to every invoice assigned to the factor, including ones already posted. Credit standings follow at the next credit review, which runs each night and whenever the customer's receivables change.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.",
+      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nRecourse is a property of the agreement, so it applies to every invoice assigned to the factor, including ones already posted. Credit standings follow at the next credit review, which runs each night and whenever the customer's receivables change.\n\nAgreements need factoring agreement access and notices need notice of assignment access. An ended agreement cannot be changed, and a factor has one active agreement at a time.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.",
       "related": [
         "/billing/configuration-files/customers",
-        "/billing/invoices"
+        "/billing/invoices",
+        "/billing/factoring"
       ],
       "covers": [],
       "createAction": {
@@ -7439,6 +7529,100 @@
           "panelType": "create"
         }
       },
+      "inNavigation": true
+    },
+    {
+      "path": "/billing/factoring",
+      "name": "Factoring",
+      "module": "billing",
+      "breadcrumb": [
+        "Billing management",
+        "Factoring"
+      ],
+      "description": "Posted invoices assigned to a factor, split by whether they are ready to sell. Open one to see the checks it failed and fix them.",
+      "summary": "Factoring lists every posted invoice assigned to a factor and says whether it is ready to sell. An invoice is ready when it is posted and open with no open dispute, its customer has acknowledged a notice of assignment for the factor, the factor has an active agreement, the shipment passes billing readiness, and the invoice carries every document the agreement asks for.\n\nThe strip at the top totals the open balance of invoices that are **Ready**, **Not ready**, and **Ready over a day** (ready for more than a day without being submitted). The **Ready** and **Not ready** tabs list those invoices with their customer, factor and open balance. Open an invoice to see each check it was given, what failed, and the action that clears it.",
+      "requires": [
+        {
+          "resource": "invoice",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "factoring queue",
+        "ready to factor",
+        "factoring readiness",
+        "sell invoices",
+        "schedule of accounts",
+        "factored invoices",
+        "NOA",
+        "notice of assignment",
+        "missing POD for factoring"
+      ],
+      "tasks": [
+        {
+          "title": "See which invoices are ready to factor",
+          "keywords": [
+            "ready to sell",
+            "factoring queue",
+            "invoices ready for the factor"
+          ],
+          "steps": [
+            "Open [Factoring](/billing/factoring).",
+            "Select the **Ready** tab, or the **Ready** figure in the strip. **Ready since** shows when each invoice became ready."
+          ]
+        },
+        {
+          "title": "Find out why an invoice is not ready",
+          "keywords": [
+            "factoring blocked",
+            "failed checks",
+            "not ready to factor",
+            "factoring readiness checks"
+          ],
+          "steps": [
+            "Open [Factoring](/billing/factoring) and select the **Not ready** tab.",
+            "Select the invoice's row. Its **Checks** list the failed checks first, each with what clears it.",
+            "Follow the check's link: **Open the factor's agreements** or **Open the factor's notices** for a missing agreement or notice, **Open the disputes** for an open dispute, and **Open the shipment** for a shipment that fails billing readiness."
+          ]
+        },
+        {
+          "title": "Ask for a missing document",
+          "keywords": [
+            "request POD",
+            "missing proof of delivery",
+            "missing BOL for factoring",
+            "request paperwork"
+          ],
+          "steps": [
+            "Open [Factoring](/billing/factoring), select the **Not ready** tab and select the invoice's row.",
+            "On the check for the missing document, select **Request documents**.",
+            "Optionally enter a **Recipient** and a **Message**, then select **Send request**. With no recipient, the driver is asked first, then the carrier, then the customer's invoice contacts."
+          ]
+        },
+        {
+          "title": "Keep one invoice out of factoring",
+          "keywords": [
+            "exclude invoice from factoring",
+            "collect it ourselves",
+            "factoring override",
+            "do not factor"
+          ],
+          "steps": [
+            "Open [Invoices](/billing/invoices) and select the invoice.",
+            "In the **Factoring** section on the **Overview** tab, change **Factoring** to **Keep out of factoring**.",
+            "Enter the **Reason**, then select **Save**. Change it back to **Follow the customer** to return the invoice to its customer's factor."
+          ]
+        }
+      ],
+      "notes": "Opening the page needs read access to invoices. Requesting documents needs permission to create customer communications, and keeping an invoice out of factoring needs update access to invoices.\n\nReadiness is checked again whenever a document, the invoice, a dispute, the agreement or the notice changes, so a fixed check clears on its own. Voided, paid and credit memo invoices, and invoices kept out of factoring, are not listed.\n\nAgreements and notices of assignment are kept on each factor; see [Factoring companies](/billing/configuration-files/factoring-companies).",
+      "related": [
+        "/billing/configuration-files/factoring-companies",
+        "/billing/configuration-files/customers",
+        "/billing/invoices"
+      ],
+      "covers": [],
+      "createAction": null,
       "inNavigation": true
     },
     {
@@ -17576,6 +17760,33 @@
         "panelEntityId": "{id}"
       },
       "deskCard": true
+    },
+    {
+      "entity": "factoring_agreement",
+      "label": "Factoring agreement",
+      "path": "/billing/configuration-files/factoring-companies",
+      "params": {
+        "section": "agreements",
+        "agreement": "{id}"
+      }
+    },
+    {
+      "entity": "factoring_company",
+      "label": "Factoring company",
+      "path": "/billing/configuration-files/factoring-companies",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
+      "entity": "factoring_noa",
+      "label": "Notice of assignment",
+      "path": "/billing/configuration-files/factoring-companies",
+      "params": {
+        "section": "notices",
+        "noa": "{id}"
+      }
     },
     {
       "entity": "formula_template",

@@ -1,6 +1,7 @@
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { useRegister } from "@/hooks/use-register";
 import { absoluteAppUrl, invoicePanelPath } from "@/lib/invoice-links";
 import { invoiceShare } from "@/lib/queries/invoice-share";
 import { apiService } from "@/services/api";
@@ -162,7 +163,7 @@ function InviteForm({ invoice, tab }: { invoice: Invoice; tab: InvoiceDetailTab 
     resolver: zodResolver(shareInvoiceFormSchema) as Resolver<ShareInvoiceFormValues>,
     defaultValues: EMPTY_FORM,
   });
-  const { control, handleSubmit, reset, register, formState } = form;
+  const { control, handleSubmit, reset, formState } = form;
 
   const mutation = useApiMutation({
     mutationFn: (values: ShareInvoiceFormValues) =>
@@ -203,28 +204,44 @@ function InviteForm({ invoice, tab }: { invoice: Invoice; tab: InvoiceDetailTab 
             {t("Invite")}
           </Button>
         </div>
-        {selected ? (
-          <div className="flex flex-col gap-1">
-            <Textarea
-              {...register("note")}
-              aria-label={t("Note")}
-              placeholder={t("Add a note for {0} (optional)", selected.name)}
-              maxLength={MAX_INVOICE_SHARE_NOTE_LENGTH}
-              minRows={4}
-              className="bg-background rounded-lg text-sm"
-              aria-invalid={noteError ? true : undefined}
-            />
-            {noteError ? (
-              <p className="text-destructive text-xs">{t(noteError)}</p>
-            ) : (
-              <p className="text-muted-foreground text-xs">
-                {t("Anyone who can view this invoice sees the note in the list below.")}
-              </p>
-            )}
-          </div>
-        ) : null}
+        {selected ? <NoteField control={control} recipient={selected} error={noteError} /> : null}
       </Form>
     </FormProvider>
+  );
+}
+
+/** The optional note for the picked teammate, registered only while it is drawn. */
+function NoteField({
+  control,
+  recipient,
+  error,
+}: {
+  control: Control<ShareInvoiceFormValues>;
+  recipient: InvoiceShareUser;
+  error?: string;
+}) {
+  const t = useT();
+  const note = useRegister(control, "note");
+
+  return (
+    <div className="flex flex-col gap-1">
+      <Textarea
+        {...note}
+        aria-label={t("Note")}
+        placeholder={t("Add a note for {0} (optional)", recipient.name)}
+        maxLength={MAX_INVOICE_SHARE_NOTE_LENGTH}
+        minRows={4}
+        className="bg-background rounded-lg text-sm"
+        aria-invalid={error ? true : undefined}
+      />
+      {error ? (
+        <p className="text-destructive text-xs">{t(error)}</p>
+      ) : (
+        <p className="text-muted-foreground text-xs">
+          {t("Anyone who can view this invoice sees the note in the list below.")}
+        </p>
+      )}
+    </div>
   );
 }
 

@@ -11,6 +11,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useRegister } from "@/hooks/use-register";
 import { apiService } from "@/services/api";
 import {
   billingQueueFilterPresetInputSchema,
@@ -53,11 +54,12 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
   });
 
   const {
-    register,
+    control,
     handleSubmit,
     reset,
     formState: { isSubmitting },
   } = form;
+  const nameField = useRegister(control, "name");
 
   const { mutateAsync } = useApiMutation({
     mutationFn: (values: BillingQueueFilterPresetInput) =>
@@ -97,7 +99,7 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
               <FormControl>
                 <Input
                   placeholder={t("Preset name")}
-                  {...register("name")}
+                  {...nameField}
                   className="h-8 text-sm"
                   autoFocus
                 />

@@ -8,6 +8,30 @@ const (
 	StatusVoided = Status("Voided")
 )
 
+type FactoringOverride string
+
+const (
+	FactoringOverrideDefault = FactoringOverride("Default")
+	FactoringOverrideExclude = FactoringOverride("Exclude")
+)
+
+func (o FactoringOverride) IsValid() bool {
+	switch o {
+	case FactoringOverrideDefault, FactoringOverrideExclude:
+		return true
+	default:
+		return false
+	}
+}
+
+func FactoringOverrideValues() []FactoringOverride {
+	return []FactoringOverride{FactoringOverrideDefault, FactoringOverrideExclude}
+}
+
+func (o FactoringOverride) Excludes() bool {
+	return o == FactoringOverrideExclude
+}
+
 // VoidDisposition says what happens to the freight behind a voided invoice:
 // back to the queue to be billed again, or canceled so it never is.
 type VoidDisposition string

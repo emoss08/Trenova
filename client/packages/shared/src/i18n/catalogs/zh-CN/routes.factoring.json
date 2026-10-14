@@ -1,0 +1,16 @@
+{
+  "Checks": "检查项目",
+  "Every check an invoice must pass before it can be sold to the factor. A failed check names what clears it.": "发票出售给保理公司前必须通过的所有检查。未通过的检查会注明如何解决。",
+  "Factoring readiness": "保理就绪状态",
+  "Factoring summary": "保理摘要",
+  "Failed checks": "未通过的检查",
+  "Loading factoring readiness...": "正在加载保理就绪状态...",
+  "No invoices are ready to factor": "没有可保理的发票",
+  "No invoices are waiting on a fix": "没有等待修正的发票",
+  "Posted invoices assigned to a factor, split by whether they are ready to sell. Open one to see the checks it failed and fix them.": "已转让给保理公司的已过账发票，按是否可出售分类。打开发票即可查看未通过的检查并加以修正。",
+  "Ready over a day": "就绪超过一天",
+  "The factoring summary could not be loaded.": "无法加载保理摘要。",
+  "This invoice's factoring readiness could not be loaded.": "无法加载此发票的保理就绪状态。",
+  "Verdict": "判定",
+  "{0, plural, one {# invoice} other {# invoices}} not yet submitted": "{0, plural, one {# 张发票} other {# 张发票}}尚未提交"
+}

@@ -1,0 +1,72 @@
+fragment FactoringNoaFields on FactoringNoa {
+  id
+  customerId
+  factoringCompanyId
+  status
+  sentAt
+  sentTo
+  acknowledgedAt
+  signedDocumentId
+  expiresAt
+  releasedAt
+  releaseReason
+  notes
+  version
+  createdAt
+  updatedAt
+  customer {
+    id
+    code
+    name
+  }
+  factoringCompany {
+    id
+    code
+    name
+  }
+}
+
+query FactoringNoas($input: FactoringNoaListInput!) {
+  factoringNoas(input: $input) {
+    edges {
+      node {
+        ...FactoringNoaFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query FactoringNoaOwner($id: ID!) {
+  factoringNoa(id: $id) {
+    id
+    factoringCompanyId
+  }
+}
+
+mutation DraftFactoringNoa($input: DraftFactoringNoaInput!) {
+  draftFactoringNoa(input: $input) {
+    ...FactoringNoaFields
+  }
+}
+
+mutation SendFactoringNoa($input: SendFactoringNoaInput!) {
+  sendFactoringNoa(input: $input) {
+    ...FactoringNoaFields
+  }
+}
+
+mutation AcknowledgeFactoringNoa($input: AcknowledgeFactoringNoaInput!) {
+  acknowledgeFactoringNoa(input: $input) {
+    ...FactoringNoaFields
+  }
+}
+
+mutation ReleaseFactoringNoa($input: ReleaseFactoringNoaInput!) {
+  releaseFactoringNoa(input: $input) {
+    ...FactoringNoaFields
+  }
+}

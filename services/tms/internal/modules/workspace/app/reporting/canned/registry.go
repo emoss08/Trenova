@@ -56,6 +56,7 @@ func Default() *Registry {
 		arAgingByCustomer(),
 		invoiceRevenueTrend(),
 		orderRevenueSummary(),
+		invoicesReadyToFactor(),
 
 		shipmentVolumeByStatus(),
 		facilityActivity(),

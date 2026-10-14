@@ -132,6 +132,19 @@ An item at the cap stays overdue and is no longer picked up by the sweep.
 | `TenderExhausted` | the move's latest tender is `Exhausted`, the move is still `New` with no live carrier assignment, and the shipment is open | tender | the move is covered or tendered again |
 | `NoCheckCall` | see [check-calls.md](check-calls.md) | move | a check call lands |
 | `EtaAtRisk` | see [eta.md](eta.md) | shipment | the projection recovers |
+| `Factoring` | an invoice has been `Ready` in `factoring_invoice_states` for more than a day (`factoring.ReadyUnsubmittedSeconds`) and is still not submitted; critical after three days | `ready:<invoice>` | the invoice is submitted, stops being ready or is paid |
+| `Factoring` | a customer's billing profile names a factor, the customer is active, and there is no acknowledged, unexpired notice of assignment for that customer and factor; the summary says whether a notice is missing, drafted, sent or expired | `noa-missing:<customer>:<factor>` | a notice is acknowledged, or the profile stops naming that factor |
+| `Factoring` | an acknowledged notice expires within `factoring.NoaExpiryWarningDays` (30) days; critical inside seven | `noa-expiring:<notice>` | the notice is renewed, released or expires (it then shows as missing) |
+
+The `Factoring` kind is read as invoices (`ResourceInvoice`, the same read the factoring queue
+takes). Its snapshot is `watchtowersources.FactoringSource`, reading
+`InvoiceStateRepository.ListReadyUnsubmitted` and `factoringports.WatchtowerReader`
+(`factoringrepository/watchtower.go`). Every item turns on the clock, so
+`factoring-watchtower-sweep` reconciles it for every organization every fifteen minutes, on
+top of the nightly reconcile. An invoice item is about the invoice (`factoring.invoice_ready`),
+an expiring notice about the notice (`factoring.noa_expiring`); a missing notice is about the
+open notice when one exists and has no subject otherwise, because a customer is not an agent
+subject.
 
 The four shipment kinds are raised by `shipment-exception-sweep` every ten minutes, which
 reconciles every organization against `exceptionsourcerepository`. A shipment event (arrival,

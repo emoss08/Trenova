@@ -209,10 +209,14 @@ const worklistSQL = `
 			AND inv.total_amount_minor > inv.applied_amount_minor
 			AND NOT EXISTS (
 				SELECT 1 FROM factoring_companies AS fac
+				LEFT JOIN factoring_agreements AS agr
+					ON agr.id = inv.factoring_agreement_id
+					AND agr.organization_id = inv.organization_id
+					AND agr.business_unit_id = inv.business_unit_id
 				WHERE fac.id = inv.factoring_company_id
 					AND fac.organization_id = inv.organization_id
 					AND fac.business_unit_id = inv.business_unit_id
-					AND fac.non_recourse
+					AND COALESCE(agr.recourse = 'NonRecourse', fac.non_recourse)
 			)
 		GROUP BY inv.customer_id
 	)

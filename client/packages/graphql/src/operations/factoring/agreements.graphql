@@ -1,0 +1,96 @@
+fragment FactoringAgreementFields on FactoringAgreement {
+  id
+  factoringCompanyId
+  status
+  effectiveFrom
+  effectiveTo
+  advanceRateBp
+  reserveRateBp
+  minimumFeeMinor
+  chargebackWindowDays
+  recourse
+  accountingTreatment
+  fundingDays
+  submissionTime
+  notes
+  activatedAt
+  endedAt
+  version
+  createdAt
+  updatedAt
+  feeTiers {
+    id
+    daysFrom
+    daysTo
+    rateBp
+    flatMinor
+  }
+  documentTypes {
+    id
+    code
+    name
+    color
+  }
+}
+
+query FactoringAgreements($factoringCompanyId: ID!) {
+  factoringAgreements(factoringCompanyId: $factoringCompanyId) {
+    ...FactoringAgreementFields
+  }
+}
+
+query FactoringAgreementOwner($id: ID!) {
+  factoringAgreement(id: $id) {
+    id
+    factoringCompanyId
+  }
+}
+
+mutation CreateFactoringAgreement($input: FactoringAgreementInput!) {
+  createFactoringAgreement(input: $input) {
+    ...FactoringAgreementFields
+  }
+}
+
+mutation UpdateFactoringAgreement($input: UpdateFactoringAgreementInput!) {
+  updateFactoringAgreement(input: $input) {
+    ...FactoringAgreementFields
+  }
+}
+
+mutation ActivateFactoringAgreement($input: ChangeFactoringAgreementStatusInput!) {
+  activateFactoringAgreement(input: $input) {
+    ...FactoringAgreementFields
+  }
+}
+
+mutation EndFactoringAgreement($input: ChangeFactoringAgreementStatusInput!) {
+  endFactoringAgreement(input: $input) {
+    ...FactoringAgreementFields
+  }
+}
+
+query FactoringCompanyRecord($id: ID!) {
+  factoringCompany(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    stateId
+    postalCode
+    email
+    phoneNumber
+    remittanceInstructions
+    noticeOfAssignment
+    nonRecourse
+    notes
+    version
+    createdAt
+    updatedAt
+  }
+}
