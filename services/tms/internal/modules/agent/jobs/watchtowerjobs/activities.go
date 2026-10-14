@@ -198,6 +198,17 @@ func (a *Activities) ShipmentExceptionSweepActivity(
 	})
 }
 
+func (a *Activities) FactoringSweepActivity(
+	ctx context.Context,
+) (*WatchtowerSweepResult, error) {
+	return a.sweepAll(ctx, func(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (*watchtowerports.WatchtowerSweepResult, error) {
+		return a.watchtower.ReconcileKind(ctx, tenant, watchtower.SourceFactoring)
+	})
+}
+
 // BackfillActivity fills the named tenant's feed from what its sources
 // report open, or every tenant's when no organization is named. It never
 // resolves: a backfill adds what is missing and leaves the rest alone.

@@ -1,7 +1,7 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AssistantHistory } from "../assistant-history";
 import { AssistantSidebar } from "../assistant-sidebar";
 
@@ -9,9 +9,17 @@ vi.mock("../use-active-turns", () => ({
   useLiveThreadIds: () => new Set<string>(),
 }));
 
-afterEach(cleanup);
+const now = Math.floor(new Date(2026, 9, 14, 12, 0, 0).getTime() / 1000);
 
-const now = Math.floor(Date.now() / 1000);
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(now * 1000);
+});
+
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 function thread(
   id: string,

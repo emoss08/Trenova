@@ -27,6 +27,7 @@ import {
 } from "@/lib/choices";
 import { BillingSchedulePreview } from "./billing-schedule-preview";
 import { CreditExposureSummary } from "./credit-exposure-summary";
+import { CustomerFactoringNoa } from "./customer-factoring-noa";
 import { MemoEntryButton } from "@/components/billing/memo-entry-button";
 import type { Customer } from "@trenova/shared/types/customer";
 import { useMemo } from "react";
@@ -587,6 +588,9 @@ export function CustomerBillingProfileForm() {
                 "Invoices posted from now on are remitted to this factor, print its notice of assignment, and are left out of payment reminders. Invoices already posted keep the factor they were posted with.",
               )}
             />
+          </FormControl>
+          <FormControl>
+            <CustomerFactoringNoa />
           </FormControl>
         </FormGroup>
       </FormSection>

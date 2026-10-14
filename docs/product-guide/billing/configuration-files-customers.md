@@ -6,6 +6,7 @@ related:
   - /billing/invoices
   - /billing/rate-agreements
   - /billing/configuration-files/document-types
+  - /billing/factoring
 ---
 
 ## What it's for
@@ -46,6 +47,14 @@ Keywords: bulk status, deactivate customers
 1. Open [Customers](/billing/configuration-files/customers).
 2. Tick the rows you want to change.
 3. Use **Update status** in the action bar that appears and pick **Active** or **Inactive**.
+
+### Send a factored customer its notice of assignment
+Keywords: send NOA, notice of assignment, factored customer, tell the customer to pay the factor
+1. Open [Customers](/billing/configuration-files/customers) and select the customer's row.
+2. Open the **Billing profile** tab. Under **Factoring**, the **Notice of assignment** box shows where
+   the customer's notice to its factor stands.
+3. Select **Send NOA**. A notice is drafted first when the customer has none.
+4. Optionally enter a **Recipient**, then select **Send notice**.
 
 ## Notes
 Viewing the page needs read access to customers; adding one needs create access and changing one needs update access. The **Broker vetting** tab needs a carrier intelligence provider connected under integrations.

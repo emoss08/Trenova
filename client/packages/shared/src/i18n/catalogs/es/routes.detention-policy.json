@@ -101,7 +101,6 @@
   "Only shipments of these types are governed. Specificity +4.": "Solo se rigen los envíos de estos tipos. Especificidad +4.",
   "Only these service levels are governed. Specificity +2.": "Solo se rigen estos niveles de servicio. Especificidad +2.",
   "Open (first-come) stops will not accrue detention under this policy.": "Las paradas abiertas (por orden de llegada) no acumularán demoras bajo esta política.",
-  "Open-ended": "Abierto",
   "Overrides computed specificity when two policies tie. Leave at 0 unless you need an explicit override.": "Anula la especificidad calculada cuando dos políticas empatan. Déjelo en 0 salvo que necesite una anulación explícita.",
   "Pays out {0} more than it bills": "Paga {0} más de lo que factura",
   "Pickup override": "Anulación de la recogida",
