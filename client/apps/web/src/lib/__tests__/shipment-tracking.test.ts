@@ -1,107 +1,178 @@
 import { formatMessage } from "@trenova/shared/i18n/format-message";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
-import { formatUnixDateTime } from "@trenova/shared/lib/date";
-import type { PublicShipmentView } from "@trenova/shared/types/shipment-tracking";
+import type {
+  PublicShipmentStop,
+  PublicShipmentView,
+} from "@trenova/shared/types/shipment-tracking";
 import { describe, expect, it } from "vitest";
 import {
+  dayAndTime,
   holdLabel,
+  journeyOf,
+  minutesOutsideWindow,
+  nextStopOf,
   publicStatusAttrs,
   shows,
-  stopPlace,
-  stopStanding,
-  stopWindow,
+  trackingHeadline,
+  windowRange,
 } from "../shipment-tracking";
 
 const t: TranslateFn = (message, ...args) => formatMessage("en", message ?? "", args);
 
 const AT = 1_800_000_000;
 
-describe("stopStanding", () => {
-  it("prefers what happened over what was expected", () => {
-    expect(
-      stopStanding(t, {
-        sequence: 1,
-        type: "Pickup",
-        city: "Dallas",
-        stateCode: "TX",
-        arrivedAt: AT,
-        departedAt: AT + 600,
-        estimatedArrival: AT - 60,
-      }),
-    ).toBe(`Left ${formatUnixDateTime(AT + 600)}`);
-    expect(
-      stopStanding(t, {
-        sequence: 1,
-        type: "Pickup",
-        city: "Dallas",
-        stateCode: "TX",
-        arrivedAt: AT,
-      }),
-    ).toBe(`Arrived ${formatUnixDateTime(AT)}`);
+function stop(
+  sequence: number,
+  overrides: Partial<PublicShipmentStop> = {},
+): PublicShipmentStop {
+  return { sequence, type: "Delivery", city: `City ${sequence}`, stateCode: "TX", ...overrides };
+}
+
+function viewOf(
+  stops: PublicShipmentStop[],
+  overrides: Partial<PublicShipmentView> = {},
+): PublicShipmentView {
+  return {
+    companyName: "Acme Logistics",
+    shipmentProNumber: "PRO-77",
+    fields: [],
+    expiresAt: AT + 86_400,
+    closed: false,
+    status: "InTransit",
+    stops,
+    ...overrides,
+  };
+}
+
+describe("journeyOf", () => {
+  it("sits at the start before anything has happened", () => {
+    const journey = journeyOf(viewOf([stop(1), stop(2)], { status: "Planned" }), AT);
+    expect(journey).toEqual({
+      progress: 0,
+      activeIndex: 0,
+      atStop: false,
+      started: false,
+      finished: false,
+    });
   });
 
-  it("says a late stop is now expected later", () => {
-    expect(
-      stopStanding(t, {
-        sequence: 2,
-        type: "Delivery",
-        city: "Memphis",
-        stateCode: "TN",
-        estimatedArrival: AT,
-        running: "Late",
-      }),
-    ).toBe(`Now expected ${formatUnixDateTime(AT)}`);
-    expect(
-      stopStanding(t, {
-        sequence: 2,
-        type: "Delivery",
-        city: "Memphis",
-        stateCode: "TN",
-        estimatedArrival: AT,
-        running: "OnTime",
-      }),
-    ).toBe(`Expected ${formatUnixDateTime(AT)}`);
+  it("moves along a segment with time toward the next expected arrival", () => {
+    const view = viewOf([
+      stop(1, { arrivedAt: AT - 7200, departedAt: AT - 3600 }),
+      stop(2, { estimatedArrival: AT + 3600 }),
+      stop(3, { windowStart: AT + 20_000 }),
+    ]);
+    const journey = journeyOf(view, AT);
+    expect(journey.progress).toBeCloseTo(0.25);
+    expect(journey.activeIndex).toBe(1);
+    expect(journey.atStop).toBe(false);
+    expect(journey.started).toBe(true);
   });
 
-  it("says nothing about times the customer is not shown", () => {
-    expect(
-      stopStanding(t, { sequence: 2, type: "Delivery", city: "Memphis", stateCode: "TN" }),
-    ).toBeNull();
+  it("stands at a stop it has reached and not left", () => {
+    const view = viewOf([
+      stop(1, { arrivedAt: AT - 7200, departedAt: AT - 3600 }),
+      stop(2, { arrivedAt: AT - 600 }),
+      stop(3),
+    ]);
+    expect(journeyOf(view, AT)).toMatchObject({ progress: 0.5, activeIndex: 1, atStop: true });
+  });
+
+  it("keeps the truck short of the next stop when it is overdue", () => {
+    const view = viewOf([
+      stop(1, { departedAt: AT - 7200 }),
+      stop(2, { estimatedArrival: AT - 3600 }),
+    ]);
+    expect(journeyOf(view, AT).progress).toBeCloseTo(0.94);
+  });
+
+  it("sits halfway between stops when nothing says when it gets there", () => {
+    const view = viewOf([stop(1, { departedAt: AT - 600 }), stop(2)]);
+    expect(journeyOf(view, AT).progress).toBeCloseTo(0.5);
+  });
+
+  it("is finished once delivered", () => {
+    const view = viewOf([stop(1, { departedAt: AT - 600 }), stop(2)], { status: "Delivered" });
+    expect(journeyOf(view, AT)).toMatchObject({ progress: 1, finished: true });
   });
 });
 
-describe("stopWindow", () => {
-  it("spells the appointment out only when windows are shown", () => {
-    expect(
-      stopWindow(t, { sequence: 1, type: "Pickup", city: "Dallas", stateCode: "TX" }),
-    ).toBeNull();
-    expect(
-      stopWindow(t, {
-        sequence: 1,
-        type: "Pickup",
-        city: "Dallas",
-        stateCode: "TX",
-        windowStart: AT,
-        windowEnd: AT + 3600,
-      }),
-    ).toBe(`Appointment ${formatUnixDateTime(AT)} to ${formatUnixDateTime(AT + 3600)}`);
+describe("nextStopOf", () => {
+  it("skips a stop the load has left even when only its departure was reported", () => {
+    const view = viewOf([stop(1, { departedAt: AT - 600 }), stop(2), stop(3)]);
+    expect(nextStopOf(view)?.sequence).toBe(2);
+  });
+
+  it("is the last stop once every stop is reached", () => {
+    const view = viewOf([stop(1, { arrivedAt: AT - 600 }), stop(2, { arrivedAt: AT })]);
+    expect(nextStopOf(view)?.sequence).toBe(2);
   });
 });
 
-describe("stopPlace", () => {
-  it("names the location only when the view carries it", () => {
-    expect(stopPlace({ sequence: 1, type: "Pickup", city: "Dallas", stateCode: "TX" })).toBe(
-      "Dallas, TX",
+describe("trackingHeadline", () => {
+  const stops = [stop(1, { city: "Omaha" }), stop(2, { city: "Minneapolis" })];
+
+  it("says where the load is going in one sentence per status", () => {
+    expect(trackingHeadline(t, viewOf(stops))).toBe("On its way to Minneapolis.");
+    expect(trackingHeadline(t, viewOf(stops, { status: "Delayed" }))).toBe(
+      "Running late to Minneapolis.",
     );
-    expect(
-      stopPlace({
-        sequence: 1,
-        type: "Pickup",
-        city: "Dallas",
-        stateCode: "TX",
-        locationName: "North DC",
-      }),
-    ).toBe("North DC · Dallas, TX");
+    expect(trackingHeadline(t, viewOf(stops, { status: "Delivered" }))).toBe(
+      "Delivered in Minneapolis.",
+    );
+    expect(trackingHeadline(t, viewOf(stops, { status: "Planned" }))).toBe(
+      "Getting ready to leave Omaha.",
+    );
+    expect(trackingHeadline(t, viewOf(stops, { status: "Canceled" }))).toBe(
+      "This shipment was canceled.",
+    );
+  });
+
+  it("reads as on its way when the customer is not shown the status", () => {
+    expect(trackingHeadline(t, viewOf(stops, { status: undefined }))).toBe(
+      "On its way to Minneapolis.",
+    );
+  });
+});
+
+describe("minutesOutsideWindow", () => {
+  const appointment = stop(1, { windowStart: AT, windowEnd: AT + 3600 });
+
+  it("is negative before the window, zero inside it and positive after it", () => {
+    expect(minutesOutsideWindow(appointment, AT - 1200)).toBe(-20);
+    expect(minutesOutsideWindow(appointment, AT + 1800)).toBe(0);
+    expect(minutesOutsideWindow(appointment, AT + 3600 + 900)).toBe(15);
+  });
+
+  it("treats a window with no end as a single moment", () => {
+    expect(minutesOutsideWindow(stop(1, { windowStart: AT }), AT + 600)).toBe(10);
+  });
+
+  it("has nothing to say without an appointment", () => {
+    expect(minutesOutsideWindow(stop(1), AT)).toBeNull();
+  });
+});
+
+describe("dayAndTime", () => {
+  it("names today, tomorrow and yesterday, and dates anything further", () => {
+    const now = AT;
+    expect(dayAndTime(t, now, now)).toMatch(/^Today, /);
+    expect(dayAndTime(t, now + 86_400, now)).toMatch(/^Tomorrow, /);
+    expect(dayAndTime(t, now - 86_400, now)).toMatch(/^Yesterday, /);
+    expect(dayAndTime(t, now + 3 * 86_400, now)).not.toMatch(/^(Today|Tomorrow|Yesterday)/);
+  });
+
+  it("reads inside a sentence when inline", () => {
+    expect(dayAndTime(t, AT, AT, { inline: true })).toMatch(/^today at /);
+    expect(dayAndTime(t, AT + 86_400, AT, { inline: true })).toMatch(/^tomorrow at /);
+  });
+});
+
+describe("windowRange", () => {
+  it("is a range, or the start alone when the window is one moment", () => {
+    expect(windowRange(t, stop(1, { windowStart: AT, windowEnd: AT + 3600 }))).toContain(" – ");
+    expect(windowRange(t, stop(1, { windowStart: AT }))).not.toContain(" – ");
+    expect(windowRange(t, stop(1))).toBeNull();
   });
 });
 

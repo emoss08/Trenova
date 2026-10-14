@@ -1,6 +1,5 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
-  formatUnixDateTime,
   formatUnixMonthDay,
   formatUnixTime,
 } from "@trenova/shared/lib/date";
@@ -29,48 +28,6 @@ export function publicStatusAttrs(t: TranslateFn): Record<PublicShipmentStatus, 
 
 export function shows(view: PublicShipmentView, field: CustomerTrackingFieldValue): boolean {
   return view.fields.includes(field);
-}
-
-export function stopPlace(stop: PublicShipmentStop): string {
-  const town = [stop.city, stop.stateCode].filter(Boolean).join(", ");
-  return [stop.locationName, town].filter(Boolean).join(" · ");
-}
-
-/**
- * The one line that says where a stop stands: left, reached, expected, or due.
- * Each part appears only when the view carries it, so a customer shown only the
- * route sees no times at all.
- */
-export function stopStanding(t: TranslateFn, stop: PublicShipmentStop): string | null {
-  if (stop.departedAt != null) {
-    return t("Left {0}", formatUnixDateTime(stop.departedAt));
-  }
-  if (stop.arrivedAt != null) {
-    return t("Arrived {0}", formatUnixDateTime(stop.arrivedAt));
-  }
-  if (stop.estimatedArrival != null) {
-    return stop.running === "Late" || stop.running === "AtRisk"
-      ? t("Now expected {0}", formatUnixDateTime(stop.estimatedArrival))
-      : t("Expected {0}", formatUnixDateTime(stop.estimatedArrival));
-  }
-  if (stop.windowStart != null) {
-    return t("Due {0}", formatUnixDateTime(stop.windowStart));
-  }
-  return null;
-}
-
-export function stopWindow(t: TranslateFn, stop: PublicShipmentStop): string | null {
-  if (stop.windowStart == null) {
-    return null;
-  }
-  if (stop.windowEnd == null) {
-    return t("Appointment {0}", formatUnixDateTime(stop.windowStart));
-  }
-  return t(
-    "Appointment {0} to {1}",
-    formatUnixDateTime(stop.windowStart),
-    formatUnixDateTime(stop.windowEnd),
-  );
 }
 
 export function holdLabel(t: TranslateFn, hold: { type: string; label?: string }): string {
@@ -153,9 +110,16 @@ export function journeyOf(view: PublicShipmentView, now: number): Journey {
   };
 }
 
-/** The stop the customer is waiting on: the first one not yet reached, else the last. */
+/**
+ * The stop the customer is waiting on: the first one the load has not reached,
+ * else the last. A stop it has left counts as reached even when only the
+ * departure was reported.
+ */
 export function nextStopOf(view: PublicShipmentView): PublicShipmentStop | undefined {
-  return view.stops.find((stop) => stop.arrivedAt == null) ?? view.stops.at(-1);
+  return (
+    view.stops.find((stop) => stop.arrivedAt == null && stop.departedAt == null) ??
+    view.stops.at(-1)
+  );
 }
 
 /** The page's headline, one sentence about the whole shipment. */

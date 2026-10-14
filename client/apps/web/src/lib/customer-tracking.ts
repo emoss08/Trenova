@@ -4,7 +4,6 @@ import type {
   CustomerTrackingLinkRow,
 } from "@/lib/graphql/customer-tracking";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
 
 export type LinkState = "live" | "expired" | "revoked";
 
@@ -16,35 +15,8 @@ export function linkState(link: CustomerTrackingLinkRow, now: number): LinkState
   return link.expiresAt > now ? "live" : "expired";
 }
 
-export function linkStateAttrs(t: TranslateFn): Record<LinkState, BadgeAttrProps> {
-  return {
-    live: { phase: "active", text: t("Live") },
-    expired: { phase: "closed", text: t("Expired") },
-    revoked: { phase: "closed", text: t("Revoked") },
-  };
-}
-
 export function liveLinkCount(links: readonly CustomerTrackingLinkRow[], now: number): number {
   return links.filter((link) => linkState(link, now) === "live").length;
-}
-
-export function notificationStatusAttrs(
-  t: TranslateFn,
-): Record<CustomerStatusNotificationRow["status"], BadgeAttrProps> {
-  return {
-    Pending: {
-      phase: "queued",
-      text: t("Pending"),
-      description: t("Owed and not yet sent; retried after a failure"),
-    },
-    Sent: { phase: "complete", text: t("Sent") },
-    Skipped: { phase: "closed", text: t("Skipped") },
-    Failed: {
-      phase: "failed",
-      text: t("Failed"),
-      description: t("Gave up after repeated failures"),
-    },
-  };
 }
 
 export function statusEventLabel(t: TranslateFn, event: CustomerStatusNotificationRow["event"]) {

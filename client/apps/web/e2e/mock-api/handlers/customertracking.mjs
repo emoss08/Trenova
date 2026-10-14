@@ -152,7 +152,7 @@ function publicView(token) {
     case "planned":
       return { ...view, status: "Planned", stops: stops(t, "planned"), carrierName: undefined };
     case "canceled":
-      return { ...view, status: "Canceled", closed: true, stops: stops(t, "planned").map(({ estimatedArrival, running, ...s }) => s) };
+      return { ...view, status: "Canceled", closed: true, stops: stops(t, "planned").map((s) => ({ ...s, estimatedArrival: undefined, running: undefined })) };
     case "minimal":
       return {
         companyName: ORG.name,
@@ -179,6 +179,14 @@ const INVALID = {
 };
 
 export const CUSTOMER_TRACKING_ROUTES = [
+  [
+    "GET",
+    /^\/api\/v1\/shipments\/[^/]+\/customer-tracking\/preview\/?$/,
+    () => {
+      const view = publicView("in-transit");
+      return { ...view, fields: view.fields.filter((f) => !["Equipment", "Freight", "Holds"].includes(f)), equipment: undefined, pieces: undefined, weight: undefined };
+    },
+  ],
   [
     "GET",
     /^\/api\/v1\/shipment-tracking-links\/[^/]+\/?$/,

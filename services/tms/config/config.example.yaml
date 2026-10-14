@@ -8,7 +8,7 @@ app:
   debug: true # Enable debug mode
   version: 1.0.0 # Application version
   problemTypeBaseUri: https://api.trenova.app/problems/ # RFC 9457 problem type base URI
-  webBaseUrl: http://localhost:5173 # Origin of the web app (the Vite dev server in development, https://cloud.trenova.app in production), used for links in user emails such as invoice shares and for approving Trenova Capture computers. Leave empty and those emails are not sent and computers cannot be paired.
+  webBaseUrl: http://localhost:5173 # Origin of the web app (the Vite dev server in development, https://cloud.trenova.app in production), used for links in user emails such as invoice shares, for the public links customers and carriers open (shipment tracking, carrier tracking, tender offers, rate confirmations) and for approving Trenova Capture computers. tendering.publicBaseUrl, when set, overrides it for the public links alone. Leave both empty and those emails and links are not sent and computers cannot be paired.
 
 platform:
   mode: self_hosted # community/self_hosted/development/enterprise

@@ -8,9 +8,12 @@ import {
   listShipmentTrackingEventsGraphQL,
 } from "@/lib/graphql/shipment";
 import { apiService } from "@/services/api";
+import { ShipmentTrackingService } from "@/services/shipment-tracking";
 import type { PaginationInfo } from "@trenova/shared/types/server";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
+
+const shipmentTrackingService = new ShipmentTrackingService();
 
 export const shipment = createQueryKeys("shipment", {
   uiPolicy: () => ({
@@ -81,6 +84,12 @@ export const shipment = createQueryKeys("shipment", {
   customerTrackingLinks: (shipmentId: string) => ({
     queryKey: ["customer-tracking-links", shipmentId],
     queryFn: async ({ signal }) => listCustomerTrackingLinks(shipmentId, { signal }),
+  }),
+  // What the shipment's customer would see through a tracking link sent now.
+  customerTrackingPreview: (shipmentId: string) => ({
+    queryKey: ["customer-tracking-preview", shipmentId],
+    queryFn: async ({ signal }) =>
+      shipmentTrackingService.previewForShipment(shipmentId, { signal }),
   }),
   // The status emails the shipment has owed its customer, and what became of each.
   customerStatusNotifications: (shipmentId: string) => ({

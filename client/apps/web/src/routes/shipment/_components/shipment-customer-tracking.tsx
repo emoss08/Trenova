@@ -40,11 +40,13 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
+import { Dialog, DialogContent, DialogTitle } from "@trenova/shared/components/ui/dialog";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -55,9 +57,12 @@ import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { lazy, useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
+import { TrackingViewSkeleton } from "@/routes/shipment-tracking-public/_components/tracking-view-skeleton";
+
+const CustomerTrackingPreview = lazy(() => import("./customer-tracking-preview"));
 
 function Section({
   title,
@@ -101,6 +106,7 @@ export default function ShipmentCustomerTracking({ shipment }: { shipment?: Ship
   return (
     <div className="flex flex-col">
       <Audience
+        shipmentId={shipmentId}
         customerId={customerId}
         customerName={shipment?.customer?.name ?? ""}
         profile={profile}
@@ -118,11 +124,13 @@ export default function ShipmentCustomerTracking({ shipment }: { shipment?: Ship
 }
 
 function Audience({
+  shipmentId,
   customerId,
   customerName,
   profile,
   loading,
 }: {
+  shipmentId: string;
   customerId: string;
   customerName: string;
   profile: CustomerTrackingProfile | null;
@@ -131,23 +139,31 @@ function Audience({
   const t = useT();
   const shown = new Set(profile?.visibleFields ?? []);
   const hidden = TRACKING_FIELDS.filter((field) => !shown.has(field));
+  const [previewing, setPreviewing] = useState(false);
+  const audience = customerName || t("The customer");
 
   return (
     <section className="flex flex-col gap-3 border-b border-border-subtle bg-muted/40 px-4 py-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="text-xs text-muted-foreground">{t("Shared with")}</span>
-          <span className="truncate text-base font-semibold">{customerName || t("The customer")}</span>
+          <span className="truncate text-base font-semibold">{audience}</span>
         </div>
-        {customerId && (
-          <Link
-            to={recordPath("customer", customerId, { tab: "tracking" })}
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "shrink-0")}
-          >
-            {t("Tracking settings")}
-            <ArrowUpRightIcon className="size-3.5" aria-hidden />
-          </Link>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          <Button type="button" variant="outline" size="sm" onClick={() => setPreviewing(true)}>
+            <EyeIcon className="size-3.5" aria-hidden />
+            {t("Preview")}
+          </Button>
+          {customerId && (
+            <Link
+              to={recordPath("customer", customerId, { tab: "tracking" })}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+            >
+              {t("Settings")}
+              <ArrowUpRightIcon className="size-3.5" aria-hidden />
+            </Link>
+          )}
+        </div>
       </div>
       {loading ? (
         <Skeleton className="h-5 w-64" />
@@ -184,6 +200,18 @@ function Audience({
           </Tooltip>
         </div>
       ) : null}
+      <Dialog open={previewing} onOpenChange={setPreviewing}>
+        <DialogContent size="fullscreen" className="bg-canvas">
+          <DialogTitle className="sr-only">
+            {t("Preview of the tracking page {0} sees", audience)}
+          </DialogTitle>
+          <div className="h-dvh overflow-y-auto">
+            <LazyComponent fallback={<TrackingViewSkeleton />}>
+              {previewing && <CustomerTrackingPreview shipmentId={shipmentId} audience={audience} />}
+            </LazyComponent>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
@@ -691,10 +719,10 @@ function StatusEmails({
               <AlertTriangleIcon aria-hidden />
               <AlertTitle>
                 {row.status === "Failed"
-                  ? t("The {0} email gave up", statusEventLabel(t, row.event).toLowerCase())
+                  ? t("{0}: the email gave up", statusEventLabel(t, row.event))
                   : t(
-                      "The {0} email is retrying after {1, plural, one {# failure} other {# failures}}",
-                      statusEventLabel(t, row.event).toLowerCase(),
+                      "{0}: retrying after {1, plural, one {# failure} other {# failures}}",
+                      statusEventLabel(t, row.event),
                       row.attempts,
                     )}
               </AlertTitle>

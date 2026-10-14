@@ -81,8 +81,9 @@ move and creates a new one; only one is live at a time.
 
 - The token comes from `shared/tokenutils`; only its SHA-256 is stored, so the link is shown
   once, in the issue response, and cannot be read back.
-- The URL is `tendering.publicBaseUrl` + `/carrier-tracking/<token>`. Without a public base
-  URL the link is refused rather than built against an internal host.
+- The URL is `Config.PublicLinkBaseURL()` (`tendering.publicBaseUrl`, else `app.webBaseUrl`) +
+  `/carrier-tracking/<token>`. Without a public base URL the link is refused rather than built
+  against an internal host.
 - With an email address the link is sent with the `carriertracking.link.email` template under
   the idempotency key `carrier-tracking-link-<link id>`. A failed send keeps the link and
   returns the reason, so the dispatcher can copy it instead.

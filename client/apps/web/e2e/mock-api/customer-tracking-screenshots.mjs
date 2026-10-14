@@ -35,6 +35,16 @@ const SHOTS = [
   { name: "tab", path: PANEL, act: openTab, settle: 9000 },
   { name: "tab-dark", path: PANEL, act: openTab, settle: 9000, colorScheme: "dark" },
   {
+    name: "tab-preview",
+    path: PANEL,
+    settle: 9000,
+    act: async (page) => {
+      await openTab(page);
+      await page.getByRole("button", { name: "Preview", exact: true }).click();
+      await page.waitForTimeout(3500);
+    },
+  },
+  {
     name: "tab-shared",
     path: PANEL,
     settle: 9000,

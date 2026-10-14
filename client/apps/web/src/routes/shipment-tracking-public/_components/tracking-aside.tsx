@@ -88,7 +88,7 @@ function ProofOfDelivery({
   now,
 }: {
   view: PublicShipmentView;
-  token: string;
+  token: string | null;
   now: number;
 }) {
   const t = useT();
@@ -110,14 +110,18 @@ function ProofOfDelivery({
               {t("Filed {0}", dayAndTime(t, view.proofOfDelivery.filedAt, now, { inline: true }))}
             </span>
           </div>
-          <a
-            href={shipmentTrackingService.proofOfDeliveryUrl(token)}
-            rel="noreferrer noopener"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            <Download01Icon className="size-3.5" aria-hidden />
-            {t("Download")}
-          </a>
+          {token ? (
+            <a
+              href={shipmentTrackingService.proofOfDeliveryUrl(token)}
+              rel="noreferrer noopener"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              <Download01Icon className="size-3.5" aria-hidden />
+              {t("Download")}
+            </a>
+          ) : (
+            <span className="text-xs text-muted-foreground">{t("Downloads from the link")}</span>
+          )}
         </div>
       ) : (
         <p className="rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
@@ -128,14 +132,17 @@ function ProofOfDelivery({
   );
 }
 
-/** What sits beside the route: holds, the shipper's notes, references, the POD. */
+/**
+ * What sits beside the route: holds, the shipper's notes, references, the POD.
+ * Without a token (a staff preview) the POD is shown as on file but not offered.
+ */
 export function TrackingAside({
   view,
   token,
   now,
 }: {
   view: PublicShipmentView;
-  token: string;
+  token: string | null;
   now: number;
 }) {
   const t = useT();

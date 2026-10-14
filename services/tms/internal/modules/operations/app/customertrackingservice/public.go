@@ -82,7 +82,46 @@ func (s *Service) PreviewByToken(
 	if err != nil {
 		return nil, err
 	}
-	ctx = resolved.ctx
+	view, err := s.buildView(resolved.ctx, resolved, resolved.link.ExpiresAt)
+	if err != nil {
+		return nil, err
+	}
+
+	if touchErr := s.links.RecordView(
+		resolved.ctx,
+		resolved.tenant,
+		resolved.link.ID,
+		s.now(),
+	); touchErr != nil {
+		s.l.Warn("failed to record customer tracking link view",
+			zap.String("linkId", resolved.link.ID.String()),
+			zap.Error(touchErr))
+	}
+	return view, nil
+}
+
+func (s *Service) PreviewForShipment(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shipmentID pulid.ID,
+) (*customertrackingports.PublicTrackingView, error) {
+	sh, err := s.loadShipment(ctx, tenantInfo, shipmentID)
+	if err != nil {
+		return nil, err
+	}
+	profile, err := s.profileOrDefault(ctx, tenantInfo, sh.CustomerID)
+	if err != nil {
+		return nil, err
+	}
+	resolved := &resolvedLink{ctx: ctx, tenant: tenantInfo, shipment: sh, profile: profile}
+	return s.buildView(ctx, resolved, s.now()+profile.LinkTTLSeconds())
+}
+
+func (s *Service) buildView(
+	ctx context.Context,
+	resolved *resolvedLink,
+	expiresAt int64,
+) (*customertrackingports.PublicTrackingView, error) {
 	sh, profile := resolved.shipment, resolved.profile
 
 	etas, err := s.etasByStop(ctx, resolved.tenant, sh.ID, profile)
@@ -93,7 +132,7 @@ func (s *Service) PreviewByToken(
 		CompanyName:       s.companyName(ctx, resolved.tenant),
 		ShipmentProNumber: sh.ProNumber,
 		Fields:            profile.VisibleFields,
-		ExpiresAt:         resolved.link.ExpiresAt,
+		ExpiresAt:         expiresAt,
 		Closed:            isClosed(sh),
 	}
 	if view.Fields == nil {
@@ -112,17 +151,6 @@ func (s *Service) PreviewByToken(
 	}
 	if err = s.fillOptionalParts(ctx, resolved, view); err != nil {
 		return nil, err
-	}
-
-	if touchErr := s.links.RecordView(
-		ctx,
-		resolved.tenant,
-		resolved.link.ID,
-		s.now(),
-	); touchErr != nil {
-		s.l.Warn("failed to record customer tracking link view",
-			zap.String("linkId", resolved.link.ID.String()),
-			zap.Error(touchErr))
 	}
 	return view, nil
 }
