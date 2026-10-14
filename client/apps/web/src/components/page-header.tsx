@@ -8,6 +8,13 @@ export type PageHeaderProps = {
   description: string;
   context?: React.ReactNode;
   actions?: React.ReactNode;
+  /**
+   * What the shell puts before the title when the title bar is also the
+   * page bar: the sidebar fold, history and the trail. Pages never set it.
+   */
+  leading?: React.ReactNode;
+  /** What the shell puts after the actions, set apart by a hairline. */
+  trailing?: React.ReactNode;
   includeMetadata?: boolean;
   className?: string;
   /**
@@ -26,6 +33,8 @@ export function PageHeader({
   description,
   context,
   actions,
+  leading,
+  trailing,
   includeMetadata = true,
   className,
   visuallyHidden = false,
@@ -50,11 +59,26 @@ export function PageHeader({
       )}
     >
       <div className="flex min-w-0 items-center gap-1.5">
+        {leading}
         <h1 className="truncate text-lg font-semibold">{title}</h1>
         {description ? <InfoPopover title={title}>{description}</InfoPopover> : null}
         {context ? <div className="ml-1 flex min-w-0 items-center gap-2">{context}</div> : null}
       </div>
-      {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions || trailing ? (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {actions}
+          {trailing ? (
+            <div
+              className={cn(
+                "flex items-center gap-1",
+                actions && "border-border ml-1 border-l pl-3",
+              )}
+            >
+              {trailing}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       {includeMetadata && <Metadata title={title} description={description} />}
     </div>
   );

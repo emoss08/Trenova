@@ -106,7 +106,7 @@ function PinnedRows() {
   );
 }
 
-function HomePanel({ hiddenSections }: { hiddenSections: ReadonlySet<string> }) {
+export function HomePanel({ hiddenSections }: { hiddenSections: ReadonlySet<string> }) {
   const t = useT();
 
   const { pathname } = useLocation();

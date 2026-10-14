@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@trenova/shared/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
 import { cn } from "@trenova/shared/lib/utils";
 import { Bell01Icon } from "@trenova/shared/components/icons";
@@ -13,10 +14,20 @@ import { NotificationPanelSkeleton } from "./notification-skeletons";
 // chunk that renders the app header on every page.
 const NotificationPanel = lazy(() => import("./notification-panel"));
 
-function BellTrigger({ unreadCount, open }: { unreadCount: number; open: boolean }) {
+function BellTrigger({
+  unreadCount,
+  open,
+  iconClassName,
+}: {
+  unreadCount: number;
+  open: boolean;
+  iconClassName?: string;
+}) {
   return (
     <span className="relative">
-      <Bell01Icon className={cn("size-3 transition-colors", open && "text-foreground")} />
+      <Bell01Icon
+        className={cn("size-3 transition-colors", open && "text-foreground", iconClassName)}
+      />
       {unreadCount > 0 && (
         <span className="bg-brand text-brand-foreground text-3xs absolute -top-2 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-0.5 leading-none font-semibold tabular-nums">
           {unreadCount > 9 ? "9+" : unreadCount}
@@ -26,7 +37,19 @@ function BellTrigger({ unreadCount, open }: { unreadCount: number; open: boolean
   );
 }
 
-export function NotificationSheet() {
+/**
+ * `className` restyles the bell for a shell that draws it as a tile rather
+ * than a header button, and `tooltipSide` names it on hover there.
+ */
+export function NotificationSheet({
+  className,
+  iconClassName,
+  tooltipSide,
+}: {
+  className?: string;
+  iconClassName?: string;
+  tooltipSide?: "right" | "bottom";
+} = {}) {
   const t = useT();
   const open = useAppDialogOpen("notifications");
   const setDialogOpen = useAppDialogsStore((state) => state.setDialogOpen);
@@ -44,24 +67,36 @@ export function NotificationSheet() {
 
   const handleClose = useCallback(() => setDialogOpen("notifications", false), [setDialogOpen]);
 
+  const label = unreadCount > 0 ? t("Notifications ({0} unread)", unreadCount) : t("Notifications");
+  const trigger = (
+    <SheetTrigger
+      render={
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          aria-label={label}
+          className={cn("w-6", className)}
+          onPointerEnter={() => void import("./notification-panel")}
+        />
+      }
+    >
+      <BellTrigger unreadCount={unreadCount} open={open} iconClassName={iconClassName} />
+    </SheetTrigger>
+  );
+
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="xs"
-            aria-label={
-              unreadCount > 0 ? t("Notifications ({0} unread)", unreadCount) : t("Notifications")
-            }
-            className="w-6"
-            onPointerEnter={() => void import("./notification-panel")}
-          />
-        }
-      >
-        <BellTrigger unreadCount={unreadCount} open={open} />
-      </SheetTrigger>
+      {tooltipSide ? (
+        <Tooltip>
+          <TooltipTrigger render={trigger} />
+          <TooltipContent side={tooltipSide} sideOffset={10}>
+            {label}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        trigger
+      )}
 
       <SheetContent
         side="right"

@@ -23,6 +23,8 @@ import { useSidebarFold } from "./sidebar-fold";
 import { findModuleForPath } from "./sidebar-model";
 import { UserSettingsHost } from "./user-settings-host";
 import { ClassicSidebar } from "./variants/classic-sidebar";
+import { RailPageBarLeading, RailPageBarTrailing } from "./variants/rail/rail-page-bar";
+import { RailShell } from "./variants/rail/rail-shell";
 import { WorkspaceContextBar, WorkspaceHeader } from "./workspace-header";
 import { WorkspaceSidebar } from "./workspace-sidebar";
 
@@ -154,7 +156,10 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   const frame = useRouteFrame();
   useLayoutEffects();
 
-  const Shell = variant === "classic" ? ClassicShell : WorkspaceShell;
+  // A room keeps the chrome it was drawn for whatever the layout: Triage and
+  // the Desk are full screen and draw their own rail.
+  const Shell =
+    variant === "classic" ? ClassicShell : variant === "rail" && frame !== "room" ? RailShell : WorkspaceShell;
 
   return (
     <>
@@ -194,6 +199,8 @@ export function PageLayout({
   bleed = false,
 }: PageLayoutProps) {
   const frame = useShellFrame();
+  const variant = useNavigationStore((state) => state.sidebarVariant);
+  const railBar = variant === "rail" && frame === "page";
 
   return (
     <div
@@ -203,7 +210,12 @@ export function PageLayout({
         fill && "h-full",
       )}
     >
-      <PageHeader {...pageHeaderProps} visuallyHidden={frame === "room"} />
+      <PageHeader
+        {...pageHeaderProps}
+        visuallyHidden={frame === "room"}
+        leading={railBar ? <RailPageBarLeading title={pageHeaderProps.title} /> : undefined}
+        trailing={railBar ? <RailPageBarTrailing /> : undefined}
+      />
       <div
         data-slot="page-body"
         data-bleed={bleed || undefined}

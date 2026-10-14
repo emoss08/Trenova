@@ -22,6 +22,11 @@ interface SidebarVariantOption {
 
 export const SIDEBAR_VARIANT_OPTIONS: readonly SidebarVariantOption[] = [
   {
+    value: "rail",
+    label: "Rail",
+    description: "Every module on a rail, the current one beside it, one bar per page",
+  },
+  {
     value: "workspace",
     label: "Workspace",
     description: "Modules in the header, the current area in the sidebar",
