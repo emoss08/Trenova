@@ -127,8 +127,10 @@ given, so a run is never drawn in the neighbouring bucket.
 `agentAnalyticsToolFailures(input, seriesKey, toolName)`.
 
 **Databases.** The prompt asks for migrations for Postgres and SQLite. Trenova runs on Postgres
-only. Its migrations are `20261231009250_ai_analytics.tx.{up,down}.sql` and
-`20261231009260_ai_analytics_indexes.{up,down}.sql` (concurrent indexes on the source tables).
+only. Its migrations are `20261231009250_ai_analytics.tx.{up,down}.sql`,
+`20261231009260_ai_analytics_indexes.{up,down}.sql` (concurrent indexes on the source tables) and
+`20261231009290_ai_analytics_refresh_indexes.{up,down}.sql` (tenant-leading `updated_at` indexes on
+`agent_runs` and `assistant_turns`, which the refresh's activity check reads).
 
 **Evaluation calls count towards provider health.** Calls made while evaluating an agent (the
 judge's calls in an evaluation run) are not runs, so they are left out of runs, spend and every
@@ -189,7 +191,7 @@ A second tenant held another 500,000 units, so every read had to filter. The gen
 about six days, so the 7- and 30-day windows both hold all 500,000. The 24-hour window holds
 86,300.
 
-**Method.** Timings are the median of three warm runs of the whole `Analytics` call. Fifteen reads
+**Method.** Timings are the median of three warm runs of the whole `Analytics` call. Sixteen reads
 run four at a time. The Redis cache is off, so these are the uncached times a person sees after
 each five-minute refresh.
 
@@ -212,7 +214,7 @@ The slowest reads at 30 days, every agent, by model:
 | --- | ---: | --- |
 | Trend | 0.90 s | Exact median per series per day: sorts every run once |
 | Outcome durations, per deployment | 0.74 s | Exact p25/p50/p75/p95 per outcome |
-| First-token histograms | 0.70 s | Sums 64-bucket histograms across hourly rows |
+| First-token histograms | 0.70 s → 0.33 s | Sums 64-bucket histograms across hourly rows, empty buckets dropped first |
 | Outcome durations, per model | 0.56 s | As above, per group |
 | Tool cells | 0.34 s | Tool calls by deployment, tool and cause |
 | Totals | 0.33 s | Counts and the overall percentiles |
@@ -228,12 +230,38 @@ Two changes came out of profiling:
 
 The whole 30-day query went from 2.37 s to 1.40 s.
 
+A later production review changed the following, measured on the same data:
+
+- **First-token histograms: 0.70 s → 0.33 s** in the whole query (0.60 s → 0.18 s run alone).
+  An hourly row's 64 buckets are mostly empty (11 filled on average), so the query now drops
+  empty buckets before it aggregates instead of hashing all 64 per row.
+- **Palette.** The keys behind the colour assignment no longer cost a 0.2 s read per scope: they
+  are cached per tenant epoch for an hour, and every scope of that epoch reads them from Redis.
+- **Tool-failure sheet.** It no longer reads the whole deployment table to name the providers
+  behind a cell, and its examples query picks candidate units from the tool rollup before it
+  touches run steps.
+- **Read order.** The heaviest reads (trend, the two duration reads, histograms) are now
+  submitted first. On this 4-core container, alternating runs of the 30-day query measured
+  1.51–1.92 s with the new order and 1.53–1.67 s with the old, so the difference is inside the
+  noise here. The order is kept because longest-first is the better schedule when the database
+  has the cores to run four reads at once.
+- **Refresh.** An organization with no new runs, turns or calls since its last refresh is marked
+  caught up after three index probes instead of rebuilding a day of rollups every five minutes.
+  A unit whose columns did not change is not rewritten, so the 15-minute overlap leaves no dead
+  tuples, and retention is pruned once an hour instead of every cycle.
+
+On this container the whole-query time varies by up to 25% between runs of the profile (the same
+30-day, every-agent query measured 1.46 s, 1.68 s and 2.06 s on three runs), so compare reads
+within a run rather than totals across runs.
+
 **Remaining cost.** What is left is sorting for exact percentiles. A larger transaction-local
 `work_mem` kept the sorts in memory but saved under 10%, so it was not adopted. Median run time is
 a headline figure, so it stays exact rather than estimated from a histogram. First-token times,
 which are only ever read as medians across hours, use the mergeable histogram.
 
 **Repeat reads.** These come from Redis. The cache key holds the tenant, a per-tenant epoch, the
-window, the comparison, the agent, the task and the time zone, with a 2-minute TTL. The refresh
+window, the comparison, the agent, the task, the viewer's language and a digest of the trend's
+bucket starts, with a 2-minute TTL. Keying on bucket starts rather than the zone name lets zones
+that start their buckets at the same instants (UTC and Africa/Abidjan) share an entry. The refresh
 job bumps the epoch whenever it folds in new runs, so a cached answer never outlives the data it
 was built from. Hovering a range button prefetches that range.

@@ -4,10 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AlertCircleIcon, PlayIcon } from "@trenova/shared/components/icons";
+import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import { useQueryStates } from "nuqs";
 import { useCallback, useMemo } from "react";
 import {
@@ -22,6 +22,7 @@ import { CasesTable } from "./cases-table";
 import { CorrectionsTable } from "./corrections-table";
 import { ExtractionFigures } from "./extraction-figures";
 import { EXTRACTION_STALE_MS, EXTRACTION_WINDOW_DAYS } from "./extraction-model";
+import { AccuracyPanelSkeleton, EXTRACTION_FIGURES } from "./extraction-skeleton";
 import { NewRunDialog } from "./new-run-dialog";
 import { ProviderTrendsPanel } from "./provider-trends-panel";
 import { RolloutView } from "./rollout-view";
@@ -84,7 +85,7 @@ export default function ExtractionView() {
       ) : accuracy.data ? (
         <ExtractionFigures accuracy={accuracy.data} />
       ) : (
-        <Skeleton className="h-16" aria-busy />
+        <KpiStripSkeleton count={EXTRACTION_FIGURES} />
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -107,11 +108,7 @@ export default function ExtractionView() {
 
       {view === "accuracy" && (
         <>
-          {accuracy.data ? (
-            <AccuracyPanel accuracy={accuracy.data} />
-          ) : (
-            <Skeleton className="h-64" aria-busy />
-          )}
+          {accuracy.data ? <AccuracyPanel accuracy={accuracy.data} /> : <AccuracyPanelSkeleton />}
           <ProviderTrendsPanel />
         </>
       )}

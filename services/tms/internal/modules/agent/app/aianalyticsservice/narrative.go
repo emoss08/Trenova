@@ -34,12 +34,12 @@ const (
 var narrativeTags = []string{tagSeries, tagProvider, tagOther, tagStrong}
 
 type narration struct {
-	locale      i18n.Locale
-	window      aianalytics.Window
-	compareBy   aianalytics.CompareBy
-	series      []aianalyticsports.Series
-	deployments []aianalyticsports.Series
-	providers   providerLookup
+	locale    i18n.Locale
+	window    aianalytics.Window
+	compareBy aianalytics.CompareBy
+	series    []aianalyticsports.Series
+	sameModel *sharedModel
+	providers providerLookup
 }
 
 type sentenceParts map[string]aianalyticsports.Segment
@@ -257,7 +257,7 @@ func sharedModelPair(deployments []aianalyticsports.Series) *sharedModel {
 }
 
 func connectionGap(n *narration) []aianalyticsports.Segment {
-	widest := sharedModelPair(n.deployments)
+	widest := n.sameModel
 	if widest == nil || widest.points < aianalytics.MinConnectionGap {
 		return nil
 	}
@@ -531,14 +531,13 @@ func healthEvents(
 	out := make([]aianalyticsports.Event, 0, 8)
 	unhealthy := make(map[string]bool, 8)
 	for _, row := range rows {
-		if row.Calls < minCallsForHealthChange && row.Failed < row.Calls {
+		if row.Calls < minCallsForHealthChange {
 			continue
 		}
 		failureRate := float64(row.Failed) / float64(row.Calls)
 		ref := providers.ref(row.ProviderID)
 		switch {
-		case !unhealthy[row.ProviderID] && row.Calls >= minCallsForHealthChange &&
-			failureRate >= unhealthyFailureRate:
+		case !unhealthy[row.ProviderID] && failureRate >= unhealthyFailureRate:
 			unhealthy[row.ProviderID] = true
 			event := aianalyticsports.Event{
 				At: row.Hour, Provider: ref, Kind: aianalytics.EventStoppedAnswering,

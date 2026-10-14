@@ -1,10 +1,15 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Dataflow02Icon, FuelIcon, Speedometer03Icon } from "@trenova/shared/components/icons";
 import { parseAsString, useQueryState } from "nuqs";
 import { lazy } from "react";
+import {
+  FuelDashboardSkeleton,
+  IndexSectionSkeleton,
+  ProgramSectionSkeleton,
+} from "./_components/fuel-management-skeleton";
 
 const FuelDashboard = lazy(() => import("./_components/fuel-dashboard"));
 const ProgramSection = lazy(() => import("./_components/program-section"));
@@ -46,19 +51,19 @@ export function FuelManagementPage() {
           </TabsList>
         </div>
         <TabsContent value="dashboard" className="pt-4">
-          <DataTableLazyComponent>
+          <LazyComponent fallback={<FuelDashboardSkeleton />}>
             <FuelDashboard onOpenIndices={() => void setActiveTab("indices")} />
-          </DataTableLazyComponent>
+          </LazyComponent>
         </TabsContent>
         <TabsContent value="programs" className="pt-4">
-          <DataTableLazyComponent>
+          <LazyComponent fallback={<ProgramSectionSkeleton />}>
             <ProgramSection />
-          </DataTableLazyComponent>
+          </LazyComponent>
         </TabsContent>
         <TabsContent value="indices" className="pt-4">
-          <DataTableLazyComponent>
+          <LazyComponent fallback={<IndexSectionSkeleton />}>
             <IndexSection />
-          </DataTableLazyComponent>
+          </LazyComponent>
         </TabsContent>
       </Tabs>
     </PageLayout>

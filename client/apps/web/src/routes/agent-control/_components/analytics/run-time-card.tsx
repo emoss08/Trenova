@@ -18,7 +18,7 @@ import {
   type SeriesColors,
 } from "./analytics-model";
 import { AnalyticsCard, Swatch } from "./card";
-import { highlightClass, hoverProps, useHighlight } from "./highlight";
+import { hoverProps, useSetHot } from "./highlight";
 
 const ROW_HEIGHT = 46;
 
@@ -47,7 +47,7 @@ export const RunTimeCard = memo(function RunTimeCard({
   onOpenProvider,
 }: RunTimeCardProps) {
   const t = useT();
-  const { hot, setHot } = useHighlight();
+  const setHot = useSetHot();
   const [outcome, setOutcome] = useState<AiWorkOutcome>("Completed");
   const order = useMemo(() => runTimeOrder(series, outcome), [outcome, series]);
   const rank = new Map(order.map((key, index) => [key, index]));
@@ -117,7 +117,8 @@ export const RunTimeCard = memo(function RunTimeCard({
             <div
               key={item.key}
               role="listitem"
-              className={cn("an-rtr", highlightClass(hot, item.key))}
+              className="an-rtr"
+              data-series={item.key}
               style={{
                 transform: `translateY(${(rank.get(item.key) ?? 0) * ROW_HEIGHT}px)`,
                 height: ROW_HEIGHT,

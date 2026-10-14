@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { lazy, Suspense } from "react";
-import { PageSkeleton } from "./skeleton";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { lazy } from "react";
+import { AccountingControlSkeleton } from "./skeleton";
 
 const AccountingControlForm = lazy(() => import("./_components/accounting-control-form"));
 
@@ -15,9 +16,9 @@ export function AccountingControlPage() {
         description: t("Configure and manage your accounting control settings"),
       }}
     >
-      <Suspense fallback={<PageSkeleton />}>
+      <LazyComponent fallback={<AccountingControlSkeleton />}>
         <AccountingControlForm />
-      </Suspense>
+      </LazyComponent>
     </PageLayout>
   );
 }

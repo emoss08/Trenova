@@ -12,7 +12,7 @@ import {
   type SeriesColors,
 } from "./analytics-model";
 import { AnalyticsCard, Better } from "./card";
-import { highlightClass, hoverProps, useHighlight } from "./highlight";
+import { hoverProps, useSetHot } from "./highlight";
 import { ProviderMarks } from "./provider-marks";
 
 type BoardCardProps = {
@@ -34,7 +34,7 @@ export const BoardCard = memo(function BoardCard({
 }: BoardCardProps) {
   const t = useT();
   const rt = useRichT();
-  const { hot, setHot } = useHighlight();
+  const setHot = useSetHot();
   const metric = METRICS[key];
   const entries = useMemo(() => board(series, metric), [metric, series]);
   const sentence = useMemo(() => boardSentence(t, rt, metric, entries), [entries, metric, rt, t]);
@@ -58,11 +58,11 @@ export const BoardCard = memo(function BoardCard({
               <button
                 key={entry.series.key}
                 type="button"
+                data-series={entry.series.key}
                 className={cn(
                   "an-vc ui-focus-ring",
                   entry.series.few && "few",
                   entry.best && "is-best",
-                  highlightClass(hot, entry.series.key),
                 )}
                 title={
                   entry.series.few

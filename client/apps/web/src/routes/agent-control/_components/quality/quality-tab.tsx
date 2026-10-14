@@ -1,6 +1,6 @@
 import { agentQuality } from "@/lib/queries/agent-quality";
 import { useQuery } from "@tanstack/react-query";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueryStates } from "nuqs";
 import { lazy, useCallback } from "react";
@@ -18,6 +18,7 @@ import { EvalCasesTable } from "./cases";
 import { QualityFigures } from "./quality-figures";
 import { QualityHero } from "./quality-hero";
 import { QUALITY_STALE_MS } from "./quality-model";
+import { QualityBodySkeleton, QualityHeadSkeleton, qualityViewHeaded } from "./quality-skeleton";
 import { SweepSettingsEditor } from "./sweep-settings-editor";
 import { Button } from "@trenova/shared/components/ui/button";
 
@@ -47,7 +48,7 @@ export default function QualityTab({ view }: { view: QualityView }) {
     (agentId: string | null) => void setDialogs({ [QUALITY_SHEET_PARAM]: agentId }),
     [setDialogs],
   );
-  const headed = view !== "extraction" && view !== "golden";
+  const headed = qualityViewHeaded(view);
 
   const settingsButton = (
     <Button
@@ -68,21 +69,21 @@ export default function QualityTab({ view }: { view: QualityView }) {
           <Callout tone="d">
             {t("How well agents are doing could not be loaded. Try again shortly.")}
           </Callout>
+        ) : overview.data ? (
+          <>
+            <QualityHero overview={overview.data} onOpenAgent={setOpenAgent} />
+            <QualityFigures overview={overview.data} />
+          </>
         ) : (
-          overview.data && (
-            <>
-              <QualityHero overview={overview.data} onOpenAgent={setOpenAgent} />
-              <QualityFigures overview={overview.data} />
-            </>
-          )
+          <QualityHeadSkeleton />
         ))}
-      <DataTableLazyComponent>
+      <LazyComponent fallback={<QualityBodySkeleton view={view} />}>
         {view === "agents" && <AgentsTable toolbar={settingsButton} />}
         {view === "runs" && <SuiteRunsView />}
         {view === "ratings" && <WorstRatedTable />}
         {view === "golden" && <EvalCasesTable />}
         {view === "extraction" && <ExtractionView />}
-      </DataTableLazyComponent>
+      </LazyComponent>
       <AgentQualitySheet
         agentId={openAgent}
         agentName={

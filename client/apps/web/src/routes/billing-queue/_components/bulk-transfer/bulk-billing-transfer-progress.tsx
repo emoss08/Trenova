@@ -15,18 +15,6 @@ export function BulkBillingTransferResolving() {
   );
 }
 
-/** Opening straight onto a run, before it has been read back. */
-export function BulkBillingTransferLoading() {
-  const t = useT();
-
-  return (
-    <div className="flex flex-col items-center gap-3 py-16 text-center" aria-live="polite">
-      <Spinner className="size-5" />
-      <p className="text-sm font-medium">{t("Loading the transfer...")}</p>
-    </div>
-  );
-}
-
 export function BulkBillingTransferProgress({ run }: { run: BillingTransferRun }) {
   const t = useT();
 

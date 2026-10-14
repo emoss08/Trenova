@@ -85,3 +85,29 @@ describe("carrier invoice matching empty states", () => {
     expect(await screen.findByText(/auto-match sweep/)).toBeInTheDocument();
   });
 });
+
+describe("carrier invoice matching loading states", () => {
+  // Until the invoices are read there is nothing to say "Nothing open" about:
+  // the list and the open invoice draw their outlines instead.
+  it("draws the list's cards and the open invoice's outline while invoices are read", () => {
+    mocks.fetchEdiCarrierInvoices.mockImplementation(() => new Promise<never>(() => {}));
+    renderWorkspace();
+
+    expect(screen.getByLabelText("Loading carrier invoices")).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByLabelText("Loading the details")).toHaveAttribute("aria-busy", "true");
+    expect(screen.queryByText("Nothing open")).not.toBeInTheDocument();
+  });
+
+  it("draws the matches' outline on the matches tab while matches are read", async () => {
+    mocks.fetchCarrierInvoiceMatches.mockImplementation(() => new Promise<never>(() => {}));
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    expect(await screen.findByText("Nothing needs attention")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^Matches \(/ }));
+
+    expect(screen.getByLabelText("Loading matches")).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByLabelText("Loading the details")).toHaveAttribute("aria-busy", "true");
+    expect(screen.queryByText("No matches yet")).not.toBeInTheDocument();
+  });
+});

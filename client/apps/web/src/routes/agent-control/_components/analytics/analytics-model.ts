@@ -398,7 +398,7 @@ export function boardSentence(
     }
     case "cost": {
       const other = display(t, metric, value);
-      if (best.value === 0) {
+      if (isLocal(best.series)) {
         return worst
           ? rt(
               "<b>{0}</b> runs on your own hardware, so a run costs nothing; <b>{1}</b> costs {2}.",

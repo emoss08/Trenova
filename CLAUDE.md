@@ -265,6 +265,11 @@ names the token to use instead.
   Figures are `KpiStrip`/`KpiStripItem`, titled blocks are `SectionPanel`, read-only
   label/value is `DescriptionList`, inline callouts are `<Alert size="sm">`, and dialogs take
   `size` rather than an arbitrary max-width. See "Page anatomy" in the design-system doc.
+- Loading states are the layout of what loads. `DataTableLazyComponent` wraps only components
+  that render `DataTable`; everything else is `LazyComponent` with a required `fallback` that is
+  its own `<name>-skeleton.tsx`, and the component's own data-loading state draws the same
+  skeleton. `pnpm lint:skeletons` runs in CI and fails a table skeleton around anything that is
+  not a table, or a `<Suspense>` without a fallback. See "Loading states" in the design-system doc.
 - Icons come from `@trenova/shared/components/icons`: every Untitled UI icon as `<Name>Icon`
   (`Truck01Icon`, `SearchLgIcon`) plus Trenova's custom set drawn on the same grid, typed
   `IconComponent`. Never import `lucide-react` or `@untitledui/icons` directly; lint refuses both.

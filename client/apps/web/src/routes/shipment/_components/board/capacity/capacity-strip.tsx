@@ -7,7 +7,6 @@ import {
   PlugIcon,
 } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { cn, formatPerMile } from "@trenova/shared/lib/utils";
 import type { CapacityGroup, CapacityUnitKind } from "@trenova/graphql/generated/graphql";
@@ -32,6 +31,7 @@ import { useBoardActions } from "../use-board-actions";
 import { useShipmentBoardUrl } from "../url-state";
 import { CapacityAvatar } from "./capacity-avatar";
 import { CapacityPopover } from "./capacity-popover";
+import { CapacityDockSkeleton, CapacitySummarySkeleton } from "./capacity-strip-skeleton";
 
 const UNIT_WIDTH = 68;
 const LABEL_WIDTH = 28;
@@ -498,12 +498,14 @@ export function CapacityStrip() {
     staleTime: 15_000,
   });
 
+  const loading = isLoading || !data;
   const tabCount = (target: CapacityUnitKind) =>
     target === "Driver" ? driverCount.data?.drivers?.ready : carrierCount.data?.carriers?.posting;
 
   return (
     <section
       aria-label={t("Capacity")}
+      aria-busy={loading}
       className="flex min-w-0 flex-col gap-3 @[760px]/board:flex-row @[760px]/board:items-stretch"
     >
       <div className="flex shrink-0 flex-col gap-2 @[760px]/board:w-[260px] @[760px]/board:border-r @[760px]/board:border-border @[760px]/board:pr-4">
@@ -537,24 +539,16 @@ export function CapacityStrip() {
             {kind === "Driver" ? t("Driver capacity") : t("Carrier capacity")}
           </span>
         )}
-        {isLoading || !data ? (
-          <div className="flex flex-col gap-2">
-            <Skeleton className="h-8 w-40" />
-            <Skeleton className="h-1.5 w-full" />
-            <Skeleton className="h-4 w-48" />
-          </div>
+        {loading ? (
+          <CapacitySummarySkeleton />
         ) : kind === "Driver" ? (
           <DriverSummary capacity={data} canTender={runsBrokerage} />
         ) : (
           <CarrierSummary capacity={data} />
         )}
       </div>
-      {isLoading || !data ? (
-        <div className="flex flex-1 items-center gap-3 pl-6">
-          {Array.from({ length: 8 }, (_, i) => (
-            <Skeleton key={i} className="size-10 rounded-full" />
-          ))}
-        </div>
+      {loading ? (
+        <CapacityDockSkeleton />
       ) : (
         <CapacityDock key={kind} capacity={data} provider={provider} />
       )}

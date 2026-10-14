@@ -121,4 +121,17 @@ describe("EDIOverview", () => {
 
     expect(screen.getByText(/pipeline is healthy/i)).toBeDefined();
   });
+
+  it("outlines the overview while the window's summary is read", () => {
+    vi.spyOn(summaryHook, "useEDISummary").mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+    } as unknown as ReturnType<typeof summaryHook.useEDISummary>);
+
+    renderOverview();
+
+    expect(screen.getByLabelText("Loading EDI operations")).toHaveAttribute("aria-busy", "true");
+    expect(screen.queryByText("Dead-lettered messages")).toBeNull();
+  });
 });

@@ -27,7 +27,8 @@ import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { Ic } from "../kit/ic";
 import { Tile } from "../kit/marks";
 import { getAgentToolColumns, holdersOf, type ToolHolding } from "./safety-columns";
-import { SAFETY_SUMMARY_STALE_MS } from "./safety-figures";
+import { MAX_COMPARED_AGENTS, SAFETY_SUMMARY_STALE_MS } from "./safety-figures";
+import { ByAgentSkeleton } from "./safety-skeleton";
 import { reachLabel, tierLabel } from "./safety-model";
 import { useToolHolding } from "./tool-rules-table";
 import { ToolSheet } from "./tool-sheet";
@@ -43,9 +44,6 @@ import {
 
 /** An agent's answers move with its settings and trust, so they are re-read after a minute. */
 const AGENT_SAFETY_STALE_MS = 60_000;
-
-/** The most agents laid side by side. */
-export const MAX_COMPARED_AGENTS = 4;
 
 const NO_RESOURCES: readonly string[] = [];
 const NO_HEADERS: readonly AgentSafetyHeader[] = [];
@@ -90,6 +88,10 @@ export default function ByAgentView() {
     const agent = byId.get(id);
     return agent ? [agent] : [];
   });
+
+  if (agentsQuery.isPending) {
+    return <ByAgentSkeleton />;
+  }
 
   return (
     <HoldingContext.Provider value={holding}>

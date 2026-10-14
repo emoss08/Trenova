@@ -1,11 +1,11 @@
 import { usePermission } from "@/hooks/use-permission";
 import { lazyComponent } from "@/lib/lazy-component";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
-import { Suspense, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import {
   ACTIVITY_VIEW_PARAM,
   AI_CONTROL_TAB_PARAM,
@@ -28,7 +28,7 @@ import {
   type RailView,
   type SafetyView,
 } from "./ai-control-tabs";
-import { AnalyticsTabSkeleton } from "./_components/analytics/analytics-skeleton";
+import { AIControlTabSkeleton } from "./ai-control-tab-skeleton";
 import { PageHead } from "./_components/kit/page-head";
 import { Seg } from "./_components/kit/layout";
 import { buildRailItems, resolveRailView, tabCounts } from "./_components/rail-items";
@@ -317,7 +317,7 @@ export function AgentControlPage() {
               />
             </div>
           )}
-          <DataTableLazyComponent>
+          <LazyComponent fallback={<AIControlTabSkeleton tab={activeTab} view={activeView} />}>
             {activeTab === "overview" && (
               <OverviewTab onOpenProviders={openProviders} onOpenAgents={openAgents} />
             )}
@@ -328,16 +328,12 @@ export function AgentControlPage() {
             {activeTab === "retrieval" && <RetrievalTab onOpenProviders={openProviders} />}
             {activeTab === "safety" && <SafetyTab view={activeView as SafetyView} />}
             {activeTab === "quality" && <QualityTab view={activeView as QualityView} />}
-            {activeTab === "analytics" && (
-              <Suspense fallback={<AnalyticsTabSkeleton />}>
-                <AnalyticsTab />
-              </Suspense>
-            )}
+            {activeTab === "analytics" && <AnalyticsTab />}
             {activeTab === "activity" && <ActivityTab view={activeView as ActivityView} />}
             {activeTab === "audit" && (
               <AuditTab view={activeView as AuditView} onOpenExports={openAuditExports} />
             )}
-          </DataTableLazyComponent>
+          </LazyComponent>
         </div>
       </div>
     </div>

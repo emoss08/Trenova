@@ -9,6 +9,7 @@ import { Callout } from "../edit/callout";
 import type { ActivityView } from "../rail-items";
 import { ActivityFigures } from "./activity-figures";
 import { ActivityHero } from "./activity-hero";
+import { ACTIVITY_TABLE_COLUMNS, ActivityHeadSkeleton } from "./activity-skeleton";
 import {
   ACTIVITY_STALE_MS,
   OPEN_EXCEPTION_FILTERS,
@@ -48,34 +49,34 @@ export default function ActivityTab({ view }: { view: ActivityView }) {
         <Callout tone="d">
           {t("What agents did today could not be loaded. Try again shortly.")}
         </Callout>
+      ) : facts ? (
+        <>
+          <ActivityHero
+            facts={facts}
+            onShowFailed={() =>
+              navigate({ tab: "activity", view: "runs", fieldFilters: failedTodayFilters(since) })
+            }
+            onShowProposals={() =>
+              navigate({
+                tab: "activity",
+                view: "proposals",
+                fieldFilters: PENDING_PROPOSAL_FILTERS,
+              })
+            }
+            onShowExceptions={() =>
+              navigate({
+                tab: "activity",
+                view: "exceptions",
+                fieldFilters: OPEN_EXCEPTION_FILTERS,
+              })
+            }
+          />
+          <ActivityFigures facts={facts} />
+        </>
       ) : (
-        facts && (
-          <>
-            <ActivityHero
-              facts={facts}
-              onShowFailed={() =>
-                navigate({ tab: "activity", view: "runs", fieldFilters: failedTodayFilters(since) })
-              }
-              onShowProposals={() =>
-                navigate({
-                  tab: "activity",
-                  view: "proposals",
-                  fieldFilters: PENDING_PROPOSAL_FILTERS,
-                })
-              }
-              onShowExceptions={() =>
-                navigate({
-                  tab: "activity",
-                  view: "exceptions",
-                  fieldFilters: OPEN_EXCEPTION_FILTERS,
-                })
-              }
-            />
-            <ActivityFigures facts={facts} />
-          </>
-        )
+        <ActivityHeadSkeleton />
       )}
-      <DataTableLazyComponent>
+      <DataTableLazyComponent columnCount={ACTIVITY_TABLE_COLUMNS[view]}>
         {view === "runs" && <AgentRunTable />}
         {view === "proposals" && <AgentProposalTable />}
         {view === "plans" && <AgentPlanTable />}
