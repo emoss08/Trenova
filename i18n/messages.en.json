@@ -102104,6 +102104,15 @@
       "go/other"
     ]
   },
+  "Formula template {0} is approved to bill from {1}, so it cannot rate shipments before then": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Formula template {0} is archived and no longer rates shipments": {
     "sites": 1,
     "scope": [
@@ -154250,6 +154259,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Nothing bills until v{0} takes effect": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Nothing called “{0}”": {
@@ -234688,6 +234706,15 @@
       "go/other"
     ]
   },
+  "Templates {0} are no longer Active or Inactive, so none were updated; refresh and try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Temporarily on hold; imported purchases are flagged until it is reactivated.": {
     "sites": 1,
     "scope": [
@@ -272650,6 +272677,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Waiting for the shipment schema to check names.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Waiting for the statement to be read.": {

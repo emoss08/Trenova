@@ -2,7 +2,8 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
-import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
+import { formulaTemplate, invalidateFormulaTemplate } from "@/lib/queries/formula-template";
+import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { apiService } from "@/services/api";
 import {
   DEFAULT_ROUNDING_MODE,
@@ -18,6 +19,8 @@ import { FormProvider, useForm, useFormState } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { FormulaStudio, type StudioSaveExtras } from "../_components/studio/formula-studio";
+
+export const prefetch: RoutePrefetch = () => [formulaTemplate.schema("shipment")];
 
 export function FormulaStudioCreatePage() {
   const t = useT();

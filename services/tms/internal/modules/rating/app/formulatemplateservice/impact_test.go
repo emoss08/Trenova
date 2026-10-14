@@ -290,6 +290,49 @@ func TestApprovalImpact_PricesWithTheRelationsTheFormulaReads(t *testing.T) {
 	assert.Len(t, store.Fetches("serviceType"), 1, "the batch loads each relation kind once")
 }
 
+func TestApprovalImpact_AShipmentWhoseRelationCannotLoadFailsOnlyItsOwnRow(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	store := ratingtest.NewRelationStore()
+	expedited := &servicetype.ServiceType{ID: pulid.MustNew("svt_"), Code: "EXP"}
+	store.ServiceTypes[expedited.ID] = expedited
+	deps.svc.hydrator = ratingtest.NewHydrator(t, store)
+	deps.svc.formulaService = ratingtest.NewFormulaService(t)
+
+	template := newBacktestTemplate()
+	template.Expression = `serviceType.code == "EXP" ? 75 : 0`
+
+	shipments := newBacktestShipments()
+	shipments[0].ServiceTypeID = expedited.ID
+	shipments[1].ServiceTypeID = pulid.MustNew("svt_")
+	expectRatedShipments(deps, template, shipments)
+
+	result, err := deps.svc.ApprovalImpact(t.Context(), &ApprovalImpactRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+
+	require.NoError(t, err)
+	require.Len(t, result.Results, 2)
+	rows := make(map[pulid.ID]*BacktestResult, len(result.Results))
+	for _, row := range result.Results {
+		rows[row.ShipmentID] = row
+	}
+
+	priced := rows[shipments[0].ID]
+	require.NotNil(t, priced)
+	assert.Empty(t, priced.CandidateError)
+	assert.Empty(t, priced.CurrentError)
+	assert.True(t, decimal.NewFromInt(75).Equal(priced.CandidateAmount), priced.CandidateAmount)
+
+	unresolved := rows[shipments[1].ID]
+	require.NotNil(t, unresolved)
+	assert.Contains(t, unresolved.CandidateError, "does not exist in this organization")
+	assert.Contains(t, unresolved.CurrentError, "does not exist in this organization")
+	assert.Equal(t, 1, result.Summary.CandidateErrorCount)
+}
+
 func TestApprovalImpact_StopsAtItsDeadlineAndSaysSo(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
@@ -353,7 +396,11 @@ func TestBacktest_CurrentSideIsTheAmountTheShipmentWasBilled(t *testing.T) {
 	recomputed := byID[overridden.ID]
 	assert.Equal(t, BacktestCurrentRecomputed, recomputed.CurrentSource,
 		"an override is not the formula's number")
-	assert.True(t, decimal.NewFromInt(100).Equal(recomputed.CurrentAmount), recomputed.CurrentAmount)
+	assert.True(
+		t,
+		decimal.NewFromInt(100).Equal(recomputed.CurrentAmount),
+		recomputed.CurrentAmount,
+	)
 }
 
 func TestApprovalImpact_RecomputesTheCurrentSideToIsolateTheContentChange(t *testing.T) {

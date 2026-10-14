@@ -19,7 +19,7 @@
       "outputs": ["src/generated/**", "src/schema.graphql"]
     },
     "typecheck": {
-      "dependsOn": ["^build", "^codegen"]
+      "dependsOn": ["^build", "^codegen", "codegen"]
     },
     "lint": {},
     "lint:fix": {

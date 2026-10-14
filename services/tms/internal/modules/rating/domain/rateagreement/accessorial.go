@@ -52,9 +52,6 @@ type RateAgreementAccessorial struct {
 	// exposes — "totalStops > 2", say. Blank means always.
 	ApplyCondition string `json:"applyCondition" bun:"apply_condition,type:TEXT,nullzero"`
 
-	// ConditionLanguageVersion is the formula language ApplyCondition is
-	// written in, so a later language can change semantics without changing
-	// what an existing condition matches.
 	ConditionLanguageVersion formulatypes.LanguageVersion `json:"conditionLanguageVersion" bun:"condition_language_version,type:SMALLINT,notnull,default:1"`
 
 	// FreeUnits are granted before the charge starts counting, which is how

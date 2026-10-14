@@ -67,8 +67,6 @@ func (s *Service) UpdateVersionEffectiveDate(
 		)
 	}
 
-	// A schedule puts content into production on a date without anyone
-	// looking at it then, so the content must already have passed review.
 	if version.Status != formulatemplate.StatusActive {
 		return nil, errortypes.NewValidationError(
 			versionNumberField,
