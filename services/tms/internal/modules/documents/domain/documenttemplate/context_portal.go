@@ -200,7 +200,7 @@ func (r *Registry) registerPortalKinds() {
 				Description: "The single-use invitation link. Required: without it the message has no purpose.",
 			},
 			{
-				Path:        "ExpiresInDays",
+				Path:        expiresInDaysPath,
 				Type:        VariableInt,
 				Description: "How many days the link is good for. Use this rather than writing a number into the copy, or the wording will drift from the real expiry.",
 			},

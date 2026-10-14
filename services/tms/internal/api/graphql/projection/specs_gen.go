@@ -26572,6 +26572,26 @@ func init() {
 				FieldMapKey: "mustChangePassword",
 			},
 			{
+				Name:        "locale",
+				FieldMapKey: "locale",
+			},
+			{
+				Name:        "jobTitle",
+				FieldMapKey: "jobTitle",
+			},
+			{
+				Name:        "phoneNumber",
+				FieldMapKey: "phoneNumber",
+			},
+			{
+				Name:        "avatarStyle",
+				FieldMapKey: "avatarStyle",
+			},
+			{
+				Name:        "availabilityStatus",
+				FieldMapKey: "availabilityStatus",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -26586,6 +26606,10 @@ func init() {
 			{
 				Name:        "lastLoginAt",
 				FieldMapKey: "lastLoginAt",
+			},
+			{
+				Name:        "passwordChangedAt",
+				FieldMapKey: "passwordChangedAt",
 			},
 			{
 				Name:        "businessUnit",

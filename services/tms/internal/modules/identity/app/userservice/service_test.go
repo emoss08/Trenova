@@ -1,19 +1,19 @@
 package userservice
 
 import (
+	"context"
+	"errors"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"context"
-	"errors"
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -474,97 +474,6 @@ func TestSwitchOrganization_UnauthorizedOrg(t *testing.T) {
 	deps.repo.AssertNotCalled(t, "UpdateCurrentOrganization")
 }
 
-func TestUpdate_Success(t *testing.T) {
-	t.Parallel()
-	deps := setupTest(t)
-	ctx := t.Context()
-
-	entity := newTestUser()
-	userID := pulid.MustNew("usr_")
-
-	original := newTestUser()
-	original.ID = entity.ID
-	original.CurrentOrganizationID = entity.CurrentOrganizationID
-	original.BusinessUnitID = entity.BusinessUnitID
-	original.Name = "Old Name"
-
-	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
-	deps.repo.On("Update", mock.Anything, mock.Anything).Return(entity, nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-
-	result, err := deps.svc.Update(ctx, entity, userID)
-
-	require.NoError(t, err)
-	assert.Equal(t, entity.ID, result.ID)
-	assert.Equal(t, entity.Name, result.Name)
-	deps.repo.AssertExpectations(t)
-	deps.audit.AssertExpectations(t)
-}
-
-func TestUpdate_ValidationError(t *testing.T) {
-	t.Parallel()
-	deps := setupTest(t)
-	ctx := t.Context()
-
-	entity := &tenant.User{
-		ID:                    pulid.MustNew("usr_"),
-		BusinessUnitID:        pulid.MustNew("bu_"),
-		CurrentOrganizationID: pulid.MustNew("org_"),
-	}
-	userID := pulid.MustNew("usr_")
-
-	result, err := deps.svc.Update(ctx, entity, userID)
-
-	require.Error(t, err)
-	assert.Nil(t, result)
-	deps.repo.AssertNotCalled(t, "GetByID")
-	deps.repo.AssertNotCalled(t, "Update")
-}
-
-func TestUpdate_GetError(t *testing.T) {
-	t.Parallel()
-	deps := setupTest(t)
-	ctx := t.Context()
-
-	entity := newTestUser()
-	userID := pulid.MustNew("usr_")
-
-	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errors.New("not found"))
-
-	result, err := deps.svc.Update(ctx, entity, userID)
-
-	require.Error(t, err)
-	assert.Nil(t, result)
-	assert.Equal(t, "not found", err.Error())
-	deps.repo.AssertExpectations(t)
-	deps.repo.AssertNotCalled(t, "Update")
-}
-
-func TestUpdate_RepoError(t *testing.T) {
-	t.Parallel()
-	deps := setupTest(t)
-	ctx := t.Context()
-
-	entity := newTestUser()
-	userID := pulid.MustNew("usr_")
-
-	original := newTestUser()
-	original.ID = entity.ID
-	original.CurrentOrganizationID = entity.CurrentOrganizationID
-	original.BusinessUnitID = entity.BusinessUnitID
-
-	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
-	deps.repo.On("Update", mock.Anything, mock.Anything).Return(nil, errors.New("update failed"))
-
-	result, err := deps.svc.Update(ctx, entity, userID)
-
-	require.Error(t, err)
-	assert.Nil(t, result)
-	assert.Equal(t, "update failed", err.Error())
-	deps.repo.AssertExpectations(t)
-	deps.audit.AssertNotCalled(t, "LogAction")
-}
-
 func TestUpdateMySettings_Success(t *testing.T) {
 	t.Parallel()
 
@@ -588,19 +497,20 @@ func TestUpdateMySettings_Success(t *testing.T) {
 			BuID:   user.BusinessUnitID,
 			UserID: user.ID,
 		},
+		LookupUserID:       user.ID,
 		IncludeMemberships: true,
-	}).Return(newTestUser(), nil).Once()
-	deps.repo.On("Update", mock.Anything, mock.MatchedBy(func(updated *tenant.User) bool {
-		return updated.Name == user.Name &&
+	}).Return(user, nil).Once()
+	deps.repo.On("UpdateColumns", mock.Anything, mock.MatchedBy(func(req tenantports.UpdateUserColumnsRequest) bool {
+		updated := req.Entity
+		return assert.ObjectsAreEqual([]string{"timezone", "time_format"}, req.Columns) &&
+			updated.Name == user.Name &&
 			updated.Username == user.Username &&
 			updated.EmailAddress == user.EmailAddress &&
 			updated.Timezone == "America/Chicago" &&
-			updated.TimeFormat == domaintypes.TimeFormat24Hour &&
-			updated.ProfilePicURL == user.ProfilePicURL &&
-			updated.ThumbnailURL == user.ThumbnailURL
-	})).Return(func(_ context.Context, updated *tenant.User) *tenant.User {
-		return updated
-	}, func(context.Context, *tenant.User) error {
+			updated.TimeFormat == domaintypes.TimeFormat24Hour
+	})).Return(func(_ context.Context, req tenantports.UpdateUserColumnsRequest) *tenant.User {
+		return req.Entity
+	}, func(context.Context, tenantports.UpdateUserColumnsRequest) error {
 		return nil
 	}).Once()
 

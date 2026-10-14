@@ -19,6 +19,8 @@ const AuthEventProviderPasswordResetRequest = "password_reset.request"
 
 const AuthEventProviderPasswordResetConfirm = "password_reset.confirm"
 
+const AuthEventProviderInviteAccept = "invite.accept"
+
 const AuthEventProviderSignupRequested = "signup_requested"
 
 const AuthEventProviderSignupRejected = "signup_rejected"
@@ -35,6 +37,7 @@ func NonSignInAuthEventProviders() []string {
 		AuthEventProviderSessionRevoked,
 		AuthEventProviderPasswordResetRequest,
 		AuthEventProviderPasswordResetConfirm,
+		AuthEventProviderInviteAccept,
 		AuthEventProviderSignupRequested,
 		AuthEventProviderSignupRejected,
 		AuthEventProviderSignupVerified,

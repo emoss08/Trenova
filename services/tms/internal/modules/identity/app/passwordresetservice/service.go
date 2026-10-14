@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"html/template"
+	"net/url"
 	"strings"
 	"time"
 
@@ -41,7 +42,7 @@ import (
 var errInvalidToken = errortypes.NewValidationError(
 	"token",
 	errortypes.ErrInvalid,
-	"This password reset link is no longer valid. Request a new one.",
+	"This link is no longer valid. Request a new one.",
 )
 
 type Params struct {
@@ -55,8 +56,9 @@ type Params struct {
 	Templates        documenttemplateports.DocumentTemplateResolver
 	AuditService     auditports.AuditService
 	AuthEvents       iamports.AuthEventRecorder
-	Plans            platformplanports.PlanService    `optional:"true"`
-	PlatformEmail    kernelports.PlatformEmailService `optional:"true"`
+	Plans            platformplanports.PlanService           `optional:"true"`
+	PlatformEmail    kernelports.PlatformEmailService        `optional:"true"`
+	PlatformInvites  kernelports.PlatformAccountInviteSender `optional:"true"`
 	Config           *config.Config
 	Logger           *zap.Logger
 }
@@ -72,6 +74,7 @@ type Service struct {
 	authEvents   iamports.AuthEventRecorder
 	plans        platformplanports.PlanService
 	platform     kernelports.PlatformEmailService
+	invites      kernelports.PlatformAccountInviteSender
 	cfg          *config.Config
 	l            *zap.Logger
 }
@@ -88,6 +91,7 @@ func New(p Params) *Service {
 		authEvents:   p.AuthEvents,
 		plans:        p.Plans,
 		platform:     p.PlatformEmail,
+		invites:      p.PlatformInvites,
 		cfg:          p.Config,
 		l:            p.Logger.Named("service.password-reset"),
 	}
@@ -148,7 +152,10 @@ func (s *Service) RequestReset(ctx context.Context, emailAddress string) (err er
 
 	// Only the newest link may work: somebody who asks twice because the first email
 	// was slow should not be left with two live credentials in their mailbox.
-	if err = s.issueToken(scoped, user); err != nil {
+	if err = s.issueToken(scoped, &linkRequest{
+		user:    user,
+		purpose: tenant.PasswordResetPurposeReset,
+	}); err != nil {
 		log.Error("failed to issue a reset link", zap.Error(err))
 		return err
 	}
@@ -200,62 +207,151 @@ func (s *Service) RequestResetForUser(ctx context.Context, req AdminResetRequest
 		)
 	}
 
-	if err = s.issueToken(ctx, user); err != nil {
+	link := &linkRequest{user: user, purpose: tenant.PasswordResetPurposeReset}
+	comment := "Password reset link sent by an administrator"
+	if user.AwaitingAccountSetup() {
+		link.purpose = tenant.PasswordResetPurposeInvite
+		link.invitedBy = s.actorName(ctx, req.Actor)
+		comment = "Account invitation resent by an administrator"
+	}
+
+	if err = s.issueToken(ctx, link); err != nil {
 		log.Error("failed to issue an administrator reset link", zap.Error(err))
 		return err
 	}
 
-	if s.audit != nil {
-		if auditErr := s.audit.LogAction(&auditports.LogActionParams{
-			Resource:       permission.ResourceUser,
-			ResourceID:     user.ID.String(),
-			Operation:      permission.OpUpdate,
-			UserID:         req.Actor.UserID,
-			OrganizationID: req.Actor.OrgID,
-			BusinessUnitID: req.Actor.BuID,
-			Critical:       true,
-		},
-			auditservice.WithComment("Password reset link sent by an administrator"),
-			auditservice.WithCategory(audit.CategoryUser),
-			auditservice.WithRequest(ctx),
-		); auditErr != nil {
-			// The link is already out; failing the request now would tell the admin it
-			// did not happen when it did.
-			log.Error("failed to audit the administrator reset", zap.Error(auditErr))
-		}
+	s.auditAdminLink(ctx, &adminLinkAudit{
+		user:    user,
+		actor:   req.Actor,
+		purpose: link.purpose,
+		comment: comment,
+	})
+
+	return nil
+}
+
+type InviteRequest struct {
+	User  *tenant.User
+	Actor pagination.TenantInfo
+}
+
+func (s *Service) SendInvite(ctx context.Context, req InviteRequest) error {
+	if req.User == nil {
+		return errortypes.NewBusinessError("There is no account to invite.")
+	}
+
+	if !req.User.IsActive() {
+		return errortypes.NewBusinessError(
+			"This account is not active, so an invitation would be unusable.",
+		)
+	}
+
+	if err := s.issueToken(ctx, &linkRequest{
+		user:      req.User,
+		purpose:   tenant.PasswordResetPurposeInvite,
+		invitedBy: s.actorName(ctx, req.Actor),
+	}); err != nil {
+		s.l.Error("failed to issue an account invitation",
+			zap.String("userId", req.User.ID.String()),
+			zap.Error(err))
+		return err
 	}
 
 	return nil
 }
 
+type adminLinkAudit struct {
+	user    *tenant.User
+	actor   pagination.TenantInfo
+	purpose tenant.PasswordResetPurpose
+	comment string
+}
+
+func (s *Service) auditAdminLink(ctx context.Context, entry *adminLinkAudit) {
+	if s.audit == nil {
+		return
+	}
+
+	if err := s.audit.LogAction(&auditports.LogActionParams{
+		Resource:       permission.ResourceUser,
+		ResourceID:     entry.user.ID.String(),
+		Operation:      permission.OpUpdate,
+		UserID:         entry.actor.UserID,
+		OrganizationID: entry.actor.OrgID,
+		BusinessUnitID: entry.actor.BuID,
+		Critical:       true,
+	},
+		auditservice.WithComment(entry.comment),
+		auditservice.WithCategory(audit.CategoryUser),
+		auditservice.WithMetadata(map[string]any{"linkPurpose": string(entry.purpose)}),
+		auditservice.WithRequest(ctx),
+	); err != nil {
+		s.l.Error("failed to audit the administrator link",
+			zap.String("userId", entry.user.ID.String()),
+			zap.Error(err))
+	}
+}
+
+func (s *Service) actorName(ctx context.Context, actor pagination.TenantInfo) string {
+	if actor.UserID.IsNil() {
+		return ""
+	}
+
+	user, err := s.ur.GetByID(ctx, tenantports.GetUserByIDRequest{TenantInfo: actor})
+	if err != nil || user == nil {
+		return ""
+	}
+
+	return user.Name
+}
+
 // issueToken retires whatever was outstanding, stores a fresh digest and mails the
 // link. Shared by both entry points so the two cannot drift on expiry, on the
 // one-live-link rule, or on what actually reaches the mailbox.
-func (s *Service) issueToken(ctx context.Context, user *tenant.User) error {
+type linkRequest struct {
+	user      *tenant.User
+	purpose   tenant.PasswordResetPurpose
+	invitedBy string
+}
+
+func (s *Service) issueToken(ctx context.Context, link *linkRequest) error {
 	token, tokenHash, err := tokenutils.New()
 	if err != nil {
 		return err
 	}
 
 	now := timeutils.NowUnix()
-	expiresAt := now + int64(s.cfg.Security.PasswordReset.GetTokenTTL().Seconds())
+	expiresAt := now + int64(s.linkTTL(link.purpose).Seconds())
 
-	if err = s.tokens.InvalidateOutstanding(ctx, user.ID, now); err != nil {
+	if err = s.tokens.InvalidateOutstanding(ctx, link.user.ID, now); err != nil {
 		return err
 	}
 
 	if err = s.tokens.Create(ctx, &tenant.PasswordResetToken{
-		UserID:         user.ID,
-		BusinessUnitID: user.BusinessUnitID,
-		OrganizationID: user.CurrentOrganizationID,
+		UserID:         link.user.ID,
+		BusinessUnitID: link.user.BusinessUnitID,
+		OrganizationID: link.user.CurrentOrganizationID,
 		TokenHash:      tokenHash,
+		Purpose:        link.purpose,
 		ExpiresAt:      expiresAt,
 	}); err != nil {
 		return err
 	}
 
-	s.sendResetEmail(ctx, user, token, expiresAt)
+	if link.purpose.IsInvite() {
+		s.sendInviteEmail(ctx, link, token, expiresAt)
+		return nil
+	}
+
+	s.sendResetEmail(ctx, link.user, token, expiresAt)
 	return nil
+}
+
+func (s *Service) linkTTL(purpose tenant.PasswordResetPurpose) time.Duration {
+	if purpose.IsInvite() {
+		return s.cfg.Security.PasswordReset.GetInviteTokenTTL()
+	}
+	return s.cfg.Security.PasswordReset.GetTokenTTL()
 }
 
 func (s *Service) withinRequestAllowance(
@@ -310,6 +406,9 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 	event.user = user
 	event.organizationID = token.OrganizationID
 	event.businessUnitID = token.BusinessUnitID
+	if token.Purpose.IsInvite() {
+		event.provider = iamports.AuthEventProviderInviteAccept
+	}
 
 	if !user.IsActive() {
 		event.deny(iam.AuthEventOutcomeDenied, resetErrorAccountUnavailable)
@@ -401,7 +500,7 @@ func (s *Service) sendResetEmail(
 		BuID:   user.BusinessUnitID,
 	}
 
-	resetURL, err := s.resetURL(rawToken)
+	resetURL, err := s.linkURL(rawToken, tenant.PasswordResetPurposeReset)
 	if err != nil {
 		log.Error("password reset email cannot be sent", zap.Error(err))
 		return
@@ -493,15 +592,119 @@ var errNoResetBaseURL = errors.New(
 	"security.passwordReset.baseUrl is not set, so a reset link cannot be built",
 )
 
-// resetURL refuses to guess. Deriving the origin from the request's Host header is how
+// linkURL refuses to guess. Deriving the origin from the request's Host header is how
 // reset links end up pointing at an attacker's domain, so an unconfigured deployment
 // gets a logged error instead of a link.
-func (s *Service) resetURL(rawToken string) (string, error) {
+func (s *Service) linkURL(rawToken string, purpose tenant.PasswordResetPurpose) (string, error) {
 	base := s.cfg.Security.PasswordReset.GetBaseURL()
 	if base == "" {
 		return "", errNoResetBaseURL
 	}
-	return base + "/auth/reset?token=" + rawToken, nil
+
+	query := url.Values{"token": []string{rawToken}}
+	if purpose.IsInvite() {
+		query.Set("purpose", string(purpose))
+	}
+
+	return base + "/auth/reset?" + query.Encode(), nil
+}
+
+func (s *Service) sendInviteEmail(
+	ctx context.Context,
+	link *linkRequest,
+	rawToken string,
+	expiresAt int64,
+) {
+	user := link.user
+	log := s.l.With(zap.String("userId", user.ID.String()))
+
+	tenantInfo := pagination.TenantInfo{
+		UserID: user.ID,
+		OrgID:  user.CurrentOrganizationID,
+		BuID:   user.BusinessUnitID,
+	}
+
+	setupURL, err := s.linkURL(rawToken, link.purpose)
+	if err != nil {
+		log.Error("account invitation email cannot be sent", zap.Error(err))
+		return
+	}
+
+	hours := int(s.linkTTL(link.purpose).Hours())
+	idempotencyKey := "account-invite-" + tokenutils.Hash(rawToken)
+
+	if s.invites != nil && s.usesPlatformSender(ctx, tenantInfo) {
+		if err = s.invites.SendAccountInvite(ctx, &kernelports.AccountInviteEmail{
+			To:             user.EmailAddress,
+			Locale:         i18n.Locale(user.Locale),
+			Name:           user.Name,
+			Username:       user.Username,
+			CompanyName:    s.companyName(ctx, user),
+			InvitedByName:  link.invitedBy,
+			SetupURL:       setupURL,
+			ExpiresInHours: hours,
+			ExpiresAt:      expiresAt,
+			Timezone:       user.Timezone,
+			IdempotencyKey: idempotencyKey,
+		}); err != nil {
+			log.Error("failed to send the account invitation through the platform sender",
+				zap.Error(err))
+		}
+		return
+	}
+
+	if s.templates == nil || s.emailService == nil {
+		log.Error("account invitation email cannot be sent: templating or email is not configured")
+		return
+	}
+
+	rendered, renderErr := s.templates.RenderMessage(
+		ctx,
+		&documenttemplateports.RenderMessageRequest{
+			TenantInfo: tenantInfo,
+			Kind:       documenttemplate.KindAccountInviteEmail,
+			Data: documenttemplate.AccountInviteContext{
+				FirstName:     stringutils.FirstName(user.Name),
+				FullName:      user.Name,
+				Username:      user.Username,
+				EmailAddress:  user.EmailAddress,
+				InvitedByName: link.invitedBy,
+				CompanyName:   s.companyName(ctx, user),
+				SetupURL: template.URL( //nolint:gosec // built from configured base URL + generated token
+					setupURL,
+				),
+				ExpiresInDays:  wholeDays(hours),
+				ExpiresInHours: hours,
+				ExpiresAt:      timeutils.FormatStampIn(expiresAt, user.Timezone),
+			},
+			ReferenceID:       user.ID,
+			Locale:            i18n.Locale(user.Locale),
+			FallbackToBuiltIn: true,
+		},
+	)
+	if renderErr != nil {
+		log.Error("failed to render the account invitation email", zap.Error(renderErr))
+		return
+	}
+
+	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
+		TenantInfo:     tenantInfo,
+		Purpose:        email.PurposeGeneral,
+		To:             []string{user.EmailAddress},
+		Subject:        rendered.Subject,
+		HTML:           rendered.HTML,
+		Text:           rendered.Text,
+		IdempotencyKey: idempotencyKey,
+	}); err != nil {
+		log.Error("failed to send the account invitation email", zap.Error(err))
+	}
+}
+
+func wholeDays(hours int) int {
+	if hours <= 0 || hours%24 != 0 {
+		return 0
+	}
+	return hours / 24
 }
 
 func (s *Service) companyName(ctx context.Context, user *tenant.User) string {

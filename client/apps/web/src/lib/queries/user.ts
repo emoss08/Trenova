@@ -18,6 +18,13 @@ export const user = createQueryKeys("user", {
     queryKey: ["detail", id],
     queryFn: async () => apiService.userService.get(id),
   }),
+  account: (id: string) => ({
+    queryKey: ["account", id],
+    queryFn: async ({ signal }) => {
+      const { fetchUserDetail } = await import("@/lib/graphql/users");
+      return fetchUserDetail(id, { signal });
+    },
+  }),
   profilePicture: (id: User["id"], variant: "thumbnail" | "full" = "thumbnail") => ({
     queryKey: ["profile-picture", id, variant],
     queryFn: async () => (id ? apiService.userService.getProfilePictureURL(id, variant) : null),

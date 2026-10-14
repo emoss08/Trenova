@@ -2168,6 +2168,8 @@ type MutationResolver interface {
 	FlagInboundFact(ctx context.Context, id string, key string) (*inboundmessage.InboundMessage, error)
 	ResolveInboundConflict(ctx context.Context, id string, conflictID string, resolution inboundmessage.ConflictResolution) (*inboundmessage.InboundMessage, error)
 	ReopenInboundConflict(ctx context.Context, id string, conflictID string) (*inboundmessage.InboundMessage, error)
+	CreateUser(ctx context.Context, input gqlmodel.CreateUserInput) (*tenant.User, error)
+	PatchUser(ctx context.Context, id string, input gqlmodel.UserPatchInput) (*tenant.User, error)
 	MarkWatchtowerSeen(ctx context.Context, seenAt *int) (*gqlmodel.WatchtowerCounts, error)
 	DismissWatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
 	HandOffWatchtowerItem(ctx context.Context, id string, input gqlmodel.HandOffWatchtowerItemInput) (*gqlmodel.WatchtowerHandOffResult, error)
@@ -30968,10 +30970,16 @@ type User {
   timezone: String!
   isLocked: Boolean!
   mustChangePassword: Boolean!
+  locale: String!
+  jobTitle: String!
+  phoneNumber: String!
+  avatarStyle: AvatarStyle!
+  availabilityStatus: AvailabilityStatus!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
   lastLoginAt: Timestamp
+  passwordChangedAt: Timestamp
   businessUnit: BusinessUnit
   currentOrganization: Organization
 }
@@ -31982,7 +31990,24 @@ extend type Mutation {
   updatedAt: Timestamp!
 }
 `, BuiltIn: false},
-	{Name: "../schema/user.graphqls", Input: `type UserEdge {
+	{Name: "../schema/user.graphqls", Input: `enum AvatarStyle {
+  auto
+  dusk
+  lagoon
+  citrus
+  orchid
+  ember
+  mint
+  slate
+}
+
+enum AvailabilityStatus {
+  available
+  focus
+  away
+}
+
+type UserEdge {
   node: User!
   cursor: String!
 }
@@ -31996,6 +32021,50 @@ type UserConnection {
 extend type Query {
   users(input: DataTableConnectionInput!): UserConnection!
   user(id: ID!): User
+}
+
+input CreateUserInput {
+  name: String!
+  username: String!
+  emailAddress: String!
+  timezone: String!
+  "Defaults to TwelveHour."
+  timeFormat: TimeFormat
+  "Defaults to the instance's default language."
+  locale: String
+  status: EntityStatus!
+  mustChangePassword: Boolean = false
+  "Roles granted in the current organization. Every grant is checked against the caller's own access."
+  roleIds: [ID!]
+}
+
+input UserPatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  name: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  emailAddress: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  timezone: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  timeFormat: TimeFormat @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  locale: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  isLocked: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  mustChangePassword: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected. An empty string clears it."
+  jobTitle: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected. An empty string clears it."
+  phoneNumber: String @goField(omittable: true)
+}
+
+extend type Mutation {
+  "Creates a user in the current organization and emails them an invitation to choose their own password."
+  createUser(input: CreateUserInput!): User!
+  patchUser(id: ID!, input: UserPatchInput!): User!
 }
 `, BuiltIn: false},
 	{Name: "../schema/watchtower.graphqls", Input: `"""

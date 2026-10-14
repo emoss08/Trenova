@@ -287,6 +287,7 @@
   "Condition key is required when a value is provided": "La clave de la condición es obligatoria cuando se proporciona un valor",
   "Condition value is required when a key is provided": "El valor de la condición es obligatorio cuando se proporciona una clave",
   "Conditional": "Condicional",
+  "Confirm password": "Confirmar la contraseña",
   "Confirm password is required": "La confirmación de la contraseña es obligatoria",
   "Confirmed": "Confirmado",
   "Confirmed by dispatcher": "Confirmado por el despachador",
