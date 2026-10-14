@@ -426,7 +426,6 @@ func (r *invoiceStateRepository) GetSummary(
 				factoring.VerdictReady,
 				factoring.VerdictNotReady,
 				factoring.VerdictSubmitted,
-				factoring.VerdictFunded,
 			})).
 			Group(cols.Verdict.Bare()).
 			Scan(ctx, &rows); err != nil {
@@ -447,14 +446,35 @@ func (r *invoiceStateRepository) GetSummary(
 				summary.NotReady = totals
 			case factoring.VerdictSubmitted:
 				summary.Submitted = totals
-			case factoring.VerdictFunded:
-				summary.Funded = totals
-			case factoring.VerdictExcluded:
+			case factoring.VerdictFunded, factoring.VerdictExcluded:
 			}
 		}
 
+		funded, err := r.fundedTotals(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		summary.Funded = funded
 		return summary, nil
 	})
+}
+
+func (r *invoiceStateRepository) fundedTotals(
+	ctx context.Context,
+	req factoringports.GetSummaryRequest,
+) (factoringports.VerdictTotals, error) {
+	item := factoringcol.SubmissionItemColumns
+	var totals factoringports.VerdictTotals
+	if err := r.db.DBForContext(ctx).NewSelect().
+		Model((*factoring.SubmissionItem)(nil)).
+		ColumnExpr("COUNT(*) AS count").
+		ColumnExpr(item.FaceMinor.Expr("COALESCE(SUM({}), 0)")+" AS amount_minor").
+		Apply(factoringcol.SubmissionItemApplyTenant(req.TenantInfo)).
+		Where(item.Status.Eq(), factoring.SubmissionItemStatusFunded).
+		Scan(ctx, &totals.Count, &totals.AmountMinor); err != nil {
+		return totals, fmt.Errorf("summarize funded factoring invoices: %w", err)
+	}
+	return totals, nil
 }
 
 func openFactoredInvoices(q *bun.SelectQuery) *bun.SelectQuery {

@@ -269,6 +269,14 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	assert.Equal(t, int64(-100000), e.ledgerBalance(t, released.ID))
 	assert.Zero(t, e.invoice(t, rejected.ID).AppliedAmountMinor)
 
+	summary, err := e.states.GetSummary(e.ctx, factoringports.GetSummaryRequest{
+		TenantInfo:  e.tenantInfo,
+		ReadyBefore: now,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 2, summary.Funded.Count)
+	assert.Equal(t, int64(150000), summary.Funded.AmountMinor)
+
 	unfunded, err = e.attention.ListUnfundedSubmissions(e.ctx,
 		&factoringports.ListUnfundedSubmissionsRequest{TenantInfo: e.tenantInfo, At: now})
 	require.NoError(t, err)
@@ -339,6 +347,13 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, balance.ReserveMinor)
 	assert.Equal(t, 6, balance.EntryCount)
+
+	summary, err = e.states.GetSummary(e.ctx, factoringports.GetSummaryRequest{
+		TenantInfo:  e.tenantInfo,
+		ReadyBefore: now,
+	})
+	require.NoError(t, err)
+	assert.Zero(t, summary.Funded.Count, "a settled item and a charged-back one are no longer funded")
 
 	reopened := e.invoice(t, charged.ID)
 	assert.Zero(t, reopened.AppliedAmountMinor)
