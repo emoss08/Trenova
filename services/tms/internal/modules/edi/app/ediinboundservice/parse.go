@@ -719,6 +719,30 @@ func isShipmentPaymentMethod(value string) bool {
 	return ok
 }
 
+type TenderReference struct {
+	ShipmentID    string
+	PaymentMethod string
+}
+
+func TenderReferences(
+	rawTransaction string,
+	envelope *edi.X12EnvelopeSettings,
+) (TenderReference, bool) {
+	if strings.TrimSpace(rawTransaction) == "" {
+		return TenderReference{}, false
+	}
+	inspection := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{
+		RawX12:   rawTransaction,
+		Envelope: envelope,
+	})
+	b2 := findSegment(inspection.Segments, "B2")
+	if b2 == nil {
+		return TenderReference{}, false
+	}
+	shipmentID, paymentMethod := readB2(b2)
+	return TenderReference{ShipmentID: shipmentID, PaymentMethod: paymentMethod}, true
+}
+
 func readB2(b2 *edix12inspect.X12Segment) (shipmentID, paymentMethod string) {
 	element := func(position int) string {
 		return strings.TrimSpace(elementValue(b2, position))
