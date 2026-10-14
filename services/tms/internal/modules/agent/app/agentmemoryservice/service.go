@@ -506,12 +506,12 @@ func (s *Service) SetStatus(
 	req agentports.SetAgentMemoryStatusRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.Memory, error) {
-	return s.setStatus(ctx, req, actor, s.manages(ctx, req.TenantInfo, actor))
+	return s.setStatus(ctx, &req, actor, s.manages(ctx, req.TenantInfo, actor))
 }
 
 func (s *Service) setStatus(
 	ctx context.Context,
-	req agentports.SetAgentMemoryStatusRequest,
+	req *agentports.SetAgentMemoryStatusRequest,
 	actor *permissionports.RequestActor,
 	manages bool,
 ) (*agent.Memory, error) {

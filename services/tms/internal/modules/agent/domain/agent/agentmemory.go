@@ -146,12 +146,7 @@ const (
 // Shared reports whether memories of the scope reach conversations other than
 // one person's own: a role's, the organization's or every agent's.
 func (s MemoryScope) Shared() bool {
-	switch s {
-	case MemoryScopeRole, MemoryScopeOrganization, MemoryScopeAgent:
-		return true
-	default:
-		return false
-	}
+	return s == MemoryScopeRole || s == MemoryScopeOrganization || s == MemoryScopeAgent
 }
 
 func (s MemoryScope) IsValid() bool {
@@ -517,7 +512,7 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 	// who asked to be asked first, or offered by a person for readers they may
 	// not keep a memory for; nothing else waits to be accepted.
 	if m.Status.IsSuggestion() && m.Source != MemorySourceFeedback &&
-		!m.Source.OfferedByAgent() && !(m.Source == MemorySourceUser && m.Scope.Shared()) {
+		!m.Source.OfferedByAgent() && (m.Source != MemorySourceUser || !m.Scope.Shared()) {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,

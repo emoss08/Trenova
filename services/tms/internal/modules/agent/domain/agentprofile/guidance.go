@@ -43,7 +43,10 @@ const (
 
 func (s GuidanceStatus) IsValid() bool {
 	switch s {
-	case GuidanceStatusActive, GuidanceStatusSuggested, GuidanceStatusRetired, GuidanceStatusDismissed:
+	case GuidanceStatusActive,
+		GuidanceStatusSuggested,
+		GuidanceStatusRetired,
+		GuidanceStatusDismissed:
 		return true
 	default:
 		return false

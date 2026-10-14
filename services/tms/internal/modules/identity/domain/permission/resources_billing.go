@@ -305,7 +305,7 @@ func (r *Registry) registerBillingResources() {
 			{Operation: OpRead, DisplayName: "Read", Description: "View what agents remember"},
 			{
 				Operation:   OpManage,
-				DisplayName: "Manage",
+				DisplayName: operationDefinitions[OpManage].DisplayName,
 				Description: "Keep, change, retire, review and approve memories and profile guidance shared with a team, the organization or every agent",
 			},
 		},

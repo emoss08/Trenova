@@ -674,7 +674,13 @@ func (s *Service) AddGuidance(
 	}
 
 	if created.IsSuggested() {
-		s.logGuidance(created, nil, req.Actor, permission.OpCreate, guidanceComment(created, "Offered"))
+		s.logGuidance(
+			created,
+			nil,
+			req.Actor,
+			permission.OpCreate,
+			guidanceComment(created, "Offered"),
+		)
 		s.announce(ctx, req.Ref, created.ID, "offered")
 
 		return created, nil

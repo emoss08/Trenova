@@ -739,7 +739,7 @@ func (s *Service) SetDeskStatus(
 		return nil, err
 	}
 
-	if _, err = s.setStatus(ctx, agentports.SetAgentMemoryStatusRequest{
+	if _, err = s.setStatus(ctx, &agentports.SetAgentMemoryStatusRequest{
 		ID:         req.ID,
 		TenantInfo: person.tenant,
 		Status:     req.Status,
