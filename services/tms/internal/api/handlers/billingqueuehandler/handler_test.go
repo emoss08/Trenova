@@ -1,6 +1,7 @@
 package billingqueuehandler_test
 
 import (
+	"errors"
 	"net/http"
 	"testing"
 
@@ -75,6 +76,7 @@ func buildHandler(
 		Service:              service,
 		ErrorHandler:         errorHandler,
 		PermissionMiddleware: pm,
+		Logger:               logger,
 	})
 }
 
@@ -100,6 +102,13 @@ func TestBillingQueueHandler_Get_FormulaContentFollowsPermission(t *testing.T) {
 		{
 			name:        "biller without formula read gets neither",
 			permissions: withoutFormulaRead(),
+		},
+		{
+			name: "a failing permission engine hides the content and keeps the answer",
+			permissions: &mocks.FailingPermissionEngine{
+				Failing: []string{permission.ResourceFormulaTemplate.String()},
+				Err:     errors.New("engine down"),
+			},
 		},
 	}
 

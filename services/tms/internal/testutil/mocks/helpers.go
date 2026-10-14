@@ -186,6 +186,28 @@ func (d *DenyResourcesPermissionEngine) Check(
 	return d.AllowAllPermissionEngine.Check(ctx, req)
 }
 
+var _ permissionports.PermissionEngine = (*FailingPermissionEngine)(nil)
+
+type FailingPermissionEngine struct {
+	AllowAllPermissionEngine
+
+	Failing []string
+	Err     error
+}
+
+func (f *FailingPermissionEngine) Check(
+	ctx context.Context,
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	for _, resource := range f.Failing {
+		if resource == req.Resource {
+			return nil, f.Err
+		}
+	}
+
+	return f.AllowAllPermissionEngine.Check(ctx, req)
+}
+
 var _ accessorialchargeports.DataTransformer = (*NoopDataTransformer)(nil)
 
 type NoopDataTransformer struct{}

@@ -1,6 +1,7 @@
 package shipmenthandler_test
 
 import (
+	"errors"
 	"net/http"
 	"testing"
 
@@ -149,37 +150,57 @@ func TestShipmentHandler_List_HidesFormulaContentWithoutFormulaRead(t *testing.T
 func TestShipmentHandler_TransferToBilling_HidesFormulaContentWithoutFormulaRead(t *testing.T) {
 	t.Parallel()
 
-	shipmentID := pulid.MustNew("shp_")
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
-		TransferToBilling(mock.Anything, mock.Anything, mock.Anything).
-		Return(&billingqueue.BillingQueueItem{
-			ID:       pulid.MustNew("bqi_"),
-			Shipment: ratedShipment(shipmentID),
-		}, nil).
-		Once()
-
-	handler := buildShipmentHandler(t, handlerDeps{
-		service:     service,
-		permissions: withoutFormulaRead(),
-	})
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPost).
-		WithPath("/api/v1/shipments/" + shipmentID.String() + "/transfer-to-billing/").
-		WithJSONBody(map[string]any{}).
-		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	require.Equal(t, http.StatusOK, ginCtx.ResponseCode(), string(ginCtx.ResponseBody()))
-
-	var body struct {
-		Shipment formulaVisibilityShipment `json:"shipment"`
+	tests := []struct {
+		name        string
+		permissions permissionports.PermissionEngine
+	}{
+		{name: "formula read denied", permissions: withoutFormulaRead()},
+		{
+			name: "permission engine failing after the write committed",
+			permissions: &mocks.FailingPermissionEngine{
+				Failing: []string{permission.ResourceFormulaTemplate.String()},
+				Err:     errors.New("engine down"),
+			},
+		},
 	}
-	require.NoError(t, ginCtx.ResponseJSON(&body))
-	assert.Nil(t, body.Shipment.FormulaTemplate)
-	assert.Empty(t, body.Shipment.RatingDetail.Expression)
-	assert.Equal(t, "Per pound", body.Shipment.RatingDetail.FormulaTemplateName)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			shipmentID := pulid.MustNew("shp_")
+			service := shipmentportsmock.NewMockShipmentService(t)
+			service.EXPECT().
+				TransferToBilling(mock.Anything, mock.Anything, mock.Anything).
+				Return(&billingqueue.BillingQueueItem{
+					ID:       pulid.MustNew("bqi_"),
+					Shipment: ratedShipment(shipmentID),
+				}, nil).
+				Once()
+
+			handler := buildShipmentHandler(t, handlerDeps{
+				service:     service,
+				permissions: tt.permissions,
+			})
+
+			ginCtx := testutil.NewGinTestContext().
+				WithMethod(http.MethodPost).
+				WithPath("/api/v1/shipments/" + shipmentID.String() + "/transfer-to-billing/").
+				WithJSONBody(map[string]any{}).
+				WithDefaultAuthContext()
+
+			handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+			ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+			require.Equal(t, http.StatusOK, ginCtx.ResponseCode(), string(ginCtx.ResponseBody()))
+
+			var body struct {
+				Shipment formulaVisibilityShipment `json:"shipment"`
+			}
+			require.NoError(t, ginCtx.ResponseJSON(&body))
+			assert.Nil(t, body.Shipment.FormulaTemplate)
+			assert.Empty(t, body.Shipment.RatingDetail.Expression)
+			assert.Equal(t, "Per pound", body.Shipment.RatingDetail.FormulaTemplateName)
+		})
+	}
 }

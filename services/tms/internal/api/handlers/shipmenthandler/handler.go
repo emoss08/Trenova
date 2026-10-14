@@ -50,6 +50,7 @@ type Handler struct {
 	etas            shipmenttrackingports.ShipmentEtaReader
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
+	formulas        formulavisibility.Gate
 	logger          *zap.Logger
 }
 
@@ -63,6 +64,7 @@ func New(p Params) *Handler {
 		etas:            p.Etas,
 		eh:              p.ErrorHandler,
 		pm:              p.PermissionMiddleware,
+		formulas:        formulavisibility.NewGate(p.PermissionMiddleware, p.Logger),
 		logger:          p.Logger.Named("api.shipment-handler"),
 	}
 }
@@ -300,7 +302,7 @@ func (h *Handler) list(c *gin.Context) {
 				return nil, err
 			}
 
-			return h.visibleShipmentPage(c, result)
+			return h.visibleShipmentPage(c, result), nil
 		},
 	)
 }
@@ -345,7 +347,7 @@ func (h *Handler) getUnassignedShipments(c *gin.Context) {
 				return nil, err
 			}
 
-			return h.visibleShipmentPage(c, result)
+			return h.visibleShipmentPage(c, result), nil
 		},
 	)
 }
@@ -1183,8 +1185,7 @@ func (h *Handler) transferToBilling(c *gin.Context) {
 
 	formulavisibility.Respond(
 		c,
-		h.pm,
-		h.eh,
+		h.formulas,
 		http.StatusOK,
 		item,
 		(*billingqueue.BillingQueueItem).WithoutFormulaContent,
@@ -1209,8 +1210,7 @@ func (h *Handler) bulkTransferToBilling(c *gin.Context) {
 
 	formulavisibility.Respond(
 		c,
-		h.pm,
-		h.eh,
+		h.formulas,
 		http.StatusOK,
 		response,
 		(*shipmentports.BulkTransferToBillingResponse).WithoutFormulaContent,

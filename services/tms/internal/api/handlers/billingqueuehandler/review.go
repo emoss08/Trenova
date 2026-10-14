@@ -285,8 +285,7 @@ func (h *Handler) post(c *gin.Context) {
 
 	formulavisibility.Respond(
 		c,
-		h.pm,
-		h.eh,
+		h.formulas,
 		http.StatusOK,
 		result,
 		(*billingqueueports.PostBillingQueueItemResult).WithoutFormulaContent,

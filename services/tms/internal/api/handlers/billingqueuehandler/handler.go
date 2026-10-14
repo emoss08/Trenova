@@ -20,6 +20,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type Params struct {
@@ -31,6 +32,7 @@ type Params struct {
 	PresetRepo           billingqueuefilterpresetports.BillingQueueFilterPresetRepository
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	Logger               *zap.Logger
 }
 
 type Handler struct {
@@ -40,6 +42,7 @@ type Handler struct {
 	presetRepo billingqueuefilterpresetports.BillingQueueFilterPresetRepository
 	eh         *helpers.ErrorHandler
 	pm         *middleware.PermissionMiddleware
+	formulas   formulavisibility.Gate
 }
 
 func New(p Params) *Handler {
@@ -50,6 +53,7 @@ func New(p Params) *Handler {
 		presetRepo: p.PresetRepo,
 		eh:         p.ErrorHandler,
 		pm:         p.PermissionMiddleware,
+		formulas:   formulavisibility.NewGate(p.PermissionMiddleware, p.Logger),
 	}
 }
 
@@ -190,7 +194,7 @@ func (h *Handler) list(c *gin.Context) {
 				return nil, err
 			}
 
-			return h.visibleItemPage(c, result)
+			return h.visibleItemPage(c, result), nil
 		},
 	)
 }
@@ -742,8 +746,7 @@ func (h *Handler) reassignCharge(c *gin.Context) {
 
 	formulavisibility.Respond(
 		c,
-		h.pm,
-		h.eh,
+		h.formulas,
 		http.StatusOK,
 		result,
 		(*billingqueueports.ReassignChargeResult).WithoutFormulaContent,

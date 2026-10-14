@@ -10,8 +10,7 @@ import (
 func (h *Handler) respondItem(c *gin.Context, status int, item *billingqueue.BillingQueueItem) {
 	formulavisibility.Respond(
 		c,
-		h.pm,
-		h.eh,
+		h.formulas,
 		status,
 		item,
 		(*billingqueue.BillingQueueItem).WithoutFormulaContent,
@@ -21,14 +20,14 @@ func (h *Handler) respondItem(c *gin.Context, status int, item *billingqueue.Bil
 func (h *Handler) visibleItemPage(
 	c *gin.Context,
 	result *pagination.ListResult[*billingqueue.BillingQueueItem],
-) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
-	items, err := formulavisibility.Apply(c, h.pm, result.Items, billingqueue.WithoutFormulaContent)
-	if err != nil {
-		return nil, err
-	}
-
+) *pagination.ListResult[*billingqueue.BillingQueueItem] {
 	visible := *result
-	visible.Items = items
+	visible.Items = formulavisibility.Apply(
+		c,
+		h.formulas,
+		result.Items,
+		billingqueue.WithoutFormulaContent,
+	)
 
-	return &visible, nil
+	return &visible
 }
