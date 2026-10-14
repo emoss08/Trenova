@@ -50,11 +50,12 @@ type RateQuote struct {
 	Outcome Outcome `json:"outcome" bun:"outcome,type:rate_quote_outcome_enum,notnull"`
 	Status  Status  `json:"status"  bun:"status,type:rate_quote_status_enum,notnull,default:'Applied'"`
 
-	RateAgreementID        *pulid.ID `json:"rateAgreementId"        bun:"rate_agreement_id,type:VARCHAR(100),nullzero"`
-	RateAgreementRuleID    *pulid.ID `json:"rateAgreementRuleId"    bun:"rate_agreement_rule_id,type:VARCHAR(100),nullzero"`
-	AgreementVersionNumber *int64    `json:"agreementVersionNumber" bun:"agreement_version_number,type:BIGINT,nullzero"`
-	FormulaTemplateID      *pulid.ID `json:"formulaTemplateId"      bun:"formula_template_id,type:VARCHAR(100),nullzero"`
-	SpecificityScore       int32     `json:"specificityScore"       bun:"specificity_score,type:INTEGER,notnull,default:0"`
+	RateAgreementID              *pulid.ID `json:"rateAgreementId"              bun:"rate_agreement_id,type:VARCHAR(100),nullzero"`
+	RateAgreementRuleID          *pulid.ID `json:"rateAgreementRuleId"          bun:"rate_agreement_rule_id,type:VARCHAR(100),nullzero"`
+	AgreementVersionNumber       *int64    `json:"agreementVersionNumber"       bun:"agreement_version_number,type:BIGINT,nullzero"`
+	FormulaTemplateID            *pulid.ID `json:"formulaTemplateId"            bun:"formula_template_id,type:VARCHAR(100),nullzero"`
+	FormulaTemplateVersionNumber *int64    `json:"formulaTemplateVersionNumber" bun:"formula_template_version_number,type:BIGINT,nullzero"`
+	SpecificityScore             int32     `json:"specificityScore"             bun:"specificity_score,type:INTEGER,notnull,default:0"`
 
 	Currency          string              `json:"currency"          bun:"currency,type:VARCHAR(3),notnull"`
 	LinehaulAmount    decimal.Decimal     `json:"linehaulAmount"    bun:"linehaul_amount,type:NUMERIC(19,4),notnull,default:0"`

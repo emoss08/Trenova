@@ -1,14 +1,14 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
 export function PaymentStatsRow() {
   const t = useT();
 
-  const { data: stats, isLoading } = useQuery(queries.ar.paymentStats());
+  const { data: stats, isLoading } = useQuery(ar.paymentStats());
 
   if (isLoading || !stats) {
     return <KpiStripSkeleton count={3} />;

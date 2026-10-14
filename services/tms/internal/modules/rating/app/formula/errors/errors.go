@@ -12,8 +12,7 @@ type ResolveError struct {
 }
 
 func (e *ResolveError) Error() string {
-	return fmt.Sprintf("failed to resolve %s on %s: %v",
-		e.Path, e.EntityType, e.Cause)
+	return fmt.Sprintf("failed to resolve %s: %v", e.Path, e.Cause)
 }
 
 func (e *ResolveError) Unwrap() error {
@@ -70,8 +69,7 @@ type ComputeError struct {
 }
 
 func (e *ComputeError) Error() string {
-	return fmt.Sprintf("failed to compute %s for %s: %v",
-		e.Function, e.EntityType, e.Cause)
+	return fmt.Sprintf("failed to compute %s: %v", e.Function, e.Cause)
 }
 
 func (e *ComputeError) Unwrap() error {
@@ -155,5 +153,25 @@ func NewMissingFieldError(expression string, fields, suggestions []string) *Miss
 		Expression:  expression,
 		Fields:      fields,
 		Suggestions: suggestions,
+	}
+}
+
+type UnresolvedFieldError struct {
+	Fields []string
+	Causes map[string]error
+}
+
+func (e *UnresolvedFieldError) Error() string {
+	return fmt.Sprintf(
+		"the formula reads %s, which could not be read from this record; "+
+			"it cannot be priced until the field has a value",
+		strings.Join(e.Fields, ", "),
+	)
+}
+
+func NewUnresolvedFieldError(fields []string, causes map[string]error) *UnresolvedFieldError {
+	return &UnresolvedFieldError{
+		Fields: fields,
+		Causes: causes,
 	}
 }

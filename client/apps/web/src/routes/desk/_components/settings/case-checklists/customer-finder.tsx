@@ -1,5 +1,5 @@
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
-import { queries } from "@/lib/queries";
+import { caseChecklist } from "@/lib/queries/case-checklist";
 import type { ChecklistTemplate } from "@/types/case-checklist";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
@@ -27,7 +27,7 @@ export function CustomerFinder({
   const [text, setText] = useState("");
   const query = useDebounce(text.trim(), SEARCH_DEBOUNCE_MS);
   const results = useQuery({
-    ...queries.caseChecklist.customers(query),
+    ...caseChecklist.customers(query),
     placeholderData: keepPreviousData,
   });
   const found = results.data?.results ?? [];

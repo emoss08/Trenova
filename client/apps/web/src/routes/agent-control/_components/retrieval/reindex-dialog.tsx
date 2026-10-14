@@ -7,7 +7,7 @@ import {
   type AIRetrievalSourceType,
   type AIRetrievalStatus,
 } from "@/lib/graphql/ai-retrieval";
-import { queries } from "@/lib/queries";
+import { aiRetrieval } from "@/lib/queries/ai-retrieval";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -67,14 +67,14 @@ function ReindexConfirm({
   const queryClient = useQueryClient();
   const label = t(SOURCE_LABEL[sourceType].label);
   const estimate = useQuery({
-    ...queries.aiRetrieval.reindexEstimate(sourceType),
+    ...aiRetrieval.reindexEstimate(sourceType),
     staleTime: 0,
   });
 
   const reindex = useApiMutation<AIRetrievalStatus, AIRetrievalSourceType>({
     mutationFn: (type) => reindexAIRetrievalSource(type),
     onSuccess: async (status) => {
-      queryClient.setQueryData(queries.aiRetrieval.status().queryKey, status);
+      queryClient.setQueryData(aiRetrieval.status().queryKey, status);
       await queryClient.invalidateQueries({ queryKey: [AI_RETRIEVAL_FAILED_LIST_KEY] });
       toast.success(t("Re-indexing {0}", label));
       onClose();

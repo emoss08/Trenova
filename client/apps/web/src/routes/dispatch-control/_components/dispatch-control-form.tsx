@@ -20,7 +20,7 @@ import {
   complianceEnforcementLevelChoices,
   serviceIncidentTypeChoices,
 } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { dispatchControl } from "@/lib/queries/dispatch-control";
 import { apiService } from "@/services/api";
 import {
   dispatchControlSchema,
@@ -37,7 +37,7 @@ export default function DispatchControlForm() {
   const t = useT();
 
   const { data } = useSuspenseQuery({
-    ...queries.dispatchControl.get(),
+    ...dispatchControl.get(),
   });
 
   const form = useForm<DispatchControl>({
@@ -48,12 +48,12 @@ export default function DispatchControlForm() {
   const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
-    queryKey: queries.dispatchControl.get._def,
+    queryKey: dispatchControl.get._def,
     mutationFn: async (values: DispatchControl) => apiService.dispatchControlService.update(values),
     resourceName: "Dispatch Control",
     resetForm: reset,
     form,
-    invalidateQueries: [queries.dispatchControl.get._def],
+    invalidateQueries: [dispatchControl.get._def],
   });
 
   const onSubmit = useCallback(

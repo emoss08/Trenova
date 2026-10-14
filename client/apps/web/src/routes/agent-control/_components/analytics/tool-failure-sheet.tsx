@@ -1,6 +1,6 @@
 import { describeToolCall } from "@/components/assistant/tool-presentation";
 import type { AIAnalyticsInput, AIAnalyticsSeries } from "@/lib/graphql/ai-analytics";
-import { queries } from "@/lib/queries";
+import { aiAnalytics } from "@/lib/queries/ai-analytics";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { formatNumber, formatRelativeTime } from "@trenova/shared/i18n/format";
@@ -38,7 +38,7 @@ export function ToolFailureSheet({
   const t = useT();
   const now = useNow("minute");
   const detailQuery = useQuery({
-    ...queries.aiAnalytics.toolFailures(input, seriesKey ?? "", toolName ?? ""),
+    ...aiAnalytics.toolFailures(input, seriesKey ?? "", toolName ?? ""),
     enabled: open && Boolean(seriesKey && toolName),
   });
   const detail = detailQuery.data;

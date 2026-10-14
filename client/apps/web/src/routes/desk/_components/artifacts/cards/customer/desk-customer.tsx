@@ -8,7 +8,8 @@ import type {
   DeskCustomerBilling,
   DeskCustomerRateAgreement,
 } from "@/lib/graphql/customer-card";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
+import { customer as customerQueries } from "@/lib/queries/customer";
 import { agreementTypeLabel, agreementWindow, orderedAgreements } from "@/lib/rate-agreement";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -102,7 +103,7 @@ export function DeskCustomer({
 }: CustomerCardProps) {
   const t = useT();
   const query = useQuery({
-    ...queries.customer.card(recordId),
+    ...customerQueries.card(recordId),
     retry: false,
     placeholderData: keepPreviousData,
   });
@@ -157,7 +158,7 @@ function CustomerCard({
   const billing = customer.billingProfile ?? null;
 
   const receivables = useQuery({
-    ...queries.ar.customerProfile(id),
+    ...ar.customerProfile(id),
     enabled: access.receivables,
     retry: false,
   });
@@ -167,7 +168,7 @@ function CustomerCard({
     enabled: access.shipments,
   });
   const agreements = useQuery({
-    ...queries.customer.rateAgreements(id, AGREEMENT_ROWS),
+    ...customerQueries.rateAgreements(id, AGREEMENT_ROWS),
     enabled: access.agreements,
     retry: false,
   });

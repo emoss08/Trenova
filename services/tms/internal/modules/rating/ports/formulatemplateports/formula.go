@@ -3,6 +3,8 @@ package formulatemplateports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/pagination"
+
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 )
 
@@ -18,6 +20,7 @@ type EvaluatePredicateRequest struct {
 	Expression string
 	SchemaID   string
 	Entity     any
+	TenantInfo pagination.TenantInfo
 }
 
 // FormulaPredicateEvaluator answers yes-or-no questions written in the same

@@ -4,7 +4,7 @@ import {
   updateAgentControl,
   type AgentControl,
 } from "@/lib/graphql/agent-control";
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -25,7 +25,7 @@ export function usePauseAgents(control: AgentControl | undefined) {
     resourceName: t("Organization-wide settings"),
     onSuccess: async (saved, shadowMode) => {
       queryClient.setQueryData(AGENT_CONTROL_QUERY_KEY, saved);
-      await queryClient.invalidateQueries({ queryKey: queries.aiControl._def });
+      await queryClient.invalidateQueries({ queryKey: aiControl._def });
       toast.success(
         shadowMode
           ? t("All agents paused · they keep running in shadow")

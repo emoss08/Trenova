@@ -1,6 +1,6 @@
 import { recordPath } from "@/config/record-links";
 import type { DeskOrder as DeskOrderRecord } from "@/lib/graphql/order-card";
-import { queries } from "@/lib/queries";
+import { order } from "@/lib/queries/order";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -70,7 +70,7 @@ export function DeskOrder({
 }: OrderCardProps) {
   const t = useT();
   const query = useQuery({
-    ...queries.order.card(recordId),
+    ...order.card(recordId),
     retry: false,
     placeholderData: keepPreviousData,
   });

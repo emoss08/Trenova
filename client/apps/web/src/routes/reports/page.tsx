@@ -12,7 +12,7 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { reports } from "@/lib/queries/reports";
 import { reportDefinitionsInfiniteQuery } from "@/lib/queries/reports";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { cn } from "@trenova/shared/lib/utils";
@@ -45,9 +45,9 @@ export const prefetch: RoutePrefetch = ({ request }) => {
   const { tab, query } = loadReportsSearch(request);
   switch (tab) {
     case "gallery":
-      return [queries.reports.canned()];
+      return [reports.canned()];
     case "dashboards":
-      return [queries.reports.dashboards()];
+      return [reports.dashboards()];
     default:
       return [reportDefinitionsInfiniteQuery(query)];
   }

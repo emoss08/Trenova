@@ -24,7 +24,7 @@ import {
   supersededInvoiceVisibilityPolicyChoices,
   writeOffApprovalPolicyChoices,
 } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { invoiceAdjustmentControl } from "@/lib/queries/invoice-adjustment-control";
 import { apiService } from "@/services/api";
 import {
   type InvoiceAdjustmentControl,
@@ -39,7 +39,7 @@ export default function InvoiceAdjustmentControlForm() {
   const t = useT();
 
   const { data } = useSuspenseQuery({
-    ...queries.invoiceAdjustmentControl.get(),
+    ...invoiceAdjustmentControl.get(),
   });
 
   const form = useForm<InvoiceAdjustmentControl>({
@@ -55,13 +55,13 @@ export default function InvoiceAdjustmentControlForm() {
     unknown,
     InvoiceAdjustmentControl
   >({
-    queryKey: queries.invoiceAdjustmentControl.get._def,
+    queryKey: invoiceAdjustmentControl.get._def,
     mutationFn: async (values: InvoiceAdjustmentControl) =>
       apiService.invoiceAdjustmentControlService.update(values),
     resourceName: "Invoice Adjustment Control",
     resetForm: reset,
     form,
-    invalidateQueries: [queries.invoiceAdjustmentControl.get._def],
+    invalidateQueries: [invoiceAdjustmentControl.get._def],
   });
 
   const onSubmit = useCallback(

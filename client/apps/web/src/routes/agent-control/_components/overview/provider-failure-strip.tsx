@@ -4,7 +4,8 @@ import {
   type AIProviderFailure,
 } from "@/lib/graphql/ai-control";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { apiService } from "@/services/api";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -46,11 +47,11 @@ function FailureRow({
 }) {
   const t = useT();
   const queryClient = useQueryClient();
-  const providersQuery = useQuery(queries.aiProvider.list());
+  const providersQuery = useQuery(aiProvider.list());
   const provider = providersQuery.data?.find((candidate) => candidate.id === failure.providerId);
 
   const refresh = useCallback(
-    () => queryClient.invalidateQueries({ queryKey: queries.aiControl._def }),
+    () => queryClient.invalidateQueries({ queryKey: aiControl._def }),
     [queryClient],
   );
 
@@ -115,12 +116,19 @@ function FailureRow({
           <Ic n="plug" s={12} />
           {t("Test again")}
         </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => onEditProvider(failure.providerId)}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onEditProvider(failure.providerId)}
+        >
           {t("Edit connection")}
         </Button>
         <Button
           type="button"
-          variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground"
+          variant="ghost"
+          size="icon-sm"
+          className="text-muted-foreground hover:text-foreground"
           title={t("Hide until it fails again")}
           aria-label={t("Hide until it fails again")}
           disabled={dismiss.isPending}

@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import type { ApiRequestError } from "@trenova/shared/lib/api";
-import { queries } from "@/lib/queries";
+import { googleMaps } from "@/lib/queries/google-maps";
+import { integration } from "@/lib/queries/integration";
 import { cn } from "@trenova/shared/lib/utils";
 import type { LocationDetails } from "@/types/google-maps";
 import { useQuery } from "@tanstack/react-query";
@@ -80,7 +81,7 @@ export function AddressField<TForm extends FieldValues>({
   const debouncedInput = useDebounce(searchValue, 400);
 
   const runtimeConfigQuery = useQuery({
-    ...queries.integration.runtimeConfig("GoogleMaps"),
+    ...integration.runtimeConfig("GoogleMaps"),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -94,7 +95,7 @@ export function AddressField<TForm extends FieldValues>({
     isFetching,
     error,
   } = useQuery({
-    ...queries.googleMaps.autocomplete({
+    ...googleMaps.autocomplete({
       input: debouncedInput,
       sessionToken,
     }),

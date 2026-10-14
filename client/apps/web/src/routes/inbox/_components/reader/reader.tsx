@@ -3,7 +3,7 @@ import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { useWidthBelow } from "@/hooks/use-width-below";
 import { describeApiError } from "@/lib/api-error-message";
 import type { InboundMessageDetail, TriageAction } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -349,7 +349,7 @@ function ReaderView({
  * finished in place, and under a bar that does the next one.
  */
 export function Reader({ messageId, position, settled, onClose, onStep }: ReaderProps) {
-  const query = useQuery({ ...queries.inbox.message(messageId), enabled: settled });
+  const query = useQuery({ ...inbox.message(messageId), enabled: settled });
   useAnnouncePresence(messageId, "viewing");
   const message = query.data;
 

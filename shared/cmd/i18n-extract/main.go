@@ -68,6 +68,8 @@ var noMessage = map[string]struct{}{
 	"NewVariableError":                {},
 	"NewSchemaError":                  {},
 	"NewMissingFieldError":            {},
+	"NewUnresolvedFieldError":         {},
+	"NewPanicError":                   {},
 	"NewSeedError":                    {},
 	"NewMissingDependencyError":       {},
 	"NewCircularDependencyError":      {},

@@ -5,7 +5,8 @@ import {
   agentToolRuleTableGraphQLConfig,
   type AgentToolRuleRow,
 } from "@/lib/graphql/agent-safety";
-import { queries } from "@/lib/queries";
+import { agentSafety } from "@/lib/queries/agent-safety";
+import { assistant } from "@/lib/queries/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -23,10 +24,10 @@ const HoldingContext = createContext<ToolHolding>(NO_HOLDING);
 /** Which agents hold each tool, with the agents themselves, read once for the page. */
 export function useToolHolding(): ToolHolding {
   const holders = useQuery({
-    ...queries.agentSafety.holders(),
+    ...agentSafety.holders(),
     staleTime: SAFETY_SUMMARY_STALE_MS,
   });
-  const agents = useQuery(queries.assistant.agents(false));
+  const agents = useQuery(assistant.agents(false));
 
   return useMemo(
     () => ({
@@ -47,7 +48,7 @@ export function useToolHolding(): ToolHolding {
 export default function ToolRulesTable() {
   const t = useT();
   const summary = useQuery({
-    ...queries.agentSafety.summary(),
+    ...agentSafety.summary(),
     staleTime: SAFETY_SUMMARY_STALE_MS,
   });
   const holding = useToolHolding();

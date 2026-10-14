@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +18,7 @@ type SetupStepsProps = {
  */
 export function SetupSteps({ agentCount, onPickPreset }: SetupStepsProps) {
   const t = useT();
-  const catalogQuery = useQuery(queries.aiProvider.catalog());
+  const catalogQuery = useQuery(aiProvider.catalog());
   const presets = SETUP_PRESETS.flatMap((key) => {
     const preset = catalogQuery.data?.presets.find((candidate) => candidate.key === key);
     return preset ? [preset] : [];

@@ -4,7 +4,7 @@ import {
   ServiceTypeAutocompleteField,
   ShipmentTypeAutocompleteField,
 } from "@/components/autocomplete-fields";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import {
   CapabilityFields,
   type FieldDescriptor,
@@ -41,7 +41,7 @@ function ShipmentServiceDetailsForm() {
   const t = useT();
 
   const { control } = useFormContext<Shipment>();
-  const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
+  const { data: shipmentUIPolicy } = useQuery({ ...shipment.uiPolicy() });
 
   const profile = getProfile(shipmentUIPolicy);
 

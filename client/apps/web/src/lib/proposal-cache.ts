@@ -1,4 +1,6 @@
-import { queries } from "@/lib/queries";
+import { agentPreview } from "@/lib/queries/agent-preview";
+import { assistant } from "@/lib/queries/assistant";
+import { homeLayout } from "@/lib/queries/home-layout";
 import type {
   AssistantPlan,
   AssistantProposal,
@@ -44,18 +46,18 @@ export async function invalidateProposalViews(queryClient: QueryClient, threadId
     ["pending-decision-summary"],
     ["attention"],
     // A decision can change the person's own home page.
-    [...queries.homeLayout.effective().queryKey],
+    [...homeLayout.effective().queryKey],
     // What a write would do is read from the world as it is now, and a
     // decision changes it: the one decided now reads as recorded, and a later
     // step or a proposal on the same record starts from what this one left.
-    scopeOf(queries.agentPreview),
+    scopeOf(agentPreview),
   ];
 
   const threadScoped = [
-    queries.assistant.proposals,
-    queries.assistant.plans,
-    queries.assistant.messages,
-    queries.assistant.artifacts,
+    assistant.proposals,
+    assistant.plans,
+    assistant.messages,
+    assistant.artifacts,
   ];
   for (const key of threadScoped) {
     keys.push(threadId ? [...key(threadId).queryKey] : scopeOf(key));
@@ -110,7 +112,7 @@ export function markProposalDecided(
   decision: ProposalDecision,
 ) {
   queryClient.setQueriesData<{ results: AssistantProposal[] }>(
-    { queryKey: scopeOf(queries.assistant.proposals) },
+    { queryKey: scopeOf(assistant.proposals) },
     (data) =>
       data === undefined
         ? data
@@ -125,7 +127,7 @@ export function markProposalDecided(
  */
 export function markPlanDecided(queryClient: QueryClient, planId: string, decision: PlanDecision) {
   queryClient.setQueriesData<{ results: AssistantPlan[] }>(
-    { queryKey: scopeOf(queries.assistant.plans) },
+    { queryKey: scopeOf(assistant.plans) },
     (data) =>
       data === undefined
         ? data
@@ -152,7 +154,7 @@ export function markProposalsStatus(
 ) {
   const ids = new Set(proposalIds);
   queryClient.setQueriesData<{ results: AssistantProposal[] }>(
-    { queryKey: scopeOf(queries.assistant.proposals) },
+    { queryKey: scopeOf(assistant.proposals) },
     (data) =>
       data === undefined
         ? data
@@ -172,7 +174,7 @@ export function markPlanStatus(
   status: AssistantPlan["status"],
 ) {
   queryClient.setQueriesData<{ results: AssistantPlan[] }>(
-    { queryKey: scopeOf(queries.assistant.plans) },
+    { queryKey: scopeOf(assistant.plans) },
     (data) =>
       data === undefined
         ? data
@@ -194,7 +196,7 @@ export function markProposalEdits(
   pendingModifications: Record<string, unknown> | null,
 ) {
   queryClient.setQueriesData<{ results: AssistantProposal[] }>(
-    { queryKey: scopeOf(queries.assistant.proposals) },
+    { queryKey: scopeOf(assistant.proposals) },
     (data) =>
       data === undefined
         ? data

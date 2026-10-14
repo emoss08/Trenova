@@ -1,6 +1,6 @@
 import { accountingMappingFilterKey } from "@/lib/accounting-sync";
 import { fetchAccountingMappings } from "@/lib/graphql/accounting-sync";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import type {
   AccountingMappingFilterInput,
   AccountingSystem,
@@ -20,7 +20,7 @@ export function useAccountingMappingList({
   enabled?: boolean;
 }) {
   const query = useInfiniteQuery({
-    queryKey: queries.accountingSync.mappings(system, accountingMappingFilterKey(filter), pageSize)
+    queryKey: accountingSync.mappings(system, accountingMappingFilterKey(filter), pageSize)
       .queryKey,
     queryFn: ({ pageParam, signal }) =>
       fetchAccountingMappings(

@@ -78,3 +78,27 @@ func TestContextVariables_EmptyWithoutPrices(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, variables, "no price means the schema's nullable placeholder stays empty")
 }
+
+func TestContextVariables_PriceDateIsADayWhateverTheColumnScansTo(t *testing.T) {
+	t.Parallel()
+
+	for _, scanned := range []string{
+		"2026-08-31",
+		"2026-08-31T00:00:00Z",
+		"2026-08-31 00:00:00+00:00",
+		"2026-08-31T00:00:00-05:00",
+	} {
+		index := &fuelsurcharge.FuelIndex{ID: pulid.MustNew("fidx_"), Code: "DOE_US"}
+		svc := &Service{
+			l:         zap.NewNop(),
+			indexRepo: &stubIndexRepo{indices: []*fuelsurcharge.FuelIndex{index}},
+			priceRepo: &stubLatestPriceRepo{latest: map[pulid.ID][]*fuelsurcharge.FuelIndexPrice{
+				index.ID: {{PriceDate: scanned, Price: decimal.RequireFromString("3.85")}},
+			}},
+		}
+
+		variables, err := svc.ContextVariables(t.Context(), pagination.TenantInfo{})
+		require.NoError(t, err)
+		assert.Equal(t, "2026-08-31", variables["fuelPriceDate"], scanned)
+	}
+}

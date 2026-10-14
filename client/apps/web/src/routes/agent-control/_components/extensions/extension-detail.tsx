@@ -2,7 +2,8 @@ import { InputField } from "@/components/fields/input-field";
 import { ExternalLink } from "@/components/link";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { agentExtension } from "@/lib/queries/agent-extension";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import type {
   AgentExtensionAvailability,
@@ -65,7 +66,7 @@ export function useExtensionControl(item: AgentExtensionCatalogItem | null): Ext
   const t = useT();
   const queryClient = useQueryClient();
   const type = item?.type ?? "";
-  const configQuery = useQuery({ ...queries.agentExtension.config(type), enabled: type !== "" });
+  const configQuery = useQuery({ ...agentExtension.config(type), enabled: type !== "" });
   const config = configQuery.data;
 
   const mutation = useApiMutation({
@@ -82,8 +83,8 @@ export function useExtensionControl(item: AgentExtensionCatalogItem | null): Ext
       if (message) toast.success(message);
       onSaved?.();
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.agentExtension._def }),
-        queryClient.invalidateQueries({ queryKey: queries.assistant._def }),
+        queryClient.invalidateQueries({ queryKey: agentExtension._def }),
+        queryClient.invalidateQueries({ queryKey: assistant._def }),
       ]);
     },
     resourceName: t("Extension"),
@@ -128,7 +129,7 @@ export function ExtensionDetail({
   const availability = config?.availability ?? item.availability;
 
   const refresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: queries.assistant._def });
+    await queryClient.invalidateQueries({ queryKey: assistant._def });
   };
 
   const give = useApiMutation({
@@ -379,7 +380,8 @@ export function ExtensionDetail({
           ) : (
             <Button
               type="button"
-              variant="default" size="sm"
+              variant="default"
+              size="sm"
               disabled={!canTurnOn || busy}
               isLoading={control.saving}
               loadingText={t("Turn on")}

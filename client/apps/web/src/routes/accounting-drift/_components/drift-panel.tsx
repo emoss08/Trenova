@@ -16,7 +16,7 @@ import {
 } from "@/lib/accounting-sync";
 import type { AccountingDriftFinding } from "@/lib/graphql/accounting-drift";
 import type { AccountingDriftRow } from "@/lib/graphql/accounting-drift-table";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import type { AccountingDriftDirection } from "@trenova/graphql/generated/graphql";
@@ -59,7 +59,7 @@ export function DriftFindingPanel({
   const [{ panelEntityId }] = useQueryStates(panelSearchParamsParser);
   const findingId = row?.id ?? panelEntityId;
   const fetched = useQuery({
-    ...queries.accountingSync.driftFinding(findingId ?? ""),
+    ...accountingSync.driftFinding(findingId ?? ""),
     enabled: open && !row && !!findingId,
   });
   const finding: AccountingDriftFinding | null = row ?? fetched.data ?? null;
@@ -342,7 +342,7 @@ function FixConfirmation({
   const labels = useAccountingDriftLabels();
   const actions = useAccountingDriftActions();
   const preview = useQuery({
-    ...queries.accountingSync.driftPreview(findingId, direction),
+    ...accountingSync.driftPreview(findingId, direction),
     enabled: open,
   });
 

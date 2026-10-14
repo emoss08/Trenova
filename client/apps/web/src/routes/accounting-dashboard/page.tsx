@@ -4,7 +4,7 @@ import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { usePermission } from "@/hooks/use-permission";
 import { AR_DASHBOARD_HISTORY_WEEKS, receivablesHaveActivity } from "@/lib/ar-dashboard";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { CoinsHandIcon } from "@trenova/shared/components/icons";
@@ -26,8 +26,8 @@ export function AccountingDashboardPage() {
   // The cards each draw their own zeros for a quiet book; only a tenant that
   // has never invoiced gets the sketch instead, so the KPI strip's own query
   // is read here alongside a year of the trend before deciding.
-  const { data: kpis } = useQuery(queries.ar.dashboardKpis());
-  const { data: history } = useQuery(queries.ar.dsoTrend(AR_DASHBOARD_HISTORY_WEEKS));
+  const { data: kpis } = useQuery(ar.dashboardKpis());
+  const { data: history } = useQuery(ar.dsoTrend(AR_DASHBOARD_HISTORY_WEEKS));
   const neverInvoiced =
     kpis !== undefined && history !== undefined && !receivablesHaveActivity(kpis.overview, history);
 

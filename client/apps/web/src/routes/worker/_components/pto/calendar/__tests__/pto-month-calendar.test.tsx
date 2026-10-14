@@ -7,14 +7,11 @@ const { fetchUpcomingWorkerPTO } = vi.hoisted(() => ({ fetchUpcomingWorkerPTO: v
 const dialogProps = vi.hoisted(() => ({ last: null as Record<string, unknown> | null }));
 const permissionState = vi.hoisted(() => ({ create: true }));
 
-vi.mock("@/lib/queries/worker", () => ({ fetchUpcomingWorkerPTO }));
-
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    worker: {
-      listUpcomingPTO: { _def: ["worker", "list-upcoming-pto"] },
-      ptoChartData: { _def: ["worker", "pto-chart-data"] },
-    },
+vi.mock("@/lib/queries/worker", () => ({
+  fetchUpcomingWorkerPTO,
+  worker: {
+    listUpcomingPTO: { _def: ["worker", "list-upcoming-pto"] },
+    ptoChartData: { _def: ["worker", "pto-chart-data"] },
   },
 }));
 

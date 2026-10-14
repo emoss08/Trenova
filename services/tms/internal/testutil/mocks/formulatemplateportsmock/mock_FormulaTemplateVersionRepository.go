@@ -657,6 +657,142 @@ func (_c *MockFormulaTemplateVersionRepository_List_Call) RunAndReturn(run func(
 	return _c
 }
 
+// ListApproved provides a mock function for the type MockFormulaTemplateVersionRepository
+func (_mock *MockFormulaTemplateVersionRepository) ListApproved(ctx context.Context, req *formulatemplateports.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListApproved")
+	}
+
+	var r0 []*formulatemplate.FormulaTemplateVersion
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.ListScheduledVersionsRequest) []*formulatemplate.FormulaTemplateVersion); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*formulatemplate.FormulaTemplateVersion)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *formulatemplateports.ListScheduledVersionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateVersionRepository_ListApproved_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListApproved'
+type MockFormulaTemplateVersionRepository_ListApproved_Call struct {
+	*mock.Call
+}
+
+// ListApproved is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListScheduledVersionsRequest
+func (_e *MockFormulaTemplateVersionRepository_Expecter) ListApproved(ctx any, req any) *MockFormulaTemplateVersionRepository_ListApproved_Call {
+	return &MockFormulaTemplateVersionRepository_ListApproved_Call{Call: _e.mock.On("ListApproved", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ListApproved_Call) Run(run func(ctx context.Context, req *formulatemplateports.ListScheduledVersionsRequest)) *MockFormulaTemplateVersionRepository_ListApproved_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *formulatemplateports.ListScheduledVersionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*formulatemplateports.ListScheduledVersionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ListApproved_Call) Return(formulaTemplateVersions []*formulatemplate.FormulaTemplateVersion, err error) *MockFormulaTemplateVersionRepository_ListApproved_Call {
+	_c.Call.Return(formulaTemplateVersions, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ListApproved_Call) RunAndReturn(run func(ctx context.Context, req *formulatemplateports.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error)) *MockFormulaTemplateVersionRepository_ListApproved_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListAuthorIDsSince provides a mock function for the type MockFormulaTemplateVersionRepository
+func (_mock *MockFormulaTemplateVersionRepository) ListAuthorIDsSince(ctx context.Context, req *formulatemplateports.ListVersionAuthorsRequest) ([]pulid.ID, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAuthorIDsSince")
+	}
+
+	var r0 []pulid.ID
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.ListVersionAuthorsRequest) ([]pulid.ID, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.ListVersionAuthorsRequest) []pulid.ID); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pulid.ID)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *formulatemplateports.ListVersionAuthorsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateVersionRepository_ListAuthorIDsSince_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAuthorIDsSince'
+type MockFormulaTemplateVersionRepository_ListAuthorIDsSince_Call struct {
+	*mock.Call
+}
+
+// ListAuthorIDsSince is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListVersionAuthorsRequest
+func (_e *MockFormulaTemplateVersionRepository_Expecter) ListAuthorIDsSince(ctx any, req any) *MockFormulaTemplateVersionRepository_ListAuthorIDsSince_Call {
+	return &MockFormulaTemplateVersionRepository_ListAuthorIDsSince_Call{Call: _e.mock.On("ListAuthorIDsSince", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ListAuthorIDsSince_Call) Run(run func(ctx context.Context, req *formulatemplateports.ListVersionAuthorsRequest)) *MockFormulaTemplateVersionRepository_ListAuthorIDsSince_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *formulatemplateports.ListVersionAuthorsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*formulatemplateports.ListVersionAuthorsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ListAuthorIDsSince_Call) Return(iDs []pulid.ID, err error) *MockFormulaTemplateVersionRepository_ListAuthorIDsSince_Call {
+	_c.Call.Return(iDs, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ListAuthorIDsSince_Call) RunAndReturn(run func(ctx context.Context, req *formulatemplateports.ListVersionAuthorsRequest) ([]pulid.ID, error)) *MockFormulaTemplateVersionRepository_ListAuthorIDsSince_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListScheduled provides a mock function for the type MockFormulaTemplateVersionRepository
 func (_mock *MockFormulaTemplateVersionRepository) ListScheduled(ctx context.Context, req *formulatemplateports.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	ret := _mock.Called(ctx, req)

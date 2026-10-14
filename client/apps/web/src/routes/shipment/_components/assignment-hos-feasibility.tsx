@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DriverFeasibility } from "@/lib/graphql/telematics";
-import { queries } from "@/lib/queries";
+import { telematics } from "@/lib/queries/telematics";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -162,7 +162,7 @@ export function AssignmentHosFeasibility({
   const [expanded, setExpanded] = useState(true);
 
   const statusQuery = useQuery({
-    ...queries.telematics.status(),
+    ...telematics.status(),
     staleTime: 5 * 60 * 1000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -171,7 +171,7 @@ export function AssignmentHosFeasibility({
   const telematicsEnabled = statusQuery.data?.enabled ?? false;
 
   const feasibilityQuery = useQuery({
-    ...queries.telematics.shipmentDriverFeasibility(shipmentId ?? ""),
+    ...telematics.shipmentDriverFeasibility(shipmentId ?? ""),
     staleTime: FEASIBILITY_STALE_MS,
     retry: false,
     refetchOnWindowFocus: false,

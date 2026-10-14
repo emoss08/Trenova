@@ -1,6 +1,7 @@
 import type { AIAnalyticsSeries, AIAnalyticsTaskRow } from "@/lib/graphql/ai-analytics";
 import { routeAITask } from "@/lib/graphql/ai-analytics";
-import { queries } from "@/lib/queries";
+import { aiAnalytics } from "@/lib/queries/ai-analytics";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -48,8 +49,8 @@ export const TaskFitCard = memo(function TaskFitCard({
       toast.success(t("{0} now goes to {1}", labelOf(row), row.suggestion?.provider.name ?? ""));
       setConfirming(null);
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.aiAnalytics._def }),
-        queryClient.invalidateQueries({ queryKey: queries.aiProvider._def }),
+        queryClient.invalidateQueries({ queryKey: aiAnalytics._def }),
+        queryClient.invalidateQueries({ queryKey: aiProvider._def }),
       ]);
     },
     onError: (error) =>

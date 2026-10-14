@@ -3,7 +3,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { saveDemotesToDraft } from "@/lib/formula-template-material";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { api } from "@trenova/shared/lib/api";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -41,7 +41,7 @@ export function FormulaStudioEditPage() {
     isLoading,
     isError,
   } = useQuery({
-    ...queries.formulaTemplate.get(id ?? ""),
+    ...formulaTemplate.get(id ?? ""),
     enabled: !!id,
   });
   useBreadcrumbLabel(template?.name);

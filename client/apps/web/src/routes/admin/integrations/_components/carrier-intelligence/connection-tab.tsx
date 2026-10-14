@@ -3,7 +3,8 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { carrierIntelProviderLabel } from "@/lib/carrier-intelligence";
 import type { CarrierIntelSettings } from "@/lib/graphql/carrier-intelligence";
 import { switchCarrierIntelProvider } from "@/lib/graphql/carrier-intel-settings";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
+import { integration } from "@/lib/queries/integration";
 import type { ConfigFieldSpec } from "@/types/integration";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -70,7 +71,7 @@ export function CarrierIntelConnectionTab({
   const queryClient = useQueryClient();
 
   const invalidateIntel = useCallback(
-    () => queryClient.invalidateQueries({ queryKey: queries.carrierIntelSettings._def }),
+    () => queryClient.invalidateQueries({ queryKey: carrierIntelSettings._def }),
     [queryClient],
   );
 
@@ -93,7 +94,7 @@ export function CarrierIntelConnectionTab({
       toast.success(t("{0} is now the primary carrier intelligence provider", vendor.name));
       await Promise.all([
         invalidateIntel(),
-        queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey }),
+        queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey }),
       ]);
     },
   });

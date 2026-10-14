@@ -413,6 +413,22 @@
   --chart-7: var(--accent-indigo);
   --chart-8: var(--accent-slate);
 
+  /* Syntax ----------------------------------------------------------------
+     Code is coloured by role, one role per categorical hue, so a keyword is the
+     same violet in a reply, an audit record and a raw payload. Comments and
+     punctuation take --foreground-subtle and --foreground-muted, and a diff's
+     added and removed lines take the success and danger text. Each value is
+     written out rather than borrowed from an accent so the audit can hold it to
+     AA on every ground code sits on: --card, --sunken, and --surface-hover
+     under a Desk reply's code block. */
+  --syntax-keyword: oklch(0.5 0.17 var(--hue-violet));
+  --syntax-string: oklch(0.5 0.11 var(--hue-emerald));
+  --syntax-number: oklch(0.5 0.1 var(--hue-amber));
+  --syntax-property: oklch(0.5 0.1 var(--hue-sky));
+  --syntax-function: oklch(0.5 0.17 var(--hue-indigo));
+  --syntax-type: oklch(0.5 0.085 var(--hue-teal));
+  --syntax-meta: oklch(0.5 0.16 var(--hue-rose));
+
   /* Series ---------------------------------------------------------------
      Comparison charts give every model and every provider a hue of its own,
      held by a stable key rather than by sort order, so the same model is the
@@ -646,6 +662,14 @@
   --series-10: oklch(0.72 0.15 48);
   --series-11: oklch(0.72 0.15 288);
   --series-12: oklch(0.72 0.142 168);
+
+  --syntax-keyword: oklch(0.8 0.12 var(--hue-violet));
+  --syntax-string: oklch(0.8 0.12 var(--hue-emerald));
+  --syntax-number: oklch(0.8 0.11 var(--hue-amber));
+  --syntax-property: oklch(0.8 0.1 var(--hue-sky));
+  --syntax-function: oklch(0.8 0.09 var(--hue-indigo));
+  --syntax-type: oklch(0.8 0.1 var(--hue-teal));
+  --syntax-meta: oklch(0.8 0.11 var(--hue-rose));
 
   --accent-indigo: oklch(0.72 0.146 var(--hue-indigo));
   --accent-indigo-subtle: oklch(0.285 0.06 var(--hue-indigo));
@@ -1064,6 +1088,15 @@
   --color-series-10: var(--series-10);
   --color-series-11: var(--series-11);
   --color-series-12: var(--series-12);
+
+  /* Syntax */
+  --color-syntax-keyword: var(--syntax-keyword);
+  --color-syntax-string: var(--syntax-string);
+  --color-syntax-number: var(--syntax-number);
+  --color-syntax-property: var(--syntax-property);
+  --color-syntax-function: var(--syntax-function);
+  --color-syntax-type: var(--syntax-type);
+  --color-syntax-meta: var(--syntax-meta);
 
   --color-agent-indigo: var(--agent-indigo);
   --color-agent-teal: var(--agent-teal);

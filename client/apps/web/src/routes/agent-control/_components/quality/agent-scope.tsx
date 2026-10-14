@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { agentQuality } from "@/lib/queries/agent-quality";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -12,7 +12,7 @@ import { QUALITY_STALE_MS } from "./quality-model";
  */
 export function AgentScope({ agentId, onClear }: { agentId: string; onClear: () => void }) {
   const t = useT();
-  const detail = useQuery({ ...queries.agentQuality.agent(agentId), staleTime: QUALITY_STALE_MS });
+  const detail = useQuery({ ...agentQuality.agent(agentId), staleTime: QUALITY_STALE_MS });
   const name =
     detail.data?.agentName ?? (detail.isError ? t("An agent that no longer exists") : "…");
 

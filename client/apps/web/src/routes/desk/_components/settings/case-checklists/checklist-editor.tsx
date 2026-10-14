@@ -7,7 +7,7 @@ import {
   formatCasePosition,
   newCustomStepKey,
 } from "@/lib/case-checklist-steps";
-import { queries } from "@/lib/queries";
+import { caseChecklist } from "@/lib/queries/case-checklist";
 import { apiService } from "@/services/api";
 import {
   checklistTemplateSchema,
@@ -24,7 +24,11 @@ import { FormProvider, useFieldArray, useForm, useWatch, type FieldErrors } from
 import { toast } from "sonner";
 import { ChecklistReorder } from "./checklist-reorder";
 import { ChecklistStepRow } from "./checklist-step-row";
-import { checklistEditorSchema, MAX_ADDED_STEPS, type ChecklistEditorValues } from "./editor-schema";
+import {
+  checklistEditorSchema,
+  MAX_ADDED_STEPS,
+  type ChecklistEditorValues,
+} from "./editor-schema";
 
 const SAVED_NOTICE_MS = 2400;
 
@@ -45,13 +49,23 @@ function editorDescription(
   const bill = kind === "ReadyToBill";
   if (!isCustomer) {
     return bill
-      ? t("Every shipment case shows these steps between the record and the bill, unless the customer has its own.")
-      : t("Every invoice case shows these steps between the record and closing, unless the customer has its own.");
+      ? t(
+          "Every shipment case shows these steps between the record and the bill, unless the customer has its own.",
+        )
+      : t(
+          "Every invoice case shows these steps between the record and closing, unless the customer has its own.",
+        );
   }
   if (isNew) {
     return bill
-      ? t("Starts as a copy of your organization's. Save it to use it for {0}'s shipments.", customerName)
-      : t("Starts as a copy of your organization's. Save it to use it for {0}'s invoices.", customerName);
+      ? t(
+          "Starts as a copy of your organization's. Save it to use it for {0}'s shipments.",
+          customerName,
+        )
+      : t(
+          "Starts as a copy of your organization's. Save it to use it for {0}'s invoices.",
+          customerName,
+        );
   }
   return bill
     ? t("Used for {0}'s shipment cases in place of your organization's.", customerName)
@@ -130,13 +144,15 @@ export function ChecklistEditor({
     () =>
       [
         ...new Set(
-          items.flatMap((item) => (item.custom?.documentTypeId ? [item.custom.documentTypeId] : [])),
+          items.flatMap((item) =>
+            item.custom?.documentTypeId ? [item.custom.documentTypeId] : [],
+          ),
         ),
       ].filter((id) => !pickedNames[id]),
     [items, pickedNames],
   );
   const namesQuery = useQuery({
-    ...queries.caseChecklist.documentTypes(documentTypeIds),
+    ...caseChecklist.documentTypes(documentTypeIds),
     enabled: documentTypeIds.length > 0,
   });
   const documentNames = useMemo(() => {
@@ -148,7 +164,7 @@ export function ChecklistEditor({
   }, [namesQuery.data, pickedNames]);
 
   const refresh = () =>
-    queryClient.invalidateQueries({ queryKey: queries.caseChecklist.list(kind).queryKey });
+    queryClient.invalidateQueries({ queryKey: caseChecklist.list(kind).queryKey });
 
   const save = useApiMutation({
     mutationFn: (values: ChecklistEditorValues) =>
@@ -296,7 +312,9 @@ export function ChecklistEditor({
             </span>
           )}
           <span className="dk-sp" />
-          {!reorder && <span className="dk-ck-sumh">{t("Numbers are the order the case shows.")}</span>}
+          {!reorder && (
+            <span className="dk-ck-sumh">{t("Numbers are the order the case shows.")}</span>
+          )}
         </div>
 
         <div className="dk-ck-scroll" key={reorder ? "reorder" : "steps"}>

@@ -1,4 +1,5 @@
 import {
+  CURRENT_FORMULA_LANGUAGE_VERSION,
   DEFAULT_ROUNDING_MODE,
   DEFAULT_ROUNDING_PRECISION,
   type FormulaTemplate,
@@ -11,6 +12,7 @@ import type { UseFormSetValue } from "react-hook-form";
 export type TemplateContentValues = Pick<
   FormulaTemplateFormValues,
   | "schemaId"
+  | "languageVersion"
   | "expression"
   | "variableDefinitions"
   | "breakdownDefinitions"
@@ -22,6 +24,7 @@ export type TemplateContentValues = Pick<
 
 const CONTENT_KEYS: readonly (keyof TemplateContentValues)[] = [
   "schemaId",
+  "languageVersion",
   "expression",
   "variableDefinitions",
   "breakdownDefinitions",
@@ -34,6 +37,7 @@ const CONTENT_KEYS: readonly (keyof TemplateContentValues)[] = [
 export function starterValuesFrom(standard: StandardTemplate): TemplateContentValues {
   return {
     schemaId: standard.schemaId,
+    languageVersion: CURRENT_FORMULA_LANGUAGE_VERSION,
     expression: standard.expression,
     variableDefinitions: standard.variableDefinitions,
     breakdownDefinitions: [],
@@ -47,6 +51,7 @@ export function starterValuesFrom(standard: StandardTemplate): TemplateContentVa
 export function copyValuesFrom(source: FormulaTemplate): TemplateContentValues {
   return {
     schemaId: source.schemaId,
+    languageVersion: source.languageVersion,
     expression: source.expression,
     variableDefinitions: source.variableDefinitions,
     breakdownDefinitions: source.breakdownDefinitions,

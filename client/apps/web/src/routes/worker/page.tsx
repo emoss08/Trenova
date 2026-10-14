@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { queries } from "@/lib/queries";
+import { tableConfiguration } from "@/lib/queries/table-configuration";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -57,7 +57,7 @@ export const prefetch: RoutePrefetch = ({ request }) => {
       list.push(ptoLiabilityReportQuery());
     }
   } else {
-    list.push({ ...queries.tableConfiguration.default(WORKER_TABLE_NAME), staleTime: Infinity });
+    list.push({ ...tableConfiguration.default(WORKER_TABLE_NAME), staleTime: Infinity });
   }
 
   return list;

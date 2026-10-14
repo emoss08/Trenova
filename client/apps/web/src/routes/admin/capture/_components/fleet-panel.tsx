@@ -6,7 +6,7 @@ import {
   type CaptureDevice,
   type CaptureDeviceStatus,
 } from "@/lib/graphql/capture";
-import { queries } from "@/lib/queries";
+import { capture } from "@/lib/queries/capture";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -77,7 +77,7 @@ export function FleetPanel() {
   // The last list stays up while the next filter or search is fetched, so
   // typing does not flash the list away on every pause.
   const devicesQuery = useQuery({
-    ...queries.capture.devices(status === "all" ? null : (status as CaptureDeviceStatus), query),
+    ...capture.devices(status === "all" ? null : (status as CaptureDeviceStatus), query),
     placeholderData: keepPreviousData,
   });
 
@@ -89,8 +89,8 @@ export function FleetPanel() {
     onSuccess: async (device) => {
       toast.success(t("{0} is revoked", device.name));
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.capture.devices._def }),
-        queryClient.invalidateQueries({ queryKey: queries.capture.myDevices._def }),
+        queryClient.invalidateQueries({ queryKey: capture.devices._def }),
+        queryClient.invalidateQueries({ queryKey: capture.myDevices._def }),
       ]);
     },
   });

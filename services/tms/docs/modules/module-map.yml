@@ -435,6 +435,7 @@ modules:
       - ratequoteservice
       - ratesimulationservice
       - ratezoneservice
+      - ratinghydration
     job:
       - formulatemplatejobs
       - fuelpricejobs

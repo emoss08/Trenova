@@ -1,5 +1,9 @@
 import type { KeyValueStore } from "@/lib/indexed-db-store";
-import { queries } from "@/lib/queries";
+import { attention } from "@/lib/queries/attention";
+import { homeLayout } from "@/lib/queries/home-layout";
+import { organization } from "@/lib/queries/organization";
+import { pageFavorite } from "@/lib/queries/page-favorite";
+import { sidebarPreferences } from "@/lib/queries/sidebar-preferences";
 import { QueryClient } from "@tanstack/react-query";
 import {
   persistQueryClientRestore,
@@ -26,10 +30,10 @@ function memoryStore(): KeyValueStore & { entries: Map<string, string> } {
   };
 }
 
-const SIDEBAR_KEY = queries.sidebarPreferences.effective().queryKey;
-const ATTENTION_KEY = queries.attention.summary().queryKey;
+const SIDEBAR_KEY = sidebarPreferences.effective().queryKey;
+const ATTENTION_KEY = attention.summary().queryKey;
 const RECORD_KEY = ["shipment", "detail", "shp_1"];
-const LOGO_KEY = queries.organization.logo("org_1").queryKey;
+const LOGO_KEY = organization.logo("org_1").queryKey;
 
 function clientWithData(): QueryClient {
   const client = new QueryClient();
@@ -78,10 +82,8 @@ describe("isShellQuery", () => {
   it("allows the queries that draw the frame and first screen, whatever their arguments", () => {
     expect(isShellQuery({ queryKey: SIDEBAR_KEY })).toBe(true);
     expect(isShellQuery({ queryKey: ATTENTION_KEY })).toBe(true);
-    expect(isShellQuery({ queryKey: queries.pageFavorite.check("/shipments").queryKey })).toBe(
-      true,
-    );
-    expect(isShellQuery({ queryKey: queries.homeLayout.effective().queryKey })).toBe(true);
+    expect(isShellQuery({ queryKey: pageFavorite.check("/shipments").queryKey })).toBe(true);
+    expect(isShellQuery({ queryKey: homeLayout.effective().queryKey })).toBe(true);
   });
 
   it("refuses records, and the logo's expiring storage URL", () => {
@@ -97,7 +99,7 @@ describe("retainShellQueries", () => {
     retainShellQueries(client);
 
     expect(client.getQueryDefaults(SIDEBAR_KEY).gcTime).toBe(SHELL_CACHE_MAX_AGE_MS);
-    expect(client.getQueryDefaults(queries.homeLayout.effective().queryKey).gcTime).toBe(
+    expect(client.getQueryDefaults(homeLayout.effective().queryKey).gcTime).toBe(
       SHELL_CACHE_MAX_AGE_MS,
     );
     expect(client.getQueryDefaults(RECORD_KEY).gcTime).toBeUndefined();

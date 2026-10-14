@@ -779,6 +779,7 @@ func (s *Service) planInvoicedLegs(
 	for _, shp := range legs {
 		before := *shp
 		shp.BilledAt = &now
+		shp.RateLocked = true
 		if _, open := stillOpen[shp.ID]; !open {
 			shp.Status = shipment.StatusInvoiced
 		}

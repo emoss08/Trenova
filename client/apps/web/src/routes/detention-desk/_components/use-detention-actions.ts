@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { handleMutationError, useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { detention } from "@/lib/queries/detention";
 import { apiService } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { DetentionOccurrence } from "@trenova/shared/types/detention";
@@ -16,7 +16,7 @@ export function useInvalidateDetention() {
   const queryClient = useQueryClient();
 
   return useCallback(
-    () => void queryClient.invalidateQueries({ queryKey: queries.detention._def }),
+    () => void queryClient.invalidateQueries({ queryKey: detention._def }),
     [queryClient],
   );
 }

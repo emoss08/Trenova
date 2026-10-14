@@ -59,8 +59,11 @@ func (s *Service) ContextVariables(
 		}
 		candidate := prices[0]
 		if chosenPrice == nil ||
-			candidate.PriceDate > chosenPrice.PriceDate ||
-			(candidate.PriceDate == chosenPrice.PriceDate && index.Code < chosenIndex.Code) {
+			fuelsurcharge.NormalizePriceDate(candidate.PriceDate) >
+				fuelsurcharge.NormalizePriceDate(chosenPrice.PriceDate) ||
+			(fuelsurcharge.NormalizePriceDate(candidate.PriceDate) ==
+				fuelsurcharge.NormalizePriceDate(chosenPrice.PriceDate) &&
+				index.Code < chosenIndex.Code) {
 			chosenIndex, chosenPrice = index, candidate
 		}
 	}
@@ -71,7 +74,7 @@ func (s *Service) ContextVariables(
 
 	return map[string]any{
 		fuelPriceVariable:     chosenPrice.Price.InexactFloat64(),
-		fuelPriceDateVariable: chosenPrice.PriceDate,
+		fuelPriceDateVariable: fuelsurcharge.NormalizePriceDate(chosenPrice.PriceDate),
 		fuelIndexCodeVariable: chosenIndex.Code,
 	}, nil
 }

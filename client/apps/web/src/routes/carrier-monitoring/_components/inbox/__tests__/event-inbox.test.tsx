@@ -29,23 +29,21 @@ vi.mock("@/lib/graphql/carrier-intelligence", async (importOriginal) => ({
   fetchCarrierIntelEvent: mocks.fetchEvent,
 }));
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    carrierIntelSettings: {
-      settings: () => ({
-        queryKey: ["carrierIntelSettings", "settings"],
-        queryFn: async () => ({
-          carrierIntelRuleCatalog: [
-            {
-              code: "insurance.bipd_below_required",
-              label: "Liability coverage below requirement",
-              description: "BIPD on file is below what the carrier must carry.",
-            },
-          ],
-        }),
+vi.mock("@/lib/queries/carrier-intel-settings", () => ({
+  carrierIntelSettings: {
+    settings: () => ({
+      queryKey: ["carrierIntelSettings", "settings"],
+      queryFn: async () => ({
+        carrierIntelRuleCatalog: [
+          {
+            code: "insurance.bipd_below_required",
+            label: "Liability coverage below requirement",
+            description: "BIPD on file is below what the carrier must carry.",
+          },
+        ],
       }),
-      monitoringStatus: () => ({ queryKey: ["carrierIntelSettings", "monitoring-status"] }),
-    },
+    }),
+    monitoringStatus: () => ({ queryKey: ["carrierIntelSettings", "monitoring-status"] }),
   },
 }));
 

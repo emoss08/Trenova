@@ -7,6 +7,7 @@ import type {
 const BACKTEST_COLUMNS: ExportColumn<BacktestResult>[] = [
   { id: "shipmentId", header: "Shipment ID", getValue: (row) => row.shipmentId },
   { id: "proNumber", header: "Pro #", getValue: (row) => row.proNumber },
+  { id: "currentSource", header: "Current source", getValue: (row) => row.currentSource },
   { id: "currentAmount", header: "Current", getValue: (row) => row.currentAmount },
   { id: "candidateAmount", header: "Candidate", getValue: (row) => row.candidateAmount },
   { id: "delta", header: "Delta", getValue: (row) => row.delta },

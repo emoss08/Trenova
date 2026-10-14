@@ -1,7 +1,7 @@
 import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
 import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, profilePictureCropConfig } from "@/lib/images/upload-config";
-import { queries } from "@/lib/queries";
+import { user } from "@/lib/queries/user";
 import { apiService } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { translate } from "@trenova/shared/i18n/runtime";
@@ -36,10 +36,10 @@ export function useProfilePicture(): ProfilePictureControls {
       if (!updated.id) return;
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.user.profilePicture(updated.id, "thumbnail").queryKey,
+          queryKey: user.profilePicture(updated.id, "thumbnail").queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.user.profilePicture(updated.id, "full").queryKey,
+          queryKey: user.profilePicture(updated.id, "full").queryKey,
         }),
       ]);
     },

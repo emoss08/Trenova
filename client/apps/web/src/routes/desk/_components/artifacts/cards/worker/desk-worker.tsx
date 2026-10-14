@@ -7,7 +7,7 @@ import type {
 } from "@/lib/graphql/worker-card";
 import { choiceLabel, driverTypeChoices, workerTypeChoices } from "@/lib/choices";
 import { dutyStatusLabel } from "@/lib/hos";
-import { queries } from "@/lib/queries";
+import { worker as workerQueries } from "@/lib/queries/worker";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   formatClockDurationMs,
@@ -103,7 +103,7 @@ export function DeskWorker({
 }: WorkerCardProps) {
   const t = useT();
   const query = useQuery({
-    ...queries.worker.card(recordId),
+    ...workerQueries.card(recordId),
     retry: false,
     placeholderData: keepPreviousData,
   });
@@ -156,10 +156,10 @@ function WorkerCard({
   const [now] = useState(() => Math.floor(Date.now() / 1000));
   const id = worker.id;
 
-  const hos = useQuery({ ...queries.worker.hos(id, VIOLATION_ROWS), retry: false });
-  const standing = useQuery({ ...queries.worker.standing(id), retry: false });
+  const hos = useQuery({ ...workerQueries.hos(id, VIOLATION_ROWS), retry: false });
+  const standing = useQuery({ ...workerQueries.standing(id), retry: false });
   const credentials = useQuery({
-    ...queries.worker.credentials(id),
+    ...workerQueries.credentials(id),
     retry: false,
     enabled: access.credentials,
   });

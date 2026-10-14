@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { updateCachedThread } from "@/lib/thread-list";
 import { apiService } from "@/services/api";
 import type { AssistantStreamEvent, AssistantThread, ContextUsage } from "@/types/assistant";
@@ -45,9 +45,8 @@ export function useCompaction(thread: AssistantThread, busy: boolean) {
         contextUsage: next ?? cached.contextUsage,
         autoCompactOff: autoCompactOff ?? cached.autoCompactOff,
       });
-      queryClient.setQueryData<AssistantThread>(
-        queries.assistant.thread(thread.id).queryKey,
-        (cached) => (cached ? merge(cached) : cached),
+      queryClient.setQueryData<AssistantThread>(assistant.thread(thread.id).queryKey, (cached) =>
+        cached ? merge(cached) : cached,
       );
       updateCachedThread(queryClient, thread.id, merge);
     },
@@ -56,10 +55,10 @@ export function useCompaction(thread: AssistantThread, busy: boolean) {
 
   const settle = useCallback(async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queries.assistant.messages(thread.id).queryKey }),
-      queryClient.invalidateQueries({ queryKey: queries.assistant.thread(thread.id).queryKey }),
-      queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
-      queryClient.invalidateQueries({ queryKey: queries.assistant.activeTurns().queryKey }),
+      queryClient.invalidateQueries({ queryKey: assistant.messages(thread.id).queryKey }),
+      queryClient.invalidateQueries({ queryKey: assistant.thread(thread.id).queryKey }),
+      queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey }),
+      queryClient.invalidateQueries({ queryKey: assistant.activeTurns().queryKey }),
     ]);
   }, [queryClient, thread.id]);
 
@@ -173,7 +172,7 @@ export function useCompaction(thread: AssistantThread, busy: boolean) {
         stopTurnQuietly(started.turnId);
         return;
       }
-      void queryClient.invalidateQueries({ queryKey: queries.assistant.activeTurns().queryKey });
+      void queryClient.invalidateQueries({ queryKey: assistant.activeTurns().queryKey });
       dispatch({
         type: "started",
         event: {

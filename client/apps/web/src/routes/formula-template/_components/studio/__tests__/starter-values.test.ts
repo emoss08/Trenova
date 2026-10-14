@@ -17,6 +17,7 @@ describe("starterValuesFrom", () => {
 
     expect(starterValuesFrom(standard)).toEqual({
       schemaId: "shipment",
+      languageVersion: 1,
       expression: "baseRate * totalDistance",
       variableDefinitions: standard.variableDefinitions,
       breakdownDefinitions: [],
@@ -37,6 +38,7 @@ describe("copyValuesFrom", () => {
       type: "FreightCharge",
       expression: "lookup('lane', laneCode)",
       schemaId: "shipment",
+      languageVersion: 1,
       status: "Active",
       variableDefinitions: [],
       breakdownDefinitions: [{ name: "linehaul", label: "Linehaul", expression: "1" }],
@@ -49,6 +51,7 @@ describe("copyValuesFrom", () => {
 
     const values = copyValuesFrom(source);
     expect(values.schemaId).toBe("shipment");
+    expect(values.languageVersion).toBe(1);
     expect(values.expression).toBe("lookup('lane', laneCode)");
     expect(values.breakdownDefinitions).toEqual(source.breakdownDefinitions);
     expect(values.minCharge).toBe(250);

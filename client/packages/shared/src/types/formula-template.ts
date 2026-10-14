@@ -70,6 +70,28 @@ const roundingPrecisionSchema = z
     error: () => translate("Rounding precision cannot exceed {0}", MAX_ROUNDING_PRECISION),
   });
 
+/** An approved snapshot whose start has not come yet: approved content waiting to bill. */
+export const scheduledWindowSchema = z.object({
+  versionNumber: z.number(),
+  effectiveFrom: z.number(),
+});
+export type ScheduledWindow = z.output<typeof scheduledWindowSchema>;
+
+const scheduledWindowsSchema = z
+  .array(scheduledWindowSchema)
+  .nullish()
+  .transform((v) => v ?? []);
+
+/** The approved snapshot that prices shipments today, whatever the row holds. */
+export const billingVersionSchema = z.object({
+  versionNumber: z.number(),
+  effectiveFrom: z.number(),
+});
+export type BillingVersion = z.output<typeof billingVersionSchema>;
+
+/** The formula language this client writes; the server refuses one it cannot read. */
+export const CURRENT_FORMULA_LANGUAGE_VERSION = 1;
+
 export const formulaTemplateSchema = z
   .object({
     id: z.string().optional(),
@@ -84,6 +106,8 @@ export const formulaTemplateSchema = z
     expression: z.string().min(1, { error: () => translate("Expression is required") }),
     status: formulaTemplateStatusSchema.default("Draft"),
     schemaId: z.string().default("shipment"),
+    /** The formula language the expression is written in; every expression so far is version 1. */
+    languageVersion: z.number().int().default(CURRENT_FORMULA_LANGUAGE_VERSION),
     variableDefinitions: z.array(variableDefinitionSchema).default([]),
     breakdownDefinitions: breakdownDefinitionsSchema,
     minCharge: decimalStringSchema,
@@ -100,6 +124,7 @@ export const formulaTemplateSchema = z
     sourceTemplateId: z.string().nullish(),
     sourceVersionNumber: z.number().nullish(),
     currentVersionNumber: z.number().optional(),
+    billing: billingVersionSchema.nullish(),
     createdAt: z.number().optional(),
     updatedAt: z.number().optional(),
     usageCount: z.number().optional(),
@@ -232,6 +257,7 @@ export const formulaTemplateVersionSchema = z.object({
   expression: z.string(),
   status: formulaTemplateStatusSchema,
   schemaId: z.string(),
+  languageVersion: z.number().int().default(CURRENT_FORMULA_LANGUAGE_VERSION),
   variableDefinitions: z.array(variableDefinitionSchema).default([]),
   breakdownDefinitions: breakdownDefinitionsSchema,
   minCharge: decimalStringSchema,
@@ -430,6 +456,8 @@ export const backtestResultSchema = z.object({
     .string()
     .nullish()
     .transform((v) => v ?? ""),
+  /** Billed: the amount on the shipment. Recomputed: its billed content rated again today. */
+  currentSource: z.enum(["Billed", "Recomputed"]).default("Recomputed"),
   currentAmount: z.coerce.number(),
   candidateAmount: z.coerce.number(),
   delta: z.coerce.number(),
@@ -465,6 +493,8 @@ export const backtestResponseSchema = z.object({
     .nullish()
     .transform((v) => v ?? []),
   summary: backtestSummarySchema,
+  /** True when the run hit its time limit before rating every shipment. */
+  truncated: z.boolean().default(false),
 });
 export type BacktestResponse = z.output<typeof backtestResponseSchema>;
 
@@ -473,351 +503,11 @@ export const updateEffectiveDateRequestSchema = z.object({
 });
 export type UpdateEffectiveDateRequest = z.infer<typeof updateEffectiveDateRequestSchema>;
 
-export type SchemaVariableType = "Number" | "String" | "Boolean" | "Integer";
-
-export type SchemaVariable = {
-  name: string;
-  type: SchemaVariableType;
-  description: string;
-  category: string;
-  nullable?: boolean;
-};
-
-export const VARIABLE_CATEGORIES = [
-  { id: "shipment", label: "Shipment fields" },
-  { id: "customer", label: "Customer" },
-  { id: "equipment", label: "Equipment" },
-  { id: "origin", label: "Origin" },
-  { id: "destination", label: "Destination" },
-  { id: "computed", label: "Computed rollups" },
-] as const;
-
-export const SHIPMENT_VARIABLES: SchemaVariable[] = [
-  // Shipment Fields
-  { name: "proNumber", type: "String", description: "PRO tracking number", category: "shipment" },
-  { name: "status", type: "String", description: "Current shipment status", category: "shipment" },
-  {
-    name: "weight",
-    type: "Number",
-    description: "Shipment weight",
-    category: "shipment",
-    nullable: true,
-  },
-  {
-    name: "pieces",
-    type: "Integer",
-    description: "Number of pieces",
-    category: "shipment",
-    nullable: true,
-  },
-  {
-    name: "temperatureMin",
-    type: "Number",
-    description: "Minimum temperature requirement",
-    category: "shipment",
-    nullable: true,
-  },
-  {
-    name: "temperatureMax",
-    type: "Number",
-    description: "Maximum temperature requirement",
-    category: "shipment",
-    nullable: true,
-  },
-  { name: "ratingUnit", type: "Integer", description: "Rating unit value", category: "shipment" },
-
-  // Customer
-  { name: "customer.name", type: "String", description: "Customer name", category: "customer" },
-  { name: "customer.code", type: "String", description: "Customer code", category: "customer" },
-
-  // Equipment
-  {
-    name: "tractorType.name",
-    type: "String",
-    description: "Tractor type name",
-    category: "equipment",
-  },
-  {
-    name: "tractorType.code",
-    type: "String",
-    description: "Tractor type code",
-    category: "equipment",
-  },
-  {
-    name: "tractorType.costPerMile",
-    type: "Number",
-    description: "Tractor cost per mile",
-    category: "equipment",
-    nullable: true,
-  },
-  {
-    name: "trailerType.name",
-    type: "String",
-    description: "Trailer type name",
-    category: "equipment",
-  },
-  {
-    name: "trailerType.code",
-    type: "String",
-    description: "Trailer type code",
-    category: "equipment",
-  },
-  {
-    name: "trailerType.costPerMile",
-    type: "Number",
-    description: "Trailer cost per mile",
-    category: "equipment",
-    nullable: true,
-  },
-
-  // Origin
-  {
-    name: "origin.city",
-    type: "String",
-    description: "City of the first pickup stop",
-    category: "origin",
-  },
-  {
-    name: "origin.state",
-    type: "String",
-    description: "State abbreviation of the first pickup stop",
-    category: "origin",
-  },
-  {
-    name: "origin.zip",
-    type: "String",
-    description: "Postal code of the first pickup stop",
-    category: "origin",
-  },
-
-  // Destination
-  {
-    name: "destination.city",
-    type: "String",
-    description: "City of the final delivery stop",
-    category: "destination",
-  },
-  {
-    name: "destination.state",
-    type: "String",
-    description: "State abbreviation of the final delivery stop",
-    category: "destination",
-  },
-  {
-    name: "destination.zip",
-    type: "String",
-    description: "Postal code of the final delivery stop",
-    category: "destination",
-  },
-
-  // Computed Rollups
-  {
-    name: "totalDistance",
-    type: "Number",
-    description: "Total shipment distance in miles",
-    category: "computed",
-  },
-  {
-    name: "totalStops",
-    type: "Integer",
-    description: "Number of stops on the shipment",
-    category: "computed",
-  },
-  {
-    name: "totalWeight",
-    type: "Number",
-    description: "Total weight in pounds",
-    category: "computed",
-  },
-  {
-    name: "totalPieces",
-    type: "Integer",
-    description: "Total number of pieces",
-    category: "computed",
-  },
-  {
-    name: "totalLinearFeet",
-    type: "Number",
-    description: "Total linear feet",
-    category: "computed",
-  },
-  {
-    name: "totalHours",
-    type: "Number",
-    description: "Hours from first stop arrival to last stop departure",
-    category: "computed",
-  },
-  {
-    name: "pickupDayOfWeek",
-    type: "Integer",
-    description: "Pickup day of week in UTC (0 = Sunday through 6 = Saturday)",
-    category: "computed",
-  },
-  {
-    name: "pickupHour",
-    type: "Integer",
-    description: "Pickup hour of day in UTC (0-23)",
-    category: "computed",
-  },
-  {
-    name: "pickupMonth",
-    type: "Integer",
-    description: "Pickup month in UTC (1-12)",
-    category: "computed",
-  },
-  {
-    name: "isWeekendPickup",
-    type: "Boolean",
-    description: "Whether the pickup falls on a Saturday or Sunday (UTC)",
-    category: "computed",
-  },
-  {
-    name: "hasHazmat",
-    type: "Boolean",
-    description: "Whether shipment contains hazmat",
-    category: "computed",
-  },
-  {
-    name: "requiresTemperatureControl",
-    type: "Boolean",
-    description: "Temperature controlled shipment",
-    category: "computed",
-  },
-  {
-    name: "temperatureDifferential",
-    type: "Number",
-    description: "Temperature range differential",
-    category: "computed",
-  },
-  {
-    name: "baseRate",
-    type: "Number",
-    description: "Base rate per unit for freight charge calculation",
-    category: "computed",
-  },
-  {
-    name: "freightChargeAmount",
-    type: "Number",
-    description: "Calculated freight charge amount",
-    category: "computed",
-  },
-  {
-    name: "otherChargeAmount",
-    type: "Number",
-    description: "Sum of other charges",
-    category: "computed",
-  },
-  {
-    name: "currentTotalCharge",
-    type: "Number",
-    description: "Current total charge",
-    category: "computed",
-  },
-];
-
-export const AVAILABLE_FUNCTIONS = [
-  { name: "abs", signature: "abs(x)", description: "Absolute value" },
-  {
-    name: "min",
-    signature: "min(...values)",
-    description: "Minimum of values",
-  },
-  {
-    name: "max",
-    signature: "max(...values)",
-    description: "Maximum of values",
-  },
-  {
-    name: "pow",
-    signature: "pow(base, exp)",
-    description: "Power function",
-  },
-  {
-    name: "round",
-    signature: "round(x, decimals?)",
-    description: "Round half up to decimal places",
-  },
-  {
-    name: "roundUp",
-    signature: "roundUp(x, decimals?)",
-    description: "Round up at decimal places",
-  },
-  {
-    name: "roundDown",
-    signature: "roundDown(x, decimals?)",
-    description: "Round down at decimal places",
-  },
-  {
-    name: "roundHalfEven",
-    signature: "roundHalfEven(x, decimals?)",
-    description: "Banker's rounding at decimal places",
-  },
-  {
-    name: "roundTo",
-    signature: "roundTo(x, increment)",
-    description: "Round to the nearest multiple of increment",
-  },
-  { name: "ceil", signature: "ceil(x)", description: "Round up to a whole number" },
-  { name: "floor", signature: "floor(x)", description: "Round down to a whole number" },
-  { name: "sqrt", signature: "sqrt(x)", description: "Square root" },
-  {
-    name: "sum",
-    signature: "sum(a, b, ...)",
-    description: "Sum of values",
-  },
-  {
-    name: "avg",
-    signature: "avg(a, b, ...)",
-    description: "Average of values",
-  },
-  {
-    name: "coalesce",
-    signature: "coalesce(a, b, ...)",
-    description: "First non-null value",
-  },
-  {
-    name: "clamp",
-    signature: "clamp(value, min, max)",
-    description: "Clamp value to range",
-  },
-  {
-    name: "lookup",
-    signature: "lookup(table, key)",
-    description: "Value for key in a single-axis rate matrix",
-  },
-  {
-    name: "lookupOr",
-    signature: "lookupOr(table, key, fallback)",
-    description:
-      "Like lookup, with a fallback when the key has no entry (a missing table still errors)",
-  },
-  {
-    name: "lookup2",
-    signature: "lookup2(table, rowKey, colKey)",
-    description: "Value at a row/column intersection of a two-axis rate matrix",
-  },
-  {
-    name: "lookup2Or",
-    signature: "lookup2Or(table, rowKey, colKey, fallback)",
-    description:
-      "Like lookup2, with a fallback when the intersection has no cell (a missing table still errors)",
-  },
-  {
-    name: "lookupInterp",
-    signature: "lookupInterp(table, key)",
-    description: "Linear interpolation between the floors of a banded single-axis rate matrix",
-  },
-  {
-    name: "deficitWeight",
-    signature: "deficitWeight(table, weight)",
-    description:
-      "Billable weight under a break table: the next break's minimum when that is cheaper",
-  },
-] as const;
-
 export const bulkUpdateStatusRequestSchema = z.object({
   templateIds: z.array(z.string()),
   status: formulaTemplateStatusSchema,
+  /** Sent after the person has seen what uses the templates and still means to archive them. */
+  confirmInUse: z.boolean().optional(),
 });
 
 export type BulkUpdateStatusRequest = z.infer<typeof bulkUpdateStatusRequestSchema>;
@@ -871,6 +561,23 @@ export const formulaSchemaVariableSchema = z.object({
 });
 export type FormulaSchemaVariable = z.output<typeof formulaSchemaVariableSchema>;
 
+/** What a value is in the formula language, as the engine publishes it for each function's result. */
+export const formulaValueTypeSchema = z.enum([
+  "Number",
+  "Integer",
+  "String",
+  "Boolean",
+  "Date",
+  "Duration",
+  "Array",
+  "Object",
+  "Any",
+]);
+export type FormulaValueType = z.output<typeof formulaValueTypeSchema>;
+
+/** A function's maxArgs when it takes any number of arguments. */
+export const VARIADIC_ARGS = -1;
+
 export const formulaSchemaFunctionSchema = z.object({
   name: z.string(),
   signature: z.string(),
@@ -878,13 +585,44 @@ export const formulaSchemaFunctionSchema = z.object({
   example: z.string().default(""),
   category: z.string().default(""),
   operator: z.boolean().default(false),
+  minArgs: z.number().int().default(0),
+  maxArgs: z.number().int().default(VARIADIC_ARGS),
+  returns: formulaValueTypeSchema.catch("Any").default("Any"),
+  /** Every argument must be a number, so text or a flag passed to it is an error. */
+  numericArgs: z.boolean().default(false),
+  /** The second argument is a predicate over each item, where `#` and `.field` read the item. */
+  predicate: z.boolean().default(false),
 });
 export type FormulaSchemaFunction = z.output<typeof formulaSchemaFunctionSchema>;
+
+/** Why the engine turns an expr builtin off; the editor words the reason. */
+export const formulaDisabledReasonSchema = z.enum([
+  "nondeterministic",
+  "serialization",
+  "textBuilding",
+]);
+export type FormulaDisabledReason = z.output<typeof formulaDisabledReasonSchema>;
+
+export const formulaSchemaDisabledSchema = z.object({
+  name: z.string(),
+  reason: formulaDisabledReasonSchema,
+  replacement: z.string().nullish(),
+});
+export type FormulaSchemaDisabled = z.output<typeof formulaSchemaDisabledSchema>;
 
 export const formulaSchemaResponseSchema = z.object({
   schemaId: z.string(),
   variables: z.array(formulaSchemaVariableSchema),
   functions: z.array(formulaSchemaFunctionSchema),
+  /** The expr builtins the engine keeps beyond the documented functions: callable, not listed in the reference. */
+  builtins: z
+    .array(formulaSchemaFunctionSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  disabled: z
+    .array(formulaSchemaDisabledSchema)
+    .nullish()
+    .transform((v) => v ?? []),
 });
 export type FormulaSchemaResponse = z.output<typeof formulaSchemaResponseSchema>;
 
@@ -985,6 +723,7 @@ export const reviewDiffResponseSchema = z.object({
   currentExpression: z.string(),
   changes: z.record(z.string(), fieldChangeSchema),
   changeCount: z.number(),
+  pendingSchedules: scheduledWindowsSchema,
 });
 export type ReviewDiffResponse = z.output<typeof reviewDiffResponseSchema>;
 
@@ -1052,6 +791,7 @@ export const readinessResponseSchema = z.object({
   scenarioTotal: z.number(),
   scenarioPassed: z.number(),
   scenarioFailing: z.array(z.string()).nullish(),
+  pendingSchedules: scheduledWindowsSchema,
 });
 export type ReadinessResponse = z.output<typeof readinessResponseSchema>;
 
@@ -1069,7 +809,6 @@ export const formulaReviewerSchema = z.object({
   id: z.string(),
   name: z.string(),
   username: z.string().nullish(),
-  emailAddress: z.string().nullish(),
   profilePicUrl: z.string().nullish(),
 });
 export type FormulaReviewer = z.output<typeof formulaReviewerSchema>;

@@ -3,7 +3,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { ARWorklistItem } from "@/lib/graphql/accounts-receivable";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircleIcon } from "@trenova/shared/components/icons";
@@ -18,7 +18,7 @@ const SEVERITY_STYLES: Record<string, string> = {
 export function CollectionsWorklistCard() {
   const t = useT();
 
-  const { data: items, isLoading } = useQuery(queries.ar.collectionsWorklist(25));
+  const { data: items, isLoading } = useQuery(ar.collectionsWorklist(25));
 
   const rows = items ?? [];
 

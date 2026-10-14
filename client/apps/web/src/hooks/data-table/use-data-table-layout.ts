@@ -1,6 +1,6 @@
 import { resetMyTableLayout, saveMyTableLayout } from "@/lib/graphql/table-layout";
 import { fromColumnPinningState } from "@/lib/data-table";
-import { queries } from "@/lib/queries";
+import { tableLayout } from "@/lib/queries/table-layout";
 import { stableStringify } from "@/lib/stable-stringify";
 import {
   tableLayoutSchema,
@@ -82,7 +82,7 @@ export function useDataTableLayout<TData extends RowData>({
   const t = useT();
   const queryClient = useQueryClient();
   const enabled = resource !== "";
-  const queryOptions = queries.tableLayout.mine(resource);
+  const queryOptions = tableLayout.mine(resource);
 
   const { data: hasSavedLayout = false, isPending } = useQuery({
     ...queryOptions,

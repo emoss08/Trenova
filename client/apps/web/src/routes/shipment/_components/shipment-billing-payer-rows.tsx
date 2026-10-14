@@ -5,7 +5,7 @@ import {
 } from "@trenova/shared/components/status-badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { invoicePanelPath } from "@/lib/invoice-links";
-import { queries } from "@/lib/queries";
+import { invoice as invoiceQueries } from "@/lib/queries/invoice";
 import { billingQueueItemsByShipmentQuery } from "@/routes/billing-queue/billing-queue-queries";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ShipmentBillingPayerReadiness } from "@trenova/shared/types/shipment";
@@ -32,7 +32,7 @@ export function ShipmentBillingPayerRows({
     enabled: Boolean(shipmentId),
   });
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
-    ...queries.invoice.byShipment(shipmentId),
+    ...invoiceQueries.byShipment(shipmentId),
     enabled: Boolean(shipmentId),
   });
 

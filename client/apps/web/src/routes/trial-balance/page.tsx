@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { FiscalPeriodSelector } from "@/components/accounting/fiscal-period-selector";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { queries } from "@/lib/queries";
+import { accountingReport } from "@/lib/queries/accounting-report";
 import { useQuery } from "@tanstack/react-query";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -23,7 +23,7 @@ export function TrialBalancePage() {
   const [periodId, setPeriodId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    ...queries.accountingReport.trialBalance(periodId!),
+    ...accountingReport.trialBalance(periodId!),
     enabled: Boolean(periodId),
   });
 

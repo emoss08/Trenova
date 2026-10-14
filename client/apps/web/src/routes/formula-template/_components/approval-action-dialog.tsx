@@ -10,6 +10,8 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { DateTimePicker } from "@/components/fields/date-field/datetime-picker";
+import { fromUserWallClock } from "@trenova/shared/lib/date";
 import { describeApiError } from "@/lib/api-error-message";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
@@ -73,7 +75,8 @@ const ACTION_CONFIG: Record<
   approve: {
     copy: defineLabels({
       title: "Approve template",
-      description: "Approving activates this template so it can be used to rate shipments.",
+      description:
+        "Approving makes this content the one that rates shipments, from now or from the date you choose.",
       confirmLabel: "Approve",
       loadingLabel: "Approving...",
       successMessage: "Template approved and activated",
@@ -89,10 +92,10 @@ const ACTION_CONFIG: Record<
     copy: defineLabels({
       title: "Reject template",
       description:
-        "Rejecting closes this review round and archives the template; it cannot rate shipments until someone resubmits it from the archive. Use Request Changes to send it back to the author instead.",
+        "Rejecting closes this review round. A template that was approved before returns to draft and its approved content keeps billing; one that never was is archived. Use Request Changes to send it back to the author instead.",
       confirmLabel: "Reject",
       loadingLabel: "Rejecting...",
-      successMessage: "Template rejected and archived",
+      successMessage: "Template rejected",
       failureTitle: "Could not reject template",
       failureFallback: "Failed to reject the template.",
       commentLabel: "Comment (required)",
@@ -139,6 +142,7 @@ export function ApprovalActionDialog({
   const [comment, setComment] = useState("");
   const [showCommentError, setShowCommentError] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [effectiveFrom, setEffectiveFrom] = useState<Date | undefined>(undefined);
   // null while the check is loading; true when the server says go, or when
   // the check itself failed and the server must be the judge.
   const [ready, setReady] = useState<boolean | null>(null);
@@ -153,6 +157,7 @@ export function ApprovalActionDialog({
       setShowCommentError(false);
       setServerError(null);
       setReady(null);
+      setEffectiveFrom(undefined);
     }
   }, [open]);
 
@@ -164,7 +169,11 @@ export function ApprovalActionDialog({
         case "submit":
           return apiService.formulaTemplateService.submit(templateId, trimmedComment);
         case "approve":
-          return apiService.formulaTemplateService.approve(templateId, trimmedComment);
+          return apiService.formulaTemplateService.approve(
+            templateId,
+            trimmedComment,
+            fromUserWallClock(effectiveFrom),
+          );
         case "reject":
           return apiService.formulaTemplateService.reject(templateId, trimmedComment);
         case "requestChanges":
@@ -229,6 +238,26 @@ export function ApprovalActionDialog({
         )}
 
         {gated && open && template?.id && <ReviewHistory templateId={template.id} />}
+
+        {action === "approve" && (
+          <div className="space-y-1.5">
+            <label htmlFor="approval-effective-from" className="text-xs font-medium">
+              {t("Start billing on (optional)")}
+            </label>
+            <DateTimePicker
+              id="approval-effective-from"
+              dateTime={effectiveFrom}
+              setDateTime={setEffectiveFrom}
+              placeholder={t("Now")}
+              clearable
+            />
+            <p className="text-2xs text-muted-foreground">
+              {t(
+                "Leave empty to bill with it as soon as it is approved. With a date, the approved content in force today keeps billing until then.",
+              )}
+            </p>
+          </div>
+        )}
 
         <div className="space-y-1.5 py-2">
           <label htmlFor="approval-comment" className="text-xs font-medium">

@@ -45,7 +45,11 @@ const inGamut = (lch) => oklchToRgb(lch).every((v) => v >= -0.0015 && v <= 1.001
 const hex = (lch) =>
   "#" +
   oklchToRgb(lch)
-    .map((v) => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, "0"))
+    .map((v) =>
+      Math.round(Math.max(0, Math.min(1, v)) * 255)
+        .toString(16)
+        .padStart(2, "0"),
+    )
     .join("");
 
 const relLum = ([r, g, b]) =>
@@ -68,12 +72,11 @@ function contrast(a, b) {
  */
 function parseBlock(block, hues) {
   const out = {};
-  const re = /^\s*(--[a-z0-9-]+):\s*oklch\(\s*([\d.]+)\s+([\d.]+)\s+(var\(--[a-z-]+\)|[\d.]+)\s*\)\s*;/gm;
+  const re =
+    /^\s*(--[a-z0-9-]+):\s*oklch\(\s*([\d.]+)\s+([\d.]+)\s+(var\(--[a-z-]+\)|[\d.]+)\s*\)\s*;/gm;
   for (const m of block.matchAll(re)) {
     const raw = m[4];
-    const hue = raw.startsWith("var(")
-      ? hues[raw.slice(4, -1)]
-      : Number(raw);
+    const hue = raw.startsWith("var(") ? hues[raw.slice(4, -1)] : Number(raw);
     if (hue === undefined || Number.isNaN(hue)) continue;
     out[m[1].slice(2)] = [Number(m[2]), Number(m[3]), hue];
   }
@@ -98,6 +101,7 @@ export function parseTokens(src) {
 
 const TONES = ["danger", "warning", "success", "info", "neutral"];
 const ACCENTS = ["indigo", "teal", "amber", "rose", "emerald", "sky", "violet", "slate"];
+const SYNTAX = ["keyword", "string", "number", "property", "function", "type", "meta"];
 
 function auditTheme(theme, p) {
   const out = [];
@@ -128,7 +132,11 @@ function auditTheme(theme, p) {
     if (t !== "brand") pair(`${t}-foreground`, "card", 4.5, `${t} text on a panel`);
     // Warning's solid is a true amber, so the ink on it is dark in both themes.
     const ink =
-      t === "brand" ? "brand-foreground" : t === "warning" ? "warning-on-solid" : "foreground-on-solid";
+      t === "brand"
+        ? "brand-foreground"
+        : t === "warning"
+          ? "warning-on-solid"
+          : "foreground-on-solid";
     pair(ink, t, 4.5, `the solid ${t} fill`);
   }
 
@@ -143,6 +151,11 @@ function auditTheme(theme, p) {
   }
 
   pair("highlight-foreground", "highlight", 4.5, "selected text");
+  for (const role of SYNTAX) {
+    pair(`syntax-${role}`, "card", 4.5, `${role} code on a panel`);
+    pair(`syntax-${role}`, "sunken", 4.5, `${role} code in a well`);
+    pair(`syntax-${role}`, "surface-hover", 4.5, `${role} code in a Desk reply`);
+  }
 
   // Not WCAG: a hairline nobody can see is how the surface ladder collapsed
   // into one flat plane the first time round.
@@ -207,7 +220,9 @@ export function auditPalette(src) {
   if (!parsed) return ["tokens.css has no .dark block, so the palette could not be read."];
   const { light, dark, hues } = parsed;
   if (Object.keys(light).length < 40) {
-    return ["tokens.css parsed into fewer than 40 light tokens, which means the palette did not read."];
+    return [
+      "tokens.css parsed into fewer than 40 light tokens, which means the palette did not read.",
+    ];
   }
   return [
     ...auditTheme("light", light),

@@ -19,19 +19,19 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    briefing: {
-      today: () => ({
-        queryKey: ["briefing-today", state.briefing.settled],
-        queryFn: () =>
-          state.briefing.settled ? state.briefing.value : new Promise(() => undefined),
-      }),
-    },
-    assistant: {
-      myAgents: () => ({ queryKey: ["my-agents"], queryFn: () => [] }),
-      providers: () => ({ queryKey: ["providers"], queryFn: () => [] }),
-    },
+vi.mock("@/lib/queries/briefing", () => ({
+  briefing: {
+    today: () => ({
+      queryKey: ["briefing-today", state.briefing.settled],
+      queryFn: () => (state.briefing.settled ? state.briefing.value : new Promise(() => undefined)),
+    }),
+  },
+}));
+vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/queries/assistant")>()),
+  assistant: {
+    myAgents: () => ({ queryKey: ["my-agents"], queryFn: () => [] }),
+    providers: () => ({ queryKey: ["providers"], queryFn: () => [] }),
   },
 }));
 
@@ -145,7 +145,10 @@ describe("Desk home headline while its figures load", () => {
   });
 
   it("opens on the briefing's headline when the morning's briefing wrote one", async () => {
-    state.briefing = { settled: true, value: { headline: "Three loads sit under a storm warning." } };
+    state.briefing = {
+      settled: true,
+      value: { headline: "Three loads sit under a storm warning." },
+    };
     renderHome();
 
     expect(await screen.findByText("Three loads sit under a storm warning.")).toBeInTheDocument();

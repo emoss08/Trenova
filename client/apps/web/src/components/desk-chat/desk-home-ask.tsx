@@ -2,7 +2,7 @@ import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-com
 import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import type { AssistantEntityRef, AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -58,7 +58,7 @@ export function useDeskHomeAsk({
   const [draft, setDraft] = useState("");
   const [mentions, setMentions] = useState<AssistantEntityRef[]>([]);
   const [providerId, setProviderId] = useState("");
-  const providersQuery = useQuery(queries.assistant.providers());
+  const providersQuery = useQuery(assistant.providers());
   const held = useHeldAttachments();
   const attachments = useDeskAttachments(held);
   const deskPage = useDeskPage({ onScreen: pageSource === "screen" });

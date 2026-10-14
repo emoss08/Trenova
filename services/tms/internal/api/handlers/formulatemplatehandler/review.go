@@ -20,6 +20,11 @@ type approvalActionRequest struct {
 	Comment string `json:"comment"`
 }
 
+type approveRequest struct {
+	Comment       string `json:"comment"`
+	EffectiveFrom *int64 `json:"effectiveFrom"`
+}
+
 func (h *Handler) handleApprovalAction(
 	c *gin.Context,
 	action func(
@@ -125,7 +130,7 @@ func (h *Handler) submit(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param templateID path string true "Formula template ID"
-// @Param request body approvalActionRequest true "Approve request"
+// @Param request body approveRequest true "Approve request"
 // @Success 200 {object} formulatemplate.FormulaTemplate
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -134,7 +139,37 @@ func (h *Handler) submit(c *gin.Context) {
 // @Security BearerAuth
 // @Router /formula-templates/{templateID}/approve [post]
 func (h *Handler) approve(c *gin.Context) {
-	h.handleApprovalAction(c, h.service.Approve)
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var req approveRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	template, err := h.service.ApproveFrom(
+		c.Request.Context(),
+		&formulatemplateservice.ApproveRequest{
+			ApprovalActionRequest: formulatemplateservice.ApprovalActionRequest{
+				TenantInfo: pagination.FromAuthAsUser(authCtx),
+				EntityID:   templateID,
+				Comment:    req.Comment,
+			},
+			EffectiveFrom: req.EffectiveFrom,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, template)
 }
 
 // @Summary Reject a formula template

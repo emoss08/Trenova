@@ -1,5 +1,5 @@
 import type { InboundMessageDetail, InboundThreadMessage } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { senderName } from "@/lib/triage/message-state";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon } from "@trenova/shared/components/icons";
@@ -86,7 +86,7 @@ function OlderInThread({ message, now }: { message: InboundMessageDetail; now: n
   const t = useT();
   const [expanded, setExpanded] = useState<string | null>(null);
   const query = useQuery({
-    ...queries.inbox.thread(message.threadKey),
+    ...inbox.thread(message.threadKey),
     enabled: message.threadCount > 1 && message.threadKey !== "",
   });
   const older = useMemo(

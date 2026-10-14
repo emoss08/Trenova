@@ -10,7 +10,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { AROpenItem, ARStatementTransaction } from "@/lib/graphql/accounts-receivable";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "@trenova/shared/components/icons";
@@ -101,7 +101,7 @@ export function CustomerStatementPage() {
     isLoading,
     isError,
   } = useQuery({
-    ...queries.ar.customerStatement(customerId!, queryOptions),
+    ...ar.customerStatement(customerId!, queryOptions),
     enabled: Boolean(customerId),
   });
 

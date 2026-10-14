@@ -2,823 +2,477 @@ package resolver_test
 
 import (
 	"testing"
+	"time"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type Move struct {
-	Distance float64
-	Stops    []Stop
+var computedFunctions = []string{
+	"computeTotalDistance",
+	"computeTotalStops",
+	"computeHasHazmat",
+	"computeRequiresTemperatureControl",
+	"computeTemperatureDifferential",
+	"computeTotalWeight",
+	"computeTotalPieces",
+	"computeTotalLinearFeet",
+	"computeTotalHours",
+	"computeStops",
+	"computeCommodities",
+	"computeTotalCubicFeet",
+	"computeDensity",
+	"computePrimaryFreightClass",
+	"computeHighestFreightClass",
+	"computeBaseRate",
+	"computeFreightChargeAmount",
+	"computeOtherChargeAmount",
+	"computeCurrentTotalCharge",
+	"computeOriginCity",
+	"computeOriginState",
+	"computeOriginZip",
+	"computeDestinationCity",
+	"computeDestinationState",
+	"computeDestinationZip",
+	"computePickupDayOfWeek",
+	"computePickupHour",
+	"computePickupMonth",
+	"computeIsWeekendPickup",
+	"computePickupDate",
+	"computeDeliveryDate",
 }
 
-type Stop struct {
-	Name string
-}
-
-type Commodity struct {
-	Weight    int64
-	Pieces    int64
-	Commodity *CommodityDetail
-}
-
-type CommodityDetail struct {
-	HazardousMaterial *HazardousMaterial
-	LinearFeetPerUnit float64
-}
-
-type HazardousMaterial struct {
-	Class string
-}
-
-type ShipmentEntity struct {
-	Weight              int64
-	Pieces              int64
-	TemperatureMin      *int16
-	TemperatureMax      *int16
-	Moves               []Move
-	Commodities         []Commodity
-	BaseRate            *float64
-	FreightChargeAmount *float64
-	OtherChargeAmount   *float64
-	TotalChargeAmount   *float64
-}
-
-func TestRegisterDefaultComputed(t *testing.T) {
-	t.Parallel()
+func computed(t *testing.T) *resolver.Resolver {
+	t.Helper()
 
 	r := resolver.NewResolver()
 	resolver.RegisterDefaultComputed(r)
+	return r
+}
 
-	expectedFunctions := []string{
-		"computeTotalDistance",
-		"computeTotalStops",
-		"computeHasHazmat",
-		"computeRequiresTemperatureControl",
-		"computeTemperatureDifferential",
-		"computeTotalWeight",
-		"computeTotalPieces",
-		"computeTotalLinearFeet",
-		"computeTotalHours",
-		"computeBaseRate",
-		"computeFreightChargeAmount",
-		"computeOtherChargeAmount",
-		"computeCurrentTotalCharge",
-		"computeOriginCity",
-		"computeOriginState",
-		"computeOriginZip",
-		"computeDestinationCity",
-		"computeDestinationState",
-		"computeDestinationZip",
-		"computePickupDayOfWeek",
-		"computePickupHour",
-		"computePickupMonth",
-		"computeIsWeekendPickup",
+func compute(t *testing.T, r *resolver.Resolver, entity any, function string) any {
+	t.Helper()
+
+	value, err := r.ResolveComputed(entity, function)
+	require.NoError(t, err, function)
+	return value
+}
+
+func floatPtr(value float64) *float64 { return &value }
+
+func int64Ptr(value int64) *int64 { return &value }
+
+func int16Ptr(value int16) *int16 { return &value }
+
+func place(city, zip, state, timezone string) *location.Location {
+	loc := &location.Location{City: city, PostalCode: zip, Timezone: timezone}
+	if state != "" {
+		loc.State = &usstate.UsState{Abbreviation: state}
 	}
+	return loc
+}
 
-	for _, fn := range expectedFunctions {
-		t.Run(fn, func(t *testing.T) {
-			t.Parallel()
-			got, ok := r.GetComputed(fn)
-			assert.True(t, ok)
-			assert.NotNil(t, got)
-		})
+func TestRegisterDefaultComputed_RegistersEveryFunction(t *testing.T) {
+	t.Parallel()
+
+	r := computed(t)
+	for _, name := range computedFunctions {
+		_, ok := r.GetComputed(name)
+		assert.True(t, ok, name)
 	}
 }
 
-func TestComputeTotalDistance(t *testing.T) {
+func TestComputed_RefusesAnythingButAShipment(t *testing.T) {
 	t.Parallel()
 
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
+	r := computed(t)
+	for _, name := range computedFunctions {
+		_, err := r.ResolveComputed(42, name)
+		require.Error(t, err, name)
+		assert.ErrorIs(t, err, resolver.ErrUnsupportedEntity, name)
 
-	tests := []struct {
-		name   string
-		entity *ShipmentEntity
-		want   float64
-	}{
-		{
-			name: "sum of move distances",
-			entity: &ShipmentEntity{
-				Moves: []Move{
-					{Distance: 100.5},
-					{Distance: 200.3},
-					{Distance: 50.2},
-				},
-			},
-			want: 351.0,
-		},
-		{
-			name: "empty moves",
-			entity: &ShipmentEntity{
-				Moves: []Move{},
-			},
-			want: 0.0,
-		},
-		{
-			name:   "nil moves slice",
-			entity: &ShipmentEntity{},
-			want:   0.0,
-		},
-		{
-			name: "single move",
-			entity: &ShipmentEntity{
-				Moves: []Move{
-					{Distance: 250.0},
-				},
-			},
-			want: 250.0,
-		},
-		{
-			name: "zero distances",
-			entity: &ShipmentEntity{
-				Moves: []Move{
-					{Distance: 0.0},
-					{Distance: 0.0},
-				},
-			},
-			want: 0.0,
-		},
-	}
+		_, err = r.ResolveComputed((*shipment.Shipment)(nil), name)
+		require.Error(t, err, name)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeTotalDistance")
-			require.NoError(t, err)
-			assert.InDelta(t, tt.want, got, 0.1)
-		})
+		_, err = r.ResolveComputed(shipment.Shipment{}, name)
+		require.NoError(t, err, "a shipment value is accepted as well as a pointer: %s", name)
 	}
 }
 
-func TestComputeTotalDistanceNonStruct(t *testing.T) {
+func TestComputed_TotalsReadTheShipmentsOwnAggregates(t *testing.T) {
 	t.Parallel()
 
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	_, err := r.ResolveComputed("not a struct", "computeTotalDistance")
-	require.Error(t, err)
-}
-
-func TestComputeTotalStops(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	tests := []struct {
-		name   string
-		entity *ShipmentEntity
-		want   int
-	}{
-		{
-			name: "sum of stops across moves",
-			entity: &ShipmentEntity{
-				Moves: []Move{
-					{Stops: []Stop{{Name: "A"}, {Name: "B"}}},
-					{Stops: []Stop{{Name: "C"}}},
-				},
-			},
-			want: 3,
-		},
-		{
-			name: "no stops",
-			entity: &ShipmentEntity{
-				Moves: []Move{
-					{Stops: []Stop{}},
-				},
-			},
-			want: 0,
-		},
-		{
-			name:   "nil moves",
-			entity: &ShipmentEntity{},
-			want:   0,
-		},
-		{
-			name: "multiple moves no stops",
-			entity: &ShipmentEntity{
-				Moves: []Move{
-					{Stops: nil},
-					{Stops: nil},
-				},
-			},
-			want: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeTotalStops")
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestComputeHasHazmat(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	tests := []struct {
-		name   string
-		entity *ShipmentEntity
-		want   bool
-	}{
-		{
-			name: "has hazmat",
-			entity: &ShipmentEntity{
-				Commodities: []Commodity{
-					{
-						Commodity: &CommodityDetail{
-							HazardousMaterial: &HazardousMaterial{Class: "3"},
-						},
-					},
-				},
-			},
-			want: true,
-		},
-		{
-			name: "no hazmat nil material",
-			entity: &ShipmentEntity{
-				Commodities: []Commodity{
-					{
-						Commodity: &CommodityDetail{
-							HazardousMaterial: nil,
-						},
-					},
-				},
-			},
-			want: false,
-		},
-		{
-			name: "nil commodity detail",
-			entity: &ShipmentEntity{
-				Commodities: []Commodity{
-					{Commodity: nil},
-				},
-			},
-			want: false,
-		},
-		{
-			name: "empty commodities",
-			entity: &ShipmentEntity{
-				Commodities: []Commodity{},
-			},
-			want: false,
-		},
-		{
-			name:   "nil commodities",
-			entity: &ShipmentEntity{},
-			want:   false,
-		},
-		{
-			name: "mixed hazmat and non-hazmat",
-			entity: &ShipmentEntity{
-				Commodities: []Commodity{
-					{Commodity: &CommodityDetail{HazardousMaterial: nil}},
-					{
-						Commodity: &CommodityDetail{
-							HazardousMaterial: &HazardousMaterial{Class: "2"},
-						},
-					},
-				},
-			},
-			want: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeHasHazmat")
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestComputeRequiresTemperatureControl(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	minTemp := int16(32)
-	maxTemp := int16(40)
-
-	tests := []struct {
-		name   string
-		entity *ShipmentEntity
-		want   bool
-	}{
-		{
-			name: "has min and max",
-			entity: &ShipmentEntity{
-				TemperatureMin: &minTemp,
-				TemperatureMax: &maxTemp,
-			},
-			want: true,
-		},
-		{
-			name: "has only min",
-			entity: &ShipmentEntity{
-				TemperatureMin: &minTemp,
-				TemperatureMax: nil,
-			},
-			want: true,
-		},
-		{
-			name: "has only max",
-			entity: &ShipmentEntity{
-				TemperatureMin: nil,
-				TemperatureMax: &maxTemp,
-			},
-			want: true,
-		},
-		{
-			name: "no temperature control",
-			entity: &ShipmentEntity{
-				TemperatureMin: nil,
-				TemperatureMax: nil,
-			},
-			want: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeRequiresTemperatureControl")
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestComputeTemperatureDifferential(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	minTemp := int16(32)
-	maxTemp := int16(40)
-
-	tests := []struct {
-		name    string
-		entity  *ShipmentEntity
-		want    float64
-		wantErr bool
-	}{
-		{
-			name: "calculate differential",
-			entity: &ShipmentEntity{
-				TemperatureMin: &minTemp,
-				TemperatureMax: &maxTemp,
-			},
-			want:    8.0,
-			wantErr: false,
-		},
-		{
-			name: "missing min temperature returns error",
-			entity: &ShipmentEntity{
-				TemperatureMin: nil,
-				TemperatureMax: &maxTemp,
-			},
-			want:    0.0,
-			wantErr: true,
-		},
-		{
-			name: "missing max temperature returns error",
-			entity: &ShipmentEntity{
-				TemperatureMin: &minTemp,
-				TemperatureMax: nil,
-			},
-			want:    0.0,
-			wantErr: true,
-		},
-		{
-			name: "both nil returns error",
-			entity: &ShipmentEntity{
-				TemperatureMin: nil,
-				TemperatureMax: nil,
-			},
-			want:    0.0,
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeTemperatureDifferential")
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestComputeTotalWeight(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	tests := []struct {
-		name   string
-		entity *ShipmentEntity
-		want   float64
-	}{
-		{
-			name: "use shipment weight if set",
-			entity: &ShipmentEntity{
-				Weight: 5000,
-				Commodities: []Commodity{
-					{Weight: 1000},
-					{Weight: 2000},
-				},
-			},
-			want: 5000.0,
-		},
-		{
-			name: "sum commodity weights if shipment weight zero",
-			entity: &ShipmentEntity{
-				Weight: 0,
-				Commodities: []Commodity{
-					{Weight: 1000},
-					{Weight: 2000},
-				},
-			},
-			want: 3000.0,
-		},
-		{
-			name: "empty commodities with zero weight",
-			entity: &ShipmentEntity{
-				Weight:      0,
-				Commodities: []Commodity{},
-			},
-			want: 0.0,
-		},
-		{
-			name: "single commodity",
-			entity: &ShipmentEntity{
-				Weight: 0,
-				Commodities: []Commodity{
-					{Weight: 4500},
-				},
-			},
-			want: 4500.0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeTotalWeight")
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestComputeTotalPieces(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	tests := []struct {
-		name   string
-		entity *ShipmentEntity
-		want   int64
-	}{
-		{
-			name: "use shipment pieces if set",
-			entity: &ShipmentEntity{
-				Pieces: 100,
-				Commodities: []Commodity{
-					{Pieces: 10},
-					{Pieces: 20},
-				},
-			},
-			want: 100,
-		},
-		{
-			name: "sum commodity pieces if shipment pieces zero",
-			entity: &ShipmentEntity{
-				Pieces: 0,
-				Commodities: []Commodity{
-					{Pieces: 10},
-					{Pieces: 20},
-				},
-			},
-			want: 30,
-		},
-		{
-			name: "empty commodities",
-			entity: &ShipmentEntity{
-				Pieces:      0,
-				Commodities: []Commodity{},
-			},
-			want: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeTotalPieces")
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestComputeTotalLinearFeet(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	tests := []struct {
-		name   string
-		entity *ShipmentEntity
-		want   float64
-	}{
-		{
-			name: "sum linear feet",
-			entity: &ShipmentEntity{
-				Commodities: []Commodity{
-					{
-						Pieces:    10,
-						Commodity: &CommodityDetail{LinearFeetPerUnit: 2.5},
-					},
-					{
-						Pieces:    5,
-						Commodity: &CommodityDetail{LinearFeetPerUnit: 3.0},
-					},
-				},
-			},
-			want: 40.0,
-		},
-		{
-			name: "zero pieces skipped",
-			entity: &ShipmentEntity{
-				Commodities: []Commodity{
-					{
-						Pieces:    0,
-						Commodity: &CommodityDetail{LinearFeetPerUnit: 2.5},
-					},
-					{
-						Pieces:    5,
-						Commodity: &CommodityDetail{LinearFeetPerUnit: 3.0},
-					},
-				},
-			},
-			want: 15.0,
-		},
-		{
-			name: "nil commodity detail skipped",
-			entity: &ShipmentEntity{
-				Commodities: []Commodity{
-					{
-						Pieces:    10,
-						Commodity: nil,
-					},
-				},
-			},
-			want: 0.0,
-		},
-		{
-			name: "empty commodities",
-			entity: &ShipmentEntity{
-				Commodities: []Commodity{},
-			},
-			want: 0.0,
-		},
-		{
-			name:   "nil commodities",
-			entity: &ShipmentEntity{},
-			want:   0.0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeTotalLinearFeet")
-			require.NoError(t, err)
-			assert.InDelta(t, tt.want, got, 0.001)
-		})
-	}
-}
-
-func TestComputeBaseRate(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	tests := []struct {
-		name   string
-		entity *ShipmentEntity
-		want   float64
-	}{
-		{
-			name: "with base rate",
-			entity: &ShipmentEntity{
-				BaseRate: new(2500.75),
-			},
-			want: 2500.75,
-		},
-		{
-			name: "nil base rate",
-			entity: &ShipmentEntity{
-				BaseRate: nil,
-			},
-			want: 0.0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeBaseRate")
-			require.NoError(t, err)
-			assert.InDelta(t, tt.want, got, 0.001)
-		})
-	}
-}
-
-func TestComputeFreightChargeAmount(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	tests := []struct {
-		name   string
-		entity *ShipmentEntity
-		want   float64
-	}{
-		{
-			name: "with freight charge",
-			entity: &ShipmentEntity{
-				FreightChargeAmount: new(1500.50),
-			},
-			want: 1500.50,
-		},
-		{
-			name: "nil freight charge",
-			entity: &ShipmentEntity{
-				FreightChargeAmount: nil,
-			},
-			want: 0.0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeFreightChargeAmount")
-			require.NoError(t, err)
-			assert.InDelta(t, tt.want, got, 0.001)
-		})
-	}
-}
-
-func TestComputeOtherChargeAmount(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	tests := []struct {
-		name   string
-		entity *ShipmentEntity
-		want   float64
-	}{
-		{
-			name: "with other charge",
-			entity: &ShipmentEntity{
-				OtherChargeAmount: new(250.00),
-			},
-			want: 250.00,
-		},
-		{
-			name: "nil other charge",
-			entity: &ShipmentEntity{
-				OtherChargeAmount: nil,
-			},
-			want: 0.0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeOtherChargeAmount")
-			require.NoError(t, err)
-			assert.InDelta(t, tt.want, got, 0.001)
-		})
-	}
-}
-
-func TestComputeOtherChargeAmount_UsesShipmentAdditionalChargeOverrides(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
+	r := computed(t)
 	entity := &shipment.Shipment{
-		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(1000)),
-		OtherChargeAmount:   decimal.NewNullDecimal(decimal.NewFromInt(50)),
+		Weight: int64Ptr(9_999),
+		Pieces: int64Ptr(999),
+		Moves: []*shipment.ShipmentMove{
+			{Distance: floatPtr(100.5), Stops: []*shipment.Stop{
+				{Sequence: 0, Type: shipment.StopTypePickup},
+				{Sequence: 1, Type: shipment.StopTypeDelivery, Status: shipment.StopStatusCanceled},
+			}},
+			{Sequence: 1, Distance: floatPtr(200.25), Stops: []*shipment.Stop{
+				{Sequence: 0, Type: shipment.StopTypeDelivery},
+			}},
+			{Sequence: 2},
+		},
+		Commodities: []*shipment.ShipmentCommodity{
+			{
+				Weight:     1_000,
+				Pieces:     10,
+				LengthFeet: floatPtr(2),
+				WidthFeet:  floatPtr(2),
+				HeightFeet: floatPtr(2),
+				Commodity: &commodity.Commodity{
+					FreightClass:      commodity.FreightClass85,
+					LinearFeetPerUnit: floatPtr(0.5),
+				},
+			},
+			{
+				Weight: 3_000,
+				Pieces: 5,
+				Commodity: &commodity.Commodity{
+					FreightClass:        commodity.FreightClass92_5,
+					HazardousMaterialID: pulid.MustNew("hm_"),
+				},
+			},
+		},
+	}
+
+	assert.InDelta(t, 300.75, compute(t, r, entity, "computeTotalDistance"), 0.0001)
+	assert.Equal(t, 2, compute(t, r, entity, "computeTotalStops"))
+	assert.Equal(t, true, compute(t, r, entity, "computeHasHazmat"))
+	assert.InDelta(t, 4_000.0, compute(t, r, entity, "computeTotalWeight"), 0.0001)
+	assert.Equal(t, int64(15), compute(t, r, entity, "computeTotalPieces"))
+	assert.InDelta(t, 5.0, compute(t, r, entity, "computeTotalLinearFeet"), 0.0001)
+	assert.InDelta(t, 80.0, compute(t, r, entity, "computeTotalCubicFeet"), 0.0001)
+	assert.InDelta(t, 50.0, compute(t, r, entity, "computeDensity"), 0.0001)
+	assert.Equal(t, "92.5", compute(t, r, entity, "computePrimaryFreightClass"))
+	assert.Equal(t, "92.5", compute(t, r, entity, "computeHighestFreightClass"))
+
+	empty := &shipment.Shipment{}
+	assert.Nil(t, compute(t, r, empty, "computeDensity"), "no cube means density is unknown")
+	assert.Empty(t, compute(t, r, empty, "computePrimaryFreightClass"))
+	assert.Equal(t, false, compute(t, r, empty, "computeHasHazmat"))
+	assert.Equal(t, 0, compute(t, r, empty, "computeTotalStops"))
+}
+
+func TestComputed_TemperatureFields(t *testing.T) {
+	t.Parallel()
+
+	r := computed(t)
+	reefer := &shipment.Shipment{TemperatureMin: int16Ptr(34), TemperatureMax: int16Ptr(40)}
+	dry := &shipment.Shipment{}
+	oneSided := &shipment.Shipment{TemperatureMax: int16Ptr(40)}
+
+	assert.Equal(t, true, compute(t, r, reefer, "computeRequiresTemperatureControl"))
+	assert.InDelta(t, 6.0, compute(t, r, reefer, "computeTemperatureDifferential"), 0.0001)
+	assert.Equal(t, false, compute(t, r, dry, "computeRequiresTemperatureControl"))
+	assert.InDelta(t, 0.0, compute(t, r, dry, "computeTemperatureDifferential"), 0.0001)
+	assert.Equal(t, true, compute(t, r, oneSided, "computeRequiresTemperatureControl"))
+	assert.InDelta(t, 0.0, compute(t, r, oneSided, "computeTemperatureDifferential"), 0.0001)
+}
+
+func TestComputed_ChargeAmounts(t *testing.T) {
+	t.Parallel()
+
+	r := computed(t)
+	entity := &shipment.Shipment{
+		BaseRate:            decimal.NewNullDecimal(decimal.RequireFromString("2.15")),
+		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(1_000)),
+		TotalChargeAmount:   decimal.NewNullDecimal(decimal.NewFromInt(1_250)),
 		AdditionalCharges: []*shipment.AdditionalCharge{
-			{
-				Method: accessorialcharge.MethodFlat,
-				Amount: decimal.NewFromInt(200),
-				Unit:   1,
-			},
-			{
-				Method: accessorialcharge.MethodPercentage,
-				Amount: decimal.NewFromInt(5),
-				Unit:   1,
-			},
+			{Method: accessorialcharge.MethodFlat, Amount: decimal.NewFromInt(75), Unit: 2},
+			{Method: accessorialcharge.MethodPercentage, Amount: decimal.NewFromInt(10)},
+			nil,
 		},
 	}
 
-	got, err := r.ResolveComputed(entity, "computeOtherChargeAmount")
+	assert.InDelta(t, 2.15, compute(t, r, entity, "computeBaseRate"), 0.0001)
+	assert.InDelta(t, 1_000.0, compute(t, r, entity, "computeFreightChargeAmount"), 0.0001)
+	assert.InDelta(t, 250.0, compute(t, r, entity, "computeOtherChargeAmount"), 0.0001)
+	assert.InDelta(t, 1_250.0, compute(t, r, entity, "computeCurrentTotalCharge"), 0.0001)
 
+	empty := &shipment.Shipment{}
+	assert.InDelta(t, 0.0, compute(t, r, empty, "computeBaseRate"), 0.0001)
+	assert.InDelta(t, 0.0, compute(t, r, empty, "computeCurrentTotalCharge"), 0.0001)
+}
+
+func TestComputed_LaneReadsTheOriginAndDestinationStops(t *testing.T) {
+	t.Parallel()
+
+	r := computed(t)
+	entity := &shipment.Shipment{Moves: []*shipment.ShipmentMove{{Stops: []*shipment.Stop{
+		{
+			Sequence: 2,
+			Type:     shipment.StopTypeDelivery,
+			Location: place("Austin", "78701", "TX", ""),
+		},
+		{
+			Sequence: 0,
+			Type:     shipment.StopTypePickup,
+			Location: place("Dallas", "75201", "TX", ""),
+		},
+		{
+			Sequence: 1,
+			Type:     shipment.StopTypeDelivery,
+			Location: place("Waco", "76701", "", ""),
+		},
+	}}}}
+
+	assert.Equal(t, "Dallas", compute(t, r, entity, "computeOriginCity"))
+	assert.Equal(t, "TX", compute(t, r, entity, "computeOriginState"))
+	assert.Equal(t, "75201", compute(t, r, entity, "computeOriginZip"))
+	assert.Equal(t, "Austin", compute(t, r, entity, "computeDestinationCity"))
+	assert.Equal(t, "TX", compute(t, r, entity, "computeDestinationState"))
+	assert.Equal(t, "78701", compute(t, r, entity, "computeDestinationZip"))
+
+	unlocated := &shipment.Shipment{Moves: []*shipment.ShipmentMove{{Stops: []*shipment.Stop{
+		{Type: shipment.StopTypePickup},
+	}}}}
+	assert.Empty(t, compute(t, r, unlocated, "computeOriginCity"))
+	assert.Empty(t, compute(t, r, unlocated, "computeOriginState"))
+	assert.Empty(t, compute(t, r, unlocated, "computeDestinationCity"))
+}
+
+func TestComputed_PickupIsReadOnThePickupLocationsClock(t *testing.T) {
+	t.Parallel()
+
+	r := computed(t)
+	pacific, err := time.LoadLocation("America/Los_Angeles")
 	require.NoError(t, err)
-	assert.InDelta(t, 250.0, got, 0.001)
+	fridayEvening := time.Date(2026, time.October, 9, 18, 0, 0, 0, pacific)
+
+	entity := &shipment.Shipment{Moves: []*shipment.ShipmentMove{{Stops: []*shipment.Stop{
+		{
+			Type:                 shipment.StopTypePickup,
+			ScheduledWindowStart: fridayEvening.Unix(),
+			Location:             place("Fresno", "93650", "CA", "America/Los_Angeles"),
+		},
+	}}}}
+
+	assert.Equal(t, int(time.Friday), compute(t, r, entity, "computePickupDayOfWeek"))
+	assert.Equal(t, 18, compute(t, r, entity, "computePickupHour"))
+	assert.Equal(t, int(time.October), compute(t, r, entity, "computePickupMonth"))
+	assert.Equal(t, false, compute(t, r, entity, "computeIsWeekendPickup"))
+
+	unknownZone := &shipment.Shipment{Moves: []*shipment.ShipmentMove{{Stops: []*shipment.Stop{
+		{
+			Type:                 shipment.StopTypePickup,
+			ScheduledWindowStart: fridayEvening.Unix(),
+			Location:             place("Fresno", "93650", "CA", "Mars/Olympus"),
+		},
+	}}}}
+	assert.Equal(t, true, compute(t, r, unknownZone, "computeIsWeekendPickup"),
+		"a zone the runtime cannot load is read in UTC, where it is already Saturday")
+
+	arrived := fridayEvening.Add(-2 * time.Hour).Unix()
+	entity.Moves[0].Stops[0].ActualArrival = &arrived
+	assert.Equal(t, 16, compute(t, r, entity, "computePickupHour"),
+		"an actual arrival outranks the scheduled window")
 }
 
-func TestComputeCurrentTotalCharge(t *testing.T) {
+func TestComputed_PickupAndDeliveryDates(t *testing.T) {
 	t.Parallel()
 
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
+	r := computed(t)
+	start := int64(1_800_000_000)
+	end := start + 7_200
 
-	tests := []struct {
-		name   string
-		entity *ShipmentEntity
-		want   float64
-	}{
+	assert.Nil(t, compute(t, r, &shipment.Shipment{}, "computePickupDate"))
+	assert.Nil(t, compute(t, r, &shipment.Shipment{}, "computeDeliveryDate"))
+	assert.Equal(t, 0, compute(t, r, &shipment.Shipment{}, "computePickupHour"))
+
+	entity := &shipment.Shipment{Moves: []*shipment.ShipmentMove{{Stops: []*shipment.Stop{
+		{Sequence: 0, Type: shipment.StopTypePickup, ScheduledWindowStart: start},
+		{Sequence: 1, Type: shipment.StopTypeDelivery, ScheduledWindowStart: end},
+	}}}}
+
+	pickup, ok := compute(t, r, entity, "computePickupDate").(time.Time)
+	require.True(t, ok)
+	assert.Equal(t, start, pickup.Unix())
+
+	delivery, ok := compute(t, r, entity, "computeDeliveryDate").(time.Time)
+	require.True(t, ok, "a delivery with only a window start is dated by it")
+	assert.Equal(t, end, delivery.Unix())
+
+	windowEnd := end + 3_600
+	entity.Moves[0].Stops[1].ScheduledWindowEnd = &windowEnd
+	delivery, _ = compute(t, r, entity, "computeDeliveryDate").(time.Time)
+	assert.Equal(t, windowEnd, delivery.Unix())
+
+	departed := windowEnd + 600
+	entity.Moves[0].Stops[1].ActualDeparture = &departed
+	delivery, _ = compute(t, r, entity, "computeDeliveryDate").(time.Time)
+	assert.Equal(t, departed, delivery.Unix())
+}
+
+func TestComputed_TotalHoursSpansTheRatedStops(t *testing.T) {
+	t.Parallel()
+
+	r := computed(t)
+	start := int64(1_800_000_000)
+	pickupEnd := start + 3_600
+	deliveryEnd := start + 10*3_600
+	canceledEnd := start + 50*3_600
+
+	entity := &shipment.Shipment{Moves: []*shipment.ShipmentMove{{Stops: []*shipment.Stop{
 		{
-			name: "with total charge",
-			entity: &ShipmentEntity{
-				TotalChargeAmount: new(3500.75),
-			},
-			want: 3500.75,
+			Sequence:             0,
+			Type:                 shipment.StopTypePickup,
+			ScheduledWindowStart: start,
+			ScheduledWindowEnd:   &pickupEnd,
 		},
 		{
-			name: "nil total charge",
-			entity: &ShipmentEntity{
-				TotalChargeAmount: nil,
-			},
-			want: 0.0,
+			Sequence:             1,
+			Type:                 shipment.StopTypeDelivery,
+			Status:               shipment.StopStatusCanceled,
+			ScheduledWindowStart: start + 40*3_600,
+			ScheduledWindowEnd:   &canceledEnd,
 		},
-	}
+		{
+			Sequence:             2,
+			Type:                 shipment.StopTypeDelivery,
+			ScheduledWindowStart: start + 9*3_600,
+			ScheduledWindowEnd:   &deliveryEnd,
+		},
+	}}}}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeCurrentTotalCharge")
-			require.NoError(t, err)
-			assert.InDelta(t, tt.want, got, 0.001)
-		})
-	}
+	assert.InDelta(t, 10.0, compute(t, r, entity, "computeTotalHours"), 0.0001)
+	assert.InDelta(t, 0.0, compute(t, r, &shipment.Shipment{}, "computeTotalHours"), 0.0001)
 }
 
-func TestComputedFunctionNotFound(t *testing.T) {
+func TestComputed_StopsListEveryStopInSequence(t *testing.T) {
 	t.Parallel()
 
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
+	r := computed(t)
+	windowEnd := int64(1_800_003_600)
+	entity := &shipment.Shipment{Moves: []*shipment.ShipmentMove{{Stops: []*shipment.Stop{
+		{
+			Sequence: 1,
+			Type:     shipment.StopTypeDelivery,
+			Status:   shipment.StopStatusCanceled,
+			Location: place("Waco", "76701", "TX", "America/Chicago"),
+		},
+		{
+			Sequence:             0,
+			Type:                 shipment.StopTypePickup,
+			Status:               shipment.StopStatusNew,
+			ScheduleType:         shipment.StopScheduleTypeOpen,
+			Pieces:               int64Ptr(12),
+			Weight:               int64Ptr(4_000),
+			ScheduledWindowStart: 1_800_000_000,
+			ScheduledWindowEnd:   &windowEnd,
+			Location:             place("Dallas", "75201", "TX", "America/Chicago"),
+		},
+	}}}}
 
-	_, err := r.ResolveComputed(&ShipmentEntity{}, "nonExistentFunction")
-	require.Error(t, err)
+	stops, ok := compute(t, r, entity, "computeStops").([]any)
+	require.True(t, ok)
+	require.Len(t, stops, 2)
+
+	first, ok := stops[0].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "Pickup", first["type"])
+	assert.Equal(t, "New", first["status"])
+	assert.Equal(t, "Open", first["scheduleType"])
+	assert.Equal(t, 0, first["sequence"])
+	assert.Equal(t, 12.0, first["pieces"])
+	assert.Equal(t, 4_000.0, first["weight"])
+	assert.Equal(t, int64(1_800_000_000), first["windowStart"])
+	assert.Equal(t, windowEnd, first["windowEnd"])
+	assert.Nil(t, first["actualArrival"])
+	assert.Equal(t, "Dallas", first["city"])
+	assert.Equal(t, "TX", first["state"])
+	assert.Equal(t, "75201", first["zip"])
+	assert.Equal(t, "America/Chicago", first["timezone"])
+
+	second, ok := stops[1].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "Canceled", second["status"], "a canceled stop is listed with its status")
+	assert.Nil(t, second["pieces"])
+	assert.Nil(t, second["windowStart"])
 }
 
-func TestComputedWithNilEntity(t *testing.T) {
+func TestComputed_CommoditiesCarryClassAndDimensions(t *testing.T) {
 	t.Parallel()
 
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
+	r := computed(t)
+	entity := &shipment.Shipment{Commodities: []*shipment.ShipmentCommodity{
+		{
+			Weight:     800,
+			Pieces:     2,
+			LengthFeet: floatPtr(4),
+			WidthFeet:  floatPtr(4),
+			HeightFeet: floatPtr(5),
+			Commodity: &commodity.Commodity{
+				Name:                "Paint",
+				FreightClass:        commodity.FreightClass77_5,
+				Stackable:           true,
+				HazardousMaterialID: pulid.MustNew("hm_"),
+			},
+		},
+		{Weight: 100, Pieces: 1},
+		nil,
+	}}
 
-	_, err := r.ResolveComputed((*ShipmentEntity)(nil), "computeTotalDistance")
-	require.Error(t, err)
+	lines, ok := compute(t, r, entity, "computeCommodities").([]any)
+	require.True(t, ok)
+	require.Len(t, lines, 2)
+
+	paint, ok := lines[0].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "Paint", paint["name"])
+	assert.Equal(t, "77.5", paint["freightClass"])
+	assert.Equal(t, true, paint["stackable"])
+	assert.Equal(t, true, paint["hazmat"])
+	assert.Equal(t, 800.0, paint["weight"])
+	assert.Equal(t, 2.0, paint["pieces"])
+	assert.Equal(t, 4.0, paint["lengthFeet"])
+	assert.InDelta(t, 160.0, paint["cubicFeet"], 0.0001)
+	assert.InDelta(t, 5.0, paint["density"], 0.0001)
+
+	bare, ok := lines[1].(map[string]any)
+	require.True(t, ok)
+	assert.Empty(t, bare["freightClass"])
+	assert.Nil(t, bare["lengthFeet"])
+	assert.Nil(t, bare["cubicFeet"])
+	assert.Nil(t, bare["density"])
+}
+
+func TestMemoize_IsTransparent(t *testing.T) {
+	t.Parallel()
+
+	r := computed(t)
+	entity := &shipment.Shipment{
+		Weight: int64Ptr(500),
+		Moves: []*shipment.ShipmentMove{{Stops: []*shipment.Stop{
+			{Type: shipment.StopTypePickup, Location: place("Dallas", "75201", "TX", "")},
+			{Sequence: 1, Type: shipment.StopTypeDelivery},
+		}}},
+	}
+
+	memo := resolver.Memoize(entity)
+	assert.Same(t, memo, resolver.Memoize(memo), "wrapping twice returns the same view")
+	assert.Same(t, entity, resolver.Unwrap(memo))
+	assert.Same(t, entity, resolver.Unwrap(entity))
+
+	for _, name := range computedFunctions {
+		direct, directErr := r.ResolveComputed(entity, name)
+		viaMemo, memoErr := r.ResolveComputed(memo, name)
+		require.NoError(t, directErr, name)
+		require.NoError(t, memoErr, name)
+		assert.Equal(t, direct, viaMemo, name)
+	}
+
+	_, err := r.ResolveComputed(resolver.Memoize(42), "computeTotalStops")
+	require.ErrorIs(t, err, resolver.ErrUnsupportedEntity)
 }

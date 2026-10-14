@@ -4,7 +4,7 @@ import {
   finishAccountingAuthorization,
   type AccountingConnection,
 } from "@/lib/graphql/accounting-sync";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import type { CompleteAccountingAuthorizationInput } from "@trenova/graphql/generated/graphql";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
@@ -27,7 +27,7 @@ export function AccountingAuthorizationCallback({ vendor }: { vendor: Accounting
 
   const returned = readAccountingCallback(params, { requireCompany: false });
   const statusQuery = useQuery({
-    ...queries.accountingSync.status(vendor.system),
+    ...accountingSync.status(vendor.system),
     enabled: returned.kind === "authorized",
   });
   const profile = statusQuery.data?.profile;

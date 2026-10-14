@@ -1,5 +1,6 @@
 import { reorderAIProviders } from "@/lib/graphql/ai-provider";
-import { queries } from "@/lib/queries";
+import { aiAnalytics } from "@/lib/queries/ai-analytics";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -45,8 +46,8 @@ export const SameModelCard = memo(function SameModelCard({
     onSuccess: async () => {
       toast.success(t("{0} now goes ahead of {1}", left.label, right.label));
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.aiProvider._def }),
-        queryClient.invalidateQueries({ queryKey: queries.aiAnalytics._def }),
+        queryClient.invalidateQueries({ queryKey: aiProvider._def }),
+        queryClient.invalidateQueries({ queryKey: aiAnalytics._def }),
       ]);
     },
     onError: (error) =>

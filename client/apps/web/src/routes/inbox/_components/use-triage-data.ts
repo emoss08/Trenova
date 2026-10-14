@@ -1,36 +1,36 @@
 import type { InboundMessageFilter, InboundMessageRow } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { inboxMessagesQuery, inboxReferenceQuery } from "@/lib/queries/inbox";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
 /** Lane counts, kinds with waiting mail, sources' waiting numbers. One aggregate. */
 export function useTriageCounts() {
-  return useQuery(queries.inbox.counts());
+  return useQuery(inbox.counts());
 }
 
 export function useTriageMailboxes() {
-  return useQuery({ ...queries.inbox.mailboxes(), retry: false });
+  return useQuery({ ...inbox.mailboxes(), retry: false });
 }
 
 export function useTriageViews() {
-  return useQuery(queries.inbox.views());
+  return useQuery(inbox.views());
 }
 
 export function useTriageRules() {
-  return useQuery(queries.inbox.rules());
+  return useQuery(inbox.rules());
 }
 
 export function useTriageBriefing() {
-  return useQuery(queries.inbox.briefing());
+  return useQuery(inbox.briefing());
 }
 
 export function useTriageAssignees() {
-  return useQuery(inboxReferenceQuery(queries.inbox.assignees()));
+  return useQuery(inboxReferenceQuery(inbox.assignees()));
 }
 
 export function useTriageDocumentTypes() {
-  return useQuery(inboxReferenceQuery(queries.inbox.documentTypes()));
+  return useQuery(inboxReferenceQuery(inbox.documentTypes()));
 }
 
 export type FolderPages = {
@@ -85,7 +85,7 @@ export function usePrefetchMessage(): (id: string) => void {
 
   return useCallback(
     (id: string) => {
-      void queryClient.prefetchQuery({ ...queries.inbox.message(id), staleTime: 30_000 });
+      void queryClient.prefetchQuery({ ...inbox.message(id), staleTime: 30_000 });
     },
     [queryClient],
   );

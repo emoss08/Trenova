@@ -27,6 +27,18 @@ func (s *stubTemplateRepo) GetByIDs(
 	return s.templates, nil
 }
 
+type approvedVersions struct {
+	formulatemplateports.FormulaTemplateVersionRepository
+	latest *formulatemplate.FormulaTemplateVersion
+}
+
+func (a *approvedVersions) GetLatestByStatus(
+	_ context.Context,
+	_ *formulatemplateports.GetLatestVersionByStatusRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	return a.latest, nil
+}
+
 func fieldMessages(multiErr *errortypes.MultiError, field string) []string {
 	if multiErr == nil {
 		return nil
@@ -89,7 +101,7 @@ func TestValidateRuleTemplateReferences(t *testing.T) {
 		multiErr := errortypes.NewMultiError()
 		validateRuleTemplateReferences(
 			t.Context(),
-			&stubTemplateRepo{},
+			templateRefs{templates: &stubTemplateRepo{}},
 			tenantInfo,
 			rules,
 			multiErr,
@@ -100,7 +112,7 @@ func TestValidateRuleTemplateReferences(t *testing.T) {
 		assert.Contains(t, messages[0], "does not exist")
 	})
 
-	t.Run("template not active", func(t *testing.T) {
+	t.Run("a draft never approved", func(t *testing.T) {
 		t.Parallel()
 
 		repo := &stubTemplateRepo{templates: []*formulatemplate.FormulaTemplate{
@@ -108,11 +120,67 @@ func TestValidateRuleTemplateReferences(t *testing.T) {
 		}}
 
 		multiErr := errortypes.NewMultiError()
-		validateRuleTemplateReferences(t.Context(), repo, tenantInfo, rules, multiErr)
+		validateRuleTemplateReferences(
+			t.Context(),
+			templateRefs{templates: repo, versions: &approvedVersions{}},
+			tenantInfo,
+			rules,
+			multiErr,
+		)
 
 		messages := fieldMessages(multiErr, "rules[0].formulaTemplateId")
 		require.Len(t, messages, 1)
-		assert.Contains(t, messages[0], "must be Active")
+		assert.Contains(t, messages[0], "never been approved")
+	})
+
+	t.Run("a revision in review keeps its approved content pricing", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &stubTemplateRepo{templates: []*formulatemplate.FormulaTemplate{
+			makeTemplate(formulatemplate.StatusInReview, formulatemplate.TemplateTypeFreightCharge),
+		}}
+
+		multiErr := errortypes.NewMultiError()
+		validateRuleTemplateReferences(
+			t.Context(),
+			templateRefs{
+				templates: repo,
+				versions: &approvedVersions{
+					latest: &formulatemplate.FormulaTemplateVersion{VersionNumber: 4},
+				},
+			},
+			tenantInfo,
+			rules,
+			multiErr,
+		)
+
+		assert.Empty(t, fieldMessages(multiErr, "rules[0].formulaTemplateId"))
+	})
+
+	t.Run("an archived template", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &stubTemplateRepo{templates: []*formulatemplate.FormulaTemplate{
+			makeTemplate(formulatemplate.StatusInactive, formulatemplate.TemplateTypeFreightCharge),
+		}}
+
+		multiErr := errortypes.NewMultiError()
+		validateRuleTemplateReferences(
+			t.Context(),
+			templateRefs{
+				templates: repo,
+				versions: &approvedVersions{
+					latest: &formulatemplate.FormulaTemplateVersion{VersionNumber: 4},
+				},
+			},
+			tenantInfo,
+			rules,
+			multiErr,
+		)
+
+		messages := fieldMessages(multiErr, "rules[0].formulaTemplateId")
+		require.Len(t, messages, 1)
+		assert.Contains(t, messages[0], "archived")
 	})
 
 	t.Run("template wrong type", func(t *testing.T) {
@@ -126,7 +194,7 @@ func TestValidateRuleTemplateReferences(t *testing.T) {
 		}}
 
 		multiErr := errortypes.NewMultiError()
-		validateRuleTemplateReferences(t.Context(), repo, tenantInfo, rules, multiErr)
+		validateRuleTemplateReferences(t.Context(), templateRefs{templates: repo}, tenantInfo, rules, multiErr)
 
 		messages := fieldMessages(multiErr, "rules[0].formulaTemplateId")
 		require.Len(t, messages, 1)
@@ -141,7 +209,7 @@ func TestValidateRuleTemplateReferences(t *testing.T) {
 		}}
 
 		multiErr := errortypes.NewMultiError()
-		validateRuleTemplateReferences(t.Context(), repo, tenantInfo, rules, multiErr)
+		validateRuleTemplateReferences(t.Context(), templateRefs{templates: repo}, tenantInfo, rules, multiErr)
 
 		assert.Empty(t, fieldMessages(multiErr, "rules[0].formulaTemplateId"))
 	})
@@ -152,7 +220,7 @@ func TestValidateRuleTemplateReferences(t *testing.T) {
 		multiErr := errortypes.NewMultiError()
 		validateRuleTemplateReferences(
 			t.Context(),
-			&stubTemplateRepo{},
+			templateRefs{templates: &stubTemplateRepo{}},
 			tenantInfo,
 			[]*rateagreement.RateAgreementRule{{FormulaTemplateID: nil}},
 			multiErr,
@@ -165,7 +233,7 @@ func TestValidateRuleTemplateReferences(t *testing.T) {
 		t.Parallel()
 
 		multiErr := errortypes.NewMultiError()
-		validateRuleTemplateReferences(t.Context(), nil, tenantInfo, rules, multiErr)
+		validateRuleTemplateReferences(t.Context(), templateRefs{}, tenantInfo, rules, multiErr)
 
 		assert.False(t, multiErr.HasErrors())
 	})

@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/expr-lang/expr/ast"
-	"github.com/expr-lang/expr/parser"
 )
 
 const (
@@ -125,10 +124,22 @@ func bandedUnsupported(function, table string) error {
 	)
 }
 
+func IsReservedName(name string) bool {
+	if isReservedName(name) {
+		return true
+	}
+	for i := range functionSpecs {
+		if functionSpecs[i].Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 func isReservedName(name string) bool {
 	switch name {
 	case lookupFuncName, lookupOrFuncName, lookup2FuncName, lookup2OrFuncName,
-		lookupInterpFuncName, deficitWeightFuncName, ctxEnvKey:
+		lookupInterpFuncName, deficitWeightFuncName, ctxEnvKey, concatFuncName:
 		return true
 	default:
 		return false
@@ -167,7 +178,7 @@ func ExtractLookupTables(expression string) ([]string, error) {
 }
 
 func ExtractLookupTableRefs(expression string) (LookupTableRefs, error) {
-	tree, err := parser.Parse(expression)
+	tree, err := parseExpression(expression)
 	if err != nil {
 		return LookupTableRefs{}, fmt.Errorf("failed to parse expression: %w", err)
 	}

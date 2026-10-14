@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import type { AgentWait, AgentWaitList } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,8 +17,8 @@ const NO_WAITS: AgentWait[] = [];
 export function useConversationWaits(threadId: string, enabled: boolean) {
   const t = useT();
   const queryClient = useQueryClient();
-  const key = queries.assistant.waits(threadId).queryKey;
-  const query = useQuery({ ...queries.assistant.waits(threadId), enabled });
+  const key = assistant.waits(threadId).queryKey;
+  const query = useQuery({ ...assistant.waits(threadId), enabled });
   const all = query.data?.items ?? NO_WAITS;
 
   const open = useMemo(() => all.filter((wait) => wait.status === "Waiting"), [all]);

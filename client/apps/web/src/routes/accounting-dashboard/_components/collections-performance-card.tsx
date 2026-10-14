@@ -3,14 +3,14 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { SectionPanel } from "@/components/section-panel";
 import { AR_CEI_HEALTHY_THRESHOLD, AR_CEI_WARNING_THRESHOLD } from "@/lib/accounting-constants";
 import type { ARCollectionPerformance } from "@/lib/graphql/accounts-receivable";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
 export function CollectionsPerformanceCard() {
   const t = useT();
 
-  const { data: performance, isLoading } = useQuery(queries.ar.collectionPerformance());
+  const { data: performance, isLoading } = useQuery(ar.collectionPerformance());
 
   return (
     <SectionPanel title={t("Collections performance")} hint={t("trailing 91 days")}>

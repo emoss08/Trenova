@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { QueryClient, QueryClientProvider, QueryObserver } from "@tanstack/react-query";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { act, renderHook } from "@testing-library/react";
@@ -71,19 +71,19 @@ describe("realtime invalidation of Desk conversations", () => {
 
     for (const thread of [OPEN, ...BACKGROUND]) {
       await client.fetchQuery({
-        queryKey: queries.assistant.proposals(thread).queryKey,
+        queryKey: assistant.proposals(thread).queryKey,
         queryFn: counted(`proposals:${thread}`),
       });
       await client.fetchQuery({
-        queryKey: queries.assistant.artifacts(thread)._ctx.summary.queryKey,
+        queryKey: assistant.artifacts(thread)._ctx.summary.queryKey,
         queryFn: counted(`artifacts:${thread}`),
       });
     }
     fetches.clear();
 
     for (const [name, queryKey] of [
-      ["proposals", queries.assistant.proposals(OPEN).queryKey],
-      ["artifacts", queries.assistant.artifacts(OPEN)._ctx.summary.queryKey],
+      ["proposals", assistant.proposals(OPEN).queryKey],
+      ["artifacts", assistant.artifacts(OPEN)._ctx.summary.queryKey],
     ] as const) {
       const observer = new QueryObserver(client, {
         queryKey,

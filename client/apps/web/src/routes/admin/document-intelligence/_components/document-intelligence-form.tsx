@@ -12,7 +12,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
-import { queries } from "@/lib/queries";
+import { documentControl } from "@/lib/queries/document-control";
 import { apiService } from "@/services/api";
 import {
   documentControlResourceSchema,
@@ -56,7 +56,7 @@ export default function DocumentIntelligenceForm() {
   const t = useT();
 
   const { data } = useSuspenseQuery({
-    ...queries.documentControl.get(),
+    ...documentControl.get(),
   });
 
   const form = useForm<DocumentControl>({
@@ -67,12 +67,12 @@ export default function DocumentIntelligenceForm() {
   const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
-    queryKey: queries.documentControl.get._def,
+    queryKey: documentControl.get._def,
     mutationFn: async (values: DocumentControl) => apiService.documentControlService.update(values),
     resourceName: "Document Intelligence",
     resetForm: reset,
     form,
-    invalidateQueries: [queries.documentControl.get._def],
+    invalidateQueries: [documentControl.get._def],
   });
 
   const onSubmit = useCallback(

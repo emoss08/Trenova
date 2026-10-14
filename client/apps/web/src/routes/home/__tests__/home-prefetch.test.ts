@@ -1,5 +1,6 @@
 import { analytics } from "@/lib/queries/analytics";
-import { queries } from "@/lib/queries";
+import { attention } from "@/lib/queries/attention";
+import { homeLayout } from "@/lib/queries/home-layout";
 import { prefetch } from "@/routes/home/page";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { LoaderFunctionArgs } from "react-router";
@@ -57,8 +58,8 @@ describe("home prefetch without a manifest loaded", () => {
     const list = await prefetch(loaderArgs);
 
     expect(list.map((entry) => entry.queryKey)).toEqual([
-      queries.homeLayout.effective().queryKey,
-      queries.attention.summary().queryKey,
+      homeLayout.effective().queryKey,
+      attention.summary().queryKey,
     ]);
     expect(list.map((entry) => entry.queryKey)).not.toContainEqual(
       analytics.get("shipment-management").queryKey,

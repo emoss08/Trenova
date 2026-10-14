@@ -22,6 +22,7 @@ function makeTemplate(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate
     expression: "weight * 0.5",
     status: "Active",
     schemaId: "shipment",
+    languageVersion: 1,
     variableDefinitions: [],
     breakdownDefinitions: [{ name: "linehaul", label: "Linehaul", expression: "weight * 0.5" }],
     minCharge: 250,
@@ -48,6 +49,7 @@ function makeVersion(overrides: Partial<FormulaTemplateVersion> = {}): FormulaTe
     expression: "weight * 0.5",
     status: "Active",
     schemaId: "shipment",
+    languageVersion: 1,
     variableDefinitions: [],
     breakdownDefinitions: [{ name: "linehaul", label: "Linehaul", expression: "weight * 0.5" }],
     minCharge: 250,
@@ -109,9 +111,10 @@ describe("buildTemplateExport", () => {
   it("builds export without versions", () => {
     const template = makeTemplate();
     const result = buildTemplateExport(template);
-    expect(result.exportVersion).toBe("1.3");
+    expect(result.exportVersion).toBe("1.4");
     expect(result.exportedAt).toBeDefined();
     expect(result.template.name).toBe("My Template");
+    expect(result.template.languageVersion).toBe(1);
     expect(result.versionHistory).toBeUndefined();
     expect(result.template.testCases).toBeUndefined();
   });
@@ -169,7 +172,7 @@ describe("buildTemplateExport", () => {
 describe("buildVersionExport", () => {
   it("exports one version's content including breakdowns and guardrails", () => {
     const result = buildVersionExport(makeTemplate(), makeVersion({ versionNumber: 3 }));
-    expect(result.exportVersion).toBe("1.3");
+    expect(result.exportVersion).toBe("1.4");
     expect(result.template.expression).toBe("weight * 0.5");
     expect(result.template.breakdownDefinitions).toHaveLength(1);
     expect(result.template.minCharge).toBe(250);
@@ -197,7 +200,7 @@ describe("buildBulkExport", () => {
 
   it("has exportVersion and exportedAt", () => {
     const result = buildBulkExport([makeTemplate()]);
-    expect(result.exportVersion).toBe("1.3");
+    expect(result.exportVersion).toBe("1.4");
     expect(result.exportedAt).toBeDefined();
   });
 

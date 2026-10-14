@@ -452,6 +452,7 @@ func TestNoAgreementFallsBackToTheShipmentsFormulaTemplate(t *testing.T) {
 			FormulaTemplateID:   templateID.String(),
 			FormulaTemplateName: "Legacy per-mile",
 			Expression:          "totalDistance * 1.7146",
+			VersionNumber:       3,
 		}, nil).Once()
 
 	result, err := d.svc.RateShipment(t.Context(), rateRequest(entity))
@@ -461,6 +462,9 @@ func TestNoAgreementFallsBackToTheShipmentsFormulaTemplate(t *testing.T) {
 	assert.True(t, result.Amount.Equal(decimal.RequireFromString("1234.56")))
 	require.NotNil(t, result.FormulaTemplateID)
 	assert.Equal(t, templateID, *result.FormulaTemplateID)
+	require.NotNil(t, result.Quote.FormulaTemplateVersionNumber,
+		"the quote names the template version that priced it")
+	assert.EqualValues(t, 3, *result.Quote.FormulaTemplateVersionNumber)
 }
 
 // Two rules that are indistinguishable on every ordering term must resolve the

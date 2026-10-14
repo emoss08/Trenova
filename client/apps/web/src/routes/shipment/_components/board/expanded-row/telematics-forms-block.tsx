@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { ShipmentFormSubmission } from "@/lib/graphql/telematics";
-import { queries } from "@/lib/queries";
+import { telematics } from "@/lib/queries/telematics";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -135,14 +135,14 @@ export function TelematicsFormsBlock({ shipmentId }: { shipmentId: string }) {
   const t = useT();
 
   const statusQuery = useQuery({
-    ...queries.telematics.status(),
+    ...telematics.status(),
     staleTime: 5 * 60 * 1000,
   });
   const telematicsEnabled = statusQuery.data?.enabled ?? false;
   const hasShipment = shipmentId.length > 0;
 
   const submissionsQuery = useQuery({
-    ...queries.telematics.shipmentFormSubmissions(shipmentId),
+    ...telematics.shipmentFormSubmissions(shipmentId),
     enabled: telematicsEnabled && hasShipment,
     staleTime: STALE_TIME_MS,
   });

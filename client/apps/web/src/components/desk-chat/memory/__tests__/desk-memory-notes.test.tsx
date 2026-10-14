@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ThreadHistory } from "@/components/assistant/thread-history";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import type { AssistantMessage, MemoryNote } from "@/types/assistant";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -105,7 +105,9 @@ describe("DeskMemorySaved", () => {
     );
 
     expect(screen.getByText("Replaced by a newer memory")).toBeInTheDocument();
-    expect(screen.getByText("Read the move and its stops before assigning it.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Read the move and its stops before assigning it."),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Undo" })).not.toBeInTheDocument();
   });
 
@@ -275,18 +277,24 @@ describe("DeskMemorySaved", () => {
 
     const why = screen.getByRole("button", { name: "Why" });
     expect(why).toHaveAttribute("aria-expanded", "false");
-    expect(screen.getByText("Assigning failed until the move was read.").closest("[inert]")).not.toBeNull();
+    expect(
+      screen.getByText("Assigning failed until the move was read.").closest("[inert]"),
+    ).not.toBeNull();
 
     fireEvent.click(why);
 
     expect(why).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText("Assigning failed until the move was read.").closest("[inert]")).toBeNull();
+    expect(
+      screen.getByText("Assigning failed until the move was read.").closest("[inert]"),
+    ).toBeNull();
     expect(screen.getByText("Before")).toBeInTheDocument();
     expect(screen.getByText("Assign.")).toBeInTheDocument();
   });
 
   it("keeps long steps inside the scroll area", () => {
-    const long = Array.from({ length: 12 }, (_, index) => `${index + 1}. Step ${index + 1}.`).join(" ");
+    const long = Array.from({ length: 12 }, (_, index) => `${index + 1}. Step ${index + 1}.`).join(
+      " ",
+    );
     const { container } = renderCard(card({ content: long }));
 
     const area = container.querySelector('[data-slot="scroll-area"]');
@@ -306,7 +314,7 @@ describe("DeskMemorySaved", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const offered = card({ status: "Suggested" });
     const note: MemoryNote = offered;
-    const key = queries.assistant.messages("thr_1").queryKey;
+    const key = assistant.messages("thr_1").queryKey;
     client.setQueryData<ThreadHistory>(key, {
       pages: [
         {

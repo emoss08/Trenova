@@ -9,7 +9,7 @@ import { DeskDropOverlay } from "@/components/desk-chat/composer/desk-uploads";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { briefing as briefingQueries } from "@/lib/queries/briefing";
 import type { AssistantThread } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
@@ -67,7 +67,7 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
     Operation.Read,
   );
   const { data: attention } = useAttentionSummary();
-  const briefingQuery = useQuery({ ...queries.briefing.today(), retry: false });
+  const briefingQuery = useQuery({ ...briefingQueries.today(), retry: false });
   const briefing = briefingQuery.data ?? null;
   const summaryQuery = usePendingDecisionSummary(canDecide);
   const waiting = summaryQuery.data?.total ?? attention?.agentDecisions ?? 0;

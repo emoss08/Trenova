@@ -35,6 +35,7 @@ var supportedImportVersions = map[string]struct{}{
 	"1.1": {},
 	"1.2": {},
 	"1.3": {},
+	"1.4": {},
 }
 
 type ImportTemplatePayload struct {
@@ -43,6 +44,7 @@ type ImportTemplatePayload struct {
 	Type                 formulatemplate.TemplateType        `json:"type"`
 	Expression           string                              `json:"expression"`
 	SchemaID             string                              `json:"schemaId"`
+	LanguageVersion      formulatypes.LanguageVersion        `json:"languageVersion"`
 	VariableDefinitions  []*formulatypes.VariableDefinition  `json:"variableDefinitions"`
 	BreakdownDefinitions []*formulatypes.BreakdownDefinition `json:"breakdownDefinitions"`
 	MinCharge            decimal.NullDecimal                 `json:"minCharge"`
@@ -124,6 +126,7 @@ func (s *Service) Import(
 
 	for _, entity := range created {
 		s.logAuditAction(
+			ctx,
 			log,
 			entity,
 			permission.OpCreate,
@@ -298,6 +301,7 @@ func (s *Service) buildImportEntities(
 			Type:                 payload.Type,
 			Expression:           payload.Expression,
 			SchemaID:             payload.SchemaID,
+			LanguageVersion:      payload.LanguageVersion,
 			VariableDefinitions:  payload.VariableDefinitions,
 			BreakdownDefinitions: payload.BreakdownDefinitions,
 			MinCharge:            payload.MinCharge,

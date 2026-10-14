@@ -1,7 +1,9 @@
 import { usePermission } from "@/hooks/use-permission";
 import { downloadCsv, exportFilename } from "@/lib/data-table-export";
 import type { AgentAnalytics, AIAnalyticsInput } from "@/lib/graphql/ai-analytics";
-import { queries } from "@/lib/queries";
+import { aiAnalytics } from "@/lib/queries/ai-analytics";
+import { aiProvider } from "@/lib/queries/ai-provider";
+import { assistant } from "@/lib/queries/assistant";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -86,9 +88,9 @@ export default function AnalyticsTab() {
   const { allowed: canReadAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { allowed: canRoute } = usePermission(Resource.AIProvider, Operation.Update);
 
-  const providersQuery = useQuery(queries.aiProvider.list());
-  const agentsQuery = useQuery({ ...queries.assistant.agents(false), enabled: canReadAgents });
-  const catalogQuery = useQuery({ ...queries.aiProvider.catalog(), staleTime: Infinity });
+  const providersQuery = useQuery(aiProvider.list());
+  const agentsQuery = useQuery({ ...assistant.agents(false), enabled: canReadAgents });
+  const catalogQuery = useQuery({ ...aiProvider.catalog(), staleTime: Infinity });
   const taskLabels = useMemo(
     () => new Map((catalogQuery.data?.tasks ?? []).map((item) => [item.task, item.label] as const)),
     [catalogQuery.data?.tasks],
@@ -108,7 +110,7 @@ export default function AnalyticsTab() {
   const input = useMemo(() => inputFor(range), [inputFor, range]);
 
   const analyticsQuery = useQuery({
-    ...queries.aiAnalytics.models(input),
+    ...aiAnalytics.models(input),
     staleTime: ANALYTICS_STALE_MS,
     refetchInterval: ANALYTICS_REFETCH_MS,
     placeholderData: keepPreviousData,
@@ -118,7 +120,7 @@ export default function AnalyticsTab() {
   const prefetchWindow = useCallback(
     (window: AiAnalyticsWindow) => {
       void queryClient.prefetchQuery({
-        ...queries.aiAnalytics.models(inputFor(window)),
+        ...aiAnalytics.models(inputFor(window)),
         staleTime: ANALYTICS_STALE_MS,
       });
     },

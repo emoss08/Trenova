@@ -1,5 +1,5 @@
 import type { TriageRule, TriageRuleInput } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { useTriageStore, type RuleSeed } from "@/stores/triage-store";
 import { useQuery } from "@tanstack/react-query";
@@ -163,7 +163,7 @@ function NewRule({
   const input = ruleInput(draft);
   const ready = input !== null;
   const preview = useQuery({
-    ...queries.inbox.rulePreview(input ?? idleRuleInput()),
+    ...inbox.rulePreview(input ?? idleRuleInput()),
     enabled: ready,
   });
   const matched = useCountUp(preview.data?.matched ?? 0, preview.data !== undefined, 700);

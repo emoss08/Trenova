@@ -11,7 +11,7 @@ import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { SectionPanel } from "@/components/section-panel";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { queries } from "@/lib/queries";
+import { journalEntry } from "@/lib/queries/journal-entry";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "@trenova/shared/components/icons";
@@ -165,11 +165,11 @@ export function SourceDrillDownPage() {
   const copy = sourceCopy(t, type ?? "", sourceLabel);
 
   const { data: entries, isLoading } = useQuery({
-    ...queries.journalEntry.bySource(type!, sourceId!),
+    ...journalEntry.bySource(type!, sourceId!),
     enabled: !!type && !!sourceId,
   });
   const { data: sourceInfo } = useQuery({
-    ...queries.journalEntry.sourceByObject(type!, sourceId!),
+    ...journalEntry.sourceByObject(type!, sourceId!),
     enabled: !!type && !!sourceId,
   });
 

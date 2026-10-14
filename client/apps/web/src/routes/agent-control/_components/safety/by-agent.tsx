@@ -8,7 +8,8 @@ import {
   type AgentSafetyHeader,
   type AgentToolSafetyRow,
 } from "@/lib/graphql/agent-safety";
-import { queries } from "@/lib/queries";
+import { agentSafety } from "@/lib/queries/agent-safety";
+import { assistant } from "@/lib/queries/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -68,7 +69,7 @@ export default function ByAgentView() {
   const [params, setParams] = useQueryStates(byAgentParsers);
   const stored = params[SAFETY_AGENTS_PARAM];
   const picked = useMemo(() => [...new Set(stored)].slice(0, MAX_COMPARED_AGENTS), [stored]);
-  const agentsQuery = useQuery(queries.assistant.agents(false));
+  const agentsQuery = useQuery(assistant.agents(false));
   const agents = agentsQuery.data ?? NO_AGENTS;
   const holding = useToolHolding();
   const [menu, setMenu] = useState(false);
@@ -115,7 +116,9 @@ export default function ByAgentView() {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-72" listClassName="max-h-80">
                 <DropdownMenuGroup>
-                  <DropdownMenuLabel>{t("Up to {0} agents", MAX_COMPARED_AGENTS)}</DropdownMenuLabel>
+                  <DropdownMenuLabel>
+                    {t("Up to {0} agents", MAX_COMPARED_AGENTS)}
+                  </DropdownMenuLabel>
                   {agents
                     .filter((agent) => !picked.includes(agent.id))
                     .map((agent) => (
@@ -173,7 +176,7 @@ export default function ByAgentView() {
 
 function useAgentHeaders(agentIds: readonly string[]) {
   return useQuery({
-    ...queries.agentSafety.headers(agentIds),
+    ...agentSafety.headers(agentIds),
     staleTime: AGENT_SAFETY_STALE_MS,
   });
 }
@@ -278,7 +281,8 @@ function AgentHeaderRow({
             </span>
             <Button
               type="button"
-              variant="outline" size="sm"
+              variant="outline"
+              size="sm"
               onClick={() =>
                 navigate({ tab: "agents", builder: { mode: "edit", agentId: header.agentId } })
               }
@@ -305,7 +309,7 @@ function AgentToolsTable({ agentIds }: { agentIds: readonly string[] }) {
   const t = useT();
   const headers = useAgentHeaders(agentIds);
   const summary = useQuery({
-    ...queries.agentSafety.summary(),
+    ...agentSafety.summary(),
     staleTime: SAFETY_SUMMARY_STALE_MS,
   });
   const resources = summary.data?.resources ?? NO_RESOURCES;

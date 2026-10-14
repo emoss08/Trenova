@@ -1,5 +1,5 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { queries } from "@/lib/queries";
+import { capture } from "@/lib/queries/capture";
 import { captureBatchesQuery } from "@/lib/queries/capture";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -51,10 +51,7 @@ function waitingFilter(filter: IntakeFilter) {
 export const prefetch: RoutePrefetch = ({ request }) => {
   const filter = parseIntakeFilter(new URL(request.url).searchParams);
 
-  return [
-    captureBatchesQuery(batchFilter(filter)),
-    queries.capture.batchCount(countFilter(filter)),
-  ];
+  return [captureBatchesQuery(batchFilter(filter)), capture.batchCount(countFilter(filter))];
 };
 
 function useNow(): number {
@@ -118,8 +115,8 @@ export function IntakePage() {
   );
 
   const batchesQuery = useInfiniteQuery(captureBatchesQuery(batchFilter(filter)));
-  const totalQuery = useQuery(queries.capture.batchCount(countFilter(filter)));
-  const waitingQuery = useQuery(queries.capture.batchCount(waitingFilter(filter)));
+  const totalQuery = useQuery(capture.batchCount(countFilter(filter)));
+  const waitingQuery = useQuery(capture.batchCount(waitingFilter(filter)));
 
   const batches = useMemo(
     () => batchesQuery.data?.pages.flatMap((page) => page.batches) ?? [],

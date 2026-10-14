@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 
@@ -208,6 +209,10 @@ func (r *repository) ListRatedByFormulaTemplate(
 		sp := shipmentcol.ShipmentColumns
 		sm := shipmentcol.ShipmentMoveColumns
 		stp := shipmentcol.StopColumns
+		stops := buncolgen.Rel(
+			shipmentcol.ShipmentRelations.Moves,
+			shipmentcol.ShipmentMoveRelations.Stops,
+		)
 
 		entities := make([]*shipment.Shipment, 0, req.Limit)
 		err := r.db.DBForContext(ctx).
@@ -218,6 +223,8 @@ func (r *repository) ListRatedByFormulaTemplate(
 					Where(sp.FormulaTemplateID.Eq(), req.TemplateID)
 			}).
 			Relation(shipmentcol.ShipmentRelations.Customer).
+			Relation(shipmentcol.ShipmentRelations.ServiceType).
+			Relation(shipmentcol.ShipmentRelations.ShipmentType).
 			Relation(shipmentcol.ShipmentRelations.TractorType).
 			Relation(shipmentcol.ShipmentRelations.TrailerType).
 			RelationWithOpts(shipmentcol.ShipmentRelations.Moves, bun.RelationOpts{
@@ -225,14 +232,17 @@ func (r *repository) ListRatedByFormulaTemplate(
 					return sq.Order(sm.Sequence.OrderAsc())
 				},
 			}).
-			RelationWithOpts(
-				buncolgen.Rel(shipmentcol.ShipmentRelations.Moves, shipmentcol.ShipmentMoveRelations.Stops),
-				bun.RelationOpts{
-					Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return sq.Order(stp.Sequence.OrderAsc())
-					},
+			RelationWithOpts(stops, bun.RelationOpts{
+				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Order(stp.Sequence.OrderAsc())
 				},
-			).
+			}).
+			Relation(buncolgen.Rel(stops, shipmentcol.StopRelations.Location)).
+			Relation(buncolgen.Rel(
+				stops,
+				shipmentcol.StopRelations.Location,
+				locationcol.LocationRelations.State,
+			)).
 			RelationWithOpts(shipmentcol.ShipmentRelations.AdditionalCharges, bun.RelationOpts{
 				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return sq.Relation(shipmentcol.AdditionalChargeRelations.AccessorialCharge)
@@ -746,6 +756,7 @@ func (r *repository) UpdateDerivedState(
 					sp.RatingDetail.Bare(),
 					sp.MarkedReadyToBillAt.Bare(),
 					sp.BilledAt.Bare(),
+					sp.RateLocked.Bare(),
 					sp.Version.Bare(),
 					sp.UpdatedAt.Bare(),
 				).

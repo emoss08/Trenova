@@ -20,7 +20,7 @@ import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/compo
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { documentParsingRule } from "@/lib/queries/document-parsing-rule";
 import { apiService } from "@/services/api";
 import {
   ruleVersionSchema,
@@ -61,7 +61,7 @@ type VersionDetailProps = {
 
 export function VersionDetail({ versionId, onBack }: VersionDetailProps) {
   const { data } = useQuery({
-    ...queries.documentParsingRule.version(versionId),
+    ...documentParsingRule.version(versionId),
   });
 
   if (!data) return null;
@@ -86,32 +86,29 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
   const { handleSubmit, reset, control } = form;
 
   const { mutateAsync } = useOptimisticMutation({
-    queryKey: queries.documentParsingRule.version._def,
+    queryKey: documentParsingRule.version._def,
     mutationFn: async (values: RuleVersion) =>
       apiService.documentParsingRuleService.updateVersion(version.id!, values),
     resourceName: "Rule Version",
     resetForm: reset,
     form,
-    invalidateQueries: [
-      queries.documentParsingRule.version._def,
-      queries.documentParsingRule.versions._def,
-    ],
+    invalidateQueries: [documentParsingRule.version._def, documentParsingRule.versions._def],
   });
 
   const publishMutation = useMutation({
     mutationFn: () => apiService.documentParsingRuleService.publishVersion(version.id!),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: queries.documentParsingRule.version._def,
+        queryKey: documentParsingRule.version._def,
       });
       void queryClient.invalidateQueries({
-        queryKey: queries.documentParsingRule.versions._def,
+        queryKey: documentParsingRule.versions._def,
       });
       void queryClient.invalidateQueries({
-        queryKey: queries.documentParsingRule.detail._def,
+        queryKey: documentParsingRule.detail._def,
       });
       void queryClient.invalidateQueries({
-        queryKey: queries.documentParsingRule.list._def,
+        queryKey: documentParsingRule.list._def,
       });
       toast.success(t("Version published successfully"));
     },

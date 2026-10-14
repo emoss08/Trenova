@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { canMarkShipmentReadyToBill, canTransferShipmentToBilling } from "@/lib/shipment-utils";
 import { SHIPMENT_LIST_KEY } from "@/routes/shipment/_components/shipment-queries";
 import { apiService } from "@/services/api";
@@ -40,10 +40,10 @@ export function useShipmentBillingActions(): ShipmentBillingActions {
       Promise.all([
         // The detail key ends in its params; dropping them matches every cached variant.
         queryClient.invalidateQueries({
-          queryKey: queries.shipment.get(shipmentId).queryKey.slice(0, -1),
+          queryKey: shipmentQueries.get(shipmentId).queryKey.slice(0, -1),
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.shipment.billingReadiness(shipmentId).queryKey,
+          queryKey: shipmentQueries.billingReadiness(shipmentId).queryKey,
         }),
         queryClient.invalidateQueries({ queryKey: [SHIPMENT_LIST_KEY] }),
       ]),

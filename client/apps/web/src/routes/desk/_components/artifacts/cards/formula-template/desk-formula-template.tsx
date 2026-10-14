@@ -5,7 +5,7 @@ import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { usePermission } from "@/hooks/use-permission";
 import { describeApiError } from "@/lib/api-error-message";
 import { formulaTestRequest } from "@/lib/formula-test-request";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
@@ -120,7 +120,7 @@ export function DeskFormulaTemplate({
 }: FormulaTemplateCardProps) {
   const t = useT();
   const query = useQuery({
-    ...queries.formulaTemplate.get(recordId),
+    ...formulaTemplate.get(recordId),
     retry: false,
     placeholderData: keepPreviousData,
   });
@@ -198,20 +198,20 @@ function FormulaCard({
   );
 
   const price = useQuery({
-    ...queries.formulaTemplate.price(request ?? NO_REQUEST),
+    ...formulaTemplate.price(request ?? NO_REQUEST),
     enabled: canPrice && request !== null,
     placeholderData: keepPreviousData,
     retry: false,
     staleTime: 5 * 60_000,
   });
   const { data: schema } = useQuery({
-    ...queries.formulaTemplate.schema(template.schemaId || "shipment"),
+    ...formulaTemplate.schema(template.schemaId || "shipment"),
     staleTime: 10 * 60_000,
   });
-  const { data: usage } = useQuery(queries.formulaTemplate.usage(recordId));
-  const { data: versions } = useQuery(queries.formulaTemplate.versions(recordId, VERSION_ROWS));
+  const { data: usage } = useQuery(formulaTemplate.usage(recordId));
+  const { data: versions } = useQuery(formulaTemplate.versions(recordId, VERSION_ROWS));
   const { data: readiness } = useQuery({
-    ...queries.formulaTemplate.readiness(recordId),
+    ...formulaTemplate.readiness(recordId),
     enabled: stage === "draft" || stage === "review",
   });
 

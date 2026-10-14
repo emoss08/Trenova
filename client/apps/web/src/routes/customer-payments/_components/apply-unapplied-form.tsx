@@ -13,7 +13,8 @@ import {
 import { getTodayDate } from "@trenova/shared/lib/date";
 import type { CustomerPaymentDetail } from "@/lib/graphql/customer-payment";
 import { applyUnappliedCustomerPayment } from "@/lib/graphql/customer-payment";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
+import { customerPayment } from "@/lib/queries/customer-payment";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import {
   applyUnappliedSchema,
@@ -57,7 +58,7 @@ export function ApplyUnappliedForm({
   } = form;
 
   const { data: openItems, isLoading: itemsLoading } = useQuery(
-    queries.ar.openItems({ customerId: payment.customerId }),
+    ar.openItems({ customerId: payment.customerId }),
   );
 
   useEffect(() => {
@@ -92,9 +93,9 @@ export function ApplyUnappliedForm({
       });
       void queryClient.invalidateQueries({ queryKey: ["customer-payment-list"] });
       void queryClient.invalidateQueries({
-        queryKey: queries.customerPayment.detail(payment.id).queryKey,
+        queryKey: customerPayment.detail(payment.id).queryKey,
       });
-      void queryClient.invalidateQueries({ queryKey: queries.ar._def });
+      void queryClient.invalidateQueries({ queryKey: ar._def });
       onDone();
     },
     form,

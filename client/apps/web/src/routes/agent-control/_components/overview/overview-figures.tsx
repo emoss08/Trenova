@@ -1,5 +1,6 @@
 import { formatMillions, formatUsd } from "@/lib/ai-usage-format";
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { useQuery } from "@tanstack/react-query";
@@ -27,11 +28,11 @@ export function OverviewFigures({ onSetPrices }: OverviewFiguresProps) {
   const t = useT();
   const timezone = useMemo(() => resolveUserTimezone(), []);
   const usageQuery = useQuery({
-    ...queries.aiProvider.usage(OVERVIEW_WINDOW_DAYS),
+    ...aiProvider.usage(OVERVIEW_WINDOW_DAYS),
     staleTime: FIGURES_STALE_MS,
   });
   const dailyQuery = useQuery({
-    ...queries.aiControl.daily(OVERVIEW_WINDOW_DAYS, timezone),
+    ...aiControl.daily(OVERVIEW_WINDOW_DAYS, timezone),
     staleTime: FIGURES_STALE_MS,
   });
 

@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +22,7 @@ export function useSpecIntegrationConfig({
   const t = useT();
   const queryClient = useQueryClient();
   const configQuery = useQuery({
-    ...queries.integration.config(integrationType),
+    ...integration.config(integrationType),
     enabled: open,
   });
   const response = configQuery.data;
@@ -59,9 +59,9 @@ export function useSpecIntegrationConfig({
       toast.success(t("{0} integration updated", name));
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.integration.config(integrationType).queryKey,
+          queryKey: integration.config(integrationType).queryKey,
         }),
-        queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey }),
+        queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey }),
         onChanged?.(),
       ]);
     },
@@ -72,7 +72,7 @@ export function useSpecIntegrationConfig({
     onSuccess: async () => {
       toast.success(t("{0} connection successful", name));
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey }),
+        queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey }),
         onChanged?.(),
       ]);
     },

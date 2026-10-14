@@ -316,6 +316,42 @@
       "apps/web/components"
     ]
   },
+  "'#acc' is the running total inside reduce() and nowhere else": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "'#{0}' isn't a pointer; use #, #index or, inside reduce(), #acc": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "'%' takes whole numbers, but this part can come to a fraction": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "'%' takes whole numbers, but {0} can hold a fraction. Use int({1}) to take its whole part": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "'(' opened here is never closed": {
     "sites": 2,
     "scope": [
@@ -407,7 +443,7 @@
     ]
   },
   "'let {0}' needs '=' and a value": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -452,7 +488,7 @@
     ]
   },
   "'let' needs a name: let fuel = …": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -3038,8 +3074,17 @@
       "routes/desk"
     ]
   },
-  "A 'let' line ends with ';'": {
+  "A 'let' here needs the value it is for after it": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "A 'let' line ends with ';'": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -4868,6 +4913,15 @@
       "apps/web/components"
     ]
   },
+  "A date moves by a duration, not a number: write {0} {1} duration(\"24h\")": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A date or time within this many hours of the value.": {
     "sites": 1,
     "scope": [
@@ -5906,6 +5960,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A function after '|' needs its parentheses: value | {0}()": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "A garnishment needs the order it is taken under": {
@@ -12185,13 +12248,12 @@
     ]
   },
   "Absolute value": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types",
-      "packages/shared/types"
+      "apps/web/types"
     ]
   },
   "Accept": {
@@ -14949,7 +15011,16 @@
     ]
   },
   "Add ';'": {
-    "sites": 2,
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Add ()": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -21923,6 +21994,15 @@
       "go/other"
     ]
   },
+  "An 'if' that is part of a calculation needs parentheses around the whole 'if … else …'": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "An API key": {
     "sites": 1,
     "scope": [
@@ -26932,15 +27012,6 @@
       "routes/rate-agreement"
     ]
   },
-  "Approving activates this template so it can be used to rate shipments.": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Approving and designating are separate decisions — nothing is drawn down yet.": {
     "sites": 1,
     "scope": [
@@ -26975,6 +27046,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Approving makes this content the one that rates shipments, from now or from the date you choose.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Approving makes you their biller.": {
@@ -27105,6 +27185,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Archive anyway": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Archive customers": {
@@ -27377,6 +27466,15 @@
       "routes/admin"
     ]
   },
+  "Archiving a formula template that is still in use needs approve permission": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Archiving is permanent. The agreement stops pricing and is kept only because quotes point at it.": {
     "sites": 1,
     "scope": [
@@ -27402,6 +27500,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Archiving stops these templates rating anything: {0}. Confirm to archive them anyway": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Archiving...": {
@@ -32884,15 +32991,6 @@
       "routes/osha"
     ]
   },
-  "Average of values": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Average safety score out of 100": {
     "sites": 1,
     "scope": [
@@ -34371,15 +34469,6 @@
       "routes/worker"
     ]
   },
-  "Banker's rounding at decimal places": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Banker's rounding: exact halves go to the even neighbour, so a large book of charges does not drift upward.": {
     "sites": 1,
     "scope": [
@@ -34574,15 +34663,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Base rate per unit for freight charge calculation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Base runtime key": {
@@ -36037,17 +36117,8 @@
       "apps/web/components"
     ]
   },
-  "Billable weight under a break table: the next break's minimum when that is cheaper": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Billed": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -36494,6 +36565,15 @@
       "go/other"
     ]
   },
+  "Billing fallback": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Billing for this shipment has been canceled. No further modifications can be made.": {
     "sites": 1,
     "scope": [
@@ -36896,6 +36976,33 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Billing v{0} until v{1} takes effect": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Billing v{0} while v{1} is a draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Billing v{0} while v{1} is in review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Billing warnings": {
@@ -39534,15 +39641,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Calculated freight charge amount": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Calculating...": {
@@ -44836,8 +44934,17 @@
       "apps/web/components"
     ]
   },
+  "Change to int({0})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Change to {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -48872,24 +48979,6 @@
       "routes/worker"
     ]
   },
-  "City of the final delivery stop": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
-  "City of the first pickup stop": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "City to city": {
     "sites": 1,
     "scope": [
@@ -49008,15 +49097,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Clamp value to range": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Clamped": {
@@ -53177,6 +53257,24 @@
       "apps/web/components"
     ]
   },
+  "Compares what recent shipments billed with what the editor's content would charge them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Compares what {0} recent shipments billed with what the editor's content would charge them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Comparing report runs…": {
     "sites": 1,
     "scope": [
@@ -54020,13 +54118,12 @@
     ]
   },
   "Computed rollups": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "packages/shared/types"
+      "apps/web/components"
     ]
   },
   "Computed time is required": {
@@ -54165,6 +54262,15 @@
       "apps/web/lib",
       "routes/edi",
       "routes/reports"
+    ]
+  },
+  "Condition Language Version": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Condition helpers": {
@@ -63215,7 +63321,7 @@
     ]
   },
   "Current": {
-    "sites": 34,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -63460,13 +63566,13 @@
       "go/other"
     ]
   },
-  "Current shipment status": {
+  "Current source": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/types"
+      "routes/formula-template"
     ]
   },
   "Current standing is not available.": {
@@ -63485,15 +63591,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Current total charge": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Current value": {
@@ -63948,7 +64045,7 @@
     ]
   },
   "Customer": {
-    "sites": 81,
+    "sites": 80,
     "scope": [
       "go",
       "ts"
@@ -63961,7 +64058,6 @@
       "go/other",
       "packages/shared/components",
       "packages/shared/lib",
-      "packages/shared/types",
       "routes/agent-control",
       "routes/ar-aging",
       "routes/ar-open-items",
@@ -64211,15 +64307,6 @@
       "routes/detention-desk"
     ]
   },
-  "Customer code": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Customer contact management": {
     "sites": 1,
     "scope": [
@@ -64369,12 +64456,11 @@
     ]
   },
   "Customer name": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/types",
       "routes/billing-queue",
       "routes/shipment"
     ]
@@ -68800,6 +68886,15 @@
       "go/other"
     ]
   },
+  "Default value must be a {0} to match the input's type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Default version cannot be longer than 20 characters": {
     "sites": 2,
     "scope": [
@@ -71555,6 +71650,15 @@
       "go/other"
     ]
   },
+  "Description cannot exceed 2,000 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Description cannot exceed 255 characters": {
     "sites": 1,
     "scope": [
@@ -71828,7 +71932,7 @@
     ]
   },
   "Destination": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -71836,7 +71940,6 @@
     "areas": [
       "apps/web/components",
       "go/other",
-      "packages/shared/types",
       "routes/inbox",
       "routes/rate-agreement",
       "routes/tender-offer-public",
@@ -82855,7 +82958,7 @@
       "routes/worker"
     ]
   },
-  "Effective date cannot be more than one hour in the past": {
+  "Effective date cannot be more than one hour in the past; earlier shipments keep the version that billed them": {
     "sites": 1,
     "scope": [
       "go"
@@ -87225,7 +87328,7 @@
     ]
   },
   "Equipment": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -93688,7 +93791,7 @@
     ]
   },
   "Expression evaluation failed": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -97422,6 +97525,15 @@
       "routes/agent-control"
     ]
   },
+  "Field and function names are checked once the shipment schema has loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Field assertions": {
     "sites": 1,
     "scope": [
@@ -99756,15 +99868,6 @@
       "packages/shared/types"
     ]
   },
-  "First non-null value": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "First of the month": {
     "sites": 1,
     "scope": [
@@ -101812,6 +101915,15 @@
       "go/other"
     ]
   },
+  "Formula Template Version Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Formula assistant": {
     "sites": 2,
     "scope": [
@@ -101847,6 +101959,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Formula language version {0} is not supported; this server reads version {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Formula methods compute rates from parameters; table methods use explicit price bands.": {
@@ -101909,6 +102030,24 @@
       "go/other"
     ]
   },
+  "Formula template has never been approved, so it cannot price shipments yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Formula template is archived and no longer prices shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Formula template is required": {
     "sites": 4,
     "scope": [
@@ -101920,25 +102059,16 @@
       "packages/shared/types"
     ]
   },
-  "Formula template must be Active to price shipments": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Formula template must be Active to rate shipments": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Formula template must be a freight charge template": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Formula template not found": {
     "sites": 1,
     "scope": [
       "go"
@@ -101957,6 +102087,24 @@
     ]
   },
   "Formula template submitted for review": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Formula template {0} has never been approved, so it cannot rate shipments yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Formula template {0} is archived and no longer rates shipments": {
     "sites": 1,
     "scope": [
       "go"
@@ -109992,15 +110140,6 @@
       "routes/osha"
     ]
   },
-  "Hours from first stop arrival to last stop departure": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Hours in a workweek": {
     "sites": 1,
     "scope": [
@@ -114926,6 +115065,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Input {0} is declared twice; the first is input {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Inputs": {
@@ -125070,6 +125218,15 @@
       "routes/worker"
     ]
   },
+  "Leave empty to bill with it as soon as it is approved. With a date, the approved content in force today keeps billing until then.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Leave empty to copy the link and share it with {0} yourself.": {
     "sites": 1,
     "scope": [
@@ -126315,15 +126472,6 @@
       "go/other"
     ]
   },
-  "Like lookup, with a fallback when the key has no entry (a missing table still errors)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Like lookup2, but returns fallback when the table has no cell at the row/column intersection. A missing table still errors, so a deleted matrix cannot silently reprice.": {
     "sites": 1,
     "scope": [
@@ -126331,15 +126479,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Like lookup2, with a fallback when the intersection has no cell (a missing table still errors)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Liked reply": {
@@ -126846,15 +126985,6 @@
     ],
     "areas": [
       "routes/commodity"
-    ]
-  },
-  "Linear interpolation between the floors of a banded single-axis rate matrix": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Linehaul": {
@@ -135000,15 +135130,6 @@
       "routes/billing-control"
     ]
   },
-  "Maximum of values": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Maximum of {0} breakdown items reached.": {
     "sites": 1,
     "scope": [
@@ -135151,15 +135272,6 @@
     ],
     "areas": [
       "routes/commodity"
-    ]
-  },
-  "Maximum temperature requirement": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Maximum weight must be greater than zero": {
@@ -136388,6 +136500,24 @@
       "routes/formula-template"
     ]
   },
+  "Metadata cannot exceed 16 KiB": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Metadata must be plain JSON values": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Meters": {
     "sites": 1,
     "scope": [
@@ -137346,15 +137476,6 @@
       "packages/shared/types"
     ]
   },
-  "Minimum of values": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Minimum other carriers sharing": {
     "sites": 1,
     "scope": [
@@ -137434,15 +137555,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Minimum temperature requirement": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Minimum {0}": {
@@ -140743,7 +140855,7 @@
     ]
   },
   "Name is required": {
-    "sites": 153,
+    "sites": 154,
     "scope": [
       "go",
       "ts"
@@ -140868,7 +140980,7 @@
     ]
   },
   "Name must start with a letter and contain only letters, digits, and underscores": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -156865,13 +156977,14 @@
     ]
   },
   "Now": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/formula-template",
       "routes/shipment"
     ]
   },
@@ -157090,15 +157203,6 @@
       "routes/customer"
     ]
   },
-  "Number of pieces": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Number of prior settlements used to compute the trailing average.": {
     "sites": 1,
     "scope": [
@@ -157115,15 +157219,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Number of stops on the shipment": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Number of trailing months of GL activity used to compute actual rates. Three months smooths lumpy maintenance spend.": {
@@ -165847,7 +165942,7 @@
     ]
   },
   "Origin": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -165855,7 +165950,6 @@
     "areas": [
       "apps/web/components",
       "go/other",
-      "packages/shared/types",
       "routes/inbox",
       "routes/rate-agreement",
       "routes/tender-offer-public",
@@ -168458,15 +168552,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "PRO tracking number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "PRO {0}": {
@@ -175810,24 +175895,6 @@
       "routes/agent-control"
     ]
   },
-  "Pickup day of week in UTC (0 = Sunday through 6 = Saturday)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
-  "Pickup hour of day in UTC (0-23)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Pickup in": {
     "sites": 1,
     "scope": [
@@ -175880,15 +175947,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Pickup month in UTC (1-12)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Pickup or Delivery.": {
@@ -178428,24 +178486,6 @@
       "go/other"
     ]
   },
-  "Postal code of the final delivery stop": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
-  "Postal code of the first pickup stop": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Postal prefix": {
     "sites": 4,
     "scope": [
@@ -178834,15 +178874,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Power function": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Power units": {
@@ -187243,15 +187274,6 @@
       "routes/edi"
     ]
   },
-  "Rating unit value": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Rating:": {
     "sites": 2,
     "scope": [
@@ -187633,16 +187655,7 @@
       "routes/formula-template"
     ]
   },
-  "Re-rates recent shipments with the active version and with the editor's.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "Re-rates {0} recent shipments with the active version and with the editor's.": {
+  "Re-rated with the content it billed with: the shipment holds no formula charge to compare, or its rate was set by hand.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -194402,7 +194415,7 @@
       "routes/worker"
     ]
   },
-  "Rejecting closes this review round and archives the template; it cannot rate shipments until someone resubmits it from the archive. Use Request Changes to send it back to the author instead.": {
+  "Rejecting closes this review round. A template that was approved before returns to draft and its approved content keeps billing; one that never was is archived. Use Request Changes to send it back to the author instead.": {
     "sites": 2,
     "scope": [
       "ts"
@@ -195581,15 +195594,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Remove the scheduled activation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Remove the waiting message": {
@@ -204144,24 +204148,6 @@
       "apps/web/types"
     ]
   },
-  "Round down at decimal places": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
-  "Round down to a whole number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Round finalised": {
     "sites": 1,
     "scope": [
@@ -204169,15 +204155,6 @@
     ],
     "areas": [
       "routes/random-testing"
-    ]
-  },
-  "Round half up to decimal places": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Round is invalid": {
@@ -204225,15 +204202,6 @@
       "apps/web/lib"
     ]
   },
-  "Round to the nearest multiple of increment": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Round up": {
     "sites": 3,
     "scope": [
@@ -204242,24 +204210,6 @@
     "areas": [
       "apps/web/lib",
       "apps/web/types"
-    ]
-  },
-  "Round up at decimal places": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
-  "Round up to a whole number": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Round voided": {
@@ -210855,7 +210805,7 @@
     ]
   },
   "Search JSON...": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -216611,12 +216561,21 @@
     ]
   },
   "Sensitive": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/admin"
+    ]
+  },
+  "Sensitive data omitted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/admin"
     ]
   },
@@ -221030,13 +220989,12 @@
     ]
   },
   "Shipment fields": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "packages/shared/types"
+      "apps/web/components"
     ]
   },
   "Shipment has already been transferred to billing": {
@@ -221684,15 +221642,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Shipment weight": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Shipment weight packaging and quantity data": {
@@ -226992,15 +226941,6 @@
       "apps/web/components"
     ]
   },
-  "Square root": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Ssn": {
     "sites": 1,
     "scope": [
@@ -227645,6 +227585,24 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "Start billing on (optional)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Start billing with this version now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Start blank": {
@@ -228489,24 +228447,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "State abbreviation of the final delivery stop": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
-  "State abbreviation of the first pickup stop": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "State after the operation": {
@@ -231625,24 +231565,6 @@
       "apps/web/types"
     ]
   },
-  "Sum of other charges": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
-  "Sum of values": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Summarize older turns to free up context": {
     "sites": 1,
     "scope": [
@@ -234392,15 +234314,6 @@
       "routes/desk"
     ]
   },
-  "Temperature controlled shipment": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Temperature max": {
     "sites": 1,
     "scope": [
@@ -234417,15 +234330,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Temperature range differential": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Temperature range requirements for shipping.": {
@@ -234630,7 +234534,7 @@
       "go/other"
     ]
   },
-  "Template rejected and archived": {
+  "Template rejected": {
     "sites": 2,
     "scope": [
       "ts"
@@ -247461,6 +247365,15 @@
       "apps/web/lib"
     ]
   },
+  "The schedule was not changed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "The scheduled report could not be queued for generation": {
     "sites": 1,
     "scope": [
@@ -248184,15 +248097,6 @@
     ]
   },
   "The standard library is empty.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "The standard rating library is ready to use.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -250702,6 +250606,15 @@
       "routes/formula-template"
     ]
   },
+  "They are drafts: add scenarios and send each for review before it rates.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "They are in the purchases table now and will be counted the next time the quarter's return is computed.": {
     "sites": 1,
     "scope": [
@@ -251030,7 +250943,7 @@
       "routes/agent-control"
     ]
   },
-  "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as Active templates. Templates you already have are left untouched.": {
+  "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as drafts. Each one rates shipments once it has scenarios and someone else approves it. Templates you already have are left untouched.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -259370,15 +259283,6 @@
       "routes/balance-sheet"
     ]
   },
-  "Total linear feet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Total miles": {
     "sites": 2,
     "scope": [
@@ -259443,15 +259347,6 @@
       "routes/carrier-settlement-workspace"
     ]
   },
-  "Total number of pieces": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Total open": {
     "sites": 6,
     "scope": [
@@ -259510,15 +259405,6 @@
       "routes/reports"
     ]
   },
-  "Total shipment distance in miles": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Total size of every stored document.": {
     "sites": 1,
     "scope": [
@@ -259554,15 +259440,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Total weight in pounds": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Total weight of all commodities in the shipment (lbs).": {
@@ -260001,15 +259878,6 @@
       "go/other"
     ]
   },
-  "Tractor cost per mile": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Tractor equipment": {
     "sites": 1,
     "scope": [
@@ -260118,24 +259986,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Tractor type code": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
-  "Tractor type name": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Tractor types": {
@@ -260362,15 +260212,6 @@
       "go/other"
     ]
   },
-  "Trailer cost per mile": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Trailer equipment": {
     "sites": 1,
     "scope": [
@@ -260522,24 +260363,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Trailer type code": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
-  "Trailer type name": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Trailer types": {
@@ -263352,6 +263175,15 @@
   },
   "Type is required": {
     "sites": 11,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Type must be Number, String, Boolean, Date, Array, Object or Any": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -268420,6 +268252,15 @@
       "routes/admin"
     ]
   },
+  "Use {0}(map(…))": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Used": {
     "sites": 2,
     "scope": [
@@ -269298,15 +269139,6 @@
       "routes/table-change-alert"
     ]
   },
-  "Value at a row/column intersection of a two-axis rate matrix": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Value cannot be negative": {
     "sites": 2,
     "scope": [
@@ -269314,15 +269146,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Value for key in a single-axis rate matrix": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Value helpers": {
@@ -269480,6 +269303,15 @@
     ],
     "areas": [
       "routes/cost-control"
+    ]
+  },
+  "Variable definition is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Variable is repeated": {
@@ -270341,6 +270173,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Version {0} has already billed shipments; a window that has started keeps its date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Version {0} is already the current one": {
@@ -278788,15 +278629,6 @@
       "routes/pto-policy"
     ]
   },
-  "Whether shipment contains hazmat": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
-    ]
-  },
   "Whether the carrier can be tendered could not be read.": {
     "sites": 1,
     "scope": [
@@ -278840,15 +278672,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "Whether the pickup falls on a Saturday or Sunday (UTC)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/types"
     ]
   },
   "Whether the pool is in use; an inactive pool stays on record with its past rounds.": {
@@ -283644,6 +283467,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "You authored part of this revision, so another reviewer must approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "You can answer in a moment.": {
@@ -292512,6 +292344,15 @@
       "routes/shipment"
     ]
   },
+  "the date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "the dispute on invoice {0}": {
     "sites": 1,
     "scope": [
@@ -293329,7 +293170,16 @@
       "apps/web/components"
     ]
   },
-  "v{0} will no longer activate automatically": {
+  "v{0} bills from now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "v{0} has already billed shipments, so its window stays as it was: a new date approves the same content again as a new version that starts then.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -295300,6 +295150,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "{0, plural, one {# match} other {# matches}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0, plural, one {# member line has no published rate, so finalizing is refused.} other {# member lines have no published rate, so finalizing is refused.}} Publish the missing rates, recompute, then finalize.": {
@@ -298287,6 +298146,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {The run reached its time limit after # shipment; the figures cover only that one.} other {The run reached its time limit after # shipments; the figures cover only those.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "{0, plural, one {The selected PTO request failed} other {All # selected PTO requests failed}}": {
     "sites": 1,
     "scope": [
@@ -299389,6 +299257,15 @@
       "routes/holiday"
     ]
   },
+  "{0} adds up values and does not take a predicate; map the list first: {0}(map(list, .field))": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} advance": {
     "sites": 1,
     "scope": [
@@ -299570,6 +299447,15 @@
     ]
   },
   "{0} and {1}, so this is never {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} and {1}; the engine compares only values of the same kind": {
     "sites": 1,
     "scope": [
       "ts"
@@ -302328,8 +302214,26 @@
       "go/other"
     ]
   },
-  "{0} is already defined above; use another name": {
+  "{0} is already a shipment field, and a 'let' can't redeclare it. Use another name": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} is already a shipment value; an input cannot replace it, so choose another name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} is already defined above; use another name": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -302371,15 +302275,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "{0} is also a shipment field; the 'let' hides it from the lines below": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "{0} is archived and cannot be sent": {
@@ -302545,7 +302440,7 @@
     ]
   },
   "{0} is never used": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -302987,6 +302882,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} is one of this template's inputs, and a 'let' can't redeclare it. Use another name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} is open again": {
     "sites": 2,
     "scope": [
@@ -303145,6 +303049,24 @@
     ]
   },
   "{0} is set not to receive payment reminders. Turn reminders on in the customer's billing profile to send one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} is the name of a formula function, and a 'let' can't take it. Use another name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} is the name of a formula function; choose another name for the input": {
     "sites": 1,
     "scope": [
       "go"
@@ -303334,6 +303256,33 @@
     ]
   },
   "{0} isn't a shipment field or one of this template's inputs. Did you mean {1}?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} isn't available in formulas: a formula must price a shipment the same way every time it runs. Use {1}, the date the contract terms are read at": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} isn't available in formulas: formulas compare codes and do not build text": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} isn't available in formulas: formulas read the shipment's fields directly and do not convert them to or from JSON": {
     "sites": 1,
     "scope": [
       "ts"
@@ -305866,6 +305815,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} reads a field of the current item, so it only works inside filter(), map() and the like": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} ready": {
     "sites": 2,
     "scope": [
@@ -308084,6 +308042,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} {1} does not exist in this organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} {1} posted, {2} waiting.": {

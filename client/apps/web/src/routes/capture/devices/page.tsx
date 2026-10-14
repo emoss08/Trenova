@@ -3,7 +3,7 @@ import { CaptureDownloadPanel } from "@/components/capture/download-panel";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { SectionPanel } from "@/components/section-panel";
 import { revokeMyCaptureDevice, type CaptureDevice } from "@/lib/graphql/capture";
-import { queries } from "@/lib/queries";
+import { capture } from "@/lib/queries/capture";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -16,16 +16,16 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 
 export const prefetch: RoutePrefetch = () => [
-  queries.capture.myDevices(null),
-  queries.capture.access(),
-  queries.capture.agentRelease(),
+  capture.myDevices(null),
+  capture.access(),
+  capture.agentRelease(),
 ];
 
 type RevokeVariables = { device: CaptureDevice; reason: string };
 
 function AccessNotice() {
   const t = useT();
-  const { data: access } = useQuery(queries.capture.access());
+  const { data: access } = useQuery(capture.access());
 
   if (access === undefined) {
     return null;
@@ -63,7 +63,7 @@ function AccessNotice() {
 export function CaptureDevicesPage() {
   const t = useT();
   const queryClient = useQueryClient();
-  const devicesQuery = useQuery(queries.capture.myDevices(null));
+  const devicesQuery = useQuery(capture.myDevices(null));
 
   // Failures are shown by the revoke dialog, which stays open until this
   // settles; a toast as well would say the same thing twice.
@@ -72,7 +72,7 @@ export function CaptureDevicesPage() {
       revokeMyCaptureDevice(device.id, reason === "" ? null : reason),
     onSuccess: async (device) => {
       toast.success(t("{0} is revoked", device.name));
-      await queryClient.invalidateQueries({ queryKey: queries.capture.myDevices._def });
+      await queryClient.invalidateQueries({ queryKey: capture.myDevices._def });
     },
   });
 

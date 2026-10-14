@@ -5,7 +5,7 @@ import {
   updateExtractionRollout,
   type ExtractionRollout,
 } from "@/lib/graphql/extraction-rollout";
-import { queries } from "@/lib/queries";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -96,7 +96,7 @@ export function RolloutSettingsDialog({ open, onOpenChange, rollout }: RolloutSe
   const enabledId = useId();
   const providerId = useId();
   const queryClient = useQueryClient();
-  const providers = useQuery({ ...queries.aiProvider.list(), enabled: open });
+  const providers = useQuery({ ...aiProvider.list(), enabled: open });
   const [draft, setDraft] = useState<RolloutDraft>(() => rolloutDraftOf(rollout));
   const [openedFor, setOpenedFor] = useState({ open, version: rollout.version });
 

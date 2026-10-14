@@ -26,7 +26,7 @@ import {
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -56,7 +56,7 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
-    ...queries.integration.config("Resend"),
+    ...integration.config("Resend"),
     enabled: open,
   });
 
@@ -107,10 +107,10 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
       toast.success(t("Resend integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.integration.config("Resend").queryKey,
+          queryKey: integration.config("Resend").queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.integration.catalog().queryKey,
+          queryKey: integration.catalog().queryKey,
         }),
       ]);
     },

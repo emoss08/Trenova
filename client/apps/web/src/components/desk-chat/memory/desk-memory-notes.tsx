@@ -11,7 +11,7 @@ import {
   type DeskMemory,
   type DeskMemoryAudience,
 } from "@/lib/graphql/desk-memories";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import type { MemoryNote } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -122,9 +122,8 @@ function useSettleMemory() {
 
   return useCallback(
     (memory: DeskMemory) => {
-      queryClient.setQueriesData<ThreadHistory>(
-        { queryKey: queries.assistant.messages._def },
-        (history) => replaceMemoryNote(history, memory.id, cardOf(memory)),
+      queryClient.setQueriesData<ThreadHistory>({ queryKey: assistant.messages._def }, (history) =>
+        replaceMemoryNote(history, memory.id, cardOf(memory)),
       );
       void queryClient.invalidateQueries({ queryKey: [DESK_MEMORIES_KEY] });
     },
@@ -392,11 +391,7 @@ function MemorySteps({
   };
 
   return (
-    <ScrollArea
-      className="dk-mem-sa"
-      maskHeight={14}
-      maskVariant="card"
-    >
+    <ScrollArea className="dk-mem-sa" maskHeight={14} maskVariant="card">
       {editing ? (
         <textarea
           ref={area}
@@ -789,10 +784,7 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
         <>
           <b>{t("Kept for {0}", who)}</b>
           <span>
-            ·{" "}
-            {procedure
-              ? t("Desk will follow these next time")
-              : t("Desk will keep this in mind")}
+            · {procedure ? t("Desk will follow these next time") : t("Desk will keep this in mind")}
           </span>
         </>
       );
@@ -865,16 +857,15 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
         : t("From this conversation")
       : card.replaces
         ? t("Replaces earlier steps")
-        : t("Saved {0} from “{1}”", memoryDay(savedAt, timezone, t), memorySource(sourceOf(card), t));
+        : t(
+            "Saved {0} from “{1}”",
+            memoryDay(savedAt, timezone, t),
+            memorySource(sourceOf(card), t),
+          );
 
   return (
     <section
-      className={cn(
-        "dk-mem",
-        `dk-mem-${mode}`,
-        whyOpen && "dk-why-on",
-        editing && "dk-editing",
-      )}
+      className={cn("dk-mem", `dk-mem-${mode}`, whyOpen && "dk-why-on", editing && "dk-editing")}
       aria-label={label}
     >
       <MemoryHeader

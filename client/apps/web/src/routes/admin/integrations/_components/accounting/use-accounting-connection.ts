@@ -12,7 +12,8 @@ import {
   type AccountingSyncStatus,
 } from "@/lib/graphql/accounting-sync";
 import { isTrustedAuthorizeUrl, normalizeNetSuiteAccountId } from "@/lib/accounting-sync";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
+import { integration } from "@/lib/queries/integration";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback } from "react";
@@ -44,9 +45,9 @@ export function useAccountingConnectionActions(vendor: AccountingVendor) {
     () =>
       Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.accountingSync.status(vendor.system).queryKey,
+          queryKey: accountingSync.status(vendor.system).queryKey,
         }),
-        queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey }),
+        queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey }),
       ]),
     [queryClient, vendor.system],
   );
@@ -104,8 +105,8 @@ export function useAccountingAppActions(
 
   const applyStatus = useCallback(
     async (status: AccountingSyncStatus) => {
-      queryClient.setQueryData(queries.accountingSync.status(vendor.system).queryKey, status);
-      await queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey });
+      queryClient.setQueryData(accountingSync.status(vendor.system).queryKey, status);
+      await queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey });
     },
     [queryClient, vendor.system],
   );
@@ -164,12 +165,12 @@ export function useAccountingSyncSetupActions(
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.accountingSync.status(vendor.system).queryKey,
+          queryKey: accountingSync.status(vendor.system).queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.accountingSync.syncSummary(vendor.system).queryKey,
+          queryKey: accountingSync.syncSummary(vendor.system).queryKey,
         }),
-        queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey }),
+        queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey }),
       ]);
       toast.success(t("Sending to {0} is on", vendor.name));
     },
@@ -197,10 +198,10 @@ export function useAccountingModeAction(
     onSuccess: async (connection) => {
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.accountingSync.status(vendor.system).queryKey,
+          queryKey: accountingSync.status(vendor.system).queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.accountingSync.mappingSummary(vendor.system).queryKey,
+          queryKey: accountingSync.mappingSummary(vendor.system).queryKey,
         }),
       ]);
       toast.success(
@@ -237,13 +238,13 @@ export function useAccountingSyncSettingsAction(
       });
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.accountingSync.status(vendor.system).queryKey,
+          queryKey: accountingSync.status(vendor.system).queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.accountingSync.syncSummary(vendor.system).queryKey,
+          queryKey: accountingSync.syncSummary(vendor.system).queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.accountingSync.inboundOverview(vendor.system).queryKey,
+          queryKey: accountingSync.inboundOverview(vendor.system).queryKey,
         }),
       ]);
       toast.success(t("Sync settings saved"));
@@ -267,9 +268,9 @@ export function useAccountingCertificateActions(
     () =>
       Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.accountingSync.status(vendor.system).queryKey,
+          queryKey: accountingSync.status(vendor.system).queryKey,
         }),
-        queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey }),
+        queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey }),
       ]),
     [queryClient, vendor.system],
   );

@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { EmailProfileAutocompleteField } from "@/components/autocomplete-fields";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { queries } from "@/lib/queries";
+import { email } from "@/lib/queries/email";
 import { apiService } from "@/services/api";
 import type { EmailProfileAssignment } from "@trenova/shared/types/email";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,7 +52,7 @@ export function PurposeAssignmentsPanel() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const assignmentsQuery = useQuery(queries.email.assignments());
+  const assignmentsQuery = useQuery(email.assignments());
   const form = useForm<PurposeAssignmentsFormValues>({
     resolver: zodResolver(purposeAssignmentsSchema),
     defaultValues: emptyAssignments,
@@ -66,7 +66,7 @@ export function PurposeAssignmentsPanel() {
     mutationFn: (values: PurposeAssignmentsFormValues) =>
       apiService.emailService.updateAssignments(toPayload(values)),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queries.email.assignments().queryKey });
+      await queryClient.invalidateQueries({ queryKey: email.assignments().queryKey });
       toast.success(t("Purpose assignments updated"));
     },
     onError: (error) => {

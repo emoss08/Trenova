@@ -24,7 +24,7 @@ import {
 } from "@trenova/shared/components/ui/collapsible";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { documentParsingRule } from "@/lib/queries/document-parsing-rule";
 import { apiService } from "@/services/api";
 import { fixtureSchema, type Fixture, type FixtureFormValues } from "@/types/document-parsing-rule";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -51,7 +51,7 @@ type FixtureDetailProps = {
 
 export function FixtureDetail({ fixtureId, ruleSetId, onBack, onDeleted }: FixtureDetailProps) {
   const { data } = useQuery({
-    ...queries.documentParsingRule.fixture(fixtureId),
+    ...documentParsingRule.fixture(fixtureId),
   });
 
   if (!data) return null;
@@ -94,23 +94,20 @@ function FixtureForm({
   }, [textSnapshot]);
 
   const { mutateAsync } = useOptimisticMutation({
-    queryKey: queries.documentParsingRule.fixture._def,
+    queryKey: documentParsingRule.fixture._def,
     mutationFn: async (values: Fixture) =>
       apiService.documentParsingRuleService.updateFixture(fixture.id!, values),
     resourceName: "Fixture",
     resetForm: reset,
     form,
-    invalidateQueries: [
-      queries.documentParsingRule.fixture._def,
-      queries.documentParsingRule.fixtures._def,
-    ],
+    invalidateQueries: [documentParsingRule.fixture._def, documentParsingRule.fixtures._def],
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => apiService.documentParsingRuleService.deleteFixture(fixture.id!),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: queries.documentParsingRule.fixtures._def,
+        queryKey: documentParsingRule.fixtures._def,
       });
       toast.success(t("Fixture deleted"));
       onDeleted();

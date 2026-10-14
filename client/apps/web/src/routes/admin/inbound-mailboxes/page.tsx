@@ -2,7 +2,7 @@ import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { rotateInboundMailboxToken, type InboundMailbox } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -29,7 +29,7 @@ import { MailboxCard } from "./_components/mailbox-card";
 import { MailboxFormDialog, type MailboxCreated } from "./_components/mailbox-form-dialog";
 import { SecretDialog } from "./_components/secret-dialog";
 
-export const prefetch: RoutePrefetch = () => [queries.inbox.mailboxes()];
+export const prefetch: RoutePrefetch = () => [inbox.mailboxes()];
 
 /**
  * The addresses the system listens on.
@@ -53,11 +53,11 @@ export function InboundMailboxesPage() {
   const [rotating, setRotating] = useState<InboundMailbox | null>(null);
   const [shown, setShown] = useState<MailboxCreated | null>(null);
 
-  const mailboxesQuery = useQuery(queries.inbox.mailboxes());
+  const mailboxesQuery = useQuery(inbox.mailboxes());
   const mailboxes = mailboxesQuery.data ?? [];
 
   const refresh = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: queries.inbox._def });
+    await queryClient.invalidateQueries({ queryKey: inbox._def });
   }, [queryClient]);
 
   const rotateMutation = useApiMutation({

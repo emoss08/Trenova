@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { threadListQuery } from "@/lib/thread-list";
 import { useParams } from "react-router";
@@ -10,7 +10,7 @@ import "./_styles/desk-agent.css";
 import "./_styles/desk-case.css";
 import "./_styles/desk-case-checklists.css";
 
-export const prefetch: RoutePrefetch = () => [threadListQuery(), queries.assistant.myAgents()];
+export const prefetch: RoutePrefetch = () => [threadListQuery(), assistant.myAgents()];
 
 /** The Desk's frame; the page inside it is the route's outlet. */
 export function DeskPage() {

@@ -5,7 +5,17 @@ package formula_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,313 +24,207 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type TestShipmentDomain struct {
-	ID                  string
-	ProNumber           string
-	BOL                 string
-	Status              string
-	RatingMethod        string
-	Weight              *int64
-	Pieces              *int64
-	TemperatureMin      *int16
-	TemperatureMax      *int16
-	RatingUnit          int64
-	BaseRate            *decimal.Decimal
-	FreightChargeAmount *decimal.Decimal
-	OtherChargeAmount   *decimal.Decimal
-	TotalChargeAmount   *decimal.Decimal
-	Customer            *TestCustomer
-	ServiceType         *TestServiceType
-	ShipmentType        *TestShipmentType
-	TractorType         *TestEquipmentType
-	TrailerType         *TestEquipmentType
-	FormulaTemplate     *TestFormulaTemplate
-	Moves               []*TestShipmentMove
-	Commodities         []*TestShipmentCommodity
-	AdditionalCharges   []*TestAdditionalCharge
+func stopWithFreight(
+	stopType shipment.StopType,
+	status shipment.StopStatus,
+	sequence int64,
+	weight, pieces int64,
+	place *location.Location,
+) *shipment.Stop {
+	return &shipment.Stop{
+		ID:         pulid.MustNew("stp_"),
+		LocationID: place.ID,
+		Type:       stopType,
+		Status:     status,
+		Sequence:   sequence,
+		Weight:     &weight,
+		Pieces:     &pieces,
+		Location:   place,
+	}
 }
 
-type TestCustomer struct {
-	ID           string
-	Name         string
-	Code         string
-	CreditLimit  *decimal.Decimal
-	DiscountRate *float64
+func cityLocation(name, city, stateAbbreviation, postalCode string) *location.Location {
+	return &location.Location{
+		ID:         pulid.MustNew("loc_"),
+		Name:       name,
+		City:       city,
+		PostalCode: postalCode,
+		State:      &usstate.UsState{Abbreviation: stateAbbreviation},
+	}
 }
 
-type TestServiceType struct {
-	ID          string
-	Code        string
-	Description string
-}
-
-type TestShipmentType struct {
-	ID          string
-	Code        string
-	Description string
-}
-
-type TestEquipmentType struct {
-	ID          string
-	Code        string
-	Description string
-	CostPerMile *float64
-}
-
-type TestFormulaTemplate struct {
-	ID         string
-	Name       string
-	Expression string
-}
-
-type TestShipmentMove struct {
-	ID       string
-	Sequence int
-	Status   string
-	Loaded   bool
-	Distance *float64
-	Stops    []*TestStop
-}
-
-type TestStop struct {
-	ID                   string
-	Sequence             int
-	Type                 string
-	Status               string
-	AddressLine          string
-	Pieces               *int
-	Weight               *int
-	ScheduledWindowStart int64
-	ScheduledWindowEnd   int64
-	Location             *TestLocation
-}
-
-type TestLocation struct {
-	ID      string
-	Name    string
-	City    string
-	State   string
-	ZipCode string
-}
-
-type TestShipmentCommodity struct {
-	ID        string
-	Weight    int64
-	Pieces    int64
-	Commodity *TestCommodity
-}
-
-type TestCommodity struct {
-	ID                string
-	Name              string
-	Description       string
-	HazardousMaterial *TestHazardousMaterial
-}
-
-type TestHazardousMaterial struct {
-	ID    string
-	Class string
-	Name  string
-}
-
-type TestAdditionalCharge struct {
-	ID                string
-	Method            string
-	Amount            decimal.Decimal
-	Unit              int16
-	AccessorialCharge *TestAccessorialCharge
-}
-
-type TestAccessorialCharge struct {
-	ID          string
-	Code        string
-	Description string
-	DefaultRate *decimal.Decimal
-}
-
-func createRealisticShipment() *TestShipmentDomain {
+func createRealisticShipment() *shipment.Shipment {
 	weight := int64(45000)
 	pieces := int64(24)
 	tempMin := int16(34)
 	tempMax := int16(38)
 	distance1 := 450.5
 	distance2 := 125.3
-	costPerMile := 1.85
-	discountRate := 0.05
 
-	stopWeight1 := 15000
-	stopPieces1 := 8
-	stopWeight2 := 18000
-	stopPieces2 := 10
-	stopWeight3 := 12000
-	stopPieces3 := 6
+	acme := &customer.Customer{
+		ID:   pulid.MustNew("cus_"),
+		Name: "Acme Distribution Inc",
+		Code: "ACME",
+	}
+	lessThanTruckload := &servicetype.ServiceType{
+		ID:          pulid.MustNew("st_"),
+		Code:        "LTL",
+		Description: "Less Than Truckload",
+	}
+	standardFreight := &shipmenttype.ShipmentType{
+		ID:          pulid.MustNew("sht_"),
+		Code:        "STANDARD",
+		Description: "Standard Freight",
+	}
+	reeferTractor := &equipmenttype.EquipmentType{
+		ID:          pulid.MustNew("et_"),
+		Code:        "REEFER",
+		Description: "Refrigerated Tractor",
+		Class:       equipmenttype.ClassTractor,
+	}
+	flammableLiquids := &hazardousmaterial.HazardousMaterial{
+		ID:    pulid.MustNew("hm_"),
+		Class: hazardousmaterial.HazardousClass3,
+		Name:  "Flammable Liquids",
+	}
+	frozenProduce := &commodity.Commodity{
+		ID:          pulid.MustNew("com_"),
+		Name:        "Frozen Produce",
+		Description: "Temperature controlled produce",
+	}
+	chemicals := &commodity.Commodity{
+		ID:                  pulid.MustNew("com_"),
+		HazardousMaterialID: flammableLiquids.ID,
+		Name:                "Hazardous Chemicals",
+		Description:         "Class 3 Flammable Liquids",
+		HazardousMaterial:   flammableLiquids,
+	}
+	liftgate := &accessorialcharge.AccessorialCharge{
+		ID:          pulid.MustNew("acc_"),
+		Code:        "LIFTGATE",
+		Description: "Liftgate Service",
+		Method:      accessorialcharge.MethodFlat,
+	}
+	stopOff := &accessorialcharge.AccessorialCharge{
+		ID:          pulid.MustNew("acc_"),
+		Code:        "STOPOFF",
+		Description: "Stop-off Charge",
+		Method:      accessorialcharge.MethodPerUnit,
+	}
 
-	return &TestShipmentDomain{
-		ID:             "SP_123456",
+	return &shipment.Shipment{
+		ID:             pulid.MustNew("shp_"),
+		ServiceTypeID:  lessThanTruckload.ID,
+		ShipmentTypeID: standardFreight.ID,
+		CustomerID:     acme.ID,
+		TractorTypeID:  reeferTractor.ID,
 		ProNumber:      "PRO-2024-00001",
 		BOL:            "BOL-98765",
-		Status:         "InProgress",
-		RatingMethod:   "PerMile",
+		Status:         shipment.StatusInTransit,
 		Weight:         &weight,
 		Pieces:         &pieces,
 		TemperatureMin: &tempMin,
 		TemperatureMax: &tempMax,
 		RatingUnit:     1,
-		Customer: &TestCustomer{
-			ID:           "CU_001",
-			Name:         "Acme Distribution Inc",
-			Code:         "ACME",
-			DiscountRate: &discountRate,
-		},
-		ServiceType: &TestServiceType{
-			ID:          "ST_001",
-			Code:        "LTL",
-			Description: "Less Than Truckload",
-		},
-		ShipmentType: &TestShipmentType{
-			ID:          "SHT_001",
-			Code:        "STANDARD",
-			Description: "Standard Freight",
-		},
-		TractorType: &TestEquipmentType{
-			ID:          "ET_001",
-			Code:        "REEFER",
-			Description: "Refrigerated Tractor",
-			CostPerMile: &costPerMile,
-		},
-		Moves: []*TestShipmentMove{
+		Customer:       acme,
+		ServiceType:    lessThanTruckload,
+		ShipmentType:   standardFreight,
+		TractorType:    reeferTractor,
+		Moves: []*shipment.ShipmentMove{
 			{
-				ID:       "SM_001",
+				ID:       pulid.MustNew("sm_"),
 				Sequence: 1,
-				Status:   "InProgress",
+				Status:   shipment.MoveStatusInTransit,
 				Loaded:   true,
 				Distance: &distance1,
-				Stops: []*TestStop{
-					{
-						ID:       "STP_001",
-						Sequence: 1,
-						Type:     "Pickup",
-						Status:   "Completed",
-						Weight:   &stopWeight1,
-						Pieces:   &stopPieces1,
-						Location: &TestLocation{
-							ID:      "LOC_001",
-							Name:    "Chicago Distribution Center",
-							City:    "Chicago",
-							State:   "IL",
-							ZipCode: "60601",
-						},
-					},
-					{
-						ID:       "STP_002",
-						Sequence: 2,
-						Type:     "Delivery",
-						Status:   "Pending",
-						Weight:   &stopWeight2,
-						Pieces:   &stopPieces2,
-						Location: &TestLocation{
-							ID:      "LOC_002",
-							Name:    "Detroit Warehouse",
-							City:    "Detroit",
-							State:   "MI",
-							ZipCode: "48201",
-						},
-					},
+				Stops: []*shipment.Stop{
+					stopWithFreight(
+						shipment.StopTypePickup,
+						shipment.StopStatusCompleted,
+						1,
+						15000,
+						8,
+						cityLocation("Chicago Distribution Center", "Chicago", "IL", "60601"),
+					),
+					stopWithFreight(
+						shipment.StopTypeDelivery,
+						shipment.StopStatusNew,
+						2,
+						18000,
+						10,
+						cityLocation("Detroit Warehouse", "Detroit", "MI", "48201"),
+					),
 				},
 			},
 			{
-				ID:       "SM_002",
+				ID:       pulid.MustNew("sm_"),
 				Sequence: 2,
-				Status:   "New",
+				Status:   shipment.MoveStatusNew,
 				Loaded:   true,
 				Distance: &distance2,
-				Stops: []*TestStop{
-					{
-						ID:       "STP_003",
-						Sequence: 1,
-						Type:     "Delivery",
-						Status:   "Pending",
-						Weight:   &stopWeight3,
-						Pieces:   &stopPieces3,
-						Location: &TestLocation{
-							ID:      "LOC_003",
-							Name:    "Cleveland Fulfillment",
-							City:    "Cleveland",
-							State:   "OH",
-							ZipCode: "44101",
-						},
-					},
+				Stops: []*shipment.Stop{
+					stopWithFreight(
+						shipment.StopTypeDelivery,
+						shipment.StopStatusNew,
+						1,
+						12000,
+						6,
+						cityLocation("Cleveland Fulfillment", "Cleveland", "OH", "44101"),
+					),
 				},
 			},
 		},
-		Commodities: []*TestShipmentCommodity{
+		Commodities: []*shipment.ShipmentCommodity{
 			{
-				ID:     "SC_001",
-				Weight: 25000,
-				Pieces: 14,
-				Commodity: &TestCommodity{
-					ID:          "COM_001",
-					Name:        "Frozen Produce",
-					Description: "Temperature controlled produce",
-				},
+				ID:          pulid.MustNew("sc_"),
+				CommodityID: frozenProduce.ID,
+				Weight:      25000,
+				Pieces:      14,
+				Commodity:   frozenProduce,
 			},
 			{
-				ID:     "SC_002",
-				Weight: 20000,
-				Pieces: 10,
-				Commodity: &TestCommodity{
-					ID:          "COM_002",
-					Name:        "Hazardous Chemicals",
-					Description: "Class 3 Flammable Liquids",
-					HazardousMaterial: &TestHazardousMaterial{
-						ID:    "HM_001",
-						Class: "3",
-						Name:  "Flammable Liquids",
-					},
-				},
+				ID:          pulid.MustNew("sc_"),
+				CommodityID: chemicals.ID,
+				Weight:      20000,
+				Pieces:      10,
+				Commodity:   chemicals,
 			},
 		},
-		AdditionalCharges: []*TestAdditionalCharge{
+		AdditionalCharges: []*shipment.AdditionalCharge{
 			{
-				ID:     "AC_001",
-				Method: "Flat",
-				Amount: decimal.NewFromFloat(75.00),
-				Unit:   1,
-				AccessorialCharge: &TestAccessorialCharge{
-					ID:          "ACC_001",
-					Code:        "LIFTGATE",
-					Description: "Liftgate Service",
-				},
+				ID:                  pulid.MustNew("ac_"),
+				AccessorialChargeID: liftgate.ID,
+				Method:              accessorialcharge.MethodFlat,
+				Amount:              decimal.NewFromFloat(75.00),
+				Unit:                1,
+				AccessorialCharge:   liftgate,
 			},
 			{
-				ID:     "AC_002",
-				Method: "PerStop",
-				Amount: decimal.NewFromFloat(25.00),
-				Unit:   3,
-				AccessorialCharge: &TestAccessorialCharge{
-					ID:          "ACC_002",
-					Code:        "STOPOFF",
-					Description: "Stop-off Charge",
-				},
+				ID:                  pulid.MustNew("ac_"),
+				AccessorialChargeID: stopOff.ID,
+				Method:              accessorialcharge.MethodPerUnit,
+				Amount:              decimal.NewFromFloat(25.00),
+				Unit:                3,
+				AccessorialCharge:   stopOff,
 			},
 		},
 	}
 }
 
-func createMinimalShipment() *TestShipmentDomain {
+func createMinimalShipment() *shipment.Shipment {
 	distance := 50.0
-	return &TestShipmentDomain{
-		ID:        "SP_MINIMAL",
+	return &shipment.Shipment{
+		ID:        pulid.MustNew("shp_"),
 		ProNumber: "PRO-MIN-001",
-		Status:    "New",
-		Moves: []*TestShipmentMove{
+		Status:    shipment.StatusNew,
+		Moves: []*shipment.ShipmentMove{
 			{
-				ID:       "SM_MIN",
+				ID:       pulid.MustNew("sm_"),
 				Distance: &distance,
-				Stops:    []*TestStop{},
+				Stops:    []*shipment.Stop{},
 			},
 		},
-		Commodities: []*TestShipmentCommodity{},
+		Commodities: []*shipment.ShipmentCommodity{},
 	}
 }
 
@@ -353,11 +257,11 @@ func TestComplex_PerMileWithMinimumAndFuelSurcharge(t *testing.T) {
 		},
 	}
 
-	shipment := createRealisticShipment()
+	entity := createRealisticShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -389,11 +293,11 @@ func TestComplex_TieredWeightPricing(t *testing.T) {
 		},
 	}
 
-	shipment := createRealisticShipment()
+	entity := createRealisticShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -432,11 +336,11 @@ func TestComplex_CWTWithAccessorials(t *testing.T) {
 		},
 	}
 
-	shipment := createRealisticShipment()
+	entity := createRealisticShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -507,11 +411,11 @@ func TestComplex_FullFreightBillCalculation(t *testing.T) {
 		},
 	}
 
-	shipment := createRealisticShipment()
+	entity := createRealisticShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -554,11 +458,11 @@ func TestComplex_DistanceBasedTiers(t *testing.T) {
 		},
 	}
 
-	shipment := createRealisticShipment()
+	entity := createRealisticShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -597,11 +501,11 @@ func TestComplex_MinimalShipmentHandling(t *testing.T) {
 		},
 	}
 
-	shipment := createMinimalShipment()
+	entity := createMinimalShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -639,11 +543,11 @@ func TestComplex_RuntimeVariableOverrides(t *testing.T) {
 		},
 	}
 
-	shipment := createRealisticShipment()
+	entity := createRealisticShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template: template,
-		Entity:   shipment,
+		Entity:   entity,
 		Variables: map[string]any{
 			"negotiatedRate":  4.25,
 			"discountPercent": 12.5,
@@ -704,11 +608,11 @@ func TestComplex_NestedConditionals(t *testing.T) {
 		},
 	}
 
-	shipment := createRealisticShipment()
+	entity := createRealisticShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -739,11 +643,11 @@ func TestComplex_MathFunctionChaining(t *testing.T) {
 		},
 	}
 
-	shipment := createRealisticShipment()
+	entity := createRealisticShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -786,11 +690,11 @@ func TestComplex_AverageAndSum(t *testing.T) {
 		},
 	}
 
-	shipment := createRealisticShipment()
+	entity := createRealisticShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -819,11 +723,11 @@ func TestComplex_CoalesceForDefaults(t *testing.T) {
 		},
 	}
 
-	shipment := createRealisticShipment()
+	entity := createRealisticShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template: template,
-		Entity:   shipment,
+		Entity:   entity,
 		Variables: map[string]any{
 			"customRate": nil,
 		},
@@ -863,11 +767,11 @@ func TestComplex_AbsoluteValueCalculation(t *testing.T) {
 		},
 	}
 
-	shipment := createRealisticShipment()
+	entity := createRealisticShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -903,11 +807,11 @@ func TestComplex_FloorCeilRounding(t *testing.T) {
 		},
 	}
 
-	shipment := createRealisticShipment()
+	entity := createRealisticShipment()
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 
@@ -944,8 +848,8 @@ func TestComplex_NilShipmentFieldsGracefulHandling(t *testing.T) {
 		},
 	}
 
-	shipment := &TestShipmentDomain{
-		ID:             "SP_NIL",
+	entity := &shipment.Shipment{
+		ID:             pulid.MustNew("shp_"),
 		ProNumber:      "PRO-NIL",
 		Weight:         nil,
 		Pieces:         nil,
@@ -957,7 +861,7 @@ func TestComplex_NilShipmentFieldsGracefulHandling(t *testing.T) {
 
 	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
-		Entity:    shipment,
+		Entity:    entity,
 		Variables: map[string]any{},
 	})
 

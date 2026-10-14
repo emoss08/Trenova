@@ -7,7 +7,7 @@ import type { UncoveredPickupWindow } from "@trenova/graphql/generated/graphql";
 import { HoldButton } from "@/components/hold-button";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import type { ShipmentWatchlist } from "@/lib/graphql/shipment-board";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import type { QuickFilterToken } from "@/lib/shipment-board/quick-filters";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
@@ -430,7 +430,7 @@ function Billing({ data }: { data: ShipmentWatchlist["billing"] }) {
 export function Watchlist() {
   const timezone = useUserTimezone();
   const { data, isLoading } = useQuery({
-    ...queries.shipmentBoard.watchlist(timezone),
+    ...shipmentBoard.watchlist(timezone),
     staleTime: WATCHLIST_STALE_MS,
   });
 

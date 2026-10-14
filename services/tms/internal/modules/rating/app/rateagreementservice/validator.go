@@ -19,31 +19,38 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB                  *postgres.Connection
-	FormulaTemplateRepo formulatemplateports.FormulaTemplateRepository
+	DB                         *postgres.Connection
+	FormulaTemplateRepo        formulatemplateports.FormulaTemplateRepository
+	FormulaTemplateVersionRepo formulatemplateports.FormulaTemplateVersionRepository `optional:"true"`
+}
+
+type templateRefs struct {
+	templates formulatemplateports.FormulaTemplateRepository
+	versions  formulatemplateports.FormulaTemplateVersionRepository
 }
 
 type Validator struct {
-	validator           validationframework.TenantedEntityValidator[*rateagreement.RateAgreement]
-	formulaTemplateRepo formulatemplateports.FormulaTemplateRepository
+	validator validationframework.TenantedEntityValidator[*rateagreement.RateAgreement]
+	refs      templateRefs
 }
 
 func NewValidator(p ValidatorParams) *Validator {
+	refs := templateRefs{templates: p.FormulaTemplateRepo, versions: p.FormulaTemplateVersionRepo}
 	return &Validator{
-		validator:           newBuilder(p.DB, p.FormulaTemplateRepo).Build(),
-		formulaTemplateRepo: p.FormulaTemplateRepo,
+		validator: newBuilder(p.DB, refs).Build(),
+		refs:      refs,
 	}
 }
 
 func newBuilder(
 	db *postgres.Connection,
-	formulaTemplateRepo formulatemplateports.FormulaTemplateRepository,
+	refs templateRefs,
 ) *validationframework.TenantedValidatorBuilder[*rateagreement.RateAgreement] {
 	builder := validationframework.
 		NewTenantedValidatorBuilder[*rateagreement.RateAgreement]().
 		WithModelName("Rate Agreement").
 		WithCustomRule(activationReadinessRule()).
-		WithCustomRule(templateReferenceRule(formulaTemplateRepo))
+		WithCustomRule(templateReferenceRule(refs))
 
 	if db == nil {
 		return builder
@@ -151,7 +158,7 @@ func (v *Validator) ValidateAmendment(
 
 	validateRuleTemplateReferences(
 		ctx,
-		v.formulaTemplateRepo,
+		v.refs,
 		pagination.TenantInfo{
 			OrgID: agreement.OrganizationID,
 			BuID:  agreement.BusinessUnitID,
@@ -169,10 +176,11 @@ func (v *Validator) ValidateAmendment(
 
 // templateReferenceRule refuses a rule that points at a formula template the
 // rating engine could never price with — one that does not exist in the
-// tenant, is not Active, or is not a freight-charge template. Without it the
-// failure surfaces only at rating time, where it blocks the shipment save.
+// tenant, has no approved content billing, or is not a freight-charge
+// template. Without it the failure surfaces only at rating time, where it
+// blocks the shipment save.
 func templateReferenceRule(
-	formulaTemplateRepo formulatemplateports.FormulaTemplateRepository,
+	refs templateRefs,
 ) validationframework.TenantedRule[*rateagreement.RateAgreement] {
 	return validationframework.
 		NewTenantedRule[*rateagreement.RateAgreement]("rate_agreement_rule_template_reference").
@@ -187,7 +195,7 @@ func templateReferenceRule(
 		) error {
 			validateRuleTemplateReferences(
 				ctx,
-				formulaTemplateRepo,
+				refs,
 				pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
@@ -202,12 +210,12 @@ func templateReferenceRule(
 
 func validateRuleTemplateReferences(
 	ctx context.Context,
-	formulaTemplateRepo formulatemplateports.FormulaTemplateRepository,
+	refs templateRefs,
 	tenantInfo pagination.TenantInfo,
 	rules []*rateagreement.RateAgreementRule,
 	multiErr *errortypes.MultiError,
 ) {
-	if formulaTemplateRepo == nil {
+	if refs.templates == nil {
 		return
 	}
 
@@ -228,7 +236,7 @@ func validateRuleTemplateReferences(
 		return
 	}
 
-	templates, err := formulaTemplateRepo.GetByIDs(
+	templates, err := refs.templates.GetByIDs(
 		ctx,
 		formulatemplateports.GetFormulaTemplatesByIDsRequest{
 			TenantInfo:  tenantInfo,
@@ -263,11 +271,17 @@ func validateRuleTemplateReferences(
 				errortypes.ErrInvalid,
 				"Formula template does not exist in your organization",
 			)
-		case template.Status != formulatemplate.StatusActive:
+		case template.Status == formulatemplate.StatusInactive:
 			indexed.Add(
 				"formulaTemplateId",
 				errortypes.ErrInvalid,
-				"Formula template must be Active to price shipments",
+				"Formula template is archived and no longer prices shipments",
+			)
+		case !refs.bills(ctx, template, tenantInfo):
+			indexed.Add(
+				"formulaTemplateId",
+				errortypes.ErrInvalid,
+				"Formula template has never been approved, so it cannot price shipments yet",
 			)
 		case template.Type != formulatemplate.TemplateTypeFreightCharge:
 			indexed.Add(
@@ -310,4 +324,27 @@ func activationReadinessRule() validationframework.TenantedRule[*rateagreement.R
 
 			return nil
 		})
+}
+
+func (r templateRefs) bills(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	tenantInfo pagination.TenantInfo,
+) bool {
+	if template.Status == formulatemplate.StatusActive {
+		return true
+	}
+	if r.versions == nil {
+		return false
+	}
+
+	approved, err := r.versions.GetLatestByStatus(
+		ctx,
+		&formulatemplateports.GetLatestVersionByStatusRequest{
+			TenantInfo: tenantInfo,
+			TemplateID: template.ID,
+			Status:     formulatemplate.StatusActive,
+		},
+	)
+	return err == nil && approved != nil
 }

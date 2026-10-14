@@ -1,6 +1,7 @@
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { WorkingRun } from "@/lib/graphql/ai-control";
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
+import { assistant } from "@/lib/queries/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
@@ -23,8 +24,8 @@ function renderAgents(agents: AgentDefinitionRow[], runs: WorkingRun[]) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
   });
-  client.setQueryData(queries.assistant.agents(false).queryKey, agents);
-  client.setQueryData(queries.aiControl.workingRuns().queryKey, runs);
+  client.setQueryData(assistant.agents(false).queryKey, agents);
+  client.setQueryData(aiControl.workingRuns().queryKey, runs);
   const onOpenAgent = vi.fn();
   const onOpenAgents = vi.fn();
   render(

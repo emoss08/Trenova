@@ -87,13 +87,25 @@ vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", async () => ({
-  queries: {
-    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
-    worker: {
-      listUpcomingPTO: { _def: ["worker", "list-upcoming-pto"] },
-      ptoChartData: { _def: ["worker", "pto-chart-data"] },
-    },
+vi.mock("@/lib/queries/bulk-edit", async () => ({
+  bulkEdit: (await import("@/test/data-table-queries")).dataTableQueryMocks.bulkEdit,
+}));
+vi.mock("@/lib/queries/table-layout", async () => ({
+  tableLayout: (await import("@/test/data-table-queries")).dataTableQueryMocks.tableLayout,
+}));
+vi.mock("@/lib/queries/data-table-insight", async () => ({
+  dataTableInsight: (await import("@/test/data-table-queries")).dataTableQueryMocks
+    .dataTableInsight,
+}));
+vi.mock("@/lib/queries/table-configuration", async () => ({
+  tableConfiguration: (await import("@/test/data-table-queries")).dataTableQueryMocks
+    .tableConfiguration,
+}));
+vi.mock("@/lib/queries/worker", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/queries/worker")>()),
+  worker: {
+    listUpcomingPTO: { _def: ["worker", "list-upcoming-pto"] },
+    ptoChartData: { _def: ["worker", "pto-chart-data"] },
   },
 }));
 
@@ -111,9 +123,11 @@ vi.mock("sonner", () => ({
 }));
 
 function renderTable() {
-  const queryClient = seedDataTableQueries(new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },
-  }));
+  const queryClient = seedDataTableQueries(
+    new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },
+    }),
+  );
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
   render(
     <QueryClientProvider client={queryClient}>

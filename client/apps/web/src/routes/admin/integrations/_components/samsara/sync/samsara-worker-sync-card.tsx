@@ -20,7 +20,7 @@ import {
   formatToUserTimezone,
   generateDateTimeStringFromUnixTimestamp,
 } from "@trenova/shared/lib/date";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { apiService } from "@/services/api";
 import { useSamsaraSyncStore } from "@/stores/samsara-sync";
 import { Resource } from "@trenova/shared/types/permission";
@@ -290,10 +290,7 @@ export function SamsaraWorkerSyncCard({
   }, [open, setLastSuccessfulSync]);
 
   const statusQuery = useQuery({
-    ...queries.integration.samsaraWorkerSyncStatus(
-      trackedWorkflowId ?? "",
-      trackedRunId ?? undefined,
-    ),
+    ...integration.samsaraWorkerSyncStatus(trackedWorkflowId ?? "", trackedRunId ?? undefined),
     enabled: open && Boolean(trackedWorkflowId),
     retry: 1,
     refetchInterval: (query) => {
@@ -308,16 +305,16 @@ export function SamsaraWorkerSyncCard({
   });
 
   const readinessQuery = useQuery({
-    ...queries.integration.samsaraWorkerSyncReadiness(),
+    ...integration.samsaraWorkerSyncReadiness(),
     enabled: open,
     refetchInterval: trackedWorkflowId ? 3000 : 30000,
   });
   const driftQuery = useQuery({
-    ...queries.integration.samsaraWorkerSyncDrift(),
+    ...integration.samsaraWorkerSyncDrift(),
     enabled: open,
   });
   const samsaraConfigQuery = useQuery({
-    ...queries.integration.config("Samsara"),
+    ...integration.config("Samsara"),
     enabled: open,
   });
 
@@ -403,7 +400,7 @@ export function SamsaraWorkerSyncCard({
       );
       toast.success(t("Worker drift detection complete"));
       await queryClient.invalidateQueries({
-        queryKey: queries.integration.samsaraWorkerSyncDrift().queryKey,
+        queryKey: integration.samsaraWorkerSyncDrift().queryKey,
       });
     },
     onError: (error) => {
@@ -447,10 +444,10 @@ export function SamsaraWorkerSyncCard({
           refetchType: "all",
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.integration.samsaraWorkerSyncReadiness().queryKey,
+          queryKey: integration.samsaraWorkerSyncReadiness().queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.integration.samsaraWorkerSyncDrift().queryKey,
+          queryKey: integration.samsaraWorkerSyncDrift().queryKey,
         }),
       ]);
     },
@@ -497,10 +494,10 @@ export function SamsaraWorkerSyncCard({
 
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.integration.samsaraWorkerSyncDrift().queryKey,
+          queryKey: integration.samsaraWorkerSyncDrift().queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.integration.samsaraWorkerSyncReadiness().queryKey,
+          queryKey: integration.samsaraWorkerSyncReadiness().queryKey,
         }),
       ]);
     },
@@ -649,7 +646,7 @@ export function SamsaraWorkerSyncCard({
         refetchType: "all",
       });
       void queryClient.invalidateQueries({
-        queryKey: queries.integration.samsaraWorkerSyncReadiness().queryKey,
+        queryKey: integration.samsaraWorkerSyncReadiness().queryKey,
       });
     }
 

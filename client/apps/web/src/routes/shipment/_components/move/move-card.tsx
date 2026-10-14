@@ -19,7 +19,7 @@ import { CarrierTrackingLink } from "@/components/carrier-assignment/carrier-tra
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
 import { CarrierAssignmentStatusBadge } from "@trenova/shared/components/status-badge";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import { apiService } from "@/services/api";
 import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
 import type {
@@ -76,12 +76,12 @@ export function MoveCard({
     formState: { errors },
   } = useFormContext<Shipment>();
   const queryClient = useQueryClient();
-  const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
+  const { data: shipmentUIPolicy } = useQuery({ ...shipment.uiPolicy() });
   const moveRemovalRule = getRule(getProfile(shipmentUIPolicy), RULE_KEYS.moveRemoval);
   const move = useWatch({ control, name: `moves.${moveIndex}` });
   const shipmentId = useWatch({ control, name: "id" });
   const { data: shipmentEta } = useQuery({
-    ...queries.shipment.eta(shipmentId ?? ""),
+    ...shipment.eta(shipmentId ?? ""),
     enabled: !!shipmentId,
   });
   const stopEtas = new Map((shipmentEta?.stops ?? []).map((eta) => [eta.stopId, eta]));
@@ -181,7 +181,7 @@ export function MoveCard({
       if (move?.shipmentId) {
         void queryClient.invalidateQueries({ queryKey: ["shipment", move.shipmentId] });
         void queryClient.invalidateQueries({
-          queryKey: queries.shipment.trackingEvents(move.shipmentId).queryKey,
+          queryKey: shipment.trackingEvents(move.shipmentId).queryKey,
         });
       }
       toast.success(

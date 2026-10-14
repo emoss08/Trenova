@@ -2,7 +2,7 @@ import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { absoluteAppUrl, invoicePanelPath } from "@/lib/invoice-links";
-import { queries } from "@/lib/queries";
+import { invoiceShare } from "@/lib/queries/invoice-share";
 import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -168,7 +168,7 @@ function InviteForm({ invoice, tab }: { invoice: Invoice; tab: InvoiceDetailTab 
     mutationFn: (values: ShareInvoiceFormValues) =>
       apiService.invoiceShareService.share(invoice.id, { ...values, tab }),
     onSuccess: (result) => {
-      queryClient.setQueryData(queries["invoice-share"].list(invoice.id).queryKey, result.shares);
+      queryClient.setQueryData(invoiceShare.list(invoice.id).queryKey, result.shares);
       toast.success(shareSuccessMessage(t, result));
       setSelected(null);
       setInviteCount((count) => count + 1);
@@ -249,7 +249,7 @@ function TeammateSearch({
 
   const showList = open && !selected;
   const { data: candidates = [], isFetching } = useQuery({
-    ...queries["invoice-share"].candidates(invoiceId, query),
+    ...invoiceShare.candidates(invoiceId, query),
     enabled: showList,
   });
   const activeOption = showList ? candidates[activeIndex] : undefined;
@@ -417,7 +417,7 @@ function PersonAvatar({ user }: { user: InvoiceShareUser }) {
 
 function SharedWithList({ invoiceId }: { invoiceId: string }) {
   const t = useT();
-  const { data: shares, isLoading, isError } = useQuery(queries["invoice-share"].list(invoiceId));
+  const { data: shares, isLoading, isError } = useQuery(invoiceShare.list(invoiceId));
 
   if (isLoading) {
     return (

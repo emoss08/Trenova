@@ -10,7 +10,7 @@ import {
   ChartTooltipContent,
 } from "@trenova/shared/components/ui/chart";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { formatCompactCurrency, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -54,7 +54,7 @@ export function AgingCard() {
 function AgingSnapshot() {
   const t = useT();
 
-  const { data: kpis, isLoading } = useQuery(queries.ar.dashboardKpis());
+  const { data: kpis, isLoading } = useQuery(ar.dashboardKpis());
 
   const buckets = kpis?.overview.buckets;
   const chartData = useMemo(
@@ -135,7 +135,7 @@ function AgingTrend() {
   const t = useT();
 
   const [range, setRange] = useState<number>(13);
-  const { data: trend, isLoading } = useQuery(queries.ar.agingTrend(range));
+  const { data: trend, isLoading } = useQuery(ar.agingTrend(range));
 
   const chartData = useMemo(
     () =>

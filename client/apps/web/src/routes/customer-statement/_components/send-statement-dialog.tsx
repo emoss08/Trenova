@@ -11,7 +11,7 @@ import {
 import { Label } from "@trenova/shared/components/ui/label";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { customerStatement } from "@/lib/queries/customer-statement";
 import { apiService } from "@/services/api";
 import type { StatementRange } from "@/types/customer-statement";
 import { useQueryClient } from "@tanstack/react-query";
@@ -49,7 +49,7 @@ export function SendStatementDialog({
     resourceName: "CustomerStatement",
     onSuccess: (result) => {
       void queryClient.invalidateQueries({
-        queryKey: queries.customerStatement.sent(customerId).queryKey,
+        queryKey: customerStatement.sent(customerId).queryKey,
       });
       void queryClient.invalidateQueries({ queryKey: ["collection"] });
       toast.success(t("Statement sent to {0}", result.sentTo.join(", ")), {

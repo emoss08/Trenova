@@ -4,7 +4,6 @@ import (
 	"context"
 	"sort"
 
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -59,33 +58,21 @@ func (s *Service) ApprovalImpact(
 		return nil, err
 	}
 
-	shipments, err := s.shipmentRepo.ListRatedByFormulaTemplate(
-		ctx,
-		&shipmentports.ListRatedByFormulaTemplateRequest{
-			TemplateID: req.TemplateID,
-			TenantInfo: req.TenantInfo,
-			Limit:      limit,
-		},
-	)
+	shipments, err := s.listRatedShipments(ctx, req.TemplateID, req.TenantInfo, limit)
 	if err != nil {
 		log.Error("failed to list rated shipments", zap.Error(err))
 		return nil, err
 	}
 
-	results := make([]*BacktestResult, 0, len(shipments))
-	for _, entity := range shipments {
-		results = append(
-			results,
-			s.backtestShipment(ctx, template, template, entity, req.TenantInfo),
-		)
-	}
+	resp := s.rateEach(ctx, &rateEachRequest{
+		current:    template,
+		candidate:  template,
+		shipments:  shipments,
+		tenantInfo: req.TenantInfo,
+	})
+	sortResultsByImpact(resp.Results)
 
-	sortResultsByImpact(results)
-
-	return &BacktestResponse{
-		Results: results,
-		Summary: buildBacktestSummary(results),
-	}, nil
+	return resp, nil
 }
 
 // sortResultsByImpact puts the biggest movers first and shipments that failed

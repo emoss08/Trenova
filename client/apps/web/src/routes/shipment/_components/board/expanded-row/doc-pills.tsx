@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { CheckIcon, ClockIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
-import { queries } from "@/lib/queries";
+import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import type { Shipment, ShipmentBillingRequirement } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { useShipmentRecordActions } from "../record-actions";
@@ -29,7 +29,7 @@ export function DocPills({ shipment }: { shipment: Shipment }) {
   const { uploadDocument } = useShipmentRecordActions();
   const shipmentId = shipment.id ?? "";
   const { data, isLoading, isError } = useQuery({
-    ...queries.shipment.billingReadiness(shipmentId),
+    ...shipmentQueries.billingReadiness(shipmentId),
     enabled: !!shipmentId,
   });
   const requirements = data?.requirements ?? [];

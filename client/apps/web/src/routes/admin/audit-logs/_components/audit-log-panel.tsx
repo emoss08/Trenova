@@ -25,7 +25,7 @@ import {
   operationLabel,
   resourceLabel,
 } from "./audit-log-formatters";
-import { ShikiJsonBlock } from "./audit-shiki-json";
+import { AuditJsonBlock } from "./audit-json-block";
 
 function Section({
   title,
@@ -95,7 +95,7 @@ function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
           {expanded ? t("Hide JSON") : t("View JSON")}
         </Button>
       </div>
-      {expanded && <ShikiJsonBlock value={value} />}
+      {expanded && <AuditJsonBlock value={value} />}
     </div>
   );
 }
@@ -231,16 +231,16 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
           </ScrollArea>
         </Section>
         <Section title={t("Metadata")} description={t("Additional contextual information")}>
-          <ShikiJsonBlock value={row.metadata} searchable />
+          <AuditJsonBlock value={row.metadata} searchable />
         </Section>
         <Section title={t("Previous state")} description={t("State before the operation")}>
-          <ShikiJsonBlock value={row.previousState} searchable copyPath />
+          <AuditJsonBlock value={row.previousState} searchable copyPath />
         </Section>
         <Section title={t("Current state")} description={t("State after the operation")}>
-          <ShikiJsonBlock value={row.currentState} searchable copyPath />
+          <AuditJsonBlock value={row.currentState} searchable copyPath />
         </Section>
         <Section title={t("Full event data")} description={t("Complete raw event payload")}>
-          <ShikiJsonBlock value={row} searchable copyPath />
+          <AuditJsonBlock value={row} searchable copyPath />
         </Section>
       </div>
     </DataTablePanelContainer>

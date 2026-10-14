@@ -3,7 +3,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { documentParsingRule } from "@/lib/queries/document-parsing-rule";
 import { apiService } from "@/services/api";
 import type { Fixture } from "@/types/document-parsing-rule";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -71,7 +71,7 @@ function FixtureList({
   const { allowed: canCreate } = usePermission(Resource.DocumentParsingRule, Operation.Create);
 
   const { data: fixtures, isLoading } = useQuery({
-    ...queries.documentParsingRule.fixtures(ruleSetId),
+    ...documentParsingRule.fixtures(ruleSetId),
   });
 
   const createMutation = useMutation({
@@ -79,7 +79,7 @@ function FixtureList({
       apiService.documentParsingRuleService.createFixture(ruleSetId, NEW_FIXTURE_TEMPLATE),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({
-        queryKey: queries.documentParsingRule.fixtures._def,
+        queryKey: documentParsingRule.fixtures._def,
       });
       toast.success(t("Fixture created"));
       if (data.id) onSelectFixture(data.id);

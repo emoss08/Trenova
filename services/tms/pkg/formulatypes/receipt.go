@@ -65,6 +65,7 @@ type Receipt struct {
 	VersionNumber  int64                `json:"versionNumber,omitempty"`
 	EffectiveFrom  *int64               `json:"effectiveFrom,omitempty"`
 	DurationMicros int64                `json:"durationMicros,omitempty"`
+	RateTableStamp string               `json:"rateTableStamp,omitempty"`
 }
 
 // VariableMap flattens the provenance list back to name → value.

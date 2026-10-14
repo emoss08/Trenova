@@ -36,6 +36,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { archiveRefusal } from "./archive-refusal";
 import { ExportTemplateDialog } from "./export-template-dialog";
 import { ForkLineageDialog } from "./fork-lineage-dialog";
 import { ForkTemplateDialog } from "./fork-template-dialog";
@@ -57,6 +58,7 @@ export default function FormulaTemplatesDataTable() {
   const [isDuplicating, setIsDuplicating] = useState(false);
 
   const [pendingArchiveRows, setPendingArchiveRows] = useState<FormulaTemplateRow[]>([]);
+  const [archiveInUse, setArchiveInUse] = useState<string | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
 
   const [exportDialogTemplate, setExportDialogTemplate] = useState<FormulaTemplateRow | null>(null);
@@ -95,7 +97,7 @@ export default function FormulaTemplatesDataTable() {
                       "{0, plural, one {# already existed and was skipped.} other {# already existed and were skipped.}}",
                       result.skipped.length,
                     )
-                  : t("The standard rating library is ready to use."),
+                  : t("They are drafts: add scenarios and send each for review before it rates."),
             },
           );
         }
@@ -142,10 +144,16 @@ export default function FormulaTemplatesDataTable() {
         return;
       }
 
+      setArchiveInUse(null);
       setPendingArchiveRows(withIds);
     },
     [t],
   );
+
+  const closeArchiveDialog = useCallback(() => {
+    setPendingArchiveRows([]);
+    setArchiveInUse(null);
+  }, []);
 
   const handleConfirmArchive = useCallback(async () => {
     const ids = pendingArchiveRows.flatMap((template) => (template.id ? [template.id] : []));
@@ -156,6 +164,7 @@ export default function FormulaTemplatesDataTable() {
       .bulkUpdateStatus({
         templateIds: ids,
         status: "Inactive",
+        confirmInUse: archiveInUse !== null,
       })
       .then(() => {
         toast.success(
@@ -163,9 +172,18 @@ export default function FormulaTemplatesDataTable() {
             ? translate("Formula template archived")
             : translate("Formula templates archived"),
         );
-        setPendingArchiveRows([]);
+        closeArchiveDialog();
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        const refusal = archiveRefusal(error);
+        if (refusal?.kind === "needsConfirmation") {
+          setArchiveInUse(refusal.message);
+          return;
+        }
+        if (refusal?.kind === "forbidden") {
+          toast.error(refusal.message);
+          return;
+        }
         toast.error(
           ids.length === 1
             ? translate("Failed to archive formula template")
@@ -176,7 +194,7 @@ export default function FormulaTemplatesDataTable() {
         setIsArchiving(false);
         await invalidateFormulaTemplate(queryClient);
       });
-  }, [pendingArchiveRows, queryClient]);
+  }, [archiveInUse, closeArchiveDialog, pendingArchiveRows, queryClient]);
 
   const contextMenuActions = useMemo<RowAction<FormulaTemplateRow>[]>(
     () => [
@@ -340,7 +358,7 @@ export default function FormulaTemplatesDataTable() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t(
-                "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as Active templates. Templates you already have are left untouched.",
+                "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as drafts. Each one rates shipments once it has scenarios and someone else approves it. Templates you already have are left untouched.",
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -374,7 +392,7 @@ export default function FormulaTemplatesDataTable() {
       <AlertDialog
         open={archiveCount > 0}
         onOpenChange={(open) => {
-          if (!open) setPendingArchiveRows([]);
+          if (!open) closeArchiveDialog();
         }}
       >
         <AlertDialogContent>
@@ -386,9 +404,10 @@ export default function FormulaTemplatesDataTable() {
               )}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t(
-                "Archived templates are marked inactive and stop pricing new shipments. Rate agreements and shipments referencing them keep their history.",
-              )}
+              {archiveInUse ??
+                t(
+                  "Archived templates are marked inactive and stop pricing new shipments. Rate agreements and shipments referencing them keep their history.",
+                )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -402,7 +421,7 @@ export default function FormulaTemplatesDataTable() {
               disabled={isArchiving}
               isLoading={isArchiving}
             >
-              {t("Archive")}
+              {archiveInUse === null ? t("Archive") : t("Archive anyway")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

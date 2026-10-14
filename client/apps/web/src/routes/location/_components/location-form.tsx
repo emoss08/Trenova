@@ -8,7 +8,7 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { statusChoices, timezoneGroupedChoices } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { useQuery } from "@tanstack/react-query";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { Location } from "@trenova/shared/types/location";
@@ -20,7 +20,7 @@ export function LocationForm() {
 
   const { control } = useFormContext<Location>();
   const googleMapsQuery = useQuery({
-    ...queries.integration.runtimeConfig("GoogleMaps"),
+    ...integration.runtimeConfig("GoogleMaps"),
     staleTime: 5 * 60 * 1000,
   });
 

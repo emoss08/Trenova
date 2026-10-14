@@ -13,7 +13,8 @@ import {
 import { updateOrganizationSettingsGraphQL } from "@/lib/graphql/organization";
 import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, organizationLogoCropConfig } from "@/lib/images/upload-config";
-import { queries } from "@/lib/queries";
+import { organization } from "@/lib/queries/organization";
+import { userOrganization } from "@/lib/queries/user";
 import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -87,7 +88,7 @@ export default function OrganizationSettingsForm() {
   const organizationId = useAuthStore((state) => state.user?.currentOrganizationId) ?? "";
 
   const organizationQuery = useQuery({
-    ...queries.organization.detail(organizationId),
+    ...organization.detail(organizationId),
     enabled: Boolean(organizationId),
   });
 
@@ -107,27 +108,24 @@ export default function OrganizationSettingsForm() {
   }, [organizationQuery.data, reset]);
 
   const { mutateAsync: updateOrganization } = useOptimisticMutation({
-    queryKey: queries.organization.detail(organizationId).queryKey,
+    queryKey: organization.detail(organizationId).queryKey,
     mutationFn: (values: OrganizationSettings) =>
       updateOrganizationSettingsGraphQL(organizationId, values),
     resourceName: "Organization Settings",
     resetForm: reset,
     form,
     invalidateQueries: [
-      queries.organization.detail._def,
-      queries.organization.logo._def,
-      queries.userOrganization.all._def,
+      organization.detail._def,
+      organization.logo._def,
+      userOrganization.all._def,
     ],
   });
 
   const handleLogoUpdated = useCallback(
     async (updatedOrganization: OrganizationSettings) => {
-      queryClient.setQueryData(
-        queries.organization.detail(organizationId).queryKey,
-        updatedOrganization,
-      );
+      queryClient.setQueryData(organization.detail(organizationId).queryKey, updatedOrganization);
       reset(updatedOrganization);
-      const logoQueryKey = queries.organization.logo(organizationId).queryKey;
+      const logoQueryKey = organization.logo(organizationId).queryKey;
 
       if (updatedOrganization.logoUrl) {
         await queryClient.invalidateQueries({
@@ -141,7 +139,7 @@ export default function OrganizationSettingsForm() {
       }
 
       await queryClient.invalidateQueries({
-        queryKey: queries.userOrganization.all._def,
+        queryKey: userOrganization.all._def,
       });
     },
     [organizationId, queryClient, reset],
@@ -230,7 +228,7 @@ function LogoForm({
   const rawLogoValue = useWatch({ control, name: "logoUrl" });
 
   const { data: resolvedLogoURL } = useQuery({
-    ...queries.organization.logo(organizationId),
+    ...organization.logo(organizationId),
     enabled: Boolean(rawLogoValue),
     retry: false,
   });
