@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -263,4 +264,25 @@ func TestGetFuelSurchargeRates_SaysWhenNoPriceIsOnFile(t *testing.T) {
 	result, err = tool.Query(t.Context(), agentParams(map[string]any{"query": "calif"}, ""))
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.(searchOutcome).Count)
+}
+
+func TestRateAgreementAccessorials_NameTheLanguageAConditionIsWrittenIn(t *testing.T) {
+	t.Parallel()
+
+	tool := &getRateAgreementTool{}
+	gate := fieldAccess{}.gateAt(permission.ResourceRateAgreement, permission.SensitivityConfidential)
+
+	rows := tool.accessorials([]*rateagreement.RateAgreementAccessorial{
+		{
+			AccessorialChargeID: pulid.MustNew("acc_"),
+			AutoApply:           true,
+			ApplyCondition:      "totalStops > 2",
+		},
+		{AccessorialChargeID: pulid.MustNew("acc_")},
+	}, gate)
+
+	require.Len(t, rows, 2)
+	assert.Equal(t, "totalStops > 2", rows[0].ApplyCondition)
+	assert.Equal(t, int16(formulatypes.CurrentLanguageVersion), rows[0].ConditionLanguage)
+	assert.Zero(t, rows[1].ConditionLanguage, "a row without a condition has no language")
 }

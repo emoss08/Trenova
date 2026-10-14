@@ -98,6 +98,7 @@ func TestApprove_NotifiesSubmitter(t *testing.T) {
 		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	_, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
 		TenantInfo: tenant,
 		EntityID:   template.ID,
@@ -131,6 +132,8 @@ func TestReject_NotifiesSubmitterWithComment(t *testing.T) {
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(0), nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).
+		Return((*formulatemplate.FormulaTemplateVersion)(nil), nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	_, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
@@ -169,6 +172,8 @@ func TestReject_SkipsNotificationWhenRejectorIsSubmitter(t *testing.T) {
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(0), nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).
+		Return((*formulatemplate.FormulaTemplateVersion)(nil), nil)
 
 	_, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
 		TenantInfo: tenant,
@@ -178,4 +183,45 @@ func TestReject_SkipsNotificationWhenRejectorIsSubmitter(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Nil(t, *captured)
+}
+
+func TestReject_ARevisionReturnsToDraftAndTheApprovedVersionKeepsBilling(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	captured := withNotifications(t, deps)
+	primeReviews(deps, &formulatemplate.Review{
+		Round: 1, Decision: formulatemplate.ReviewDecisionSubmitted, BaseVersionNumber: 3,
+	})
+
+	submitterID := pulid.MustNew("usr_")
+	submittedAt := timeutils.NowUnix() - 3600
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusInReview
+	template.CurrentVersionNumber = 4
+	template.SubmittedByID = &submitterID
+	template.SubmittedAt = &submittedAt
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(0), nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).
+		Return(&formulatemplate.FormulaTemplateVersion{
+			VersionNumber: 3,
+			Status:        formulatemplate.StatusActive,
+		}, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	result, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
+		TenantInfo: newTenantInfo(),
+		EntityID:   template.ID,
+		Comment:    "the fuel step is wrong",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, formulatemplate.StatusDraft, result.Status,
+		"archiving would stop the approved version billing")
+
+	notified := *captured
+	require.NotNil(t, notified)
+	assert.Contains(t, notified.Message, "v3 keeps billing")
+	assert.NotContains(t, notified.Message, "archived")
 }

@@ -55,6 +55,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		middleware.PermissionCheck{Resource: resource, Operation: permission.OpCreate},
 		middleware.PermissionCheck{Resource: resource, Operation: permission.OpUpdate},
 	)
+	requireAuthoringOrApprove := h.pm.RequireAnyPermission(
+		middleware.PermissionCheck{Resource: resource, Operation: permission.OpCreate},
+		middleware.PermissionCheck{Resource: resource, Operation: permission.OpUpdate},
+		middleware.PermissionCheck{Resource: resource, Operation: permission.OpApprove},
+	)
 
 	api := rg.Group("/formula-templates")
 	api.GET("/", requireRead, h.list)
@@ -96,7 +101,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	idGroup.GET("/reviewers", requireRead, h.listReviewers)
 	idGroup.POST("/review-note", requireRead, requireAssistant, h.reviewNote)
 	idGroup.POST("/backtest", requireAuthoring, h.backtest)
-	idGroup.POST("/impact", requireRead, h.approvalImpact)
+	idGroup.POST("/impact", requireAuthoringOrApprove, h.approvalImpact)
 	idGroup.GET("/readiness", requireRead, h.readiness)
 	idGroup.GET("/review-diff", requireRead, h.reviewDiff)
 	idGroup.GET("/test-cases", requireRead, h.listTestCases)

@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import { ExpressionEditor } from "../expression-editor";
+import { describedShipment } from "@/components/formula-editor/__tests__/described-shipment";
 
 vi.mock("@trenova/shared/components/theme-provider", () => ({
   useTheme: () => ({ theme: "system", setTheme: vi.fn() }),
@@ -29,7 +30,7 @@ function Harness({
     <ExpressionEditor
       name="expression"
       control={control}
-      knownIdentifiers={buildKnownIdentifiers(undefined, [])}
+      knownIdentifiers={buildKnownIdentifiers(describedShipment, [])}
       editorRef={ref}
       lint={false}
     />

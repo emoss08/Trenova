@@ -72,6 +72,8 @@ function hasMissing(program: Program): boolean {
         return node.entries.some((entry) => visit(entry.value));
       case "predicate":
         return visit(node.body);
+      case "sequence":
+        return node.lets.some((entry) => visit(entry.value)) || visit(node.body);
       default:
         return false;
     }
@@ -197,8 +199,9 @@ class Printer {
       }
       case "index": {
         const object = this.node(node.object, column, indent);
-        const index = this.node(node.index, lastLineLength(object) + 1, indent);
-        return `${object}[${index}]`;
+        const open = node.optional ? "?.[" : "[";
+        const index = this.node(node.index, lastLineLength(object) + open.length, indent);
+        return `${object}${open}${index}]`;
       }
       default:
         return this.flat(node);
@@ -318,7 +321,7 @@ class Printer {
       case "nil":
         return "nil";
       case "pointer":
-        return "#";
+        return `#${node.name}`;
       case "ident":
         return node.name;
       case "member": {
@@ -328,7 +331,7 @@ class Printer {
         return `${this.flat(node.object)}${node.optional ? "?." : "."}${node.property}`;
       }
       case "index":
-        return `${this.flat(node.object)}[${this.flat(node.index)}]`;
+        return `${this.flat(node.object)}${node.optional ? "?.[" : "["}${this.flat(node.index)}]`;
       case "slice":
         return `${this.flat(node.object)}[${node.start ? this.flat(node.start) : ""}:${
           node.end ? this.flat(node.end) : ""
@@ -384,6 +387,11 @@ class Printer {
           : `{${node.entries.map((entry) => `${entry.key}: ${this.flat(entry.value)}`).join(", ")}}`;
       case "predicate":
         return `{${this.flat(node.body)}}`;
+      case "sequence": {
+        // i18n-ignore: formula source code, not text
+        const lets = node.lets.map((entry) => `let ${entry.name} = ${this.flat(entry.value)}; `);
+        return `${lets.join("")}${this.flat(node.body)}`;
+      }
       case "missing":
         return "";
       default:

@@ -106,6 +106,7 @@ func classifyFormula(err error) (ProblemType, bool) {
 		variableErr  *formulaerrors.VariableError
 		resolveErr   *formulaerrors.ResolveError
 		missingErr   *formulaerrors.MissingFieldError
+		unresolved   *formulaerrors.UnresolvedFieldError
 	)
 
 	if errors.As(err, &schemaErr) ||
@@ -113,7 +114,8 @@ func classifyFormula(err error) (ProblemType, bool) {
 		errors.As(err, &transformErr) ||
 		errors.As(err, &variableErr) ||
 		errors.As(err, &resolveErr) ||
-		errors.As(err, &missingErr) {
+		errors.As(err, &missingErr) ||
+		errors.As(err, &unresolved) {
 		return ProblemTypeValidation, true
 	}
 

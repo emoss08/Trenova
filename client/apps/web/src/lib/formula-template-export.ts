@@ -5,7 +5,7 @@ import type {
 } from "@trenova/shared/types/formula-template";
 import { downloadJsonFile, slugify } from "@trenova/shared/lib/utils";
 
-export const FORMULA_TEMPLATE_EXPORT_VERSION = "1.3";
+export const FORMULA_TEMPLATE_EXPORT_VERSION = "1.4";
 
 export type ExportedTestCase = {
   name: string;
@@ -22,6 +22,8 @@ export type FormulaTemplateExportPayload = {
   expression: string;
   status: FormulaTemplate["status"];
   schemaId: string;
+  /** The formula language the expression is written in. */
+  languageVersion: number;
   variableDefinitions: FormulaTemplate["variableDefinitions"];
   breakdownDefinitions: FormulaTemplate["breakdownDefinitions"];
   minCharge: FormulaTemplate["minCharge"];
@@ -46,6 +48,7 @@ export type FormulaTemplateExport = {
     expression: string;
     status: FormulaTemplate["status"];
     schemaId: string;
+    languageVersion: number;
     variableDefinitions: FormulaTemplate["variableDefinitions"];
     breakdownDefinitions: FormulaTemplate["breakdownDefinitions"];
     minCharge: FormulaTemplate["minCharge"];
@@ -90,6 +93,7 @@ function toExportPayload(
     expression: template.expression,
     status: template.status,
     schemaId: template.schemaId,
+    languageVersion: template.languageVersion,
     variableDefinitions: template.variableDefinitions,
     breakdownDefinitions: template.breakdownDefinitions,
     minCharge: template.minCharge,
@@ -133,6 +137,7 @@ export function buildTemplateExport(
       expression: v.expression,
       status: v.status,
       schemaId: v.schemaId,
+      languageVersion: v.languageVersion,
       variableDefinitions: v.variableDefinitions,
       breakdownDefinitions: v.breakdownDefinitions,
       minCharge: v.minCharge,
@@ -166,6 +171,7 @@ export function buildVersionExport(
       expression: version.expression,
       status: version.status,
       schemaId: version.schemaId,
+      languageVersion: version.languageVersion,
       variableDefinitions: version.variableDefinitions,
       breakdownDefinitions: version.breakdownDefinitions,
       minCharge: version.minCharge,

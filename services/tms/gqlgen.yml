@@ -81,6 +81,12 @@ models:
         resolver: true
       eta:
         resolver: true
+      formulaTemplate:
+        resolver: true
+  ShipmentRatingDetail:
+    fields:
+      expression:
+        resolver: true
   ShipmentCustomer:
     fields:
       ediPartner:

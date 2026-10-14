@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { collectIdentifierTokens, lintExpression } from "../expr-lint";
 import { buildKnownIdentifiers } from "../known-identifiers";
+import { describedShipment } from "@/components/formula-editor/__tests__/described-shipment";
+import { formulaSchemaResponseSchema } from "@trenova/shared/types/formula-template";
 
-const known = buildKnownIdentifiers(undefined, [
+const known = buildKnownIdentifiers(describedShipment, [
   { name: "fuelPct", type: "Number", description: "", required: false },
 ]);
 
@@ -90,36 +92,39 @@ describe("lintExpression with expr string operators", () => {
   });
 
   it("accepts operators the server publishes even when the static list lacks them", () => {
-    const serverKnown = buildKnownIdentifiers({
-      variables: [
-        {
-          name: "code",
-          type: "string",
-          description: "",
-          category: "shipment",
-          nullable: false,
-          computed: false,
-          enum: undefined,
-        },
-      ],
-      functions: [
-        {
-          name: "soundsLike",
-          signature: 'text soundsLike "x"',
-          description: "",
-          example: "",
-          category: "string",
-          operator: true,
-        },
-      ],
-    });
+    const serverKnown = buildKnownIdentifiers(
+      formulaSchemaResponseSchema.parse({
+        schemaId: "shipment",
+        variables: [
+          {
+            name: "code",
+            type: "string",
+            description: "",
+            category: "shipment",
+            nullable: false,
+            computed: false,
+            enum: undefined,
+          },
+        ],
+        functions: [
+          {
+            name: "soundsLike",
+            signature: 'text soundsLike "x"',
+            description: "",
+            example: "",
+            category: "string",
+            operator: true,
+          },
+        ],
+      }),
+    );
     expect(lintExpression('code soundsLike "abc" ? 1 : 0', serverKnown)).toEqual([]);
   });
 });
 
 describe("let bindings", () => {
   it("treats a name the expression binds with let as known wherever it is read", () => {
-    const known = buildKnownIdentifiers(undefined, []);
+    const known = buildKnownIdentifiers(describedShipment, []);
     const diagnostics = lintExpression(
       "let linehaul = baseRate * totalDistance;\nlet fuel = linehaul * 0.18;\nlinehaul + fuel",
       known,
@@ -128,7 +133,7 @@ describe("let bindings", () => {
   });
 
   it("still flags a name nothing binds", () => {
-    const known = buildKnownIdentifiers(undefined, []);
+    const known = buildKnownIdentifiers(describedShipment, []);
     const diagnostics = lintExpression("let linehaul = baseRate;\nlinehaul + weekendFee", known);
     expect(diagnostics.map((d) => d.message)).toEqual([expect.stringContaining("weekendFee")]);
   });

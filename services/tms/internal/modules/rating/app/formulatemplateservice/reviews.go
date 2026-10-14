@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/approvalworkflow"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -59,47 +61,56 @@ func (s *Service) RequestChanges(
 	}
 
 	var submitterID *pulid.ID
-	returned, err := s.approvals().Apply(ctx, req, templateTransition{
-		Operation:    "RequestChanges",
-		From:         formulatemplate.StatusInReview,
-		To:           formulatemplate.StatusDraft,
-		PermissionOp: permission.OpReject,
-		AuditComment: "Changes requested on formula template",
-		Validate: func(
-			_ context.Context,
-			template *formulatemplate.FormulaTemplate,
-			r *ApprovalActionRequest,
-		) error {
-			if template.SubmittedByID != nil && *template.SubmittedByID == r.TenantInfo.UserID {
-				return errortypes.NewValidationError(
-					"approvedById",
-					errortypes.ErrInvalid,
-					"A template's submitter cannot review it; ask another reviewer or archive it",
-				)
-			}
-			return nil
-		},
-		Apply: func(
-			template *formulatemplate.FormulaTemplate,
-			r *ApprovalActionRequest,
-			_ int64,
-		) {
-			if template.SubmittedByID != nil {
-				captured := *template.SubmittedByID
-				submitterID = &captured
-			}
-			template.ReviewComment = r.Comment
-		},
-		AfterSave: func(
-			aCtx context.Context,
-			updated *formulatemplate.FormulaTemplate,
-			r *ApprovalActionRequest,
-		) error {
-			return s.recordReview(aCtx, updated, r.TenantInfo, &reviewRecord{
-				Comment:  r.Comment,
-				Decision: formulatemplate.ReviewDecisionChangesRequested,
-			})
-		},
+	var returned *formulatemplate.FormulaTemplate
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		result, txErr := s.approvals(ctx).Apply(txCtx, req, templateTransition{
+			Operation:    "RequestChanges",
+			From:         formulatemplate.StatusInReview,
+			To:           formulatemplate.StatusDraft,
+			PermissionOp: permission.OpReject,
+			AuditComment: "Changes requested on formula template",
+			Validate: func(
+				_ context.Context,
+				template *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+			) error {
+				if template.SubmittedByID != nil && *template.SubmittedByID == r.TenantInfo.UserID {
+					return errortypes.NewValidationError(
+						"approvedById",
+						errortypes.ErrInvalid,
+						"A template's submitter cannot review it; ask another reviewer or archive it",
+					)
+				}
+				return nil
+			},
+			Apply: func(
+				template *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+				_ int64,
+			) {
+				if template.SubmittedByID != nil {
+					captured := *template.SubmittedByID
+					submitterID = &captured
+				}
+				template.ReviewComment = r.Comment
+			},
+			AfterSave: func(
+				aCtx context.Context,
+				updated *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+			) error {
+				return s.recordReview(aCtx, updated, r.TenantInfo, &reviewRecord{
+					Comment:  r.Comment,
+					Decision: formulatemplate.ReviewDecisionChangesRequested,
+				})
+			},
+		})
+		if txErr != nil {
+			return txErr
+		}
+
+		returned = result
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -189,19 +200,29 @@ func (s *Service) expireSubmission(
 	template.SubmittedAt = nil
 	template.ReviewComment = "Submission expired after waiting for review"
 
-	updated, err := s.repo.Update(ctx, template)
+	var updated *formulatemplate.FormulaTemplate
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		saved, txErr := s.repo.Update(txCtx, template)
+		if txErr != nil {
+			return txErr
+		}
+
+		if txErr = s.recordReview(txCtx, saved, tenantInfo, &reviewRecord{
+			Comment:  template.ReviewComment,
+			Decision: formulatemplate.ReviewDecisionExpired,
+		}); txErr != nil {
+			return txErr
+		}
+
+		updated = saved
+		return nil
+	})
 	if err != nil {
 		return err
 	}
 
-	if err = s.recordReview(ctx, updated, tenantInfo, &reviewRecord{
-		Comment:  template.ReviewComment,
-		Decision: formulatemplate.ReviewDecisionExpired,
-	}); err != nil {
-		return err
-	}
-
 	s.logAuditAction(
+		ctx,
 		s.l.With(zap.String("operation", "ExpireSubmission")),
 		updated,
 		permission.OpUpdate,
@@ -283,10 +304,18 @@ func (s *Service) latestApprovedVersionNumber(
 	template *formulatemplate.FormulaTemplate,
 	tenantInfo pagination.TenantInfo,
 ) int64 {
+	return s.approvedVersionNumber(ctx, template.ID, tenantInfo)
+}
+
+func (s *Service) approvedVersionNumber(
+	ctx context.Context,
+	templateID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) int64 {
 	version, err := s.versionRepo.GetLatestByStatus(
 		ctx,
 		&formulatemplateports.GetLatestVersionByStatusRequest{
-			TemplateID: template.ID,
+			TemplateID: templateID,
 			TenantInfo: tenantInfo,
 			Status:     formulatemplate.StatusActive,
 		},

@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -19,6 +21,9 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -162,7 +167,7 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *formulatemplateports.ListFormulaTemplateConnectionRequest,
 ) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
@@ -416,38 +421,76 @@ func (r *repository) BulkUpdateStatus(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
-			log := r.l.With(
-				zap.String("operation", "BulkUpdateStatus"),
-				zap.Any("request", req),
+			var entities []*formulatemplate.FormulaTemplate
+			err := r.db.WithTx(
+				ctx,
+				kernelports.TxOptions{},
+				func(txCtx context.Context, _ bun.Tx) error {
+					updated, err := r.bulkUpdateStatus(txCtx, req)
+					entities = updated
+					return err
+				},
 			)
-
-			entities := make([]*formulatemplate.FormulaTemplate, 0, len(req.TemplateIDs))
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(&entities).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return formulatemplatecol.FormulaTemplateScopeTenantUpdate(uq, req.TenantInfo).
-						Where(formulatemplatecol.FormulaTemplateColumns.ID.In(), bun.List(req.TemplateIDs))
-				}).
-				Set("status = ?", req.Status).
-				Returning("*").
-				Exec(ctx)
 			if err != nil {
-				log.Error("failed to bulk update formula template status", zap.Error(err))
 				return nil, err
 			}
-
-			if err = dberror.CheckBulkRowsAffected(
-				results,
-				"FormulaTemplate",
-				req.TemplateIDs,
-			); err != nil {
-				return nil, err
-			}
-
 			return entities, nil
 		},
 	)
+}
+
+func (r *repository) bulkUpdateStatus(
+	ctx context.Context,
+	req *formulatemplateports.BulkUpdateFormulaTemplateStatusRequest,
+) ([]*formulatemplate.FormulaTemplate, error) {
+	log := r.l.With(
+		zap.String("operation", "BulkUpdateStatus"),
+		zap.Any("request", req),
+	)
+
+	cols := formulatemplatecol.FormulaTemplateColumns
+	entities := make([]*formulatemplate.FormulaTemplate, 0, len(req.TemplateIDs))
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model(&entities).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return formulatemplatecol.FormulaTemplateScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.In(), bun.List(req.TemplateIDs)).
+				Where(cols.Status.In(), bun.List([]formulatemplate.Status{
+					formulatemplate.StatusActive,
+					formulatemplate.StatusInactive,
+				}))
+		}).
+		Set(cols.Status.Set(), req.Status).
+		Set(cols.Version.Inc(1)).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to bulk update formula template status", zap.Error(err))
+		return nil, err
+	}
+
+	if err = dberror.CheckBulkRowsAffected(
+		results,
+		"FormulaTemplate",
+		req.TemplateIDs,
+	); err != nil {
+		return nil, err
+	}
+
+	updatedIDs := make([]pulid.ID, 0, len(entities))
+	for _, entity := range entities {
+		updatedIDs = append(updatedIDs, entity.ID)
+	}
+	if skipped := sliceutils.Difference(
+		sliceutils.Dedupe(req.TemplateIDs),
+		updatedIDs,
+	); len(skipped) > 0 {
+		return nil, dberror.CreateBulkVersionMismatchError("FormulaTemplate", skipped)
+	}
+
+	return entities, nil
 }
 
 func (r *repository) BulkDuplicate(
@@ -570,7 +613,7 @@ func (r *repository) CountUsages(
 	ctx context.Context,
 	req *formulatemplateports.GetTemplateUsageRequest,
 ) (*formulatemplateports.GetTemplateUsageResponse, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*formulatemplateports.GetTemplateUsageResponse, error) {
@@ -604,6 +647,11 @@ func (r *repository) CountUsages(
 				rateagreementcol.RateAgreementAccessorialColumns.FormulaTemplateID,
 				rateagreementcol.RateAgreementAccessorialScopeTenant,
 			)
+			billingFallbackUsage := r.usageCount(ctx, req, "billing_control_fallback",
+				tenantcol.BillingControlTable,
+				tenantcol.BillingControlColumns.FallbackFormulaTemplateID,
+				tenantcol.BillingControlScopeTenant,
+			)
 
 			var results []usageResult
 			err := r.db.DBForContext(ctx).NewSelect().
@@ -611,6 +659,7 @@ func (r *repository) CountUsages(
 				UnionAll(matrixUsage).
 				UnionAll(ruleUsage).
 				UnionAll(agreementAccessorialUsage).
+				UnionAll(billingFallbackUsage).
 				Scan(ctx, &results)
 			if err != nil {
 				log.Error("failed to count usages", zap.Error(err))
@@ -641,7 +690,7 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *formulatemplateports.FormulaTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {

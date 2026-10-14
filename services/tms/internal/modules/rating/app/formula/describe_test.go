@@ -54,3 +54,23 @@ func TestDescribeSchema_UnknownSchema(t *testing.T) {
 	_, err := svc.DescribeSchema("nope")
 	require.Error(t, err)
 }
+
+func TestDescribeSchema_OptionalRelationFieldsAreNullable(t *testing.T) {
+	t.Parallel()
+
+	svc := setupService(t)
+
+	description, err := svc.DescribeSchema("shipment")
+	require.NoError(t, err)
+
+	nullable := make(map[string]bool, len(description.Variables))
+	for _, variable := range description.Variables {
+		nullable[variable.Name] = variable.Nullable
+	}
+
+	assert.True(t, nullable["tractorType.code"])
+	assert.True(t, nullable["trailerType.description"])
+	assert.True(t, nullable["shipmentType.code"])
+	assert.False(t, nullable["serviceType.code"], "every shipment has a service type")
+	assert.False(t, nullable["customer.code"], "every shipment has a customer")
+}

@@ -38,6 +38,46 @@ func CloneShallow(input map[string]any) map[string]any {
 	return output
 }
 
+func CloneDeep(input map[string]any) map[string]any {
+	if input == nil {
+		return nil
+	}
+
+	output := make(map[string]any, len(input))
+	for key, value := range input {
+		output[key] = cloneValue(value)
+	}
+
+	return output
+}
+
+func cloneValue(value any) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		return CloneDeep(typed)
+	case []any:
+		if typed == nil {
+			return value
+		}
+		cloned := make([]any, len(typed))
+		for i, item := range typed {
+			cloned[i] = cloneValue(item)
+		}
+		return cloned
+	case []map[string]any:
+		if typed == nil {
+			return value
+		}
+		cloned := make([]map[string]any, len(typed))
+		for i, item := range typed {
+			cloned[i] = CloneDeep(item)
+		}
+		return cloned
+	default:
+		return value
+	}
+}
+
 func OrEmpty(input map[string]any) map[string]any {
 	if input == nil {
 		return map[string]any{}

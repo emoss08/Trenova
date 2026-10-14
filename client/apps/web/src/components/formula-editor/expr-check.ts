@@ -1,15 +1,16 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import {
-  EXPR_BUILTIN_FUNCTIONS,
   isKnownFunction,
   isOperatorWord,
-  type FunctionDoc,
+  type DisabledFunction,
+  type FunctionShape,
   type KnownIdentifiers,
   type VariableDoc,
 } from "./known-identifiers";
 import {
   memberPath,
   parseExpression,
+  type LetEntry,
   type Node,
   type Program,
   type Range,
@@ -42,6 +43,7 @@ export type DiagnosticCode =
   | "unknown-variable"
   | "unknown-field"
   | "unknown-function"
+  | "disabled-function"
   | "arity"
   | "type"
   | "nullable"
@@ -73,6 +75,8 @@ export type LetBinding = Range & {
   name: string;
   nameRange: Range;
   type: ExprType;
+  /** The value is a whole number to the engine, so `%` takes it. */
+  whole: boolean;
   reads: number;
 };
 
@@ -88,6 +92,8 @@ export type ExprAnalysis = {
   reads: string[];
   bindings: Map<string, LetBinding>;
   resultType: ExprType;
+  /** The engine's schema has not loaded yet, so names were not checked. */
+  pending: boolean;
 };
 
 const BOOLEAN_PREFIX = /^(is|has|requires|uses|needs|allows|can)[A-Z_]/;
@@ -150,143 +156,6 @@ export function typeWords(type: ExprType): string {
   }
 }
 
-type Arity = { min: number; max: number };
-
-/** How many arguments a signature such as `round(x, decimals?)` or `min(...values)` takes. */
-export function arityOf(signature: string): Arity | null {
-  const open = signature.indexOf("(");
-  const close = signature.lastIndexOf(")");
-  if (open === -1 || close <= open) return null;
-  const inner = signature.slice(open + 1, close).trim();
-  if (inner === "") return { min: 0, max: 0 };
-  const params = inner.split(",").map((part) => part.trim());
-  let min = 0;
-  let max = 0;
-  let variadic = false;
-  for (const param of params) {
-    if (param.startsWith("...") || param === "…") {
-      variadic = true;
-      continue;
-    }
-    max += 1;
-    if (!param.endsWith("?")) min += 1;
-  }
-  if (variadic && min === 0) min = 1;
-  return { min, max: variadic ? Number.POSITIVE_INFINITY : max };
-}
-
-const RETURN_TYPES: Record<string, ExprType> = {
-  abs: "Number",
-  min: "Number",
-  max: "Number",
-  clamp: "Number",
-  pow: "Number",
-  sqrt: "Number",
-  ceil: "Number",
-  floor: "Number",
-  round: "Number",
-  roundUp: "Number",
-  roundDown: "Number",
-  roundHalfEven: "Number",
-  roundTo: "Number",
-  sum: "Number",
-  avg: "Number",
-  mean: "Number",
-  median: "Number",
-  int: "Number",
-  float: "Number",
-  len: "Number",
-  count: "Number",
-  lookup: "Number",
-  lookupOr: "Number",
-  lookup2: "Number",
-  lookup2Or: "Number",
-  lookupInterp: "Number",
-  deficitWeight: "Number",
-  string: "String",
-  upper: "String",
-  lower: "String",
-  trim: "String",
-  trimPrefix: "String",
-  trimSuffix: "String",
-  join: "String",
-  replace: "String",
-  repeat: "String",
-  toJSON: "String",
-  toBase64: "String",
-  fromBase64: "String",
-  type: "String",
-  all: "Boolean",
-  any: "Boolean",
-  one: "Boolean",
-  none: "Boolean",
-  hasPrefix: "Boolean",
-  hasSuffix: "Boolean",
-  map: "Array",
-  filter: "Array",
-  sort: "Array",
-  sortBy: "Array",
-  uniq: "Array",
-  flatten: "Array",
-  concat: "Array",
-  split: "Array",
-  splitAfter: "Array",
-  take: "Array",
-  keys: "Array",
-  values: "Array",
-  now: "Date",
-  date: "Date",
-};
-
-const NUMERIC_PARAMS = new Set([
-  "abs",
-  "min",
-  "max",
-  "clamp",
-  "pow",
-  "sqrt",
-  "ceil",
-  "floor",
-  "round",
-  "roundUp",
-  "roundDown",
-  "roundHalfEven",
-  "roundTo",
-  "sum",
-  "avg",
-]);
-
-const BUILTIN_ARITY: Record<string, Arity> = {
-  len: { min: 1, max: 1 },
-  int: { min: 1, max: 1 },
-  float: { min: 1, max: 1 },
-  string: { min: 1, max: 1 },
-  upper: { min: 1, max: 1 },
-  lower: { min: 1, max: 1 },
-  trim: { min: 1, max: 2 },
-  abs: { min: 1, max: 1 },
-  ceil: { min: 1, max: 1 },
-  floor: { min: 1, max: 1 },
-  round: { min: 1, max: 2 },
-  first: { min: 1, max: 1 },
-  last: { min: 1, max: 1 },
-  keys: { min: 1, max: 1 },
-  values: { min: 1, max: 1 },
-  type: { min: 1, max: 1 },
-  now: { min: 0, max: 0 },
-  count: { min: 1, max: 2 },
-  sum: { min: 1, max: 2 },
-  mean: { min: 1, max: 1 },
-  median: { min: 1, max: 1 },
-  get: { min: 2, max: 2 },
-  lookup: { min: 2, max: 2 },
-  lookupOr: { min: 3, max: 3 },
-  lookup2: { min: 3, max: 3 },
-  lookup2Or: { min: 4, max: 4 },
-  lookupInterp: { min: 2, max: 2 },
-  deficitWeight: { min: 2, max: 2 },
-};
-
 function levenshtein(a: string, b: string): number {
   if (Math.abs(a.length - b.length) > 3) return Number.MAX_SAFE_INTEGER;
   const rows = a.length + 1;
@@ -330,7 +199,6 @@ type Scope = {
   known: KnownIdentifiers;
   variables: Map<string, VariableDoc>;
   roots: Map<string, VariableDoc[]>;
-  functions: Map<string, FunctionDoc>;
   bindings: Map<string, LetBinding>;
   diagnostics: ExprDiagnostic[];
   schemaReads: Set<string>;
@@ -347,6 +215,12 @@ type Scope = {
   pointerDepth: number;
   /** Names the enclosing ternary tested for nil, so reads of them in its branches are guarded. */
   guardedByTest?: Set<string>;
+  /** `#acc` is in scope inside reduce(). */
+  reduceDepth: number;
+  /** The expression's text, for fixes that rewrite a span from its own parts. */
+  source: string;
+  /** The type worked out for each node, so a chained comparison can read its middle operand's. */
+  types: Map<Node, ExprType>;
 };
 
 function report(
@@ -519,6 +393,18 @@ function typeOfMember(scope: Scope, node: Node & { kind: "member" }): ExprType {
   const path = memberPath(node);
   const rootName = memberPath(rootOf(node));
   if (node.object.kind === "pointer") {
+    if (scope.pointerDepth === 0) {
+      report(
+        scope,
+        node,
+        "error",
+        "syntax",
+        translate(
+          "{0} reads a field of the current item, so it only works inside filter(), map() and the like",
+          quote(`.${node.property}`),
+        ),
+      );
+    }
     return "Any";
   }
   if (path && scope.variables.has(path)) {
@@ -586,18 +472,108 @@ function rootOf(node: Node): Node {
   return node.kind === "member" ? rootOf(node.object) : node;
 }
 
+const RATING_TIME = "ratingTime";
+
+function reportDisabledFunction(
+  scope: Scope,
+  node: Node & { kind: "call" },
+  disabled: DisabledFunction,
+) {
+  const { name, replacement } = disabled;
+  switch (disabled.reason) {
+    case "nondeterministic":
+      report(
+        scope,
+        node.callee,
+        "error",
+        "disabled-function",
+        translate(
+          "{0} isn't available in formulas: a formula must price a shipment the same way every time it runs. Use {1}, the date the contract terms are read at",
+          quote(`${name}()`),
+          quote(replacement ?? RATING_TIME),
+        ),
+        {
+          name,
+          fixes:
+            node.args.length === 0 && replacement
+              ? [
+                  {
+                    kind: "replace",
+                    label: translate("Change to {0}", replacement),
+                    changes: [{ from: node.from, to: node.to, insert: replacement }],
+                  },
+                ]
+              : [],
+        },
+      );
+      return;
+    case "textBuilding":
+      report(
+        scope,
+        node.callee,
+        "error",
+        "disabled-function",
+        translate(
+          "{0} isn't available in formulas: formulas compare codes and do not build text",
+          quote(name),
+        ),
+        { name },
+      );
+      return;
+    default:
+      report(
+        scope,
+        node.callee,
+        "error",
+        "disabled-function",
+        translate(
+          "{0} isn't available in formulas: formulas read the shipment's fields directly and do not convert them to or from JSON",
+          quote(name),
+        ),
+        { name },
+      );
+  }
+}
+
+/** Whether an argument reads the current item (`#`, `.field`) outside a call that binds one. */
+function readsItem(scope: Scope, node: Node): boolean {
+  if (node.kind === "pointer" || node.kind === "predicate") return true;
+  if (node.kind === "call") {
+    const name = memberPath(node.callee);
+    if (name !== null && scope.known.shapes.get(name)?.predicate) {
+      return node.args.length > 0 && readsItem(scope, node.args[0]);
+    }
+  }
+  return (
+    childrenFor(node).some((child) => readsItem(scope, child)) ||
+    (node.kind === "member" && readsItem(scope, node.object))
+  );
+}
+
+function arityText(shape: FunctionShape): string {
+  return shape.maxArgs === Number.POSITIVE_INFINITY
+    ? translate("at least {0, plural, one {# argument} other {# arguments}}", shape.minArgs)
+    : shape.minArgs === shape.maxArgs
+      ? translate("{0, plural, one {# argument} other {# arguments}}", shape.minArgs)
+      : translate("{0} to {1} arguments", shape.minArgs, shape.maxArgs);
+}
+
 function typeOfCall(scope: Scope, node: Node & { kind: "call" }): ExprType {
   const name = memberPath(node.callee);
   if (name === null || node.callee.kind !== "ident") {
+    if (node.callee.kind === "member") typeOf(scope, node.callee.object);
     for (const arg of node.args) typeOf(scope, arg);
     return "Any";
   }
-  const doc = scope.functions.get(name);
-  if (!doc && !isKnownFunction(scope.known, name)) {
-    const suggestion = nearestKnown(name, [
-      ...scope.known.functionNames,
-      ...EXPR_BUILTIN_FUNCTIONS,
-    ]);
+  const shape = scope.known.shapes.get(name);
+  const disabled = scope.known.disabled.get(name);
+  if (!shape && disabled && !scope.variables.has(name) && !scope.bindings.has(name)) {
+    reportDisabledFunction(scope, node, disabled);
+    for (const arg of node.args) typeOf(scope, arg);
+    return "Any";
+  }
+  if (!shape || !isKnownFunction(scope.known, name)) {
+    const suggestion = nearestKnown(name, scope.known.functionNames);
     const isVariable = scope.variables.has(name) || scope.bindings.has(name);
     report(
       scope,
@@ -633,15 +609,28 @@ function typeOfCall(scope: Scope, node: Node & { kind: "call" }): ExprType {
   if (name === "coalesce") {
     for (const arg of node.args) markGuarded(scope, arg);
   }
-  const argTypes = node.args.map((arg) => typeOf(scope, arg));
-  const arity = doc ? arityOf(doc.signature) : (BUILTIN_ARITY[name] ?? null);
-  if (arity && (node.args.length < arity.min || node.args.length > arity.max)) {
-    const expected =
-      arity.max === Number.POSITIVE_INFINITY
-        ? translate("at least {0, plural, one {# argument} other {# arguments}}", arity.min)
-        : arity.min === arity.max
-          ? translate("{0, plural, one {# argument} other {# arguments}}", arity.min)
-          : translate("{0} to {1} arguments", arity.min, arity.max);
+
+  const predicateArg = shape.predicate ? 1 : -1;
+  const argTypes = node.args.map((arg, index) => {
+    if (index === predicateArg) {
+      scope.pointerDepth += 1;
+      if (name === "reduce") scope.reduceDepth += 1;
+      const type = typeOf(scope, arg);
+      if (name === "reduce") scope.reduceDepth -= 1;
+      scope.pointerDepth -= 1;
+      return type;
+    }
+    if (!shape.predicate && index > 0 && readsItem(scope, arg)) {
+      reportPredicateOnAFunction(scope, node, name, arg);
+      scope.pointerDepth += 1;
+      const type = typeOf(scope, arg);
+      scope.pointerDepth -= 1;
+      return type;
+    }
+    return typeOf(scope, arg);
+  });
+
+  if (node.args.length < shape.minArgs || node.args.length > shape.maxArgs) {
     report(
       scope,
       node.parens,
@@ -649,14 +638,14 @@ function typeOfCall(scope: Scope, node: Node & { kind: "call" }): ExprType {
       "arity",
       translate(
         "{0} takes {1}; {2, plural, one {# was} other {# were}} given",
-        doc?.signature ?? name,
-        expected,
+        shape.signature,
+        arityText(shape),
         node.args.length,
       ),
       { name },
     );
   }
-  if (NUMERIC_PARAMS.has(name)) {
+  if (shape.numericArgs) {
     node.args.forEach((arg, index) => {
       const type = argTypes[index];
       if (type !== undefined && !isNumeric(type) && type !== "Nil") {
@@ -673,17 +662,9 @@ function typeOfCall(scope: Scope, node: Node & { kind: "call" }): ExprType {
   if (name === "coalesce") {
     return argTypes.reduce<ExprType>((acc, type) => join(acc, type), "Nil");
   }
-  if (
-    (name === "lookup" ||
-      name === "lookupOr" ||
-      name === "lookup2" ||
-      name === "lookup2Or" ||
-      name === "lookupInterp" ||
-      name === "deficitWeight") &&
-    node.args[0]
-  ) {
+  if (scope.known.functions.some((fn) => fn.name === name && fn.category === "rateTable")) {
     const first = node.args[0];
-    if (first.kind !== "string") {
+    if (first && first.kind !== "string") {
       report(
         scope,
         first,
@@ -693,8 +674,99 @@ function typeOfCall(scope: Scope, node: Node & { kind: "call" }): ExprType {
       );
     }
   }
-  return RETURN_TYPES[name] ?? "Any";
+  return normalizeType(shape.returns);
 }
+
+/** A predicate given to a function that takes values, such as `sum(stops, .weight)`. */
+function reportPredicateOnAFunction(
+  scope: Scope,
+  node: Node & { kind: "call" },
+  name: string,
+  arg: Node,
+) {
+  const list = node.args[0];
+  const source = scope.source;
+  const fixes: ExprFix[] =
+    node.args.length === 2 && list
+      ? [
+          {
+            kind: "replace",
+            label: translate("Use {0}(map(…))", name),
+            changes: [
+              {
+                from: node.from,
+                to: node.to,
+                // i18n-ignore: formula source code, not text
+                insert: `${name}(map(${source.slice(list.from, list.to)}, ${source.slice(arg.from, arg.to)}))`,
+              },
+            ],
+          },
+        ]
+      : [];
+  report(
+    scope,
+    arg,
+    "error",
+    "type",
+    translate(
+      "{0} adds up values and does not take a predicate; map the list first: {0}(map(list, .field))",
+      name,
+    ),
+    { name, fixes },
+  );
+}
+
+/** Whether a value is a whole number to the engine, which is what `%` takes. */
+function isWhole(scope: Scope, node: Node): boolean {
+  switch (node.kind) {
+    case "number":
+      return node.whole;
+    case "ident": {
+      const binding = scope.bindings.get(node.name);
+      if (binding) return binding.whole;
+      const doc = scope.variables.get(node.name);
+      return doc !== undefined && isWholeType(doc.type);
+    }
+    case "member": {
+      const path = memberPath(node);
+      const doc = path ? scope.variables.get(path) : undefined;
+      return doc !== undefined && isWholeType(doc.type);
+    }
+    case "call": {
+      const name = memberPath(node.callee);
+      return name !== null && scope.known.shapes.get(name)?.returns === "Integer";
+    }
+    case "unary":
+      return (node.op === "-" || node.op === "+") && isWhole(scope, node.operand);
+    case "binary":
+      return (
+        (node.op === "+" || node.op === "-" || node.op === "*" || node.op === "%") &&
+        isWhole(scope, node.left) &&
+        isWhole(scope, node.right)
+      );
+    case "ternary":
+    case "if":
+      return isWhole(scope, node.consequent) && isWhole(scope, node.alternate);
+    case "sequence":
+      return isWhole(scope, node.body);
+    default:
+      return false;
+  }
+}
+
+function isWholeType(type: string): boolean {
+  const lower = type.toLowerCase();
+  return lower === "integer" || lower === "int";
+}
+
+/** A relation's field (`origin.zip`): the engine reads it untyped, so it compiles against anything. */
+function isUntypedToTheEngine(scope: Scope, node: Node): boolean {
+  if (node.kind !== "member") return false;
+  const root = memberPath(node.object);
+  return root !== null && scope.roots.has(root.split(".")[0]);
+}
+
+const COMPARISONS = new Set(["<", ">", "<=", ">="]);
 
 function checkArithmetic(
   scope: Scope,
@@ -743,7 +815,16 @@ function typeOfBinary(scope: Scope, node: Node & { kind: "binary" }): ExprType {
     const right = typeOf(scope, node.right);
     return join(left, right);
   }
-  const left = typeOf(scope, node.left);
+  const chained =
+    COMPARISONS.has(op) &&
+    node.left.kind === "binary" &&
+    !node.left.grouped &&
+    COMPARISONS.has(node.left.op);
+  const leftOfChain = typeOf(scope, node.left);
+  const left =
+    chained && node.left.kind === "binary"
+      ? (scope.types.get(node.left.right) ?? "Any")
+      : leftOfChain;
   const right = typeOf(scope, node.right);
   switch (op) {
     case "+":
@@ -760,7 +841,10 @@ function typeOfBinary(scope: Scope, node: Node & { kind: "binary" }): ExprType {
         );
         return "Any";
       }
-      if (left === "Date" || right === "Date") return "Date";
+      if (left === "Date" || right === "Date") {
+        checkDateArithmetic(scope, node, left, right);
+        return "Date";
+      }
       checkArithmetic(scope, node, left, right);
       return "Number";
     case "-":
@@ -778,8 +862,12 @@ function typeOfBinary(scope: Scope, node: Node & { kind: "binary" }): ExprType {
           translate("Dividing by 0 fails on every load"),
         );
       }
-      if (op === "-" && left === "Date") return "Any";
+      if (op === "-" && left === "Date") {
+        if (right !== "Date") checkDateArithmetic(scope, node, left, right);
+        return right === "Date" ? "Any" : "Date";
+      }
       checkArithmetic(scope, node, left, right);
+      if (op === "%") checkWholeOperands(scope, node, left, right);
       return "Number";
     case "<":
     case ">":
@@ -828,17 +916,25 @@ function typeOfBinary(scope: Scope, node: Node & { kind: "binary" }): ExprType {
         right !== "Nil" &&
         left !== right
       ) {
+        const untyped =
+          isUntypedToTheEngine(scope, node.left) || isUntypedToTheEngine(scope, node.right);
         report(
           scope,
           node.opRange,
-          "warning",
+          untyped ? "warning" : "error",
           "type",
-          translate(
-            "{0} and {1}, so this is never {2}",
-            describeValue(node.left, left),
-            describeValue(node.right, right),
-            op === "==" ? translate("equal") : translate("different"),
-          ),
+          untyped
+            ? translate(
+                "{0} and {1}, so this is never {2}",
+                describeValue(node.left, left),
+                describeValue(node.right, right),
+                op === "==" ? translate("equal") : translate("different"),
+              )
+            : translate(
+                "{0} and {1}; the engine compares only values of the same kind",
+                describeValue(node.left, left),
+                describeValue(node.right, right),
+              ),
         );
       }
       return "Boolean";
@@ -909,6 +1005,69 @@ function typeOfBinary(scope: Scope, node: Node & { kind: "binary" }): ExprType {
   }
 }
 
+/** A date moves by a duration (`duration("2h")`), not by a bare number. */
+function checkDateArithmetic(
+  scope: Scope,
+  node: Node & { kind: "binary" },
+  left: ExprType,
+  right: ExprType,
+) {
+  const number = left === "Number" ? node.left : right === "Number" ? node.right : null;
+  if (!number) return;
+  report(
+    scope,
+    number,
+    "error",
+    "type",
+    translate(
+      'A date moves by a duration, not a number: write {0} {1} duration("24h")',
+      memberPath(node.left === number ? node.right : node.left) ?? translate("the date"),
+      node.op,
+    ),
+  );
+}
+
+/** `%` takes whole numbers only; a decimal field, an input or a quotient is refused by the engine. */
+function checkWholeOperands(
+  scope: Scope,
+  node: Node & { kind: "binary" },
+  left: ExprType,
+  right: ExprType,
+) {
+  for (const [operand, type] of [
+    [node.left, left],
+    [node.right, right],
+  ] as const) {
+    if (type !== "Number" || isWhole(scope, operand)) continue;
+    const name = memberPath(operand);
+    report(
+      scope,
+      operand,
+      "error",
+      "type",
+      name
+        ? translate(
+            "'%' takes whole numbers, but {0} can hold a fraction. Use int({1}) to take its whole part",
+            quote(name),
+            name,
+          )
+        : translate("'%' takes whole numbers, but this part can come to a fraction"),
+      {
+        fixes: name
+          ? [
+              {
+                kind: "replace",
+                label: translate("Change to int({0})", name),
+                // i18n-ignore: formula source code, not text
+                changes: [{ from: operand.from, to: operand.to, insert: `int(${name})` }],
+              },
+            ]
+          : [],
+      },
+    );
+  }
+}
+
 function checkTextOperands(
   scope: Scope,
   node: Node & { kind: "binary" },
@@ -938,6 +1097,12 @@ function checkTextOperands(
 }
 
 function typeOf(scope: Scope, node: Node): ExprType {
+  const type = typeOfNode(scope, node);
+  scope.types.set(node, type);
+  return type;
+}
+
+function typeOfNode(scope: Scope, node: Node): ExprType {
   switch (node.kind) {
     case "number":
       return "Number";
@@ -955,6 +1120,22 @@ function typeOf(scope: Scope, node: Node): ExprType {
           "error",
           "syntax",
           translate("'#' stands for the current item inside filter(), map() and the like"),
+        );
+      } else if (node.name === "acc" && scope.reduceDepth === 0) {
+        report(
+          scope,
+          node,
+          "error",
+          "syntax",
+          translate("'#acc' is the running total inside reduce() and nowhere else"),
+        );
+      } else if (node.name !== "" && node.name !== "acc" && node.name !== "index") {
+        report(
+          scope,
+          node,
+          "error",
+          "syntax",
+          translate("'#{0}' isn't a pointer; use #, #index or, inside reduce(), #acc", node.name),
         );
       }
       return "Any";
@@ -984,34 +1165,10 @@ function typeOf(scope: Scope, node: Node): ExprType {
       if (node.end) typeOf(scope, node.end);
       return "Any";
     }
-    case "call": {
-      const name = memberPath(node.callee);
-      const predicate =
-        name !== null &&
-        [
-          "filter",
-          "map",
-          "all",
-          "any",
-          "one",
-          "none",
-          "find",
-          "findIndex",
-          "findLast",
-          "findLastIndex",
-          "count",
-          "sortBy",
-          "groupBy",
-          "reduce",
-          "sum",
-          "mean",
-          "median",
-        ].includes(name);
-      if (predicate) scope.pointerDepth += 1;
-      const type = typeOfCall(scope, node);
-      if (predicate) scope.pointerDepth -= 1;
-      return type;
-    }
+    case "call":
+      return typeOfCall(scope, node);
+    case "sequence":
+      return typeOfSequence(scope, node);
     case "unary": {
       const operand = typeOf(scope, node.operand);
       if (node.op === "-" || node.op === "+") {
@@ -1090,6 +1247,97 @@ function typeOf(scope: Scope, node: Node): ExprType {
   }
 }
 
+/**
+ * `let` lines inside parentheses, an `if` block or a predicate. Each name is
+ * scoped to the value after it; the engine refuses one that a field, an input,
+ * a function or an enclosing `let` already holds.
+ */
+function typeOfSequence(scope: Scope, node: Node & { kind: "sequence" }): ExprType {
+  const added: string[] = [];
+  for (const entry of node.lets) {
+    const type = typeOf(scope, entry.value);
+    if (entry.name === "") continue;
+    if (scope.bindings.has(entry.name)) {
+      report(
+        scope,
+        entry.nameRange,
+        "error",
+        "let-duplicate",
+        translate("{0} is already defined above; use another name", quote(entry.name)),
+        { name: entry.name },
+      );
+      continue;
+    }
+    checkLetName(scope, entry);
+    scope.bindings.set(entry.name, {
+      name: entry.name,
+      nameRange: entry.nameRange,
+      type,
+      whole: isWhole(scope, entry.value),
+      reads: 0,
+      from: entry.from,
+      to: entry.to,
+    });
+    scope.defined.add(entry.name);
+    added.push(entry.name);
+  }
+  const type = typeOf(scope, node.body);
+  for (const name of added) {
+    const binding = scope.bindings.get(name);
+    if (binding && binding.reads === 0) {
+      report(
+        scope,
+        binding.nameRange,
+        "warning",
+        "let-unused",
+        translate("{0} is never used", quote(name)),
+        { name },
+      );
+    }
+    scope.bindings.delete(name);
+    scope.defined.delete(name);
+  }
+  return type;
+}
+
+/** The engine refuses a `let` that would hide a field, an input or a function. */
+function checkLetName(scope: Scope, entry: Pick<LetEntry, "name" | "nameRange">) {
+  const { name } = entry;
+  if (scope.variables.has(name) || scope.roots.has(name)) {
+    const custom = scope.variables.get(name)?.custom === true;
+    report(
+      scope,
+      entry.nameRange,
+      "error",
+      "let-shadows",
+      custom
+        ? translate(
+            "{0} is one of this template's inputs, and a 'let' can't redeclare it. Use another name",
+            quote(name),
+          )
+        : translate(
+            "{0} is already a shipment field, and a 'let' can't redeclare it. Use another name",
+            quote(name),
+          ),
+      { name },
+    );
+    return;
+  }
+  if (scope.known.functionNames.has(name)) {
+    report(
+      scope,
+      entry.nameRange,
+      "error",
+      "let-shadows",
+      translate(
+        "{0} is the name of a formula function, and a 'let' can't take it. Use another name",
+        quote(name),
+      ),
+      { name },
+    );
+  }
+}
+
 /** A ternary whose test asks whether a value is empty guards that value in both branches. */
 function markNilTests(scope: Scope, test: Node) {
   const names = new Set<string>();
@@ -1143,6 +1391,8 @@ function childrenFor(node: Node): Node[] {
       return node.entries.map((entry) => entry.value);
     case "predicate":
       return [node.body];
+    case "sequence":
+      return [...node.lets.map((entry) => entry.value), node.body];
     default:
       return [];
   }
@@ -1198,7 +1448,6 @@ export function checkExpression(expression: string, known: KnownIdentifiers): Ex
     known,
     variables: new Map(known.variables.map((doc) => [doc.name, doc])),
     roots: new Map(),
-    functions: new Map(known.functions.map((doc) => [doc.name, doc])),
     bindings: new Map(),
     diagnostics: program.diagnostics.map(syntaxToDiagnostic),
     schemaReads: new Set(),
@@ -1209,6 +1458,9 @@ export function checkExpression(expression: string, known: KnownIdentifiers): Ex
     flaggedNullable: new Set(),
     defined: new Set(),
     pointerDepth: 0,
+    reduceDepth: 0,
+    types: new Map(),
+    source: expression,
   };
   for (const doc of known.variables) {
     const dot = doc.name.indexOf(".");
@@ -1237,6 +1489,7 @@ export function checkExpression(expression: string, known: KnownIdentifiers): Ex
       name: statement.name,
       nameRange: statement.nameRange,
       type: "Any",
+      whole: false,
       reads: 0,
       from: statement.from,
       to: statement.to,
@@ -1247,26 +1500,12 @@ export function checkExpression(expression: string, known: KnownIdentifiers): Ex
   statements.forEach((statement, index) => {
     preMarkGuards(scope, statement.value);
     if (statement.kind === "let") {
-      if (
-        statement.name !== "" &&
-        (scope.variables.has(statement.name) || scope.roots.has(statement.name))
-      ) {
-        report(
-          scope,
-          statement.nameRange,
-          "warning",
-          "let-shadows",
-          translate(
-            "{0} is also a shipment field; the 'let' hides it from the lines below",
-            quote(statement.name),
-          ),
-          { name: statement.name },
-        );
-      }
+      if (statement.name !== "") checkLetName(scope, statement);
       const type = typeOf(scope, statement.value);
       const binding = scope.bindings.get(statement.name);
       if (binding && binding.nameRange.from === statement.nameRange.from) {
         binding.type = type;
+        binding.whole = isWhole(scope, statement.value);
         scope.defined.add(statement.name);
       }
       if (index === statements.length - 1 && statement.name !== "") {
@@ -1339,7 +1578,10 @@ export function checkExpression(expression: string, known: KnownIdentifiers): Ex
     }
   }
 
-  const diagnostics = dedupe(scope.diagnostics).sort((a, b) => a.from - b.from || a.to - b.to);
+  const found = known.ready
+    ? scope.diagnostics
+    : scope.diagnostics.filter((diagnostic) => !SCHEMA_CODES.has(diagnostic.code));
+  const diagnostics = dedupe(found).sort((a, b) => a.from - b.from || a.to - b.to);
   const reads = [
     ...scope.order.filter((name) => scope.inputReads.has(name)),
     ...scope.order.filter((name) => !scope.inputReads.has(name)),
@@ -1354,8 +1596,19 @@ export function checkExpression(expression: string, known: KnownIdentifiers): Ex
     reads,
     bindings: scope.bindings,
     resultType,
+    pending: !known.ready,
   };
 }
+
+/** Findings that depend on the engine's schema; none is reported until it has loaded. */
+const SCHEMA_CODES: ReadonlySet<DiagnosticCode> = new Set<DiagnosticCode>([
+  "unknown-variable",
+  "unknown-field",
+  "unknown-function",
+  "disabled-function",
+  "arity",
+  "let-shadows",
+]);
 
 function dedupe(diagnostics: ExprDiagnostic[]): ExprDiagnostic[] {
   const seen = new Set<string>();
@@ -1367,7 +1620,11 @@ function dedupe(diagnostics: ExprDiagnostic[]): ExprDiagnostic[] {
   });
 }
 
-/** Parses the position expr's engine writes into its errors, "(line:column)", onto a span. */
+/**
+ * Parses the position expr's engine writes into its errors, "(line:column)",
+ * onto a span. The line and column are 1-based and the column counts
+ * characters (runes), not the UTF-16 units the editor's offsets are in.
+ */
 export function engineErrorRange(message: string, expression: string): Range | null {
   const match = /\((\d+):(\d+)\)/.exec(message);
   if (!match) return null;
@@ -1377,8 +1634,11 @@ export function engineErrorRange(message: string, expression: string): Range | n
   if (line < 1 || line > lines.length) return null;
   let offset = 0;
   for (let index = 0; index < line - 1; index += 1) offset += lines[index].length + 1;
-  const from = Math.min(offset + column, offset + lines[line - 1].length);
-  const rest = lines[line - 1].slice(column);
+  const text = lines[line - 1];
+  const runes = Array.from(text);
+  const start = runes.slice(0, Math.max(0, column - 1)).join("").length;
+  const from = Math.min(offset + start, offset + text.length);
+  const rest = text.slice(start);
   const word = /^[A-Za-z_][A-Za-z0-9_.]*|^\S/.exec(rest);
   return { from, to: from + Math.max(1, word?.[0].length ?? 1) };
 }

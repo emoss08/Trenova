@@ -6,10 +6,13 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -115,4 +118,21 @@ func TestBuildValidationEnvironmentForTenant_IncludesProvidedVariables(t *testin
 	require.NoError(t, err)
 	assert.InDelta(t, 3.85, env["fuelPrice"], 0.0001)
 	assert.InDelta(t, 2.0, env["customRate"], 0.0001)
+}
+
+func TestEvaluatePredicate_SeesTheTenantsProvidedValues(t *testing.T) {
+	t.Parallel()
+
+	fuel := &stubContextProvider{variables: map[string]any{"fuelPrice": 4.5}}
+	svc := setupServiceWithProviders(t, fuel)
+
+	holds, err := svc.EvaluatePredicate(t.Context(), &formulatemplateports.EvaluatePredicateRequest{
+		Expression: "fuelPrice > 4",
+		SchemaID:   "shipment",
+		Entity:     &shipment.Shipment{ServiceType: &servicetype.ServiceType{Code: "STD"}},
+		TenantInfo: testTenant(),
+	})
+	require.NoError(t, err)
+	assert.True(t, holds)
+	assert.EqualValues(t, 1, fuel.calls.Load())
 }

@@ -2,11 +2,15 @@
 package engine
 
 import (
+	goErrors "errors"
 	"fmt"
 	"maps"
+	"runtime/debug"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/pkg/formulatypes"
@@ -56,15 +60,16 @@ func (b *EnvironmentBuilder) Build(
 			continue
 		}
 
-		if source.Computed {
-			value, err = b.resolver.ResolveComputed(computedEntity, source.Function)
-		} else {
-			value, err = b.resolver.ResolveField(entity, source)
-		}
+		value, err = guardResolve(entity, fieldPath, func() (any, error) {
+			if source.Computed {
+				return b.resolver.ResolveComputed(computedEntity, source.Function)
+			}
+			return b.resolver.ResolveField(entity, source)
+		})
 
 		if err != nil {
 			value = nil
-			if !source.Nullable {
+			if !source.Nullable || isPanic(err) {
 				resolveFailures[fieldPath] = err
 			}
 		}
@@ -72,7 +77,32 @@ func (b *EnvironmentBuilder) Build(
 		formulatypes.SetNestedValue(env, fieldPath, value)
 	}
 
+	b.clearAbsentRelations(entity, definition, env)
+
 	return env, resolveFailures, nil
+}
+
+func (b *EnvironmentBuilder) clearAbsentRelations(
+	entity any,
+	definition *formulatypes.Definition,
+	env map[string]any,
+) {
+	objects := nullableObjects(definition.Properties, "")
+	for path := range objects {
+		relation := objects[path].Source.Relation
+		if relation == "" {
+			continue
+		}
+		value, err := guardResolve(entity, path, func() (any, error) {
+			return b.resolver.ResolveField(entity, &formulatypes.FieldSource{
+				Path:     relation,
+				Nullable: true,
+			})
+		})
+		if err == nil && value == nil {
+			setShapePath(env, path, nil)
+		}
+	}
 }
 
 func (b *EnvironmentBuilder) BuildWithVariables(
@@ -134,15 +164,28 @@ func (b *EnvironmentBuilder) GetRequiredPreloads(schemaID string) []string {
 		return nil
 	}
 
-	preloadSet := make(map[string]struct{})
+	preloadSet := make(map[string]struct{}, len(definition.DataSource.Preloads))
+	addRelation := func(path string) {
+		if path != "" {
+			preloadSet[path] = struct{}{}
+		}
+	}
 
 	for _, preload := range definition.DataSource.Preloads {
-		preloadSet[preload] = struct{}{}
+		addRelation(preload)
 	}
 
 	for _, source := range definition.FieldSources {
 		for _, preload := range source.Preload {
-			preloadSet[preload] = struct{}{}
+			addRelation(preload)
+		}
+		for _, required := range source.Requires {
+			if !isSchemaField(definition, required) {
+				addRelation(required)
+			}
+		}
+		if index := strings.LastIndex(source.Path, "."); index > 0 {
+			addRelation(source.Path[:index])
 		}
 	}
 
@@ -150,8 +193,17 @@ func (b *EnvironmentBuilder) GetRequiredPreloads(schemaID string) []string {
 	for p := range preloadSet {
 		preloads = append(preloads, p)
 	}
+	sort.Strings(preloads)
 
 	return preloads
+}
+
+func isSchemaField(definition *formulatypes.Definition, name string) bool {
+	if _, ok := definition.FieldSources[name]; ok {
+		return true
+	}
+	_, ok := definition.Properties[name]
+	return ok
 }
 
 func (b *EnvironmentBuilder) GetAvailableVariables(schemaID string) []*formulatypes.FieldSource {
@@ -306,4 +358,27 @@ func coerceDateSample(value any) any {
 		}
 	}
 	return value
+}
+
+func guardResolve(
+	entity any,
+	fieldPath string,
+	resolve func() (any, error),
+) (value any, err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			value = nil
+			err = errors.NewResolveError(
+				fieldPath,
+				fmt.Sprintf("%T", resolver.Unwrap(entity)),
+				errors.NewPanicError(recovered, debug.Stack()),
+			)
+		}
+	}()
+	return resolve()
+}
+
+func isPanic(err error) bool {
+	var panicErr *errors.PanicError
+	return goErrors.As(err, &panicErr)
 }

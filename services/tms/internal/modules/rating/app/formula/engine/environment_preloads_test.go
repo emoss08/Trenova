@@ -3,6 +3,7 @@ package engine_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/stretchr/testify/assert"
@@ -377,11 +378,12 @@ func TestEnvironmentBuilder_Build_WithComputedAndDirect(t *testing.T) {
 	err := registry.Register("test-mixed-fields", []byte(schemaJSON))
 	require.NoError(t, err)
 
-	entity := &TestShipment{
-		Weight: 3000,
-		Moves: []Move{
-			{Distance: 100.0},
-			{Distance: 200.0},
+	weight := int64(3000)
+	entity := &shipment.Shipment{
+		Weight: &weight,
+		Moves: []*shipment.ShipmentMove{
+			{Distance: distance(100.0)},
+			{Distance: distance(200.0)},
 		},
 	}
 
@@ -493,4 +495,72 @@ func TestNewEnvironmentBuilder(t *testing.T) {
 	})
 
 	require.NotNil(t, builder)
+}
+
+func TestGetRequiredPreloads_DerivesRelationsFromPathsAndRequires(t *testing.T) {
+	t.Parallel()
+
+	builder, registry := setupEnvironmentBuilder(t)
+
+	schemaJSON := `{
+		"$schema": "http://json-schema.org/draft-07/schema#",
+		"$id": "test-derived-preloads",
+		"type": "object",
+		"x-formula-context": {
+			"entityType": "Shipment"
+		},
+		"x-data-source": {
+			"table": "shipments",
+			"preloads": []
+		},
+		"properties": {
+			"temperatureMin": {
+				"type": "number",
+				"x-source": {
+					"field": "temperature_min",
+					"path": "TemperatureMin"
+				}
+			},
+			"spread": {
+				"type": "number",
+				"x-source": {
+					"computed": true,
+					"function": "computeSpread",
+					"requires": ["temperatureMin", "Moves"]
+				}
+			},
+			"customer": {
+				"type": "object",
+				"properties": {
+					"code": {
+						"type": "string",
+						"x-source": {
+							"path": "Customer.Code"
+						}
+					}
+				}
+			},
+			"billTo": {
+				"type": "object",
+				"properties": {
+					"state": {
+						"type": "string",
+						"x-source": {
+							"path": "BillToCustomer.State.Abbreviation"
+						}
+					}
+				}
+			}
+		}
+	}`
+
+	require.NoError(t, registry.Register("test-derived-preloads", []byte(schemaJSON)))
+
+	preloads := builder.GetRequiredPreloads("test-derived-preloads")
+	assert.Equal(
+		t,
+		[]string{"BillToCustomer.State", "Customer", "Moves"},
+		preloads,
+		"a path leaf's parent and a relation named in requires are relations; a field named in requires is not",
+	)
 }

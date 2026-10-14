@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	formulaerrors "github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
@@ -613,13 +614,13 @@ func TestEngine_ValidateExpressionWithEnv(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:       "boolean result is valid",
+			name:       "boolean result is refused; it would bill 1 or 0",
 			expression: "x > y",
 			env: map[string]any{
 				"x": 0.0,
 				"y": 0.0,
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name:       "undefined variable",
@@ -940,7 +941,8 @@ func TestEngine_EvaluateWithEnv_CoalesceAllNilResult(t *testing.T) {
 		&formulatemplatetypes.EnvEvaluationRequest{Expression: "coalesce(a, b)", Env: env},
 	)
 	require.Error(t, err)
-	require.ErrorContains(t, err, "cannot convert <nil> to decimal")
+	require.ErrorIs(t, err, engine.ErrNonNumericResult)
+	require.ErrorContains(t, err, "got an empty value")
 }
 
 func TestEngine_EvaluateWithEnv_StringResultError(t *testing.T) {
@@ -1139,9 +1141,10 @@ func TestEngine_Evaluate_UnresolvedNonNullableField(t *testing.T) {
 			Entity:    struct{}{},
 			Variables: map[string]any{},
 		})
-		require.Error(t, evalErr)
-		require.ErrorContains(t, evalErr, "unresolved fields")
-		require.ErrorContains(t, evalErr, "weight")
+		var unresolved *formulaerrors.UnresolvedFieldError
+		require.ErrorAs(t, evalErr, &unresolved)
+		assert.Equal(t, []string{"weight"}, unresolved.Fields)
+		require.Error(t, unresolved.Causes["weight"])
 	})
 }
 

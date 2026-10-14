@@ -486,6 +486,11 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	// Storage defaults
 	l.viper.SetDefault("storage.provider", StorageProviderMinio)
 	l.viper.SetDefault("storage.autoCreateBucket", true)
+
+	l.viper.SetDefault(
+		"formula.maxConcurrentEvaluations",
+		defaultMaxConcurrentFormulaEvaluations,
+	)
 }
 
 func (l *Loader) bindPlatformEnvAliases() {

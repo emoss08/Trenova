@@ -453,49 +453,51 @@ var RateAgreementAccessorialTable = buncolgen.TableInfo{
 //	q.Where(RateAgreementAccessorialColumns.ID.Eq(), id)           // WHERE raga.id = ?
 //	q.Order(RateAgreementAccessorialColumns.CreatedAt.OrderDesc())  // ORDER BY raga.created_at DESC
 var RateAgreementAccessorialColumns = struct {
-	ID                  buncolgen.Column // "id" → qualified: "raga.id"
-	BusinessUnitID      buncolgen.Column // "business_unit_id" → qualified: "raga.business_unit_id"
-	OrganizationID      buncolgen.Column // "organization_id" → qualified: "raga.organization_id"
-	RateAgreementID     buncolgen.Column // "rate_agreement_id" → qualified: "raga.rate_agreement_id"
-	AccessorialChargeID buncolgen.Column // "accessorial_charge_id" → qualified: "raga.accessorial_charge_id"
-	Method              buncolgen.Column // "method" → qualified: "raga.method"
-	RateUnit            buncolgen.Column // "rate_unit" → qualified: "raga.rate_unit"
-	Amount              buncolgen.Column // "amount" → qualified: "raga.amount"
-	Waived              buncolgen.Column // "waived" → qualified: "raga.waived"
-	AutoApply           buncolgen.Column // "auto_apply" → qualified: "raga.auto_apply"
-	ApplyCondition      buncolgen.Column // "apply_condition" → qualified: "raga.apply_condition"
-	FreeUnits           buncolgen.Column // "free_units" → qualified: "raga.free_units"
-	MaxAmount           buncolgen.Column // "max_amount" → qualified: "raga.max_amount"
-	FormulaTemplateID   buncolgen.Column // "formula_template_id" → qualified: "raga.formula_template_id"
-	ServiceTypeIDs      buncolgen.Column // "service_type_ids" → qualified: "raga.service_type_ids"
-	ShipmentTypeIDs     buncolgen.Column // "shipment_type_ids" → qualified: "raga.shipment_type_ids"
-	EffectiveFrom       buncolgen.Column // "effective_from" → qualified: "raga.effective_from"
-	EffectiveTo         buncolgen.Column // "effective_to" → qualified: "raga.effective_to"
-	Version             buncolgen.Column // "version" → qualified: "raga.version"
-	CreatedAt           buncolgen.Column // "created_at" → qualified: "raga.created_at"
-	UpdatedAt           buncolgen.Column // "updated_at" → qualified: "raga.updated_at"
+	ID                       buncolgen.Column // "id" → qualified: "raga.id"
+	BusinessUnitID           buncolgen.Column // "business_unit_id" → qualified: "raga.business_unit_id"
+	OrganizationID           buncolgen.Column // "organization_id" → qualified: "raga.organization_id"
+	RateAgreementID          buncolgen.Column // "rate_agreement_id" → qualified: "raga.rate_agreement_id"
+	AccessorialChargeID      buncolgen.Column // "accessorial_charge_id" → qualified: "raga.accessorial_charge_id"
+	Method                   buncolgen.Column // "method" → qualified: "raga.method"
+	RateUnit                 buncolgen.Column // "rate_unit" → qualified: "raga.rate_unit"
+	Amount                   buncolgen.Column // "amount" → qualified: "raga.amount"
+	Waived                   buncolgen.Column // "waived" → qualified: "raga.waived"
+	AutoApply                buncolgen.Column // "auto_apply" → qualified: "raga.auto_apply"
+	ApplyCondition           buncolgen.Column // "apply_condition" → qualified: "raga.apply_condition"
+	ConditionLanguageVersion buncolgen.Column // "condition_language_version" → qualified: "raga.condition_language_version"
+	FreeUnits                buncolgen.Column // "free_units" → qualified: "raga.free_units"
+	MaxAmount                buncolgen.Column // "max_amount" → qualified: "raga.max_amount"
+	FormulaTemplateID        buncolgen.Column // "formula_template_id" → qualified: "raga.formula_template_id"
+	ServiceTypeIDs           buncolgen.Column // "service_type_ids" → qualified: "raga.service_type_ids"
+	ShipmentTypeIDs          buncolgen.Column // "shipment_type_ids" → qualified: "raga.shipment_type_ids"
+	EffectiveFrom            buncolgen.Column // "effective_from" → qualified: "raga.effective_from"
+	EffectiveTo              buncolgen.Column // "effective_to" → qualified: "raga.effective_to"
+	Version                  buncolgen.Column // "version" → qualified: "raga.version"
+	CreatedAt                buncolgen.Column // "created_at" → qualified: "raga.created_at"
+	UpdatedAt                buncolgen.Column // "updated_at" → qualified: "raga.updated_at"
 }{
-	ID:                  buncolgen.NewColumn("id", "raga"),
-	BusinessUnitID:      buncolgen.NewColumn("business_unit_id", "raga"),
-	OrganizationID:      buncolgen.NewColumn("organization_id", "raga"),
-	RateAgreementID:     buncolgen.NewColumn("rate_agreement_id", "raga"),
-	AccessorialChargeID: buncolgen.NewColumn("accessorial_charge_id", "raga"),
-	Method:              buncolgen.NewColumn("method", "raga"),
-	RateUnit:            buncolgen.NewColumn("rate_unit", "raga"),
-	Amount:              buncolgen.NewColumn("amount", "raga"),
-	Waived:              buncolgen.NewColumn("waived", "raga"),
-	AutoApply:           buncolgen.NewColumn("auto_apply", "raga"),
-	ApplyCondition:      buncolgen.NewColumn("apply_condition", "raga"),
-	FreeUnits:           buncolgen.NewColumn("free_units", "raga"),
-	MaxAmount:           buncolgen.NewColumn("max_amount", "raga"),
-	FormulaTemplateID:   buncolgen.NewColumn("formula_template_id", "raga"),
-	ServiceTypeIDs:      buncolgen.NewColumn("service_type_ids", "raga"),
-	ShipmentTypeIDs:     buncolgen.NewColumn("shipment_type_ids", "raga"),
-	EffectiveFrom:       buncolgen.NewColumn("effective_from", "raga"),
-	EffectiveTo:         buncolgen.NewColumn("effective_to", "raga"),
-	Version:             buncolgen.NewColumn("version", "raga"),
-	CreatedAt:           buncolgen.NewColumn("created_at", "raga"),
-	UpdatedAt:           buncolgen.NewColumn("updated_at", "raga"),
+	ID:                       buncolgen.NewColumn("id", "raga"),
+	BusinessUnitID:           buncolgen.NewColumn("business_unit_id", "raga"),
+	OrganizationID:           buncolgen.NewColumn("organization_id", "raga"),
+	RateAgreementID:          buncolgen.NewColumn("rate_agreement_id", "raga"),
+	AccessorialChargeID:      buncolgen.NewColumn("accessorial_charge_id", "raga"),
+	Method:                   buncolgen.NewColumn("method", "raga"),
+	RateUnit:                 buncolgen.NewColumn("rate_unit", "raga"),
+	Amount:                   buncolgen.NewColumn("amount", "raga"),
+	Waived:                   buncolgen.NewColumn("waived", "raga"),
+	AutoApply:                buncolgen.NewColumn("auto_apply", "raga"),
+	ApplyCondition:           buncolgen.NewColumn("apply_condition", "raga"),
+	ConditionLanguageVersion: buncolgen.NewColumn("condition_language_version", "raga"),
+	FreeUnits:                buncolgen.NewColumn("free_units", "raga"),
+	MaxAmount:                buncolgen.NewColumn("max_amount", "raga"),
+	FormulaTemplateID:        buncolgen.NewColumn("formula_template_id", "raga"),
+	ServiceTypeIDs:           buncolgen.NewColumn("service_type_ids", "raga"),
+	ShipmentTypeIDs:          buncolgen.NewColumn("shipment_type_ids", "raga"),
+	EffectiveFrom:            buncolgen.NewColumn("effective_from", "raga"),
+	EffectiveTo:              buncolgen.NewColumn("effective_to", "raga"),
+	Version:                  buncolgen.NewColumn("version", "raga"),
+	CreatedAt:                buncolgen.NewColumn("created_at", "raga"),
+	UpdatedAt:                buncolgen.NewColumn("updated_at", "raga"),
 }
 
 // RateAgreementAccessorialFieldMap maps JSON API field names to database column names.
@@ -503,27 +505,28 @@ var RateAgreementAccessorialColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by RateAgreementAccessorial.GetStaticFieldMap().
 var RateAgreementAccessorialFieldMap = map[string]string{
-	"id":                  "id",
-	"businessUnitId":      "business_unit_id",
-	"organizationId":      "organization_id",
-	"rateAgreementId":     "rate_agreement_id",
-	"accessorialChargeId": "accessorial_charge_id",
-	"method":              "method",
-	"rateUnit":            "rate_unit",
-	"amount":              "amount",
-	"waived":              "waived",
-	"autoApply":           "auto_apply",
-	"applyCondition":      "apply_condition",
-	"freeUnits":           "free_units",
-	"maxAmount":           "max_amount",
-	"formulaTemplateId":   "formula_template_id",
-	"serviceTypeIds":      "service_type_ids",
-	"shipmentTypeIds":     "shipment_type_ids",
-	"effectiveFrom":       "effective_from",
-	"effectiveTo":         "effective_to",
-	"version":             "version",
-	"createdAt":           "created_at",
-	"updatedAt":           "updated_at",
+	"id":                       "id",
+	"businessUnitId":           "business_unit_id",
+	"organizationId":           "organization_id",
+	"rateAgreementId":          "rate_agreement_id",
+	"accessorialChargeId":      "accessorial_charge_id",
+	"method":                   "method",
+	"rateUnit":                 "rate_unit",
+	"amount":                   "amount",
+	"waived":                   "waived",
+	"autoApply":                "auto_apply",
+	"applyCondition":           "apply_condition",
+	"conditionLanguageVersion": "condition_language_version",
+	"freeUnits":                "free_units",
+	"maxAmount":                "max_amount",
+	"formulaTemplateId":        "formula_template_id",
+	"serviceTypeIds":           "service_type_ids",
+	"shipmentTypeIds":          "shipment_type_ids",
+	"effectiveFrom":            "effective_from",
+	"effectiveTo":              "effective_to",
+	"version":                  "version",
+	"createdAt":                "created_at",
+	"updatedAt":                "updated_at",
 }
 
 // RateAgreementAccessorialInsertableColumns lists column names suitable for INSERT statements on the "rate_agreement_accessorials" table.
@@ -540,6 +543,7 @@ var RateAgreementAccessorialInsertableColumns = []string{
 	"waived",
 	"auto_apply",
 	"apply_condition",
+	"condition_language_version",
 	"free_units",
 	"max_amount",
 	"formula_template_id",
@@ -615,27 +619,28 @@ func RateAgreementAccessorialApplyTenant(ti pagination.TenantInfo) func(*bun.Sel
 //	RateAgreementAccessorialFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var RateAgreementAccessorialFilter = struct {
-	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	RateAgreementID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementId" → DB: "rate_agreement_id"
-	AccessorialChargeID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessorialChargeId" → DB: "accessorial_charge_id"
-	Method              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
-	RateUnit            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateUnit" → DB: "rate_unit"
-	Amount              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
-	Waived              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "waived" → DB: "waived"
-	AutoApply           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoApply" → DB: "auto_apply"
-	ApplyCondition      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "applyCondition" → DB: "apply_condition"
-	FreeUnits           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freeUnits" → DB: "free_units"
-	MaxAmount           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxAmount" → DB: "max_amount"
-	FormulaTemplateID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
-	ServiceTypeIDs      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceTypeIds" → DB: "service_type_ids"
-	ShipmentTypeIDs     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentTypeIds" → DB: "shipment_type_ids"
-	EffectiveFrom       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
-	EffectiveTo         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveTo" → DB: "effective_to"
-	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RateAgreementID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementId" → DB: "rate_agreement_id"
+	AccessorialChargeID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessorialChargeId" → DB: "accessorial_charge_id"
+	Method                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
+	RateUnit                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateUnit" → DB: "rate_unit"
+	Amount                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
+	Waived                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "waived" → DB: "waived"
+	AutoApply                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoApply" → DB: "auto_apply"
+	ApplyCondition           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "applyCondition" → DB: "apply_condition"
+	ConditionLanguageVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "conditionLanguageVersion" → DB: "condition_language_version"
+	FreeUnits                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freeUnits" → DB: "free_units"
+	MaxAmount                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxAmount" → DB: "max_amount"
+	FormulaTemplateID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
+	ServiceTypeIDs           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceTypeIds" → DB: "service_type_ids"
+	ShipmentTypeIDs          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentTypeIds" → DB: "shipment_type_ids"
+	EffectiveFrom            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
+	EffectiveTo              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveTo" → DB: "effective_to"
+	Version                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -669,6 +674,9 @@ var RateAgreementAccessorialFilter = struct {
 	},
 	ApplyCondition: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("applyCondition", op, value)
+	},
+	ConditionLanguageVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("conditionLanguageVersion", op, value)
 	},
 	FreeUnits: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("freeUnits", op, value)

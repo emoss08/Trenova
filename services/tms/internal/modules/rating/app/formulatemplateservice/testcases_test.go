@@ -186,6 +186,7 @@ func TestApprove_BlockedByFailingScenarios(t *testing.T) {
 		newTestCase("this one fails", 999, 0.01),
 	}
 
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	result, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
 		TenantInfo: tenant,
 		EntityID:   template.ID,
@@ -220,6 +221,7 @@ func TestApprove_PassesWithGreenScenarios(t *testing.T) {
 		newTestCase("green scenario", 250, 0.01),
 	}
 
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	result, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
 		TenantInfo: tenant,
 		EntityID:   template.ID,
@@ -277,10 +279,17 @@ func TestDeleteTestCase_Delegates(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	caseID := pulid.MustNew("ftc_")
+	template := newTestTemplate()
+	scenario := newTestCase("exact match", 250, 0.01)
+	scenario.TemplateID = template.ID
+	deps.testCaseRepo.cases = []*formulatemplate.TestCase{scenario}
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+
+	caseID := scenario.ID
 	err := deps.svc.DeleteTestCase(t.Context(), formulatemplateports.GetTestCaseByIDRequest{
 		TenantInfo: newTenantInfo(),
-		TemplateID: pulid.MustNew("ft_"),
+		TemplateID: template.ID,
 		TestCaseID: caseID,
 	})
 

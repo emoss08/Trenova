@@ -685,6 +685,8 @@ export const rateQuoteSchema = z.object({
   rateAgreementRuleId: z.string().nullish(),
   agreementVersionNumber: z.number().int().nullish(),
   formulaTemplateId: z.string().nullish(),
+  /** The approved snapshot of the formula that priced the linehaul. */
+  formulaTemplateVersionNumber: z.number().int().nullish(),
   specificityScore: z.number().int().default(0),
   /** The contract's currency, which every amount in the trace is stated in. */
   currency: z.string().default("USD"),

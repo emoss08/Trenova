@@ -17,10 +17,6 @@ type Load func(ctx context.Context) ([]*formulatemplate.FormulaTemplateVersion, 
 // predate any snapshot asks the database once.
 type LoadOne func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error)
 
-// latestActiveKey is the version-number slot reserved for "the newest Active
-// snapshot"; real version numbers start at one.
-const latestActiveKey int64 = 0
-
 type singleKey struct {
 	templateID    pulid.ID
 	versionNumber int64
@@ -53,16 +49,6 @@ func GetVersion(
 	load LoadOne,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return getSingle(ctx, singleKey{templateID: templateID, versionNumber: versionNumber}, load)
-}
-
-// GetLatestActive returns the newest snapshot the template took while Active,
-// loading it once per context.
-func GetLatestActive(
-	ctx context.Context,
-	templateID pulid.ID,
-	load LoadOne,
-) (*formulatemplate.FormulaTemplateVersion, error) {
-	return getSingle(ctx, singleKey{templateID: templateID, versionNumber: latestActiveKey}, load)
 }
 
 func getSingle(
@@ -120,24 +106,36 @@ func GetVersions(
 }
 
 func EffectiveAsOf(
-	versions []*formulatemplate.FormulaTemplateVersion,
+	approved []*formulatemplate.FormulaTemplateVersion,
 	asOf int64,
 ) *formulatemplate.FormulaTemplateVersion {
-	var best *formulatemplate.FormulaTemplateVersion
-	for _, version := range versions {
-		if version == nil || version.EffectiveFrom == nil || *version.EffectiveFrom > asOf {
+	var inForce, earliest *formulatemplate.FormulaTemplateVersion
+	for _, version := range approved {
+		if version == nil {
 			continue
 		}
 
-		if best == nil ||
-			*version.EffectiveFrom > *best.EffectiveFrom ||
-			(*version.EffectiveFrom == *best.EffectiveFrom &&
-				version.VersionNumber > best.VersionNumber) {
-			best = version
+		start := version.EffectiveStart()
+		if earliest == nil ||
+			start < earliest.EffectiveStart() ||
+			(start == earliest.EffectiveStart() && version.VersionNumber < earliest.VersionNumber) {
+			earliest = version
+		}
+
+		if start > asOf {
+			continue
+		}
+		if inForce == nil ||
+			start > inForce.EffectiveStart() ||
+			(start == inForce.EffectiveStart() && version.VersionNumber > inForce.VersionNumber) {
+			inForce = version
 		}
 	}
 
-	return best
+	if inForce != nil {
+		return inForce
+	}
+	return earliest
 }
 
 func from(ctx context.Context) *cache {

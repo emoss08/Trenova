@@ -436,7 +436,7 @@ func (moveIntgStubVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
-func (moveIntgStubVersionRepo) ListScheduled(
+func (moveIntgStubVersionRepo) ListApproved(
 	_ context.Context,
 	_ *formulatemplateports.ListScheduledVersionsRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {

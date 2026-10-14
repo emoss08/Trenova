@@ -7,6 +7,7 @@ import type { BacktestResult } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { MinusIcon, TrendDown01Icon, TrendUp01Icon } from "@trenova/shared/components/icons";
 import { useRichT } from "@trenova/shared/i18n/rich";
+import { BacktestTruncatedNote } from "./backtest-truncated-note";
 
 const TOP_MOVERS_SHOWN = 5;
 
@@ -150,6 +151,11 @@ export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
           {movers.map((result) => (
             <MoverRow key={result.shipmentId} result={result} />
           ))}
+        </div>
+      )}
+      {data.truncated && (
+        <div className="border-t p-2">
+          <BacktestTruncatedNote data={data} />
         </div>
       )}
     </div>

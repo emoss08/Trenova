@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -106,10 +107,33 @@ func (s *Service) TestExpression(
 	return resp
 }
 
+func previewBoundsError(req *TestExpressionRequest) string {
+	if len(req.Expression) > formulatemplate.MaxExpressionLength {
+		return "Expression cannot exceed 10,000 characters"
+	}
+	if len(req.Breakdowns) > formulatypes.MaxBreakdownDefinitions {
+		return "A template cannot have more than 20 breakdown definitions"
+	}
+	for _, def := range req.Breakdowns {
+		if def != nil && len(def.Expression) > formulatemplate.MaxExpressionLength {
+			return "Breakdown expression cannot exceed 10,000 characters"
+		}
+	}
+	return ""
+}
+
 func (s *Service) testExpression(
 	ctx context.Context,
 	req *TestExpressionRequest,
 ) *TestExpressionResponse {
+	if message := previewBoundsError(req); message != "" {
+		return &TestExpressionResponse{
+			Valid:   false,
+			Error:   message,
+			Message: msgExpressionValidationFailed,
+		}
+	}
+
 	err := s.formulaService.ValidateLookupTables(ctx, req.Expression, req.TenantInfo)
 	if err != nil {
 		return &TestExpressionResponse{
@@ -141,6 +165,13 @@ func (s *Service) testExpression(
 	return resp
 }
 
+const (
+	storedTotalField   = "currentTotalCharge"
+	storedTotalWarning = "currentTotalCharge is the total stored before this rating: 0 on a new " +
+		"shipment and the previous save's total afterwards, so a charge priced from it trails the " +
+		"shipment by one save."
+)
+
 // nullableFieldWarnings runs the unguarded-field check over the expression and
 // every breakdown line. A check that cannot run (a schema the engine does not
 // know, an expression that will not parse) contributes nothing: the result
@@ -167,6 +198,16 @@ func (s *Service) warningsForScope(
 	scope, expression string,
 	req *TestExpressionRequest,
 ) []ExpressionWarning {
+	warnings := make([]ExpressionWarning, 0, 2)
+	if s.formulaService.ReferencesField(expression, storedTotalField) {
+		warnings = append(warnings, ExpressionWarning{
+			Scope:   scope,
+			Field:   storedTotalField,
+			Type:    "number",
+			Message: storedTotalWarning,
+		})
+	}
+
 	found, err := s.formulaService.UnguardedNullableFields(
 		ctx,
 		expression,
@@ -174,10 +215,9 @@ func (s *Service) warningsForScope(
 		req.Variables,
 	)
 	if err != nil || len(found) == 0 {
-		return nil
+		return warnings
 	}
 
-	warnings := make([]ExpressionWarning, 0, len(found))
 	for _, item := range found {
 		warnings = append(warnings, ExpressionWarning{
 			Scope: scope,
@@ -242,6 +282,9 @@ func (s *Service) testExpressionAgainstShipment(
 		TenantInfo:      req.TenantInfo,
 		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 	})
+	if err == nil {
+		err = s.hydrateShipments(ctx, []*shipment.Shipment{entity}, req.TenantInfo)
+	}
 	if err != nil {
 		return &TestExpressionResponse{
 			Valid:   false,
@@ -285,12 +328,19 @@ func (s *Service) evaluateAgainstShipment(
 		}
 	}
 
-	amount, guardrail, rounding := formula.ApplyChargePolicy(req.chargePolicy(), resp.Amount)
+	amount, guardrail, rounding, err := formula.ApplyChargePolicy(req.chargePolicy(), resp.Amount)
+	if err != nil {
+		return &TestExpressionResponse{
+			Valid:   false,
+			Error:   err.Error(),
+			Message: "Expression evaluation failed",
+		}
+	}
 
 	return &TestExpressionResponse{
 		Valid:             true,
 		Result:            amount,
-		Breakdown:         resp.Breakdown,
+		Breakdown:         formula.RoundBreakdown(req.chargePolicy(), resp.Breakdown, resp.Amount),
 		ResolvedVariables: maputils.WithoutFuncValues(resp.Variables),
 		Guardrail:         guardrail,
 		Rounding:          rounding,
@@ -371,7 +421,14 @@ func (s *Service) evaluateWithEnv(
 		}
 	}
 
-	amount, guardrail, rounding := formula.ApplyChargePolicy(req.chargePolicy(), result.Amount)
+	amount, guardrail, rounding, err := formula.ApplyChargePolicy(req.chargePolicy(), result.Amount)
+	if err != nil {
+		return &TestExpressionResponse{
+			Valid:   false,
+			Error:   err.Error(),
+			Message: "Expression evaluation failed",
+		}
+	}
 
 	resp := &TestExpressionResponse{
 		Valid:     true,
@@ -384,7 +441,9 @@ func (s *Service) evaluateWithEnv(
 
 	if len(req.Breakdowns) > 0 {
 		var lookups []formulatypes.LookupTrace
-		resp.Breakdown, lookups = s.evaluateBreakdownsWithEnv(ctx, req.Breakdowns, env, lookup)
+		var breakdown []formulatemplatetypes.BreakdownAmount
+		breakdown, lookups = s.evaluateBreakdownsWithEnv(ctx, req.Breakdowns, env, lookup)
+		resp.Breakdown = formula.RoundBreakdown(req.chargePolicy(), breakdown, result.Amount)
 		if resp.Receipt != nil {
 			resp.Receipt.Lookups = append(resp.Receipt.Lookups, lookups...)
 		}

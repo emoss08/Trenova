@@ -58,8 +58,9 @@ type InstallStandardsResponse struct {
 // InstallStandards creates the standard template library for a tenant. It is
 // idempotent by name: templates the organization already has are skipped, so a
 // re-run only fills gaps and never duplicates the set an organization's
-// contracts already point at. The catalog is vendor-curated and validated at
-// install time, so the templates land Active without a review cycle.
+// contracts already point at. The templates land as drafts: a catalog entry is
+// a starting point, and nothing rates shipments until a person has given it
+// scenarios and another has approved it.
 func (s *Service) InstallStandards(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -108,7 +109,7 @@ func (s *Service) InstallStandards(
 			Expression:          entry.Expression,
 			SchemaID:            entry.SchemaID,
 			VariableDefinitions: entry.VariableDefinitions,
-			Status:              formulatemplate.StatusActive,
+			Status:              formulatemplate.StatusDraft,
 		}.Build()
 
 		if vErr := s.validateTemplate(ctx, entity); vErr != nil {
@@ -158,6 +159,7 @@ func (s *Service) InstallStandards(
 
 	for _, entity := range installed {
 		s.logAuditAction(
+			ctx,
 			log,
 			entity,
 			permission.OpCreate,

@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/expr-lang/expr/ast"
-	"github.com/expr-lang/expr/parser"
 )
 
 // NullableFieldWarning names a schema field that can be empty on a real record
@@ -61,40 +60,109 @@ func (e *Engine) UnguardedNullableFields(
 	}
 	injectLookupFunctions(env, StubLookup{})
 
+	objects := nullableObjects(definition.Properties, "")
+	baselineRuns := e.probeRuns(ctx, expression, env, definition)
+
 	warnings := make([]NullableFieldWarning, 0, len(fields))
 	for _, field := range fields {
-		probe := cloneAlongPath(env, field)
-		formulatypes.SetNestedValue(probe, field, nil)
-		probe[ctxEnvKey] = ctx
-
-		if _, compileErr := e.Compile(expression, probe); compileErr != nil {
-			warnings = append(warnings, NullableFieldWarning{
-				Field:      field,
-				Type:       candidates[field],
-				Suggestion: guardFor(field, candidates[field]),
-			})
+		if !e.breaksWithoutValue(ctx, &nullProbe{
+			expression:   expression,
+			env:          env,
+			field:        field,
+			objects:      objects,
+			definition:   definition,
+			baselineRuns: baselineRuns,
+		}) {
+			continue
 		}
+		warnings = append(warnings, NullableFieldWarning{
+			Field:      field,
+			Type:       candidates[field],
+			Suggestion: guardFor(field, candidates[field]),
+		})
 	}
 
 	return warnings, nil
 }
 
+type nullProbe struct {
+	expression   string
+	env          map[string]any
+	field        string
+	objects      map[string]formulatypes.Property
+	definition   *formulatypes.Definition
+	baselineRuns bool
+}
+
+func (e *Engine) breaksWithoutValue(ctx context.Context, p *nullProbe) bool {
+	parent, nested := nullableParent(p.field, p.objects)
+	if !nested {
+		probe := cloneAlongPath(p.env, p.field)
+		formulatypes.SetNestedValue(probe, p.field, nil)
+		probe[ctxEnvKey] = ctx
+
+		_, compileErr := e.Compile(p.expression, probe)
+		return compileErr != nil
+	}
+
+	if !p.baselineRuns {
+		return false
+	}
+
+	probe := cloneAlongPath(p.env, parent)
+	formulatypes.SetNestedValue(probe, parent, nil)
+
+	return !e.probeRuns(ctx, p.expression, probe, p.definition)
+}
+
+func (e *Engine) probeRuns(
+	ctx context.Context,
+	expression string,
+	env map[string]any,
+	definition *formulatypes.Definition,
+) bool {
+	shape := e.shapeFor(ctx, definition, env, StubLookup{})
+	_, _, err := e.runShaped(ctx, &evaluation{
+		expression: expression,
+		scope:      mainExpressionScope,
+		env:        env,
+		shape:      shape,
+	})
+	return err == nil
+}
+
 // guardFor is the smallest edit that keeps a formula pricing when the field is
 // empty: substitute the type's zero.
 func guardFor(field, fieldType string) string {
+	zero := guardZero(fieldType)
+	if strings.Contains(field, ".") {
+		return strings.ReplaceAll(field, ".", "?.") + " ?? " + zero
+	}
+	return "coalesce(" + field + ", " + zero + ")"
+}
+
+func guardZero(fieldType string) string {
 	switch fieldType {
 	case "boolean":
-		return "coalesce(" + field + ", false)"
+		return "false"
 	case "string":
-		return "coalesce(" + field + ", \"\")"
+		return "\"\""
 	case "datetime":
-		return "coalesce(" + field + ", now())"
+		return RatingTimeVariable
 	default:
-		return "coalesce(" + field + ", 0)"
+		return "0"
 	}
 }
 
 func nullablePaths(properties map[string]formulatypes.Property, prefix string) map[string]string {
+	return nullablePathsUnder(properties, prefix, false)
+}
+
+func nullablePathsUnder(
+	properties map[string]formulatypes.Property,
+	prefix string,
+	optionalParent bool,
+) map[string]string {
 	paths := make(map[string]string, len(properties))
 
 	for name, prop := range properties {
@@ -104,16 +172,59 @@ func nullablePaths(properties map[string]formulatypes.Property, prefix string) m
 		}
 
 		if len(prop.Properties) > 0 {
-			maps.Copy(paths, nullablePaths(prop.Properties, path))
+			_, objectNullable := propertyTypeInfo(prop)
+			maps.Copy(
+				paths,
+				nullablePathsUnder(prop.Properties, path, optionalParent || objectNullable),
+			)
 			continue
 		}
 
-		if fieldType, nullable := propertyTypeInfo(prop); nullable {
+		if fieldType, nullable := propertyTypeInfo(prop); nullable || optionalParent {
 			paths[path] = fieldType
 		}
 	}
 
 	return paths
+}
+
+func nullableObjects(
+	properties map[string]formulatypes.Property,
+	prefix string,
+) map[string]formulatypes.Property {
+	objects := make(map[string]formulatypes.Property)
+
+	for name := range properties {
+		prop := properties[name]
+		if len(prop.Properties) == 0 {
+			continue
+		}
+
+		path := name
+		if prefix != "" {
+			path = prefix + "." + name
+		}
+
+		if _, nullable := propertyTypeInfo(prop); nullable {
+			objects[path] = prop
+		}
+		maps.Copy(objects, nullableObjects(prop.Properties, path))
+	}
+
+	return objects
+}
+
+func nullableParent(field string, objects map[string]formulatypes.Property) (string, bool) {
+	for parent := field; ; {
+		index := strings.LastIndex(parent, ".")
+		if index < 0 {
+			return "", false
+		}
+		parent = parent[:index]
+		if _, ok := objects[parent]; ok {
+			return parent, true
+		}
+	}
 }
 
 func propertyTypeInfo(prop formulatypes.Property) (string, bool) {
@@ -151,10 +262,15 @@ func rawPropertyTypeInfo(prop formulatypes.Property) (string, bool) {
 	}
 }
 
+func ReferencesPath(expression, path string) bool {
+	_, ok := referencedPaths(expression)[path]
+	return ok
+}
+
 // referencedPaths lists every identifier and dotted member path an expression
 // names. A parse failure yields nothing: compile validation reports it.
 func referencedPaths(expression string) map[string]struct{} {
-	tree, err := parser.Parse(expression)
+	tree, err := parseExpression(expression)
 	if err != nil {
 		return nil
 	}
@@ -233,6 +349,9 @@ func nestedValue(env map[string]any, path string) (any, bool) {
 		if i == len(segments)-1 {
 			return value, true
 		}
+		if value == nil {
+			return nil, true
+		}
 		next, isMap := value.(map[string]any)
 		if !isMap {
 			return nil, false
@@ -279,4 +398,53 @@ func missingFieldError(
 	}
 
 	return errors.NewMissingFieldError(expression, fields, suggestions)
+}
+
+func unresolvedFieldError(
+	expressions []string,
+	env map[string]any,
+	resolveFailures map[string]error,
+) error {
+	if len(resolveFailures) == 0 {
+		return nil
+	}
+
+	fields := make([]string, 0, len(resolveFailures))
+	causes := make(map[string]error, len(resolveFailures))
+	for _, expression := range expressions {
+		for path := range referencedPaths(expression) {
+			cause, failed := resolveFailures[path]
+			if !failed {
+				continue
+			}
+			if _, seen := causes[path]; seen {
+				continue
+			}
+			if value, ok := nestedValue(env, path); ok && value != nil {
+				continue
+			}
+			fields = append(fields, path)
+			causes[path] = cause
+		}
+	}
+	if len(fields) == 0 {
+		return nil
+	}
+	sort.Strings(fields)
+
+	return errors.NewUnresolvedFieldError(fields, causes)
+}
+
+func breakdownExpressions(
+	expression string,
+	definitions []*formulatypes.BreakdownDefinition,
+) []string {
+	expressions := make([]string, 0, len(definitions)+1)
+	expressions = append(expressions, expression)
+	for _, definition := range definitions {
+		if definition != nil {
+			expressions = append(expressions, definition.Expression)
+		}
+	}
+	return expressions
 }

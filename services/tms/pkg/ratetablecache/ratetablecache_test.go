@@ -38,7 +38,7 @@ func (s *stampedSource) Stamp(context.Context) (string, error) {
 	return s.stamp.Load().(string), nil //nolint:errcheck // always a string
 }
 
-func (s *stampedSource) Build(context.Context) (formulatemplatetypes.RateTableLookup, error) {
+func (s *stampedSource) Build(context.Context, string) (formulatemplatetypes.RateTableLookup, error) {
 	s.builds.Add(1)
 	return &fakeLookup{}, nil
 }

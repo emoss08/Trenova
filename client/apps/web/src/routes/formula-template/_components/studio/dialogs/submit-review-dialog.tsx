@@ -186,7 +186,7 @@ export function SubmitReviewDialog({
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="truncate text-sm font-medium">{person.name}</span>
                           <span className="text-foreground-subtle truncate text-xs font-normal">
-                            {person.emailAddress ?? person.username}
+                            {person.username}
                           </span>
                         </span>
                         {selected && <CheckIcon className="size-3.5" />}

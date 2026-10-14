@@ -10,7 +10,7 @@ import (
 func TestShipmentSchema_MatchesCurrentShipmentModel(t *testing.T) {
 	t.Parallel()
 
-	registry, err := newSchemaRegistry()
+	registry, err := NewSchemaRegistry()
 	require.NoError(t, err)
 
 	definition, ok := registry.Get("shipment")
@@ -24,7 +24,7 @@ func TestShipmentSchema_MatchesCurrentShipmentModel(t *testing.T) {
 	assert.Contains(t, definition.DataSource.Preloads, "TractorType")
 	assert.Contains(t, definition.DataSource.Preloads, "TrailerType")
 	assert.Contains(t, definition.DataSource.Preloads, "Moves.Stops")
-	assert.Contains(t, definition.DataSource.Preloads, "AdditionalCharges.AccessorialCharge")
+	assert.Contains(t, definition.DataSource.Preloads, "AdditionalCharges")
 	assert.Contains(t, definition.DataSource.Preloads, "Commodities.Commodity")
 	assert.Contains(t, definition.DataSource.Preloads, "Commodities.Commodity.HazardousMaterial")
 
@@ -47,7 +47,7 @@ func TestShipmentSchema_MatchesCurrentShipmentModel(t *testing.T) {
 func TestShipmentSchema_ExposesStopAndCommodityCollections(t *testing.T) {
 	t.Parallel()
 
-	registry, err := newSchemaRegistry()
+	registry, err := NewSchemaRegistry()
 	require.NoError(t, err)
 
 	definition, ok := registry.Get("shipment")
@@ -71,7 +71,7 @@ func TestShipmentSchema_ExposesStopAndCommodityCollections(t *testing.T) {
 func TestShipmentSchema_ExposesServiceAndShipmentTypesAndDimensionRollups(t *testing.T) {
 	t.Parallel()
 
-	registry, err := newSchemaRegistry()
+	registry, err := NewSchemaRegistry()
 	require.NoError(t, err)
 
 	definition, ok := registry.Get("shipment")
@@ -101,7 +101,7 @@ func TestShipmentSchema_ExposesServiceAndShipmentTypesAndDimensionRollups(t *tes
 func TestShipmentSchema_RelationFieldsAreFieldSources(t *testing.T) {
 	t.Parallel()
 
-	registry, err := newSchemaRegistry()
+	registry, err := NewSchemaRegistry()
 	require.NoError(t, err)
 
 	definition, ok := registry.Get("shipment")

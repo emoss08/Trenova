@@ -2,7 +2,10 @@ package formulatemplateservice
 
 import (
 	"context"
+	"strings"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
@@ -12,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -362,6 +366,7 @@ func TestReadiness_FailingScenarioBlocksBothSteps(t *testing.T) {
 		newTestCase("wrong expectation", 999, 0.01),
 	}
 
+	deps.versionRepo.On("ListScheduled", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: template.ID,
@@ -391,6 +396,7 @@ func TestReadiness_SubmitterCannotApproveButOthersCan(t *testing.T) {
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.testCaseRepo.cases = []*formulatemplate.TestCase{newTestCase("ok", 200, 0.01)}
 
+	deps.versionRepo.On("ListScheduled", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	asSubmitter, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
 		TenantInfo: tenant,
 		TemplateID: template.ID,
@@ -419,6 +425,7 @@ func TestReadiness_WarnsAboutUnguardedFieldsAndFailsWithoutDescriptionOrScenario
 	template.Expression = "weight * 0.5"
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 
+	deps.versionRepo.On("ListScheduled", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: template.ID,
@@ -445,6 +452,7 @@ func TestReadiness_WarningsDoNotBlock(t *testing.T) {
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.testCaseRepo.cases = []*formulatemplate.TestCase{newTestCase("exact", 250, 0.01)}
 
+	deps.versionRepo.On("ListScheduled", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: template.ID,
@@ -467,6 +475,7 @@ func TestReadiness_BrokenExpressionBlocks(t *testing.T) {
 	template.Expression = "totalDistance +* 2"
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 
+	deps.versionRepo.On("ListScheduled", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: template.ID,
@@ -534,6 +543,7 @@ func TestReviewDiff_ComparesLastApprovedSnapshotToPendingContent(t *testing.T) {
 		},
 	)).Return(newApprovedSnapshot(template, 2, "totalDistance * 2"), nil)
 
+	deps.versionRepo.On("ListScheduled", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	diff, err := deps.svc.ReviewDiff(t.Context(), &ReviewDiffRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: template.ID,
@@ -558,6 +568,7 @@ func TestReviewDiff_WithoutApprovedHistoryShowsEverythingAsNew(t *testing.T) {
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
 
+	deps.versionRepo.On("ListScheduled", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	diff, err := deps.svc.ReviewDiff(t.Context(), &ReviewDiffRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: template.ID,
@@ -636,4 +647,115 @@ func TestTestExpression_PreviewSeesProvidedContextVariables(t *testing.T) {
 
 	require.True(t, resp.Valid, resp.Error)
 	assert.InDelta(t, 385, resultAmount(t, resp).InexactFloat64(), 0.0001)
+}
+
+func TestTestExpression_WarnsThatCurrentTotalChargeIsTheStoredTotal(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	deps.svc.formulaService = ratingtest.NewFormulaService(t)
+
+	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: "currentTotalCharge * 0.1",
+		SchemaID:   "shipment",
+		TenantInfo: newTenantInfo(),
+	})
+
+	require.True(t, result.Valid, result.Error)
+	require.Len(t, result.Warnings, 1)
+	assert.Equal(t, "currentTotalCharge", result.Warnings[0].Field)
+	assert.Contains(t, result.Warnings[0].Message, "before this rating")
+}
+
+func TestReadiness_WarnsWhenAFreightChargeReadsTheStoredTotal(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	deps.svc.formulaService = ratingtest.NewFormulaService(t)
+
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusDraft
+	template.Type = formulatemplate.TemplateTypeFreightCharge
+	template.Expression = "max(currentTotalCharge * 0.1, 50)"
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+
+	deps.versionRepo.On("ListScheduled", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+
+	require.NoError(t, err)
+	check := readinessByKey(resp)[ReadinessCheckNullables]
+	assert.Equal(t, ReadinessWarn, check.Status)
+	assert.Contains(t, check.Detail, "currentTotalCharge")
+}
+
+func TestTestExpression_LoadsTablesNamedInsideTheEnginesOwnFunctions(t *testing.T) {
+	t.Parallel()
+	deps := setupTestWithMatrices(t, []*ratematrixports.RateMatrixLookupData{
+		exactMatrixFixture("fsc", map[string]string{"DIESEL": "0.35"}),
+	})
+
+	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: `sum(lookup("fsc", "DIESEL") * totalDistance, 10, 25)`,
+		SchemaID:   "shipment",
+		Variables:  map[string]any{"totalDistance": 100.0},
+		TenantInfo: newTenantInfo(),
+	})
+
+	require.True(t, result.Valid, result.Error)
+	assert.True(t, decimal.NewFromFloat(70).Equal(resultAmount(t, result)), result.Result)
+}
+
+func TestReviewDiffAndReadiness_ListPendingSchedules(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	pending := timeutils.NowUnix() + 10*86_400
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
+	deps.versionRepo.On("ListScheduled", mock.Anything, mock.Anything).
+		Return([]*formulatemplate.FormulaTemplateVersion{
+			{VersionNumber: 6, Status: formulatemplate.StatusActive, EffectiveFrom: &pending},
+		}, nil)
+
+	diff, err := deps.svc.ReviewDiff(t.Context(), &ReviewDiffRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []ScheduledWindow{{VersionNumber: 6, EffectiveFrom: pending}}, diff.PendingSchedules)
+
+	readiness, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []ScheduledWindow{{VersionNumber: 6, EffectiveFrom: pending}}, readiness.PendingSchedules)
+}
+
+func TestTestExpression_EnforcesTheSaveTimeCaps(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	tooLong := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: strings.Repeat("1 + ", formulatemplate.MaxExpressionLength/4) + "1",
+		SchemaID:   "shipment",
+		TenantInfo: newTenantInfo(),
+	})
+	assert.False(t, tooLong.Valid)
+	assert.Contains(t, tooLong.Error, "10,000")
+
+	breakdowns := make([]*formulatypes.BreakdownDefinition, formulatypes.MaxBreakdownDefinitions+1)
+	for i := range breakdowns {
+		breakdowns[i] = &formulatypes.BreakdownDefinition{Name: "line", Label: "Line", Expression: "1"}
+	}
+	tooMany := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: "1",
+		SchemaID:   "shipment",
+		TenantInfo: newTenantInfo(),
+		Breakdowns: breakdowns,
+	})
+	assert.False(t, tooMany.Valid)
+	assert.Contains(t, tooMany.Error, "20 breakdown")
 }

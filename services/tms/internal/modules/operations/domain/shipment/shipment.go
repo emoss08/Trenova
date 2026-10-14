@@ -299,6 +299,22 @@ func RestoreRateOwnedFields(original, updated *Shipment) {
 	updated.RatingDetail = original.RatingDetail
 }
 
+func (s *Shipment) ClearRatingOutcome() {
+	s.FreightChargeAmount = decimal.NullDecimal{}
+	s.OtherChargeAmount = decimal.NullDecimal{}
+	s.TotalChargeAmount = decimal.NullDecimal{}
+	s.RatingDetail = nil
+	s.RateQuoteID = nil
+	s.RateAgreementID = nil
+	s.RateAgreementRuleID = nil
+	s.RateOverrideAmount = decimal.NullDecimal{}
+	s.RateOverrideReason = ""
+	s.RateOverrideByID = nil
+	s.RateOverrideAt = nil
+	s.RateLocked = false
+	s.ClearAutoRating()
+}
+
 func (s *Shipment) ClearAutoRating() {
 	s.AutoRated = false
 	s.AutoRatedAt = nil

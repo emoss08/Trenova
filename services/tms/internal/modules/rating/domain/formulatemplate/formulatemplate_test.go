@@ -781,3 +781,77 @@ func TestFormulaTemplate_ValidateCaps(t *testing.T) {
 	tooMany.Validate(multiErr)
 	assert.True(t, multiErr.HasErrors(), "too many variables must be rejected")
 }
+
+func TestFormulaTemplate_Validate_BoundsDescriptionAndMetadata(t *testing.T) {
+	t.Parallel()
+
+	template := &FormulaTemplate{
+		Name:        "Bounded",
+		Expression:  "1",
+		Type:        TemplateTypeFreightCharge,
+		Status:      StatusDraft,
+		Description: strings.Repeat("d", MaxDescriptionLength+1),
+		Metadata:    map[string]any{"notes": strings.Repeat("m", MaxMetadataBytes)},
+	}
+
+	multiErr := errortypes.NewMultiError()
+	template.Validate(multiErr)
+
+	fields := make([]string, 0, len(multiErr.Errors))
+	for _, fieldErr := range multiErr.Errors {
+		fields = append(fields, fieldErr.Field)
+	}
+	assert.ElementsMatch(t, []string{"description", "metadata"}, fields)
+
+	template.Description = "A per-mile linehaul"
+	template.Metadata = map[string]any{"owner": "pricing"}
+	multiErr = errortypes.NewMultiError()
+	template.Validate(multiErr)
+	assert.False(t, multiErr.HasErrors())
+}
+
+func TestFormulaTemplate_LanguageVersionTravelsWithItsContent(t *testing.T) {
+	t.Parallel()
+
+	template := Seed{
+		Name:       "Per mile",
+		Type:       TemplateTypeFreightCharge,
+		Expression: "totalDistance * 2",
+	}.Build()
+	assert.Equal(t, formulatypes.CurrentLanguageVersion, template.LanguageVersion)
+
+	snapshot := NewVersionFromTemplate(template, 1, pulid.MustNew("usr_"), "", nil)
+	assert.Equal(t, formulatypes.CurrentLanguageVersion, snapshot.LanguageVersion)
+
+	legacy := *snapshot
+	legacy.LanguageVersion = 0
+	assert.Equal(
+		t,
+		formulatypes.CurrentLanguageVersion,
+		template.ApplyVersion(&legacy).LanguageVersion,
+		"a snapshot without a version is in the language every snapshot was written in",
+	)
+
+	forked := SeedFromVersion(snapshot).Build()
+	assert.Equal(t, snapshot.LanguageVersion, forked.LanguageVersion)
+
+	changed := *template
+	changed.LanguageVersion = formulatypes.LanguageVersion(2)
+	assert.True(t, changed.HasMaterialChange(template), "a language change changes what bills")
+}
+
+func TestFormulaTemplate_RefusesALanguageVersionTheServerCannotRead(t *testing.T) {
+	t.Parallel()
+
+	template := Seed{
+		Name:       "Per mile",
+		Type:       TemplateTypeFreightCharge,
+		Expression: "totalDistance * 2",
+	}.Build()
+	template.LanguageVersion = formulatypes.LanguageVersion(2)
+
+	multiErr := errortypes.NewMultiError()
+	template.Validate(multiErr)
+	require.True(t, multiErr.HasErrors())
+	assert.Contains(t, multiErr.Error(), "languageVersion")
+}

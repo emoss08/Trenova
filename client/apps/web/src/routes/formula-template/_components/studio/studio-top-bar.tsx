@@ -43,6 +43,7 @@ import { Fragment } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
 import type { ApprovalAction } from "../approval-action-dialog";
+import { billingLabel } from "./model/billing";
 import { useStudio } from "./studio-context";
 
 const USAGE_LABELS: Readonly<Record<string, string>> = defineLabels({
@@ -50,6 +51,7 @@ const USAGE_LABELS: Readonly<Record<string, string>> = defineLabels({
   rate_matrix: "Rate matrices",
   rate_agreement_rule: "Rate agreement rules",
   rate_agreement_accessorial: "Rate agreement accessorials",
+  billing_control_fallback: "Billing fallback",
 });
 
 /** What editing does to the places a template is used, by where it is. */
@@ -159,6 +161,7 @@ function Lifecycle() {
 
   const current = stages.findIndex((stage) => stage.key === template.status);
   const goingBack = material && current > 0;
+  const billing = billingLabel(template, t);
 
   return (
     <ol aria-label={t("Lifecycle")} className="flex items-center gap-1.5 text-xs">
@@ -246,6 +249,12 @@ function Lifecycle() {
           </Fragment>
         );
       })}
+      {billing && (
+        <li className="text-foreground-muted @max-[1100px]:hidden flex items-center gap-1.5 pl-1.5">
+          <ClockIcon className="size-3" />
+          {billing}
+        </li>
+      )}
     </ol>
   );
 }

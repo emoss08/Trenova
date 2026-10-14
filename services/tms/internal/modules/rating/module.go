@@ -26,8 +26,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratinghydration"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports"
 	"go.uber.org/fx"
 )
@@ -66,6 +68,8 @@ func SharedOptions() fx.Option {
 			func(s *ratesimulationservice.Service) ratesimulationports.RateSimulationRunner { return s },
 			fuelsurchargeservice.New,
 			func(s *fuelsurchargeservice.Service) fuelsurchargeports.FuelSurchargeResolver { return s },
+			ratinghydration.New,
+			func(h *ratinghydration.Hydrator) ratequoteports.ShipmentRatingHydrator { return h },
 		),
 		formula.Module,
 		formulatemplateservice.Module,

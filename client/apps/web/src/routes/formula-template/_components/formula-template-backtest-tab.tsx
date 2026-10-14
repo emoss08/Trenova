@@ -49,6 +49,7 @@ import { useState } from "react";
 import { useWatch, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { backtestCsv, describeVersionOption } from "./backtest-export";
+import { BacktestTruncatedNote } from "./backtest-truncated-note";
 
 type CandidateSource = "editor" | "version";
 
@@ -153,6 +154,21 @@ function BacktestResultRow({ result }: { result: BacktestResult }) {
       <TableCell className="text-right font-mono text-xs tabular-nums">
         {result.currentError ? (
           <span className="text-muted-foreground">—</span>
+        ) : result.currentSource === "Recomputed" ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <span className="decoration-border-strong underline decoration-dashed underline-offset-4">
+                  {formatCurrency(result.currentAmount)}
+                </span>
+              }
+            />
+            <TooltipContent side="left" className="max-w-64 text-xs">
+              {t(
+                "Re-rated with the content it billed with: the shipment holds no formula charge to compare, or its rate was set by hand.",
+              )}
+            </TooltipContent>
+          </Tooltip>
         ) : (
           formatCurrency(result.currentAmount)
         )}
@@ -361,6 +377,7 @@ export default function FormulaTemplateBacktestTab({
       {mutation.data ? (
         <>
           <BacktestSummaryRow summary={mutation.data.summary} />
+          <BacktestTruncatedNote data={mutation.data} />
 
           <div className="flex items-center justify-between gap-2">
             <p className="text-muted-foreground text-xs">
@@ -387,7 +404,7 @@ export default function FormulaTemplateBacktestTab({
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">{t("Pro #")}</TableHead>
-                  <TableHead className="text-right text-xs">{t("Current")}</TableHead>
+                  <TableHead className="text-right text-xs">{t("Billed")}</TableHead>
                   <TableHead className="text-right text-xs">{t("Candidate")}</TableHead>
                   <TableHead className="text-right text-xs">{t("Delta")}</TableHead>
                   <TableHead className="w-16" />

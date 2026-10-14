@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
@@ -122,6 +124,13 @@ func (s *stubFormulaVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
+func (s *stubFormulaVersionRepo) ListApproved(
+	_ context.Context,
+	_ *formulatemplateports.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}
+
 func (s *stubFormulaVersionRepo) ListScheduled(
 	_ context.Context,
 	_ *formulatemplateports.ListScheduledVersionsRequest,
@@ -143,17 +152,18 @@ func (s *stubMatrixLookupRepo) GetLookupData(
 
 func newFormulaService(t *testing.T) *formula.Service {
 	t.Helper()
-	return newFormulaServiceWithMatrices(t, nil)
+	return newFormulaServiceWithMatrices(t, nil, &stubFormulaVersionRepo{})
 }
 
 func newFormulaServiceWithMatrices(
 	t *testing.T,
 	matrices []*ratematrixports.RateMatrixLookupData,
+	versions formulatemplateports.FormulaTemplateVersionRepository,
 ) *formula.Service {
 	t.Helper()
 
 	registry := schema.NewRegistry()
-	registerShipmentSchema(registry)
+	testutil.RegisterShipmentFormulaSchema(t, registry)
 	res := resolver.NewResolver()
 	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
 		Registry: registry,
@@ -170,52 +180,9 @@ func newFormulaServiceWithMatrices(
 		Registry:       registry,
 		Engine:         eng,
 		Resolver:       res,
-		VersionRepo:    &stubFormulaVersionRepo{},
+		VersionRepo:    versions,
 		RateMatrixRepo: &stubMatrixLookupRepo{data: matrices},
 	})
-}
-
-func registerShipmentSchema(registry *schema.Registry) {
-	const shipmentSchema = `{
-		"$schema": "http://json-schema.org/draft-07/schema#",
-		"$id": "shipment-test-schema",
-		"type": "object",
-		"x-formula-context": {
-			"entityType": "Shipment"
-		},
-		"x-data-source": {
-			"table": "shipments",
-			"preloads": []
-		},
-		"properties": {
-			"customer": {
-				"type": "object",
-				"properties": {
-					"name": { "type": "string" },
-					"code": { "type": "string" }
-				}
-			},
-			"weight": { "type": ["number", "null"] },
-			"pieces": { "type": "integer" },
-			"ratingUnit": { "type": "integer" },
-			"baseRate": { "type": "number" },
-			"freightChargeAmount": { "type": "number" },
-			"otherChargeAmount": { "type": "number" },
-			"currentTotalCharge": { "type": "number" },
-			"totalDistance": { "type": "number" },
-			"totalStops": { "type": "integer" },
-			"totalWeight": { "type": "number" },
-			"totalPieces": { "type": "integer" },
-			"totalLinearFeet": { "type": "number" },
-			"hasHazmat": { "type": "boolean" },
-			"requiresTemperatureControl": { "type": "boolean" },
-			"temperatureDifferential": { "type": "number" }
-		}
-	}`
-
-	if err := registry.Register("shipment", []byte(shipmentSchema)); err != nil {
-		panic(err)
-	}
 }
 
 func setupTest(t *testing.T) *testDeps {
@@ -241,7 +208,7 @@ func setupTestWithMatrices(
 		testCaseRepo:   testCaseRepo,
 		reviewRepo:     &stubReviewRepo{},
 		shipmentRepo:   shipmentRepo,
-		formulaService: newFormulaServiceWithMatrices(t, matrices),
+		formulaService: newFormulaServiceWithMatrices(t, matrices, versionRepo),
 		auditService:   auditSvc,
 	}
 	return &testDeps{
@@ -333,6 +300,7 @@ func TestGetByID_Success(t *testing.T) {
 	}
 
 	deps.repo.On("GetByID", mock.Anything, req).Return(entity, nil)
+	deps.versionRepo.On("ListApproved", mock.Anything, mock.Anything).Return(nil, nil)
 
 	result, err := deps.svc.GetByID(ctx, req)
 
@@ -703,7 +671,10 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 		TenantInfo:  req.TenantInfo,
 		TemplateIDs: req.TemplateIDs,
 	}).Return(entities, nil)
+	deps.repo.On("CountUsages", mock.Anything, mock.Anything).
+		Return(&formulatemplateports.GetTemplateUsageResponse{}, nil)
 	deps.repo.On("BulkUpdateStatus", mock.Anything, req).Return(entities, nil)
+	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(1), nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.BulkUpdateStatus(ctx, req)
@@ -711,6 +682,74 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, result, 1)
 	deps.repo.AssertExpectations(t)
+	deps.versionRepo.AssertCalled(t, "ClearScheduled", mock.Anything, mock.Anything)
+}
+
+func inUseArchive(
+	t *testing.T,
+	mayApprove, confirmed bool,
+) (*testDeps, *formulatemplateports.BulkUpdateFormulaTemplateStatusRequest) {
+	t.Helper()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Name = "Linehaul per mile"
+	req := &formulatemplateports.BulkUpdateFormulaTemplateStatusRequest{
+		TenantInfo:      newTenantInfo(),
+		TemplateIDs:     []pulid.ID{template.ID},
+		Status:          formulatemplate.StatusInactive,
+		ConfirmInUse:    confirmed,
+		MayArchiveInUse: mayApprove,
+	}
+
+	deps.repo.On("GetByIDs", mock.Anything, mock.Anything).
+		Return([]*formulatemplate.FormulaTemplate{template}, nil)
+	deps.repo.On("CountUsages", mock.Anything, mock.Anything).
+		Return(&formulatemplateports.GetTemplateUsageResponse{
+			InUse: true,
+			Usages: []formulatemplateports.TemplateUsageCount{
+				{Type: "rate_agreement_rule", Count: 2},
+				{Type: "shipment", Count: 1},
+			},
+		}, nil)
+
+	return deps, req
+}
+
+func TestBulkUpdateStatus_ArchivingATemplateInUseNeedsApprovePermission(t *testing.T) {
+	t.Parallel()
+	deps, req := inUseArchive(t, false, true)
+
+	_, err := deps.svc.BulkUpdateStatus(t.Context(), req)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "approve")
+	deps.repo.AssertNotCalled(t, "BulkUpdateStatus")
+}
+
+func TestBulkUpdateStatus_ArchivingATemplateInUseNeedsConfirmation(t *testing.T) {
+	t.Parallel()
+	deps, req := inUseArchive(t, true, false)
+
+	_, err := deps.svc.BulkUpdateStatus(t.Context(), req)
+	require.Error(t, err)
+	assert.True(t, errortypes.IsError(err))
+	assert.Contains(t, err.Error(), "Linehaul per mile")
+	assert.Contains(t, err.Error(), "2 rate agreement rules")
+	assert.Contains(t, err.Error(), "1 shipment")
+	deps.repo.AssertNotCalled(t, "BulkUpdateStatus")
+}
+
+func TestBulkUpdateStatus_ArchivesATemplateInUseOnceConfirmed(t *testing.T) {
+	t.Parallel()
+	deps, req := inUseArchive(t, true, true)
+	deps.repo.On("BulkUpdateStatus", mock.Anything, req).
+		Return([]*formulatemplate.FormulaTemplate{newTestTemplate()}, nil)
+	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(0), nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	result, err := deps.svc.BulkUpdateStatus(t.Context(), req)
+	require.NoError(t, err)
+	assert.Len(t, result, 1)
 }
 
 func TestBulkUpdateStatus_RejectsReactivation(t *testing.T) {
@@ -973,6 +1012,7 @@ func TestRollback_Success(t *testing.T) {
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(updatedTemplate, nil)
 	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
 		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
+	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(1), nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Rollback(ctx, req)
@@ -1049,6 +1089,7 @@ func TestRollback_DefaultChangeMessage(t *testing.T) {
 	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
 		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(0), nil)
 
 	result, err := deps.svc.Rollback(ctx, req)
 
@@ -1730,8 +1771,12 @@ func TestApprovalTransitions(t *testing.T) {
 					&SubmitRequest{ApprovalActionRequest: *req},
 				)
 			case "approve":
+				deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 				result, err = deps.svc.Approve(t.Context(), req)
 			case "reject":
+				deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).
+					Return(nil, nil).
+					Maybe()
 				result, err = deps.svc.Reject(t.Context(), req)
 			}
 
@@ -1797,6 +1842,7 @@ func TestApprove_RejectsSelfApproval(t *testing.T) {
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	result, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
 		TenantInfo: tenant,
 		EntityID:   template.ID,
@@ -1830,6 +1876,7 @@ func TestApprove_StampsApprovalAndKeepsSubmission(t *testing.T) {
 		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	result, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
 		TenantInfo: tenant,
 		EntityID:   template.ID,
@@ -1880,6 +1927,8 @@ func TestReject_ClearsSubmissionFields(t *testing.T) {
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(0), nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).
+		Return((*formulatemplate.FormulaTemplateVersion)(nil), nil)
 
 	result, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
 		TenantInfo: newTenantInfo(),
@@ -1915,6 +1964,8 @@ func TestReject_ClearsScheduledVersions(t *testing.T) {
 		},
 	)).Return(int64(2), nil).Once()
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).
+		Return((*formulatemplate.FormulaTemplateVersion)(nil), nil)
 
 	_, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
 		TenantInfo: newTenantInfo(),
@@ -2131,10 +2182,12 @@ func TestUpdateVersionEffectiveDate_Success(t *testing.T) {
 		EffectiveFrom: &future,
 	}
 
+	pending := future + 86_400
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).
 		Return(&formulatemplate.FormulaTemplateVersion{
 			VersionNumber: 2,
 			Status:        formulatemplate.StatusActive,
+			EffectiveFrom: &pending,
 		}, nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("UpdateEffectiveDate", mock.Anything, mock.Anything).Return(updated, nil)
@@ -2186,20 +2239,21 @@ func TestUpdateVersionEffectiveDate_RejectsUnapprovedSnapshot(t *testing.T) {
 	deps.versionRepo.AssertNotCalled(t, "UpdateEffectiveDate", mock.Anything, mock.Anything)
 }
 
-func TestUpdateVersionEffectiveDate_ClearAllowsAnyStatus(t *testing.T) {
+func TestUpdateVersionEffectiveDate_ClearingNeedsAnActiveTemplate(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
 	template := newTestTemplate()
 	template.Status = formulatemplate.StatusDraft
-
-	updated := &formulatemplate.FormulaTemplateVersion{VersionNumber: 2}
+	pending := timeutils.NowUnix() + 86_400
 
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).
-		Return(&formulatemplate.FormulaTemplateVersion{VersionNumber: 2}, nil)
+		Return(&formulatemplate.FormulaTemplateVersion{
+			VersionNumber: 2,
+			Status:        formulatemplate.StatusActive,
+			EffectiveFrom: &pending,
+		}, nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
-	deps.versionRepo.On("UpdateEffectiveDate", mock.Anything, mock.Anything).Return(updated, nil)
-	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.UpdateVersionEffectiveDate(
 		t.Context(),
@@ -2207,12 +2261,12 @@ func TestUpdateVersionEffectiveDate_ClearAllowsAnyStatus(t *testing.T) {
 			TenantInfo:    newTenantInfo(),
 			TemplateID:    template.ID,
 			VersionNumber: 2,
-			EffectiveFrom: nil,
 		},
 	)
 
-	require.NoError(t, err)
-	assert.Nil(t, result.EffectiveFrom)
+	require.Error(t, err, "clearing starts the window, and a draft does not bill new content")
+	assert.Nil(t, result)
+	deps.versionRepo.AssertNotCalled(t, "UpdateEffectiveDate")
 }
 
 func TestListScheduledVersions_Passthrough(t *testing.T) {
@@ -2271,9 +2325,9 @@ func TestBacktest_ExclusiveArgValidation(t *testing.T) {
 
 func newBacktestTemplate() *formulatemplate.FormulaTemplate {
 	template := newTestTemplate()
-	template.Expression = "baseRate"
+	template.Expression = "linehaulRate"
 	template.VariableDefinitions = []*formulatypes.VariableDefinition{
-		{Name: "baseRate", Type: "number", DefaultValue: 100.0},
+		{Name: "linehaulRate", Type: "number", DefaultValue: 100.0},
 	}
 	return template
 }
@@ -2293,7 +2347,7 @@ func TestBacktest_SummaryMath(t *testing.T) {
 	template := newBacktestTemplate()
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
-	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
+	deps.versionRepo.On("ListApproved", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.shipmentRepo.On("ListRatedByFormulaTemplate", mock.Anything, mock.MatchedBy(
 		func(req *shipmentports.ListRatedByFormulaTemplateRequest) bool {
 			return req.TemplateID == template.ID && req.Limit == 50
@@ -2303,7 +2357,7 @@ func TestBacktest_SummaryMath(t *testing.T) {
 	result, err := deps.svc.Backtest(t.Context(), &BacktestRequest{
 		TenantInfo: tenant,
 		TemplateID: template.ID,
-		Expression: "baseRate * 2",
+		Expression: "linehaulRate * 2",
 	})
 
 	require.NoError(t, err)
@@ -2342,14 +2396,14 @@ func TestBacktest_GuardrailClampsCandidate(t *testing.T) {
 	template.MaxCharge = decimal.NewNullDecimal(decimal.NewFromInt(150))
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
-	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
+	deps.versionRepo.On("ListApproved", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.shipmentRepo.On("ListRatedByFormulaTemplate", mock.Anything, mock.Anything).
 		Return(newBacktestShipments()[:1], nil)
 
 	result, err := deps.svc.Backtest(t.Context(), &BacktestRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: template.ID,
-		Expression: "baseRate * 2",
+		Expression: "linehaulRate * 2",
 	})
 
 	require.NoError(t, err)
@@ -2372,15 +2426,15 @@ func TestBacktest_WithVersionNumber(t *testing.T) {
 		TemplateID:    template.ID,
 		VersionNumber: versionNumber,
 		Type:          template.Type,
-		Expression:    "baseRate * 3",
+		Expression:    "linehaulRate * 3",
 		SchemaID:      template.SchemaID,
 		VariableDefinitions: []*formulatypes.VariableDefinition{
-			{Name: "baseRate", Type: "number", DefaultValue: 100.0},
+			{Name: "linehaulRate", Type: "number", DefaultValue: 100.0},
 		},
 	}
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
-	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
+	deps.versionRepo.On("ListApproved", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.MatchedBy(
 		func(req *formulatemplateports.GetVersionRequest) bool {
 			return req.VersionNumber == versionNumber
@@ -2407,7 +2461,7 @@ func TestBacktest_CandidateErrorsRecordedPerRow(t *testing.T) {
 	template := newBacktestTemplate()
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
-	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
+	deps.versionRepo.On("ListApproved", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.shipmentRepo.On("ListRatedByFormulaTemplate", mock.Anything, mock.Anything).
 		Return(newBacktestShipments(), nil)
 
@@ -2628,7 +2682,7 @@ func newFormulaServiceWithProviders(
 	t.Helper()
 
 	registry := schema.NewRegistry()
-	registerShipmentSchema(registry)
+	testutil.RegisterShipmentFormulaSchema(t, registry)
 	res := resolver.NewResolver()
 	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
 		Registry: registry,
@@ -2656,4 +2710,96 @@ func (*stubMatrixLookupRepo) GetLookupStamp(
 	pagination.TenantInfo,
 ) (string, error) {
 	return "", nil
+}
+
+func TestGetByID_SaysWhichVersionIsBilling(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusInReview
+	template.CurrentVersionNumber = 5
+	approvedAt := timeutils.NowUnix() - 86_400
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("ListApproved", mock.Anything, mock.Anything).
+		Return([]*formulatemplate.FormulaTemplateVersion{
+			{VersionNumber: 2, Status: formulatemplate.StatusActive, CreatedAt: approvedAt - 86_400},
+			{VersionNumber: 4, Status: formulatemplate.StatusActive, CreatedAt: approvedAt},
+		}, nil)
+
+	result, err := deps.svc.GetByID(t.Context(), formulatemplateports.GetFormulaTemplateByIDRequest{
+		TemplateID: template.ID,
+		TenantInfo: newTenantInfo(),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, result.Billing)
+	assert.EqualValues(t, 4, result.Billing.VersionNumber, "v5 is in review; v4 bills")
+	assert.Equal(t, approvedAt, result.Billing.EffectiveFrom)
+}
+
+func TestGetByID_ANeverApprovedTemplateHasNothingBilling(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusDraft
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("ListApproved", mock.Anything, mock.Anything).Return(nil, nil)
+
+	result, err := deps.svc.GetByID(t.Context(), formulatemplateports.GetFormulaTemplateByIDRequest{
+		TemplateID: template.ID,
+		TenantInfo: newTenantInfo(),
+	})
+	require.NoError(t, err)
+	assert.Nil(t, result.Billing)
+}
+
+func TestValidateTemplate_InputsCannotShadowFieldsOrFunctions(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.VariableDefinitions = []*formulatypes.VariableDefinition{
+		{Name: "totalDistance", Type: formulatypes.VariableValueTypeNumber},
+		{Name: "lookup", Type: formulatypes.VariableValueTypeNumber},
+		{Name: "round", Type: formulatypes.VariableValueTypeNumber},
+		{Name: "linehaulRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 2.5},
+	}
+
+	err := deps.svc.validateTemplate(t.Context(), template)
+	require.Error(t, err)
+
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	fields := make([]string, 0, len(multiErr.Errors))
+	for _, fieldErr := range multiErr.Errors {
+		fields = append(fields, fieldErr.Field)
+	}
+	assert.ElementsMatch(t, []string{
+		"variableDefinitions[0].name",
+		"variableDefinitions[1].name",
+		"variableDefinitions[2].name",
+	}, fields)
+}
+
+func TestFork_ValidatesTheForkLikeANewTemplate(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	tenant := newTenantInfo()
+	source := newTestTemplate()
+	source.VariableDefinitions = []*formulatypes.VariableDefinition{
+		{Name: "totalDistance", Type: formulatypes.VariableValueTypeNumber},
+	}
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(source, nil)
+	deps.versionRepo.On("GetLatestVersion", mock.Anything, source.ID, tenant).
+		Return(nil, errors.New("no snapshot"))
+
+	_, err := deps.svc.Fork(t.Context(), &formulatemplateports.ForkTemplateRequest{
+		TenantInfo:       tenant,
+		SourceTemplateID: source.ID,
+		NewName:          "Forked",
+	})
+	require.Error(t, err, "the source declares an input that shadows a shipment value")
+	deps.repo.AssertNotCalled(t, "Create")
 }
