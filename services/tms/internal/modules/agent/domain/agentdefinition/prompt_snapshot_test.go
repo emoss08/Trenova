@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -85,6 +85,9 @@ func canonicalContext(trigger agent.RunTrigger) agentdefinition.RuntimeContext {
 		Timezone:         "America/Chicago",
 		Now:              snapshotNow,
 		Trigger:          trigger,
+		OrganizationProfile: "Acme Freight runs its own fleet of sleeper tractors and dry vans " +
+			"and brokers overflow to outside carriers. Most of its freight is retail " +
+			"replenishment out of Dallas, with Texas to California its busiest lane.",
 	}
 }
 
@@ -105,6 +108,8 @@ func promptContexts() []promptContext {
 				}
 				rc.Guide = true
 				rc.Facts = []string{"Invoice date is Oct 3", "Acme pays net 45"}
+				rc.UserProfile = "This person dispatches the Dallas terminal's regional loads " +
+					"and works mostly with Northwind Foods and Contoso Retail."
 
 				return &agentports.RunRequest{
 					Definition: definition,
@@ -249,21 +254,21 @@ func snapshotMemories() ([]*agent.Memory, []agent.MemorySubject) {
 	outside.Tainted = true
 
 	return []*agent.Memory{
-		memory("amem_01JSNAPSHOTMEMORY00000008", agent.MemoryKindFact,
-			"The yard closes at 18:00."),
-		holdFix,
-		long,
-		assignFix,
-		memory("amem_01JSNAPSHOTMEMORY00000009", agent.MemoryKindInstruction,
-			"Quote every lane in US dollars."),
-		outside,
-		dockRule,
-		aboutCustomer,
-		customerRule,
-	}, []agent.MemorySubject{
-		{Type: agent.MemorySubjectCustomer, ID: customer, Relation: agent.MemoryRelationDirect},
-		{Type: agent.MemorySubjectLocation, ID: location, Relation: agent.MemoryRelationRelated},
-	}
+			memory("amem_01JSNAPSHOTMEMORY00000008", agent.MemoryKindFact,
+				"The yard closes at 18:00."),
+			holdFix,
+			long,
+			assignFix,
+			memory("amem_01JSNAPSHOTMEMORY00000009", agent.MemoryKindInstruction,
+				"Quote every lane in US dollars."),
+			outside,
+			dockRule,
+			aboutCustomer,
+			customerRule,
+		}, []agent.MemorySubject{
+			{Type: agent.MemorySubjectCustomer, ID: customer, Relation: agent.MemoryRelationDirect},
+			{Type: agent.MemorySubjectLocation, ID: location, Relation: agent.MemoryRelationRelated},
+		}
 }
 
 func TestPromptSnapshots_MemoryGrouping(t *testing.T) {

@@ -118,6 +118,8 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  AgentProfileGuidance:
+    - createdByName
   CustomerEmailProfile:
     - fromEmail
   ShipmentEta:

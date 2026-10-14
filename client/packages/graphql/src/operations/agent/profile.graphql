@@ -1,0 +1,92 @@
+fragment AgentProfileVersionFields on AgentProfileVersion {
+  id
+  subject
+  status
+  trigger
+  content
+  facts {
+    key
+    text
+  }
+  guidanceIds
+  model
+  errorMessage
+  checkedAt
+  createdAt
+}
+
+fragment AgentProfileGuidanceFields on AgentProfileGuidance {
+  id
+  subject
+  content
+  status
+  source
+  createdById
+  createdByName
+  threadId
+  retiredAt
+  createdAt
+}
+
+fragment AgentProfileFields on AgentProfile {
+  subject
+  current {
+    ...AgentProfileVersionFields
+  }
+  latestFailure {
+    ...AgentProfileVersionFields
+  }
+  guidance {
+    ...AgentProfileGuidanceFields
+  }
+}
+
+query AgentOrganizationProfile {
+  agentOrganizationProfile {
+    ...AgentProfileFields
+  }
+}
+
+query AgentOrganizationProfileHistory($limit: Int) {
+  agentOrganizationProfileHistory(limit: $limit) {
+    ...AgentProfileVersionFields
+  }
+}
+
+query MyAgentProfile {
+  myAgentProfile {
+    ...AgentProfileFields
+  }
+}
+
+mutation AddAgentOrganizationProfileGuidance($input: AgentProfileGuidanceInput!) {
+  addAgentOrganizationProfileGuidance(input: $input) {
+    ...AgentProfileGuidanceFields
+  }
+}
+
+mutation RetireAgentOrganizationProfileGuidance($id: ID!) {
+  retireAgentOrganizationProfileGuidance(id: $id) {
+    ...AgentProfileGuidanceFields
+  }
+}
+
+mutation RegenerateAgentOrganizationProfile {
+  regenerateAgentOrganizationProfile
+}
+
+mutation AddMyAgentProfileGuidance($input: AgentProfileGuidanceInput!) {
+  addMyAgentProfileGuidance(input: $input) {
+    ...AgentProfileGuidanceFields
+  }
+}
+
+mutation RetireMyAgentProfileGuidance($id: ID!) {
+  retireMyAgentProfileGuidance(id: $id) {
+    ...AgentProfileGuidanceFields
+  }
+}
+
+mutation RegenerateMyAgentProfile {
+  regenerateMyAgentProfile
+}

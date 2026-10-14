@@ -772,6 +772,15 @@ never a suggestion still waiting. The Desk carries the same links, with the
 reason and quotes, on `DeskMemory` and on each reply's memory notes, naming the
 other memory only when the person may see it.
 
+### Profiles in the prompt
+
+Besides memory, every turn is told what kind of business the organization is and what the
+person works on: the organization's profile in the stable part of the prompt ("About this
+organization"), the person's in the runtime context. `ContextBuilder.Build` reads both
+through `agentprofileports.Reader` beside the memories, gated by the `Organization` and `User`
+context providers; a profile that cannot be read leaves the turn without it. How they are
+worked out, written and steered is in [agent-profiles.md](agent-profiles.md).
+
 ### Learning from the work
 
 When a conversation goes quiet or a background run settles, its agent looks back

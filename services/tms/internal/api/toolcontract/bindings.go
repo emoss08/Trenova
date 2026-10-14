@@ -476,10 +476,13 @@ var Unbound = map[string]string{
 	"edit_shipment_comment":                pendingBinding,
 	"email_customer": "composes any customer email; notifyShipmentDelay's input is one fixed " +
 		"kind of it, so the tool keeps its own parameters",
-	"fork_report":                          pendingBinding,
-	"generate_carrier_settlement_batch":    pendingBinding,
-	"generate_driver_settlement":           pendingBinding,
-	"generate_driver_settlement_batch":     pendingBinding,
+	"fork_report":                       pendingBinding,
+	"generate_carrier_settlement_batch": pendingBinding,
+	"generate_driver_settlement":        pendingBinding,
+	"generate_driver_settlement_batch":  pendingBinding,
+	"guide_profile": "takes which profile the line is for as well as the line; each " +
+		"mutation fixes the profile by its name, so AgentProfileGuidanceInput carries only " +
+		"the line",
 	"hold_billing_queue_item":              statusDecision,
 	"hold_driver_pay_event":                pendingBinding,
 	"ignore_accounting_inbound_change":     pendingBinding,

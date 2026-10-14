@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
@@ -326,6 +327,30 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_agent_reflections_skip_reason",
 			values: stringsOf(agent.AllReflectionSkips()),
+		},
+		{
+			name:   "ck_agent_profiles_subject",
+			values: stringsOf(agentprofile.AllSubjects()),
+		},
+		{
+			name:   "ck_agent_profiles_status",
+			values: stringsOf(agentprofile.AllStatuses()),
+		},
+		{
+			name:   "ck_agent_profiles_trigger",
+			values: stringsOf(agentprofile.AllTriggers()),
+		},
+		{
+			name:   "ck_agent_profile_guidance_subject",
+			values: stringsOf(agentprofile.AllSubjects()),
+		},
+		{
+			name:   "ck_agent_profile_guidance_status",
+			values: stringsOf(agentprofile.AllGuidanceStatuses()),
+		},
+		{
+			name:   "ck_agent_profile_guidance_source",
+			values: stringsOf(agentprofile.AllGuidanceSources()),
 		},
 		{
 			name:   "chk_agent_proposals_egress_class",

@@ -375,7 +375,11 @@ export type AiTuneUpStatus =
 
 /** The product feature that made a model call. */
 export type AiUsageFeature =
+  | 'AccountingMapping'
+  | 'AgentDrafting'
   | 'AgentEvaluation'
+  | 'AgentProfile'
+  | 'AgentReflection'
   | 'AgentTurn'
   | 'DocumentIntelligenceExtract'
   | 'DocumentIntelligenceRoute'
@@ -1120,6 +1124,37 @@ export type AgentPreviewOperation =
   | 'Run'
   | 'Send'
   | 'Update';
+
+export type AgentProfileGuidanceInput = {
+  /** One plain sentence, at most 500 characters. */
+  content: string;
+};
+
+/** Who worded a line of guidance: a person typing it, or an agent writing down what a person said. */
+export type AgentProfileGuidanceSource =
+  | 'Agent'
+  | 'Person';
+
+export type AgentProfileGuidanceStatus =
+  | 'Active'
+  | 'Retired';
+
+/** Where a version of a profile stands. Only the current version is told to agents. */
+export type AgentProfileStatus =
+  | 'Current'
+  | 'Failed'
+  | 'Superseded';
+
+/** Whom an agent profile describes: the organization's business, or one person's work in it. */
+export type AgentProfileSubject =
+  | 'Organization'
+  | 'User';
+
+/** What made a version get written. */
+export type AgentProfileTrigger =
+  | 'Guidance'
+  | 'Requested'
+  | 'Scheduled';
 
 export type AgentProposalDecisionInput = {
   decision: AgentDecisionType;
@@ -9783,6 +9818,67 @@ export type MyPlanPreviewQueryVariables = Exact<{
 
 export type MyPlanPreviewQuery = { myPlanPreview: { ' $fragmentRefs'?: { 'AgentPlanPreviewFieldsFragment': AgentPlanPreviewFieldsFragment } } };
 
+export type AgentProfileVersionFieldsFragment = { id: string, subject: AgentProfileSubject, status: AgentProfileStatus, trigger: AgentProfileTrigger, content: string | null, guidanceIds: Array<string>, model: string | null, errorMessage: string | null, checkedAt: number, createdAt: number, facts: Array<{ key: string, text: string }> } & { ' $fragmentName'?: 'AgentProfileVersionFieldsFragment' };
+
+export type AgentProfileGuidanceFieldsFragment = { id: string, subject: AgentProfileSubject, content: string, status: AgentProfileGuidanceStatus, source: AgentProfileGuidanceSource, createdById: string, createdByName: string | null, threadId: string | null, retiredAt: number | null, createdAt: number } & { ' $fragmentName'?: 'AgentProfileGuidanceFieldsFragment' };
+
+export type AgentProfileFieldsFragment = { subject: AgentProfileSubject, current: { ' $fragmentRefs'?: { 'AgentProfileVersionFieldsFragment': AgentProfileVersionFieldsFragment } } | null, latestFailure: { ' $fragmentRefs'?: { 'AgentProfileVersionFieldsFragment': AgentProfileVersionFieldsFragment } } | null, guidance: Array<{ ' $fragmentRefs'?: { 'AgentProfileGuidanceFieldsFragment': AgentProfileGuidanceFieldsFragment } }> } & { ' $fragmentName'?: 'AgentProfileFieldsFragment' };
+
+export type AgentOrganizationProfileQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentOrganizationProfileQuery = { agentOrganizationProfile: { ' $fragmentRefs'?: { 'AgentProfileFieldsFragment': AgentProfileFieldsFragment } } };
+
+export type AgentOrganizationProfileHistoryQueryVariables = Exact<{
+  limit?: number | null | undefined;
+}>;
+
+
+export type AgentOrganizationProfileHistoryQuery = { agentOrganizationProfileHistory: Array<{ ' $fragmentRefs'?: { 'AgentProfileVersionFieldsFragment': AgentProfileVersionFieldsFragment } }> };
+
+export type MyAgentProfileQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyAgentProfileQuery = { myAgentProfile: { ' $fragmentRefs'?: { 'AgentProfileFieldsFragment': AgentProfileFieldsFragment } } };
+
+export type AddAgentOrganizationProfileGuidanceMutationVariables = Exact<{
+  input: AgentProfileGuidanceInput;
+}>;
+
+
+export type AddAgentOrganizationProfileGuidanceMutation = { addAgentOrganizationProfileGuidance: { ' $fragmentRefs'?: { 'AgentProfileGuidanceFieldsFragment': AgentProfileGuidanceFieldsFragment } } };
+
+export type RetireAgentOrganizationProfileGuidanceMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RetireAgentOrganizationProfileGuidanceMutation = { retireAgentOrganizationProfileGuidance: { ' $fragmentRefs'?: { 'AgentProfileGuidanceFieldsFragment': AgentProfileGuidanceFieldsFragment } } };
+
+export type RegenerateAgentOrganizationProfileMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type RegenerateAgentOrganizationProfileMutation = { regenerateAgentOrganizationProfile: boolean };
+
+export type AddMyAgentProfileGuidanceMutationVariables = Exact<{
+  input: AgentProfileGuidanceInput;
+}>;
+
+
+export type AddMyAgentProfileGuidanceMutation = { addMyAgentProfileGuidance: { ' $fragmentRefs'?: { 'AgentProfileGuidanceFieldsFragment': AgentProfileGuidanceFieldsFragment } } };
+
+export type RetireMyAgentProfileGuidanceMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RetireMyAgentProfileGuidanceMutation = { retireMyAgentProfileGuidance: { ' $fragmentRefs'?: { 'AgentProfileGuidanceFieldsFragment': AgentProfileGuidanceFieldsFragment } } };
+
+export type RegenerateMyAgentProfileMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type RegenerateMyAgentProfileMutation = { regenerateMyAgentProfile: boolean };
+
 export type AgentEvidenceRefFieldsFragment = { type: string, id: string, note: string } & { ' $fragmentName'?: 'AgentEvidenceRefFieldsFragment' };
 
 export type AgentProposalTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, modifications: unknown, tainted: boolean, egressClass: AgentEgressClass | null, heldBy: Array<string>, traceId: string, traceUrl: string | null, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }> } & { ' $fragmentName'?: 'AgentProposalTableRowFieldsFragment' };
@@ -17529,6 +17625,7 @@ export { AgentExceptionTableRowFieldsFragmentDoc, AgentExceptionDetailFieldsFrag
 export { AgentMemoryTableRowFieldsFragmentDoc, AgentReflectionRowFieldsFragmentDoc, AgentMemoryTableDocument, AgentMemoryCountDocument, AgentMemoryUsageDocument, CreateAgentMemoryDocument, UpdateAgentMemoryDocument, SetAgentMemoryStatusDocument, ReviewAgentMemoryDocument, ApproveAgentMemorySuggestionDocument, DismissAgentMemorySuggestionDocument, AgentReflectionsDocument } from "./documents/agent/memories";
 export { AgentPlanTableRowFieldsFragmentDoc, AgentPlanTableDocument, AgentPlanDetailDocument, DecideAgentPlanDocument } from "./documents/agent/plans";
 export { AgentProposalPreviewFieldsFragmentDoc, AgentPlanPreviewFieldsFragmentDoc, AgentProposalPreviewDocument, MyProposalPreviewDocument, AgentPlanPreviewDocument, MyPlanPreviewDocument } from "./documents/agent/previews";
+export { AgentProfileVersionFieldsFragmentDoc, AgentProfileGuidanceFieldsFragmentDoc, AgentProfileFieldsFragmentDoc, AgentOrganizationProfileDocument, AgentOrganizationProfileHistoryDocument, MyAgentProfileDocument, AddAgentOrganizationProfileGuidanceDocument, RetireAgentOrganizationProfileGuidanceDocument, RegenerateAgentOrganizationProfileDocument, AddMyAgentProfileGuidanceDocument, RetireMyAgentProfileGuidanceDocument, RegenerateMyAgentProfileDocument } from "./documents/agent/profile";
 export { AgentEvidenceRefFieldsFragmentDoc, AgentProposalTableRowFieldsFragmentDoc, AgentProposalDetailFieldsFragmentDoc, AgentProposalTableDocument, AgentProposalDetailDocument, DecideAgentProposalDocument } from "./documents/agent/proposals";
 export { AgentSuiteRunFieldsFragmentDoc, AgentQualityPointFieldsFragmentDoc, AgentWorstRatedAnswerFieldsFragmentDoc, AgentQualityControlFieldsFragmentDoc, AgentSuiteRunCaseFieldsFragmentDoc, AgentQualityOverviewDocument, AgentQualityAgentTableDocument, AgentWorstRatedAnswerTableDocument, AgentQualityDocument, AgentSuiteRunTableDocument, AgentSuiteRunDocument, AgentSuiteRunCaseTableDocument, AgentQualityControlDocument, UpdateAgentQualityControlDocument, RunAgentSuiteDocument } from "./documents/agent/quality";
 export { AiRetrievalStatusFieldsFragmentDoc, AiRetrievalFailedEntryFieldsFragmentDoc, AiRetrievalStatusDocument, AiRetrievalReindexEstimateDocument, AiRetrievalFailedEntryTableDocument, UpdateAiRetrievalSettingsDocument, ReindexAiRetrievalSourceDocument } from "./documents/agent/retrieval";

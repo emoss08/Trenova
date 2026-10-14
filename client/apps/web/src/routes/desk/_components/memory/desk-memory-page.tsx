@@ -45,6 +45,7 @@ import {
   type MemoryFilter,
   type MemoryRow,
 } from "./memory-page-state";
+import { DeskProfileCard } from "./desk-profile-card";
 import "@/components/desk-chat/memory/desk-memory.css";
 
 const PAGE_SIZE = 50;
@@ -322,6 +323,8 @@ export function DeskMemoryPage() {
             ))}
           </div>
         </div>
+
+        <DeskProfileCard />
 
         <form className="dk-mm-add" onSubmit={create}>
           <DeskIcon name="plus" size={14} />

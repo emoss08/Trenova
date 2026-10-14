@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
@@ -728,6 +729,22 @@ type AgentPlanDecisionInput struct {
 type AgentPlanEdge struct {
 	Node   *agent.AgentPlan `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+// A profile as AI Control and the Desk show it.
+type AgentProfile struct {
+	Subject agentprofile.Subject `json:"subject"`
+	// The version agents are told, or null before the first is written.
+	Current *agentprofile.Profile `json:"current,omitempty"`
+	// The newest attempt, when it failed after the current version was written.
+	LatestFailure *agentprofile.Profile `json:"latestFailure,omitempty"`
+	// The active guidance, newest first.
+	Guidance []*agentprofile.Guidance `json:"guidance"`
+}
+
+type AgentProfileGuidanceInput struct {
+	// One plain sentence, at most 500 characters.
+	Content string `json:"content"`
 }
 
 type AgentProposalConnection struct {

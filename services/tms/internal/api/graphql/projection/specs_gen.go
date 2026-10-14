@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/accounttypecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentprofilecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/agentqualitycol"
 	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
@@ -153,6 +154,10 @@ var AgentExceptionSpec TypeSpec
 var AgentMemorySpec TypeSpec
 
 var AgentPlanSpec TypeSpec
+
+var AgentProfileGuidanceSpec TypeSpec
+
+var AgentProfileVersionSpec TypeSpec
 
 var AgentProposalSpec TypeSpec
 
@@ -3720,6 +3725,112 @@ func init() {
 			{
 				Name:    "run",
 				Special: "run",
+			},
+		},
+	}
+
+	AgentProfileGuidanceSpec = TypeSpec{
+		TypeName: "AgentProfileGuidance",
+		FieldMap: agentprofilecol.GuidanceFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "subject",
+				FieldMapKey: "subject",
+			},
+			{
+				Name:        "content",
+				FieldMapKey: "content",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:    "createdByName",
+				Special: "createdByName",
+			},
+			{
+				Name:        "threadId",
+				FieldMapKey: "threadId",
+			},
+			{
+				Name:        "retiredAt",
+				FieldMapKey: "retiredAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	AgentProfileVersionSpec = TypeSpec{
+		TypeName: "AgentProfileVersion",
+		FieldMap: map[string]string{"businessUnitId": "business_unit_id", "checkedAt": "checked_at", "content": "content", "createdAt": "created_at", "digest": "digest", "errorMessage": "error_message", "facts": "facts", "guidanceIds": "guidance_ids", "id": "id", "inputTokens": "input_tokens", "model": "model", "organizationId": "organization_id", "outputTokens": "output_tokens", "providerId": "provider_id", "requestedById": "requested_by_id", "status": "status", "subject": "subject", "trigger": "trigger", "updatedAt": "updated_at", "userId": "user_id", "version": "version"},
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "subject",
+				FieldMapKey: "subject",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "trigger",
+				FieldMapKey: "trigger",
+			},
+			{
+				Name:        "content",
+				FieldMapKey: "content",
+			},
+			{
+				Name:        "facts",
+				FieldMapKey: "facts",
+			},
+			{
+				Name:        "guidanceIds",
+				FieldMapKey: "guidanceIds",
+			},
+			{
+				Name:        "model",
+				FieldMapKey: "model",
+			},
+			{
+				Name:        "errorMessage",
+				FieldMapKey: "errorMessage",
+			},
+			{
+				Name:        "checkedAt",
+				FieldMapKey: "checkedAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
 			},
 		},
 	}

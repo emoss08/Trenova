@@ -494,6 +494,14 @@ Keywords: tainted memory, outside content, writes waiting for approval, review m
    agents reading it. You can also open a memory and use **Reviewed, keep it** under **Review**,
    or right-click it in the list.
 
+### See and steer what agents know about the organization
+Keywords: organization profile, what agents know about us, business profile, agents assume, our lanes, our customers, steer the agents, guidance
+1. Open [AI control](/admin/agent-control) and select **Memory** in the rail. **What agents know about the organization** is at the top: the note every agent reads before it answers, with when it was last checked.
+2. Open **What it was written from** to see the facts it came from: shipments, customers, lanes, fleet, drivers, integrations and settings, each worked out from your records.
+3. Under **Guidance**, type what the records cannot show, such as "The Laredo lane is seasonal; it runs from October to March", and select **Add guidance**. The note is written again with it a few minutes later. Each line shows who gave it.
+4. To take a line back, select **Retire** on it.
+5. To have the note written again now, select **Write it again**. **Earlier versions** lists every version, including any attempt that did not finish.
+
 ### Let agents learn from their work
 Keywords: self-improving agents, learning, reflection, look back, lessons, procedures, what the agent learned
 1. Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, select
@@ -547,6 +555,8 @@ saving preference, and replaces an older memory rather than contradicting it. A 
 or the whole organization, anything learned from a background run nobody was in, and anything
 learned from work that read outside content, is only ever offered. Retiring or editing a learned
 memory works like any other.
+
+Agents are told what kind of business the organization is from a note written each night from its own records and from the guidance its people gave; each person who talks to agents has a short note of their own, kept up each week. A note is written again only when the facts behind it move, never edited by a model on its own, and never states a number that is not in the facts or the guidance; an attempt that would is set aside and the version before it stays. Notes are written only while **Learn from their work** is on. Seeing the organization's note needs read access to agent memory, adding guidance needs create access, and retiring a line or writing it again needs update access.
 
 A memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's
 **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is
