@@ -7,6 +7,13 @@ import { RailShell } from "../rail-shell";
 vi.mock("../module-rail", () => ({
   ModuleRail: () => <nav aria-label="Modules" />,
 }));
+vi.mock("../sidebar-chrome", () => ({
+  SearchTrigger: () => <button type="button">Search</button>,
+}));
+vi.mock("../user-menu", () => ({ UserMenu: () => null }));
+vi.mock("../../notification-center/notification-sheet", () => ({
+  NotificationSheet: () => null,
+}));
 vi.mock("../rail-panel", () => ({
   RailPanel: ({ shown }: { shown: boolean }) => (
     <aside aria-label="Sidebar" hidden={!shown || undefined}>
@@ -41,10 +48,10 @@ afterEach(() => {
   phone = false;
 });
 
-function renderShell() {
+function renderShell(room = false) {
   return render(
     <MemoryRouter initialEntries={["/"]}>
-      <RailShell>
+      <RailShell room={room}>
         <p>page body</p>
       </RailShell>
     </MemoryRouter>,
@@ -96,5 +103,28 @@ describe("the rail shell on a phone", () => {
     const sheet = await screen.findByRole("dialog", { name: "Sidebar" });
     expect(sheet).toContainElement(screen.getByRole("navigation", { name: "Modules" }));
     expect(sheet).toContainElement(screen.getByRole("link", { name: "Home" }));
+  });
+
+  it("gives a room one strip on a phone, whose toggle brings out the rail alone", async () => {
+    phone = true;
+    renderShell(true);
+
+    await act(async () => {});
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
+
+    act(() => screen.getByRole("button", { name: "Show sidebar" }).click());
+
+    const sheet = await screen.findByRole("dialog", { name: "Sidebar" });
+    expect(sheet).toContainElement(screen.getByRole("navigation", { name: "Modules" }));
+    expect(screen.queryByRole("link", { name: "Home" })).not.toBeInTheDocument();
+  });
+
+  it("draws no strip for a room at desk widths", () => {
+    renderShell(true);
+
+    expect(screen.getByRole("navigation", { name: "Modules" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Search" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("complementary", { name: "Sidebar" })).not.toBeInTheDocument();
   });
 });

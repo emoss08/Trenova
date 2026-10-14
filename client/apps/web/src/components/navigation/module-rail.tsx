@@ -11,8 +11,9 @@ import { NotificationSheet } from "@/components/notification-center/notification
 import { preloadCommandPalette } from "@/components/command-palette/command-palette-mount";
 import type { ModuleId, NavModule } from "@/config/navigation.types";
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
+import { useSidebarFold } from "@/components/navigation/sidebar-fold";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
-import { SearchLgIcon } from "@trenova/shared/components/icons";
+import { LayoutLeftIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import {
   HoverCard,
   HoverCardContent,
@@ -128,12 +129,14 @@ function RailButton({
   hint,
   onClick,
   onPointerEnter,
+  pressed,
   children,
 }: {
   label: string;
   hint?: ReactNode;
   onClick: () => void;
   onPointerEnter?: () => void;
+  pressed?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -143,6 +146,7 @@ function RailButton({
           <button
             type="button"
             aria-label={label}
+            aria-pressed={pressed}
             onClick={onClick}
             onPointerEnter={onPointerEnter}
             onFocus={onPointerEnter}
@@ -159,6 +163,27 @@ function RailButton({
         </span>
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+/**
+ * A room has no page bar to carry the fold, so the rail does: the room's own
+ * rail stands where the panel would and folds with this tile and ⌘B.
+ */
+function FoldTile() {
+  const t = useT();
+  const { shown, toggle } = useSidebarFold();
+  const label = shown ? t("Hide sidebar") : t("Show sidebar");
+
+  return (
+    <RailButton
+      label={label}
+      hint={<Kbd className="ml-2">{formatShortcut("B")}</Kbd>}
+      onClick={toggle}
+      pressed={shown}
+    >
+      <LayoutLeftIcon className="size-4" strokeWidth={1.75} />
+    </RailButton>
   );
 }
 
@@ -212,13 +237,20 @@ function moduleTile({
  * bottom. It never scrolls the page and never folds; the panel beside it
  * does.
  */
-export function ModuleRail({
-  panelFolded,
-  className,
-}: {
+export interface ModuleRailProps {
+  /**
+   * Whether what stands beside the rail (the panel, or a room's own rail) is
+   * folded away. Folded, the tiles open their module's pages on hover.
+   */
   panelFolded: boolean;
+  /** Draw the search tile: when the panel's own search field is not on screen. */
+  search: boolean;
+  /** Draw the fold tile: for a room, which has no page bar to carry it. */
+  fold?: boolean;
   className?: string;
-}) {
+}
+
+export function ModuleRail({ panelFolded, search, fold = false, className }: ModuleRailProps) {
   const t = useT();
   const { home, settings, domains, views, activeModule, activePath, attention, pageAttention } =
     useSidebarNavigation();
@@ -263,7 +295,8 @@ export function ModuleRail({
 
       <div className="flex shrink-0 flex-col items-center gap-0.5 pt-1 pb-2">
         <DomainRule />
-        {panelFolded && (
+        {fold && <FoldTile />}
+        {search && (
           <RailButton
             label={t("Search")}
             hint={<Kbd className="ml-2">{formatShortcut("K")}</Kbd>}

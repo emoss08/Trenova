@@ -66126,15 +66126,6 @@
       "routes/fuel-management"
     ]
   },
-  "Customize navigation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Customize sidebar": {
     "sites": 3,
     "scope": [
@@ -111588,6 +111579,15 @@
       "apps/web/components"
     ]
   },
+  "Hide sidebar": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Hide the assistant button": {
     "sites": 1,
     "scope": [
@@ -112400,7 +112400,7 @@
     ]
   },
   "Home": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -142000,7 +142000,7 @@
     ]
   },
   "Modules": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -167426,15 +167426,6 @@
       "routes/edi"
     ]
   },
-  "Open modules": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Open new artifacts": {
     "sites": 2,
     "scope": [
@@ -170219,12 +170210,11 @@
     ]
   },
   "Organization settings": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "apps/web/config",
       "routes/admin"
     ]
@@ -173708,15 +173698,6 @@
     ]
   },
   "Pages scan on your computer and attach to this message": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Pages you open show up here.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -180828,7 +180809,7 @@
     ]
   },
   "Pinned": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -195017,7 +194998,7 @@
     ]
   },
   "Recent": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -228494,6 +228475,15 @@
       "apps/web/components"
     ]
   },
+  "Show sidebar": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Show the first {0}": {
     "sites": 1,
     "scope": [
@@ -233149,15 +233139,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Star a page from its header to keep it here.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Star a page to pin it here.": {
@@ -238020,15 +238001,6 @@
   },
   "Switch model": {
     "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Switch module (current: {0})": {
-    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -270440,15 +270412,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Type a page name in <kbd/> to jump anywhere": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Type a value and press Enter": {

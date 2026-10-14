@@ -108,5 +108,5 @@ in `config/keybinds.config.ts` so the shortcuts dialog shows them.
 ## Still open
 
 - People, Payroll, Detention and EDI carry no chord letter.
-- Rooms keep the old header rather than sitting beside the module rail; moving Triage and the
-  Formula Studio onto the rail is a follow-up, once their own rails are looked at with it.
+- Rooms (Triage, the Formula Studio) sit beside the module rail too; the rail carries their
+  fold tile, and on a phone a room gets one strip that opens the module sheet.

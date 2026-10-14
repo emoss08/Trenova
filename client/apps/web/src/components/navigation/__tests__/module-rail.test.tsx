@@ -73,7 +73,7 @@ afterEach(() => cleanup());
 function renderRail(panelFolded: boolean) {
   return render(
     <MemoryRouter initialEntries={["/shipments"]}>
-      <ModuleRail panelFolded={panelFolded} />
+      <ModuleRail panelFolded={panelFolded} search={panelFolded} />
     </MemoryRouter>,
   );
 }

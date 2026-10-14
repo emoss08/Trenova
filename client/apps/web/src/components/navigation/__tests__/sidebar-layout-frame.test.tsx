@@ -1,17 +1,15 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { frameOfMatches } from "../shell-frame";
 import { PageLayout, SidebarLayout } from "../sidebar-layout";
 
-vi.mock("../room-header", () => ({
-  RoomHeader: ({ leading }: { leading?: ReactNode }) => (
-    <header data-testid="room-header">{leading}</header>
-  ),
-}));
 vi.mock("../module-rail", () => ({
-  ModuleRail: () => <nav aria-label="Modules" />,
+  ModuleRail: ({ fold, search }: { fold?: boolean; search: boolean }) => (
+    <nav aria-label="Modules" data-search={search || undefined}>
+      {fold && <button type="button">Hide sidebar</button>}
+    </nav>
+  ),
 }));
 vi.mock("../rail-panel", () => ({
   RailPanel: ({ shown }: { shown: boolean }) => (
@@ -88,10 +86,9 @@ function renderAt(path: string) {
 /**
  * A page sits beside the rail and the module's panel and owns the only bar
  * above its body: the fold, history and the trail lead its title, the star
- * follows its actions. Triage, like the Desk, wants the window for its own
- * rail, list and reader, and keeps the header it was drawn for: the module
- * rail and the panel go, and the page's title bar stays only for assistive
- * tech.
+ * follows its actions. Triage wants the window for its own rail, list and
+ * reader: the module rail stays and carries the fold for the room's rail,
+ * the panel goes, and the page's title bar stays only for assistive tech.
  */
 describe("the shell's frame", () => {
   it("takes the frame the deepest route that names one asks for", () => {
@@ -109,9 +106,8 @@ describe("the shell's frame", () => {
     renderAt("/shipments");
 
     expect(await screen.findByText("Shipments body")).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Modules" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Modules" })).not.toHaveAttribute("data-search");
     expect(screen.getByRole("complementary", { name: "Sidebar" })).toBeInTheDocument();
-    expect(screen.queryByTestId("room-header")).not.toBeInTheDocument();
 
     const bar = screen
       .getByRole("heading", { name: "Shipments", level: 1 })
@@ -140,16 +136,15 @@ describe("the shell's frame", () => {
     expect(screen.queryByRole("navigation", { name: "Breadcrumb" })).not.toBeInTheDocument();
   });
 
-  it("gives a room the window under its header, with the toggle leading the header", async () => {
+  it("gives a room the window beside the rail, which carries the fold and search", async () => {
     renderAt("/triage");
 
     expect(await screen.findByText("Triage body")).toBeInTheDocument();
-    expect(screen.queryByRole("navigation", { name: "Modules" })).not.toBeInTheDocument();
+    const rail = screen.getByRole("navigation", { name: "Modules" });
+    expect(rail).toHaveAttribute("data-search");
+    expect(rail).toContainElement(screen.getByRole("button", { name: "Hide sidebar" }));
     expect(screen.queryByRole("complementary", { name: "Sidebar" })).not.toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Breadcrumb" })).not.toBeInTheDocument();
-    expect(screen.getByTestId("room-header")).toContainElement(
-      screen.getByRole("button", { name: "Hide sidebar" }),
-    );
   });
 
   it("keeps a room's title and description for assistive tech without drawing its title bar", async () => {

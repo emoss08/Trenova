@@ -4,11 +4,16 @@ import { PageBarLeading, PageBarTrailing } from "@/components/navigation/rail-pa
 import { RailPanel, RailPanelBody } from "@/components/navigation/rail-panel";
 import { MODULE_GO_KEYS } from "@/components/navigation/rail-shortcuts";
 import { PageBarSlotsContext, type PageBarSlots } from "@/components/navigation/shell-frame";
+import { SearchTrigger } from "@/components/navigation/sidebar-chrome";
 import { useSidebarFold } from "@/components/navigation/sidebar-fold";
 import { useGoToChords } from "@/components/navigation/use-go-to-chords";
+import { UserMenu } from "@/components/navigation/user-menu";
+import { NotificationSheet } from "@/components/notification-center/notification-sheet";
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
 import { edition } from "@/lib/edition";
 import { useNavigationStore } from "@/stores/navigation-store";
+import { LayoutLeftIcon } from "@trenova/shared/components/icons";
+import { Button } from "@trenova/shared/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@trenova/shared/components/ui/sheet";
 import { useMemo, type ReactNode } from "react";
 
@@ -34,12 +39,14 @@ function useModuleChordTargets() {
 }
 
 /**
- * On a phone the rail and the panel come out together as one sheet; the
- * page bar's fold opens it. Whether it is out comes from the shell, which
- * decided the sheet was needed from the same reading of the viewport, so
- * the sheet never opens on the render that first mounts it.
+ * On a phone the rail comes out as a sheet, with the panel beside it on a
+ * page; the page bar's fold opens it. A room's own rail is the room's to
+ * draw on a phone, so its sheet holds the module rail alone. Whether the
+ * sheet is out comes from the shell, which decided the sheet was needed from
+ * the same reading of the viewport, so it never opens on the render that
+ * first mounts it.
  */
-function RailSheet({ shown }: { shown: boolean }) {
+function RailSheet({ shown, room }: { shown: boolean; room: boolean }) {
   const t = useT();
   const setCompactSidebarOpen = useNavigationStore((state) => state.setCompactSidebarOpen);
   const width = useNavigationStore((state) => state.railPanelWidth);
@@ -49,15 +56,46 @@ function RailSheet({ shown }: { shown: boolean }) {
       <SheetContent
         side="left"
         showCloseButton={false}
-        className="bg-sidebar w-auto flex-row gap-0 rounded-none border-y-0 border-l-0 p-0"
+        className="bg-sidebar flex-row gap-0 rounded-none border-y-0 border-l-0 p-0 data-[side=left]:w-auto data-[side=left]:max-w-none"
       >
         <SheetTitle className="sr-only">{t("Sidebar")}</SheetTitle>
-        <ModuleRail panelFolded={false} />
-        <div style={{ width }} className="flex h-full min-h-0 flex-col">
-          <RailPanelBody />
-        </div>
+        <ModuleRail panelFolded={false} search={room} />
+        {!room && (
+          <div style={{ width }} className="flex h-full min-h-0 flex-col">
+            <RailPanelBody />
+          </div>
+        )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+/**
+ * A room on a phone has no rail on screen and no page bar, so one strip
+ * holds the way to the rest of the product: the sheet's toggle, search,
+ * notifications and you.
+ */
+function RoomCompactBar() {
+  const t = useT();
+  const { toggle } = useSidebarFold();
+
+  return (
+    <div className="bg-sidebar border-border flex h-10 shrink-0 items-center gap-1 border-b px-2">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-xs"
+        aria-label={t("Show sidebar")}
+        onClick={toggle}
+      >
+        <LayoutLeftIcon className="size-3.5" />
+      </Button>
+      <div className="min-w-0 flex-1 px-1">
+        <SearchTrigger />
+      </div>
+      <NotificationSheet />
+      <UserMenu compact />
+    </div>
   );
 }
 
@@ -66,27 +104,37 @@ function RailSheet({ shown }: { shown: boolean }) {
  * you are in beside it, and the page with one bar of its own. There is no
  * global header; what applies everywhere lives on the rail, and where you
  * are is the page's title. The panel folds with ⌘B and the rail stays.
+ *
+ * A room (Triage, the Formula Studio) draws its own rail where the panel
+ * would be and folds it with the same ⌘B and the rail's fold tile; the
+ * module rail stays beside it, so the rest of the product is one click away
+ * from inside the room.
  */
-export function RailShell({ children }: { children: ReactNode }) {
+export function RailShell({ children, room = false }: { children: ReactNode; room?: boolean }) {
   const { compact, shown } = useSidebarFold();
   useGoToChords(useModuleChordTargets());
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <AppBanner />
+      {compact && room && <RoomCompactBar />}
       <div className="flex min-h-0 flex-1">
         {compact ? (
-          <RailSheet shown={shown} />
+          <RailSheet shown={shown} room={room} />
         ) : (
           <>
-            <ModuleRail panelFolded={!shown} className="max-md:hidden" />
-            <RailPanel shown={shown} />
+            <ModuleRail panelFolded={!shown} search={room || !shown} fold={room} />
+            {!room && <RailPanel shown={shown} />}
           </>
         )}
         <main className="min-w-0 flex-1 overflow-y-auto">
-          <PageBarSlotsContext.Provider value={PAGE_BAR_SLOTS}>
-            {children}
-          </PageBarSlotsContext.Provider>
+          {room ? (
+            children
+          ) : (
+            <PageBarSlotsContext.Provider value={PAGE_BAR_SLOTS}>
+              {children}
+            </PageBarSlotsContext.Provider>
+          )}
         </main>
       </div>
     </div>

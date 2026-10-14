@@ -409,8 +409,11 @@ rail. Below `md` the rail and the panel come out together as one sheet from the
 page bar's fold.
 
 A room (Triage, the Formula Studio, `frame: "room"` on its route) draws its own
-rail in the module rail's place and keeps the header it was drawn for
-(`room-header.tsx`); the Desk has no shell at all.
+rail where the panel would be, folded by the same ⌘B and by a fold tile the module
+rail carries only for rooms; the rail's search tile is always on for a room, since
+the panel's field is not there. On a phone a room gets one strip (the sheet's
+toggle, search, notifications, you) because its own rail is not on screen either.
+The Desk has no shell at all.
 
 ## Page anatomy
 
