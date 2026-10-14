@@ -66,6 +66,13 @@ const (
 	OfferStatusSuperseded     = OfferStatus("Superseded")
 	OfferStatusSkipped        = OfferStatus("Skipped")
 	OfferStatusDeliveryFailed = OfferStatus("DeliveryFailed")
+	// OfferStatusCountered is a carrier's answer with a rate of its own,
+	// waiting for somebody to take or refuse it.
+	OfferStatusCountered = OfferStatus("Countered")
+	// OfferStatusCounterRejected is a counter-offer somebody refused.
+	OfferStatusCounterRejected = OfferStatus("CounterRejected")
+	// OfferStatusRevoked is an acceptance the carrier walked back.
+	OfferStatusRevoked = OfferStatus("Revoked")
 )
 
 func (s OfferStatus) String() string {
@@ -82,14 +89,23 @@ func (s OfferStatus) IsValid() bool {
 		OfferStatusWithdrawn,
 		OfferStatusSuperseded,
 		OfferStatusSkipped,
-		OfferStatusDeliveryFailed:
+		OfferStatusDeliveryFailed,
+		OfferStatusCountered,
+		OfferStatusCounterRejected,
+		OfferStatusRevoked:
 		return true
 	}
 	return false
 }
 
 func (s OfferStatus) IsOutstanding() bool {
-	return s == OfferStatusPending || s == OfferStatusSent
+	return s == OfferStatusPending || s == OfferStatusSent || s == OfferStatusCountered
+}
+
+// IsAwaitingAnswer reports whether a carrier holds the offer or a person
+// holds the carrier's counter: the offer is live and has a deadline.
+func (s OfferStatus) IsAwaitingAnswer() bool {
+	return s == OfferStatusSent || s == OfferStatusCountered
 }
 
 func (s OfferStatus) IsTerminal() bool {
@@ -128,6 +144,7 @@ type ResponseAction string
 const (
 	ResponseActionAccept  = ResponseAction("Accept")
 	ResponseActionDecline = ResponseAction("Decline")
+	ResponseActionCounter = ResponseAction("Counter")
 )
 
 func (a ResponseAction) String() string {
@@ -136,7 +153,7 @@ func (a ResponseAction) String() string {
 
 func (a ResponseAction) IsValid() bool {
 	switch a {
-	case ResponseActionAccept, ResponseActionDecline:
+	case ResponseActionAccept, ResponseActionDecline, ResponseActionCounter:
 		return true
 	}
 	return false

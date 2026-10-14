@@ -77,7 +77,11 @@ func shipmentEventToModel(event *shipmentevent.Event) (gqlmodel.ShipmentEvent, e
 		shipmentevent.TypeTenderLateResponse,
 		shipmentevent.TypeTenderDeliveryFailed,
 		shipmentevent.TypeTenderEntrySkipped,
-		shipmentevent.TypeTenderEntryWarned:
+		shipmentevent.TypeTenderEntryWarned,
+		shipmentevent.TypeTenderBounced,
+		shipmentevent.TypeTenderCountered,
+		shipmentevent.TypeTenderCounterDecided,
+		shipmentevent.TypeTenderEscalated:
 		return envelope.tender(), nil
 	case shipmentevent.TypeHoldPlaced,
 		shipmentevent.TypeHoldUpdated,

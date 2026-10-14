@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 )
 
 // CancelPreview is a tender before and as withdrawing it would leave it, its
@@ -65,6 +66,14 @@ func (s *Service) PreviewResponse(
 	ctx context.Context,
 	req *tenderports.TenderResponseRequest,
 ) (*ResponsePreview, error) {
+	decision, err := s.counterDecisionFor(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if decision != nil {
+		return s.PreviewDecideCounter(ctx, decision)
+	}
+
 	offer, err := s.planResponse(ctx, req)
 	if err != nil {
 		return nil, err
@@ -84,6 +93,11 @@ func (s *Service) PreviewResponse(
 	if req.Action == tender.ResponseActionAccept {
 		out.TenderAfter = acceptedTender(entity, offer.ID, req.Source, now)
 
+		return out, nil
+	}
+
+	if req.Action == tender.ResponseActionCounter {
+		out.TenderAfter = counteredTender(entity, offer.ID, req, now)
 		return out, nil
 	}
 
@@ -154,6 +168,16 @@ func (s *Service) planResponse(
 			errortypes.ErrInvalid,
 			"Decline reason must be at most 500 characters",
 		)
+	}
+	if req.Action == tender.ResponseActionCounter {
+		if err := validateCounter(req); err != nil {
+			return nil, err
+		}
+		if !s.tenderPolicy(ctx, req.TenantInfo).CountersEnabled {
+			return nil, errortypes.NewBusinessError(
+				"Counter-offers are turned off; accept or decline the offer",
+			)
+		}
 	}
 
 	offer, err := s.repo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
@@ -239,6 +263,27 @@ func declinedTender(
 		offer.RespondedAt = &now
 		offer.ResponseSource = req.Source
 		offer.DeclineReason = req.DeclineReason
+	})
+}
+
+// counteredTender is the tender with the answered offer holding the
+// carrier's counter, as RecordCounter records it.
+func counteredTender(
+	entity *tender.Tender,
+	offerID pulid.ID,
+	req *tenderports.TenderResponseRequest,
+	now int64,
+) *tender.Tender {
+	return copyTender(entity, func(offer *tender.TenderOffer) {
+		if offer.ID != offerID {
+			return
+		}
+		offer.Status = tender.OfferStatusCountered
+		offer.RespondedAt = &now
+		offer.ResponseSource = req.Source
+		offer.CounterRate = decimal.NewNullDecimal(req.CounterRate)
+		offer.CounterNote = req.CounterNote
+		offer.CounteredAt = &now
 	})
 }
 

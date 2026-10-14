@@ -3065,6 +3065,9 @@ type TenderResolver interface {
 type TenderOfferResolver interface {
 	Rate(ctx context.Context, obj *tender.TenderOffer) (string, error)
 	ResponseSource(ctx context.Context, obj *tender.TenderOffer) (*tender.ResponseSource, error)
+	CounterRate(ctx context.Context, obj *tender.TenderOffer) (*string, error)
+	CounterMarginPercent(ctx context.Context, obj *tender.TenderOffer) (*string, error)
+	AgreedRate(ctx context.Context, obj *tender.TenderOffer) (string, error)
 }
 
 type TractorResolver interface {
@@ -28422,6 +28425,10 @@ enum ShipmentEventType {
   TenderDeliveryFailed
   TenderEntrySkipped
   TenderEntryWarned
+  TenderBounced
+  TenderCountered
+  TenderCounterDecided
+  TenderEscalated
   HoldPlaced
   HoldUpdated
   HoldReleased
@@ -28633,8 +28640,9 @@ type ShipmentCarrierEvent implements ShipmentEvent {
 """
 Tender workflow activity: TenderOffered, TenderAccepted, TenderDeclined,
 TenderExpired, TenderWithdrawn, TenderNeedsReview, RoutingGuideExhausted,
-TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped and
-TenderEntryWarned.
+TenderLateResponse, TenderDeliveryFailed, TenderEntrySkipped,
+TenderEntryWarned, TenderBounced, TenderCountered, TenderCounterDecided and
+TenderEscalated.
 """
 type ShipmentTenderEvent implements ShipmentEvent {
   id: ID!
@@ -30423,6 +30431,12 @@ enum TenderOfferStatus {
   Superseded
   Skipped
   DeliveryFailed
+  "A carrier's answer with a rate of its own, waiting on a decision."
+  Countered
+  "A counter-offer somebody refused."
+  CounterRejected
+  "An acceptance the carrier walked back."
+  Revoked
 }
 
 enum TenderChannel {
@@ -30459,6 +30473,23 @@ type TenderOffer {
   ediMessageId: ID
   lateResponseAction: String!
   lateResponseAt: Timestamp
+  "The rate the carrier countered with, when it made one."
+  counterRate: Decimal
+  counterNote: String!
+  counteredAt: Timestamp
+  "The margin the counter leaves, as a percentage of the sell price. Null when the load has no sell price."
+  counterMarginPercent: Decimal
+  "True when the counter is below the margin floor, so taking it needs the tender approve permission."
+  counterNeedsApproval: Boolean!
+  counterDecidedAt: Timestamp
+  counterDecidedById: ID
+  "The rate the carrier is held to: its counter when one stands or was taken, the offered rate otherwise."
+  agreedRate: Decimal!
+  revokedAt: Timestamp
+  revokeReason: String!
+  revokedById: ID
+  "The offer this one asks again after a carrier backed out."
+  reofferedFromId: ID
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -30482,6 +30513,13 @@ type Tender {
   acceptedAt: Timestamp
   exhaustedAt: Timestamp
   canceledAt: Timestamp
+  "How many times a carrier has backed out of an acceptance on this tender."
+  bounceCount: Int!
+  lastBouncedAt: Timestamp
+  "The exhausted tender this one escalated from."
+  escalatedFromId: ID
+  "Zero for a tender a person or the routing guide started; the escalation round otherwise."
+  escalationRound: Int!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

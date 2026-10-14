@@ -1,4 +1,6 @@
 aliases:
+  TenderOffer:
+    counterMarginPercent: counterMargin
   WatchtowerItem:
     assignee: assigneeId
     resolvedBy: resolvedById
@@ -118,6 +120,8 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  TenderOffer:
+    - agreedRate
   CustomerEmailProfile:
     - fromEmail
   ShipmentEta:
