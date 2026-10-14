@@ -25,6 +25,7 @@ type runner struct {
 	failures     int
 	trenovaAS2ID string
 	simAS2ID     string
+	organization string
 }
 
 func main() {
@@ -37,6 +38,11 @@ func main() {
 		"http://localhost:8080/api/v1/edi/as2/inbound/",
 		"Trenova AS2 inbound URL the simulator posts to",
 	)
+	organization := flag.String(
+		"org",
+		"Trenova Logistics",
+		"organization name or ID to run the scenario in",
+	)
 	flag.Parse()
 
 	jar, err := cookiejar.New(nil)
@@ -48,6 +54,8 @@ func main() {
 		apiBase: strings.TrimRight(*apiBase, "/"),
 		simBase: strings.TrimRight(*simBase, "/"),
 		client:  &http.Client{Jar: jar, Timeout: 60 * time.Second},
+
+		organization: strings.TrimSpace(*organization),
 	}
 
 	fmt.Println("=== Trenova EDI end-to-end run ===")
@@ -75,15 +83,9 @@ func (r *runner) run(email, password, inboundURL string) bool {
 	r.simAS2ID = "SIM" + suffix
 	r.trenovaAS2ID = "TRN" + suffix
 
-	// 2. Login + role activation
+	// 2. Login, organization, role activation
 	var login struct {
-		CSRFToken       string `json:"csrfToken"`
-		AuthorizedRoles []struct {
-			ID string `json:"id"`
-		} `json:"authorizedRoles"`
-		ActiveRoles []struct {
-			ID string `json:"id"`
-		} `json:"activeRoles"`
+		CSRFToken string `json:"csrfToken"`
 	}
 	if !r.step("login as "+email, func() error {
 		return r.postJSON(r.apiBase+"/auth/login", map[string]string{
@@ -95,18 +97,31 @@ func (r *runner) run(email, password, inboundURL string) bool {
 	}
 	r.csrfToken = login.CSRFToken
 
-	if len(login.ActiveRoles) == 0 {
-		roleIDs := make([]string, 0, len(login.AuthorizedRoles))
-		for _, role := range login.AuthorizedRoles {
-			roleIDs = append(roleIDs, role.ID)
+	if !r.step("use organization "+r.organization, r.selectOrganization) {
+		return false
+	}
+
+	var sessionRoles struct {
+		AuthorizedRoleIDs []string `json:"authorizedRoleIds"`
+	}
+	if !r.step("read authorized session roles", func() error {
+		if err := r.getJSON(r.apiBase+"/auth/session/roles", &sessionRoles); err != nil {
+			return err
 		}
-		if !r.step(fmt.Sprintf("activate %d session role(s)", len(roleIDs)), func() error {
-			return r.postJSON(r.apiBase+"/auth/session/roles/activate", map[string]any{
-				"roleIds": roleIDs,
-			}, nil)
-		}) {
-			return false
+		if len(sessionRoles.AuthorizedRoleIDs) == 0 {
+			return fmt.Errorf("no roles are authorized in %s", r.organization)
 		}
+		return nil
+	}) {
+		return false
+	}
+	roleIDs := sessionRoles.AuthorizedRoleIDs
+	if !r.step(fmt.Sprintf("activate %d session role(s)", len(roleIDs)), func() error {
+		return r.postJSON(r.apiBase+"/auth/session/roles/activate", map[string]any{
+			"roleIds": roleIDs,
+		}, nil)
+	}) {
+		return false
 	}
 
 	// 3. Trenova-side AS2 identity + simulator wiring
@@ -803,6 +818,39 @@ func (r *runner) pollMessage(
 		time.Sleep(2 * time.Second)
 	}
 	return fmt.Errorf("timed out after %s", timeout)
+}
+
+func (r *runner) selectOrganization() error {
+	var organizations []struct {
+		ID        string `json:"id"`
+		Name      string `json:"name"`
+		IsCurrent bool   `json:"isCurrent"`
+	}
+	if err := r.getJSON(r.apiBase+"/users/me/organizations/", &organizations); err != nil {
+		return err
+	}
+
+	names := make([]string, 0, len(organizations))
+	for _, organization := range organizations {
+		if organization.ID != r.organization &&
+			!strings.EqualFold(organization.Name, r.organization) {
+			names = append(names, organization.Name)
+			continue
+		}
+		fmt.Printf("      · %s (%s)\n", organization.Name, organization.ID)
+		if organization.IsCurrent {
+			return nil
+		}
+		return r.postJSON(r.apiBase+"/users/me/switch-organization/", map[string]string{
+			"organizationId": organization.ID,
+		}, nil)
+	}
+
+	return fmt.Errorf(
+		"no membership in %q; available: %s",
+		r.organization,
+		strings.Join(names, ", "),
+	)
 }
 
 func (r *runner) step(name string, fn func() error) bool {

@@ -89,4 +89,6 @@ curl -s localhost:9210/control/sftp/inbound  | jq
 `-auto-ack`, `-identity-dir` (persist keys), `-sftp-listen`, `-sftp-user`,
 `-sftp-password`, `-sftp-root`.
 
-`cmd/edi-e2e`: `-api`, `-sim`, `-email`, `-password`, `-inbound`.
+`cmd/edi-e2e`: `-api`, `-sim`, `-email`, `-password`, `-inbound`, `-org` (organization name or
+ID the scenario runs in, default `Trenova Logistics` — the seeded organization that holds the
+shipments; the runner switches the session into it after login).
