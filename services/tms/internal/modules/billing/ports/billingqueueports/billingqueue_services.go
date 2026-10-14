@@ -173,3 +173,15 @@ type ReassignChargePreview struct {
 	ToCreate    []*shipment.PayerShare
 	ToCancel    []*billingqueue.BillingQueueItem
 }
+
+func (r *ReassignChargeResult) WithoutFormulaContent() *ReassignChargeResult {
+	if r == nil {
+		return nil
+	}
+
+	redacted := *r
+	redacted.Item = r.Item.WithoutFormulaContent()
+	redacted.Items = billingqueue.WithoutFormulaContent(r.Items)
+
+	return &redacted
+}

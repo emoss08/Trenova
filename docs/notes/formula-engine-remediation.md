@@ -827,10 +827,15 @@ edited, never what bills, unless the template is Active and has no approved snap
 - **5.7.**
   - `Shipment.formulaTemplate` and `ShipmentRatingDetail.expression` resolve only for a
     reader with formula template read; anyone else gets null and an empty string.
-  - Found while fixing this and not changed here: REST `GET /shipments/:id?expandShipmentDetails=true`
-    (and the list, create and update responses that load details) still return the template
-    relation and the rating detail's expression to anyone with shipment read. That needs the
-    same check on about ten handlers and is left for a follow-up.
+  - REST follows the same rule (a follow-up to #730): every shipment handler response that
+    carries a shipment (get, list, unassigned, create, update, cancel, uncancel, transfer
+    ownership, delayed and auto-cancel lists) and every billing queue response that embeds one
+    (get, list, transfer, assign, charges, status, review, post, reassign, bulk transfer) goes
+    through `formulavisibility.Respond`, which checks formula template read once per request
+    and answers with `Shipment.WithoutFormulaContent()` copies when it is missing. The
+    service's rows are never mutated, so a cached shipment stays whole for the next reader.
+    Other records that embed a shipment (invoices, settlements, rate confirmations, tenders,
+    orders, service failures) are loaded without the template relation and are not gated here.
   - Reviewers are listed by name and username, without email.
   - ListConnection, CountUsages and SelectOptions run in `dbtx.Read`.
   - `DeleteTestCase` uses the generated tenant scope and columns. This is a refactor with no

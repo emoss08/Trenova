@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/formulavisibility"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -197,7 +198,7 @@ func (h *Handler) resolveIssue(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, item)
+	h.respondItem(c, http.StatusOK, item)
 }
 
 // @Summary Take back how a check was settled
@@ -232,7 +233,7 @@ func (h *Handler) undoIssue(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, item)
+	h.respondItem(c, http.StatusOK, item)
 }
 
 // @Summary Release an item's hold
@@ -257,7 +258,7 @@ func (h *Handler) release(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, item)
+	h.respondItem(c, http.StatusOK, item)
 }
 
 // @Summary Post an approved item's invoice
@@ -282,7 +283,13 @@ func (h *Handler) post(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	formulavisibility.Respond(
+		c,
+		h.formulas,
+		http.StatusOK,
+		result,
+		(*billingqueueports.PostBillingQueueItemResult).WithoutFormulaContent,
+	)
 }
 
 type bulkApproveRequest struct {

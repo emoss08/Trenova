@@ -702,3 +702,21 @@ type ShipmentService interface {
 		req *ListBillingTransferCandidatesRequest,
 	) (*BillingTransferCandidates, error)
 }
+
+func (r *BulkTransferToBillingResponse) WithoutFormulaContent() *BulkTransferToBillingResponse {
+	if r == nil {
+		return nil
+	}
+
+	results := make([]BulkTransferToBillingResult, len(r.Results))
+	for i := range r.Results {
+		results[i] = r.Results[i]
+		results[i].Item = results[i].Item.WithoutFormulaContent()
+		results[i].Items = billingqueue.WithoutFormulaContent(results[i].Items)
+	}
+
+	redacted := *r
+	redacted.Results = results
+
+	return &redacted
+}

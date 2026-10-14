@@ -58,6 +58,22 @@ func (m *PermissionMiddleware) RequirePermission(
 	}
 }
 
+func (m *PermissionMiddleware) Allowed(
+	c *gin.Context,
+	resource string,
+	operation permission.Operation,
+) (bool, error) {
+	result, err := m.permEngine.Check(
+		c.Request.Context(),
+		BuildPermissionCheckRequest(authctx.GetAuthContext(c), resource, operation),
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return result.Allowed, nil
+}
+
 func (m *PermissionMiddleware) RequireParamPermission(
 	param string,
 	operation permission.Operation,
