@@ -133,7 +133,19 @@ func (r *submissionRepository) updateItemStatuses(
 		}
 		if _, err := dba.NewUpdate().
 			Model(item).
-			Column(cols.Status.Bare(), cols.ReleasedAt.Bare(), cols.UpdatedAt.Bare()).
+			Column(
+				cols.Status.Bare(),
+				cols.ReleasedAt.Bare(),
+				cols.FundedOn.Bare(),
+				cols.AdvanceMinor.Bare(),
+				cols.FeeMinor.Bare(),
+				cols.ReserveMinor.Bare(),
+				cols.RejectionReason.Bare(),
+				cols.SettledOn.Bare(),
+				cols.ChargedBackOn.Bare(),
+				cols.ChargebackReason.Bare(),
+				cols.UpdatedAt.Bare(),
+			).
 			WherePK().
 			Where(cols.SubmissionID.Eq(), entity.ID).
 			Exec(ctx); err != nil {
@@ -382,6 +394,8 @@ func (r *submissionRepository) ListLiveItems(
 				ColumnExpr(item.SubmissionID.As("submission_id")).
 				ColumnExpr(sub.Number.As("submission_number")).
 				ColumnExpr(sub.Status.As("submission_status")).
+				ColumnExpr(item.ID.As("item_id")).
+				ColumnExpr(item.Status.As("item_status")).
 				Join("JOIN "+factoringcol.SubmissionTable.As(factoringcol.SubmissionTable.Alias)).
 				JoinOn(sub.ID.EqColumn(item.SubmissionID)).
 				JoinOn(sub.OrganizationID.EqColumn(item.OrganizationID)).
@@ -389,12 +403,15 @@ func (r *submissionRepository) ListLiveItems(
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return factoringcol.SubmissionItemScopeTenant(sq, req.TenantInfo).
 						Where(item.InvoiceID.In(), bun.List(req.InvoiceIDs)).
-						Where(item.Status.Eq(), factoring.SubmissionItemStatusPending)
+						Where(item.Status.In(), bun.List(liveItemStatuses(req.IncludeChargedBack)))
 				}).
 				Scan(ctx, &rows); err != nil {
 				return nil, fmt.Errorf("list live factoring submission items: %w", err)
 			}
 			for _, row := range rows {
+				if existing, ok := result[row.InvoiceID]; ok && existing.IsLive() {
+					continue
+				}
 				result[row.InvoiceID] = row
 			}
 			return result, nil
@@ -466,4 +483,12 @@ func translateSubmissionError(err error, action string) error {
 		}
 	}
 	return fmt.Errorf("%s: %w", action, err)
+}
+
+func liveItemStatuses(includeChargedBack bool) []factoring.SubmissionItemStatus {
+	statuses := factoring.LiveSubmissionItemStatuses()
+	if includeChargedBack {
+		statuses = append(statuses, factoring.SubmissionItemStatusChargedBack)
+	}
+	return statuses
 }

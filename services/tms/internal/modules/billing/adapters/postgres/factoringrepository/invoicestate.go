@@ -426,6 +426,7 @@ func (r *invoiceStateRepository) GetSummary(
 				factoring.VerdictReady,
 				factoring.VerdictNotReady,
 				factoring.VerdictSubmitted,
+				factoring.VerdictFunded,
 			})).
 			Group(cols.Verdict.Bare()).
 			Scan(ctx, &rows); err != nil {
@@ -446,6 +447,8 @@ func (r *invoiceStateRepository) GetSummary(
 				summary.NotReady = totals
 			case factoring.VerdictSubmitted:
 				summary.Submitted = totals
+			case factoring.VerdictFunded:
+				summary.Funded = totals
 			case factoring.VerdictExcluded:
 			}
 		}

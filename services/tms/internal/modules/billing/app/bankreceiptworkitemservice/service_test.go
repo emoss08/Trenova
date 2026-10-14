@@ -1,8 +1,8 @@
 package bankreceiptworkitemservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
 	"context"
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"

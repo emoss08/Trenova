@@ -169,6 +169,7 @@ type Summary struct {
 	Ready            VerdictTotals `json:"ready"`
 	NotReady         VerdictTotals `json:"notReady"`
 	Submitted        VerdictTotals `json:"submitted"`
+	Funded           VerdictTotals `json:"funded"`
 	ReadyUnsubmitted VerdictTotals `json:"readyUnsubmitted"`
 }
 

@@ -27,15 +27,22 @@ type ListSubmissionConnectionRequest struct {
 }
 
 type ListLiveItemsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	InvoiceIDs []pulid.ID            `json:"invoiceIds"`
+	TenantInfo         pagination.TenantInfo `json:"-"`
+	InvoiceIDs         []pulid.ID            `json:"invoiceIds"`
+	IncludeChargedBack bool                  `json:"includeChargedBack"`
 }
 
 type LiveItem struct {
-	InvoiceID        pulid.ID                   `json:"invoiceId"        bun:"invoice_id"`
-	SubmissionID     pulid.ID                   `json:"submissionId"     bun:"submission_id"`
-	SubmissionNumber string                     `json:"submissionNumber" bun:"submission_number"`
-	SubmissionStatus factoring.SubmissionStatus `json:"submissionStatus" bun:"submission_status"`
+	InvoiceID        pulid.ID                       `json:"invoiceId"        bun:"invoice_id"`
+	SubmissionID     pulid.ID                       `json:"submissionId"     bun:"submission_id"`
+	SubmissionNumber string                         `json:"submissionNumber" bun:"submission_number"`
+	SubmissionStatus factoring.SubmissionStatus     `json:"submissionStatus" bun:"submission_status"`
+	ItemID           pulid.ID                       `json:"itemId"           bun:"item_id"`
+	ItemStatus       factoring.SubmissionItemStatus `json:"itemStatus"       bun:"item_status"`
+}
+
+func (l *LiveItem) IsLive() bool {
+	return l != nil && l.ItemStatus.IsLive()
 }
 
 type ListItemsBySubmissionIDsRequest struct {

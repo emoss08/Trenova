@@ -77,12 +77,13 @@ const (
 	VerdictReady     = Verdict("Ready")
 	VerdictNotReady  = Verdict("NotReady")
 	VerdictSubmitted = Verdict("Submitted")
+	VerdictFunded    = Verdict("Funded")
 	VerdictExcluded  = Verdict("Excluded")
 )
 
 func (v Verdict) IsValid() bool {
 	switch v {
-	case VerdictReady, VerdictNotReady, VerdictSubmitted, VerdictExcluded:
+	case VerdictReady, VerdictNotReady, VerdictSubmitted, VerdictFunded, VerdictExcluded:
 		return true
 	default:
 		return false
@@ -90,7 +91,7 @@ func (v Verdict) IsValid() bool {
 }
 
 func QueueVerdicts() []Verdict {
-	return []Verdict{VerdictReady, VerdictNotReady, VerdictSubmitted}
+	return []Verdict{VerdictReady, VerdictNotReady, VerdictSubmitted, VerdictFunded}
 }
 
 type CheckCode string
@@ -105,13 +106,14 @@ const (
 	CheckBillingValidation   = CheckCode("BillingValidation")
 	CheckAgreementDocument   = CheckCode("AgreementDocument")
 	CheckShipmentUnavailable = CheckCode("ShipmentUnavailable")
+	CheckChargedBack         = CheckCode("ChargedBack")
 )
 
 func (c CheckCode) IsValid() bool {
 	switch c {
 	case CheckEligible, CheckFactored, CheckAgreement, CheckNoa, CheckDispute,
 		CheckBillingDocument, CheckBillingValidation, CheckAgreementDocument,
-		CheckShipmentUnavailable:
+		CheckShipmentUnavailable, CheckChargedBack:
 		return true
 	default:
 		return false
@@ -147,16 +149,24 @@ const (
 	SubmissionStatusSent      = SubmissionStatus("Sent")
 	SubmissionStatusFailed    = SubmissionStatus("Failed")
 	SubmissionStatusCancelled = SubmissionStatus("Cancelled")
+	SubmissionStatusPartially = SubmissionStatus("PartiallyFunded")
+	SubmissionStatusFunded    = SubmissionStatus("Funded")
+	SubmissionStatusRejected  = SubmissionStatus("Rejected")
 )
 
 func (s SubmissionStatus) IsValid() bool {
 	switch s {
 	case SubmissionStatusSending, SubmissionStatusSent, SubmissionStatusFailed,
-		SubmissionStatusCancelled:
+		SubmissionStatusCancelled, SubmissionStatusPartially, SubmissionStatusFunded,
+		SubmissionStatusRejected:
 		return true
 	default:
 		return false
 	}
+}
+
+func (s SubmissionStatus) AwaitsFunding() bool {
+	return s == SubmissionStatusSent || s == SubmissionStatusPartially
 }
 
 func (s SubmissionStatus) IsLive() bool {
@@ -170,19 +180,66 @@ func AllSubmissionStatuses() []SubmissionStatus {
 		SubmissionStatusSent,
 		SubmissionStatusFailed,
 		SubmissionStatusCancelled,
+		SubmissionStatusPartially,
+		SubmissionStatusFunded,
+		SubmissionStatusRejected,
 	}
 }
 
 type SubmissionItemStatus string
 
 const (
-	SubmissionItemStatusPending  = SubmissionItemStatus("Pending")
-	SubmissionItemStatusReleased = SubmissionItemStatus("Released")
+	SubmissionItemStatusPending     = SubmissionItemStatus("Pending")
+	SubmissionItemStatusReleased    = SubmissionItemStatus("Released")
+	SubmissionItemStatusFunded      = SubmissionItemStatus("Funded")
+	SubmissionItemStatusRejected    = SubmissionItemStatus("Rejected")
+	SubmissionItemStatusSettled     = SubmissionItemStatus("Settled")
+	SubmissionItemStatusChargedBack = SubmissionItemStatus("ChargedBack")
 )
 
 func (s SubmissionItemStatus) IsValid() bool {
 	switch s {
-	case SubmissionItemStatusPending, SubmissionItemStatusReleased:
+	case SubmissionItemStatusPending, SubmissionItemStatusReleased, SubmissionItemStatusFunded,
+		SubmissionItemStatusRejected, SubmissionItemStatusSettled,
+		SubmissionItemStatusChargedBack:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s SubmissionItemStatus) IsLive() bool {
+	return s == SubmissionItemStatusPending || s == SubmissionItemStatusFunded
+}
+
+func LiveSubmissionItemStatuses() []SubmissionItemStatus {
+	return []SubmissionItemStatus{SubmissionItemStatusPending, SubmissionItemStatusFunded}
+}
+
+type FundingOutcome string
+
+const (
+	FundingOutcomeFunded   = FundingOutcome("Funded")
+	FundingOutcomeRejected = FundingOutcome("Rejected")
+)
+
+func (o FundingOutcome) IsValid() bool {
+	return o == FundingOutcomeFunded || o == FundingOutcomeRejected
+}
+
+type ReserveEntryKind string
+
+const (
+	ReserveEntryFunding            = ReserveEntryKind("Funding")
+	ReserveEntryRelease            = ReserveEntryKind("ReserveRelease")
+	ReserveEntryChargeback         = ReserveEntryKind("Chargeback")
+	ReserveEntryChargebackReversal = ReserveEntryKind("ChargebackReversal")
+)
+
+func (k ReserveEntryKind) IsValid() bool {
+	switch k {
+	case ReserveEntryFunding, ReserveEntryRelease, ReserveEntryChargeback,
+		ReserveEntryChargebackReversal:
 		return true
 	default:
 		return false

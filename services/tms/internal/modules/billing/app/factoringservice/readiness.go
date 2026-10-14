@@ -315,12 +315,21 @@ func (s *ReadinessService) gather(
 
 	in.OpenDispute = inv.DisputeStatus == invoice.DisputeStatusDisputed
 
-	live, err := s.liveItem(ctx, tenantInfo, inv.ID)
+	items, err := s.submissions.ListLiveItems(ctx, &factoringports.ListLiveItemsRequest{
+		TenantInfo:         tenantInfo,
+		InvoiceIDs:         []pulid.ID{inv.ID},
+		IncludeChargedBack: true,
+	})
 	if err != nil {
 		return err
 	}
-	if live != nil {
-		in.SubmissionNumber = live.SubmissionNumber
+	if item := items[inv.ID]; item != nil {
+		if item.IsLive() {
+			in.SubmissionNumber = item.SubmissionNumber
+			in.SubmissionItemStatus = item.ItemStatus
+		} else {
+			in.ChargedBack = item.ItemStatus == factoring.SubmissionItemStatusChargedBack
+		}
 	}
 
 	legs := inv.LegShipmentIDs()

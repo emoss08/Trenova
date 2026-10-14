@@ -1,17 +1,17 @@
 package customerpaymentservice
 
 import (
+	"context"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
