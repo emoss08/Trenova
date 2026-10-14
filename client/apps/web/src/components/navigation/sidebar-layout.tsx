@@ -7,24 +7,19 @@ import { isGlobalSearchEntityType } from "@/services/global-search";
 import { useRecentPagesStore } from "@/stores/recent-pages-store";
 import { useRecentRecordsStore } from "@/stores/recent-records-store";
 import { useUpdateStore } from "@/stores/update-store";
-import type { ShellFrame } from "@/types/router";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useEffect } from "react";
 import { useLocation } from "react-router";
 import { AssistantWidget, useAssistantSideInset } from "../assistant/assistant-widget";
 import { CommandPaletteMount } from "../command-palette/command-palette-mount";
-import { edition } from "@/lib/edition";
-import { Header, SidebarToggle } from "../header";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
 import { PageHeader, type PageHeaderProps } from "../page-header";
-import { ShellFrameContext, useRouteFrame, useShellFrame } from "./shell-frame";
+import { ShellFrameContext, usePageBarSlots, useRouteFrame, useShellFrame } from "./shell-frame";
 import { useSidebarFold } from "./sidebar-fold";
 import { findModuleForPath } from "./sidebar-model";
 import { UserSettingsHost } from "./user-settings-host";
-import { ClassicSidebar } from "./variants/classic-sidebar";
-import { WorkspaceContextBar, WorkspaceHeader } from "./workspace-header";
-import { WorkspaceSidebar } from "./workspace-sidebar";
+import { RailShell } from "./rail-shell";
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -105,56 +100,10 @@ function useLayoutEffects() {
   useTouchRecentRecords();
 }
 
-const AppBanner = edition.slots.AppBanner;
-
-type ShellProps = SidebarLayoutProps & { frame: ShellFrame };
-
-/**
- * A page sits under the module's sidebar and the bar that says where you
- * are. A room keeps only the header: its own rail stands in the sidebar's
- * place and folds with the same toggle, which moves to the header's leading
- * edge, and with ⌘B.
- */
-function WorkspaceShell({ children, frame }: ShellProps) {
-  const room = frame === "room";
-
-  return (
-    <div className="flex h-screen flex-col overflow-hidden">
-      <AppBanner />
-      <WorkspaceHeader leading={room ? <SidebarToggle className="max-md:hidden" /> : undefined} />
-      <div className="flex min-h-0 flex-1">
-        {!room && <WorkspaceSidebar />}
-        <div className="flex min-w-0 flex-1 flex-col">
-          {!room && <WorkspaceContextBar />}
-          <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ClassicShell({ children }: ShellProps) {
-  return (
-    <div className="flex h-screen flex-col overflow-hidden">
-      <AppBanner />
-      <div className="flex min-h-0 flex-1">
-        <ClassicSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Header />
-          <main className="flex-1 overflow-y-auto">{children}</main>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function SidebarLayout({ children }: SidebarLayoutProps) {
-  const variant = useNavigationStore((state) => state.sidebarVariant);
   const assistantSide = useAssistantSideInset();
   const frame = useRouteFrame();
   useLayoutEffects();
-
-  const Shell = variant === "classic" ? ClassicShell : WorkspaceShell;
 
   return (
     <>
@@ -166,7 +115,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           rather than sitting under it. */}
       <div className="as-reflow" data-assistant-side={assistantSide ?? undefined}>
         <ShellFrameContext.Provider value={frame}>
-          <Shell frame={frame}>{children}</Shell>
+          <RailShell room={frame === "room"}>{children}</RailShell>
         </ShellFrameContext.Provider>
       </div>
     </>
@@ -194,6 +143,8 @@ export function PageLayout({
   bleed = false,
 }: PageLayoutProps) {
   const frame = useShellFrame();
+  const shellSlots = usePageBarSlots();
+  const slots = frame === "page" ? shellSlots : null;
 
   return (
     <div
@@ -203,7 +154,12 @@ export function PageLayout({
         fill && "h-full",
       )}
     >
-      <PageHeader {...pageHeaderProps} visuallyHidden={frame === "room"} />
+      <PageHeader
+        {...pageHeaderProps}
+        visuallyHidden={frame === "room"}
+        leading={slots?.leading(pageHeaderProps.title)}
+        trailing={slots?.trailing}
+      />
       <div
         data-slot="page-body"
         data-bleed={bleed || undefined}

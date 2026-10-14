@@ -259,6 +259,10 @@ names the token to use instead.
   one place); a `Button`-built trigger takes `fieldTriggerClass` and an invalid one `fieldInvalidClass`, both from
   `@trenova/shared/lib/variants/field`. Never hand-write `border-input bg-muted` or a
   `data-pressed:ring-*` on a field.
+- The shell is one layout: a 48px module rail, the current module's panel beside it, and the
+  page's own title bar as the only bar above the body. There is no global header; a page never
+  draws its own top bar, and `PageHeader`'s `leading`/`trailing` slots belong to the shell. See
+  "Shell anatomy" in the design-system doc.
 - Pages: always `PageLayout` with `pageHeaderProps` (never mount `PageHeader` by hand, never
   `p-0` plus re-added `mx-4`). A list page is `PageLayout` > `DataTableLazyComponent` > table
   with no wrapper `div`, so the table bleeds edge to edge. Create buttons read "New {thing}".

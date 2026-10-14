@@ -5,7 +5,7 @@ import { SwitchField } from "@/components/fields/switch-field";
 import { TimezoneField } from "@/components/fields/timezone-field";
 import { applyLocale } from "@/components/navigation/language-submenu";
 import { useMotionPreferenceStore } from "@/stores/motion-preference-store";
-import { useNavigationStore, type SidebarVariant } from "@/stores/navigation-store";
+import { useNavigationStore } from "@/stores/navigation-store";
 import { apiService } from "@/services/api";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -35,8 +35,7 @@ type RegionalValues = {
 
 type DisplayValues = {
   theme: ThemeChoice;
-  sidebar: "full" | "rail";
-  layout: SidebarVariant;
+  sidebar: "open" | "folded";
   reduceMotion: boolean;
 };
 
@@ -178,13 +177,11 @@ function useDisplayRows() {
   const t = useT();
   const { theme, setTheme } = useTheme();
   const sidebarCollapsed = useNavigationStore((state) => state.sidebarCollapsed);
-  const sidebarVariant = useNavigationStore((state) => state.sidebarVariant);
   const reduceMotion = useMotionPreferenceStore((state) => state.reduceMotion);
   const form = useForm<DisplayValues>({
     defaultValues: {
       theme: theme as ThemeChoice,
-      sidebar: sidebarCollapsed ? "rail" : "full",
-      layout: sidebarVariant,
+      sidebar: sidebarCollapsed ? "folded" : "open",
       reduceMotion,
     },
   });
@@ -195,8 +192,7 @@ function useDisplayRows() {
     resourceName: "Display",
     save: async (next) => {
       setTheme(next.theme);
-      useNavigationStore.getState().setSidebarCollapsed(next.sidebar === "rail");
-      useNavigationStore.getState().setSidebarVariant(next.layout);
+      useNavigationStore.getState().setSidebarCollapsed(next.sidebar === "folded");
       useMotionPreferenceStore.getState().setReduceMotion(next.reduceMotion);
     },
   });
@@ -227,23 +223,10 @@ function useDisplayRows() {
             name="sidebar"
             layout="inline"
             label={t("Sidebar")}
-            description={t("Full labels, or a slim rail of icons.")}
+            description={t("The module's pages beside the rail, or the rail alone.")}
             options={[
-              { value: "full", label: t("Labels") },
-              { value: "rail", label: t("Rail") },
-            ]}
-          />
-        </SettingsRow>
-        <SettingsRow id="sidebar-layout">
-          <SegmentedField
-            control={form.control}
-            name="layout"
-            layout="inline"
-            label={t("Sidebar layout")}
-            description={t("Modules in the header, or every section stacked in one column.")}
-            options={[
-              { value: "workspace", label: t("Workspace") },
-              { value: "classic", label: t("Classic") },
+              { value: "open", label: t("Rail and pages") },
+              { value: "folded", label: t("Rail only") },
             ]}
           />
         </SettingsRow>

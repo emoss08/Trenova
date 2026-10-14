@@ -320,8 +320,8 @@ function StudioLayout() {
   const form = useFormContext<FormulaTemplateFormValues>();
   const expression = useWatch({ control: form.control, name: "expression" }) ?? "";
   const stacked = useMediaQuery("(max-width: 899px)");
-  // The studio is a room: the rate trace stands where the sidebar would and
-  // folds with the header's toggle and ⌘B, like Triage's folder rail.
+  // The studio is a room: the rate trace stands where the panel would and
+  // folds with the rail's fold tile and ⌘B, like Triage's folder rail.
   const traceFolded = useNavigationStore((state) => state.sidebarCollapsed);
 
   const [approvalAction, setApprovalAction] = useState<ApprovalAction | null>(null);

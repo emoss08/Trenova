@@ -1,5 +1,5 @@
 import type { BreadcrumbMatch, ShellFrame } from "@/types/router";
-import { createContext, useContext } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { useMatches } from "react-router";
 
 /**
@@ -29,4 +29,22 @@ export function useRouteFrame(): ShellFrame {
   const matches = useMatches() as unknown as BreadcrumbMatch[];
 
   return frameOfMatches(matches);
+}
+
+/**
+ * What the shell puts on a page's title bar around the page's own content:
+ * the fold, history and the trail before the title, the star after the
+ * actions. The shell provides it and `PageLayout` draws it, so a page never
+ * reaches for the router's data itself and renders the same outside the
+ * shell, where there is nothing to lead with.
+ */
+export interface PageBarSlots {
+  leading: (title: string) => ReactNode;
+  trailing: ReactNode;
+}
+
+export const PageBarSlotsContext = createContext<PageBarSlots | null>(null);
+
+export function usePageBarSlots(): PageBarSlots | null {
+  return useContext(PageBarSlotsContext);
 }

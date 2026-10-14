@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { PageBarControls } from "@/components/navigation/rail-page-bar";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { AIControlTab } from "../../ai-control-tabs";
@@ -70,11 +71,14 @@ export function PageHead({ tabs, active, counts, onSelect, onIntent }: PageHeadP
     <div className="ph">
       <div className="ph-r">
         <div className="ph-t">
-          <span className="crumb">
-            {t("Settings")}
-            <Ic n="chevR" s={11} />
-            {t("AI & Automation")}
-          </span>
+          <div className="flex items-center">
+            <PageBarControls />
+            <span className="crumb">
+              {t("Settings")}
+              <Ic n="chevR" s={11} />
+              {t("AI & Automation")}
+            </span>
+          </div>
           <h1>{t("AI control")}</h1>
         </div>
       </div>
