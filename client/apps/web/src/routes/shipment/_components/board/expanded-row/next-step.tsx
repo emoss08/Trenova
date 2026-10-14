@@ -1,11 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { CheckIcon, MessageChatCircleIcon, Send01Icon } from "@trenova/shared/components/icons";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { formatClockDurationMs, formatMinutesSpan } from "@trenova/shared/lib/date";
-import { cn, formatCurrency, formatPerMile } from "@trenova/shared/lib/utils";
-import type { Shipment } from "@trenova/shared/types/shipment";
 import type {
   CarrierCoverageSuggestion,
   DriverCoverageSuggestion,
@@ -14,6 +6,14 @@ import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { resolveCoverage, type Coverage } from "@/lib/shipment-board/coverage";
 import { useQuery } from "@tanstack/react-query";
+import { CheckIcon, MessageChatCircleIcon, Send01Icon } from "@trenova/shared/components/icons";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { formatClockDurationMs, formatMinutesSpan } from "@trenova/shared/lib/date";
+import { cn, formatCurrency, formatPerMile } from "@trenova/shared/lib/utils";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { useEffect, useState, type ReactNode } from "react";
 import { IdentityAvatar } from "../identity-avatar";
 import { useBoardActions } from "../use-board-actions";
