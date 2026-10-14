@@ -288,6 +288,7 @@
   "Condition key is required when a value is provided": "提供值時，條件索引鍵為必填",
   "Condition value is required when a key is provided": "提供索引鍵時，條件值為必填",
   "Conditional": "有條件",
+  "Confirm password": "確認密碼",
   "Confirm password is required": "確認密碼為必填",
   "Confirmed": "已確認",
   "Confirmed by dispatcher": "已由調度員確認",

@@ -42,6 +42,18 @@ var families = [...][]string{
 	{"list_watchtower_items", "get_daily_briefing", "list_agent_runs", "get_agent_run"},
 	{"list_driver_settlements", "get_driver_settlement", "list_driver_pay_events"},
 	{"get_ar_aging", "list_ar_open_items", "get_customer_statement"},
+	{
+		"list_factoring_ready_invoices",
+		"get_factoring_readiness",
+		"request_missing_factoring_document",
+		"set_invoice_factoring_override",
+	},
+	{
+		"list_factoring_noas",
+		"draft_factoring_noa",
+		"send_factoring_noa",
+		"record_factoring_noa_acknowledgement",
+	},
 	{"list_edi_inbound_files", "get_edi_inbound_file", "get_edi_partner"},
 	{"list_edi_transfers", "get_edi_transfer", "accept_edi_tender", "decline_edi_tender"},
 	{"list_edi_tender_changes", "review_edi_tender_change"},

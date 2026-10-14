@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 578.
+Tools listed: 588.
 
 ## The model
 
@@ -59,12 +59,12 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 197 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 201 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 234 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 238 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 24 |
-| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 35 |
+| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 37 |
 | Money | Moves or commits money. | Automatic | Yes | 98 |
 
 ## Reads only
@@ -110,6 +110,8 @@ Looks something up. Nothing changes and nothing is sent.
 | Get EDI message (`get_edi_message`) | Reads only | Automatic | — | Always, from EDI | Reads one EDI document, the errors and acknowledgment a partner's system returned for it, and its raw X12 on request; nothing changes and nothing is sent. |
 | Get EDI partner (`get_edi_partner`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get EDI transfer (`get_edi_transfer`) | Reads only | Automatic | — | Always, from EDI | Reads a load tender a trading partner wrote, stops and references included; nothing changes and nothing is sent. |
+| Get factoring agreement (`get_factoring_agreement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get factoring readiness (`get_factoring_readiness`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get fiscal close blockers (`get_fiscal_close_blockers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get formula template (`get_formula_template`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get fuel surcharge rates (`get_fuel_surcharge_rates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -181,6 +183,8 @@ Looks something up. Nothing changes and nothing is sent.
 | List equipment types (`list_equipment_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List escrow accounts (`list_escrow_accounts`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List expiring credentials (`list_expiring_credentials`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List factoring noas (`list_factoring_noas`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List factoring ready invoices (`list_factoring_ready_invoices`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List fiscal periods (`list_fiscal_periods`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List fleet codes (`list_fleet_codes`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List formula templates (`list_formula_templates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -370,6 +374,7 @@ Changes records only people inside the organization see.
 | Dismiss accounting drift (`dismiss_accounting_drift`) | Inside the organization | Ask first | — | — | Closes a difference with the books without fixing it, so a person approves it. |
 | Dismiss insight (`dismiss_insight`) | Inside the organization | Automatic | — | — | Dismisses an insight inside Trenova; it can be restored. |
 | Dismiss watchtower item (`dismiss_watchtower_item`) | Inside the organization | Ask first | — | — | Takes an item off the shared attention feed inside Trenova; nothing is sent and the record behind it is unchanged. |
+| Draft factoring noa (`draft_factoring_noa`) | Inside the organization | Automatic | — | — | Drafts a letter nobody outside sees until it is sent. |
 | Draft manual journal (`draft_manual_journal`) | Inside the organization | Ask first | A journal drafted from what someone outside wrote is proposed, since its lines are what an approver books. | — | Saves a draft journal inside Trenova; nothing reaches the ledger until a person submits, approves and posts it, and a draft is cancelled the same way. |
 | Draft performance review (`draft_performance_review`) | Inside the organization | Ask first | — | — | Saves the reviewer's draft inside Trenova; the worker sees nothing until the reviewer submits it, and the draft is edited again the same way. |
 | Draft rate agreement (`draft_rate_agreement`) | Inside the organization | Ask first | An agreement drafted from a rate sheet or a message someone outside sent is proposed, since its lanes are what the organization will charge. | — | Saves a draft agreement inside Trenova that prices nothing until a person approves it; archive_rate_agreement retires it. |
@@ -418,6 +423,7 @@ Changes records only people inside the organization see.
 | Recalculate shipment distance (`recalculate_shipment_distance`) | Inside the organization | Automatic | — | — | Re-derives the shipment's move distances inside Trenova from its stops; nothing is sent and running it again gives the same miles. |
 | Recompute IFTA return (`recompute_ifta_return`) | Inside the organization | Automatic | — | — | Re-derives a draft return's figures inside Trenova from what is on file; nothing is filed, and running it again gives the same figures. |
 | Record employment verification (`record_employment_verification`) | Inside the organization | Ask first | — | — | Adds a previous employer to the qualification file inside Trenova; nothing is sent to the employer, and it is corrected or removed the same way. |
+| Record factoring noa acknowledgement (`record_factoring_noa_acknowledgement`) | Inside the organization | Ask first | — | — | Lets the customer's invoices be sold to the factor; a person confirms the signed copy is the customer's. |
 | Record fuel purchase (`record_fuel_purchase`) | Inside the organization | Ask first | A purchase read from a receipt or statement someone outside sent is proposed, since it is a tax record the IFTA return is computed from. | — | Adds a fuel purchase inside Trenova that the next IFTA return counts; nothing is sent, and delete_fuel_purchase removes it. |
 | Record IFTA mileage entry (`record_ifta_mileage_entry`) | Inside the organization | Ask first | Miles read from a log or a message someone outside sent are proposed, since the IFTA return is computed from them. | — | Adds jurisdiction miles inside Trenova that the next IFTA return counts; nothing is sent, and delete_ifta_mileage_entry removes them. |
 | Record leave day (`record_leave_day`) | Inside the organization | Ask first | — | — | Records a day taken against a leave case inside Trenova; nothing is sent, and update_leave_day or delete_leave_day corrects it. |
@@ -436,6 +442,7 @@ Changes records only people inside the organization see.
 | Reject invoice adjustment (`reject_invoice_adjustment`) | Inside the organization | Propose | — | — | Turns down an adjustment an approver was asked to sign off; the approval decision is a person's. |
 | Reject rate agreement (`reject_rate_agreement`) | Inside the organization | Propose | — | — | Returns an agreement to its author with the reviewer's reason; it prices nothing either way, but the review is a person's decision. |
 | Release driver pay event (`release_driver_pay_event`) | Inside the organization | Automatic | — | — | Returns held pay to the settlement pool inside Trenova; nothing is paid until a settlement is approved, and the pay is held again the same way. |
+| Release factoring noa (`release_factoring_noa`) | Inside the organization | Ask first | — | — | Ends the customer's assignment to the factor; only the factor can release it, so a person confirms the release. |
 | Release shipment hold (`release_shipment_hold`) | Inside the organization | Automatic | — | — | Releases a hold on a shipment inside Trenova; no customer or EDI notice is sent. |
 | Remember (`remember`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. An Instruction, a Procedure or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text. A call on the caller's own records runs unasked while they are present. | Carries outside text into later runs | Saves a memory later runs read, so it keeps the taint of the run that wrote it. One kept for the caller alone is their own record; one for their team or the organization reaches colleagues' conversations. |
 | Reopen exception (`reopen_exception`) | Inside the organization | Ask first | — | — | Puts an exception back on the open queue inside Trenova; nothing outside changes. |
@@ -462,6 +469,7 @@ Changes records only people inside the organization see.
 | Send billing item back to ops (`send_billing_item_back_to_ops`) | Inside the organization | Automatic | Its notes are what a biller or operations reads next, so a run that has read outside text proposes it rather than writing it. | — | Returns an item to operations with a note on its shipment inside Trenova; it creates no money and the item comes back when operations fixes it. |
 | Set accounting mapping (`set_accounting_mapping`) | Inside the organization | Ask first | — | — | Decides which account or record Trenova's invoices, payments and bills will post to, so a person approves it; clearing or changing it undoes it. |
 | Set exception due (`set_exception_due`) | Inside the organization | Ask first | — | — | Changes when an exception escalates inside Trenova; nothing outside changes. |
+| Set invoice factoring override (`set_invoice_factoring_override`) | Inside the organization | Ask first | — | — | Moves one invoice between the organization's receivables and the factor's; reversible until the invoice is submitted. |
 | Set recurring shipment status (`set_recurring_shipment_status`) | Inside the organization | Ask first | — | — | Starts or stops a schedule inside Trenova; nothing is sent, and the status is set back the same way. |
 | Set table change alert status (`set_table_change_alert_status`) | Inside the organization | Automatic | — | — | Pauses or resumes an alert whose notices go to the person who owns it; the opposite call undoes it. |
 | Set worker availability preference (`set_worker_availability_preference`) | Inside the organization | Ask first | — | — | Records a worker's own stated preference inside Trenova; nothing is sent, and it is set again the same way. |
@@ -567,6 +575,7 @@ Sends to someone outside the organization.
 | Reply to inbound message (`reply_to_inbound_message`) | Sent outside the organization | Ask first | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Replies to whoever wrote in with text the model composed. |
 | Reprocess EDI inbound files (`reprocess_edi_inbound_files`) | Sent outside the organization | Propose | — | — | Turns what trading partners sent into tenders, status updates and invoices again, and sends each partner acknowledgments they act on. A person always decides. |
 | Request missing docs (`request_missing_docs`) | Sent outside the organization | Ask first | — | — | Emails an outside party a request for paperwork in words the model wrote. |
+| Request missing factoring document (`request_missing_factoring_document`) | Sent outside the organization | Propose | — | — | Emails a driver, carrier or customer outside the organization. |
 | Reschedule stop (`reschedule_stop`) | Sent outside the organization | Ask first | — | — | A changed appointment is sent as an EDI tender change to the trading partners the load was tendered to. |
 | Resolve service failure (`resolve_service_failure`) | Sent outside the organization | Ask first | — | — | Resolving a failure generates an EDI 214 to the customer's trading partner carrying the reason chosen. |
 | Retry EDI message delivery (`retry_edi_message_delivery`) | Sent outside the organization | Propose | — | — | Sends documents to trading partners outside the organization, who act on what they receive; a document sent cannot be recalled. A person always decides. |
@@ -577,6 +586,7 @@ Sends to someone outside the organization.
 | Send detention notice (`send_detention_notice`) | Sent outside the organization | Ask first | — | — | Sends the customer a detention notice that starts a charge. |
 | Send EDI status update (`send_edi_status_update`) | Sent outside the organization | Propose | — | — | Sends a trading partner a shipment status they act on and pass to their own customers; a document sent cannot be recalled. A person always decides. |
 | Send EDI tender (`send_edi_tender`) | Sent outside the organization | Propose | — | — | Offers a load to another organization, which may accept it and haul it on the terms tendered; a tender is withdrawn, never recalled. A person always decides. |
+| Send factoring noa (`send_factoring_noa`) | Sent outside the organization | Propose | — | — | Tells a customer, in writing, to pay someone else; a person decides every one. |
 | Send invoice (`send_invoice`) | Sent outside the organization | Propose | — | — | Emails the customer their invoice; only a person sends it, to the recipients the customer's billing profile names. |
 | Send invoice EDI (`send_invoice_edi`) | Sent outside the organization | Propose | — | — | Transmits the invoice to the customer's EDI trading partner, which cannot be called back; only a person sends it. |
 | Send invoices (`send_invoices`) | Sent outside the organization | Propose | — | — | Emails several customers their invoices at once; only a person sends them, is named as who sent each, and sees every recipient before approving. |

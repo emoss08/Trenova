@@ -37,7 +37,7 @@ Every rank passed ─▶ MarkExhausted ─▶ escalateExhausted (dispatch contro
 | Service | `operations/app/tenderservice`: `bounce.go`, `counter.go`, `escalate.go`, `lifecycle.go` |
 | Repository | `tenderrepository.Reopen`, `UpdateOfferStatus` with `Counter` and `CounterDecided` |
 | Workflow | `operations/jobs/tenderjobs/workflow.go`, `RecordCounterActivity` |
-| Migration | `20261231009310_tender_bounce_counter` |
+| Migration | `20261231009320_tender_bounce_counter` |
 | REST | `POST /tenders/:tenderID/bounce/`, the respond route's `Counter` action, public `POST /tender-offers/:token/counter/` |
 | Agent tool | `record_tender_response` (`Accept`, `Decline`, `Counter`, `BackedOut`) |
 | Web | dispatch console live tender panel and tender history, `/tender-offer/:token`, "Carrier tenders" on dispatch controls |

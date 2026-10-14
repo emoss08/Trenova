@@ -86,7 +86,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 83 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 272 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 275 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 99 |
@@ -97,14 +97,14 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1126 writes: 606 GraphQL mutations and 520 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1135 writes: 620 GraphQL mutations and 515 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 401 |
-| Exempt | 691 |
+| Covered by a tool | 407 |
+| Exempt | 694 |
 | — Security | 83 |
-| — Configuration | 272 |
+| — Configuration | 275 |
 | — User preference | 38 |
 | — Infrastructure | 52 |
 | — Agent administration | 99 |
@@ -113,9 +113,9 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1126 |
+| Total | 1135 |
 
-Of the 435 writes an agent should be able to make, 401 have a tool (92%).
+Of the 441 writes an agent should be able to make, 407 have a tool (92%).
 
 ## Pending
 
@@ -236,7 +236,8 @@ The writes no tool performs yet, and what the tool would do.
 | extractioneval | 5 | 0 | 5 | 0 |
 | extractionrollout | 1 | 0 | 1 | 0 |
 | extractionshadow | 1 | 0 | 1 | 0 |
-| factoringcompany | 3 | 0 | 3 | 0 |
+| factoring | 10 | 6 | 4 | 0 |
+| factoringcompany | 2 | 0 | 2 | 0 |
 | fiscalperiod | 9 | 5 | 4 | 0 |
 | fiscalyear | 7 | 0 | 7 | 0 |
 | fleetcode | 3 | 0 | 3 | 0 |
@@ -1231,13 +1232,27 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation updateExtractionShadowSettings` | Exempt, agent-administration: Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against. |
 
+### factoring
+
+| Write | Decision |
+| --- | --- |
+| `mutation acknowledgeFactoringNoa` | Tool: `record_factoring_noa_acknowledgement` |
+| `mutation activateFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
+| `mutation createFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
+| `mutation draftFactoringNoa` | Tool: `draft_factoring_noa` |
+| `mutation endFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
+| `mutation releaseFactoringNoa` | Tool: `release_factoring_noa` |
+| `mutation requestMissingFactoringDocuments` | Tool: `request_missing_factoring_document` |
+| `mutation sendFactoringNoa` | Tool: `send_factoring_noa` |
+| `mutation setInvoiceFactoringOverride` | Tool: `set_invoice_factoring_override` |
+| `mutation updateFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
+
 ### factoringcompany
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/factoring-companies/:factoringCompanyID/`<br>factoringcompanyhandler.patch | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
-| `POST /api/v1/factoring-companies/`<br>factoringcompanyhandler.create | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
-| `PUT /api/v1/factoring-companies/:factoringCompanyID/`<br>factoringcompanyhandler.update | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
+| `mutation createFactoringCompany`<br>twin `POST /api/v1/factoring-companies/` | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
+| `mutation updateFactoringCompany`<br>twin `PATCH /api/v1/factoring-companies/:factoringCompanyID/`<br>twin `PUT /api/v1/factoring-companies/:factoringCompanyID/` | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
 
 ### fiscalperiod
 
@@ -2169,10 +2184,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation createUser` | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
+| `mutation patchUser` | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `DELETE /api/v1/users/:userID/mfa/`<br>userhandler.resetUserMFA | Exempt, security: Resetting a person's second sign-in factor decides who can sign in as them. |
 | `DELETE /api/v1/users/me/profile-picture/`<br>userhandler.deleteProfilePicture | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `DELETE /api/v1/users/me/sessions/:sessionID/`<br>userhandler.revokeMySession | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
-| `PATCH /api/v1/users/:userID/`<br>userhandler.patch | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PATCH /api/v1/users/me/profile/`<br>userhandler.updateMyProfile | Exempt, user-preference: A person's own job title, phone and avatar; they describe themselves and no agent speaks for them. |
 | `PATCH /api/v1/users/me/settings/`<br>userhandler.updateMySettings | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `POST /api/v1/users/:userID/permissions/simulate/`<br>userhandler.simulatePermissions | Exempt, read-only: Shows what a user could do with a set of roles and saves nothing. |
@@ -2186,7 +2202,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/users/me/profile-picture/`<br>userhandler.uploadProfilePicture | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `POST /api/v1/users/me/sessions/revoke-others/`<br>userhandler.revokeMyOtherSessions | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
 | `POST /api/v1/users/me/switch-organization/`<br>userhandler.switchOrganization | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
-| `PUT /api/v1/users/:userID/`<br>userhandler.update | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PUT /api/v1/users/:userID/organization-memberships/`<br>userhandler.replaceOrganizationMemberships | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PUT /api/v1/users/me/availability/`<br>userhandler.updateMyAvailability | Exempt, user-preference: Whether a person is available, focusing or away, and who covers for them, is theirs alone to say. |
 

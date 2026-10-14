@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerstatementrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoiceadjustmentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicedisputerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
@@ -40,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/customerstatementservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentionbillingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentioncreditservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedisputeservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
@@ -47,6 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceshareservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/latechargeservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/paymentreminderservice"
+	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
@@ -55,6 +58,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -103,6 +107,18 @@ func SharedOptions() fx.Option {
 			invoiceadjustmentrepository.New,
 			invoicerepository.New,
 			invoicedisputerepository.New,
+			factoringrepository.NewAgreementRepository,
+			factoringrepository.NewNoaRepository,
+			factoringrepository.NewInvoiceStateRepository,
+			factoringrepository.NewWatchtowerReader,
+			factoringcontract.NewRequester,
+			factoringservice.NewAgreementService,
+			factoringservice.NewNoaService,
+			factoringservice.NewReadinessService,
+			fx.Annotate(
+				factoringservice.NewDocumentObserver,
+				fx.ResultTags(documentports.DocumentChangeObserverGroup),
+			),
 			latechargerepository.New,
 			invoicerunrepository.New,
 			invoicesharerepository.New,
@@ -147,6 +163,7 @@ func SharedOptions() fx.Option {
 				fx.ResultTags(documenttemplateports.ContextBuilderGroup),
 			),
 		),
+		fx.Decorate(factoringservice.WatchInvoices),
 	)
 }
 

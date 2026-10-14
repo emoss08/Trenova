@@ -35,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -690,6 +691,15 @@ type AccountingSyncRecordFilterInput struct {
 	ObjectID *string `json:"objectId,omitempty"`
 	// Matches the document number.
 	Search *string `json:"search,omitempty"`
+}
+
+type AcknowledgeFactoringNoaInput struct {
+	ID             string `json:"id"`
+	Version        int    `json:"version"`
+	AcknowledgedAt int    `json:"acknowledgedAt"`
+	// The signed copy, uploaded as a document on this notice.
+	SignedDocumentID string `json:"signedDocumentId"`
+	ExpiresAt        *int   `json:"expiresAt,omitempty"`
 }
 
 type AcknowledgeMyPolicyInput struct {
@@ -2260,6 +2270,13 @@ type ChangeAccountingBackfillInput struct {
 	Action accountingsyncports.AccountingBackfillAction `json:"action"`
 }
 
+type ChangeFactoringAgreementStatusInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	// When the agreement stops covering invoices. Defaults to now.
+	EndAt *int `json:"endAt,omitempty"`
+}
+
 type ChargeAllocationInput struct {
 	ID               *string                         `json:"id,omitempty"`
 	BillToCustomerID string                          `json:"billToCustomerId"`
@@ -2597,6 +2614,21 @@ type CreateSettlementDisputeInput struct {
 	SettlementLineID *string                          `json:"settlementLineId,omitempty"`
 	Category         driversettlement.DisputeCategory `json:"category"`
 	Description      string                           `json:"description"`
+}
+
+type CreateUserInput struct {
+	Name         string `json:"name"`
+	Username     string `json:"username"`
+	EmailAddress string `json:"emailAddress"`
+	Timezone     string `json:"timezone"`
+	// Defaults to TwelveHour.
+	TimeFormat *TimeFormat `json:"timeFormat,omitempty"`
+	// Defaults to the instance's default language.
+	Locale             *string            `json:"locale,omitempty"`
+	Status             domaintypes.Status `json:"status"`
+	MustChangePassword *bool              `json:"mustChangePassword,omitempty"`
+	// Roles granted in the current organization. Every grant is checked against the caller's own access.
+	RoleIds []string `json:"roleIds,omitempty"`
 }
 
 type CreateWorkerPTOInput struct {
@@ -3915,6 +3947,12 @@ type DocumentTypeEdge struct {
 	Cursor string                     `json:"cursor"`
 }
 
+type DraftFactoringNoaInput struct {
+	CustomerID         string  `json:"customerId"`
+	FactoringCompanyID string  `json:"factoringCompanyId"`
+	Notes              *string `json:"notes,omitempty"`
+}
+
 type DriverCapacitySummary struct {
 	Ready          int `json:"ready"`
 	WithinTwoHours int `json:"withinTwoHours"`
@@ -4365,6 +4403,23 @@ type FacilityDetentionStat struct {
 	SuppressedCount    int     `json:"suppressedCount"`
 }
 
+type FactoringAgreementInput struct {
+	FactoringCompanyID   string                        `json:"factoringCompanyId"`
+	EffectiveFrom        int                           `json:"effectiveFrom"`
+	EffectiveTo          *int                          `json:"effectiveTo,omitempty"`
+	AdvanceRateBp        int                           `json:"advanceRateBp"`
+	ReserveRateBp        int                           `json:"reserveRateBp"`
+	MinimumFeeMinor      *int                          `json:"minimumFeeMinor,omitempty"`
+	ChargebackWindowDays int                           `json:"chargebackWindowDays"`
+	Recourse             factoring.Recourse            `json:"recourse"`
+	AccountingTreatment  factoring.AccountingTreatment `json:"accountingTreatment"`
+	FundingDays          int                           `json:"fundingDays"`
+	SubmissionTime       int                           `json:"submissionTime"`
+	Notes                *string                       `json:"notes,omitempty"`
+	FeeTiers             []*FactoringFeeTierInput      `json:"feeTiers"`
+	DocumentTypeIds      []string                      `json:"documentTypeIds,omitempty"`
+}
+
 type FactoringCompanyConnection struct {
 	Edges      []*FactoringCompanyEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
@@ -4374,6 +4429,67 @@ type FactoringCompanyConnection struct {
 type FactoringCompanyEdge struct {
 	Node   *factoringcompany.FactoringCompany `json:"node"`
 	Cursor string                             `json:"cursor"`
+}
+
+type FactoringCompanyInput struct {
+	Status                 domaintypes.Status `json:"status"`
+	Code                   string             `json:"code"`
+	Name                   string             `json:"name"`
+	AddressLine1           string             `json:"addressLine1"`
+	AddressLine2           *string            `json:"addressLine2,omitempty"`
+	City                   string             `json:"city"`
+	StateID                string             `json:"stateId"`
+	PostalCode             string             `json:"postalCode"`
+	Email                  *string            `json:"email,omitempty"`
+	PhoneNumber            *string            `json:"phoneNumber,omitempty"`
+	RemittanceInstructions *string            `json:"remittanceInstructions,omitempty"`
+	NoticeOfAssignment     *string            `json:"noticeOfAssignment,omitempty"`
+	// Kept in step with the agreement in force once the factor has one.
+	NonRecourse *bool   `json:"nonRecourse,omitempty"`
+	Notes       *string `json:"notes,omitempty"`
+}
+
+type FactoringFeeTierInput struct {
+	DaysFrom  int  `json:"daysFrom"`
+	DaysTo    *int `json:"daysTo,omitempty"`
+	RateBp    int  `json:"rateBp"`
+	FlatMinor *int `json:"flatMinor,omitempty"`
+}
+
+type FactoringInvoiceStateConnection struct {
+	Edges      []*FactoringInvoiceStateEdge `json:"edges"`
+	PageInfo   *PageInfo                    `json:"pageInfo"`
+	TotalCount *int                         `json:"totalCount,omitempty"`
+}
+
+type FactoringInvoiceStateEdge struct {
+	Node   *factoring.InvoiceState `json:"node"`
+	Cursor string                  `json:"cursor"`
+}
+
+type FactoringInvoiceStateListInput struct {
+	Table              *DataTableConnectionInput `json:"table"`
+	Verdicts           []factoring.Verdict       `json:"verdicts,omitempty"`
+	FactoringCompanyID *string                   `json:"factoringCompanyId,omitempty"`
+	CustomerID         *string                   `json:"customerId,omitempty"`
+}
+
+type FactoringNoaConnection struct {
+	Edges      []*FactoringNoaEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type FactoringNoaEdge struct {
+	Node   *factoring.Noa `json:"node"`
+	Cursor string         `json:"cursor"`
+}
+
+type FactoringNoaListInput struct {
+	Table              *DataTableConnectionInput `json:"table"`
+	CustomerID         *string                   `json:"customerId,omitempty"`
+	FactoringCompanyID *string                   `json:"factoringCompanyId,omitempty"`
+	Statuses           []factoring.NoaStatus     `json:"statuses,omitempty"`
 }
 
 type FieldFilterInput struct {
@@ -6473,6 +6589,12 @@ type ReleaseAccountingSyncInput struct {
 	Ids             []string         `json:"ids,omitempty"`
 }
 
+type ReleaseFactoringNoaInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	Reason  string `json:"reason"`
+}
+
 type RemoveCarrierSettlementAdjustmentInput struct {
 	SettlementID string `json:"settlementId"`
 	LineID       string `json:"lineId"`
@@ -6954,6 +7076,15 @@ type RequestAccountingBackfillInput struct {
 	ObjectTypes []accountingsync.SyncObjectType `json:"objectTypes,omitempty"`
 }
 
+type RequestMissingFactoringDocumentsInput struct {
+	InvoiceID string `json:"invoiceId"`
+	// Ask for these only. Defaults to every document the invoice is missing.
+	DocumentTypeIds []string `json:"documentTypeIds,omitempty"`
+	// Defaults to the driver, then the carrier, then the customer's invoice email recipients.
+	Recipient *string `json:"recipient,omitempty"`
+	Message   *string `json:"message,omitempty"`
+}
+
 type RequestMyPTOInput struct {
 	Type      worker.PTOType `json:"type"`
 	StartDate int            `json:"startDate"`
@@ -7314,6 +7445,13 @@ type SelectOptionsInput struct {
 	Filters  map[string]any       `json:"filters,omitempty"`
 }
 
+type SendFactoringNoaInput struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	// Addresses to send to. Defaults to the customer's invoice email recipients.
+	Recipient *string `json:"recipient,omitempty"`
+}
+
 type SendInboundReplyInput struct {
 	MessageID string `json:"messageId"`
 	Subject   string `json:"subject"`
@@ -7387,6 +7525,13 @@ type SetAvailabilityPreferenceInput struct {
 	DayOfWeek  int                           `json:"dayOfWeek"`
 	Preference worker.AvailabilityPreference `json:"preference"`
 	Note       *string                       `json:"note,omitempty"`
+}
+
+type SetInvoiceFactoringOverrideInput struct {
+	InvoiceID string                    `json:"invoiceId"`
+	Override  invoice.FactoringOverride `json:"override"`
+	// Required when keeping the invoice out of factoring.
+	Reason *string `json:"reason,omitempty"`
 }
 
 type SetMyAIFeedbackInput struct {
@@ -10096,6 +10241,18 @@ type UpdateExtractionShadowSettingsInput struct {
 	Version       int     `json:"version"`
 }
 
+type UpdateFactoringAgreementInput struct {
+	ID        string                   `json:"id"`
+	Version   int                      `json:"version"`
+	Agreement *FactoringAgreementInput `json:"agreement"`
+}
+
+type UpdateFactoringCompanyInput struct {
+	ID               string                 `json:"id"`
+	Version          int                    `json:"version"`
+	FactoringCompany *FactoringCompanyInput `json:"factoringCompany"`
+}
+
 type UpdateFuelIndexPriceInput struct {
 	ID        string `json:"id"`
 	PriceDate string `json:"priceDate"`
@@ -10404,6 +10561,29 @@ type UserConnection struct {
 type UserEdge struct {
 	Node   *tenant.User `json:"node"`
 	Cursor string       `json:"cursor"`
+}
+
+type UserPatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Status graphql.Omittable[*domaintypes.Status] `json:"status,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Name graphql.Omittable[*string] `json:"name,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	EmailAddress graphql.Omittable[*string] `json:"emailAddress,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Timezone graphql.Omittable[*string] `json:"timezone,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	TimeFormat graphql.Omittable[*TimeFormat] `json:"timeFormat,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Locale graphql.Omittable[*string] `json:"locale,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	IsLocked graphql.Omittable[*bool] `json:"isLocked,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	MustChangePassword graphql.Omittable[*bool] `json:"mustChangePassword,omitempty"`
+	// Omit to leave unchanged; null is rejected. An empty string clears it.
+	JobTitle graphql.Omittable[*string] `json:"jobTitle,omitempty"`
+	// Omit to leave unchanged; null is rejected. An empty string clears it.
+	PhoneNumber graphql.Omittable[*string] `json:"phoneNumber,omitempty"`
 }
 
 type VehicleInspection struct {

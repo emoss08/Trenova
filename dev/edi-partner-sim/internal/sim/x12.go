@@ -3,10 +3,13 @@ package sim
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 )
+
+const transactionControlNumber = "0001"
 
 type X12Envelope struct {
 	SenderQualifier          string `json:"senderQualifier"`
@@ -62,6 +65,16 @@ func ParseX12Envelope(raw string) (*X12Envelope, error) {
 	return envelope, nil
 }
 
+func transactionSet(id string, body ...string) []string {
+	segments := make([]string, 0, len(body)+2)
+	segments = append(segments, "ST*"+id+"*"+transactionControlNumber)
+	segments = append(segments, body...)
+	return append(
+		segments,
+		"SE*"+strconv.Itoa(len(segments)+1)+"*"+transactionControlNumber,
+	)
+}
+
 func padISA(value string) string {
 	if len(value) >= 15 {
 		return value[:15]
@@ -84,23 +97,29 @@ func Build997(input Build997Input) string {
 		acceptance = "A"
 	}
 	isaControl := fmt.Sprintf("%09d", input.ControlNumber)
-	segments := []string{
-		"ISA*00*          *00*          *ZZ*" + padISA(input.SenderID) +
-			"*ZZ*" + padISA(input.ReceiverID) +
-			"*" + now.Format("060102") + "*" + now.Format("1504") +
-			"*^*00401*" + isaControl + "*0*T*>",
-		"GS*FA*" + input.SenderID + "*" + input.ReceiverID +
-			"*" + now.Format("20060102") + "*" + now.Format("1504") +
-			"*" + strconv.FormatInt(input.ControlNumber, 10) + "*X*004010",
-		"ST*997*0001",
-		"AK1*" + input.Original.FunctionalGroupID + "*" + input.Original.GroupControlNumber,
-		"AK2*" + input.Original.TransactionSet + "*" + input.Original.TransactionControlNumber,
-		"AK5*" + acceptance,
-		"AK9*" + acceptance + "*1*1*1",
-		"SE*6*0001",
-		"GE*1*" + strconv.FormatInt(input.ControlNumber, 10),
-		"IEA*1*" + isaControl,
-	}
+	control := strconv.FormatInt(input.ControlNumber, 10)
+	segments := slices.Concat(
+		[]string{
+			"ISA*00*          *00*          *ZZ*" + padISA(input.SenderID) +
+				"*ZZ*" + padISA(input.ReceiverID) +
+				"*" + now.Format("060102") + "*" + now.Format("1504") +
+				"*^*00401*" + isaControl + "*0*T*>",
+			"GS*FA*" + input.SenderID + "*" + input.ReceiverID +
+				"*" + now.Format("20060102") + "*" + now.Format("1504") +
+				"*" + control + "*X*004010",
+		},
+		transactionSet(
+			"997",
+			"AK1*"+input.Original.FunctionalGroupID+"*"+input.Original.GroupControlNumber,
+			"AK2*"+input.Original.TransactionSet+"*"+input.Original.TransactionControlNumber,
+			"AK5*"+acceptance,
+			"AK9*"+acceptance+"*1*1*1",
+		),
+		[]string{
+			"GE*1*" + control,
+			"IEA*1*" + isaControl,
+		},
+	)
 	return strings.Join(segments, "~") + "~"
 }
 
@@ -115,32 +134,37 @@ func BuildLoadTender204(input BuildLoadTenderInput) string {
 	now := time.Now().UTC()
 	isaControl := fmt.Sprintf("%09d", input.ControlNumber)
 	control := strconv.FormatInt(input.ControlNumber, 10)
-	segments := []string{
-		"ISA*00*          *00*          *ZZ*" + padISA(input.SenderID) +
-			"*ZZ*" + padISA(input.ReceiverID) +
-			"*" + now.Format("060102") + "*" + now.Format("1504") +
-			"*^*00401*" + isaControl + "*0*T*>",
-		"GS*SM*" + input.SenderID + "*" + input.ReceiverID +
-			"*" + now.Format("20060102") + "*" + now.Format("1504") +
-			"*" + control + "*X*004010",
-		"ST*204*0001",
-		"B2**SIML**" + input.ShipmentID + "**PP",
-		"B2A*00",
-		"L11*" + input.ShipmentID + "*CR",
-		"S5*1*CL",
-		"G62*64*" + now.Format("20060102") + "*1*" + now.Format("1504"),
-		"N1*SF*Simulator Shipper*93*SIM-SHIP",
-		"N3*100 Simulator Way",
-		"N4*Chicago*IL*60601*US",
-		"S5*2*CU",
-		"G62*68*" + now.AddDate(0, 0, 2).Format("20060102") + "*1*" + now.Format("1504"),
-		"N1*ST*Simulator Consignee*93*SIM-CONS",
-		"N3*200 Receiver Road",
-		"N4*Dallas*TX*75201*US",
-		"L3*1000*G***150000*",
-		"SE*15*0001",
-		"GE*1*" + control,
-		"IEA*1*" + isaControl,
-	}
+	segments := slices.Concat(
+		[]string{
+			"ISA*00*          *00*          *ZZ*" + padISA(input.SenderID) +
+				"*ZZ*" + padISA(input.ReceiverID) +
+				"*" + now.Format("060102") + "*" + now.Format("1504") +
+				"*^*00401*" + isaControl + "*0*T*>",
+			"GS*SM*" + input.SenderID + "*" + input.ReceiverID +
+				"*" + now.Format("20060102") + "*" + now.Format("1504") +
+				"*" + control + "*X*004010",
+		},
+		transactionSet(
+			"204",
+			"B2**SIML**"+input.ShipmentID+"**PP",
+			"B2A*00",
+			"L11*"+input.ShipmentID+"*CR",
+			"S5*1*CL",
+			"G62*10*"+now.Format("20060102")+"*Y*"+now.Format("1504"),
+			"N1*SF*Simulator Shipper*93*SIM-SHIP",
+			"N3*100 Simulator Way",
+			"N4*Chicago*IL*60601*US",
+			"S5*2*CU",
+			"G62*68*"+now.AddDate(0, 0, 2).Format("20060102")+"*Z*"+now.Format("1504"),
+			"N1*ST*Simulator Consignee*93*SIM-CONS",
+			"N3*200 Receiver Road",
+			"N4*Dallas*TX*75201*US",
+			"L3*1000*G***150000",
+		),
+		[]string{
+			"GE*1*" + control,
+			"IEA*1*" + isaControl,
+		},
+	)
 	return strings.Join(segments, "~") + "~"
 }

@@ -288,6 +288,7 @@
   "Condition key is required when a value is provided": "提供值时，条件键为必填",
   "Condition value is required when a key is provided": "提供键时，条件值为必填",
   "Conditional": "有条件",
+  "Confirm password": "确认密码",
   "Confirm password is required": "确认密码为必填项",
   "Confirmed": "已确认",
   "Confirmed by dispatcher": "已由调度员确认",

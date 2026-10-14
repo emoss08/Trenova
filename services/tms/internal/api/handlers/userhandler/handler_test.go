@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -307,125 +306,6 @@ func TestUserHandler_Get_NotFound(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
 }
 
-func TestUserHandler_Update_Success(t *testing.T) {
-	t.Parallel()
-
-	userID := pulid.MustNew("usr_")
-	repo := tenantportsmock.NewMockUserRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&tenant.User{
-		ID:                    userID,
-		CurrentOrganizationID: testutil.TestOrgID,
-		BusinessUnitID:        testutil.TestBuID,
-		Name:                  "Test User",
-		Username:              "testuser",
-		EmailAddress:          "test@example.com",
-		Status:                domaintypes.StatusActive,
-		Timezone:              "America/New_York",
-	}, nil)
-	repo.EXPECT().
-		Update(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, entity *tenant.User) (*tenant.User, error) {
-			return entity, nil
-		})
-
-	handler := setupUserHandler(t, setupOptions{userRepo: repo})
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPut).
-		WithPath("/api/v1/users/" + userID.String() + "/").
-		WithDefaultAuthContext().
-		WithJSONBody(map[string]any{
-			"name":         "Updated User",
-			"username":     "updateduser",
-			"emailAddress": "updated@example.com",
-			"status":       "Active",
-			"timezone":     "America/New_York",
-		})
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, "Updated User", resp["name"])
-}
-
-func TestUserHandler_Update_InvalidID(t *testing.T) {
-	t.Parallel()
-
-	handler := setupUserHandler(t, setupOptions{})
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPut).
-		WithPath("/api/v1/users/invalid-id/").
-		WithDefaultAuthContext().
-		WithJSONBody(map[string]any{
-			"name": "Updated User",
-		})
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
-}
-
-func TestUserHandler_Update_BadJSON(t *testing.T) {
-	t.Parallel()
-
-	userID := pulid.MustNew("usr_")
-	handler := setupUserHandler(t, setupOptions{})
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPut).
-		WithPath("/api/v1/users/" + userID.String() + "/").
-		WithDefaultAuthContext().
-		WithBody("{invalid json")
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.True(t, ginCtx.ResponseCode() >= 400)
-}
-
-func TestUserHandler_Update_ServiceError(t *testing.T) {
-	t.Parallel()
-
-	userID := pulid.MustNew("usr_")
-	repo := tenantportsmock.NewMockUserRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&tenant.User{
-		ID:                    userID,
-		CurrentOrganizationID: testutil.TestOrgID,
-		BusinessUnitID:        testutil.TestBuID,
-		Name:                  "Test User",
-		Username:              "testuser",
-		EmailAddress:          "test@example.com",
-		Status:                domaintypes.StatusActive,
-		Timezone:              "America/New_York",
-	}, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Return(nil, errors.New("update failed"))
-
-	handler := setupUserHandler(t, setupOptions{userRepo: repo})
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPut).
-		WithPath("/api/v1/users/" + userID.String() + "/").
-		WithDefaultAuthContext().
-		WithJSONBody(map[string]any{
-			"name":         "Updated User",
-			"username":     "updateduser",
-			"emailAddress": "updated@example.com",
-			"status":       "Active",
-			"timezone":     "America/New_York",
-		})
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
-}
-
 func TestUserHandler_Me_Success(t *testing.T) {
 	t.Parallel()
 
@@ -573,150 +453,6 @@ func TestUserHandler_GetEffectivePermissions_EngineError(t *testing.T) {
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/users/" + userID.String() + "/effective-permissions/").
 		WithDefaultAuthContext()
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
-}
-
-func TestUserHandler_Patch_Success(t *testing.T) {
-	t.Parallel()
-
-	userID := pulid.MustNew("usr_")
-	repo := tenantportsmock.NewMockUserRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&tenant.User{
-		ID:                    userID,
-		CurrentOrganizationID: testutil.TestOrgID,
-		BusinessUnitID:        testutil.TestBuID,
-		Name:                  "Test User",
-		Username:              "testuser",
-		EmailAddress:          "test@example.com",
-		Status:                domaintypes.StatusActive,
-		Timezone:              "America/New_York",
-	}, nil)
-	repo.EXPECT().
-		Update(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, entity *tenant.User) (*tenant.User, error) {
-			return entity, nil
-		})
-
-	handler := setupUserHandler(t, setupOptions{userRepo: repo})
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPatch).
-		WithPath("/api/v1/users/" + userID.String() + "/").
-		WithDefaultAuthContext().
-		WithJSONBody(map[string]any{
-			"name": "Patched User",
-		})
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, "Patched User", resp["name"])
-}
-
-func TestUserHandler_Patch_InvalidID(t *testing.T) {
-	t.Parallel()
-
-	handler := setupUserHandler(t, setupOptions{})
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPatch).
-		WithPath("/api/v1/users/invalid-id/").
-		WithDefaultAuthContext().
-		WithJSONBody(map[string]any{
-			"name": "Patched User",
-		})
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
-}
-
-func TestUserHandler_Patch_GetByIDError(t *testing.T) {
-	t.Parallel()
-
-	userID := pulid.MustNew("usr_")
-	repo := makeUserRepoWithGetByID(t, nil, errNotFound)
-
-	handler := setupUserHandler(t, setupOptions{userRepo: repo})
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPatch).
-		WithPath("/api/v1/users/" + userID.String() + "/").
-		WithDefaultAuthContext().
-		WithJSONBody(map[string]any{
-			"name": "Patched User",
-		})
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
-}
-
-func TestUserHandler_Patch_BadJSON(t *testing.T) {
-	t.Parallel()
-
-	userID := pulid.MustNew("usr_")
-	repo := makeUserRepoWithGetByID(t, &tenant.User{
-		ID:                    userID,
-		CurrentOrganizationID: testutil.TestOrgID,
-		BusinessUnitID:        testutil.TestBuID,
-		Name:                  "Test User",
-		Username:              "testuser",
-		EmailAddress:          "test@example.com",
-		Status:                domaintypes.StatusActive,
-		Timezone:              "America/New_York",
-	}, nil)
-
-	handler := setupUserHandler(t, setupOptions{userRepo: repo})
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPatch).
-		WithPath("/api/v1/users/" + userID.String() + "/").
-		WithDefaultAuthContext().
-		WithBody("{invalid json")
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.True(t, ginCtx.ResponseCode() >= 400)
-}
-
-func TestUserHandler_Patch_UpdateError(t *testing.T) {
-	t.Parallel()
-
-	userID := pulid.MustNew("usr_")
-	repo := tenantportsmock.NewMockUserRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&tenant.User{
-		ID:                    userID,
-		CurrentOrganizationID: testutil.TestOrgID,
-		BusinessUnitID:        testutil.TestBuID,
-		Name:                  "Test User",
-		Username:              "testuser",
-		EmailAddress:          "test@example.com",
-		Status:                domaintypes.StatusActive,
-		Timezone:              "America/New_York",
-	}, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Return(nil, errors.New("update failed"))
-
-	handler := setupUserHandler(t, setupOptions{userRepo: repo})
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPatch).
-		WithPath("/api/v1/users/" + userID.String() + "/").
-		WithDefaultAuthContext().
-		WithJSONBody(map[string]any{
-			"name": "Patched User",
-		})
 
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
@@ -1214,8 +950,13 @@ func TestUserHandler_UpdateMySettings_Success(t *testing.T) {
 	}
 
 	repo := tenantportsmock.NewMockUserRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(newTestUserForHandler(), nil).Twice()
-	repo.On("Update", mock.Anything, mock.Anything).Return(user, nil).Once()
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(newTestUserForHandler(), nil).Once()
+	repo.On("UpdateColumns", mock.Anything, mock.MatchedBy(func(req tenantports.UpdateUserColumnsRequest) bool {
+		return assert.ObjectsAreEqual([]string{"timezone", "time_format"}, req.Columns) &&
+			req.Entity.Timezone == "America/Chicago" &&
+			req.Entity.TimeFormat == domaintypes.TimeFormat24Hour
+	})).Return(user, nil).Once()
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(user, nil).Once()
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 

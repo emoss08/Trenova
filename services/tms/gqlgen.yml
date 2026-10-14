@@ -143,6 +143,9 @@ models:
   FactoringCompany:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany.FactoringCompany
+    fields:
+      agreements:
+        resolver: true
   JurisdictionRule:
     model:
       - github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule.JurisdictionRule
@@ -1702,6 +1705,78 @@ models:
   VoidInvoiceResult:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.VoidInvoiceResult
+  FactoringAgreementStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.AgreementStatus
+  FactoringRecourse:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Recourse
+  FactoringAccountingTreatment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.AccountingTreatment
+  FactoringNoaStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.NoaStatus
+  FactoringVerdict:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Verdict
+  FactoringCheckCode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.CheckCode
+  FactoringFixAction:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.FixAction
+  InvoiceFactoringOverride:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.FactoringOverride
+  FactoringFeeTier:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.FeeTier
+  FactoringAgreement:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Agreement
+    fields:
+      factoringCompany:
+        resolver: true
+  FactoringNoa:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Noa
+    fields:
+      signedDocumentId:
+        resolver: true
+      customer:
+        resolver: true
+      factoringCompany:
+        resolver: true
+  FactoringCheck:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Check
+    fields:
+      fix:
+        resolver: true
+      documentTypeId:
+        resolver: true
+      shipmentId:
+        resolver: true
+  FactoringInvoiceState:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.InvoiceState
+    fields:
+      invoice:
+        resolver: true
+      customer:
+        resolver: true
+      factoringCompany:
+        resolver: true
+  FactoringVerdictTotals:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.VerdictTotals
+  FactoringSummary:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.Summary
+  FactoringDocumentRequestResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RequestMissingDocumentsResult
   InvoiceDisputeCaseStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.DisputeCaseStatus
@@ -1822,6 +1897,10 @@ models:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.Invoice
     fields:
+      factoringCompany:
+        resolver: true
+      factoringState:
+        resolver: true
       subtotalAmount:
         resolver: true
       otherAmount:
@@ -4091,6 +4170,12 @@ models:
     fields:
       logoUrl:
         fieldName: LogoURL
+  AvatarStyle:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.AvatarStyle
+  AvailabilityStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.AvailabilityStatus
   User:
     model:
       - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.User
@@ -4310,6 +4395,8 @@ models:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/customer.CustomerBillingProfile
     fields:
+      factoringCompany:
+        resolver: true
       invoiceAdjustmentSupportingDocumentPolicy:
         resolver: true
       billingCycleType:

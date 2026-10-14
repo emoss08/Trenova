@@ -44,7 +44,10 @@ func (t Template) StarterDataAccess() DataAccessCeiling {
 	switch t {
 	case TemplateCashApplication, TemplateLoadEntryCheck, TemplateInsightAnalyst:
 		return DataAccessRestricted
-	case TemplateMasterDataSteward, TemplateFuelTaxClerk, TemplateReportAnalyst:
+	case TemplateMasterDataSteward,
+		TemplateFuelTaxClerk,
+		TemplateReportAnalyst,
+		TemplateFactoringClerk:
 		return DataAccessInternal
 	default:
 		if t.StarterTrigger() == TriggerChat {

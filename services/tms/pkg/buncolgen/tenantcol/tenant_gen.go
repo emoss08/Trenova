@@ -2980,6 +2980,7 @@ var PasswordResetTokenColumns = struct {
 	BusinessUnitID buncolgen.Column // "business_unit_id" → qualified: "prt.business_unit_id"
 	OrganizationID buncolgen.Column // "organization_id" → qualified: "prt.organization_id"
 	TokenHash      buncolgen.Column // "token_hash" → qualified: "prt.token_hash"
+	Purpose        buncolgen.Column // "purpose" → qualified: "prt.purpose"
 	ExpiresAt      buncolgen.Column // "expires_at" → qualified: "prt.expires_at"
 	UsedAt         buncolgen.Column // "used_at" → qualified: "prt.used_at"
 	InvalidatedAt  buncolgen.Column // "invalidated_at" → qualified: "prt.invalidated_at"
@@ -2990,6 +2991,7 @@ var PasswordResetTokenColumns = struct {
 	BusinessUnitID: buncolgen.NewColumn("business_unit_id", "prt"),
 	OrganizationID: buncolgen.NewColumn("organization_id", "prt"),
 	TokenHash:      buncolgen.NewColumn("token_hash", "prt"),
+	Purpose:        buncolgen.NewColumn("purpose", "prt"),
 	ExpiresAt:      buncolgen.NewColumn("expires_at", "prt"),
 	UsedAt:         buncolgen.NewColumn("used_at", "prt"),
 	InvalidatedAt:  buncolgen.NewColumn("invalidated_at", "prt"),
@@ -3005,6 +3007,7 @@ var PasswordResetTokenFieldMap = map[string]string{
 	"userId":         "user_id",
 	"businessUnitId": "business_unit_id",
 	"organizationId": "organization_id",
+	"purpose":        "purpose",
 	"expiresAt":      "expires_at",
 	"usedAt":         "used_at",
 	"invalidatedAt":  "invalidated_at",
@@ -3019,6 +3022,7 @@ var PasswordResetTokenInsertableColumns = []string{
 	"business_unit_id",
 	"organization_id",
 	"token_hash",
+	"purpose",
 	"expires_at",
 	"used_at",
 	"invalidated_at",
@@ -3090,6 +3094,7 @@ var PasswordResetTokenFilter = struct {
 	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
 	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Purpose        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "purpose" → DB: "purpose"
 	ExpiresAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
 	UsedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "usedAt" → DB: "used_at"
 	InvalidatedAt  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invalidatedAt" → DB: "invalidated_at"
@@ -3106,6 +3111,9 @@ var PasswordResetTokenFilter = struct {
 	},
 	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	Purpose: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("purpose", op, value)
 	},
 	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("expiresAt", op, value)

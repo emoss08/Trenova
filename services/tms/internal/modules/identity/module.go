@@ -124,6 +124,8 @@ func SharedOptions() fx.Option {
 			roleassignmentservice.New,
 			tenanttimezone.New,
 			passwordresetservice.New,
+			func(s *roleservice.Service) userservice.RoleAssigner { return s },
+			func(s *passwordresetservice.Service) userservice.AccountInviter { return s },
 			onboardingservice.New,
 			onboardingservice.NewSampleData,
 			sequenceconfigservice.New,

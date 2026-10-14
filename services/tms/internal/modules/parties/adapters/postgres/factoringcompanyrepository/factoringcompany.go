@@ -183,6 +183,34 @@ func (r *repository) ListConnection(
 	)
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req factoringcompanyports.GetFactoringCompaniesByIDsRequest,
+) ([]*factoringcompany.FactoringCompany, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*factoringcompany.FactoringCompany, error) {
+			entities := make([]*factoringcompany.FactoringCompany, 0, len(req.IDs))
+			if len(req.IDs) == 0 {
+				return entities, nil
+			}
+			if err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return factoringcompanycol.FactoringCompanyScopeTenant(sq, req.TenantInfo).
+						Where(factoringcompanycol.FactoringCompanyColumns.ID.In(), bun.List(req.IDs))
+				}).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("get factoring companies by ids: %w", err)
+			}
+
+			return entities, nil
+		},
+	)
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req factoringcompanyports.GetFactoringCompanyByIDRequest,

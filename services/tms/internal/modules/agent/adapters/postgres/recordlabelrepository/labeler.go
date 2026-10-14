@@ -23,6 +23,8 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/equipmentmanufacturercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/equipmenttypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
@@ -57,6 +59,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -73,6 +76,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -220,6 +224,12 @@ var sources = map[permission.Resource]source{
 		scope: accessorialchargecol.AccessorialChargeScopeTenant,
 		id:    accessorialchargecol.AccessorialChargeColumns.ID,
 		label: accessorialchargecol.AccessorialChargeColumns.Code.Qualified(),
+	},
+	permission.ResourceFactoringCompany: {
+		model: func() any { return (*factoringcompany.FactoringCompany)(nil) },
+		scope: factoringcompanycol.FactoringCompanyScopeTenant,
+		id:    factoringcompanycol.FactoringCompanyColumns.ID,
+		label: factoringcompanycol.FactoringCompanyColumns.Name.Qualified(),
 	},
 	permission.ResourceInvoice: {
 		model: func() any { return (*invoice.Invoice)(nil) },
@@ -430,6 +440,16 @@ var ownedSources = map[permission.Resource]ownedSource{
 		},
 		ownerID: tendercol.TenderOfferColumns.CarrierID,
 		owner:   permission.ResourceCarrier,
+	},
+	permission.ResourceFactoringAgreement: {
+		source: source{
+			model: func() any { return (*factoring.Agreement)(nil) },
+			scope: factoringcol.AgreementScopeTenant,
+			id:    factoringcol.AgreementColumns.ID,
+			label: factoringcol.AgreementColumns.Status.Qualified(),
+		},
+		ownerID: factoringcol.AgreementColumns.FactoringCompanyID,
+		owner:   permission.ResourceFactoringCompany,
 	},
 	permission.ResourceWorkerLeave: {
 		source: source{

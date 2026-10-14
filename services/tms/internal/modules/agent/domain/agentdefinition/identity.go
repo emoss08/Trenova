@@ -95,6 +95,7 @@ var templateIcons = map[Template]string{
 	TemplateEDIDesk:              IconFile,
 	TemplateFormulaAssistant:     IconSparkle,
 	TemplateBooksKeeper:          IconReceipt,
+	TemplateFactoringClerk:       IconBanknote,
 	TemplateSettlementsClerk:     IconBanknote,
 	TemplateReceivables:          IconCoins,
 	TemplateMasterDataSteward:    IconFile,

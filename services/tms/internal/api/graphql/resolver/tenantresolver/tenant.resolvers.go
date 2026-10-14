@@ -9,10 +9,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/usermapping"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -106,11 +106,7 @@ func (r *QueryResolver) Organization(ctx context.Context, id string, includeStat
 }
 
 func (r *UserResolver) TimeFormat(ctx context.Context, obj *tenant.User) (gqlmodel.TimeFormat, error) {
-	if obj.TimeFormat == domaintypes.TimeFormat24Hour {
-		return gqlmodel.TimeFormatTwentyFourHour, nil
-	}
-
-	return gqlmodel.TimeFormatTwelveHour, nil
+	return usermapping.TimeFormatFromDomain(obj.TimeFormat), nil
 }
 
 func (r *UserResolver) BusinessUnit(ctx context.Context, obj *tenant.User) (*tenant.BusinessUnit, error) {

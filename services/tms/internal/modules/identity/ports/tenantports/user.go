@@ -91,7 +91,28 @@ type UpdateUserColumnsRequest struct {
 	Columns []string
 }
 
+type CreateUserRequest struct {
+	User       *tenant.User
+	Membership *tenant.OrganizationMembership
+}
+
+type UserIdentityConflictsRequest struct {
+	EmailAddress  string
+	Username      string
+	ExcludeUserID pulid.ID
+}
+
+type UserIdentityConflicts struct {
+	EmailAddress bool
+	Username     bool
+}
+
 type UserRepository interface {
+	Create(ctx context.Context, req CreateUserRequest) (*tenant.User, error)
+	FindIdentityConflicts(
+		ctx context.Context,
+		req UserIdentityConflictsRequest,
+	) (UserIdentityConflicts, error)
 	List(ctx context.Context, req *ListUsersRequest) (*pagination.ListResult[*tenant.User], error)
 	ListConnection(
 		ctx context.Context,
@@ -127,7 +148,6 @@ type UserRepository interface {
 	) ([]*tenant.OrganizationMembership, error)
 	UpdateCurrentOrganization(ctx context.Context, userID, orgID, buID pulid.ID) error
 	GetUserOrganizationSummaries(ctx context.Context, userID pulid.ID) ([]OrgSummary, error)
-	Update(ctx context.Context, entity *tenant.User) (*tenant.User, error)
 	UpdateColumns(ctx context.Context, req UpdateUserColumnsRequest) (*tenant.User, error)
 	UpdatePassword(ctx context.Context, req UpdateUserPasswordRequest) error
 	BulkUpdateStatus(

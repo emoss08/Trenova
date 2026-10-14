@@ -63,6 +63,27 @@ describe("EDI inspector context", () => {
     expect(context.provenanceRows).toContainEqual(["Message ID", "msg_1"]);
     expect(context.controlRows[2]).toEqual(["Transaction control number", "0003"]);
   });
+
+  it("shows a dash for the profile and template of a message neither generated", () => {
+    const inspection = messageInspection();
+    const context = buildMessageInspectorContext({
+      ...inspection,
+      provenance: {
+        ...inspection.provenance,
+        profileId: null,
+        templateId: null,
+        templateVersionId: null,
+      },
+    });
+
+    expect(context.provenanceRows).toEqual(
+      expect.arrayContaining([
+        ["Profile ID", "-"],
+        ["Template ID", "-"],
+        ["Template Version ID", "-"],
+      ]),
+    );
+  });
 });
 
 function documentPreview(overrides: Partial<EDIDocumentPreview> = {}): EDIDocumentPreview {

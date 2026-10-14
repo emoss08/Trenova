@@ -80,3 +80,21 @@ type PlatformEmailService interface {
 	SendAccountPurged(ctx context.Context, msg *AccountPurgedEmail) error
 	SendPasswordReset(ctx context.Context, msg *PasswordResetEmail) error
 }
+
+type AccountInviteEmail struct {
+	To             string
+	Locale         i18n.Locale
+	Name           string
+	Username       string
+	CompanyName    string
+	InvitedByName  string
+	SetupURL       string
+	ExpiresInHours int
+	ExpiresAt      int64
+	Timezone       string
+	IdempotencyKey string
+}
+
+type PlatformAccountInviteSender interface {
+	SendAccountInvite(ctx context.Context, msg *AccountInviteEmail) error
+}

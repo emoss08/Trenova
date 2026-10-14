@@ -86,6 +86,8 @@ var noMessage = map[string]struct{}{
 	"NewThrottleError":                {},
 	"NewConcurrentAccessError":        {},
 	"NewContinueAsNewError":           {},
+	"NewDuplicateEmailAddressError":   {},
+	"NewDuplicateUsernameError":       {},
 	"NewCanceledError":                {},
 	"NewQuotaExceededError":           {},
 	"NewPlanRestrictionError":         {},

@@ -127,73 +127,108 @@ type readRequest struct {
 	cache   *aianalyticsports.CacheKey
 }
 
+type submitRead func(fn func(context.Context) error)
+
 func (s *Service) read(ctx context.Context, in *readRequest) (*readings, error) {
 	out := new(readings)
-	req := in.request
-	filter := in.filter
-
 	group, gctx := errgroup.WithContext(ctx)
 	group.SetLimit(readConcurrency)
 	run := func(fn func(context.Context) error) {
 		group.Go(func() error { return fn(gctx) })
 	}
 
-	run(func(ctx context.Context) (err error) {
+	s.readAggregates(run, out, in)
+	s.readReferences(run, out, in)
+
+	if err := group.Wait(); err != nil {
+		return nil, fmt.Errorf("read ai analytics: %w", err)
+	}
+
+	return out, nil
+}
+
+func (s *Service) readAggregates(run submitRead, out *readings, in *readRequest) {
+	req := in.request
+	filter := in.filter
+
+	run(func(ctx context.Context) error {
+		var err error
 		out.trend, err = s.reader.Trend(ctx, aianalyticsports.TrendRequest{
 			Filter:       filter,
 			Grouping:     req.CompareBy.Grouping(),
 			BucketStarts: in.starts,
 		})
-		return
+		return err
 	})
-	run(func(ctx context.Context) (err error) {
+	run(func(ctx context.Context) error {
+		var err error
 		out.deploymentDurations, err = s.reader.OutcomeDurations(
 			ctx,
 			filter,
 			aianalytics.GroupingDeployment,
 		)
-		return
+		return err
 	})
-	run(func(ctx context.Context) (err error) {
+	run(func(ctx context.Context) error {
+		var err error
 		out.histograms, err = s.reader.FirstTokenHistograms(ctx, filter)
-		return
+		return err
 	})
-	run(func(ctx context.Context) (err error) {
+	run(func(ctx context.Context) error {
+		var err error
 		out.durations, err = s.reader.OutcomeDurations(ctx, filter, req.CompareBy.Grouping())
-		return
+		return err
 	})
-	run(
-		func(ctx context.Context) (err error) { out.totals, err = s.reader.Totals(ctx, filter); return },
-	)
-	run(
-		func(ctx context.Context) (err error) { out.toolCells, err = s.reader.ToolCells(ctx, filter); return },
-	)
-	run(func(ctx context.Context) (err error) {
+	run(func(ctx context.Context) error {
+		var err error
+		out.totals, err = s.reader.Totals(ctx, filter)
+		return err
+	})
+	run(func(ctx context.Context) error {
+		var err error
+		out.toolCells, err = s.reader.ToolCells(ctx, filter)
+		return err
+	})
+	run(func(ctx context.Context) error {
+		var err error
 		out.deployments, err = s.reader.Deployments(ctx, filter)
-		return
+		return err
 	})
-	run(func(ctx context.Context) (err error) {
+	run(func(ctx context.Context) error {
+		var err error
 		out.providerHours, err = s.reader.ProviderHours(ctx, filter)
-		return
+		return err
 	})
-	run(func(ctx context.Context) (err error) {
+	run(func(ctx context.Context) error {
+		var err error
 		out.providerCalls, err = s.reader.ProviderCalls(ctx, filter)
-		return
+		return err
 	})
-	run(
-		func(ctx context.Context) (err error) { out.taskCells, err = s.reader.TaskCells(ctx, filter); return },
-	)
-	run(func(ctx context.Context) (err error) {
+	run(func(ctx context.Context) error {
+		var err error
+		out.taskCells, err = s.reader.TaskCells(ctx, filter)
+		return err
+	})
+}
+
+func (s *Service) readReferences(run submitRead, out *readings, in *readRequest) {
+	req := in.request
+	filter := in.filter
+
+	run(func(ctx context.Context) error {
+		var err error
 		out.palette, err = s.palette(ctx, req.TenantInfo, in.cache, in.until)
-		return
+		return err
 	})
-	run(func(ctx context.Context) (err error) {
+	run(func(ctx context.Context) error {
+		var err error
 		out.versions, err = s.reader.ProviderVersions(ctx, filter)
-		return
+		return err
 	})
-	run(func(ctx context.Context) (err error) {
+	run(func(ctx context.Context) error {
+		var err error
 		out.providers, err = s.providers.ListOrdered(ctx, req.TenantInfo)
-		return
+		return err
 	})
 	run(func(ctx context.Context) error {
 		state, err := s.reader.RefreshState(ctx, req.TenantInfo)
@@ -203,18 +238,16 @@ func (s *Service) read(ctx context.Context, in *readRequest) (*readings, error) 
 		}
 		return err
 	})
-	run(
-		func(ctx context.Context) (err error) { out.decisions, err = s.reader.Decisions(ctx, filter); return },
-	)
-	run(
-		func(ctx context.Context) (err error) { out.ratings, err = s.reader.Ratings(ctx, filter); return },
-	)
-
-	if err := group.Wait(); err != nil {
-		return nil, fmt.Errorf("read ai analytics: %w", err)
-	}
-
-	return out, nil
+	run(func(ctx context.Context) error {
+		var err error
+		out.decisions, err = s.reader.Decisions(ctx, filter)
+		return err
+	})
+	run(func(ctx context.Context) error {
+		var err error
+		out.ratings, err = s.reader.Ratings(ctx, filter)
+		return err
+	})
 }
 
 func (s *Service) palette(

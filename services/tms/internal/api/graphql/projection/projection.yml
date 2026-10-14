@@ -114,6 +114,8 @@ aliases:
     ruleLabel: ruleCode
     acknowledgedBy: acknowledgedById
     resolvedBy: resolvedById
+  FactoringInvoiceState:
+    invoiceId: id
   Tractor:
     equipmentStatus: status
   Trailer:
@@ -271,6 +273,7 @@ virtuals:
     - openDispute
     - lateChargeAssessments
     - ediSendPlan
+    - factoringState
   LateChargeAssessment:
     - sourceInvoice
     - debitMemo
@@ -465,6 +468,10 @@ virtuals:
   CustomerPaymentApplication:
     - invoice
     - payment
+  FactoringAgreement:
+    - documentTypes
+  FactoringCompany:
+    - agreements
   AIAnalyticsProvider:
     - removed
     - shortName

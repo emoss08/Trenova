@@ -27,6 +27,11 @@ const (
 	KindCustomerStatementPDF Kind = "customer.statement.pdf"
 	// KindCustomerStatementEmail is the message that delivers a statement.
 	KindCustomerStatementEmail Kind = "customer.statement.email"
+	// KindFactoringNoaPDF is the letter telling a customer that its invoices
+	// are assigned to a factor and must be paid to the factor.
+	KindFactoringNoaPDF Kind = "factoring.noa.pdf"
+	// KindFactoringNoaEmail is the message that delivers a notice of assignment.
+	KindFactoringNoaEmail Kind = "factoring.noa.email"
 
 	// Detention.
 
@@ -79,6 +84,7 @@ const (
 	// KindPasswordResetEmail carries the single-use link that lets somebody who has
 	// lost their password choose a new one.
 	KindPasswordResetEmail Kind = "account.password_reset.email"
+	KindAccountInviteEmail Kind = "account.invite.email"
 
 	// Agent.
 
@@ -180,6 +186,8 @@ func AllKinds() []Kind {
 		KindPaymentReminderEmail,
 		KindCustomerStatementPDF,
 		KindCustomerStatementEmail,
+		KindFactoringNoaPDF,
+		KindFactoringNoaEmail,
 		KindDetentionNoticeEmail,
 		KindDetentionNoticePDF,
 		KindRateConfirmationPDF,
@@ -192,6 +200,7 @@ func AllKinds() []Kind {
 		KindCustomerStatusEmail,
 		KindDriverPortalInvitationEmail,
 		KindPasswordResetEmail,
+		KindAccountInviteEmail,
 		KindAgentRequestMissingDocsEmail,
 		KindAgentCustomerUpdateEmail,
 		KindAgentProposalReminderEmail,

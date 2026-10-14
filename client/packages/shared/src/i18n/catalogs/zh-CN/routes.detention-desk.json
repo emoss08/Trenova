@@ -43,7 +43,6 @@
   "Search facility, customer, PRO": "搜索场所、客户、PRO 号码",
   "Search the detention desk": "搜索滞留费工作台",
   "Select a coded reason": "选择代码化的原因",
-  "Send notice": "发送通知",
   "Send the customer notice before this deadline or the charge stops being collectable": "请在此期限前发送客户通知，否则此费用将无法收取",
   "Started notice": "开始通知",
   "Stops appear here the moment an arrival is recorded, with the free-time clock and the notice deadline already running.": "一旦记录到达，停靠点就会显示于此，且免费时间计时与通知期限均已开始运行。",
