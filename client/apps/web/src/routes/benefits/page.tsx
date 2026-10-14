@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
 import { BenefitsSkeleton } from "./_components/benefits-skeleton";
 import {
@@ -35,9 +35,9 @@ export function BenefitsPage() {
         ),
       }}
     >
-      <DataTableLazyComponent fallback={<BenefitsSkeleton />}>
+      <LazyComponent fallback={<BenefitsSkeleton />}>
         <BenefitsConsole />
-      </DataTableLazyComponent>
+      </LazyComponent>
     </PageLayout>
   );
 }

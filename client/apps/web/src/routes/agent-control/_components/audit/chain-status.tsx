@@ -11,6 +11,7 @@ import { Callout } from "../edit/callout";
 import { Hero } from "../kit/hero";
 import { Ic } from "../kit/ic";
 import { Figs, type Fig } from "../kit/layout";
+import { ChainStatusSkeleton } from "./audit-skeleton";
 import {
   VERIFY_POLL_MS,
   VERIFY_WAIT_MS,
@@ -73,7 +74,7 @@ export function ChainStatusHeader() {
     );
   }
   if (!chain.data) {
-    return null;
+    return <ChainStatusSkeleton />;
   }
 
   const status = chain.data;

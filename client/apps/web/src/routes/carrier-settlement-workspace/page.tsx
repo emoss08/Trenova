@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
+import { WorkspaceSkeleton } from "./_components/workspace-skeleton";
 
 const Workspace = lazy(() => import("./_components/workspace"));
 
@@ -18,7 +19,7 @@ export function CarrierSettlementWorkspacePage() {
         ),
       }}
     >
-      <LazyComponent>
+      <LazyComponent fallback={<WorkspaceSkeleton />}>
         <Workspace />
       </LazyComponent>
     </PageLayout>

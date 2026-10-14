@@ -98,6 +98,8 @@ jobs:
             run: pnpm lint -- --format=github
           - name: Design tokens
             run: pnpm lint:design -- --format=github
+          - name: Loading skeletons
+            run: pnpm lint:skeletons -- --format=github
           - name: Single copies
             run: pnpm check:single-copies
           - name: Typecheck

@@ -1,10 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { QueryLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { billingControl } from "@/lib/queries/billing-control";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { lazy } from "react";
+import { BillingControlSkeleton } from "./skeleton";
 
 const BillingControlForm = lazy(() => import("./_components/billing-control-form"));
 
@@ -19,9 +19,9 @@ export function BillingControlPage() {
       }}
     >
       <BillingControlAlert />
-      <QueryLazyComponent queryKey={billingControl.get._def}>
+      <LazyComponent fallback={<BillingControlSkeleton />}>
         <BillingControlForm />
-      </QueryLazyComponent>
+      </LazyComponent>
     </PageLayout>
   );
 }

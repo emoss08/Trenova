@@ -22,11 +22,11 @@ import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Building07Icon, PlugIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { MyDotSkeleton } from "./my-dot-skeleton";
 
 export const MY_DOT_PROFILE_SECTIONS = [
   "safety",
@@ -90,7 +90,7 @@ export function MyDotIntelligence() {
   });
 
   if (permissionsLoading) {
-    return <Skeleton className="h-40 w-full" />;
+    return <MyDotSkeleton />;
   }
 
   if (!canRead) {
@@ -106,18 +106,7 @@ export function MyDotIntelligence() {
   }
 
   if (mineQuery.isPending || settingsQuery.isPending) {
-    return (
-      <div className="flex flex-col gap-4" aria-busy data-testid="my-dot-loading">
-        <div className="flex flex-col gap-2 border-b pb-4">
-          <Skeleton className="h-3.5 w-80" />
-          <Skeleton className="h-3 w-56" />
-        </div>
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </div>
-      </div>
-    );
+    return <MyDotSkeleton />;
   }
 
   const loadError = mineQuery.error ?? settingsQuery.error;

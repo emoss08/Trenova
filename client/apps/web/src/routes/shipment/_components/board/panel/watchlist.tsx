@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatMinutesSpan, userWallClockNow } from "@trenova/shared/lib/date";
 import { cn, formatCompactCurrency, formatCurrency } from "@trenova/shared/lib/utils";
 import type { UncoveredPickupWindow } from "@trenova/graphql/generated/graphql";
@@ -13,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { useBoardActions } from "../use-board-actions";
 import { useShipmentBoardUrl } from "../url-state";
+import { WatchlistSkeleton } from "./side-panel-skeleton";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const WATCHLIST_STALE_MS = 30_000;
@@ -435,13 +435,7 @@ export function Watchlist() {
   });
 
   if (isLoading || !data) {
-    return (
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
-      </div>
-    );
+    return <WatchlistSkeleton />;
   }
 
   return (

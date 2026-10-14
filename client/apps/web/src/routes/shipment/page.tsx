@@ -13,8 +13,11 @@ import { PlusIcon } from "@trenova/shared/components/icons";
 import { createLoader, useQueryStates } from "nuqs";
 import { useCallback } from "react";
 import { ShipmentBriefing } from "./_components/board/briefing/shipment-briefing";
+import { ShipmentBriefingSkeleton } from "./_components/board/briefing/shipment-briefing-skeleton";
 import { CapacityStrip } from "./_components/board/capacity/capacity-strip";
+import { CapacityStripSkeleton } from "./_components/board/capacity/capacity-strip-skeleton";
 import { ShipmentSidePanel } from "./_components/board/panel/side-panel";
+import { ShipmentSidePanelSkeleton } from "./_components/board/panel/side-panel-skeleton";
 import { ShipmentRecordActionsProvider } from "./_components/board/record-actions";
 import { ShipmentBoard } from "./_components/board/shipment-board";
 import { BoardRefreshButton } from "./_components/board/toolbar/board-refresh-button";
@@ -46,10 +49,10 @@ function ShipmentWorkspace() {
   return (
     <div className="@container/board relative grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)]">
       <div className="border-border flex min-w-0 flex-col gap-3.5 border-b px-5 pt-3 pb-3.5">
-        <LazyComponent>
+        <LazyComponent fallback={<ShipmentBriefingSkeleton />}>
           <ShipmentBriefing />
         </LazyComponent>
-        <LazyComponent>
+        <LazyComponent fallback={<CapacityStripSkeleton />}>
           <CapacityStrip />
         </LazyComponent>
       </div>
@@ -59,7 +62,7 @@ function ShipmentWorkspace() {
         </DataTableLazyComponent>
       </div>
       {panelOpen ? (
-        <LazyComponent>
+        <LazyComponent fallback={<ShipmentSidePanelSkeleton />}>
           <ShipmentSidePanel onClose={() => setPanelOpen(false)} />
         </LazyComponent>
       ) : null}

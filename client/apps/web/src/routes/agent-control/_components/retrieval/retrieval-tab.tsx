@@ -12,7 +12,6 @@ import { REINDEX_PARAM, reindexParser } from "../../ai-control-tabs";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { formatUsd } from "@/lib/ai-usage-format";
 import { Ic } from "../kit/ic";
-import { NovaSummary } from "../nova/nova-summary";
 import { ReindexDialog } from "./reindex-dialog";
 import { RetrievalFigures } from "./retrieval-figures";
 import { RetrievalHero } from "./retrieval-hero";
@@ -23,6 +22,7 @@ import {
   retrievalRefetchInterval,
 } from "./retrieval-model";
 import { RetrievalNotice } from "./retrieval-notice";
+import { FAILED_ENTRY_COLUMNS, RetrievalTabSkeleton } from "./retrieval-skeleton";
 import { RetrievalSettingsPanel } from "./retrieval-settings";
 import { RetrievalSources } from "./retrieval-sources";
 import { useRetrievalPatch } from "./use-retrieval-patch";
@@ -83,11 +83,7 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
   }
 
   if (!status.data) {
-    return (
-      <div className="tabp">
-        <NovaSummary context={t("Retrieval")} segments={undefined} loading onTarget={() => {}} />
-      </div>
-    );
+    return <RetrievalTabSkeleton />;
   }
 
   const data = status.data;
@@ -128,7 +124,7 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
             }
           />
           <section className="sec" id={FAILED_SECTION_ID}>
-            <DataTableLazyComponent>
+            <DataTableLazyComponent columnCount={FAILED_ENTRY_COLUMNS}>
               <FailedEntriesTable />
             </DataTableLazyComponent>
           </section>

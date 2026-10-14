@@ -9,7 +9,6 @@ import {
 } from "@trenova/shared/components/ui/avatar";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { formatHours } from "@trenova/shared/lib/timesheet";
 import { cn, initials } from "@trenova/shared/lib/utils";
@@ -20,6 +19,7 @@ import {
   Users01Icon,
 } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
+import { ClockBoardRowsSkeleton } from "./time-attendance-skeleton";
 
 /** The length of the meter: a working day, the point past which a punch reads as forgotten. */
 const METER_MINUTES = 12 * 60;
@@ -75,6 +75,7 @@ export function ClockBoard({
   return (
     <section
       aria-labelledby="clock-board-heading"
+      aria-busy={isLoading && !entries ? true : undefined}
       className="bg-card overflow-hidden rounded-lg border"
     >
       <header className="border-border flex min-h-9 flex-wrap items-center justify-between gap-2 border-b px-3 py-1.5">
@@ -112,10 +113,7 @@ export function ClockBoard({
       </header>
 
       {isLoading && !entries ? (
-        <div className="flex flex-col gap-2 p-3">
-          <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-9 w-2/3" />
-        </div>
+        <ClockBoardRowsSkeleton />
       ) : ranked.length === 0 ? (
         <p className="text-muted-foreground px-3 py-3 text-sm">
           {t("Nobody is punched in{0} right now.", teamOnly ? ` ${t("on your team")}` : "")}

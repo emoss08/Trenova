@@ -1,6 +1,7 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import { usePermission } from "@/hooks/use-permission";
 import {
   EXTRACTION_ROLLOUT_KEY,
@@ -28,6 +29,7 @@ import { toast } from "sonner";
 import { formatShare } from "../quality-model";
 import { RolloutStateBadge } from "./extraction-badges";
 import { EXTRACTION_STALE_MS } from "./extraction-model";
+import { COMPARISON_FIGURES } from "./extraction-skeleton";
 import { RolloutFigures } from "./rollout-figures";
 import { rolloutDraftOf, rolloutInput, rolloutState } from "./rollout-model";
 import { RolloutSettingsDialog } from "./rollout-settings-dialog";
@@ -294,7 +296,7 @@ export function RolloutView() {
           </SectionPanel>
         )
       ) : (
-        <Skeleton className="h-16" aria-busy />
+        <KpiStripSkeleton count={COMPARISON_FIGURES} />
       )}
 
       {current ? (

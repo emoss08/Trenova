@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
+import { DocumentIntelligenceSkeleton } from "./skeleton";
 
 const DocumentIntelligenceForm = lazy(() => import("./_components/document-intelligence-form"));
 
@@ -15,9 +16,9 @@ export function DocumentIntelligencePage() {
         description: t("Configure OCR, classification, extraction, and shipment draft behavior"),
       }}
     >
-      <SuspenseLoader>
+      <LazyComponent fallback={<DocumentIntelligenceSkeleton />}>
         <DocumentIntelligenceForm />
-      </SuspenseLoader>
+      </LazyComponent>
     </PageLayout>
   );
 }
