@@ -628,7 +628,7 @@ func (r *Registry) registerBillingResources() {
 				Description: "Export factoring agreements",
 			},
 		},
-		DefaultSensitivity: SensitivityConfidential,
+		DefaultSensitivity: SensitivityRestricted,
 	})
 
 	_ = r.Register(&ResourceDefinition{
@@ -650,6 +650,6 @@ func (r *Registry) registerBillingResources() {
 				Description: "Export notices of assignment",
 			},
 		},
-		DefaultSensitivity: SensitivityConfidential,
+		DefaultSensitivity: SensitivityRestricted,
 	})
 }
