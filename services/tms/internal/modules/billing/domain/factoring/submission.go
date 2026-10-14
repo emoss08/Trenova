@@ -354,14 +354,16 @@ func (i *SubmissionItem) ExpectedFunding() ItemFunding {
 func (i *SubmissionItem) Fund(fundedOn int64, funding ItemFunding) error {
 	if i.Status != SubmissionItemStatusPending {
 		return errortypes.NewBusinessError(
-			"Invoice " + i.InvoiceNumber + " is not waiting on the factor",
+			"Invoice {0} is not waiting on the factor",
+			i.InvoiceNumber,
 		)
 	}
 	if funding.AdvanceMinor < 0 || funding.FeeMinor < 0 {
 		return errortypes.NewValidationError(
 			"items",
 			errortypes.ErrInvalid,
-			"The advance and fee for "+i.InvoiceNumber+" cannot be negative",
+			"The advance and fee for invoice {0} cannot be negative",
+			i.InvoiceNumber,
 		)
 	}
 	reserve := i.FaceMinor - funding.AdvanceMinor - funding.FeeMinor
@@ -369,7 +371,8 @@ func (i *SubmissionItem) Fund(fundedOn int64, funding ItemFunding) error {
 		return errortypes.NewValidationError(
 			"items",
 			errortypes.ErrInvalid,
-			"The advance and fee for "+i.InvoiceNumber+" come to more than the invoice",
+			"The advance and fee for invoice {0} come to more than the invoice",
+			i.InvoiceNumber,
 		)
 	}
 	i.Status = SubmissionItemStatusFunded
@@ -383,7 +386,8 @@ func (i *SubmissionItem) Fund(fundedOn int64, funding ItemFunding) error {
 func (i *SubmissionItem) Reject(reason string) error {
 	if i.Status != SubmissionItemStatusPending {
 		return errortypes.NewBusinessError(
-			"Invoice " + i.InvoiceNumber + " is not waiting on the factor",
+			"Invoice {0} is not waiting on the factor",
+			i.InvoiceNumber,
 		)
 	}
 	reason = strings.TrimSpace(reason)
@@ -391,7 +395,8 @@ func (i *SubmissionItem) Reject(reason string) error {
 		return errortypes.NewValidationError(
 			"items",
 			errortypes.ErrRequired,
-			"Say why the factor rejected "+i.InvoiceNumber,
+			"Say why the factor rejected invoice {0}",
+			i.InvoiceNumber,
 		)
 	}
 	i.Status = SubmissionItemStatusRejected
@@ -402,8 +407,8 @@ func (i *SubmissionItem) Reject(reason string) error {
 func (i *SubmissionItem) Settle(settledOn int64) error {
 	if i.Status != SubmissionItemStatusFunded {
 		return errortypes.NewBusinessError(
-			"Only a funded invoice's reserve can be released; " + i.InvoiceNumber + " is " +
-				string(i.Status),
+			"Invoice {0} is not funded, so it has no reserve to release",
+			i.InvoiceNumber,
 		)
 	}
 	i.Status = SubmissionItemStatusSettled
@@ -414,8 +419,8 @@ func (i *SubmissionItem) Settle(settledOn int64) error {
 func (i *SubmissionItem) ChargeBack(chargedBackOn int64, reason string) error {
 	if i.Status != SubmissionItemStatusFunded {
 		return errortypes.NewBusinessError(
-			"Only a funded invoice the customer has not paid can be charged back; " +
-				i.InvoiceNumber + " is " + string(i.Status),
+			"Invoice {0} is not funded and open with the factor, so it cannot be charged back",
+			i.InvoiceNumber,
 		)
 	}
 	reason = strings.TrimSpace(reason)
@@ -435,7 +440,8 @@ func (i *SubmissionItem) ChargeBack(chargedBackOn int64, reason string) error {
 func (i *SubmissionItem) ReverseChargeback() error {
 	if i.Status != SubmissionItemStatusChargedBack {
 		return errortypes.NewBusinessError(
-			"Invoice " + i.InvoiceNumber + " has no chargeback to reverse",
+			"Invoice {0} has no chargeback to reverse",
+			i.InvoiceNumber,
 		)
 	}
 	i.Status = SubmissionItemStatusFunded

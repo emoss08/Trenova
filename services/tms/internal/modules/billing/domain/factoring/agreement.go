@@ -257,8 +257,8 @@ type PostingAccounts struct {
 }
 
 type MissingAccount struct {
-	Field string
-	Label string
+	Field   string
+	Message string
 }
 
 func (a *Agreement) PostingAccounts(defaultAR, defaultCash pulid.ID) PostingAccounts {
@@ -275,39 +275,56 @@ func (a *Agreement) PostingAccounts(defaultAR, defaultCash pulid.ID) PostingAcco
 	}
 }
 
+func (p *PostingAccounts) For(role AccountRole) pulid.ID {
+	switch role {
+	case AccountRoleAR:
+		return p.AR
+	case AccountRoleCash:
+		return p.Cash
+	case AccountRoleDueFromFactor:
+		return p.DueFromFactor
+	case AccountRoleFeeExpense:
+		return p.FeeExpense
+	case AccountRoleLiability:
+		return p.Liability
+	default:
+		return pulid.Nil
+	}
+}
+
 func (p *PostingAccounts) Missing(treatment AccountingTreatment) []MissingAccount {
 	missing := make([]MissingAccount, 0, 5)
 	if p.AR.IsNil() {
 		missing = append(missing, MissingAccount{
-			Field: "defaultArAccountId",
-			Label: "the organization's accounts receivable account",
+			Field:   "defaultArAccountId",
+			Message: "Set the organization's accounts receivable account in accounting settings before booking factoring",
 		})
 	}
 	if p.Cash.IsNil() {
 		missing = append(missing, MissingAccount{
-			Field: "cashAccountId",
-			Label: "a cash account, on the agreement or the organization",
+			Field:   "cashAccountId",
+			Message: "Set a cash account on the agreement or in accounting settings before booking factoring",
 		})
 	}
 	if p.FeeExpense.IsNil() {
 		missing = append(missing, MissingAccount{
-			Field: "feeExpenseAccountId",
-			Label: "the agreement's factoring fee account",
+			Field:   "feeExpenseAccountId",
+			Message: "Set the agreement's factoring fee account before booking factoring",
 		})
 	}
 	switch treatment {
 	case AccountingTreatmentSecuredBorrowing:
 		if p.Liability.IsNil() {
 			missing = append(missing, MissingAccount{
-				Field: "liabilityAccountId",
-				Label: "the agreement's factoring liability account",
+				Field:   "liabilityAccountId",
+				Message: "Set the agreement's factoring liability account before booking factoring",
 			})
 		}
 	case AccountingTreatmentSale:
 		if p.DueFromFactor.IsNil() {
 			missing = append(missing, MissingAccount{
-				Field: "dueFromFactorAccountId",
-				Label: "the agreement's due-from-factor account",
+				Field:   "dueFromFactorAccountId",
+				Message: "Set the agreement's due-from-factor account before booking factoring",
 			})
 		}
 	}
