@@ -112,10 +112,25 @@ func TestMemoryValidate_APersonalScopeNamesItsReaders(t *testing.T) {
 	assert.False(t, me.HasErrors(), "an agent may offer a memory for a person to accept")
 
 	written := validMemory("x")
+	written.SetAudience(agent.MemoryScopeUser, pulid.MustNew("usr_"), pulid.Nil)
 	written.Status = agent.MemoryStatusSuggested
 	me = errortypes.NewMultiError()
 	written.Validate(me)
 	assert.True(t, me.HasErrors(), "a person's own memory is never a suggestion")
+
+	forTeam := validMemory("x")
+	forTeam.SetAudience(agent.MemoryScopeRole, pulid.Nil, pulid.MustNew("rol_"))
+	forTeam.Status = agent.MemoryStatusSuggested
+	me = errortypes.NewMultiError()
+	forTeam.Validate(me)
+	assert.False(t, me.HasErrors(), "a person may offer a memory for their team")
+
+	forEveryone := validMemory("x")
+	forEveryone.SetAudience(agent.MemoryScopeOrganization, pulid.Nil, pulid.Nil)
+	forEveryone.Status = agent.MemoryStatusSuggested
+	me = errortypes.NewMultiError()
+	forEveryone.Validate(me)
+	assert.False(t, me.HasErrors(), "a person may offer a memory for the organization")
 }
 
 // touchedAt is a memory kept for the organization, about nothing in

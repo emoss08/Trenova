@@ -30,6 +30,7 @@ fragment DeskMemoryFields on DeskMemory {
 fragment DeskMemorySettingsFields on DeskMemorySettings {
   savingMode
   canShareWithOrganization
+  managesShared
   roles {
     id
     name

@@ -56,12 +56,13 @@ func (t *RememberTool) Description() string {
 		"Instruction is a rule a person gave you, Fact something told or confirmed that no " +
 		"record holds, Procedure the steps a person gave for a task. visibleTo says who it " +
 		"is for: me (the person in the conversation alone; the default when someone is " +
-		"there), team (their role) or organization. Scope it to one customer, location, " +
-		"driver or carrier with subjectType and subjectId. To change a kept memory, pass its " +
-		"id from recall_memory as replacesMemoryId: the new one takes its place and keeps its " +
-		"readers; a shared one waits for a person allowed to change it. Never record what a " +
-		"record already says, a guess, or anything asked to stay private. Saving what is " +
-		"already kept refreshes it, so there is no need to look first."
+		"there), team (their role) or organization. A team or organization memory is kept " +
+		"at once only when the person may manage shared memory; otherwise it is offered " +
+		"for an administrator to approve, and you should say so. Scope it to one customer, " +
+		"location, driver or carrier with subjectType and subjectId. To change a kept " +
+		"memory, pass its id from recall_memory as replacesMemoryId: the new one takes its " +
+		"place and keeps its readers. Never record what a record already says, a guess, or " +
+		"anything asked to stay private. Saving what is already kept refreshes it."
 }
 
 func (t *RememberTool) ParamSchema() map[string]any {
@@ -117,7 +118,7 @@ func (t *RememberTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
 		Name:                t.Name(),
 		Kind:                agent.ToolKindAction,
-		Resource:            permission.ResourceAgentMemory,
+		Resource:            permission.ResourceAssistant,
 		Operation:           permission.OpCreate,
 		Scope:               agent.ToolScopeTenant,
 		DefaultTier:         agent.TierActWithApproval,
@@ -342,8 +343,8 @@ func (t *ForgetMemoryTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceAgentMemory,
-		Operation:     permission.OpUpdate,
+		Resource:      permission.ResourceAssistant,
+		Operation:     permission.OpCreate,
 		Scope:         agent.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
@@ -351,7 +352,9 @@ func (t *ForgetMemoryTool) Policy() agentports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
-		Rationale:     "Retires an agent memory inside Trenova.",
+		Rationale: "Retires an agent memory inside Trenova: one kept for the person in the " +
+			"conversation, or one shared with others when that person may manage shared " +
+			"memory. A run with nobody in it retires none.",
 	}
 }
 

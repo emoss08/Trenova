@@ -60,6 +60,9 @@ type Params struct {
 	Scheduler        agentprofileports.Scheduler                    `optional:"true"`
 	Audit            auditports.AuditService                        `optional:"true"`
 	Realtime         agentports.RealtimeService                     `optional:"true"`
+	// Memories says who manages agent memory, and so keeps guidance about
+	// the organization at once. Without it everyone offers it.
+	Memories agentports.AgentMemoryService `optional:"true"`
 }
 
 type Service struct {
@@ -76,6 +79,7 @@ type Service struct {
 	scheduler        agentprofileports.Scheduler
 	audit            auditports.AuditService
 	realtime         agentports.RealtimeService
+	memories         agentports.AgentMemoryService
 	now              func() int64
 }
 
@@ -100,8 +104,24 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 		scheduler:        p.Scheduler,
 		audit:            p.Audit,
 		realtime:         p.Realtime,
+		memories:         p.Memories,
 		now:              timeutils.NowUnix,
 	}
+}
+
+// manages reports whether the actor is a person holding agent-memory manage:
+// the one who keeps guidance about the organization at once and decides what
+// others offered. The memory service owns that question.
+func (s *Service) manages(ctx context.Context, actor *permissionports.RequestActor) bool {
+	if s.memories == nil || actor == nil || !actor.IsUser() || actor.UserID.IsNil() {
+		return false
+	}
+
+	return s.memories.MayManageShared(
+		ctx,
+		pagination.TenantInfo{OrgID: actor.OrganizationID, BuID: actor.BusinessUnitID},
+		actor.UserID,
+	)
 }
 
 func AsService(s *Service) agentprofileports.Service { return s }
@@ -588,8 +608,45 @@ func (s *Service) ListGuidance(
 }
 
 // AddGuidance keeps a line about how to read a profile and asks for the
-// profile to be written again with it.
+// profile to be written again with it. A line about the organization shapes
+// what every agent is told, so only a person who manages agent memory keeps
+// one at once; from anyone else it is offered, kept as Suggested until an
+// administrator approves or dismisses it. A person's own lines are theirs.
 func (s *Service) AddGuidance(
+	ctx context.Context,
+	req *agentprofileports.AddGuidanceRequest,
+) (*agentprofile.Guidance, error) {
+	entity, err := s.PlanGuidance(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := s.guidance.Create(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	if created.IsSuggested() {
+		s.logGuidance(
+			created,
+			nil,
+			req.Actor,
+			permission.OpCreate,
+			guidanceComment(created, "Offered"),
+		)
+		s.announce(ctx, req.Ref, created.ID, "offered")
+
+		return created, nil
+	}
+
+	s.logGuidance(created, nil, req.Actor, permission.OpCreate, guidanceComment(created, "Added"))
+	s.announce(ctx, req.Ref, created.ID, "guided")
+	s.schedule(ctx, req.Ref, agentprofile.TriggerGuidance, req.Actor.UserID)
+
+	return created, nil
+}
+
+func (s *Service) PlanGuidance(
 	ctx context.Context,
 	req *agentprofileports.AddGuidanceRequest,
 ) (*agentprofile.Guidance, error) {
@@ -600,18 +657,22 @@ func (s *Service) AddGuidance(
 		return nil, err
 	}
 
-	count, err := s.guidance.CountActive(ctx, req.Ref)
+	count, err := s.guidance.CountOpen(ctx, req.Ref)
 	if err != nil {
 		return nil, err
 	}
 	if count >= agentprofile.MaxActiveGuidance {
 		return nil, errortypes.NewValidationError("content", errortypes.ErrInvalid,
-			"This profile already has 50 lines of guidance. Retire one that no longer holds first.")
+			"This profile already has 50 lines of guidance, kept or offered. Retire or dismiss one that no longer holds first.")
 	}
 
 	source := req.Source
 	if !source.IsValid() {
 		source = agentprofile.GuidanceSourcePerson
+	}
+	status := agentprofile.GuidanceStatusActive
+	if req.Ref.Subject == agentprofile.SubjectOrganization && !s.manages(ctx, req.Actor) {
+		status = agentprofile.GuidanceStatusSuggested
 	}
 	entity := &agentprofile.Guidance{
 		OrganizationID: req.Ref.OrganizationID,
@@ -619,7 +680,7 @@ func (s *Service) AddGuidance(
 		Subject:        req.Ref.Subject,
 		UserID:         req.Ref.PersonPtr(),
 		Content:        strings.TrimSpace(req.Content),
-		Status:         agentprofile.GuidanceStatusActive,
+		Status:         status,
 		Source:         source,
 		CreatedByID:    req.Actor.UserID,
 	}
@@ -631,16 +692,101 @@ func (s *Service) AddGuidance(
 		return nil, err
 	}
 
-	created, err := s.guidance.Create(ctx, entity)
+	return entity, nil
+}
+
+// ApproveGuidance keeps a line someone offered about the organization and
+// asks for the profile to be written again with it. The caller has checked
+// the actor manages agent memory; a line that is not waiting is left as it is.
+func (s *Service) ApproveGuidance(
+	ctx context.Context,
+	req *agentprofileports.DecideGuidanceRequest,
+) (*agentprofile.Guidance, error) {
+	entity, err := s.offered(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if !entity.IsSuggested() {
+		return entity, nil
+	}
+
+	previous := jsonutils.MustToJSON(entity)
+	entity.Approve()
+	if err = s.validate(entity); err != nil {
+		return nil, err
+	}
+	updated, err := s.guidance.Update(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
 
-	s.logGuidance(created, nil, req.Actor, permission.OpCreate, guidanceComment(created, "Added"))
-	s.announce(ctx, req.Ref, created.ID, "guided")
+	s.logGuidance(updated, previous, req.Actor, permission.OpManage,
+		guidanceComment(updated, "Approved offered"))
+	s.announce(ctx, req.Ref, updated.ID, "guided")
 	s.schedule(ctx, req.Ref, agentprofile.TriggerGuidance, req.Actor.UserID)
 
-	return created, nil
+	return updated, nil
+}
+
+// DismissGuidance turns an offered line down; it never shapes the profile, so
+// nothing is written again.
+func (s *Service) DismissGuidance(
+	ctx context.Context,
+	req *agentprofileports.DecideGuidanceRequest,
+) (*agentprofile.Guidance, error) {
+	entity, err := s.offered(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if !entity.IsSuggested() {
+		return entity, nil
+	}
+
+	previous := jsonutils.MustToJSON(entity)
+	entity.Dismiss(req.Actor.UserID, s.now())
+	if err = s.validate(entity); err != nil {
+		return nil, err
+	}
+	updated, err := s.guidance.Update(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logGuidance(updated, previous, req.Actor, permission.OpManage,
+		guidanceComment(updated, "Dismissed offered"))
+	s.announce(ctx, req.Ref, updated.ID, "guided")
+
+	return updated, nil
+}
+
+// offered reads a line a decision names. Lines are offered about the
+// organization alone; one for another subject reads as not found.
+func (s *Service) offered(
+	ctx context.Context,
+	req *agentprofileports.DecideGuidanceRequest,
+) (*agentprofile.Guidance, error) {
+	if req == nil || req.Actor == nil || req.Actor.UserID.IsNil() {
+		return nil, errortypes.NewAuthorizationError("Offered guidance is decided by a person")
+	}
+	if err := validRef(req.Ref); err != nil {
+		return nil, err
+	}
+	if req.Ref.Subject != agentprofile.SubjectOrganization {
+		return nil, errortypes.NewNotFoundError("Guidance not found")
+	}
+
+	entity, err := s.guidance.GetByID(ctx, agentprofileports.GetGuidanceRequest{
+		ID:         req.ID,
+		TenantInfo: req.Ref.Tenant(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !sameSubject(entity, req.Ref) {
+		return nil, errortypes.NewNotFoundError("Guidance not found")
+	}
+
+	return entity, nil
 }
 
 // RetireGuidance stops a line from shaping the profile and asks for the

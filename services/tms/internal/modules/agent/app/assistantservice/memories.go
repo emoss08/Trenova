@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -93,7 +92,7 @@ func messageMemoryIDs(message *conversation.Message) []pulid.ID {
 	return ids
 }
 
-// deskMemoryActor is the reader with the permissions that decide whether
+// deskMemoryActor is the reader with the permission that decides whether
 // they may change a memory their team or organization shares.
 func (s *Service) deskMemoryActor(
 	ctx context.Context,
@@ -110,26 +109,8 @@ func (s *Service) deskMemoryActor(
 
 	return &agentports.DeskMemoryActor{
 		Actor:           actor,
-		MayCreateShared: s.allowed(ctx, actor, permission.OpCreate),
-		MayUpdateShared: s.allowed(ctx, actor, permission.OpUpdate),
+		MayManageShared: s.memories.MayManageShared(ctx, tenant, userID),
 	}
-}
-
-func (s *Service) allowed(
-	ctx context.Context,
-	actor *permissionports.RequestActor,
-	operation permission.Operation,
-) bool {
-	if s.permissions == nil {
-		return false
-	}
-
-	result, err := s.permissions.Check(
-		ctx,
-		actor.PermissionCheck(permission.ResourceAgentMemory, operation),
-	)
-
-	return err == nil && result != nil && result.Allowed
 }
 
 func memoryNote(memory *agentports.DeskMemory) conversation.MemoryNote {

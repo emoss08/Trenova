@@ -143,6 +143,12 @@ const (
 	MemoryScopeRole         = MemoryScope("Role")
 )
 
+// Shared reports whether memories of the scope reach conversations other than
+// one person's own: a role's, the organization's or every agent's.
+func (s MemoryScope) Shared() bool {
+	return s == MemoryScopeRole || s == MemoryScopeOrganization || s == MemoryScopeAgent
+}
+
 func (s MemoryScope) IsValid() bool {
 	switch s {
 	case MemoryScopeOrganization, MemoryScopeAgent, MemoryScopeUser, MemoryScopeRole:
@@ -502,14 +508,15 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 			)
 		}
 	}
-	// A suggestion is drawn from feedback, or offered by an agent to the
-	// person who asked to be asked first; nothing else waits to be accepted.
+	// A suggestion is drawn from feedback, offered by an agent to the person
+	// who asked to be asked first, or offered by a person for readers they may
+	// not keep a memory for; nothing else waits to be accepted.
 	if m.Status.IsSuggestion() && m.Source != MemorySourceFeedback &&
-		!m.Source.OfferedByAgent() {
+		!m.Source.OfferedByAgent() && (m.Source != MemorySourceUser || !m.Scope.Shared()) {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
-			"Only feedback or an agent can suggest a memory",
+			"Only feedback, an agent, or a person offering a shared memory can suggest one",
 		)
 	}
 	if m.Source == MemorySourceReflection && (m.ReflectionID == nil || m.ReflectionID.IsNil()) {

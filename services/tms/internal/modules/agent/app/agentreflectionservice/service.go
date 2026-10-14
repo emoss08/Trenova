@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +38,6 @@ type Params struct {
 	Memories      agentports.AgentMemoryService
 	Feedback      aifeedbackports.AIFeedbackRepository `optional:"true"`
 	Budgets       agentports.AgentBudgetService        `optional:"true"`
-	Permissions   permissionports.PermissionEngine     `optional:"true"`
 	Realtime      agentports.RealtimeService           `optional:"true"`
 }
 
@@ -55,7 +53,6 @@ type Service struct {
 	memories      agentports.AgentMemoryService
 	feedback      aifeedbackports.AIFeedbackRepository
 	budgets       agentports.AgentBudgetService
-	permissions   permissionports.PermissionEngine
 	realtime      agentports.RealtimeService
 	now           func() int64
 }
@@ -73,7 +70,6 @@ func New(p Params) agentports.AgentReflectionService {
 		memories:      p.Memories,
 		feedback:      p.Feedback,
 		budgets:       p.Budgets,
-		permissions:   p.Permissions,
 		realtime:      p.Realtime,
 		now:           timeutils.NowUnix,
 	}

@@ -4836,7 +4836,7 @@ type AgentPreviewWarning {
 type AgentProfile {
   """The version agents are told, or null before the first is written."""
   current: AgentProfileVersion
-  """The active guidance, newest first."""
+  """The active and the offered guidance, active first, then newest first."""
   guidance: [AgentProfileGuidance!]!
   """
   The newest attempt, when it failed after the current version was written.
@@ -4884,9 +4884,17 @@ enum AgentProfileGuidanceSource {
   Person
 }
 
+"""
+Where a line stands. Active lines shape the next version. A Suggested line
+about the organization was offered by someone who does not manage agent memory,
+or written down by an agent, and waits for an administrator to approve or
+dismiss it. Retired and Dismissed lines are kept for the record.
+"""
 enum AgentProfileGuidanceStatus {
   Active
+  Dismissed
   Retired
+  Suggested
 }
 
 """
@@ -9984,7 +9992,7 @@ input CreateDeskMemoryInput {
   content: String!
   roleId: ID
   """
-  User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds.
+  User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise.
   """
   scope: AgentMemoryScope!
 }
@@ -11281,7 +11289,7 @@ type DeskMemory {
   content: String!
   createdAt: Timestamp!
   """
-  The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories.
+  The person may change, pause and forget it: their own always, a role's or the organization's when they manage agent memory. An offered memory waits for an administrator and is not editable.
   """
   editable: Boolean!
   id: ID!
@@ -11351,14 +11359,20 @@ type DeskMemoryRole {
   id: ID!
   name: String!
   """
-  The person may keep memories for the role: it needs permission to create agent memories.
+  The person may write memories for the role: kept at once when they manage agent memory, offered to an administrator otherwise.
   """
   writable: Boolean!
 }
 
 type DeskMemorySettings {
-  """The person may keep memories for the whole organization."""
+  """
+  The person may write memories for the whole organization: kept at once when they manage agent memory, offered to an administrator otherwise.
+  """
   canShareWithOrganization: Boolean!
+  """
+  The person manages agent memory: what they write for a team or the organization is kept at once, and they may change what others share.
+  """
+  managesShared: Boolean!
   """The person's roles by name."""
   roles: [DeskMemoryRole!]!
   savingMode: AgentMemorySavingMode!
@@ -19163,7 +19177,9 @@ type Mutation {
   acknowledgeWatchtowerItem(expectedVersion: Int, id: ID!): WatchtowerItem!
   activateFactoringAgreement(input: ChangeFactoringAgreementStatusInput!): FactoringAgreement!
   """
-  Add a line of guidance to the organization's profile; it is written again with it.
+  Add a line of guidance to the organization's profile. From someone who manages
+  agent memory it is kept and the profile is written again with it; from anyone
+  else it is offered (Suggested) for an administrator to approve.
   """
   addAgentOrganizationProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!
   addCarrierSettlementAdjustment(input: AddCarrierSettlementAdjustmentInput!): CarrierSettlement!
@@ -19195,6 +19211,10 @@ type Mutation {
   Makes a suggested memory Active, with the text as the administrator edited it. A tainted suggestion approved is reviewed.
   """
   approveAgentMemorySuggestion(id: ID!, input: ApproveAgentMemorySuggestionInput!): AgentMemory!
+  """
+  Keep an offered line; the organization's profile is written again with it. Needs agent memory manage.
+  """
+  approveAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
   """
   Approves a machine waiting to pair, as the caller. It then acts for them.
   """
@@ -19575,6 +19595,10 @@ type Mutation {
   Refuses a suggested memory; its pattern is not suggested again for 30 days.
   """
   dismissAgentMemorySuggestion(id: ID!, version: Int!): AgentMemory!
+  """
+  Turn an offered line down; it never shapes the profile. Needs agent memory manage.
+  """
+  dismissAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
   """Turns down a memory an agent offered; nothing is kept."""
   dismissDeskMemory(id: ID!): DeskMemory!
   dismissMyNotifications(ids: [ID!]!): Boolean!
@@ -19807,7 +19831,7 @@ type Mutation {
   Reads the accounting system's records again and refreshes the proposals.
   """
   refreshAccountingReferenceData(integrationType: AccountingSystem!): AccountingConnection!
-  """Write the organization's profile again now."""
+  """Write the organization's profile again now. Needs agent memory manage."""
   regenerateAgentOrganizationProfile: Boolean!
   """
   Writes today's page again from current figures, replacing what was there.
@@ -19934,7 +19958,7 @@ type Mutation {
   resumeAccountingSync(integrationType: AccountingSystem!): AccountingConnection!
   resumeCarrierIntelMonitoring: Boolean!
   """
-  Retire a line of guidance from the organization's profile; it is written again without it.
+  Retire a line of guidance from the organization's profile; it is written again without it. Needs agent memory manage.
   """
   retireAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
   """Retire a line of guidance from the signed-in person's own profile."""
