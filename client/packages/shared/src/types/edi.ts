@@ -314,7 +314,7 @@ export type EDIMappingPreview = z.infer<typeof ediMappingPreviewSchema>;
 const nullableNumberSchema = z.number().nullish();
 
 export const loadTenderStopSchema = z.object({
-  locationId: z.string(),
+  locationId: z.string().nullish(),
   locationLabel: z.string().nullish(),
   locationName: z.string().nullish(),
   locationCode: z.string().nullish(),
@@ -368,6 +368,8 @@ export const loadTenderChargeSchema = z.object({
 export type LoadTenderCharge = z.infer<typeof loadTenderChargeSchema>;
 
 export const loadTenderPayloadSchema = z.object({
+  purposeCode: z.string().nullish(),
+  tenderOfferId: z.string().nullish(),
   shipmentId: z.string().nullish(),
   businessUnitId: z.string().nullish(),
   organizationId: z.string().nullish(),
@@ -469,11 +471,14 @@ export type EDIDocumentPayload = z.infer<typeof ediDocumentPayloadSchema>;
 export const ediTransferSchema = z.object({
   id: z.string(),
   sourceOrganizationId: z.string(),
+  sourceBusinessUnitId: z.string().nullish(),
   targetOrganizationId: z.string(),
+  targetBusinessUnitId: z.string().nullish(),
   sourcePartnerId: z.string(),
   targetPartnerId: z.string(),
-  sourceShipmentId: z.string(),
+  sourceShipmentId: z.string().nullish(),
   targetShipmentId: z.string().nullish(),
+  inboundMessageId: z.string().nullish(),
   status: ediTransferStatusSchema,
   tenderPayload: loadTenderPayloadSchema,
   mappingSnapshot: z.array(ediMappingResolutionSchema).default([]),
@@ -487,6 +492,13 @@ export const ediTransferSchema = z.object({
   processedAt: z.number().nullish(),
   rejectedAt: z.number().nullish(),
   canceledAt: z.number().nullish(),
+  submittedById: z.string().nullish(),
+  approvedById: z.string().nullish(),
+  rejectedById: z.string().nullish(),
+  canceledById: z.string().nullish(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
   sourcePartner: ediPartnerSchema.nullish(),
   targetPartner: ediPartnerSchema.nullish(),
 });
@@ -1014,6 +1026,7 @@ export const ediInboundFileSchema = z.object({
   transactionCount: z.number().default(0),
   receivedAt: z.number(),
   processedAt: nullableNumberSchema,
+  rawPurgedAt: nullableNumberSchema,
   version: z.number().optional(),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
@@ -1124,8 +1137,8 @@ export const ediX12TransactionSchema = z.object({
   endSegmentIndex: z.number().default(0),
 });
 
-export const ediX12InspectionSchema = z.object({
-  rawX12: z.string(),
+/** What the inspector reads of an interchange: its envelope, sets and findings. */
+const ediX12InspectionOverviewSchema = z.object({
   transactionSet: z.union([ediTransactionSetSchema, z.literal("")]).nullish(),
   x12Version: z.string().nullish(),
   separators: ediX12SeparatorsSchema,
@@ -1133,12 +1146,27 @@ export const ediX12InspectionSchema = z.object({
   envelope: ediX12EnvelopeInspectionSchema,
   groups: z.array(ediX12FunctionalGroupSchema).default([]),
   transactions: z.array(ediX12TransactionSchema).default([]),
-  segments: z.array(ediX12SegmentSchema).default([]),
-  formatted: z.string(),
   diagnostics: z.array(ediInspectionDiagnosticSchema).default([]),
 });
 
+export const ediX12InspectionSchema = ediX12InspectionOverviewSchema.extend({
+  rawX12: z.string(),
+  segments: z.array(ediX12SegmentSchema).default([]),
+  formatted: z.string(),
+});
+
 export type EDIX12Inspection = z.infer<typeof ediX12InspectionSchema>;
+
+/**
+ * An inbound file's interchange as the file card reads it: the overview
+ * without the segments, formatted copy or raw text it already holds, and
+ * whether the file opened with an ISA at all.
+ */
+export const ediInboundFileInspectionSchema = ediX12InspectionOverviewSchema.extend({
+  interchange: z.boolean(),
+});
+
+export type EDIInboundFileInspection = z.infer<typeof ediInboundFileInspectionSchema>;
 
 export const ediMessageInspectionSchema = z.object({
   message: ediMessageSchema,
@@ -1226,6 +1254,7 @@ export const ediPartnerDocumentProfileListSchema = createLimitOffsetResponse(
   ediPartnerDocumentProfileSchema,
 );
 export const ediMessageListSchema = createLimitOffsetResponse(ediMessageSchema);
+export const ediTransferListSchema = createLimitOffsetResponse(ediTransferSchema);
 export const ediTestCaseListSchema = createLimitOffsetResponse(ediTestCaseSchema);
 
 export const createInternalPartnerPairRequestSchema = z.object({

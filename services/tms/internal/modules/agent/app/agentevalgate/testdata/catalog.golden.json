@@ -11291,8 +11291,8 @@
       },
       "policy": {
         "kind": "action",
-        "resource": "agent_memory",
-        "operation": "update",
+        "resource": "assistant",
+        "operation": "create",
         "scope": "tenant",
         "defaultTier": "ActWithApproval",
         "maxTier": "AutoExecute",
@@ -11308,7 +11308,7 @@
         "idempotent": false,
         "readsExternal": "never",
         "carriesTaint": false,
-        "rationale": "Retires an agent memory inside Trenova."
+        "rationale": "Retires an agent memory inside Trenova: one kept for the person in the conversation, or one shared with others when that person may manage shared memory. A run with nobody in it retires none."
       }
     },
     {
@@ -14462,7 +14462,7 @@
     },
     {
       "name": "guide_profile",
-      "description": "Correct or add to the profile agents are given about the organization's business or the person's own work, when they say it is wrong or missing something. about organization is the business as a whole: what it runs, for whom, on which lanes, how it is set up (\"the Laredo lane is seasonal\", \"we stopped running reefers\"). about me is the person's own work (\"I only handle the Midwest accounts\", \"I'm in billing now\"). Write one plain sentence in your own words from what they said; the profile is written again with it. Not for a rule about one customer, record or task, or how to do something: use remember for those.",
+      "description": "Correct or add to the profile agents are given about the organization's business or the person's own work, when they say it is wrong or missing something. about organization is the business as a whole: what it runs, for whom, on which lanes, how it is set up (\"the Laredo lane is seasonal\", \"we stopped running reefers\"). about me is the person's own work (\"I only handle the Midwest accounts\", \"I'm in billing now\"). Write one plain sentence in your own words from what they said; the profile is written again with it. Guidance about the organization is kept at once only when the person may manage agent memory; otherwise it is offered for an administrator to approve, and you should say so. Not for a rule about one customer, record or task, or how to do something: use remember for those.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -14495,7 +14495,7 @@
       ],
       "policy": {
         "kind": "action",
-        "resource": "agent_memory",
+        "resource": "assistant",
         "operation": "create",
         "scope": "tenant",
         "defaultTier": "ActWithApproval",
@@ -24676,6 +24676,7 @@
               "driver_settlement",
               "edi_inbound_file",
               "edi_message",
+              "edi_transfer",
               "factoring_agreement",
               "factoring_company",
               "factoring_noa",
@@ -27012,7 +27013,7 @@
       ],
       "policy": {
         "kind": "query",
-        "resource": "agent_memory",
+        "resource": "assistant",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -27030,7 +27031,7 @@
         "readsExternal": "marked",
         "source": "memory",
         "carriesTaint": false,
-        "rationale": "Reads memories earlier runs saved, which carry the taint of the run that wrote them."
+        "rationale": "Reads memories earlier runs saved, which carry the taint of the run that wrote them. It returns only what the reader's own prompt already reads, so it is used under the assistant like the Desk's memory page."
       }
     },
     {
@@ -29413,7 +29414,7 @@
     },
     {
       "name": "remember",
-      "description": "Record a standing instruction, a fact or a procedure for later runs. Kind Instruction is a rule a person gave you, Fact something told or confirmed that no record holds, Procedure the steps a person gave for a task. visibleTo says who it is for: me (the person in the conversation alone; the default when someone is there), team (their role) or organization. Scope it to one customer, location, driver or carrier with subjectType and subjectId. To change a kept memory, pass its id from recall_memory as replacesMemoryId: the new one takes its place and keeps its readers; a shared one waits for a person allowed to change it. Never record what a record already says, a guess, or anything asked to stay private. Saving what is already kept refreshes it, so there is no need to look first.",
+      "description": "Record a standing instruction, a fact or a procedure for later runs. Kind Instruction is a rule a person gave you, Fact something told or confirmed that no record holds, Procedure the steps a person gave for a task. visibleTo says who it is for: me (the person in the conversation alone; the default when someone is there), team (their role) or organization. A team or organization memory is kept at once only when the person may manage shared memory; otherwise it is offered for an administrator to approve, and you should say so. Scope it to one customer, location, driver or carrier with subjectType and subjectId. To change a kept memory, pass its id from recall_memory as replacesMemoryId: the new one takes its place and keeps its readers. Never record what a record already says, a guess, or anything asked to stay private. Saving what is already kept refreshes it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -29485,7 +29486,7 @@
       ],
       "policy": {
         "kind": "action",
-        "resource": "agent_memory",
+        "resource": "assistant",
         "operation": "create",
         "scope": "tenant",
         "defaultTier": "ActWithApproval",

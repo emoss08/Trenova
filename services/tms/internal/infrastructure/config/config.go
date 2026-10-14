@@ -1966,6 +1966,13 @@ func (c *TenderingConfig) GetPublicBaseURL() string {
 	return strings.TrimSuffix(c.PublicBaseURL, "/")
 }
 
+func (c *Config) PublicLinkBaseURL() string {
+	if base := c.Tendering.GetPublicBaseURL(); base != "" {
+		return base
+	}
+	return c.App.GetWebBaseURL()
+}
+
 type PushConfig struct {
 	VAPIDPublicKey  string `mapstructure:"vapidPublicKey"`
 	VAPIDPrivateKey string `mapstructure:"vapidPrivateKey"`

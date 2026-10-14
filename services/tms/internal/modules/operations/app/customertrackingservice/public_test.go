@@ -188,7 +188,7 @@ func TestIssueLink_RefusesWhatItCannotShare(t *testing.T) {
 	})
 	assert.Contains(t, err.Error(), "turned off")
 
-	h.service.cfg.Tendering.PublicBaseURL = ""
+	h.service.cfg.App.WebBaseURL = ""
 	open := pickedUpShipment(h)
 	_, err = h.service.IssueLink(t.Context(), &customertrackingports.IssueLinkRequest{
 		TenantInfo: testTenant,
@@ -298,4 +298,56 @@ func TestGetProfile_DefaultsUntilChanged(t *testing.T) {
 	assert.True(t, profile.LinkEnabled)
 	assert.Equal(t, customertracking.DefaultFields(), profile.VisibleFields)
 	assert.False(t, profile.NotifiesAny())
+}
+
+func TestPreviewForShipment_ShowsWhatALinkWouldWithoutMintingOne(t *testing.T) {
+	h := newHarness()
+	sh := pickedUpShipment(h)
+	h.notify(sh.CustomerID, func(p *customertracking.Profile) {
+		p.VisibleFields = []customertracking.Field{
+			customertracking.FieldStatus,
+			customertracking.FieldCarrier,
+		}
+		p.LinkTTLDays = 10
+	})
+	h.facts.descriptors = customertrackingports.ShipmentDescriptors{
+		CarrierName: "Redline Freight",
+		Equipment:   "53' Dry Van",
+	}
+
+	view, err := h.service.PreviewForShipment(t.Context(), testTenant, sh.ID)
+	require.NoError(t, err)
+
+	token := h.issue(t, sh)
+	viaLink, err := h.service.PreviewByToken(t.Context(), token)
+	require.NoError(t, err)
+
+	assert.Equal(t, viaLink.Fields, view.Fields)
+	assert.Equal(t, viaLink.Stops, view.Stops)
+	assert.Equal(t, viaLink.Status, view.Status)
+	assert.Equal(t, "Redline Freight", view.CarrierName)
+	assert.Empty(t, view.Equipment)
+	assert.Equal(t, testNow+10*86400, view.ExpiresAt)
+	assert.Len(t, h.links.rows, 1, "only the link issued above exists")
+	assert.Equal(t, 1, h.links.views, "only the link's own open is counted")
+}
+
+func TestPreviewForShipment_ShowsTheDefaultsForACustomerWithoutSettings(t *testing.T) {
+	h := newHarness()
+	sh := pickedUpShipment(h)
+
+	view, err := h.service.PreviewForShipment(t.Context(), testTenant, sh.ID)
+	require.NoError(t, err)
+
+	assert.Equal(t, customertracking.DefaultFields(), view.Fields)
+	assert.Equal(t, "PRO-77", view.ShipmentProNumber)
+	assert.Empty(t, h.links.rows)
+}
+
+func TestPreviewForShipment_UnknownShipmentIsNotFound(t *testing.T) {
+	h := newHarness()
+
+	_, err := h.service.PreviewForShipment(t.Context(), testTenant, pulid.MustNew("shp_"))
+	require.Error(t, err)
+	assert.True(t, errortypes.IsNotFoundError(err))
 }

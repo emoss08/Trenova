@@ -3,6 +3,8 @@
 // each card. Every time is relative to the scenario's anchor.
 
 import { DESK_EDI_CONVERSATIONS } from "./desk-edi.mjs";
+import { DESK_EDI_FILE_CONVERSATIONS } from "./desk-edi-files.mjs";
+import { DESK_EDI_TRANSFER_CONVERSATIONS } from "./desk-edi-transfers.mjs";
 
 export const DESK_THREAD_ID = "thr_desk_cards";
 
@@ -119,6 +121,18 @@ export function deskCardArtifacts(anchor) {
       Object.entries(DESK_EDI_CONVERSATIONS).map(([slug, entry]) => [
         slug,
         artifact(slug, "edi_message", entry.recordId, entry.title),
+      ]),
+    ),
+    ...Object.fromEntries(
+      Object.entries(DESK_EDI_FILE_CONVERSATIONS).map(([slug, entry]) => [
+        slug,
+        artifact(slug, "edi_inbound_file", entry.recordId, entry.title),
+      ]),
+    ),
+    ...Object.fromEntries(
+      Object.entries(DESK_EDI_TRANSFER_CONVERSATIONS).map(([slug, entry]) => [
+        slug,
+        artifact(slug, "edi_transfer", entry.recordId, entry.title),
       ]),
     ),
   };
@@ -1945,6 +1959,18 @@ const TURNS = {
   ],
   ...Object.fromEntries(
     Object.entries(DESK_EDI_CONVERSATIONS).map(([slug, entry]) => [
+      slug,
+      [entry.question, entry.reply],
+    ]),
+  ),
+  ...Object.fromEntries(
+    Object.entries(DESK_EDI_FILE_CONVERSATIONS).map(([slug, entry]) => [
+      slug,
+      [entry.question, entry.reply],
+    ]),
+  ),
+  ...Object.fromEntries(
+    Object.entries(DESK_EDI_TRANSFER_CONVERSATIONS).map(([slug, entry]) => [
       slug,
       [entry.question, entry.reply],
     ]),

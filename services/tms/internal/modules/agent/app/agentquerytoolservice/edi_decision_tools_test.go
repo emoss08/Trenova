@@ -292,3 +292,41 @@ func TestListEDIPartners_FindsACustomersPartner(t *testing.T) {
 	assert.Equal(t, "ACME", rows[0].Code)
 	assert.Equal(t, agent.ExternalReadNever, tool.Policy().ReadsExternal)
 }
+
+func TestGetEDITransfer_IsTitledByItsBillOfLadingOrItsSender(t *testing.T) {
+	t.Parallel()
+
+	params := agentParams(nil, permission.SensitivityRestricted)
+	title := func(transfer *edi.EDITransfer) string {
+		tool := newGetEDITransferTool(&fakeTransferDetail{transfer: transfer}, &fakePermissions{})
+		params.Params = map[string]any{paramEDITransferID: transfer.ID.String()}
+		result, err := tool.Query(t.Context(), params)
+		require.NoError(t, err)
+		return result.(*ediTransferView).Title
+	}
+
+	withBOL := receivedTender(params.OrganizationID)
+	assert.Equal(t, "BOL-5", title(withBOL))
+
+	fromFile := receivedTender(params.OrganizationID)
+	fromFile.TenderPayload.BOL = ""
+	fromFile.SourcePartner = &edi.EDIPartner{Name: "Acme Foods"}
+	fromFile.TargetPartner = fromFile.SourcePartner
+	assert.Equal(t, "from Acme Foods", title(fromFile))
+
+	fromTrenova := receivedTender(params.OrganizationID)
+	fromTrenova.TenderPayload.BOL = ""
+	fromTrenova.SourceOrganizationID = pulid.MustNew("org_")
+	fromTrenova.TargetPartner = &edi.EDIPartner{Name: "Lone Star Logistics"}
+	assert.Equal(t, "from Lone Star Logistics", title(fromTrenova))
+
+	sent := receivedTender(pulid.MustNew("org_"))
+	sent.SourceOrganizationID = params.OrganizationID
+	sent.TenderPayload.BOL = ""
+	sent.SourcePartner = &edi.EDIPartner{Name: "Lone Star Logistics"}
+	assert.Equal(t, "to Lone Star Logistics", title(sent))
+
+	unnamed := receivedTender(params.OrganizationID)
+	unnamed.TenderPayload.BOL = ""
+	assert.Empty(t, title(unnamed))
+}

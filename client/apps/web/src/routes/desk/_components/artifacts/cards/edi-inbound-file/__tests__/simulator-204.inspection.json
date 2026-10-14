@@ -1,0 +1,52 @@
+{
+  "transactionSet": "",
+  "x12Version": "",
+  "separators": {
+    "element": "*",
+    "segment": "~",
+    "component": "\u003e",
+    "repetition": "^",
+    "source": "isa",
+    "hasConflict": false
+  },
+  "summary": {
+    "segmentCount": 20,
+    "groupCount": 1,
+    "transactionCount": 1,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0
+  },
+  "envelope": {
+    "isaControlNumber": "000000042",
+    "ieaControlNumber": "000000042",
+    "expectedGroups": 1,
+    "actualGroups": 1
+  },
+  "groups": [
+    {
+      "index": 1,
+      "functionalIdCode": "SM",
+      "gsControlNumber": "42",
+      "geControlNumber": "42",
+      "expectedCount": 1,
+      "actualCount": 1,
+      "startSegmentIndex": 2,
+      "endSegmentIndex": 19
+    }
+  ],
+  "transactions": [
+    {
+      "index": 1,
+      "transactionSet": "204",
+      "stControlNumber": "0001",
+      "seControlNumber": "0001",
+      "expectedSegments": 16,
+      "actualSegments": 16,
+      "startSegmentIndex": 3,
+      "endSegmentIndex": 18
+    }
+  ],
+  "diagnostics": [],
+  "interchange": true
+}

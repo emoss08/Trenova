@@ -101,6 +101,8 @@ type ProfileRepository interface {
 	Prune(ctx context.Context, req PruneProfilesRequest) (int, error)
 }
 
+// ListGuidanceRequest lists a profile's lines: the active and the offered ones,
+// and the closed ones too when IncludeRetired is set.
 type ListGuidanceRequest struct {
 	Ref            SubjectRef
 	IncludeRetired bool
@@ -116,6 +118,8 @@ type GuidanceRepository interface {
 	ListActive(ctx context.Context, ref SubjectRef) ([]*agentprofile.Guidance, error)
 	List(ctx context.Context, req *ListGuidanceRequest) ([]*agentprofile.Guidance, error)
 	CountActive(ctx context.Context, ref SubjectRef) (int, error)
+	// CountOpen counts the lines a profile holds open: active and offered.
+	CountOpen(ctx context.Context, ref SubjectRef) (int, error)
 	GetByID(ctx context.Context, req GetGuidanceRequest) (*agentprofile.Guidance, error)
 	Create(ctx context.Context, entity *agentprofile.Guidance) (*agentprofile.Guidance, error)
 	Update(ctx context.Context, entity *agentprofile.Guidance) (*agentprofile.Guidance, error)

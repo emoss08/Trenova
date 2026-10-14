@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -93,6 +94,47 @@ func TestForgetMemory_PreviewWarnsForAMemoryAlreadyRetired(t *testing.T) {
 
 	memory := &agent.Memory{ID: pulid.MustNew("amem_"), Status: agent.MemoryStatusRetired}
 	memories := &fakeMemories{stored: map[pulid.ID]*agent.Memory{memory.ID: memory}}
+	tool := NewForgetMemoryTool(memories).(*ForgetMemoryTool)
+
+	preview := agenttoolstest.PreviewWithoutWrites(t, &memories.guard, func() (*agent.ToolPreview, error) {
+		return tool.Preview(t.Context(), agenttoolstest.MemoryParams(map[string]any{"memoryId": memory.ID.String()}))
+	})
+
+	assert.Empty(t, preview.Changes)
+	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+}
+
+// A person without the manage permission remembering something for the
+// organization is offering it: the preview says so, so what they approve is
+// what will happen.
+func TestRemember_PreviewSaysWhenItWouldBeOffered(t *testing.T) {
+	t.Parallel()
+
+	memories := &fakeMemories{offers: true}
+	tool := NewRememberTool(memories).(*RememberTool)
+
+	preview := agenttoolstest.PreviewWithoutWrites(t, &memories.guard, func() (*agent.ToolPreview, error) {
+		return tool.Preview(t.Context(), agenttoolstest.MemoryParams(map[string]any{
+			"kind":      "Fact",
+			"content":   "Granite wants the POD on the invoice.",
+			"visibleTo": "organization",
+		}))
+	})
+
+	assert.Contains(t, preview.Summary, "Would offer a memory for an administrator to keep")
+	assert.Len(t, preview.Changes, 1, "the offered memory is still the one change")
+}
+
+// Retiring a memory the person may not change fails when it runs, so the
+// preview warns rather than promising the retire.
+func TestForgetMemory_PreviewWarnsWhenTheServiceWouldRefuse(t *testing.T) {
+	t.Parallel()
+
+	memory := &agent.Memory{ID: pulid.MustNew("amem_"), Status: agent.MemoryStatusActive}
+	memories := &fakeMemories{
+		stored: map[pulid.ID]*agent.Memory{memory.ID: memory},
+		refuse: errortypes.NewAuthorizationError("shared memory is an administrator's"),
+	}
 	tool := NewForgetMemoryTool(memories).(*ForgetMemoryTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, &memories.guard, func() (*agent.ToolPreview, error) {

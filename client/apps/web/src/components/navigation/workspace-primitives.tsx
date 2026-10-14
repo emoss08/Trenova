@@ -80,32 +80,3 @@ export function WorkspaceGroupLabel({ children }: { children: ReactNode }) {
 export function WorkspaceDivider({ className }: { className?: string }) {
   return <div aria-hidden className={cn("bg-border mx-4 my-1.5 h-px shrink-0", className)} />;
 }
-
-/**
- * The tinted square that stands for a module wherever the workspace shows
- * one: the sidebar head, the modules menu, the collapsed rail.
- */
-export function ModuleTile({
-  icon: Icon,
-  active = true,
-  size = "md",
-  className,
-}: {
-  icon: ComponentType<{ className?: string; strokeWidth?: number }>;
-  active?: boolean;
-  size?: "sm" | "md";
-  className?: string;
-}) {
-  return (
-    <span
-      className={cn(
-        "flex shrink-0 items-center justify-center",
-        size === "md" ? "size-7 rounded-md" : "size-6 rounded-md",
-        active ? "bg-brand/10 text-nav-active-foreground" : "bg-muted text-foreground",
-        className,
-      )}
-    >
-      <Icon className={size === "md" ? "size-[15px]" : "size-3.5"} strokeWidth={1.75} />
-    </span>
-  );
-}

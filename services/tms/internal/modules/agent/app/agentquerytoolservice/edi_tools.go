@@ -352,6 +352,7 @@ type ediMessageRow struct {
 type ediInboundFileView struct {
 	ediInboundFileRow
 
+	Title           string          `json:"title"`
 	ReceiverID      string          `json:"isaReceiverId,omitempty"`
 	ProfileName     string          `json:"communicationProfile,omitempty"`
 	MessageCount    int             `json:"messageCount"`
@@ -389,6 +390,7 @@ func (t *getEDIInboundFileTool) Query(
 
 	view := ediInboundFileView{
 		ediInboundFileRow: ediInboundFileRowFrom(file),
+		Title:             file.FileName,
 		ReceiverID:        file.ISAReceiverID,
 		MessageCount:      len(file.Messages),
 		MessagesOmitted:   max(len(file.Messages)-maxInboundMessages, 0),
@@ -697,8 +699,7 @@ func (t *listEDITransfersTool) Policy() agentports.ToolPolicy {
 type ediTransferRow struct {
 	ID               string       `json:"id"`
 	Status           string       `json:"status"`
-	SourcePartner    string       `json:"sourcePartner,omitempty"`
-	TargetPartner    string       `json:"targetPartner,omitempty"`
+	Partner          string       `json:"partner,omitempty"`
 	BOL              string       `json:"bol,omitempty"`
 	Customer         string       `json:"customer,omitempty"`
 	ServiceType      string       `json:"serviceType,omitempty"`
@@ -717,7 +718,7 @@ type ediCursorOutcome struct {
 	NextCursor string `json:"nextCursor,omitempty"`
 }
 
-func ediTransferRowFrom(transfer *edi.EDITransfer) ediTransferRow {
+func ediTransferRowFrom(transfer *edi.EDITransfer, orgID pulid.ID) ediTransferRow {
 	row := ediTransferRow{
 		ID:               transfer.ID.String(),
 		Status:           string(transfer.Status),
@@ -737,11 +738,8 @@ func ediTransferRowFrom(transfer *edi.EDITransfer) ediTransferRow {
 	for _, move := range transfer.TenderPayload.Moves {
 		row.StopCount += len(move.Stops)
 	}
-	if transfer.SourcePartner != nil {
-		row.SourcePartner = transfer.SourcePartner.Name
-	}
-	if transfer.TargetPartner != nil {
-		row.TargetPartner = transfer.TargetPartner.Name
+	if partner := transfer.Counterparty(orgID); partner != nil {
+		row.Partner = partner.Name
 	}
 
 	return row
@@ -808,7 +806,7 @@ func (t *listEDITransfersTool) Query(
 		if transfer == nil {
 			continue
 		}
-		rows = append(rows, ediTransferRowFrom(transfer))
+		rows = append(rows, ediTransferRowFrom(transfer, params.OrganizationID))
 		refs = append(refs, agent.RecordRef{
 			EntityType: ediTransferEntity,
 			ID:         transfer.ID.String(),

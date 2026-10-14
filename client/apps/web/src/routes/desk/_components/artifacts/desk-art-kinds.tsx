@@ -65,6 +65,19 @@ const ICONS = {
       <path d="M3.5 7.5l8.5 5.5 8.5-5.5M7 15h2.5M14.5 15H17" />
     </>
   ),
+  inbound: (
+    <>
+      <path d="M6.5 3.5h7.5l4 4v13h-11.5z" />
+      <path d="M14 3.5v4h4M12.25 10v6.5M9.5 14l2.75 2.75L15 14" />
+    </>
+  ),
+  tender: (
+    <>
+      <path d="M4.5 6.5h15v3a2.5 2.5 0 0 0 0 5v3h-15v-3a2.5 2.5 0 0 0 0-5z" />
+      <path d="M14.5 6.5v11" strokeDasharray="1.6 1.9" />
+      <path d="M8 12h3.5M10 10l1.8 2-1.8 2" />
+    </>
+  ),
   agreement: (
     <>
       <path d="M6 3.5h12v17H6z" />
@@ -256,7 +269,9 @@ export type DeskArtKind =
   | "order"
   | "failure"
   | "agreement"
-  | "edi";
+  | "edi"
+  | "inbound"
+  | "tender";
 
 const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   table: "Table",
@@ -283,6 +298,8 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   failure: "Service failure",
   agreement: "Rate agreement",
   edi: "EDI message",
+  inbound: "EDI inbound file",
+  tender: "Load tender",
 });
 
 /**
@@ -297,7 +314,9 @@ const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
  * biller follow from taken to billed, a service failure as the miss a customer
  * service rep explains and settles, a rate agreement as the terms a pricing
  * analyst holds freight to, an EDI message as the document an EDI coordinator
- * follows to and from a trading partner.
+ * follows to and from a trading partner, an EDI inbound file as the delivery
+ * a trading partner sent that the coordinator traces into messages, an EDI
+ * transfer as the load tender a coordinator accepts or declines.
  */
 const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   billing_queue_item: "bill",
@@ -313,6 +332,8 @@ const CARD_KINDS: Readonly<Record<string, DeskArtKind>> = {
   service_failure: "failure",
   rate_agreement: "agreement",
   edi_message: "edi",
+  edi_inbound_file: "inbound",
+  edi_transfer: "tender",
 };
 
 export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload">): DeskArtKind {
@@ -408,6 +429,10 @@ export function deskArtKindName(kind: DeskArtKind, t: TranslateFn): string {
       return t("Rate agreement");
     case "edi":
       return t("EDI message");
+    case "inbound":
+      return t("EDI inbound file");
+    case "tender":
+      return t("Load tender");
   }
 }
 

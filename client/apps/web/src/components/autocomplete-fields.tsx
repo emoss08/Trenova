@@ -1581,7 +1581,7 @@ export function ControlledEDITransferAutocompleteField({
           primary={option.label}
           secondary={
             selectOptionMetaString(option, "customerLabel") ||
-            selectOptionMetaString(option, "sourcePartner") ||
+            selectOptionMetaString(option, "partner") ||
             selectOptionMetaString(option, "status")
           }
         />

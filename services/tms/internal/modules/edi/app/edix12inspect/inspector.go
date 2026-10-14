@@ -35,13 +35,15 @@ func InspectX12(req *InspectX12Request) InspectX12Result {
 	diagnostics = append(diagnostics, normalizeRenderDiagnostics(req.Diagnostics, segments)...)
 
 	result := InspectX12Result{
-		RawX12:         req.RawX12,
-		TransactionSet: req.TransactionSet,
-		X12Version:     req.X12Version,
-		Separators:     separators,
-		Segments:       segments,
-		Formatted:      formatSegments(segments, diagnostics),
-		Diagnostics:    diagnostics,
+		InspectOverview: InspectOverview{
+			TransactionSet: req.TransactionSet,
+			X12Version:     req.X12Version,
+			Separators:     separators,
+			Diagnostics:    diagnostics,
+		},
+		RawX12:    req.RawX12,
+		Segments:  segments,
+		Formatted: formatSegments(segments, diagnostics),
 	}
 	result.Envelope = buildEnvelope(segments)
 	result.Groups = buildGroups(segments)

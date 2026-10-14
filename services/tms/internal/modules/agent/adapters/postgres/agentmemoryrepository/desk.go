@@ -59,20 +59,39 @@ func (r *repository) deskSelect(ctx context.Context, rows *[]deskRow) *bun.Selec
 }
 
 // deskVisible keeps what a person keeps: memories of the organization, their
-// own, and their roles', active or paused. What is kept for one agent is
-// administered in AI Control, and a suggestion waits in its conversation.
+// own, and their roles', active or paused, and the memories they offered for
+// their team or the organization while an administrator has yet to decide.
+// What is kept for one agent is administered in AI Control, and an agent's
+// suggestion waits in its conversation.
 func deskVisible(sq *bun.SelectQuery, filter *agentports.DeskMemoryFilter) *bun.SelectQuery {
 	cols := agentcol.MemoryColumns
 	sq = agentcol.MemoryScopeTenant(sq, filter.TenantInfo).
-		Where(cols.Status.In(), bun.List([]agent.MemoryStatus{
-			agent.MemoryStatusActive,
-			agent.MemoryStatusPaused,
-		})).
-		WhereGroup(" AND ", func(who *bun.SelectQuery) *bun.SelectQuery {
-			return forPerson(
-				who.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization),
-				filter.Reader,
-			)
+		WhereGroup(" AND ", func(kept *bun.SelectQuery) *bun.SelectQuery {
+			kept = kept.WhereGroup(" OR ", func(read *bun.SelectQuery) *bun.SelectQuery {
+				return read.Where(cols.Status.In(), bun.List([]agent.MemoryStatus{
+					agent.MemoryStatusActive,
+					agent.MemoryStatusPaused,
+				})).
+					WhereGroup(" AND ", func(who *bun.SelectQuery) *bun.SelectQuery {
+						return forPerson(
+							who.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization),
+							filter.Reader,
+						)
+					})
+			})
+			if filter.Reader.UserID.IsNotNil() {
+				kept = kept.WhereGroup(" OR ", func(offered *bun.SelectQuery) *bun.SelectQuery {
+					return offered.Where(cols.Status.Eq(), agent.MemoryStatusSuggested).
+						Where(cols.Source.Eq(), agent.MemorySourceUser).
+						Where(cols.CreatedByUserID.Eq(), filter.Reader.UserID).
+						Where(cols.Scope.In(), bun.List([]agent.MemoryScope{
+							agent.MemoryScopeRole,
+							agent.MemoryScopeOrganization,
+						}))
+				})
+			}
+
+			return kept
 		})
 
 	if text := newTextQuery(filter.Query, nil); !text.empty() {

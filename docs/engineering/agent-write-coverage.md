@@ -89,7 +89,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 277 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 99 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 101 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 34 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 48 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1142 writes: 629 GraphQL mutations and 513 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1144 writes: 631 GraphQL mutations and 513 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 413 |
-| Exempt | 695 |
+| Exempt | 697 |
 | — Security | 83 |
 | — Configuration | 277 |
 | — User preference | 38 |
 | — Infrastructure | 52 |
-| — Agent administration | 99 |
+| — Agent administration | 101 |
 | — Counterparty | 34 |
 | — Read-only | 56 |
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1142 |
+| Total | 1144 |
 
 Of the 447 writes an agent should be able to make, 413 have a tool (92%).
 
@@ -170,7 +170,7 @@ The writes no tool performs yet, and what the tool would do.
 | agent | 16 | 2 | 14 | 0 |
 | agentdefinition | 12 | 0 | 12 | 0 |
 | agentextension | 2 | 0 | 2 | 0 |
-| agentprofile | 6 | 2 | 4 | 0 |
+| agentprofile | 8 | 2 | 6 | 0 |
 | agentquality | 6 | 0 | 6 | 0 |
 | agentrun | 1 | 0 | 1 | 0 |
 | agentsafety | 1 | 0 | 1 | 0 |
@@ -473,6 +473,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation addAgentOrganizationProfileGuidance` | Tool: `guide_profile` |
 | `mutation addMyAgentProfileGuidance` | Tool: `guide_profile` |
+| `mutation approveAgentOrganizationProfileGuidance` | Exempt, agent-administration: An administrator keeping a line someone offered about the organization; an agent offers guidance through guide_profile and never approves its own. |
+| `mutation dismissAgentOrganizationProfileGuidance` | Exempt, agent-administration: An administrator turning down a line someone offered about the organization; an agent offers guidance through guide_profile and never decides on it. |
 | `mutation regenerateAgentOrganizationProfile` | Exempt, agent-administration: Asks for the organization's agent profile to be written again; agents read the profile, they do not decide when it is rewritten. |
 | `mutation regenerateMyAgentProfile` | Exempt, agent-administration: Asks for a person's own agent profile to be written again; agents read the profile, they do not decide when it is rewritten. |
 | `mutation retireAgentOrganizationProfileGuidance` | Exempt, agent-administration: A person curating what agents are told about the organization; an agent records guidance through guide_profile and never retires what a person gave. |

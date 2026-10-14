@@ -606,15 +606,19 @@ func ediTemplateSelectOption(entity *edi.EDITemplate) *gqlmodel.SelectOption {
 	}
 }
 
-func ediTransferSelectOptionItem(entity *edi.EDITransfer) selectOptionConnectionItem {
-	return selectOptionConnectionItemFor(
-		ediTransferSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+func ediTransferSelectOptionItemFor(
+	orgID pulid.ID,
+) func(*edi.EDITransfer) selectOptionConnectionItem {
+	return func(entity *edi.EDITransfer) selectOptionConnectionItem {
+		return selectOptionConnectionItemFor(
+			ediTransferSelectOption(entity, orgID),
+			entity.CreatedAt,
+			entity.ID,
+		)
+	}
 }
 
-func ediTransferSelectOption(entity *edi.EDITransfer) *gqlmodel.SelectOption {
+func ediTransferSelectOption(entity *edi.EDITransfer, orgID pulid.ID) *gqlmodel.SelectOption {
 	label := entity.TenderPayload.BOL
 	if label == "" {
 		label = "Load tender " + entity.ID.String()
@@ -625,11 +629,8 @@ func ediTransferSelectOption(entity *edi.EDITransfer) *gqlmodel.SelectOption {
 		"bol":           entity.TenderPayload.BOL,
 		"customerLabel": entity.TenderPayload.CustomerLabel,
 	}
-	if entity.SourcePartner != nil {
-		meta["sourcePartner"] = entity.SourcePartner.Name
-	}
-	if entity.TargetPartner != nil {
-		meta["targetPartner"] = entity.TargetPartner.Name
+	if partner := entity.Counterparty(orgID); partner != nil {
+		meta["partner"] = partner.Name
 	}
 
 	description := entity.TenderPayload.CustomerLabel

@@ -204,7 +204,6 @@
   "Share": "Compartir",
   "Share invoice {0}": "Compartir factura {0}",
   "Shared by {0} on {1}": "Compartida por {0} el {1}",
-  "Shared with": "Compartida con",
   "Shared with {0, plural, one {# teammate} other {# teammates}}. Everyone got a notification, but some emails couldn't be sent.": "Compartida con {0, plural, one {# compañero} other {# compañeros}}. Todos recibieron una notificación, pero algunos correos no se pudieron enviar.",
   "Shared with {0, plural, one {# teammate} other {# teammates}}. Everyone got a notification, but the emails couldn't be sent.": "Compartida con {0, plural, one {# compañero} other {# compañeros}}. Todos recibieron una notificación, pero los correos no se pudieron enviar.",
   "Shared with {0, plural, one {# teammate} other {# teammates}}. They'll get a notification and an email.": "Compartida con {0, plural, one {# compañero} other {# compañeros}}. Recibirán una notificación y un correo.",

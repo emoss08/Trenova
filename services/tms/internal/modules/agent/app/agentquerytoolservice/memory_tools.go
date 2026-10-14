@@ -105,11 +105,12 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 
 func (t *recallMemoryTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceAgentMemory,
+		resource: permission.ResourceAssistant,
 		reads:    agent.ExternalReadMarked,
 		source:   agent.TaintSourceMemory,
 		rationale: "Reads memories earlier runs saved, which carry the taint of the run that " +
-			"wrote them.",
+			"wrote them. It returns only what the reader's own prompt already reads, so it " +
+			"is used under the assistant like the Desk's memory page.",
 	})
 }
 

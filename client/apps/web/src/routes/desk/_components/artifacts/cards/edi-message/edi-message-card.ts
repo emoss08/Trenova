@@ -5,29 +5,9 @@ import type {
   EDIMessage,
   EDIX12Inspection,
 } from "@trenova/shared/types/edi";
-import type { CardCheckState, CardFact, CardTone } from "../../record-card/record-card";
-import { cardDate, cardMoment, money, waitText } from "../../record-card/record-card-values";
-
-type TransactionSet = EDIMessage["transactionSet"];
-type Payload = NonNullable<EDIMessage["payloadSnapshot"]>;
-
-/** What a transaction set is, in the words a dispatcher uses for it. */
-export function transactionName(set: TransactionSet, t: TranslateFn): string {
-  switch (set) {
-    case "204":
-      return t("Load tender");
-    case "210":
-      return t("Freight invoice");
-    case "214":
-      return t("Shipment status");
-    case "990":
-      return t("Tender response");
-    case "997":
-      return t("Functional acknowledgment");
-    case "999":
-      return t("Implementation acknowledgment");
-  }
-}
+import type { CardCheckState, CardTone } from "../../record-card/record-card";
+import { ACCEPT_CODES, payloadText } from "../../record-card/edi-reading";
+import { cardMoment } from "../../record-card/record-card-values";
 
 /** Where the message stands, as the pill at the card's head says it. */
 export type MessageStanding = {
@@ -91,7 +71,7 @@ export function messageStanding(message: EDIMessage, t: TranslateFn): MessageSta
 function inboundStanding(message: EDIMessage, t: TranslateFn): MessageStanding {
   const ack = message.payloadSnapshot?.functionalAck ?? message.payloadSnapshot?.implementationAck;
   const code = ack
-    ? text(ack.transactionAcknowledgmentCode) || text(ack.groupAcknowledgmentCode)
+    ? payloadText(ack.transactionAcknowledgmentCode) || payloadText(ack.groupAcknowledgmentCode)
     : "";
   if (code === "E") return { label: t("Accepted with errors"), tone: "warn", mark: "pause" };
   if (code === "P") return { label: t("Partly accepted"), tone: "warn", mark: "pause" };
@@ -451,291 +431,6 @@ export function envelopeLayers(
   ];
 }
 
-/** A stop a load tender names, as the plain reading lists it. */
-export type ReadingStop = { key: string; kind: string; place: string; window: string };
-
-/** A charge line an invoice carries, as the plain reading lists it. */
-export type ReadingLine = { key: string; label: string; amount: string };
-
-/** What the message says, decoded from its payload into a headline and the facts behind it. */
-export type PlainReading = {
-  headline: string;
-  /** Where or to whom, under the headline. */
-  line: string;
-  /** How the headline reads: a delivery or an acceptance is good news, a delay or rejection is not. */
-  state: CardCheckState;
-  /** A figure set beside the headline, such as an invoice's total. */
-  figure: string;
-  facts: CardFact[];
-  stops: ReadingStop[];
-  lines: ReadingLine[];
-  /** Where an acknowledgment found fault, segment by segment. */
-  faults: ReadingLine[];
-};
-
-const STATUS_WORDS: Record<string, (t: TranslateFn) => string> = {
-  X3: (t) => t("Arrived at pickup"),
-  AF: (t) => t("Departed pickup"),
-  X6: (t) => t("En route to delivery"),
-  X1: (t) => t("Arrived at delivery"),
-  D1: (t) => t("Delivered"),
-  CD: (t) => t("Departed delivery"),
-  A3: (t) => t("Shipment delayed"),
-  SD: (t) => t("Shipment delayed"),
-  A7: (t) => t("Shipment canceled"),
-};
-
-const DELAY_CODES = new Set(["A3", "SD", "A7"]);
-const ACCEPT_CODES = new Set(["A", "E"]);
-
-/**
- * What the message says, read from its decoded payload rather than its
- * segments: a 214's status at its stop, a 204's load and stops, a 210's bill
- * and charges, a 990's answer, a 997 or 999's verdict on what it answers.
- * Null when no payload was kept.
- */
-export function plainReading(message: EDIMessage, t: TranslateFn): PlainReading | null {
-  const payload = message.payloadSnapshot;
-  if (!payload) return null;
-  switch (message.transactionSet) {
-    case "214":
-      return payload.shipmentStatus ? statusReading(payload.shipmentStatus, t) : null;
-    case "204": {
-      const tender = payload.loadTender ?? payload.shipment;
-      return tender ? tenderReading(tender, payload, t) : null;
-    }
-    case "210":
-      return payload.invoice ? invoiceReading(payload.invoice, t) : null;
-    case "990":
-      return payload.tenderResponse ? responseReading(payload.tenderResponse, t) : null;
-    case "997":
-    case "999": {
-      const ack = payload.functionalAck ?? payload.implementationAck;
-      return ack ? ackReading(ack, t) : null;
-    }
-  }
-}
-
-function blankReading(): Omit<PlainReading, "headline" | "line" | "state"> {
-  return { figure: "", facts: [], stops: [], lines: [], faults: [] };
-}
-
-function fact(key: string, label: string, value: string | null | undefined): CardFact[] {
-  const shown = value?.trim();
-  return shown ? [{ key, label, value: shown }] : [];
-}
-
-function text(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function amountOf(value: unknown): string | number | null {
-  return typeof value === "number" ? value : text(value) || null;
-}
-
-function count(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
-
-function placeLine(...parts: (string | null | undefined)[]): string {
-  return parts
-    .map((part) => part?.trim() ?? "")
-    .filter(Boolean)
-    .join(", ");
-}
-
-function statusReading(
-  status: NonNullable<Payload["shipmentStatus"]>,
-  t: TranslateFn,
-): PlainReading {
-  const code = status.statusCode?.trim() ?? "";
-  const words = STATUS_WORDS[code];
-  const late = status.lateMinutes ?? 0;
-  return {
-    ...blankReading(),
-    headline: words ? words(t) : code ? t("Status {0}", code) : t("Status update"),
-    line: placeLine(
-      status.locationName,
-      placeLine(status.city, [status.stateCode, status.postalCode].filter(Boolean).join(" ")),
-    ),
-    state: DELAY_CODES.has(code) || late > 0 ? "warn" : code === "D1" ? "ok" : "info",
-    figure: cardMoment(status.eventDate),
-    facts: [
-      ...fact(
-        "code",
-        t("Status code"),
-        code && status.statusReasonCode
-          ? t("{0} · reason {1}", code, status.statusReasonCode)
-          : code,
-      ),
-      ...fact(
-        "stop",
-        t("Stop"),
-        status.stopType && status.stopSequence
-          ? t("{0}, stop {1}", status.stopType, formatNumber(status.stopSequence))
-          : status.stopType,
-      ),
-      ...fact("pro", t("PRO"), status.proNumber),
-      ...fact("bol", t("BOL"), status.bol),
-      ...fact("appointment", t("Appointment"), status.appointmentNumber),
-      ...fact("equipment", t("Equipment"), status.equipmentNumber),
-      ...fact("late", t("Late by"), late > 0 ? waitText(late) : ""),
-      ...fact("reason", t("Reason"), status.reasonDescription),
-      ...fact("failure", t("Service failure"), status.serviceFailureNumber),
-    ],
-  };
-}
-
-function tenderReading(
-  tender: NonNullable<Payload["loadTender"]>,
-  payload: Payload,
-  t: TranslateFn,
-): PlainReading {
-  const update = payload.purposeCode === "04";
-  const stops = (tender.moves ?? [])
-    .flatMap((move) => move.stops ?? [])
-    .map((stop, index) => ({
-      key: `${stop.locationId}-${index}`,
-      kind: stop.type,
-      place:
-        placeLine(
-          stop.locationName ?? stop.locationLabel,
-          stop.locationCity,
-          stop.locationStateCode,
-        ) || t("Unnamed stop"),
-      window: cardMoment(stop.scheduledWindowStart),
-    }));
-  const first = stops[0];
-  const last = stops.at(-1);
-  return {
-    ...blankReading(),
-    headline: update ? t("Updated load tender") : t("Load tender"),
-    line:
-      first && last && first !== last
-        ? t("{0} to {1}", first.place, last.place)
-        : (first?.place ?? ""),
-    state: "info",
-    figure:
-      amountOf(tender.totalChargeAmount) === null ? "" : money(amountOf(tender.totalChargeAmount)),
-    facts: [
-      ...fact("bol", t("BOL"), tender.bol),
-      ...fact("customer", t("Customer"), tender.customerLabel),
-      ...fact("weight", t("Weight"), tender.weight ? t("{0} lb", formatNumber(tender.weight)) : ""),
-      ...fact("pieces", t("Pieces"), tender.pieces ? formatNumber(tender.pieces) : ""),
-      ...fact("service", t("Service"), tender.serviceTypeLabel),
-    ],
-    stops,
-  };
-}
-
-function invoiceReading(invoice: NonNullable<Payload["invoice"]>, t: TranslateFn): PlainReading {
-  const currency = text(invoice.currencyCode) || "USD";
-  const number = text(invoice.invoiceNumber);
-  const charges = Array.isArray(invoice.lineCharges) ? (invoice.lineCharges as unknown[]) : [];
-  return {
-    ...blankReading(),
-    headline: number ? t("Invoice {0}", number) : t("Freight invoice"),
-    line: placeLine(
-      text(invoice.billToName),
-      text(invoice.billToCity),
-      text(invoice.billToStateCode),
-    ),
-    state: "info",
-    figure: money(amountOf(invoice.totalAmount), currency),
-    facts: [
-      ...fact("pro", t("PRO"), text(invoice.proNumber)),
-      ...fact("bol", t("BOL"), text(invoice.bol)),
-      ...fact("date", t("Invoice date"), cardDate(count(invoice.invoiceDate))),
-      ...fact("delivered", t("Delivered"), cardDate(count(invoice.deliveryDate))),
-    ],
-    lines: charges.flatMap((raw, index) => {
-      if (!raw || typeof raw !== "object") return [];
-      const charge = raw as Record<string, unknown>;
-      return [
-        {
-          key: `${text(charge.code)}-${index}`,
-          label: text(charge.description) || text(charge.code) || t("Charge"),
-          amount: money(amountOf(charge.amount), currency),
-        },
-      ];
-    }),
-  };
-}
-
-function responseReading(
-  response: NonNullable<Payload["tenderResponse"]>,
-  t: TranslateFn,
-): PlainReading {
-  const code = text(response.responseCode);
-  const accepted = code === "A";
-  const declined = code === "D";
-  return {
-    ...blankReading(),
-    headline: accepted
-      ? t("Accepted the tender")
-      : declined
-        ? t("Declined the tender")
-        : t("Answered the tender"),
-    line: text(response.rejectionReason),
-    state: accepted ? "ok" : declined ? "bad" : "info",
-    facts: [
-      ...fact("bol", t("BOL"), text(response.bol)),
-      ...fact("code", t("Response code"), code),
-      ...fact("reason", t("Reason code"), text(response.reasonCode)),
-    ],
-  };
-}
-
-function ackReading(ack: NonNullable<Payload["functionalAck"]>, t: TranslateFn): PlainReading {
-  const code = text(ack.transactionAcknowledgmentCode) || text(ack.groupAcknowledgmentCode);
-  const accepted = ACCEPT_CODES.has(code);
-  const partly = code === "P";
-  const set = text(ack.originalTransactionSet);
-  const control = text(ack.originalTransactionControlNumber);
-  const group = text(ack.originalGroupControlNumber);
-  const received = count(ack.receivedTransactionSetCount);
-  const acceptedCount = count(ack.acceptedTransactionSetCount);
-  return {
-    ...blankReading(),
-    headline:
-      code === "E"
-        ? t("Accepted with errors")
-        : accepted
-          ? t("Accepted")
-          : partly
-            ? t("Partly accepted")
-            : code
-              ? t("Rejected")
-              : t("Acknowledgment"),
-    line:
-      set && control
-        ? group
-          ? t("Answers {0} transaction {1} in group {2}", set, control, group)
-          : t("Answers {0} transaction {1}", set, control)
-        : "",
-    state: code === "E" || partly ? "warn" : accepted ? "ok" : code ? "bad" : "info",
-    figure:
-      received !== null && acceptedCount !== null
-        ? t("{0} of {1} accepted", formatNumber(acceptedCount), formatNumber(received))
-        : "",
-    facts: [...fact("code", t("Acknowledgment code"), code)],
-    faults: (ack.diagnostics ?? []).map((diagnostic, index) => ({
-      key: `${diagnostic.segmentId ?? ""}-${diagnostic.errorCode ?? ""}-${index}`,
-      label:
-        diagnostic.segmentId && diagnostic.elementPosition
-          ? t("{0}, element {1}", diagnostic.segmentId, formatNumber(diagnostic.elementPosition))
-          : (diagnostic.segmentId ?? t("Envelope")),
-      amount:
-        [
-          diagnostic.message?.trim(),
-          diagnostic.errorCode ? t("code {0}", diagnostic.errorCode) : "",
-        ]
-          .filter(Boolean)
-          .join(" · ") || t("No detail given"),
-    })),
-  };
-}
-
 /** One element of a segment on the tape: its value and what the X12 dictionary calls it. */
 export type TapeElement = { position: number; value: string; label: string; empty: boolean };
 
@@ -868,8 +563,8 @@ export function messageLinks(message: EDIMessage, t: TranslateFn): MessageLink[]
   const links: MessageLink[] = [];
 
   if (message.shipmentId) {
-    const pro = text(status?.proNumber) || text(invoice?.proNumber);
-    const bol = text(status?.bol) || text(tender?.bol) || text(invoice?.bol);
+    const pro = payloadText(status?.proNumber) || payloadText(invoice?.proNumber);
+    const bol = payloadText(status?.bol) || payloadText(tender?.bol) || payloadText(invoice?.bol);
     links.push({
       key: "shipment",
       entity: "shipment",
@@ -879,7 +574,7 @@ export function messageLinks(message: EDIMessage, t: TranslateFn): MessageLink[]
     });
   }
   if (message.invoiceId) {
-    const number = text(invoice?.invoiceNumber);
+    const number = payloadText(invoice?.invoiceNumber);
     links.push({
       key: "invoice",
       entity: "invoice",
@@ -899,10 +594,10 @@ export function messageLinks(message: EDIMessage, t: TranslateFn): MessageLink[]
         : t("EDI message"),
     });
   }
-  const source = text(ack?.sourceMessageId);
+  const source = payloadText(ack?.sourceMessageId);
   if (source) {
-    const set = text(ack?.originalTransactionSet);
-    const control = text(ack?.originalTransactionControlNumber);
+    const set = payloadText(ack?.originalTransactionSet);
+    const control = payloadText(ack?.originalTransactionControlNumber);
     links.push({
       key: "source",
       entity: "edi_message",

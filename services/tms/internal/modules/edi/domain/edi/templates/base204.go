@@ -200,9 +200,9 @@ func (b base204Builder) headerSegments() []*edi.EDITemplateSegment {
 			"",
 			true,
 			[]edi.TemplateElement{
-				b.partner(1, "Standard Carrier Alpha Code", "carrier.scac"),
-				b.field(2, "Shipment Identification Number", "shipmentId", "", true),
-				b.field(4, "Shipment Method of Payment", "ratingDetail.paymentMethod", "PP"),
+				b.partner(2, "Standard Carrier Alpha Code", "carrier.scac"),
+				b.field(4, "Shipment Identification Number", "shipmentId", "", true),
+				b.field(6, "Shipment Method of Payment", "ratingDetail.paymentMethod", "PP"),
 			},
 		),
 		b.segment(50, "B2A", "Set Purpose", "", true, []edi.TemplateElement{

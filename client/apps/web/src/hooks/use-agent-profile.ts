@@ -2,6 +2,8 @@ import { describeApiError } from "@/lib/api-error-message";
 import {
   AGENT_PROFILE_KEY,
   addAgentProfileGuidance,
+  approveAgentProfileGuidance,
+  dismissAgentProfileGuidance,
   regenerateAgentProfile,
   retireAgentProfileGuidance,
   type AgentProfileOwner,
@@ -27,8 +29,12 @@ export function useAgentProfile(owner: AgentProfileOwner, options?: { enabled?: 
 
   const addGuidance = useMutation({
     mutationFn: (content: string) => addAgentProfileGuidance(owner, content),
-    onSuccess: async () => {
-      toast.success(t("Guidance added; the profile will be written again with it shortly"));
+    onSuccess: async (line) => {
+      toast.success(
+        line.status === "Suggested"
+          ? t("Guidance offered; an administrator decides whether the profile keeps it")
+          : t("Guidance added; the profile will be written again with it shortly"),
+      );
       await refresh();
     },
     onError: (error) => {
@@ -47,6 +53,28 @@ export function useAgentProfile(owner: AgentProfileOwner, options?: { enabled?: 
     },
   });
 
+  const approveGuidance = useMutation({
+    mutationFn: (id: string) => approveAgentProfileGuidance(id),
+    onSuccess: async () => {
+      toast.success(t("Guidance kept; the profile will be written again with it shortly"));
+      await refresh();
+    },
+    onError: (error) => {
+      toast.error(describeApiError(error, t("The guidance could not be kept")));
+    },
+  });
+
+  const dismissGuidance = useMutation({
+    mutationFn: (id: string) => dismissAgentProfileGuidance(id),
+    onSuccess: async () => {
+      toast.success(t("Guidance dismissed"));
+      await refresh();
+    },
+    onError: (error) => {
+      toast.error(describeApiError(error, t("The guidance could not be dismissed")));
+    },
+  });
+
   const regenerate = useMutation({
     mutationFn: () => regenerateAgentProfile(owner),
     onSuccess: () => {
@@ -57,5 +85,12 @@ export function useAgentProfile(owner: AgentProfileOwner, options?: { enabled?: 
     },
   });
 
-  return { profileQuery, addGuidance, retireGuidance, regenerate };
+  return {
+    profileQuery,
+    addGuidance,
+    retireGuidance,
+    approveGuidance,
+    dismissGuidance,
+    regenerate,
+  };
 }

@@ -75,6 +75,18 @@ mutation RegenerateAgentOrganizationProfile {
   regenerateAgentOrganizationProfile
 }
 
+mutation ApproveAgentOrganizationProfileGuidance($id: ID!) {
+  approveAgentOrganizationProfileGuidance(id: $id) {
+    ...AgentProfileGuidanceFields
+  }
+}
+
+mutation DismissAgentOrganizationProfileGuidance($id: ID!) {
+  dismissAgentOrganizationProfileGuidance(id: $id) {
+    ...AgentProfileGuidanceFields
+  }
+}
+
 mutation AddMyAgentProfileGuidance($input: AgentProfileGuidanceInput!) {
   addMyAgentProfileGuidance(input: $input) {
     ...AgentProfileGuidanceFields

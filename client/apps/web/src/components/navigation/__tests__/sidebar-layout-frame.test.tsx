@@ -1,20 +1,22 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { frameOfMatches } from "../shell-frame";
 import { PageLayout, SidebarLayout } from "../sidebar-layout";
 
-vi.mock("../workspace-header", () => ({
-  WorkspaceHeader: ({ leading }: { leading?: ReactNode }) => (
-    <header data-testid="app-header">{leading}</header>
+vi.mock("../module-rail", () => ({
+  ModuleRail: ({ fold, search }: { fold?: boolean; search: boolean }) => (
+    <nav aria-label="Modules" data-search={search || undefined}>
+      {fold && <button type="button">Hide sidebar</button>}
+    </nav>
   ),
-  WorkspaceContextBar: () => <nav aria-label="Breadcrumb" />,
 }));
-vi.mock("../workspace-sidebar", () => ({
-  WorkspaceSidebar: () => <aside aria-label="Sidebar" />,
+vi.mock("../rail-panel", () => ({
+  RailPanel: ({ shown }: { shown: boolean }) => (
+    <aside aria-label="Sidebar" hidden={!shown || undefined} />
+  ),
+  RailPanelBody: () => null,
 }));
-vi.mock("../variants/classic-sidebar", () => ({ ClassicSidebar: () => null }));
 vi.mock("../user-settings-host", () => ({ UserSettingsHost: () => null }));
 vi.mock("../../assistant/assistant-widget", () => ({
   AssistantWidget: () => null,
@@ -23,10 +25,14 @@ vi.mock("../../assistant/assistant-widget", () => ({
 vi.mock("../../command-palette/command-palette-mount", () => ({ CommandPaletteMount: () => null }));
 vi.mock("../../keyboard-shortcuts-dialog", () => ({ KeyboardShortcutsDialog: () => null }));
 vi.mock("../../header", () => ({
-  Header: () => null,
   SidebarToggle: () => <button type="button">Hide sidebar</button>,
+  HistoryNavigation: () => <button type="button">Go back</button>,
+  FavoriteToggle: () => <button type="button">Add to favorites</button>,
 }));
 vi.mock("@/hooks/use-filtered-navigation", () => ({ useFilteredNavigation: () => [] }));
+vi.mock("@/hooks/use-sidebar-navigation", () => ({
+  useSidebarNavigation: () => ({ views: new Map(), home: null, settings: null }),
+}));
 vi.mock("@/stores/update-store", () => ({
   useUpdateStore: (select: (state: { fetchStatus: () => Promise<void> }) => unknown) =>
     select({ fetchStatus: () => Promise.resolve() }),
@@ -67,6 +73,7 @@ function renderAt(path: string) {
         children: [
           { path: "/triage", handle: { frame: "room" }, element: page("Triage") },
           { path: "/shipments", element: page("Shipments") },
+          { path: "/shipments/hazardous-materials", element: page("Hazardous materials") },
         ],
       },
     ],
@@ -77,11 +84,11 @@ function renderAt(path: string) {
 }
 
 /**
- * Triage, like the Desk, wants the window for its own rail, list and reader.
- * Unlike the Desk it stays inside the app: the header, its search, the module
- * switcher and the way to everywhere else remain. What goes is the module's
- * sidebar and the bar that says where you are, which the room's rail and title
- * replace, and the page's title bar, whose title stays for assistive tech.
+ * A page sits beside the rail and the module's panel and owns the only bar
+ * above its body: the fold, history and the trail lead its title, the star
+ * follows its actions. Triage wants the window for its own rail, list and
+ * reader: the module rail stays and carries the fold for the room's rail,
+ * the panel goes, and the page's title bar stays only for assistive tech.
  */
 describe("the shell's frame", () => {
   it("takes the frame the deepest route that names one asks for", () => {
@@ -95,27 +102,49 @@ describe("the shell's frame", () => {
     );
   });
 
-  it("draws a page under the module's sidebar, the bar that says where you are and its title bar", async () => {
+  it("draws a page beside the rail and the panel, with one bar of its own", async () => {
     renderAt("/shipments");
 
     expect(await screen.findByText("Shipments body")).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Modules" })).not.toHaveAttribute("data-search");
     expect(screen.getByRole("complementary", { name: "Sidebar" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Shipments", level: 1 }).parentElement).not.toHaveClass(
-      "sr-only",
-    );
-    expect(screen.getByTestId("app-header")).toBeEmptyDOMElement();
+
+    const bar = screen
+      .getByRole("heading", { name: "Shipments", level: 1 })
+      .closest("[data-slot=page-header]");
+    expect(bar).not.toHaveClass("sr-only");
+    expect(bar).toContainElement(screen.getByRole("button", { name: "Hide sidebar" }));
+    expect(bar).toContainElement(screen.getByRole("button", { name: "Go back" }));
+    expect(bar).toContainElement(screen.getByRole("button", { name: "Add to favorites" }));
   });
 
-  it("gives a room the window under the header, with the sidebar's toggle leading the header", async () => {
+  it("leads the title with the trail above it, never with Home or the title itself", async () => {
+    renderAt("/shipments/hazardous-materials");
+
+    await screen.findByText("Hazardous materials body");
+    const trail = screen.getByRole("navigation", { name: "Breadcrumb" });
+    expect(trail).toHaveTextContent("Shipments");
+    expect(trail).not.toHaveTextContent("Home");
+    expect(trail).not.toHaveTextContent("Hazardous materials");
+    expect(screen.getByRole("link", { name: "Shipments" })).toHaveAttribute("href", "/shipments");
+  });
+
+  it("draws no trail on a module's own landing page", async () => {
+    renderAt("/shipments");
+
+    await screen.findByText("Shipments body");
+    expect(screen.queryByRole("navigation", { name: "Breadcrumb" })).not.toBeInTheDocument();
+  });
+
+  it("gives a room the window beside the rail, which carries the fold and search", async () => {
     renderAt("/triage");
 
     expect(await screen.findByText("Triage body")).toBeInTheDocument();
+    const rail = screen.getByRole("navigation", { name: "Modules" });
+    expect(rail).toHaveAttribute("data-search");
+    expect(rail).toContainElement(screen.getByRole("button", { name: "Hide sidebar" }));
     expect(screen.queryByRole("complementary", { name: "Sidebar" })).not.toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Breadcrumb" })).not.toBeInTheDocument();
-    expect(screen.getByTestId("app-header")).toContainElement(
-      screen.getByRole("button", { name: "Hide sidebar" }),
-    );
   });
 
   it("keeps a room's title and description for assistive tech without drawing its title bar", async () => {
