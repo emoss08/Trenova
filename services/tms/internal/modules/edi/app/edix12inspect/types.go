@@ -34,8 +34,7 @@ type InspectX12Request struct {
 	Diagnostics    []edix12.Diagnostic      `json:"diagnostics,omitempty"`
 }
 
-type InspectX12Result struct {
-	RawX12         string                 `json:"rawX12"`
+type InspectOverview struct {
 	TransactionSet edi.TransactionSet     `json:"transactionSet"`
 	X12Version     string                 `json:"x12Version"`
 	Separators     X12Separators          `json:"separators"`
@@ -43,9 +42,30 @@ type InspectX12Result struct {
 	Envelope       X12Envelope            `json:"envelope"`
 	Groups         []X12FunctionalGroup   `json:"groups"`
 	Transactions   []X12Transaction       `json:"transactions"`
-	Segments       []X12Segment           `json:"segments"`
-	Formatted      string                 `json:"formatted"`
 	Diagnostics    []NormalizedDiagnostic `json:"diagnostics"`
+}
+
+type InspectX12Result struct {
+	InspectOverview
+
+	RawX12    string       `json:"rawX12"`
+	Segments  []X12Segment `json:"segments"`
+	Formatted string       `json:"formatted"`
+}
+
+type FileInspection struct {
+	InspectOverview
+
+	Interchange bool `json:"interchange"`
+}
+
+const interchangeHeader = "ISA"
+
+func (r *InspectX12Result) FileInspection() FileInspection {
+	return FileInspection{
+		InspectOverview: r.InspectOverview,
+		Interchange:     firstSegment(r.Segments, interchangeHeader) != nil,
+	}
 }
 
 type X12Separators struct {

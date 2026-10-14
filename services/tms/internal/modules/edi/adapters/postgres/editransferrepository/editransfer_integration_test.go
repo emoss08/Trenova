@@ -3,6 +3,8 @@
 package editransferrepository_test
 
 import (
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -29,6 +31,8 @@ type transferFixture struct {
 	fromB    pulid.ID
 	repo     ediports.EDILoadTenderTransferRepository
 	receiver *edi.EDIPartner
+	tender   func(fileID pulid.ID, bol string) pulid.ID
+	stampAll func(createdAt int64)
 }
 
 func seedTransfers(t *testing.T) *transferFixture {
@@ -157,6 +161,15 @@ func seedTransfers(t *testing.T) *transferFixture {
 	}
 	fixture.fromA = tender(fixture.fileA, "BOL-A")
 	fixture.fromB = tender(fileB, "BOL-B")
+	fixture.tender = tender
+	fixture.stampAll = func(createdAt int64) {
+		_, stampErr := db.NewUpdate().
+			Table("edi_load_tender_transfers").
+			Set("created_at = ?", createdAt).
+			Where("target_organization_id = ?", org.ID).
+			Exec(ctx)
+		require.NoError(t, stampErr)
+	}
 	return fixture
 }
 
@@ -194,4 +207,32 @@ func TestListInboundTransfersFromOneInboundFile(t *testing.T) {
 	}
 	require.Equal(t, []pulid.ID{fixture.fromA}, ids)
 	require.Equal(t, 1, result.Total)
+}
+
+func TestListInboundTransfersPagesAFileWhoseTendersArrivedTogether(t *testing.T) {
+	fixture := seedTransfers(t)
+	want := []pulid.ID{fixture.fromA}
+	for _, bol := range []string{"BOL-A2", "BOL-A3", "BOL-A4", "BOL-A5"} {
+		want = append(want, fixture.tender(fixture.fileA, bol))
+	}
+	fixture.stampAll(timeutils.NowUnix())
+	slices.SortFunc(want, func(a, b pulid.ID) int { return strings.Compare(b.String(), a.String()) })
+
+	read := make([]pulid.ID, 0, len(want))
+	for offset := 0; offset < len(want); offset += 2 {
+		page, err := fixture.repo.ListInbound(t.Context(), &ediports.ListEDITransfersRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: fixture.tenant,
+				Pagination: pagination.Info{Limit: 2, Offset: offset},
+			},
+			InboundFileID: fixture.fileA,
+		})
+		require.NoError(t, err)
+		require.Equal(t, len(want), page.Total)
+		for _, transfer := range page.Items {
+			read = append(read, transfer.ID)
+		}
+	}
+
+	require.Equal(t, want, read, "every tender once, newest first and by id within a second")
 }

@@ -1,5 +1,4 @@
 {
-  "rawX12": "Hello from the Acme EDI team,\nplease find this week's tenders attached.\nRegards, Dana\n",
   "transactionSet": "",
   "x12Version": "",
   "separators": {
@@ -23,21 +22,6 @@
   },
   "groups": [],
   "transactions": [],
-  "segments": [
-    {
-      "index": 1,
-      "segmentId": "Hello from the Acme EDI team,\nplease find this week's tenders attached.\nRegards, Dana",
-      "name": "Unknown Segment",
-      "type": "detail",
-      "raw": "Hello from the Acme EDI team,\nplease find this week's tenders attached.\nRegards, Dana",
-      "rawWithTerminator": "Hello from the Acme EDI team,\nplease find this week's tenders attached.\nRegards, Dana",
-      "startOffset": 0,
-      "endOffset": 85,
-      "elements": [],
-      "malformed": true
-    }
-  ],
-  "formatted": "    Hello from the Acme EDI team,\nplease find this week's tenders attached.\nRegards, Dana - Unknown Segment\n      ! Error: Segment ID \"Hello from the Acme EDI team,\\nplease find this week's tenders attached.\\nRegards, Dana\" is not a valid X12 segment identifier.\n      ! Warning: The final segment is missing the detected segment terminator.",
   "diagnostics": [
     {
       "severity": "Warning",
@@ -112,5 +96,6 @@
       "message": "Required envelope segment IEA is missing.",
       "suggestedFix": "Include a complete ISA/GS/ST/SE/GE/IEA envelope."
     }
-  ]
+  ],
+  "interchange": false
 }

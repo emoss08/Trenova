@@ -70,12 +70,18 @@ func TestEDIHandler_InspectInboundFileLaysOutTheFileItHolds(t *testing.T) {
 		http.StatusOK,
 	)
 
-	var result edix12inspect.InspectX12Result
+	var result edix12inspect.FileInspection
 	require.NoError(t, ctx.ResponseJSON(&result))
-	assert.Equal(t, inspectedInterchange, result.RawX12)
+	assert.True(t, result.Interchange)
 	require.Len(t, result.Transactions, 1)
 	assert.Equal(t, "204", result.Transactions[0].TransactionSet)
 	assert.Equal(t, "000000042", result.Envelope.ISAControlNumber)
+
+	var wire map[string]any
+	require.NoError(t, ctx.ResponseJSON(&wire))
+	for _, heavy := range []string{"rawX12", "formatted", "segments"} {
+		assert.NotContains(t, wire, heavy, "the file is already on the card; only its overview is sent")
+	}
 }
 
 func TestEDIHandler_InspectInboundFileRefusesAPurgedFile(t *testing.T) {

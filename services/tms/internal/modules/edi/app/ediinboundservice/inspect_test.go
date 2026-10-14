@@ -29,7 +29,7 @@ func TestInspectInboundFile_LaysOutTheInterchangeTheFileCarried(t *testing.T) {
 	result, err := fixture.service.InspectInboundFile(t.Context(), req)
 	require.NoError(t, err)
 
-	assert.Equal(t, simulatorTender, result.RawX12)
+	assert.True(t, result.Interchange)
 	require.Len(t, result.Transactions, 1)
 	assert.Equal(t, "204", result.Transactions[0].TransactionSet)
 	assert.Equal(t, 16, result.Transactions[0].ActualSegments)
@@ -56,6 +56,20 @@ func TestInspectInboundFile_FlagsWhatTheFileGotWrong(t *testing.T) {
 		codes = append(codes, diagnostic.Code)
 	}
 	assert.Contains(t, codes, "x12.count.se01_mismatch")
+}
+
+func TestInspectInboundFile_SaysAFileThatIsNotX12CarriesNoInterchange(t *testing.T) {
+	t.Parallel()
+
+	fixture := newInboundFixture(t, "Hi team,\nPlease see this week's tenders below.\n")
+	req := ediports.GetEDIInboundFileByIDRequest{ID: fixture.file.ID, TenantInfo: fixture.tenantInfo()}
+	fixture.inboundFileRepo.EXPECT().GetInboundFileByID(t.Context(), req).Return(fixture.file, nil).Once()
+
+	result, err := fixture.service.InspectInboundFile(t.Context(), req)
+	require.NoError(t, err)
+
+	assert.False(t, result.Interchange)
+	assert.Empty(t, result.Transactions)
 }
 
 func TestInspectInboundFile_RefusesAFileWhoseRawContentWasPurged(t *testing.T) {

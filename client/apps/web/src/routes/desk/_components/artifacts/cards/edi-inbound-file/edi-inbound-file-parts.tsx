@@ -5,7 +5,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type {
   EDIInboundFile,
   EDIInspectionDiagnostic,
-  EDIX12Inspection,
+  EDIInboundFileInspection,
 } from "@trenova/shared/types/edi";
 import { useState, type CSSProperties } from "react";
 import { EdiFinding } from "../../record-card/edi-finding";
@@ -485,7 +485,7 @@ export function RawGlimpse({ lines, more }: { lines: readonly string[]; more: nu
  * IEA's, the groups it declares against those it holds, and the separators it
  * was read with.
  */
-export function EnvelopeChecks({ inspection }: { inspection: EDIX12Inspection }) {
+export function EnvelopeChecks({ inspection }: { inspection: EDIInboundFileInspection }) {
   const t = useT();
   const { envelope, separators } = inspection;
   const isa = envelope.isaControlNumber?.trim() ?? "";

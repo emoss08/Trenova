@@ -7,7 +7,6 @@ import {
   fileIntake,
   fileManifest,
   fileStanding,
-  isInterchange,
   looseFindings,
   processingNotes,
   qualifierName,
@@ -15,7 +14,8 @@ import {
   routingLabel,
   segmentRuler,
 } from "../edi-inbound-file-card";
-import { fileInspection, inboundFile } from "./fixtures";
+import { ediInboundFileInspectionSchema } from "@trenova/shared/types/edi";
+import { fileInspection, inboundFile, wireFileInspection, wireInboundFile } from "./fixtures";
 
 const t = translate as TranslateFn;
 
@@ -413,13 +413,6 @@ describe("looseFindings", () => {
   });
 });
 
-describe("isInterchange", () => {
-  it("knows an X12 interchange from anything else", () => {
-    expect(isInterchange(fileInspection("simulator"))).toBe(true);
-    expect(isInterchange(fileInspection("quarantined"))).toBe(false);
-  });
-});
-
 describe("rawGlimpse", () => {
   it("shows the first lines of a file that is not X12 and counts the rest", () => {
     expect(rawGlimpse(inboundFile("quarantined").rawContent ?? "", 2)).toEqual({
@@ -433,5 +426,86 @@ describe("rawGlimpse", () => {
       lines: ["xxxxxxxxxx…"],
       more: 0,
     });
+  });
+});
+
+describe("a batch of many sets", () => {
+  // Some partners put every set in a group of its own and number each ST 0001,
+  // so a set is told from the others only by its group. Shaped from the Go
+  // inspection of Acme's batch, repeated.
+  const SETS = 400;
+  const wire = wireFileInspection("batch") as {
+    groups: Record<string, unknown>[];
+    transactions: Record<string, unknown>[];
+    diagnostics: Record<string, unknown>[];
+    summary: Record<string, unknown>;
+  };
+  const gsControl = (index: number) => String(1000 + index);
+  const inspection = ediInboundFileInspectionSchema.parse({
+    ...wire,
+    groups: Array.from({ length: SETS }, (_, index) => ({
+      ...wire.groups[0],
+      index: index + 1,
+      gsControlNumber: gsControl(index),
+      geControlNumber: gsControl(index),
+      expectedCount: 1,
+      actualCount: 1,
+      startSegmentIndex: 2 + index * 12,
+      endSegmentIndex: 13 + index * 12,
+    })),
+    transactions: Array.from({ length: SETS }, (_, index) => ({
+      ...wire.transactions[0],
+      index: index + 1,
+      stControlNumber: "0001",
+      seControlNumber: "0001",
+      startSegmentIndex: 3 + index * 12,
+      endSegmentIndex: 12 + index * 12,
+    })),
+    diagnostics: Array.from({ length: SETS }, (_, index) => ({
+      ...wire.diagnostics[0],
+      segmentIndex: 12 + index * 12,
+      message: `SE01 of set ${index}`,
+    })),
+    summary: {
+      ...wire.summary,
+      segmentCount: 3 + SETS * 12,
+      groupCount: SETS,
+      transactionCount: SETS,
+    },
+  });
+  const [kept] = (wireInboundFile("batch") as { messages: Record<string, unknown>[] }).messages;
+  const file = inboundFile("batch", {
+    messages: Array.from({ length: SETS }, (_, index) => ({
+      ...kept,
+      id: `edimsg_set_${index}`,
+      transactionControlNumber: "0001",
+      groupControlNumber: gsControl(SETS - 1 - index),
+    })),
+  });
+
+  it("files each set under its own group with the message kept from that group and its own finding", () => {
+    const groups = manifest(file, inspection);
+
+    expect(groups).toHaveLength(SETS);
+    expect(
+      groups.map((group) => [
+        group.control,
+        group.entries.map((entry) => [entry.message?.id, entry.findings.map((f) => f.message)]),
+      ]),
+    ).toEqual(
+      Array.from({ length: SETS }, (_, index) => [
+        gsControl(index),
+        [[`edimsg_set_${SETS - 1 - index}`, [`SE01 of set ${index}`]]],
+      ]),
+    );
+    expect(looseFindings(inspection)).toEqual([]);
+  });
+
+  it("shades each set on the ruler by its own group and flags it by its own finding", () => {
+    const sets = segmentRuler(inspection).filter((run) => run.kind === "transaction");
+
+    expect(sets.map((run) => [run.group, run.state])).toEqual(
+      Array.from({ length: SETS }, (_, index) => [index + 1, "bad"]),
+    );
   });
 });

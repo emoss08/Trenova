@@ -729,7 +729,7 @@ func (s *Service) GetInboundFile(
 func (s *Service) InspectInboundFile(
 	ctx context.Context,
 	req ediports.GetEDIInboundFileByIDRequest,
-) (*edix12inspect.InspectX12Result, error) {
+) (*edix12inspect.FileInspection, error) {
 	file, err := s.inboundFileRepo.GetInboundFileByID(ctx, ediports.GetEDIInboundFileByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
@@ -746,7 +746,8 @@ func (s *Service) InspectInboundFile(
 	}
 
 	result := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{RawX12: file.RawContent})
-	return &result, nil
+	overview := result.FileInspection()
+	return &overview, nil
 }
 
 func (s *Service) ListInboundFilesCursor(

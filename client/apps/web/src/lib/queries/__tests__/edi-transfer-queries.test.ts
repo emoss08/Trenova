@@ -64,5 +64,35 @@ describe("EDI transfer queries", () => {
       { signal: expect.any(AbortSignal) },
     );
     expect(transfers.map((row) => row.id)).toEqual(["edilt_acme_88240", "edilt_acme_88241"]);
+    expect(get).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads every page of tenders a large file opened, in the order the server lists them", async () => {
+    const total = 250;
+    const tender = (index: number) =>
+      wireTransfer("approved", {
+        id: `edilt_batch_${String(index).padStart(3, "0")}`,
+        inboundMessageId: `edimsg_batch_${String(index).padStart(3, "0")}`,
+      });
+    get.mockImplementation(async (url: string) => {
+      const offset = Number(new URL(url, "http://api").searchParams.get("offset") ?? 0);
+      const results = Array.from(
+        { length: Math.max(Math.min(100, total - offset), 0) },
+        (_, index) => tender(offset + index),
+      );
+      return { results, count: total, next: null, prev: null };
+    });
+
+    const transfers = await new QueryClient().fetchQuery(edi.inboundFileTransfers("ediinf_batch"));
+
+    expect(get.mock.calls.map(([url]) => url)).toEqual([
+      "/edi/transfers/?direction=inbound&inboundFileId=ediinf_batch&limit=100",
+      "/edi/transfers/?direction=inbound&inboundFileId=ediinf_batch&limit=100&offset=100",
+      "/edi/transfers/?direction=inbound&inboundFileId=ediinf_batch&limit=100&offset=200",
+    ]);
+    expect(transfers).toHaveLength(total);
+    expect(transfers.map((row) => row.id)).toEqual(
+      Array.from({ length: total }, (_, index) => tender(index).id),
+    );
   });
 });

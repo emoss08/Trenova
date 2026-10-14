@@ -4,8 +4,9 @@ import type {
   EDIInboundFile,
   EDIInspectionDiagnostic,
   EDIMessage,
-  EDIX12Inspection,
+  EDIInboundFileInspection,
 } from "@trenova/shared/types/edi";
+import { lastAtOrBefore, sortedRange } from "@trenova/shared/lib/sorted";
 import { plainReading } from "../../record-card/edi-reading";
 import { functionalGroupName, transactionSetName } from "../../record-card/edi-transaction-sets";
 import type { CardTone } from "../../record-card/record-card";
@@ -357,8 +358,8 @@ function countCheck(expected: number, actual: number): CountCheck {
   return { expected, actual, ok: expected === actual };
 }
 
-type InspectedTransaction = EDIX12Inspection["transactions"][number];
-type InspectedGroup = EDIX12Inspection["groups"][number];
+type InspectedTransaction = EDIInboundFileInspection["transactions"][number];
+type InspectedGroup = EDIInboundFileInspection["groups"][number];
 
 function holds(group: InspectedGroup, transaction: InspectedTransaction): boolean {
   return (
@@ -372,6 +373,59 @@ function within(transaction: InspectedTransaction, segmentIndex: number): boolea
     segmentIndex >= transaction.startSegmentIndex &&
     (transaction.endSegmentIndex === 0 || segmentIndex <= transaction.endSegmentIndex)
   );
+}
+
+/** Where an inspection's sets, groups and findings sit, worked out once per inspection. */
+type InspectionIndex = {
+  /** The position in `groups` of the group a set sits in, or -1 when it sits in none. */
+  groupOf: (transaction: InspectedTransaction) => number;
+  /** The findings on segments `start` through `end`. */
+  findingsBetween: (start: number, end: number) => EDIInspectionDiagnostic[];
+  /** The findings that sit on no transaction set, in the order the inspector gave them. */
+  loose: EDIInspectionDiagnostic[];
+};
+
+const segmentOf = (finding: EDIInspectionDiagnostic) => finding.segmentIndex;
+const startOf = (item: { startSegmentIndex: number }) => item.startSegmentIndex;
+const bySegment = (a: { startSegmentIndex: number }, b: { startSegmentIndex: number }) =>
+  a.startSegmentIndex - b.startSegmentIndex;
+
+/** The last segment of a set; a set left open runs to the end of the file. */
+function endOf(transaction: InspectedTransaction): number {
+  return transaction.endSegmentIndex || Number.POSITIVE_INFINITY;
+}
+
+const inspectionIndexes = new WeakMap<EDIInboundFileInspection, InspectionIndex>();
+
+/**
+ * The inspection laid out for lookups: findings, groups and sets each in
+ * segment order, so a set's group, a span's findings and a finding's set are
+ * found by bisecting rather than by reading every one. A batch of thousands
+ * of sets is read in one pass, and once for as long as the inspection lasts.
+ */
+function indexInspection(inspection: EDIInboundFileInspection): InspectionIndex {
+  const cached = inspectionIndexes.get(inspection);
+  if (cached) return cached;
+
+  const findings = [...inspection.diagnostics].sort((a, b) => a.segmentIndex - b.segmentIndex);
+  const groups = inspection.groups
+    .map((group, position) => ({ group, position, startSegmentIndex: group.startSegmentIndex }))
+    .sort(bySegment);
+  const transactions = [...inspection.transactions].sort(bySegment);
+  const index: InspectionIndex = {
+    groupOf: (transaction) => {
+      const home = lastAtOrBefore(groups, transaction.startSegmentIndex - 1, startOf);
+      return home && holds(home.group, transaction) ? home.position : -1;
+    },
+    findingsBetween: (start, end) => sortedRange(findings, start, end, segmentOf),
+    loose: inspection.diagnostics.filter((finding) => {
+      if (finding.segmentIndex <= 0) return true;
+      const home = lastAtOrBefore(transactions, finding.segmentIndex, startOf);
+      return !home || !within(home, finding.segmentIndex);
+    }),
+  };
+  inspectionIndexes.set(inspection, index);
+  return index;
 }
 
 function entryVerdict(
@@ -429,17 +483,20 @@ function entryFor(
  * filed under its own group, by set and control number alone.
  */
 function messageClaimer(messages: readonly EDIMessage[]) {
-  const unclaimed = new Set(messages);
+  const unclaimed = new Map<string, EDIMessage[]>();
+  const keyOf = (set: string, control: string) => `${set}|${control}`;
+  for (const message of messages) {
+    const key = keyOf(message.transactionSet, message.transactionControlNumber.trim());
+    const waiting = unclaimed.get(key);
+    if (waiting) waiting.push(message);
+    else unclaimed.set(key, [message]);
+  }
   return (set: string, control: string, group: string): EDIMessage | null => {
-    const candidates = [...unclaimed].filter(
-      (message) =>
-        message.transactionSet === set && message.transactionControlNumber.trim() === control,
-    );
-    const match =
-      candidates.find((message) => message.groupControlNumber.trim() === group) ?? candidates[0];
-    if (!match) return null;
-    unclaimed.delete(match);
-    return match;
+    const candidates = unclaimed.get(keyOf(set, control));
+    if (!candidates || candidates.length === 0) return null;
+    const inGroup = candidates.findIndex((message) => message.groupControlNumber.trim() === group);
+    const [match] = candidates.splice(Math.max(inGroup, 0), 1);
+    return match ?? null;
   };
 }
 
@@ -452,7 +509,7 @@ function messageClaimer(messages: readonly EDIMessage[]) {
  */
 export function fileManifest(
   file: EDIInboundFile,
-  inspection: EDIX12Inspection | undefined,
+  inspection: EDIInboundFileInspection | undefined,
   notes: readonly ProcessingNote[],
   t: TranslateFn,
 ): ManifestGroup[] {
@@ -460,16 +517,17 @@ export function fileManifest(
   if (!inspection) return keptManifest(file, messages, notes, t);
 
   const claim = messageClaimer(messages);
+  const index = indexInspection(inspection);
   const findingsIn = (transaction: InspectedTransaction) =>
-    inspection.diagnostics.filter(
-      (finding) => finding.segmentIndex > 0 && within(transaction, finding.segmentIndex),
-    );
+    index
+      .findingsBetween(transaction.startSegmentIndex, endOf(transaction))
+      .filter((finding) => finding.segmentIndex > 0);
   const groups: { group: InspectedGroup | null; transactions: InspectedTransaction[] }[] =
     inspection.groups.map((group) => ({ group, transactions: [] }));
   const loose: InspectedTransaction[] = [];
   for (const transaction of inspection.transactions) {
-    const home = groups.find(({ group }) => group !== null && holds(group, transaction));
-    (home?.transactions ?? loose).push(transaction);
+    const home = index.groupOf(transaction);
+    (home === -1 ? loose : groups[home].transactions).push(transaction);
   }
   if (loose.length > 0) groups.push({ group: null, transactions: loose });
 
@@ -569,16 +627,14 @@ function worstOf(findings: readonly EDIInspectionDiagnostic[]): RulerRun["state"
  * flagged by the worst finding in it, the envelope between them as the runs
  * that hold them apart.
  */
-export function segmentRuler(inspection: EDIX12Inspection): RulerRun[] {
+export function segmentRuler(inspection: EDIInboundFileInspection): RulerRun[] {
   const runs: RulerRun[] = [];
+  const index = indexInspection(inspection);
   const groupOf = (transaction: InspectedTransaction) => {
-    const index = inspection.groups.findIndex((group) => holds(group, transaction));
-    return index === -1 ? null : index + 1;
+    const position = index.groupOf(transaction);
+    return position === -1 ? null : position + 1;
   };
-  const findingsBetween = (start: number, end: number) =>
-    inspection.diagnostics.filter(
-      (finding) => finding.segmentIndex >= start && finding.segmentIndex <= end,
-    );
+  const findingsBetween = index.findingsBetween;
   const envelope = (start: number, end: number) => {
     if (end < start) return;
     runs.push({
@@ -610,17 +666,8 @@ export function segmentRuler(inspection: EDIX12Inspection): RulerRun[] {
 }
 
 /** The findings that sit on no transaction set: the envelope's, and the file's as a whole. */
-export function looseFindings(inspection: EDIX12Inspection): EDIInspectionDiagnostic[] {
-  return inspection.diagnostics.filter(
-    (finding) =>
-      finding.segmentIndex <= 0 ||
-      !inspection.transactions.some((transaction) => within(transaction, finding.segmentIndex)),
-  );
-}
-
-/** Whether the file holds an X12 interchange at all. */
-export function isInterchange(inspection: EDIX12Inspection): boolean {
-  return inspection.segments.some((segment) => segment.segmentId === "ISA");
+export function looseFindings(inspection: EDIInboundFileInspection): EDIInspectionDiagnostic[] {
+  return indexInspection(inspection).loose;
 }
 
 /** The first lines of a file that is not X12, each cut to a readable length, and how many more. */

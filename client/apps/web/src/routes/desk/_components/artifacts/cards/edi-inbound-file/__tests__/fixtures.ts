@@ -1,8 +1,8 @@
 import {
   ediInboundFileSchema,
-  ediX12InspectionSchema,
+  ediInboundFileInspectionSchema,
   type EDIInboundFile,
-  type EDIX12Inspection,
+  type EDIInboundFileInspection,
 } from "@trenova/shared/types/edi";
 import batchFile from "./batch-file.json";
 import duplicateFile from "./duplicate-file.json";
@@ -66,6 +66,6 @@ export function inboundFile(
   return ediInboundFileSchema.parse(wireInboundFile(name, overrides));
 }
 
-export function fileInspection(name: WireInspectionName): EDIX12Inspection {
-  return ediX12InspectionSchema.parse(wireFileInspection(name));
+export function fileInspection(name: WireInspectionName): EDIInboundFileInspection {
+  return ediInboundFileInspectionSchema.parse(wireFileInspection(name));
 }

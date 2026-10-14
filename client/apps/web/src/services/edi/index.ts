@@ -13,6 +13,7 @@ import {
   ediConnectionSchema,
   ediDocumentPreviewSchema,
   ediMessageInspectionSchema,
+  ediInboundFileInspectionSchema,
   ediInboundFileSchema,
   ediMessageListSchema,
   ediMessageSchema,
@@ -307,7 +308,7 @@ export class EDIService {
     const response = await api.get(`/edi/inbound-files/${fileId}/inspect/`, {
       signal: options?.signal,
     });
-    return safeParse(ediX12InspectionSchema, response, "EDIX12Inspection");
+    return safeParse(ediInboundFileInspectionSchema, response, "EDIInboundFileInspection");
   }
 
   public async reprocessInboundFile(fileId: string) {
@@ -402,17 +403,36 @@ export class EDIService {
     return safeParse(ediTransferSchema, response, "EDITransfer");
   }
 
+  /**
+   * Every tender one inbound file's 204s opened. A batch can carry more than a
+   * page, so the first page's count tells how many more to read, and those are
+   * read together.
+   */
   public async listInboundFileTransfers(fileId: string, options?: { signal?: AbortSignal }) {
-    const query = new URLSearchParams({
-      direction: "inbound",
-      inboundFileId: fileId,
-      limit: String(INBOUND_FILE_TRANSFER_LIMIT),
-    });
-    const response = await api.get(`/edi/transfers/?${query.toString()}`, {
-      signal: options?.signal,
-    });
-    const list = await safeParse(ediTransferListSchema, response, "EDITransferList");
-    return list.results;
+    const page = async (offset: number) => {
+      const query = new URLSearchParams({
+        direction: "inbound",
+        inboundFileId: fileId,
+        limit: String(INBOUND_FILE_TRANSFER_LIMIT),
+      });
+      if (offset > 0) query.set("offset", String(offset));
+      const response = await api.get(`/edi/transfers/?${query.toString()}`, {
+        signal: options?.signal,
+      });
+      return safeParse(ediTransferListSchema, response, "EDITransferList");
+    };
+
+    const first = await page(0);
+    const offsets: number[] = [];
+    for (
+      let offset = INBOUND_FILE_TRANSFER_LIMIT;
+      offset < first.count;
+      offset += INBOUND_FILE_TRANSFER_LIMIT
+    ) {
+      offsets.push(offset);
+    }
+    const rest = await Promise.all(offsets.map(page));
+    return [first, ...rest].flatMap((list) => list.results);
   }
 
   public async getMappingPreview(transferId: string, options?: { signal?: AbortSignal }) {

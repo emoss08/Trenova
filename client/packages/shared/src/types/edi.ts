@@ -1137,8 +1137,8 @@ export const ediX12TransactionSchema = z.object({
   endSegmentIndex: z.number().default(0),
 });
 
-export const ediX12InspectionSchema = z.object({
-  rawX12: z.string(),
+/** What the inspector reads of an interchange: its envelope, sets and findings. */
+const ediX12InspectionOverviewSchema = z.object({
   transactionSet: z.union([ediTransactionSetSchema, z.literal("")]).nullish(),
   x12Version: z.string().nullish(),
   separators: ediX12SeparatorsSchema,
@@ -1146,12 +1146,27 @@ export const ediX12InspectionSchema = z.object({
   envelope: ediX12EnvelopeInspectionSchema,
   groups: z.array(ediX12FunctionalGroupSchema).default([]),
   transactions: z.array(ediX12TransactionSchema).default([]),
-  segments: z.array(ediX12SegmentSchema).default([]),
-  formatted: z.string(),
   diagnostics: z.array(ediInspectionDiagnosticSchema).default([]),
 });
 
+export const ediX12InspectionSchema = ediX12InspectionOverviewSchema.extend({
+  rawX12: z.string(),
+  segments: z.array(ediX12SegmentSchema).default([]),
+  formatted: z.string(),
+});
+
 export type EDIX12Inspection = z.infer<typeof ediX12InspectionSchema>;
+
+/**
+ * An inbound file's interchange as the file card reads it: the overview
+ * without the segments, formatted copy or raw text it already holds, and
+ * whether the file opened with an ISA at all.
+ */
+export const ediInboundFileInspectionSchema = ediX12InspectionOverviewSchema.extend({
+  interchange: z.boolean(),
+});
+
+export type EDIInboundFileInspection = z.infer<typeof ediInboundFileInspectionSchema>;
 
 export const ediMessageInspectionSchema = z.object({
   message: ediMessageSchema,

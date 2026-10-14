@@ -6,7 +6,11 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatFileSize } from "@trenova/shared/lib/utils";
-import type { EDIInboundFile, EDITransfer } from "@trenova/shared/types/edi";
+import type {
+  EDIInboundFile,
+  EDIInspectionDiagnostic,
+  EDITransfer,
+} from "@trenova/shared/types/edi";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import {
@@ -28,7 +32,6 @@ import {
   fileIntake,
   fileManifest,
   fileStanding,
-  isInterchange,
   looseFindings,
   processingNotes,
   rawGlimpse,
@@ -69,6 +72,7 @@ export type EdiInboundFileCardProps = {
 };
 
 const NO_ROWS: readonly string[] = [];
+const NO_FINDINGS: readonly EDIInspectionDiagnostic[] = [];
 
 /** The lines of a file that is not X12 the card shows before it says how many more there are. */
 const GLIMPSE_LINES = 6;
@@ -195,9 +199,15 @@ function EdiInboundFileCard({
     () => fileManifest(file, inspected, notes, t),
     [file, inspected, notes, t],
   );
-  const tied = new Set(manifest.flatMap((group) => group.entries.flatMap((entry) => entry.notes)));
-  const ledger = notes.filter((note) => !tied.has(note));
-  const interchange = inspected ? isInterchange(inspected) : false;
+  const ledger = useMemo(() => {
+    const tied = new Set(
+      manifest.flatMap((group) => group.entries.flatMap((entry) => entry.notes)),
+    );
+    return notes.filter((note) => !tied.has(note));
+  }, [manifest, notes]);
+  const ruler = useMemo(() => (inspected ? segmentRuler(inspected) : null), [inspected]);
+  const loose = inspected ? looseFindings(inspected) : NO_FINDINGS;
+  const interchange = inspected?.interchange ?? false;
 
   const carriedTender = (file.messages ?? []).some((message) => message.transactionSet === "204");
   const tenders = useQuery({
@@ -325,10 +335,7 @@ function EdiInboundFileCard({
         ) : manifest.length > 0 ? (
           <>
             {inspected && interchange && (
-              <SegmentRulerView
-                runs={segmentRuler(inspected)}
-                total={inspected.summary.segmentCount}
-              />
+              <SegmentRulerView runs={ruler ?? []} total={inspected.summary.segmentCount} />
             )}
             <FileManifest
               groups={manifest}
@@ -365,15 +372,13 @@ function EdiInboundFileCard({
         ) : interchange ? (
           <>
             <EnvelopeChecks inspection={inspected} />
-            {looseFindings(inspected).length > 0 && (
-              <FindingList findings={looseFindings(inspected)} />
-            )}
+            {loose.length > 0 && <FindingList findings={loose} />}
           </>
         ) : (
           <>
             <p className="dk-rec-note">{t("This file is not an X12 interchange. It begins:")}</p>
             <RawGlimpse {...rawGlimpse(file.rawContent ?? "", GLIMPSE_LINES)} />
-            <FindingList findings={looseFindings(inspected)} />
+            <FindingList findings={loose} />
           </>
         )}
       </CardSection>
