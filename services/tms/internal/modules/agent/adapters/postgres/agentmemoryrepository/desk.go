@@ -75,7 +75,7 @@ func deskVisible(sq *bun.SelectQuery, filter *agentports.DeskMemoryFilter) *bun.
 			)
 		})
 
-	if text := newTextQuery(filter.Query); !text.empty() {
+	if text := newTextQuery(filter.Query, nil); !text.empty() {
 		if text.unmatchable() {
 			return sq.Where("FALSE")
 		}

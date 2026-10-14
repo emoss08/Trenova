@@ -4,7 +4,6 @@ import {
   createDeskMemory,
   DESK_MEMORIES_KEY,
   fetchDeskMemories,
-  fetchDeskMemorySettings,
   reviseDeskMemory,
   setDeskMemoryStatus,
   setMemorySavingMode,
@@ -13,6 +12,7 @@ import {
   type DeskMemoryAudience,
   type DeskMemorySettings,
 } from "@/lib/graphql/desk-memories";
+import { deskMemorySettingsQueryOptions } from "@/lib/queries/desk-memories";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -45,6 +45,7 @@ import {
   type MemoryFilter,
   type MemoryRow,
 } from "./memory-page-state";
+import { DeskProfileCard } from "./desk-profile-card";
 import "@/components/desk-chat/memory/desk-memory.css";
 
 const PAGE_SIZE = 50;
@@ -120,10 +121,7 @@ export function DeskMemoryPage() {
   const [addAudience, setAddAudience] = useState("User");
   const [state, dispatch] = useReducer(memoryPageReducer, initialMemoryPageState);
 
-  const settingsQuery = useQuery({
-    queryKey: [DESK_MEMORIES_KEY, "settings"],
-    queryFn: ({ signal }) => fetchDeskMemorySettings(signal),
-  });
+  const settingsQuery = useQuery(deskMemorySettingsQueryOptions());
   const settings = settingsQuery.data;
 
   const scope = useMemo(() => filterScope(filter), [filter]);
@@ -322,6 +320,8 @@ export function DeskMemoryPage() {
             ))}
           </div>
         </div>
+
+        <DeskProfileCard />
 
         <form className="dk-mm-add" onSubmit={create}>
           <DeskIcon name="plus" size={14} />

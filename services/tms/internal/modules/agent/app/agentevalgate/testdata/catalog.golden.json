@@ -14167,6 +14167,63 @@
       }
     },
     {
+      "name": "guide_profile",
+      "description": "Correct or add to the profile agents are given about the organization's business or the person's own work, when they say it is wrong or missing something. about organization is the business as a whole: what it runs, for whom, on which lanes, how it is set up (\"the Laredo lane is seasonal\", \"we stopped running reefers\"). about me is the person's own work (\"I only handle the Midwest accounts\", \"I'm in billing now\"). Write one plain sentence in your own words from what they said; the profile is written again with it. Not for a rule about one customer, record or task, or how to do something: use remember for those.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "about": {
+            "description": "organization for the business as a whole; me for the person in the conversation's own work.",
+            "enum": [
+              "organization",
+              "me"
+            ],
+            "type": "string",
+            "x-enumOf": "agent.profileSubject"
+          },
+          "guidance": {
+            "description": "One plain sentence, at most 500 characters, saying what the profile should take into account, written so a reader with no other context understands it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "about",
+          "guidance"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "profile",
+        "about our business",
+        "about my work",
+        "what we do",
+        "my role"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "agent_memory",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "personal",
+          "internal"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": true,
+        "heldWhenTainted": true,
+        "taintHold": "Guidance recorded after the run read text from outside the organization waits for a person's approval, because every later prompt is written from it.",
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": true,
+        "rationale": "Adds a line every later write-up of a profile honours. Guidance about the person's own work reaches only their conversations; guidance about the organization reaches everyone's."
+      }
+    },
+    {
       "name": "hold_billing_queue_item",
       "description": "Put a billing queue item on hold, with a note saying what it waits on. Use it when an item waiting for or in review cannot be billed yet but nothing is wrong with it: a document on its way, a customer's confirmation. A held item is taken off hold only when the note's condition is met.",
       "parameters": {

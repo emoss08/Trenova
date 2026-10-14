@@ -379,6 +379,12 @@ content proposes every later write, is in
 How an agent looks back over a quiet conversation or a settled run and keeps what the work
 taught (`agentreflectionservice`, `reflectionjobs`, the `agent_reflections` table) is under
 "Learning from the work" in agent-runtime.md.
+What agents are told about the organization's business and about the person they are
+talking to — profiles worked out from the records, written up by a model, steered by people's
+guidance and never edited by hand (`agentprofileservice`, `agentprofilejobs`, the
+`agent_profiles` and `agent_profile_guidance` tables, the `guide_profile` tool) — is in
+[docs/engineering/agent-profiles.md](docs/engineering/agent-profiles.md). Read it before
+adding a fact, changing the writing prompt, or touching the profile sections of the prompt.
 An agent parking its work until something happens in the world (`wait_until`, a truck
 reaching a stop, a reply, an appointment or free time coming round, drive time running low,
 a time) and picking it up as a new turn or run is described in

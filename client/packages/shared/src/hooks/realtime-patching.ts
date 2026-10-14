@@ -163,6 +163,9 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   // learned: the card appears under the reply it learned from, and the
   // person's memory list moves with it.
   agent_memory: [["assistant", "messages"], "desk-memories"],
+  // A profile was written again or its guidance changed: AI Control's panel and
+  // the person's own on the Desk read under one root.
+  agent_profile: ["agent-profile"],
   // The feed and its counts live under one key root from the query factory
   // (createQueryKeys("watchtower")), so invalidating the root catches both the
   // list and every filtered variant of it.
@@ -413,6 +416,7 @@ const ON_SCREEN_RESOURCES = new Set([
   "agent_plan",
   "agent_waits",
   "agent_memory",
+  "agent_profile",
   "assistant_artifact",
   "assistant_case",
   "assistant_queue",

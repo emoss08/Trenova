@@ -29,6 +29,7 @@ vi.mock("../memory-panel", () => ({
 }));
 
 const api = vi.hoisted(() => ({
+  fetchAgentProfile: vi.fn(),
   fetchAgentMemoryTotal: vi.fn(),
   fetchAgentMemoryUsage: vi.fn(),
   fetchAgentMemorySuggestions: vi.fn(),
@@ -42,6 +43,10 @@ vi.mock("@/lib/graphql/agent-memories", async (importOriginal) => ({
   fetchAgentMemoryTotal: api.fetchAgentMemoryTotal,
   fetchAgentMemoryUsage: api.fetchAgentMemoryUsage,
   fetchAgentMemorySuggestions: api.fetchAgentMemorySuggestions,
+}));
+vi.mock("@/lib/graphql/agent-profile", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/agent-profile")>()),
+  fetchAgentProfile: api.fetchAgentProfile,
 }));
 vi.mock("@/lib/graphql/agent-reflections", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graphql/agent-reflections")>()),
@@ -76,6 +81,12 @@ function renderTab(onUrlUpdate?: OnUrlUpdateFunction) {
 }
 
 beforeEach(() => {
+  api.fetchAgentProfile.mockResolvedValue({
+    subject: "Organization",
+    current: null,
+    latestFailure: null,
+    guidance: [],
+  });
   api.fetchAgentMemoryTotal.mockResolvedValue(3);
   api.fetchAgentMemoryUsage.mockResolvedValue({ activeCount: 3, activeSoftCap: 200, warnAt: 160 });
   api.fetchAgentMemorySuggestions.mockResolvedValue([]);

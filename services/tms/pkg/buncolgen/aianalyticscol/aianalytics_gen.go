@@ -366,21 +366,29 @@ var UnitToolTable = buncolgen.TableInfo{
 //	q.Where(UnitToolColumns.ID.Eq(), id)           // WHERE aiwt.id = ?
 //	q.Order(UnitToolColumns.CreatedAt.OrderDesc())  // ORDER BY aiwt.created_at DESC
 var UnitToolColumns = struct {
-	OrganizationID buncolgen.Column // "organization_id" → qualified: "aiwt.organization_id"
-	BusinessUnitID buncolgen.Column // "business_unit_id" → qualified: "aiwt.business_unit_id"
-	UnitID         buncolgen.Column // "unit_id" → qualified: "aiwt.unit_id"
-	ToolName       buncolgen.Column // "tool_name" → qualified: "aiwt.tool_name"
-	Cause          buncolgen.Column // "cause" → qualified: "aiwt.cause"
-	FinishedAt     buncolgen.Column // "finished_at" → qualified: "aiwt.finished_at"
-	Calls          buncolgen.Column // "calls" → qualified: "aiwt.calls"
+	OrganizationID    buncolgen.Column // "organization_id" → qualified: "aiwt.organization_id"
+	BusinessUnitID    buncolgen.Column // "business_unit_id" → qualified: "aiwt.business_unit_id"
+	UnitID            buncolgen.Column // "unit_id" → qualified: "aiwt.unit_id"
+	ToolName          buncolgen.Column // "tool_name" → qualified: "aiwt.tool_name"
+	Cause             buncolgen.Column // "cause" → qualified: "aiwt.cause"
+	FinishedAt        buncolgen.Column // "finished_at" → qualified: "aiwt.finished_at"
+	ModelKey          buncolgen.Column // "model_key" → qualified: "aiwt.model_key"
+	ProviderID        buncolgen.Column // "provider_id" → qualified: "aiwt.provider_id"
+	AgentDefinitionID buncolgen.Column // "agent_definition_id" → qualified: "aiwt.agent_definition_id"
+	Task              buncolgen.Column // "task" → qualified: "aiwt.task"
+	Calls             buncolgen.Column // "calls" → qualified: "aiwt.calls"
 }{
-	OrganizationID: buncolgen.NewColumn("organization_id", "aiwt"),
-	BusinessUnitID: buncolgen.NewColumn("business_unit_id", "aiwt"),
-	UnitID:         buncolgen.NewColumn("unit_id", "aiwt"),
-	ToolName:       buncolgen.NewColumn("tool_name", "aiwt"),
-	Cause:          buncolgen.NewColumn("cause", "aiwt"),
-	FinishedAt:     buncolgen.NewColumn("finished_at", "aiwt"),
-	Calls:          buncolgen.NewColumn("calls", "aiwt"),
+	OrganizationID:    buncolgen.NewColumn("organization_id", "aiwt"),
+	BusinessUnitID:    buncolgen.NewColumn("business_unit_id", "aiwt"),
+	UnitID:            buncolgen.NewColumn("unit_id", "aiwt"),
+	ToolName:          buncolgen.NewColumn("tool_name", "aiwt"),
+	Cause:             buncolgen.NewColumn("cause", "aiwt"),
+	FinishedAt:        buncolgen.NewColumn("finished_at", "aiwt"),
+	ModelKey:          buncolgen.NewColumn("model_key", "aiwt"),
+	ProviderID:        buncolgen.NewColumn("provider_id", "aiwt"),
+	AgentDefinitionID: buncolgen.NewColumn("agent_definition_id", "aiwt"),
+	Task:              buncolgen.NewColumn("task", "aiwt"),
+	Calls:             buncolgen.NewColumn("calls", "aiwt"),
 }
 
 // UnitToolFieldMap maps JSON API field names to database column names.
@@ -388,13 +396,17 @@ var UnitToolColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by UnitTool.GetStaticFieldMap().
 var UnitToolFieldMap = map[string]string{
-	"organizationId": "organization_id",
-	"businessUnitId": "business_unit_id",
-	"unitId":         "unit_id",
-	"toolName":       "tool_name",
-	"cause":          "cause",
-	"finishedAt":     "finished_at",
-	"calls":          "calls",
+	"organizationId":    "organization_id",
+	"businessUnitId":    "business_unit_id",
+	"unitId":            "unit_id",
+	"toolName":          "tool_name",
+	"cause":             "cause",
+	"finishedAt":        "finished_at",
+	"modelKey":          "model_key",
+	"providerId":        "provider_id",
+	"agentDefinitionId": "agent_definition_id",
+	"task":              "task",
+	"calls":             "calls",
 }
 
 // UnitToolInsertableColumns lists column names suitable for INSERT statements on the "ai_work_unit_tools" table.
@@ -406,6 +418,10 @@ var UnitToolInsertableColumns = []string{
 	"tool_name",
 	"cause",
 	"finished_at",
+	"model_key",
+	"provider_id",
+	"agent_definition_id",
+	"task",
 	"calls",
 }
 
@@ -459,13 +475,17 @@ func UnitToolApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.S
 //	UnitToolFilter.OrganizationID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "organizationId", Operator: "eq", Value: value}
 var UnitToolFilter = struct {
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	UnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unitId" → DB: "unit_id"
-	ToolName       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
-	Cause          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cause" → DB: "cause"
-	FinishedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "finishedAt" → DB: "finished_at"
-	Calls          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "calls" → DB: "calls"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	UnitID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unitId" → DB: "unit_id"
+	ToolName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
+	Cause             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cause" → DB: "cause"
+	FinishedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "finishedAt" → DB: "finished_at"
+	ModelKey          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modelKey" → DB: "model_key"
+	ProviderID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	Task              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "task" → DB: "task"
+	Calls             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "calls" → DB: "calls"
 }{
 	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("organizationId", op, value)
@@ -484,6 +504,18 @@ var UnitToolFilter = struct {
 	},
 	FinishedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("finishedAt", op, value)
+	},
+	ModelKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("modelKey", op, value)
+	},
+	ProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("providerId", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentDefinitionId", op, value)
+	},
+	Task: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("task", op, value)
 	},
 	Calls: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("calls", op, value)

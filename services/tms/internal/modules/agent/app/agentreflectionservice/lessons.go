@@ -274,14 +274,11 @@ func (s *Service) audience(
 	suggest := plan.Tainted()
 
 	if person.IsNil() {
-		switch audience {
-		case audienceOrganization:
+		req.Scope = agent.MemoryScopeAgent
+		if audience == audienceOrganization {
 			req.Scope = agent.MemoryScopeOrganization
-			suggest = true
-		default:
-			req.Scope = agent.MemoryScopeAgent
 		}
-		req.Suggest = suggest
+		req.Suggest = true
 
 		return "", nil
 	}

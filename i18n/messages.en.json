@@ -7677,6 +7677,42 @@
       "go/other"
     ]
   },
+  "A profile is at most 3,000 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A profile is made from at most 40 facts": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A profile is written again when a person asks": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A profile says something": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A profile with this name already exists": {
     "sites": 1,
     "scope": [
@@ -13517,12 +13553,14 @@
     ]
   },
   "Accounting mapping": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "api/handlers"
+      "api/handlers",
+      "apps/web/lib"
     ]
   },
   "Accounting mappings": {
@@ -15083,7 +15121,7 @@
     ]
   },
   "Add": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -15093,6 +15131,7 @@
       "packages/shared/lib",
       "routes/admin",
       "routes/benefits",
+      "routes/desk",
       "routes/formula-template",
       "routes/fuel-management",
       "routes/inbox",
@@ -16335,6 +16374,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Add guidance": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Add hazardous material...": {
@@ -18764,6 +18812,15 @@
       "routes/desk"
     ]
   },
+  "After guidance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "After outside content": {
     "sites": 1,
     "scope": [
@@ -18946,6 +19003,15 @@
       "go/other"
     ]
   },
+  "Agent drafting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Agent evaluation case retention (days)": {
     "sites": 1,
     "scope": [
@@ -19106,6 +19172,17 @@
       "go"
     ],
     "areas": [
+      "go/other"
+    ]
+  },
+  "Agent profiles": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
       "go/other"
     ]
   },
@@ -19313,6 +19390,15 @@
       "apps/web/lib"
     ]
   },
+  "Agents are not learning from their work in this organization. Turn learning on in AI Control first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Agents ask before saving anything": {
     "sites": 1,
     "scope": [
@@ -19365,6 +19451,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Agents learning from their work": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Agents may read {0} active memories; an organization should keep at most {1}. Each prompt carries only what fits its budget, so retire what no longer holds.": {
@@ -28782,12 +28877,13 @@
     ]
   },
   "Asked for": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Asked from": {
@@ -39198,7 +39294,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 138,
+    "sites": 140,
     "scope": [
       "go"
     ],
@@ -46853,6 +46949,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Checked {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Checking EDI 214 readiness": {
@@ -63691,7 +63796,7 @@
     ]
   },
   "Current": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -63925,6 +64030,15 @@
     ],
     "areas": [
       "routes/accessorial-charge"
+    ]
+  },
+  "Current profile": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Current sequence cannot be negative": {
@@ -73487,6 +73601,15 @@
       "apps/web/components"
     ]
   },
+  "Did not finish": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Did not run": {
     "sites": 1,
     "scope": [
@@ -73723,6 +73846,24 @@
   },
   "Digest day must be a day of the week": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Digest is not a SHA-256 hex digest": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Digest is required": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -82528,6 +82669,24 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Earlier versions": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Earlier versions could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Earliest feasible pickup": {
@@ -95141,6 +95300,17 @@
       "go/other"
     ]
   },
+  "Facts from the records": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/agent-control"
+    ]
+  },
   "Fail": {
     "sites": 1,
     "scope": [
@@ -103671,6 +103841,15 @@
       "routes/inbox"
     ]
   },
+  "From {0} in a conversation, written down by an agent · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "From {0} to {1}": {
     "sites": 1,
     "scope": [
@@ -103681,11 +103860,12 @@
     ]
   },
   "From {0} · {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/desk"
     ]
   },
@@ -107521,6 +107701,96 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Guidance": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Guidance added; the profile will be written again with it shortly": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Guidance from people": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Guidance is at most 500 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Guidance is given by a person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Guidance is retired by a person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Guidance not found": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Guidance recorded after the run read text from outside the organization waits for a person's approval, because every later prompt is written from it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Guidance retired; the profile will be written again without it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Guidance says something": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Guide #{0}": {
@@ -122335,6 +122605,15 @@
       "routes/agent-control"
     ]
   },
+  "Keep the profile": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Keep the question to 20,000 characters": {
     "sites": 1,
     "scope": [
@@ -128479,6 +128758,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "List what to write profiles for": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Listed twice": {
@@ -145065,6 +145353,15 @@
       "packages/shared/lib"
     ]
   },
+  "Nightly": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nightly PTO accrual, carryover cap, and expiry posting": {
     "sites": 1,
     "scope": [
@@ -150240,6 +150537,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "No profile yet. One is written each night once there is work on record, from your shipments, fleet, customers, lanes, integrations and settings.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No programs yet": {
     "sites": 1,
     "scope": [
@@ -152328,6 +152634,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No versions yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No versions.": {
@@ -157002,6 +157317,15 @@
       "routes/billing-queue"
     ]
   },
+  "Nothing yet. After you've worked with agents for a while, a short note about your work appears here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing yet. Values appear here as the expression names them.": {
     "sites": 1,
     "scope": [
@@ -161056,6 +161380,15 @@
       "routes/worker"
     ]
   },
+  "Only a failed version says why": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only a filed return carries a filed stamp": {
     "sites": 1,
     "scope": [
@@ -161246,6 +161579,15 @@
     ]
   },
   "Only a person keeps memories on the Desk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a person's profile names the person": {
     "sites": 1,
     "scope": [
       "go"
@@ -162167,6 +162509,15 @@
       "go/other"
     ]
   },
+  "Only guidance about a person names them": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only image files are allowed for organization logos": {
     "sites": 1,
     "scope": [
@@ -162681,6 +163032,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Only retired guidance says when": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Only send when there is something to report": {
@@ -166736,7 +167096,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 137,
+    "sites": 139,
     "scope": [
       "go"
     ],
@@ -166835,6 +167195,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Organization profile": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Organization settings": {
@@ -182544,6 +182913,15 @@
       "routes/admin"
     ]
   },
+  "Profile version not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Profiles are shared templates — set driver-specific rates below instead of cloning profiles.": {
     "sites": 1,
     "scope": [
@@ -182569,6 +182947,15 @@
     ],
     "areas": [
       "routes/pay-profile"
+    ]
+  },
+  "Profiles cannot be written right now. Try again shortly.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Profit": {
@@ -184160,6 +184547,15 @@
     ]
   },
   "Prune telematics events older than 90 days and HOS violations older than a year": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Prune the profile's old versions": {
     "sites": 1,
     "scope": [
       "go"
@@ -197759,12 +198155,13 @@
     ]
   },
   "Replaced": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/hooks"
+      "apps/web/hooks",
+      "routes/agent-control"
     ]
   },
   "Replaced by": {
@@ -202152,12 +202549,13 @@
     ]
   },
   "Retire": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Retire a memory": {
@@ -202194,6 +202592,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Retire “{0}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Retired": {
@@ -226217,7 +226624,7 @@
     ]
   },
   "Someone": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -226976,7 +227383,7 @@
     ]
   },
   "Source is required": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -230132,7 +230539,7 @@
     ]
   },
   "Status is required": {
-    "sites": 145,
+    "sites": 147,
     "scope": [
       "go",
       "ts"
@@ -231888,7 +232295,7 @@
     ]
   },
   "Subject is required": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go"
     ],
@@ -235295,6 +235702,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Tell agents about your work": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Tell agents about your work, e.g. “I only handle the Midwest accounts”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Tell agents something once and every one of them remembers it — a customer's rule, a dock's hours, how your team clears a hold.": {
@@ -243675,6 +244100,24 @@
       "go/other"
     ]
   },
+  "The guidance could not be added": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "The guidance could not be retired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "The hashing algorithm used to sign outbound messages and MDNs.": {
     "sites": 1,
     "scope": [
@@ -244195,6 +244638,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The last attempt did not finish, so agents are still told the version above: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The last attempt to write it again did not finish: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The last call to {0} failed; Trenova will keep retrying": {
@@ -246781,6 +247242,33 @@
     ],
     "areas": [
       "routes/trailer"
+    ]
+  },
+  "The profile could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The profile could not be written again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "The profile is being written again; it will update here when it's done": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "The program this contract's fuel surcharge reads, and the terms it negotiated over it.": {
@@ -251628,6 +252116,15 @@
       "go/other"
     ]
   },
+  "There isn't enough of your work on record yet to write about. Work with agents for a while and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "There's no POD on file": {
     "sites": 1,
     "scope": [
@@ -253080,6 +253577,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "This could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This couldn't be loaded": {
@@ -255538,6 +256044,15 @@
     ]
   },
   "This pool has already been drawn for {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This profile already has 50 lines of guidance. Retire one that no longer holds first.": {
     "sites": 1,
     "scope": [
       "go"
@@ -263211,7 +263726,7 @@
     ]
   },
   "Trigger is required": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go"
     ],
@@ -276460,6 +276975,24 @@
       "routes/agent-control"
     ]
   },
+  "What agents know about the organization": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "What agents know about your work": {
+    "sites": 6,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "What agents learned": {
     "sites": 1,
     "scope": [
@@ -277146,6 +277679,15 @@
       "apps/web/components"
     ]
   },
+  "What it was written from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What it was: Invoice, Payment, Credit memo.": {
     "sites": 1,
     "scope": [
@@ -277695,6 +278237,15 @@
       "routes/worker"
     ]
   },
+  "What the records can't show, such as a seasonal lane or a customer winding down": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What the replay said": {
     "sites": 1,
     "scope": [
@@ -278238,6 +278789,15 @@
     ]
   },
   "What you see when you open Desk.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "What you told agents": {
     "sites": 1,
     "scope": [
       "ts"
@@ -280859,6 +281419,15 @@
       "routes/factoring-company"
     ]
   },
+  "Who gave it is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Who has signed": {
     "sites": 1,
     "scope": [
@@ -282589,6 +283158,15 @@
       "go/other"
     ]
   },
+  "Work out the profile's facts": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Work queue": {
     "sites": 2,
     "scope": [
@@ -282642,6 +283220,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Worked out from your own records and what you've told them, so a short request means what you meant.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Worker": {
@@ -283666,6 +284253,15 @@
       "go/other"
     ]
   },
+  "Write an agent profile again once a person asks or guidance settles": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Write an expression and the charge appears here as you type.": {
     "sites": 1,
     "scope": [
@@ -283682,6 +284278,16 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Write it again": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Write it here": {
@@ -283747,6 +284353,24 @@
       "routes/pay-advance"
     ]
   },
+  "Write one agent profile from its facts and guidance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Write one organization's agent profile and its people's": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Write one organization's morning briefing": {
     "sites": 1,
     "scope": [
@@ -283766,6 +284390,24 @@
     ]
   },
   "Write something before sending": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Write the agent profiles of every organization and the people in it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Write the agent profiles of every organization and the people who talk to its agents": {
     "sites": 1,
     "scope": [
       "go"
@@ -283817,6 +284459,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "Write the profile": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Write the question the agent is asked": {
@@ -286648,6 +287299,15 @@
     ]
   },
   "Your pinned table views and report views": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Your plan does not include agent automation, so profiles are not written.": {
     "sites": 1,
     "scope": [
       "go"
@@ -290124,6 +290784,15 @@
     ],
     "areas": [
       "routes/table-change-alert"
+    ]
+  },
+  "e.g. “The Laredo lane is seasonal; it runs from October to March”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "e.g.,": {
@@ -306186,7 +306855,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 32,
+    "sites": 33,
     "scope": [
       "ts"
     ],

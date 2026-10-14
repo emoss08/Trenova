@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentmemoryrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentmemorysubjectrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentplanrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentprofilerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentproposalbaselinerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentproposalrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentqualityrepository"
@@ -67,6 +68,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentplanservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentprofileservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentproposalnotifier"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentproposalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
@@ -129,6 +131,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentprofilejobs/agentprofilecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs/conversationschedulecontract"
@@ -234,6 +237,10 @@ func SharedOptions() fx.Option {
 			watchtowerrepository.New,
 			exceptionsourcerepository.New,
 			briefingrepository.New,
+			agentprofilerepository.NewProfiles,
+			agentprofilerepository.NewGuidance,
+			agentprofilerepository.NewFacts,
+			agentprofilecontract.NewScheduler,
 			shipmentimportchatrepository.New,
 			shipmentbriefrepository.New,
 			agentextensionrepository.New,
@@ -304,6 +311,10 @@ func SharedOptions() fx.Option {
 			briefingwriter.New,
 			briefingservice.New,
 			briefingservice.AsService,
+			agentprofileservice.New,
+			agentprofileservice.AsService,
+			agentprofileservice.AsGenerator,
+			agentprofileservice.AsReader,
 			agentscorecardservice.New,
 			agentscorecardservice.AsService,
 			agentquerytoolservice.FilterCatalog,

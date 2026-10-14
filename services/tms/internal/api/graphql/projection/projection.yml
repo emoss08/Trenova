@@ -120,6 +120,8 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  AgentProfileGuidance:
+    - createdByName
   TenderOffer:
     - agreedRate
   CustomerEmailProfile:
@@ -466,6 +468,8 @@ virtuals:
   AIAnalyticsProvider:
     - removed
     - shortName
+  AIAnalyticsCauseCount:
+    - blame
 
 specials:
   Tractor:

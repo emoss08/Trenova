@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentdefinitionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentpreviewexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentprofileexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentqualityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentruneventexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentsafetyexec"
@@ -155,6 +156,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
@@ -317,6 +319,8 @@ type ResolverRoot interface {
 	AgentPreviewRecordChange() AgentPreviewRecordChangeResolver
 	AgentPreviewRef() AgentPreviewRefResolver
 	AgentPreviewWarning() AgentPreviewWarningResolver
+	AgentProfileGuidance() AgentProfileGuidanceResolver
+	AgentProfileVersion() AgentProfileVersionResolver
 	AgentProposal() AgentProposalResolver
 	AgentProposalField() AgentProposalFieldResolver
 	AgentQualityAgent() AgentQualityAgentResolver
@@ -774,6 +778,14 @@ type AgentPreviewRefResolver interface {
 
 type AgentPreviewWarningResolver interface {
 	Code(ctx context.Context, obj *agent.PreviewWarning) (string, error)
+}
+
+type AgentProfileGuidanceResolver interface {
+	CreatedByName(ctx context.Context, obj *agentprofile.Guidance) (*string, error)
+}
+
+type AgentProfileVersionResolver interface {
+	Facts(ctx context.Context, obj *agentprofile.Profile) ([]*agentprofile.Fact, error)
 }
 
 type AgentProposalResolver interface {
@@ -1653,6 +1665,12 @@ type MutationResolver interface {
 	DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agent.Memory, error)
 	ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agent.AgentException, error)
 	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*tenant.AgentControl, error)
+	AddAgentOrganizationProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
+	RetireAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
+	RegenerateAgentOrganizationProfile(ctx context.Context) (bool, error)
+	AddMyAgentProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
+	RetireMyAgentProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
+	RegenerateMyAgentProfile(ctx context.Context) (bool, error)
 	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agentdefinition.TestPrompt, error)
 	DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
@@ -2383,6 +2401,9 @@ type QueryResolver interface {
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
 	AgentPromotionPreview(ctx context.Context, threshold int) ([]*agentports.ToolPromotion, error)
 	AgentActivitySummary(ctx context.Context, since int) (*gqlmodel.AgentActivitySummary, error)
+	AgentOrganizationProfile(ctx context.Context) (*gqlmodel.AgentProfile, error)
+	AgentOrganizationProfileHistory(ctx context.Context, limit *int) ([]*agentprofile.Profile, error)
+	MyAgentProfile(ctx context.Context) (*gqlmodel.AgentProfile, error)
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
 	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
 	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
@@ -3425,6 +3446,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		agentexec.Shard,
 		agentdefinitionexec.Shard,
 		agentpreviewexec.Shard,
+		agentprofileexec.Shard,
 		agentqualityexec.Shard,
 		agentruneventexec.Shard,
 		agentsafetyexec.Shard,
@@ -3602,6 +3624,8 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AgentPreviewRecordChange":           func() any { return r.AgentPreviewRecordChange() },
 			"AgentPreviewRef":                    func() any { return r.AgentPreviewRef() },
 			"AgentPreviewWarning":                func() any { return r.AgentPreviewWarning() },
+			"AgentProfileGuidance":               func() any { return r.AgentProfileGuidance() },
+			"AgentProfileVersion":                func() any { return r.AgentProfileVersion() },
 			"AgentProposal":                      func() any { return r.AgentProposal() },
 			"AgentProposalField":                 func() any { return r.AgentProposalField() },
 			"AgentQualityAgent":                  func() any { return r.AgentQualityAgent() },
@@ -6511,6 +6535,121 @@ type AgentActivitySummary {
 extend type Query {
   "What agents did since the moment given, at most 31 days ago."
   agentActivitySummary(since: Timestamp!): AgentActivitySummary!
+}
+`, BuiltIn: false},
+	{Name: "../schema/agent_profile.graphqls", Input: `"Whom an agent profile describes: the organization's business, or one person's work in it."
+enum AgentProfileSubject {
+  Organization
+  User
+}
+
+"Where a version of a profile stands. Only the current version is told to agents."
+enum AgentProfileStatus {
+  Current
+  Superseded
+  Failed
+}
+
+"What made a version get written."
+enum AgentProfileTrigger {
+  Scheduled
+  Requested
+  Guidance
+}
+
+enum AgentProfileGuidanceStatus {
+  Active
+  Retired
+}
+
+"Who worded a line of guidance: a person typing it, or an agent writing down what a person said."
+enum AgentProfileGuidanceSource {
+  Person
+  Agent
+}
+
+"One thing a query worked out from the records. Facts are never written by a model."
+type AgentProfileFact {
+  key: String!
+  text: String!
+}
+
+"""
+One version of a profile: a model's write-up of the facts and the guidance in
+force when it was written. A failed version says why and was never told to
+agents.
+"""
+type AgentProfileVersion {
+  id: ID!
+  subject: AgentProfileSubject!
+  status: AgentProfileStatus!
+  trigger: AgentProfileTrigger!
+  "The write-up agents are told; empty for a failed version."
+  content: String
+  facts: [AgentProfileFact!]!
+  "The guidance in force when it was written."
+  guidanceIds: [ID!]!
+  model: String
+  errorMessage: String
+  "When the facts were last worked out and found to give this version."
+  checkedAt: Timestamp!
+  createdAt: Timestamp!
+}
+
+"A line people gave about how to read a profile. The next version honours every active line."
+type AgentProfileGuidance {
+  id: ID!
+  subject: AgentProfileSubject!
+  content: String!
+  status: AgentProfileGuidanceStatus!
+  source: AgentProfileGuidanceSource!
+  createdById: ID!
+  "Who gave it, by name."
+  createdByName: String
+  "The conversation it was given in, when an agent wrote it down."
+  threadId: ID
+  retiredAt: Timestamp
+  createdAt: Timestamp!
+}
+
+"A profile as AI Control and the Desk show it."
+type AgentProfile {
+  subject: AgentProfileSubject!
+  "The version agents are told, or null before the first is written."
+  current: AgentProfileVersion
+  "The newest attempt, when it failed after the current version was written."
+  latestFailure: AgentProfileVersion
+  "The active guidance, newest first."
+  guidance: [AgentProfileGuidance!]!
+}
+
+input AgentProfileGuidanceInput {
+  "One plain sentence, at most 500 characters."
+  content: String!
+}
+
+extend type Query {
+  "What agents are told about the organization's business."
+  agentOrganizationProfile: AgentProfile!
+  "The organization profile's versions, newest first."
+  agentOrganizationProfileHistory(limit: Int): [AgentProfileVersion!]!
+  "What agents are told about the signed-in person's own work."
+  myAgentProfile: AgentProfile!
+}
+
+extend type Mutation {
+  "Add a line of guidance to the organization's profile; it is written again with it."
+  addAgentOrganizationProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!
+  "Retire a line of guidance from the organization's profile; it is written again without it."
+  retireAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
+  "Write the organization's profile again now."
+  regenerateAgentOrganizationProfile: Boolean!
+  "Add a line of guidance to the signed-in person's own profile."
+  addMyAgentProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!
+  "Retire a line of guidance from the signed-in person's own profile."
+  retireMyAgentProfileGuidance(id: ID!): AgentProfileGuidance!
+  "Write the signed-in person's own profile again now."
+  regenerateMyAgentProfile: Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentdefinition.graphqls", Input: `enum AgentTemplate {
@@ -10167,6 +10306,10 @@ enum AIUsageFeature {
   ShipmentImportChat
   DocumentIntelligenceRoute
   DocumentIntelligenceExtract
+  AccountingMapping
+  AgentReflection
+  AgentDrafting
+  AgentProfile
 }
 
 """
