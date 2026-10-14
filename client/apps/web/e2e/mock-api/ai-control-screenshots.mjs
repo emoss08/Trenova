@@ -298,6 +298,17 @@ const SHOTS = [
     act: (page) => scrollToSection(page, "Run time", 60),
   },
   {
+    name: "analytics-loading",
+    scenario: { aiProviders: "all", aiAnalytics: "hold" },
+    query: "?tab=analytics",
+  },
+  {
+    name: "analytics-code-loading",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    holdModule: "**/analytics/analytics-tab.tsx*",
+  },
+  {
     name: "analytics-error",
     scenario: { aiProviders: "all", aiAnalytics: "error" },
     query: "?tab=analytics",
@@ -724,6 +735,7 @@ for (const shot of SHOTS) {
     ...(shot.timezoneId ? { timezoneId: shot.timezoneId } : {}),
   });
   await page.clock.install({ time: new Date(anchor * 1000) });
+  if (shot.holdModule) await page.route(shot.holdModule, () => new Promise(() => {}));
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => {

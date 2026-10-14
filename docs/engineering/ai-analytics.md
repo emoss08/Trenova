@@ -182,6 +182,19 @@ is visible on its next read. The cache fails open: a Redis error is logged, and 
 from Postgres. `until` and every "quiet" flag are as of when the answer was built, so they can be
 up to two minutes old.
 
+## Loading the tab
+
+- The tab is a `lazyComponent` of the AI control page. Its code is preloaded when the pointer or
+  focus reaches the tab, as every AI control tab's is.
+- While its code loads, the page draws `AnalyticsTabSkeleton`, and while the query runs the
+  tab draws `AnalyticsBodySkeleton`. Both live in `analytics-skeleton.tsx`, which the page
+  imports up front and which draws only from `ai-control.css`, so it stands in before
+  `analytics.css` arrives.
+- The series and tool-failure sheets are `lazyComponent`s, mounted the first time one opens
+  and preloaded with `whenIdle` once the analytics are on screen.
+- No component here opts out of the React Compiler: nothing is virtualized, and nothing reads
+  or writes a ref during render.
+
 ## Routing from the page
 
 - **"Use X +n"** on a task row calls `routeAITask(task, providerId)`. `PlanRouteTo` refuses a target
