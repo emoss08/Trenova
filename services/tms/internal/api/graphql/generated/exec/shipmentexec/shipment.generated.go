@@ -12554,7 +12554,7 @@ func unmarshalInputShipmentsInput(ctx context.Context, ec *gqlexec.Exec, obj any
 		asMap["includeCustomer"] = false
 	}
 
-	fieldsInOrder := [...]string{"first", "after", "query", "fieldFilters", "filterGroups", "sort", "expandShipmentDetails", "status", "activityWindowStart", "activityWindowEnd", "billingTransferEligible", "includeCustomer", "quickFilters", "timezone", "tractorIds", "trailerIds", "workerIds", "stopLocationIds", "carrierIds"}
+	fieldsInOrder := [...]string{"first", "after", "query", "fieldFilters", "filterGroups", "sort", "expandShipmentDetails", "status", "activityWindowStart", "activityWindowEnd", "billingTransferEligible", "includeCustomer", "quickFilters", "timezone", "tractorIds", "trailerIds", "workerIds", "stopLocationIds", "carrierIds", "invoiceIds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12694,6 +12694,13 @@ func unmarshalInputShipmentsInput(ctx context.Context, ec *gqlexec.Exec, obj any
 				return it, err
 			}
 			it.CarrierIds = data
+		case "invoiceIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invoiceIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.InvoiceIds = data
 		}
 	}
 	return it, nil

@@ -177,6 +177,7 @@ type InvoiceLine struct {
 	RateUnit            accessorialcharge.RateUnit `json:"rateUnit"            bun:"rate_unit,type:VARCHAR(20),nullzero"`
 	Rate                decimal.NullDecimal        `json:"rate"                bun:"rate,type:NUMERIC(19,4),nullzero"`
 	RateBasisAmount     decimal.NullDecimal        `json:"rateBasisAmount"     bun:"rate_basis_amount,type:NUMERIC(19,4),nullzero"`
+	FormulaTemplateID   pulid.ID                   `json:"formulaTemplateId"   bun:"formula_template_id,type:VARCHAR(100),nullzero"`
 	FormulaTemplateName string                     `json:"formulaTemplateName" bun:"formula_template_name,type:TEXT,nullzero"`
 	AllocationPercent   decimal.NullDecimal        `json:"allocationPercent"   bun:"allocation_percent,type:NUMERIC(9,6),nullzero"`
 	ChargeAllocationID  pulid.ID                   `json:"chargeAllocationId"  bun:"charge_allocation_id,type:VARCHAR(100),nullzero"`
@@ -639,6 +640,7 @@ func (l *InvoiceLine) CopyChargeDetail(src *InvoiceLine) {
 	l.RateUnit = src.RateUnit
 	l.Rate = src.Rate
 	l.RateBasisAmount = src.RateBasisAmount
+	l.FormulaTemplateID = src.FormulaTemplateID
 	l.FormulaTemplateName = src.FormulaTemplateName
 	l.AllocationPercent = src.AllocationPercent
 	l.ChargeAllocationID = src.ChargeAllocationID

@@ -176,6 +176,19 @@ describe("fetchRecordShipments for an order", () => {
   });
 });
 
+describe("fetchRecordShipments for an invoice", () => {
+  it("reads the shipments an invoice bills by the invoice", async () => {
+    requestGraphQLMock.mockResolvedValue({
+      shipments: { edges: [], pageInfo: { hasNextPage: false, endCursor: null }, totalCount: 0 },
+    } as never);
+
+    await fetchRecordShipments({ kind: "invoice", id: "inv_1" }, { first: 5, after: null });
+
+    expect(lastCall().variables.input).toMatchObject({ invoiceIds: ["inv_1"] });
+    expect(lastCall().variables.input).not.toHaveProperty("fieldFilters");
+  });
+});
+
 describe("fetchRecordShipments with openOnly", () => {
   beforeEach(() => {
     requestGraphQLMock.mockResolvedValue({

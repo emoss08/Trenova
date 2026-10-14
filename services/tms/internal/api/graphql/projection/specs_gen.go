@@ -17724,6 +17724,14 @@ func init() {
 				},
 			},
 			{
+				Name:    "chargeSummary",
+				Special: "chargeSummary",
+			},
+			{
+				Name:        "voidedBy",
+				FieldMapKey: "voidedById",
+			},
+			{
 				Name:        "factoringOverride",
 				FieldMapKey: "factoringOverride",
 			},
@@ -18085,6 +18093,14 @@ func init() {
 				Name:    "customer",
 				Special: "customer",
 			},
+			{
+				Name:        "openedBy",
+				FieldMapKey: "openedById",
+			},
+			{
+				Name:        "resolvedBy",
+				FieldMapKey: "resolvedById",
+			},
 		},
 	}
 
@@ -18167,6 +18183,14 @@ func init() {
 			{
 				Name:        "allocationPercent",
 				FieldMapKey: "allocationPercent",
+			},
+			{
+				Name:        "formulaTemplateId",
+				FieldMapKey: "formulaTemplateId",
+			},
+			{
+				Name:        "formulaTemplateName",
+				FieldMapKey: "formulaTemplateName",
 			},
 			{
 				Name:        "chargeAllocationId",

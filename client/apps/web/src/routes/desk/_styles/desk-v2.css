@@ -11338,3 +11338,726 @@ button.dk-ra-tpl:hover {
     grid-column: 1 / -1;
   }
 }
+/* The invoice card */
+.dk-inv {
+  container: dkinv / inline-size;
+}
+.dk-inv code:where(.dk-inv-code) {
+  font: 500 10.5px var(--dk-plex);
+}
+/* the invoice as a receipt slip: what kind of bill it is over a torn foot */
+.dk-inv-slip {
+  flex: none;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 40px;
+  height: 52px;
+  padding-bottom: 6px;
+  border-radius: 5px 5px 0 0;
+  color: var(--dsk-fg);
+  background: color-mix(in oklch, var(--dsk-fg) 8%, var(--dsk-card));
+  -webkit-mask:
+    linear-gradient(black, black) top / 100% calc(100% - 4px) no-repeat,
+    conic-gradient(from 135deg at 50% 0, black 90deg, transparent 0) bottom / 8px 4px repeat-x;
+  mask:
+    linear-gradient(black, black) top / 100% calc(100% - 4px) no-repeat,
+    conic-gradient(from 135deg at 50% 0, black 90deg, transparent 0) bottom / 8px 4px repeat-x;
+}
+.dk-inv-slip > b {
+  font: 600 12px var(--dk-plex);
+  letter-spacing: -0.02em;
+}
+.dk-inv-slip > i {
+  width: 22px;
+  border-top: 1.5px solid var(--dsk-b-strong);
+}
+.dk-inv-slip > i + i {
+  width: 14px;
+}
+.dk-inv-slip.dk-sk {
+  -webkit-mask: none;
+  mask: none;
+}
+.dk-rec-hrow > .dk-inv-slip + .dk-rec-who {
+  flex: 1;
+}
+.dk-rec-amt .dk-inv-owing {
+  color: var(--dsk-warn-fg);
+}
+.dk-inv-voided .dk-rec-amt b {
+  color: var(--dsk-faint);
+}
+.dk-inv-aside {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-inv-clip {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dk-inv-clip:focus-visible {
+  outline: 2px solid var(--dsk-ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+/* what is owed: the total as one strip, paid, credited, in dispute and still open */
+.dk-inv-strip {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--dsk-sunken);
+}
+.dk-inv-strip > i {
+  display: block;
+  min-width: 3px;
+  height: 100%;
+}
+.dk-inv-strip > .dk-paid {
+  background: var(--dsk-fg2);
+}
+.dk-inv-strip > .dk-credited {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--dsk-fg2) 0 2px,
+    color-mix(in oklch, var(--dsk-fg2) 35%, var(--dsk-card)) 2px 5px
+  );
+}
+.dk-inv-strip > .dk-disputed {
+  background: var(--dsk-warn);
+}
+.dk-inv-strip > .dk-open {
+  border-radius: 0 999px 999px 0;
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
+}
+.dk-inv-strip > .dk-open:first-child {
+  border-radius: 999px;
+}
+.dk-inv-keys {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0 0;
+}
+.dk-inv-keys.dk-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.dk-inv-keys > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-inv-keys dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-inv-keys dt::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+.dk-inv-keys .dk-paid dt::before {
+  background: var(--dsk-fg2);
+}
+.dk-inv-keys .dk-credited dt::before {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--dsk-fg2) 0 1.5px,
+    color-mix(in oklch, var(--dsk-fg2) 35%, var(--dsk-card)) 1.5px 3px
+  );
+}
+.dk-inv-keys .dk-disputed dt::before {
+  background: var(--dsk-warn);
+}
+.dk-inv-keys .dk-open dt::before {
+  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
+}
+.dk-inv-keys dd {
+  margin: 0;
+  font: 500 13px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-inv-keys .dk-zero dd {
+  color: var(--dsk-faint);
+}
+/* the terms as a ruler: invoiced, due, today, the days past due or unposted in amber */
+.dk-inv-terms {
+  margin-top: 18px;
+}
+.dk-inv-terms:first-child {
+  margin: 0 0 12px;
+}
+.dk-inv-ruler {
+  position: relative;
+  height: 22px;
+}
+.dk-inv-ruler > .dk-term,
+.dk-inv-ruler > .dk-over,
+.dk-inv-ruler > .dk-wait,
+.dk-inv-ruler > .dk-ahead {
+  position: absolute;
+  top: 9px;
+  left: 0;
+  height: 4px;
+}
+.dk-inv-ruler > .dk-term {
+  border-radius: 999px 0 0 999px;
+  background: var(--dsk-fg2);
+}
+.dk-inv-ruler > .dk-over {
+  border-radius: 0 999px 999px 0;
+  background: var(--dsk-warn);
+}
+.dk-inv-ruler > .dk-wait {
+  border-radius: 999px 0 0 999px;
+  background: var(--dsk-warn);
+}
+.dk-inv-ruler > .dk-ahead {
+  background: repeating-linear-gradient(90deg, var(--dsk-b-strong) 0 6px, transparent 6px 10px);
+}
+.dk-inv-ruler > .dk-tick {
+  position: absolute;
+  top: 2px;
+  width: 2px;
+  height: 18px;
+  border-radius: 1px;
+  background: var(--dsk-fg);
+}
+.dk-inv-ruler > .dk-start {
+  left: 0;
+}
+.dk-inv-ruler > .dk-end {
+  right: 0;
+}
+.dk-inv-ruler > .dk-due {
+  margin-left: -1px;
+}
+.dk-inv-ruler > .dk-pin {
+  position: absolute;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 2.5px var(--dsk-fg);
+}
+.dk-inv-ruler > .dk-pin.dk-warn {
+  box-shadow: inset 0 0 0 2.5px var(--dsk-warn);
+}
+.dk-inv-ruler.dk-sk {
+  height: 4px;
+  margin-top: 9px;
+  border-radius: 999px;
+}
+.dk-inv-marks {
+  position: relative;
+  min-height: 32px;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-inv-marks > span {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+}
+.dk-inv-marks > span > b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-inv-marks > .dk-start {
+  left: 0;
+}
+.dk-inv-marks > .dk-mid {
+  align-items: center;
+  transform: translateX(-50%);
+}
+.dk-inv-marks > .dk-end {
+  right: 0;
+  align-items: flex-end;
+}
+.dk-inv-marks > .dk-warn > b {
+  color: var(--dsk-warn-fg);
+}
+.dk-inv-pending {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
+.dk-inv-reason {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dsk-fg);
+}
+.dk-inv-reason > b {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--dsk-subtle);
+}
+/* the charges as the bill reads them: a row for each way a charge was billed, then its foot */
+.dk-inv-bill > table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.dk-inv-bill th {
+  padding: 0 0 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  text-align: left;
+  color: var(--dsk-subtle);
+  border-bottom: 1px solid var(--dsk-b);
+}
+.dk-inv-bill th:nth-child(2),
+.dk-inv-bill td:nth-child(2) {
+  width: 34%;
+}
+.dk-inv-bill th:nth-child(3),
+.dk-inv-bill td:nth-child(3) {
+  width: 104px;
+}
+.dk-inv-bill th:not(:first-child),
+.dk-inv-bill td:not(:first-child) {
+  padding-left: 16px;
+  text-align: right;
+}
+.dk-inv-bill td {
+  padding: 9px 0;
+  vertical-align: top;
+  border-bottom: 1px solid var(--dsk-b-sub);
+}
+.dk-inv-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dk-inv-desc > span {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-inv-desc > em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-inv-code {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-inv-basis {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-subtle);
+}
+.dk-inv-amt {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+  color: var(--dsk-fg);
+}
+/* the formula template that rated the freight, its name cut to fit, opening its card */
+.dk-inv-fx {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  height: 22px;
+  margin: -2px -6px -2px 0;
+  padding: 0 6px 0 3px;
+  border-radius: 6px;
+  font: 12.5px var(--font-sans);
+  text-align: left;
+  color: var(--dsk-fg);
+}
+button.dk-inv-fx:hover {
+  background: var(--dsk-hover);
+}
+.dk-inv-fx > svg {
+  flex: none;
+  color: var(--dsk-subtle);
+}
+.dk-inv-fx-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+}
+.dk-inv-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(100%, 300px);
+  margin: 12px 0 0 auto;
+  font-size: 12.5px;
+}
+.dk-inv-foot > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  color: var(--dsk-fg2);
+}
+.dk-inv-foot dd {
+  margin: 0;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-inv-foot > .dk-total {
+  padding-top: 8px;
+  border-top: 1px solid var(--dsk-fg);
+  font-weight: 600;
+  color: var(--dsk-fg);
+}
+.dk-inv-foot > .dk-less dd {
+  color: var(--dsk-fg2);
+}
+.dk-inv-foot > .dk-due {
+  padding: 8px 0 6px;
+  border-top: 1px solid var(--dsk-fg);
+  border-bottom: 3px double var(--dsk-fg);
+  font-weight: 600;
+  color: var(--dsk-fg);
+}
+.dk-inv-foot > .dk-due dd {
+  font-size: 14px;
+  font-weight: 600;
+}
+.dk-inv-note {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+/* payments and credits as remittance stubs */
+.dk-inv-remit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-inv-stub {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-left-style: dashed;
+  border-radius: 8px;
+  text-align: left;
+  color: var(--dsk-fg);
+}
+button.dk-inv-stub:hover {
+  background: var(--dsk-hover);
+}
+.dk-inv-stub > svg {
+  color: var(--dsk-subtle);
+}
+.dk-inv-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
+.dk-inv-what {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-inv-what > b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.dk-inv-what > b > span:first-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dk-inv-what > span {
+  overflow: hidden;
+  font-size: 11.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--dsk-subtle);
+}
+.dk-inv-tag {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.dk-inv-tag.dk-warn {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-inv-amount {
+  font: 500 13px var(--dk-plex);
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+.dk-inv-remit > .dk-undone .dk-inv-amount,
+.dk-inv-remit > .dk-undone .dk-inv-what > b > span:first-child {
+  color: var(--dsk-faint);
+  text-decoration: line-through;
+}
+/* the open dispute as a case slip, the closed ones beneath it */
+.dk-inv-case {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--dsk-warn-sub);
+}
+.dk-inv-case-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dk-inv-case-h > b {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dsk-warn-fg);
+}
+.dk-inv-case-h > span {
+  font: 600 14px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-warn-fg);
+}
+.dk-inv-case > blockquote,
+.dk-inv-void > blockquote {
+  margin: 0;
+  padding-left: 10px;
+  border-left: 2px solid color-mix(in oklch, var(--dsk-warn) 60%, transparent);
+  font-size: 12.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg);
+}
+.dk-inv-case > em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--dsk-warn-fg);
+}
+.dk-inv-cases {
+  display: flex;
+  flex-direction: column;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-inv-cases.dk-alone {
+  margin-top: 0;
+}
+.dk-inv-cases > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--dsk-b-sub);
+  font-size: 12.5px;
+}
+.dk-inv-cases.dk-alone > li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.dk-inv-cases > li > b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-inv-cases > li > span {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  text-align: right;
+  color: var(--dsk-fg2);
+}
+.dk-inv-cases > li > em {
+  grid-column: 1 / -1;
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+/* why the invoice was voided, kept as written, with what became of its freight */
+.dk-inv-void {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--dsk-sunken);
+}
+.dk-inv-void > blockquote {
+  border-left-color: var(--dsk-b-strong);
+}
+.dk-inv-void > dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+}
+.dk-inv-void dt {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-inv-void dd {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+}
+/* where it went: email, the EDI 210 and the accounting system, one slip each */
+.dk-inv-went {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.dk-inv-went.dk-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.dk-inv-chan {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 8px;
+}
+.dk-inv-chan-h {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-inv-chan-h > svg {
+  color: var(--dsk-fg2);
+}
+.dk-inv-chan > b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dsk-fg);
+}
+.dk-inv-chan > b > i {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dsk-b-strong);
+}
+.dk-inv-chan > b > svg {
+  flex: none;
+  color: var(--dsk-success);
+}
+.dk-inv-chan.dk-warn > b > i {
+  background: var(--dsk-warn);
+}
+.dk-inv-chan.dk-progress > b > i {
+  background: var(--dsk-blue);
+}
+.dk-inv-chan > .dk-inv-clip {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--dsk-subtle);
+}
+.dk-inv-chan > .dk-inv-why {
+  color: var(--dsk-warn-fg);
+}
+.dk-inv-chan-a {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  font: 500 11.5px var(--dk-plex);
+  color: var(--dsk-fg);
+  text-decoration: none;
+}
+.dk-inv-chan-a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@container dkinv (max-width: 560px) {
+  .dk-inv-keys {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dk-inv-went,
+  .dk-inv-went.dk-two,
+  .dk-inv-void > dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-inv-bill th:nth-child(2),
+  .dk-inv-bill td:nth-child(2) {
+    width: 38%;
+  }
+  .dk-inv-bill th:nth-child(3),
+  .dk-inv-bill td:nth-child(3) {
+    width: 88px;
+  }
+}

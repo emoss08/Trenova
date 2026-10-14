@@ -20,7 +20,6 @@
   "Dismisses the pairing — the invoice stays open for a different assignment or a dispute with the carrier.": "解除此配對 — 該發票仍為未結，可改配其他派車或與承運業者提出爭議。",
   "Document AI": "文件 AI",
   "Duplicate invoice": "重複的發票",
-  "EDI 210": "EDI 210",
   "EDI 210 carrier freight invoice · received {0}": "EDI 210 承運業者運費發票 · 於 {0} 收到",
   "Every carrier invoice is linked to a carrier and matched. Clear the filter to see them anyway.": "所有承運業者發票均已連結至承運業者並完成比對。清除篩選條件即可查看。",
   "Expected amount": "預期金額",

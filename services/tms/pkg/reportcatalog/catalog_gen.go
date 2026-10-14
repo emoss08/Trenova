@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:547511961fc2d0728af2efc377bc1db50a6da685ab9d664210aee89b8ed6f23f"
+const Version = "sha256:34ea82ff2b51e24d9531109a16190094a3a2947800bac4bc0234c79b49663a0e"
 
 var Default = indexed(defaultCatalog)
 
@@ -11729,6 +11729,16 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+				},
+				{
+					Key:          "formulaTemplateId",
+					Column:       buncolgen.NewColumn("formula_template_id", "invl"),
+					Label:        "Formula Template ID",
+					Type:         FieldRef,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
 				},
 				{
 					Key:          "formulaTemplateName",

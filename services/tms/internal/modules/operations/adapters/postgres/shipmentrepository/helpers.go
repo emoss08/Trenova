@@ -173,6 +173,9 @@ func applyShipmentOptionFilters(
 	if opts.Status != "" {
 		q = q.Where(shipmentcol.ShipmentColumns.Status.Eq(), shipment.Status(opts.Status))
 	}
+	if len(opts.IDs) > 0 {
+		q = q.Where(shipmentcol.ShipmentColumns.ID.In(), bun.List(opts.IDs))
+	}
 	if len(opts.Statuses) > 0 {
 		q = q.Where(shipmentcol.ShipmentColumns.Status.In(), bun.In(opts.Statuses))
 	}

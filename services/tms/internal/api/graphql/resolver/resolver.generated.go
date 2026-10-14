@@ -301,6 +301,7 @@ type Resolver struct {
 	invoiceAdjustment                  *invoiceadjustmentresolver.InvoiceAdjustmentResolver
 	invoiceAdjustmentApprovalQueueItem *invoiceadjustmentresolver.InvoiceAdjustmentApprovalQueueItemResolver
 	invoiceAdjustmentLine              *invoiceadjustmentresolver.InvoiceAdjustmentLineResolver
+	invoiceChargeGroup                 *invoiceresolver.InvoiceChargeGroupResolver
 	invoiceDispute                     *invoicedisputeresolver.InvoiceDisputeResolver
 	invoiceLine                        *invoiceresolver.InvoiceLineResolver
 	jobPosition                        *orgstructureresolver.JobPositionResolver
@@ -963,6 +964,7 @@ func FromServices(s *Services) *Resolver {
 		ShipmentEventService:    s.ShipmentEventService,
 		TrackingEventService:    s.TrackingEventService,
 		ShipmentImportAssistant: s.ShipmentImportAssistant,
+		InvoiceService:          s.InvoiceService,
 	}
 	shipmentboardDeps := &shipmentboardresolver.Deps{
 		Core:                   s.Core,
@@ -1280,6 +1282,7 @@ func FromServices(s *Services) *Resolver {
 		invoiceAdjustment:                  &invoiceadjustmentresolver.InvoiceAdjustmentResolver{Deps: invoiceadjustmentDeps},
 		invoiceAdjustmentApprovalQueueItem: &invoiceadjustmentresolver.InvoiceAdjustmentApprovalQueueItemResolver{Deps: invoiceadjustmentDeps},
 		invoiceAdjustmentLine:              &invoiceadjustmentresolver.InvoiceAdjustmentLineResolver{Deps: invoiceadjustmentDeps},
+		invoiceChargeGroup:                 &invoiceresolver.InvoiceChargeGroupResolver{Deps: invoiceDeps},
 		invoiceDispute:                     &invoicedisputeresolver.InvoiceDisputeResolver{Deps: invoicedisputeDeps},
 		invoiceLine:                        &invoiceresolver.InvoiceLineResolver{Deps: invoiceDeps},
 		jobPosition:                        &orgstructureresolver.JobPositionResolver{Deps: orgstructureDeps},
@@ -2282,6 +2285,10 @@ func (r *Resolver) InvoiceAdjustmentApprovalQueueItem() generated.InvoiceAdjustm
 
 func (r *Resolver) InvoiceAdjustmentLine() generated.InvoiceAdjustmentLineResolver {
 	return r.invoiceAdjustmentLine
+}
+
+func (r *Resolver) InvoiceChargeGroup() generated.InvoiceChargeGroupResolver {
+	return r.invoiceChargeGroup
 }
 
 func (r *Resolver) InvoiceDispute() generated.InvoiceDisputeResolver {

@@ -16,8 +16,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -439,4 +441,70 @@ func (r *QueryResolver) Invoice(ctx context.Context, id string) (*invoice.Invoic
 		ID:         invoiceID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
+}
+
+func (r *InvoiceChargeGroupResolver) ChargeCode(ctx context.Context, obj *invoice.ChargeGroup) (*string, error) {
+	return base.StringPtrFromValue(obj.ChargeCode), nil
+}
+
+func (r *InvoiceChargeGroupResolver) ChargeMethod(ctx context.Context, obj *invoice.ChargeGroup) (*accessorialcharge.Method, error) {
+	if obj.ChargeMethod == "" {
+		return nil, nil
+	}
+	method := obj.ChargeMethod
+
+	return &method, nil
+}
+
+func (r *InvoiceChargeGroupResolver) RateUnit(ctx context.Context, obj *invoice.ChargeGroup) (*accessorialcharge.RateUnit, error) {
+	if obj.RateUnit == "" {
+		return nil, nil
+	}
+	unit := obj.RateUnit
+
+	return &unit, nil
+}
+
+func (r *InvoiceChargeGroupResolver) Rate(ctx context.Context, obj *invoice.ChargeGroup) (*string, error) {
+	return base.NullDecimalStringPtr(obj.Rate), nil
+}
+
+func (r *InvoiceChargeGroupResolver) RateBasisAmount(ctx context.Context, obj *invoice.ChargeGroup) (*string, error) {
+	return base.NullDecimalStringPtr(obj.RateBasisAmount), nil
+}
+
+func (r *InvoiceChargeGroupResolver) Quantity(ctx context.Context, obj *invoice.ChargeGroup) (string, error) {
+	return obj.Quantity.String(), nil
+}
+
+func (r *InvoiceChargeGroupResolver) FormulaTemplateID(ctx context.Context, obj *invoice.ChargeGroup) (*string, error) {
+	return base.StringPtrFromValue(obj.FormulaTemplateID.String()), nil
+}
+
+func (r *InvoiceChargeGroupResolver) FormulaTemplateName(ctx context.Context, obj *invoice.ChargeGroup) (*string, error) {
+	return base.StringPtrFromValue(obj.FormulaTemplateName), nil
+}
+
+func (r *InvoiceChargeGroupResolver) Amount(ctx context.Context, obj *invoice.ChargeGroup) (string, error) {
+	return obj.Amount.String(), nil
+}
+
+func (r *InvoiceResolver) ChargeSummary(ctx context.Context, obj *invoice.Invoice) ([]*invoice.ChargeGroup, error) {
+	if obj.Lines != nil || !loaders.Available(ctx) {
+		return invoice.ChargeGroups(obj.Lines), nil
+	}
+
+	loaded, err := loaders.InvoiceByID(ctx, obj.ID.String())
+	if err != nil {
+		return nil, err
+	}
+	if loaded == nil {
+		return []*invoice.ChargeGroup{}, nil
+	}
+
+	return invoice.ChargeGroups(loaded.Lines), nil
+}
+
+func (r *InvoiceResolver) VoidedBy(ctx context.Context, obj *invoice.Invoice) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.VoidedByID)
 }
