@@ -19,7 +19,6 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   daysInMonth,
   formatUtcDate,
@@ -44,6 +43,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { HolidayMonthsSkeleton } from "./holiday-calendar-skeleton";
 import { HolidayDialog } from "./holiday-dialog";
 
 const MONTH_NAMES = Array.from({ length: 12 }, (_, month) =>
@@ -190,11 +190,7 @@ export function HolidayCalendar() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-          {MONTH_NAMES.map((name) => (
-            <Skeleton key={name} className="h-44 w-full" />
-          ))}
-        </div>
+        <HolidayMonthsSkeleton year={year} />
       ) : isError ? (
         <div className="text-destructive rounded-lg border border-dashed p-6 text-center text-sm">
           {t("The calendar could not be loaded. Try again in a moment.")}

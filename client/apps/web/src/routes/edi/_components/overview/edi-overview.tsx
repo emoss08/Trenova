@@ -1,5 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { KpiStrip } from "@/components/kpi/kpi-strip";
 import { ediWindowHasTraffic } from "@/lib/edi-summary";
@@ -12,6 +11,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { InfoTile } from "../panel/edi-panel-primitives";
 import { EDIOverviewEmpty } from "./edi-overview-empty";
+import { EDIOverviewSkeleton } from "./edi-overview-skeleton";
 import { EDIPartnerScorecards } from "./edi-partner-scorecards";
 import { EDITrendCharts } from "./edi-trend-charts";
 import { useEDIPartnerScorecards, useEDISummary, useEDIVolumeSeries } from "./use-edi-summary";
@@ -39,7 +39,7 @@ export function EDIOverview() {
   const volumeQuery = useEDIVolumeSeries(sinceHours);
 
   if (isLoading) {
-    return <ComponentLoader message={t("Loading EDI operations summary")} />;
+    return <EDIOverviewSkeleton />;
   }
   if (isError || !data) {
     return (

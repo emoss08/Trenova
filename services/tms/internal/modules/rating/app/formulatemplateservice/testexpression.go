@@ -283,7 +283,7 @@ func (s *Service) testExpressionAgainstShipment(
 		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 	})
 	if err == nil {
-		err = s.hydrateShipments(ctx, []*shipment.Shipment{entity}, req.TenantInfo)
+		err = s.hydrateShipment(ctx, entity, req.TenantInfo)
 	}
 	if err != nil {
 		return &TestExpressionResponse{

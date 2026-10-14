@@ -6,10 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
@@ -28,32 +24,16 @@ import (
 	"go.uber.org/zap"
 )
 
-type tenantRow struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-
 func seededTenant(ctx context.Context, t *testing.T, db *bun.DB) pagination.TenantInfo {
 	t.Helper()
 
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
+	data := seedtest.SeedFullTestData(t, ctx, db)
 
-	var row tenantRow
-	require.NoError(t, db.NewSelect().
-		TableExpr("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &row))
-
-	return pagination.TenantInfo{OrgID: row.ID, BuID: row.BusinessUnitID}
+	return pagination.TenantInfo{
+		OrgID:  data.Organization.ID,
+		BuID:   data.BusinessUnit.ID,
+		UserID: data.User.ID,
+	}
 }
 
 func insert(ctx context.Context, t *testing.T, db *bun.DB, models ...any) {
@@ -88,19 +68,26 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		PromptVersion: "v1", InputContextHash: "hash", StartedAt: now - 20,
 		Fingerprint: &agent.Fingerprint{Model: "claude-sonnet-5", StoppedAtLimit: true},
 	}
+	thread := &conversation.Thread{
+		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
+		UserID: tenant.UserID, AgentDefinitionID: pulid.MustNew("agd_"),
+		Title: "Analytics fixture",
+	}
 	turn := &conversation.AssistantTurn{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
-		ThreadID: pulid.MustNew("athr_"), UserID: pulid.MustNew("usr_"),
+		UserID: tenant.UserID,
 		Origin: conversation.AssistantTurnOriginPerson, Status: conversation.AssistantTurnStatusStopped,
 		StartedAt:   now - 15,
 		Fingerprint: &agent.Fingerprint{Model: "gpt-5.1-mini"},
 	}
 	compaction := &conversation.AssistantTurn{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
-		ThreadID: pulid.MustNew("athr_"), UserID: pulid.MustNew("usr_"),
+		UserID: tenant.UserID,
 		Origin: conversation.AssistantTurnOriginCompaction, Status: conversation.AssistantTurnStatusCompleted,
 		Fingerprint: &agent.Fingerprint{Model: "gpt-5.1-mini"},
 	}
+	insert(ctx, t, db, thread)
+	turn.ThreadID, compaction.ThreadID = thread.ID, thread.ID
 	insert(ctx, t, db, run, stopped, turn, compaction)
 	_, err := db.NewInsert().Model(&agent.AgentException{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, RunID: stopped.ID,

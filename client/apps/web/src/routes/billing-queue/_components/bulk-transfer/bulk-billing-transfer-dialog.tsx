@@ -22,10 +22,8 @@ import { Download01Icon, RefreshCcw01Icon, Send01Icon } from "@trenova/shared/co
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { billingTransferCandidatesQuery } from "../../billing-queue-queries";
 import { BulkBillingTransferCandidates } from "./bulk-billing-transfer-candidates";
-import {
-  BulkBillingTransferLoading,
-  BulkBillingTransferProgress,
-} from "./bulk-billing-transfer-progress";
+import { BulkBillingTransferRunSkeleton } from "./bulk-billing-transfer-dialog-skeleton";
+import { BulkBillingTransferProgress } from "./bulk-billing-transfer-progress";
 import { buildBulkBillingTransferReportCsv } from "./bulk-billing-transfer-report";
 import { BulkBillingTransferResults } from "./bulk-billing-transfer-results";
 import {
@@ -184,7 +182,7 @@ export function BulkBillingTransferDialog({
 
         {run === null ? (
           loadingRun ? (
-            <BulkBillingTransferLoading />
+            <BulkBillingTransferRunSkeleton />
           ) : (
             <>
               {startError ? (

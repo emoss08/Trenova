@@ -2,15 +2,14 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { ArchiveIcon, LayersThree01Icon } from "@trenova/shared/components/icons";
 import { lazy, Suspense } from "react";
-import { DesignerWorkspaceSkeleton } from "./components/designer-workspace-skeleton";
+import {
+  DesignerDocumentsSkeleton,
+  DesignerTemplatesSkeleton,
+} from "./components/designer-workspace-skeleton";
 import { useEDIDesignerUrlState } from "./hooks/use-edi-designer-url-state";
 
 const TemplateDesignerTab = lazy(() => import("./components/template-designer-tab"));
 const DocumentPreviewArchiveTab = lazy(() => import("./archive/document-preview-archive-tab"));
-
-function DesignerLoadingBlock() {
-  return <DesignerWorkspaceSkeleton />;
-}
 
 export function DesignerWorkspace() {
   const t = useT();
@@ -34,12 +33,12 @@ export function DesignerWorkspace() {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="templates" className="m-0 min-h-0 overflow-hidden px-3 pt-3">
-        <Suspense fallback={<DesignerLoadingBlock />}>
+        <Suspense fallback={<DesignerTemplatesSkeleton />}>
           <TemplateDesignerTab />
         </Suspense>
       </TabsContent>
       <TabsContent value="documents" className="m-0 min-h-0 overflow-hidden px-3 pt-3">
-        <Suspense fallback={<DesignerLoadingBlock />}>
+        <Suspense fallback={<DesignerDocumentsSkeleton />}>
           <DocumentPreviewArchiveTab />
         </Suspense>
       </TabsContent>

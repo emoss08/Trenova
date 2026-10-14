@@ -86,6 +86,23 @@ describe("ChainStatusHeader", () => {
     ).toBeInTheDocument();
   });
 
+  it("holds the sentence, the check and the three figures in place while the status is read", async () => {
+    const pending = deferred<AIAuditChainStatus>();
+    fetchAIAuditChainStatus.mockReturnValue(pending.promise);
+    const { container } = renderStrip();
+
+    const busy = container.querySelector('[aria-busy="true"]');
+    expect(busy).not.toBeNull();
+    expect(busy?.querySelectorAll(".hero .hc")).toHaveLength(1);
+    expect(busy?.querySelectorAll(".figs .fg")).toHaveLength(3);
+    expect(screen.queryByRole("button", { name: /verify now/i })).not.toBeInTheDocument();
+
+    await act(async () => pending.resolve(chainStatus()));
+
+    expect(await screen.findByRole("button", { name: /verify now/i })).toBeEnabled();
+    expect(container.querySelector('[aria-busy="true"]')).toBeNull();
+  });
+
   it("says every row is sealed when the seal has caught up", async () => {
     fetchAIAuditChainStatus.mockResolvedValue(chainStatus({ sealedThroughSeq: 1_204 }));
     renderStrip();

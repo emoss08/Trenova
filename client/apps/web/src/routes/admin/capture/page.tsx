@@ -1,12 +1,13 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
-import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Monitor01Icon, Settings01Icon, Sliders01Icon } from "@trenova/shared/components/icons";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { lazy } from "react";
+import { CaptureSettingsSkeleton } from "./skeleton";
 import { FleetPanel } from "./_components/fleet-panel";
 import { ProfilesPanel } from "./_components/profiles-panel";
 
@@ -67,9 +68,9 @@ export function CaptureAdminPage() {
         </TabsList>
         {canSettings && (
           <TabsContent value="settings" className="pt-4">
-            <SuspenseLoader>
+            <LazyComponent fallback={<CaptureSettingsSkeleton />}>
               <CaptureSettingsForm />
-            </SuspenseLoader>
+            </LazyComponent>
           </TabsContent>
         )}
         {canProfiles && (

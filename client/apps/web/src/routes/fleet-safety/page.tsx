@@ -2,13 +2,14 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { RadarIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { lazy } from "react";
 import { FleetSafetySkeleton } from "./_components/fleet-safety-skeleton";
+import { MyDotSkeleton } from "./_components/my-dot-skeleton";
 import { fleetSafetyQuery } from "./_components/queries";
 
 const FleetSafetyConsole = lazy(() => import("./_components/fleet-safety-console"));
@@ -70,15 +71,15 @@ export function FleetSafetyPage() {
         </div>
         <TabsContent value="fleet" className="pt-4">
           <div className="flex flex-col gap-4">
-            <DataTableLazyComponent fallback={<FleetSafetySkeleton />}>
+            <LazyComponent fallback={<FleetSafetySkeleton />}>
               <FleetSafetyConsole />
-            </DataTableLazyComponent>
+            </LazyComponent>
           </div>
         </TabsContent>
         <TabsContent value="my-dot" className="pt-4">
-          <DataTableLazyComponent>
+          <LazyComponent fallback={<MyDotSkeleton />}>
             <MyDotIntelligence />
-          </DataTableLazyComponent>
+          </LazyComponent>
         </TabsContent>
       </Tabs>
     </PageLayout>

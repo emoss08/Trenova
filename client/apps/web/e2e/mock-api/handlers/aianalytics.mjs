@@ -422,7 +422,7 @@ function bucketStarts(window, timezone, until) {
   return starts.reverse();
 }
 
-/** The bucket a run lands in: the latest start at or before it, the first for anything earlier. */
+/** The bucket a run lands in: the latest start at or before it. */
 function bucketOf(starts, at) {
   let index = 0;
   while (index + 1 < starts.length && starts[index + 1] <= at) index += 1;
@@ -431,7 +431,8 @@ function bucketOf(starts, at) {
 
 function trendOf(units, compareBy, starts) {
   const key = groupKeyOf(compareBy);
-  const groups = groupBy(units, (unit) => `${key(unit)}|${bucketOf(starts, unit.finishedAt)}`);
+  const onAxis = units.filter((unit) => unit.finishedAt >= starts[0]);
+  const groups = groupBy(onAxis, (unit) => `${key(unit)}|${bucketOf(starts, unit.finishedAt)}`);
   return [...groups.entries()]
     .map(([group, members]) => {
       const [seriesKey, bucket] = group.split("|");
@@ -518,7 +519,7 @@ function canRouteTo(routing, task, providerId) {
 const completion = (members) =>
   members.filter((unit) => unit.outcome === "Completed").length / Math.max(1, members.length);
 
-function tasksOf(units, compareBy, routing) {
+function tasksOf(units, compareBy, routing, agentScoped) {
   const key = groupKeyOf(compareBy);
   const rows = [];
   for (const [task, members] of groupBy(units, (unit) => unit.task)) {
@@ -547,7 +548,7 @@ function tasksOf(units, compareBy, routing) {
 
     let suggestion = null;
     const currentUnits = currentId ? members.filter((unit) => unit.providerId === currentId) : [];
-    if (currentUnits.length >= MIN_RUNS_TO_RANK) {
+    if (!agentScoped && currentUnits.length >= MIN_RUNS_TO_RANK) {
       const candidates = [...groupBy(members, deploymentKey).values()]
         .filter((list) => list[0].providerId !== currentId && list.length >= MIN_RUNS_TO_RANK)
         .sort((a, b) => completion(b) - completion(a) || b.length - a.length);
@@ -581,7 +582,13 @@ function tasksOf(units, compareBy, routing) {
   return rows.sort((a, b) => b._runs - a._runs).map(({ _runs, ...row }) => row);
 }
 
+/** The first whole hour at or after a moment: hourly provider stats start there. */
+function ceilHour(at) {
+  return at % HOUR === 0 ? at : at - (at % HOUR) + HOUR;
+}
+
 function providerHealthOf(state, units, since, until, input) {
+  const sinceHour = ceilHour(since);
   const health = new Map();
   const entry = (providerId, modelKey) => {
     const key = `${modelKey}|${providerId}`;
@@ -601,6 +608,7 @@ function providerHealthOf(state, units, since, until, input) {
     return health.get(key);
   };
   for (const unit of units) {
+    if (unit.finishedAt - (unit.finishedAt % HOUR) < sinceHour) continue;
     const item = entry(unit.providerId, unit.modelKey);
     item.calls += unit.modelCalls;
     item.firstTokens.push(unit.firstTokenMs);
@@ -608,7 +616,7 @@ function providerHealthOf(state, units, since, until, input) {
   }
   for (const error of analyticsOf(state).errors) {
     if (
-      error.at < since ||
+      error.at - (error.at % HOUR) < sinceHour ||
       (input.task && error.task !== input.task) ||
       (input.agentDefinitionId && error.agentId !== input.agentDefinitionId)
     )
@@ -621,28 +629,31 @@ function providerHealthOf(state, units, since, until, input) {
     item.lastCalledAt = Math.max(item.lastCalledAt, error.at - (error.at % HOUR));
   }
   return [...health.values()]
-    .map((item) => ({
-      key: item.key,
-      provider: item.provider,
-      modelKey: item.modelKey,
-      model: item.model,
-      lastCalledAt: item.lastCalledAt || null,
-      quiet: item.lastCalledAt > 0 && until - item.lastCalledAt > QUIET_SECONDS,
-      calls: item.calls,
-      errors: item.errors,
-      errorRate: rate(item.errors, item.calls),
-      errorAlarm: (rate(item.errors, item.calls) ?? 0) > PROVIDER_ERROR_ALARM_RATE,
-      fellToNext: item.fellToNext,
-      fellToNextAlarm: item.fellToNext > FELL_TO_NEXT_ALARM_CALLS,
-      firstTokenMedianMs: percentile(
-        item.firstTokens.sort((a, b) => a - b),
-        0.5,
-      ),
-      errorsByKind: PROVIDER_ERRORS.filter((kind) => item.kinds.has(kind)).map((kind) => ({
-        kind,
-        calls: item.kinds.get(kind),
-      })),
-    }))
+    .map((item) => {
+      const lastCalledAt = item.lastCalledAt ? Math.min(item.lastCalledAt + HOUR - 1, until) : null;
+      return {
+        key: item.key,
+        provider: item.provider,
+        modelKey: item.modelKey,
+        model: item.model,
+        lastCalledAt,
+        quiet: lastCalledAt !== null && until - lastCalledAt > QUIET_SECONDS,
+        calls: item.calls,
+        errors: item.errors,
+        errorRate: rate(item.errors, item.calls),
+        errorAlarm: (rate(item.errors, item.calls) ?? 0) > PROVIDER_ERROR_ALARM_RATE,
+        fellToNext: item.fellToNext,
+        fellToNextAlarm: item.fellToNext > FELL_TO_NEXT_ALARM_CALLS,
+        firstTokenMedianMs: percentile(
+          item.firstTokens.sort((a, b) => a - b),
+          0.5,
+        ),
+        errorsByKind: PROVIDER_ERRORS.filter((kind) => item.kinds.has(kind)).map((kind) => ({
+          kind,
+          calls: item.kinds.get(kind),
+        })),
+      };
+    })
     .sort((a, b) => b.calls - a.calls || a.key.localeCompare(b.key));
 }
 
@@ -796,6 +807,7 @@ function runTimeNoteOf(deployments) {
 
 function agentAnalytics(state, input) {
   if (state.scenario.aiAnalytics === "error") throw new Error("analytics read failed");
+  if (state.scenario.aiAnalytics === "hold") return { __hold: true };
   const now = state.now();
   const { since, units } = scope(state, input, now);
   const compareBy = input.compareBy ?? "Model";
@@ -836,7 +848,7 @@ function agentAnalytics(state, input) {
         };
       }),
     tools: toolsOf(units, compareBy),
-    tasks: tasksOf(units, compareBy, analytics.routing),
+    tasks: tasksOf(units, compareBy, analytics.routing, Boolean(input.agentDefinitionId)),
     providers: providerHealthOf(state, units, since, now, input),
     sameModel: pair
       ? { modelKey: pair.model, betterKey: pair.better.key, worseKey: pair.worse.key }
@@ -916,7 +928,10 @@ function routeTask(state, task, providerId) {
 }
 
 export const AI_ANALYTICS_HANDLERS = {
-  AgentAnalytics: (state, v) => ({ agentAnalytics: agentAnalytics(state, v.input) }),
+  AgentAnalytics: (state, v) => {
+    const analytics = agentAnalytics(state, v.input);
+    return analytics.__hold ? analytics : { agentAnalytics: analytics };
+  },
   AgentAnalyticsToolFailures: (state, v) => ({
     agentAnalyticsToolFailures: toolFailures(state, v.input, v.seriesKey, v.toolName),
   }),

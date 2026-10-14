@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { yearOf } from "@/lib/osha-log";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
 import { OshaLogSkeleton } from "./_components/osha-skeleton";
 import { oshaLogQuery, oshaSummariesQuery } from "./_components/queries";
@@ -31,9 +31,9 @@ export function OshaLogPage() {
         ),
       }}
     >
-      <DataTableLazyComponent fallback={<OshaLogSkeleton />}>
+      <LazyComponent fallback={<OshaLogSkeleton />}>
         <OshaLogConsole />
-      </DataTableLazyComponent>
+      </LazyComponent>
     </PageLayout>
   );
 }

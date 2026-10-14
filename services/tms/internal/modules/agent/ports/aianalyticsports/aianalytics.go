@@ -189,24 +189,33 @@ type ToolFailureExample struct {
 }
 
 type ToolFailureRows struct {
-	Calls    int
-	Failed   int
-	Causes   []CauseRow
-	Examples []ToolFailureExample
+	Calls     int
+	Failed    int
+	Causes    []CauseRow
+	Providers []string
+	Examples  []ToolFailureExample
 }
 
-type AnalyticsRepository interface {
+type RefreshStateReader interface {
 	RefreshState(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
 	) (*aianalytics.RefreshState, error)
+}
+
+type AnalyticsRefresher interface {
+	RefreshStateReader
 	SaveRefreshState(ctx context.Context, state *aianalytics.RefreshState) error
+	HasActivity(ctx context.Context, req RefreshRequest) (bool, error)
 	RefreshUnits(ctx context.Context, req RefreshRequest) (int, error)
 	RefreshProviderHours(ctx context.Context, req RefreshRequest) (int, error)
 	UnkeyedModels(ctx context.Context, req ModelKeyRequest) ([]string, error)
 	SetModelKeys(ctx context.Context, req ModelKeyRequest, keys []ModelKey) error
 	Prune(ctx context.Context, req PruneRequest) error
+}
 
+type AnalyticsReader interface {
+	RefreshStateReader
 	Totals(ctx context.Context, filter Filter) (*TotalsRow, error)
 	Deployments(ctx context.Context, filter Filter) ([]DeploymentRow, error)
 	OutcomeDurations(
@@ -225,4 +234,9 @@ type AnalyticsRepository interface {
 	ProviderVersions(ctx context.Context, filter Filter) ([]ProviderVersionRow, error)
 	ToolFailures(ctx context.Context, req ToolFailureRequest) (*ToolFailureRows, error)
 	Palette(ctx context.Context, tenant pagination.TenantInfo, since int64) ([]DeploymentKey, error)
+}
+
+type AnalyticsRepository interface {
+	AnalyticsRefresher
+	AnalyticsReader
 }

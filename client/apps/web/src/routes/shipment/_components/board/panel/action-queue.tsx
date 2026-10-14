@@ -2,7 +2,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { CheckIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { formatAltShortcut, formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
@@ -16,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useBoardActions } from "../use-board-actions";
 import { useShipmentBoardUrl } from "../url-state";
+import { ActionQueueSkeleton } from "./side-panel-skeleton";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const TONE_DOT: Record<ShipmentSuggestionTone, string> = {
@@ -156,12 +156,7 @@ export function ActionQueue() {
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-3 w-40" />
-        <Skeleton className="h-20 w-full" />
-      </div>
-    );
+    return <ActionQueueSkeleton />;
   }
 
   return (

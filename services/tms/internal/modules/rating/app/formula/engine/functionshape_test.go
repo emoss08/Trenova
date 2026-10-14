@@ -61,7 +61,11 @@ func TestBuiltinSpecsMarkTheBuiltinsThatTakeAPredicate(t *testing.T) {
 		assert.Equal(t, predicates[spec.Name], spec.Predicate, spec.Name)
 		assert.NotEmpty(t, spec.Signature, spec.Name)
 		assert.NotEmpty(t, spec.Returns, spec.Name)
-		assert.True(t, spec.MaxArgs == engine.VariadicArgs || spec.MaxArgs >= spec.MinArgs, spec.Name)
+		assert.True(
+			t,
+			spec.MaxArgs == engine.VariadicArgs || spec.MaxArgs >= spec.MinArgs,
+			spec.Name,
+		)
 	}
 }
 
@@ -71,9 +75,14 @@ func TestFunctionSpecsDeriveTheirShapeFromTheirSignatures(t *testing.T) {
 	specs := specsByName()
 
 	cases := map[string]engine.FunctionShape{
-		"round":    {MinArgs: 1, MaxArgs: 2, Returns: engine.ValueNumber, NumericArgs: true},
-		"clamp":    {MinArgs: 3, MaxArgs: 3, Returns: engine.ValueNumber, NumericArgs: true},
-		"min":      {MinArgs: 1, MaxArgs: engine.VariadicArgs, Returns: engine.ValueNumber, NumericArgs: true},
+		"round": {MinArgs: 1, MaxArgs: 2, Returns: engine.ValueNumber, NumericArgs: true},
+		"clamp": {MinArgs: 3, MaxArgs: 3, Returns: engine.ValueNumber, NumericArgs: true},
+		"min": {
+			MinArgs:     1,
+			MaxArgs:     engine.VariadicArgs,
+			Returns:     engine.ValueNumber,
+			NumericArgs: true,
+		},
 		"sum":      {MinArgs: 1, MaxArgs: engine.VariadicArgs, Returns: engine.ValueNumber},
 		"avg":      {MinArgs: 1, MaxArgs: engine.VariadicArgs, Returns: engine.ValueNumber},
 		"coalesce": {MinArgs: 1, MaxArgs: engine.VariadicArgs, Returns: engine.ValueAny},
@@ -108,4 +117,17 @@ func TestDisabledFunctionsSayWhyAndWhatToUseInstead(t *testing.T) {
 		}
 	}
 	assert.Equal(t, []string{"fromJSON", "now", "repeat", "toJSON"}, names)
+}
+
+func TestIsReservedNameCoversEveryNameAnExpressionCanCall(t *testing.T) {
+	t.Parallel()
+
+	for _, spec := range engine.FunctionSpecs() {
+		assert.True(t, engine.IsReservedName(spec.Name), spec.Name)
+	}
+	for _, spec := range engine.BuiltinSpecs() {
+		assert.True(t, engine.IsReservedName(spec.Name), spec.Name)
+	}
+	assert.True(t, engine.IsReservedName("date"), "an input named date would shadow the call")
+	assert.False(t, engine.IsReservedName("baseRate"))
 }

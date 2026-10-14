@@ -81,6 +81,16 @@ const SHOTS = [
     act: (page) => scrollToSection(page, "Tool calls that failed"),
   },
   {
+    name: "analytics-highlight",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: async (page) => {
+      await scrollToSection(page, "Leaderboard");
+      await page.getByTitle("Hide from charts").nth(1).hover();
+      await page.waitForTimeout(400);
+    },
+  },
+  {
     name: "analytics-tradeoffs",
     scenario: { aiProviders: "all" },
     query: "?tab=analytics",
@@ -296,6 +306,17 @@ const SHOTS = [
     query: "?tab=analytics&window=Week",
     timezoneId: "America/New_York",
     act: (page) => scrollToSection(page, "Run time", 60),
+  },
+  {
+    name: "analytics-loading",
+    scenario: { aiProviders: "all", aiAnalytics: "hold" },
+    query: "?tab=analytics",
+  },
+  {
+    name: "analytics-code-loading",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    holdModule: "**/analytics/analytics-tab.tsx*",
   },
   {
     name: "analytics-error",
@@ -724,6 +745,7 @@ for (const shot of SHOTS) {
     ...(shot.timezoneId ? { timezoneId: shot.timezoneId } : {}),
   });
   await page.clock.install({ time: new Date(anchor * 1000) });
+  if (shot.holdModule) await page.route(shot.holdModule, () => new Promise(() => {}));
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => {

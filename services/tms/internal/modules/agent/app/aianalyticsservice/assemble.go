@@ -165,26 +165,28 @@ func assemble(a *assembly) *aianalyticsports.Analytics {
 		Trend:         buildTrend(a.data.trend, groupOf),
 		Tools:         buildTools(a.data.toolCells, groupOf),
 		Tasks: buildTasks(&taskInput{
-			rows:      a.data.taskCells,
-			ordered:   a.data.providers,
-			locale:    a.locale,
-			compareBy: compareBy,
+			rows:        a.data.taskCells,
+			ordered:     a.data.providers,
+			providers:   providers,
+			compareBy:   compareBy,
+			agentScoped: !a.request.AgentDefinitionID.IsNil(),
 		}),
 		Providers: buildProviderHealth(a.data, providers, a.until),
 		Events:    buildEvents(a.data, providers, a.since),
 	}
+	pair := sharedModelPair(deployments)
 	out.Summary = summarize(&narration{
-		locale:      a.locale,
-		window:      a.request.Window,
-		compareBy:   compareBy,
-		series:      series,
-		deployments: deployments,
-		providers:   providers,
+		locale:    a.locale,
+		window:    a.request.Window,
+		compareBy: compareBy,
+		series:    series,
+		sameModel: pair,
+		providers: providers,
 	})
 	out.RunTimeNote = runTimeNote(deployments, providers)
 	markQuiet(out.Series, a.until)
 	markQuiet(out.Deployments, a.until)
-	if pair := sharedModelPair(deployments); pair != nil {
+	if pair != nil {
 		out.SameModel = &aianalyticsports.SameModel{
 			ModelKey:  pair.model,
 			BetterKey: pair.better.Key,
@@ -575,46 +577,50 @@ func buildTrend(rows []aianalyticsports.TrendRow, groupOf keyFunc) []aianalytics
 	return out
 }
 
+type toolTally struct {
+	row   aianalyticsports.ToolRow
+	cells map[string]*aianalyticsports.ToolCell
+}
+
 func buildTools(rows []aianalyticsports.ToolCellRow, groupOf keyFunc) []aianalyticsports.ToolRow {
-	type cellKey struct{ tool, series string }
-	cells := make(map[cellKey]*aianalyticsports.ToolCell, len(rows))
-	tools := make(map[string]*aianalyticsports.ToolRow, len(rows))
+	tools := make(map[string]*toolTally, len(rows))
 	for _, row := range rows {
 		tool, ok := tools[row.ToolName]
 		if !ok {
-			tool = &aianalyticsports.ToolRow{Name: row.ToolName}
+			tool = &toolTally{
+				row:   aianalyticsports.ToolRow{Name: row.ToolName},
+				cells: make(map[string]*aianalyticsports.ToolCell, 4),
+			}
 			tools[row.ToolName] = tool
 		}
-		key := cellKey{tool: row.ToolName, series: groupOf(row.DeploymentKey)}
-		cell, ok := cells[key]
+		series := groupOf(row.DeploymentKey)
+		cell, ok := tool.cells[series]
 		if !ok {
-			cell = &aianalyticsports.ToolCell{SeriesKey: key.series}
-			cells[key] = cell
+			cell = &aianalyticsports.ToolCell{SeriesKey: series}
+			tool.cells[series] = cell
 		}
 		cell.Calls += row.Calls
-		tool.Calls += row.Calls
+		tool.row.Calls += row.Calls
 		if row.Cause != "" {
 			cell.Failed += row.Calls
-			tool.Failed += row.Calls
+			tool.row.Failed += row.Calls
 		}
 	}
 
 	ordered := make([]*aianalyticsports.ToolRow, 0, len(tools))
 	for _, tool := range tools {
-		tool.FailureRate = rate(tool.Failed, tool.Calls)
-		ordered = append(ordered, tool)
+		tool.row.FailureRate = rate(tool.row.Failed, tool.row.Calls)
+		ordered = append(ordered, &tool.row)
 	}
 	slices.SortFunc(ordered, compareTools)
 	ordered = ordered[:min(len(ordered), maxTools)]
 
 	out := make([]aianalyticsports.ToolRow, 0, len(ordered))
 	for _, tool := range ordered {
+		cells := tools[tool.Name].cells
 		row := *tool
-		row.Cells = make([]aianalyticsports.ToolCell, 0, 8)
-		for key, cell := range cells {
-			if key.tool != tool.Name {
-				continue
-			}
+		row.Cells = make([]aianalyticsports.ToolCell, 0, len(cells))
+		for _, cell := range cells {
 			cell.FailureRate = rate(cell.Failed, cell.Calls)
 			cell.Few = !aianalytics.RanksByCalls(cell.Calls)
 			row.Cells = append(row.Cells, *cell)
@@ -687,8 +693,9 @@ func buildProviderHealth(
 		}
 		item.Calls += row.Calls
 		item.FellToNext += row.FellToNext
-		if row.LastHour > 0 && (item.LastCalledAt == nil || row.LastHour > *item.LastCalledAt) {
-			item.LastCalledAt = ptr(row.LastHour)
+		lastCall := min(row.LastHour+secondsPerHour-1, until)
+		if row.LastHour > 0 && (item.LastCalledAt == nil || lastCall > *item.LastCalledAt) {
+			item.LastCalledAt = ptr(lastCall)
 		}
 		if row.Error.BeforeAnswer() {
 			item.Errors += row.Calls

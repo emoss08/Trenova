@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
@@ -16,6 +16,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { importAssistantConversationKey } from "./import-draft";
 import { ProcessingPhase } from "./processing-phase";
+import { ReconciliationWorkspaceSkeleton } from "./reconciliation-workspace-skeleton";
 import { SuccessPhase } from "./success-phase";
 import type { ReconciliationPhase, RequiredFieldsForm } from "./types";
 import { UploadPhase } from "./upload-phase";
@@ -389,9 +390,7 @@ export function ImportWorkspace() {
       )}
 
       {currentPhase === "reconciliation" && uploadedDocumentId && (
-        <SuspenseLoader
-          componentLoaderProps={{ message: t("Loading reconciliation workspace...") }}
-        >
+        <LazyComponent fallback={<ReconciliationWorkspaceSkeleton />}>
           <ReconciliationWorkspace
             documentId={uploadedDocumentId}
             fileName={importedDocument?.originalName}
@@ -415,7 +414,7 @@ export function ImportWorkspace() {
             lastCreateError={lastCreateError}
             onClearCreateError={() => setLastCreateError(null)}
           />
-        </SuspenseLoader>
+        </LazyComponent>
       )}
 
       {currentPhase === "success" && createdShipmentId && (

@@ -29,8 +29,6 @@ type contextKey struct{}
 // Build produces a tenant's lookup. It is the expensive call being memoized.
 type Build func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error)
 
-// StampedBuild produces a tenant's lookup knowing the stamp it is built under,
-// empty when the stamp could not be read.
 type StampedBuild func(ctx context.Context, stamp string) (formulatemplatetypes.RateTableLookup, error)
 
 // tenantKey scopes a memo entry to one organization in one business unit. An

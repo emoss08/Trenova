@@ -1,10 +1,11 @@
 import { usePermission } from "@/hooks/use-permission";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { lazyComponent } from "@/lib/lazy-component";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
-import { lazy, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import {
   ACTIVITY_VIEW_PARAM,
   AI_CONTROL_TAB_PARAM,
@@ -27,6 +28,7 @@ import {
   type RailView,
   type SafetyView,
 } from "./ai-control-tabs";
+import { AIControlTabSkeleton } from "./ai-control-tab-skeleton";
 import { PageHead } from "./_components/kit/page-head";
 import { Seg } from "./_components/kit/layout";
 import { buildRailItems, resolveRailView, tabCounts } from "./_components/rail-items";
@@ -40,17 +42,81 @@ import { agentQuality } from "@/lib/queries/agent-quality";
 import { aiAudit } from "@/lib/queries/ai-audit";
 import { aiRetrieval } from "@/lib/queries/ai-retrieval";
 
-const OverviewTab = lazy(() => import("./_components/overview/overview-tab"));
-const AgentsTab = lazy(() => import("./_components/agents/agents-tab"));
-const ProvidersTab = lazy(() => import("./_components/providers/providers-tab"));
-const ExtensionsTab = lazy(() => import("./_components/extensions/extensions-tab"));
-const MemoryTab = lazy(() => import("./_components/memory/memory-tab"));
-const RetrievalTab = lazy(() => import("./_components/retrieval/retrieval-tab"));
-const SafetyTab = lazy(() => import("./_components/safety/safety-tab"));
-const QualityTab = lazy(() => import("./_components/quality/quality-tab"));
-const AnalyticsTab = lazy(() => import("./_components/analytics/analytics-tab"));
-const ActivityTab = lazy(() => import("./_components/activity/activity-tab"));
-const AuditTab = lazy(() => import("./_components/audit/audit-tab"));
+const overviewModule = lazyComponent(
+  () => import("./_components/overview/overview-tab"),
+  (module) => module.default,
+);
+const agentsModule = lazyComponent(
+  () => import("./_components/agents/agents-tab"),
+  (module) => module.default,
+);
+const providersModule = lazyComponent(
+  () => import("./_components/providers/providers-tab"),
+  (module) => module.default,
+);
+const extensionsModule = lazyComponent(
+  () => import("./_components/extensions/extensions-tab"),
+  (module) => module.default,
+);
+const memoryModule = lazyComponent(
+  () => import("./_components/memory/memory-tab"),
+  (module) => module.default,
+);
+const retrievalModule = lazyComponent(
+  () => import("./_components/retrieval/retrieval-tab"),
+  (module) => module.default,
+);
+const safetyModule = lazyComponent(
+  () => import("./_components/safety/safety-tab"),
+  (module) => module.default,
+);
+const qualityModule = lazyComponent(
+  () => import("./_components/quality/quality-tab"),
+  (module) => module.default,
+);
+const analyticsModule = lazyComponent(
+  () => import("./_components/analytics/analytics-tab"),
+  (module) => module.default,
+);
+const activityModule = lazyComponent(
+  () => import("./_components/activity/activity-tab"),
+  (module) => module.default,
+);
+const auditModule = lazyComponent(
+  () => import("./_components/audit/audit-tab"),
+  (module) => module.default,
+);
+
+const OverviewTab = overviewModule.Component;
+const AgentsTab = agentsModule.Component;
+const ProvidersTab = providersModule.Component;
+const ExtensionsTab = extensionsModule.Component;
+const MemoryTab = memoryModule.Component;
+const RetrievalTab = retrievalModule.Component;
+const SafetyTab = safetyModule.Component;
+const QualityTab = qualityModule.Component;
+const AnalyticsTab = analyticsModule.Component;
+const ActivityTab = activityModule.Component;
+const AuditTab = auditModule.Component;
+
+/** Reads a tab's code when the pointer or focus reaches it, so the click waits for nothing. */
+const TAB_PRELOADS: Record<AIControlTab, () => Promise<unknown>> = {
+  overview: overviewModule.preload,
+  agents: agentsModule.preload,
+  providers: providersModule.preload,
+  extensions: extensionsModule.preload,
+  memory: memoryModule.preload,
+  retrieval: retrievalModule.preload,
+  safety: safetyModule.preload,
+  quality: qualityModule.preload,
+  analytics: analyticsModule.preload,
+  activity: activityModule.preload,
+  audit: auditModule.preload,
+};
+
+function preloadTab(tab: AIControlTab) {
+  void TAB_PRELOADS[tab]().catch(() => undefined);
+}
 
 /**
  * One place for everything AI in the organization: where work goes
@@ -233,7 +299,13 @@ export function AgentControlPage() {
   return (
     <div className="aic">
       <div className="pg">
-        <PageHead tabs={tabs} active={activeTab} counts={counts} onSelect={selectTab} />
+        <PageHead
+          tabs={tabs}
+          active={activeTab}
+          counts={counts}
+          onSelect={selectTab}
+          onIntent={preloadTab}
+        />
         <div key={activeTab} className="tab-in">
           {activeItem && activeItem.children.length > 1 && activeView && activeTab !== "safety" && (
             <div className="vw">
@@ -245,7 +317,7 @@ export function AgentControlPage() {
               />
             </div>
           )}
-          <DataTableLazyComponent>
+          <LazyComponent fallback={<AIControlTabSkeleton tab={activeTab} view={activeView} />}>
             {activeTab === "overview" && (
               <OverviewTab onOpenProviders={openProviders} onOpenAgents={openAgents} />
             )}
@@ -261,7 +333,7 @@ export function AgentControlPage() {
             {activeTab === "audit" && (
               <AuditTab view={activeView as AuditView} onOpenExports={openAuditExports} />
             )}
-          </DataTableLazyComponent>
+          </LazyComponent>
         </div>
       </div>
     </div>

@@ -97,7 +97,7 @@ func outcomeDurationsSQL(grouping aianalytics.Grouping) string {
 
 func trendSQL(grouping aianalytics.Grouping) string {
 	return fmt.Sprintf(`SELECT %[1]s,
-		(?starts::bigint[])[GREATEST(width_bucket(w.finished_at, ?starts::bigint[]), 1)] AS bucket_start,
+		(?starts::bigint[])[width_bucket(w.finished_at, ?starts::bigint[])] AS bucket_start,
 		COUNT(*) AS runs,
 		COUNT(*) FILTER (WHERE w.outcome = '%[2]s') AS completed,
 		COALESCE(SUM(w.tool_calls), 0) AS tool_calls,
@@ -106,6 +106,7 @@ func trendSQL(grouping aianalytics.Grouping) string {
 			FILTER (WHERE w.outcome = '%[2]s') AS median_run_ms
 	FROM ai_work_units AS w
 	WHERE %[3]s
+		AND w.finished_at >= (?starts::bigint[])[1]
 	GROUP BY 1, 2, 3`,
 		groupColumnsSQL(grouping), aianalytics.OutcomeCompleted, unitWindowSQL)
 }
@@ -189,9 +190,8 @@ var firstTokenSQL = fmt.Sprintf(`SELECT %[1]s,
 		SUM(b.v)::bigint AS count
 	FROM ai_provider_hourly_stats AS h
 	CROSS JOIN LATERAL unnest(h.first_token_hist) WITH ORDINALITY AS b(v, idx)
-	WHERE %[2]s AND h.error_class = ''
-	GROUP BY 1, 2, 3
-	HAVING SUM(b.v) > 0`,
+	WHERE %[2]s AND h.error_class = '' AND b.v > 0
+	GROUP BY 1, 2, 3`,
 	hourDeploymentColumnsSQL, hourScopeSQL)
 
 var providerHoursSQL = fmt.Sprintf(`SELECT h.provider_id, h.hour,
@@ -222,31 +222,42 @@ var providerVersionsSQL = fmt.Sprintf(`SELECT v.subject_id AS provider_id,
 	settingversion.KindAIProvider)
 
 func toolCausesSQL(compareBy aianalytics.CompareBy) string {
-	return fmt.Sprintf(`SELECT t.cause, SUM(t.calls) AS calls
+	return fmt.Sprintf(`SELECT t.cause, t.provider_id, SUM(t.calls) AS calls
 	FROM ai_work_unit_tools AS t
 	WHERE %[1]s
 		AND t.tool_name = ?tool_name
 		AND %[2]s = ?series_key
-	GROUP BY 1`,
+	GROUP BY 1, 2`,
 		toolScopeSQL, toolKeySQL(compareBy))
 }
 
 func toolExamplesSQL(compareBy aianalytics.CompareBy) string {
-	return fmt.Sprintf(`SELECT w.id AS unit_id, w.source, s.tool_name,
+	return fmt.Sprintf(`WITH candidates AS (
+		SELECT t.unit_id, MAX(t.finished_at) AS finished_at
+		FROM ai_work_unit_tools AS t
+		WHERE %[1]s
+			AND t.tool_name = ?tool_name
+			AND %[2]s = ?series_key
+			AND t.cause <> ''
+		GROUP BY t.unit_id
+		ORDER BY 2 DESC
+		LIMIT ?candidates
+	)
+	SELECT w.id AS unit_id, w.source, s.tool_name,
 		LEFT(COALESCE(NULLIF(s.outcome->>'content', ''), s.outcome->>'reason', ''), 300) AS message,
 		COALESCE(w.agent_definition_id, '') AS agent_definition_id,
 		COALESCE(s.settled_at_ms / 1000, s.updated_at) AS at
-	FROM ai_work_units AS w
+	FROM candidates AS c
+	JOIN ai_work_units AS w
+		ON w.organization_id = ?org AND w.business_unit_id = ?bu AND w.id = c.unit_id
 	JOIN agent_run_steps AS s
-		ON s.organization_id = w.organization_id
-		AND s.business_unit_id = w.business_unit_id
-		AND s.owner_id = w.id
-	WHERE %[1]s
-		AND %[2]s = ?series_key
-		AND s.kind = '%[3]s' AND s.status = '%[4]s' AND s.tool_name = ?tool_name
+		ON s.organization_id = ?org
+		AND s.business_unit_id = ?bu
+		AND s.owner_id = c.unit_id
+	WHERE s.kind = '%[3]s' AND s.status = '%[4]s' AND s.tool_name = ?tool_name
 	ORDER BY s.updated_at DESC, s.id DESC
 	LIMIT ?limit`,
-		unitWindowSQL, keySQL(compareBy), agentports.RunStepTool, agentports.RunStepFailed)
+		toolScopeSQL, toolKeySQL(compareBy), agentports.RunStepTool, agentports.RunStepFailed)
 }
 
 const paletteSQL = `SELECT DISTINCT h.model_key, h.provider_id

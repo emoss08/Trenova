@@ -15,6 +15,11 @@ import {
 } from "@trenova/shared/components/ui/sheet";
 import { createLoader, useQueryStates } from "nuqs";
 import { lazy, useCallback, useEffect, useState } from "react";
+import {
+  BillingQueueDetailSkeleton,
+  BillingQueueDetailUnselected,
+} from "./_components/billing-queue-detail-skeleton";
+import { BillingQueueDocumentPreviewSkeleton } from "./_components/billing-queue-document-preview-skeleton";
 import { BillingQueueKPIStrip } from "./_components/billing-queue-kpi-strip";
 import { BillingQueueSidebar } from "./_components/billing-queue-sidebar";
 import {
@@ -34,6 +39,10 @@ import {
 import { BillingQueueViewSwitch } from "./_components/billing-queue-view-switch";
 import { BulkBillingTransferAction } from "./_components/bulk-transfer/bulk-billing-transfer-action";
 import { StatementKPIStrip } from "./_components/statements/statement-kpi-strip";
+import {
+  StatementDetailSkeleton,
+  StatementDetailUnselected,
+} from "./_components/statements/statement-detail-skeleton";
 import { StatementSidebar } from "./_components/statements/statement-sidebar";
 
 const BillingQueueDetailPane = lazy(() => import("./_components/billing-queue-detail-pane"));
@@ -220,7 +229,11 @@ export function BillingQueuePage() {
           />
         }
         detail={
-          <LazyComponent>
+          <LazyComponent
+            fallback={
+              selectedCustomerId ? <StatementDetailSkeleton /> : <StatementDetailUnselected />
+            }
+          >
             <StatementDetail
               key={selectedCustomerId ?? "none"}
               customerId={selectedCustomerId}
@@ -251,7 +264,11 @@ export function BillingQueuePage() {
           <BillingQueueSidebar selectedItemId={selectedItemId} onSelectItem={handleSelectItem} />
         }
         detail={
-          <LazyComponent>
+          <LazyComponent
+            fallback={
+              selectedItemId ? <BillingQueueDetailSkeleton /> : <BillingQueueDetailUnselected />
+            }
+          >
             <BillingQueueDetailPane
               selectedItemId={selectedItemId}
               onDocumentSelect={handleDocumentSelect}
@@ -278,7 +295,7 @@ export function BillingQueuePage() {
             </SheetDescription>
           </SheetHeader>
           <div className="h-[calc(100%-73px)]">
-            <LazyComponent>
+            <LazyComponent fallback={<BillingQueueDocumentPreviewSkeleton />}>
               <BillingQueueDocumentPreview
                 documentId={selectedDocumentId}
                 fileName={selectedDocumentName}

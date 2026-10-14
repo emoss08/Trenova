@@ -7,7 +7,6 @@ import { memo, type CSSProperties } from "react";
 import { failureIntensity, failureShare, type SeriesColors } from "./analytics-model";
 import { AnalyticsCard } from "./card";
 import { HeatHead } from "./heat-head";
-import { highlightClass, useHighlight } from "./highlight";
 
 type ToolCallsCardProps = {
   tools: readonly AIAnalyticsTool[];
@@ -24,7 +23,6 @@ export const ToolCallsCard = memo(function ToolCallsCard({
   onOpenCell,
 }: ToolCallsCardProps) {
   const t = useT();
-  const { hot } = useHighlight();
   const keys = new Set(series.map((item) => item.key));
   const rows = tools.filter((tool) =>
     tool.cells.some((cell) => keys.has(cell.seriesKey) && cell.calls > 0),
@@ -71,7 +69,8 @@ export const ToolCallsCard = memo(function ToolCallsCard({
                         <span
                           key={item.key}
                           role="cell"
-                          className={cn("an-c z", highlightClass(hot, item.key))}
+                          className="an-c z"
+                          data-series={item.key}
                           aria-label={t("No calls")}
                         >
                           —
@@ -89,11 +88,8 @@ export const ToolCallsCard = memo(function ToolCallsCard({
                         key={item.key}
                         type="button"
                         role="cell"
-                        className={cn(
-                          "an-c ui-focus-ring",
-                          cell.few && "few",
-                          highlightClass(hot, item.key),
-                        )}
+                        data-series={item.key}
+                        className={cn("an-c ui-focus-ring", cell.few && "few")}
                         style={
                           {
                             "--i": cell.few ? 0 : failureIntensity(cell.failureRate),
