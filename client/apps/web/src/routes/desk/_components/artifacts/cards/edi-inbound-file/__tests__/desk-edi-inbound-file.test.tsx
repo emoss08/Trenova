@@ -187,7 +187,7 @@ describe("DeskEdiInboundFile", () => {
         .getAllByRole("listitem")
         .map((item) => item.textContent),
     ).toEqual([
-      "Load tender change 204/0002 did not match a pending tender for ACME; review manually",
+      "Load tender change 204/0002 did not match a pending tender for LT-88241; review manually",
       "Load tender 204/0002 requires mapping before approval (1 unresolved entities)",
     ]);
     expect(within(carried).getByText("SE01 says 7; 9 counted")).toBeInTheDocument();

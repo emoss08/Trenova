@@ -16,7 +16,7 @@
   "isaReceiverQualifier": "ZZ",
   "isaReceiverId": "TRENOVA",
   "status": "PartiallyProcessed",
-  "failureReason": "load tender change 204/0002 did not match a pending tender for ACME; review manually; load tender 204/0002 requires mapping before approval (1 unresolved entities); acknowledgment for control number 0001 could not be matched to an outbound message",
+  "failureReason": "load tender change 204/0002 did not match a pending tender for LT-88241; review manually; load tender 204/0002 requires mapping before approval (1 unresolved entities); acknowledgment for control number 0001 could not be matched to an outbound message",
   "transactionCount": 3,
   "receivedAt": 1791626400,
   "processedAt": 1791626404,
@@ -118,8 +118,8 @@
           "totalChargeAmount": "280000",
           "ratingUnit": 0,
           "ratingDetail": {
-            "externalShipmentId": "ACME",
-            "paymentMethod": "LT-88240"
+            "externalShipmentId": "LT-88240",
+            "paymentMethod": "PP"
           },
           "moves": [
             {
@@ -234,8 +234,8 @@
           "totalChargeAmount": null,
           "ratingUnit": 0,
           "ratingDetail": {
-            "externalShipmentId": "ACME",
-            "paymentMethod": "LT-88241"
+            "externalShipmentId": "LT-88241",
+            "paymentMethod": "PP"
           },
           "moves": [
             {

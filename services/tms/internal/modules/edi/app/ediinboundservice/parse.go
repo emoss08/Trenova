@@ -707,6 +707,31 @@ func applyFreightInvoiceTotals(
 	}
 }
 
+var shipmentPaymentMethods = map[string]struct{}{
+	"BP": {}, "CA": {}, "CC": {}, "CD": {}, "CF": {}, "DE": {}, "DF": {}, "FO": {},
+	"HP": {}, "MX": {}, "NC": {}, "NR": {}, "PA": {}, "PB": {}, "PC": {}, "PD": {},
+	"PE": {}, "PL": {}, "PO": {}, "PP": {}, "PS": {}, "PU": {}, "RC": {}, "RF": {},
+	"RS": {}, "SC": {}, "TP": {}, "WC": {},
+}
+
+func isShipmentPaymentMethod(value string) bool {
+	_, ok := shipmentPaymentMethods[value]
+	return ok
+}
+
+func readB2(b2 *edix12inspect.X12Segment) (shipmentID, paymentMethod string) {
+	element := func(position int) string {
+		return strings.TrimSpace(elementValue(b2, position))
+	}
+	b201, b202, b204, b206 := element(1), element(2), element(4), element(6)
+	legacy := b206 == "" &&
+		(isShipmentPaymentMethod(b204) || (b204 == "" && b201 != "" && b202 != ""))
+	if legacy {
+		return b202, b204
+	}
+	return b204, b206
+}
+
 func parseLoadTender(t *parsedTransaction) edi.LoadTenderPayload {
 	payload := edi.LoadTenderPayload{
 		PurposeCode:              edi.LoadTenderPurposeOriginal,
@@ -720,10 +745,11 @@ func parseLoadTender(t *parsedTransaction) edi.LoadTenderPayload {
 		RequiredMappingEntityIDs: map[edi.MappingEntityType][]pulid.ID{},
 	}
 	if b2 := findSegment(t.segments, "B2"); b2 != nil {
-		if ref := strings.TrimSpace(elementValue(b2, 2)); ref != "" {
-			payload.RatingDetail["externalShipmentId"] = ref
+		shipmentID, paymentMethod := readB2(b2)
+		if shipmentID != "" {
+			payload.RatingDetail["externalShipmentId"] = shipmentID
 		}
-		if paymentMethod := strings.TrimSpace(elementValue(b2, 4)); paymentMethod != "" {
+		if paymentMethod != "" {
 			payload.RatingDetail["paymentMethod"] = paymentMethod
 		}
 	}

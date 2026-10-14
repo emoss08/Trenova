@@ -53,7 +53,7 @@ func TestRender204_ResolvesRepeatPartnerAndDateTimeFields(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Empty(t, result.Diagnostics)
-	assert.Contains(t, result.RawX12, "B2*ABCD*"+input.Payload.ShipmentID.String())
+	assert.Contains(t, result.RawX12, "B2**ABCD**"+input.Payload.ShipmentID.String()+"**PP")
 	assert.Contains(t, result.RawX12, "G62*37*20260516*I*1430")
 	assert.Contains(t, result.RawX12, "N1*LD*Chicago Dock")
 	assert.Contains(t, result.RawX12, "G61*IC*Jane Dispatcher*TE*5551212")
@@ -74,8 +74,8 @@ func TestRender204_CarrierSCACOverrideAndOfferReference(t *testing.T) {
 	result, err := Render204(input)
 
 	require.NoError(t, err)
-	assert.Contains(t, result.RawX12, "B2*WXYZ*"+input.Payload.ShipmentID.String())
-	assert.NotContains(t, result.RawX12, "B2*ABCD*")
+	assert.Contains(t, result.RawX12, "B2**WXYZ**"+input.Payload.ShipmentID.String()+"**PP")
+	assert.NotContains(t, result.RawX12, "ABCD")
 	assert.Contains(t, result.RawX12, "L11*"+offerID.String()+"*CR")
 	assert.Equal(
 		t,
@@ -95,7 +95,7 @@ func TestRender204_CarrierSCACFallsBackToPartnerSettings(t *testing.T) {
 	result, err := Render204(input)
 
 	require.NoError(t, err)
-	assert.Contains(t, result.RawX12, "B2*ABCD*"+input.Payload.ShipmentID.String())
+	assert.Contains(t, result.RawX12, "B2**ABCD**"+input.Payload.ShipmentID.String()+"**PP")
 	assert.NotContains(t, result.RawX12, "*CR")
 }
 
@@ -146,7 +146,7 @@ func TestRender204_PreservesElementPositionsAndISAFixedWidths(t *testing.T) {
 	assert.Equal(t, "TRENOVA        ", isa[6])
 	assert.Len(t, isa[8], 15)
 	assert.Equal(t, "PARTNER        ", isa[8])
-	assert.Contains(t, result.RawX12, "B2**"+input.Payload.ShipmentID.String()+"**PP")
+	assert.Contains(t, result.RawX12, "B2****"+input.Payload.ShipmentID.String()+"**PP")
 }
 
 func TestRender204_TrailerCountsAndControlNumbersUseRenderedEnvelope(t *testing.T) {
@@ -389,7 +389,7 @@ func TestRender204_RequiredElementFalseConditionDoesNotValidateRequired(t *testi
 
 	require.NoError(t, err)
 	require.Empty(t, result.Diagnostics)
-	assert.Contains(t, result.RawX12, "B2****PP")
+	assert.Contains(t, result.RawX12, "B2******PP")
 }
 
 func TestRender204_InvalidConditionEmitsConditionError(t *testing.T) {
@@ -639,7 +639,7 @@ func TestRender204_StarlarkReadsShipmentContext(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Empty(t, result.Diagnostics)
-	assert.Contains(t, result.RawX12, "B2**"+input.Payload.ShipmentID.String()+"**BOL-STARK")
+	assert.Contains(t, result.RawX12, "B2****"+input.Payload.ShipmentID.String()+"**BOL-STARK")
 }
 
 func TestRender204_StarlarkRepeatValueRenders(t *testing.T) {
@@ -702,7 +702,7 @@ func TestRender204_StarlarkNoneFallsThroughToRequiredValidation(t *testing.T) {
 	assert.Equal(t, edi.ValidationSeverityError, diagnostic.Severity)
 	assert.Equal(t, "required", diagnostic.Code)
 	assert.Equal(t, "B2", diagnostic.SegmentID)
-	assert.Equal(t, 2, diagnostic.ElementPosition)
+	assert.Equal(t, 4, diagnostic.ElementPosition)
 	assert.Equal(t, "starlark:value", diagnostic.Path)
 	assert.Contains(t, diagnostic.Message, "Shipment Identification Number is required")
 }

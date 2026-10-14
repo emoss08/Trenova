@@ -118,7 +118,11 @@ func sampleTenderPayload() edi.LoadTenderPayload {
 func TestParseInterchangeRoundTripsRendered204(t *testing.T) {
 	t.Parallel()
 
-	raw := renderBase204(t, sampleTenderPayload())
+	shipmentID := pulid.MustNew("shp_")
+	sample := sampleTenderPayload()
+	sample.ShipmentID = shipmentID
+	raw := renderBase204(t, sample)
+	require.Contains(t, raw, "B2****"+shipmentID.String()+"**PP~")
 	interchange, err := parseInterchange(raw)
 	require.NoError(t, err)
 
@@ -138,6 +142,11 @@ func TestParseInterchangeRoundTripsRendered204(t *testing.T) {
 	tender := payload.LoadTender
 	require.Equal(t, edi.LoadTenderPurposeOriginal, tender.PurposeCode)
 	require.Equal(t, "BOL-778899", tender.BOL)
+	require.Equal(
+		t,
+		map[string]any{"externalShipmentId": shipmentID.String(), "paymentMethod": "PP"},
+		tender.RatingDetail,
+	)
 	require.NotNil(t, tender.Weight)
 	require.EqualValues(t, 42000, *tender.Weight)
 	require.NotNil(t, tender.Pieces)
@@ -626,4 +635,94 @@ func TestParseInterchangeKeepsEachTransactionInItsOwnGroup(t *testing.T) {
 	require.Equal(t, edi.TransactionSet997, ack.set)
 	require.Equal(t, "FA", ack.functionalGroupID)
 	require.Equal(t, "318", ack.groupControlNumber)
+}
+
+func tenderRatingDetail(t *testing.T, b2 string) map[string]any {
+	t.Helper()
+
+	raw := "ISA*00*          *00*          *ZZ*PARTNER        *ZZ*TRENOVA        " +
+		"*260107*1200*^*00401*000000501*0*P*>~" +
+		"GS*SM*PARTNER*TRENOVA*20260107*1200*501*X*004010~" +
+		"ST*204*0001~" +
+		b2 + "~" +
+		"B2A*00~" +
+		"SE*4*0001~" +
+		"GE*1*501~" +
+		"IEA*1*000000501~"
+
+	interchange, err := parseInterchange(raw)
+	require.NoError(t, err)
+	require.Len(t, interchange.transactions, 1)
+	payload := interchange.transactions[0].documentPayload()
+	require.NotNil(t, payload.LoadTender)
+	return payload.LoadTender.RatingDetail
+}
+
+func TestParseLoadTenderReadsB2AsX12LaysItOut(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		b2   string
+		want map[string]any
+	}{
+		{
+			name: "SCAC in B202, shipment in B204, payment in B206",
+			b2:   "B2**SIML**SIM000042**PP",
+			want: map[string]any{"externalShipmentId": "SIM000042", "paymentMethod": "PP"},
+		},
+		{
+			name: "a tariff service code in B201",
+			b2:   "B2*TL*ACME**LT-88240**CC",
+			want: map[string]any{"externalShipmentId": "LT-88240", "paymentMethod": "CC"},
+		},
+		{
+			name: "no method of payment",
+			b2:   "B2**ACME**LT-88240",
+			want: map[string]any{"externalShipmentId": "LT-88240"},
+		},
+		{
+			name: "no SCAC",
+			b2:   "B2****LT-88240**TP",
+			want: map[string]any{"externalShipmentId": "LT-88240", "paymentMethod": "TP"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			require.Equal(t, tt.want, tenderRatingDetail(t, tt.b2))
+		})
+	}
+}
+
+func TestParseLoadTenderStillReadsB2AsTrenovaOnceWroteIt(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		b2   string
+		want map[string]any
+	}{
+		{
+			name: "SCAC in B201, shipment in B202, payment in B204",
+			b2:   "B2*ABCD*shp_01JABCDEF**PP",
+			want: map[string]any{"externalShipmentId": "shp_01JABCDEF", "paymentMethod": "PP"},
+		},
+		{
+			name: "no SCAC",
+			b2:   "B2**shp_01JABCDEF**PP",
+			want: map[string]any{"externalShipmentId": "shp_01JABCDEF", "paymentMethod": "PP"},
+		},
+		{
+			name: "no method of payment",
+			b2:   "B2*ABCD*shp_01JABCDEF",
+			want: map[string]any{"externalShipmentId": "shp_01JABCDEF"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			require.Equal(t, tt.want, tenderRatingDetail(t, tt.b2))
+		})
+	}
 }

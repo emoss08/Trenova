@@ -132,7 +132,7 @@ describe("processingNotes", () => {
     expect(processingNotes(inboundFile("batch"))).toEqual([
       {
         key: "note-0",
-        text: "Load tender change 204/0002 did not match a pending tender for ACME; review manually",
+        text: "Load tender change 204/0002 did not match a pending tender for LT-88241; review manually",
         severity: "warn",
         set: "204",
         control: "0002",
