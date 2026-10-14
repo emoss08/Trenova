@@ -199,6 +199,20 @@ describe("board", () => {
     );
   });
 
+  it("does not call a priced series whose runs cost nothing local", () => {
+    const entries = board(
+      [
+        series({ key: "free-tier", pricedRuns: 12, costPerCompletedRun: "0" }),
+        series({ key: "azure", costPerCompletedRun: "0.041" }),
+      ],
+      METRICS.cost,
+    );
+
+    expect(boardSentence(t, rt, METRICS.cost, entries)).toBe(
+      "[free-tier] costs $0.000 per finished run; [azure] costs $0.041.",
+    );
+  });
+
   it("names only the best series when it is the one ranked", () => {
     const entries = board(
       [series({ key: "solo", approvalRate: 0.72 }), series({ key: "few", few: true })],

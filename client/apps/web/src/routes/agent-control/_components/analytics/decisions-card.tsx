@@ -1,11 +1,10 @@
 import type { AIAnalyticsSeries } from "@/lib/graphql/ai-analytics";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
 import { memo, useMemo } from "react";
 import { percent, type SeriesColors } from "./analytics-model";
 import { AnalyticsCard, Swatch } from "./card";
-import { highlightClass, hoverProps, useHighlight } from "./highlight";
+import { hoverProps, useSetHot } from "./highlight";
 
 /** What people did with each series' proposals: a read on judgment, not just completion. */
 export const DecisionsCard = memo(function DecisionsCard({
@@ -18,7 +17,7 @@ export const DecisionsCard = memo(function DecisionsCard({
   onOpen: (key: string) => void;
 }) {
   const t = useT();
-  const { hot, setHot } = useHighlight();
+  const setHot = useSetHot();
   const rows = useMemo(
     () =>
       series
@@ -40,7 +39,8 @@ export const DecisionsCard = memo(function DecisionsCard({
           <button
             key={item.key}
             type="button"
-            className={cn("an-dcr ui-focus-ring", highlightClass(hot, item.key))}
+            className="an-dcr ui-focus-ring"
+            data-series={item.key}
             onClick={() => onOpen(item.key)}
             {...hoverProps(setHot, item.key)}
           >

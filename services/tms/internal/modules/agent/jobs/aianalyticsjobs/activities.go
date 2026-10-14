@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -50,7 +51,9 @@ func (a *Activities) RefreshOrganizationAIAnalyticsActivity(
 	input *OrganizationAIAnalyticsInput,
 ) (*OrganizationAIAnalyticsResult, error) {
 	tenant := input.TenantInfo()
-	refreshed, err := a.analytics.Refresh(ctx, tenant)
+	refreshed, err := a.analytics.Refresh(ctx, tenant, func(refreshedThrough int64) {
+		activity.RecordHeartbeat(ctx, refreshedThrough)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("refresh ai analytics: %w", err)
 	}
