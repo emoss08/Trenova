@@ -370,13 +370,13 @@ func (r *repository) ListActive(
 // Search is the recall tool's read: the memories whose words match the
 // query, best first, and whatever narrowing it was given. A query with no
 // operators also matches every word as a prefix, and when that finds nothing
-// the words are tried one at a time, so a question finds the memories that
-// share most of its words.
+// any two of its meaningful words are tried, so a question finds the
+// memories that share most of its words.
 func (r *repository) Search(
 	ctx context.Context,
 	req agentports.SearchAgentMemoriesRequest,
 ) ([]*agent.Memory, error) {
-	text := newTextQuery(req.Query)
+	text := newTextQuery(req.Query, req.Terms)
 	if text.empty() {
 		return r.search(ctx, &req, nil)
 	}

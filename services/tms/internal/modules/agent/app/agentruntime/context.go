@@ -198,6 +198,7 @@ func (b *ContextBuilder) readMemories(
 		Records:           records,
 		Query:             b.memoryQuery(ctx, &req.Query),
 		Text:              req.Query.Text,
+		Focus:             req.Query.Focus,
 	})
 	if err != nil {
 		b.logger.Warn("agent context: memory lookup failed",

@@ -61,9 +61,10 @@ func (rc *RuntimeContext) MemoryRecords() []agent.EntityRef {
 }
 
 // MemoryFit is what a turn does with the memories it read. Carried is what
-// the prompt holds. Used is what bore on the turn: memories about the records
-// it is about, about a tool picked for it, or that share meaning or words
-// with what it asked. ByTool holds the carried memories about a tool that
+// the prompt holds. Used is what bore on the turn: memories about a tool
+// picked for it, or that share meaning or words with what it asked. A
+// memory about a record in play is carried whatever was asked, but is used
+// only when it bears on it. ByTool holds the carried memories about a tool that
 // was only on hand, which become used when the turn calls it. HeldBack
 // counts the candidates left out, each still a recall_memory call away.
 type MemoryFit struct {
@@ -80,9 +81,10 @@ func (d *Definition) FitMemories(rc *RuntimeContext) []*agent.Memory {
 
 // PlanMemories fits the memories that have not gone stale to the agent's
 // token budget and MaxPromptMemories, best first, and says which of them
-// bear on the turn. A memory in no tier of its own (a Fact, or a Correction
-// to a tool not in play) is carried only when it bears on what was asked;
-// when there was nothing to judge by, every candidate bears, as before.
+// bear on the turn. A memory in no tier of its own (a Fact or Procedure for
+// no record or tool, or a Correction to a tool not in play) is carried only
+// when it bears on what was asked; when there was nothing to judge by, every
+// candidate bears, as before.
 func (d *Definition) PlanMemories(rc *RuntimeContext) MemoryFit {
 	if rc == nil || len(rc.Memories) == 0 {
 		return MemoryFit{HeldBack: heldBack(rc, 0)}
@@ -144,9 +146,7 @@ func (f *MemoryFit) note(rc *RuntimeContext, entry rankedMemory) {
 	}
 
 	switch {
-	case entry.tier == memoryTierDirectSubject,
-		entry.tier == memoryTierRelatedSubject,
-		entry.relevant:
+	case entry.relevant:
 		f.Used = append(f.Used, memory.ID)
 	case entry.tier == memoryTierLoadedTool && rc.ToolsDisclosed:
 		f.Used = append(f.Used, memory.ID)
@@ -256,7 +256,7 @@ func tierOf(
 
 		return memoryTierRest
 	}
-	if memory.Kind.Followed() {
+	if memory.Kind == agent.MemoryKindInstruction {
 		return memoryTierOrganizationInstruction
 	}
 

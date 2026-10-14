@@ -660,13 +660,23 @@ also returns the candidates at or above the similarity floor
 **What bears on the turn.** `agentmemoryservice.Relevance` marks a candidate as
 bearing on the turn (`agent.MemoryRelevance`, carried on
 `RuntimeContext.MemoryRelevance`) when it is at or above the similarity floor, or
-when its content, subject label or tool name shares a meaningful word with the
-turn's query text (`agentsearch.Terms` on the query, with the operator's words
-mapped to the schema's, against `agentsearch.TokenSet` on the memory; words under
-three letters are ignored). The two are unioned, so a memory found either way
-bears. When there is neither a usable vector nor any query words, nothing is
-judged and every candidate bears, which is how the fit worked before relevance
-was read.
+when its content, subject label or tool name shares enough of the turn's words.
+The words are read from the turn's own message (`QueryVectorRequest.Focus`,
+carried as `MemoryContextRequest.Focus`); the message before it, which the
+embedded text also carries, is read too only when the turn's message has fewer
+than two meaningful words ("yes, send it"), so an earlier topic does not leak
+into a message that names its own. A word is one of the turn's meaningful words
+(three letters or more, neither a question word nor a conversational one such as
+"now", "thanks" or "yes"), matched in any of its forms: itself, its singular,
+and the schema's word for it (`agentsearch.Terms`), against
+`agentsearch.TokenSet` on the memory. **Enough** is one word that is rare among
+the candidates (in at most a tenth of them, or no more than two), or any two
+words: in an organization whose memories all say "shipment", asking about a
+shipment makes none of them bear on that word alone, while "hazmat" or a
+customer's name does. A one-word question needs that one word. The similarity
+and word tests are unioned, so a memory found either way bears. When there is
+neither a usable vector nor any query words, nothing is judged and every
+candidate bears, which is how the fit worked before relevance was read.
 
 **What the prompt carries.** `OpenTurn` fits the candidates to the agent's
 `memory_token_budget` (6,000 tokens by default, 1,000–16,000; estimated with
@@ -675,11 +685,14 @@ what is left:
 
 1. memories about a record the turn is about;
 2. memories about a record it names;
-3. organization-wide Instructions and Procedures (`MemoryKind.Followed`);
+3. Instructions for no record and no tool, whoever they are kept for;
 4. memories about a tool loaded this turn (every held tool when the turn
    disclosed none);
-5. everything else — Facts, and Corrections to tools not loaded — in the
-   ranker's order, **only when it bears on the turn**.
+5. everything else — Facts and Procedures for no record or tool, and
+   Corrections to tools not loaded — in the ranker's order, **only when it
+   bears on the turn**. A Procedure is the steps that worked for one kind of
+   task; carried on every turn it crowded out the memories the turn was about,
+   so it rides only when the turn is that kind of task.
 
 Within a tier a memory that bears comes first, so a short budget keeps the
 standing rules that apply to this message; then an Instruction comes before a
@@ -691,11 +704,14 @@ the task may depend on one.
 
 **What counts as used.** Carrying a memory and using it are different things.
 `Definition.PlanMemories` returns the carried memories and, separately, those
-that were used (`MemoryFit.Used`): memories about a record the turn is about or
-names, memories about a tool picked for the turn (a disclosed turn's loaded
-tools), and any carried memory that bears on the turn. A standing Instruction or
-Procedure that does not bear is still carried and followed, but is not shown or
-counted. A memory about a tool that was only on hand (every held tool, when the
+that were used (`MemoryFit.Used`): memories about a tool picked for the turn (a
+disclosed turn's loaded tools), and any carried memory that bears on the turn.
+A memory about a record the turn is about or names is carried whatever was
+asked, so a rule about a shipment's customer is never missed, but it is shown
+and counted only when it bears: asked for a shipment's arrival, the Desk no
+longer says it used the customer's billing rule, each stop's dock note and the
+driver's preference. A standing Instruction that does not bear is likewise
+carried and followed, but is not shown or counted. A memory about a tool that was only on hand (every held tool, when the
 turn disclosed none) waits in `MemoryFit.ByTool`, kept on `TurnState.ToolMemories`,
 and is added to `UsedMemoryIDs` and announced when the turn calls that tool
 (`Turn.noteToolMemories`). A state from before `ToolMemories` existed promotes
@@ -718,11 +734,14 @@ delegate reads the memories of no record. No `GetVersion` gate.
 **Recall.** `recall_memory` searches a generated `search_vector` on
 `agent_memories` (`'simple'` configuration: subject label A, content B, tool C;
 GIN index). A query is `websearch_to_tsquery` or'd with every word as a prefix,
-ranked by `ts_rank_cd`; when nothing matches every word, any word's prefix is
-tried, so a question finds the memories that share most of its words. A query
-with websearch operators (quotes, `or`, `-word`) is taken as written. It returns
-10 rows by default and at most 50, reads one memory whole by `id`, and marks each
-row a search found `match: "words"`.
+ranked by `ts_rank_cd`; when nothing matches every word, any **two** of its
+meaningful words are tried as prefixes (`SearchAgentMemoriesRequest.Terms`, read
+the way relevance reads a turn, at most eight of them), so a question finds the
+memories that share most of it, and one common word — or "the" — never matches
+every memory on its own. A query with one meaningful word has no looser pass. A
+query with websearch operators (quotes, `or`, `-word`) is taken as written. It
+returns 10 rows by default and at most 50, reads one memory whole by `id`, and
+marks each row a search found `match: "words"`.
 
 **Limits.** A memory holds at most 4,000 characters
 (`agent.MaxMemoryContentChars`). An organization should keep at most 5,000
@@ -797,8 +816,9 @@ row; a Failed row is claimed again) and skip without calling a model when:
 then worked (refusals — `denied`, `duplicate`, `over_budget` — are not lessons);
 a person correcting the agent after it answered; a person saying how they want
 it done from now on; a proposal modified or rejected; a reply rated unhelpful;
-and a task of six or more successful tool calls. A run with nobody in it reads
-no person signals.
+and, in a conversation, a task of six or more successful tool calls. A run with
+nobody in it reads no person signals, and a long run alone is no signal: one that
+only worked showed it nothing a person corrected or decided.
 
 **What it asks.** A ready plan carries one structured completion
 (`FeatureAgentReflection`, at most 2,500 output tokens, strict JSON schema of at
@@ -820,7 +840,10 @@ and the agent as its actor:
   (`Agent`), or offered to the team or organization; a person without
   agent-memory create permission has shared lessons kept for themselves alone;
 - team and organization lessons are always suggestions, and a run with nobody
-  in it keeps its lessons at `Agent` scope and suggests organization ones;
+  in it only ever suggests: its lessons wait at `Agent` scope (organization
+  ones at `Organization`) for an administrator in AI Control. Bench runs kept
+  lessons nobody saw learned, some of them wrong (DB-111), and an unscoped one
+  reached every later turn of that agent;
 - a window that read outside content (or whose taint is unknown) only ever
   suggests;
 - otherwise the person's saving mode decides: Automatic keeps, Ask first

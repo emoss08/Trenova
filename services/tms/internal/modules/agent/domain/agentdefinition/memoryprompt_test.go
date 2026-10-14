@@ -353,7 +353,7 @@ func TestRuntimeContext_MemoryRecordsNameEveryRecordOnce(t *testing.T) {
 	}).MemoryRecords(), "a list page is about no record")
 }
 
-func TestOrderMemoriesForPrompt_AnOrganizationProcedureIsFollowedLikeAnInstruction(t *testing.T) {
+func TestOrderMemoriesForPrompt_AnOrganizationProcedureIsCarriedOnlyWhenItBears(t *testing.T) {
 	t.Parallel()
 
 	fact := &agent.Memory{
@@ -371,12 +371,16 @@ func TestOrderMemoriesForPrompt_AnOrganizationProcedureIsFollowedLikeAnInstructi
 		Kind:    agent.MemoryKindInstruction,
 		Content: "Quote in dollars.",
 	}
+	rc := &agentdefinition.RuntimeContext{Memories: []*agent.Memory{fact, procedure, instruction}}
 
-	fitted := definitionWithInstructions("Help.").FitMemories(&agentdefinition.RuntimeContext{
-		Memories: []*agent.Memory{fact, procedure, instruction},
-	})
+	assert.Equal(t, []*agent.Memory{instruction, fact, procedure},
+		definitionWithInstructions("Help.").FitMemories(rc),
+		"with nothing to judge by, every memory bears and the instruction leads")
 
-	assert.Equal(t, []*agent.Memory{instruction, procedure, fact}, fitted)
+	rc.MemoryRelevance = judged(fact.ID)
+	assert.Equal(t, []*agent.Memory{instruction, fact},
+		definitionWithInstructions("Help.").FitMemories(rc),
+		"a procedure for no record or tool is carried only when it bears on the turn")
 }
 
 func judged(ids ...pulid.ID) agent.MemoryRelevance {
@@ -417,7 +421,7 @@ func TestPlanMemories_WithNothingToJudgeByEveryCarriedMemoryIsUsed(t *testing.T)
 	assert.Zero(t, fit.HeldBack)
 }
 
-func TestPlanMemories_TheRecordsTheTurnIsAboutAreAlwaysUsed(t *testing.T) {
+func TestPlanMemories_TheRecordsTheTurnIsAboutAreCarriedButUsedOnlyWhenTheyBear(t *testing.T) {
 	t.Parallel()
 
 	f := newMemoryFixture()
@@ -426,7 +430,14 @@ func TestPlanMemories_TheRecordsTheTurnIsAboutAreAlwaysUsed(t *testing.T) {
 
 	fit := definitionWithInstructions("Help.").PlanMemories(rc)
 
-	assert.Equal(t, []pulid.ID{f.direct.ID, f.related.ID}, fit.Used)
+	assert.Empty(t, fit.Used,
+		"a memory about the shipment's customer is not shown as used for an unrelated question")
+	assert.Len(t, fit.Carried, 3)
+
+	rc.MemoryRelevance = judged(f.related.ID)
+	fit = definitionWithInstructions("Help.").PlanMemories(rc)
+
+	assert.Equal(t, []pulid.ID{f.related.ID}, fit.Used)
 	assert.Len(t, fit.Carried, 3)
 }
 

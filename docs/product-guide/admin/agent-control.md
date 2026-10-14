@@ -502,8 +502,8 @@ Keywords: self-improving agents, learning, reflection, look back, lessons, proce
    or off, then select **Save**.
 3. Select **Memory** in the rail. **What agents learned** lists the latest times an agent looked
    back over its work: what made it look (a tool that worked after failing, a person correcting
-   it, a proposal changed or refused, a reply rated unhelpful, a long task) and each lesson it
-   kept, offered or turned down, with the reason.
+   it, a proposal changed or refused, a reply rated unhelpful, a long task in a conversation)
+   and each lesson it kept, offered or turned down, with the reason.
 4. A lesson shared beyond one person waits under **Nova suggests**, with the memory it would
    retire. Select **Approve** to keep it as written, **Edit** to reword it first, or **Dismiss**.
 5. Open any memory in the list to see **Where it came from**: why it was kept, what made the
@@ -544,12 +544,16 @@ nothing. A lesson is a **Procedure** (the steps that worked, naming the tools), 
 record holds, or, from a person's own words, an **Instruction** that was not already saved. It is
 kept for the person in the conversation unless they may create agent memories, follows their
 saving preference, and replaces an older memory rather than contradicting it. A lesson for a team
-or the whole organization, and anything learned from work that read outside content, is only
-ever offered. Retiring or editing a learned memory works like any other.
+or the whole organization, anything learned from a background run nobody was in, and anything
+learned from work that read outside content, is only ever offered. Retiring or editing a learned
+memory works like any other.
 
 A memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's
 **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is
-recorded about the record the conversation is about. When the organization keeps close to 5,000
+recorded about the record the conversation is about. **Used** above a reply counts only the
+memories that bear on what was asked: a note about a shipment's customer is still in front of the
+agent when you ask about that shipment's arrival, but is not counted as used unless it is about
+that. A procedure the agent learned is brought in only for the kind of task it describes. When the organization keeps close to 5,000
 active memories, the Memory section warns that fewer of them reach each prompt; retire what no
 longer holds.
 
