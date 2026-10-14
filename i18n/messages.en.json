@@ -1075,9 +1075,9 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "apps/web/lib",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/settings"
     ]
   },
   "1 in {0}": {
@@ -1412,7 +1412,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "1200 Industrial Pkwy": {
@@ -1522,8 +1522,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/settings"
     ]
   },
   "2 sources": {
@@ -7054,7 +7054,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "A number where the executive can be reached about the summary.": {
@@ -9669,7 +9669,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "A source blocks at most {0} senders. Unblock some first.": {
@@ -10067,7 +10067,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "A system agent is open to everyone who can use the assistant and is granted to no role": {
@@ -12361,7 +12361,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "About {0}": {
@@ -14961,7 +14961,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Active outbound document profile": {
@@ -18467,7 +18467,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Adjusted Trenova": {
@@ -20664,7 +20664,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "All clear": {
@@ -21298,9 +21298,9 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/desk",
-      "routes/formula-template"
+      "routes/formula-template",
+      "routes/settings"
     ]
   },
   "All {0} are set up already. Nothing else to switch on.": {
@@ -21628,7 +21628,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Allow shipment drafts to be generated for shipment documents.": {
@@ -21826,7 +21826,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Allowed values": {
@@ -29151,7 +29151,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Ask for access, allowance, budget or daily requests": {
@@ -32400,7 +32400,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Authenticator assurance level is required": {
@@ -32607,6 +32607,7 @@
       "go/other",
       "routes/agent-control",
       "routes/carrier-invoice-matching",
+      "routes/settings",
       "routes/shipment",
       "routes/worker"
     ]
@@ -32843,7 +32844,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Auto-accept within tolerance": {
@@ -33624,9 +33625,9 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "apps/web/lib",
-      "routes/admin"
+      "routes/admin",
+      "routes/settings"
     ]
   },
   "Availability is required": {
@@ -33644,7 +33645,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Available": {
@@ -33658,7 +33659,8 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
-      "routes/desk"
+      "routes/desk",
+      "routes/settings"
     ]
   },
   "Available For Dispatch": {
@@ -33794,7 +33796,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Avatar style": {
@@ -33803,7 +33805,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Avatar style is not one Trenova offers": {
@@ -34078,9 +34080,9 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/osha",
-      "routes/scheduling"
+      "routes/scheduling",
+      "routes/settings"
     ]
   },
   "Away from work": {
@@ -34098,7 +34100,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Away note must be 280 characters or fewer": {
@@ -34422,7 +34424,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Back on must be within a year": {
@@ -39804,7 +39806,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Business Central journal lines cannot post to a customer or vendor or apply to an invoice, so Trenova's journals cannot be sent to Business Central as they are. Send documents instead.": {
@@ -41117,6 +41119,7 @@
       "routes/scheduling",
       "routes/service-failure",
       "routes/service-failure-reason-code",
+      "routes/settings",
       "routes/settlement-workspace",
       "routes/shipment",
       "routes/time-attendance",
@@ -45415,6 +45418,7 @@
       "routes/agent-control",
       "routes/desk",
       "routes/rate-agreement",
+      "routes/settings",
       "routes/shipment"
     ]
   },
@@ -45695,8 +45699,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "apps/web/routes"
+      "apps/web/routes",
+      "routes/settings"
     ]
   },
   "Change payer for {0}": {
@@ -45714,7 +45718,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Change policy": {
@@ -45993,7 +45997,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Change values": {
@@ -46178,7 +46182,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Changed while the agent was working": {
@@ -49500,7 +49504,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Choose what the sidebar shows: which counts you watch, which shortcuts you keep, and how much activity you see. Your choices follow you across devices.": {
@@ -52024,15 +52028,6 @@
       "routes/worker"
     ]
   },
-  "Close settings": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Close the current dialog or modal": {
     "sites": 1,
     "scope": [
@@ -52196,7 +52191,7 @@
     ]
   },
   "Close · Esc": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -56131,8 +56126,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/auth"
+      "routes/auth",
+      "routes/settings"
     ]
   },
   "Confirm password": {
@@ -58958,7 +58953,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Copied as Markdown": {
@@ -59600,7 +59595,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Copy value": {
@@ -60479,7 +60474,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Could not copy to the clipboard": {
@@ -64262,7 +64257,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Cross Dock": {
@@ -64760,7 +64755,8 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/auth"
+      "routes/auth",
+      "routes/settings"
     ]
   },
   "Current password is required": {
@@ -66913,8 +66909,8 @@
     ],
     "areas": [
       "apps/dash/routes",
-      "apps/web/components",
       "routes/desk",
+      "routes/settings",
       "routes/worker"
     ]
   },
@@ -67851,6 +67847,7 @@
       "routes/factoring",
       "routes/factoring-submission",
       "routes/reports",
+      "routes/settings",
       "routes/worker"
     ]
   },
@@ -71889,6 +71886,7 @@
       "routes/inbox",
       "routes/invoice",
       "routes/reports",
+      "routes/settings",
       "routes/shipment",
       "routes/tender-offer-public",
       "routes/training-course"
@@ -73269,7 +73267,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Desktop must be off, urgent or all": {
@@ -73287,7 +73285,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Desktop notifications allowed": {
@@ -73296,7 +73294,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Destination": {
@@ -75922,10 +75920,10 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/admin",
       "routes/hold-reason",
-      "routes/service-failure-reason-code"
+      "routes/service-failure-reason-code",
+      "routes/settings"
     ]
   },
   "Display name cannot be longer than 200 characters": {
@@ -84910,6 +84908,7 @@
       "routes/desk",
       "routes/factoring-company",
       "routes/inbox",
+      "routes/settings",
       "routes/worker"
     ]
   },
@@ -85000,8 +84999,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/settings"
     ]
   },
   "Email address cannot be longer than 320 characters": {
@@ -85322,7 +85321,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Email override": {
@@ -91053,7 +91052,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Every built-in step must stay on the checklist; turn it off instead": {
@@ -92595,12 +92594,12 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "packages/shared/lib",
       "routes/inbox",
       "routes/intake",
       "routes/policies",
-      "routes/scheduling"
+      "routes/scheduling",
+      "routes/settings"
     ]
   },
   "Everything affecting this carrier's payable — cost accruals, recent statements, and the AP subledger.": {
@@ -92627,7 +92626,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Everything for this employment is settled.": {
@@ -92681,7 +92680,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Everything needed to run a carrier pay period from one screen — review the queue, process settlements one at a time or in bulk, and keep the AP subledger current.": {
@@ -92726,7 +92725,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Everything the driver owes, bundled into one notice. Range over it; empty on every kind but the digest.": {
@@ -98386,7 +98385,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Failed to reopen comment": {
@@ -99825,7 +99824,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Fewest cases to compare": {
@@ -101615,7 +101614,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Find a shipment": {
@@ -103331,8 +103330,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "apps/web/hooks"
+      "apps/web/hooks",
+      "routes/settings"
     ]
   },
   "Focus can last at most a day": {
@@ -103350,7 +103349,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Focus must end in the future": {
@@ -103377,7 +103376,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Fold the module's pages away beside the rail, or bring them back": {
@@ -103698,7 +103697,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "For anything the employment events do not start on their own.": {
@@ -105256,7 +105255,8 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/reports"
+      "routes/reports",
+      "routes/settings"
     ]
   },
   "Friday": {
@@ -105298,7 +105298,8 @@
       "routes/detention-policy",
       "routes/fuel-management",
       "routes/invoice",
-      "routes/org-structure"
+      "routes/org-structure",
+      "routes/settings"
     ]
   },
   "From 0 to 1440 minutes. Leave empty to use the threshold set in dispatch controls.": {
@@ -107620,7 +107621,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Generate now": {
@@ -108155,7 +108156,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Getting ready to leave {0}.": {
@@ -108673,7 +108674,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Good afternoon, {0}": {
@@ -108701,7 +108702,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Good evening, {0}": {
@@ -108729,7 +108730,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Good morning, {0}": {
@@ -109856,8 +109857,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/desk"
+      "routes/desk",
+      "routes/settings"
     ]
   },
   "Hand off to a person in your organization": {
@@ -109911,7 +109912,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Hand over": {
@@ -112183,7 +112184,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Hold for review": {
@@ -112840,6 +112841,7 @@
     ],
     "areas": [
       "apps/web/components",
+      "routes/settings",
       "routes/worker"
     ]
   },
@@ -113072,7 +113074,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "How Trenova proves who it is to the platform.": {
@@ -122881,7 +122883,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "It's a new load": {
@@ -123427,8 +123429,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/admin",
+      "routes/settings",
       "template/factoring.noa.pdf"
     ]
   },
@@ -126189,7 +126191,8 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/settings"
     ]
   },
   "Language is required": {
@@ -129061,7 +129064,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Let your team know where you are. Notifications follow it.": {
@@ -129070,7 +129073,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Let {0} run on its own for {1}": {
@@ -129534,8 +129537,8 @@
     ],
     "areas": [
       "apps/dash/routes",
-      "apps/web/components",
       "routes/desk",
+      "routes/settings",
       "routes/worker"
     ]
   },
@@ -129554,7 +129557,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Like lookup, but returns fallback when the table has no entry or band for the key. A missing table still errors, so a deleted matrix cannot silently reprice.": {
@@ -134019,7 +134022,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/settings"
     ]
   },
   "Log query": {
@@ -136026,7 +136030,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Managed by your organization. Ask an admin to change it.": {
@@ -136035,7 +136039,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Managed by {0}": {
@@ -139775,7 +139779,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Merchant and processing fees": {
@@ -142199,7 +142203,8 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/reports"
+      "routes/reports",
+      "routes/settings"
     ]
   },
   "Monday": {
@@ -146176,6 +146181,7 @@
       "routes/formula-template",
       "routes/fuel-purchase",
       "routes/inbox",
+      "routes/settings",
       "routes/shipment"
     ]
   },
@@ -146828,8 +146834,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/auth"
+      "routes/auth",
+      "routes/settings"
     ]
   },
   "New password is required": {
@@ -152402,7 +152408,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "No notifications yet": {
@@ -152456,7 +152462,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "No open dispute": {
@@ -152871,7 +152877,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "No pickup": {
@@ -154401,7 +154407,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "No signing secret is set, so every delivery to this mailbox is refused.": {
@@ -154861,7 +154867,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "No tool calls": {
@@ -155818,7 +155824,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "None": {
@@ -157071,7 +157077,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Not permitted": {
@@ -159012,7 +159018,8 @@
     "areas": [
       "apps/web/components",
       "routes/desk",
-      "routes/inbox"
+      "routes/inbox",
+      "routes/settings"
     ]
   },
   "Nothing matches “{0}”.": {
@@ -159312,7 +159319,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Nothing posted": {
@@ -160411,7 +160418,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Notification types": {
@@ -160435,6 +160442,7 @@
       "apps/web/components",
       "apps/web/config",
       "go/other",
+      "routes/settings",
       "routes/table-change-alert"
     ]
   },
@@ -160454,7 +160462,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Notifications can be paused for at most two weeks": {
@@ -160481,7 +160489,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Notified": {
@@ -161846,6 +161854,7 @@
       "routes/carrier-invoice-matching",
       "routes/desk",
       "routes/scheduling",
+      "routes/settings",
       "routes/shipment"
     ]
   },
@@ -162580,7 +162589,8 @@
       "routes/agent-control",
       "routes/carrier-invoice-matching",
       "routes/desk",
-      "routes/inbox"
+      "routes/inbox",
+      "routes/settings"
     ]
   },
   "On / off": {
@@ -166452,7 +166462,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Only variance matches can be accepted with a variance adjustment": {
@@ -168172,15 +168182,6 @@
       "routes/desk"
     ]
   },
-  "Open the user settings dialog": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/config"
-    ]
-  },
   "Open the worker's safety tab": {
     "sites": 1,
     "scope": [
@@ -168344,6 +168345,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Open your settings from any page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Open {0}": {
@@ -169610,7 +169620,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Optional. Specify a record ID to only watch a single record.": {
@@ -171420,7 +171430,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Out-of-service order": {
@@ -175230,12 +175240,12 @@
     ],
     "areas": [
       "apps/dash/routes",
-      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "routes/auth",
       "routes/edi",
-      "routes/factoring-company"
+      "routes/factoring-company",
+      "routes/settings"
     ]
   },
   "Password accepted, code requested": {
@@ -175244,7 +175254,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Password changed": {
@@ -175364,7 +175374,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Password-protected · Desk can't open it": {
@@ -175863,7 +175873,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Pause one of the person's change alerts so it stops notifying them, or resume a paused one.": {
@@ -175952,7 +175962,8 @@
       "routes/admin",
       "routes/agent-control",
       "routes/carrier-monitoring",
-      "routes/inbox"
+      "routes/inbox",
+      "routes/settings"
     ]
   },
   "Paused feeds poll again on their next scheduled run.": {
@@ -179546,7 +179557,8 @@
       "routes/carrier",
       "routes/desk",
       "routes/factoring-company",
-      "routes/osha"
+      "routes/osha",
+      "routes/settings"
     ]
   },
   "Phone Number": {
@@ -179649,7 +179661,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Photo removed": {
@@ -179658,7 +179670,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Photo updated": {
@@ -179667,7 +179679,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Physical": {
@@ -180797,7 +180809,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Pie": {
@@ -181738,8 +181750,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/settings"
     ]
   },
   "Please contact your IT administrator for assistance.": {
@@ -181921,7 +181933,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
+      "routes/settings",
       "routes/worker"
     ]
   },
@@ -183894,7 +183906,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Preferences document is required": {
@@ -186130,13 +186142,13 @@
     "areas": [
       "apps/dash/_components",
       "apps/dash/routes",
-      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "routes/carrier",
       "routes/edi",
       "routes/organization",
       "routes/pay-profile",
+      "routes/settings",
       "routes/worker"
     ]
   },
@@ -189840,7 +189852,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Quiet for": {
@@ -189858,7 +189870,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Quiet hours must end at a different time than they start": {
@@ -190063,7 +190075,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Rail only": {
@@ -190072,7 +190084,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Rail yard": {
@@ -195365,7 +195377,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Recent usage window": {
@@ -197634,7 +197646,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/settings"
     ]
   },
   "Recovery codes copied": {
@@ -197974,7 +197987,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Reduced": {
@@ -200605,7 +200618,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Remove pinned comments from the top of a shipment": {
@@ -203916,6 +203929,7 @@
       "routes/edi",
       "routes/formula-template",
       "routes/reports",
+      "routes/settings",
       "routes/training-course",
       "routes/worker",
       "routes/worker-checklist-template",
@@ -204164,7 +204178,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Requirements are re-checked against this permit.": {
@@ -205796,7 +205810,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Restore": {
@@ -212950,7 +212964,8 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/reports"
+      "routes/reports",
+      "routes/settings"
     ]
   },
   "Satellite": {
@@ -213836,7 +213851,8 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
-      "routes/formula-template"
+      "routes/formula-template",
+      "routes/settings"
     ]
   },
   "Saved \"{0}\"": {
@@ -217907,10 +217923,10 @@
     ],
     "areas": [
       "api/writecoverage",
-      "apps/web/components",
       "go/other",
       "packages/shared/types",
-      "routes/admin"
+      "routes/admin",
+      "routes/settings"
     ]
   },
   "Security Information": {
@@ -221061,7 +221077,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Send a test email": {
@@ -222673,7 +222689,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/settings"
     ]
   },
   "Sent to {0} by {1}": {
@@ -223961,7 +223978,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Sessions could not be loaded.": {
@@ -223970,7 +223987,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Sessions · sign out": {
@@ -223979,7 +223996,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Set": {
@@ -224352,7 +224369,8 @@
       "apps/web/components",
       "routes/agent-control",
       "routes/factoring-company",
-      "routes/fuel-purchase"
+      "routes/fuel-purchase",
+      "routes/settings"
     ]
   },
   "Set up a trading partner": {
@@ -224542,6 +224560,7 @@
       "routes/agent-control",
       "routes/carrier-monitoring",
       "routes/desk",
+      "routes/settings",
       "routes/shipment"
     ]
   },
@@ -224578,7 +224597,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Settings to change are required": {
@@ -229164,7 +229183,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Shown verbatim on the driver's settlement statement, so make it recognizable.": {
@@ -229183,7 +229202,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Shown when someone picks a template to start a review.": {
@@ -229273,7 +229292,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Sick": {
@@ -229315,7 +229334,8 @@
     ],
     "areas": [
       "apps/web/components",
-      "packages/shared/components"
+      "packages/shared/components",
+      "routes/settings"
     ]
   },
   "Sidebar preferences saved": {
@@ -229490,7 +229510,7 @@
     ],
     "areas": [
       "apps/dash/routes",
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Sign out everywhere else": {
@@ -229499,7 +229519,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Sign the rate confirmation and send it back": {
@@ -229536,7 +229556,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Sign-in and risk events will appear here after users authenticate.": {
@@ -229581,7 +229601,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Sign-in will ask for a code from an authenticator app as well as your password.": {
@@ -229608,7 +229628,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Signals": {
@@ -229708,7 +229728,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Signed in with password": {
@@ -229717,7 +229737,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Signed in with password + code": {
@@ -229726,7 +229746,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Signed in with single sign-on": {
@@ -229735,7 +229755,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Signed notice of assignment": {
@@ -229816,7 +229836,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Signing in...": {
@@ -231640,7 +231660,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Source": {
@@ -232979,7 +232999,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Ssn": {
@@ -234931,6 +234951,7 @@
       "routes/scheduling",
       "routes/service-failure",
       "routes/service-type",
+      "routes/settings",
       "routes/settlement-batch",
       "routes/settlement-dispute",
       "routes/shipment",
@@ -235784,7 +235805,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Stop dictating": {
@@ -237817,7 +237838,8 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/reports"
+      "routes/reports",
+      "routes/settings"
     ]
   },
   "Sunday": {
@@ -238621,6 +238643,7 @@
       "routes/desk",
       "routes/invoice-adjustment-batch",
       "routes/pay-code",
+      "routes/settings",
       "routes/shipment"
     ]
   },
@@ -241816,7 +241839,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Test recorded": {
@@ -250761,7 +250784,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "The moment free time runs out.": {
@@ -256450,7 +256473,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "The type of document this rule set is designed to parse.": {
@@ -257395,8 +257418,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/desk"
+      "routes/desk",
+      "routes/settings"
     ]
   },
   "Theme · dark mode": {
@@ -257405,7 +257428,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Then": {
@@ -258591,7 +258614,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "This browser can't show desktop notifications.": {
@@ -258600,7 +258623,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "This browser hasn't allowed Trenova yet.": {
@@ -258609,7 +258632,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "This can't be undone now": {
@@ -259510,7 +259533,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "This difference could not be loaded.": {
@@ -260592,7 +260615,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "This is not valid JSON": {
@@ -263795,7 +263818,8 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/reports"
+      "routes/reports",
+      "routes/settings"
     ]
   },
   "Thumbnail regeneration is unavailable": {
@@ -264343,8 +264367,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/settings"
     ]
   },
   "Time format is required": {
@@ -264372,7 +264396,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Time of day": {
@@ -264565,9 +264589,9 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/agent-control",
-      "routes/customer"
+      "routes/customer",
+      "routes/settings"
     ]
   },
   "Time zone is not one this system knows": {
@@ -265052,7 +265076,8 @@
       "routes/desk",
       "routes/detention-policy",
       "routes/fuel-management",
-      "routes/invoice"
+      "routes/invoice",
+      "routes/settings"
     ]
   },
   "To Values": {
@@ -265747,7 +265772,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Too many cells": {
@@ -269373,7 +269398,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Trenova's closed-period policy keeps a document in its own period; reopen the period in {0}, or set the policy to post to the next open period": {
@@ -270014,6 +270039,7 @@
       "routes/invoice",
       "routes/onboarding",
       "routes/rate-confirmation-public",
+      "routes/settings",
       "routes/shipment",
       "routes/shipment-tracking-public",
       "routes/tender-offer-public",
@@ -270141,7 +270167,8 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/reports"
+      "routes/reports",
+      "routes/settings"
     ]
   },
   "Tuesday": {
@@ -270332,7 +270359,8 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/settings"
     ]
   },
   "Turn off anything you don't need. A few are required by your organization.": {
@@ -270341,7 +270369,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Turn off for a company-policy test that is not made under 49 CFR 382.": {
@@ -270655,8 +270683,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/auth"
+      "routes/auth",
+      "routes/settings"
     ]
   },
   "Two-factor authentication is already turned on. Turn it off before enrolling a new authenticator.": {
@@ -270710,7 +270738,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/settings"
     ]
   },
   "Type": {
@@ -271999,6 +272028,7 @@
       "routes/dispatch-console",
       "routes/formula-template",
       "routes/inbox",
+      "routes/settings",
       "routes/shipment"
     ]
   },
@@ -272511,7 +272541,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Unknown canned report \"{0}\"": {
@@ -273720,7 +273750,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Unsupported profile picture file extension": {
@@ -273803,7 +273833,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Until Monday": {
@@ -273812,7 +273842,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Until a break": {
@@ -273930,9 +273960,9 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/benefits",
-      "routes/my-team"
+      "routes/my-team",
+      "routes/settings"
     ]
   },
   "Until {0} delivers": {
@@ -274288,8 +274318,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/auth"
+      "routes/auth",
+      "routes/settings"
     ]
   },
   "Update sent": {
@@ -274546,7 +274576,6 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/account-type",
       "routes/admin",
       "routes/carrier",
@@ -274562,6 +274591,7 @@
       "routes/recurring-deduction",
       "routes/recurring-earning",
       "routes/service-type",
+      "routes/settings",
       "routes/settlement-dispute",
       "routes/shipment-type",
       "routes/tractor",
@@ -274580,6 +274610,7 @@
       "routes/admin",
       "routes/billing-queue",
       "routes/edi",
+      "routes/settings",
       "routes/shipment"
     ]
   },
@@ -274793,7 +274824,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Upload progress": {
@@ -275130,7 +275161,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Upper bound on the retry backoff. Defaults to 900 seconds (15 minutes).": {
@@ -275195,8 +275226,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/settings"
     ]
   },
   "Urgent comments request acknowledgment from viewers.": {
@@ -275214,7 +275245,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Usage": {
@@ -275452,7 +275483,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Use a previously saved version snapshot": {
@@ -275813,7 +275844,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Use this profile when no distance override applies to a shipment move.": {
@@ -276341,10 +276372,10 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "go/other",
       "routes/admin",
-      "routes/edi"
+      "routes/edi",
+      "routes/settings"
     ]
   },
   "Username cannot be changed": {
@@ -281607,7 +281638,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "We are extracting text, classifying the document, and assembling the shipment draft.": {
@@ -282108,7 +282139,8 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/reports"
+      "routes/reports",
+      "routes/settings"
     ]
   },
   "Wed 2026-03-04": {
@@ -284772,7 +284804,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "What you see when you open Desk.": {
@@ -286456,7 +286488,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Where {0} stands": {
@@ -287782,7 +287814,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Who's affected": {
@@ -289993,7 +290025,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Working notes on where the figures came from, for whoever prepares next year's form.": {
@@ -290929,7 +290961,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Wrong verification code": {
@@ -290938,7 +290970,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Wyoming (WY)": {
@@ -292362,7 +292394,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "You sign in on {0}'s own page and choose the company to connect. Trenova never sees your password; it keeps an encrypted authorization that you can revoke at any time.": {
@@ -293481,7 +293513,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "Your pay dispute was denied": {
@@ -293536,6 +293568,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Your profile, preferences, notifications and security, each saved as you change it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
     ]
   },
   "Your proof of delivery is ready": {
@@ -296024,7 +296065,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "e.g. Dock 4, Joliet terminal": {
@@ -299526,7 +299567,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "opens this panel": {
@@ -299663,15 +299704,6 @@
     ],
     "areas": [
       "apps/dash/_components"
-    ]
-  },
-  "over {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "p.{0}": {
@@ -304377,7 +304409,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "{0, plural, one {# report} other {# reports}}": {
@@ -306005,7 +306037,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "{0, plural, one {Leg added} other {# legs added}}": {
@@ -306492,7 +306524,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "{0, plural, one {Snoozed # message} other {Snoozed # messages}}": {
@@ -310540,7 +310572,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/settings"
     ]
   },
   "{0} in {1}s": {
@@ -313280,6 +313312,7 @@
       "routes/random-testing",
       "routes/reports",
       "routes/scheduling",
+      "routes/settings",
       "routes/shipment",
       "routes/time-attendance",
       "routes/worker"
@@ -319815,7 +319848,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/settings"
     ]
   },
   "⌘N": {

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a8e58baba548955257dec03ec79b18434efa3dddf1fe7c15bf1c5c65729b05d4",
+  "version": "sha256:a6e4152170bbcf36ba846653645ad86c12afdc7faa12c0ac66a9630a672b35a8",
   "modules": [
     {
       "id": "home",
@@ -16585,6 +16585,136 @@
       "covers": [],
       "createAction": null,
       "inNavigation": true
+    },
+    {
+      "path": "/settings",
+      "name": "Settings",
+      "module": "",
+      "breadcrumb": [
+        "Settings"
+      ],
+      "description": "Your profile, preferences, notifications and security, each saved as you change it",
+      "summary": "Settings is where you change things about your own account: your profile and availability, how Trenova looks and keeps time for you, what notifications reach you, and your password, second factor and signed-in sessions. It is yours alone; what applies to the whole organization is in the organization's own settings.\n\nThe page is one long scroll in four sections, **Profile**, **Preferences**, **Notifications** and **Security**, listed down the left beside the module rail; select one to jump to it, or search for a setting in the box above them. Each change saves as you make it, and **Undo** in the confirmation puts it back. Open Settings from your name at the bottom of the rail, from the command palette, or with Ctrl+Shift+S (⌘⇧S on a Mac) from any page.",
+      "requires": [],
+      "capabilities": [],
+      "aliases": [
+        "user settings",
+        "my settings",
+        "my account",
+        "my profile",
+        "account settings",
+        "preferences",
+        "notification settings",
+        "change password",
+        "two-factor",
+        "2FA",
+        "MFA",
+        "dark mode",
+        "time zone",
+        "language",
+        "out of office",
+        "away",
+        "signed-in devices",
+        "sign out other devices"
+      ],
+      "tasks": [
+        {
+          "title": "Let your team know you are away",
+          "keywords": [
+            "out of office",
+            "vacation",
+            "focus mode",
+            "do not disturb",
+            "availability",
+            "hand off"
+          ],
+          "steps": [
+            "Open [Settings](/settings) and go to **Profile**.",
+            "Under **Availability**, choose **Focus** to hold everything but urgent notifications and direct @mentions for a while, or **Away**.",
+            "For **Away**, set **Back on**, write an **Away note** if you like, and pick who to **Hand off to**, or **No one, hold them for me**.",
+            "Choose **Available** when you are back."
+          ]
+        },
+        {
+          "title": "Change your theme, language or time zone",
+          "keywords": [
+            "dark mode",
+            "light mode",
+            "24-hour clock",
+            "timezone",
+            "language",
+            "reduce motion"
+          ],
+          "steps": [
+            "Open [Settings](/settings) and go to **Preferences**.",
+            "Change **Theme**, **Language**, **Time zone** or **Time format**. **Reduce motion** cuts slides and other movement."
+          ]
+        },
+        {
+          "title": "Choose which notifications reach you",
+          "keywords": [
+            "email notifications",
+            "desktop notifications",
+            "digest",
+            "quiet hours",
+            "mute",
+            "pause notifications"
+          ],
+          "steps": [
+            "Open [Settings](/settings) and go to **Notifications**.",
+            "Under **Delivery**, choose what reaches you on the **Desktop** and by **Email**.",
+            "Turn on **Quiet hours** to hold notifications at set times; **Let urgent ones through** keeps urgent ones coming.",
+            "Use **Pause notifications** to stop desktop notifications and emails for a while.",
+            "Under **What you hear about**, turn off anything you don't need. Those marked **Required** are set by your organization."
+          ]
+        },
+        {
+          "title": "Change your password",
+          "keywords": [
+            "reset password",
+            "new password",
+            "update password"
+          ],
+          "steps": [
+            "Open [Settings](/settings) and go to **Security**.",
+            "Select **Change password**, enter your **Current password**, then the **New password** and **Confirm new password**.",
+            "Select **Update password**."
+          ]
+        },
+        {
+          "title": "Turn on two-factor authentication",
+          "keywords": [
+            "2FA",
+            "MFA",
+            "authenticator app",
+            "recovery codes"
+          ],
+          "steps": [
+            "Open [Settings](/settings) and go to **Security**.",
+            "Beside **Two-factor authentication**, select **Set up** and follow the steps with your authenticator app."
+          ]
+        },
+        {
+          "title": "Sign out a device you no longer use",
+          "keywords": [
+            "sessions",
+            "signed-in devices",
+            "lost laptop",
+            "sign out everywhere"
+          ],
+          "steps": [
+            "Open [Settings](/settings) and go to **Security**.",
+            "Under **Where you're signed in**, select **Sign out** beside the session, or **Sign out everywhere else** to end every session but this one."
+          ]
+        }
+      ],
+      "notes": "The link at the foot of a notification email opens the **Notifications** section. Your display name and email address are managed by your organization; ask an admin to change them.",
+      "related": [
+        "/"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": false
     },
     {
       "path": "/shipment-management/configuration-files/commodities",

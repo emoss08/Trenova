@@ -1,5 +1,5 @@
 import { buildNotificationCatalog } from "@/components/notification-center/notification-registry";
-import type { SettingsSection } from "@/stores/app-dialogs-store";
+import type { SettingsSection } from "@/lib/settings-path";
 import {
   Bell01Icon,
   type IconComponent,
