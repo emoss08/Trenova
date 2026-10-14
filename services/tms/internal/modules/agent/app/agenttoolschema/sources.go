@@ -2,6 +2,8 @@ package agenttoolschema
 
 import (
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -55,6 +57,12 @@ var (
 	AccountingSystems = Source(
 		"integration.accountingSystem",
 		accountingsync.AccountingSystems(),
+	)
+	FactoringQueueVerdicts = Source("factoring.verdict", factoring.QueueVerdicts())
+	FactoringNoaStatuses   = Source("factoring.noaStatus", factoring.AllNoaStatuses())
+	FactoringOverrides     = Source(
+		"invoice.factoringOverride",
+		invoice.FactoringOverrideValues(),
 	)
 	MappingTargetTypes = Source(
 		"accountingSync.mappingTargetType",

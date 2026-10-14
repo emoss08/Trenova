@@ -67,6 +67,10 @@ func (s NoaStatus) IsValid() bool {
 	}
 }
 
+func AllNoaStatuses() []NoaStatus {
+	return []NoaStatus{NoaStatusDraft, NoaStatusSent, NoaStatusAcknowledged, NoaStatusReleased}
+}
+
 type Verdict string
 
 const (
@@ -82,6 +86,10 @@ func (v Verdict) IsValid() bool {
 	default:
 		return false
 	}
+}
+
+func QueueVerdicts() []Verdict {
+	return []Verdict{VerdictReady, VerdictNotReady}
 }
 
 type CheckCode string

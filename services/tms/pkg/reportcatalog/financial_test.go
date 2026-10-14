@@ -37,6 +37,8 @@ func TestInstantsTheColumnHeuristicMissesAreDeclaredEpoch(t *testing.T) {
 	declared := map[string][]string{
 		"driver_settlement":          {"periodStart", "periodEnd"},
 		"driver_settlement_batch":    {"periodStart", "periodEnd"},
+		"factoring_agreement":        {"effectiveFrom", "effectiveTo"},
+		"factoring_invoice_state":    {"readySince"},
 		"fiscal_period":              {"adjustmentDeadline"},
 		"rate_agreement":             {"effectiveFrom", "effectiveTo"},
 		"rate_agreement_rule":        {"effectiveFrom", "effectiveTo"},

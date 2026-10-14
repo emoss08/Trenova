@@ -36,6 +36,7 @@ func ToolProviders() []any {
 		ledgerToolProviders(),
 		settlementToolProviders(),
 		receivableToolProviders(),
+		factoringToolProviders(),
 		driverPayToolProviders(),
 		ratingToolProviders(),
 		orderToolProviders(),

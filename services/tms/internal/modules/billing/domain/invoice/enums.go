@@ -24,6 +24,10 @@ func (o FactoringOverride) IsValid() bool {
 	}
 }
 
+func FactoringOverrideValues() []FactoringOverride {
+	return []FactoringOverride{FactoringOverrideDefault, FactoringOverrideExclude}
+}
+
 func (o FactoringOverride) Excludes() bool {
 	return o == FactoringOverrideExclude
 }

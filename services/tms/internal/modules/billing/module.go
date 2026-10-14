@@ -110,6 +110,7 @@ func SharedOptions() fx.Option {
 			factoringrepository.NewAgreementRepository,
 			factoringrepository.NewNoaRepository,
 			factoringrepository.NewInvoiceStateRepository,
+			factoringrepository.NewWatchtowerReader,
 			factoringcontract.NewRequester,
 			factoringservice.NewAgreementService,
 			factoringservice.NewNoaService,

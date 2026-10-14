@@ -2,6 +2,7 @@ package factoring
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
@@ -21,6 +22,8 @@ const (
 	MaxNoaReleaseReasonLength = 500
 	NoaExpiryWarningDays      = 30
 	NoaDocumentResourceType   = "factoring_noa"
+	MaxNoaRecipientLength     = 320
+	NoaFutureSlackSeconds     = 300
 )
 
 var _ bun.BeforeAppendModelHook = (*Noa)(nil)
@@ -140,6 +143,73 @@ func (n *Noa) CanSend() bool {
 
 func (n *Noa) CanAcknowledge() bool {
 	return n != nil && (n.Status == NoaStatusDraft || n.Status == NoaStatusSent)
+}
+
+func (n *Noa) MarkSent(at int64, recipients []string) error {
+	if !n.CanSend() {
+		return errortypes.NewBusinessError(
+			"Only a drafted or sent notice can be sent; draft a new notice instead",
+		)
+	}
+	if len(recipients) == 0 {
+		return errortypes.NewValidationError(
+			"recipient",
+			errortypes.ErrRequired,
+			"The notice needs someone to send it to",
+		)
+	}
+	sentTo := strings.Join(recipients, ", ")
+	if len(sentTo) > MaxNoaRecipientLength {
+		sentTo = recipients[0]
+	}
+	n.Status = NoaStatusSent
+	n.SentAt = &at
+	n.SentTo = sentTo
+	return nil
+}
+
+func (n *Noa) Acknowledge(at, acknowledgedAt int64, signedDocumentID pulid.ID, expiresAt *int64) error {
+	if !n.CanAcknowledge() {
+		return errortypes.NewBusinessError("Only a drafted or sent notice can be acknowledged")
+	}
+	if acknowledgedAt <= 0 || acknowledgedAt > at+NoaFutureSlackSeconds {
+		return errortypes.NewValidationError(
+			"acknowledgedAt",
+			errortypes.ErrInvalid,
+			"Enter the date the customer signed the notice; it cannot be in the future",
+		)
+	}
+	if signedDocumentID.IsNil() {
+		return errortypes.NewValidationError(
+			"signedDocumentId",
+			errortypes.ErrRequired,
+			"Attach the customer's signed copy of the notice",
+		)
+	}
+	n.Status = NoaStatusAcknowledged
+	n.AcknowledgedAt = &acknowledgedAt
+	n.SignedDocumentID = signedDocumentID
+	n.ExpiresAt = expiresAt
+	n.ExpiryWarnedAt = nil
+	return nil
+}
+
+func (n *Noa) Release(at int64, reason string) error {
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return errortypes.NewValidationError(
+			"reason",
+			errortypes.ErrRequired,
+			"Say why the notice is released, such as the factor's release letter",
+		)
+	}
+	if !n.IsOpen() {
+		return errortypes.NewBusinessError("The notice is already released")
+	}
+	n.Status = NoaStatusReleased
+	n.ReleasedAt = &at
+	n.ReleaseReason = reason
+	return nil
 }
 
 func (n *Noa) BeforeAppendModel(_ context.Context, query bun.Query) error {

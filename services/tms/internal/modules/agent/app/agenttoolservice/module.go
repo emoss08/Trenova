@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dispatchtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/editools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/insighttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
@@ -197,6 +198,8 @@ func ToolProviders() []any {
 	providers = append(providers, ratesToolProviders()...)
 	providers = append(providers, workforceToolProviders()...)
 	providers = append(providers, masterDataToolProviders()...)
+
+	providers = append(providers, factoringtools.Providers()...)
 
 	return append(providers, settlementToolProviders()...)
 }

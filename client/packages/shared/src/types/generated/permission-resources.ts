@@ -108,6 +108,8 @@ export const Resource = {
   // Billing
   Invoice: "invoice",
   InvoiceDispute: "invoice_dispute",
+  FactoringAgreement: "factoring_agreement",
+  FactoringNoa: "factoring_noa",
   BillingQueue: "billing_queue",
   InvoiceRun: "invoice_run",
   AccessorialCharge: "accessorial_charge",

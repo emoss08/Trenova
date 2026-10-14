@@ -101,6 +101,36 @@ type ReleaseNoaRequest struct {
 	Reason     string                `json:"reason"`
 }
 
+type MessagePlan struct {
+	To             []string  `json:"to"`
+	CC             []string  `json:"cc"`
+	BCC            []string  `json:"bcc"`
+	Subject        string    `json:"subject"`
+	HTML           string    `json:"html"`
+	Text           string    `json:"text"`
+	AttachmentName string    `json:"attachmentName"`
+	VersionID      *pulid.ID `json:"versionId"`
+}
+
+type NoaSendPlan struct {
+	Noa     *factoring.Noa `json:"noa"`
+	Message MessagePlan    `json:"message"`
+}
+
+type DocumentRequestPlan struct {
+	Invoice       *invoice.Invoice `json:"invoice"`
+	RecipientKind string           `json:"recipientKind"`
+	DocumentTypes []string         `json:"documentTypes"`
+	ShipmentIDs   []pulid.ID       `json:"shipmentIds"`
+	Message       MessagePlan      `json:"message"`
+}
+
+type OverridePlan struct {
+	Before  *invoice.Invoice `json:"before"`
+	After   *invoice.Invoice `json:"after"`
+	Changed bool             `json:"changed"`
+}
+
 type RenderedLetter struct {
 	FileName string `json:"fileName"`
 	PDF      []byte `json:"-"`
@@ -108,6 +138,7 @@ type RenderedLetter struct {
 
 type NoaService interface {
 	RenderLetter(ctx context.Context, req GetNoaRequest) (*RenderedLetter, error)
+	PlanSend(ctx context.Context, req *SendNoaRequest, userID pulid.ID) (*NoaSendPlan, error)
 	List(
 		ctx context.Context,
 		req *ListNoaConnectionRequest,
@@ -209,11 +240,17 @@ type ReadinessService interface {
 		req *SetOverrideRequest,
 		actor *permissionports.RequestActor,
 	) (*factoring.InvoiceState, error)
+	PlanOverride(ctx context.Context, req *SetOverrideRequest) (*OverridePlan, error)
 	RequestMissingDocuments(
 		ctx context.Context,
 		req *RequestMissingDocumentsRequest,
 		actor *permissionports.RequestActor,
 	) (*RequestMissingDocumentsResult, error)
+	PlanDocumentRequest(
+		ctx context.Context,
+		req *RequestMissingDocumentsRequest,
+		userID pulid.ID,
+	) (*DocumentRequestPlan, error)
 	ListSweepTenants(ctx context.Context) ([]pagination.TenantInfo, error)
 	SweepTenant(ctx context.Context, tenantInfo pagination.TenantInfo) (*SweepResult, error)
 }

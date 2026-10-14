@@ -28,6 +28,7 @@ var Module = fx.Module("watchtower-sources",
 		asSource(NewMissedDeliverySource),
 		asSource(NewPodMissingSource),
 		asSource(NewTenderExhaustedSource),
+		asSource(NewFactoringSource),
 	),
 	fx.Provide(fx.Annotate(
 		NewShipmentExceptionObserver,

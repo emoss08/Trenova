@@ -180,13 +180,9 @@ func (s *ReadinessService) evaluate(
 	inv *invoice.Invoice,
 ) (*factoring.InvoiceState, evaluation, error) {
 	now := s.now()
-	inputs := &factoring.ReadinessInputs{At: now, Invoice: invoiceFacts(inv)}
-	readiness := factoring.EvaluateReadiness(inputs)
-	if readiness.Verdict != factoring.VerdictExcluded {
-		if err := s.gather(ctx, tenantInfo, inv, inputs); err != nil {
-			return nil, evaluation{}, err
-		}
-		readiness = factoring.EvaluateReadiness(inputs)
+	readiness, err := s.assess(ctx, tenantInfo, inv, now)
+	if err != nil {
+		return nil, evaluation{}, err
 	}
 
 	previous, err := s.states.Get(ctx, factoringports.GetInvoiceStateRequest{
@@ -199,6 +195,7 @@ func (s *ReadinessService) evaluate(
 	if err != nil {
 		previous = nil
 	}
+	err = nil
 
 	next := &factoring.InvoiceState{
 		InvoiceID:          inv.ID,
@@ -221,6 +218,23 @@ func (s *ReadinessService) evaluate(
 		s.rec.publish(ctx, permission.ResourceInvoice, next, nil, "factoring_readiness")
 	}
 	return next, result, nil
+}
+
+func (s *ReadinessService) assess(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	inv *invoice.Invoice,
+	now int64,
+) (factoring.Readiness, error) {
+	inputs := &factoring.ReadinessInputs{At: now, Invoice: invoiceFacts(inv)}
+	readiness := factoring.EvaluateReadiness(inputs)
+	if readiness.Verdict == factoring.VerdictExcluded {
+		return readiness, nil
+	}
+	if err := s.gather(ctx, tenantInfo, inv, inputs); err != nil {
+		return factoring.Readiness{}, err
+	}
+	return factoring.EvaluateReadiness(inputs), nil
 }
 
 func (s *ReadinessService) announce(
@@ -431,10 +445,53 @@ func (s *ReadinessService) SetOverride(
 	req *factoringports.SetOverrideRequest,
 	actor *permissionports.RequestActor,
 ) (*factoring.InvoiceState, error) {
-	if err := requireRequest(req != nil); err != nil {
+	if err := requireActor(actor, "Changing whether an invoice is factored"); err != nil {
 		return nil, err
 	}
-	if err := requireActor(actor, "Changing whether an invoice is factored"); err != nil {
+	plan, err := s.PlanOverride(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if !plan.Changed {
+		state, _, evalErr := s.evaluate(ctx, req.TenantInfo, plan.Before)
+		return state, evalErr
+	}
+
+	if err = s.states.SetInvoiceOverride(ctx, factoringports.SetInvoiceOverrideRequest{
+		TenantInfo:           req.TenantInfo,
+		InvoiceID:            plan.After.ID,
+		Override:             plan.After.FactoringOverride,
+		FactoringCompanyID:   plan.After.FactoringCompanyID,
+		FactoringAgreementID: plan.After.FactoringAgreementID,
+	}); err != nil {
+		return nil, err
+	}
+	plan.After.Version++
+
+	comment := "Invoice follows the customer's factoring again"
+	if req.Override.Excludes() {
+		comment = "Invoice kept out of factoring: " + strings.TrimSpace(req.Reason)
+	}
+	s.rec.log(actor, &auditEntry{
+		resource: permission.ResourceInvoice,
+		entity:   plan.After,
+		previous: plan.Before,
+		op:       permission.OpUpdate,
+		comment:  comment,
+	})
+	state, _, err := s.evaluate(ctx, req.TenantInfo, plan.After)
+	if err != nil {
+		return nil, err
+	}
+	s.rec.publish(ctx, permission.ResourceInvoice, plan.After, actor, "updated")
+	return state, nil
+}
+
+func (s *ReadinessService) PlanOverride(
+	ctx context.Context,
+	req *factoringports.SetOverrideRequest,
+) (*factoringports.OverridePlan, error) {
+	if err := requireRequest(req != nil); err != nil {
 		return nil, err
 	}
 	if !req.Override.IsValid() {
@@ -470,47 +527,22 @@ func (s *ReadinessService) SetOverride(
 	if inv.Status == invoice.StatusVoided {
 		return nil, errortypes.NewBusinessError("A voided invoice cannot be changed")
 	}
+	if inv.IsCreditMemo() {
+		return nil, errortypes.NewBusinessError("A credit memo is never factored")
+	}
 	if inv.FactoringOverride == req.Override {
-		state, _, evalErr := s.evaluate(ctx, req.TenantInfo, inv)
-		return state, evalErr
+		return &factoringports.OverridePlan{Before: inv, After: inv}, nil
 	}
 
-	previous := *inv
 	factorID, agreementID, err := s.stampFor(ctx, req.TenantInfo, inv, req.Override)
 	if err != nil {
 		return nil, err
 	}
-	if err = s.states.SetInvoiceOverride(ctx, factoringports.SetInvoiceOverrideRequest{
-		TenantInfo:           req.TenantInfo,
-		InvoiceID:            inv.ID,
-		Override:             req.Override,
-		FactoringCompanyID:   factorID,
-		FactoringAgreementID: agreementID,
-	}); err != nil {
-		return nil, err
-	}
-	inv.FactoringOverride = req.Override
-	inv.FactoringCompanyID = factorID
-	inv.FactoringAgreementID = agreementID
-	inv.Version++
-
-	comment := "Invoice follows the customer's factoring again"
-	if req.Override.Excludes() {
-		comment = "Invoice kept out of factoring: " + reason
-	}
-	s.rec.log(actor, &auditEntry{
-		resource: permission.ResourceInvoice,
-		entity:   inv,
-		previous: &previous,
-		op:       permission.OpUpdate,
-		comment:  comment,
-	})
-	state, _, err := s.evaluate(ctx, req.TenantInfo, inv)
-	if err != nil {
-		return nil, err
-	}
-	s.rec.publish(ctx, permission.ResourceInvoice, inv, actor, "updated")
-	return state, nil
+	after := *inv
+	after.FactoringOverride = req.Override
+	after.FactoringCompanyID = factorID
+	after.FactoringAgreementID = agreementID
+	return &factoringports.OverridePlan{Before: inv, After: &after, Changed: true}, nil
 }
 
 func (s *ReadinessService) stampFor(

@@ -34,12 +34,10 @@ import (
 )
 
 const (
-	pdfContentType        = "application/pdf"
-	noaFileNameFallback   = "Notice-of-Assignment.pdf"
-	maxNoaFileNameLength  = 120
-	maxRecipientLength    = 320
-	noaFutureSlackSeconds = 300
-	noaSendKeyPrefix      = "facnoa-"
+	pdfContentType       = "application/pdf"
+	noaFileNameFallback  = "Notice-of-Assignment.pdf"
+	maxNoaFileNameLength = 120
+	noaSendKeyPrefix     = "facnoa-"
 )
 
 type NoaParams struct {
@@ -190,43 +188,18 @@ func (s *NoaService) Send(
 		return nil, err
 	}
 
-	current, err := s.repo.GetByID(ctx, factoringports.GetNoaRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	plan, letter, err := s.planSend(ctx, req, actor.UserID)
 	if err != nil {
 		return nil, err
 	}
-	if !current.CanSend() {
-		return nil, errortypes.NewBusinessError(
-			"Only a drafted or sent notice can be sent; draft a new notice instead",
-		)
-	}
-	if current.Version != req.Version {
-		return nil, errortypes.NewConflictError(
-			"The notice of assignment changed since you opened it; reload and try again",
-		)
-	}
-
-	letter, err := s.prepare(ctx, req.TenantInfo, current, actor.UserID)
-	if err != nil {
-		return nil, err
-	}
-	recipients, err := recipientsFor(letter.customer, req.Recipient)
-	if err != nil {
-		return nil, err
-	}
-	if err = s.deliver(ctx, req.TenantInfo, letter, recipients, actor.UserID); err != nil {
+	if err = s.send(ctx, req.TenantInfo, letter, &plan.Message); err != nil {
 		return nil, err
 	}
 
+	current := plan.Noa
 	previous := *current
-	sentAt := s.now()
-	current.Status = factoring.NoaStatusSent
-	current.SentAt = &sentAt
-	current.SentTo = strings.Join(recipients.To, ", ")
-	if len(current.SentTo) > maxRecipientLength {
-		current.SentTo = recipients.To[0]
+	if err = current.MarkSent(s.now(), plan.Message.To); err != nil {
+		return nil, err
 	}
 	updated, err := s.save(ctx, current)
 	if err != nil {
@@ -265,31 +238,20 @@ func (s *NoaService) Acknowledge(
 	if err != nil {
 		return nil, err
 	}
-	if !current.CanAcknowledge() {
-		return nil, errortypes.NewBusinessError(
-			"Only a drafted or sent notice can be acknowledged",
-		)
-	}
-	now := s.now()
-	if req.AcknowledgedAt <= 0 || req.AcknowledgedAt > now+noaFutureSlackSeconds {
-		return nil, errortypes.NewValidationError(
-			"acknowledgedAt",
-			errortypes.ErrInvalid,
-			"Enter the date the customer signed the notice; it cannot be in the future",
-		)
-	}
 	if err = s.checkSignedCopy(ctx, req.TenantInfo, current.ID, req.SignedDocumentID); err != nil {
 		return nil, err
 	}
 
 	previous := *current
-	acknowledgedAt := req.AcknowledgedAt
 	current.Version = req.Version
-	current.Status = factoring.NoaStatusAcknowledged
-	current.AcknowledgedAt = &acknowledgedAt
-	current.SignedDocumentID = req.SignedDocumentID
-	current.ExpiresAt = req.ExpiresAt
-	current.ExpiryWarnedAt = nil
+	if err = current.Acknowledge(
+		s.now(),
+		req.AcknowledgedAt,
+		req.SignedDocumentID,
+		req.ExpiresAt,
+	); err != nil {
+		return nil, err
+	}
 	updated, err := s.save(ctx, current)
 	if err != nil {
 		return nil, err
@@ -318,15 +280,6 @@ func (s *NoaService) Release(
 	if err := requireActor(actor, "Releasing a notice of assignment"); err != nil {
 		return nil, err
 	}
-	reason := strings.TrimSpace(req.Reason)
-	if reason == "" {
-		return nil, errortypes.NewValidationError(
-			"reason",
-			errortypes.ErrRequired,
-			"Say why the notice is released, such as the factor's release letter",
-		)
-	}
-
 	current, err := s.repo.GetByID(ctx, factoringports.GetNoaRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
@@ -334,16 +287,11 @@ func (s *NoaService) Release(
 	if err != nil {
 		return nil, err
 	}
-	if !current.IsOpen() {
-		return nil, errortypes.NewBusinessError("The notice is already released")
-	}
-
 	previous := *current
-	releasedAt := s.now()
 	current.Version = req.Version
-	current.Status = factoring.NoaStatusReleased
-	current.ReleasedAt = &releasedAt
-	current.ReleaseReason = reason
+	if err = current.Release(s.now(), req.Reason); err != nil {
+		return nil, err
+	}
 	updated, err := s.save(ctx, current)
 	if err != nil {
 		return nil, err
@@ -354,7 +302,7 @@ func (s *NoaService) Release(
 		entity:   updated,
 		previous: &previous,
 		op:       permission.OpUpdate,
-		comment:  "Notice of assignment released: " + reason,
+		comment:  "Notice of assignment released: " + updated.ReleaseReason,
 	})
 	s.rec.publish(ctx, permission.ResourceFactoringNoa, updated, actor, "updated")
 	s.requestCustomer(ctx, req.TenantInfo, updated.CustomerID)
@@ -458,33 +406,91 @@ func (s *NoaService) prepare(
 	return out, nil
 }
 
-func (s *NoaService) deliver(
+func (s *NoaService) PlanSend(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	letter *preparedLetter,
-	recipients customer.EmailRecipients,
+	req *factoringports.SendNoaRequest,
 	userID pulid.ID,
-) error {
+) (*factoringports.NoaSendPlan, error) {
+	plan, _, err := s.planSend(ctx, req, userID)
+	return plan, err
+}
+
+func (s *NoaService) planSend(
+	ctx context.Context,
+	req *factoringports.SendNoaRequest,
+	userID pulid.ID,
+) (*factoringports.NoaSendPlan, *preparedLetter, error) {
+	if err := requireRequest(req != nil); err != nil {
+		return nil, nil, err
+	}
+	current, err := s.repo.GetByID(ctx, factoringports.GetNoaRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	if !current.CanSend() {
+		return nil, nil, errortypes.NewBusinessError(
+			"Only a drafted or sent notice can be sent; draft a new notice instead",
+		)
+	}
+	if current.Version != req.Version {
+		return nil, nil, errortypes.NewConflictError(
+			"The notice of assignment changed since you opened it; reload and try again",
+		)
+	}
+
+	letter, err := s.prepare(ctx, req.TenantInfo, current, userID)
+	if err != nil {
+		return nil, nil, err
+	}
+	recipients, err := recipientsFor(letter.customer, req.Recipient)
+	if err != nil {
+		return nil, nil, err
+	}
 	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
-		TenantInfo:  tenantInfo,
+		TenantInfo:  req.TenantInfo,
 		Kind:        documenttemplate.KindFactoringNoaEmail,
 		CustomerID:  &letter.customer.ID,
 		Data:        letterEmailContext(letter, s.now()),
-		ReferenceID: letter.noa.ID,
+		ReferenceID: current.ID,
 		UserID:      userID,
 	})
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
-	_, err = s.email.Send(ctx, &emailports.SendEmailRequest{
+
+	return &factoringports.NoaSendPlan{
+		Noa: current,
+		Message: factoringports.MessagePlan{
+			To:             recipients.To,
+			CC:             recipients.CC,
+			BCC:            recipients.BCC,
+			Subject:        rendered.Subject,
+			HTML:           rendered.HTML,
+			Text:           rendered.Text,
+			AttachmentName: letter.fileName,
+			VersionID:      rendered.VersionID,
+		},
+	}, letter, nil
+}
+
+func (s *NoaService) send(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	letter *preparedLetter,
+	message *factoringports.MessagePlan,
+) error {
+	_, err := s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo: tenantInfo,
 		Purpose:    email.PurposeBilling,
-		To:         recipients.To,
-		CC:         recipients.CC,
-		BCC:        recipients.BCC,
-		Subject:    rendered.Subject,
-		HTML:       rendered.HTML,
-		Text:       rendered.Text,
+		To:         message.To,
+		CC:         message.CC,
+		BCC:        message.BCC,
+		Subject:    message.Subject,
+		HTML:       message.HTML,
+		Text:       message.Text,
 		Attachments: []emailports.EmailAttachment{{
 			FileName:    letter.fileName,
 			ContentType: pdfContentType,

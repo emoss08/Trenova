@@ -61,6 +61,11 @@ func (r *Registry) registerBillingResources() {
 				DisplayName: "Update",
 				Description: "Change, activate and end factoring agreements",
 			},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export factoring agreements",
+			},
 		},
 		DefaultSensitivity: SensitivityConfidential,
 	})
@@ -77,6 +82,11 @@ func (r *Registry) registerBillingResources() {
 				Operation:   OpUpdate,
 				DisplayName: "Update",
 				Description: "Send, record and release notices of assignment",
+			},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export notices of assignment",
 			},
 		},
 		DefaultSensitivity: SensitivityConfidential,

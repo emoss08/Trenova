@@ -50,57 +50,87 @@ func (s *ReadinessService) RequestMissingDocuments(
 	req *factoringports.RequestMissingDocumentsRequest,
 	actor *permissionports.RequestActor,
 ) (*factoringports.RequestMissingDocumentsResult, error) {
-	if err := requireRequest(req != nil); err != nil {
-		return nil, err
-	}
 	if err := requireActor(actor, "Requesting documents for factoring"); err != nil {
 		return nil, err
 	}
-	message := strings.TrimSpace(req.Message)
-	if len(message) > maxRequestMessageLen {
-		return nil, errortypes.NewValidationError(
-			"message",
-			errortypes.ErrInvalid,
-			"Keep the message under 4,000 characters",
-		)
-	}
-
-	plan, err := s.planDocumentRequest(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	rendered, err := s.renderDocumentRequest(ctx, req.TenantInfo, plan, message, actor.UserID)
+	plan, request, err := s.planDocuments(ctx, req, actor.UserID)
 	if err != nil {
 		return nil, err
 	}
 	if _, err = s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     req.TenantInfo,
 		Purpose:        email.PurposeBilling,
-		To:             plan.recipient,
-		Subject:        rendered.Subject,
-		HTML:           rendered.HTML,
-		Text:           rendered.Text,
-		IdempotencyKey: requestKey(plan, s.now()),
+		To:             plan.Message.To,
+		Subject:        plan.Message.Subject,
+		HTML:           plan.Message.HTML,
+		Text:           plan.Message.Text,
+		IdempotencyKey: requestKey(request, s.now()),
 	}); err != nil {
 		return nil, err
 	}
 
-	names := neededNames(plan.needs)
 	s.rec.log(actor, &auditEntry{
 		resource: permission.ResourceInvoice,
-		entity:   plan.inv,
+		entity:   request.inv,
 		op:       permission.OpUpdate,
-		comment: "Asked " + strings.Join(plan.recipient, ", ") + " for " +
-			strings.Join(names, ", ") + " so the invoice can be factored",
+		comment: "Asked " + strings.Join(request.recipient, ", ") + " for " +
+			strings.Join(plan.DocumentTypes, ", ") + " so the invoice can be factored",
 	})
 	return &factoringports.RequestMissingDocumentsResult{
-		Recipient:     strings.Join(plan.recipient, ", "),
-		RecipientKind: plan.kind,
-		DocumentTypes: names,
-		ShipmentIDs:   neededShipments(plan.needs),
+		Recipient:     strings.Join(request.recipient, ", "),
+		RecipientKind: request.kind,
+		DocumentTypes: plan.DocumentTypes,
+		ShipmentIDs:   plan.ShipmentIDs,
 		Sent:          true,
 	}, nil
+}
+
+func (s *ReadinessService) PlanDocumentRequest(
+	ctx context.Context,
+	req *factoringports.RequestMissingDocumentsRequest,
+	userID pulid.ID,
+) (*factoringports.DocumentRequestPlan, error) {
+	plan, _, err := s.planDocuments(ctx, req, userID)
+	return plan, err
+}
+
+func (s *ReadinessService) planDocuments(
+	ctx context.Context,
+	req *factoringports.RequestMissingDocumentsRequest,
+	userID pulid.ID,
+) (*factoringports.DocumentRequestPlan, *documentRequest, error) {
+	if err := requireRequest(req != nil); err != nil {
+		return nil, nil, err
+	}
+	message := strings.TrimSpace(req.Message)
+	if len(message) > maxRequestMessageLen {
+		return nil, nil, errortypes.NewValidationError(
+			"message",
+			errortypes.ErrInvalid,
+			"Keep the message under 4,000 characters",
+		)
+	}
+	request, err := s.planDocumentRequest(ctx, req)
+	if err != nil {
+		return nil, nil, err
+	}
+	rendered, err := s.renderDocumentRequest(ctx, req.TenantInfo, request, message, userID)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &factoringports.DocumentRequestPlan{
+		Invoice:       request.inv,
+		RecipientKind: request.kind,
+		DocumentTypes: neededNames(request.needs),
+		ShipmentIDs:   neededShipments(request.needs),
+		Message: factoringports.MessagePlan{
+			To:        request.recipient,
+			Subject:   rendered.Subject,
+			HTML:      rendered.HTML,
+			Text:      rendered.Text,
+			VersionID: rendered.VersionID,
+		},
+	}, request, nil
 }
 
 func (s *ReadinessService) planDocumentRequest(
@@ -114,12 +144,12 @@ func (s *ReadinessService) planDocumentRequest(
 	if err != nil {
 		return nil, err
 	}
-	state, _, err := s.evaluate(ctx, req.TenantInfo, inv)
+	readiness, err := s.assess(ctx, req.TenantInfo, inv, s.now())
 	if err != nil {
 		return nil, err
 	}
 
-	needs := requestableChecks(state.Checks)
+	needs := requestableChecks(readiness.Checks)
 	if len(needs) == 0 {
 		return nil, errortypes.NewBusinessError(
 			"Invoice {0} is not missing any document the factor needs",

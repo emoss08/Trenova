@@ -1456,3 +1456,97 @@ entities:
       resolvedAt: { label: "Resolved At" }
       detectedAt: { label: "Detected At" }
       lastSeenAt: { label: "Last Seen At" }
+
+  # Free text a person wrote for the factor (remittance instructions, the
+  # notice wording) is a document body, not something a report groups by.
+  factoring_company:
+    struct: factoringcompany.FactoringCompany
+    resource: factoring_company
+    label: Factoring Company
+    pluralLabel: Factoring Companies
+    description: Factors that buy customer invoices and the remittance details invoices carry to them
+    category: Parties
+    excludeFields:
+      - remittanceInstructions
+      - noticeOfAssignment
+      - notes
+    fields:
+      code: { label: "Code" }
+      name: { label: "Name" }
+      nonRecourse: { label: "Non-Recourse" }
+
+  # The effective dates are instants whose column names miss the epoch
+  # heuristic; the submission time is minutes after midnight, which the
+  # heuristic would otherwise read as an instant because it ends in _time.
+  factoring_agreement:
+    struct: factoring.Agreement
+    resource: factoring_agreement
+    label: Factoring Agreement
+    pluralLabel: Factoring Agreements
+    description: The terms each factor buys invoices on, with their advance, reserve and effective dates
+    category: Billing
+    fields:
+      status: { label: "Status" }
+      effectiveFrom: { label: "Effective From", type: epoch }
+      effectiveTo: { label: "Effective To", type: epoch }
+      advanceRateBp: { label: "Advance Rate (bp)" }
+      reserveRateBp: { label: "Reserve Rate (bp)" }
+      minimumFeeMinor: { label: "Minimum Fee (Minor)" }
+      chargebackWindowDays: { label: "Chargeback Window (Days)" }
+      recourse: { label: "Recourse", enumLabels: { Recourse: "Recourse", NonRecourse: "Non-Recourse" } }
+      accountingTreatment: { label: "Accounting Treatment", enumLabels: { SecuredBorrowing: "Secured Borrowing" } }
+      fundingDays: { label: "Funding Days" }
+      submissionTime: { label: "Submission Cutoff (Minutes After Midnight)", type: int }
+      activatedAt: { label: "Activated At" }
+      endedAt: { label: "Ended At" }
+    edges:
+      factoringCompany: { label: "Factoring Company" }
+
+  factoring_noa:
+    struct: factoring.Noa
+    resource: factoring_noa
+    label: Notice of Assignment
+    pluralLabel: Notices of Assignment
+    description: Notices telling each customer to pay a factor, from draft to signed acknowledgement, expiry and release
+    category: Billing
+    fields:
+      status: { label: "Status" }
+      letterDocumentId: { label: "Letter Document ID" }
+      sentAt: { label: "Sent At" }
+      sentTo: { label: "Sent To" }
+      acknowledgedAt: { label: "Acknowledged At" }
+      signedDocumentId: { label: "Signed Copy Document ID" }
+      expiresAt: { label: "Expires At" }
+      expiryWarnedAt: { label: "Expiry Warned At" }
+      releasedAt: { label: "Released At" }
+      releaseReason: { label: "Release Reason" }
+      notes: { label: "Notes" }
+    edges:
+      customer: { label: Customer }
+      factoringCompany: { label: "Factoring Company" }
+
+  # One row per factored invoice: its last readiness verdict. The checks are a
+  # JSON list of every rule and why it failed, which a report cannot group by;
+  # the failed-check count carries what a report needs from it. Ready since is
+  # an instant whose column name misses the epoch heuristic.
+  factoring_invoice_state:
+    struct: factoring.InvoiceState
+    resource: invoice
+    label: Invoice Factoring State
+    pluralLabel: Invoice Factoring States
+    description: Whether each factored invoice is ready to submit to its factor, what is holding it back, and since when
+    category: Billing
+    excludeFields:
+      - checks
+    fields:
+      id: { label: "Invoice ID" }
+      verdict: { label: "Verdict", enumLabels: { Ready: "Ready to Factor", NotReady: "Not Ready", Excluded: "Excluded" } }
+      failedChecks: { label: "Failed Checks", format: count }
+      openBalanceMinor: { label: "Open Balance (Minor)" }
+      readySince: { label: "Ready Since", type: epoch }
+      readyAnnouncedAt: { label: "Ready Announced At" }
+      evaluatedAt: { label: "Evaluated At" }
+    edges:
+      invoice: { label: Invoice }
+      customer: { label: Customer }
+      factoringCompany: { label: "Factoring Company" }

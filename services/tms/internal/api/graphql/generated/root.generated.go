@@ -6590,6 +6590,7 @@ extend type Query {
   WorkforceCoordinator
   FuelTaxClerk
   ReportAnalyst
+  FactoringClerk
 }
 
 enum AgentTriggerMode {
@@ -31477,6 +31478,7 @@ enum WatchtowerSourceKind {
   MissedDelivery
   PodMissing
   TenderExhausted
+  Factoring
 }
 
 "Where an exception is in its owner's hands."
