@@ -1145,9 +1145,9 @@ export const ediMessageInspectionSchema = z.object({
   inspection: ediX12InspectionSchema,
   provenance: z.object({
     messageId: z.string(),
-    profileId: z.string(),
-    templateId: z.string(),
-    templateVersionId: z.string(),
+    profileId: z.string().nullish(),
+    templateId: z.string().nullish(),
+    templateVersionId: z.string().nullish(),
     generatedAt: z.number(),
     generatedById: z.string().nullish(),
   }),

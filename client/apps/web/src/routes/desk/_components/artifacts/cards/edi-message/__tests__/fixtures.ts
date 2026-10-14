@@ -261,7 +261,11 @@ const SEGMENTS_214: WireSegment[] = [
  * an absent count).
  */
 export function wireInspection(
-  overrides: { inspection?: Record<string, unknown>; message?: Record<string, unknown> } = {},
+  overrides: {
+    inspection?: Record<string, unknown>;
+    message?: Record<string, unknown>;
+    provenance?: Record<string, unknown>;
+  } = {},
 ): Record<string, unknown> {
   let offset = 0;
   const segments = SEGMENTS_214.map((segment, index) => {
@@ -356,6 +360,7 @@ export function wireInspection(
       templateVersionId: "editplv_1",
       generatedAt: NOW - 2 * HOUR,
       generatedById: "usr_1",
+      ...overrides.provenance,
     },
   };
 }
