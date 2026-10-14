@@ -73,7 +73,30 @@ func (b *EnvironmentBuilder) Build(
 		formulatypes.SetNestedValue(env, fieldPath, value)
 	}
 
+	b.clearAbsentRelations(entity, definition, env)
+
 	return env, resolveFailures, nil
+}
+
+func (b *EnvironmentBuilder) clearAbsentRelations(
+	entity any,
+	definition *formulatypes.Definition,
+	env map[string]any,
+) {
+	objects := nullableObjects(definition.Properties, "")
+	for path := range objects {
+		relation := objects[path].Source.Relation
+		if relation == "" {
+			continue
+		}
+		value, err := b.resolver.ResolveField(entity, &formulatypes.FieldSource{
+			Path:     relation,
+			Nullable: true,
+		})
+		if err == nil && value == nil {
+			setShapePath(env, path, nil)
+		}
+	}
 }
 
 func (b *EnvironmentBuilder) BuildWithVariables(

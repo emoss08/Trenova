@@ -12,9 +12,9 @@ workstreams follows from that.
 
 ## How to work this spec
 
-- **Branch.** Start from `worktree-formula-relation-fields`. Its one commit (`eed4f535d`) is
-  workstream 0, already done. Open one PR per workstream against `master`, in the order below;
-  WS0 and WS1 ship together in a single PR because WS0 alone makes things worse (see WS0).
+- **Branch.** All workstreams ship in one pull request against `master`
+  (emoss08/Trenova#730, branch `worktree-formula-relation-fields`), one commit per workstream in
+  the order below. WS0 reached `master` on its own as `a7b2653e`; the rest follow in that PR.
 - **Every item starts with a failing test.** Items are marked **confirmed** (the code was read
   and the defect traced) or **reported** (traced from source by the review, not reproduced).
   For a reported item, write the test first; if it passes on `master`, the item is wrong —
@@ -44,7 +44,7 @@ workstreams follows from that.
 |---|---|
 | WS0. Relation fields reach a real shipment's environment | done, on `master` as `a7b2653e` (landed ahead of WS1) |
 | WS1. Rate with the relations the schema needs, and fail on what didn't resolve | done, in review |
-| WS2. Data-contract defects (silent mispricing) | open |
+| WS2. Data-contract defects (silent mispricing) | done, in review |
 | WS3. Data-contract defects (loud failures the preview hides) | open |
 | WS4. Engine hardening and money arithmetic | open |
 | WS5. Template lifecycle: billing continuity, effective dating, approval | open |
@@ -319,6 +319,60 @@ template validation warn when a freight-charge template references it.
   `requiresTemperatureControl: false` and `temperatureDifferential: 0`. Better than patching the
   lists: have the client read variables from the server's `DescribeSchema` and delete the
   hand-kept list, keeping only sample values.
+
+### Done
+
+Every item was reproduced on a real `shipment.Shipment` first
+(`formula/data_contract_test.go`); all reported items held.
+
+- **One implementation of every aggregate (2.5).** The shipment domain carries the rating
+  facts (`operations/domain/shipment/ratingfacts.go`): ordered and rated stops, stop count,
+  distance, weight, pieces, linear feet, cube, density, hazmat, freight classes. The rate
+  engine's context and every formula computed field read them, so a rule is matched and
+  priced on the same numbers. Where the two sides disagreed the engine's meaning won, because
+  it is what contracts are matched on: weight and pieces prefer the commodity lines over the
+  header, cube prefers the load envelope over the lines, hazmat is a hazardous material on a
+  commodity by ID or by record. A formula that read `totalWeight` from the header on a load
+  whose lines disagree now prices from the lines.
+- **Typed computed fields.** The formula's computed fields read `*shipment.Shipment` directly
+  instead of walking an `any` by reflection, and refuse any other entity
+  (`resolver.ErrUnsupportedEntity`). The reflection helpers and the tests built on look-alike
+  structs are gone; `resolver/computed_test.go` covers every computed field on the real type.
+- **Freight class (2.1).** `commodity.FreightClass.Number()` and `ParseFreightClass`: formulas
+  see `"85"`, `"92.5"` in `freightClass`, `primaryFreightClass` and `highestFreightClass`. Rate
+  matrices keep their stored `Class85` keys; a formula lookup on a freight-class axis reads
+  either form, so `lookup(t, highestFreightClass)` finds the cell without migrating data.
+- **Stops (2.2).** Stops are ordered by move then stop sequence, whatever order the client sent.
+  `totalStops` and `totalHours` skip canceled stops; `stops[]` lists them with their status.
+  `origin`, `destination`, `pickupDate` and `deliveryDate` come from the domain's
+  `ShipperStop`/`DeliveryStop`.
+- **Pointers and named types (2.3, and 3.1's conversion).** A path value is dereferenced and
+  converted to its plain Go kind (`*int64` → `int64`, `shipment.Status` → `string`); transforms
+  still receive the dereferenced raw value.
+- **Absent optional relations (2.4).** An absent nullable relation is `nil` in the environment
+  (`tractorType == nil`), the compile shape keeps the object's declared zeros so
+  `tractorType?.code ?? ""` compiles, and reading a member of the absent object fails at run
+  time rather than reading empty. A leaf under a nullable object is nullable in the compile
+  shape, the unguarded-field check and `describe.go`. The check probes a nested member by
+  running the expression with its parent nil, because expr types nested members as unknown and
+  a compile probe can never fail; its suggestion is `tractorType?.code ?? ""`.
+- **Predicates (2.6).** `EvaluatePredicateRequest` carries the tenant, and conditions see the
+  tenant's provided values exactly as rating does.
+- **`currentTotalCharge` (2.7).** The schema says what it is. The preview warns wherever it is
+  read, and approval readiness warns when a freight charge template reads it (under "Safe on
+  every shipment", so the client needed no new check).
+- **2.8.** `deliveryDate` falls back to the delivery's scheduled window start, and both date
+  descriptions name the pickup and delivery stops. `fuelPriceDate` is normalized to `YYYY-MM-DD`
+  (`fuelsurcharge.NormalizePriceDate`) whatever the DATE column scans to. `sellTotal` is bound
+  on every path that knows it (agreement rules and matrix cells on the buy side); every other
+  path declares it unavailable (`CalculateRequest.UnavailableInputs`), and a template that reads
+  it there is refused with a validation error instead of billing $0. `testutil`'s schema and
+  the copies in the template service, the template handler and the shipment service tests now
+  register the embedded schema (`formula.ShipmentSchemaJSON`); the drift hid a template variable
+  named `baseRate` colliding with the schema field, which those tests now avoid (the collision
+  itself is WS5.6). The client's sample values cover every schema variable and agree with each
+  other, pinned by a test that reads `shipment.schema.json`. Replacing the client's hand-kept
+  variable list with the server's is done with WS6.3, which needs the same loading state.
 
 ---
 

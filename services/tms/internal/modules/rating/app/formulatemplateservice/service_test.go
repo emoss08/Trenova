@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
@@ -153,7 +155,7 @@ func newFormulaServiceWithMatrices(
 	t.Helper()
 
 	registry := schema.NewRegistry()
-	registerShipmentSchema(registry)
+	testutil.RegisterShipmentFormulaSchema(t, registry)
 	res := resolver.NewResolver()
 	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
 		Registry: registry,
@@ -173,49 +175,6 @@ func newFormulaServiceWithMatrices(
 		VersionRepo:    &stubFormulaVersionRepo{},
 		RateMatrixRepo: &stubMatrixLookupRepo{data: matrices},
 	})
-}
-
-func registerShipmentSchema(registry *schema.Registry) {
-	const shipmentSchema = `{
-		"$schema": "http://json-schema.org/draft-07/schema#",
-		"$id": "shipment-test-schema",
-		"type": "object",
-		"x-formula-context": {
-			"entityType": "Shipment"
-		},
-		"x-data-source": {
-			"table": "shipments",
-			"preloads": []
-		},
-		"properties": {
-			"customer": {
-				"type": "object",
-				"properties": {
-					"name": { "type": "string" },
-					"code": { "type": "string" }
-				}
-			},
-			"weight": { "type": ["number", "null"] },
-			"pieces": { "type": "integer" },
-			"ratingUnit": { "type": "integer" },
-			"baseRate": { "type": "number" },
-			"freightChargeAmount": { "type": "number" },
-			"otherChargeAmount": { "type": "number" },
-			"currentTotalCharge": { "type": "number" },
-			"totalDistance": { "type": "number" },
-			"totalStops": { "type": "integer" },
-			"totalWeight": { "type": "number" },
-			"totalPieces": { "type": "integer" },
-			"totalLinearFeet": { "type": "number" },
-			"hasHazmat": { "type": "boolean" },
-			"requiresTemperatureControl": { "type": "boolean" },
-			"temperatureDifferential": { "type": "number" }
-		}
-	}`
-
-	if err := registry.Register("shipment", []byte(shipmentSchema)); err != nil {
-		panic(err)
-	}
 }
 
 func setupTest(t *testing.T) *testDeps {
@@ -2271,9 +2230,9 @@ func TestBacktest_ExclusiveArgValidation(t *testing.T) {
 
 func newBacktestTemplate() *formulatemplate.FormulaTemplate {
 	template := newTestTemplate()
-	template.Expression = "baseRate"
+	template.Expression = "linehaulRate"
 	template.VariableDefinitions = []*formulatypes.VariableDefinition{
-		{Name: "baseRate", Type: "number", DefaultValue: 100.0},
+		{Name: "linehaulRate", Type: "number", DefaultValue: 100.0},
 	}
 	return template
 }
@@ -2303,7 +2262,7 @@ func TestBacktest_SummaryMath(t *testing.T) {
 	result, err := deps.svc.Backtest(t.Context(), &BacktestRequest{
 		TenantInfo: tenant,
 		TemplateID: template.ID,
-		Expression: "baseRate * 2",
+		Expression: "linehaulRate * 2",
 	})
 
 	require.NoError(t, err)
@@ -2349,7 +2308,7 @@ func TestBacktest_GuardrailClampsCandidate(t *testing.T) {
 	result, err := deps.svc.Backtest(t.Context(), &BacktestRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: template.ID,
-		Expression: "baseRate * 2",
+		Expression: "linehaulRate * 2",
 	})
 
 	require.NoError(t, err)
@@ -2372,10 +2331,10 @@ func TestBacktest_WithVersionNumber(t *testing.T) {
 		TemplateID:    template.ID,
 		VersionNumber: versionNumber,
 		Type:          template.Type,
-		Expression:    "baseRate * 3",
+		Expression:    "linehaulRate * 3",
 		SchemaID:      template.SchemaID,
 		VariableDefinitions: []*formulatypes.VariableDefinition{
-			{Name: "baseRate", Type: "number", DefaultValue: 100.0},
+			{Name: "linehaulRate", Type: "number", DefaultValue: 100.0},
 		},
 	}
 
@@ -2628,7 +2587,7 @@ func newFormulaServiceWithProviders(
 	t.Helper()
 
 	registry := schema.NewRegistry()
-	registerShipmentSchema(registry)
+	testutil.RegisterShipmentFormulaSchema(t, registry)
 	res := resolver.NewResolver()
 	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
 		Registry: registry,

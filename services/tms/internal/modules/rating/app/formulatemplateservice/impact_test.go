@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
@@ -66,7 +66,7 @@ func TestApprovalImpact_UsesVersionRecordedOnEachShipment(t *testing.T) {
 	deps := setupTest(t)
 
 	template := newBacktestTemplate()
-	template.Expression = "baseRate * 2"
+	template.Expression = "linehaulRate * 2"
 	template.CurrentVersionNumber = 2
 
 	shipments := newBacktestShipments()
@@ -78,7 +78,7 @@ func TestApprovalImpact_UsesVersionRecordedOnEachShipment(t *testing.T) {
 		func(req *formulatemplateports.GetVersionRequest) bool {
 			return req.TemplateID == template.ID && req.VersionNumber == 1
 		},
-	)).Return(newApprovedSnapshot(template, 1, "baseRate"), nil).Once()
+	)).Return(newApprovedSnapshot(template, 1, "linehaulRate"), nil).Once()
 
 	result, err := deps.svc.ApprovalImpact(t.Context(), &ApprovalImpactRequest{
 		TenantInfo: newTenantInfo(),
@@ -102,14 +102,14 @@ func TestApprovalImpact_FallsBackToLastActiveSnapshot(t *testing.T) {
 	deps := setupTest(t)
 
 	template := newBacktestTemplate()
-	template.Expression = "baseRate * 2"
+	template.Expression = "linehaulRate * 2"
 
 	expectRatedShipments(deps, template, newBacktestShipments())
 	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.MatchedBy(
 		func(req *formulatemplateports.GetLatestVersionByStatusRequest) bool {
 			return req.TemplateID == template.ID && req.Status == formulatemplate.StatusActive
 		},
-	)).Return(newApprovedSnapshot(template, 1, "baseRate"), nil).Once()
+	)).Return(newApprovedSnapshot(template, 1, "linehaulRate"), nil).Once()
 
 	result, err := deps.svc.ApprovalImpact(t.Context(), &ApprovalImpactRequest{
 		TenantInfo: newTenantInfo(),
@@ -130,7 +130,7 @@ func TestApprovalImpact_StaleVersionStampDegradesToLastActive(t *testing.T) {
 	deps := setupTest(t)
 
 	template := newBacktestTemplate()
-	template.Expression = "baseRate * 2"
+	template.Expression = "linehaulRate * 2"
 
 	shipments := newBacktestShipments()
 	stampRatedVersion(shipments, template.ID, 9)
@@ -139,7 +139,7 @@ func TestApprovalImpact_StaleVersionStampDegradesToLastActive(t *testing.T) {
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).
 		Return(nil, sql.ErrNoRows).Once()
 	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).
-		Return(newApprovedSnapshot(template, 1, "baseRate"), nil).Once()
+		Return(newApprovedSnapshot(template, 1, "linehaulRate"), nil).Once()
 
 	result, err := deps.svc.ApprovalImpact(t.Context(), &ApprovalImpactRequest{
 		TenantInfo: newTenantInfo(),
@@ -190,7 +190,7 @@ func TestBacktest_CurrentSideUsesRecordedVersion(t *testing.T) {
 	deps := setupTest(t)
 
 	template := newBacktestTemplate()
-	template.Expression = "baseRate * 2"
+	template.Expression = "linehaulRate * 2"
 
 	shipments := newBacktestShipments()
 	stampRatedVersion(shipments, template.ID, 1)
@@ -198,12 +198,12 @@ func TestBacktest_CurrentSideUsesRecordedVersion(t *testing.T) {
 	deps.shipmentRepo.On("ListRatedByFormulaTemplate", mock.Anything, mock.Anything).
 		Return(shipments, nil)
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).
-		Return(newApprovedSnapshot(template, 1, "baseRate"), nil).Once()
+		Return(newApprovedSnapshot(template, 1, "linehaulRate"), nil).Once()
 
 	result, err := deps.svc.Backtest(t.Context(), &BacktestRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: template.ID,
-		Expression: "baseRate * 3",
+		Expression: "linehaulRate * 3",
 	})
 
 	require.NoError(t, err)

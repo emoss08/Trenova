@@ -31,7 +31,7 @@ func (s *Service) DescribeSchema(
 		rootCategory = schemaID
 	}
 
-	variables := collectSchemaVariables(definition.Properties, "", rootCategory)
+	variables := collectSchemaVariables(definition.Properties, "", rootCategory, false)
 	sort.Slice(variables, func(i, j int) bool {
 		if variables[i].Category != variables[j].Category {
 			return variables[i].Category < variables[j].Category
@@ -62,6 +62,7 @@ func (s *Service) DescribeSchema(
 func collectSchemaVariables(
 	properties map[string]formulatypes.Property,
 	prefix, category string,
+	optionalParent bool,
 ) []formulatemplatetypes.SchemaVariableInfo {
 	variables := make([]formulatemplatetypes.SchemaVariableInfo, 0, len(properties))
 
@@ -78,9 +79,15 @@ func collectSchemaVariables(
 			if prefix != "" {
 				nestedCategory = category
 			}
+			_, objectNullable := normalizePropertyType(prop.Type)
 			variables = append(
 				variables,
-				collectSchemaVariables(prop.Properties, path, nestedCategory)...)
+				collectSchemaVariables(
+					prop.Properties,
+					path,
+					nestedCategory,
+					optionalParent || objectNullable || prop.Source.Nullable,
+				)...)
 			continue
 		}
 
@@ -102,7 +109,7 @@ func collectSchemaVariables(
 			Type:        variableType,
 			Description: prop.Description,
 			Category:    variableCategory,
-			Nullable:    nullable || prop.Source.Nullable,
+			Nullable:    nullable || prop.Source.Nullable || optionalParent,
 			Computed:    prop.Source.Computed,
 			Enum:        prop.Enum,
 		})

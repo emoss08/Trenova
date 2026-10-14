@@ -1,13 +1,16 @@
 package formula_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -102,4 +105,48 @@ func TestService_EvaluateExpression_ReferencedUnresolvedFieldIsAValidationError(
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err))
 	assert.Contains(t, err.Error(), "customer.code")
+}
+
+func TestService_Calculate_RefusesATemplateReadingAnUnavailableInput(t *testing.T) {
+	t.Parallel()
+
+	template := activeTemplate(`round(sellTotal * (baseRate / 100), 2)`)
+	template.VariableDefinitions = []*formulatypes.VariableDefinition{
+		{Name: "sellTotal", Type: "number", DefaultValue: 0.0},
+	}
+	svc := setupServiceWithRepo(t, &singleTemplateRepo{template: template})
+
+	unavailable := map[string]string{
+		"sellTotal": "sellTotal is only known when a carrier is priced against the customer's charge",
+	}
+
+	_, err := svc.Calculate(t.Context(), &formulatemplatetypes.CalculateRequest{
+		TemplateID:        template.ID,
+		Entity:            &shipment.Shipment{ServiceType: &servicetype.ServiceType{Code: "STD"}},
+		Overrides:         map[string]any{"baseRate": 85.0},
+		UnavailableInputs: unavailable,
+	})
+	require.Error(t, err)
+	assert.True(t, errortypes.IsError(err))
+	assert.Contains(t, err.Error(), "only known when a carrier is priced")
+
+	resp, err := svc.Calculate(t.Context(), &formulatemplatetypes.CalculateRequest{
+		TemplateID: template.ID,
+		Entity:     &shipment.Shipment{ServiceType: &servicetype.ServiceType{Code: "STD"}},
+		Overrides:  map[string]any{"baseRate": 85.0, "sellTotal": 2_000.0},
+	})
+	require.NoError(t, err)
+	assert.True(t, decimal.NewFromInt(1_700).Equal(resp.Amount), resp.Amount.String())
+}
+
+type singleTemplateRepo struct {
+	formulatemplateports.FormulaTemplateRepository
+	template *formulatemplate.FormulaTemplate
+}
+
+func (r *singleTemplateRepo) GetByID(
+	_ context.Context,
+	_ formulatemplateports.GetFormulaTemplateByIDRequest,
+) (*formulatemplate.FormulaTemplate, error) {
+	return r.template, nil
 }

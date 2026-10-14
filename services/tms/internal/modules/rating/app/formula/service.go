@@ -5,6 +5,7 @@ import (
 	goErrors "errors"
 	"fmt"
 	"maps"
+	"slices"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
@@ -135,6 +136,10 @@ func (s *Service) Calculate(
 		resolved = template.ApplyVersion(scheduled)
 	}
 
+	if err = refuseUnavailableInputs(resolved, req); err != nil {
+		return nil, err
+	}
+
 	resp, err := s.Rate(ctx, &RateRequest{
 		Template:  resolved,
 		Entity:    req.Entity,
@@ -158,6 +163,47 @@ func (s *Service) Calculate(
 	}
 
 	return resp, nil
+}
+
+func refuseUnavailableInputs(
+	template *formulatemplate.FormulaTemplate,
+	req *formulatemplatetypes.CalculateRequest,
+) error {
+	if len(req.UnavailableInputs) == 0 {
+		return nil
+	}
+
+	names := slices.Sorted(maps.Keys(req.UnavailableInputs))
+	for _, name := range names {
+		if _, supplied := req.Overrides[name]; supplied {
+			continue
+		}
+		if _, supplied := req.Variables[name]; supplied {
+			continue
+		}
+		if !templateReads(template, name) {
+			continue
+		}
+		return errortypes.NewValidationError(
+			"formulaTemplateId",
+			errortypes.ErrInvalid,
+			req.UnavailableInputs[name],
+		)
+	}
+
+	return nil
+}
+
+func templateReads(template *formulatemplate.FormulaTemplate, name string) bool {
+	if engine.ReferencesPath(template.Expression, name) {
+		return true
+	}
+	for _, def := range template.BreakdownDefinitions {
+		if def != nil && engine.ReferencesPath(def.Expression, name) {
+			return true
+		}
+	}
+	return false
 }
 
 // ResolveEffectiveTemplate resolves the template content that is in effect for
@@ -517,6 +563,7 @@ func (s *Service) EvaluatePredicate(
 			Expression:   req.Expression,
 			Entity:       req.Entity,
 			SchemaID:     req.SchemaID,
+			Provided:     s.ContextVariables(ctx, req.TenantInfo),
 			Lookup:       engine.StubLookup{},
 			AllowBoolean: true,
 		},
@@ -560,6 +607,10 @@ func (s *Service) ValidateExpressionWithEnv(
 	env map[string]any,
 ) error {
 	return s.engine.ValidateExpressionWithEnv(ctx, expression, env)
+}
+
+func (s *Service) ReferencesField(expression, field string) bool {
+	return engine.ReferencesPath(expression, field)
 }
 
 // UnguardedNullableFields lists the nullable schema fields an expression uses

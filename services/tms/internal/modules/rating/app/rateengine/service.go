@@ -264,11 +264,14 @@ func (s *Service) rateFromFallbackTemplate(
 		})
 	}
 
+	overrides := make(map[string]any, 1)
 	resp, err := s.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
-		TemplateID: templateID,
-		Entity:     rateCtx.Entity,
-		TenantInfo: rateCtx.TenantInfo,
-		RatingDate: rateCtx.AsOf,
+		TemplateID:        templateID,
+		Entity:            rateCtx.Entity,
+		Overrides:         overrides,
+		TenantInfo:        rateCtx.TenantInfo,
+		RatingDate:        rateCtx.AsOf,
+		UnavailableInputs: bindSellTotal(rateCtx, overrides),
 	})
 	if err != nil {
 		// A template that will not evaluate has always failed the save, and it

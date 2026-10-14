@@ -291,13 +291,24 @@ func (s *Service) nullableReadiness(
 		}
 	}
 
+	details := make([]string, 0, 2)
 	if len(fields) > 0 {
-		check.Status = ReadinessWarn
-		check.Detail = fmt.Sprintf(
+		details = append(details, fmt.Sprintf(
 			"%s can be empty: %s",
 			stringutils.CountNoun(len(fields), "value", "values"),
 			strings.Join(fields, ", "),
-		)
+		))
+	}
+	if template.Type == formulatemplate.TemplateTypeFreightCharge &&
+		slices.ContainsFunc(expressions, func(expression string) bool {
+			return s.formulaService.ReferencesField(expression, storedTotalField)
+		}) {
+		details = append(details, storedTotalField+
+			" is the total stored before this rating, so the freight charge trails by one save")
+	}
+	if len(details) > 0 {
+		check.Status = ReadinessWarn
+		check.Detail = strings.Join(details, "; ")
 		return check
 	}
 

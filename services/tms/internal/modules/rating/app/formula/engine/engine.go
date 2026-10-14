@@ -774,6 +774,16 @@ func (e *Engine) shapeFor(
 	shaped[ctxEnvKey] = ctx
 
 	if definition != nil {
+		objects := nullableObjects(definition.Properties, "")
+		for path := range objects {
+			if value, ok := nestedValue(shaped, path); ok && value == nil {
+				setShapePath(
+					shaped,
+					path,
+					buildPropertyValidationEnvironment(objects[path].Properties),
+				)
+			}
+		}
 		for path, fieldType := range nullablePaths(definition.Properties, "") {
 			shapePath(shaped, path, declaredZero(fieldType))
 		}
@@ -824,6 +834,22 @@ func shapePath(env map[string]any, path string, value any) {
 	if _, present := current[segments[len(segments)-1]]; present {
 		current[segments[len(segments)-1]] = value
 	}
+}
+
+func setShapePath(env map[string]any, path string, value any) {
+	segments := strings.Split(path, ".")
+	current := env
+	for _, segment := range segments[:len(segments)-1] {
+		nested, ok := current[segment].(map[string]any)
+		if !ok {
+			return
+		}
+		cloned := make(map[string]any, len(nested))
+		maps.Copy(cloned, nested)
+		current[segment] = cloned
+		current = cloned
+	}
+	current[segments[len(segments)-1]] = value
 }
 
 func (e *Engine) compileShaped(

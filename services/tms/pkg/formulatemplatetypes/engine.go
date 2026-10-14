@@ -128,9 +128,10 @@ type CalculateRequest struct {
 	Variables  map[string]any
 	// Overrides carry engine-supplied bindings that may shadow schema fields.
 	// See EvaluationRequest.Overrides.
-	Overrides  map[string]any
-	TenantInfo pagination.TenantInfo
-	RatingDate int64
+	Overrides         map[string]any
+	TenantInfo        pagination.TenantInfo
+	RatingDate        int64
+	UnavailableInputs map[string]string
 }
 
 type CalculateResponse struct {

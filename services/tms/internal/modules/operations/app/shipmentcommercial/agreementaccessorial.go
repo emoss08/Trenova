@@ -197,6 +197,10 @@ func (c *Calculator) conditionHolds(
 		Expression: accessorial.ApplyCondition,
 		SchemaID:   shipmentSchemaID,
 		Entity:     entity,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 	})
 	if err != nil {
 		c.logger.Warn("rate agreement accessorial condition could not be evaluated",

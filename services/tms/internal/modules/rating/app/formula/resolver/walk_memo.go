@@ -1,20 +1,22 @@
 package resolver
 
-import "sync"
+import (
+	"errors"
+	"fmt"
+	"sync"
 
-// walkMemo wraps an entity for one evaluation so the Moves and Stops walk
-// happens once, however many computed variables read from it. Every field
-// accessor unwraps it, so computed functions never know it is there.
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+)
+
+var ErrUnsupportedEntity = errors.New("formula entity is not a shipment")
+
 type walkMemo struct {
-	entity   any
-	once     sync.Once
-	moves    []any
-	movesErr error
-	stops    []any
+	entity  any
+	once    sync.Once
+	ordered []*shipment.Stop
+	rated   []*shipment.Stop
 }
 
-// Memoize returns a view of the entity whose stop walk is shared by every
-// computed function called with it. Wrapping twice returns the same view.
 func Memoize(entity any) any {
 	if _, ok := entity.(*walkMemo); ok {
 		return entity
@@ -22,7 +24,6 @@ func Memoize(entity any) any {
 	return &walkMemo{entity: entity}
 }
 
-// Unwrap returns the entity behind a memoized view, or the value itself.
 func Unwrap(entity any) any {
 	if memo, ok := entity.(*walkMemo); ok {
 		return memo.entity
@@ -30,44 +31,37 @@ func Unwrap(entity any) any {
 	return entity
 }
 
-func (m *walkMemo) walk() {
-	m.once.Do(func() {
-		m.moves, m.movesErr = getFieldSlice(m.entity, "Moves")
-		m.stops = collectStops(m.moves)
-	})
-}
-
-func collectStops(moves []any) []any {
-	stops := make([]any, 0, len(moves)*2)
-	for _, move := range moves {
-		moveStops, err := getFieldSlice(move, "Stops")
-		if err != nil {
-			continue
+func shipmentOf(entity any) (*shipment.Shipment, error) {
+	switch typed := Unwrap(entity).(type) {
+	case *shipment.Shipment:
+		if typed == nil {
+			return nil, ErrNilPointer
 		}
-		stops = append(stops, moveStops...)
+		return typed, nil
+	case shipment.Shipment:
+		return &typed, nil
+	default:
+		return nil, fmt.Errorf("%w: %T", ErrUnsupportedEntity, typed)
 	}
-	return stops
 }
 
-// movesOf reads the entity's moves, once per evaluation when memoized.
-func movesOf(entity any) ([]any, error) {
+func stopsOf(entity any) (ordered, rated []*shipment.Stop, err error) {
 	if memo, ok := entity.(*walkMemo); ok {
-		memo.walk()
-		return memo.moves, memo.movesErr
+		entry, shipErr := shipmentOf(memo.entity)
+		if shipErr != nil {
+			return nil, nil, shipErr
+		}
+		memo.once.Do(func() {
+			memo.ordered = entry.OrderedStops()
+			memo.rated = shipment.RatedStopsOf(memo.ordered)
+		})
+		return memo.ordered, memo.rated, nil
 	}
-	return getFieldSlice(entity, "Moves")
-}
 
-// orderedStops reads every stop across the entity's moves in move order,
-// once per evaluation when memoized.
-func orderedStops(entity any) ([]any, error) {
-	if memo, ok := entity.(*walkMemo); ok {
-		memo.walk()
-		return memo.stops, memo.movesErr
-	}
-	moves, err := getFieldSlice(entity, "Moves")
+	entry, err := shipmentOf(entity)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return collectStops(moves), nil
+	ordered = entry.OrderedStops()
+	return ordered, shipment.RatedStopsOf(ordered), nil
 }

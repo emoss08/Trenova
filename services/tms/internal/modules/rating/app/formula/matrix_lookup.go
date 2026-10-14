@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/shopspring/decimal"
@@ -23,7 +24,7 @@ type rateBand struct {
 // normalised by the axis's mode, so a lookup normalises once and compares.
 type exactTable struct {
 	entries   map[string]float64
-	normalize ratematrix.KeyNormalization
+	normalize axisKey
 }
 
 // rangeTable is a banded single-axis matrix together with the axis's policy
@@ -53,8 +54,8 @@ type twoAxisCell struct {
 type twoAxisTable struct {
 	rowMode      ratematrix.MatchMode
 	colMode      ratematrix.MatchMode
-	rowNormalize ratematrix.KeyNormalization
-	colNormalize ratematrix.KeyNormalization
+	rowNormalize axisKey
+	colNormalize axisKey
 	rowOverflow  ratematrix.RangeOverflow
 	colOverflow  ratematrix.RangeOverflow
 	rowBands     []rateBand
@@ -63,6 +64,24 @@ type twoAxisTable struct {
 	// byRowBand groups a banded row axis's cells by band, so a lookup walks
 	// the few sorted bands instead of every cell in the matrix.
 	byRowBand map[string][]twoAxisCell
+}
+
+type axisKey struct {
+	kind          ratematrix.DimensionKind
+	normalization ratematrix.KeyNormalization
+}
+
+func keyOf(axis *ratematrix.RateMatrixDimension) axisKey {
+	return axisKey{kind: axis.Kind, normalization: axis.KeyNormalization}
+}
+
+func (k axisKey) apply(key string) string {
+	if k.kind == ratematrix.DimensionKindFreightClass {
+		if class, ok := commodity.ParseFreightClass(key); ok {
+			return string(class)
+		}
+	}
+	return k.normalization.Apply(key)
 }
 
 // matrixLookup answers a formula's lookup() and lookup2() calls from rate
@@ -131,11 +150,11 @@ func indexSingleAxis(lookup *matrixLookup, item *ratematrixports.RateMatrixLooku
 			if cell == nil {
 				continue
 			}
-			entries[axis.KeyNormalization.Apply(cell.D0Key)] = cell.Value.InexactFloat64()
+			entries[keyOf(axis).apply(cell.D0Key)] = cell.Value.InexactFloat64()
 		}
 		lookup.exact[item.Matrix.Code] = exactTable{
 			entries:   entries,
-			normalize: axis.KeyNormalization,
+			normalize: keyOf(axis),
 		}
 	case ratematrix.MatchModeRange:
 		bands := make([]rateBand, 0, len(item.Cells))
@@ -179,8 +198,8 @@ func indexTwoAxis(lookup *matrixLookup, item *ratematrixports.RateMatrixLookupDa
 	table := &twoAxisTable{
 		rowMode:      rowAxis.MatchMode,
 		colMode:      colAxis.MatchMode,
-		rowNormalize: rowAxis.KeyNormalization,
-		colNormalize: colAxis.KeyNormalization,
+		rowNormalize: keyOf(rowAxis),
+		colNormalize: keyOf(colAxis),
 		rowOverflow:  rowAxis.RangeOverflow,
 		colOverflow:  colAxis.RangeOverflow,
 	}
@@ -197,10 +216,10 @@ func indexTwoAxis(lookup *matrixLookup, item *ratematrixports.RateMatrixLookupDa
 			continue
 		}
 		cells = append(cells, twoAxisCell{
-			rowKey: rowAxis.KeyNormalization.Apply(cell.D0Key),
+			rowKey: keyOf(rowAxis).apply(cell.D0Key),
 			rowMin: cell.D0Min,
 			rowMax: cell.D0Max,
-			colKey: colAxis.KeyNormalization.Apply(cell.D1Key),
+			colKey: keyOf(colAxis).apply(cell.D1Key),
 			colMin: cell.D1Min,
 			colMax: cell.D1Max,
 			value:  cell.Value.InexactFloat64(),
@@ -363,7 +382,7 @@ func (t *twoAxisTable) rowCandidates(table string, rowKey any) ([]twoAxisCell, b
 		if err != nil {
 			return nil, false, fmt.Errorf("rate table %q row key: %w", table, err)
 		}
-		return t.byRow[t.rowNormalize.Apply(matchKey)], false, nil
+		return t.byRow[t.rowNormalize.apply(matchKey)], false, nil
 	}
 
 	numericKey, err := keyToDecimal(rowKey)
@@ -409,7 +428,7 @@ func (t *twoAxisTable) colMatches(
 		if err != nil {
 			return false, fmt.Errorf("rate table %q column key: %w", table, err)
 		}
-		return cell.colKey == t.colNormalize.Apply(matchKey), nil
+		return cell.colKey == t.colNormalize.apply(matchKey), nil
 	}
 
 	numericKey, err := keyToDecimal(colKey)
@@ -435,7 +454,7 @@ func lookupExact(table string, t exactTable, key any) (float64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("rate table %q: %w", table, err)
 	}
-	matchKey = t.normalize.Apply(matchKey)
+	matchKey = t.normalize.apply(matchKey)
 
 	value, ok := t.entries[matchKey]
 	if !ok {
@@ -628,7 +647,7 @@ func (l *matrixLookup) ExplainLookup(table string, key any) (formulatypes.Lookup
 		if err != nil {
 			return formulatypes.LookupMatch{}, false
 		}
-		matchKey = t.normalize.Apply(matchKey)
+		matchKey = t.normalize.apply(matchKey)
 		if _, found := t.entries[matchKey]; !found {
 			return formulatypes.LookupMatch{}, false
 		}

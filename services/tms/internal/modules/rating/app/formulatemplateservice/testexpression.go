@@ -141,6 +141,13 @@ func (s *Service) testExpression(
 	return resp
 }
 
+const (
+	storedTotalField   = "currentTotalCharge"
+	storedTotalWarning = "currentTotalCharge is the total stored before this rating: 0 on a new " +
+		"shipment and the previous save's total afterwards, so a charge priced from it trails the " +
+		"shipment by one save."
+)
+
 // nullableFieldWarnings runs the unguarded-field check over the expression and
 // every breakdown line. A check that cannot run (a schema the engine does not
 // know, an expression that will not parse) contributes nothing: the result
@@ -167,6 +174,16 @@ func (s *Service) warningsForScope(
 	scope, expression string,
 	req *TestExpressionRequest,
 ) []ExpressionWarning {
+	warnings := make([]ExpressionWarning, 0, 2)
+	if s.formulaService.ReferencesField(expression, storedTotalField) {
+		warnings = append(warnings, ExpressionWarning{
+			Scope:   scope,
+			Field:   storedTotalField,
+			Type:    "number",
+			Message: storedTotalWarning,
+		})
+	}
+
 	found, err := s.formulaService.UnguardedNullableFields(
 		ctx,
 		expression,
@@ -174,10 +191,9 @@ func (s *Service) warningsForScope(
 		req.Variables,
 	)
 	if err != nil || len(found) == 0 {
-		return nil
+		return warnings
 	}
 
-	warnings := make([]ExpressionWarning, 0, len(found))
 	for _, item := range found {
 		warnings = append(warnings, ExpressionWarning{
 			Scope: scope,

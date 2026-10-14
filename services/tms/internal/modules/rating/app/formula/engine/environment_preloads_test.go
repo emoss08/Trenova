@@ -3,6 +3,7 @@ package engine_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/stretchr/testify/assert"
@@ -377,11 +378,12 @@ func TestEnvironmentBuilder_Build_WithComputedAndDirect(t *testing.T) {
 	err := registry.Register("test-mixed-fields", []byte(schemaJSON))
 	require.NoError(t, err)
 
-	entity := &TestShipment{
-		Weight: 3000,
-		Moves: []Move{
-			{Distance: 100.0},
-			{Distance: 200.0},
+	weight := int64(3000)
+	entity := &shipment.Shipment{
+		Weight: &weight,
+		Moves: []*shipment.ShipmentMove{
+			{Distance: distance(100.0)},
+			{Distance: distance(200.0)},
 		},
 	}
 

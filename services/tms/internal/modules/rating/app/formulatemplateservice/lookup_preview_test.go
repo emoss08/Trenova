@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
+
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -636,4 +638,43 @@ func TestTestExpression_PreviewSeesProvidedContextVariables(t *testing.T) {
 
 	require.True(t, resp.Valid, resp.Error)
 	assert.InDelta(t, 385, resultAmount(t, resp).InexactFloat64(), 0.0001)
+}
+
+func TestTestExpression_WarnsThatCurrentTotalChargeIsTheStoredTotal(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	deps.svc.formulaService = ratingtest.NewFormulaService(t)
+
+	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: "currentTotalCharge * 0.1",
+		SchemaID:   "shipment",
+		TenantInfo: newTenantInfo(),
+	})
+
+	require.True(t, result.Valid, result.Error)
+	require.Len(t, result.Warnings, 1)
+	assert.Equal(t, "currentTotalCharge", result.Warnings[0].Field)
+	assert.Contains(t, result.Warnings[0].Message, "before this rating")
+}
+
+func TestReadiness_WarnsWhenAFreightChargeReadsTheStoredTotal(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	deps.svc.formulaService = ratingtest.NewFormulaService(t)
+
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusDraft
+	template.Type = formulatemplate.TemplateTypeFreightCharge
+	template.Expression = "max(currentTotalCharge * 0.1, 50)"
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+
+	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+
+	require.NoError(t, err)
+	check := readinessByKey(resp)[ReadinessCheckNullables]
+	assert.Equal(t, ReadinessWarn, check.Status)
+	assert.Contains(t, check.Detail, "currentTotalCharge")
 }

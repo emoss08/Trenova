@@ -3,17 +3,16 @@ package rateengine
 import (
 	"context"
 	"errors"
+	"math"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -53,19 +52,19 @@ func (s *Service) buildContext(
 		AsOf:            asOf,
 		Origin:          placeOf(entity.ShipperStop()),
 		Destination:     placeOf(entity.DeliveryStop()),
-		Distance:        totalDistance(entity),
-		Weight:          totalWeight(entity),
-		Pieces:          totalPieces(entity),
-		Stops:           countStops(entity),
-		LinearFeet:      totalLinearFeet(entity),
-		CubicFeet:       cubicFeet(entity),
+		Distance:        entity.RatingDistance(),
+		Weight:          entity.RatingWeight(),
+		Pieces:          entity.RatingPieces(),
+		Stops:           ratedStops(entity),
+		LinearFeet:      entity.RatingLinearFeet(),
+		CubicFeet:       entity.RatingCubicFeet(),
 		ServiceTypeID:   entity.ServiceTypeID,
 		ShipmentTypeID:  entity.ShipmentTypeID,
 		TractorTypeID:   entity.TractorTypeID,
 		TrailerTypeID:   entity.TrailerTypeID,
 		CommodityIDs:    commodityIDs(entity),
-		FreightClasses:  freightClasses(entity),
-		HasHazmat:       hasHazmat(entity),
+		FreightClasses:  entity.FreightClasses(),
+		HasHazmat:       entity.HasHazardousMaterial(),
 		BillingCurrency: billingCurrency(entity),
 		SellTotal:       req.SellTotal,
 		Entity:          entity,
@@ -215,165 +214,6 @@ func applyCoordinates(rateCtx *RateContext, entity *shipment.Shipment) {
 	}
 }
 
-func totalDistance(entity *shipment.Shipment) decimal.Decimal {
-	total := decimal.Zero
-
-	for _, move := range entity.Moves {
-		if move == nil || move.Distance == nil {
-			continue
-		}
-		total = total.Add(decimal.NewFromFloat(*move.Distance))
-	}
-
-	return total
-}
-
-// totalWeight prefers the commodities' own weights and falls back to the
-// shipment header, which is what a load entered without a commodity breakdown
-// carries.
-func totalWeight(entity *shipment.Shipment) decimal.Decimal {
-	total := decimal.Zero
-
-	for _, item := range entity.Commodities {
-		if item == nil {
-			continue
-		}
-		total = total.Add(decimal.NewFromInt(item.Weight))
-	}
-
-	if total.IsPositive() {
-		return total
-	}
-
-	if entity.Weight != nil {
-		return decimal.NewFromInt(*entity.Weight)
-	}
-
-	return decimal.Zero
-}
-
-func totalPieces(entity *shipment.Shipment) int64 {
-	var total int64
-
-	for _, item := range entity.Commodities {
-		if item == nil {
-			continue
-		}
-		total += item.Pieces
-	}
-
-	if total > 0 {
-		return total
-	}
-
-	if entity.Pieces != nil {
-		return *entity.Pieces
-	}
-
-	return 0
-}
-
-func countStops(entity *shipment.Shipment) int16 {
-	var total int16
-
-	for _, move := range entity.Moves {
-		if move == nil {
-			continue
-		}
-		for _, stop := range move.Stops {
-			if stop == nil || stop.Status == shipment.StopStatusCanceled {
-				continue
-			}
-			total++
-		}
-	}
-
-	return total
-}
-
-func totalLinearFeet(entity *shipment.Shipment) decimal.Decimal {
-	total := decimal.Zero
-
-	for _, item := range entity.Commodities {
-		if item == nil || item.Commodity == nil ||
-			item.Commodity.LinearFeetPerUnit == nil {
-			continue
-		}
-
-		perUnit := decimal.NewFromFloat(*item.Commodity.LinearFeetPerUnit)
-		total = total.Add(perUnit.Mul(decimal.NewFromInt(item.Pieces)))
-	}
-
-	return total
-}
-
-// cubicFeet is what density classification divides weight by.
-//
-// The shipment's own load envelope is preferred because it describes the space
-// the freight actually occupies on the trailer. Falling back to summing the
-// commodities' dimensions is less accurate — it ignores how the freight stacks
-// — but it is what a rater would do with the numbers available.
-func cubicFeet(entity *shipment.Shipment) decimal.Decimal {
-	if envelope := envelopeCubicFeet(entity); envelope.IsPositive() {
-		return envelope
-	}
-
-	total := decimal.Zero
-
-	for _, item := range entity.Commodities {
-		if item == nil {
-			continue
-		}
-
-		volume := commodityCubicFeet(item)
-		if volume.IsPositive() {
-			total = total.Add(volume.Mul(decimal.NewFromInt(item.Pieces)))
-		}
-	}
-
-	return total
-}
-
-func envelopeCubicFeet(entity *shipment.Shipment) decimal.Decimal {
-	if entity.EnvelopeLengthFeet == nil || entity.EnvelopeWidthFeet == nil ||
-		entity.EnvelopeHeightFeet == nil {
-		return decimal.Zero
-	}
-
-	return decimal.NewFromFloat(*entity.EnvelopeLengthFeet).
-		Mul(decimal.NewFromFloat(*entity.EnvelopeWidthFeet)).
-		Mul(decimal.NewFromFloat(*entity.EnvelopeHeightFeet))
-}
-
-func commodityCubicFeet(item *shipment.ShipmentCommodity) decimal.Decimal {
-	length, width, height := itemDimensions(item)
-	if length == nil || width == nil || height == nil {
-		return decimal.Zero
-	}
-
-	return decimal.NewFromFloat(*length).
-		Mul(decimal.NewFromFloat(*width)).
-		Mul(decimal.NewFromFloat(*height))
-}
-
-// itemDimensions prefers the dimensions recorded on this shipment's line over
-// the commodity's catalogue defaults, since the line describes what actually
-// shipped.
-func itemDimensions(item *shipment.ShipmentCommodity) (length, width, height *float64) {
-	length, width, height = item.LengthFeet, item.WidthFeet, item.HeightFeet
-	if length != nil && width != nil && height != nil {
-		return length, width, height
-	}
-
-	if item.Commodity == nil {
-		return nil, nil, nil
-	}
-
-	return item.Commodity.LengthPerUnit,
-		item.Commodity.WidthPerUnit,
-		item.Commodity.HeightPerUnit
-}
-
 func commodityIDs(entity *shipment.Shipment) []pulid.ID {
 	ids := make([]pulid.ID, 0, len(entity.Commodities))
 
@@ -385,39 +225,6 @@ func commodityIDs(entity *shipment.Shipment) []pulid.ID {
 	}
 
 	return ids
-}
-
-func freightClasses(entity *shipment.Shipment) []commodity.FreightClass {
-	classes := make([]commodity.FreightClass, 0, len(entity.Commodities))
-	seen := make(map[commodity.FreightClass]struct{}, len(entity.Commodities))
-
-	for _, item := range entity.Commodities {
-		if item == nil || item.Commodity == nil || item.Commodity.FreightClass == "" {
-			continue
-		}
-
-		class := item.Commodity.FreightClass
-		if _, dup := seen[class]; dup {
-			continue
-		}
-		seen[class] = struct{}{}
-		classes = append(classes, class)
-	}
-
-	return classes
-}
-
-func hasHazmat(entity *shipment.Shipment) bool {
-	for _, item := range entity.Commodities {
-		if item == nil || item.Commodity == nil {
-			continue
-		}
-		if !item.Commodity.HazardousMaterialID.IsNil() {
-			return true
-		}
-	}
-
-	return false
 }
 
 func requiresTempControl(entity *shipment.Shipment) bool {
@@ -454,4 +261,12 @@ func LocationOf(loc *location.Location) rategeo.Place {
 	}
 
 	return place
+}
+
+func ratedStops(entity *shipment.Shipment) int16 {
+	count := entity.RatedStopCount()
+	if count > math.MaxInt16 {
+		return math.MaxInt16
+	}
+	return int16(count) //nolint:gosec // bounded by MaxInt16 above
 }

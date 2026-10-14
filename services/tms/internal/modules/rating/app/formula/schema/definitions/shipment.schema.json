@@ -143,7 +143,7 @@
             }
         },
         "currentTotalCharge": {
-            "description": "Current total shipment charge in USD",
+            "description": "The total charge stored on the shipment before this rating ran: 0 on a new shipment, and the previous save's total afterwards. A freight charge formula that reads it prices against its own last result",
             "type": "number",
             "minimum": 0,
             "x-source": {
@@ -636,7 +636,7 @@
             }
         },
         "pickupDate": {
-            "description": "The pickup as a date in the pickup location's local time (UTC when the location has no timezone), from the first stop's actual arrival or scheduled window. Supports date methods such as pickupDate.Hour() and comparisons with date(\"2026-01-01\"); empty when the shipment has no stops",
+            "description": "The pickup as a date in the pickup location's local time (UTC when the location has no timezone), from the first pickup stop's actual arrival or scheduled window start. Supports date methods such as pickupDate.Hour() and comparisons with date(\"2026-01-01\"); empty when the shipment has no pickup stop",
             "type": ["string", "null"],
             "format": "date-time",
             "x-source": {
@@ -649,7 +649,7 @@
             }
         },
         "deliveryDate": {
-            "description": "The delivery as a date in the delivery location's local time (UTC when the location has no timezone), from the last stop's actual departure, actual arrival, or scheduled window end; empty when the shipment has no stops",
+            "description": "The delivery as a date in the delivery location's local time (UTC when the location has no timezone), from the final delivery stop's actual departure, actual arrival, scheduled window end, or scheduled window start; empty when the shipment has no delivery stop",
             "type": ["string", "null"],
             "format": "date-time",
             "x-source": {

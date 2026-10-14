@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"testing"
 
+	internaltestutil "github.com/emoss08/trenova/internal/testutil"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
@@ -289,7 +291,7 @@ func newTestFormulaService(t *testing.T) *formula.Service {
 	t.Helper()
 
 	registry := schema.NewRegistry()
-	registerShipmentSchema(registry)
+	internaltestutil.RegisterShipmentFormulaSchema(t, registry)
 	res := resolver.NewResolver()
 	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
 		Registry: registry,
@@ -338,48 +340,6 @@ func (s *stubRateMatrixRepo) GetLookupData(
 	_ *ratematrixports.GetRateMatrixLookupDataRequest,
 ) ([]*ratematrixports.RateMatrixLookupData, error) {
 	return nil, nil
-}
-
-func registerShipmentSchema(registry *schema.Registry) {
-	const shipmentSchema = `{
-		"$schema": "http://json-schema.org/draft-07/schema#",
-		"$id": "shipment-test-schema",
-		"type": "object",
-		"x-formula-context": {
-			"entityType": "Shipment"
-		},
-		"x-data-source": {
-			"table": "shipments",
-			"preloads": []
-		},
-		"properties": {
-			"customer": {
-				"type": "object",
-				"properties": {
-					"name": { "type": "string" },
-					"code": { "type": "string" }
-				}
-			},
-			"weight": { "type": "number" },
-			"pieces": { "type": "integer" },
-			"ratingUnit": { "type": "integer" },
-			"freightChargeAmount": { "type": "number" },
-			"otherChargeAmount": { "type": "number" },
-			"currentTotalCharge": { "type": "number" },
-			"totalDistance": { "type": "number" },
-			"totalStops": { "type": "integer" },
-			"totalWeight": { "type": "number" },
-			"totalPieces": { "type": "integer" },
-			"totalLinearFeet": { "type": "number" },
-			"hasHazmat": { "type": "boolean" },
-			"requiresTemperatureControl": { "type": "boolean" },
-			"temperatureDifferential": { "type": "number" }
-		}
-	}`
-
-	if err := registry.Register("shipment", []byte(shipmentSchema)); err != nil {
-		panic(err)
-	}
 }
 
 type mockShipmentRepo struct {
@@ -2809,11 +2769,11 @@ func TestFormulaTemplateHandler_Backtest_Success(t *testing.T) {
 				BusinessUnitID: testutil.TestBuID,
 				Name:           "Backtest Template",
 				Type:           formulatemplate.TemplateTypeFreightCharge,
-				Expression:     "baseRate",
+				Expression:     "linehaulRate",
 				Status:         formulatemplate.StatusActive,
 				SchemaID:       "shipment",
 				VariableDefinitions: []*formulatypes.VariableDefinition{
-					{Name: "baseRate", Type: "number", DefaultValue: 100.0},
+					{Name: "linehaulRate", Type: "number", DefaultValue: 100.0},
 				},
 			}, nil
 		},
@@ -2839,7 +2799,7 @@ func TestFormulaTemplateHandler_Backtest_Success(t *testing.T) {
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/formula-templates/" + ftID.String() + "/backtest").
 		WithDefaultAuthContext().
-		WithJSONBody(map[string]any{"expression": "baseRate * 2"})
+		WithJSONBody(map[string]any{"expression": "linehaulRate * 2"})
 
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)

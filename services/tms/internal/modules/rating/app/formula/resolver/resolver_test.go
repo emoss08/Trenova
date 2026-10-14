@@ -58,7 +58,7 @@ func TestResolver_ResolveField(t *testing.T) {
 			source: &formulatypes.FieldSource{
 				Path: "Age",
 			},
-			want:    30,
+			want:    int64(30),
 			wantErr: false,
 		},
 		{
@@ -74,7 +74,7 @@ func TestResolver_ResolveField(t *testing.T) {
 			source: &formulatypes.FieldSource{
 				Path: "Nullable",
 			},
-			want:    &name,
+			want:    name,
 			wantErr: false,
 		},
 		{
@@ -458,7 +458,7 @@ func TestResolver_ResolveField_JSONTag(t *testing.T) {
 			source: &formulatypes.FieldSource{
 				Path: "other_name",
 			},
-			want: 42,
+			want: int64(42),
 		},
 		{
 			name: "resolve by struct field name",

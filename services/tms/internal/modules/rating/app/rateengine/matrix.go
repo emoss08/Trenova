@@ -227,12 +227,14 @@ func (s *Service) applyCellValue(
 ) (decimal.Decimal, error) {
 	cell := match.Cell
 
+	overrides := map[string]any{"baseRate": cell.Value.InexactFloat64()}
 	resp, err := s.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
-		TemplateID: matrix.FormulaTemplateID,
-		Entity:     rateCtx.Entity,
-		Overrides:  map[string]any{"baseRate": cell.Value.InexactFloat64()},
-		TenantInfo: rateCtx.TenantInfo,
-		RatingDate: rateCtx.AsOf,
+		TemplateID:        matrix.FormulaTemplateID,
+		Entity:            rateCtx.Entity,
+		Overrides:         overrides,
+		TenantInfo:        rateCtx.TenantInfo,
+		RatingDate:        rateCtx.AsOf,
+		UnavailableInputs: bindSellTotal(rateCtx, overrides),
 	})
 	if err != nil {
 		return decimal.Zero, err

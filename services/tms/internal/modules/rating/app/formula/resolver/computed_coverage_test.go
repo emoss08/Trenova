@@ -3,6 +3,7 @@ package resolver_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/stretchr/testify/assert"
@@ -116,90 +117,6 @@ func TestGetFieldFloat64_NullableNilPtr(t *testing.T) {
 	assert.Nil(t, got)
 }
 
-func TestGetFieldFloat64_NonNumericType(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithStringDistance struct {
-		Distance string
-		Moves    []EntityWithStringDistance
-	}
-
-	entity := &struct {
-		Moves []EntityWithStringDistance
-	}{
-		Moves: []EntityWithStringDistance{
-			{Distance: "not_a_number"},
-		},
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalDistance")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
-}
-
-func TestGetFieldInt64_ViaComputed(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	tests := []struct {
-		name   string
-		entity *ShipmentEntity
-		fn     string
-		want   any
-	}{
-		{
-			name:   "int64 weight field",
-			entity: &ShipmentEntity{Weight: 5000},
-			fn:     "computeTotalWeight",
-			want:   5000.0,
-		},
-		{
-			name:   "int64 pieces field",
-			entity: &ShipmentEntity{Pieces: 25},
-			fn:     "computeTotalPieces",
-			want:   int64(25),
-		},
-		{
-			name: "zero weight falls through to commodities",
-			entity: &ShipmentEntity{
-				Weight: 0,
-				Commodities: []Commodity{
-					{Weight: 1000},
-					{Weight: 2000},
-				},
-			},
-			fn:   "computeTotalWeight",
-			want: 3000.0,
-		},
-		{
-			name: "zero pieces falls through to commodities",
-			entity: &ShipmentEntity{
-				Pieces: 0,
-				Commodities: []Commodity{
-					{Pieces: 5},
-					{Pieces: 10},
-				},
-			},
-			fn:   "computeTotalPieces",
-			want: int64(15),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, tt.fn)
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
 func TestGetFieldInt64_NonNumericType(t *testing.T) {
 	t.Parallel()
 
@@ -242,111 +159,6 @@ func TestGetFieldInt64_PtrIntNil(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestGetFieldInt64_PtrIntNonNil(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithPtrInt struct {
-		Weight      *int
-		Pieces      *int64
-		Moves       []struct{}
-		Commodities []struct{}
-	}
-
-	w := 5000
-	entity := &EntityWithPtrInt{
-		Weight: &w,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalWeight")
-	require.NoError(t, err)
-	assert.InDelta(t, 5000.0, got, 0.001)
-}
-
-func TestGetFieldInt64_IntType(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithInt struct {
-		Weight      int
-		Pieces      int
-		Moves       []struct{}
-		Commodities []struct{}
-	}
-
-	entity := &EntityWithInt{
-		Weight: 3000,
-		Pieces: 50,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalWeight")
-	require.NoError(t, err)
-	assert.InDelta(t, 3000.0, got, 0.001)
-
-	gotPieces, err := r.ResolveComputed(entity, "computeTotalPieces")
-	require.NoError(t, err)
-	assert.Equal(t, int64(50), gotPieces)
-}
-
-func TestGetFieldInt16_ViaComputed(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	min16 := int16(30)
-	max16 := int16(50)
-
-	tests := []struct {
-		name    string
-		entity  *ShipmentEntity
-		want    float64
-		wantErr bool
-	}{
-		{
-			name: "valid int16 pointers",
-			entity: &ShipmentEntity{
-				TemperatureMin: &min16,
-				TemperatureMax: &max16,
-			},
-			want: 20.0,
-		},
-		{
-			name: "nil min returns error",
-			entity: &ShipmentEntity{
-				TemperatureMin: nil,
-				TemperatureMax: &max16,
-			},
-			wantErr: true,
-		},
-		{
-			name: "nil max returns error",
-			entity: &ShipmentEntity{
-				TemperatureMin: &min16,
-				TemperatureMax: nil,
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := r.ResolveComputed(tt.entity, "computeTemperatureDifferential")
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.InDelta(t, tt.want, got, 0.001)
-		})
-	}
-}
-
 func TestGetFieldInt16_NonInt16Type(t *testing.T) {
 	t.Parallel()
 
@@ -367,27 +179,6 @@ func TestGetFieldInt16_NonInt16Type(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestGetFieldInt16_DirectInt16Value(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithDirectInt16 struct {
-		TemperatureMin int16
-		TemperatureMax int16
-	}
-
-	entity := &EntityWithDirectInt16{
-		TemperatureMin: 20,
-		TemperatureMax: 60,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTemperatureDifferential")
-	require.NoError(t, err)
-	assert.InDelta(t, 40.0, got, 0.001)
-}
-
 func TestGetFieldSlice_NonSliceField(t *testing.T) {
 	t.Parallel()
 
@@ -406,27 +197,6 @@ func TestGetFieldSlice_NonSliceField(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestGetFieldSlice_NilSlice(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithNilSlice struct {
-		Moves []struct {
-			Distance float64
-		}
-	}
-
-	entity := &EntityWithNilSlice{
-		Moves: nil,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalDistance")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
-}
-
 func TestGetFieldSlice_FieldNotFound(t *testing.T) {
 	t.Parallel()
 
@@ -441,208 +211,6 @@ func TestGetFieldSlice_FieldNotFound(t *testing.T) {
 
 	_, err := r.ResolveComputed(entity, "computeTotalDistance")
 	require.Error(t, err)
-}
-
-func TestGetFieldDecimal_NilValue(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	entity := &ShipmentEntity{
-		FreightChargeAmount: nil,
-		OtherChargeAmount:   nil,
-		TotalChargeAmount:   nil,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeFreightChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
-
-	got, err = r.ResolveComputed(entity, "computeOtherChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
-
-	got, err = r.ResolveComputed(entity, "computeCurrentTotalCharge")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
-}
-
-func TestGetFieldDecimal_Float64Value(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	val := 1234.56
-	entity := &ShipmentEntity{
-		FreightChargeAmount: &val,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeFreightChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 1234.56, got, 0.001)
-}
-
-func TestGetFieldDecimal_StructWithValidFalse(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithNullDecimal struct {
-		FreightChargeAmount FakeNullDecimal
-	}
-
-	entity := &EntityWithNullDecimal{
-		FreightChargeAmount: FakeNullDecimal{
-			Valid:   false,
-			Decimal: FakeInnerDecimal{},
-		},
-	}
-
-	got, err := r.ResolveComputed(entity, "computeFreightChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
-}
-
-func TestGetFieldDecimal_StructWithValidTrue(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithValidDecimal struct {
-		FreightChargeAmount FakeValidDecimal
-	}
-
-	entity := &EntityWithValidDecimal{
-		FreightChargeAmount: FakeValidDecimal{
-			Valid:   true,
-			Decimal: FakeInnerDecimal{},
-		},
-	}
-
-	got, err := r.ResolveComputed(entity, "computeFreightChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 99.99, got, 0.001)
-}
-
-func TestGetFieldDecimal_StructWithInexactFloat64Method(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithDecimalMethod struct {
-		FreightChargeAmount FakeInnerDecimal
-	}
-
-	entity := &EntityWithDecimalMethod{
-		FreightChargeAmount: FakeInnerDecimal{},
-	}
-
-	got, err := r.ResolveComputed(entity, "computeFreightChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 99.99, got, 0.001)
-}
-
-func TestGetFieldDecimal_PtrToDecimalStruct(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type PtrDecimalEntity struct {
-		FreightChargeAmount *FakeNullDecimal
-	}
-
-	entity := &PtrDecimalEntity{
-		FreightChargeAmount: &FakeNullDecimal{
-			Valid:   true,
-			Decimal: FakeInnerDecimal{},
-		},
-	}
-
-	got, err := r.ResolveComputed(entity, "computeFreightChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 99.99, got, 0.001)
-}
-
-func TestGetFieldDecimal_PtrToDecimalStructNil(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type PtrDecimalEntity struct {
-		FreightChargeAmount *FakeNullDecimal
-	}
-
-	entity := &PtrDecimalEntity{
-		FreightChargeAmount: nil,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeFreightChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
-}
-
-func TestGetFieldDecimal_NonNumericNonStruct(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithStringDecimal struct {
-		FreightChargeAmount string
-	}
-
-	entity := &EntityWithStringDecimal{
-		FreightChargeAmount: "not_a_decimal",
-	}
-
-	got, err := r.ResolveComputed(entity, "computeFreightChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
-}
-
-func TestGetFieldDecimal_IntField(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithIntDecimal struct {
-		FreightChargeAmount int
-	}
-
-	entity := &EntityWithIntDecimal{
-		FreightChargeAmount: 500,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeFreightChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
-}
-
-func TestGetFieldDecimal_Float64Direct(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithFloat64Decimal struct {
-		FreightChargeAmount float64
-	}
-
-	entity := &EntityWithFloat64Decimal{
-		FreightChargeAmount: 250.75,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeFreightChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 250.75, got, 0.001)
 }
 
 func TestGetFieldDecimal_FieldNotFound(t *testing.T) {
@@ -661,138 +229,6 @@ func TestGetFieldDecimal_FieldNotFound(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestGetFieldFloat64_IntField(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithIntDistance struct {
-		Moves []struct {
-			Distance int
-		}
-	}
-
-	entity := &EntityWithIntDistance{
-		Moves: []struct {
-			Distance int
-		}{
-			{Distance: 100},
-			{Distance: 200},
-		},
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalDistance")
-	require.NoError(t, err)
-	assert.InDelta(t, 300.0, got, 0.001)
-}
-
-func TestGetFieldFloat64_Int64Field(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithInt64Distance struct {
-		Moves []struct {
-			Distance int64
-		}
-	}
-
-	entity := &EntityWithInt64Distance{
-		Moves: []struct {
-			Distance int64
-		}{
-			{Distance: 150},
-			{Distance: 250},
-		},
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalDistance")
-	require.NoError(t, err)
-	assert.InDelta(t, 400.0, got, 0.001)
-}
-
-func TestGetFieldFloat64_Float32Field(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithFloat32Distance struct {
-		Moves []struct {
-			Distance float32
-		}
-	}
-
-	entity := &EntityWithFloat32Distance{
-		Moves: []struct {
-			Distance float32
-		}{
-			{Distance: 100.5},
-			{Distance: 50.5},
-		},
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalDistance")
-	require.NoError(t, err)
-	assert.InDelta(t, 151.0, got, 0.1)
-}
-
-func TestGetFieldFloat64_PtrFloat64Field(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	d1 := 100.0
-	d2 := 200.0
-
-	type EntityWithPtrDistance struct {
-		Moves []struct {
-			Distance *float64
-		}
-	}
-
-	entity := &EntityWithPtrDistance{
-		Moves: []struct {
-			Distance *float64
-		}{
-			{Distance: &d1},
-			{Distance: &d2},
-		},
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalDistance")
-	require.NoError(t, err)
-	assert.InDelta(t, 300.0, got, 0.001)
-}
-
-func TestGetFieldFloat64_PtrFloat64Nil(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithNilPtrDistance struct {
-		Moves []struct {
-			Distance *float64
-		}
-	}
-
-	entity := &EntityWithNilPtrDistance{
-		Moves: []struct {
-			Distance *float64
-		}{
-			{Distance: nil},
-		},
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalDistance")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
-}
-
 func TestResolveField_NonStructEntity(t *testing.T) {
 	t.Parallel()
 
@@ -808,7 +244,7 @@ func TestResolveField_NilSource(t *testing.T) {
 
 	r := resolver.NewResolver()
 
-	_, err := r.ResolveField(&ShipmentEntity{}, nil)
+	_, err := r.ResolveField(&FieldTestEntity{}, nil)
 	require.Error(t, err)
 }
 
@@ -818,7 +254,7 @@ func TestResolveField_ComputedSource(t *testing.T) {
 	r := resolver.NewResolver()
 
 	source := &formulatypes.FieldSource{Computed: true, Function: "computeSomething"}
-	_, err := r.ResolveField(&ShipmentEntity{}, source)
+	_, err := r.ResolveField(&FieldTestEntity{}, source)
 	require.Error(t, err)
 }
 
@@ -828,7 +264,7 @@ func TestResolveField_EmptyPathAndField(t *testing.T) {
 	r := resolver.NewResolver()
 
 	source := &formulatypes.FieldSource{}
-	_, err := r.ResolveField(&ShipmentEntity{}, source)
+	_, err := r.ResolveField(&FieldTestEntity{}, source)
 	require.Error(t, err)
 }
 
@@ -877,12 +313,13 @@ func TestResolveAllFields(t *testing.T) {
 	r := resolver.NewResolver()
 	resolver.RegisterDefaultComputed(r)
 
-	entity := &ShipmentEntity{
-		Weight: 5000,
-		Pieces: 100,
-		Moves: []Move{
-			{Distance: 100.0},
-		},
+	weight := int64(5000)
+	pieces := int64(100)
+	miles := 100.0
+	entity := &shipment.Shipment{
+		Weight: &weight,
+		Pieces: &pieces,
+		Moves:  []*shipment.ShipmentMove{{Distance: &miles}},
 	}
 
 	sources := map[string]*formulatypes.FieldSource{
@@ -906,7 +343,7 @@ func TestResolveAllFields_NullableFieldError(t *testing.T) {
 
 	r := resolver.NewResolver()
 
-	entity := &ShipmentEntity{}
+	entity := &FieldTestEntity{}
 
 	sources := map[string]*formulatypes.FieldSource{
 		"missing": {
@@ -925,7 +362,7 @@ func TestResolveAllFields_NonNullableFieldError(t *testing.T) {
 
 	r := resolver.NewResolver()
 
-	entity := &ShipmentEntity{}
+	entity := &FieldTestEntity{}
 
 	sources := map[string]*formulatypes.FieldSource{
 		"missing": {
@@ -963,134 +400,6 @@ func TestComputeWithNonStructInput(t *testing.T) {
 			require.Error(t, err)
 		})
 	}
-}
-
-func TestComputeRequiresTemperatureControl_NonStruct(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	got, err := r.ResolveComputed(42, "computeRequiresTemperatureControl")
-	require.NoError(t, err)
-	assert.Equal(t, false, got)
-}
-
-func TestComputeTotalLinearFeet_NonStruct(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	got, err := r.ResolveComputed(42, "computeTotalLinearFeet")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
-}
-
-func TestGetFieldInt64_PtrInt64Nil(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithPtrInt64 struct {
-		Weight      *int64
-		Pieces      *int64
-		Moves       []struct{}
-		Commodities []struct{ Weight int64 }
-	}
-
-	entity := &EntityWithPtrInt64{
-		Weight: nil,
-		Pieces: nil,
-		Commodities: []struct{ Weight int64 }{
-			{Weight: 100},
-		},
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalWeight")
-	require.NoError(t, err)
-	assert.InDelta(t, 100.0, got, 0.001)
-}
-
-func TestGetFieldInt64_PtrInt64NonNil(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithPtrInt64 struct {
-		Weight      *int64
-		Pieces      *int64
-		Moves       []struct{}
-		Commodities []struct{ Weight int64 }
-	}
-
-	w := int64(7000)
-	entity := &EntityWithPtrInt64{
-		Weight: &w,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalWeight")
-	require.NoError(t, err)
-	assert.InDelta(t, 7000.0, got, 0.001)
-}
-
-func TestGetFieldSlice_PtrToSlice(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithPtrSlice struct {
-		Moves *[]struct {
-			Distance float64
-		}
-	}
-
-	moves := []struct {
-		Distance float64
-	}{
-		{Distance: 100.0},
-	}
-
-	entity := &EntityWithPtrSlice{
-		Moves: &moves,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalDistance")
-	require.NoError(t, err)
-	assert.InDelta(t, 100.0, got, 0.001)
-}
-
-func TestComputeLinearFeet_WithCommodityMissingLinearFeetPerUnit(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type CommodityNoLF struct {
-		Name string
-	}
-
-	type CommodityItem struct {
-		Pieces    int64
-		Commodity *CommodityNoLF
-	}
-
-	type Entity struct {
-		Commodities []CommodityItem
-	}
-
-	entity := &Entity{
-		Commodities: []CommodityItem{
-			{Pieces: 10, Commodity: &CommodityNoLF{Name: "test"}},
-		},
-	}
-
-	got, err := r.ResolveComputed(entity, "computeTotalLinearFeet")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
 }
 
 func TestResolveField_WithPath(t *testing.T) {
@@ -1165,41 +474,6 @@ func TestResolveField_NullableNilPointerInPath(t *testing.T) {
 	got, err := r.ResolveField(entity, source)
 	require.NoError(t, err)
 	assert.Nil(t, got)
-}
-
-func TestGetFieldDecimal_PtrFloat64Direct(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	val := 333.33
-	entity := &ShipmentEntity{
-		OtherChargeAmount: &val,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeOtherChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 333.33, got, 0.001)
-}
-
-func TestGetFieldDecimal_BoolField(t *testing.T) {
-	t.Parallel()
-
-	r := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(r)
-
-	type EntityWithBoolDecimal struct {
-		FreightChargeAmount bool
-	}
-
-	entity := &EntityWithBoolDecimal{
-		FreightChargeAmount: true,
-	}
-
-	got, err := r.ResolveComputed(entity, "computeFreightChargeAmount")
-	require.NoError(t, err)
-	assert.InDelta(t, 0.0, got, 0.001)
 }
 
 func TestResolveField_JSONTagLookup(t *testing.T) {

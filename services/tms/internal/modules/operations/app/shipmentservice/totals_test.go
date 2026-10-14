@@ -1,28 +1,30 @@
 package shipmentservice
 
 import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"context"
-	"errors"
-	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -498,7 +500,7 @@ func newTestFormulaService(
 	t.Helper()
 
 	registry := schema.NewRegistry()
-	registerShipmentSchema(t, registry)
+	testutil.RegisterShipmentFormulaSchema(t, registry)
 	res := resolver.NewResolver()
 	resolver.RegisterDefaultComputed(res)
 
@@ -555,84 +557,6 @@ func (stubTotalsMatrixRepo) GetLookupData(
 	_ *ratematrixports.GetRateMatrixLookupDataRequest,
 ) ([]*ratematrixports.RateMatrixLookupData, error) {
 	return nil, nil
-}
-
-func registerShipmentSchema(t *testing.T, registry *schema.Registry) {
-	t.Helper()
-
-	const shipmentSchema = `{
-		"$schema": "https://json-schema.org/draft/2020-12/schema",
-		"$id": "https://trenova.com/schemas/formula/shipment.schema.json",
-		"type": "object",
-		"x-formula-context": {
-			"category": "shipment",
-			"entities": ["Shipment"]
-		},
-		"x-data-source": {
-			"table": "shipments",
-			"preloads": ["Customer", "Moves.Stops", "Commodities.Commodity", "Commodities.Commodity.HazardousMaterial"]
-		},
-		"properties": {
-			"weight": {
-				"type": ["number", "null"],
-				"x-source": { "field": "Weight", "nullable": true, "transform": "int64ToFloat64" }
-			},
-			"pieces": {
-				"type": ["integer", "null"],
-				"x-source": { "field": "Pieces", "nullable": true }
-			},
-			"freightChargeAmount": {
-				"type": "number",
-				"x-source": { "field": "FreightChargeAmount", "transform": "decimalToFloat64" }
-			},
-			"otherChargeAmount": {
-				"type": "number",
-				"x-source": { "computed": true, "function": "computeOtherChargeAmount" }
-			},
-			"currentTotalCharge": {
-				"type": "number",
-				"x-source": { "computed": true, "function": "computeCurrentTotalCharge" }
-			},
-			"ratingUnit": {
-				"type": "integer",
-				"x-source": { "field": "RatingUnit" }
-			},
-			"totalDistance": {
-				"type": "number",
-				"x-source": { "computed": true, "function": "computeTotalDistance" }
-			},
-			"totalStops": {
-				"type": "integer",
-				"x-source": { "computed": true, "function": "computeTotalStops" }
-			},
-			"totalWeight": {
-				"type": "number",
-				"x-source": { "computed": true, "function": "computeTotalWeight" }
-			},
-			"totalPieces": {
-				"type": "integer",
-				"x-source": { "computed": true, "function": "computeTotalPieces" }
-			},
-			"totalLinearFeet": {
-				"type": "number",
-				"x-source": { "computed": true, "function": "computeTotalLinearFeet" }
-			},
-			"hasHazmat": {
-				"type": "boolean",
-				"x-source": { "computed": true, "function": "computeHasHazmat" }
-			},
-			"requiresTemperatureControl": {
-				"type": "boolean",
-				"x-source": { "computed": true, "function": "computeRequiresTemperatureControl" }
-			},
-			"temperatureDifferential": {
-				"type": "number",
-				"x-source": { "computed": true, "function": "computeTemperatureDifferential" }
-			}
-		}
-	}`
-
-	require.NoError(t, registry.Register("shipment", []byte(shipmentSchema)))
 }
 
 type stubFormulaTemplateRepository struct {
