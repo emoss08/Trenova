@@ -422,6 +422,14 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
+            path: "/billing/factoring",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
+            async lazy() {
+              const { FactoringPage } = await import("@/routes/factoring/page");
+              return { Component: FactoringPage };
+            },
+          },
+          {
             path: "/payroll/workspace",
             loader: combineLoaders(
               protectedLoader,

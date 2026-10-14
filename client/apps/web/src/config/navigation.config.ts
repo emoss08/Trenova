@@ -532,6 +532,13 @@ const billingModule: NavModule = {
       resource: Resource.Invoice,
     },
     {
+      id: "factoring",
+      label: "Factoring",
+      path: "/billing/factoring",
+      keywords: ["factor", "factoring", "ready to factor", "notice of assignment", "noa"],
+      resource: Resource.Invoice,
+    },
+    {
       id: "pending-approvals",
       label: "Pending approvals",
       path: "/billing/pending-approvals",
