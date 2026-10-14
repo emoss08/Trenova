@@ -1,5 +1,6 @@
 import { hotkeyOf } from "@/config/keybinds.config";
 import { handleMutationError } from "@/hooks/use-api-mutation";
+import { useChangedFieldNames } from "@/hooks/use-dirty-fields";
 import { fieldErrorMessages, refusedFieldMessages } from "@/lib/form-errors";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { ApiRequestError } from "@trenova/shared/lib/api";
@@ -102,7 +103,8 @@ export function useEditFlow<T extends FieldValues>({
   enabled = true,
   bindEscape = false,
 }: EditFlowOptions<T>): EditFlow {
-  const { dirtyFields, isDirty } = useFormState({ control: form.control });
+  const { isDirty } = useFormState({ control: form.control });
+  const changed = useChangedFieldNames(form.control, versionField);
   const [confirmingClose, setConfirmingClose] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -119,9 +121,6 @@ export function useEditFlow<T extends FieldValues>({
     [],
   );
 
-  // dirtyFields is the form's own object, changed in place, so it is read on every render
-  // rather than memoized on its identity.
-  const changed = Object.keys(dirtyFields).filter((key) => key !== versionField);
   const dirty = isDirty && changed.length > 0;
   const canSave = (dirty || create) && !invalid && !saving;
 

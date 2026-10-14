@@ -14,16 +14,20 @@ import { z } from "zod";
 import { emailPurposes } from "./email-profile-constants";
 import { translate } from "@trenova/shared/i18n/runtime";
 
-const purposeAssignmentsSchema = z.object({
-  General: z.string(),
-  Billing: z.string(),
-  Reporting: z.string(),
-  Operations: z.string(),
-  Authentication: z.string(),
-  Notifications: z.string(),
+// A cleared purpose holds null, which is how the autocomplete clears; it saves as no
+// assignment.
+const assignedProfileSchema = z.string().nullable();
+
+export const purposeAssignmentsSchema = z.object({
+  General: assignedProfileSchema,
+  Billing: assignedProfileSchema,
+  Reporting: assignedProfileSchema,
+  Operations: assignedProfileSchema,
+  Authentication: assignedProfileSchema,
+  Notifications: assignedProfileSchema,
 });
 
-type PurposeAssignmentsFormValues = z.infer<typeof purposeAssignmentsSchema>;
+export type PurposeAssignmentsFormValues = z.infer<typeof purposeAssignmentsSchema>;
 
 const emptyAssignments = Object.fromEntries(
   emailPurposes.map((purpose) => [purpose, ""]),
@@ -39,13 +43,15 @@ function toFormValues(assignments: EmailProfileAssignment[]): PurposeAssignments
   return values;
 }
 
-function toPayload(values: PurposeAssignmentsFormValues): EmailProfileAssignment[] {
-  return emailPurposes
-    .map((purpose) => ({
-      purpose,
-      profileId: values[purpose],
-    }))
-    .filter((assignment) => assignment.profileId);
+export function toPayload(values: PurposeAssignmentsFormValues): EmailProfileAssignment[] {
+  const assignments: EmailProfileAssignment[] = [];
+  for (const purpose of emailPurposes) {
+    const profileId = values[purpose];
+    if (profileId) {
+      assignments.push({ purpose, profileId });
+    }
+  }
+  return assignments;
 }
 
 export function PurposeAssignmentsPanel() {
