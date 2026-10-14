@@ -2,6 +2,7 @@ import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
+import { useRegister } from "@/hooks/use-register";
 import { usePermission } from "@/hooks/use-permission";
 import {
   linkState,
@@ -455,11 +456,12 @@ function ShareForm({
     defaultValues: { recipientEmail: "" },
   });
   const {
-    register,
+    control,
     handleSubmit,
     reset,
     formState: { isSubmitting, errors },
   } = form;
+  const recipientEmail = useRegister(control, "recipientEmail");
   const [copying, setCopying] = useState(false);
 
   const { mutateAsync } = useApiMutation({
@@ -491,7 +493,7 @@ function ShareForm({
             placeholder={t("Email the link to…")}
             aria-label={t("Email the link to")}
             aria-invalid={errors.recipientEmail ? true : undefined}
-            {...register("recipientEmail")}
+            {...recipientEmail}
           />
           {errors.recipientEmail?.message && (
             <span className="text-xs text-danger-foreground">{errors.recipientEmail.message}</span>
