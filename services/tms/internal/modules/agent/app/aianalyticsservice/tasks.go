@@ -7,15 +7,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
-	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type taskInput struct {
-	locale    i18n.Locale
-	rows      []aianalyticsports.TaskCellRow
-	ordered   []*aiprovider.Provider
-	compareBy aianalytics.CompareBy
+	rows        []aianalyticsports.TaskCellRow
+	ordered     []*aiprovider.Provider
+	providers   providerLookup
+	compareBy   aianalytics.CompareBy
+	agentScoped bool
 }
 
 type taskDeployment struct {
@@ -75,7 +75,7 @@ func buildTasks(in *taskInput) []aianalyticsports.TaskRow {
 			enabled = append(enabled, provider)
 		}
 	}
-	providers := providerIndex(in.locale, in.ordered)
+	providers := in.providers
 
 	out := make([]aianalyticsports.TaskRow, 0, len(order))
 	for _, task := range order {
@@ -89,6 +89,10 @@ func buildTasks(in *taskInput) []aianalyticsports.TaskRow {
 			ref := providers.ref(current.ID.String())
 			row.Current = &ref
 			row.CurrentSeriesKey = seriesKeyOf(current, in.compareBy)
+		}
+		if in.agentScoped {
+			out = append(out, row)
+			continue
 		}
 		row.Suggestion = suggestRoute(&routeQuestion{
 			task:        task,

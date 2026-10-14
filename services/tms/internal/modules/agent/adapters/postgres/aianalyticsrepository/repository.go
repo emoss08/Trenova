@@ -1,10 +1,13 @@
 package aianalyticsrepository
 
 import (
+	"cmp"
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -19,6 +22,8 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const toolExampleCandidatesPerExample = 25
 
 type Params struct {
 	fx.In
@@ -52,6 +57,7 @@ type sqlArgs struct {
 	SeriesKey  string                `bun:"series_key"`
 	ToolName   string                `bun:"tool_name"`
 	Limit      int                   `bun:"limit"`
+	Candidates int                   `bun:"candidates"`
 	Model      string                `bun:"model"`
 	ModelKey   string                `bun:"model_key"`
 	Before     int64                 `bun:"before"`
@@ -65,7 +71,7 @@ func tenantArgs(tenant pagination.TenantInfo) sqlArgs {
 func filterArgs(filter aianalyticsports.Filter) sqlArgs {
 	args := tenantArgs(filter.TenantInfo)
 	args.Since = filter.Since
-	args.SinceHour = floorHour(filter.Since)
+	args.SinceHour = ceilHour(filter.Since)
 	args.Agent = filter.AgentDefinitionID.String()
 	args.Task = string(filter.Task)
 
@@ -149,6 +155,39 @@ func (r *repository) lockRefresh(ctx context.Context, tenant pagination.TenantIn
 	}
 
 	return nil
+}
+
+const activitySQL = `SELECT EXISTS (
+		SELECT 1 FROM agent_runs AS o
+		WHERE o.organization_id = ?org AND o.business_unit_id = ?bu
+			AND o.updated_at >= ?from AND o.updated_at < ?to
+	) OR EXISTS (
+		SELECT 1 FROM assistant_turns AS o
+		WHERE o.organization_id = ?org AND o.business_unit_id = ?bu
+			AND o.updated_at >= ?from AND o.updated_at < ?to
+	) OR EXISTS (
+		SELECT 1 FROM ai_usage_records AS u
+		WHERE u.organization_id = ?org AND u.business_unit_id = ?bu
+			AND u.created_at >= ?from AND u.created_at < ?to
+	) AS active`
+
+func (r *repository) HasActivity(
+	ctx context.Context,
+	req aianalyticsports.RefreshRequest,
+) (bool, error) {
+	args := tenantArgs(req.TenantInfo)
+	args.From = req.From
+	args.To = req.To
+	rows, err := scanRaw[activityScan](ctx, r, "activity", activitySQL, args)
+	if err != nil {
+		return false, err
+	}
+
+	return len(rows) > 0 && rows[0].Active, nil
+}
+
+type activityScan struct {
+	Active bool `bun:"active"`
 }
 
 func (r *repository) RefreshUnits(
@@ -724,8 +763,9 @@ func (r *repository) ProviderVersions(
 }
 
 type causeScan struct {
-	Cause string `bun:"cause"`
-	Calls int    `bun:"calls"`
+	Cause      string `bun:"cause"`
+	ProviderID string `bun:"provider_id"`
+	Calls      int    `bun:"calls"`
 }
 
 type exampleScan struct {
@@ -745,6 +785,7 @@ func (r *repository) ToolFailures(
 	args.SeriesKey = req.SeriesKey
 	args.ToolName = req.ToolName
 	args.Limit = req.Limit
+	args.Candidates = req.Limit * toolExampleCandidatesPerExample
 
 	causes, err := scanRaw[causeScan](ctx, r, "tool causes", toolCausesSQL(req.CompareBy), args)
 	if err != nil {
@@ -765,18 +806,30 @@ func (r *repository) ToolFailures(
 		Causes:   make([]aianalyticsports.CauseRow, 0, len(causes)),
 		Examples: make([]aianalyticsports.ToolFailureExample, 0, len(examples)),
 	}
+	byCause := make(map[string]int, len(causes))
+	byProvider := make(map[string]int, len(causes))
 	for index := range causes {
 		row := &causes[index]
 		out.Calls += row.Calls
+		if row.ProviderID != "" {
+			byProvider[row.ProviderID] += row.Calls
+		}
 		if row.Cause == "" {
 			continue
 		}
 		out.Failed += row.Calls
+		byCause[row.Cause] += row.Calls
+	}
+	for cause, calls := range byCause {
 		out.Causes = append(out.Causes, aianalyticsports.CauseRow{
-			Cause: aianalytics.Cause(row.Cause),
-			Calls: row.Calls,
+			Cause: aianalytics.Cause(cause),
+			Calls: calls,
 		})
 	}
+	out.Providers = slices.Collect(maps.Keys(byProvider))
+	slices.SortFunc(out.Providers, func(left, right string) int {
+		return cmp.Or(cmp.Compare(byProvider[right], byProvider[left]), cmp.Compare(left, right))
+	})
 	for index := range examples {
 		row := &examples[index]
 		example := aianalyticsports.ToolFailureExample{
