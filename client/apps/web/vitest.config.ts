@@ -30,7 +30,32 @@ export default defineConfig({
           environment: "happy-dom",
           setupFiles: ["./src/test-setup.ts"],
           include: ["src/**/*.{test,spec}.{ts,tsx}"],
-          exclude: ["src/**/*.stories.{ts,tsx}"],
+          exclude: ["src/**/*.stories.{ts,tsx}", "src/**/*.compiled.test.{ts,tsx}"],
+        },
+      },
+      {
+        // Components built by the React Compiler exactly as vite.config.ts builds the app,
+        // for behaviour that only memoization can break, such as a value derived from an
+        // object a library changes in place.
+        plugins: [
+          routeCatalogs({ srcDir: srcAlias }),
+          react({
+            compiler: true,
+            exclude: [
+              /[\\/]node_modules[\\/]/,
+              /[\\/]packages[\\/]graphql[\\/]src[\\/]generated[\\/]/,
+            ],
+          }),
+        ],
+        resolve: {
+          alias: { "@": srcAlias, "@trenova/shared": sharedAlias, ...editionAlias() },
+          dedupe: ["react-router"],
+        },
+        test: {
+          name: "compiled",
+          environment: "happy-dom",
+          setupFiles: ["./src/test-setup.ts"],
+          include: ["src/**/*.compiled.test.{ts,tsx}"],
         },
       },
       {
