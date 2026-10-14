@@ -926,13 +926,22 @@ func (r *repository) EnsureBaseTemplate(
 	tenantInfo pagination.TenantInfo,
 	transactionSet edi.TransactionSet,
 ) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
+	return r.EnsureStarterTemplate(ctx, tenantInfo, transactionSet, edi.DocumentDirectionOutbound)
+}
+
+func (r *repository) EnsureStarterTemplate(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	transactionSet edi.TransactionSet,
+	direction edi.DocumentDirection,
+) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
 	return dbtx.Write2(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
 			template := new(edi.EDITemplate)
 			version := new(edi.EDITemplateVersion)
-			templateName := fmt.Sprintf("Base X12 %s Outbound", transactionSet)
+			templateName := fmt.Sprintf("Base X12 %s %s", transactionSet, direction)
 			err := r.db.WithTx(
 				ctx,
 				kernelports.TxOptions{},
@@ -946,7 +955,7 @@ func (r *repository) EnsureBaseTemplate(
 							return edicol.EDITemplateScopeTenant(sq, tenantInfo).
 								Where(cols.Standard.Eq(), edi.EDIStandardX12).
 								Where(cols.TransactionSet.Eq(), transactionSet).
-								Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
+								Where(cols.Direction.Eq(), direction).
 								Where(cols.Name.Eq(), templateName)
 						}).
 						Limit(1).
@@ -974,7 +983,7 @@ func (r *repository) EnsureBaseTemplate(
 						ediports.ListEDIDocumentTypesRequest{
 							Standard:       edi.EDIStandardX12,
 							TransactionSet: transactionSet,
-							Direction:      edi.DocumentDirectionOutbound,
+							Direction:      direction,
 						},
 					)
 					if err != nil {
@@ -982,8 +991,9 @@ func (r *repository) EnsureBaseTemplate(
 					}
 					if len(documentTypes) == 0 {
 						return fmt.Errorf(
-							"x12 %s outbound document type is not seeded",
+							"x12 %s %s document type is not seeded",
 							transactionSet,
+							strings.ToLower(string(direction)),
 						)
 					}
 
@@ -993,10 +1003,11 @@ func (r *repository) EnsureBaseTemplate(
 						DocumentTypeID: documentTypes[0].ID,
 						Name:           templateName,
 						Description: fmt.Sprintf(
-							"Tenant-scoped base outbound X12 %s template",
+							"Tenant-scoped base %s X12 %s template",
+							strings.ToLower(string(direction)),
 							transactionSet,
 						),
-						Direction:      edi.DocumentDirectionOutbound,
+						Direction:      direction,
 						Standard:       edi.EDIStandardX12,
 						TransactionSet: transactionSet,
 						Status:         edi.TemplateStatusActive,
@@ -1024,9 +1035,10 @@ func (r *repository) EnsureBaseTemplate(
 						Status:            edi.TemplateStatusActive,
 						IsActive:          true,
 						Notes: fmt.Sprintf(
-							"Seeded base %s X12 %s outbound profile",
+							"Seeded base %s X12 %s %s profile",
 							x12Version,
 							transactionSet,
+							strings.ToLower(string(direction)),
 						),
 						ActivatedAt: &activatedAt,
 					}

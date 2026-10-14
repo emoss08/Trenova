@@ -4663,3 +4663,87 @@ func (_c *MockEDIDocumentRepository_ListOverdueAcks_Call) RunAndReturn(run func(
 	_c.Call.Return(run)
 	return _c
 }
+
+// EnsureStarterTemplate provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) EnsureStarterTemplate(ctx context.Context, tenantInfo pagination.TenantInfo, transactionSet edi.TransactionSet, direction edi.DocumentDirection) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
+	ret := _mock.Called(ctx, tenantInfo, transactionSet, direction)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnsureStarterTemplate")
+	}
+
+	var r0 *edi.EDITemplate
+	var r1 *edi.EDITemplateVersion
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, edi.TransactionSet, edi.DocumentDirection) (*edi.EDITemplate, *edi.EDITemplateVersion, error)); ok {
+		return returnFunc(ctx, tenantInfo, transactionSet, direction)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, edi.TransactionSet, edi.DocumentDirection) *edi.EDITemplate); ok {
+		r0 = returnFunc(ctx, tenantInfo, transactionSet, direction)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDITemplate)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, edi.TransactionSet, edi.DocumentDirection) *edi.EDITemplateVersion); ok {
+		r1 = returnFunc(ctx, tenantInfo, transactionSet, direction)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*edi.EDITemplateVersion)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, pagination.TenantInfo, edi.TransactionSet, edi.DocumentDirection) error); ok {
+		r2 = returnFunc(ctx, tenantInfo, transactionSet, direction)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockEDIDocumentRepository_EnsureStarterTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnsureStarterTemplate'
+type MockEDIDocumentRepository_EnsureStarterTemplate_Call struct {
+	*mock.Call
+}
+
+// EnsureStarterTemplate is a helper method to define mock.On call
+func (_e *MockEDIDocumentRepository_Expecter) EnsureStarterTemplate(ctx any, tenantInfo any, transactionSet any, direction any) *MockEDIDocumentRepository_EnsureStarterTemplate_Call {
+	return &MockEDIDocumentRepository_EnsureStarterTemplate_Call{Call: _e.mock.On("EnsureStarterTemplate", ctx, tenantInfo, transactionSet, direction)}
+}
+
+func (_c *MockEDIDocumentRepository_EnsureStarterTemplate_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, transactionSet edi.TransactionSet, direction edi.DocumentDirection)) *MockEDIDocumentRepository_EnsureStarterTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 edi.TransactionSet
+		if args[2] != nil {
+			arg2 = args[2].(edi.TransactionSet)
+		}
+		var arg3 edi.DocumentDirection
+		if args[3] != nil {
+			arg3 = args[3].(edi.DocumentDirection)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_EnsureStarterTemplate_Call) Return(ret0 *edi.EDITemplate, ret1 *edi.EDITemplateVersion, ret2 error) *MockEDIDocumentRepository_EnsureStarterTemplate_Call {
+	_c.Call.Return(ret0, ret1, ret2)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_EnsureStarterTemplate_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, transactionSet edi.TransactionSet, direction edi.DocumentDirection) (*edi.EDITemplate, *edi.EDITemplateVersion, error)) *MockEDIDocumentRepository_EnsureStarterTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
