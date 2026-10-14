@@ -13385,6 +13385,7 @@ type EdiMessage {
 
 enum EdiMessageAckStatus {
   Accepted
+  AcceptedWithErrors
   Failed
   NotExpected
   Pending

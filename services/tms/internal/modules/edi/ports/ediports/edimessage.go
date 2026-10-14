@@ -9,15 +9,20 @@ import (
 )
 
 type ListEDIMessagesRequest struct {
-	Filter         *pagination.QueryOptions `json:"filter"`
-	Cursor         pagination.CursorInfo    `json:"-"`
-	TransactionSet edi.TransactionSet       `json:"transactionSet"`
-	Direction      edi.DocumentDirection    `json:"direction"`
-	PartnerID      pulid.ID                 `json:"partnerId"`
-	Status         edi.MessageStatus        `json:"status"`
-	Query          string                   `json:"query"`
-	GeneratedFrom  int64                    `json:"generatedFrom"`
-	GeneratedTo    int64                    `json:"generatedTo"`
+	Filter         *pagination.QueryOptions        `json:"filter"`
+	Cursor         pagination.CursorInfo           `json:"-"`
+	TransactionSet edi.TransactionSet              `json:"transactionSet"`
+	Direction      edi.DocumentDirection           `json:"direction"`
+	PartnerID      pulid.ID                        `json:"partnerId"`
+	Status         edi.MessageStatus               `json:"status"`
+	Query          string                          `json:"query"`
+	GeneratedFrom  int64                           `json:"generatedFrom"`
+	GeneratedTo    int64                           `json:"generatedTo"`
+	AckStatus      edi.MessageAcknowledgmentStatus `json:"ackStatus"`
+	ShipmentID     pulid.ID                        `json:"shipmentId"`
+	InvoiceID      pulid.ID                        `json:"invoiceId"`
+	CreatedAfter   int64                           `json:"createdAfter"`
+	CreatedBefore  int64                           `json:"createdBefore"`
 }
 
 type GetEDIMessageByIDRequest struct {

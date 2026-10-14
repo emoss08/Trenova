@@ -18956,6 +18956,7 @@ enum EdiMessageAckStatus {
   NotExpected
   Pending
   Accepted
+  AcceptedWithErrors
   Rejected
   Failed
 }

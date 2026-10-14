@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -167,6 +168,80 @@ func TestListEDIMessages_FiltersOnDeliveryAndNeverReturnsTheDocument(t *testing.
 	assert.Equal(t, "550 mailbox unavailable", rows[0].DeliveryError)
 	assert.Len(t, outcome.TaintedRecords(), 1)
 	assert.NotContains(t, rows[0].ID, "SECRET")
+}
+
+func TestListEDIMessages_NarrowsOnAcknowledgmentRecordsAndCreationTime(t *testing.T) {
+	t.Parallel()
+
+	shipmentID := pulid.MustNew("shp_")
+	invoiceID := pulid.MustNew("inv_")
+	fake := &fakeMessageList{}
+	tool := newListEDIMessagesTool(fake)
+
+	result, err := tool.Query(t.Context(), agentParams(map[string]any{
+		paramAckStatus:     "AcceptedWithErrors",
+		paramShipmentID:    shipmentID.String(),
+		paramInvoiceID:     invoiceID.String(),
+		paramCreatedAfter:  float64(1_790_000_000),
+		paramCreatedBefore: "1790086400",
+	}, ""))
+	require.NoError(t, err)
+
+	assert.Equal(t, edi.MessageAcknowledgmentStatusAcceptedWithErrors, fake.request.AckStatus)
+	assert.Equal(t, shipmentID, fake.request.ShipmentID)
+	assert.Equal(t, invoiceID, fake.request.InvoiceID)
+	assert.EqualValues(t, 1_790_000_000, fake.request.CreatedAfter)
+	assert.EqualValues(t, 1_790_086_400, fake.request.CreatedBefore)
+
+	outcome := result.(ediCursorOutcome)
+	criteria := strings.Join(outcome.SearchedFor, "; ")
+	assert.Contains(t, criteria, "ackStatus AcceptedWithErrors")
+	assert.Contains(t, criteria, "shipment "+shipmentID.String())
+	assert.Contains(t, criteria, "invoice "+invoiceID.String())
+	assert.Contains(t, criteria, "created at or after")
+	assert.Contains(t, criteria, "created before")
+}
+
+func TestListEDIMessages_OffersTheFourAcknowledgmentOutcomes(t *testing.T) {
+	t.Parallel()
+
+	schema := newListEDIMessagesTool(&fakeMessageList{}).ParamSchema()
+	properties := schema["properties"].(map[string]any)
+	ack := properties[paramAckStatus].(map[string]any)
+	assert.ElementsMatch(t,
+		[]string{"Pending", "Accepted", "AcceptedWithErrors", "Rejected"},
+		ack["enum"])
+	for _, name := range []string{
+		paramShipmentID, paramInvoiceID, paramCreatedAfter, paramCreatedBefore,
+	} {
+		assert.Contains(t, properties, name)
+	}
+}
+
+func TestListEDIMessages_RefusesAWindowItCannotRead(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]map[string]any{
+		"ends before it starts": {
+			paramCreatedAfter:  float64(1_790_086_400),
+			paramCreatedBefore: float64(1_790_000_000),
+		},
+		"negative":       {paramCreatedAfter: float64(-5)},
+		"a fraction":     {paramCreatedBefore: 1_790_000_000.5},
+		"not a number":   {paramCreatedAfter: "yesterday"},
+		"milliseconds":   {paramCreatedAfter: float64(1_790_000_000_000)},
+		"an unknown ack": {paramAckStatus: "NotExpected"},
+	}
+	for name, params := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			fake := &fakeMessageList{}
+			_, err := newListEDIMessagesTool(fake).Query(t.Context(), agentParams(params, ""))
+			require.Error(t, err)
+			assert.Nil(t, fake.request, "a refused call reads nothing")
+		})
+	}
 }
 
 type fakeTenderChangeList struct {
