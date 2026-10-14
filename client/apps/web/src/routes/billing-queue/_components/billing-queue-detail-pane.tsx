@@ -1,11 +1,9 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import AuditTab from "@/components/audit-tab";
-import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { PlainBillingQueueStatusBadge } from "@trenova/shared/components/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { exceptionReasonLabels } from "@/lib/choices";
 import { billingQueue } from "@/lib/queries/billing-queue";
@@ -28,6 +26,10 @@ import { billingQueueItemLabel } from "@/lib/billing-queue-label";
 import { BillingQueueChargesTab } from "./billing-queue-charges-tab";
 import { BillingQueueDetentionHolds } from "./billing-queue-detention-holds";
 import { BillingQueueDocumentsTab } from "./billing-queue-documents-tab";
+import {
+  BillingQueueDetailSkeleton,
+  BillingQueueDetailUnselected,
+} from "./billing-queue-detail-skeleton";
 
 // The comments tab brings the realtime comment stack with it; the billing queue
 // opens on the Charges tab, so it only pays for that once someone switches.
@@ -58,26 +60,11 @@ export default function BillingQueueDetailPane({
   }, []);
 
   if (!selectedItemId) {
-    return (
-      <BillingDetailUnselected
-        layout="tabs"
-        title={t("Nothing open")}
-        description={t(
-          "Pick an item from the queue to review it here, or press J to start at the top.",
-        )}
-      />
-    );
+    return <BillingQueueDetailUnselected />;
   }
 
   if (isLoading || !item) {
-    return (
-      <div className="flex flex-col gap-4 p-4">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
-    );
+    return <BillingQueueDetailSkeleton />;
   }
 
   const shipment = item.shipment;

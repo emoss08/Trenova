@@ -6,7 +6,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { SettlementQueueRowsSkeleton } from "@/components/settlements/settlement-workspace-skeleton";
 import {
   BulkMarkPaidDialog,
   CARRIER_MARK_PAID_METHODS,
@@ -190,11 +190,7 @@ export function SettlementQueue({
         maskHeight={18}
       >
         {loading ? (
-          <div className="flex flex-col gap-2 p-2">
-            <Skeleton className="h-14 w-full" />
-            <Skeleton className="h-14 w-full" />
-            <Skeleton className="h-14 w-full" />
-          </div>
+          <SettlementQueueRowsSkeleton />
         ) : visible.length === 0 ? (
           <BillingListEmpty
             title={hasActiveFilters ? "Nothing matches" : "Nothing to work"}

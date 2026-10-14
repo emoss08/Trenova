@@ -131,3 +131,29 @@ describe("driver settlement workspace empty states", () => {
     expect(await screen.findByText("Ada Byrne")).toBeInTheDocument();
   });
 });
+
+describe("driver settlement workspace loading states", () => {
+  // The page draws this same outline while the workspace's code arrives, so the
+  // period's summary loading must not swap it for a different shape.
+  it("draws the workspace's outline while the period's summary is read", () => {
+    mocks.fetchSettlementWorkspaceSummary.mockImplementation(() => new Promise<never>(() => {}));
+    renderWorkspace();
+
+    expect(screen.getByLabelText("Loading the settlement workspace")).toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
+    expect(mocks.fetchWorkspaceSettlements).not.toHaveBeenCalled();
+  });
+
+  it("draws the queue's rows while the period's settlements are read", async () => {
+    mocks.fetchWorkspaceSettlements.mockImplementation(() => new Promise<never>(() => {}));
+    renderWorkspace();
+
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Loading the settlement workspace")).not.toBeInTheDocument(),
+    );
+    expect(screen.getByLabelText("Loading settlements")).toHaveAttribute("aria-busy", "true");
+    expect(screen.queryByText("No settlements this period yet")).not.toBeInTheDocument();
+  });
+});

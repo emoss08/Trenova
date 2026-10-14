@@ -39,6 +39,7 @@
   "Kept with the voided run so the reopened weeks can be explained later.": "与已作废的运行一并保存，以便日后说明重新打开的周次。",
   "Last two weeks": "最近两周",
   "Later period": "较晚的期间",
+  "Loading time and attendance": "正在加载考勤管理",
   "Longest running: {0}, {1}": "持续最久：{0}，{1}",
   "No approved week in this period is waiting to be sent. Move the period, or approve some weeks first.": "此期间内没有待送出的已批准周次。请切换期间，或先批准部分周次。",
   "No open weeks": "无未结周",

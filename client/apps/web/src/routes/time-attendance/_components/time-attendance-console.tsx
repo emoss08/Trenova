@@ -19,6 +19,7 @@ import {
   unpaidApprovedQuery,
 } from "./queries";
 import { TimeAttendanceOverview } from "./time-attendance-overview";
+import { TimeAttendanceSkeleton } from "./time-attendance-skeleton";
 import { TimeClockPanel } from "./time-clock-panel";
 import { TimesheetQueue } from "./timesheet-queue";
 
@@ -46,6 +47,13 @@ export default function TimeAttendanceConsole() {
   const openEntries = useQuery({ ...openEntriesQuery(teamOnly), enabled: canRead });
 
   if (!canRead) return null;
+
+  // The first read draws the page's own outline; once any list has answered,
+  // the strip and board fill in place, so switching the board to "my team" or
+  // rolling into a new week never blanks the page again.
+  if (awaiting.isLoading && thisWeek.isLoading && openEntries.isLoading) {
+    return <TimeAttendanceSkeleton showPayroll={canExport} />;
+  }
 
   const awaitingCount = awaiting.data?.length ?? 0;
   const onClockCount = openEntries.data?.length ?? 0;

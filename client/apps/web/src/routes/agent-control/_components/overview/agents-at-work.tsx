@@ -10,6 +10,7 @@ import { runStatusLabel } from "../activity/agent-badges";
 import { Ic } from "../kit/ic";
 import { SecH } from "../kit/layout";
 import { Tile } from "../kit/marks";
+import { AgentsAtWorkBodySkeleton } from "./overview-skeleton";
 
 /** A run is short; a quarter minute keeps "working now" honest without a stream. */
 const WORKING_REFRESH_MS = 15_000;
@@ -55,71 +56,77 @@ export function AgentsAtWork({ idleReason, onOpenAgent, onOpenAgents }: AgentsAt
           </button>
         }
       />
-      {working.length > 0 ? (
-        <div className="wn">
-          {working.map(({ agent, run }) => (
-            <button
-              key={run.id}
-              type="button"
-              className="wn-r"
-              onClick={() => onOpenAgent(agent.id)}
-            >
-              <span className="pc-mk">
-                <Tile agent={agent} s={26} />
-                <i className="pc-dot run sm" />
-              </span>
-              <span className="wn-t">
-                <b>{agent.name}</b>
-                <span className="shm">{`${run.summary.trim() || runStatusLabel(run.status, t)}…`}</span>
-              </span>
-            </button>
-          ))}
-        </div>
+      {agentsQuery.isLoading ? (
+        <AgentsAtWorkBodySkeleton />
       ) : (
-        <p className="wn-e">
-          {idleReason === "no-provider"
-            ? t("Nothing can run until a provider is connected.")
-            : idleReason === "paused"
-              ? t("Paused. Nothing is running right now.")
-              : t("Nothing is running right now.")}
-        </p>
+        <>
+          {working.length > 0 ? (
+            <div className="wn">
+              {working.map(({ agent, run }) => (
+                <button
+                  key={run.id}
+                  type="button"
+                  className="wn-r"
+                  onClick={() => onOpenAgent(agent.id)}
+                >
+                  <span className="pc-mk">
+                    <Tile agent={agent} s={26} />
+                    <i className="pc-dot run sm" />
+                  </span>
+                  <span className="wn-t">
+                    <b>{agent.name}</b>
+                    <span className="shm">{`${run.summary.trim() || runStatusLabel(run.status, t)}…`}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="wn-e">
+              {idleReason === "no-provider"
+                ? t("Nothing can run until a provider is connected.")
+                : idleReason === "paused"
+                  ? t("Paused. Nothing is running right now.")
+                  : t("Nothing is running right now.")}
+            </p>
+          )}
+          <div className="ms">
+            {agents.map((agent) => (
+              <button
+                key={agent.id}
+                type="button"
+                className={cn("ms-i", !agent.enabled && "off", agent.shadowMode && "sh")}
+                title={
+                  !agent.enabled
+                    ? t("{0} · off", agent.name)
+                    : agent.shadowMode
+                      ? t("{0} · shadow", agent.name)
+                      : agent.name
+                }
+                onClick={() => onOpenAgent(agent.id)}
+              >
+                <Tile agent={agent} s={28} />
+                {agent.enabled && agent.pendingProposals > 0 && (
+                  <i className="ms-b mono">{agent.pendingProposals}</i>
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="lgd">
+            <span>
+              <i className="k" />
+              {t("{0} live", on.length - shadow)}
+            </span>
+            <span>
+              <i className="s" />
+              {t("{0} shadow", shadow)}
+            </span>
+            <span>
+              <i className="o" />
+              {t("{0} off", agents.length - on.length)}
+            </span>
+          </div>
+        </>
       )}
-      <div className="ms">
-        {agents.map((agent) => (
-          <button
-            key={agent.id}
-            type="button"
-            className={cn("ms-i", !agent.enabled && "off", agent.shadowMode && "sh")}
-            title={
-              !agent.enabled
-                ? t("{0} · off", agent.name)
-                : agent.shadowMode
-                  ? t("{0} · shadow", agent.name)
-                  : agent.name
-            }
-            onClick={() => onOpenAgent(agent.id)}
-          >
-            <Tile agent={agent} s={28} />
-            {agent.enabled && agent.pendingProposals > 0 && (
-              <i className="ms-b mono">{agent.pendingProposals}</i>
-            )}
-          </button>
-        ))}
-      </div>
-      <div className="lgd">
-        <span>
-          <i className="k" />
-          {t("{0} live", on.length - shadow)}
-        </span>
-        <span>
-          <i className="s" />
-          {t("{0} shadow", shadow)}
-        </span>
-        <span>
-          <i className="o" />
-          {t("{0} off", agents.length - on.length)}
-        </span>
-      </div>
     </section>
   );
 }

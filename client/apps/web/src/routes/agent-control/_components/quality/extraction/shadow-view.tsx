@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
+import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import { usePermission } from "@/hooks/use-permission";
 import {
   EXTRACTION_SHADOW_REPORT_KEY,
@@ -27,6 +28,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AlertCircleIcon, Sliders01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { EXTRACTION_STALE_MS } from "./extraction-model";
+import { COMPARISON_FIGURES } from "./extraction-skeleton";
 import { ShadowFieldsTable } from "./shadow-fields-table";
 import { ShadowFigures } from "./shadow-figures";
 import { getShadowResultColumns } from "./shadow-result-columns";
@@ -151,7 +153,7 @@ export function ShadowView() {
           </SectionPanel>
         )
       ) : (
-        <Skeleton className="h-16" aria-busy />
+        <KpiStripSkeleton count={COMPARISON_FIGURES} />
       )}
 
       <DataTable<ExtractionShadowResultRow>

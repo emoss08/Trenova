@@ -114,4 +114,15 @@ describe("MyDotIntelligence", () => {
     expect(screen.getByText("Your DOT profile is restricted")).toBeInTheDocument();
     expect(mocks.fetchMyCarrierIntelligence).not.toHaveBeenCalled();
   });
+
+  // The profile is read before anything can be said about it; the tab draws
+  // the profile's outline meanwhile, not an empty-state or a grey block.
+  it("outlines the profile while it and the provider settings are read", () => {
+    mocks.fetchMyCarrierIntelligence.mockReturnValue(new Promise<never>(() => {}));
+    mocks.fetchSettings.mockReturnValue(new Promise<never>(() => {}));
+    renderMyDot();
+
+    expect(screen.getByLabelText("Loading your DOT profile")).toHaveAttribute("aria-busy", "true");
+    expect(screen.queryByText("Your organization has no DOT number")).toBeNull();
+  });
 });

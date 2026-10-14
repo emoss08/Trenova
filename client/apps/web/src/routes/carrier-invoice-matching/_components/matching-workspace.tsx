@@ -18,7 +18,6 @@ import {
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import {
   acceptCarrierInvoiceMatch,
@@ -49,6 +48,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { LinkCarrierDialog } from "./link-carrier-dialog";
+import { MatchingDetailSkeleton, MatchingListSkeleton } from "./matching-workspace-skeleton";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { translate } from "@trenova/shared/i18n/runtime";
 
@@ -344,7 +344,9 @@ export default function MatchingWorkspace() {
           </ScrollArea>
         </div>
         <ScrollArea className="h-full min-h-0" viewportClassName="min-h-0">
-          {tab === "invoices" ? (
+          {(tab === "invoices" ? invoicesQuery.isLoading : matchesQuery.isLoading) ? (
+            <MatchingDetailSkeleton />
+          ) : tab === "invoices" ? (
             selectedInvoice ? (
               <InvoiceDetail
                 key={selectedInvoice.id}
@@ -449,13 +451,7 @@ function InvoiceList({
   const t = useT();
 
   if (loading) {
-    return (
-      <div className="flex flex-col gap-1.5 p-2">
-        {Array.from({ length: 5 }, (_, index) => (
-          <Skeleton key={index} className="h-20 w-full rounded-lg" />
-        ))}
-      </div>
-    );
+    return <MatchingListSkeleton label={t("Loading carrier invoices")} />;
   }
 
   if (invoices.length === 0) {
@@ -543,13 +539,7 @@ function MatchList({
   const t = useT();
 
   if (loading) {
-    return (
-      <div className="flex flex-col gap-1.5 p-2">
-        {Array.from({ length: 5 }, (_, index) => (
-          <Skeleton key={index} className="h-20 w-full rounded-lg" />
-        ))}
-      </div>
-    );
+    return <MatchingListSkeleton label={t("Loading matches")} />;
   }
 
   if (matches.length === 0) {

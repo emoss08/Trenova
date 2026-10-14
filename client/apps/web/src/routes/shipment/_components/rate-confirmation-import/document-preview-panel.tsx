@@ -7,6 +7,10 @@ import { useQuery } from "@tanstack/react-query";
 import { File06Icon, ZoomInIcon, ZoomOutIcon } from "@trenova/shared/components/icons";
 import { useCallback, useRef, useState } from "react";
 import { Document, Page } from "react-pdf";
+import {
+  DocumentPageSkeleton,
+  DocumentPreviewPanelSkeleton,
+} from "./document-preview-panel-skeleton";
 import "@/lib/pdf-worker";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -37,13 +41,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
   const isPdf = fileName?.toLowerCase().endsWith(".pdf") ?? true;
 
   if (isLoading) {
-    return (
-      <div className="bg-muted/20 flex h-full items-center justify-center">
-        <TextShimmer as="span" className="text-sm" duration={1.5}>
-          {t("Loading document preview")}
-        </TextShimmer>
-      </div>
-    );
+    return <DocumentPreviewPanelSkeleton />;
   }
 
   if (!viewUrl) {
@@ -110,13 +108,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
           <Document
             file={viewUrl}
             onLoadSuccess={onDocumentLoadSuccess}
-            loading={
-              <div className="flex items-center justify-center py-20">
-                <TextShimmer as="span" className="text-xs" duration={1.5}>
-                  {t("Rendering document")}
-                </TextShimmer>
-              </div>
-            }
+            loading={<DocumentPageSkeleton />}
             error={
               <div className="text-muted-foreground flex items-center justify-center py-20 text-xs">
                 {t("Failed to load PDF")}

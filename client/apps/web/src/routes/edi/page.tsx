@@ -1,8 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { ComponentLoader } from "@trenova/shared/components/component-loader";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
+import { EDIPageSkeleton } from "./_components/edi-skeleton";
 import type { EDIPageKind } from "./_components/edi-types";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
@@ -76,23 +76,18 @@ export function EDITestCasesPage() {
 
 function EDIPage({ kind }: { kind: EDIPageKind }) {
   const t = useT();
+  const title = t(pageTitles[kind]);
 
   return (
     <PageLayout
       pageHeaderProps={{
-        title: t(pageTitles[kind]),
+        title,
         description: pageDescriptions[kind],
       }}
     >
-      <DataTableLazyComponent
-        fallback={
-          kind === "designer" ? (
-            <ComponentLoader message={t("Loading template designer")} />
-          ) : undefined
-        }
-      >
+      <LazyComponent fallback={<EDIPageSkeleton kind={kind} title={title} />}>
         <Table kind={kind} />
-      </DataTableLazyComponent>
+      </LazyComponent>
     </PageLayout>
   );
 }

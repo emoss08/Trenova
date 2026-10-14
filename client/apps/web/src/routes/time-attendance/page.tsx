@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
+import { usePermission } from "@/hooks/use-permission";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { startOfRotaWeek } from "@trenova/shared/lib/scheduling";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -12,6 +13,7 @@ import {
   thisWeekQuery,
   unpaidApprovedQuery,
 } from "./_components/queries";
+import { TimeAttendanceSkeleton } from "./_components/time-attendance-skeleton";
 
 const TimeAttendanceConsole = lazy(() => import("./_components/time-attendance-console"));
 
@@ -33,6 +35,7 @@ export const prefetch: RoutePrefetch = () => {
 
 export function TimeAttendancePage() {
   const t = useT();
+  const { allowed: canExport } = usePermission(Resource.Timesheet, Operation.Export);
 
   return (
     <PageLayout
@@ -43,9 +46,9 @@ export function TimeAttendancePage() {
         ),
       }}
     >
-      <DataTableLazyComponent>
+      <LazyComponent fallback={<TimeAttendanceSkeleton showPayroll={canExport} />}>
         <TimeAttendanceConsole />
-      </DataTableLazyComponent>
+      </LazyComponent>
     </PageLayout>
   );
 }

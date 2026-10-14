@@ -16,6 +16,7 @@ import { AgentsAtWork } from "./agents-at-work";
 import { OrganizationWide } from "./organization-wide";
 import { OVERVIEW_WINDOW_DAYS, OverviewFigures } from "./overview-figures";
 import { OverviewControl } from "./overview-control";
+import { OrganizationWideSkeleton } from "./overview-skeleton";
 import { ProviderFailureStrip } from "./provider-failure-strip";
 import { SetupSteps } from "./setup-steps";
 import { TuneUps } from "./tune-ups";
@@ -115,6 +116,7 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
             onOpenAgent={openAgent}
             onOpenAgents={onOpenAgents}
           />
+          {controlQuery.isLoading && <OrganizationWideSkeleton />}
           {controlQuery.data && (
             <OrganizationWide
               control={controlQuery.data}

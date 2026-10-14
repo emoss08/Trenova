@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
+import { LeaveControlSkeleton } from "./skeleton";
 
 const LeaveControlForm = lazy(() => import("./_components/leave-control-form"));
 
@@ -17,9 +18,9 @@ export function LeaveControlPage() {
         ),
       }}
     >
-      <SuspenseLoader>
+      <LazyComponent fallback={<LeaveControlSkeleton />}>
         <LeaveControlForm />
-      </SuspenseLoader>
+      </LazyComponent>
     </PageLayout>
   );
 }

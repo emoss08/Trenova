@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
 import { PoliciesSkeleton } from "./_components/policies-skeleton";
 
@@ -18,9 +18,9 @@ export function PoliciesPage() {
         ),
       }}
     >
-      <DataTableLazyComponent fallback={<PoliciesSkeleton />}>
+      <LazyComponent fallback={<PoliciesSkeleton />}>
         <PoliciesConsole />
-      </DataTableLazyComponent>
+      </LazyComponent>
     </PageLayout>
   );
 }

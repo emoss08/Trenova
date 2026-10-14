@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
+import { MatchingWorkspaceSkeleton } from "./_components/matching-workspace-skeleton";
 
 const MatchingWorkspace = lazy(() => import("./_components/matching-workspace"));
 
@@ -18,7 +19,7 @@ export function CarrierInvoiceMatchingPage() {
         ),
       }}
     >
-      <LazyComponent>
+      <LazyComponent fallback={<MatchingWorkspaceSkeleton />}>
         <MatchingWorkspace />
       </LazyComponent>
     </PageLayout>

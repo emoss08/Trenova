@@ -20,11 +20,18 @@ function agent(id: string, name: string, patch: Partial<AgentDefinitionRow> = {}
   } as AgentDefinitionRow;
 }
 
-function renderAgents(agents: AgentDefinitionRow[], runs: WorkingRun[]) {
+function renderAgents(agents: AgentDefinitionRow[] | "reading", runs: WorkingRun[]) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
   });
-  client.setQueryData(assistant.agents(false).queryKey, agents);
+  if (agents === "reading") {
+    void client.prefetchQuery({
+      queryKey: assistant.agents(false).queryKey,
+      queryFn: () => new Promise<AgentDefinitionRow[]>(() => {}),
+    });
+  } else {
+    client.setQueryData(assistant.agents(false).queryKey, agents);
+  }
   client.setQueryData(aiControl.workingRuns().queryKey, runs);
   const onOpenAgent = vi.fn();
   const onOpenAgents = vi.fn();
@@ -64,6 +71,14 @@ describe("AgentsAtWork", () => {
 
     fireEvent.click(screen.getByText("Reading invoices…").closest("button")!);
     expect(onOpenAgent).toHaveBeenCalledWith("agdef_b");
+  });
+
+  it("draws the roster's skeleton while the agents are read, instead of saying none is running", () => {
+    renderAgents("reading", []);
+
+    expect(screen.getByLabelText("Loading agents")).toHaveAttribute("aria-busy", "true");
+    expect(screen.queryByText("Nothing is running right now.")).toBeNull();
+    expect(screen.queryByText("0 live")).toBeNull();
   });
 
   it("keeps the roster link for the whole list", () => {

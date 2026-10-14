@@ -24,6 +24,7 @@ import {
   type ExtensionSort,
 } from "./extension-roster";
 import { ExtensionMark, ExtensionStateTag, ExtensionTile } from "./extension-tile";
+import { ExtensionsBodySkeleton } from "./extensions-skeleton";
 import { Button } from "@trenova/shared/components/ui/button";
 
 const SORT_LABELS: Record<ExtensionSort, string> = defineLabels({
@@ -123,146 +124,149 @@ export default function ExtensionsTab() {
           <span>{t("The extensions could not be loaded. Reload the page to try again.")}</span>
         </div>
       )}
-      {featured && shelf === "all" && !query && (
-        <section className={cn("spot", extensionState(featured) === "on" && "on")}>
-          <div className="spot-m">
-            <span className="spot-k">{t("Featured")}</span>
-            <div className="mkt-h">
-              <ExtensionMark item={featured} s={48} />
-              <div className="mkt-n">
-                <b>{featured.name}</b>
-                <span>{t("By {0} · {1}", featured.vendor, featured.categoryLabel)}</span>
+      {catalogQuery.isLoading ? (
+        <ExtensionsBodySkeleton />
+      ) : (
+        <>
+          {featured && shelf === "all" && !query && (
+            <section className={cn("spot", extensionState(featured) === "on" && "on")}>
+              <div className="spot-m">
+                <span className="spot-k">{t("Featured")}</span>
+                <div className="mkt-h">
+                  <ExtensionMark item={featured} s={48} />
+                  <div className="mkt-n">
+                    <b>{featured.name}</b>
+                    <span>{t("By {0} · {1}", featured.vendor, featured.categoryLabel)}</span>
+                  </div>
+                  <ExtensionStateTag item={featured} now={now} />
+                </div>
+                <p className="spot-p">{featured.summary}</p>
+                <ul className="caps two">
+                  {featured.capabilities.map((capability) => (
+                    <li key={capability}>
+                      <Ic n="check" s={12} w={2.2} />
+                      {capability}
+                    </li>
+                  ))}
+                </ul>
+                <div className="spot-a">
+                  {extensionState(featured) === "on" ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => void setOpenType(featured.type)}
+                      >
+                        <Ic n="gear" s={13} />
+                        {t("Manage")}
+                      </Button>
+                      <span className="mkt-u">
+                        <span className="ubar">
+                          <i style={{ width: `${dailyUsageShare(featured) * 100}%` }} />
+                        </span>
+                        <span className="mono">
+                          {t(
+                            "{0} of {1} today",
+                            featured.usage.requestsToday.toLocaleString(),
+                            featured.dailyRequestLimit.toLocaleString(),
+                          )}
+                        </span>
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="default"
+                        size="lg"
+                        onClick={() => void setOpenType(featured.type)}
+                      >
+                        {t("Set up {0}", featured.name)}
+                        <Ic n="arrowR" s={12} />
+                      </Button>
+                      <span className="spot-s">
+                        {featured.configSpec.some((field) => field.sensitive)
+                          ? t("About a minute · needs a {0} key", featured.vendor)
+                          : t("About a minute · no key needed")}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
-              <ExtensionStateTag item={featured} now={now} />
-            </div>
-            <p className="spot-p">{featured.summary}</p>
-            <ul className="caps two">
-              {featured.capabilities.map((capability) => (
-                <li key={capability}>
-                  <Ic n="check" s={12} w={2.2} />
-                  {capability}
-                </li>
-              ))}
-            </ul>
-            <div className="spot-a">
-              {extensionState(featured) === "on" ? (
-                <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => void setOpenType(featured.type)}
-                  >
-                    <Ic n="gear" s={13} />
-                    {t("Manage")}
-                  </Button>
-                  <span className="mkt-u">
-                    <span className="ubar">
-                      <i style={{ width: `${dailyUsageShare(featured) * 100}%` }} />
-                    </span>
-                    <span className="mono">
-                      {t(
-                        "{0} of {1} today",
-                        featured.usage.requestsToday.toLocaleString(),
-                        featured.dailyRequestLimit.toLocaleString(),
-                      )}
-                    </span>
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Button
-                    type="button"
-                    variant="default"
-                    size="lg"
-                    onClick={() => void setOpenType(featured.type)}
-                  >
-                    {t("Set up {0}", featured.name)}
-                    <Ic n="arrowR" s={12} />
-                  </Button>
-                  <span className="spot-s">
-                    {featured.configSpec.some((field) => field.sensitive)
-                      ? t("About a minute · needs a {0} key", featured.vendor)
-                      : t("About a minute · no key needed")}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-          <ExtensionDemo agentName={demoAgent} />
-        </section>
-      )}
-      <div className="mkt">
-        <nav className="mkt-c" aria-label={t("Categories")}>
-          <ShelfButton
-            label={t("All extensions")}
-            count={items.length}
-            on={shelf === "all"}
-            onClick={() => setShelf("all")}
-          />
-          <ShelfButton
-            label={t("On")}
-            count={onCount}
-            on={shelf === "on"}
-            onClick={() => setShelf("on")}
-          />
-          {categories.length > 0 && <span className="mkt-ch">{t("Categories")}</span>}
-          {categories.map((category) => (
-            <ShelfButton
-              key={category.value}
-              label={category.label}
-              count={category.count}
-              on={shelf === category.value}
-              onClick={() => setShelf(category.value)}
-            />
-          ))}
-        </nav>
-        <div className="mkt-b">
-          <div className="mkt-bh">
-            <b>{shelfTitle}</b>
-            <em className="mono">{visible.length}</em>
-            <span className="sp" />
-            <Seg
-              className="sm"
-              label={t("Sort by")}
-              v={sort}
-              opts={(Object.keys(SORT_LABELS) as ExtensionSort[]).map(
-                (value) => [value, SORT_LABELS[value]] as const,
-              )}
-              onChange={setSort}
-            />
-          </div>
-          {catalogQuery.isLoading ? (
-            <div className="mkt-g" aria-busy>
-              <div className="mkt-t sk ui-shimmer" />
-              <div className="mkt-t sk ui-shimmer" />
-            </div>
-          ) : visible.length > 0 ? (
-            <div className="mkt-g">
-              {visible.map((item) => (
-                <ExtensionTile
-                  key={item.type}
-                  item={item}
-                  now={now}
-                  onOpen={() => void setOpenType(item.type)}
+              <ExtensionDemo agentName={demoAgent} />
+            </section>
+          )}
+          <div className="mkt">
+            <nav className="mkt-c" aria-label={t("Categories")}>
+              <ShelfButton
+                label={t("All extensions")}
+                count={items.length}
+                on={shelf === "all"}
+                onClick={() => setShelf("all")}
+              />
+              <ShelfButton
+                label={t("On")}
+                count={onCount}
+                on={shelf === "on"}
+                onClick={() => setShelf("on")}
+              />
+              {categories.length > 0 && <span className="mkt-ch">{t("Categories")}</span>}
+              {categories.map((category) => (
+                <ShelfButton
+                  key={category.value}
+                  label={category.label}
+                  count={category.count}
+                  on={shelf === category.value}
+                  onClick={() => setShelf(category.value)}
                 />
               ))}
+            </nav>
+            <div className="mkt-b">
+              <div className="mkt-bh">
+                <b>{shelfTitle}</b>
+                <em className="mono">{visible.length}</em>
+                <span className="sp" />
+                <Seg
+                  className="sm"
+                  label={t("Sort by")}
+                  v={sort}
+                  opts={(Object.keys(SORT_LABELS) as ExtensionSort[]).map(
+                    (value) => [value, SORT_LABELS[value]] as const,
+                  )}
+                  onChange={setSort}
+                />
+              </div>
+              {visible.length > 0 ? (
+                <div className="mkt-g">
+                  {visible.map((item) => (
+                    <ExtensionTile
+                      key={item.type}
+                      item={item}
+                      now={now}
+                      onOpen={() => void setOpenType(item.type)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="dtx-e">
+                  <b>{shelf === "on" ? t("Nothing is on yet") : t("No extensions match")}</b>
+                  <span>
+                    {shelf === "on"
+                      ? t("Set one up and it shows here.")
+                      : t("Try another word or category.")}
+                  </span>
+                </div>
+              )}
+              <div className="mkt-more">
+                <Ic n="sparkle" s={13} />
+                <span>
+                  {t("More extensions are on the way — they arrive with Trenova updates.")}
+                </span>
+              </div>
             </div>
-          ) : (
-            <div className="dtx-e">
-              <b>{shelf === "on" ? t("Nothing is on yet") : t("No extensions match")}</b>
-              <span>
-                {shelf === "on"
-                  ? t("Set one up and it shows here.")
-                  : t("Try another word or category.")}
-              </span>
-            </div>
-          )}
-          <div className="mkt-more">
-            <Ic n="sparkle" s={13} />
-            <span>{t("More extensions are on the way — they arrive with Trenova updates.")}</span>
           </div>
-        </div>
-      </div>
+        </>
+      )}
       <ReadSheet
         open={open !== null}
         onClose={() => void setOpenType(null)}
