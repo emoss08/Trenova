@@ -13,12 +13,15 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/factoringcompanyrepository"
@@ -104,6 +107,86 @@ func TestNonRecourseFactoredInvoicesLeaveCollectionsAndCreditExposure(t *testing
 	}, time.Now().Unix())
 	require.NoError(t, err)
 	assert.Equal(t, 3, row.OpenInvoiceCount)
+}
+
+func TestStampedAgreementDecidesRecourse(t *testing.T) {
+	env := setupNonRecourseEnv(t)
+	repo := New(Params{DB: postgres.NewTestConnection(env.db), Logger: zap.NewNop()})
+	agreements := factoringrepository.NewAgreementRepository(factoringrepository.Params{
+		DB:     postgres.NewTestConnection(env.db),
+		Logger: zap.NewNop(),
+	})
+
+	flaggedSold := env.createFactor(t, "FLAGSOLD", true)
+	flaggedRecourse := env.createFactor(t, "FLAGRCRS", false)
+	now := time.Now().Unix()
+	withRecourse := env.agreeWith(t, agreements, flaggedSold.ID, factoring.RecourseFull, now)
+	withoutRecourse := env.agreeWith(t, agreements, flaggedRecourse.ID, factoring.RecourseNone, now)
+
+	kept := env.postInvoice(t, "INV-AGR-1", 10000, &flaggedSold.ID)
+	sold := env.postInvoice(t, "INV-AGR-2", 20000, &flaggedRecourse.ID)
+	env.stampAgreement(t, kept, withRecourse.ID)
+	env.stampAgreement(t, sold, withoutRecourse.ID)
+	env.postInvoice(t, "INV-AGR-3", 40000, &flaggedSold.ID)
+
+	row, err := repo.GetWorklistRow(env.ctx, collectionports.GetAccountRequest{
+		TenantInfo: env.tenantInfo,
+		CustomerID: env.customerID,
+	}, time.Now().Unix())
+	require.NoError(t, err)
+	assert.Equal(t, 1, row.OpenInvoiceCount, "only the invoice under a recourse agreement stays")
+	assert.Equal(t, kept.TotalAmountMinor, row.TotalOpenMinor)
+
+	exposure, err := env.ledger.SumCustomerBalances(
+		env.ctx,
+		customerledgerports.SumCustomerBalancesRequest{
+			TenantInfo:                 env.tenantInfo,
+			CustomerIDs:                []pulid.ID{env.customerID},
+			ExcludeNonRecourseFactored: true,
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, kept.TotalAmountMinor, exposure[env.customerID])
+}
+
+func (e *nonRecourseEnv) agreeWith(
+	t *testing.T,
+	repo factoringports.AgreementRepository,
+	factorID pulid.ID,
+	recourse factoring.Recourse,
+	now int64,
+) *factoring.Agreement {
+	t.Helper()
+	created, err := repo.Create(e.ctx, &factoring.Agreement{
+		OrganizationID:       e.tenantInfo.OrgID,
+		BusinessUnitID:       e.tenantInfo.BuID,
+		FactoringCompanyID:   factorID,
+		Status:               factoring.AgreementStatusActive,
+		ActivatedAt:          new(now - 86400),
+		EffectiveFrom:        now - 86400,
+		AdvanceRateBP:        9000,
+		ReserveRateBP:        1000,
+		ChargebackWindowDays: 90,
+		Recourse:             recourse,
+		AccountingTreatment:  factoring.AccountingTreatmentSale,
+		FundingDays:          1,
+		SubmissionTime:       600,
+		FeeTiers:             []*factoring.FeeTier{{DaysFrom: 0, RateBP: 300}},
+	})
+	require.NoError(t, err)
+	return created
+}
+
+func (e *nonRecourseEnv) stampAgreement(t *testing.T, inv *invoice.Invoice, agreementID pulid.ID) {
+	t.Helper()
+	_, err := e.db.NewUpdate().
+		Table("invoices").
+		Set("factoring_agreement_id = ?", agreementID).
+		Where("id = ?", inv.ID).
+		Where("organization_id = ?", e.tenantInfo.OrgID).
+		Where("business_unit_id = ?", e.tenantInfo.BuID).
+		Exec(e.ctx)
+	require.NoError(t, err)
 }
 
 func TestFactoringCompanyUpdateSavesClearedFields(t *testing.T) {

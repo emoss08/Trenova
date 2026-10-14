@@ -3,6 +3,7 @@ package aicorrectionjobs
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -36,13 +37,16 @@ func TestAICorrectionRetentionWorkflow_PurgesEachOrganization(t *testing.T) {
 		}}, nil).
 		Once()
 
+	var mu sync.Mutex
 	instants := make(map[int64]struct{})
 	env.OnActivity(a.PurgeOrganizationAICorrectionsActivity, mock.Anything, mock.Anything).
 		Return(func(
 			_ context.Context,
 			input *OrganizationAICorrectionInput,
 		) (*OrganizationAICorrectionResult, error) {
+			mu.Lock()
 			instants[input.Now] = struct{}{}
+			mu.Unlock()
 			if input.OrganizationID == "org_b" {
 				return nil, temporal.NewNonRetryableApplicationError(
 					"broken",
@@ -64,6 +68,8 @@ func TestAICorrectionRetentionWorkflow_PurgesEachOrganization(t *testing.T) {
 	assert.Equal(t, 1, result.OrganizationsProcessed)
 	assert.Equal(t, int64(7), result.Purged)
 	assert.Equal(t, []string{"org_b"}, result.FailedOrganizations)
+	mu.Lock()
+	defer mu.Unlock()
 	assert.Len(t, instants, 1, "every organization is purged as of one instant")
 }
 

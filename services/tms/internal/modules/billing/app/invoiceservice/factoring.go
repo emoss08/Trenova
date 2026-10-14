@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 // assignFactoring records on a posting invoice the factor its customer's
@@ -23,6 +25,11 @@ func (s *Service) assignFactoring(
 	tenantInfo pagination.TenantInfo,
 ) error {
 	if s.customerRepo == nil || s.factoringRepo == nil || entity.CustomerID.IsNil() {
+		return nil
+	}
+	if entity.FactoringOverride.Excludes() {
+		entity.FactoringCompanyID = nil
+		entity.FactoringAgreementID = nil
 		return nil
 	}
 	cus, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
@@ -38,6 +45,7 @@ func (s *Service) assignFactoring(
 	factorID := assignedFactorID(cus)
 	if factorID == nil {
 		entity.FactoringCompanyID = nil
+		entity.FactoringAgreementID = nil
 		return nil
 	}
 	factor, err := s.factoringRepo.GetByID(
@@ -58,6 +66,36 @@ func (s *Service) assignFactoring(
 		)
 	}
 	entity.FactoringCompanyID = factorID
+	return s.assignAgreement(ctx, entity, tenantInfo, *factorID)
+}
+
+func (s *Service) assignAgreement(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	tenantInfo pagination.TenantInfo,
+	factorID pulid.ID,
+) error {
+	entity.FactoringAgreementID = nil
+	if s.agreementRepo == nil {
+		return nil
+	}
+	at := timeutils.NowUnix()
+	if entity.PostedAt != nil {
+		at = *entity.PostedAt
+	}
+	agreement, err := s.agreementRepo.GetInForce(ctx, factoringports.GetAgreementInForceRequest{
+		TenantInfo:         tenantInfo,
+		FactoringCompanyID: factorID,
+		At:                 at,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil
+		}
+		return err
+	}
+	id := agreement.ID
+	entity.FactoringAgreementID = &id
 	return nil
 }
 

@@ -41,3 +41,32 @@ extend type Query {
   factoringCompanies(input: DataTableConnectionInput!): FactoringCompanyConnection!
   factoringCompany(id: ID!): FactoringCompany
 }
+
+input FactoringCompanyInput {
+  status: EntityStatus!
+  code: String!
+  name: String!
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  stateId: ID!
+  postalCode: String!
+  email: String
+  phoneNumber: String
+  remittanceInstructions: String
+  noticeOfAssignment: String
+  "Kept in step with the agreement in force once the factor has one."
+  nonRecourse: Boolean = false
+  notes: String
+}
+
+input UpdateFactoringCompanyInput {
+  id: ID!
+  version: Int!
+  factoringCompany: FactoringCompanyInput!
+}
+
+extend type Mutation {
+  createFactoringCompany(input: FactoringCompanyInput!): FactoringCompany!
+  updateFactoringCompany(input: UpdateFactoringCompanyInput!): FactoringCompany!
+}

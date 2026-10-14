@@ -45,6 +45,11 @@ const (
 	absentNotResolved  = "not resolved"
 	absentNotProcessed = "not processed"
 	absentOpenEnded    = "open-ended"
+	absentNotReady     = "not ready"
+	absentNotReleased  = "not released"
+	absentNoExpiry     = "no expiry"
+
+	absentNotAcknowledged = "not acknowledged"
 )
 
 // recordedDate is for a value somebody was supposed to enter. Its absence is a
@@ -60,6 +65,15 @@ func pointerDate(seconds *int64) optionalDate {
 	}
 
 	return recordedDate(*seconds)
+}
+
+// pointerDateOr is expectedDate for the nullable columns, saying in absent
+// what an unset value means for this field.
+func pointerDateOr(seconds *int64, absent string) optionalDate {
+	if seconds == nil {
+		return expectedDate(0, absent)
+	}
+	return expectedDate(*seconds, absent)
 }
 
 // expectedDate is for something that has not happened yet rather than something

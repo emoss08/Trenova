@@ -10,9 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -30,8 +31,8 @@ func (r *QueryResolver) FactoringCompanies(ctx context.Context, input gqlmodel.D
 	result, err := r.FactoringCompanyService.ListConnection(
 		ctx,
 		&factoringcompanyports.ListFactoringCompanyConnectionRequest{
-			Filter:            tableInput.Filter,
-			Cursor:            tableInput.Cursor,
+			Filter:                  tableInput.Filter,
+			Cursor:                  tableInput.Cursor,
 			FactoringCompanyColumns: factoringCompanyColumns(ctx, "edges.node"),
 		},
 	)
@@ -57,4 +58,53 @@ func (r *QueryResolver) FactoringCompany(ctx context.Context, id string) (*facto
 		ID:         factoringCompanyID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
+}
+
+func (r *MutationResolver) CreateFactoringCompany(ctx context.Context, input gqlmodel.FactoringCompanyInput) (*factoringcompany.FactoringCompany, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringCompany, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity := &factoringcompany.FactoringCompany{
+		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+	}
+	if err = applyFactoringCompanyInput(entity, &input); err != nil {
+		return nil, err
+	}
+
+	return r.FactoringCompanyService.Create(ctx, entity, authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateFactoringCompany(ctx context.Context, input gqlmodel.UpdateFactoringCompanyInput) (*factoringcompany.FactoringCompany, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringCompany, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	factoringCompanyID, err := pulid.MustParse(input.ID)
+	if err != nil {
+		return nil, err
+	}
+	entity, err := r.FactoringCompanyService.Get(ctx, factoringcompanyports.GetFactoringCompanyByIDRequest{
+		ID:         factoringCompanyID,
+		TenantInfo: base.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if input.FactoringCompany == nil {
+		return nil, errortypes.NewValidationError(
+			"factoringCompany",
+			errortypes.ErrRequired,
+			"Factoring company details are required",
+		)
+	}
+	if err = applyFactoringCompanyInput(entity, input.FactoringCompany); err != nil {
+		return nil, err
+	}
+	entity.Version = int64(input.Version)
+
+	return r.FactoringCompanyService.Update(ctx, entity, authCtx.UserID)
 }

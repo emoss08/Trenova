@@ -842,6 +842,15 @@ export type AccountingSystem =
   | 'QuickBooksOnline'
   | 'Xero';
 
+export type AcknowledgeFactoringNoaInput = {
+  acknowledgedAt: number;
+  expiresAt?: number | null | undefined;
+  id: string | number;
+  /** The signed copy, uploaded as a document on this notice. */
+  signedDocumentId: string | number;
+  version: number;
+};
+
 export type AcknowledgeMyPolicyInput = {
   policyId: string | number;
   /** Typed full name. Required when the policy asks for a signature, and it has to be the name on the record. */
@@ -1386,6 +1395,7 @@ export type AgentSubjectType =
   | 'DetentionOccurrence'
   | 'Document'
   | 'EDIInboundFile'
+  | 'FactoringNoa'
   | 'FormulaTemplate'
   | 'InboundMessage'
   | 'Insight'
@@ -1439,6 +1449,7 @@ export type AgentTemplate =
   | 'DispatchAssignment'
   | 'DispatchAssistant'
   | 'EDIDesk'
+  | 'FactoringClerk'
   | 'FormulaAssistant'
   | 'FuelTaxClerk'
   | 'GeneralAssistant'
@@ -2426,6 +2437,13 @@ export type CarrierType =
 export type ChangeAccountingBackfillInput = {
   action: AccountingBackfillAction;
   id: string | number;
+};
+
+export type ChangeFactoringAgreementStatusInput = {
+  /** When the agreement stops covering invoices. Defaults to now. */
+  endAt?: number | null | undefined;
+  id: string | number;
+  version: number;
 };
 
 export type ChargeAllocationInput = {
@@ -3522,6 +3540,12 @@ export type DocumentClassification =
   | 'Regulatory'
   | 'Sensitive';
 
+export type DraftFactoringNoaInput = {
+  customerId: string | number;
+  factoringCompanyId: string | number;
+  notes?: string | null | undefined;
+};
+
 /**
  * How a driver hears about what they owe. Immediate is the default so no carrier
  * silently loses notices they already rely on.
@@ -3869,6 +3893,87 @@ export type FacilityType =
   | 'HazmatFacility'
   | 'IntermodalFacility'
   | 'StorageWarehouse';
+
+/** How factored invoices are booked. */
+export type FactoringAccountingTreatment =
+  /** Each funded invoice leaves receivables, with the fee as an expense. */
+  | 'Sale'
+  /** Receivables stay on the books and the advance is a liability to the factor. */
+  | 'SecuredBorrowing';
+
+export type FactoringAgreementInput = {
+  accountingTreatment: FactoringAccountingTreatment;
+  advanceRateBp: number;
+  chargebackWindowDays: number;
+  documentTypeIds?: Array<string | number> | null | undefined;
+  effectiveFrom: number;
+  effectiveTo?: number | null | undefined;
+  factoringCompanyId: string | number;
+  feeTiers: Array<FactoringFeeTierInput>;
+  fundingDays: number;
+  minimumFeeMinor?: number | null | undefined;
+  notes?: string | null | undefined;
+  recourse: FactoringRecourse;
+  reserveRateBp: number;
+  submissionTime: number;
+};
+
+export type FactoringAgreementStatus =
+  | 'Active'
+  | 'Draft'
+  | 'Ended';
+
+export type FactoringCheckCode =
+  | 'Agreement'
+  | 'AgreementDocument'
+  | 'BillingDocument'
+  | 'BillingValidation'
+  | 'Dispute'
+  | 'Eligible'
+  | 'Factored'
+  | 'Noa'
+  | 'ShipmentUnavailable';
+
+export type FactoringFeeTierInput = {
+  daysFrom: number;
+  daysTo?: number | null | undefined;
+  flatMinor?: number | null | undefined;
+  rateBp: number;
+};
+
+export type FactoringFixAction =
+  | 'RecordNoaAcknowledgement'
+  | 'RequestDocument'
+  | 'ResolveDispute'
+  | 'ReviewShipment'
+  | 'SendNoa'
+  | 'SetUpAgreement';
+
+export type FactoringNoaListInput = {
+  customerId?: string | number | null | undefined;
+  factoringCompanyId?: string | number | null | undefined;
+  statuses?: Array<FactoringNoaStatus> | null | undefined;
+  table: DataTableConnectionInput;
+};
+
+export type FactoringNoaStatus =
+  | 'Acknowledged'
+  | 'Draft'
+  | 'Released'
+  | 'Sent';
+
+/** Who carries the loss when a customer does not pay a factored invoice. */
+export type FactoringRecourse =
+  /** The factor buys the invoice and carries the credit risk. */
+  | 'NonRecourse'
+  /** The factor can charge an unpaid invoice back after the chargeback window. */
+  | 'Recourse';
+
+export type FactoringVerdict =
+  /** Not something to factor: unposted, voided, paid, a credit memo, kept out, or not factored. */
+  | 'Excluded'
+  | 'NotReady'
+  | 'Ready';
 
 export type FieldFilterInput = {
   field: string;
@@ -4783,6 +4888,12 @@ export type InvoiceEdiSendStatus =
   | 'Queued'
   | 'Sending'
   | 'Sent';
+
+export type InvoiceFactoringOverride =
+  /** The invoice follows its customer's factoring. */
+  | 'Default'
+  /** The invoice stays on the organization's own receivables. */
+  | 'Exclude';
 
 export type InvoiceMemoKind =
   | 'LateCharge'
@@ -5921,6 +6032,12 @@ export type ReleaseAccountingSyncInput = {
   integrationType: AccountingSystem;
 };
 
+export type ReleaseFactoringNoaInput = {
+  id: string | number;
+  reason: string;
+  version: number;
+};
+
 export type RemoveCarrierSettlementAdjustmentInput = {
   lineId: string | number;
   settlementId: string | number;
@@ -6163,6 +6280,15 @@ export type RequestAccountingBackfillInput = {
   rangeEnd?: number | null | undefined;
   /** Defaults to the start date. */
   rangeStart?: number | null | undefined;
+};
+
+export type RequestMissingFactoringDocumentsInput = {
+  /** Ask for these only. Defaults to every document the invoice is missing. */
+  documentTypeIds?: Array<string | number> | null | undefined;
+  invoiceId: string | number;
+  message?: string | null | undefined;
+  /** Defaults to the driver, then the carrier, then the customer's invoice email recipients. */
+  recipient?: string | null | undefined;
 };
 
 export type RequestMyPtoInput = {
@@ -6531,6 +6657,13 @@ export type SelectOptionsInput = {
   resource: SelectOptionResource;
 };
 
+export type SendFactoringNoaInput = {
+  id: string | number;
+  /** Addresses to send to. Defaults to the customer's invoice email recipients. */
+  recipient?: string | null | undefined;
+  version: number;
+};
+
 export type SendInboundReplyInput = {
   body: string;
   /** Documents to attach, from inboundReplyAttachables. */
@@ -6605,6 +6738,13 @@ export type SetAvailabilityPreferenceInput = {
   note?: string | null | undefined;
   preference: AvailabilityPreference;
   workerId: string | number;
+};
+
+export type SetInvoiceFactoringOverrideInput = {
+  invoiceId: string | number;
+  override: InvoiceFactoringOverride;
+  /** Required when keeping the invoice out of factoring. */
+  reason?: string | null | undefined;
 };
 
 export type SetMyAiFeedbackInput = {
@@ -7890,6 +8030,12 @@ export type UpdateExtractionShadowSettingsInput = {
   version: number;
 };
 
+export type UpdateFactoringAgreementInput = {
+  agreement: FactoringAgreementInput;
+  id: string | number;
+  version: number;
+};
+
 export type UpdateFuelIndexPriceInput = {
   id: string | number;
   price: string;
@@ -8327,6 +8473,7 @@ export type WatchtowerSourceKind =
   | 'DetentionOccurrence'
   | 'EDIInboundQuarantined'
   | 'EtaAtRisk'
+  | 'Factoring'
   | 'HOSViolation'
   | 'InboundMessage'
   | 'Insight'
@@ -13125,6 +13272,140 @@ export type FactoringCompanyTableQueryVariables = Exact<{
 
 export type FactoringCompanyTableQuery = { factoringCompanies: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringCompanyTableRowFieldsFragment': FactoringCompanyTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type FactoringAgreementFieldsFragment = { id: string, factoringCompanyId: string, status: FactoringAgreementStatus, effectiveFrom: number, effectiveTo: number | null, advanceRateBp: number, reserveRateBp: number, minimumFeeMinor: number, chargebackWindowDays: number, recourse: FactoringRecourse, accountingTreatment: FactoringAccountingTreatment, fundingDays: number, submissionTime: number, notes: string | null, activatedAt: number | null, endedAt: number | null, version: number, createdAt: number, updatedAt: number, feeTiers: Array<{ id: string, daysFrom: number, daysTo: number | null, rateBp: number, flatMinor: number }>, documentTypes: Array<{ id: string, code: string, name: string, color: string }> } & { ' $fragmentName'?: 'FactoringAgreementFieldsFragment' };
+
+export type FactoringAgreementsQueryVariables = Exact<{
+  factoringCompanyId: string | number;
+}>;
+
+
+export type FactoringAgreementsQuery = { factoringAgreements: Array<{ ' $fragmentRefs'?: { 'FactoringAgreementFieldsFragment': FactoringAgreementFieldsFragment } }> };
+
+export type FactoringAgreementOwnerQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FactoringAgreementOwnerQuery = { factoringAgreement: { id: string, factoringCompanyId: string } };
+
+export type CreateFactoringAgreementMutationVariables = Exact<{
+  input: FactoringAgreementInput;
+}>;
+
+
+export type CreateFactoringAgreementMutation = { createFactoringAgreement: { ' $fragmentRefs'?: { 'FactoringAgreementFieldsFragment': FactoringAgreementFieldsFragment } } };
+
+export type UpdateFactoringAgreementMutationVariables = Exact<{
+  input: UpdateFactoringAgreementInput;
+}>;
+
+
+export type UpdateFactoringAgreementMutation = { updateFactoringAgreement: { ' $fragmentRefs'?: { 'FactoringAgreementFieldsFragment': FactoringAgreementFieldsFragment } } };
+
+export type ActivateFactoringAgreementMutationVariables = Exact<{
+  input: ChangeFactoringAgreementStatusInput;
+}>;
+
+
+export type ActivateFactoringAgreementMutation = { activateFactoringAgreement: { ' $fragmentRefs'?: { 'FactoringAgreementFieldsFragment': FactoringAgreementFieldsFragment } } };
+
+export type EndFactoringAgreementMutationVariables = Exact<{
+  input: ChangeFactoringAgreementStatusInput;
+}>;
+
+
+export type EndFactoringAgreementMutation = { endFactoringAgreement: { ' $fragmentRefs'?: { 'FactoringAgreementFieldsFragment': FactoringAgreementFieldsFragment } } };
+
+export type FactoringCompanyRecordQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FactoringCompanyRecordQuery = { factoringCompany: { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string | null, city: string, stateId: string, postalCode: string, email: string | null, phoneNumber: string | null, remittanceInstructions: string | null, noticeOfAssignment: string | null, nonRecourse: boolean, notes: string | null, version: number, createdAt: number, updatedAt: number } | null };
+
+export type FactoringNoaFieldsFragment = { id: string, customerId: string, factoringCompanyId: string, status: FactoringNoaStatus, sentAt: number | null, sentTo: string | null, acknowledgedAt: number | null, signedDocumentId: string | null, expiresAt: number | null, releasedAt: number | null, releaseReason: string | null, notes: string | null, version: number, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringNoaFieldsFragment' };
+
+export type FactoringNoasQueryVariables = Exact<{
+  input: FactoringNoaListInput;
+}>;
+
+
+export type FactoringNoasQuery = { factoringNoas: { edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringNoaFieldsFragment': FactoringNoaFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type FactoringNoaOwnerQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FactoringNoaOwnerQuery = { factoringNoa: { id: string, factoringCompanyId: string } };
+
+export type DraftFactoringNoaMutationVariables = Exact<{
+  input: DraftFactoringNoaInput;
+}>;
+
+
+export type DraftFactoringNoaMutation = { draftFactoringNoa: { ' $fragmentRefs'?: { 'FactoringNoaFieldsFragment': FactoringNoaFieldsFragment } } };
+
+export type SendFactoringNoaMutationVariables = Exact<{
+  input: SendFactoringNoaInput;
+}>;
+
+
+export type SendFactoringNoaMutation = { sendFactoringNoa: { ' $fragmentRefs'?: { 'FactoringNoaFieldsFragment': FactoringNoaFieldsFragment } } };
+
+export type AcknowledgeFactoringNoaMutationVariables = Exact<{
+  input: AcknowledgeFactoringNoaInput;
+}>;
+
+
+export type AcknowledgeFactoringNoaMutation = { acknowledgeFactoringNoa: { ' $fragmentRefs'?: { 'FactoringNoaFieldsFragment': FactoringNoaFieldsFragment } } };
+
+export type ReleaseFactoringNoaMutationVariables = Exact<{
+  input: ReleaseFactoringNoaInput;
+}>;
+
+
+export type ReleaseFactoringNoaMutation = { releaseFactoringNoa: { ' $fragmentRefs'?: { 'FactoringNoaFieldsFragment': FactoringNoaFieldsFragment } } };
+
+export type FactoringInvoiceStateFieldsFragment = { invoiceId: string, factoringCompanyId: string | null, customerId: string, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null, detail: string | null }>, invoice: { id: string, number: string, status: InvoiceStatus, currencyCode: string, billToName: string } | null, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'FactoringInvoiceStateFieldsFragment' };
+
+export type FactoringInvoiceStateTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  verdicts?: Array<FactoringVerdict> | FactoringVerdict | null | undefined;
+  factoringCompanyId?: string | number | null | undefined;
+  customerId?: string | number | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type FactoringInvoiceStateTableQuery = { factoringInvoiceStates: { totalCount?: number | null, edges: Array<{ node: { invoiceId: string, factoringCompanyId: string | null, customerId: string, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null, detail: string | null }>, invoice: { id: string, number: string, status: InvoiceStatus, currencyCode: string, billToName: string } | null, customer: { id: string, code: string, name: string } | null, factoringCompany: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type FactoringSummaryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type FactoringSummaryQuery = { factoringSummary: { ready: { count: number, amountMinor: number }, notReady: { count: number, amountMinor: number }, readyUnsubmitted: { count: number, amountMinor: number } } };
+
+export type InvoiceFactoringQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type InvoiceFactoringQuery = { invoice: { id: string, number: string, status: InvoiceStatus, billType: BillType, currencyCode: string, factoringOverride: InvoiceFactoringOverride, factoringOverrideReason: string | null, factoringAgreementId: string | null, factoringCompany: { id: string, code: string, name: string } | null, factoringState: { ' $fragmentRefs'?: { 'FactoringInvoiceStateFieldsFragment': FactoringInvoiceStateFieldsFragment } } | null } | null };
+
+export type SetInvoiceFactoringOverrideMutationVariables = Exact<{
+  input: SetInvoiceFactoringOverrideInput;
+}>;
+
+
+export type SetInvoiceFactoringOverrideMutation = { setInvoiceFactoringOverride: { ' $fragmentRefs'?: { 'FactoringInvoiceStateFieldsFragment': FactoringInvoiceStateFieldsFragment } } };
+
+export type RequestMissingFactoringDocumentsMutationVariables = Exact<{
+  input: RequestMissingFactoringDocumentsInput;
+}>;
+
+
+export type RequestMissingFactoringDocumentsMutation = { requestMissingFactoringDocuments: { recipient: string, recipientKind: string, documentTypes: Array<string>, shipmentIds: Array<string>, sent: boolean } };
+
 export type FiscalPeriodFieldsFragment = { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, closedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FiscalPeriodFieldsFragment' };
 
 export type FiscalYearTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number, periods: Array<{ ' $fragmentRefs'?: { 'FiscalPeriodFieldsFragment': FiscalPeriodFieldsFragment } }> } & { ' $fragmentName'?: 'FiscalYearTableRowFieldsFragment' };
@@ -17872,6 +18153,9 @@ export { ExtractionEvalRunFieldsFragmentDoc, ExtractionFieldAccuracyFieldsFragme
 export { ExtractionRolloutFieldsFragmentDoc, ExtractionRolloutArmFieldsFragmentDoc, ExtractionRolloutAccuracyFieldsFragmentDoc, ExtractionRolloutDocument, ExtractionRolloutReportDocument, UpdateExtractionRolloutDocument } from "./documents/extraction-rollout/extraction-rollout";
 export { ExtractionShadowSettingsFieldsFragmentDoc, ExtractionShadowResultTableRowFieldsFragmentDoc, ExtractionShadowResultDetailFieldsFragmentDoc, ExtractionShadowSettingsDocument, ExtractionShadowReportDocument, ExtractionShadowResultTableDocument, ExtractionShadowResultDetailDocument, UpdateExtractionShadowSettingsDocument } from "./documents/extraction-shadow/extraction-shadow";
 export { FactoringCompanyTableRowFieldsFragmentDoc, FactoringCompanyTableDocument } from "./documents/factoring-company/table";
+export { FactoringAgreementFieldsFragmentDoc, FactoringAgreementsDocument, FactoringAgreementOwnerDocument, CreateFactoringAgreementDocument, UpdateFactoringAgreementDocument, ActivateFactoringAgreementDocument, EndFactoringAgreementDocument, FactoringCompanyRecordDocument } from "./documents/factoring/agreements";
+export { FactoringNoaFieldsFragmentDoc, FactoringNoasDocument, FactoringNoaOwnerDocument, DraftFactoringNoaDocument, SendFactoringNoaDocument, AcknowledgeFactoringNoaDocument, ReleaseFactoringNoaDocument } from "./documents/factoring/noas";
+export { FactoringInvoiceStateFieldsFragmentDoc, FactoringInvoiceStateTableDocument, FactoringSummaryDocument, InvoiceFactoringDocument, SetInvoiceFactoringOverrideDocument, RequestMissingFactoringDocumentsDocument } from "./documents/factoring/readiness";
 export { FiscalPeriodFieldsFragmentDoc, FiscalYearTableRowFieldsFragmentDoc, FiscalYearTableDocument } from "./documents/fiscal-year/table";
 export { FleetCodeTableRowFieldsFragmentDoc, FleetCodeTableDocument } from "./documents/fleet-code/table";
 export { FleetSafetyDocument, WorkerSafetyViolationsDocument, RecordSafetyViolationDocument, UpdateSafetyViolationDocument, DeleteSafetyViolationDocument } from "./documents/fleet-safety/operations";

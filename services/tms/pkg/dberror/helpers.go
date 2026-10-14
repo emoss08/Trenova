@@ -151,6 +151,10 @@ func IsUniqueConstraintViolation(err error) bool {
 	return ExtractCode(err) == pgerrcode.UniqueViolation
 }
 
+func IsExclusionConstraintViolation(err error) bool {
+	return ExtractCode(err) == pgerrcode.ExclusionViolation
+}
+
 func IsForeignKeyConstraintViolation(err error) bool {
 	return ExtractCode(err) == pgerrcode.ForeignKeyViolation
 }

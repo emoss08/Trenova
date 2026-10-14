@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/pkg/domainregistry"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -83,6 +84,7 @@ func TestOwnedLabelQueries_AreScopedToTheTenantAndCarryTheOwner(t *testing.T) {
 	t.Parallel()
 
 	db := bun.NewDB(nil, pgdialect.New())
+	db.RegisterModel(domainregistry.RegisterManyToManyEntities()...)
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	ids := []pulid.ID{pulid.MustNew("rec_"), pulid.MustNew("rec_")}
 

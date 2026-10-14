@@ -1,0 +1,1 @@
+{{ t "Notice of assignment from {0}" .CompanyName }}

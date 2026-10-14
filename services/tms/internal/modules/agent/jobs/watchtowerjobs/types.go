@@ -32,6 +32,7 @@ const (
 	// pickups, missed deliveries, missing PODs and exhausted tenders that
 	// only the clock can raise.
 	ShipmentExceptionSweepWorkflowName = "ShipmentExceptionSweepWorkflow"
+	FactoringSweepWorkflowName         = "FactoringSweepWorkflow"
 )
 
 // WatchtowerBackfillInput names the tenant to fill. An empty organization

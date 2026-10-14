@@ -54,6 +54,8 @@ type openItemRecord struct {
 	SettlementStatus   string `bun:"settlement_status"`
 	DisputeStatus      string `bun:"dispute_status"`
 	HasShortPay        bool   `bun:"has_short_pay"`
+	FactoringCompanyID string `bun:"factoring_company_id"`
+	FactoringCompany   string `bun:"factoring_company_name"`
 }
 
 func New(p Params) customerledgerports.AccountsReceivableRepository {
@@ -182,8 +184,14 @@ func (r *repository) ListOpenItems(
 				  AND cpa.organization_id = inv.organization_id
 				  AND cpa.business_unit_id = inv.business_unit_id
 				  AND cpa.short_pay_amount_minor > 0
-			) AS has_short_pay
+			) AS has_short_pay,
+			COALESCE(inv.factoring_company_id, '') AS factoring_company_id,
+			COALESCE(fac.name, '') AS factoring_company_name
 		FROM invoices inv
+		LEFT JOIN factoring_companies fac
+		  ON fac.id = inv.factoring_company_id
+		 AND fac.organization_id = inv.organization_id
+		 AND fac.business_unit_id = inv.business_unit_id
 		WHERE inv.organization_id = ?
 		  AND inv.business_unit_id = ?
 		  AND inv.status = 'Posted'
@@ -223,6 +231,8 @@ func (r *repository) ListOpenItems(
 					SettlementStatus:   rec.SettlementStatus,
 					DisputeStatus:      rec.DisputeStatus,
 					HasShortPay:        rec.HasShortPay,
+					FactoringCompanyID: pulid.ID(rec.FactoringCompanyID),
+					FactoringCompany:   rec.FactoringCompany,
 				})
 			}
 
