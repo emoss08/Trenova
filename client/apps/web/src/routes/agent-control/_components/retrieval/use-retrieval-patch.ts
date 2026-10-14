@@ -3,7 +3,7 @@ import {
   updateAIRetrievalSettings,
   type AIRetrievalSettingsPatch,
 } from "@/lib/graphql/ai-retrieval";
-import { queries } from "@/lib/queries";
+import { aiRetrieval } from "@/lib/queries/ai-retrieval";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { toast } from "sonner";
@@ -25,7 +25,7 @@ export function useRetrievalPatch() {
   return useMutation({
     mutationFn: ({ patch }: RetrievalChange) => updateAIRetrievalSettings(patch),
     onSuccess: async (status, { done }) => {
-      queryClient.setQueryData(queries.aiRetrieval.status().queryKey, status);
+      queryClient.setQueryData(aiRetrieval.status().queryKey, status);
       await queryClient.invalidateQueries({ queryKey: [AI_RETRIEVAL_FAILED_LIST_KEY] });
       toast.success(done);
     },

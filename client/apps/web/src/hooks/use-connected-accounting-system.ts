@@ -5,7 +5,7 @@ import {
   type AccountingSystemCandidate,
 } from "@/lib/accounting-sync";
 import type { AccountingConnection } from "@/lib/graphql/accounting-sync";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import { useQueries, type QueryFunction, type UseQueryResult } from "@tanstack/react-query";
 
@@ -29,9 +29,9 @@ type ConnectionQuery<TSource extends AccountingSystemSource> = {
 const SOURCES: {
   [TSource in AccountingSystemSource]: (system: AccountingSystem) => ConnectionQuery<TSource>;
 } = {
-  status: queries.accountingSync.status,
-  mappingSummary: queries.accountingSync.mappingSummary,
-  syncSummary: queries.accountingSync.syncSummary,
+  status: accountingSync.status,
+  mappingSummary: accountingSync.mappingSummary,
+  syncSummary: accountingSync.syncSummary,
 };
 
 function combineResolution(

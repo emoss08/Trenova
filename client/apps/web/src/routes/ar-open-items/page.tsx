@@ -8,7 +8,7 @@ import { AutoCompleteDateField } from "@/components/fields/date-field/date-field
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { useQuery } from "@tanstack/react-query";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -71,7 +71,7 @@ export function AROpenItemsPage() {
     data: items,
     isLoading,
     isError,
-  } = useQuery(queries.ar.openItems({ customerId: customerId || undefined, asOfDate: asOfUnix }));
+  } = useQuery(ar.openItems({ customerId: customerId || undefined, asOfDate: asOfUnix }));
 
   const openItems = useMemo(() => items ?? [], [items]);
 

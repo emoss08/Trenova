@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import type { QueueOutcome } from "@/services/assistant";
 import type {
@@ -43,8 +43,8 @@ export function useConversationQueue(threadId: string, options: ConversationQueu
   const t = useT();
   const queryClient = useQueryClient();
   const { enabled, steered, context, surface, providerId, onStarted } = options;
-  const key = queries.assistant.queue(threadId).queryKey;
-  const query = useQuery({ ...queries.assistant.queue(threadId), enabled });
+  const key = assistant.queue(threadId).queryKey;
+  const query = useQuery({ ...assistant.queue(threadId), enabled });
 
   const items = useMemo(() => {
     const all = query.data?.items ?? NO_ITEMS;

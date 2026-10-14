@@ -6,7 +6,7 @@ import {
   revokeCarrierTrackingLink,
   type IssuedCarrierTrackingLink,
 } from "@/lib/graphql/check-calls";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import { issueTrackingLinkFormSchema, type IssueTrackingLinkFormValues } from "@/types/check-call";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Copy01Icon, Link01Icon, XCloseIcon } from "@trenova/shared/components/icons";
@@ -39,7 +39,7 @@ export function CarrierTrackingLink({
   const t = useT();
   const queryClient = useQueryClient();
   const [issueOpen, setIssueOpen] = useState(false);
-  const linkQuery = queries.shipment.trackingLink(moveId);
+  const linkQuery = shipment.trackingLink(moveId);
 
   const { data: link, isPending, isError } = useQuery({ ...linkQuery });
 
@@ -197,7 +197,7 @@ function IssueTrackingLinkBody({
     form,
     onSuccess: (result) => {
       void queryClient.invalidateQueries({
-        queryKey: queries.shipment.trackingLink(moveId).queryKey,
+        queryKey: shipment.trackingLink(moveId).queryKey,
       });
       setIssued(result);
     },

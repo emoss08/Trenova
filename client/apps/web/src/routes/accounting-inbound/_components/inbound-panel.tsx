@@ -18,7 +18,7 @@ import type {
   AccountingInboundChange,
 } from "@/lib/graphql/accounting-inbound";
 import type { AccountingInboundRow } from "@/lib/graphql/accounting-inbound-table";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
@@ -56,7 +56,7 @@ export function InboundChangePanel({
   const [{ panelEntityId }] = useQueryStates(panelSearchParamsParser);
   const changeId = row?.id ?? panelEntityId;
   const fetched = useQuery({
-    ...queries.accountingSync.inboundChange(changeId ?? ""),
+    ...accountingSync.inboundChange(changeId ?? ""),
     enabled: open && !row && !!changeId,
   });
   const change: AccountingInboundChange | null = row ?? fetched.data ?? null;
@@ -108,7 +108,7 @@ function InboundChangeDetail({
   const [ignoring, setIgnoring] = useState(false);
   const applicable = accountingInboundCanApply(change.status, change.reason);
   const preview = useQuery({
-    ...queries.accountingSync.inboundPreview(change.id),
+    ...accountingSync.inboundPreview(change.id),
     enabled: open && applicable,
   });
   const currency = change.currencyCode;

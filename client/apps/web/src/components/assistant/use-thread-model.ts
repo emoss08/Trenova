@@ -1,6 +1,6 @@
 import { answerMessageIds } from "@/components/ai-feedback/feedback-targets";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useSharedItems } from "@/hooks/use-keyed-sharing";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useRealtimeStore } from "@/stores/realtime-store";
@@ -143,7 +143,7 @@ export function useThreadModel({
   // Proposals are fetched rather than taken from the send response: they outlive
   // the turn that raised them, so reopening a thread has to show what is still
   // waiting on a decision.
-  const providersQuery = useQuery(queries.assistant.providers());
+  const providersQuery = useQuery(assistant.providers());
   const providers = useMemo(() => providersQuery.data ?? [], [providersQuery.data]);
 
   // The thread carries the choice, so a reload reopens on the same model, and a
@@ -169,22 +169,21 @@ export function useThreadModel({
   // remount; the moment nothing is running, they are not.
   const realtimeConnected = useRealtimeStore((state) => state.connectionState === "connected");
   const proposalsQuery = useQuery({
-    ...queries.assistant.proposals(thread.id),
+    ...assistant.proposals(thread.id),
     refetchInterval: (query) =>
       pollIntervalFor(
         query.state.data?.results ?? [],
-        queryClient.getQueryData<{ results: AssistantPlan[] }>(
-          queries.assistant.plans(thread.id).queryKey,
-        )?.results ?? [],
+        queryClient.getQueryData<{ results: AssistantPlan[] }>(assistant.plans(thread.id).queryKey)
+          ?.results ?? [],
         realtimeConnected,
       ),
   });
   const plansQuery = useQuery({
-    ...queries.assistant.plans(thread.id),
+    ...assistant.plans(thread.id),
     refetchInterval: (query) =>
       pollIntervalFor(
         queryClient.getQueryData<{ results: AssistantProposal[] }>(
-          queries.assistant.proposals(thread.id).queryKey,
+          assistant.proposals(thread.id).queryKey,
         )?.results ?? [],
         query.state.data?.results ?? [],
         realtimeConnected,

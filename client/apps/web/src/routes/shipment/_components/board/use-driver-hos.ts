@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { telematics } from "@/lib/queries/telematics";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
@@ -37,7 +37,7 @@ export function useDriverHos(workerId: string | null | undefined): number | null
     [workerId],
   );
   const { data } = useQuery({
-    ...queries.telematics.workerHosStates(),
+    ...telematics.workerHosStates(),
     enabled: hos,
     staleTime: HOS_REFRESH_MS,
     refetchInterval: HOS_REFRESH_MS,

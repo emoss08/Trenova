@@ -3,7 +3,7 @@ import { AccountingStatusBadge } from "@/components/accounting/accounting-status
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
-import { queries } from "@/lib/queries";
+import { bankReceipt } from "@/lib/queries/bank-receipt";
 import { apiService } from "@/services/api";
 import type { BankReceipt, BankReceiptStatus, MatchSuggestion } from "@/types/bank-receipt";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -113,12 +113,12 @@ export function BankReceiptPage() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const detailQuery = useQuery({
-    ...queries.bankReceipt.get(selectedRow?.id ?? ""),
+    ...bankReceipt.get(selectedRow?.id ?? ""),
     enabled: Boolean(selectedRow?.id),
   });
 
   const summaryQuery = useQuery({
-    ...queries.bankReceipt.summary(),
+    ...bankReceipt.summary(),
   });
 
   return (
@@ -292,7 +292,7 @@ function ReceiptDetail({
   const t = useT();
 
   const suggestionsQuery = useQuery({
-    ...queries.bankReceipt.suggestions(receipt.id!),
+    ...bankReceipt.suggestions(receipt.id!),
     enabled: receipt.status !== "Matched" && Boolean(receipt.id),
   });
 

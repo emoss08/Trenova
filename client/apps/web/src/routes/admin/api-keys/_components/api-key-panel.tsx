@@ -26,7 +26,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import type { ApiKeyRow } from "@/lib/graphql/api-key-table";
 import { apiService } from "@/services/api";
 import type { ApiKey, ApiKeyPermissionInput, CreateApiKeyRequest } from "@/types/api-key";
@@ -204,7 +204,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
   } = form;
 
   const detailQuery = useQuery({
-    ...queries.integration.apiKey(row.id),
+    ...integration.apiKey(row.id),
     enabled: open,
   });
 
@@ -231,7 +231,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["api-key-list"] }),
       queryClient.invalidateQueries({
-        queryKey: queries.integration.apiKey(row.id).queryKey,
+        queryKey: integration.apiKey(row.id).queryKey,
       }),
     ]);
   }, [queryClient, row.id]);

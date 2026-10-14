@@ -1,6 +1,6 @@
 import { accountingReferenceDetail } from "@/lib/accounting-sync";
 import type { AccountingReferenceObject } from "@/lib/graphql/accounting-sync";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
 import type { AccountingReferenceKind, AccountingSystem } from "@trenova/graphql/generated/graphql";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
@@ -32,7 +32,7 @@ export function MappingRecordPicker({
   const [query, setQuery] = useState("");
   const search = useDebounce(query.trim(), SEARCH_DELAY_MS);
   const results = useQuery({
-    ...queries.accountingSync.referenceSearch({ integrationType: system, kind, query: search }),
+    ...accountingSync.referenceSearch({ integrationType: system, kind, query: search }),
     enabled: !disabled,
   });
 

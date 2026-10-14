@@ -8,7 +8,7 @@ import { spendCapProgress } from "@/lib/carrier-intel-usage";
 import { formatOptionalDecimalCurrency } from "@/lib/carrier-intelligence";
 import { CARRIER_INTEL_INTEGRATIONS_PATH } from "@/lib/carrier-links";
 import type { CarrierIntelMonitoringStatus } from "@/lib/graphql/carrier-intel-settings";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBar, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
@@ -113,7 +113,7 @@ function MonitoringBody({ status, canUpdate, canManage }: MonitoringBodyProps) {
   const health = monitoringHealth(status);
 
   const usageQuery = useQuery({
-    ...queries.carrierIntelSettings.usage(),
+    ...carrierIntelSettings.usage(),
     enabled: canManage,
   });
 
@@ -319,7 +319,7 @@ export function MonitoringWorkspace() {
   const { allowed: canManage } = usePermission(Resource.CarrierIntelligence, Operation.Manage);
 
   const statusQuery = useQuery({
-    ...queries.carrierIntelSettings.monitoringStatus(),
+    ...carrierIntelSettings.monitoringStatus(),
     refetchInterval: MONITORING_STATUS_REFRESH_MS,
   });
 

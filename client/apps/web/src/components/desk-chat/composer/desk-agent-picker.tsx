@@ -1,5 +1,5 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -64,7 +64,7 @@ export function DeskAgentPicker({
     setOpen(false);
   }, []);
   useOutsideDismiss(rootRef, open, close);
-  const agentsQuery = useQuery({ ...queries.assistant.myAgents(), enabled: open });
+  const agentsQuery = useQuery({ ...assistant.myAgents(), enabled: open });
   const [now] = useState(nowInSeconds);
 
   const { recent, rest } = useMemo(() => {

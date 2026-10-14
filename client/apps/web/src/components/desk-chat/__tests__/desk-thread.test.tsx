@@ -14,26 +14,25 @@ const conversation = vi.hoisted(() => ({
   providersReady: true,
 }));
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    assistant: {
-      artifacts: (threadId: string) => ({
-        queryKey: ["artifacts", threadId],
-        queryFn: () => ({ results: [] }),
-        _ctx: {
-          summary: {
-            queryKey: ["artifacts", threadId, "summary"],
-            queryFn: () => ({ results: conversation.artifacts }),
-          },
+vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/queries/assistant")>()),
+  assistant: {
+    artifacts: (threadId: string) => ({
+      queryKey: ["artifacts", threadId],
+      queryFn: () => ({ results: [] }),
+      _ctx: {
+        summary: {
+          queryKey: ["artifacts", threadId, "summary"],
+          queryFn: () => ({ results: conversation.artifacts }),
         },
-      }),
-      threadBudget: (threadId: string) => ({
-        queryKey: ["budget", threadId],
-        queryFn: () => new Promise(() => undefined),
-      }),
-      myAgents: () => ({ queryKey: ["my-agents"], queryFn: () => [] }),
-      providers: () => ({ queryKey: ["providers"], queryFn: () => [] }),
-    },
+      },
+    }),
+    threadBudget: (threadId: string) => ({
+      queryKey: ["budget", threadId],
+      queryFn: () => new Promise(() => undefined),
+    }),
+    myAgents: () => ({ queryKey: ["my-agents"], queryFn: () => [] }),
+    providers: () => ({ queryKey: ["providers"], queryFn: () => [] }),
   },
 }));
 

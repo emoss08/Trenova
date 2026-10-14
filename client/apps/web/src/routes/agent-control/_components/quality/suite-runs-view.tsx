@@ -8,7 +8,7 @@ import {
   type AgentSuiteRunCaseRow,
   type AgentSuiteRunRow,
 } from "@/lib/graphql/agent-quality";
-import { queries } from "@/lib/queries";
+import { agentQuality } from "@/lib/queries/agent-quality";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
@@ -227,7 +227,7 @@ const SQUARE_CLASS: Record<CaseOutcome, string | undefined> = {
 function CaseSquares({ run }: { run: AgentSuiteRunRow }) {
   const t = useT();
   const cases = useQuery({
-    ...queries.agentQuality.suiteRunCases(run.id),
+    ...agentQuality.suiteRunCases(run.id),
     staleTime: QUALITY_STALE_MS,
   });
 
@@ -268,7 +268,7 @@ function SuiteRunCases({ suiteRunId, agentId }: { suiteRunId: string; agentId: s
   const t = useT();
   const navigate = useAIControlNavigation();
   const run = useQuery({
-    ...queries.agentQuality.suiteRun(suiteRunId),
+    ...agentQuality.suiteRun(suiteRunId),
     staleTime: QUALITY_STALE_MS,
   });
   const columns = useMemo(() => getSuiteCaseColumns(t), [t]);

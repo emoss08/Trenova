@@ -11,8 +11,7 @@ import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { draftFactoringNoa, type FactoringNoa } from "@/lib/graphql/factoring";
-import { queries } from "@/lib/queries";
-import { invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -66,7 +65,7 @@ export function FactoringNoticesSection({
   const { allowed: canCreate } = usePermission(Resource.FactoringNoa, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.FactoringNoa, Operation.Update);
   const { data, isLoading, isError, refetch } = useQuery({
-    ...queries.factoring.noas({ factoringCompanyId }),
+    ...factoringQueries.noas({ factoringCompanyId }),
     enabled: canRead,
   });
   const [nowUnix] = useState(() => dateToUnixTimestamp(new Date()));

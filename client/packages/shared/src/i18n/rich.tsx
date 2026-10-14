@@ -12,6 +12,7 @@
 // Only the tags the caller declares are markup; any other "<" is text. A tag holds text and
 // placeholders but no other tag, and a plural cannot span a tag — the pieces between tags
 // are formatted on their own.
+import { escapeRegExp } from "@trenova/shared/lib/regexp";
 import { formatMessage } from "@trenova/shared/i18n/format-message";
 import { DEFAULT_LOCALE, type Locale } from "@trenova/shared/i18n/generated/locales";
 import { getCatalogVersion, getLocale, lookupIn, subscribe } from "@trenova/shared/i18n/runtime";
@@ -26,10 +27,6 @@ export type RichTranslateFn = (message: string, tags: RichTags, ...args: unknown
 type RichPiece = { tag: null; text: string } | { tag: string; text: string | null };
 
 const TAG_NAME = /^[A-Za-z][\w-]*$/;
-
-function escapeRegExp(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 /**
  * parseRich splits a template at the declared tags, or returns null when the template uses

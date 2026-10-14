@@ -1,6 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { BULK_EDIT_DONE_STATUSES, undoMyBulkEdit, type BulkEditJob } from "@/lib/graphql/bulk-edit";
-import { queries } from "@/lib/queries";
+import { bulkEdit } from "@/lib/queries/bulk-edit";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FlipBackwardIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -29,7 +29,7 @@ export function BulkEditProgress({ jobId, onDismiss, onDone }: BulkEditProgressP
   const queryClient = useQueryClient();
   const [showFailures, setShowFailures] = useState(false);
   const jobQuery = useQuery({
-    ...queries.bulkEdit.job(jobId),
+    ...bulkEdit.job(jobId),
     refetchInterval: (query) => {
       const status = query.state.data?.status;
       return status && BULK_EDIT_DONE_STATUSES.includes(status) ? false : FALLBACK_POLL_MS;
@@ -51,7 +51,7 @@ export function BulkEditProgress({ jobId, onDismiss, onDone }: BulkEditProgressP
     mutationFn: () => undoMyBulkEdit(jobId),
     resourceName: "Bulk edit",
     onSuccess: (updated) => {
-      queryClient.setQueryData(queries.bulkEdit.job(jobId).queryKey, updated);
+      queryClient.setQueryData(bulkEdit.job(jobId).queryKey, updated);
     },
   });
 

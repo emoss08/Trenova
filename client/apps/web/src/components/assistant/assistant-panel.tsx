@@ -2,7 +2,7 @@ import { DeskThread } from "@/components/desk-chat/desk-thread";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AssistantLayout } from "@/lib/assistant-dock";
 import { conversationPath } from "@/lib/conversation-path";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
@@ -98,7 +98,7 @@ export function AssistantPanel({
       if (activeThread?.id === id) {
         setActiveThreadId(null);
       }
-      await queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey });
+      await queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
     },
     resourceName: "Conversation",
   });

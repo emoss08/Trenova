@@ -4,7 +4,7 @@ import {
   type AgentDraft,
   type TightenedInstructions,
 } from "@/lib/graphql/agent-builder";
-import { queries } from "@/lib/queries";
+import { agentBuilder } from "@/lib/queries/agent-builder";
 import type { AutonomyTier, TriggerMode } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
@@ -55,7 +55,7 @@ export function useAgentDrafting(): {
   draft: (description: string) => Promise<DraftedAgent>;
   tighten: (instructions: string) => Promise<TightenedInstructions>;
 } {
-  const availableQuery = useQuery({ ...queries.agentBuilder.drafting(), staleTime: 60_000 });
+  const availableQuery = useQuery({ ...agentBuilder.drafting(), staleTime: 60_000 });
   const draft = useCallback(
     async (description: string) => draftedValues(await draftAgentFromDescription(description)),
     [],

@@ -11,7 +11,7 @@ import {
   type ExtractionShadowResultRow,
   type ExtractionShadowSettings,
 } from "@/lib/graphql/extraction-shadow";
-import { queries } from "@/lib/queries";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -37,7 +37,7 @@ import { useExtractionDialog } from "./use-extraction-dialog";
 
 function CandidateSummary({ settings }: { settings: ExtractionShadowSettings }) {
   const t = useT();
-  const providers = useQuery({ ...queries.aiProvider.list() });
+  const providers = useQuery({ ...aiProvider.list() });
   const provider = providers.data?.find((item) => item.id === settings.providerId);
 
   return (

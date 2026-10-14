@@ -11,7 +11,7 @@ import {
   fetchCarrierIntelReviewQueue,
   type CarrierIntelReviewQueueItem,
 } from "@/lib/graphql/carrier-intelligence";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
@@ -261,7 +261,7 @@ export function ReviewQueue({ canUpdate }: ReviewQueueProps) {
     void queryClient.invalidateQueries({ queryKey: [CARRIER_INTELLIGENCE_KEY] });
     void queryClient.invalidateQueries({ queryKey: ["carrier-list"] });
     void queryClient.invalidateQueries({
-      queryKey: queries.carrierIntelSettings.monitoringStatus().queryKey,
+      queryKey: carrierIntelSettings.monitoringStatus().queryKey,
     });
   }, [queryClient]);
 

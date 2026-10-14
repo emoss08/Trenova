@@ -112,6 +112,48 @@ func TestRegistry_Register(t *testing.T) {
 		assert.Equal(t, "addresses", def.FieldSources["address.city"].Table)
 	})
 
+	t.Run("registers relation fields that declare only a path", func(t *testing.T) {
+		t.Parallel()
+		r := NewRegistry()
+		err := r.Register("relations", []byte(`{
+			"$id": "relations",
+			"type": "object",
+			"properties": {
+				"customer": {
+					"type": "object",
+					"x-source": {"relation": "Customer"},
+					"properties": {
+						"code": {"type": "string", "x-source": {"path": "Customer.Code"}}
+					}
+				},
+				"trailerType": {
+					"type": ["object", "null"],
+					"x-source": {"relation": "TrailerType", "nullable": true},
+					"properties": {
+						"code": {"type": "string", "x-source": {"path": "TrailerType.Code"}}
+					}
+				}
+			}
+		}`))
+		require.NoError(t, err)
+
+		def := r.schemas["relations"]
+		require.Contains(t, def.FieldSources, "customer.code")
+		assert.Equal(t, "Customer.Code", def.FieldSources["customer.code"].Path)
+		assert.False(t, def.FieldSources["customer.code"].Nullable)
+
+		require.Contains(t, def.FieldSources, "trailerType.code")
+		assert.Equal(t, "TrailerType.Code", def.FieldSources["trailerType.code"].Path)
+		assert.True(
+			t,
+			def.FieldSources["trailerType.code"].Nullable,
+			"a field under a nullable relation is empty when the relation is",
+		)
+
+		assert.NotContains(t, def.FieldSources, "customer")
+		assert.NotContains(t, def.FieldSources, "trailerType")
+	})
+
 	t.Run("extracts array item sources", func(t *testing.T) {
 		t.Parallel()
 		r := NewRegistry()

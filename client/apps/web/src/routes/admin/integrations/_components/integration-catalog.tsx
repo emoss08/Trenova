@@ -22,7 +22,7 @@ import {
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { cn } from "@trenova/shared/lib/utils";
 import type { IntegrationCatalogItem } from "@/types/integration";
 import { useQuery } from "@tanstack/react-query";
@@ -218,7 +218,7 @@ export function IntegrationCatalogCard() {
   const [searchParams, setSearchParams] = useQueryStates(integrationCatalogSearchParamsParser);
 
   const catalogQuery = useQuery({
-    ...queries.integration.catalog(),
+    ...integration.catalog(),
   });
   const items = catalogQuery.data?.items ?? [];
   const uniqueCategories = new Map<string, string>();

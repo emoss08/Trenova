@@ -13,7 +13,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { distanceProfileDistanceUnitChoices } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { distanceControl } from "@/lib/queries/distance-control";
 import { apiService } from "@/services/api";
 import {
   distanceControlSchema,
@@ -72,7 +72,7 @@ export default function DistanceControlForm() {
   const t = useT();
 
   const { data } = useSuspenseQuery({
-    ...queries.distanceControl.get(),
+    ...distanceControl.get(),
   });
 
   const form = useForm<DistanceControlInput, unknown, DistanceControl>({
@@ -88,12 +88,12 @@ export default function DistanceControlForm() {
     unknown,
     DistanceControlInput
   >({
-    queryKey: queries.distanceControl.get._def,
+    queryKey: distanceControl.get._def,
     mutationFn: async (values: DistanceControl) => apiService.distanceControlService.patch(values),
     resourceName: "Distance Control",
     resetForm: reset,
     form,
-    invalidateQueries: [queries.distanceControl.get._def],
+    invalidateQueries: [distanceControl.get._def],
   });
 
   const onSubmit = useCallback(

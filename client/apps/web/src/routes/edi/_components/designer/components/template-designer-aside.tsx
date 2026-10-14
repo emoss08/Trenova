@@ -29,7 +29,7 @@ import {
 import { ControlledSelectField } from "./designer-fields";
 import { PanelHeader } from "./designer-shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 
 export default function TemplateDesignerAside() {
   const t = useT();
@@ -97,7 +97,7 @@ export default function TemplateDesignerAside() {
       segmentId: "",
       elementPosition: 0,
     });
-    await queryClient.invalidateQueries({ queryKey: queries.edi.templates._def });
+    await queryClient.invalidateQueries({ queryKey: edi.templates._def });
   };
 
   return (

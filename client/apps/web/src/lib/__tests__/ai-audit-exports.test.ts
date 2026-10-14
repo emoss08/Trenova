@@ -1,6 +1,6 @@
 import { getNotificationDescriptor } from "@/components/notification-center/notification-registry";
 import { AI_AUDIT_EXPORT_LIST_KEY } from "@/lib/graphql/ai-audit";
-import { queries } from "@/lib/queries";
+import { aiAudit } from "@/lib/queries/ai-audit";
 import { RESOURCE_QUERY_KEY_MAP, queryKeyPrefix } from "@trenova/shared/hooks/realtime-patching";
 import type { Notification } from "@trenova/shared/types/notification";
 import { describe, expect, it } from "vitest";
@@ -30,7 +30,7 @@ describe("AI audit realtime", () => {
 
   it("reads the chain's status again when a check finishes", () => {
     const roots = RESOURCE_QUERY_KEY_MAP["ai-audit-chain"] ?? [];
-    const key = queries.aiAudit.chainStatus().queryKey;
+    const key = aiAudit.chainStatus().queryKey;
 
     expect(roots.some((root) => startsWith(key, queryKeyPrefix(root)))).toBe(true);
   });

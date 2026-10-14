@@ -11,7 +11,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { EDITestCaseTableRow } from "@/lib/graphql/edi-table";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -129,7 +129,7 @@ function TestCaseEditPanel({
     state.hasPermission(Resource.EDI, Operation.Update),
   );
   const { data: testCase } = useQuery({
-    ...queries.edi.testCase(testCaseId ?? ""),
+    ...edi.testCase(testCaseId ?? ""),
     enabled: open && Boolean(testCaseId),
   });
   const form = useForm<EDITestCaseFormValues>({

@@ -6,7 +6,7 @@ import {
   type JournalReviewResult,
 } from "@/lib/graphql/journal-review";
 import { journalReviewMessage, type JournalReviewAction } from "@/lib/journal-review";
-import { queries } from "@/lib/queries";
+import { journalEntry } from "@/lib/queries/journal-entry";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback } from "react";
@@ -19,7 +19,7 @@ export function useJournalReviewActions() {
   const report = useCallback(
     async (action: JournalReviewAction, result: JournalReviewResult) => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.journalEntry._def }),
+        queryClient.invalidateQueries({ queryKey: journalEntry._def }),
         queryClient.invalidateQueries({ queryKey: [JOURNAL_REVIEW_TABLE_KEY] }),
       ]);
       const message = journalReviewMessage(t, action, result);

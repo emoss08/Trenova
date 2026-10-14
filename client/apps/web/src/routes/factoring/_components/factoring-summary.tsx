@@ -1,6 +1,6 @@
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
-import { queries } from "@/lib/queries";
+import { factoring as factoringQueries } from "@/lib/queries/factoring";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -16,7 +16,7 @@ export function FactoringSummaryStrip({
   onSelect: (tab: FactoringTab) => void;
 }) {
   const t = useT();
-  const { data, isLoading, isError, refetch } = useQuery(queries.factoring.summary());
+  const { data, isLoading, isError, refetch } = useQuery(factoringQueries.summary());
 
   if (isLoading) {
     return <KpiStripSkeleton count={3} />;

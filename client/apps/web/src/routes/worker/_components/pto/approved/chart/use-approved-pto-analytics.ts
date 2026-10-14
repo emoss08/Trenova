@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { worker } from "@/lib/queries/worker";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { PTOChartDataPoint, PTOType, Worker } from "@trenova/shared/types/worker";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +22,7 @@ export function approvedPtoChartQuery(
   timezone: string | undefined,
 ) {
   return {
-    ...queries.worker.ptoChartData({
+    ...worker.ptoChartData({
       startDateFrom: startDate,
       startDateTo: endDate,
       type: type as PTOType,
@@ -43,7 +43,7 @@ export function requestedPtoCountQuery(
   timezone: string | undefined,
 ) {
   return {
-    ...queries.worker.listUpcomingPTO({
+    ...worker.listUpcomingPTO({
       filter: {
         limit: 1,
         after: null,

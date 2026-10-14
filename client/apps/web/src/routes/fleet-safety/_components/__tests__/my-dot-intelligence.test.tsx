@@ -19,14 +19,12 @@ vi.mock("@/lib/graphql/carrier-intelligence", () => ({
   fetchMyCarrierIntelligence: mocks.fetchMyCarrierIntelligence,
 }));
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    carrierIntelSettings: {
-      settings: () => ({
-        queryKey: ["carrierIntelSettings", "settings"],
-        queryFn: mocks.fetchSettings,
-      }),
-    },
+vi.mock("@/lib/queries/carrier-intel-settings", () => ({
+  carrierIntelSettings: {
+    settings: () => ({
+      queryKey: ["carrierIntelSettings", "settings"],
+      queryFn: mocks.fetchSettings,
+    }),
   },
 }));
 

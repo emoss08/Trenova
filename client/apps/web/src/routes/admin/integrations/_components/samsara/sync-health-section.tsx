@@ -1,7 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { TelematicsStatus } from "@/lib/graphql/telematics";
-import { queries } from "@/lib/queries";
+import { telematics } from "@/lib/queries/telematics";
 import { formatPreciseTimeAgo } from "@/lib/time-utils";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -80,7 +80,7 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
   const t = useT();
 
   const statusQuery = useQuery({
-    ...queries.telematics.status(),
+    ...telematics.status(),
     refetchInterval: STATUS_REFETCH_MS,
     staleTime: STATUS_REFETCH_MS,
     retry: false,

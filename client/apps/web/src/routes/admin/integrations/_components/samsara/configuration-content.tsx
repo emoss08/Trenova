@@ -9,7 +9,7 @@ import { Switch } from "@trenova/shared/components/ui/switch";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,7 +47,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
   const [copied, setCopied] = useState(false);
 
   const configQuery = useQuery({
-    ...queries.integration.config("Samsara"),
+    ...integration.config("Samsara"),
     enabled: open,
   });
   const form = useForm<UpdateIntegrationConfigRequest>({
@@ -95,10 +95,10 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
       toast.success(t("Samsara integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.integration.config("Samsara").queryKey,
+          queryKey: integration.config("Samsara").queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.integration.catalog().queryKey,
+          queryKey: integration.catalog().queryKey,
         }),
       ]);
     },
@@ -144,10 +144,10 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
       setValue("enabled", true, { shouldDirty: false });
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: queries.integration.config("Samsara").queryKey,
+          queryKey: integration.config("Samsara").queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: queries.integration.catalog().queryKey,
+          queryKey: integration.catalog().queryKey,
         }),
       ]);
     }

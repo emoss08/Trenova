@@ -29,7 +29,7 @@ import {
   type CarrierSourcingPage,
   type CarrierSourcingSuggestion,
 } from "@/lib/graphql/carrier-sourcing";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import type { CarrierSourcingSort } from "@trenova/graphql/generated/graphql";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -86,7 +86,7 @@ export function CarrierSourcingWorkspace() {
   const canImport = canImportSourcing && canCreateCarrier;
 
   const settingsQuery = useQuery({
-    ...queries.carrierIntelSettings.settings(),
+    ...carrierIntelSettings.settings(),
     enabled: canReadIntel,
   });
   const ruleLabels = useCarrierIntelRuleLabels(canReadIntel);

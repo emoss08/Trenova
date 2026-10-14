@@ -3,7 +3,8 @@ import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
-import { queries } from "@/lib/queries";
+import { capture } from "@/lib/queries/capture";
+import { documentControl } from "@/lib/queries/document-control";
 import { usePermission } from "@/hooks/use-permission";
 import { apiService } from "@/services/api";
 import { documentControlSchema, type DocumentControl } from "@/types/document-control";
@@ -30,7 +31,7 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
  */
 export default function CaptureSettingsForm() {
   const t = useT();
-  const { data } = useSuspenseQuery({ ...queries.documentControl.get() });
+  const { data } = useSuspenseQuery({ ...documentControl.get() });
   const { allowed: canUpdate } = usePermission(Resource.DocumentControl, Operation.Update);
   const readOnly = !canUpdate;
 
@@ -43,12 +44,12 @@ export default function CaptureSettingsForm() {
   const captureHeld = readOnly || !enabled;
 
   const { mutateAsync } = useOptimisticMutation({
-    queryKey: queries.documentControl.get._def,
+    queryKey: documentControl.get._def,
     mutationFn: async (values: DocumentControl) => apiService.documentControlService.update(values),
     resourceName: "Capture settings",
     resetForm: reset,
     form,
-    invalidateQueries: [queries.documentControl.get._def, queries.capture.access._def],
+    invalidateQueries: [documentControl.get._def, capture.access._def],
   });
 
   const onSubmit = useCallback(

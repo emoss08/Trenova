@@ -15,8 +15,7 @@ import {
   type FactoringInvoiceState,
   type InvoiceFactoring,
 } from "@/lib/graphql/factoring";
-import { queries } from "@/lib/queries";
-import { invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
 import { invalidateInvoiceQueries } from "@/lib/queries/invoice";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -78,7 +77,7 @@ export function InvoiceFactoringSection({ invoice }: { invoice: Invoice }) {
 
 function InvoiceFactoring({ invoice }: { invoice: Invoice }) {
   const t = useT();
-  const { data, isLoading } = useQuery(queries.factoring.invoice(invoice.id));
+  const { data, isLoading } = useQuery(factoringQueries.invoice(invoice.id));
 
   if (isLoading) {
     return (

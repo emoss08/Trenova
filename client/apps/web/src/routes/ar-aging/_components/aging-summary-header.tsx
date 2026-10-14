@@ -7,7 +7,7 @@ import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import { SectionPanel } from "@/components/section-panel";
 import { AR_DSO_TARGET_DAYS } from "@/lib/accounting-constants";
-import { queries } from "@/lib/queries";
+import { ar } from "@/lib/queries/ar";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
@@ -20,7 +20,7 @@ export function AgingSummaryHeader({
 }) {
   const t = useT();
 
-  const { data: kpis } = useQuery(queries.ar.dashboardKpis());
+  const { data: kpis } = useQuery(ar.dashboardKpis());
 
   if (isLoading || !totals) {
     return <KpiStripSkeleton count={5} />;

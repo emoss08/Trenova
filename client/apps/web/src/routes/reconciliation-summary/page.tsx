@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { SectionPanel } from "@/components/section-panel";
-import { queries } from "@/lib/queries";
+import { bankReceipt } from "@/lib/queries/bank-receipt";
 import { matchRate, reconciliationHasActivity } from "@/lib/reconciliation-summary";
 import type { ReconciliationSummary } from "@/types/bank-receipt";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +18,7 @@ export function ReconciliationSummaryPage() {
   const t = useT();
 
   const { data, isLoading } = useQuery({
-    ...queries.bankReceipt.summary(),
+    ...bankReceipt.summary(),
   });
 
   return (

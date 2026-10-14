@@ -25,7 +25,7 @@ import { FactoringAgreementsSection } from "./factoring-agreements-section";
 import { FactoringNoticesSection } from "./factoring-notices-section";
 import { useClearFactoringRecordParams } from "./use-factoring-record-redirect";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
-import { queries } from "@/lib/queries";
+import { factoring as factoringQueries } from "@/lib/queries/factoring";
 import { factoringCompanyRecordSearchParamsParser } from "../use-factoring-company-state";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
@@ -106,7 +106,7 @@ function FactoringCompanyEditPanel({
     factoringCompanyRecordSearchParamsParser,
   );
   const fetched = useQuery({
-    ...queries.factoring.company(panelEntityId ?? ""),
+    ...factoringQueries.company(panelEntityId ?? ""),
     enabled: open && !listRow && !!panelEntityId,
   });
   const row = listRow ?? (fetched.data as FactoringCompany | null | undefined) ?? null;

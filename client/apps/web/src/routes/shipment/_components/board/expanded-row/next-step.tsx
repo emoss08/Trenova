@@ -10,7 +10,7 @@ import type {
   CarrierCoverageSuggestion,
   DriverCoverageSuggestion,
 } from "@/lib/graphql/shipment-board";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { resolveCoverage, type Coverage } from "@/lib/shipment-board/coverage";
 import { useQuery } from "@tanstack/react-query";
@@ -54,7 +54,9 @@ function OptionRow({
       {avatar}
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-sm font-medium">{title}</span>
-        <span className="text-muted-foreground truncate font-mono text-xs tabular-nums">{detail}</span>
+        <span className="text-muted-foreground truncate font-mono text-xs tabular-nums">
+          {detail}
+        </span>
       </span>
       {trailing}
       <span className="text-brand text-xs font-medium opacity-0 group-hover/option:opacity-100 group-focus-visible/option:opacity-100">
@@ -72,11 +74,18 @@ function CommittedState({ coverage }: { coverage: Coverage }) {
     <div className="animate-success flex flex-col gap-2">
       <Heading tone="text-success">{isCarrier ? t("Tendered") : t("Assigned")}</Heading>
       <div className="flex items-center gap-2.5">
-        <IdentityAvatar id={coverage.id} initials={coverage.initials} shape={isCarrier ? "square" : "circle"} className="size-7 text-xs" />
+        <IdentityAvatar
+          id={coverage.id}
+          initials={coverage.initials}
+          shape={isCarrier ? "square" : "circle"}
+          className="size-7 text-xs"
+        />
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-medium">{coverage.name}</span>
           <span className="text-muted-foreground truncate text-xs">
-            {isCarrier ? t("Rate con sent · awaiting acceptance") : t("{0} · dispatch sheet sent", coverage.detail ?? "")}
+            {isCarrier
+              ? t("Rate con sent · awaiting acceptance")
+              : t("{0} · dispatch sheet sent", coverage.detail ?? "")}
           </span>
         </span>
         <CheckIcon className="text-success ml-auto size-4" aria-hidden />
@@ -85,13 +94,19 @@ function CommittedState({ coverage }: { coverage: Coverage }) {
   );
 }
 
-function CoverageOptions({ shipment, onCommitted }: { shipment: Shipment; onCommitted: () => void }) {
+function CoverageOptions({
+  shipment,
+  onCommitted,
+}: {
+  shipment: Shipment;
+  onCommitted: () => void;
+}) {
   const t = useT();
   const { ai, runsAssets, runsBrokerage, hos } = useShipmentCapabilities();
   const actions = useBoardActions();
   const shipmentId = shipment.id ?? "";
   const { data, isLoading } = useQuery({
-    ...queries.shipmentBoard.coverageSuggestions(shipmentId),
+    ...shipmentBoard.coverageSuggestions(shipmentId),
     enabled: !!shipmentId,
   });
   const pending = actions.assign.isPending || actions.tender.isPending;
@@ -137,10 +152,19 @@ function CoverageOptions({ shipment, onCommitted }: { shipment: Shipment; onComm
           {drivers.map((driver) => (
             <OptionRow
               key={driver.workerId}
-              avatar={<IdentityAvatar id={driver.workerId} initials={driver.initials} shape="circle" className="size-7 text-xs" />}
+              avatar={
+                <IdentityAvatar
+                  id={driver.workerId}
+                  initials={driver.initials}
+                  shape="circle"
+                  className="size-7 text-xs"
+                />
+              }
               title={driver.name}
               detail={[
-                driver.distanceMiles != null ? t("{0} mi out", Math.round(driver.distanceMiles)) : null,
+                driver.distanceMiles != null
+                  ? t("{0} mi out", Math.round(driver.distanceMiles))
+                  : null,
                 hos && driver.driveRemainingMs != null
                   ? t("{0} HOS", formatClockDurationMs(driver.driveRemainingMs))
                   : null,
@@ -149,7 +173,9 @@ function CoverageOptions({ shipment, onCommitted }: { shipment: Shipment; onComm
                 .join(" · ")}
               trailing={
                 ai && driver.fitPercent != null ? (
-                  <span className="text-success font-mono text-xs tabular-nums">{Math.round(driver.fitPercent)}%</span>
+                  <span className="text-success font-mono text-xs tabular-nums">
+                    {Math.round(driver.fitPercent)}%
+                  </span>
                 ) : null
               }
               actionLabel={t("Assign")}
@@ -171,12 +197,21 @@ function CoverageOptions({ shipment, onCommitted }: { shipment: Shipment; onComm
           {carriers.map((carrier) => (
             <OptionRow
               key={carrier.carrierId}
-              avatar={<IdentityAvatar id={carrier.carrierId} initials={carrier.initials} shape="square" className="size-7 text-xs" />}
+              avatar={
+                <IdentityAvatar
+                  id={carrier.carrierId}
+                  initials={carrier.initials}
+                  shape="square"
+                  className="size-7 text-xs"
+                />
+              }
               title={carrier.name}
               detail={[
                 formatCurrency(Number(carrier.quote)),
                 formatPerMile(Number(carrier.ratePerMile)),
-                carrier.acceptancePercent != null ? t("{0}% accept", Math.round(carrier.acceptancePercent)) : null,
+                carrier.acceptancePercent != null
+                  ? t("{0}% accept", Math.round(carrier.acceptancePercent))
+                  : null,
               ]
                 .filter(Boolean)
                 .join(" · ")}
@@ -229,19 +264,31 @@ function DelayNotice({ shipment }: { shipment: Shipment }) {
       <Heading tone="text-danger">{ai ? t("Drafted update") : t("Running late")}</Heading>
       {ai ? (
         editing ? (
-          <Textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={4} className="text-sm" />
+          <Textarea
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            rows={4}
+            className="text-sm"
+          />
         ) : (
           <p className="text-sm leading-relaxed">“{message}”</p>
         )
       ) : (
         <p className="text-sm">
-          {[behind ? t("{0} behind", behind) : null, shipment.eta?.reason].filter(Boolean).join(" · ")}
+          {[behind ? t("{0} behind", behind) : null, shipment.eta?.reason]
+            .filter(Boolean)
+            .join(" · ")}
           {". "}
           {t("The appointment will be missed.")}
         </p>
       )}
       <div className="flex items-center gap-1.5">
-        <Button size="sm" onClick={send} isLoading={actions.notifyDelay.isPending} loadingText={t("Sending")}>
+        <Button
+          size="sm"
+          onClick={send}
+          isLoading={actions.notifyDelay.isPending}
+          loadingText={t("Sending")}
+        >
           <Send01Icon className="size-3.5" />
           {ai ? t("Send to {0}", customerName.split(" ")[0]) : t("Notify customer")}
         </Button>
@@ -264,12 +311,23 @@ function CoveredBy({ shipment, coverage }: { shipment: Shipment; coverage: Cover
     <div className="flex flex-col gap-2">
       <Heading>{t("Coverage")}</Heading>
       <div className="flex items-center gap-2.5">
-        <IdentityAvatar id={coverage.id} initials={coverage.initials} shape={isCarrier ? "square" : "circle"} className="size-7 text-xs" />
+        <IdentityAvatar
+          id={coverage.id}
+          initials={coverage.initials}
+          shape={isCarrier ? "square" : "circle"}
+          className="size-7 text-xs"
+        />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-sm font-medium">{coverage.name}</span>
-          <span className="text-muted-foreground truncate text-xs">{coverage.detail ?? shipment.proNumber}</span>
+          <span className="text-muted-foreground truncate text-xs">
+            {coverage.detail ?? shipment.proNumber}
+          </span>
         </span>
-        <Button variant="ghost" size="icon-sm" aria-label={isCarrier ? t("Message carrier") : t("Message driver")}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={isCarrier ? t("Message carrier") : t("Message driver")}
+        >
           <MessageChatCircleIcon className="size-4" />
         </Button>
       </div>
@@ -277,7 +335,10 @@ function CoveredBy({ shipment, coverage }: { shipment: Shipment; coverage: Cover
         <div className="flex items-center gap-2">
           <span className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
             <span
-              className={cn("block h-full rounded-full", driveRemainingMs < LOW_HOS_MS ? "bg-warning" : "bg-success")}
+              className={cn(
+                "block h-full rounded-full",
+                driveRemainingMs < LOW_HOS_MS ? "bg-warning" : "bg-success",
+              )}
               style={{ width: `${Math.min(100, (driveRemainingMs / DRIVE_LIMIT_MS) * 100)}%` }}
             />
           </span>

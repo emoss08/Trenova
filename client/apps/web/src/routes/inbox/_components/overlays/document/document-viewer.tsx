@@ -1,6 +1,6 @@
 import "../../../_styles/triage-overlays.css";
 import type { InboundAttachment, InboundMessageDetail } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { senderName } from "@/lib/triage/message-state";
 import { documentContentUrl } from "@/services/document";
 import { useQuery } from "@tanstack/react-query";
@@ -62,7 +62,7 @@ export function DocumentViewer({
   onClose: () => void;
 }) {
   const t = useT();
-  const message = useQuery(queries.inbox.message(messageId)).data;
+  const message = useQuery(inbox.message(messageId)).data;
   const attachment = message?.attachments.find((row) => row.id === attachmentId);
 
   return (

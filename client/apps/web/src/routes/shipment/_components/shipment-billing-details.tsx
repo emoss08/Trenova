@@ -13,7 +13,8 @@ import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-o
 import { selectOptionMetaString } from "@/lib/select-option-meta";
 import { useShipmentAutoRate } from "@/hooks/use-shipment-auto-rate";
 import { useShipmentTotalsPreview } from "@/hooks/use-shipment-totals-preview";
-import { queries } from "@/lib/queries";
+import { customer as customerQueries } from "@/lib/queries/customer";
+import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { useQuery } from "@tanstack/react-query";
 import {
   CapabilityFields,
@@ -151,7 +152,7 @@ function CreditHoldAlert({ customerId, payerName }: { customerId: string; payerN
   const t = useT();
 
   const { data: billingProfile } = useQuery({
-    ...queries.customer.getBillingProfile(customerId),
+    ...customerQueries.getBillingProfile(customerId),
     enabled: !!customerId,
   });
 
@@ -595,7 +596,7 @@ export default function ShipmentBillingDetails() {
     fuelSurchargeChange,
     resolveFuelSurchargeChange,
   } = useShipmentTotalsPreview();
-  const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
+  const { data: shipmentUIPolicy } = useQuery({ ...shipmentQueries.uiPolicy() });
 
   // A contract prices a shipment once, while it is being typed. An existing
   // one already carries a rate somebody may have negotiated, and replacing it

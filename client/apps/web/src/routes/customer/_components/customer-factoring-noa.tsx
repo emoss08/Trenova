@@ -4,8 +4,7 @@ import { recordPath } from "@/config/record-links";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { draftFactoringNoa, type FactoringNoa } from "@/lib/graphql/factoring";
-import { queries } from "@/lib/queries";
-import { invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LinkExternal01Icon, Send01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -65,7 +64,7 @@ function NoaStatus({
   const [sending, setSending] = useState<FactoringNoa | null>(null);
   const { allowed: canCreate } = usePermission(Resource.FactoringNoa, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.FactoringNoa, Operation.Update);
-  const { data, isLoading } = useQuery(queries.factoring.noas({ customerId, factoringCompanyId }));
+  const { data, isLoading } = useQuery(factoringQueries.noas({ customerId, factoringCompanyId }));
   const current = currentFactoringNoa(data ?? []);
 
   const draft = useMutation({

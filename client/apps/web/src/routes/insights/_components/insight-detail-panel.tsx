@@ -14,7 +14,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { insight as insightQueries } from "@/lib/queries/insight";
 import { apiService } from "@/services/api";
 import type { Insight, InsightMetric } from "@/types/insight";
 import {
@@ -59,7 +59,7 @@ export function InsightDetailPanel({
   insightId: string;
   onClose: () => void;
 }) {
-  const detailQuery = useQuery(queries.insight.detail(insightId));
+  const detailQuery = useQuery(insightQueries.detail(insightId));
   const detail = detailQuery.data;
 
   return (
@@ -334,7 +334,7 @@ function DecisionSection({ insight, onDone }: { insight: Insight; onDone: () => 
   const [reason, setReason] = useState("");
 
   const invalidate = async () => {
-    await queryClient.invalidateQueries({ queryKey: queries.insight._def });
+    await queryClient.invalidateQueries({ queryKey: insightQueries._def });
     onDone();
   };
 

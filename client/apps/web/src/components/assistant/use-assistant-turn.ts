@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ApiRequestError } from "@trenova/shared/lib/api";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import {
   followTurn,
@@ -148,12 +148,12 @@ export function useAssistantTurn(
   // after it.
   const refreshThread = useCallback(async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queries.assistant.activeTurns().queryKey }),
-      queryClient.invalidateQueries({ queryKey: queries.assistant.messages(threadId).queryKey }),
-      queryClient.invalidateQueries({ queryKey: queries.assistant.proposals(threadId).queryKey }),
-      queryClient.invalidateQueries({ queryKey: queries.assistant.plans(threadId).queryKey }),
-      queryClient.invalidateQueries({ queryKey: queries.assistant.artifacts(threadId).queryKey }),
-      queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
+      queryClient.invalidateQueries({ queryKey: assistant.activeTurns().queryKey }),
+      queryClient.invalidateQueries({ queryKey: assistant.messages(threadId).queryKey }),
+      queryClient.invalidateQueries({ queryKey: assistant.proposals(threadId).queryKey }),
+      queryClient.invalidateQueries({ queryKey: assistant.plans(threadId).queryKey }),
+      queryClient.invalidateQueries({ queryKey: assistant.artifacts(threadId).queryKey }),
+      queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey }),
     ]);
   }, [queryClient, threadId]);
 
@@ -166,7 +166,7 @@ export function useAssistantTurn(
       if (proposals.length === 0) {
         return;
       }
-      const key = queries.assistant.proposals(threadId).queryKey;
+      const key = assistant.proposals(threadId).queryKey;
       queryClient.setQueryData<{ results: SendMessageResult["proposals"] & object }>(
         key,
         (cached) => {
@@ -193,7 +193,7 @@ export function useAssistantTurn(
   // streaming copy up, and the reply shown twice, until the slowest returns.
   const absorbTurn = useCallback(
     async (result: SendMessageResult | null) => {
-      const key = queries.assistant.messages(threadId).queryKey;
+      const key = assistant.messages(threadId).queryKey;
       const cached = queryClient.getQueryData<ThreadHistory>(key);
       if (result) {
         seedProposals(result);
@@ -204,16 +204,16 @@ export function useAssistantTurn(
         );
         void Promise.all([
           queryClient.invalidateQueries({
-            queryKey: queries.assistant.activeTurns().queryKey,
+            queryKey: assistant.activeTurns().queryKey,
           }),
           queryClient.invalidateQueries({
-            queryKey: queries.assistant.proposals(threadId).queryKey,
+            queryKey: assistant.proposals(threadId).queryKey,
           }),
-          queryClient.invalidateQueries({ queryKey: queries.assistant.plans(threadId).queryKey }),
+          queryClient.invalidateQueries({ queryKey: assistant.plans(threadId).queryKey }),
           queryClient.invalidateQueries({
-            queryKey: queries.assistant.artifacts(threadId).queryKey,
+            queryKey: assistant.artifacts(threadId).queryKey,
           }),
-          queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
+          queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey }),
         ]);
         return;
       }
@@ -231,7 +231,7 @@ export function useAssistantTurn(
     async (startedAt: number) => {
       await refreshThread();
       const history = queryClient.getQueryData<ThreadHistory>(
-        queries.assistant.messages(threadId).queryKey,
+        assistant.messages(threadId).queryKey,
       );
       const newest = history?.pages[0]?.results.at(-1);
       if (newest?.failure && newest.createdAt >= Math.floor(startedAt / 1000) - 5) {
@@ -378,9 +378,7 @@ export function useAssistantTurn(
   // so the reply the queue started shows them on its question from the start.
   const queuedMentions = useCallback(
     (queuedId: string): AssistantEntityRef[] => {
-      const queue = queryClient.getQueryData<QueuedMessageList>(
-        queries.assistant.queue(threadId).queryKey,
-      );
+      const queue = queryClient.getQueryData<QueuedMessageList>(assistant.queue(threadId).queryKey);
       return queue?.items.find((item) => item.id === queuedId)?.request.mentions ?? [];
     },
     [queryClient, threadId],
@@ -493,9 +491,7 @@ export function useAssistantTurn(
         if (!following()) {
           setTurn(initial);
           const quiet = listSaysQuiet(
-            queryClient.getQueryState<AssistantLiveTurnList>(
-              queries.assistant.activeTurns().queryKey,
-            ),
+            queryClient.getQueryState<AssistantLiveTurnList>(assistant.activeTurns().queryKey),
             threadId,
             useRealtimeStore.getState().connectionState === "connected",
           );
@@ -545,7 +541,7 @@ export function useAssistantTurn(
                 turnIdRef.current = started.turnId;
                 endStarting(pending);
                 void queryClient.invalidateQueries({
-                  queryKey: queries.assistant.activeTurns().queryKey,
+                  queryKey: assistant.activeTurns().queryKey,
                 });
               },
               onEvent,
@@ -598,7 +594,7 @@ export function useAssistantTurn(
       if (following() || startingRef.current !== null) {
         return;
       }
-      void queryClient.invalidateQueries({ queryKey: queries.assistant.activeTurns().queryKey });
+      void queryClient.invalidateQueries({ queryKey: assistant.activeTurns().queryKey });
       await followActive(
         { id: turnId, threadId, status: "Running", origin: "Person", input: content },
         {

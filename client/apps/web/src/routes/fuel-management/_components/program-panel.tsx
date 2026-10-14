@@ -9,7 +9,7 @@ import {
   updateFuelSurchargeProgram,
   type FuelSurchargeProgramDetail,
 } from "@/lib/graphql/fuel-surcharge";
-import { queries } from "@/lib/queries";
+import { fuelSurcharge } from "@/lib/queries/fuel-surcharge";
 import {
   fuelSurchargeProgramSchema,
   type FuelSurchargeProgramFormValues,
@@ -116,7 +116,7 @@ export function ProgramPanel({ open, onOpenChange, programId }: ProgramPanelProp
   } = form;
 
   const { data: detail, isLoading: isDetailLoading } = useQuery({
-    ...queries.fuelSurcharge.programDetail(programId ?? ""),
+    ...fuelSurcharge.programDetail(programId ?? ""),
     enabled: open && isEdit,
   });
 
@@ -133,11 +133,11 @@ export function ProgramPanel({ open, onOpenChange, programId }: ProgramPanelProp
   }, [open, detail, isEdit, reset]);
 
   const invalidate = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: queries.fuelSurcharge.currentRates().queryKey });
+    void queryClient.invalidateQueries({ queryKey: fuelSurcharge.currentRates().queryKey });
     void queryClient.invalidateQueries({ queryKey: ["fuel-surcharge-program-list"] });
     if (programId) {
       void queryClient.invalidateQueries({
-        queryKey: queries.fuelSurcharge.programDetail(programId).queryKey,
+        queryKey: fuelSurcharge.programDetail(programId).queryKey,
       });
     }
   }, [queryClient, programId]);

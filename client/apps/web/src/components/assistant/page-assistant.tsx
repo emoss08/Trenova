@@ -1,6 +1,6 @@
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import type { AssistantArtifact, AssistantThread, PageAgent, PageThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -122,7 +122,7 @@ export function PageAssistant({
   // The conversation read fresh after each reply, so a document it read or a
   // change of access shows without reopening the page.
   const threadQuery = useQuery({
-    ...queries.assistant.thread(threadId),
+    ...assistant.thread(threadId),
     enabled: threadId !== "",
     initialData: opened.data?.thread,
   });
@@ -137,7 +137,7 @@ export function PageAssistant({
         return;
       }
       void queryClient
-        .fetchQuery(queries.assistant.artifacts(threadId)._ctx.lineage(id))
+        .fetchQuery(assistant.artifacts(threadId)._ctx.lineage(id))
         .then((lineage) => {
           const artifact =
             lineage.results.find((candidate) => candidate.id === id) ?? lineage.results.at(-1);
@@ -164,10 +164,10 @@ export function PageAssistant({
       onWorkingChangeProp?.(active);
       if (finished && threadId !== "") {
         void queryClient.invalidateQueries({
-          queryKey: queries.assistant.thread(threadId).queryKey,
+          queryKey: assistant.thread(threadId).queryKey,
         });
         void queryClient.invalidateQueries({
-          queryKey: queries.assistant.artifacts(threadId).queryKey,
+          queryKey: assistant.artifacts(threadId).queryKey,
         });
       }
     },

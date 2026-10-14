@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { queries } from "@/lib/queries";
+import { shipment } from "@/lib/queries/shipment";
 import { permitViewQueryKeys } from "@/lib/queries/shipment";
 
 const SHIPMENT_ID = "shp_01ARZ3NDEKTSV4RRFFQ69G5FAV";
@@ -17,12 +17,12 @@ describe("permitViewQueryKeys", () => {
   const keys = permitViewQueryKeys(SHIPMENT_ID);
 
   it("invalidates the recorded permit list", () => {
-    const full = queries.shipment.permits(SHIPMENT_ID).queryKey;
+    const full = shipment.permits(SHIPMENT_ID).queryKey;
     expect(keys.some((key) => isPrefixOf(key, full))).toBe(true);
   });
 
   it("invalidates the persisted requirement list", () => {
-    const full = queries.shipment.permitRequirements(SHIPMENT_ID).queryKey;
+    const full = shipment.permitRequirements(SHIPMENT_ID).queryKey;
     expect(keys.some((key) => isPrefixOf(key, full))).toBe(true);
   });
 
@@ -31,7 +31,7 @@ describe("permitViewQueryKeys", () => {
   // it had before the write.
   it("invalidates the assessment regardless of which version is cached", () => {
     for (const version of [undefined, 1, 7]) {
-      const full = queries.shipment.permitAssessment(SHIPMENT_ID, version).queryKey;
+      const full = shipment.permitAssessment(SHIPMENT_ID, version).queryKey;
       expect(
         keys.some((key) => isPrefixOf(key, full)),
         `no invalidation key matched the assessment at version ${String(version)}`,
@@ -40,12 +40,12 @@ describe("permitViewQueryKeys", () => {
   });
 
   it("does not invalidate an unrelated shipment's permits", () => {
-    const other = queries.shipment.permits("shp_someone_else").queryKey;
+    const other = shipment.permits("shp_someone_else").queryKey;
     expect(keys.some((key) => isPrefixOf(key, other))).toBe(false);
   });
 
   it("does not invalidate unrelated shipment queries", () => {
-    const billing = queries.shipment.billingReadiness(SHIPMENT_ID).queryKey;
+    const billing = shipment.billingReadiness(SHIPMENT_ID).queryKey;
     expect(keys.some((key) => isPrefixOf(key, billing))).toBe(false);
   });
 });

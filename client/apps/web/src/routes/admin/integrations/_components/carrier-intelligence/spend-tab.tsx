@@ -1,6 +1,6 @@
 import { NumberField } from "@/components/fields/number-field";
 import { CarrierIntelUsageSummaryView } from "@/components/carrier-intelligence/usage-summary";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQuery } from "@tanstack/react-query";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -114,7 +114,7 @@ export function CarrierIntelSpendTab({
 function UsageMeter({ open }: { open: boolean }) {
   const t = useT();
   const usageQuery = useQuery({
-    ...queries.carrierIntelSettings.usage(),
+    ...carrierIntelSettings.usage(),
     enabled: open,
   });
 

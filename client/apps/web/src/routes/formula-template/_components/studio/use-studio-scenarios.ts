@@ -1,6 +1,6 @@
 import { describeApiError } from "@/lib/api-error-message";
 import { formulaTestRequest } from "@/lib/formula-test-request";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
 import type {
   FormulaTemplateFormValues,
@@ -115,7 +115,7 @@ export function useStudioScenarios({
   const roundingPrecision = useWatch({ control, name: "roundingPrecision" });
 
   const savedQuery = useQuery({
-    ...queries.formulaTemplate.testCases(templateId ?? ""),
+    ...formulaTemplate.testCases(templateId ?? ""),
     enabled: !!templateId,
   });
   const [held, setHeld] = useState<StudioScenario[]>([]);
@@ -222,7 +222,7 @@ export function useStudioScenarios({
   const invalidate = useCallback(async () => {
     if (!templateId) return;
     await queryClient.invalidateQueries({
-      queryKey: queries.formulaTemplate.testCases(templateId).queryKey,
+      queryKey: formulaTemplate.testCases(templateId).queryKey,
     });
   }, [queryClient, templateId]);
 

@@ -19,16 +19,17 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/services/api", () => ({
   apiService: { documentService: { getByResource: mocks.documents, delete: vi.fn() } },
 }));
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    shipment: {
-      billingReadiness: (id: string) => ({
-        queryKey: ["billing-readiness", id],
-        queryFn: mocks.readiness,
-      }),
-    },
-    audit: { history: (id: string) => ({ queryKey: ["audit-history", id] }) },
+vi.mock("@/lib/queries/shipment", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/queries/shipment")>()),
+  shipment: {
+    billingReadiness: (id: string) => ({
+      queryKey: ["billing-readiness", id],
+      queryFn: mocks.readiness,
+    }),
   },
+}));
+vi.mock("@/lib/queries/audit", () => ({
+  audit: { history: (id: string) => ({ queryKey: ["audit-history", id] }) },
 }));
 vi.mock("@/components/autocomplete-fields", () => ({ DocumentTypeAutocompleteField: () => null }));
 vi.mock("@/components/documents/upload-panel", () => ({

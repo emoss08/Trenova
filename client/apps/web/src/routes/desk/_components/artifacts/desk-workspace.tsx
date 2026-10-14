@@ -1,6 +1,6 @@
 import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import { artifactCsvUrl } from "@/services/assistant";
 import { useDeskStore } from "@/stores/desk-store";
@@ -397,7 +397,7 @@ function useRememberedLineage(
 ): ArtifactLineage | null {
   const inPage = lineageContaining(lineages, remembered);
   const lineageQuery = useQuery({
-    ...queries.assistant.artifacts(threadId)._ctx.lineage(remembered ?? ""),
+    ...assistant.artifacts(threadId)._ctx.lineage(remembered ?? ""),
     enabled: loaded && remembered !== undefined && inPage === null,
     retry: false,
   });
@@ -415,7 +415,7 @@ function useRememberedLineage(
  */
 function useFullLineage(threadId: string, active: ArtifactLineage | null) {
   const lineageQuery = useQuery({
-    ...queries.assistant.artifacts(threadId)._ctx.lineage(active?.id ?? ""),
+    ...assistant.artifacts(threadId)._ctx.lineage(active?.id ?? ""),
     enabled: active !== null,
   });
   const lineage = useMemo(
@@ -496,7 +496,7 @@ export function DeskWorkspace({
 }) {
   const t = useT();
   const queryClient = useQueryClient();
-  const artifactsQuery = useQuery(queries.assistant.artifacts(threadId)._ctx.summary);
+  const artifactsQuery = useQuery(assistant.artifacts(threadId)._ctx.summary);
   const page = useMemo(
     () =>
       withoutPendingLookups(
@@ -531,7 +531,7 @@ export function DeskWorkspace({
       return;
     }
     void queryClient.invalidateQueries({
-      queryKey: queries.assistant.artifacts(threadId).queryKey,
+      queryKey: assistant.artifacts(threadId).queryKey,
     });
     if (newestLive) {
       setActiveArtifact(threadId, newestLive);
@@ -594,7 +594,7 @@ export function DeskWorkspace({
     }
     return whenIdle(() => {
       for (const id of readAhead.split(",")) {
-        void queryClient.prefetchQuery(queries.assistant.artifacts(threadId)._ctx.lineage(id));
+        void queryClient.prefetchQuery(assistant.artifacts(threadId)._ctx.lineage(id));
       }
     });
   }, [activeLoaded, queryClient, readAhead, threadId]);
@@ -603,7 +603,7 @@ export function DeskWorkspace({
     mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>
       apiService.assistantService.pinArtifact(threadId, id, pinned),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: queries.assistant.artifacts(threadId).queryKey }),
+      queryClient.invalidateQueries({ queryKey: assistant.artifacts(threadId).queryKey }),
     resourceName: "Artifact",
   });
 

@@ -1,6 +1,6 @@
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { checklistDifferences } from "@/lib/case-checklist-steps";
-import { queries } from "@/lib/queries";
+import { caseChecklist } from "@/lib/queries/case-checklist";
 import type { ChecklistKind, ChecklistTemplate } from "@/types/case-checklist";
 import { useQuery } from "@tanstack/react-query";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -40,7 +40,7 @@ export function CaseChecklistsSection({ readOnly }: { readOnly: boolean }) {
   const [adding, setAdding] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const clearNotice = useCallback(() => setNotice(null), []);
-  const query = useQuery(queries.caseChecklist.list(kind));
+  const query = useQuery(caseChecklist.list(kind));
   const data = query.data;
 
   const guard = (change: () => void) => {
@@ -86,11 +86,7 @@ export function CaseChecklistsSection({ readOnly }: { readOnly: boolean }) {
   return (
     <div className="dk-ck">
       <aside className="dk-ck-side">
-        <div
-          className="dk-ck-kind"
-          role="radiogroup"
-          aria-label={t("Checklist")}
-        >
+        <div className="dk-ck-kind" role="radiogroup" aria-label={t("Checklist")}>
           {KINDS.map((option) => (
             <button
               key={option}
@@ -138,9 +134,7 @@ export function CaseChecklistsSection({ readOnly }: { readOnly: boolean }) {
                       differences,
                     )
               }
-              onClick={() =>
-                pick({ customerId: customer.customerId, name: customer.customerName })
-              }
+              onClick={() => pick({ customerId: customer.customerId, name: customer.customerName })}
             />
           );
         })}

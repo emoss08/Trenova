@@ -16,7 +16,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { documentParsingRule } from "@/lib/queries/document-parsing-rule";
 import { apiService } from "@/services/api";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -99,14 +99,14 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
     isError,
     error,
   } = useQuery({
-    ...queries.documentParsingRule.detail(ruleSetId),
+    ...documentParsingRule.detail(ruleSetId),
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => apiService.documentParsingRuleService.delete(ruleSetId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: queries.documentParsingRule.list._def,
+        queryKey: documentParsingRule.list._def,
       });
       toast.success(t("Rule set deleted"));
       onDeleted();

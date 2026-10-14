@@ -5,7 +5,7 @@ import { SectionPanel } from "@/components/section-panel";
 import { recordPath } from "@/config/record-links";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import type { FactoringInvoiceState, FactoringInvoiceStateRow } from "@/lib/graphql/factoring";
-import { queries } from "@/lib/queries";
+import { factoring as factoringQueries } from "@/lib/queries/factoring";
 import { useQuery } from "@tanstack/react-query";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -36,7 +36,7 @@ export function FactoringInvoicePanel({
   const [{ panelEntityId }] = useQueryStates(panelSearchParamsParser);
   const invoiceId = row?.invoiceId ?? panelEntityId;
   const fetched = useQuery({
-    ...queries.factoring.invoice(invoiceId ?? ""),
+    ...factoringQueries.invoice(invoiceId ?? ""),
     enabled: open && !!invoiceId,
   });
   const state: FactoringInvoiceState | null = fetched.data?.factoringState ?? row ?? null;

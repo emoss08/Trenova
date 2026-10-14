@@ -1,5 +1,5 @@
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
+import { insight } from "@/lib/queries/insight";
 import { sortInsights } from "@/routes/home/_components/widgets/insight-presentation";
 import type { Insight, InsightSurface } from "@/types/insight";
 import { useQuery } from "@tanstack/react-query";
@@ -21,7 +21,7 @@ export function usePageInsights(
   const { allowed } = usePermission(Resource.Insight, Operation.Read);
 
   const query = useQuery({
-    ...queries.insight.active(limit, surface),
+    ...insight.active(limit, surface),
     enabled: allowed,
   });
 

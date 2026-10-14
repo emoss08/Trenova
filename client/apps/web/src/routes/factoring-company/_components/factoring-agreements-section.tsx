@@ -14,8 +14,7 @@ import {
   endFactoringAgreement,
   type FactoringAgreement,
 } from "@/lib/graphql/factoring";
-import { queries } from "@/lib/queries";
-import { invalidateFactoringQueries } from "@/lib/queries/factoring";
+import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib/queries/factoring";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit05Icon, PlayIcon, PlusIcon, StopCircleIcon } from "@trenova/shared/components/icons";
@@ -74,7 +73,7 @@ export function FactoringAgreementsSection({
   const { allowed: canCreate } = usePermission(Resource.FactoringAgreement, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.FactoringAgreement, Operation.Update);
   const { data, isLoading, isError, refetch } = useQuery({
-    ...queries.factoring.agreements(factoringCompanyId),
+    ...factoringQueries.agreements(factoringCompanyId),
     enabled: canRead,
   });
   const [editing, setEditing] = useState<{ agreement: FactoringAgreement | null } | null>(null);

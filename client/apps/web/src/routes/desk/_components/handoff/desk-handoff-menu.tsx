@@ -1,7 +1,7 @@
 import { appendToHistory, type ThreadHistory } from "@/components/assistant/thread-history";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -60,12 +60,11 @@ export function DeskHandoffMenu({
     onSuccess: async (result) => {
       const card = result.message;
       if (card) {
-        queryClient.setQueryData<ThreadHistory>(
-          queries.assistant.messages(threadId).queryKey,
-          (history) => appendToHistory(history, [card]),
+        queryClient.setQueryData<ThreadHistory>(assistant.messages(threadId).queryKey, (history) =>
+          appendToHistory(history, [card]),
         );
       }
-      await queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey });
+      await queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
     },
     onSettled: () => dispatch({ type: "settled" }),
     resourceName: "Conversation",

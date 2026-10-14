@@ -17,7 +17,7 @@ import {
   type FuelProgramCurrentRate,
 } from "@/lib/graphql/fuel-surcharge";
 import { fuelSurchargeMethodChoices } from "@/lib/choices";
-import { queries } from "@/lib/queries";
+import { fuelSurcharge } from "@/lib/queries/fuel-surcharge";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
@@ -46,7 +46,7 @@ function currentRateDisplay(entry: FuelProgramCurrentRate) {
 export default function ProgramSection() {
   const t = useT();
 
-  const { data: entries, isLoading } = useQuery(queries.fuelSurcharge.currentRates());
+  const { data: entries, isLoading } = useQuery(fuelSurcharge.currentRates());
   const [panelOpen, setPanelOpen] = useState(false);
   const [editingProgramId, setEditingProgramId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FuelProgramCurrentRate | null>(null);
@@ -218,7 +218,7 @@ function DeleteProgramDialog({
     onSuccess: () => {
       toast.success(t("Fuel surcharge program deleted"));
       void queryClient.invalidateQueries({
-        queryKey: queries.fuelSurcharge.currentRates().queryKey,
+        queryKey: fuelSurcharge.currentRates().queryKey,
       });
       onOpenChange();
     },

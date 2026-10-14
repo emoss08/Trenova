@@ -20,7 +20,7 @@ import type {
   WorkerHosViolation,
 } from "@/lib/graphql/telematics";
 import { dutyStatusLabel } from "@/lib/hos";
-import { queries } from "@/lib/queries";
+import { telematics } from "@/lib/queries/telematics";
 import {
   formatClockDurationMs,
   formatDurationMs,
@@ -341,7 +341,7 @@ function ViolationsSection({ workerId, since }: { workerId: string; since: numbe
   const t = useT();
 
   const violationsQuery = useQuery({
-    ...queries.telematics.workerHosViolations(workerId, since),
+    ...telematics.workerHosViolations(workerId, since),
     enabled: workerId.length > 0,
     refetchInterval: REFETCH_INTERVAL_MS,
   });
@@ -738,7 +738,7 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
   const isTodaySelected = (selectedDayKey ?? dateRange.endDate) === dateRange.endDate;
 
   const dailyLogsQuery = useQuery({
-    ...queries.telematics.workerHosDailyLogs(workerId, dateRange.startDate, dateRange.endDate),
+    ...telematics.workerHosDailyLogs(workerId, dateRange.startDate, dateRange.endDate),
     enabled: workerId.length > 0,
     staleTime: STALE_TIME_MS,
     refetchInterval: isTodaySelected ? REFETCH_INTERVAL_MS : false,
@@ -750,7 +750,7 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
   const hasHistory = (dailyLogsQuery.data?.length ?? 0) > 0;
 
   const logsQuery = useQuery({
-    ...queries.telematics.workerHosLogs(workerId, selectedDay.startAt, selectedDay.endAt),
+    ...telematics.workerHosLogs(workerId, selectedDay.startAt, selectedDay.endAt),
     enabled: workerId.length > 0 && hasHistory,
     staleTime: STALE_TIME_MS,
     refetchInterval: selectedDay.isToday ? REFETCH_INTERVAL_MS : false,
@@ -907,7 +907,7 @@ function FormsSection({ workerId }: { workerId: string }) {
   });
 
   const formsQuery = useQuery({
-    ...queries.telematics.workerFormSubmissions(workerId, dateWindow.startTime, dateWindow.endTime),
+    ...telematics.workerFormSubmissions(workerId, dateWindow.startTime, dateWindow.endTime),
     enabled: workerId.length > 0,
     staleTime: STALE_TIME_MS,
   });
@@ -1039,12 +1039,12 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
   const [since] = useState(() => Math.floor(Date.now() / 1000) - THIRTY_DAYS_SECONDS);
 
   const statusQuery = useQuery({
-    ...queries.telematics.status(),
+    ...telematics.status(),
   });
   const telematicsEnabled = statusQuery.data?.enabled ?? false;
 
   const hosQuery = useQuery({
-    ...queries.telematics.workerHosState(workerId),
+    ...telematics.workerHosState(workerId),
     enabled: telematicsEnabled && workerId.length > 0,
     refetchInterval: REFETCH_INTERVAL_MS,
   });

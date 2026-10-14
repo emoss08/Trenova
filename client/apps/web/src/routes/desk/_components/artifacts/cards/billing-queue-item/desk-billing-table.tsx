@@ -1,6 +1,6 @@
 import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { billingQueue } from "@/lib/queries/billing-queue";
 import { apiService } from "@/services/api";
 import { useDeskStore } from "@/stores/desk-store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,7 +30,7 @@ const SUMMARY_LIMIT = 200;
 export function useBillingSummaries(ids: readonly string[], enabled: boolean) {
   const wanted = useMemo(() => ids.slice(0, SUMMARY_LIMIT), [ids]);
   const { data } = useQuery({
-    ...queries.billingQueue.summaries([...wanted]),
+    ...billingQueue.summaries([...wanted]),
     enabled: enabled && wanted.length > 0,
   });
 
@@ -196,7 +196,7 @@ export function BillingBulkBar({
   // After the window, the run's results arrive over the event stream; items
   // that could not be approved are said once.
   const { data: run } = useQuery({
-    ...queries.billingQueue.approvalRun(undo?.runId ?? ""),
+    ...billingQueue.approvalRun(undo?.runId ?? ""),
     enabled: undo !== null && !counting,
   });
   const announced = useRef(new Set<string>());

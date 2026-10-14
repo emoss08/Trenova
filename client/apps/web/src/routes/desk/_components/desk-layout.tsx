@@ -3,7 +3,8 @@ import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
+import { watchtower } from "@/lib/queries/watchtower";
 import { findCachedThread, removeCachedThread, updateCachedThread } from "@/lib/thread-list";
 import { useDeskThreads } from "./use-desk-threads";
 import { apiService } from "@/services/api";
@@ -156,7 +157,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
   const { data: attention } = useAttentionSummary();
   const { data: watchtowerCounts } = useQuery({
-    ...queries.watchtower.counts(),
+    ...watchtower.counts(),
     enabled: canWatch,
   });
 
@@ -210,7 +211,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const settings = useDeskSettingsStore((state) => state.settings);
 
   const threadsQuery = useDeskThreads(activeThreadId);
-  const agentsQuery = useQuery(queries.assistant.myAgents());
+  const agentsQuery = useQuery(assistant.myAgents());
   const { threads, listedThread } = threadsQuery;
   const agents = useMemo(() => agentsQuery.data ?? [], [agentsQuery.data]);
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
@@ -220,7 +221,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   // finished answer's notice links to. Read on its own only once the list has
   // said it does not have it, drawn meanwhile from whichever shelf holds it.
   const unlistedQuery = useQuery({
-    ...queries.assistant.thread(activeThreadId ?? ""),
+    ...assistant.thread(activeThreadId ?? ""),
     enabled: activeThreadId !== null && threadsQuery.isSuccess && listedThread === null,
     placeholderData: () => findCachedThread(queryClient, activeThreadId) ?? undefined,
     retry: false,
@@ -269,8 +270,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const refreshThreads = useCallback(
     () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
-        queryClient.invalidateQueries({ queryKey: queries.assistant.thread._def }),
+        queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey }),
+        queryClient.invalidateQueries({ queryKey: assistant.thread._def }),
       ]),
     [queryClient],
   );
@@ -301,9 +302,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     (threadId: string, changes: Partial<AssistantThread>) => {
       const retitle = (cached: AssistantThread): AssistantThread => ({ ...cached, ...changes });
       updateCachedThread(queryClient, threadId, retitle);
-      queryClient.setQueryData<AssistantThread>(
-        queries.assistant.thread(threadId).queryKey,
-        (cached) => (cached ? retitle(cached) : cached),
+      queryClient.setQueryData<AssistantThread>(assistant.thread(threadId).queryKey, (cached) =>
+        cached ? retitle(cached) : cached,
       );
     },
     [queryClient],
@@ -320,8 +320,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       });
       // A read already under way was asked before the rename and would put
       // the old name back; it is asked again instead.
-      if (queryClient.isFetching({ queryKey: queries.assistant.threads().queryKey }) > 0) {
-        void queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey });
+      if (queryClient.isFetching({ queryKey: assistant.threads().queryKey }) > 0) {
+        void queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
       }
     },
     onError: () => void refreshThreads(),
@@ -389,7 +389,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       return;
     }
     const cache = queryClient.getQueryCache();
-    const queryHash = hashKey(queries.assistant.artifacts(activeThreadId)._ctx.summary.queryKey);
+    const queryHash = hashKey(assistant.artifacts(activeThreadId)._ctx.summary.queryKey);
     const seen = cache.get(queryHash)?.state.dataUpdateCount ?? 0;
     const settle = () => setPendingLookups(NO_PENDING_LOOKUPS);
     const timer = window.setTimeout(settle, LOOKUP_SETTLE_MS);

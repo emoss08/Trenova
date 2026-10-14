@@ -1,5 +1,5 @@
 import { turnFailureDetail } from "@/components/assistant/follow-turn";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import type { AssistantThread, CaseParty, CaseSubjectType, SnoozeAnchor } from "@/types/assistant";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,7 +26,7 @@ export function useDeskCase(thread: Pick<AssistantThread, "id" | "case">) {
   const queryClient = useQueryClient();
   const threadId = thread.id;
   const isCase = thread.case !== undefined;
-  const query = useQuery({ ...queries.assistant.case(threadId), enabled: isCase });
+  const query = useQuery({ ...assistant.case(threadId), enabled: isCase });
 
   const mutation = useMutation({
     mutationFn: async (action: CaseAction) => {
@@ -59,10 +59,10 @@ export function useDeskCase(thread: Pick<AssistantThread, "id" | "case">) {
     },
     onSettled: () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.assistant.case(threadId).queryKey }),
-        queryClient.invalidateQueries({ queryKey: queries.assistant.thread(threadId).queryKey }),
-        queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
-        queryClient.invalidateQueries({ queryKey: queries.assistant.waits(threadId).queryKey }),
+        queryClient.invalidateQueries({ queryKey: assistant.case(threadId).queryKey }),
+        queryClient.invalidateQueries({ queryKey: assistant.thread(threadId).queryKey }),
+        queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey }),
+        queryClient.invalidateQueries({ queryKey: assistant.waits(threadId).queryKey }),
       ]),
   });
 

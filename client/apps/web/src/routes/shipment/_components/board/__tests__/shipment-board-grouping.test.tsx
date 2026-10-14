@@ -40,13 +40,11 @@ vi.mock("@tanstack/react-query", () => ({
   }),
 }));
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    shipmentBoard: {
-      stageSummary: () => ({ queryKey: ["summary"] }),
-      groups: (_input: unknown, groupBy: string) => ({ queryKey: ["groups", groupBy] }),
-      quickFilterCounts: () => ({ queryKey: ["quick-filter-counts"] }),
-    },
+vi.mock("@/lib/queries/shipment-board", () => ({
+  shipmentBoard: {
+    stageSummary: () => ({ queryKey: ["summary"] }),
+    groups: (_input: unknown, groupBy: string) => ({ queryKey: ["groups", groupBy] }),
+    quickFilterCounts: () => ({ queryKey: ["quick-filter-counts"] }),
   },
 }));
 

@@ -532,28 +532,15 @@ export const SHIPMENT_VARIABLES: SchemaVariable[] = [
 
   // Equipment
   {
-    name: "tractorType.name",
-    type: "String",
-    description: "Tractor type name",
-    category: "equipment",
-  },
-  {
     name: "tractorType.code",
     type: "String",
     description: "Tractor type code",
     category: "equipment",
   },
   {
-    name: "tractorType.costPerMile",
-    type: "Number",
-    description: "Tractor cost per mile",
-    category: "equipment",
-    nullable: true,
-  },
-  {
-    name: "trailerType.name",
+    name: "tractorType.description",
     type: "String",
-    description: "Trailer type name",
+    description: "Tractor type description",
     category: "equipment",
   },
   {
@@ -563,11 +550,10 @@ export const SHIPMENT_VARIABLES: SchemaVariable[] = [
     category: "equipment",
   },
   {
-    name: "trailerType.costPerMile",
-    type: "Number",
-    description: "Trailer cost per mile",
+    name: "trailerType.description",
+    type: "String",
+    description: "Trailer type description",
     category: "equipment",
-    nullable: true,
   },
 
   // Origin

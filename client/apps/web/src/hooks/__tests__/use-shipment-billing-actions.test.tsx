@@ -17,16 +17,15 @@ vi.mock("@/services/api", () => ({ apiService: { shipmentService } }));
 
 vi.mock("sonner", () => ({ toast }));
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    shipment: {
-      get: (shipmentId: string, params?: Record<string, string>) => ({
-        queryKey: ["shipment", "get", shipmentId, params],
-      }),
-      billingReadiness: (shipmentId: string) => ({
-        queryKey: ["shipment", "billing-readiness", shipmentId],
-      }),
-    },
+vi.mock("@/lib/queries/shipment", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/queries/shipment")>()),
+  shipment: {
+    get: (shipmentId: string, params?: Record<string, string>) => ({
+      queryKey: ["shipment", "get", shipmentId, params],
+    }),
+    billingReadiness: (shipmentId: string) => ({
+      queryKey: ["shipment", "billing-readiness", shipmentId],
+    }),
   },
 }));
 

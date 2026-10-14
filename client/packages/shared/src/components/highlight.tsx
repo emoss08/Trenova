@@ -1,3 +1,4 @@
+import { escapeRegExp } from "@trenova/shared/lib/regexp";
 import { memo } from "react";
 
 interface HighlightProps {
@@ -11,8 +12,6 @@ function Highlight({ text, highlight = "", className }: HighlightProps) {
   if (!highlight.trim() || !text) {
     return <span className={className}>{text}</span>;
   }
-
-  const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
   const safe = escapeRegExp(highlight);
   const parts = text.split(new RegExp(`(${safe})`, "gi"));

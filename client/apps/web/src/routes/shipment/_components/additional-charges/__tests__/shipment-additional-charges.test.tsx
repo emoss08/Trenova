@@ -12,14 +12,13 @@ const SHIPMENT_ID = "shp_01SHIPMENT000000000000000001";
 
 const occurrences: DetentionOccurrence[] = [];
 
-vi.mock("@/lib/queries", () => ({
-  queries: {
-    detention: {
-      byShipment: (shipmentId: string) => ({
-        queryKey: ["byShipment", shipmentId],
-        queryFn: async () => occurrences,
-      }),
-    },
+vi.mock("@/lib/queries/detention", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/queries/detention")>()),
+  detention: {
+    byShipment: (shipmentId: string) => ({
+      queryKey: ["byShipment", shipmentId],
+      queryFn: async () => occurrences,
+    }),
   },
 }));
 vi.mock("@/routes/detention-desk/_components/occurrence-detail-sheet", () => ({

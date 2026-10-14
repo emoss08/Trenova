@@ -1,7 +1,7 @@
 import { PageAssistant, pageAssistantThreadKey } from "@/components/assistant/page-assistant";
 import type { PageBinding } from "@/components/assistant/use-thread-model";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { apiService } from "@/services/api";
 import { pageDraftEditSchema, type FormulaProposal, type PageDraftEdit } from "@/types/page-draft";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -79,7 +79,7 @@ function ReplyProposals({
   onDismiss: (artifactId: string) => void;
 }) {
   const { data: summary } = useQuery({
-    ...queries.assistant.artifacts(threadId)._ctx.summary,
+    ...assistant.artifacts(threadId)._ctx.summary,
     enabled: threadId !== "",
   });
   const edits = (summary?.results ?? []).filter(
@@ -120,7 +120,7 @@ function ReplyProposal({
   onDismiss: () => void;
 }) {
   const { data, isPending } = useQuery({
-    ...queries.assistant.artifacts(threadId)._ctx.lineage(artifactId),
+    ...assistant.artifacts(threadId)._ctx.lineage(artifactId),
     staleTime: Number.POSITIVE_INFINITY,
   });
   const proposal = useMemo((): FormulaProposal | null => {

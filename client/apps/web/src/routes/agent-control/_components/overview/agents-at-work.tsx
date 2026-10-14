@@ -1,6 +1,7 @@
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { WorkingRun } from "@/lib/graphql/ai-control";
-import { queries } from "@/lib/queries";
+import { aiControl } from "@/lib/queries/ai-control";
+import { assistant } from "@/lib/queries/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -28,9 +29,9 @@ type AgentsAtWorkProps = {
  */
 export function AgentsAtWork({ idleReason, onOpenAgent, onOpenAgents }: AgentsAtWorkProps) {
   const t = useT();
-  const agentsQuery = useQuery(queries.assistant.agents(false));
+  const agentsQuery = useQuery(assistant.agents(false));
   const runsQuery = useQuery({
-    ...queries.aiControl.workingRuns(),
+    ...aiControl.workingRuns(),
     refetchInterval: idleReason ? false : WORKING_REFRESH_MS,
   });
   const agents = useMemo(() => agentsQuery.data ?? [], [agentsQuery.data]);

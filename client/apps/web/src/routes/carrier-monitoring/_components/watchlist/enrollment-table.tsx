@@ -8,7 +8,7 @@ import {
   carrierMonitoringEnrollmentTableGraphQLConfig,
   type CarrierMonitoringEnrollmentRow,
 } from "@/lib/graphql/carrier-monitoring-table";
-import { queries } from "@/lib/queries";
+import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQueryClient } from "@tanstack/react-query";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -45,7 +45,7 @@ export function EnrollmentTable({ canUpdate }: EnrollmentTableProps) {
       queryClient.invalidateQueries({ queryKey: [CARRIER_MONITORING_ENROLLMENT_LIST_KEY] }),
       queryClient.invalidateQueries({ queryKey: [CARRIER_INTELLIGENCE_KEY] }),
       queryClient.invalidateQueries({
-        queryKey: queries.carrierIntelSettings.monitoringStatus().queryKey,
+        queryKey: carrierIntelSettings.monitoringStatus().queryKey,
       }),
     ]);
   }, [queryClient]);

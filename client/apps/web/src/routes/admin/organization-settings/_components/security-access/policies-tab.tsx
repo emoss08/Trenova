@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@trenova/shared/components/ui/select";
-import { queries } from "@/lib/queries";
+import { organization } from "@/lib/queries/organization";
 import { getAvailableOperations, getAvailableResources } from "@/lib/role-api";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
@@ -30,7 +30,7 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const policiesQuery = useQuery(queries.organization.accessPolicies(organizationId));
+  const policiesQuery = useQuery(organization.accessPolicies(organizationId));
   const resourcesQuery = useQuery({
     queryKey: ["permissions", "resources"],
     queryFn: getAvailableResources,
@@ -77,7 +77,7 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
   const invalidateAccessPolicies = useCallback(
     async () =>
       queryClient.invalidateQueries({
-        queryKey: queries.organization.accessPolicies(organizationId).queryKey,
+        queryKey: organization.accessPolicies(organizationId).queryKey,
       }),
     [organizationId, queryClient],
   );

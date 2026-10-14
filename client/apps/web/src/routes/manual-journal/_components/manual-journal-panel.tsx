@@ -5,7 +5,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormSection } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { ManualJournalRow } from "@/lib/graphql/manual-journal-table";
-import { queries } from "@/lib/queries";
+import { manualJournal } from "@/lib/queries/manual-journal";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { ManualJournal, ManualJournalLine } from "@/types/manual-journal";
@@ -123,7 +123,7 @@ function EditPanel({
   const [showCancelInput, setShowCancelInput] = useState(false);
 
   const detailQuery = useQuery({
-    ...queries.manualJournal.get(row?.id ?? ""),
+    ...manualJournal.get(row?.id ?? ""),
     enabled: Boolean(row?.id),
   });
 

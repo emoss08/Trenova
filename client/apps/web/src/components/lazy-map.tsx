@@ -1,5 +1,5 @@
 import { useMapId } from "@/hooks/use-map-id";
-import { queries } from "@/lib/queries";
+import { integration } from "@/lib/queries/integration";
 import { useQuery } from "@tanstack/react-query";
 import { AdvancedMarker, APIProvider, Map } from "@vis.gl/react-google-maps";
 
@@ -22,7 +22,7 @@ export default function LazyMap({ apiKey, position }: LazyMapProps) {
 
 export function LazyMapWithKey({ position }: Pick<LazyMapProps, "position">) {
   const { data: googleMapsData } = useQuery({
-    ...queries.integration.runtimeConfig("GoogleMaps"),
+    ...integration.runtimeConfig("GoogleMaps"),
   });
 
   if (!googleMapsData?.config.apiKey) {

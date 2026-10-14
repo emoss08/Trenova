@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import {
   addQuickFilter,
   QUICK_FILTER_MENU,
@@ -30,7 +30,7 @@ export function useQuickFilterSearch(): {
   const scope = useBoardScope();
   const [open, setOpen] = useState(false);
   const counts = useQuery({
-    ...queries.shipmentBoard.quickFilterCounts(scope),
+    ...shipmentBoard.quickFilterCounts(scope),
     enabled: open,
     staleTime: 15_000,
   });

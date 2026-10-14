@@ -2,7 +2,7 @@ import { describeToolCall } from "@/components/assistant/tool-presentation";
 import type { AgentControl } from "@/lib/graphql/agent-control";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { AgentRosterStat } from "@/lib/graphql/ai-control";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { useQuery } from "@tanstack/react-query";
@@ -56,7 +56,7 @@ export function AgentDetail({
   const t = useT();
   const mode = agentMode(agent);
   const tools = split[0] + split[1] + split[2];
-  const trustQuery = useQuery(queries.assistant.agentTrust(agent.id));
+  const trustQuery = useQuery(assistant.agentTrust(agent.id));
   const streak = useMemo(
     () => leadingStreak(trustQuery.data?.results ?? [], agent.toolNames),
     [agent.toolNames, trustQuery.data?.results],
@@ -113,7 +113,11 @@ export function AgentDetail({
             <>
               <h4>{t("Runs")}</h4>
               <p className="ad-v">
-                {t("Every {0} seconds, at most {1} at once", agent.intervalSeconds, agent.maxConcurrentRuns)}
+                {t(
+                  "Every {0} seconds, at most {1} at once",
+                  agent.intervalSeconds,
+                  agent.maxConcurrentRuns,
+                )}
               </p>
             </>
           )}
@@ -200,8 +204,7 @@ export function AgentDetail({
                         </>
                       ) : threshold - streak.streak === 1 ? (
                         <>
-                          {t("1 more clean approval and")} <b>{toolName}</b>{" "}
-                          {t("moves up a tier")}
+                          {t("1 more clean approval and")} <b>{toolName}</b> {t("moves up a tier")}
                         </>
                       ) : (
                         <>
@@ -242,12 +245,7 @@ export function AgentDetail({
           </button>
         )}
         {agent.triggerMode !== "Chat" && (
-          <button
-            type="button"
-            className="xa"
-            disabled={!agent.enabled || !canRun}
-            onClick={onRun}
-          >
+          <button type="button" className="xa" disabled={!agent.enabled || !canRun} onClick={onRun}>
             <Ic n="play" s={12} />
             {t("Run now")}
             <span className="kbd">R</span>

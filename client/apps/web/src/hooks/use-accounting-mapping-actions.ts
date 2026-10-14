@@ -8,7 +8,8 @@ import {
   rejectAccountingMapping,
   setAccountingMapping,
 } from "@/lib/graphql/accounting-sync";
-import { queries } from "@/lib/queries";
+import { accountingSync } from "@/lib/queries/accounting-sync";
+import { integration } from "@/lib/queries/integration";
 import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -22,8 +23,8 @@ export function useAccountingMappingActions(system: AccountingSystem, providerNa
   const refresh = useCallback(
     () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.accountingSync._def }),
-        queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey }),
+        queryClient.invalidateQueries({ queryKey: accountingSync._def }),
+        queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey }),
       ]),
     [queryClient],
   );

@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { inbox } from "@/lib/queries/inbox";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useCallback, type ReactNode } from "react";
@@ -106,7 +106,7 @@ export function TriageOverlayHost() {
 }
 
 function LinkOverlay({ messageId, onClose }: { messageId: string; onClose: () => void }) {
-  const message = useQuery(queries.inbox.message(messageId)).data;
+  const message = useQuery(inbox.message(messageId)).data;
   if (message === undefined) {
     return null;
   }

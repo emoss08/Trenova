@@ -2,8 +2,9 @@ import type { QueryClient } from "@tanstack/react-query";
 
 /**
  * The query factories a `DataTable` reads besides its own rows, answered with
- * empty results. Spread into a test's `@/lib/queries` mock so a table renders
- * without a server.
+ * empty results. A test mocks each factory's module with its entry here
+ * (`vi.mock("@/lib/queries/bulk-edit", ...)` returning `{ bulkEdit }`) so a table
+ * renders without a server.
  */
 export const dataTableQueryMocks = {
   bulkEdit: {

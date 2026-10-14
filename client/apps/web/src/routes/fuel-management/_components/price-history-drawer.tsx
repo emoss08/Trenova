@@ -16,7 +16,7 @@ import {
   deleteFuelIndexPrice,
   type FuelDashboardEntry,
 } from "@/lib/graphql/fuel-surcharge";
-import { queries } from "@/lib/queries";
+import { fuelSurcharge } from "@/lib/queries/fuel-surcharge";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
@@ -49,16 +49,16 @@ export function PriceHistoryDrawer({
   const [newPrice, setNewPrice] = useState("");
 
   const { data: history, isLoading } = useQuery({
-    ...queries.fuelSurcharge.priceHistory(indexId, 52),
+    ...fuelSurcharge.priceHistory(indexId, 52),
     enabled: !!entry,
   });
 
   const invalidate = () => {
     void queryClient.invalidateQueries({
-      queryKey: queries.fuelSurcharge.priceHistory(indexId, 52).queryKey,
+      queryKey: fuelSurcharge.priceHistory(indexId, 52).queryKey,
     });
     void queryClient.invalidateQueries({
-      queryKey: queries.fuelSurcharge.dashboard().queryKey,
+      queryKey: fuelSurcharge.dashboard().queryKey,
     });
   };
 

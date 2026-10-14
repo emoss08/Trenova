@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { cn } from "@trenova/shared/lib/utils";
-import { queries } from "@/lib/queries";
+import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { SHIPMENT_LIST_KEY } from "../../shipment-queries";
@@ -18,13 +18,13 @@ export function BoardRefreshButton() {
   const queryClient = useQueryClient();
   const refreshing =
     useIsFetching({ queryKey: [SHIPMENT_LIST_KEY] }) +
-      useIsFetching({ queryKey: queries.shipmentBoard._def }) >
+      useIsFetching({ queryKey: shipmentBoard._def }) >
     0;
 
   const handleRefresh = useCallback(() => {
     void Promise.all([
       queryClient.invalidateQueries({ queryKey: [SHIPMENT_LIST_KEY] }),
-      queryClient.invalidateQueries({ queryKey: queries.shipmentBoard._def }),
+      queryClient.invalidateQueries({ queryKey: shipmentBoard._def }),
       queryClient.invalidateQueries({ queryKey: ["shipment-events"] }),
     ]);
   }, [queryClient]);

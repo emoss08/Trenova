@@ -5,7 +5,7 @@ import {
   type AgentAccentName,
   type AgentIdentityInput,
 } from "@/components/agent-identity/agent-identity";
-import { queries } from "@/lib/queries";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import type { AIProviderKind, AIProviderPreset } from "@/types/ai-provider";
 import { useQuery } from "@tanstack/react-query";
 import { BrandLogo } from "@trenova/shared/components/brand-logo";
@@ -72,7 +72,7 @@ type MarkProps = {
  * Brandfetch has it, and the provider's initials otherwise.
  */
 export function Mark({ provider, preset, s = 28, className }: MarkProps) {
-  const catalog = useQuery({ ...queries.aiProvider.catalog(), staleTime: Infinity });
+  const catalog = useQuery({ ...aiProvider.catalog(), staleTime: Infinity });
   const domain = useMemo(() => {
     if (preset) return preset.domain || null;
     if (!provider.kind) return null;

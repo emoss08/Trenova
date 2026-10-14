@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
-import { queries } from "@/lib/queries";
+import { billingQueue } from "@/lib/queries/billing-queue";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -66,12 +66,12 @@ export const prefetch: RoutePrefetch = ({ request }) => {
   }
 
   list.push(
-    queries.billingQueue.stats(),
+    billingQueue.stats(),
     billingQueueFilterPresetsQuery(),
     billingQueueListQuery({ status, billers, billType, payer, search: query, includePosted }),
   );
   if (item) {
-    list.push(queries.billingQueue.get(item));
+    list.push(billingQueue.get(item));
   }
   return list;
 };

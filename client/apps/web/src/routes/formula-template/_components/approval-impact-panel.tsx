@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { BacktestResult } from "@trenova/shared/types/formula-template";
@@ -52,7 +52,7 @@ export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
   };
 
   const { data, isLoading, isError } = useQuery({
-    ...queries.formulaTemplate.approvalImpact(templateId),
+    ...formulaTemplate.approvalImpact(templateId),
     enabled: !!templateId,
     staleTime: 30_000,
   });

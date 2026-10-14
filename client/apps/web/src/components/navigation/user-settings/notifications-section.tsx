@@ -7,7 +7,7 @@ import {
   buildNotificationCatalog,
   type NotificationCatalogCategory,
 } from "@/components/notification-center/notification-registry";
-import { queries } from "@/lib/queries";
+import { user as userQueries } from "@/lib/queries/user";
 import {
   formatClockValue,
   halfHourValues,
@@ -547,7 +547,7 @@ function NotificationsForm({ preferences }: { preferences: NotificationPreferenc
       });
       pausedUntilRef.current = saved.pausedUntil;
       setPausedUntil(saved.pausedUntil);
-      queryClient.setQueryData(queries.user.myNotificationPreferences().queryKey, saved);
+      queryClient.setQueryData(userQueries.myNotificationPreferences().queryKey, saved);
     },
   });
 
@@ -582,7 +582,7 @@ function NotificationsSkeleton() {
 
 export function NotificationsSection() {
   const t = useT();
-  const { data, isError, refetch } = useQuery(queries.user.myNotificationPreferences());
+  const { data, isError, refetch } = useQuery(userQueries.myNotificationPreferences());
 
   if (isError) {
     return (

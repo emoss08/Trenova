@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { edi } from "@/lib/queries/edi";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -33,7 +33,7 @@ export function PendingConnectionsPanel() {
     state.hasPermission(Resource.EDI, Operation.Update),
   );
   const [rejecting, setRejecting] = useState<EDIConnection | null>(null);
-  const { data, isLoading } = useQuery(queries.edi.connections("?limit=25"));
+  const { data, isLoading } = useQuery(edi.connections("?limit=25"));
   const pending = (data?.results ?? []).filter(
     (connection) =>
       connection.status === "PendingAcceptance" &&

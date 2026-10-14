@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { Form } from "@trenova/shared/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
-import { queries } from "@/lib/queries";
+import { sequenceConfig } from "@/lib/queries/sequence-config";
 import { apiService } from "@/services/api";
 import {
   sequenceConfigDocumentSchema,
@@ -26,7 +26,7 @@ export default function SequenceConfigForm() {
   const t = useT();
 
   const { data } = useSuspenseQuery({
-    ...queries.sequenceConfig.get(),
+    ...sequenceConfig.get(),
   });
 
   const form = useForm({
@@ -37,13 +37,13 @@ export default function SequenceConfigForm() {
   const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
-    queryKey: queries.sequenceConfig.get._def,
+    queryKey: sequenceConfig.get._def,
     mutationFn: async (values: SequenceConfigDocument) =>
       apiService.sequenceConfigService.update(values),
     resourceName: "Sequence Configuration",
     resetForm: reset,
     form,
-    invalidateQueries: [queries.sequenceConfig.get._def],
+    invalidateQueries: [sequenceConfig.get._def],
   });
 
   const onSubmit = useCallback(

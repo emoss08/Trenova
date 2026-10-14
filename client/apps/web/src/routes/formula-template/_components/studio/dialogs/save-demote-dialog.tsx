@@ -1,4 +1,4 @@
-import { queries } from "@/lib/queries";
+import { formulaTemplate } from "@/lib/queries/formula-template";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +31,7 @@ export function SaveDemoteDialog({
 }) {
   const t = useT();
   const { data: usage } = useQuery({
-    ...queries.formulaTemplate.usage(template?.id ?? ""),
+    ...formulaTemplate.usage(template?.id ?? ""),
     enabled: open && !!template?.id,
     staleTime: 60_000,
   });

@@ -6,7 +6,7 @@ import {
   type AgentChoiceSource,
   type AgentOrigin,
 } from "@/lib/graphql/agent-definition";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
@@ -78,7 +78,7 @@ export function useAgentChoices({
   const browsing = settledSearch === "" && origin === "all" && leadsWithRecent;
 
   const recentQuery = useQuery({
-    ...queries.assistant.agentChoicesByIds(recentIds),
+    ...assistant.agentChoicesByIds(recentIds),
     enabled: enabled && leadsWithRecent,
     staleTime: 60_000,
   });
@@ -100,10 +100,10 @@ export function useAgentChoices({
     AgentChoicePage,
     Error,
     { pages: AgentChoicePage[] },
-    ReturnType<typeof queries.assistant.agentChoices>["queryKey"],
+    ReturnType<typeof assistant.agentChoices>["queryKey"],
     string | undefined
   >({
-    queryKey: queries.assistant.agentChoices(query, source, pageSize).queryKey,
+    queryKey: assistant.agentChoices(query, source, pageSize).queryKey,
     queryFn: ({ pageParam, signal }) =>
       fetchAgentChoices(
         query,

@@ -67,7 +67,7 @@ import {
   type TriageUser,
   type TriageView,
 } from "@/lib/graphql/inbox";
-import { queries } from "@/lib/queries";
+import { assistant } from "@/lib/queries/assistant";
 import { inbox } from "@/lib/queries/inbox";
 import { applyRows, folderMembership, knownRow, type MembershipContext } from "@/lib/triage/cache";
 import {
@@ -1007,7 +1007,7 @@ export function useTriageActionsController(): TriageActions {
             (thread) => {
               useAssistantStore.getState().setLastAgentId(agentId);
               void queryClient.invalidateQueries({
-                queryKey: queries.assistant.threads().queryKey,
+                queryKey: assistant.threads().queryKey,
               });
               return thread;
             },
