@@ -20,6 +20,7 @@ import {
 } from "../fixtures/desk-cards.mjs";
 import { deskEdiMessages } from "../fixtures/desk-edi.mjs";
 import { deskEdiInboundFiles } from "../fixtures/desk-edi-files.mjs";
+import { DESK_EDI_FILE_TENDERS, deskEdiTransfers } from "../fixtures/desk-edi-transfers.mjs";
 import { hash } from "../state.mjs";
 import { userSelectOptions } from "./settings.mjs";
 
@@ -438,7 +439,67 @@ function ediFileRoute(state, path) {
       };
 }
 
+/** The EDI transfer a route names, or the 404 the API answers for one that is gone. */
+function ediTransferRoute(state, path) {
+  const id = path.match(/edi\/transfers\/([a-z0-9_]+)/)?.[1] ?? "";
+  const fixture = deskEdiTransfers(state.anchor)[id];
+  return fixture
+    ? { fixture }
+    : {
+        missing: {
+          __status: 404,
+          body: { title: "Not Found", status: 404, detail: "EDI transfer not found" },
+        },
+      };
+}
+
+/** The inbound tenders one file opened, as the transfers list answers for `inboundFileId`. */
+function ediFileTenders(state, query) {
+  const transfers = deskEdiTransfers(state.anchor);
+  const results = (DESK_EDI_FILE_TENDERS[query?.get("inboundFileId") ?? ""] ?? []).map(
+    (id) => transfers[id].transfer,
+  );
+  return { results, count: results.length, next: null, prev: null };
+}
+
 export const DESK_CARD_ROUTES = [
+  [
+    "GET",
+    /^\/api\/v1\/edi\/transfers\/?$/,
+    (state, _path, _body, query) => {
+      if (held(state)) return HOLD;
+      return ediFileTenders(state, query);
+    },
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/edi\/transfers\/[a-z0-9_]+\/mapping-preview\/?$/,
+    (state, path) => {
+      if (held(state)) return HOLD;
+      const { fixture, missing } = ediTransferRoute(state, path);
+      if (missing) return missing;
+      if (!fixture.preview) {
+        return {
+          __status: 400,
+          body: {
+            title: "Bad Request",
+            status: 400,
+            detail: "Mapping preview is only available for transfers that have not been decided",
+          },
+        };
+      }
+      return fixture.preview;
+    },
+  ],
+  [
+    "GET",
+    /^\/api\/v1\/edi\/transfers\/[a-z0-9_]+\/?$/,
+    (state, path) => {
+      if (held(state)) return HOLD;
+      const { fixture, missing } = ediTransferRoute(state, path);
+      return missing ?? fixture.transfer;
+    },
+  ],
   [
     "GET",
     /^\/api\/v1\/edi\/inbound-files\/[a-z0-9_]+\/inspect\/?$/,

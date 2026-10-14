@@ -3968,6 +3968,14 @@ button.dk-dx-c:hover {
 .dk-rec-st.dk-st-warn i {
   background: var(--dsk-warn);
 }
+.dk-rec-st.dk-st-bad {
+  color: var(--danger-subtle-foreground);
+  background: var(--danger-subtle);
+  box-shadow: none;
+}
+.dk-rec-st.dk-st-bad i {
+  background: var(--danger);
+}
 .dk-rec-sec {
   padding: 16px 16px 4px;
 }
@@ -10343,6 +10351,11 @@ button.dk-ra-tpl:hover {
   padding: 0;
   border-top: 0;
 }
+/* the tender a 204 opened, named under its row */
+.dk-eif-tender {
+  margin: -2px 12px 8px 58px;
+  font-size: var(--text-xs);
+}
 .dk-eif-note {
   --dk-eif-tone: var(--dsk-subtle);
   display: grid;
@@ -10863,11 +10876,465 @@ button.dk-ra-tpl:hover {
     grid-row: 2;
   }
   .dk-eif-notes.dk-under,
+  .dk-eif-tender,
   .dk-eif-miscount,
   .dk-eif-findings.dk-under {
     margin-left: 12px;
   }
   .dk-eif-gcount {
     margin-left: 0;
+  }
+}
+/* The EDI transfer card */
+.dk-tdr {
+  container: dktdr / inline-size;
+}
+.dk-tdr code:where(:not(.dk-edi-mark *)) {
+  padding: 0;
+  border-radius: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+}
+/* the tender as a ticket torn from a book: its set over the tear, its way under it */
+.dk-tdr-ticket {
+  position: relative;
+  flex: none;
+  align-self: center;
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  justify-items: center;
+  align-items: center;
+  width: 42px;
+  height: 52px;
+  padding: 4px 0;
+  border-radius: 6px;
+  color: var(--dsk-fg);
+  background: color-mix(in oklch, var(--dsk-fg) 8%, var(--dsk-card));
+  -webkit-mask:
+    radial-gradient(circle at 0 58%, transparent 5px, black 5.5px) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 58%, transparent 5px, black 5.5px) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle at 0 58%, transparent 5px, black 5.5px) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 58%, transparent 5px, black 5.5px) right / 51% 100% no-repeat;
+}
+.dk-tdr-ticket > b {
+  align-self: end;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.dk-tdr-ticket > i {
+  width: 70%;
+  margin: 4px 0;
+  border-top: 1.5px dashed var(--dsk-b-strong);
+}
+.dk-tdr-ticket > svg {
+  align-self: start;
+  color: var(--dsk-fg2);
+}
+.dk-tdr-ticket.dk-sk {
+  -webkit-mask: none;
+  mask: none;
+}
+.dk-rec-hrow > .dk-tdr-ticket + .dk-rec-who {
+  flex: 1;
+}
+.dk-tdr-aside {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+/* the decision as gates side by side, each a segment of one meter */
+.dk-tdr-gates {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-tdr-gate {
+  --dk-tdr-tone: var(--dsk-b);
+  --dk-tdr-ink: var(--dsk-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dk-tdr-bar {
+  height: 6px;
+  margin-bottom: 6px;
+  border-radius: 999px;
+  background: var(--dk-tdr-tone);
+}
+.dk-tdr-gl {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--dk-tdr-ink);
+}
+.dk-tdr-gl > b {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-tdr-gl > svg {
+  flex: none;
+}
+.dk-tdr-gd {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+  overflow-wrap: anywhere;
+}
+.dk-tdr-gate > time {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 11px;
+  color: var(--dsk-faint);
+}
+.dk-tdr-gate.dk-done {
+  --dk-tdr-tone: var(--dsk-fg2);
+  --dk-tdr-ink: var(--dsk-fg);
+}
+.dk-tdr-gate.dk-now {
+  --dk-tdr-tone: var(--dsk-ink);
+  --dk-tdr-ink: var(--dsk-fg);
+}
+.dk-tdr-gate.dk-now .dk-tdr-gd {
+  color: var(--dsk-fg2);
+}
+.dk-tdr-gate.dk-warn {
+  --dk-tdr-tone: var(--dsk-warn);
+  --dk-tdr-ink: var(--dsk-warn-fg);
+}
+.dk-tdr-gate.dk-warn .dk-tdr-gd {
+  color: var(--dsk-warn-fg);
+}
+.dk-tdr-gate.dk-failed {
+  --dk-tdr-tone: var(--danger);
+  --dk-tdr-ink: var(--danger);
+}
+.dk-tdr-gate.dk-failed .dk-tdr-gd {
+  color: var(--danger);
+}
+.dk-tdr-gate.dk-closed {
+  --dk-tdr-tone: var(--dsk-subtle);
+  --dk-tdr-ink: var(--dsk-fg2);
+}
+.dk-tdr-gate.dk-skipped .dk-tdr-bar {
+  background: repeating-linear-gradient(-45deg, var(--dsk-b) 0 4px, transparent 4px 8px);
+}
+.dk-tdr-gate.dk-skipped,
+.dk-tdr-gate.dk-ahead {
+  --dk-tdr-ink: var(--dsk-faint);
+}
+/* why the tender closed where it did, kept as written */
+.dk-tdr-reason {
+  --dk-tdr-tone: var(--dsk-subtle);
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 8px;
+  background: var(--dsk-sunken);
+}
+.dk-tdr-reason.dk-bad {
+  --dk-tdr-tone: var(--danger);
+  border-color: color-mix(in oklch, var(--danger) 30%, var(--dsk-b-sub));
+  background: color-mix(in oklch, var(--danger) 5%, var(--dsk-card));
+}
+.dk-tdr-reason > b {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--dk-tdr-tone);
+}
+.dk-tdr-reason > p {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+/* the stops down one rail: a pickup ringed, a delivery filled */
+.dk-tdr-route {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-tdr-stop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 0 16px 26px;
+}
+.dk-tdr-stop:last-child {
+  padding-bottom: 0;
+}
+.dk-tdr-stop:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  bottom: 2px;
+  left: 6px;
+  border-left: 2px solid var(--dsk-b);
+}
+.dk-tdr-pin {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid var(--dsk-fg2);
+  background: var(--dsk-card);
+}
+.dk-tdr-stop.dk-drop .dk-tdr-pin {
+  border-radius: 4px;
+  background: var(--dsk-fg2);
+}
+.dk-tdr-stop .dk-tdr-pin.dk-sk {
+  border: 0;
+}
+.dk-tdr-sh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+}
+.dk-tdr-kind {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-tdr-sh > time {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 11.5px;
+  color: var(--dsk-fg2);
+}
+.dk-tdr-place {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-tdr-line {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-tdr-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--dsk-fg2);
+}
+.dk-tdr-map {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border-radius: 999px;
+  line-height: 20px;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
+.dk-tdr-map.dk-missing {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+/* what the tender moves beside what it pays */
+.dk-tdr-freight {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 14px;
+}
+.dk-tdr-load {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.dk-tdr-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+}
+.dk-tdr-facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-tdr-facts dt {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-tdr-facts dd {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-tdr-goods {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 8px 0 0;
+  border-top: 1px dashed var(--dsk-b);
+  list-style: none;
+}
+.dk-tdr-goods > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 10px;
+  font-size: 12.5px;
+}
+.dk-tdr-goods b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-tdr-goods span {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-tdr-rate {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-sunken);
+}
+.dk-tdr-rate > dl {
+  margin: 0;
+}
+.dk-tdr-rate dl > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12.5px;
+}
+.dk-tdr-rate dl > div::after {
+  content: "";
+  order: 1;
+  flex: 1;
+  border-bottom: 1px dotted var(--dsk-b-strong);
+}
+.dk-tdr-rate dt {
+  color: var(--dsk-fg2);
+}
+.dk-tdr-rate dd {
+  order: 2;
+  margin: 0;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-tdr-rate dl > .dk-tdr-total {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--dsk-b);
+}
+.dk-tdr-rate dl > .dk-tdr-total::after {
+  border-bottom-color: transparent;
+}
+.dk-tdr-total dt,
+.dk-tdr-total dd {
+  font-weight: 600;
+  color: var(--dsk-fg);
+}
+/* the partner's codes against our records, a meter over the ledger */
+.dk-tdr-maps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dk-tdr-meter {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--dsk-warn-sub);
+  overflow: hidden;
+}
+.dk-tdr-maps[aria-busy] .dk-tdr-meter {
+  background: var(--dsk-b);
+}
+.dk-tdr-meter > i {
+  display: block;
+  height: 100%;
+  background: var(--dsk-fg2);
+}
+.dk-tdr-mlist {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-tdr-mlist > li {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 12.5px;
+}
+.dk-tdr-mlist > li + li {
+  border-top: 1px dashed var(--dsk-b-sub);
+}
+.dk-tdr-ment {
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-tdr-mlist code {
+  overflow: hidden;
+  font-family: var(--dk-plex);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsk-fg2);
+}
+.dk-tdr-mlist > li > svg {
+  color: var(--dsk-faint);
+}
+.dk-tdr-mlist b {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsk-fg);
+}
+.dk-tdr-mlist em {
+  font-style: normal;
+  color: var(--dsk-warn-fg);
+}
+@container dktdr (max-width: 460px) {
+  .dk-tdr-gates {
+    grid-auto-flow: row;
+    gap: 10px;
+  }
+  .dk-tdr-freight {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-tdr-mlist > li {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+  .dk-tdr-ment {
+    grid-column: 1 / -1;
   }
 }

@@ -4329,6 +4329,7 @@
   "Inactive courses cannot be assigned": "Los cursos inactivos no pueden asignarse",
   "Inactive templates cannot be used for a new review": "Las plantillas inactivas no pueden usarse para una nueva evaluación",
   "Inbound and outbound EDI messages that failed or are held": "Mensajes EDI entrantes y salientes que fallaron o están retenidos",
+  "Inbound file ID is not a valid ID": "El ID del archivo entrante no es un ID válido",
   "Inbound mail": "Correo entrante",
   "Inbound message": "Mensaje entrante",
   "Inbound message is required": "El mensaje de entrada es obligatorio",

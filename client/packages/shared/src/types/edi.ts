@@ -368,6 +368,8 @@ export const loadTenderChargeSchema = z.object({
 export type LoadTenderCharge = z.infer<typeof loadTenderChargeSchema>;
 
 export const loadTenderPayloadSchema = z.object({
+  purposeCode: z.string().nullish(),
+  tenderOfferId: z.string().nullish(),
   shipmentId: z.string().nullish(),
   businessUnitId: z.string().nullish(),
   organizationId: z.string().nullish(),
@@ -469,11 +471,14 @@ export type EDIDocumentPayload = z.infer<typeof ediDocumentPayloadSchema>;
 export const ediTransferSchema = z.object({
   id: z.string(),
   sourceOrganizationId: z.string(),
+  sourceBusinessUnitId: z.string().nullish(),
   targetOrganizationId: z.string(),
+  targetBusinessUnitId: z.string().nullish(),
   sourcePartnerId: z.string(),
   targetPartnerId: z.string(),
-  sourceShipmentId: z.string(),
+  sourceShipmentId: z.string().nullish(),
   targetShipmentId: z.string().nullish(),
+  inboundMessageId: z.string().nullish(),
   status: ediTransferStatusSchema,
   tenderPayload: loadTenderPayloadSchema,
   mappingSnapshot: z.array(ediMappingResolutionSchema).default([]),
@@ -487,6 +492,13 @@ export const ediTransferSchema = z.object({
   processedAt: z.number().nullish(),
   rejectedAt: z.number().nullish(),
   canceledAt: z.number().nullish(),
+  submittedById: z.string().nullish(),
+  approvedById: z.string().nullish(),
+  rejectedById: z.string().nullish(),
+  canceledById: z.string().nullish(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
   sourcePartner: ediPartnerSchema.nullish(),
   targetPartner: ediPartnerSchema.nullish(),
 });
@@ -1227,6 +1239,7 @@ export const ediPartnerDocumentProfileListSchema = createLimitOffsetResponse(
   ediPartnerDocumentProfileSchema,
 );
 export const ediMessageListSchema = createLimitOffsetResponse(ediMessageSchema);
+export const ediTransferListSchema = createLimitOffsetResponse(ediTransferSchema);
 export const ediTestCaseListSchema = createLimitOffsetResponse(ediTestCaseSchema);
 
 export const createInternalPartnerPairRequestSchema = z.object({

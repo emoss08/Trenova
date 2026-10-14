@@ -20,6 +20,7 @@ import { DeskOrderSkeleton } from "./order/order-skeleton";
 import { DeskServiceFailureSkeleton } from "./service-failure/service-failure-skeleton";
 import { DeskEdiMessageSkeleton } from "./edi-message/edi-message-skeleton";
 import { DeskEdiInboundFileSkeleton } from "./edi-inbound-file/edi-inbound-file-skeleton";
+import { DeskEdiTransferSkeleton } from "./edi-transfer/edi-transfer-skeleton";
 
 /*
 The Desk's resource cards: a record drawn for what a person reads that kind of
@@ -74,6 +75,7 @@ const loadOrder = preloadable(() => import("./order/desk-order"));
 const loadServiceFailure = preloadable(() => import("./service-failure/desk-service-failure"));
 const loadEdiMessage = preloadable(() => import("./edi-message/desk-edi-message"));
 const loadEdiInboundFile = preloadable(() => import("./edi-inbound-file/desk-edi-inbound-file"));
+const loadEdiTransfer = preloadable(() => import("./edi-transfer/desk-edi-transfer"));
 
 const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
   formula_template: {
@@ -159,6 +161,12 @@ const RECORD_CARDS: Partial<Record<RecordEntityType, RecordCardEntry>> = {
     Skeleton: DeskEdiInboundFileSkeleton,
     inPlace: lazyComponent(loadEdiInboundFile, (module) => module.DeskEdiInboundFile),
     artifact: lazyComponent(loadEdiInboundFile, (module) => module.DeskEdiInboundFileArtifact),
+  },
+  edi_transfer: {
+    resource: Resource.EDI,
+    Skeleton: DeskEdiTransferSkeleton,
+    inPlace: lazyComponent(loadEdiTransfer, (module) => module.DeskEdiTransfer),
+    artifact: lazyComponent(loadEdiTransfer, (module) => module.DeskEdiTransferArtifact),
   },
 };
 

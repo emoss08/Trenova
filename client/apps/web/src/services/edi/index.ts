@@ -24,6 +24,7 @@ import {
   ediTemplateSchema,
   ediTemplateValidationResponseSchema,
   ediTemplateVersionSchema,
+  ediTransferListSchema,
   ediTransferSchema,
   internalPartnerPairSchema,
   type ApproveEDITransferRequest,
@@ -54,6 +55,9 @@ import {
   type UpsertEDIPartnerDocumentProfileRequest,
 } from "@trenova/shared/types/edi";
 import { ediTransferEndpoints } from "./transfers";
+
+/** The most tenders one inbound file is listed with: the transfer list's page limit. */
+const INBOUND_FILE_TRANSFER_LIMIT = 100;
 
 export class EDIService {
   public async listConnections(query = "") {
@@ -393,13 +397,28 @@ export class EDIService {
     return safeParse(ediTransferSchema, response, "EDITransfer");
   }
 
-  public async getTransfer(transferId: string) {
-    const response = await api.get(`/edi/transfers/${transferId}/`);
+  public async getTransfer(transferId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/edi/transfers/${transferId}/`, { signal: options?.signal });
     return safeParse(ediTransferSchema, response, "EDITransfer");
   }
 
-  public async getMappingPreview(transferId: string) {
-    const response = await api.get(`/edi/transfers/${transferId}/mapping-preview/`);
+  public async listInboundFileTransfers(fileId: string, options?: { signal?: AbortSignal }) {
+    const query = new URLSearchParams({
+      direction: "inbound",
+      inboundFileId: fileId,
+      limit: String(INBOUND_FILE_TRANSFER_LIMIT),
+    });
+    const response = await api.get(`/edi/transfers/?${query.toString()}`, {
+      signal: options?.signal,
+    });
+    const list = await safeParse(ediTransferListSchema, response, "EDITransferList");
+    return list.results;
+  }
+
+  public async getMappingPreview(transferId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/edi/transfers/${transferId}/mapping-preview/`, {
+      signal: options?.signal,
+    });
     return safeParse(ediMappingPreviewSchema, response, "EDIMappingPreview");
   }
 

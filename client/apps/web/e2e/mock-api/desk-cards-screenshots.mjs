@@ -104,6 +104,20 @@ const CARDS = [
     empty: "edi-file-old",
     gone: "edi-file-gone",
   },
+  {
+    card: "tender",
+    loaded: "tender-accepted",
+    attention: "tender-mapping",
+    empty: "tender-superseded",
+    gone: "tender-gone",
+  },
+  {
+    card: "tender-closed",
+    loaded: "tender-outbound",
+    attention: "tender-failed",
+    empty: "tender-declined",
+    gone: "tender-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

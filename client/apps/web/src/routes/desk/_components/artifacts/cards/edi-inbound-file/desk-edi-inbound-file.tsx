@@ -6,7 +6,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatFileSize } from "@trenova/shared/lib/utils";
-import type { EDIInboundFile } from "@trenova/shared/types/edi";
+import type { EDIInboundFile, EDITransfer } from "@trenova/shared/types/edi";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import {
@@ -35,12 +35,14 @@ import {
   routingLabel,
   segmentRuler,
 } from "./edi-inbound-file-card";
+import { transferStanding } from "../../record-card/edi-transfer-standing";
 import {
   EnvelopeChecks,
   FileGlyph,
   FileManifest,
   FindingList,
   IntakeChevrons,
+  type ManifestTender,
   ProcessingLedger,
   RawGlimpse,
   RoutingLabelView,
@@ -144,6 +146,11 @@ function emptyManifestNote(file: EDIInboundFile, gone: boolean, t: ReturnType<ty
   return t("Nothing in it could be read as a transaction set.");
 }
 
+/** A tender's bill of lading, or what it is when it carries none. */
+function tenderSlipTitle(tender: EDITransfer, t: ReturnType<typeof useT>): string {
+  return tender.tenderPayload.bol?.trim() || t("without a BOL");
+}
+
 /** What the bar says of where the file's actions are. */
 function barHint(file: EDIInboundFile, t: ReturnType<typeof useT>): string {
   switch (file.status) {
@@ -192,6 +199,32 @@ function EdiInboundFileCard({
   const ledger = notes.filter((note) => !tied.has(note));
   const interchange = inspected ? isInterchange(inspected) : false;
 
+  const carriedTender = (file.messages ?? []).some((message) => message.transactionSet === "204");
+  const tenders = useQuery({
+    ...edi.inboundFileTransfers(id),
+    retry: false,
+    enabled: carriedTender,
+  }).data;
+  const tenderByMessage = useMemo(() => {
+    const byMessage = new Map<string, ManifestTender>();
+    for (const tender of tenders ?? []) {
+      if (!tender.inboundMessageId) continue;
+      byMessage.set(tender.inboundMessageId, {
+        id: tender.id,
+        label: t(
+          "Tender {0} · {1}",
+          tenderSlipTitle(tender, t),
+          transferStanding(tender, "inbound", t).label,
+        ),
+      });
+    }
+    return byMessage;
+  }, [tenders, t]);
+  const tenderIds = useMemo(() => {
+    const ids = [...tenderByMessage.values()].map((tender) => tender.id);
+    return ids.length > 0 ? ids : NO_ROWS;
+  }, [tenderByMessage]);
+
   const messageIds = useMemo(() => {
     const ids = manifest.flatMap((group) =>
       group.entries.flatMap((entry) => (entry.message ? [entry.message.id] : [])),
@@ -203,11 +236,17 @@ function EdiInboundFileCard({
     order: messageIds,
     backLabel: t("Back to {0}", file.fileName),
   });
+  const listedTenders = useListedRecords({
+    entity: "edi_transfer",
+    order: tenderIds,
+    backLabel: t("Back to {0}", file.fileName),
+  });
 
-  // A message opened from the card takes the card's place, and its way back
-  // returns here.
-  if (listedMessages.opened) {
-    return listedMessages.opened;
+  // A message or a tender opened from the card takes the card's place, and its
+  // way back returns here.
+  const opened = listedMessages.opened ?? listedTenders.opened;
+  if (opened) {
+    return opened;
   }
 
   const waitingOnInspection = !gone && !inspected && !inspection.isError;
@@ -295,6 +334,8 @@ function EdiInboundFileCard({
               groups={manifest}
               messagePath={(messageId) => recordPath("edi_message", messageId)}
               onOpen={listedMessages.open}
+              tenders={tenderByMessage}
+              onOpenTender={listedTenders.open}
             />
           </>
         ) : (

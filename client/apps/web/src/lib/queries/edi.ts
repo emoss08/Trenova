@@ -25,7 +25,18 @@ export const edi = createQueryKeys("edi", {
   }),
   mappingPreview: (transferId: string) => ({
     queryKey: ["mapping-preview", transferId],
-    queryFn: async () => apiService.ediService.getMappingPreview(transferId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.ediService.getMappingPreview(transferId, { signal }),
+  }),
+  transfer: (transferId: string) => ({
+    queryKey: ["transfer", transferId],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.ediService.getTransfer(transferId, { signal }),
+  }),
+  inboundFileTransfers: (fileId: string) => ({
+    queryKey: ["inbound-file-transfers", fileId],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.ediService.listInboundFileTransfers(fileId, { signal }),
   }),
   templates: (filters: EDITemplateListFilters = {}) => ({
     queryKey: ["templates", filters],

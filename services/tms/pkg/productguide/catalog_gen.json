@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a5e69f02c4f10210bf2cbd3917bae7e8518a6d579408d9db859a1bf1cce33892",
+  "version": "sha256:b40edf6773969f694b0e5d2c3518f5319a7671e7558c6e16db59a4a688b2e24d",
   "modules": [
     {
       "id": "home",
@@ -17561,6 +17561,16 @@
       "entity": "edi_message",
       "label": "EDI message",
       "path": "/edi/messages",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      },
+      "deskCard": true
+    },
+    {
+      "entity": "edi_transfer",
+      "label": "EDI transfer",
+      "path": "/edi/transfers/inbound",
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"

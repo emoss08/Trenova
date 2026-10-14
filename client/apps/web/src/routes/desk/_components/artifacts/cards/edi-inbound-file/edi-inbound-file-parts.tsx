@@ -9,7 +9,8 @@ import type {
 } from "@trenova/shared/types/edi";
 import { useState, type CSSProperties } from "react";
 import { EdiFinding } from "../../record-card/edi-finding";
-import { CardIcon, CardRecordRow } from "../../record-card/record-card";
+import { recordPath } from "@/config/record-links";
+import { CardIcon, CardOpenLink, CardRecordRow } from "../../record-card/record-card";
 import { cardMoment } from "../../record-card/record-card-values";
 import type {
   IntakeStage,
@@ -291,15 +292,22 @@ function EntryRow({ entry }: { entry: ManifestEntry }) {
   );
 }
 
+/** The tender a 204 opened, as a manifest row names it. */
+export type ManifestTender = { id: string; label: string };
+
 /** One transaction set the file carried, opened as its message when one was kept. */
 function ManifestRow({
   entry,
   messagePath,
   onOpen,
+  tender,
+  onOpenTender,
 }: {
   entry: ManifestEntry;
   messagePath: (id: string) => string;
   onOpen?: (id: string) => void;
+  tender?: ManifestTender;
+  onOpenTender?: (id: string) => void;
 }) {
   const t = useT();
   const message = entry.message;
@@ -330,6 +338,16 @@ function ManifestRow({
           )}
         </p>
       )}
+      {tender && (
+        <div className="dk-eif-tender">
+          <CardOpenLink
+            to={recordPath("edi_transfer", tender.id)}
+            onOpen={onOpenTender && (() => onOpenTender(tender.id))}
+          >
+            {tender.label}
+          </CardOpenLink>
+        </div>
+      )}
       {entry.notes.length > 0 && (
         <ul className="dk-eif-notes dk-under" aria-label={t("Notes on {0}", entry.control)}>
           {entry.notes.map((note) => (
@@ -358,10 +376,15 @@ export function FileManifest({
   groups,
   messagePath,
   onOpen,
+  tenders,
+  onOpenTender,
 }: {
   groups: readonly ManifestGroup[];
   messagePath: (id: string) => string;
   onOpen?: (id: string) => void;
+  /** The tender each kept 204 opened, by the message's id. */
+  tenders?: ReadonlyMap<string, ManifestTender>;
+  onOpenTender?: (id: string) => void;
 }) {
   const t = useT();
   return (
@@ -395,6 +418,8 @@ export function FileManifest({
                 entry={entry}
                 messagePath={messagePath}
                 onOpen={onOpen}
+                tender={entry.message ? tenders?.get(entry.message.id) : undefined}
+                onOpenTender={onOpenTender}
               />
             ))}
           </ol>

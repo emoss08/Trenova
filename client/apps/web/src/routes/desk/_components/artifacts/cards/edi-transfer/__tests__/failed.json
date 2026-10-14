@@ -1,0 +1,227 @@
+{
+  "id": "edilt_acme_88233",
+  "sourceOrganizationId": "org_1",
+  "sourceBusinessUnitId": "bu_1",
+  "targetOrganizationId": "org_1",
+  "targetBusinessUnitId": "bu_1",
+  "sourcePartnerId": "edip_acme",
+  "targetPartnerId": "edip_acme",
+  "sourceShipmentId": null,
+  "targetShipmentId": null,
+  "inboundMessageId": "edimsg_acme_204e",
+  "status": "Failed",
+  "tenderPayload": {
+    "purposeCode": "00",
+    "shipmentId": null,
+    "businessUnitId": null,
+    "organizationId": null,
+    "serviceTypeId": "DEFAULT",
+    "serviceTypeLabel": "Default service type for inbound tenders",
+    "customerId": "ACME",
+    "customerLabel": "Acme Foods",
+    "formulaTemplateId": "DEFAULT",
+    "formulaTemplateLabel": "Default rating formula for inbound tenders",
+    "bol": "LT-88233",
+    "pieces": 24,
+    "weight": 42000,
+    "temperatureMin": 34,
+    "temperatureMax": 38,
+    "freightChargeAmount": "2650",
+    "otherChargeAmount": "230",
+    "baseRate": null,
+    "totalChargeAmount": "2880",
+    "ratingUnit": 1,
+    "ratingDetail": {
+      "externalShipmentId": "LT-88233",
+      "paymentMethod": "PP"
+    },
+    "moves": [
+      {
+        "loaded": true,
+        "sequence": 0,
+        "distance": 271.4,
+        "stops": [
+          {
+            "locationId": "ACME-DAL",
+            "locationLabel": "Acme Plant 2",
+            "locationName": "Acme Plant 2",
+            "locationCode": "ACME-DAL",
+            "locationAddressLine1": "4100 Irving Blvd",
+            "locationCity": "Dallas",
+            "locationStateCode": "TX",
+            "locationPostalCode": "75247",
+            "type": "Pickup",
+            "scheduleType": "Appointment",
+            "sequence": 1,
+            "pieces": 24,
+            "weight": 42000,
+            "scheduledWindowStart": 1791806400,
+            "scheduledWindowEnd": 1791813600
+          },
+          {
+            "locationId": "KR-HOU",
+            "locationLabel": "Kroger Houston DC",
+            "locationName": "Kroger Houston DC",
+            "locationCode": "KR-HOU",
+            "locationAddressLine1": "8833 Kirby Dr",
+            "locationCity": "Houston",
+            "locationStateCode": "TX",
+            "locationPostalCode": "77054",
+            "type": "Delivery",
+            "scheduleType": "Appointment",
+            "sequence": 2,
+            "pieces": 24,
+            "weight": 42000,
+            "scheduledWindowStart": 1791892800,
+            "scheduledWindowEnd": 1791896400
+          }
+        ]
+      }
+    ],
+    "commodities": [
+      {
+        "commodityId": "FROZEN",
+        "commodityLabel": "Frozen poultry",
+        "commodityName": "Frozen poultry",
+        "weight": 42000,
+        "pieces": 24
+      }
+    ],
+    "additionalCharges": [
+      {
+        "accessorialChargeId": "FSC",
+        "accessorialLabel": "Fuel surcharge",
+        "accessorialCode": "FSC",
+        "method": "Flat",
+        "amount": "230",
+        "unit": 1
+      }
+    ],
+    "requiredMappingEntityIds": {
+      "AccessorialCharge": [
+        "FSC"
+      ],
+      "Commodity": [
+        "FROZEN"
+      ],
+      "Customer": [
+        "ACME"
+      ],
+      "Location": [
+        "ACME-DAL",
+        "KR-HOU"
+      ]
+    }
+  },
+  "mappingSnapshot": [
+    {
+      "entityType": "Customer",
+      "sourceId": "ACME",
+      "sourceLabel": "Acme Foods",
+      "targetId": "cus_acme",
+      "targetLabel": "Acme Foods, Inc.",
+      "resolved": true
+    },
+    {
+      "entityType": "Location",
+      "sourceId": "ACME-DAL",
+      "sourceLabel": "Acme Plant 2",
+      "targetId": "loc_acme_dal",
+      "targetLabel": "Acme Plant 2 (Dallas)",
+      "resolved": true
+    },
+    {
+      "entityType": "Location",
+      "sourceId": "KR-HOU",
+      "sourceLabel": "Kroger Houston DC",
+      "targetId": "loc_kroger_hou",
+      "targetLabel": "Kroger Houston DC",
+      "resolved": true
+    },
+    {
+      "entityType": "Commodity",
+      "sourceId": "FROZEN",
+      "sourceLabel": "Frozen poultry",
+      "targetId": "com_frozen",
+      "targetLabel": "Frozen poultry",
+      "resolved": true
+    },
+    {
+      "entityType": "AccessorialCharge",
+      "sourceId": "FSC",
+      "sourceLabel": "Fuel surcharge",
+      "targetId": "acc_fsc",
+      "targetLabel": "Fuel surcharge",
+      "resolved": true
+    }
+  ],
+  "rejectionReason": "",
+  "failureReason": "customer Acme Foods, Inc. has no billing profile",
+  "approvalWorkflowId": "",
+  "approvalWorkflowRunId": "",
+  "submittedById": null,
+  "submittedAt": 1791702000,
+  "approvedById": "usr_maya",
+  "approvedAt": 1791705600,
+  "processingStartedAt": 1791705601,
+  "processedAt": 1791705605,
+  "rejectedById": null,
+  "rejectedAt": null,
+  "canceledById": null,
+  "canceledAt": null,
+  "version": 1,
+  "createdAt": 1791702000,
+  "updatedAt": 1791705605,
+  "sourcePartner": {
+    "id": "edip_acme",
+    "businessUnitId": "bu_1",
+    "organizationId": "org_1",
+    "kind": "External",
+    "status": "Active",
+    "code": "ACME",
+    "name": "Acme Foods",
+    "description": "",
+    "internalOrganizationId": null,
+    "ediConnectionId": null,
+    "customerId": null,
+    "defaultTransportId": null,
+    "defaultMappingProfileId": null,
+    "timezone": "",
+    "country": "US",
+    "contactName": "",
+    "contactEmail": "",
+    "contactPhone": "",
+    "enabledForInbound": true,
+    "enabledForOutbound": true,
+    "settings": null,
+    "version": 2,
+    "createdAt": 1765800000,
+    "updatedAt": 1789128000
+  },
+  "targetPartner": {
+    "id": "edip_acme",
+    "businessUnitId": "bu_1",
+    "organizationId": "org_1",
+    "kind": "External",
+    "status": "Active",
+    "code": "ACME",
+    "name": "Acme Foods",
+    "description": "",
+    "internalOrganizationId": null,
+    "ediConnectionId": null,
+    "customerId": null,
+    "defaultTransportId": null,
+    "defaultMappingProfileId": null,
+    "timezone": "",
+    "country": "US",
+    "contactName": "",
+    "contactEmail": "",
+    "contactPhone": "",
+    "enabledForInbound": true,
+    "enabledForOutbound": true,
+    "settings": null,
+    "version": 2,
+    "createdAt": 1765800000,
+    "updatedAt": 1789128000
+  }
+}

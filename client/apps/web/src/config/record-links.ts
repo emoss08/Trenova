@@ -138,6 +138,11 @@ export const RECORD_LINKS = {
     path: "/edi/messages",
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
+  edi_transfer: {
+    label: "EDI transfer",
+    path: "/edi/transfers/inbound",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
   capture_batch: {
     label: "Stack",
     path: "/intake",

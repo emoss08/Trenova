@@ -5,6 +5,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskEdiInboundFile, DeskEdiInboundFileArtifact } from "../desk-edi-inbound-file";
+import { wireTransfer } from "../../edi-transfer/__tests__/fixtures";
 import { wireFileInspection, wireInboundFile } from "./fixtures";
 
 const server = vi.hoisted(() => ({ get: vi.fn() }));
@@ -36,6 +37,25 @@ vi.mock("../../edi-message/desk-edi-message", () => ({
   ),
   DeskEdiMessageArtifact: () => null,
 }));
+vi.mock("../../edi-transfer/desk-edi-transfer", () => ({
+  DeskEdiTransfer: ({
+    recordId,
+    onBack,
+    backLabel,
+  }: {
+    recordId: string;
+    onBack: () => void;
+    backLabel?: string;
+  }) => (
+    <div>
+      <p>Tender card {recordId}</p>
+      <button type="button" onClick={onBack}>
+        {backLabel}
+      </button>
+    </div>
+  ),
+  DeskEdiTransferArtifact: () => null,
+}));
 
 type Routes = Record<string, () => unknown>;
 let routes: Routes;
@@ -50,6 +70,12 @@ function route(overrides: Routes = {}) {
     "/edi/inbound-files/ediinf_bad/inspect/": () => wireFileInspection("quarantined"),
     "/edi/inbound-files/ediinf_dup/": () => wireInboundFile("duplicate"),
     "/edi/inbound-files/ediinf_dup/inspect/": () => wireFileInspection("simulator"),
+    "/edi/transfers/?direction=inbound&inboundFileId=ediinf_acme&limit=100": () => ({
+      results: [wireTransfer("approved"), wireTransfer("mappingRequired")],
+      count: 2,
+      next: null,
+      prev: null,
+    }),
     ...overrides,
   };
 }
@@ -217,6 +243,37 @@ describe("DeskEdiInboundFile", () => {
     ).toBeInTheDocument();
   });
 
+  it("names the tender each 204 opened and opens it in the card's place", async () => {
+    draw({ recordId: "ediinf_acme" });
+    await screen.findByRole("heading", { name: "ACME_20261013_0912.x12", level: 2 });
+
+    const carried = section("What it carried");
+    expect(
+      await within(carried).findByRole("button", { name: "Tender LT-88240 · Accepted" }),
+    ).toBeInTheDocument();
+    expect(
+      within(carried).getByRole("button", { name: "Tender LT-88241 · Needs mapping" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      within(carried).getByRole("button", { name: "Tender LT-88241 · Needs mapping" }),
+    );
+    expect(await screen.findByText("Tender card edilt_acme_88241")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back to ACME_20261013_0912.x12" }));
+    expect(
+      await screen.findByRole("heading", { name: "ACME_20261013_0912.x12", level: 2 }),
+    ).toBeInTheDocument();
+  });
+
+  it("asks for no tenders when a file carried no load tender", async () => {
+    draw({ recordId: "ediinf_bad" });
+    await screen.findByRole("heading", { name: "tenders-week-42.txt", level: 2 });
+
+    expect(server.get.mock.calls.some(([url]) => String(url).startsWith("/edi/transfers/"))).toBe(
+      false,
+    );
+  });
+
   it("shows how a file that is not X12 begins, and why it was held", async () => {
     draw({ recordId: "ediinf_bad" });
     await screen.findByRole("heading", { name: "tenders-week-42.txt", level: 2 });
@@ -286,7 +343,9 @@ describe("DeskEdiInboundFile", () => {
     expect(
       await within(section("The interchange")).findByText(/inspector down|could not be inspected/u),
     ).toBeInTheDocument();
-    expect(within(section("What it carried")).getAllByRole("button")).toHaveLength(3);
+    expect(
+      within(section("What it carried")).getAllByRole("button", { name: /^(?!Tender )/u }),
+    ).toHaveLength(3);
   });
 
   it("says a duplicate was turned away and that nothing in it was processed again", async () => {

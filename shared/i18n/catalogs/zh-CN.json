@@ -4329,6 +4329,7 @@
   "Inactive courses cannot be assigned": "已停用的课程无法指派",
   "Inactive templates cannot be used for a new review": "已停用的模板无法用于新的考核",
   "Inbound and outbound EDI messages that failed or are held": "失败或保留中的 EDI 收发消息",
+  "Inbound file ID is not a valid ID": "进站文件 ID 不是有效的 ID",
   "Inbound mail": "收到的邮件",
   "Inbound message": "收到的邮件",
   "Inbound message is required": "接收消息为必填",
