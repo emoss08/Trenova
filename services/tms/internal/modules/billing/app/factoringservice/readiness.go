@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
-	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -143,7 +142,7 @@ func (s *ReadinessService) evaluateOne(
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
-		if !dberror.IsNotFoundError(err) {
+		if !errortypes.IsNotFoundError(err) {
 			result.Failed++
 			s.l.Warn("could not load an invoice to evaluate for factoring",
 				zap.String("invoiceId", invoiceID.String()), zap.Error(err))
@@ -189,7 +188,7 @@ func (s *ReadinessService) evaluate(
 		TenantInfo: tenantInfo,
 		InvoiceID:  inv.ID,
 	})
-	if err != nil && !dberror.IsNotFoundError(err) {
+	if err != nil && !errortypes.IsNotFoundError(err) {
 		return nil, evaluation{}, err
 	}
 	if err != nil {
@@ -291,7 +290,7 @@ func (s *ReadinessService) gather(
 		FactoringCompanyID: factorID,
 		At:                 in.At,
 	})
-	if err != nil && !dberror.IsNotFoundError(err) {
+	if err != nil && !errortypes.IsNotFoundError(err) {
 		return err
 	}
 	if err == nil {
@@ -304,7 +303,7 @@ func (s *ReadinessService) gather(
 		CustomerID:         inv.CustomerID,
 		FactoringCompanyID: factorID,
 	})
-	if err != nil && !dberror.IsNotFoundError(err) {
+	if err != nil && !errortypes.IsNotFoundError(err) {
 		return err
 	}
 	if err == nil {
@@ -601,7 +600,7 @@ func (s *ReadinessService) stampFor(
 		At:                 at,
 	})
 	if err != nil {
-		if dberror.IsNotFoundError(err) {
+		if errortypes.IsNotFoundError(err) {
 			return factorID, nil, nil
 		}
 		return nil, nil, err
