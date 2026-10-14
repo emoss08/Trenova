@@ -34,7 +34,7 @@ export function getTransferColumns(
       header: t("Partner"),
       cell: ({ row }) => {
         const partner =
-          direction === "inbound" ? row.original.sourcePartner : row.original.targetPartner;
+          direction === "inbound" ? row.original.targetPartner : row.original.sourcePartner;
         return partner?.name ? (
           <span className="font-medium">{partner.name}</span>
         ) : (
@@ -44,7 +44,7 @@ export function getTransferColumns(
       size: 240,
       meta: {
         label: t("Partner"),
-        apiField: direction === "inbound" ? "sourcePartnerId" : "targetPartnerId",
+        apiField: direction === "inbound" ? "targetPartnerId" : "sourcePartnerId",
         filterable: false,
         sortable: false,
       },
