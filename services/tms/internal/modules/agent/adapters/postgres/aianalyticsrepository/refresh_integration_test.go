@@ -53,7 +53,15 @@ func seededTenant(ctx context.Context, t *testing.T, db *bun.DB) pagination.Tena
 		Limit(1).
 		Scan(ctx, &row))
 
-	return pagination.TenantInfo{OrgID: row.ID, BuID: row.BusinessUnitID}
+	var userID pulid.ID
+	require.NoError(t, db.NewSelect().
+		TableExpr("users").
+		Column("id").
+		Where("business_unit_id = ?", row.BusinessUnitID).
+		Limit(1).
+		Scan(ctx, &userID))
+
+	return pagination.TenantInfo{OrgID: row.ID, BuID: row.BusinessUnitID, UserID: userID}
 }
 
 func insert(ctx context.Context, t *testing.T, db *bun.DB, models ...any) {
@@ -88,19 +96,26 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		PromptVersion: "v1", InputContextHash: "hash", StartedAt: now - 20,
 		Fingerprint: &agent.Fingerprint{Model: "claude-sonnet-5", StoppedAtLimit: true},
 	}
+	thread := &conversation.Thread{
+		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
+		UserID: tenant.UserID, AgentDefinitionID: pulid.MustNew("agd_"),
+		Title: "Analytics fixture",
+	}
 	turn := &conversation.AssistantTurn{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
-		ThreadID: pulid.MustNew("athr_"), UserID: pulid.MustNew("usr_"),
+		UserID: tenant.UserID,
 		Origin: conversation.AssistantTurnOriginPerson, Status: conversation.AssistantTurnStatusStopped,
 		StartedAt:   now - 15,
 		Fingerprint: &agent.Fingerprint{Model: "gpt-5.1-mini"},
 	}
 	compaction := &conversation.AssistantTurn{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
-		ThreadID: pulid.MustNew("athr_"), UserID: pulid.MustNew("usr_"),
+		UserID: tenant.UserID,
 		Origin: conversation.AssistantTurnOriginCompaction, Status: conversation.AssistantTurnStatusCompleted,
 		Fingerprint: &agent.Fingerprint{Model: "gpt-5.1-mini"},
 	}
+	insert(ctx, t, db, thread)
+	turn.ThreadID, compaction.ThreadID = thread.ID, thread.ID
 	insert(ctx, t, db, run, stopped, turn, compaction)
 	_, err := db.NewInsert().Model(&agent.AgentException{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, RunID: stopped.ID,
