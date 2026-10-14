@@ -302,6 +302,18 @@ func (t *RequestMissingFactoringDocumentTool) request(
 	}, nil
 }
 
+func (t *RequestMissingFactoringDocumentTool) Validate(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+) error {
+	req, err := t.request(&params)
+	if err != nil {
+		return err
+	}
+	_, err = t.readiness.PlanDocumentRequest(ctx, req, params.Actor.UserID)
+	return err
+}
+
 func (t *RequestMissingFactoringDocumentTool) Execute(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value

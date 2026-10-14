@@ -373,6 +373,7 @@ func TestSendFactoringNoa_RefusesAReleasedNotice(t *testing.T) {
 	})
 	assert.NotEmpty(t, preview.Warnings, "a notice that cannot be sent previews as a refusal")
 	assert.Empty(t, preview.Changes)
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestRecordFactoringNoaAcknowledgement_RecordsTheSignedCopy(t *testing.T) {
@@ -418,6 +419,8 @@ func TestRecordFactoringNoaAcknowledgement_RefusesAFutureSignature(t *testing.T)
 		paramSignedDocument: pulid.MustNew("doc_").String(),
 	})
 
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+
 	preview := agenttoolstest.PreviewWithoutWrites(t, &noas.guard, func() (*agent.ToolPreview, error) {
 		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
@@ -437,6 +440,7 @@ func TestReleaseFactoringNoa_NeedsAReason(t *testing.T) {
 	})
 	require.Error(t, tool.Execute(t.Context(), missing))
 	assert.Nil(t, noas.released)
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), missing))
 
 	params := toolParams(map[string]any{
 		paramNoaID:   noa.ID.String(),
@@ -448,6 +452,8 @@ func TestReleaseFactoringNoa_NeedsAReason(t *testing.T) {
 	})
 	agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "releaseReason")
 
+	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	assert.Nil(t, noas.released, "validating releases nothing")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, noas.released)
 	assert.Equal(t, "The factor's release letter arrived.", noas.released.Reason)

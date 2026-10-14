@@ -211,6 +211,14 @@ func (t *DraftFactoringNoaTool) request(
 	}, nil
 }
 
+func (t *DraftFactoringNoaTool) Validate(
+	_ context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+) error {
+	_, err := t.request(&params)
+	return err
+}
+
 func (t *DraftFactoringNoaTool) Execute(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
@@ -331,6 +339,18 @@ func (t *SendFactoringNoaTool) request(
 		Version:    int64(version),
 		Recipient:  common.OptionalString(params.Params, paramRecipient),
 	}, nil
+}
+
+func (t *SendFactoringNoaTool) Validate(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+) error {
+	req, err := t.request(&params)
+	if err != nil {
+		return err
+	}
+	_, err = t.noas.PlanSend(ctx, req, params.Actor.UserID)
+	return err
 }
 
 func (t *SendFactoringNoaTool) Execute(
@@ -497,6 +517,26 @@ func (t *RecordFactoringNoaAcknowledgementTool) plan(
 	}}, nil
 }
 
+func (a *acknowledgement) apply(noa *factoring.Noa) error {
+	return noa.Acknowledge(
+		timeutils.NowUnix(),
+		a.req.AcknowledgedAt,
+		a.req.SignedDocumentID,
+		a.req.ExpiresAt,
+	)
+}
+
+func (t *RecordFactoringNoaAcknowledgementTool) Validate(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+) error {
+	planned, err := t.plan(ctx, &params)
+	if err != nil {
+		return err
+	}
+	return planned.apply(planned.noa)
+}
+
 func (t *RecordFactoringNoaAcknowledgementTool) Execute(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
@@ -518,18 +558,10 @@ func (t *RecordFactoringNoaAcknowledgementTool) Preview(
 	if err != nil {
 		return refused(summary, err)
 	}
-	req := planned.req
 	update, err := common.PlanUpdate(
 		noaRecord(planned.noa),
 		planned.noa,
-		func(after *factoring.Noa) error {
-			return after.Acknowledge(
-				timeutils.NowUnix(),
-				req.AcknowledgedAt,
-				req.SignedDocumentID,
-				req.ExpiresAt,
-			)
-		},
+		planned.apply,
 		noaPreviewOptions()...)
 	if err != nil {
 		return nil, err
@@ -615,6 +647,21 @@ func (t *ReleaseFactoringNoaTool) plan(
 	}}, nil
 }
 
+func (r *release) apply(noa *factoring.Noa) error {
+	return noa.Release(timeutils.NowUnix(), r.req.Reason)
+}
+
+func (t *ReleaseFactoringNoaTool) Validate(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+) error {
+	planned, err := t.plan(ctx, &params)
+	if err != nil {
+		return err
+	}
+	return planned.apply(planned.noa)
+}
+
 func (t *ReleaseFactoringNoaTool) Execute(
 	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
@@ -636,13 +683,10 @@ func (t *ReleaseFactoringNoaTool) Preview(
 	if err != nil {
 		return refused(summary, err)
 	}
-	reason := planned.req.Reason
 	update, err := common.PlanUpdate(
 		noaRecord(planned.noa),
 		planned.noa,
-		func(after *factoring.Noa) error {
-			return after.Release(timeutils.NowUnix(), reason)
-		},
+		planned.apply,
 		noaPreviewOptions()...)
 	if err != nil {
 		return nil, err

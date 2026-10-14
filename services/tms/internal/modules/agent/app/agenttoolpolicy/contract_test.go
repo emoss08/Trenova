@@ -581,6 +581,12 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"discard_capture_batch":            {agent.EgressInternal},
 		"reschedule_stop":                  {agent.EgressExternalRecipient},
 		"add_shipment_charge":              {agent.EgressMoney},
+		"draft_factoring_noa":              {agent.EgressInternal},
+		"send_factoring_noa":               {agent.EgressExternalRecipient},
+		"record_factoring_noa_acknowledgement": {agent.EgressInternal},
+		"release_factoring_noa":            {agent.EgressInternal},
+		"set_invoice_factoring_override":   {agent.EgressInternal},
+		"request_missing_factoring_document": {agent.EgressExternalRecipient},
 	}
 
 	tools := buildRegistered(t)
