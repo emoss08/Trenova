@@ -8743,6 +8743,7 @@
   "The rate that applies after free time, in words.": "La tarifa que se aplica tras el tiempo libre, en palabras.",
   "The rating is no longer on record": "La valoración ya no está registrada",
   "The raw X12 payload was purged by the retention policy and can no longer be replayed": "La política de conservación purgó la carga útil X12 sin procesar y ya no se puede reproducir",
+  "The raw file was purged under the retention policy, so it cannot be inspected": "El archivo sin procesar se purgó según la política de retención, por lo que no puede inspeccionarse",
   "The record is kept for retention. Nothing else on it needs action.": "El registro se conserva por política de retención. No requiere ninguna otra acción.",
   "The record of how each shipment was priced, including every rate considered and why it lost": "El registro de cómo se tarificó cada envío, incluidas todas las tarifas consideradas y por qué se descartaron",
   "The record this change is for has changed since it was proposed, so it cannot be approved as it stands. Reject it, or ask the agent again for a current one": "El registro al que se refiere este cambio ha cambiado desde que se propuso, por lo que no se puede aprobar tal como está. Recháselo o pida al agente una propuesta actualizada",

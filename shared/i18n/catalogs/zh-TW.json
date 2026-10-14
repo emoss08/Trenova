@@ -8743,6 +8743,7 @@
   "The rate that applies after free time, in words.": "免費時間之後適用的費率，以文字表示。",
   "The rating is no longer on record": "此評分已不在紀錄中",
   "The raw X12 payload was purged by the retention policy and can no longer be replayed": "原始 X12 承載內容已依保存政策清除，無法再重播",
+  "The raw file was purged under the retention policy, so it cannot be inspected": "原始檔案已依保留政策清除，因此無法檢查",
   "The record is kept for retention. Nothing else on it needs action.": "此記錄僅供保存之用。其上無其他需要處理的事項。",
   "The record of how each shipment was priced, including every rate considered and why it lost": "每筆運單的計價記錄，包含所有評估過的費率及其未獲採用的原因",
   "The record this change is for has changed since it was proposed, so it cannot be approved as it stands. Reject it, or ask the agent again for a current one": "此變更所針對的記錄在提出後已變更，因此無法照原樣核准。請駁回，或再次向代理索取最新的提議",
