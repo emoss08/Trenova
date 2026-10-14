@@ -1,5 +1,4 @@
 {
-  "Checked {0}": "Verificado el {0}",
   "Checks": "Verificaciones",
   "Every check an invoice must pass before it can be sold to the factor. A failed check names what clears it.": "Todas las verificaciones que una factura debe superar antes de venderse a la empresa de factoraje. Una verificación fallida indica qué la resuelve.",
   "Factoring readiness": "Preparación para factoraje",

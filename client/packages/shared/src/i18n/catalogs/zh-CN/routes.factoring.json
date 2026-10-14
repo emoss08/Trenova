@@ -1,5 +1,4 @@
 {
-  "Checked {0}": "检查于 {0}",
   "Checks": "检查项目",
   "Every check an invoice must pass before it can be sold to the factor. A failed check names what clears it.": "发票出售给保理公司前必须通过的所有检查。未通过的检查会注明如何解决。",
   "Factoring readiness": "保理就绪状态",

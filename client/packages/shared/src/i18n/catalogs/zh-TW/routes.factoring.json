@@ -1,5 +1,4 @@
 {
-  "Checked {0}": "檢查於 {0}",
   "Checks": "檢查項目",
   "Every check an invoice must pass before it can be sold to the factor. A failed check names what clears it.": "發票出售給承購公司前必須通過的所有檢查。未通過的檢查會註明如何解決。",
   "Factoring readiness": "承購就緒狀態",
