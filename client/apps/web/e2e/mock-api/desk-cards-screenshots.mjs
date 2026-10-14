@@ -90,6 +90,20 @@ const CARDS = [
     empty: "edi-990-acme",
     gone: "edi-gone",
   },
+  {
+    card: "edi-file",
+    loaded: "edi-file-sim",
+    attention: "edi-file-acme",
+    empty: "edi-file-old",
+    gone: "edi-file-gone",
+  },
+  {
+    card: "edi-file-held",
+    loaded: "edi-file-bad",
+    attention: "edi-file-dup",
+    empty: "edi-file-old",
+    gone: "edi-file-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

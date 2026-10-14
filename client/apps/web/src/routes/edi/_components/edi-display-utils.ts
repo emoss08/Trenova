@@ -22,8 +22,9 @@ export function mappingKey(entityType: string, sourceId: string) {
 export function findMapping(
   mappingRows: EDIMappingResolution[],
   entityType: EDIMappingEntityType,
-  sourceId: string,
+  sourceId: string | null | undefined,
 ) {
+  if (!sourceId) return undefined;
   return mappingRows.find((row) => row.entityType === entityType && row.sourceId === sourceId);
 }
 

@@ -9,12 +9,11 @@ import {
   messageJourney,
   messageLinks,
   messageStanding,
-  plainReading,
   tapeSegments,
-  transactionName,
   wayAnchor,
   wayHalt,
 } from "../edi-message-card";
+import { plainReading } from "../../../record-card/edi-reading";
 import { HOUR, NOW, ediInspection, ediMessage } from "./fixtures";
 
 const t = translate as TranslateFn;
@@ -25,21 +24,6 @@ const stations = (overrides: Record<string, unknown>) =>
     station.state,
     station.detail,
   ]);
-
-describe("transactionName", () => {
-  it("names every transaction set the way a dispatcher says it", () => {
-    expect(
-      (["204", "210", "214", "990", "997", "999"] as const).map((set) => transactionName(set, t)),
-    ).toEqual([
-      "Load tender",
-      "Freight invoice",
-      "Shipment status",
-      "Tender response",
-      "Functional acknowledgment",
-      "Implementation acknowledgment",
-    ]);
-  });
-});
 
 describe("messageStanding", () => {
   it("puts the worst news first: not generated, dead-lettered, failed, then rejected", () => {

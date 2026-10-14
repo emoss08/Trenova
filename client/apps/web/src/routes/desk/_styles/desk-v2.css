@@ -10135,3 +10135,739 @@ button.dk-ra-tpl:hover {
     animation: none;
   }
 }
+/* The EDI inbound file card */
+.dk-eif {
+  container: dkeif / inline-size;
+}
+/* the pane's inline code pill is the agent's prose; the card sets each code itself */
+.dk-eif code:where(:not(.dk-edi-mark *)) {
+  padding: 0;
+  border-radius: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+}
+.dk-eif-name {
+  overflow-wrap: anywhere;
+}
+/* the file as a sheet with its corner folded down, the way it came in tabbed to its foot */
+.dk-eif-glyph {
+  position: relative;
+  flex: none;
+  align-self: center;
+  width: 40px;
+  height: 48px;
+  margin-bottom: 4px;
+}
+.dk-eif-sheet {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-top: 6px;
+  background: var(--dsk-b-strong);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+}
+.dk-eif-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: var(--dsk-sunken);
+  clip-path: polygon(0 0, calc(100% - 11.6px) 0, 100% 11.6px, 100% 100%, 0 100%);
+}
+.dk-eif-sheet::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--dsk-b-strong);
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+}
+.dk-eif-sheet > b {
+  position: relative;
+  font-family: var(--dk-plex);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--dsk-fg);
+}
+.dk-eif-tab {
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  translate: -50% 0;
+  padding: 0 5px;
+  border: 1px solid var(--dsk-b-strong);
+  border-radius: 999px;
+  font-family: var(--dk-plex);
+  font-size: 9.5px;
+  font-weight: 500;
+  line-height: 14px;
+  white-space: nowrap;
+  color: var(--dsk-fg2);
+  background: var(--dsk-card);
+}
+.dk-eif-glyph.dk-sk {
+  border-radius: 6px;
+}
+.dk-rec-hrow > .dk-eif-glyph + .dk-rec-who {
+  flex: 1;
+}
+/* the intake as chevrons pointing on: through, here, in part, failed, ahead, never reached */
+.dk-eif-intake {
+  --dk-eif-chev: 28px;
+  --dk-eif-notch: 10px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-eif-stage {
+  --dk-eif-fill: var(--dsk-sunken);
+  --dk-eif-ink: var(--dsk-faint);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-eif-chev {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--dk-eif-chev);
+  padding: 0 calc(var(--dk-eif-notch) + 6px) 0 calc(var(--dk-eif-notch) + 8px);
+  font-size: 12px;
+  color: var(--dk-eif-ink);
+  background: var(--dk-eif-fill);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--dk-eif-notch)) 0,
+    100% 50%,
+    calc(100% - var(--dk-eif-notch)) 100%,
+    0 100%,
+    var(--dk-eif-notch) 50%
+  );
+}
+.dk-eif-stage:first-child .dk-eif-chev {
+  padding-left: 10px;
+  border-radius: 6px 0 0 6px;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--dk-eif-notch)) 0,
+    100% 50%,
+    calc(100% - var(--dk-eif-notch)) 100%,
+    0 100%
+  );
+}
+.dk-eif-stage:last-child .dk-eif-chev {
+  border-radius: 0 6px 6px 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, var(--dk-eif-notch) 50%);
+}
+.dk-eif-chev > b {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-eif-chev > svg {
+  flex: none;
+}
+.dk-eif-chev > i:not(.dk-sk) {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+}
+.dk-eif-stage.dk-done {
+  --dk-eif-fill: color-mix(in oklch, var(--dsk-fg) 9%, var(--dsk-card));
+  --dk-eif-ink: var(--dsk-fg);
+}
+.dk-eif-stage.dk-now {
+  --dk-eif-fill: var(--dsk-ink);
+  --dk-eif-ink: var(--dsk-ink-fg);
+}
+.dk-eif-stage.dk-now .dk-eif-chev > i {
+  background: currentColor;
+}
+.dk-eif-stage.dk-partial {
+  --dk-eif-fill: var(--dsk-warn-sub);
+  --dk-eif-ink: var(--dsk-warn-fg);
+}
+.dk-eif-stage.dk-failed {
+  --dk-eif-fill: color-mix(in oklch, var(--danger) 12%, var(--dsk-card));
+  --dk-eif-ink: var(--danger);
+}
+.dk-eif-stage.dk-skipped .dk-eif-chev {
+  background: repeating-linear-gradient(-45deg, var(--dsk-sunken) 0 5px, var(--dsk-card) 5px 9px);
+}
+.dk-eif-stage-d {
+  padding-left: 10px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+  overflow-wrap: anywhere;
+}
+.dk-eif-stage > time {
+  padding-left: 10px;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 11px;
+  color: var(--dsk-faint);
+}
+.dk-eif-stage.dk-failed .dk-eif-stage-d {
+  color: var(--danger);
+}
+.dk-eif-stage.dk-partial .dk-eif-stage-d {
+  color: var(--dsk-warn-fg);
+}
+.dk-eif-stage .dk-rec-sk-label {
+  margin-left: 10px;
+}
+/* what processing said: a note to a line, kept as the service wrote it */
+.dk-eif-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 12px 0 0;
+  padding: 6px 0;
+  border-top: 1px dashed var(--dsk-b);
+  list-style: none;
+}
+.dk-eif-notes.dk-under {
+  margin: 0 12px 8px 58px;
+  padding: 0;
+  border-top: 0;
+}
+.dk-eif-note {
+  --dk-eif-tone: var(--dsk-subtle);
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 10px;
+  padding: 3px 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--dsk-fg);
+}
+.dk-eif-note.dk-bad {
+  --dk-eif-tone: var(--danger);
+}
+.dk-eif-note.dk-warn {
+  --dk-eif-tone: var(--dsk-warn-fg);
+}
+.dk-eif-note-i {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border-radius: 999px;
+  color: var(--dk-eif-tone);
+  background: color-mix(in oklch, var(--dk-eif-tone) 12%, transparent);
+}
+.dk-eif-note-t {
+  overflow-wrap: anywhere;
+}
+.dk-eif-note > .dk-eif-ref {
+  padding: 0 7px;
+  border-radius: 999px;
+  font-family: var(--dk-plex);
+  font-size: 11px;
+  line-height: 18px;
+  white-space: nowrap;
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
+/* the routing label: from whom to whom, the interchange, and the file along its foot */
+.dk-eif-label {
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-card);
+  overflow: hidden;
+}
+.dk-eif-addr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px 14px;
+  padding: 12px 14px;
+}
+.dk-eif-party,
+.dk-eif-icn {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dk-eif-icn {
+  align-self: stretch;
+  padding-left: 14px;
+  border-left: 1px dashed var(--dsk-b);
+}
+.dk-eif-cap {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-eif-id {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.dk-eif-id > code,
+.dk-eif-icn > code {
+  overflow: hidden;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsk-fg);
+}
+.dk-eif-id > em,
+.dk-eif-icn > em {
+  font-size: 13px;
+  font-style: normal;
+  color: var(--dsk-faint);
+}
+.dk-eif-qual {
+  flex: none;
+  padding: 0 6px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 999px;
+  font-family: var(--dk-plex);
+  font-size: 10.5px;
+  line-height: 16px;
+  text-decoration: none;
+  cursor: help;
+  color: var(--dsk-subtle);
+}
+.dk-eif-pname {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsk-fg2);
+}
+.dk-eif-arrow {
+  align-self: center;
+  color: var(--dsk-faint);
+}
+.dk-eif-foot {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0 16px;
+  margin: 0;
+  padding: 8px 14px 10px;
+  border-top: 1px dashed var(--dsk-b);
+  background: var(--dsk-sunken);
+}
+.dk-eif-foot > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+  min-width: 0;
+}
+.dk-eif-foot .dk-eif-f-way,
+.dk-eif-foot .dk-eif-f-print {
+  grid-column: span 2;
+}
+.dk-eif-foot dt {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-eif-foot dd {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsk-fg);
+}
+.dk-eif-f-print dd > code {
+  font-family: var(--dk-plex);
+  font-size: 12px;
+}
+.dk-eif-f-print dd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dk-eif-bars {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 1px;
+  height: 14px;
+  color: var(--dsk-fg2);
+}
+.dk-eif-bars > span {
+  display: inline-flex;
+  gap: 1px;
+}
+.dk-eif-bars i {
+  display: block;
+  width: calc(var(--dk-eif-w) * 1px);
+  background: currentColor;
+}
+/* the interchange as one ruler: each set a run as long as its segments, the envelope between */
+.dk-eif-ruler {
+  margin-bottom: 12px;
+}
+.dk-eif-runs {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.dk-eif-runs.dk-sk {
+  display: block;
+}
+.dk-eif-run {
+  min-width: 3px;
+  flex-basis: 0;
+}
+.dk-eif-run.dk-envelope {
+  background: var(--dsk-b);
+}
+.dk-eif-run.dk-odd {
+  background: var(--dsk-fg2);
+}
+.dk-eif-run.dk-even {
+  background: var(--dsk-subtle);
+}
+.dk-eif-run.dk-transaction:not(.dk-odd):not(.dk-even) {
+  background: var(--dsk-faint);
+}
+.dk-eif-run.dk-warn {
+  background: var(--dsk-warn);
+}
+.dk-eif-run.dk-bad {
+  background: var(--danger);
+}
+.dk-eif-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 10.5px;
+  color: var(--dsk-faint);
+}
+.dk-eif-aside {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+/* what the file carried: a folder per group, a row per transaction set */
+.dk-eif-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dk-eif-group {
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-card);
+  overflow: hidden;
+}
+.dk-eif-gh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--dsk-b-sub);
+  background: var(--dsk-sunken);
+}
+.dk-eif-gcode {
+  padding: 0 7px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 999px;
+  font-family: var(--dk-plex);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--dsk-fg);
+  background: var(--dsk-card);
+}
+.dk-eif-gh > b {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-eif-gh > code {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-eif-gcount {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.dk-eif-gcount.dk-ok {
+  color: var(--dsk-success-fg);
+}
+.dk-eif-gcount.dk-bad {
+  color: var(--danger);
+}
+.dk-eif-entries {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-eif-entry + .dk-eif-entry {
+  border-top: 1px dashed var(--dsk-b-sub);
+}
+.dk-rec-row.dk-eif-row,
+.dk-eif-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 12px;
+  border-top: 0;
+}
+.dk-eif-row.dk-unkept {
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+}
+.dk-eif-set {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 28px;
+  border-radius: 6px;
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dsk-fg);
+  background: var(--dsk-sunken);
+}
+.dk-eif-row.dk-unkept .dk-eif-set {
+  color: var(--dsk-subtle);
+  outline: 1px dashed var(--dsk-b-strong);
+  outline-offset: -1px;
+  background: transparent;
+}
+.dk-eif-row .dk-rec-main > b {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.dk-eif-row .dk-rec-main > b > code {
+  font-family: var(--dk-plex);
+  font-feature-settings: "tnum";
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--dsk-subtle);
+}
+.dk-eif-row .dk-rec-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-eif-verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  white-space: nowrap;
+  color: var(--dsk-subtle);
+}
+.dk-eif-verdict.dk-routed {
+  color: var(--dsk-success-fg);
+}
+.dk-eif-verdict.dk-noted {
+  color: var(--dsk-warn-fg);
+}
+.dk-eif-verdict.dk-failed {
+  color: var(--danger);
+}
+.dk-eif-miscount {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 12px 8px 58px;
+  font-family: var(--dk-plex);
+  font-size: 11.5px;
+  color: var(--danger);
+}
+.dk-eif-findings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dk-eif-findings > .dk-edi-mark {
+  margin: 0;
+}
+.dk-eif-findings.dk-under {
+  margin: 0 12px 10px 58px;
+}
+.dk-eif-checks + .dk-eif-findings,
+.dk-eif-glimpse + .dk-eif-findings {
+  margin-top: 10px;
+}
+.dk-eif-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px dashed var(--dsk-b);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--dsk-fg2);
+}
+.dk-eif-more:hover {
+  color: var(--dsk-fg);
+  background: var(--dsk-hover);
+}
+/* the interchange's envelope, checked end to end */
+.dk-eif-checks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12.5px;
+}
+.dk-eif-checks > li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dsk-fg);
+}
+.dk-eif-checks > li > svg {
+  flex: none;
+}
+.dk-eif-checks > .dk-ok > svg {
+  color: var(--dsk-success-fg);
+}
+.dk-eif-checks > .dk-bad {
+  color: var(--danger);
+}
+.dk-eif-checks > .dk-sep {
+  gap: 4px;
+  color: var(--dsk-subtle);
+}
+.dk-eif-checks > .dk-sep > span {
+  margin-right: 2px;
+}
+.dk-eif-checks code {
+  display: inline-grid;
+  padding: 0 4px;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  font-family: var(--dk-plex);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dsk-fg);
+  background: var(--dsk-sunken);
+}
+/* the start of a file that is not X12, as it was sent */
+.dk-eif-glimpse {
+  margin: 8px 0 0;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: 10px;
+  background: var(--dsk-sunken);
+  overflow: hidden;
+}
+.dk-eif-glimpse > pre {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 8px 12px 8px 0;
+  font-family: var(--dk-plex);
+  font-size: 12px;
+  line-height: 20px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--dsk-fg2);
+}
+.dk-eif-glimpse > pre > span {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  column-gap: 10px;
+}
+.dk-eif-glimpse > pre i {
+  justify-self: end;
+  padding: 0 5px;
+  font-style: normal;
+  font-size: 10.5px;
+  user-select: none;
+  color: var(--dsk-faint);
+}
+.dk-eif-glimpse > figcaption {
+  padding: 6px 12px;
+  border-top: 1px dashed var(--dsk-b);
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+@container dkeif (max-width: 460px) {
+  .dk-eif-intake {
+    grid-auto-flow: row;
+    gap: 8px;
+  }
+  .dk-eif-stage .dk-eif-chev,
+  .dk-eif-stage:first-child .dk-eif-chev,
+  .dk-eif-stage:last-child .dk-eif-chev {
+    padding-left: 10px;
+    border-radius: 6px 0 0 6px;
+    clip-path: polygon(
+      0 0,
+      calc(100% - var(--dk-eif-notch)) 0,
+      100% 50%,
+      calc(100% - var(--dk-eif-notch)) 100%,
+      0 100%
+    );
+  }
+  .dk-eif-addr {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+  .dk-eif-icn {
+    grid-column: 1 / -1;
+    padding: 8px 0 0;
+    border-top: 1px dashed var(--dsk-b);
+    border-left: 0;
+  }
+  .dk-eif-foot .dk-eif-f-way,
+  .dk-eif-foot .dk-eif-f-print {
+    grid-column: 1 / -1;
+  }
+  .dk-rec-row.dk-eif-row,
+  .dk-eif-row {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+  .dk-eif-verdict {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .dk-eif-notes.dk-under,
+  .dk-eif-miscount,
+  .dk-eif-findings.dk-under {
+    margin-left: 12px;
+  }
+  .dk-eif-gcount {
+    margin-left: 0;
+  }
+}

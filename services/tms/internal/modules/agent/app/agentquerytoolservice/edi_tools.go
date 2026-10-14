@@ -352,6 +352,7 @@ type ediMessageRow struct {
 type ediInboundFileView struct {
 	ediInboundFileRow
 
+	Title           string          `json:"title"`
 	ReceiverID      string          `json:"isaReceiverId,omitempty"`
 	ProfileName     string          `json:"communicationProfile,omitempty"`
 	MessageCount    int             `json:"messageCount"`
@@ -389,6 +390,7 @@ func (t *getEDIInboundFileTool) Query(
 
 	view := ediInboundFileView{
 		ediInboundFileRow: ediInboundFileRowFrom(file),
+		Title:             file.FileName,
 		ReceiverID:        file.ISAReceiverID,
 		MessageCount:      len(file.Messages),
 		MessagesOmitted:   max(len(file.Messages)-maxInboundMessages, 0),

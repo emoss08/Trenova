@@ -60,16 +60,38 @@ func parseInterchange(rawX12 string) (*parsedInterchange, error) {
 		for segmentIndex := range segments {
 			raw.WriteString(segments[segmentIndex].RawWithTerminator)
 		}
+		functionalGroupID, groupControlNumber := interchange.functionalGroupID,
+			interchange.groupControlNumber
+		if group := enclosingGroup(inspection.Groups, transaction); group != nil {
+			functionalGroupID = strings.TrimSpace(group.FunctionalIDCode)
+			groupControlNumber = strings.TrimSpace(group.GSControlNumber)
+		}
 		interchange.transactions = append(interchange.transactions, parsedTransaction{
 			set:                edi.TransactionSet(transaction.TransactionSet),
 			controlNumber:      strings.TrimSpace(transaction.STControlNumber),
-			groupControlNumber: interchange.groupControlNumber,
-			functionalGroupID:  interchange.functionalGroupID,
+			groupControlNumber: groupControlNumber,
+			functionalGroupID:  functionalGroupID,
 			segments:           segments,
 			raw:                raw.String(),
 		})
 	}
 	return interchange, nil
+}
+
+func enclosingGroup(
+	groups []edix12inspect.X12FunctionalGroup,
+	transaction *edix12inspect.X12Transaction,
+) *edix12inspect.X12FunctionalGroup {
+	for index := range groups {
+		group := &groups[index]
+		if transaction.StartSegmentIndex <= group.StartSegmentIndex {
+			continue
+		}
+		if group.EndSegmentIndex == 0 || transaction.StartSegmentIndex < group.EndSegmentIndex {
+			return group
+		}
+	}
+	return nil
 }
 
 func transactionSegments(

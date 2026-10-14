@@ -71,7 +71,13 @@ export const edi = createQueryKeys("edi", {
   }),
   inboundFile: (fileId: string) => ({
     queryKey: ["inbound-file", fileId],
-    queryFn: () => apiService.ediService.getInboundFile(fileId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.ediService.getInboundFile(fileId, { signal }),
+  }),
+  inboundFileInspection: (fileId: string) => ({
+    queryKey: ["inbound-file-inspection", fileId],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.ediService.inspectInboundFile(fileId, { signal }),
   }),
   messages: (query = "") => ({
     queryKey: ["messages", query],

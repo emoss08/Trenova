@@ -314,7 +314,7 @@ export type EDIMappingPreview = z.infer<typeof ediMappingPreviewSchema>;
 const nullableNumberSchema = z.number().nullish();
 
 export const loadTenderStopSchema = z.object({
-  locationId: z.string(),
+  locationId: z.string().nullish(),
   locationLabel: z.string().nullish(),
   locationName: z.string().nullish(),
   locationCode: z.string().nullish(),
@@ -1014,6 +1014,7 @@ export const ediInboundFileSchema = z.object({
   transactionCount: z.number().default(0),
   receivedAt: z.number(),
   processedAt: nullableNumberSchema,
+  rawPurgedAt: nullableNumberSchema,
   version: z.number().optional(),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),

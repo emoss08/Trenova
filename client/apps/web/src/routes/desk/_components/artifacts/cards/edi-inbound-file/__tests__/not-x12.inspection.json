@@ -1,0 +1,116 @@
+{
+  "rawX12": "Hello from the Acme EDI team,\nplease find this week's tenders attached.\nRegards, Dana\n",
+  "transactionSet": "",
+  "x12Version": "",
+  "separators": {
+    "element": "*",
+    "segment": "~",
+    "component": "\u003e",
+    "repetition": "^",
+    "source": "fallback",
+    "hasConflict": false
+  },
+  "summary": {
+    "segmentCount": 1,
+    "groupCount": 0,
+    "transactionCount": 0,
+    "errorCount": 7,
+    "warningCount": 2,
+    "infoCount": 0
+  },
+  "envelope": {
+    "actualGroups": 0
+  },
+  "groups": [],
+  "transactions": [],
+  "segments": [
+    {
+      "index": 1,
+      "segmentId": "Hello from the Acme EDI team,\nplease find this week's tenders attached.\nRegards, Dana",
+      "name": "Unknown Segment",
+      "type": "detail",
+      "raw": "Hello from the Acme EDI team,\nplease find this week's tenders attached.\nRegards, Dana",
+      "rawWithTerminator": "Hello from the Acme EDI team,\nplease find this week's tenders attached.\nRegards, Dana",
+      "startOffset": 0,
+      "endOffset": 85,
+      "elements": [],
+      "malformed": true
+    }
+  ],
+  "formatted": "    Hello from the Acme EDI team,\nplease find this week's tenders attached.\nRegards, Dana - Unknown Segment\n      ! Error: Segment ID \"Hello from the Acme EDI team,\\nplease find this week's tenders attached.\\nRegards, Dana\" is not a valid X12 segment identifier.\n      ! Warning: The final segment is missing the detected segment terminator.",
+  "diagnostics": [
+    {
+      "severity": "Warning",
+      "code": "x12.separator.fallback",
+      "source": "inspection",
+      "message": "Unable to read X12 separators from ISA; default X12 separators were used.",
+      "suggestedFix": "Provide a valid ISA segment or envelope separators."
+    },
+    {
+      "severity": "Error",
+      "code": "x12.segment.id_malformed",
+      "source": "inspection",
+      "segmentId": "Hello from the Acme EDI team,\nplease find this week's tenders attached.\nRegards, Dana",
+      "segmentIndex": 1,
+      "message": "Segment ID \"Hello from the Acme EDI team,\\nplease find this week's tenders attached.\\nRegards, Dana\" is not a valid X12 segment identifier.",
+      "suggestedFix": "Use a two or three character uppercase alphanumeric segment ID."
+    },
+    {
+      "severity": "Warning",
+      "code": "x12.segment.missing_terminator",
+      "source": "inspection",
+      "segmentId": "Hello from the Acme EDI team,\nplease find this week's tenders attached.\nRegards, Dana",
+      "segmentIndex": 1,
+      "message": "The final segment is missing the detected segment terminator.",
+      "suggestedFix": "Append the segment terminator to the final X12 segment."
+    },
+    {
+      "severity": "Error",
+      "code": "x12.envelope.missing_isa",
+      "source": "inspection",
+      "segmentId": "ISA",
+      "message": "Required envelope segment ISA is missing.",
+      "suggestedFix": "Include a complete ISA/GS/ST/SE/GE/IEA envelope."
+    },
+    {
+      "severity": "Error",
+      "code": "x12.envelope.missing_gs",
+      "source": "inspection",
+      "segmentId": "GS",
+      "message": "Required envelope segment GS is missing.",
+      "suggestedFix": "Include a complete ISA/GS/ST/SE/GE/IEA envelope."
+    },
+    {
+      "severity": "Error",
+      "code": "x12.envelope.missing_st",
+      "source": "inspection",
+      "segmentId": "ST",
+      "message": "Required envelope segment ST is missing.",
+      "suggestedFix": "Include a complete ISA/GS/ST/SE/GE/IEA envelope."
+    },
+    {
+      "severity": "Error",
+      "code": "x12.envelope.missing_se",
+      "source": "inspection",
+      "segmentId": "SE",
+      "message": "Required envelope segment SE is missing.",
+      "suggestedFix": "Include a complete ISA/GS/ST/SE/GE/IEA envelope."
+    },
+    {
+      "severity": "Error",
+      "code": "x12.envelope.missing_ge",
+      "source": "inspection",
+      "segmentId": "GE",
+      "message": "Required envelope segment GE is missing.",
+      "suggestedFix": "Include a complete ISA/GS/ST/SE/GE/IEA envelope."
+    },
+    {
+      "severity": "Error",
+      "code": "x12.envelope.missing_iea",
+      "source": "inspection",
+      "segmentId": "IEA",
+      "message": "Required envelope segment IEA is missing.",
+      "suggestedFix": "Include a complete ISA/GS/ST/SE/GE/IEA envelope."
+    }
+  ]
+}

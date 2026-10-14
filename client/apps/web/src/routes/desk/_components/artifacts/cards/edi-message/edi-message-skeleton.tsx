@@ -100,8 +100,8 @@ export function DeskEdiMessageSkeleton({ stepper = false }: { stepper?: boolean 
         kicker={[56, 48, 64]}
         stepper={stepper}
         lead={<i className="dk-sk dk-edi-stamp" />}
-        title={128}
-        subtitle={96}
+        title={48}
+        subtitle={36}
         meta={[112, 72]}
       />
       <CardSectionSkeleton title={48}>

@@ -1,0 +1,2342 @@
+{
+  "rawX12": "ISA*00*          *00*          *ZZ*ACMEFOODS      *ZZ*TRENOVA        *261013*0912*^*00401*000000317*0*P*\u003e~GS*SM*ACMEFOODS*TRENOVA*20261013*0912*317*X*004010~ST*204*0001~B2**ACME**LT-88240**PP~B2A*00~L11*LT-88240*BM~S5*1*CL~N1*SF*Acme Foods DC*93*ACME-DAL~S5*2*CU~N1*ST*Kroger Houston*93*KR-HOU~L3*42000*G***280000~SE*10*0001~ST*204*0002~B2**ACME**LT-88241**PP~B2A*04~L11*LT-88241*BM~S5*1*CL~N1*SF*Acme Foods DC*93*ACME-DAL~S5*2*CU~N1*ST*HEB San Antonio*93*HEB-SAT~SE*7*0002~GE*2*317~GS*FA*ACMEFOODS*TRENOVA*20261013*0912*318*X*004010~ST*997*0001~AK1*IM*433~AK2*210*0001~AK5*A~AK9*A*1*1*1~SE*6*0001~GE*1*318~IEA*2*000000317~",
+  "transactionSet": "",
+  "x12Version": "",
+  "separators": {
+    "element": "*",
+    "segment": "~",
+    "component": "\u003e",
+    "repetition": "^",
+    "source": "isa",
+    "hasConflict": false
+  },
+  "summary": {
+    "segmentCount": 31,
+    "groupCount": 2,
+    "transactionCount": 3,
+    "errorCount": 1,
+    "warningCount": 0,
+    "infoCount": 0
+  },
+  "envelope": {
+    "isaControlNumber": "000000317",
+    "ieaControlNumber": "000000317",
+    "expectedGroups": 2,
+    "actualGroups": 2
+  },
+  "groups": [
+    {
+      "index": 1,
+      "functionalIdCode": "SM",
+      "gsControlNumber": "317",
+      "geControlNumber": "317",
+      "expectedCount": 2,
+      "actualCount": 2,
+      "startSegmentIndex": 2,
+      "endSegmentIndex": 22
+    },
+    {
+      "index": 2,
+      "functionalIdCode": "FA",
+      "gsControlNumber": "318",
+      "geControlNumber": "318",
+      "expectedCount": 1,
+      "actualCount": 1,
+      "startSegmentIndex": 23,
+      "endSegmentIndex": 30
+    }
+  ],
+  "transactions": [
+    {
+      "index": 1,
+      "transactionSet": "204",
+      "stControlNumber": "0001",
+      "seControlNumber": "0001",
+      "expectedSegments": 10,
+      "actualSegments": 10,
+      "startSegmentIndex": 3,
+      "endSegmentIndex": 12
+    },
+    {
+      "index": 2,
+      "transactionSet": "204",
+      "stControlNumber": "0002",
+      "seControlNumber": "0002",
+      "expectedSegments": 7,
+      "actualSegments": 9,
+      "startSegmentIndex": 13,
+      "endSegmentIndex": 21
+    },
+    {
+      "index": 3,
+      "transactionSet": "997",
+      "stControlNumber": "0001",
+      "seControlNumber": "0001",
+      "expectedSegments": 6,
+      "actualSegments": 6,
+      "startSegmentIndex": 24,
+      "endSegmentIndex": 29
+    }
+  ],
+  "segments": [
+    {
+      "index": 1,
+      "segmentId": "ISA",
+      "name": "Interchange Control Header",
+      "type": "interchange",
+      "raw": "ISA*00*          *00*          *ZZ*ACMEFOODS      *ZZ*TRENOVA        *261013*0912*^*00401*000000317*0*P*\u003e",
+      "rawWithTerminator": "ISA*00*          *00*          *ZZ*ACMEFOODS      *ZZ*TRENOVA        *261013*0912*^*00401*000000317*0*P*\u003e~",
+      "startOffset": 0,
+      "endOffset": 106,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Authorization Information Qualifier",
+          "value": "00",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 4,
+          "endOffset": 6,
+          "components": [
+            {
+              "position": 1,
+              "value": "00",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Authorization Information",
+          "value": "          ",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 7,
+          "endOffset": 17,
+          "components": [
+            {
+              "position": 1,
+              "value": "          ",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "label": "Security Information Qualifier",
+          "value": "00",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 18,
+          "endOffset": 20,
+          "components": [
+            {
+              "position": 1,
+              "value": "00",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "label": "Security Information",
+          "value": "          ",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 21,
+          "endOffset": 31,
+          "components": [
+            {
+              "position": 1,
+              "value": "          ",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 5,
+          "label": "Interchange ID Qualifier",
+          "value": "ZZ",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 32,
+          "endOffset": 34,
+          "components": [
+            {
+              "position": 1,
+              "value": "ZZ",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 6,
+          "label": "Interchange Sender ID",
+          "value": "ACMEFOODS      ",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 35,
+          "endOffset": 50,
+          "components": [
+            {
+              "position": 1,
+              "value": "ACMEFOODS      ",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 7,
+          "label": "Interchange ID Qualifier",
+          "value": "ZZ",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 51,
+          "endOffset": 53,
+          "components": [
+            {
+              "position": 1,
+              "value": "ZZ",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 8,
+          "label": "Interchange Receiver ID",
+          "value": "TRENOVA        ",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 54,
+          "endOffset": 69,
+          "components": [
+            {
+              "position": 1,
+              "value": "TRENOVA        ",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 9,
+          "label": "Interchange Date",
+          "value": "261013",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 70,
+          "endOffset": 76,
+          "components": [
+            {
+              "position": 1,
+              "value": "261013",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 10,
+          "label": "Interchange Time",
+          "value": "0912",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 77,
+          "endOffset": 81,
+          "components": [
+            {
+              "position": 1,
+              "value": "0912",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 11,
+          "label": "Repetition Separator",
+          "value": "^",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 82,
+          "endOffset": 83,
+          "components": [
+            {
+              "position": 1,
+              "value": "^",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 12,
+          "label": "Interchange Control Version Number",
+          "value": "00401",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 84,
+          "endOffset": 89,
+          "components": [
+            {
+              "position": 1,
+              "value": "00401",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 13,
+          "label": "Interchange Control Number",
+          "value": "000000317",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 90,
+          "endOffset": 99,
+          "components": [
+            {
+              "position": 1,
+              "value": "000000317",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 14,
+          "label": "Acknowledgment Requested",
+          "value": "0",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 100,
+          "endOffset": 101,
+          "components": [
+            {
+              "position": 1,
+              "value": "0",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 15,
+          "label": "Usage Indicator",
+          "value": "P",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 102,
+          "endOffset": 103,
+          "components": [
+            {
+              "position": 1,
+              "value": "P",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 16,
+          "label": "Component Element Separator",
+          "value": "\u003e",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 104,
+          "endOffset": 105,
+          "components": [
+            {
+              "position": 1,
+              "value": "",
+              "empty": true
+            },
+            {
+              "position": 2,
+              "value": "",
+              "empty": true
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 2,
+      "segmentId": "GS",
+      "name": "Functional Group Header",
+      "type": "group",
+      "raw": "GS*SM*ACMEFOODS*TRENOVA*20261013*0912*317*X*004010",
+      "rawWithTerminator": "GS*SM*ACMEFOODS*TRENOVA*20261013*0912*317*X*004010~",
+      "startOffset": 106,
+      "endOffset": 157,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Functional Identifier Code",
+          "value": "SM",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 109,
+          "endOffset": 111,
+          "components": [
+            {
+              "position": 1,
+              "value": "SM",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Application Sender Code",
+          "value": "ACMEFOODS",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 112,
+          "endOffset": 121,
+          "components": [
+            {
+              "position": 1,
+              "value": "ACMEFOODS",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "label": "Application Receiver Code",
+          "value": "TRENOVA",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 122,
+          "endOffset": 129,
+          "components": [
+            {
+              "position": 1,
+              "value": "TRENOVA",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "label": "Date",
+          "value": "20261013",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 130,
+          "endOffset": 138,
+          "components": [
+            {
+              "position": 1,
+              "value": "20261013",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 5,
+          "label": "Time",
+          "value": "0912",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 139,
+          "endOffset": 143,
+          "components": [
+            {
+              "position": 1,
+              "value": "0912",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 6,
+          "label": "Group Control Number",
+          "value": "317",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 144,
+          "endOffset": 147,
+          "components": [
+            {
+              "position": 1,
+              "value": "317",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 7,
+          "label": "Responsible Agency Code",
+          "value": "X",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 148,
+          "endOffset": 149,
+          "components": [
+            {
+              "position": 1,
+              "value": "X",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 8,
+          "label": "Version / Release / Industry Identifier Code",
+          "value": "004010",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 150,
+          "endOffset": 156,
+          "components": [
+            {
+              "position": 1,
+              "value": "004010",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 3,
+      "transactionIndex": 1,
+      "segmentId": "ST",
+      "name": "Transaction Set Header",
+      "type": "transaction",
+      "raw": "ST*204*0001",
+      "rawWithTerminator": "ST*204*0001~",
+      "startOffset": 157,
+      "endOffset": 169,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Transaction Set Identifier Code",
+          "value": "204",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 160,
+          "endOffset": 163,
+          "components": [
+            {
+              "position": 1,
+              "value": "204",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Transaction Set Control Number",
+          "value": "0001",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 164,
+          "endOffset": 168,
+          "components": [
+            {
+              "position": 1,
+              "value": "0001",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 4,
+      "transactionIndex": 1,
+      "segmentId": "B2",
+      "name": "Beginning Segment for Shipment Information",
+      "type": "detail",
+      "raw": "B2**ACME**LT-88240**PP",
+      "rawWithTerminator": "B2**ACME**LT-88240**PP~",
+      "startOffset": 169,
+      "endOffset": 192,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Tariff Service Code",
+          "value": "",
+          "empty": true,
+          "required": false,
+          "known": true,
+          "startOffset": 172,
+          "endOffset": 172,
+          "components": [
+            {
+              "position": 1,
+              "value": "",
+              "empty": true
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Standard Carrier Alpha Code",
+          "value": "ACME",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 173,
+          "endOffset": 177,
+          "components": [
+            {
+              "position": 1,
+              "value": "ACME",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "label": "Standard Point Location Code",
+          "value": "",
+          "empty": true,
+          "required": false,
+          "known": true,
+          "startOffset": 178,
+          "endOffset": 178,
+          "components": [
+            {
+              "position": 1,
+              "value": "",
+              "empty": true
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "label": "Shipment Identification Number",
+          "value": "LT-88240",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 179,
+          "endOffset": 187,
+          "components": [
+            {
+              "position": 1,
+              "value": "LT-88240",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 5,
+          "label": "Weight Unit Code",
+          "value": "",
+          "empty": true,
+          "required": false,
+          "known": true,
+          "startOffset": 188,
+          "endOffset": 188,
+          "components": [
+            {
+              "position": 1,
+              "value": "",
+              "empty": true
+            }
+          ]
+        },
+        {
+          "position": 6,
+          "label": "Shipment Method of Payment",
+          "value": "PP",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 189,
+          "endOffset": 191,
+          "components": [
+            {
+              "position": 1,
+              "value": "PP",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 5,
+      "transactionIndex": 1,
+      "segmentId": "B2A",
+      "name": "Set Purpose",
+      "type": "detail",
+      "raw": "B2A*00",
+      "rawWithTerminator": "B2A*00~",
+      "startOffset": 192,
+      "endOffset": 199,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Transaction Set Purpose Code",
+          "value": "00",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 196,
+          "endOffset": 198,
+          "components": [
+            {
+              "position": 1,
+              "value": "00",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 6,
+      "transactionIndex": 1,
+      "segmentId": "L11",
+      "name": "Business Instructions and Reference Number",
+      "type": "detail",
+      "raw": "L11*LT-88240*BM",
+      "rawWithTerminator": "L11*LT-88240*BM~",
+      "startOffset": 199,
+      "endOffset": 215,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Reference Identification",
+          "value": "LT-88240",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 203,
+          "endOffset": 211,
+          "components": [
+            {
+              "position": 1,
+              "value": "LT-88240",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Reference Identification Qualifier",
+          "value": "BM",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 212,
+          "endOffset": 214,
+          "components": [
+            {
+              "position": 1,
+              "value": "BM",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 7,
+      "transactionIndex": 1,
+      "segmentId": "S5",
+      "name": "Stop-off Details",
+      "type": "loop",
+      "loop": "S5",
+      "raw": "S5*1*CL",
+      "rawWithTerminator": "S5*1*CL~",
+      "startOffset": 215,
+      "endOffset": 223,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Stop Sequence Number",
+          "value": "1",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 218,
+          "endOffset": 219,
+          "components": [
+            {
+              "position": 1,
+              "value": "1",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Stop Reason Code",
+          "value": "CL",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 220,
+          "endOffset": 222,
+          "components": [
+            {
+              "position": 1,
+              "value": "CL",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 8,
+      "transactionIndex": 1,
+      "segmentId": "N1",
+      "name": "Name",
+      "type": "loop",
+      "loop": "N1",
+      "raw": "N1*SF*Acme Foods DC*93*ACME-DAL",
+      "rawWithTerminator": "N1*SF*Acme Foods DC*93*ACME-DAL~",
+      "startOffset": 223,
+      "endOffset": 255,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Entity Identifier Code",
+          "value": "SF",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 226,
+          "endOffset": 228,
+          "components": [
+            {
+              "position": 1,
+              "value": "SF",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Name",
+          "value": "Acme Foods DC",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 229,
+          "endOffset": 242,
+          "components": [
+            {
+              "position": 1,
+              "value": "Acme Foods DC",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "label": "Identification Code Qualifier",
+          "value": "93",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 243,
+          "endOffset": 245,
+          "components": [
+            {
+              "position": 1,
+              "value": "93",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "label": "Identification Code",
+          "value": "ACME-DAL",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 246,
+          "endOffset": 254,
+          "components": [
+            {
+              "position": 1,
+              "value": "ACME-DAL",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 9,
+      "transactionIndex": 1,
+      "segmentId": "S5",
+      "name": "Stop-off Details",
+      "type": "loop",
+      "loop": "S5",
+      "raw": "S5*2*CU",
+      "rawWithTerminator": "S5*2*CU~",
+      "startOffset": 255,
+      "endOffset": 263,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Stop Sequence Number",
+          "value": "2",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 258,
+          "endOffset": 259,
+          "components": [
+            {
+              "position": 1,
+              "value": "2",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Stop Reason Code",
+          "value": "CU",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 260,
+          "endOffset": 262,
+          "components": [
+            {
+              "position": 1,
+              "value": "CU",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 10,
+      "transactionIndex": 1,
+      "segmentId": "N1",
+      "name": "Name",
+      "type": "loop",
+      "loop": "N1",
+      "raw": "N1*ST*Kroger Houston*93*KR-HOU",
+      "rawWithTerminator": "N1*ST*Kroger Houston*93*KR-HOU~",
+      "startOffset": 263,
+      "endOffset": 294,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Entity Identifier Code",
+          "value": "ST",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 266,
+          "endOffset": 268,
+          "components": [
+            {
+              "position": 1,
+              "value": "ST",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Name",
+          "value": "Kroger Houston",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 269,
+          "endOffset": 283,
+          "components": [
+            {
+              "position": 1,
+              "value": "Kroger Houston",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "label": "Identification Code Qualifier",
+          "value": "93",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 284,
+          "endOffset": 286,
+          "components": [
+            {
+              "position": 1,
+              "value": "93",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "label": "Identification Code",
+          "value": "KR-HOU",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 287,
+          "endOffset": 293,
+          "components": [
+            {
+              "position": 1,
+              "value": "KR-HOU",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 11,
+      "transactionIndex": 1,
+      "segmentId": "L3",
+      "name": "Total Weight and Charges",
+      "type": "summary",
+      "raw": "L3*42000*G***280000",
+      "rawWithTerminator": "L3*42000*G***280000~",
+      "startOffset": 294,
+      "endOffset": 314,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Weight",
+          "value": "42000",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 297,
+          "endOffset": 302,
+          "components": [
+            {
+              "position": 1,
+              "value": "42000",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Weight Qualifier",
+          "value": "G",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 303,
+          "endOffset": 304,
+          "components": [
+            {
+              "position": 1,
+              "value": "G",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "label": "Element 03",
+          "value": "",
+          "empty": true,
+          "required": false,
+          "known": false,
+          "startOffset": 305,
+          "endOffset": 305,
+          "components": [
+            {
+              "position": 1,
+              "value": "",
+              "empty": true
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "label": "Element 04",
+          "value": "",
+          "empty": true,
+          "required": false,
+          "known": false,
+          "startOffset": 306,
+          "endOffset": 306,
+          "components": [
+            {
+              "position": 1,
+              "value": "",
+              "empty": true
+            }
+          ]
+        },
+        {
+          "position": 5,
+          "label": "Charge",
+          "value": "280000",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 307,
+          "endOffset": 313,
+          "components": [
+            {
+              "position": 1,
+              "value": "280000",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 12,
+      "transactionIndex": 1,
+      "segmentId": "SE",
+      "name": "Transaction Set Trailer",
+      "type": "transaction",
+      "raw": "SE*10*0001",
+      "rawWithTerminator": "SE*10*0001~",
+      "startOffset": 314,
+      "endOffset": 325,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Number of Included Segments",
+          "value": "10",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 317,
+          "endOffset": 319,
+          "components": [
+            {
+              "position": 1,
+              "value": "10",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Transaction Set Control Number",
+          "value": "0001",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 320,
+          "endOffset": 324,
+          "components": [
+            {
+              "position": 1,
+              "value": "0001",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 13,
+      "transactionIndex": 2,
+      "segmentId": "ST",
+      "name": "Transaction Set Header",
+      "type": "transaction",
+      "raw": "ST*204*0002",
+      "rawWithTerminator": "ST*204*0002~",
+      "startOffset": 325,
+      "endOffset": 337,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Transaction Set Identifier Code",
+          "value": "204",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 328,
+          "endOffset": 331,
+          "components": [
+            {
+              "position": 1,
+              "value": "204",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Transaction Set Control Number",
+          "value": "0002",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 332,
+          "endOffset": 336,
+          "components": [
+            {
+              "position": 1,
+              "value": "0002",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 14,
+      "transactionIndex": 2,
+      "segmentId": "B2",
+      "name": "Beginning Segment for Shipment Information",
+      "type": "detail",
+      "raw": "B2**ACME**LT-88241**PP",
+      "rawWithTerminator": "B2**ACME**LT-88241**PP~",
+      "startOffset": 337,
+      "endOffset": 360,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Tariff Service Code",
+          "value": "",
+          "empty": true,
+          "required": false,
+          "known": true,
+          "startOffset": 340,
+          "endOffset": 340,
+          "components": [
+            {
+              "position": 1,
+              "value": "",
+              "empty": true
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Standard Carrier Alpha Code",
+          "value": "ACME",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 341,
+          "endOffset": 345,
+          "components": [
+            {
+              "position": 1,
+              "value": "ACME",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "label": "Standard Point Location Code",
+          "value": "",
+          "empty": true,
+          "required": false,
+          "known": true,
+          "startOffset": 346,
+          "endOffset": 346,
+          "components": [
+            {
+              "position": 1,
+              "value": "",
+              "empty": true
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "label": "Shipment Identification Number",
+          "value": "LT-88241",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 347,
+          "endOffset": 355,
+          "components": [
+            {
+              "position": 1,
+              "value": "LT-88241",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 5,
+          "label": "Weight Unit Code",
+          "value": "",
+          "empty": true,
+          "required": false,
+          "known": true,
+          "startOffset": 356,
+          "endOffset": 356,
+          "components": [
+            {
+              "position": 1,
+              "value": "",
+              "empty": true
+            }
+          ]
+        },
+        {
+          "position": 6,
+          "label": "Shipment Method of Payment",
+          "value": "PP",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 357,
+          "endOffset": 359,
+          "components": [
+            {
+              "position": 1,
+              "value": "PP",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 15,
+      "transactionIndex": 2,
+      "segmentId": "B2A",
+      "name": "Set Purpose",
+      "type": "detail",
+      "raw": "B2A*04",
+      "rawWithTerminator": "B2A*04~",
+      "startOffset": 360,
+      "endOffset": 367,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Transaction Set Purpose Code",
+          "value": "04",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 364,
+          "endOffset": 366,
+          "components": [
+            {
+              "position": 1,
+              "value": "04",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 16,
+      "transactionIndex": 2,
+      "segmentId": "L11",
+      "name": "Business Instructions and Reference Number",
+      "type": "detail",
+      "raw": "L11*LT-88241*BM",
+      "rawWithTerminator": "L11*LT-88241*BM~",
+      "startOffset": 367,
+      "endOffset": 383,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Reference Identification",
+          "value": "LT-88241",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 371,
+          "endOffset": 379,
+          "components": [
+            {
+              "position": 1,
+              "value": "LT-88241",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Reference Identification Qualifier",
+          "value": "BM",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 380,
+          "endOffset": 382,
+          "components": [
+            {
+              "position": 1,
+              "value": "BM",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 17,
+      "transactionIndex": 2,
+      "segmentId": "S5",
+      "name": "Stop-off Details",
+      "type": "loop",
+      "loop": "S5",
+      "raw": "S5*1*CL",
+      "rawWithTerminator": "S5*1*CL~",
+      "startOffset": 383,
+      "endOffset": 391,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Stop Sequence Number",
+          "value": "1",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 386,
+          "endOffset": 387,
+          "components": [
+            {
+              "position": 1,
+              "value": "1",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Stop Reason Code",
+          "value": "CL",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 388,
+          "endOffset": 390,
+          "components": [
+            {
+              "position": 1,
+              "value": "CL",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 18,
+      "transactionIndex": 2,
+      "segmentId": "N1",
+      "name": "Name",
+      "type": "loop",
+      "loop": "N1",
+      "raw": "N1*SF*Acme Foods DC*93*ACME-DAL",
+      "rawWithTerminator": "N1*SF*Acme Foods DC*93*ACME-DAL~",
+      "startOffset": 391,
+      "endOffset": 423,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Entity Identifier Code",
+          "value": "SF",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 394,
+          "endOffset": 396,
+          "components": [
+            {
+              "position": 1,
+              "value": "SF",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Name",
+          "value": "Acme Foods DC",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 397,
+          "endOffset": 410,
+          "components": [
+            {
+              "position": 1,
+              "value": "Acme Foods DC",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "label": "Identification Code Qualifier",
+          "value": "93",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 411,
+          "endOffset": 413,
+          "components": [
+            {
+              "position": 1,
+              "value": "93",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "label": "Identification Code",
+          "value": "ACME-DAL",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 414,
+          "endOffset": 422,
+          "components": [
+            {
+              "position": 1,
+              "value": "ACME-DAL",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 19,
+      "transactionIndex": 2,
+      "segmentId": "S5",
+      "name": "Stop-off Details",
+      "type": "loop",
+      "loop": "S5",
+      "raw": "S5*2*CU",
+      "rawWithTerminator": "S5*2*CU~",
+      "startOffset": 423,
+      "endOffset": 431,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Stop Sequence Number",
+          "value": "2",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 426,
+          "endOffset": 427,
+          "components": [
+            {
+              "position": 1,
+              "value": "2",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Stop Reason Code",
+          "value": "CU",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 428,
+          "endOffset": 430,
+          "components": [
+            {
+              "position": 1,
+              "value": "CU",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 20,
+      "transactionIndex": 2,
+      "segmentId": "N1",
+      "name": "Name",
+      "type": "loop",
+      "loop": "N1",
+      "raw": "N1*ST*HEB San Antonio*93*HEB-SAT",
+      "rawWithTerminator": "N1*ST*HEB San Antonio*93*HEB-SAT~",
+      "startOffset": 431,
+      "endOffset": 464,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Entity Identifier Code",
+          "value": "ST",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 434,
+          "endOffset": 436,
+          "components": [
+            {
+              "position": 1,
+              "value": "ST",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Name",
+          "value": "HEB San Antonio",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 437,
+          "endOffset": 452,
+          "components": [
+            {
+              "position": 1,
+              "value": "HEB San Antonio",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "label": "Identification Code Qualifier",
+          "value": "93",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 453,
+          "endOffset": 455,
+          "components": [
+            {
+              "position": 1,
+              "value": "93",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "label": "Identification Code",
+          "value": "HEB-SAT",
+          "empty": false,
+          "required": false,
+          "known": true,
+          "startOffset": 456,
+          "endOffset": 463,
+          "components": [
+            {
+              "position": 1,
+              "value": "HEB-SAT",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 21,
+      "transactionIndex": 2,
+      "segmentId": "SE",
+      "name": "Transaction Set Trailer",
+      "type": "transaction",
+      "raw": "SE*7*0002",
+      "rawWithTerminator": "SE*7*0002~",
+      "startOffset": 464,
+      "endOffset": 474,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Number of Included Segments",
+          "value": "7",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 467,
+          "endOffset": 468,
+          "components": [
+            {
+              "position": 1,
+              "value": "7",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Transaction Set Control Number",
+          "value": "0002",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 469,
+          "endOffset": 473,
+          "components": [
+            {
+              "position": 1,
+              "value": "0002",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 22,
+      "transactionIndex": 2,
+      "segmentId": "GE",
+      "name": "Functional Group Trailer",
+      "type": "group",
+      "raw": "GE*2*317",
+      "rawWithTerminator": "GE*2*317~",
+      "startOffset": 474,
+      "endOffset": 483,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Number of Transaction Sets Included",
+          "value": "2",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 477,
+          "endOffset": 478,
+          "components": [
+            {
+              "position": 1,
+              "value": "2",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Group Control Number",
+          "value": "317",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 479,
+          "endOffset": 482,
+          "components": [
+            {
+              "position": 1,
+              "value": "317",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 23,
+      "transactionIndex": 2,
+      "segmentId": "GS",
+      "name": "Functional Group Header",
+      "type": "group",
+      "raw": "GS*FA*ACMEFOODS*TRENOVA*20261013*0912*318*X*004010",
+      "rawWithTerminator": "GS*FA*ACMEFOODS*TRENOVA*20261013*0912*318*X*004010~",
+      "startOffset": 483,
+      "endOffset": 534,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Functional Identifier Code",
+          "value": "FA",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 486,
+          "endOffset": 488,
+          "components": [
+            {
+              "position": 1,
+              "value": "FA",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Application Sender Code",
+          "value": "ACMEFOODS",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 489,
+          "endOffset": 498,
+          "components": [
+            {
+              "position": 1,
+              "value": "ACMEFOODS",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "label": "Application Receiver Code",
+          "value": "TRENOVA",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 499,
+          "endOffset": 506,
+          "components": [
+            {
+              "position": 1,
+              "value": "TRENOVA",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "label": "Date",
+          "value": "20261013",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 507,
+          "endOffset": 515,
+          "components": [
+            {
+              "position": 1,
+              "value": "20261013",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 5,
+          "label": "Time",
+          "value": "0912",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 516,
+          "endOffset": 520,
+          "components": [
+            {
+              "position": 1,
+              "value": "0912",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 6,
+          "label": "Group Control Number",
+          "value": "318",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 521,
+          "endOffset": 524,
+          "components": [
+            {
+              "position": 1,
+              "value": "318",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 7,
+          "label": "Responsible Agency Code",
+          "value": "X",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 525,
+          "endOffset": 526,
+          "components": [
+            {
+              "position": 1,
+              "value": "X",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 8,
+          "label": "Version / Release / Industry Identifier Code",
+          "value": "004010",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 527,
+          "endOffset": 533,
+          "components": [
+            {
+              "position": 1,
+              "value": "004010",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 24,
+      "transactionIndex": 3,
+      "segmentId": "ST",
+      "name": "Transaction Set Header",
+      "type": "transaction",
+      "raw": "ST*997*0001",
+      "rawWithTerminator": "ST*997*0001~",
+      "startOffset": 534,
+      "endOffset": 546,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Transaction Set Identifier Code",
+          "value": "997",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 537,
+          "endOffset": 540,
+          "components": [
+            {
+              "position": 1,
+              "value": "997",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Transaction Set Control Number",
+          "value": "0001",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 541,
+          "endOffset": 545,
+          "components": [
+            {
+              "position": 1,
+              "value": "0001",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 25,
+      "transactionIndex": 3,
+      "segmentId": "AK1",
+      "name": "Unknown Segment",
+      "type": "detail",
+      "raw": "AK1*IM*433",
+      "rawWithTerminator": "AK1*IM*433~",
+      "startOffset": 546,
+      "endOffset": 557,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Element 01",
+          "value": "IM",
+          "empty": false,
+          "required": false,
+          "known": false,
+          "startOffset": 550,
+          "endOffset": 552,
+          "components": [
+            {
+              "position": 1,
+              "value": "IM",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Element 02",
+          "value": "433",
+          "empty": false,
+          "required": false,
+          "known": false,
+          "startOffset": 553,
+          "endOffset": 556,
+          "components": [
+            {
+              "position": 1,
+              "value": "433",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 26,
+      "transactionIndex": 3,
+      "segmentId": "AK2",
+      "name": "Unknown Segment",
+      "type": "detail",
+      "raw": "AK2*210*0001",
+      "rawWithTerminator": "AK2*210*0001~",
+      "startOffset": 557,
+      "endOffset": 570,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Element 01",
+          "value": "210",
+          "empty": false,
+          "required": false,
+          "known": false,
+          "startOffset": 561,
+          "endOffset": 564,
+          "components": [
+            {
+              "position": 1,
+              "value": "210",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Element 02",
+          "value": "0001",
+          "empty": false,
+          "required": false,
+          "known": false,
+          "startOffset": 565,
+          "endOffset": 569,
+          "components": [
+            {
+              "position": 1,
+              "value": "0001",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 27,
+      "transactionIndex": 3,
+      "segmentId": "AK5",
+      "name": "Unknown Segment",
+      "type": "detail",
+      "raw": "AK5*A",
+      "rawWithTerminator": "AK5*A~",
+      "startOffset": 570,
+      "endOffset": 576,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Element 01",
+          "value": "A",
+          "empty": false,
+          "required": false,
+          "known": false,
+          "startOffset": 574,
+          "endOffset": 575,
+          "components": [
+            {
+              "position": 1,
+              "value": "A",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 28,
+      "transactionIndex": 3,
+      "segmentId": "AK9",
+      "name": "Unknown Segment",
+      "type": "detail",
+      "raw": "AK9*A*1*1*1",
+      "rawWithTerminator": "AK9*A*1*1*1~",
+      "startOffset": 576,
+      "endOffset": 588,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Element 01",
+          "value": "A",
+          "empty": false,
+          "required": false,
+          "known": false,
+          "startOffset": 580,
+          "endOffset": 581,
+          "components": [
+            {
+              "position": 1,
+              "value": "A",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Element 02",
+          "value": "1",
+          "empty": false,
+          "required": false,
+          "known": false,
+          "startOffset": 582,
+          "endOffset": 583,
+          "components": [
+            {
+              "position": 1,
+              "value": "1",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "label": "Element 03",
+          "value": "1",
+          "empty": false,
+          "required": false,
+          "known": false,
+          "startOffset": 584,
+          "endOffset": 585,
+          "components": [
+            {
+              "position": 1,
+              "value": "1",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "label": "Element 04",
+          "value": "1",
+          "empty": false,
+          "required": false,
+          "known": false,
+          "startOffset": 586,
+          "endOffset": 587,
+          "components": [
+            {
+              "position": 1,
+              "value": "1",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 29,
+      "transactionIndex": 3,
+      "segmentId": "SE",
+      "name": "Transaction Set Trailer",
+      "type": "transaction",
+      "raw": "SE*6*0001",
+      "rawWithTerminator": "SE*6*0001~",
+      "startOffset": 588,
+      "endOffset": 598,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Number of Included Segments",
+          "value": "6",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 591,
+          "endOffset": 592,
+          "components": [
+            {
+              "position": 1,
+              "value": "6",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Transaction Set Control Number",
+          "value": "0001",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 593,
+          "endOffset": 597,
+          "components": [
+            {
+              "position": 1,
+              "value": "0001",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 30,
+      "transactionIndex": 3,
+      "segmentId": "GE",
+      "name": "Functional Group Trailer",
+      "type": "group",
+      "raw": "GE*1*318",
+      "rawWithTerminator": "GE*1*318~",
+      "startOffset": 598,
+      "endOffset": 607,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Number of Transaction Sets Included",
+          "value": "1",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 601,
+          "endOffset": 602,
+          "components": [
+            {
+              "position": 1,
+              "value": "1",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Group Control Number",
+          "value": "318",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 603,
+          "endOffset": 606,
+          "components": [
+            {
+              "position": 1,
+              "value": "318",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    },
+    {
+      "index": 31,
+      "transactionIndex": 3,
+      "segmentId": "IEA",
+      "name": "Interchange Control Trailer",
+      "type": "interchange",
+      "raw": "IEA*2*000000317",
+      "rawWithTerminator": "IEA*2*000000317~",
+      "startOffset": 607,
+      "endOffset": 623,
+      "elements": [
+        {
+          "position": 1,
+          "label": "Number of Included Functional Groups",
+          "value": "2",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 611,
+          "endOffset": 612,
+          "components": [
+            {
+              "position": 1,
+              "value": "2",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "label": "Interchange Control Number",
+          "value": "000000317",
+          "empty": false,
+          "required": true,
+          "known": true,
+          "startOffset": 613,
+          "endOffset": 622,
+          "components": [
+            {
+              "position": 1,
+              "value": "000000317",
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "malformed": false
+    }
+  ],
+  "formatted": "ISA - Interchange Control Header\n  ISA01 Authorization Information Qualifier: 00\n  ISA02 Authorization Information:           \n  ISA03 Security Information Qualifier: 00\n  ISA04 Security Information:           \n  ISA05 Interchange ID Qualifier: ZZ\n  ISA06 Interchange Sender ID: ACMEFOODS      \n  ISA07 Interchange ID Qualifier: ZZ\n  ISA08 Interchange Receiver ID: TRENOVA        \n  ISA09 Interchange Date: 261013\n  ISA10 Interchange Time: 0912\n  ISA11 Repetition Separator: ^\n  ISA12 Interchange Control Version Number: 00401\n  ISA13 Interchange Control Number: 000000317\n  ISA14 Acknowledgment Requested: 0\n  ISA15 Usage Indicator: P\n  ISA16 Component Element Separator: \u003e ([empty] \u003e [empty])\n  GS - Functional Group Header\n    GS01 Functional Identifier Code: SM\n    GS02 Application Sender Code: ACMEFOODS\n    GS03 Application Receiver Code: TRENOVA\n    GS04 Date: 20261013\n    GS05 Time: 0912\n    GS06 Group Control Number: 317\n    GS07 Responsible Agency Code: X\n    GS08 Version / Release / Industry Identifier Code: 004010\n    ST - Transaction Set Header\n      ST01 Transaction Set Identifier Code: 204\n      ST02 Transaction Set Control Number: 0001\n    B2 - Beginning Segment for Shipment Information\n      B201 Tariff Service Code: [empty]\n      B202 Standard Carrier Alpha Code: ACME\n      B203 Standard Point Location Code: [empty]\n      B204 Shipment Identification Number: LT-88240\n      B205 Weight Unit Code: [empty]\n      B206 Shipment Method of Payment: PP\n    B2A - Set Purpose\n      B2A01 Transaction Set Purpose Code: 00\n    L11 - Business Instructions and Reference Number\n      L1101 Reference Identification: LT-88240\n      L1102 Reference Identification Qualifier: BM\n    S5 - Stop-off Details\n      S501 Stop Sequence Number: 1\n      S502 Stop Reason Code: CL\n    N1 - Name\n      N101 Entity Identifier Code: SF\n      N102 Name: Acme Foods DC\n      N103 Identification Code Qualifier: 93\n      N104 Identification Code: ACME-DAL\n    S5 - Stop-off Details\n      S501 Stop Sequence Number: 2\n      S502 Stop Reason Code: CU\n    N1 - Name\n      N101 Entity Identifier Code: ST\n      N102 Name: Kroger Houston\n      N103 Identification Code Qualifier: 93\n      N104 Identification Code: KR-HOU\n    L3 - Total Weight and Charges\n      L301 Weight: 42000\n      L302 Weight Qualifier: G\n      L303 Element 03: [empty]\n      L304 Element 04: [empty]\n      L305 Charge: 280000\n    SE - Transaction Set Trailer\n      SE01 Number of Included Segments: 10\n      SE02 Transaction Set Control Number: 0001\n    ST - Transaction Set Header\n      ST01 Transaction Set Identifier Code: 204\n      ST02 Transaction Set Control Number: 0002\n    B2 - Beginning Segment for Shipment Information\n      B201 Tariff Service Code: [empty]\n      B202 Standard Carrier Alpha Code: ACME\n      B203 Standard Point Location Code: [empty]\n      B204 Shipment Identification Number: LT-88241\n      B205 Weight Unit Code: [empty]\n      B206 Shipment Method of Payment: PP\n    B2A - Set Purpose\n      B2A01 Transaction Set Purpose Code: 04\n    L11 - Business Instructions and Reference Number\n      L1101 Reference Identification: LT-88241\n      L1102 Reference Identification Qualifier: BM\n    S5 - Stop-off Details\n      S501 Stop Sequence Number: 1\n      S502 Stop Reason Code: CL\n    N1 - Name\n      N101 Entity Identifier Code: SF\n      N102 Name: Acme Foods DC\n      N103 Identification Code Qualifier: 93\n      N104 Identification Code: ACME-DAL\n    S5 - Stop-off Details\n      S501 Stop Sequence Number: 2\n      S502 Stop Reason Code: CU\n    N1 - Name\n      N101 Entity Identifier Code: ST\n      N102 Name: HEB San Antonio\n      N103 Identification Code Qualifier: 93\n      N104 Identification Code: HEB-SAT\n    SE - Transaction Set Trailer\n      SE01 Number of Included Segments: 7\n      SE02 Transaction Set Control Number: 0002\n      ! Error: SE01 reports 7 segments but 9 were found from ST through SE.\n  GE - Functional Group Trailer\n    GE01 Number of Transaction Sets Included: 2\n    GE02 Group Control Number: 317\n  GS - Functional Group Header\n    GS01 Functional Identifier Code: FA\n    GS02 Application Sender Code: ACMEFOODS\n    GS03 Application Receiver Code: TRENOVA\n    GS04 Date: 20261013\n    GS05 Time: 0912\n    GS06 Group Control Number: 318\n    GS07 Responsible Agency Code: X\n    GS08 Version / Release / Industry Identifier Code: 004010\n    ST - Transaction Set Header\n      ST01 Transaction Set Identifier Code: 997\n      ST02 Transaction Set Control Number: 0001\n    AK1 - Unknown Segment\n      AK101 Element 01: IM\n      AK102 Element 02: 433\n    AK2 - Unknown Segment\n      AK201 Element 01: 210\n      AK202 Element 02: 0001\n    AK5 - Unknown Segment\n      AK501 Element 01: A\n    AK9 - Unknown Segment\n      AK901 Element 01: A\n      AK902 Element 02: 1\n      AK903 Element 03: 1\n      AK904 Element 04: 1\n    SE - Transaction Set Trailer\n      SE01 Number of Included Segments: 6\n      SE02 Transaction Set Control Number: 0001\n  GE - Functional Group Trailer\n    GE01 Number of Transaction Sets Included: 1\n    GE02 Group Control Number: 318\nIEA - Interchange Control Trailer\n  IEA01 Number of Included Functional Groups: 2\n  IEA02 Interchange Control Number: 000000317",
+  "diagnostics": [
+    {
+      "severity": "Error",
+      "code": "x12.count.se01_mismatch",
+      "source": "inspection",
+      "segmentId": "SE",
+      "segmentIndex": 21,
+      "message": "SE01 reports 7 segments but 9 were found from ST through SE.",
+      "suggestedFix": "Set SE01 to the count of segments from ST through SE, inclusive."
+    }
+  ]
+}

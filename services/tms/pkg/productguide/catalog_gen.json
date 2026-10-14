@@ -1,5 +1,5 @@
 {
-  "version": "sha256:7af3d61888af07ac0fd5a66b6cb0a441190b158e8adc0228e0da2403cba57aa2",
+  "version": "sha256:a5e69f02c4f10210bf2cbd3917bae7e8518a6d579408d9db859a1bf1cce33892",
   "modules": [
     {
       "id": "home",
@@ -17554,7 +17554,8 @@
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
-      }
+      },
+      "deskCard": true
     },
     {
       "entity": "edi_message",

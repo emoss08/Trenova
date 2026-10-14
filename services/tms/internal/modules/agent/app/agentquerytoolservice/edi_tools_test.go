@@ -114,6 +114,8 @@ func TestGetEDIInboundFile_NeverCarriesTransportSecretsOrMessageBodies(t *testin
 	assert.NotContains(t, string(encoded), "hunter2")
 	assert.NotContains(t, string(encoded), "ST*204", "a message's raw body stays out")
 	assert.Contains(t, string(encoded), "Acme SFTP")
+	assert.Contains(t, string(encoded), `"title":"204_20260921.x12"`,
+		"the Desk names the file's card by its file name")
 }
 
 func TestListEDIInboundFiles_MarksEveryFileItReturns(t *testing.T) {

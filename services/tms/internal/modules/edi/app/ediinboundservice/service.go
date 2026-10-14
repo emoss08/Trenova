@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -723,6 +724,29 @@ func (s *Service) GetInboundFile(
 	req ediports.GetEDIInboundFileByIDRequest,
 ) (*edi.EDIInboundFile, error) {
 	return s.inboundFileRepo.GetInboundFileByID(ctx, req)
+}
+
+func (s *Service) InspectInboundFile(
+	ctx context.Context,
+	req ediports.GetEDIInboundFileByIDRequest,
+) (*edix12inspect.InspectX12Result, error) {
+	file, err := s.inboundFileRepo.GetInboundFileByID(ctx, ediports.GetEDIInboundFileByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if file.RawPurgedAt != nil || strings.TrimSpace(file.RawContent) == "" {
+		return nil, errortypes.NewValidationError(
+			"rawContent",
+			errortypes.ErrInvalid,
+			"The raw file was purged under the retention policy, so it cannot be inspected",
+		)
+	}
+
+	result := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{RawX12: file.RawContent})
+	return &result, nil
 }
 
 func (s *Service) ListInboundFilesCursor(

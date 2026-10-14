@@ -6,13 +6,14 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { EDIInspectionDiagnostic, EDIMessage } from "@trenova/shared/types/edi";
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { CardIcon, type CardCheckState } from "../../record-card/record-card";
+import { EdiFinding, findingSeverity } from "../../record-card/edi-finding";
+import type { PlainReading } from "../../record-card/edi-reading";
 import { cardMoment } from "../../record-card/record-card-values";
 import {
   type EnvelopeLayer,
   foldTape,
   journeyPosition,
   type JourneyStation,
-  type PlainReading,
   type TapeSegment,
   wayAnchor,
   type WayHalt,
@@ -238,55 +239,11 @@ export function PlainReadingView({ reading }: { reading: PlainReading }) {
   );
 }
 
-function severityOf(diagnostic: EDIInspectionDiagnostic): "bad" | "warn" | "info" {
-  return diagnostic.severity === "Error"
-    ? "bad"
-    : diagnostic.severity === "Warning"
-      ? "warn"
-      : "info";
-}
-
-/** What the validator said of a segment, pinned under it, with the fix it suggests. */
-function SegmentMark({ diagnostic }: { diagnostic: EDIInspectionDiagnostic }) {
-  const t = useT();
-  const severity = severityOf(diagnostic);
-  const where =
-    diagnostic.elementPosition > 0
-      ? t("{0}, element {1}", diagnostic.segmentId ?? "", formatNumber(diagnostic.elementPosition))
-      : "";
-  return (
-    <div className={cn("dk-edi-mark", `dk-${severity}`)}>
-      <span className="dk-edi-mark-i" aria-hidden>
-        <CardIcon
-          name={severity === "bad" ? "x" : severity === "warn" ? "warn" : "info"}
-          size={10}
-          stroke={2.8}
-        />
-      </span>
-      <span className="dk-edi-mark-b">
-        <b>{diagnostic.message}</b>
-        {(where || diagnostic.code) && (
-          <span className="dk-edi-mark-at">
-            {where && <span className="dk-edi-mark-el">{where}</span>}
-            {diagnostic.code && <code>{diagnostic.code}</code>}
-          </span>
-        )}
-        {diagnostic.suggestedFix && (
-          <span className="dk-edi-mark-fix">
-            <CardIcon name="forward" size={11} stroke={2.4} />
-            <span>{t("Fix: {0}", diagnostic.suggestedFix)}</span>
-          </span>
-        )}
-      </span>
-    </div>
-  );
-}
-
 /** One segment on the tape: its place, its id, each element in turn, and what was said of it. */
 function TapeLine({ row }: { row: TapeSegment }) {
   const marked = new Set(row.marks.map((mark) => mark.elementPosition));
   const worst = row.marks.reduce<"bad" | "warn" | "info" | null>((current, mark) => {
-    const severity = severityOf(mark);
+    const severity = findingSeverity(mark);
     if (current === "bad" || severity === "bad") return "bad";
     if (current === "warn" || severity === "warn") return "warn";
     return severity;
@@ -326,7 +283,7 @@ function TapeLine({ row }: { row: TapeSegment }) {
       </span>
       {row.marks.map((mark, index) => (
         // oxlint-disable-next-line react/no-array-index-key -- a segment's diagnostics never reorder
-        <SegmentMark key={`${mark.code}-${index}`} diagnostic={mark} />
+        <EdiFinding key={`${mark.code}-${index}`} diagnostic={mark} />
       ))}
     </div>
   );
@@ -354,7 +311,7 @@ export function X12Tape({
         <div className="dk-edi-loose">
           {loose.map((mark, index) => (
             // oxlint-disable-next-line react/no-array-index-key -- the message's diagnostics never reorder
-            <SegmentMark key={`${mark.code}-${index}`} diagnostic={mark} />
+            <EdiFinding key={`${mark.code}-${index}`} diagnostic={mark} />
           ))}
         </div>
       )}

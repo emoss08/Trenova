@@ -294,9 +294,16 @@ export class EDIService {
     return safeParse(ediMessageSchema, response, "EDIMessage");
   }
 
-  public async getInboundFile(fileId: string) {
-    const response = await api.get(`/edi/inbound-files/${fileId}/`);
+  public async getInboundFile(fileId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/edi/inbound-files/${fileId}/`, { signal: options?.signal });
     return safeParse(ediInboundFileSchema, response, "EDIInboundFile");
+  }
+
+  public async inspectInboundFile(fileId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get(`/edi/inbound-files/${fileId}/inspect/`, {
+      signal: options?.signal,
+    });
+    return safeParse(ediX12InspectionSchema, response, "EDIX12Inspection");
   }
 
   public async reprocessInboundFile(fileId: string) {
