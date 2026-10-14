@@ -1,5 +1,6 @@
 import { describeToolCall } from "@/components/assistant/tool-presentation";
 import type { AIAnalyticsSeries, AIAnalyticsTool } from "@/lib/graphql/ai-analytics";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { memo, type CSSProperties } from "react";
@@ -80,8 +81,8 @@ export const ToolCallsCard = memo(function ToolCallsCard({
                     const label = t(
                       "{0} · {1} of {2} calls failed",
                       item.label,
-                      cell.failed.toLocaleString(),
-                      cell.calls.toLocaleString(),
+                      formatNumber(cell.failed),
+                      formatNumber(cell.calls),
                     );
                     return (
                       <button

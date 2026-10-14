@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"github.com/emoss08/trenova/pkg/buncolgen/agentqualitycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/aianalyticscol"
 	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
 	"github.com/emoss08/trenova/pkg/buncolgen/aifeedbackcol"
@@ -102,8 +101,6 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/watchtowercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 )
-
-var AIAnalyticsCauseCountSpec TypeSpec
 
 var AIAnalyticsProviderSpec TypeSpec
 
@@ -739,26 +736,6 @@ var WorkerTrainingRecordSpec TypeSpec
 // package-level initialisers. Assigning inside init lets the zero-valued vars
 // exist first and be filled in afterwards.
 func init() {
-	AIAnalyticsCauseCountSpec = TypeSpec{
-		TypeName:      "AIAnalyticsCauseCount",
-		FieldMap:      aianalyticscol.UnitToolFieldMap,
-		AlwaysColumns: []string{},
-		Fields: []FieldSpec{
-			{
-				Name:        "cause",
-				FieldMapKey: "cause",
-			},
-			{
-				Name:    "blame",
-				Special: "blame",
-			},
-			{
-				Name:        "calls",
-				FieldMapKey: "calls",
-			},
-		},
-	}
-
 	AIAnalyticsProviderSpec = TypeSpec{
 		TypeName: "AIAnalyticsProvider",
 		FieldMap: aiprovidercol.ProviderFieldMap,
@@ -774,6 +751,10 @@ func init() {
 			{
 				Name:        "name",
 				FieldMapKey: "name",
+			},
+			{
+				Name:    "shortName",
+				Special: "shortName",
 			},
 			{
 				Name:        "kind",

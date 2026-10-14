@@ -87,16 +87,10 @@ type OutcomeDurationRow struct {
 	DurationStats
 }
 
-type OffsetSpan struct {
-	From   int64
-	Offset int64
-}
-
 type TrendRequest struct {
 	Filter
-	Grouping      aianalytics.Grouping
-	BucketSeconds int64
-	Offsets       []OffsetSpan
+	Grouping     aianalytics.Grouping
+	BucketStarts []int64
 }
 
 type TrendRow struct {

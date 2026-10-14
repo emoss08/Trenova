@@ -1,4 +1,5 @@
 import type { AIAnalyticsSegment, AIAnalyticsSeries } from "@/lib/graphql/ai-analytics";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AiWorkOutcome } from "@trenova/graphql/generated/graphql";
@@ -145,7 +146,7 @@ export const RunTimeCard = memo(function RunTimeCard({
                       formatRunTime(runTime.medianMs),
                       formatRunTime(runTime.p75Ms),
                       formatRunTime(runTime.p95Ms),
-                      runs.toLocaleString(),
+                      formatNumber(runs),
                     )}
                   >
                     <i

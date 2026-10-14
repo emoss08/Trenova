@@ -108,7 +108,7 @@ func renderPlaceholder(locale Locale, body string, args []any) (string, bool) {
 		return stringify(value), true
 	}
 
-	return strings.ReplaceAll(chosen, "#", stringify(value)), true
+	return strings.ReplaceAll(chosen, "#", formatCount(locale, number)), true
 }
 
 func pluralBranch(forms string, want pluralForm) (string, bool) {

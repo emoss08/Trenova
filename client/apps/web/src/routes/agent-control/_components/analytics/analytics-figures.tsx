@@ -1,11 +1,10 @@
 import type { AIAnalyticsTotals } from "@/lib/graphql/ai-analytics";
 import { useCountUp } from "@trenova/shared/hooks/use-count-up";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatPercent } from "@trenova/shared/lib/utils";
 import { Figs } from "../kit/layout";
-import { formatRunTime, formatSpend, percent } from "./analytics-model";
-
-/** Above this share of failed tool calls the figure reads as a problem. */
-const TOOL_FAILURE_ALARM = 0.03;
+import { formatCost, formatRunTime, formatSpend, percent } from "./analytics-model";
 
 function CountUp({ value, format }: { value: number; format: (value: number) => string }) {
   return <>{format(useCountUp(value))}</>;
@@ -25,7 +24,7 @@ export function AnalyticsFigures({ totals }: { totals: AIAnalyticsTotals }) {
         {
           label: t("Runs"),
           value: (
-            <CountUp value={totals.runs} format={(value) => Math.round(value).toLocaleString()} />
+            <CountUp value={totals.runs} format={(value) => formatNumber(Math.round(value))} />
           ),
           sub: t("{0, plural, one {# model call} other {# model calls}}", totals.modelCalls),
         },
@@ -34,13 +33,13 @@ export function AnalyticsFigures({ totals }: { totals: AIAnalyticsTotals }) {
           value: (
             <CountUp
               value={(totals.completedRate ?? 0) * 100}
-              format={(value) => `${value.toFixed(1)}%`}
+              format={(value) => formatPercent(value, 1)}
             />
           ),
           sub: t(
             "{0} handed to a person · {1} failed",
-            totals.handedOff.toLocaleString(),
-            totals.failed.toLocaleString(),
+            formatNumber(totals.handedOff),
+            formatNumber(totals.failed),
           ),
         },
         {
@@ -58,14 +57,14 @@ export function AnalyticsFigures({ totals }: { totals: AIAnalyticsTotals }) {
         },
         {
           label: t("Tool calls failed"),
-          value: <CountUp value={failureRate * 100} format={(value) => `${value.toFixed(1)}%`} />,
-          tone: failureRate > TOOL_FAILURE_ALARM ? "t-d" : undefined,
+          value: <CountUp value={failureRate * 100} format={(value) => formatPercent(value, 1)} />,
+          tone: totals.toolFailureAlarm ? "t-d" : undefined,
           sub:
             totals.toolCalls > 0
               ? t(
                   "{0} of {1} · {2} the model's mistake",
-                  totals.toolCallsFailed.toLocaleString(),
-                  totals.toolCalls.toLocaleString(),
+                  formatNumber(totals.toolCallsFailed),
+                  formatNumber(totals.toolCalls),
                   percent(totals.modelShareOfToolFailures ?? 0),
                 )
               : t("No tool calls"),
@@ -78,7 +77,7 @@ export function AnalyticsFigures({ totals }: { totals: AIAnalyticsTotals }) {
               ? totals.pricedRuns === 0
                 ? t("Every run was on a local provider")
                 : t("Nothing completed")
-              : t("{0} per completed run", `$${perRun.toFixed(3)}`),
+              : t("{0} per completed run", formatCost(perRun)),
         },
       ]}
     />

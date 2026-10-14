@@ -290,7 +290,8 @@ func buildAnalyticsSeed(refs *analyticsSeedRefs) *analyticsSeedData {
 			agentID := refs.agents[route.agent]
 			for index := range route.runs {
 				daysAgo := deployment.quietDays + index*days/route.runs
-				finishedAt := refs.now - int64(daysAgo)*analyticsSeedDay - analyticsSeedQuietTail -
+				finishedAt := analyticsSeedEnd(refs.now) - int64(daysAgo)*analyticsSeedDay -
+					analyticsSeedQuietTail -
 					int64(random.Float64()*float64(analyticsSeedDay-analyticsSeedQuietTail))
 				completed := math.Mod(float64(index)*0.6180339887+float64(route.runs)*0.137, 1) <
 					completionOn(&deployment, route, daysAgo)
@@ -956,4 +957,8 @@ func (s *AIAnalyticsSeed) Down(ctx context.Context, tx bun.Tx) error {
 
 func (s *AIAnalyticsSeed) CanRollback() bool {
 	return true
+}
+
+func analyticsSeedEnd(now int64) int64 {
+	return now - now%analyticsSeedHour - analyticsSeedHour
 }

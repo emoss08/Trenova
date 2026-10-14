@@ -10,7 +10,12 @@ const OUT = resolve(process.argv[2] ?? "e2e/mock-api/screenshots/ai-control");
 const ONLY = process.argv[3] ? new Set(process.argv[3].split(",")) : null;
 const SETTLE_MS = Number(process.env.SETTLE_MS ?? 7000);
 
-const DEFAULT_SCENARIO = { ai: true, aiProviders: "configured", aiPaused: false };
+const DEFAULT_SCENARIO = {
+  ai: true,
+  aiProviders: "configured",
+  aiPaused: false,
+  aiAnalytics: "ok",
+};
 
 /** Scrolls the page's scrolling ancestor so the lower half of a tab is in view. */
 async function scrollDown(page, by = 760) {
@@ -176,7 +181,7 @@ const SHOTS = [
     query: "?tab=analytics",
     act: async (page) => {
       await scrollToSection(page, "Routing and judgment");
-      await page.getByRole("button", { name: /Use AWS Bedrock/ }).click();
+      await page.getByRole("button", { name: /Use Bedrock/ }).click();
       await page.waitForTimeout(600);
     },
   },
@@ -186,7 +191,7 @@ const SHOTS = [
     query: "?tab=analytics",
     act: async (page) => {
       await scrollToSection(page, "Routing and judgment");
-      await page.getByRole("button", { name: /Use AWS Bedrock/ }).click();
+      await page.getByRole("button", { name: /Use Bedrock/ }).click();
       await page.waitForTimeout(500);
       await page.getByRole("button", { name: "Route it" }).click();
       await page.waitForTimeout(1500);
@@ -284,6 +289,23 @@ const SHOTS = [
     name: "analytics-task-filter",
     scenario: { aiProviders: "all" },
     query: "?tab=analytics&analyticsTask=AssistantChat",
+  },
+  {
+    name: "analytics-new-york-week",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics&window=Week",
+    timezoneId: "America/New_York",
+    act: (page) => scrollToSection(page, "Run time", 60),
+  },
+  {
+    name: "analytics-error",
+    scenario: { aiProviders: "all", aiAnalytics: "error" },
+    query: "?tab=analytics",
+  },
+  {
+    name: "analytics-unknown-task",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics&analyticsTask=NotATask",
   },
   {
     name: "analytics-narrow-1000",
@@ -699,6 +721,7 @@ for (const shot of SHOTS) {
   const page = await browser.newPage({
     viewport: shot.viewport ?? { width: 1440, height: 1000 },
     colorScheme: shot.colorScheme ?? "dark",
+    ...(shot.timezoneId ? { timezoneId: shot.timezoneId } : {}),
   });
   await page.clock.install({ time: new Date(anchor * 1000) });
   const errors = [];

@@ -1,6 +1,7 @@
 fragment AIAnalyticsProviderFields on AIAnalyticsProvider {
   id
   name
+  shortName
   kind
   baseUrl
   enabled
@@ -52,6 +53,7 @@ fragment AIAnalyticsSeriesFields on AIAnalyticsSeries {
   costPerCompletedRun
   firstTokenMedianMs
   lastRanAt
+  quiet
   runTimes {
     outcome
     runs
@@ -77,6 +79,7 @@ query AgentAnalytics($input: AIAnalyticsInput!) {
     since
     until
     bucketSeconds
+    trendBuckets
     refreshedAt
     summary {
       ...AIAnalyticsSegmentFields
@@ -102,6 +105,7 @@ query AgentAnalytics($input: AIAnalyticsInput!) {
       costUsd
       pricedRuns
       costPerCompletedRun
+      toolFailureAlarm
     }
     series {
       ...AIAnalyticsSeriesFields
@@ -168,15 +172,23 @@ query AgentAnalytics($input: AIAnalyticsInput!) {
       modelKey
       model
       lastCalledAt
+      quiet
       calls
       errors
       errorRate
+      errorAlarm
       fellToNext
+      fellToNextAlarm
       firstTokenMedianMs
       errorsByKind {
         kind
         calls
       }
+    }
+    sameModel {
+      modelKey
+      betterKey
+      worseKey
     }
   }
 }

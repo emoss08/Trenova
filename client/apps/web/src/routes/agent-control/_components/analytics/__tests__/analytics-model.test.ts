@@ -19,7 +19,10 @@ import {
   sameModelPair,
   seriesColors,
   stackLabels,
-  trendBuckets,
+  bucketPosition,
+  emptyScopeMessage,
+  hiddenAmong,
+  knownTask,
   trendLines,
   whoseRows,
 } from "../analytics-model";
@@ -60,6 +63,7 @@ function series(overrides: Partial<AIAnalyticsSeries> & { key: string }): AIAnal
     costPerCompletedRun: "0.05",
     firstTokenMedianMs: 420,
     lastRanAt: 1_790_000_000,
+    quiet: false,
     runTimes: [],
     decided: 0,
     accepted: 0,
@@ -167,6 +171,20 @@ describe("board", () => {
     );
   });
 
+  it("says a series with no failed tool calls gets none wrong in words", () => {
+    const entries = board(
+      [
+        series({ key: "clean", toolFailureRate: 0 }),
+        series({ key: "sloppy", toolFailureRate: 0.09 }),
+      ],
+      METRICS.toolFailures,
+    );
+
+    expect(boardSentence(t, rt, METRICS.toolFailures, entries)).toBe(
+      "[clean] gets no tool calls wrong; [sloppy] gets 1 in 11 wrong.",
+    );
+  });
+
   it("says a local provider's run costs nothing", () => {
     const entries = board(
       [
@@ -270,10 +288,9 @@ describe("run time", () => {
 });
 
 describe("trend", () => {
-  it("lays out every bucket of the window so a quiet one is a gap", () => {
-    const buckets = trendBuckets(1_000_000 - 4 * 3600, 1_000_000, 3600);
+  it("puts each point on the server's bucket so a quiet one is a gap", () => {
+    const buckets = [986_400, 990_000, 993_600, 997_200];
 
-    expect(buckets).toEqual([986_400, 990_000, 993_600, 997_200]);
     const lines = trendLines(
       [
         {
@@ -304,11 +321,41 @@ describe("trend", () => {
       "completed",
       ["a"],
       buckets,
-      3600,
     );
 
     expect(lines.get("a")).toEqual([0.9, null, null, 0.5]);
     expect(lines.has("z")).toBe(false);
+  });
+
+  it("keeps a point on its local bucket when the viewer is not in UTC", () => {
+    const newYork = [1_791_979_200, 1_792_000_800, 1_792_022_400];
+
+    const lines = trendLines(
+      [
+        {
+          seriesKey: "a",
+          bucketStart: 1_792_000_800,
+          runs: 4,
+          completedRate: 0.75,
+          toolFailureRate: null,
+          medianRunMs: null,
+        },
+      ],
+      "completed",
+      ["a"],
+      newYork,
+    );
+
+    expect(lines.get("a")).toEqual([null, 0.75, null]);
+  });
+
+  it("places an instant inside an uneven bucket by how far through it is", () => {
+    const days = [0, 90_000, 176_400];
+
+    expect(bucketPosition(days, 45_000, 86_400)).toBe(0.5);
+    expect(bucketPosition(days, 176_400 + 43_200, 86_400)).toBe(2.5);
+    expect(bucketPosition(days, -10, 86_400)).toBe(0);
+    expect(bucketPosition([], 10, 86_400)).toBe(0);
   });
 
   it("lifts the pen over a gap", () => {
@@ -365,12 +412,15 @@ describe("sameModelPair", () => {
     approvalRate: 0.59,
   });
 
-  it("puts the deployment that completes more on the left and counts its wins", () => {
-    const pair = sameModelPair([
-      vllm,
-      groq,
-      series({ key: "gpt|azure", modelKey: "gpt", providerId: "azure" }),
-    ]);
+  const picked = { modelKey: "llama", betterKey: "llama|groq", worseKey: "llama|vllm" };
+  const shown = () => false;
+
+  it("puts the server's better deployment on the left and counts its wins", () => {
+    const pair = sameModelPair(
+      [vllm, groq, series({ key: "gpt|azure", modelKey: "gpt", providerId: "azure" })],
+      picked,
+      shown,
+    );
 
     expect(pair?.left.label).toBe("Groq");
     expect(pair?.right.label).toBe("Workstation vLLM");
@@ -384,8 +434,10 @@ describe("sameModelPair", () => {
     expect(pair?.wins).toBe(4);
   });
 
-  it("finds no pair when one side has too few runs to compare", () => {
-    expect(sameModelPair([groq, { ...vllm, few: true }])).toBeNull();
+  it("shows no pair when the server named none, one side is missing, or one is hidden", () => {
+    expect(sameModelPair([groq, vllm], null, shown)).toBeNull();
+    expect(sameModelPair([groq], picked, shown)).toBeNull();
+    expect(sameModelPair([groq, vllm], picked, (item) => item.key === "llama|vllm")).toBeNull();
   });
 });
 
@@ -423,5 +475,42 @@ describe("analyticsCsv", () => {
     expect(group?.startsWith('"GPT-5.1, preview",,100,90.00,')).toBe(true);
     expect(evil?.startsWith("'=HYPERLINK(1),,100,")).toBe(true);
     expect(deployment?.startsWith("GPT-5.1 · Azure,,100,93.12,")).toBe(true);
+  });
+});
+
+describe("scope", () => {
+  it("drops hidden keys for series that are gone, and shows everything when all are hidden", () => {
+    const series = [{ key: "a" }, { key: "b" }];
+
+    expect(hiddenAmong(["a", "gone"], series)).toEqual(["a"]);
+    expect(hiddenAmong(["a", "b"], series)).toEqual([]);
+    expect(hiddenAmong(["a"], [])).toEqual([]);
+  });
+
+  it("filters on a task only once the catalog knows it", () => {
+    const labels = new Map([["AssistantChat", "Assistant chat"]] as const);
+
+    expect(knownTask(null, labels, false, false)).toBeNull();
+    expect(knownTask("AssistantChat", labels, true, false)).toBe("AssistantChat");
+    expect(knownTask("Bogus", new Map(), false, false)).toBeUndefined();
+    expect(knownTask("Bogus", labels, true, false)).toBeNull();
+    expect(knownTask("Bogus", new Map(), false, true)).toBeNull();
+  });
+
+  it("names the filters that left the scope empty", () => {
+    const window = "the last 7 days";
+
+    expect(emptyScopeMessage(t, { window, agent: true, task: true })).toBe(
+      "Nothing ran for this agent and task in the last 7 days.",
+    );
+    expect(emptyScopeMessage(t, { window, agent: true, task: false })).toBe(
+      "Nothing ran for this agent in the last 7 days.",
+    );
+    expect(emptyScopeMessage(t, { window, agent: false, task: true })).toBe(
+      "Nothing ran for this task in the last 7 days.",
+    );
+    expect(emptyScopeMessage(t, { window, agent: false, task: false })).toBe(
+      "Nothing ran in the last 7 days.",
+    );
   });
 });

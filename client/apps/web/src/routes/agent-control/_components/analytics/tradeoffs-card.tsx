@@ -1,5 +1,6 @@
 import type { AIAnalyticsSeries } from "@/lib/graphql/ai-analytics";
 import { useElementWidth } from "@trenova/shared/hooks/use-element-width";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AiAnalyticsCompareBy } from "@trenova/graphql/generated/graphql";
@@ -200,11 +201,35 @@ export const TradeoffsCard = memo(function TradeoffsCard({
                 return (
                   <g
                     key={label.key}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={t(
+                      "{0}: {1} {2}, {3} {4}",
+                      point.series.label,
+                      t(Y.label),
+                      display(t, Y, point.y),
+                      t(X.label),
+                      display(t, X, point.x),
+                    )}
                     className={cn("an-pt", highlightClass(hot, label.key))}
                     style={{ "--col": colors.get(label.key) } as CSSProperties}
                     onMouseEnter={() => {
                       setHot(label.key);
                       setTip({ point, x: label.cx, y: label.cy - label.r - 8 });
+                    }}
+                    onFocus={() => {
+                      setHot(label.key);
+                      setTip({ point, x: label.cx, y: label.cy - label.r - 8 });
+                    }}
+                    onBlur={() => {
+                      setHot(null);
+                      setTip(null);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onOpen(label.key);
+                      }
                     }}
                     onClick={() => onOpen(label.key)}
                   >
@@ -248,7 +273,7 @@ export const TradeoffsCard = memo(function TradeoffsCard({
             </span>
             <span className="an-ttr">
               <em>{t("Runs")}</em>
-              <b className="mono">{tip.point.series.runs.toLocaleString()}</b>
+              <b className="mono">{formatNumber(tip.point.series.runs)}</b>
             </span>
           </Tip>
         )}

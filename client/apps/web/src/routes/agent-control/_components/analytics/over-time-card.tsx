@@ -11,7 +11,7 @@ import {
   stackLabels,
   niceTicks,
   TREND_METRICS,
-  trendBuckets,
+  bucketPosition,
   trendLines,
   type SeriesColors,
   type TrendMetric,
@@ -74,10 +74,7 @@ export const OverTimeCard = memo(function OverTimeCard({
   const choice = TREND_METRICS.find((item) => item.value === metricKey) ?? TREND_METRICS[0];
   const metric = METRICS[choice?.metric ?? "completed"];
 
-  const buckets = useMemo(
-    () => trendBuckets(analytics.since, analytics.until, analytics.bucketSeconds),
-    [analytics.bucketSeconds, analytics.since, analytics.until],
-  );
+  const buckets = analytics.trendBuckets;
   const lines = useMemo(
     () =>
       trendLines(
@@ -85,9 +82,8 @@ export const OverTimeCard = memo(function OverTimeCard({
         metricKey,
         series.map((item) => item.key),
         buckets,
-        analytics.bucketSeconds,
       ),
-    [analytics.bucketSeconds, analytics.trend, buckets, metricKey, series],
+    [analytics.trend, buckets, metricKey, series],
   );
   const shown = useMemo(() => {
     const providerIds = new Set(
@@ -99,9 +95,8 @@ export const OverTimeCard = memo(function OverTimeCard({
   }, [analytics.events, buckets, series]);
 
   const count = buckets.length;
-  const first = buckets[0] ?? 0;
   const last = buckets[count - 1] ?? 0;
-  const indexOf = (at: number) => (at - first) / analytics.bucketSeconds;
+  const indexOf = (at: number) => bucketPosition(buckets, at, analytics.bucketSeconds);
   const roughWidth = Math.max(10, width - 64);
   const eventX = (at: number) => 48 + (count > 1 ? indexOf(at) / (count - 1) : 0) * roughWidth;
   const rows = stackLabels(

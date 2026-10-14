@@ -636,9 +636,9 @@ func TestEventsMarkProviderChangesAndHealthTurnsOnce(t *testing.T) {
 	assert.Equal(t, []string{
 		"Groq turned off",
 		"Groq switched to Llama 4 Scout",
-		"Workstation vLLM stopped answering",
-		"Workstation vLLM recovered",
-		"AWS Bedrock lost access",
+		"vLLM stopped answering",
+		"vLLM recovered",
+		"Bedrock lost access",
 	}, labels)
 	assert.Equal(t, aianalytics.EventLostAccess, got.Events[4].Kind)
 }
@@ -713,4 +713,77 @@ func TestSeriesKeepTheirColourWhenTheScopeNarrows(t *testing.T) {
 			})[groqID.String()], deployment.ColorSlot, "a deployment takes its provider's hue")
 		}
 	}
+}
+
+func TestProviderSeriesCarryAShortNameForChartLabels(t *testing.T) {
+	t.Parallel()
+
+	got := analyticsFor(fixture(), aianalytics.CompareByProvider)
+
+	short := map[string]string{}
+	for _, series := range got.Series {
+		short[series.Label] = series.ShortLabel
+	}
+	assert.Equal(t, "vLLM", short["Workstation vLLM"])
+	assert.Equal(t, "Bedrock", short["AWS Bedrock"])
+	assert.Equal(t, "Groq", short["Groq"])
+}
+
+func TestTheServerNamesTheSameModelPairTheSummaryTalksAbout(t *testing.T) {
+	t.Parallel()
+
+	got := analyticsFor(fixture(), aianalytics.CompareByModel)
+
+	require.NotNil(t, got.SameModel)
+	assert.Equal(t, llamaKey, got.SameModel.ModelKey)
+	assert.Equal(t, llamaKey+deploymentSeparator+groqID.String(), got.SameModel.BetterKey)
+	assert.Equal(t, llamaKey+deploymentSeparator+vllmID.String(), got.SameModel.WorseKey)
+	assert.Contains(
+		t,
+		sentence(got.Summary),
+		"Llama 3.3 70B completed 86% on Groq but 74% on Workstation vLLM",
+	)
+}
+
+func TestAlarmsAndQuietDeploymentsAreDecidedByTheServer(t *testing.T) {
+	t.Parallel()
+
+	data := fixture()
+	got := analyticsFor(data, aianalytics.CompareByModel)
+
+	vllm := got.Providers[0]
+	assert.True(t, vllm.ErrorAlarm, "20 of 113 calls failing is past the 5% line")
+	assert.False(t, vllm.FellToNextAlarm, "17 calls passed on stays under 50")
+	assert.True(t, vllm.Quiet, "its last call was almost a week before the window ended")
+	assert.Equal(
+		t,
+		aianalytics.ToolFailureAlarm(got.Totals.ToolFailureRate),
+		got.Totals.ToolFailureAlarm,
+	)
+
+	until := int64(1_790_592_000)
+	stale := until - aianalytics.QuietSeconds - 1
+	assert.True(t, aianalytics.IsQuiet(&stale, until))
+	recent := until - aianalytics.QuietSeconds
+	assert.False(t, aianalytics.IsQuiet(&recent, until))
+	assert.False(t, aianalytics.IsQuiet(nil, until))
+}
+
+func TestTrendBucketsAreThoseTheServiceWasGiven(t *testing.T) {
+	t.Parallel()
+
+	data := fixture()
+	starts := []int64{1_790_400_000, 1_790_486_400}
+	got := assemble(&assembly{
+		request: &aianalyticsports.AnalyticsRequest{
+			Window:    aianalytics.WindowMonth,
+			CompareBy: aianalytics.CompareByModel,
+		},
+		since:   1_788_000_000,
+		until:   1_790_592_000,
+		buckets: starts,
+		data:    data,
+	})
+
+	assert.Equal(t, starts, got.TrendBuckets)
 }

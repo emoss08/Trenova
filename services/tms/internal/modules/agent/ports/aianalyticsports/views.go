@@ -26,12 +26,13 @@ type ToolFailureDetailRequest struct {
 }
 
 type ProviderRef struct {
-	ID      pulid.ID
-	Name    string
-	Kind    aiprovider.Kind
-	BaseURL string
-	Enabled bool
-	Removed bool
+	ID        pulid.ID
+	Name      string
+	ShortName string
+	Kind      aiprovider.Kind
+	BaseURL   string
+	Enabled   bool
+	Removed   bool
 }
 
 type RunTime struct {
@@ -73,6 +74,7 @@ type Series struct {
 	CostPerCompletedRun *decimal.Decimal
 	FirstTokenMedianMs  *int64
 	LastRanAt           *int64
+	Quiet               bool
 	RunTimes            []RunTime
 	Decided             int
 	Accepted            int
@@ -102,6 +104,7 @@ type Totals struct {
 	CostUSD                  decimal.Decimal
 	PricedRuns               int
 	CostPerCompletedRun      *decimal.Decimal
+	ToolFailureAlarm         bool
 }
 
 type TrendPoint struct {
@@ -170,10 +173,13 @@ type ProviderHealth struct {
 	ModelKey           string
 	Model              string
 	LastCalledAt       *int64
+	Quiet              bool
 	Calls              int
 	Errors             int
 	FellToNext         int
+	FellToNextAlarm    bool
 	ErrorRate          *float64
+	ErrorAlarm         bool
 	FirstTokenMedianMs *int64
 	ErrorsByKind       []ErrorCount
 }
@@ -200,6 +206,7 @@ type Analytics struct {
 	Since         int64
 	Until         int64
 	BucketSeconds int64
+	TrendBuckets  []int64
 	RefreshedAt   *int64
 	Summary       []Segment
 	RunTimeNote   []Segment
@@ -211,6 +218,13 @@ type Analytics struct {
 	Tools         []ToolRow
 	Tasks         []TaskRow
 	Providers     []ProviderHealth
+	SameModel     *SameModel
+}
+
+type SameModel struct {
+	ModelKey  string
+	BetterKey string
+	WorseKey  string
 }
 
 type CauseCount struct {

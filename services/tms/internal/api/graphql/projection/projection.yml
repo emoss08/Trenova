@@ -459,10 +459,9 @@ virtuals:
   CustomerPaymentApplication:
     - invoice
     - payment
-  AIAnalyticsCauseCount:
-    - blame
   AIAnalyticsProvider:
     - removed
+    - shortName
 
 specials:
   Tractor:

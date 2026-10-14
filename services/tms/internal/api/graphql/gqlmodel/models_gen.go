@@ -198,12 +198,14 @@ type AIAnalyticsInput struct {
 
 // A provider the analytics name. Removed is a provider that has since been deleted.
 type AIAnalyticsProvider struct {
-	ID      *string          `json:"id,omitempty"`
-	Name    string           `json:"name"`
-	Kind    *aiprovider.Kind `json:"kind,omitempty"`
-	BaseURL string           `json:"baseUrl"`
-	Enabled bool             `json:"enabled"`
-	Removed bool             `json:"removed"`
+	ID   *string `json:"id,omitempty"`
+	Name string  `json:"name"`
+	// A name short enough for a chart label, distinct among the organization's providers.
+	ShortName string           `json:"shortName"`
+	Kind      *aiprovider.Kind `json:"kind,omitempty"`
+	BaseURL   string           `json:"baseUrl"`
+	Enabled   bool             `json:"enabled"`
+	Removed   bool             `json:"removed"`
 }
 
 // Errors that happened before a model could answer, by deployment (a model on a provider).
@@ -214,11 +216,17 @@ type AIAnalyticsProviderHealth struct {
 	ModelKey     string               `json:"modelKey"`
 	Model        string               `json:"model"`
 	LastCalledAt *int                 `json:"lastCalledAt,omitempty"`
-	Calls        int                  `json:"calls"`
-	Errors       int                  `json:"errors"`
-	ErrorRate    *float64             `json:"errorRate,omitempty"`
+	// Nothing was called for longer than a day before the end of the window.
+	Quiet     bool     `json:"quiet"`
+	Calls     int      `json:"calls"`
+	Errors    int      `json:"errors"`
+	ErrorRate *float64 `json:"errorRate,omitempty"`
+	// The error rate is high enough to call out.
+	ErrorAlarm bool `json:"errorAlarm"`
 	// Failed calls another provider then answered.
-	FellToNext         int  `json:"fellToNext"`
+	FellToNext int `json:"fellToNext"`
+	// Enough calls fell to the next provider to call out.
+	FellToNextAlarm    bool `json:"fellToNextAlarm"`
 	FirstTokenMedianMs *int `json:"firstTokenMedianMs,omitempty"`
 	// In the order of the kinds.
 	ErrorsByKind []*AIAnalyticsErrorCount `json:"errorsByKind"`
@@ -239,6 +247,13 @@ type AIAnalyticsRunTime struct {
 	MedianMs int                 `json:"medianMs"`
 	P75Ms    int                 `json:"p75Ms"`
 	P95Ms    int                 `json:"p95Ms"`
+}
+
+// One model on two providers: the deployment that completed more, and the one that completed less.
+type AIAnalyticsSameModel struct {
+	ModelKey  string `json:"modelKey"`
+	BetterKey string `json:"betterKey"`
+	WorseKey  string `json:"worseKey"`
 }
 
 // One run of a sentence. A target makes it a link.
@@ -295,10 +310,12 @@ type AIAnalyticsSeries struct {
 	CostUsd    string `json:"costUsd"`
 	PricedRuns int    `json:"pricedRuns"`
 	// Cost over completed runs; absent when nothing was priced or completed.
-	CostPerCompletedRun *string               `json:"costPerCompletedRun,omitempty"`
-	FirstTokenMedianMs  *int                  `json:"firstTokenMedianMs,omitempty"`
-	LastRanAt           *int                  `json:"lastRanAt,omitempty"`
-	RunTimes            []*AIAnalyticsRunTime `json:"runTimes"`
+	CostPerCompletedRun *string `json:"costPerCompletedRun,omitempty"`
+	FirstTokenMedianMs  *int    `json:"firstTokenMedianMs,omitempty"`
+	LastRanAt           *int    `json:"lastRanAt,omitempty"`
+	// Nothing ran for longer than a day before the end of the window.
+	Quiet    bool                  `json:"quiet"`
+	RunTimes []*AIAnalyticsRunTime `json:"runTimes"`
 	// Proposals people decided in the window.
 	Decided  int `json:"decided"`
 	Accepted int `json:"accepted"`
@@ -368,6 +385,8 @@ type AIAnalyticsTotals struct {
 	CostUsd                  string   `json:"costUsd"`
 	PricedRuns               int      `json:"pricedRuns"`
 	CostPerCompletedRun      *string  `json:"costPerCompletedRun,omitempty"`
+	// Tool calls fail often enough to call out.
+	ToolFailureAlarm bool `json:"toolFailureAlarm"`
 }
 
 // One series in one hour or day.
@@ -768,6 +787,8 @@ type AgentAnalytics struct {
 	Until     int                   `json:"until"`
 	// The width of one trend point in seconds.
 	BucketSeconds int `json:"bucketSeconds"`
+	// Where every trend point starts, oldest first, at the viewer's local boundaries.
+	TrendBuckets []int `json:"trendBuckets"`
 	// When the analytics were last worked out; absent before the first time.
 	RefreshedAt *int                  `json:"refreshedAt,omitempty"`
 	Summary     []*AIAnalyticsSegment `json:"summary"`
@@ -783,6 +804,8 @@ type AgentAnalytics struct {
 	Tools       []*AIAnalyticsTool           `json:"tools"`
 	Tasks       []*AIAnalyticsTask           `json:"tasks"`
 	Providers   []*AIAnalyticsProviderHealth `json:"providers"`
+	// The model that ran on two providers to compare, when one did.
+	SameModel *AIAnalyticsSameModel `json:"sameModel,omitempty"`
 }
 
 // Why one tool's calls failed for one series, and the newest failures.

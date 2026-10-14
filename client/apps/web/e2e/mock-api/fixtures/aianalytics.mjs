@@ -510,6 +510,7 @@ export function buildAnalyticsUnits(anchor) {
       }
 
       const provider = ANALYTICS_PROVIDERS[route.provider];
+      const firstError = errors.length;
       const modelCalls = 1 + Math.ceil(toolCount / 2);
       let failedCalls = 0;
       const profile = PROVIDER_ERRORS[route.provider];
@@ -581,6 +582,8 @@ export function buildAnalyticsUnits(anchor) {
         decision,
         rating: rated ? (random() < model.helpful ? 1 : -1) : null,
       });
+      const agentId = units[units.length - 1].agentId;
+      for (const error of errors.slice(firstError)) error.agentId = agentId;
     }
   }
   units.sort((left, right) => left.finishedAt - right.finishedAt);
@@ -601,25 +604,21 @@ export function analyticsEvents(anchor) {
     {
       at: at(12, -10),
       kind: "Recovered",
-      label: "Workstation vLLM recovered",
       providerId: "aip_vllm",
     },
     {
       at: at(7, 2),
       kind: "LostAccess",
-      label: "AWS Bedrock lost access",
       providerId: "aip_bedrock",
     },
     {
       at: at(6, 1),
       kind: "TurnedOff",
-      label: "Google Gemini turned off",
       providerId: "aip_gemini",
     },
     {
       at: at(0, -11),
       kind: "StoppedAnswering",
-      label: "Workstation vLLM stopped answering",
       providerId: "aip_vllm",
     },
   ];

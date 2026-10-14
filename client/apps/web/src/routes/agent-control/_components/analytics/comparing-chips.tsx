@@ -1,4 +1,5 @@
 import type { AIAnalyticsSeries } from "@/lib/graphql/ai-analytics";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AiAnalyticsCompareBy } from "@trenova/graphql/generated/graphql";
@@ -60,7 +61,7 @@ export function ComparingChips({
           >
             <i className="an-sw" />
             <b>{item.label}</b>
-            <span className="mono">{item.runs.toLocaleString()}</span>
+            <span className="mono">{formatNumber(item.runs)}</span>
           </button>
         );
       })}

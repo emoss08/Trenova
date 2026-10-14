@@ -2,14 +2,16 @@ import { usePermission } from "@/hooks/use-permission";
 import { downloadCsv, exportFilename } from "@/lib/data-table-export";
 import type { AgentAnalytics, AIAnalyticsInput } from "@/lib/graphql/ai-analytics";
 import { queries } from "@/lib/queries";
+import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
+import { describeError } from "@trenova/shared/lib/error-presentation";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { FieldFilter } from "@trenova/shared/types/data-table";
-import type { AiAnalyticsWindow, AiTask } from "@trenova/graphql/generated/graphql";
+import type { AiAnalyticsWindow } from "@trenova/graphql/generated/graphql";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
 import { useCallback, useMemo, useState } from "react";
@@ -34,7 +36,10 @@ import { AnalyticsScope } from "./analytics-scope";
 import { AnalyticsSummary } from "./analytics-summary";
 import {
   analyticsCsv,
+  emptyScopeMessage,
   groupKeyOf,
+  hiddenAmong,
+  knownTask,
   LEADERBOARD,
   sameModelPair,
   seriesColors,
@@ -81,15 +86,24 @@ export default function AnalyticsTab() {
   const { allowed: canReadAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { allowed: canRoute } = usePermission(Resource.AIProvider, Operation.Update);
 
+  const providersQuery = useQuery(queries.aiProvider.list());
+  const agentsQuery = useQuery({ ...queries.assistant.agents(false), enabled: canReadAgents });
+  const catalogQuery = useQuery({ ...queries.aiProvider.catalog(), staleTime: Infinity });
+  const taskLabels = useMemo(
+    () => new Map((catalogQuery.data?.tasks ?? []).map((item) => [item.task, item.label] as const)),
+    [catalogQuery.data?.tasks],
+  );
+  const scopedTask = knownTask(task, taskLabels, catalogQuery.isSuccess, catalogQuery.isError);
+
   const inputFor = useCallback(
     (window: AiAnalyticsWindow): AIAnalyticsInput => ({
       window,
       compareBy,
       agentDefinitionId: agentId ?? null,
-      task: (task as AiTask | null) ?? null,
+      task: scopedTask ?? null,
       timezone,
     }),
-    [agentId, compareBy, task, timezone],
+    [agentId, compareBy, scopedTask, timezone],
   );
   const input = useMemo(() => inputFor(range), [inputFor, range]);
 
@@ -98,10 +112,8 @@ export default function AnalyticsTab() {
     staleTime: ANALYTICS_STALE_MS,
     refetchInterval: ANALYTICS_REFETCH_MS,
     placeholderData: keepPreviousData,
+    enabled: scopedTask !== undefined,
   });
-  const providersQuery = useQuery(queries.aiProvider.list());
-  const agentsQuery = useQuery({ ...queries.assistant.agents(false), enabled: canReadAgents });
-  const catalogQuery = useQuery({ ...queries.aiProvider.catalog(), staleTime: Infinity });
 
   const prefetchWindow = useCallback(
     (window: AiAnalyticsWindow) => {
@@ -125,33 +137,32 @@ export default function AnalyticsTab() {
       ),
     [analytics?.deployments],
   );
-  const visible = useMemo(
-    () => (analytics?.series ?? []).filter((series) => !hidden.includes(series.key)),
+  const shownHidden = useMemo(
+    () => hiddenAmong(hidden, analytics?.series ?? []),
     [analytics?.series, hidden],
   );
-  const visibleDeployments = useMemo(
-    () =>
-      (analytics?.deployments ?? []).filter(
-        (deployment) => !hidden.includes(groupKeyOf(compareBy, deployment)),
-      ),
-    [analytics?.deployments, compareBy, hidden],
+  const visible = useMemo(
+    () => (analytics?.series ?? []).filter((series) => !shownHidden.includes(series.key)),
+    [analytics?.series, shownHidden],
   );
-  const pair = useMemo(() => sameModelPair(visibleDeployments), [visibleDeployments]);
-  const taskLabels = useMemo(
-    () => new Map((catalogQuery.data?.tasks ?? []).map((item) => [item.task, item.label] as const)),
-    [catalogQuery.data?.tasks],
+  const pair = useMemo(
+    () =>
+      sameModelPair(analytics?.deployments ?? [], analytics?.sameModel ?? null, (deployment) =>
+        shownHidden.includes(groupKeyOf(compareBy, deployment)),
+      ),
+    [analytics?.deployments, analytics?.sameModel, compareBy, shownHidden],
   );
 
   const toggleSeries = useCallback(
     (key: string) =>
-      setHidden((current) => {
-        if (current.includes(key)) {
-          return current.filter((item) => item !== key);
+      setHidden(() => {
+        if (shownHidden.includes(key)) {
+          return shownHidden.filter((item) => item !== key);
         }
-        const shown = (analytics?.series.length ?? 0) - current.length;
-        return shown <= 1 ? current : [...current, key];
+        const shown = (analytics?.series.length ?? 0) - shownHidden.length;
+        return shown <= 1 ? shownHidden : [...shownHidden, key];
       }),
-    [analytics?.series.length],
+    [analytics?.series.length, shownHidden],
   );
   const openSeriesSheet = useCallback(
     (key: string) => {
@@ -219,7 +230,7 @@ export default function AnalyticsTab() {
       agentId={agentId}
       onAgent={(next) => void setAgentId(next)}
       agents={canReadAgents ? (agentsQuery.data ?? []) : []}
-      task={(task as AiTask | null) ?? null}
+      task={scopedTask ?? null}
       onTask={(next) => void setTask(next)}
       taskLabels={taskLabels}
     />
@@ -228,22 +239,43 @@ export default function AnalyticsTab() {
   const agentFilter: FieldFilter[] = agentId
     ? [{ field: "agentDefinitionId", operator: "eq", value: agentId }]
     : [];
-  const loading = analyticsQuery.isLoading || !analytics;
-  const empty = !loading && analytics.totals.runs === 0;
+  const failed = analyticsQuery.isError && !analytics;
+  const loading = !failed && (analyticsQuery.isLoading || !analytics);
+  const empty = !loading && !failed && analytics?.totals.runs === 0;
 
   return (
     <HighlightProvider>
       <div className={cn("an-tab", analyticsQuery.isPlaceholderData && "is-stale")}>
-        <AnalyticsSummary
-          analytics={analytics}
-          loading={loading}
-          onExport={analytics && !empty ? () => exportCsv(analytics) : undefined}
-          onOpenSeries={openSeriesSheet}
-          onOpenProvider={openProvider}
-        />
+        {!failed && (
+          <AnalyticsSummary
+            analytics={analytics}
+            loading={loading}
+            onExport={analytics && !empty ? () => exportCsv(analytics) : undefined}
+            onOpenSeries={openSeriesSheet}
+            onOpenProvider={openProvider}
+          />
+        )}
         {scope}
 
-        {loading ? (
+        {failed ? (
+          <Alert size="sm" variant="destructive" className="mt-4">
+            <AlertDescription>
+              {describeError(analyticsQuery.error).detail ??
+                t("The analytics could not be loaded.")}
+            </AlertDescription>
+            <AlertAction>
+              <Button
+                type="button"
+                size="xs"
+                variant="outline"
+                disabled={analyticsQuery.isFetching}
+                onClick={() => void analyticsQuery.refetch()}
+              >
+                {t("Try again")}
+              </Button>
+            </AlertAction>
+          </Alert>
+        ) : loading || !analytics ? (
           <AnalyticsSkeleton />
         ) : empty ? (
           <div className="empty">
@@ -253,10 +285,11 @@ export default function AnalyticsTab() {
             <span>
               {analytics.refreshedAt === null
                 ? t("The last 30 days of runs are being read. They appear within a few minutes.")
-                : t(
-                    "Nothing ran for this agent and task in {0}.",
-                    t(WINDOW_PHRASES[analytics.window].label),
-                  )}
+                : emptyScopeMessage(t, {
+                    window: t(WINDOW_PHRASES[analytics.window].label),
+                    agent: Boolean(agentId),
+                    task: Boolean(scopedTask),
+                  })}
             </span>
           </div>
         ) : (
@@ -266,7 +299,7 @@ export default function AnalyticsTab() {
               series={analytics.series}
               colors={colors}
               compareBy={compareBy}
-              hidden={hidden}
+              hidden={shownHidden}
               onToggle={toggleSeries}
               onShowAll={() => setHidden([])}
             />
@@ -329,7 +362,7 @@ export default function AnalyticsTab() {
             </div>
 
             <h2 className="an-h">{t("Routing and judgment")}</h2>
-            {!task && (
+            {!scopedTask && (
               <TaskFitCard
                 tasks={analytics.tasks}
                 series={visible}
@@ -343,9 +376,8 @@ export default function AnalyticsTab() {
               <DecisionsCard series={visible} colors={colors} onOpen={openSeriesSheet} />
               <ProviderHealthCard
                 providers={analytics.providers}
-                hidden={hidden}
+                hidden={shownHidden}
                 compareBy={compareBy}
-                until={analytics.until}
                 onOpenProvider={openProvider}
               />
             </div>
@@ -356,7 +388,6 @@ export default function AnalyticsTab() {
           open={Boolean(sheetSeries) && !openTool}
           series={sheetSeries}
           tools={analytics?.tools ?? []}
-          until={analytics?.until ?? 0}
           compareBy={compareBy}
           onOpenProvider={openProvider}
           onOpenRuns={() => go({ tab: "activity", view: "runs", fieldFilters: agentFilter })}

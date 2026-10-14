@@ -21,7 +21,6 @@ import (
 
 const (
 	readConcurrency    = 4
-	maxOffsetSpans     = 16
 	recentFailureLimit = 8
 	maxToolNameLength  = 200
 	maxSeriesKeyLength = 200
@@ -122,27 +121,11 @@ type stateReading struct {
 	refreshedAt *int64
 }
 
-func offsetSpans(location *time.Location, since, until int64) []aianalyticsports.OffsetSpan {
-	spans := make([]aianalyticsports.OffsetSpan, 0, 2)
-	at := time.Unix(since, 0).In(location)
-	for at.Unix() < until && len(spans) < maxOffsetSpans {
-		_, offset := at.Zone()
-		spans = append(spans, aianalyticsports.OffsetSpan{From: at.Unix(), Offset: int64(offset)})
-		_, end := at.ZoneBounds()
-		if end.IsZero() || !end.After(at) {
-			break
-		}
-		at = end.In(location)
-	}
-
-	return spans
-}
-
 func (s *Service) read(
 	ctx context.Context,
 	req *aianalyticsports.AnalyticsRequest,
 	filter aianalyticsports.Filter,
-	location *time.Location,
+	starts []int64,
 	until int64,
 ) (*readings, error) {
 	out := new(readings)
@@ -182,10 +165,9 @@ func (s *Service) read(
 	})
 	run(func(ctx context.Context) (err error) {
 		out.trend, err = s.repo.Trend(ctx, aianalyticsports.TrendRequest{
-			Filter:        filter,
-			Grouping:      req.CompareBy.Grouping(),
-			BucketSeconds: req.Window.BucketSeconds(),
-			Offsets:       offsetSpans(location, filter.Since, until),
+			Filter:       filter,
+			Grouping:     req.CompareBy.Grouping(),
+			BucketStarts: starts,
 		})
 		return
 	})
@@ -255,7 +237,8 @@ func (s *Service) Analytics(
 
 	now := s.clock().Unix()
 	filter := s.filter(req, now)
-	data, err := s.read(ctx, req, filter, location, now)
+	starts := aianalytics.BucketStarts(req.Window, location, now)
+	data, err := s.read(ctx, req, filter, starts, now)
 	if err != nil {
 		return nil, err
 	}
@@ -265,6 +248,7 @@ func (s *Service) Analytics(
 		request: req,
 		since:   filter.Since,
 		until:   now,
+		buckets: starts,
 		data:    data,
 	})
 	if key != nil {

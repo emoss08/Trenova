@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -22,21 +23,29 @@ type assembly struct {
 	request *aianalyticsports.AnalyticsRequest
 	since   int64
 	until   int64
+	buckets []int64
 	data    *readings
 }
 
 type providerLookup struct {
 	locale i18n.Locale
 	byID   map[pulid.ID]*aiprovider.Provider
+	short  map[pulid.ID]string
 }
 
 func providerIndex(locale i18n.Locale, providers []*aiprovider.Provider) providerLookup {
 	index := providerLookup{
 		locale: locale,
 		byID:   make(map[pulid.ID]*aiprovider.Provider, len(providers)),
+		short:  make(map[pulid.ID]string, len(providers)),
 	}
-	for _, provider := range providers {
+	names := make([]string, len(providers))
+	for idx, provider := range providers {
 		index.byID[provider.ID] = provider
+		names[idx] = provider.Name
+	}
+	for idx, short := range stringutils.DistinctShortNames(names) {
+		index.short[providers[idx].ID] = short
 	}
 
 	return index
@@ -49,26 +58,27 @@ func (l providerLookup) get(id pulid.ID) (*aiprovider.Provider, bool) {
 
 func (l providerLookup) ref(id string) aianalyticsports.ProviderRef {
 	if id == "" {
-		return aianalyticsports.ProviderRef{
-			Name:    i18n.Translate(l.locale, "No provider"),
-			Removed: true,
-		}
+		name := i18n.Translate(l.locale, "No provider")
+		return aianalyticsports.ProviderRef{Name: name, ShortName: name, Removed: true}
 	}
 	provider, ok := l.byID[pulid.ID(id)]
 	if !ok {
+		name := i18n.Translate(l.locale, "Removed provider")
 		return aianalyticsports.ProviderRef{
-			ID:      pulid.ID(id),
-			Name:    i18n.Translate(l.locale, "Removed provider"),
-			Removed: true,
+			ID:        pulid.ID(id),
+			Name:      name,
+			ShortName: name,
+			Removed:   true,
 		}
 	}
 
 	return aianalyticsports.ProviderRef{
-		ID:      provider.ID,
-		Name:    provider.Name,
-		Kind:    provider.Kind,
-		BaseURL: provider.BaseURL,
-		Enabled: provider.Enabled,
+		ID:        provider.ID,
+		Name:      provider.Name,
+		ShortName: stringutils.WithDefault(l.short[provider.ID], provider.Name),
+		Kind:      provider.Kind,
+		BaseURL:   provider.BaseURL,
+		Enabled:   provider.Enabled,
 	}
 }
 
@@ -147,6 +157,7 @@ func assemble(a *assembly) *aianalyticsports.Analytics {
 		Since:         a.since,
 		Until:         a.until,
 		BucketSeconds: a.request.Window.BucketSeconds(),
+		TrendBuckets:  a.buckets,
 		RefreshedAt:   a.data.state.refreshedAt,
 		Totals:        buildTotals(a.data.totals),
 		Series:        series,
@@ -159,7 +170,7 @@ func assemble(a *assembly) *aianalyticsports.Analytics {
 			locale:    a.locale,
 			compareBy: compareBy,
 		}),
-		Providers: buildProviderHealth(a.data, providers),
+		Providers: buildProviderHealth(a.data, providers, a.until),
 		Events:    buildEvents(a.data, providers, a.since),
 	}
 	out.Summary = summarize(&narration{
@@ -171,8 +182,23 @@ func assemble(a *assembly) *aianalyticsports.Analytics {
 		providers:   providers,
 	})
 	out.RunTimeNote = runTimeNote(deployments, providers)
+	markQuiet(out.Series, a.until)
+	markQuiet(out.Deployments, a.until)
+	if pair := sharedModelPair(deployments); pair != nil {
+		out.SameModel = &aianalyticsports.SameModel{
+			ModelKey:  pair.model,
+			BetterKey: pair.better.Key,
+			WorseKey:  pair.worse.Key,
+		}
+	}
 
 	return out
+}
+
+func markQuiet(series []aianalyticsports.Series, until int64) {
+	for idx := range series {
+		series[idx].Quiet = aianalytics.IsQuiet(series[idx].LastRanAt, until)
+	}
 }
 
 func buildTotals(row *aianalyticsports.TotalsRow) aianalyticsports.Totals {
@@ -201,6 +227,7 @@ func buildTotals(row *aianalyticsports.TotalsRow) aianalyticsports.Totals {
 		totals.MedianRunMs = ptr(row.Completion.P50Ms)
 		totals.P95RunMs = ptr(row.Completion.P95Ms)
 	}
+	totals.ToolFailureAlarm = aianalytics.ToolFailureAlarm(totals.ToolFailureRate)
 
 	return totals
 }
@@ -469,13 +496,13 @@ func identify(
 
 	switch grouping {
 	case aianalytics.GroupingProvider:
-		name := providers.ref(item.key).Name
-		series.Label, series.ShortLabel = name, name
+		ref := providers.ref(item.key)
+		series.Label, series.ShortLabel = ref.Name, ref.ShortName
 		series.ProviderID = pulid.ID(item.key)
 	case aianalytics.GroupingDeployment:
 		key := item.served[0].key
-		name := providers.ref(key.ProviderID).Name
-		series.Label, series.ShortLabel = name, name
+		ref := providers.ref(key.ProviderID)
+		series.Label, series.ShortLabel = ref.Name, ref.ShortName
 		series.ModelKey = key.ModelKey
 		series.ProviderID = pulid.ID(key.ProviderID)
 	default:
@@ -632,6 +659,7 @@ func valueOr(value *float64) float64 {
 func buildProviderHealth(
 	data *readings,
 	providers providerLookup,
+	until int64,
 ) []aianalyticsports.ProviderHealth {
 	health := make(map[string]*aianalyticsports.ProviderHealth, len(data.providerCalls))
 	order := make([]string, 0, len(data.providerCalls))
@@ -683,6 +711,9 @@ func buildProviderHealth(
 	for _, key := range order {
 		item := health[key]
 		item.ErrorRate = rate(item.Errors, item.Calls)
+		item.ErrorAlarm = aianalytics.ProviderErrorAlarm(item.ErrorRate)
+		item.FellToNextAlarm = aianalytics.FellToNextAlarm(item.FellToNext)
+		item.Quiet = aianalytics.IsQuiet(item.LastCalledAt, until)
 		for _, kind := range aianalytics.AllProviderErrors() {
 			if calls := kinds[key][kind]; calls > 0 {
 				item.ErrorsByKind = append(

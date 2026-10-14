@@ -3,7 +3,7 @@ import type { AIAnalyticsInput, AIAnalyticsSeries } from "@/lib/graphql/ai-analy
 import { queries } from "@/lib/queries";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useNow } from "@trenova/shared/hooks/use-now";
-import { formatRelativeTime } from "@trenova/shared/i18n/format";
+import { formatNumber, formatRelativeTime } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQuery } from "@tanstack/react-query";
 import { Ic } from "../kit/ic";
@@ -65,8 +65,8 @@ export function ToolFailureSheet({
               {detail
                 ? t(
                     "{0} of {1} calls failed",
-                    detail.failed.toLocaleString(),
-                    detail.calls.toLocaleString(),
+                    formatNumber(detail.failed),
+                    formatNumber(detail.calls),
                   )
                 : "…"}
             </span>
@@ -94,7 +94,7 @@ export function ToolFailureSheet({
                       {t(CAUSES.find((entry) => entry.cause === cause.cause)?.label ?? cause.cause)}
                     </b>
                     <span className="mono">
-                      {cause.calls.toLocaleString()} ·{" "}
+                      {formatNumber(cause.calls)} ·{" "}
                       {cause.blame === "Model" ? t("the model") : t("the tool or a rule")}
                     </span>
                   </span>

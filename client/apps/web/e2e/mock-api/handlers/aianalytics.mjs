@@ -23,6 +23,17 @@ const MIN_CONNECTION_GAP = 3;
 const MIN_MISTAKE_RATIO = 2;
 const MIN_GROUPS_FOR_OUTLIER = 3;
 const MIN_FAILED_RUNS_TO_NOTE = 10;
+const TOOL_FAILURE_ALARM_RATE = 0.03;
+const PROVIDER_ERROR_ALARM_RATE = 0.05;
+const FELL_TO_NEXT_ALARM_CALLS = 50;
+const QUIET_SECONDS = DAY;
+const EVENT_LABELS = {
+  TurnedOff: "{0} turned off",
+  TurnedOn: "{0} turned on",
+  StoppedAnswering: "{0} stopped answering",
+  LostAccess: "{0} lost access",
+  Recovered: "{0} recovered",
+};
 const MAX_TOOLS = 12;
 const CAUSES = [
   "WrongArguments",
@@ -63,20 +74,63 @@ function analyticsOf(state) {
   return state.ai.analytics;
 }
 
+/** The last word of each name, else the first, else the whole name: whichever no other shares (stringutils.DistinctShortNames). */
+function distinctShortNames(names) {
+  const candidates = names.map((name) => {
+    const trimmed = name.trim();
+    const words = trimmed.split(/\s+/);
+    if (words.length < 2) return [trimmed];
+    const first = words[0];
+    const last = words[words.length - 1];
+    return first.toLowerCase() === last.toLowerCase() ? [last, trimmed] : [last, first, trimmed];
+  });
+  const level = names.map(() => 0);
+  for (let round = 0; round < 3; round += 1) {
+    const claims = new Map();
+    candidates.forEach((list, index) => {
+      const want = list[level[index]].toLowerCase();
+      claims.set(want, (claims.get(want) ?? 0) + 1);
+    });
+    let moved = false;
+    candidates.forEach((list, index) => {
+      if (claims.get(list[level[index]].toLowerCase()) > 1 && level[index] < list.length - 1) {
+        level[index] += 1;
+        moved = true;
+      }
+    });
+    if (!moved) break;
+  }
+  return candidates.map((list, index) => list[level[index]]);
+}
+
+let shortNames = null;
+function shortNameOf(id) {
+  if (!shortNames) {
+    const providers = Object.values(ANALYTICS_PROVIDERS);
+    const names = distinctShortNames(providers.map((provider) => provider.name));
+    shortNames = new Map(providers.map((provider, index) => [provider.id, names[index]]));
+  }
+  return shortNames.get(id);
+}
+
 function providerRef(id) {
   const provider = ANALYTICS_PROVIDERS[id];
-  if (!provider)
+  if (!provider) {
+    const name = id ? "Removed provider" : "No provider";
     return {
       id: id || null,
-      name: id ? "Removed provider" : "No provider",
+      name,
+      shortName: name,
       kind: null,
       baseUrl: "",
       enabled: false,
       removed: true,
     };
+  }
   return {
     id: provider.id,
     name: provider.name,
+    shortName: shortNameOf(provider.id) ?? provider.name,
     kind: provider.kind,
     baseUrl: provider.baseUrl,
     enabled: provider.enabled,
@@ -200,6 +254,7 @@ function totalsOf(units) {
     costUsd: money(cost),
     pricedRuns: priced.length,
     costPerCompletedRun: priced.length > 0 && completed > 0 ? money(cost / completed) : null,
+    toolFailureAlarm: (rate(failures.length, toolCalls) ?? 0) > TOOL_FAILURE_ALARM_RATE,
   };
 }
 
@@ -277,10 +332,10 @@ function seriesOf(units, compareBy, palette) {
   return busiestFirst(
     [...groupBy(units, groupKeyOf(compareBy)).entries()].map(([key, members]) => {
       if (compareBy === "Provider") {
-        const name = providerRef(key).name;
+        const ref = providerRef(key);
         return seriesFrom(key, members, {
-          label: name,
-          shortLabel: name,
+          label: ref.name,
+          shortLabel: ref.shortName,
           modelKey: null,
           providerId: key,
           colorSlot: palette.providers.get(key) ?? 0,
@@ -304,10 +359,10 @@ function deploymentsOf(units, palette) {
   return busiestFirst(
     [...groupBy(units, deploymentKey).entries()].map(([key, members]) => {
       const { modelKey, providerId } = members[0];
-      const name = providerRef(providerId).name;
+      const ref = providerRef(providerId);
       return seriesFrom(key, members, {
-        label: name,
-        shortLabel: name,
+        label: ref.name,
+        shortLabel: ref.shortName,
         modelKey,
         providerId,
         colorSlot: palette.providers.get(providerId) ?? 0,
@@ -318,12 +373,65 @@ function deploymentsOf(units, palette) {
   );
 }
 
-function trendOf(units, compareBy, bucketSeconds) {
-  const key = groupKeyOf(compareBy);
-  const groups = groupBy(
-    units,
-    (unit) => `${key(unit)}|${unit.finishedAt - (unit.finishedAt % bucketSeconds)}`,
+/** The zone's offset from UTC at an instant, in seconds. */
+function offsetAt(at, timezone) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+    })
+      .formatToParts(new Date(at * 1000))
+      .map((part) => [part.type, Number(part.value)]),
   );
+  const local =
+    Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second) / 1000;
+  return local - at;
+}
+
+/** The start of the bucket an instant falls in, at the zone's local boundaries (aianalytics.BucketStarts). */
+function alignBucket(at, size, timezone) {
+  const step = size / HOUR;
+  if (size > HOUR && 24 % step === 0) {
+    const local = new Date((at + offsetAt(at, timezone)) * 1000);
+    const hour = local.getUTCHours() - (local.getUTCHours() % step);
+    const guess =
+      Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), hour) / 1000;
+    let start = guess - offsetAt(guess, timezone);
+    start = guess - offsetAt(start, timezone);
+    if (start <= at) return start;
+  }
+  const rest = (((at + offsetAt(at, timezone)) % size) + size) % size;
+  return at - rest;
+}
+
+function bucketStarts(window, timezone, until) {
+  const size = BUCKET_SECONDS[window] ?? DAY;
+  const count = Math.round((WINDOW_SECONDS[window] ?? WINDOW_SECONDS.Month) / size);
+  const starts = [];
+  let at = alignBucket(until, size, timezone);
+  while (starts.length < count) {
+    starts.push(at);
+    at = alignBucket(at - 1, size, timezone);
+  }
+  return starts.reverse();
+}
+
+/** The bucket a run lands in: the latest start at or before it, the first for anything earlier. */
+function bucketOf(starts, at) {
+  let index = 0;
+  while (index + 1 < starts.length && starts[index + 1] <= at) index += 1;
+  return starts[index];
+}
+
+function trendOf(units, compareBy, starts) {
+  const key = groupKeyOf(compareBy);
+  const groups = groupBy(units, (unit) => `${key(unit)}|${bucketOf(starts, unit.finishedAt)}`);
   return [...groups.entries()]
     .map(([group, members]) => {
       const [seriesKey, bucket] = group.split("|");
@@ -473,7 +581,7 @@ function tasksOf(units, compareBy, routing) {
   return rows.sort((a, b) => b._runs - a._runs).map(({ _runs, ...row }) => row);
 }
 
-function providerHealthOf(state, units, since, input) {
+function providerHealthOf(state, units, since, until, input) {
   const health = new Map();
   const entry = (providerId, modelKey) => {
     const key = `${modelKey}|${providerId}`;
@@ -499,7 +607,12 @@ function providerHealthOf(state, units, since, input) {
     item.lastCalledAt = Math.max(item.lastCalledAt, unit.finishedAt - (unit.finishedAt % HOUR));
   }
   for (const error of analyticsOf(state).errors) {
-    if (error.at < since || (input.task && error.task !== input.task)) continue;
+    if (
+      error.at < since ||
+      (input.task && error.task !== input.task) ||
+      (input.agentDefinitionId && error.agentId !== input.agentDefinitionId)
+    )
+      continue;
     const item = entry(error.providerId, error.model);
     item.calls += 1;
     item.errors += 1;
@@ -514,10 +627,13 @@ function providerHealthOf(state, units, since, input) {
       modelKey: item.modelKey,
       model: item.model,
       lastCalledAt: item.lastCalledAt || null,
+      quiet: item.lastCalledAt > 0 && until - item.lastCalledAt > QUIET_SECONDS,
       calls: item.calls,
       errors: item.errors,
       errorRate: rate(item.errors, item.calls),
+      errorAlarm: (rate(item.errors, item.calls) ?? 0) > PROVIDER_ERROR_ALARM_RATE,
       fellToNext: item.fellToNext,
+      fellToNextAlarm: item.fellToNext > FELL_TO_NEXT_ALARM_CALLS,
       firstTokenMedianMs: percentile(
         item.firstTokens.sort((a, b) => a - b),
         0.5,
@@ -541,6 +657,28 @@ const seg = (text, extra = {}) => ({
 });
 const percent = (value) => `${Math.round(value * 100)}%`;
 
+/** The model on two providers with the widest gap in completion (narrative.go sharedModelPair). */
+function sharedModelPair(deployments) {
+  let widest = null;
+  for (const [model, list] of groupBy(
+    deployments.filter((item) => !item.few && item.modelKey && item.providerId),
+    (item) => item.modelKey,
+  )) {
+    if (list.length < 2) continue;
+    const sorted = [...list].sort(
+      (a, b) =>
+        (b.completedRate ?? 0) - (a.completedRate ?? 0) ||
+        b.runs - a.runs ||
+        a.key.localeCompare(b.key),
+    );
+    const gap =
+      ((sorted[0].completedRate ?? 0) - (sorted[sorted.length - 1].completedRate ?? 0)) * 100;
+    if (!widest || gap > widest.gap || (gap === widest.gap && model < widest.model))
+      widest = { model, better: sorted[0], worse: sorted[sorted.length - 1], gap };
+  }
+  return widest;
+}
+
 function summaryOf(input, series, deployments, compareBy) {
   const phrase =
     { Day: "Over the last 24 hours", Week: "Over the last 7 days", Month: "Over the last 30 days" }[
@@ -559,9 +697,18 @@ function summaryOf(input, series, deployments, compareBy) {
     out.push(
       seg(`${phrase}, `),
       seg(leader.label, { target: "Series", seriesKey: leader.key }),
-      seg(` completed ${ranked.length === 1 ? "its runs" : "the most of its runs"} — `),
-      seg(percent(leader.completedRate), { strong: true }),
-      seg(". "),
+      ...(ranked.length === 1
+        ? [
+            seg(" completed "),
+            seg(percent(leader.completedRate), { strong: true }),
+            seg(" of its runs."),
+          ]
+        : [
+            seg(" completed the most of its runs — "),
+            seg(percent(leader.completedRate), { strong: true }),
+            seg("."),
+          ]),
+      seg(" "),
     );
   } else {
     out.push(
@@ -573,17 +720,8 @@ function summaryOf(input, series, deployments, compareBy) {
     );
   }
 
-  let widest = null;
-  for (const [model, list] of groupBy(
-    deployments.filter((item) => !item.few),
-    (item) => item.modelKey,
-  )) {
-    if (list.length < 2) continue;
-    const sorted = [...list].sort((a, b) => b.completedRate - a.completedRate || b.runs - a.runs);
-    const gap = (sorted[0].completedRate - sorted[sorted.length - 1].completedRate) * 100;
-    if (gap >= MIN_CONNECTION_GAP && (!widest || gap > widest.gap))
-      widest = { model, better: sorted[0], worse: sorted[sorted.length - 1], gap };
-  }
+  const pair = sharedModelPair(deployments);
+  const widest = pair && pair.gap >= MIN_CONNECTION_GAP ? pair : null;
   if (widest) {
     out.push(
       seg(modelLabel(widest.model)[0], { strong: true }),
@@ -657,6 +795,7 @@ function runTimeNoteOf(deployments) {
 }
 
 function agentAnalytics(state, input) {
+  if (state.scenario.aiAnalytics === "error") throw new Error("analytics read failed");
   const now = state.now();
   const { since, units } = scope(state, input, now);
   const compareBy = input.compareBy ?? "Model";
@@ -666,27 +805,42 @@ function agentAnalytics(state, input) {
     models: paletteSlots(analytics.units.map((unit) => unit.modelKey)),
     providers: paletteSlots(analytics.units.map((unit) => unit.providerId)),
   };
-  const series = seriesOf(units, compareBy, palette);
-  const deployments = deploymentsOf(units, palette);
+  const markQuiet = (list) =>
+    list.map((item) => ({ ...item, quiet: now - item.lastRanAt > QUIET_SECONDS }));
+  const series = markQuiet(seriesOf(units, compareBy, palette));
+  const deployments = markQuiet(deploymentsOf(units, palette));
+  const starts = bucketStarts(input.window, input.timezone || "UTC", now);
+  const pair = sharedModelPair(deployments);
   return {
     window: input.window,
     compareBy,
     since,
     until: now,
     bucketSeconds,
+    trendBuckets: starts,
     refreshedAt: analytics.refreshedAt,
     summary: summaryOf(input, series, deployments, compareBy),
     runTimeNote: runTimeNoteOf(deployments),
     totals: totalsOf(units),
     series,
     deployments,
-    trend: trendOf(units, compareBy, bucketSeconds),
+    trend: trendOf(units, compareBy, starts),
     events: analyticsEvents(state.anchor)
       .filter((event) => event.at >= since)
-      .map(({ providerId, ...event }) => ({ ...event, provider: providerRef(providerId) })),
+      .map(({ providerId, ...event }) => {
+        const provider = providerRef(providerId);
+        return {
+          ...event,
+          label: EVENT_LABELS[event.kind].replace("{0}", provider.shortName),
+          provider,
+        };
+      }),
     tools: toolsOf(units, compareBy),
     tasks: tasksOf(units, compareBy, analytics.routing),
-    providers: providerHealthOf(state, units, since, input),
+    providers: providerHealthOf(state, units, since, now, input),
+    sameModel: pair
+      ? { modelKey: pair.model, betterKey: pair.better.key, worseKey: pair.worse.key }
+      : null,
   };
 }
 

@@ -78,6 +78,9 @@ func (s *Service) Reorder(
 			comment:   "AI provider moved in the routing order",
 		})
 	}
+	if len(changes) > 0 {
+		s.analyticsChanged(ctx, req.TenantInfo)
+	}
 
 	return s.ordered(ctx, req.TenantInfo)
 }
@@ -112,6 +115,7 @@ func (s *Service) AssignTask(
 		actor:     actor,
 		comment:   "Task assigned to AI provider",
 	})
+	s.analyticsChanged(ctx, req.TenantInfo)
 
 	return saved.Redacted(), nil
 }
@@ -270,6 +274,9 @@ func (s *Service) RouteTask(
 			actor:     actor,
 			comment:   "Task routed to " + plan.Target.Name,
 		})
+	}
+	if len(changes) > 0 {
+		s.analyticsChanged(ctx, req.TenantInfo)
 	}
 
 	return s.ordered(ctx, req.TenantInfo)

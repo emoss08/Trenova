@@ -1,4 +1,5 @@
 import type { AIAnalyticsSeries } from "@/lib/graphql/ai-analytics";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { memo, useMemo } from "react";
@@ -46,7 +47,7 @@ export const DecisionsCard = memo(function DecisionsCard({
             <span className="an-dcn">
               <Swatch color={colors.get(item.key)} />
               <b>{item.label}</b>
-              <em className="mono">{item.decided.toLocaleString()}</em>
+              <em className="mono">{formatNumber(item.decided)}</em>
             </span>
             <span
               className="an-stk"

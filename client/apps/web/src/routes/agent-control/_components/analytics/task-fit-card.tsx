@@ -1,6 +1,7 @@
 import type { AIAnalyticsSeries, AIAnalyticsTaskRow } from "@/lib/graphql/ai-analytics";
 import { routeAITask } from "@/lib/graphql/ai-analytics";
 import { queries } from "@/lib/queries";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AiAnalyticsCompareBy } from "@trenova/graphql/generated/graphql";
@@ -114,7 +115,7 @@ export const TaskFitCard = memo(function TaskFitCard({
                       onClick={() => setConfirming(row)}
                     >
                       <Ic n="arrowR" s={10} />
-                      {t("Use {0}", row.suggestion.provider.name)}
+                      {t("Use {0}", row.suggestion.provider.shortName)}
                       <em className="mono t-k">+{Math.round(row.suggestion.gainPoints)}</em>
                     </button>
                   ) : (
@@ -157,13 +158,13 @@ export const TaskFitCard = memo(function TaskFitCard({
                         current
                           ? t(
                               "{0} of {1} runs completed · routed here now",
-                              cell.completed.toLocaleString(),
-                              cell.runs.toLocaleString(),
+                              formatNumber(cell.completed),
+                              formatNumber(cell.runs),
                             )
                           : t(
                               "{0} of {1} runs completed",
-                              cell.completed.toLocaleString(),
-                              cell.runs.toLocaleString(),
+                              formatNumber(cell.completed),
+                              formatNumber(cell.runs),
                             )
                       }
                     >

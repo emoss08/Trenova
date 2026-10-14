@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -61,11 +62,12 @@ func optionalDecimal(value *decimal.Decimal) *string {
 
 func providerModel(ref aianalyticsports.ProviderRef) *gqlmodel.AIAnalyticsProvider {
 	out := &gqlmodel.AIAnalyticsProvider{
-		ID:      optionalString(ref.ID.String()),
-		Name:    ref.Name,
-		BaseURL: ref.BaseURL,
-		Enabled: ref.Enabled,
-		Removed: ref.Removed,
+		ID:        optionalString(ref.ID.String()),
+		Name:      ref.Name,
+		ShortName: ref.ShortName,
+		BaseURL:   ref.BaseURL,
+		Enabled:   ref.Enabled,
+		Removed:   ref.Removed,
 	}
 	if ref.Kind != "" {
 		kind := ref.Kind
@@ -127,6 +129,7 @@ func totalsModel(totals *aianalyticsports.Totals) *gqlmodel.AIAnalyticsTotals {
 		CostUsd:                  totals.CostUSD.String(),
 		PricedRuns:               totals.PricedRuns,
 		CostPerCompletedRun:      optionalDecimal(totals.CostPerCompletedRun),
+		ToolFailureAlarm:         totals.ToolFailureAlarm,
 	}
 }
 
@@ -178,6 +181,7 @@ func seriesModel(series *aianalyticsports.Series) *gqlmodel.AIAnalyticsSeries {
 		CostPerCompletedRun: optionalDecimal(series.CostPerCompletedRun),
 		FirstTokenMedianMs:  optionalInt(series.FirstTokenMedianMs),
 		LastRanAt:           optionalInt(series.LastRanAt),
+		Quiet:               series.Quiet,
 		RunTimes:            runTimes,
 		Decided:             series.Decided,
 		Accepted:            series.Accepted,
@@ -271,10 +275,13 @@ func providerHealthModels(
 			ModelKey:           row.ModelKey,
 			Model:              row.Model,
 			LastCalledAt:       optionalInt(row.LastCalledAt),
+			Quiet:              row.Quiet,
 			Calls:              row.Calls,
 			Errors:             row.Errors,
 			ErrorRate:          row.ErrorRate,
+			ErrorAlarm:         row.ErrorAlarm,
 			FellToNext:         row.FellToNext,
+			FellToNextAlarm:    row.FellToNextAlarm,
 			FirstTokenMedianMs: optionalInt(row.FirstTokenMedianMs),
 			ErrorsByKind:       kinds,
 		})
@@ -328,6 +335,7 @@ func analyticsModel(analytics *aianalyticsports.Analytics) *gqlmodel.AgentAnalyt
 		Since:         int(analytics.Since),
 		Until:         int(analytics.Until),
 		BucketSeconds: int(analytics.BucketSeconds),
+		TrendBuckets:  intutils.Ints(analytics.TrendBuckets),
 		RefreshedAt:   optionalInt(analytics.RefreshedAt),
 		Summary:       segmentModels(analytics.Summary),
 		RunTimeNote:   segmentModels(analytics.RunTimeNote),
@@ -339,6 +347,19 @@ func analyticsModel(analytics *aianalyticsports.Analytics) *gqlmodel.AgentAnalyt
 		Tools:         toolModels(analytics.Tools),
 		Tasks:         taskModels(analytics.Tasks),
 		Providers:     providerHealthModels(analytics.Providers),
+		SameModel:     sameModelModel(analytics.SameModel),
+	}
+}
+
+func sameModelModel(pair *aianalyticsports.SameModel) *gqlmodel.AIAnalyticsSameModel {
+	if pair == nil {
+		return nil
+	}
+
+	return &gqlmodel.AIAnalyticsSameModel{
+		ModelKey:  pair.ModelKey,
+		BetterKey: pair.BetterKey,
+		WorseKey:  pair.WorseKey,
 	}
 }
 

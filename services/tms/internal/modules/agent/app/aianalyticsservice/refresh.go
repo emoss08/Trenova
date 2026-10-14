@@ -36,44 +36,12 @@ func (s *Service) Refresh(
 	from = max(from, now-RetentionDays*secondsPerDay)
 
 	result := &aianalyticsports.RefreshResult{RefreshedThrough: from}
-	lastStamp := int64(0)
-	for chunk := 0; chunk < MaxChunksPerCycle && from < now; chunk++ {
-		to := min(from+ChunkSeconds, now)
-		stamp := max(s.clock().UnixMilli(), lastStamp+1)
-		lastStamp = stamp
-
-		req := aianalyticsports.RefreshRequest{TenantInfo: tenant, From: from, To: to, Stamp: stamp}
-		units, unitErr := s.repo.RefreshUnits(ctx, req)
-		if unitErr != nil {
-			return nil, unitErr
-		}
-		hours, hourErr := s.repo.RefreshProviderHours(ctx, req)
-		if hourErr != nil {
-			return nil, hourErr
-		}
-		if keyErr := s.keyModels(ctx, aianalyticsports.ModelKeyRequest{
-			TenantInfo: tenant,
-			Stamp:      stamp,
-			FromHour:   from - from%3600,
-		}); keyErr != nil {
-			return nil, keyErr
-		}
-		if saveErr := s.repo.SaveRefreshState(ctx, &aianalytics.RefreshState{
-			OrganizationID:   tenant.OrgID,
-			BusinessUnitID:   tenant.BuID,
-			RefreshedThrough: to,
-			RefreshedAt:      s.clock().Unix(),
-		}); saveErr != nil {
-			return nil, saveErr
-		}
-
-		result.Units += units
-		result.Hours += hours
-		result.RefreshedThrough = to
-		from = to
+	err = s.refreshChunks(ctx, tenant, now, result)
+	s.invalidate(ctx, tenant, result)
+	if err != nil {
+		return nil, err
 	}
 	result.CaughtUp = result.RefreshedThrough >= now
-	s.invalidate(ctx, tenant, result)
 
 	if err = s.repo.Prune(ctx, aianalyticsports.PruneRequest{
 		TenantInfo: tenant,
@@ -90,6 +58,53 @@ func (s *Service) Refresh(
 	)
 
 	return result, nil
+}
+
+func (s *Service) refreshChunks(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	now int64,
+	result *aianalyticsports.RefreshResult,
+) error {
+	from := result.RefreshedThrough
+	lastStamp := int64(0)
+	for chunk := 0; chunk < MaxChunksPerCycle && from < now; chunk++ {
+		to := min(from+ChunkSeconds, now)
+		stamp := max(s.clock().UnixMilli(), lastStamp+1)
+		lastStamp = stamp
+
+		req := aianalyticsports.RefreshRequest{TenantInfo: tenant, From: from, To: to, Stamp: stamp}
+		units, err := s.repo.RefreshUnits(ctx, req)
+		if err != nil {
+			return err
+		}
+		result.Units += units
+		hours, err := s.repo.RefreshProviderHours(ctx, req)
+		if err != nil {
+			return err
+		}
+		result.Hours += hours
+		if err = s.keyModels(ctx, aianalyticsports.ModelKeyRequest{
+			TenantInfo: tenant,
+			Stamp:      stamp,
+			FromHour:   from - from%3600,
+		}); err != nil {
+			return err
+		}
+		if err = s.repo.SaveRefreshState(ctx, &aianalytics.RefreshState{
+			OrganizationID:   tenant.OrgID,
+			BusinessUnitID:   tenant.BuID,
+			RefreshedThrough: to,
+			RefreshedAt:      s.clock().Unix(),
+		}); err != nil {
+			return err
+		}
+
+		result.RefreshedThrough = to
+		from = to
+	}
+
+	return nil
 }
 
 func (s *Service) keyModels(ctx context.Context, req aianalyticsports.ModelKeyRequest) error {

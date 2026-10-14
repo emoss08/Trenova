@@ -109,13 +109,15 @@ and, for failed runs, by status. The runs table cannot filter by canonical model
 the link does not narrow to the group.
 
 **Over-time buckets** follow the README: 24 hourly, 28 six-hourly and 30 daily points, in the
-viewer's time zone. The server converts the zone into UTC-offset spans with Go's `ZoneBounds`, so
-the SQL buckets with integer arithmetic. A bucket that straddles a daylight-saving change places
-each run by the offset in force when it finished.
+viewer's time zone. The server works out where each bucket starts (daily and 6-hour buckets on
+the local calendar, so a day with a clock change is 23 or 25 hours) and returns the list with the
+answer. The query buckets runs with `width_bucket` over the same list, and the chart draws it as
+given, so a run is never drawn in the neighbouring bucket.
 
 **Event markers.**
 
-- The design's "vLLM restarted" is the server's "Workstation vLLM recovered": the first hour back
+- Markers name a provider by its short name, as the prototype does ("vLLM", "Bedrock").
+- The design's "vLLM restarted" is the server's "vLLM recovered": the first hour back
   under 20% failed calls after an hour at 50% or more.
 - "Lost access" is the same transition when most failures were access denied.
 - "Turned off" and "switched model" come from the provider's settings history.
@@ -127,6 +129,24 @@ each run by the offset in force when it finished.
 **Databases.** The prompt asks for migrations for Postgres and SQLite. Trenova runs on Postgres
 only. Its migrations are `20261231009250_ai_analytics.tx.{up,down}.sql` and
 `20261231009260_ai_analytics_indexes.{up,down}.sql` (concurrent indexes on the source tables).
+
+**Evaluation calls count towards provider health.** Calls made while evaluating an agent (the
+judge's calls in an evaluation run) are not runs, so they are left out of runs, spend and every
+per-run figure. They are real calls to the provider, though, so they stay in provider health:
+calls, errors, error rate and first-token time. A provider that times out on an evaluation batch
+is a provider that times out.
+
+**Numbers in sentences.** The server writes percentages and ratios ("86%", "2.5×") into the
+Nova sentences. In every locale Trenova ships (en-US, es-419, zh-CN, zh-TW) those are written the
+same way, so they need no locale formatting. Counts inside plural messages (`#`) are grouped the
+way the locale writes numbers ("21,375 model calls"), identically in the Go and browser
+formatters. The client formats money with the shared currency formatter, so es-419 reads
+"USD 0.053".
+
+**What stays on the client.** Every threshold that decides what a figure *means* (ranking,
+"few", alarms, "quiet", suggested routes, the same-model pair) is decided on the server and sent
+as a flag. The client keeps presentation only: the colour scale of a heatmap cell and where a bar
+tops out.
 
 **Tool latency.** Each tool step now records when it started and settled, in milliseconds, and
 model calls record first-token time and when they finished. The design has no tool-latency chart,
@@ -175,19 +195,22 @@ each five-minute refresh.
 
 | Scope | Runs in scope | Whole query |
 | --- | ---: | ---: |
-| 30 days, by model, every agent | 500,000 | 1.46 s |
-| 30 days, by provider, every agent | 500,000 | 1.44 s |
-| 30 days, by model, one agent | 66,667 | 0.76 s |
-| 7 days, by model, every agent | 500,000 | 0.97 s |
-| 7 days, by model, one agent | 66,667 | 0.49 s |
-| 24 hours, by model, every agent | 86,300 | 0.28 s |
-| 24 hours, by model, one agent | 11,507 | 0.18 s |
+| 30 days, by model, every agent | 500,000 | 1.40 s |
+| 30 days, by provider, every agent | 500,000 | 1.40 s |
+| 30 days, by model, one agent | 66,667 | 0.75 s |
+| 7 days, by model, every agent | 500,000 | 1.08 s |
+| 7 days, by model, one agent | 66,667 | 0.57 s |
+| 24 hours, by model, every agent | 86,300 | 0.31 s |
+| 24 hours, by model, one agent | 11,507 | 0.20 s |
+
+Repeated runs of the whole profile differ by up to 10% (the 30-day, every-agent query measured
+1.40 s and 1.53 s on two runs), so read the figures as a scale rather than exact.
 
 The slowest reads at 30 days, every agent, by model:
 
 | Read | Time | What it does |
 | --- | ---: | --- |
-| Trend | 0.99 s | Exact median per series per day: sorts every run once |
+| Trend | 0.90 s | Exact median per series per day: sorts every run once |
 | Outcome durations, per deployment | 0.74 s | Exact p25/p50/p75/p95 per outcome |
 | First-token histograms | 0.70 s | Sums 64-bucket histograms across hourly rows |
 | Outcome durations, per model | 0.56 s | As above, per group |
@@ -198,12 +221,12 @@ The slowest reads at 30 days, every agent, by model:
 
 Two changes came out of profiling:
 
-- **Trend: 2.07 s → 0.99 s.** Converting every run to the viewer's time zone dominated the trend.
-  It now buckets with integer offsets computed once from the zone's spans.
+- **Trend: 2.07 s → 0.90 s.** Converting every run to the viewer's time zone dominated the trend.
+  It now buckets with `width_bucket` over bucket starts the service computes once per request.
 - **Tool cells: 1.12 s → 0.34 s.** Tool rows carry their unit's model, provider, agent and task, so
   the tool reads no longer join 867,000 tool rows to 500,000 units.
 
-The whole 30-day query went from 2.37 s to 1.46 s.
+The whole 30-day query went from 2.37 s to 1.40 s.
 
 **Remaining cost.** What is left is sorting for exact percentiles. A larger transaction-local
 `work_mem` kept the sorts in memory but saved under 10%, so it was not adopted. Median run time is

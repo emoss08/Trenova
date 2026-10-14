@@ -2,6 +2,7 @@ package aianalyticsservice
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -56,7 +57,8 @@ func (c *memoryCache) Set(
 
 type refreshRepo struct {
 	aianalyticsports.AnalyticsRepository
-	units int
+	units    int
+	hoursErr error
 }
 
 func (r *refreshRepo) RefreshState(
@@ -74,7 +76,7 @@ func (r *refreshRepo) RefreshProviderHours(
 	context.Context,
 	aianalyticsports.RefreshRequest,
 ) (int, error) {
-	return 0, nil
+	return 0, r.hoursErr
 }
 
 func (r *refreshRepo) UnkeyedModels(
@@ -156,4 +158,17 @@ func TestRefreshThatWroteRowsMovesTheTenantToANewEpoch(t *testing.T) {
 	_, err = serviceWith(&refreshRepo{}, cache).Refresh(t.Context(), tenant)
 	require.NoError(t, err)
 	assert.Equal(t, 1, cache.bumps, "a refresh that found nothing keeps what is cached")
+}
+
+func TestRefreshThatFailsAfterSavingRunsStillMovesTheTenantToANewEpoch(t *testing.T) {
+	t.Parallel()
+
+	cache := &memoryCache{entries: map[int64]*aianalyticsports.Analytics{}}
+	tenant := pagination.TenantInfo{OrgID: "org_1", BuID: "bu_1"}
+	repo := &refreshRepo{units: 3, hoursErr: errors.New("connection reset")}
+
+	_, err := serviceWith(repo, cache).Refresh(t.Context(), tenant)
+
+	require.Error(t, err)
+	assert.Equal(t, 1, cache.bumps, "the runs already saved must not hide behind a cached answer")
 }

@@ -2,13 +2,10 @@ package aianalyticsrepository
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
 )
 
@@ -98,31 +95,9 @@ func outcomeDurationsSQL(grouping aianalytics.Grouping) string {
 		groupColumnsSQL(grouping), unitWindowSQL)
 }
 
-func offsetSQL(spans []aianalyticsports.OffsetSpan) string {
-	if len(spans) == 0 {
-		return "0"
-	}
-	if len(spans) == 1 {
-		return strconv.FormatInt(spans[0].Offset, 10)
-	}
-	var builder strings.Builder
-	builder.WriteString("CASE")
-	for idx := len(spans) - 1; idx > 0; idx-- {
-		fmt.Fprintf(
-			&builder,
-			" WHEN w.finished_at >= %d THEN %d",
-			spans[idx].From,
-			spans[idx].Offset,
-		)
-	}
-	fmt.Fprintf(&builder, " ELSE %d END", spans[0].Offset)
-
-	return builder.String()
-}
-
-func trendSQL(grouping aianalytics.Grouping, spans []aianalyticsports.OffsetSpan) string {
+func trendSQL(grouping aianalytics.Grouping) string {
 	return fmt.Sprintf(`SELECT %[1]s,
-		(w.finished_at + o.off) - (w.finished_at + o.off) %% ?bucket - o.off AS bucket_start,
+		(?starts::bigint[])[GREATEST(width_bucket(w.finished_at, ?starts::bigint[]), 1)] AS bucket_start,
 		COUNT(*) AS runs,
 		COUNT(*) FILTER (WHERE w.outcome = '%[2]s') AS completed,
 		COALESCE(SUM(w.tool_calls), 0) AS tool_calls,
@@ -130,10 +105,9 @@ func trendSQL(grouping aianalytics.Grouping, spans []aianalyticsports.OffsetSpan
 		percentile_cont(0.5) WITHIN GROUP (ORDER BY w.duration_ms)
 			FILTER (WHERE w.outcome = '%[2]s') AS median_run_ms
 	FROM ai_work_units AS w
-	CROSS JOIN LATERAL (SELECT (%[4]s)::bigint AS off) AS o
 	WHERE %[3]s
 	GROUP BY 1, 2, 3`,
-		groupColumnsSQL(grouping), aianalytics.OutcomeCompleted, unitWindowSQL, offsetSQL(spans))
+		groupColumnsSQL(grouping), aianalytics.OutcomeCompleted, unitWindowSQL)
 }
 
 const toolScopeSQL = `t.organization_id = ?org AND t.business_unit_id = ?bu AND t.finished_at >= ?since

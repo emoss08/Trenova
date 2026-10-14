@@ -129,6 +129,10 @@ func (w Window) Seconds() int64 {
 	}
 }
 
+func (w Window) Buckets() int {
+	return int(w.Seconds() / w.BucketSeconds())
+}
+
 func (w Window) BucketSeconds() int64 {
 	switch w {
 	case WindowDay:

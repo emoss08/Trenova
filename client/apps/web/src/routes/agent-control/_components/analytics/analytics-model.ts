@@ -10,9 +10,12 @@ import type {
   AiAnalyticsCompareBy,
   AiAnalyticsWindow,
   AiProviderErrorKind,
+  AiTask,
   AiToolFailureCause,
   AiWorkOutcome,
 } from "@trenova/graphql/generated/graphql";
+import { formatNumber } from "@trenova/shared/i18n/format";
+import { formatCurrency, formatPercent } from "@trenova/shared/lib/utils";
 import { createElement, type ReactNode } from "react";
 
 export const ANALYTICS_WINDOWS = [
@@ -78,7 +81,7 @@ export function percent(value: number | null | undefined, digits = 0): string {
     return "—";
   }
 
-  return `${(value * 100).toFixed(digits)}%`;
+  return formatPercent(value * 100, digits);
 }
 
 /** A failure share: one decimal under ten percent, under 0.1% said as such. */
@@ -125,16 +128,22 @@ export function formatLatency(ms: number | null | undefined): string {
   return `${(ms / 1000).toFixed(2)}s`;
 }
 
+/** A cost per run, to a tenth of a cent: runs are cheap, so cents alone would read $0.00. */
 export function formatCost(value: number | null | undefined): string {
   if (value === null || value === undefined || !Number.isFinite(value)) {
     return "—";
   }
 
-  return `$${value.toFixed(3)}`;
+  return formatNumber(value, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3,
+  });
 }
 
 export function formatSpend(value: number): string {
-  return `$${value.toFixed(2)}`;
+  return formatCurrency(value);
 }
 
 /** "1 in 25" for a rate; a rate of nothing is "none". */
@@ -364,6 +373,17 @@ export function boardSentence(
         : rt("<b>{0}</b> usually finishes in {1}.", BOLD, top, own);
     }
     case "toolFailures": {
+      if (best.value <= 0) {
+        return worst && value > 0
+          ? rt(
+              "<b>{0}</b> gets no tool calls wrong; <b>{1}</b> gets {2} wrong.",
+              BOLD,
+              top,
+              low,
+              oneIn(t, value),
+            )
+          : rt("<b>{0}</b> gets no tool calls wrong.", BOLD, top);
+      }
       const own = oneIn(t, best.value);
       return worst
         ? rt(
@@ -624,36 +644,49 @@ function trendValue(point: AIAnalyticsTrendPoint, metric: TrendMetric): number |
   }
 }
 
-/** The start of every bucket in the window, oldest first, so a quiet bucket is a gap. */
-export function trendBuckets(since: number, until: number, bucketSeconds: number): number[] {
-  const count = Math.max(1, Math.round((until - since) / bucketSeconds));
-  const last = Math.floor(until / bucketSeconds) * bucketSeconds;
-
-  return Array.from({ length: count }, (_, index) => last - (count - 1 - index) * bucketSeconds);
-}
-
-/** Each series' value per bucket, null where it did not run. */
+/** Each series' value per bucket, null where it did not run; points land on their own bucket. */
 export function trendLines(
   trend: readonly AIAnalyticsTrendPoint[],
   metric: TrendMetric,
   keys: readonly string[],
   buckets: readonly number[],
-  bucketSeconds: number,
 ): Map<string, (number | null)[]> {
   const out = new Map<string, (number | null)[]>(keys.map((key) => [key, buckets.map(() => null)]));
-  const first = buckets[0] ?? 0;
+  const slots = new Map(buckets.map((start, index) => [start, index] as const));
   for (const point of trend) {
     const line = out.get(point.seriesKey);
+    const slot = slots.get(point.bucketStart);
     const value = trendValue(point, metric);
-    if (!line || value === null || !Number.isFinite(value)) {
+    if (!line || slot === undefined || value === null || !Number.isFinite(value)) {
       continue;
     }
-    const index = Math.round((point.bucketStart - first) / bucketSeconds);
-    const slot = Math.max(0, Math.min(buckets.length - 1, index));
     line[slot] = value;
   }
 
   return out;
+}
+
+/**
+ * Where an instant falls on the bucket axis, as a fractional bucket index: 2.5 is halfway
+ * through the third bucket. Buckets need not be the same length (a day with a clock change).
+ */
+export function bucketPosition(
+  buckets: readonly number[],
+  at: number,
+  bucketSeconds: number,
+): number {
+  const count = buckets.length;
+  if (count === 0) {
+    return 0;
+  }
+  let index = 0;
+  while (index + 1 < count && (buckets[index + 1] ?? 0) <= at) {
+    index += 1;
+  }
+  const start = buckets[index] ?? 0;
+  const end = buckets[index + 1] ?? start + bucketSeconds;
+
+  return index + Math.min(1, Math.max(0, (at - start) / (end - start || bucketSeconds)));
 }
 
 /**
@@ -748,25 +781,21 @@ export type SameModelPair = {
 };
 
 /**
- * The first model that ran on two providers with enough runs on each to compare, its better
- * deployment on the left, and how the two compare on the figures the connection moves.
+ * The model the server picked as running on two providers (the widest gap in completion), its
+ * better deployment on the left, and how the two compare on the figures the connection moves.
+ * Nothing when either deployment is hidden from the charts.
  */
-export function sameModelPair(deployments: readonly AIAnalyticsSeries[]): SameModelPair | null {
-  const byModel = new Map<string, AIAnalyticsSeries[]>();
-  for (const deployment of deployments) {
-    if (!deployment.modelKey || !deployment.providerId || deployment.few) {
-      continue;
-    }
-    byModel.set(deployment.modelKey, [...(byModel.get(deployment.modelKey) ?? []), deployment]);
-  }
-  const pair = [...byModel.values()].find((list) => list.length > 1);
-  if (!pair) {
+export function sameModelPair(
+  deployments: readonly AIAnalyticsSeries[],
+  sameModel: AgentAnalytics["sameModel"],
+  isHidden: (deployment: AIAnalyticsSeries) => boolean,
+): SameModelPair | null {
+  if (!sameModel) {
     return null;
   }
-  const [left, right] = [...pair].sort(
-    (a, b) => (b.completedRate ?? 0) - (a.completedRate ?? 0) || b.runs - a.runs,
-  );
-  if (!left || !right) {
+  const left = deployments.find((deployment) => deployment.key === sameModel.betterKey);
+  const right = deployments.find((deployment) => deployment.key === sameModel.worseKey);
+  if (!left || !right || isHidden(left) || isHidden(right)) {
     return null;
   }
   const rows: SameModelRow[] = [];
@@ -787,6 +816,55 @@ export function sameModelPair(deployments: readonly AIAnalyticsSeries[]): SameMo
   }
 
   return { left, right, rows, wins: rows.filter((row) => row.leftWins).length };
+}
+
+/** The hidden series that are still on the page; all of them hidden shows them all again. */
+export function hiddenAmong(
+  hidden: readonly string[],
+  series: readonly { key: string }[],
+): readonly string[] {
+  const keys = new Set(series.map((item) => item.key));
+  const kept = hidden.filter((key) => keys.has(key));
+
+  return series.length > 0 && kept.length >= series.length ? [] : kept;
+}
+
+/**
+ * The task the scope filters on: none when no task is chosen or the chosen one is not a task
+ * the catalog knows, and undefined while the catalog that decides it is still loading.
+ */
+export function knownTask(
+  task: string | null,
+  labels: ReadonlyMap<AiTask, string>,
+  loaded: boolean,
+  failed: boolean,
+): AiTask | null | undefined {
+  if (!task) {
+    return null;
+  }
+  if (labels.has(task as AiTask)) {
+    return task as AiTask;
+  }
+
+  return loaded || failed ? null : undefined;
+}
+
+/** Why a scope with runs elsewhere shows nothing, naming the filters that are set. */
+export function emptyScopeMessage(
+  t: TranslateFn,
+  scope: { window: string; agent: boolean; task: boolean },
+): string {
+  if (scope.agent && scope.task) {
+    return t("Nothing ran for this agent and task in {0}.", scope.window);
+  }
+  if (scope.agent) {
+    return t("Nothing ran for this agent in {0}.", scope.window);
+  }
+  if (scope.task) {
+    return t("Nothing ran for this task in {0}.", scope.window);
+  }
+
+  return t("Nothing ran in {0}.", scope.window);
 }
 
 /** The routing order with one provider moved to just ahead of another. */

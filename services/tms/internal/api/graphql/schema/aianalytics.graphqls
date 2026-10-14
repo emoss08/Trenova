@@ -94,6 +94,8 @@ input AIAnalyticsInput {
 type AIAnalyticsProvider {
   id: ID
   name: String!
+  "A name short enough for a chart label, distinct among the organization's providers."
+  shortName: String!
   kind: AIProviderKind
   baseUrl: String!
   enabled: Boolean!
@@ -161,6 +163,8 @@ type AIAnalyticsSeries {
   costPerCompletedRun: Decimal
   firstTokenMedianMs: Int
   lastRanAt: Timestamp
+  "Nothing ran for longer than a day before the end of the window."
+  quiet: Boolean!
   runTimes: [AIAnalyticsRunTime!]!
   "Proposals people decided in the window."
   decided: Int!
@@ -192,6 +196,8 @@ type AIAnalyticsTotals {
   costUsd: Decimal!
   pricedRuns: Int!
   costPerCompletedRun: Decimal
+  "Tool calls fail often enough to call out."
+  toolFailureAlarm: Boolean!
 }
 
 "One series in one hour or day."
@@ -273,11 +279,17 @@ type AIAnalyticsProviderHealth {
   modelKey: String!
   model: String!
   lastCalledAt: Timestamp
+  "Nothing was called for longer than a day before the end of the window."
+  quiet: Boolean!
   calls: Int!
   errors: Int!
   errorRate: Float
+  "The error rate is high enough to call out."
+  errorAlarm: Boolean!
   "Failed calls another provider then answered."
   fellToNext: Int!
+  "Enough calls fell to the next provider to call out."
+  fellToNextAlarm: Boolean!
   firstTokenMedianMs: Int
   "In the order of the kinds."
   errorsByKind: [AIAnalyticsErrorCount!]!
@@ -304,6 +316,8 @@ type AgentAnalytics {
   until: Timestamp!
   "The width of one trend point in seconds."
   bucketSeconds: Int!
+  "Where every trend point starts, oldest first, at the viewer's local boundaries."
+  trendBuckets: [Timestamp!]!
   "When the analytics were last worked out; absent before the first time."
   refreshedAt: Timestamp
   summary: [AIAnalyticsSegment!]!
@@ -319,6 +333,15 @@ type AgentAnalytics {
   tools: [AIAnalyticsTool!]!
   tasks: [AIAnalyticsTask!]!
   providers: [AIAnalyticsProviderHealth!]!
+  "The model that ran on two providers to compare, when one did."
+  sameModel: AIAnalyticsSameModel
+}
+
+"One model on two providers: the deployment that completed more, and the one that completed less."
+type AIAnalyticsSameModel {
+  modelKey: String!
+  betterKey: String!
+  worseKey: String!
 }
 
 type AIAnalyticsCauseCount {

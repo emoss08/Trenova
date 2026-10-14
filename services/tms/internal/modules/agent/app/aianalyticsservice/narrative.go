@@ -219,7 +219,7 @@ type sharedModel struct {
 	points float64
 }
 
-func widestConnectionGap(deployments []aianalyticsports.Series) *sharedModel {
+func sharedModelPair(deployments []aianalyticsports.Series) *sharedModel {
 	byModel := make(map[string][]*aianalyticsports.Series, len(deployments))
 	for idx := range deployments {
 		item := &deployments[idx]
@@ -238,12 +238,10 @@ func widestConnectionGap(deployments []aianalyticsports.Series) *sharedModel {
 			return cmp.Or(
 				cmp.Compare(completion(right), completion(left)),
 				cmp.Compare(right.Runs, left.Runs),
+				cmp.Compare(left.Key, right.Key),
 			)
 		})
 		points := (completion(rows[0]) - completion(rows[len(rows)-1])) * percentScale
-		if points < aianalytics.MinConnectionGap {
-			continue
-		}
 		if widest == nil || points > widest.points ||
 			(points == widest.points && model < widest.model) {
 			widest = &sharedModel{
@@ -259,8 +257,8 @@ func widestConnectionGap(deployments []aianalyticsports.Series) *sharedModel {
 }
 
 func connectionGap(n *narration) []aianalyticsports.Segment {
-	widest := widestConnectionGap(n.deployments)
-	if widest == nil {
+	widest := sharedModelPair(n.deployments)
+	if widest == nil || widest.points < aianalytics.MinConnectionGap {
 		return nil
 	}
 	better := n.providers.ref(widest.better.ProviderID.String())
@@ -496,18 +494,18 @@ func settingEvents(
 		}
 		ref := providers.ref(row.ProviderID)
 		if ref.Removed && row.Name != "" {
-			ref.Name = row.Name
+			ref.Name, ref.ShortName = row.Name, row.Name
 		}
 		switch {
 		case before.enabled && !row.Enabled:
 			out = append(out, aianalyticsports.Event{
 				At: row.CreatedAt, Provider: ref, Kind: aianalytics.EventTurnedOff,
-				Label: i18n.Translate(providers.locale, "{0} turned off", ref.Name),
+				Label: i18n.Translate(providers.locale, "{0} turned off", ref.ShortName),
 			})
 		case !before.enabled && row.Enabled:
 			out = append(out, aianalyticsports.Event{
 				At: row.CreatedAt, Provider: ref, Kind: aianalytics.EventTurnedOn,
-				Label: i18n.Translate(providers.locale, "{0} turned on", ref.Name),
+				Label: i18n.Translate(providers.locale, "{0} turned on", ref.ShortName),
 			})
 		}
 		if before.model != row.Model && row.Model != "" {
@@ -516,7 +514,7 @@ func settingEvents(
 				Label: i18n.Translate(
 					providers.locale,
 					"{0} switched to {1}",
-					ref.Name,
+					ref.ShortName,
 					aianalytics.NameModel(aianalytics.CanonicalModel(row.Model)).Label,
 				),
 			})
@@ -544,18 +542,18 @@ func healthEvents(
 			unhealthy[row.ProviderID] = true
 			event := aianalyticsports.Event{
 				At: row.Hour, Provider: ref, Kind: aianalytics.EventStoppedAnswering,
-				Label: i18n.Translate(providers.locale, "{0} stopped answering", ref.Name),
+				Label: i18n.Translate(providers.locale, "{0} stopped answering", ref.ShortName),
 			}
 			if row.AuthFailed*2 >= row.Failed {
 				event.Kind = aianalytics.EventLostAccess
-				event.Label = i18n.Translate(providers.locale, "{0} lost access", ref.Name)
+				event.Label = i18n.Translate(providers.locale, "{0} lost access", ref.ShortName)
 			}
 			out = append(out, event)
 		case unhealthy[row.ProviderID] && failureRate < recoveredFailureRate:
 			unhealthy[row.ProviderID] = false
 			out = append(out, aianalyticsports.Event{
 				At: row.Hour, Provider: ref, Kind: aianalytics.EventRecovered,
-				Label: i18n.Translate(providers.locale, "{0} recovered", ref.Name),
+				Label: i18n.Translate(providers.locale, "{0} recovered", ref.ShortName),
 			})
 		}
 	}

@@ -86,7 +86,12 @@ agent runtime    ─▶ agent_runs / assistant_turns (status, fingerprint.stoppe
    `meta-llama/Llama-3.3-70B-Instruct` and `llama-3.3-70b-versatile` are one model. The key is
    applied to units, hours and tool rows.
 5. Prunes everything older than 90 days.
-6. Bumps the tenant's cache epoch when it wrote anything.
+6. Bumps the tenant's cache epoch when it wrote anything, including when a later step of the
+   same cycle failed, so rows already saved never hide behind a cached answer.
+
+Every write transaction of the refresh first takes a transaction-scoped advisory lock on the
+tenant (`pg_advisory_xact_lock`). An activity retried while its first attempt is still running
+waits for it instead of colliding on the hourly table's primary key.
 
 Every table is a tenant table under FORCE row-level security, and the migration ends with
 `trenova_rls.reconcile()`. The rollup is derived data: deleting it is safe, and the next refresh
@@ -111,6 +116,25 @@ group and per deployment, and the trend is read per group.
 | A tool-call outlier is named | 2× the rest, among at least 3 ranked groups |
 | A run-time note appears | 10 failed runs, at 2× the completed median |
 | A connection gap is named | 3 points |
+| Failed tool calls read as a problem | over 3% |
+| A provider's error rate reads as a problem | over 5% |
+| Calls that fell to the next provider read as a warning | over 50 |
+| A series or deployment says when it last ran | quiet for over a day before the window ends |
+
+The view carries each of these as a flag (`toolFailureAlarm`, `errorAlarm`, `fellToNextAlarm`,
+`quiet`), so the client only draws them. What the client still owns is presentation: the colour
+scale of a heatmap cell and where a bar tops out.
+
+**Same model, two providers.** `sharedModelPair` picks the model run on two providers with the
+widest gap in completion between its best and worst deployment, among deployments that rank.
+The view names it as `sameModel` (the model and both deployment keys), and both the same-model
+card and the connection-gap sentence read that pair, so they always talk about the same one. The
+sentence appears only when the gap is at least 3 points; the card shows whenever a pair exists.
+
+**Short names.** Every provider carries a `shortName` for chart labels and event markers:
+`stringutils.DistinctShortNames` takes the last word of the name ("AWS Bedrock" → "Bedrock"),
+falls back to the first when two providers share it ("Workstation vLLM" and "Office vLLM" →
+"Workstation", "Office"), and to the full name after that.
 
 **Narrative.** `summarize` and `runTimeNote` build the Nova sentences as segments the client
 renders. Segments that name a series or a provider link to it. Each sentence is one catalog
@@ -128,9 +152,13 @@ hourly health transitions (stopped answering, lost access, recovered).
 key or provider id, over everything seen in the last 30 days, so a model keeps its colour whatever
 is filtered. The client draws `var(--series-<slot + 1>)`.
 
-**Trend buckets.** Buckets are 1 hour, 6 hours or 1 day, in the viewer's time zone. The service
-turns the zone into UTC-offset spans (`ZoneBounds`), so the SQL adds integers instead of converting
-every row's time zone.
+**Trend buckets.** Buckets are 1 hour, 6 hours or 1 day, in the viewer's time zone: 24, 28 or 30
+of them. `aianalytics.BucketStarts` works out the instant each bucket starts. Daily and 6-hour
+buckets start on the local calendar, so a day with a clock change is 23 or 25 hours long. Hourly
+buckets follow the zone's offset, so a half-hour zone's hours start on its own half hour. The trend
+query assigns each run to the latest start at or before it with `width_bucket` over that list, and
+the view returns the same list as `trendBuckets`. The client draws exactly those buckets, so the
+axis and the data cannot disagree about where a day begins.
 
 **Tool failures.** `agentAnalyticsToolFailures` returns a cell's failures by cause, and the eight
 newest failed tool steps with their messages and agents.
@@ -144,9 +172,15 @@ newest failed tool steps with their messages and agents.
 - window, comparison, agent, task and time zone
 - the viewer's language, because the sentences are translated on the server
 
-Entries live for two minutes. The refresh bumps the epoch (`INCR`, kept seven days) whenever it
-writes, so a new run is visible after the next refresh and never later. The cache fails open: a
-Redis error is logged, and the query is read from Postgres.
+Entries live for two minutes. The epoch (`INCR`, kept seven days) is bumped by:
+
+- the refresh, whenever it writes;
+- every AI provider write: create, update, patch, delete, reorder, assign a task and route a task.
+
+A new run is therefore visible after the next refresh, and a routing change made from the page
+is visible on its next read. The cache fails open: a Redis error is logged, and the query is read
+from Postgres. `until` and every "quiet" flag are as of when the answer was built, so they can be
+up to two minutes old.
 
 ## Routing from the page
 
@@ -161,7 +195,9 @@ Redis error is logged, and the query is read from Postgres.
 ## Testing it
 
 - `aianalyticsservice` tests build `readings` by hand and assert the assembled view: grouping,
-  "few", the narrative, task fit, provider health, the cache epoch and the offset spans.
+  "few", the narrative, task fit, provider health, the cache epoch, alarms, short names and the
+  same-model pair.
+- `aianalytics` tests cover bucket starts across a clock change and in a half-hour zone.
 - `aianalyticsrepository/refresh_integration_test.go` (`-tags integration`) refreshes real rows into
   a container database.
 - The client's `analytics/__tests__/analytics-model.test.ts` covers formatting, ranking, sentences,

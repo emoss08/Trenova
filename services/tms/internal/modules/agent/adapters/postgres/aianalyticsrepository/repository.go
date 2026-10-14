@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -36,25 +37,25 @@ func New(p Params) aianalyticsports.AnalyticsRepository {
 }
 
 type sqlArgs struct {
-	Org        string `bun:"org"`
-	Bu         string `bun:"bu"`
-	From       int64  `bun:"from"`
-	To         int64  `bun:"to"`
-	FromHour   int64  `bun:"from_hour"`
-	ToHour     int64  `bun:"to_hour"`
-	Stamp      int64  `bun:"stamp"`
-	Since      int64  `bun:"since"`
-	SinceHour  int64  `bun:"since_hour"`
-	Agent      string `bun:"agent"`
-	Task       string `bun:"task"`
-	Bucket     int64  `bun:"bucket"`
-	SeriesKey  string `bun:"series_key"`
-	ToolName   string `bun:"tool_name"`
-	Limit      int    `bun:"limit"`
-	Model      string `bun:"model"`
-	ModelKey   string `bun:"model_key"`
-	Before     int64  `bun:"before"`
-	BeforeHour int64  `bun:"before_hour"`
+	Org        string                `bun:"org"`
+	Bu         string                `bun:"bu"`
+	From       int64                 `bun:"from"`
+	To         int64                 `bun:"to"`
+	FromHour   int64                 `bun:"from_hour"`
+	ToHour     int64                 `bun:"to_hour"`
+	Stamp      int64                 `bun:"stamp"`
+	Since      int64                 `bun:"since"`
+	SinceHour  int64                 `bun:"since_hour"`
+	Agent      string                `bun:"agent"`
+	Task       string                `bun:"task"`
+	Starts     *pgdialect.ArrayValue `bun:"starts"`
+	SeriesKey  string                `bun:"series_key"`
+	ToolName   string                `bun:"tool_name"`
+	Limit      int                   `bun:"limit"`
+	Model      string                `bun:"model"`
+	ModelKey   string                `bun:"model_key"`
+	Before     int64                 `bun:"before"`
+	BeforeHour int64                 `bun:"before_hour"`
 }
 
 func tenantArgs(tenant pagination.TenantInfo) sqlArgs {
@@ -136,11 +137,28 @@ func (r *repository) exec(ctx context.Context, query string, args sqlArgs) (int,
 	return int(affected), nil
 }
 
+func (r *repository) lockRefresh(ctx context.Context, tenant pagination.TenantInfo) error {
+	_, err := r.db.DBForContext(ctx).
+		NewRaw(
+			"SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
+			"ai-analytics-refresh:"+tenant.OrgID.String()+":"+tenant.BuID.String(),
+		).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("lock ai analytics refresh: %w", err)
+	}
+
+	return nil
+}
+
 func (r *repository) RefreshUnits(
 	ctx context.Context,
 	req aianalyticsports.RefreshRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		if err := r.lockRefresh(ctx, req.TenantInfo); err != nil {
+			return 0, err
+		}
 		args := tenantArgs(req.TenantInfo)
 		args.From = req.From
 		args.To = req.To
@@ -185,6 +203,9 @@ func (r *repository) RefreshProviderHours(
 	req aianalyticsports.RefreshRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		if err := r.lockRefresh(ctx, req.TenantInfo); err != nil {
+			return 0, err
+		}
 		args := tenantArgs(req.TenantInfo)
 		args.FromHour = floorHour(req.From)
 		args.ToHour = ceilHour(req.To)
@@ -259,6 +280,9 @@ func (r *repository) SetModelKeys(
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if err := r.lockRefresh(ctx, req.TenantInfo); err != nil {
+			return err
+		}
 		args := tenantArgs(req.TenantInfo)
 		args.Stamp = req.Stamp
 		args.FromHour = req.FromHour
@@ -294,6 +318,9 @@ const (
 
 func (r *repository) Prune(ctx context.Context, req aianalyticsports.PruneRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if err := r.lockRefresh(ctx, req.TenantInfo); err != nil {
+			return err
+		}
 		args := tenantArgs(req.TenantInfo)
 		args.Before = req.Before
 		args.BeforeHour = floorHour(req.Before)
@@ -495,10 +522,13 @@ func (r *repository) Trend(
 	ctx context.Context,
 	req aianalyticsports.TrendRequest,
 ) ([]aianalyticsports.TrendRow, error) {
+	if len(req.BucketStarts) == 0 {
+		return []aianalyticsports.TrendRow{}, nil
+	}
 	args := filterArgs(req.Filter)
-	args.Bucket = req.BucketSeconds
+	args.Starts = pgdialect.Array(req.BucketStarts)
 
-	return scanMapped(ctx, r, "trend", trendSQL(req.Grouping, req.Offsets), args,
+	return scanMapped(ctx, r, "trend", trendSQL(req.Grouping), args,
 		func(row *trendScan) aianalyticsports.TrendRow {
 			return aianalyticsports.TrendRow{
 				DeploymentKey: row.key(),

@@ -1,5 +1,6 @@
 import { describeToolCall } from "@/components/assistant/tool-presentation";
 import type { AIAnalyticsSeries, AIAnalyticsTool } from "@/lib/graphql/ai-analytics";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixMonthDay } from "@trenova/shared/lib/date";
 import type { AiAnalyticsCompareBy } from "@trenova/graphql/generated/graphql";
@@ -21,13 +22,11 @@ import { ProviderMarks } from "./provider-marks";
 
 const TOOLS_SHOWN = 4;
 const TOOL_BAR_CEILING = 0.15;
-const QUIET_SECONDS = 86_400;
 
 type SeriesSheetProps = {
   open: boolean;
   series: AIAnalyticsSeries | null;
   tools: readonly AIAnalyticsTool[];
-  until: number;
   compareBy: AiAnalyticsCompareBy;
   onOpenProvider: (providerId: string) => void;
   onOpenRuns: () => void;
@@ -39,7 +38,6 @@ export function SeriesSheet({
   open,
   series,
   tools,
-  until,
   compareBy,
   onOpenProvider,
   onOpenRuns,
@@ -53,10 +51,7 @@ export function SeriesSheet({
     compareBy === "Provider"
       ? series.models.join(" · ")
       : series.providers.map((provider) => provider.name).join(" · ");
-  const quiet =
-    series.lastRanAt !== null &&
-    series.lastRanAt !== undefined &&
-    until - series.lastRanAt > QUIET_SECONDS;
+  const quiet = series.quiet;
   const wrong = tools
     .map((tool) => ({ tool, cell: tool.cells.find((cell) => cell.seriesKey === series.key) }))
     .filter((entry) => entry.cell && !entry.cell.few)
@@ -90,7 +85,7 @@ export function SeriesSheet({
     >
       <KV
         items={[
-          [t("Runs"), series.runs.toLocaleString()],
+          [t("Runs"), formatNumber(series.runs)],
           [t("Completed"), percent(series.completedRate)],
           [
             t("Tool calls failed"),
@@ -105,7 +100,7 @@ export function SeriesSheet({
           [
             t("Approved as proposed"),
             series.decided > 0
-              ? t("{0} of {1}", percent(series.approvalRate), series.decided.toLocaleString())
+              ? t("{0} of {1}", percent(series.approvalRate), formatNumber(series.decided))
               : "—",
           ],
           [t("Rated helpful"), series.rated > 0 ? percent(series.helpfulRate) : "—"],
@@ -149,7 +144,7 @@ export function SeriesSheet({
                       {t(item.title)}
                     </span>
                   </td>
-                  <td className="r mono">{outcomeCount(series, item.outcome).toLocaleString()}</td>
+                  <td className="r mono">{formatNumber(outcomeCount(series, item.outcome))}</td>
                   <td className="r mono">{runTime ? formatRunTime(runTime.medianMs) : "—"}</td>
                   <td className="r mono">{runTime ? formatRunTime(runTime.p95Ms) : "—"}</td>
                 </tr>
@@ -166,7 +161,7 @@ export function SeriesSheet({
               <span className="an-wl">
                 <b>{describeToolCall(entry.tool.name, null).title}</b>
                 <span className="mono">
-                  {t("{0} of {1}", percent(entry.rate, 1), entry.calls.toLocaleString())}
+                  {t("{0} of {1}", percent(entry.rate, 1), formatNumber(entry.calls))}
                 </span>
               </span>
               <span className="ubar">

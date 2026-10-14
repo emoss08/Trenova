@@ -99,6 +99,10 @@ type AIAnalyticsProvider {
   kind: AIProviderKind
   name: String!
   removed: Boolean!
+  """
+  A name short enough for a chart label, distinct among the organization's providers.
+  """
+  shortName: String!
 }
 
 """
@@ -106,12 +110,16 @@ Errors that happened before a model could answer, by deployment (a model on a pr
 """
 type AIAnalyticsProviderHealth {
   calls: Int!
+  """The error rate is high enough to call out."""
+  errorAlarm: Boolean!
   errorRate: Float
   errors: Int!
   """In the order of the kinds."""
   errorsByKind: [AIAnalyticsErrorCount!]!
   """Failed calls another provider then answered."""
   fellToNext: Int!
+  """Enough calls fell to the next provider to call out."""
+  fellToNextAlarm: Boolean!
   firstTokenMedianMs: Int
   """model|provider, the same key as the deployment."""
   key: String!
@@ -119,6 +127,8 @@ type AIAnalyticsProviderHealth {
   model: String!
   modelKey: String!
   provider: AIAnalyticsProvider!
+  """Nothing was called for longer than a day before the end of the window."""
+  quiet: Boolean!
 }
 
 """
@@ -138,6 +148,15 @@ type AIAnalyticsRunTime {
   p75Ms: Int!
   p95Ms: Int!
   runs: Int!
+}
+
+"""
+One model on two providers: the deployment that completed more, and the one that completed less.
+"""
+type AIAnalyticsSameModel {
+  betterKey: String!
+  modelKey: String!
+  worseKey: String!
 }
 
 """One run of a sentence. A target makes it a link."""
@@ -203,6 +222,8 @@ type AIAnalyticsSeries {
   The providers that served the model, busiest first, or the provider itself.
   """
   providers: [AIAnalyticsProvider!]!
+  """Nothing ran for longer than a day before the end of the window."""
+  quiet: Boolean!
   rated: Int!
   rejected: Int!
   runTimes: [AIAnalyticsRunTime!]!
@@ -283,6 +304,8 @@ type AIAnalyticsTotals {
   stopped: Int!
   toolCalls: Int!
   toolCallsFailed: Int!
+  """Tool calls fail often enough to call out."""
+  toolFailureAlarm: Boolean!
   toolFailureRate: Float
   toolFailuresModel: Int!
 }
@@ -3391,6 +3414,8 @@ type AgentAnalytics {
   refreshedAt: Timestamp
   """What stands out about run times; empty when nothing does."""
   runTimeNote: [AIAnalyticsSegment!]!
+  """The model that ran on two providers to compare, when one did."""
+  sameModel: AIAnalyticsSameModel
   """Busiest first."""
   series: [AIAnalyticsSeries!]!
   since: Timestamp!
@@ -3399,6 +3424,10 @@ type AgentAnalytics {
   tools: [AIAnalyticsTool!]!
   totals: AIAnalyticsTotals!
   trend: [AIAnalyticsTrendPoint!]!
+  """
+  Where every trend point starts, oldest first, at the viewer's local boundaries.
+  """
+  trendBuckets: [Timestamp!]!
   until: Timestamp!
   window: AIAnalyticsWindow!
 }

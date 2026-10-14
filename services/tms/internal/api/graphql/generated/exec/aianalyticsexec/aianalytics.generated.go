@@ -25,6 +25,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AIAnalyticsProviderHealth", Implementors: []string{"AIAnalyticsProviderHealth"}},
 		{Name: "AIAnalyticsRouteSuggestion", Implementors: []string{"AIAnalyticsRouteSuggestion"}},
 		{Name: "AIAnalyticsRunTime", Implementors: []string{"AIAnalyticsRunTime"}},
+		{Name: "AIAnalyticsSameModel", Implementors: []string{"AIAnalyticsSameModel"}},
 		{Name: "AIAnalyticsSegment", Implementors: []string{"AIAnalyticsSegment"}},
 		{Name: "AIAnalyticsSeries", Implementors: []string{"AIAnalyticsSeries"}},
 		{Name: "AIAnalyticsTask", Implementors: []string{"AIAnalyticsTask"}},
@@ -225,6 +226,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "shortName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsProvider)
+					return obj.ShortName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
 				Name:     "kind",
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -316,6 +327,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
 			{
+				Name:     "quiet",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
+					return obj.Quiet, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:     "calls",
 				NonNull:  true,
 				ChildErr: errNoChild2,
@@ -345,6 +366,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
 			},
 			{
+				Name:     "errorAlarm",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
+					return obj.ErrorAlarm, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:     "fellToNext",
 				NonNull:  true,
 				ChildErr: errNoChild2,
@@ -353,6 +384,16 @@ var Shard = &gqlexec.Shard{
 					return obj.FellToNext, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "fellToNextAlarm",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
+					return obj.FellToNextAlarm, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
 				Name:     "firstTokenMedianMs",
@@ -468,6 +509,38 @@ var Shard = &gqlexec.Shard{
 					return obj.P95Ms, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "AIAnalyticsSameModel", Fields: []*gqlexec.Field{
+			{
+				Name:     "modelKey",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsSameModel)
+					return obj.ModelKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "betterKey",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsSameModel)
+					return obj.BetterKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "worseKey",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsSameModel)
+					return obj.WorseKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
 		{Object: "AIAnalyticsSegment", Fields: []*gqlexec.Field{
@@ -810,6 +883,16 @@ var Shard = &gqlexec.Shard{
 					return obj.LastRanAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "quiet",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsSeries)
+					return obj.Quiet, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
 				Name:      "runTimes",
@@ -1281,6 +1364,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
+			{
+				Name:     "toolFailureAlarm",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsTotals)
+					return obj.ToolFailureAlarm, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "AIAnalyticsTrendPoint", Fields: []*gqlexec.Field{
 			{
@@ -1391,6 +1484,16 @@ var Shard = &gqlexec.Shard{
 					return obj.BucketSeconds, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "trendBuckets",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AgentAnalytics)
+					return obj.TrendBuckets, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2ᚕintᚄ),
 			},
 			{
 				Name:     "refreshedAt",
@@ -1510,6 +1613,16 @@ var Shard = &gqlexec.Shard{
 					return obj.Providers, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAIAnalyticsProviderHealth2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsProviderHealthᚄ),
+			},
+			{
+				Name:      "sameModel",
+				HasChild:  true,
+				ChildType: "AIAnalyticsSameModel",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AgentAnalytics)
+					return obj.SameModel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAIAnalyticsSameModel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsSameModel),
 			},
 		}},
 		{Object: "AgentAnalyticsToolFailures", Fields: []*gqlexec.Field{
@@ -2176,6 +2289,15 @@ func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
+func marshalNTimestamp2ᚕintᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []int) graphql.Marshaler {
+	return gqlexec.List[int]{
+		Elem:        marshalNTimestamp2int,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalOAIAnalyticsProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsProvider(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AIAnalyticsProvider) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -2188,6 +2310,13 @@ func marshalOAIAnalyticsRouteSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AIAnalyticsRouteSuggestion", v)
+}
+
+func marshalOAIAnalyticsSameModel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsSameModel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AIAnalyticsSameModel) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AIAnalyticsSameModel", v)
 }
 
 func marshalOAIAnalyticsTarget2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsTarget(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AIAnalyticsTarget) graphql.Marshaler {

@@ -152,3 +152,20 @@ func TestAnalyticsSeedIsTheSameEveryTime(t *testing.T) {
 	}
 	assert.Len(t, second.hours, len(first.hours))
 }
+
+func TestAnalyticsSeedEndsBeforeTheHourTheFirstRefreshRebuilds(t *testing.T) {
+	t.Parallel()
+
+	now := analyticsTestNow - analyticsTestNow%analyticsSeedHour + 5*60
+	refs := analyticsTestRefs()
+	refs.now = now
+	data := buildAnalyticsSeed(refs)
+
+	firstRebuiltHour := (now - 15*60) - (now-15*60)%analyticsSeedHour
+	for _, unit := range data.units {
+		require.Less(t, unit.FinishedAt, firstRebuiltHour)
+	}
+	for _, hour := range data.hours {
+		require.Less(t, hour.Hour, firstRebuiltHour)
+	}
+}

@@ -40,6 +40,7 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `listRows` | number | `3` | Rows on the hazardous materials list, for checking a short and a long list page |
 | `aiProviders` | `configured` \| `many` \| `all` \| `none` | `configured` | AI control: the prototype's three providers (one failing), five cloud providers, both together, or none |
 | `aiPaused` | `true` \| `false` | `false` | Every agent paused in shadow |
+| `aiAnalytics` | `ok` \| `error` | `ok` | AI control › Analytics: the query answers, or every read fails (the error state) |
 | `triage` | `live` \| `firstDay` \| `noMailbox` \| `deskOff` | `live` | Triage's queue: the prototype's mail with a new message every 26s, no mail yet, no source, or Nova off |
 | `triageTime` | `afternoon` \| `endOfDay` | `afternoon` | Triage's clock: 13:39 (the prototype's NOW) or 17:20, after the 17:00 wrap-up |
 | `triageReplyAfterMs` | number | `6500` | How long after "Wait for reply" the sender answers on the thread |
@@ -296,7 +297,9 @@ recovered 12 days ago and stopped answering this morning, AWS Bedrock lost acces
 Google Gemini was turned off six days ago, and Llama 3.3 runs on both Groq and the workstation
 so the same-model card has a pair to compare. Use `aiProviders: "all"` for the analytics shots:
 it connects every provider the units name. `routeAITask` changes the mock's routing, so a
-suggestion disappears once it is taken.
+suggestion disappears once it is taken. Trend buckets start at the viewer's local boundaries, as
+the server's do, so a shot with a `timezoneId` (`analytics-new-york-week`) checks the chart
+outside UTC.
 
 The Desk's resource cards have their own walkthrough:
 
