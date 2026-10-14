@@ -20,6 +20,7 @@ import {
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { InfoPopover } from "./info-popover";
+import { useAnyFieldDirty, useChangedFieldNames } from "@/hooks/use-dirty-fields";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useRichT } from "@trenova/shared/i18n/rich";
@@ -38,7 +39,6 @@ import {
 import {
   get,
   useFormContext,
-  useFormState,
   useWatch,
   type FieldPath,
   type FieldValues,
@@ -76,16 +76,6 @@ function fallbackLabel(key: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-/**
- * The top-level fields that differ from what the form opened with. The form's
- * dirty fields are read on every render, because react-hook-form changes that
- * object in place.
- */
-function useChangedFields<T extends FieldValues>(form: UseFormReturn<T, any, any>) {
-  const { dirtyFields } = useFormState({ control: form.control });
-  return Object.keys(dirtyFields).filter((key) => key !== "version");
-}
-
 type FormChangesFooterProps<T extends FieldValues> = {
   form: UseFormReturn<T, any, any>;
   fields: ChangeFields;
@@ -108,7 +98,7 @@ export function FormChangesFooter<T extends FieldValues>({
   problem,
 }: FormChangesFooterProps<T>) {
   const t = useT();
-  const changed = useChangedFields(form);
+  const changed = useChangedFieldNames(form.control);
   const count = changed.length;
 
   return (
@@ -137,8 +127,7 @@ const UNSAVED_TONE = {
     offset: 8,
   },
   dock: {
-    trigger:
-      "text-background hover:bg-background/10 data-popup-open:bg-background/15",
+    trigger: "text-background hover:bg-background/10 data-popup-open:bg-background/15",
     chevron: "text-background/70",
     // Anchored to the dock itself, so the gap is measured from the dock's edge.
     offset: 6,
@@ -279,7 +268,12 @@ type ChangeListProps<T extends FieldValues> = {
  * The review's rows. A component of its own so its lookups and formatting run only
  * while the review is open, never on the footer's renders while it is closed.
  */
-function ChangeList<T extends FieldValues>({ form, changed, fields, registry }: ChangeListProps<T>) {
+function ChangeList<T extends FieldValues>({
+  form,
+  changed,
+  fields,
+  registry,
+}: ChangeListProps<T>) {
   // Watched rather than read, so a row's "after" follows an edit made while the
   // review is open.
   const values: unknown[] = useWatch({
@@ -342,8 +336,7 @@ function ChangeRow({ field, before, after, onUndo }: ChangeRowProps) {
 function ChangeValue({ field, before, after }: Omit<ChangeRowProps, "onUndo">) {
   if (!field.format && isPlainList(before) && isPlainList(after)) {
     const { added, removed } = listDelta(before, after);
-    const name =
-      field.item ?? ((item: string | number) => field.value?.(item) ?? String(item));
+    const name = field.item ?? ((item: string | number) => field.value?.(item) ?? String(item));
     return (
       <span className="flex min-w-0 flex-wrap gap-x-2 gap-y-0.5">
         {added.map((value) => (
@@ -360,8 +353,7 @@ function ChangeValue({ field, before, after }: Omit<ChangeRowProps, "onUndo">) {
     );
   }
 
-  const write =
-    field.format ?? ((value: unknown) => field.value?.(value) ?? previewValue(value));
+  const write = field.format ?? ((value: unknown) => field.value?.(value) ?? previewValue(value));
   return (
     <span className="flex min-w-0 items-center gap-1.5">
       <span className="max-w-[45%] shrink-0 truncate opacity-60">{write(before)}</span>
@@ -405,12 +397,7 @@ export function FormPanelSection({
     () => (fields.length === 0 ? drawn : Array.from(new Set([...fields, ...drawn]))),
     [drawn, fields],
   );
-  const { dirtyFields } = useFormState({
-    control,
-    name: watched as string[],
-    disabled: watched.length === 0,
-  });
-  const changed = watched.some((name) => Boolean(get(dirtyFields, name)));
+  const changed = useAnyFieldDirty(control, watched);
 
   return (
     <FormSection
@@ -501,7 +488,7 @@ export function PanelDirtyTracker<T extends FieldValues>({
   form: UseFormReturn<T, any, any>;
   guard: PanelCloseGuard;
 }) {
-  const count = useChangedFields(form).length;
+  const count = useChangedFieldNames(form.control).length;
   const { reportDirty } = guard;
   useEffect(() => {
     reportDirty(count);

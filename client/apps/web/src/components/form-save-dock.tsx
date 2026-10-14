@@ -14,6 +14,7 @@ import { useCallback, useRef, type Ref } from "react";
 import { useFormContext, useFormState } from "react-hook-form";
 import { UnsavedChanges, type ChangeFields } from "./form-changes";
 import { useFormFieldRegistry } from "@trenova/shared/lib/form-field-registry";
+import { useChangedFieldNames } from "@/hooks/use-dirty-fields";
 
 const NO_CHANGE_FIELDS: ChangeFields = {};
 
@@ -197,9 +198,10 @@ export function FormSaveDock<T extends string = string>({
   const { control, reset } = form;
   const registry = useFormFieldRegistry();
 
-  const { isDirty, dirtyFields, touchedFields, isSubmitting } = useFormState({
+  const { isDirty, touchedFields, isSubmitting } = useFormState({
     control,
   });
+  const changed = useChangedFieldNames(control);
 
   const handleReset = useCallback(() => {
     reset(
@@ -211,18 +213,17 @@ export function FormSaveDock<T extends string = string>({
     );
   }, [reset]);
 
-  const changed = Object.keys(dirtyFields).filter((key) => key !== "version");
   const hasDirtyFields = isDirty && changed.length > 0;
   const liveChanges = hasDirtyFields ? (
-      <UnsavedChanges
-        form={form}
-        changed={changed}
-        fields={changeFields ?? NO_CHANGE_FIELDS}
-        registry={registry}
-        tone="dock"
-        anchor={dockRef}
-      />
-    ) : undefined;
+    <UnsavedChanges
+      form={form}
+      changed={changed}
+      fields={changeFields ?? NO_CHANGE_FIELDS}
+      registry={registry}
+      tone="dock"
+      anchor={dockRef}
+    />
+  ) : undefined;
   const hasTouchedFields = Object.keys(touchedFields).length > 0;
 
   if (closePrompt) {
