@@ -505,9 +505,9 @@ opens tainted when:
 Master-data names and notes written inside the organization are not sources.
 A shipment comment written outside it is (`record_note`, below).
 
-Web content is held more strictly: once a turn has read the web through an extension, every
-later write is capped at `Propose`, whatever its class
-([agent-extensions.md](agent-extensions.md)). That rule rides its own flag
+Web content is held more strictly: once a turn has read the web through an extension, or
+X12 a person pasted for `inspect_x12` to read, every later write is capped at `Propose`,
+whatever its class ([agent-extensions.md](agent-extensions.md#pasted-partner-text)). That rule rides its own flag
 (`TurnState.ExternalContent`) beside the taint, and the web read also adds a `web` mark to the
 taint, so both record it.
 

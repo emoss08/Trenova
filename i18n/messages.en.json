@@ -12774,6 +12774,15 @@
       "routes/desk"
     ]
   },
+  "Accepted by the partner, with errors": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Accepted organization connection this profile routes through.": {
     "sites": 1,
     "scope": [
@@ -12821,11 +12830,13 @@
     ]
   },
   "Accepted with errors": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
+      "packages/shared/components",
       "routes/desk"
     ]
   },
@@ -82663,6 +82674,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "EDI acknowledgment health": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "EDI approval workflow is not configured": {
@@ -258470,6 +258490,15 @@
       "go/other"
     ]
   },
+  "The trading partner accepted this message but reported errors in it. Review the acknowledgment errors.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
   "The trading partner acknowledged and accepted this message.": {
     "sites": 1,
     "scope": [
@@ -263814,6 +263843,15 @@
       "routes/edi"
     ]
   },
+  "This partner has no active outbound 990 profile yet. Trenova creates one from the partner's envelope and the base 990 template when the tender is decided, so its 990 cannot be previewed before then": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This partner is enabled for inbound and outbound exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.": {
     "sites": 1,
     "scope": [
@@ -265233,6 +265271,51 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "This tender came from another Trenova organization and is answered inside Trenova, so no 990 is sent for it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This tender came from another trading partner; its 990 goes to the partner that sent it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This tender is not answered yet; say whether to preview the 990 that accepts it or the one that declines it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This tender is {0} and will not be answered with a 990": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This tender was already answered {0}; its 990 says so": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This test is already {0}; record a correction as a new test": {
@@ -286530,6 +286613,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "What the partner noted when it accepted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "What the person sending the notice wrote. Print it when present.": {
