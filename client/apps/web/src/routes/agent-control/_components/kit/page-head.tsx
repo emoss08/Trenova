@@ -14,6 +14,7 @@ const LABELS: Record<AIControlTab, { label: string }> = {
   retrieval: { label: "Retrieval" },
   safety: { label: "Safety" },
   quality: { label: "Quality" },
+  analytics: { label: "Analytics" },
   activity: { label: "Activity" },
   audit: { label: "Audit trail" },
 };

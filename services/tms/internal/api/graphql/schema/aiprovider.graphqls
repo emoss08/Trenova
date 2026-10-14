@@ -373,5 +373,11 @@ extend type Mutation {
   testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderDraftTestResult!
   "Sets the routing order: the first ID takes work first. Every provider must be listed once."
   reorderAIProviders(ids: [ID!]!): [AIProvider!]!
+  """
+  Makes a provider the first to take a task: assigns the task to it and takes
+  it from the providers ahead of it in the routing order, leaving every other
+  task where it goes. Returns the providers in routing order.
+  """
+  routeAITask(task: AITask!, providerId: ID!): [AIProvider!]!
   patchAIProvider(id: ID!, version: Int!, input: AIProviderPatchInput!): AIProvider!
 }

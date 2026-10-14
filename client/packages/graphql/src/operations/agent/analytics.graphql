@@ -1,0 +1,233 @@
+fragment AIAnalyticsProviderFields on AIAnalyticsProvider {
+  id
+  name
+  shortName
+  kind
+  baseUrl
+  enabled
+  removed
+}
+
+fragment AIAnalyticsSegmentFields on AIAnalyticsSegment {
+  text
+  strong
+  tone
+  target
+  seriesKey
+  providerId
+}
+
+fragment AIAnalyticsSeriesFields on AIAnalyticsSeries {
+  key
+  label
+  shortLabel
+  modelKey
+  providerId
+  few
+  colorSlot
+  models
+  providers {
+    ...AIAnalyticsProviderFields
+  }
+  runs
+  completed
+  handedOff
+  stopped
+  failed
+  completedRate
+  medianRunMs
+  p95RunMs
+  modelCalls
+  toolCalls
+  toolCallsFailed
+  toolFailuresModel
+  toolFailureRate
+  modelMistakeRate
+  toolFailuresByCause {
+    cause
+    blame
+    calls
+  }
+  costUsd
+  pricedRuns
+  costPerCompletedRun
+  firstTokenMedianMs
+  lastRanAt
+  quiet
+  runTimes {
+    outcome
+    runs
+    p25Ms
+    medianMs
+    p75Ms
+    p95Ms
+  }
+  decided
+  accepted
+  modified
+  rejected
+  approvalRate
+  rated
+  helpful
+  helpfulRate
+}
+
+query AgentAnalytics($input: AIAnalyticsInput!) {
+  agentAnalytics(input: $input) {
+    window
+    compareBy
+    since
+    until
+    bucketSeconds
+    trendBuckets
+    refreshedAt
+    summary {
+      ...AIAnalyticsSegmentFields
+    }
+    runTimeNote {
+      ...AIAnalyticsSegmentFields
+    }
+    totals {
+      runs
+      modelCalls
+      completed
+      handedOff
+      stopped
+      failed
+      completedRate
+      medianRunMs
+      p95RunMs
+      toolCalls
+      toolCallsFailed
+      toolFailuresModel
+      toolFailureRate
+      modelShareOfToolFailures
+      costUsd
+      pricedRuns
+      costPerCompletedRun
+      toolFailureAlarm
+    }
+    series {
+      ...AIAnalyticsSeriesFields
+    }
+    deployments {
+      ...AIAnalyticsSeriesFields
+    }
+    trend {
+      seriesKey
+      bucketStart
+      runs
+      completedRate
+      toolFailureRate
+      medianRunMs
+    }
+    events {
+      at
+      kind
+      label
+      provider {
+        ...AIAnalyticsProviderFields
+      }
+    }
+    tools {
+      name
+      calls
+      failed
+      failureRate
+      cells {
+        seriesKey
+        few
+        calls
+        failed
+        failureRate
+      }
+    }
+    tasks {
+      task
+      current {
+        ...AIAnalyticsProviderFields
+      }
+      currentSeriesKey
+      bestSeriesKey
+      cells {
+        seriesKey
+        few
+        runs
+        completed
+        completedRate
+      }
+      suggestion {
+        provider {
+          ...AIAnalyticsProviderFields
+        }
+        seriesKey
+        gainPoints
+      }
+    }
+    providers {
+      key
+      provider {
+        ...AIAnalyticsProviderFields
+      }
+      modelKey
+      model
+      lastCalledAt
+      quiet
+      calls
+      errors
+      errorRate
+      errorAlarm
+      fellToNext
+      fellToNextAlarm
+      firstTokenMedianMs
+      errorsByKind {
+        kind
+        calls
+      }
+    }
+    sameModel {
+      modelKey
+      betterKey
+      worseKey
+    }
+  }
+}
+
+query AgentAnalyticsToolFailures(
+  $input: AIAnalyticsInput!
+  $seriesKey: String!
+  $toolName: String!
+) {
+  agentAnalyticsToolFailures(input: $input, seriesKey: $seriesKey, toolName: $toolName) {
+    seriesKey
+    toolName
+    calls
+    failed
+    causes {
+      cause
+      blame
+      calls
+    }
+    recent {
+      unitId
+      source
+      toolName
+      message
+      agentId
+      agentName
+      at
+    }
+    providers {
+      ...AIAnalyticsProviderFields
+    }
+  }
+}
+
+mutation RouteAITask($task: AITask!, $providerId: ID!) {
+  routeAITask(task: $task, providerId: $providerId) {
+    id
+    tasks
+    priority
+    version
+  }
+}

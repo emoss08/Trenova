@@ -9,6 +9,7 @@ export const aiControlTabValues = [
   "retrieval",
   "safety",
   "quality",
+  "analytics",
   "activity",
   "audit",
 ] as const;
@@ -167,6 +168,27 @@ export const extractionViewParser = parseAsStringLiteral(extractionViews)
   .withOptions({ history: "replace", shallow: true })
   .withDefault("accuracy");
 
+/** How far back Analytics looks, and what it puts side by side. */
+export const ANALYTICS_WINDOW_PARAM = "window";
+export const analyticsWindowParser = parseAsStringLiteral(["Day", "Week", "Month"] as const)
+  .withOptions({ history: "replace", shallow: true })
+  .withDefault("Month");
+
+export const ANALYTICS_COMPARE_PARAM = "compare";
+export const analyticsCompareParser = parseAsStringLiteral(["Model", "Provider"] as const)
+  .withOptions({ history: "replace", shallow: true })
+  .withDefault("Model");
+
+/** Narrows Analytics to one agent's or one task's work. */
+export const ANALYTICS_AGENT_PARAM = "analyticsAgent";
+export const analyticsAgentParser = parseAsString.withOptions({
+  history: "replace",
+  shallow: true,
+});
+
+export const ANALYTICS_TASK_PARAM = "analyticsTask";
+export const analyticsTaskParser = parseAsString.withOptions({ history: "replace", shallow: true });
+
 /**
  * The page's dialogs and sheets that are not a table's own panel, each opened
  * by a key in the address so a link, a reload or the back button lands on it.
@@ -242,6 +264,14 @@ export const agentTryParser = parseAsBoolean.withOptions(dialogOptions);
 export const TOOL_PICKER_PARAM = "pickTools";
 export const toolPickerParser = parseAsBoolean.withOptions(dialogOptions);
 
+/** The model or provider open in Analytics' sheet, by its series key. */
+export const ANALYTICS_SERIES_PARAM = "series";
+export const analyticsSeriesParser = parseAsString.withOptions(dialogOptions);
+
+/** The tool whose failures for the open series are shown in Analytics' sheet. */
+export const ANALYTICS_TOOL_PARAM = "tool";
+export const analyticsToolParser = parseAsString.withOptions(dialogOptions);
+
 export const aiControlDialogParsers = {
   [POLICY_EDITOR_PARAM]: policyEditorParser,
   [PROVIDER_EDITOR_PARAM]: providerEditorParser,
@@ -258,6 +288,8 @@ export const aiControlDialogParsers = {
   [TOOL_RULE_EDIT_PARAM]: toolRuleEditParser,
   [AGENT_TRY_PARAM]: agentTryParser,
   [TOOL_PICKER_PARAM]: toolPickerParser,
+  [ANALYTICS_SERIES_PARAM]: analyticsSeriesParser,
+  [ANALYTICS_TOOL_PARAM]: analyticsToolParser,
 };
 
 /** Every dialog closed: a move to another table never carries one open into it. */
@@ -277,4 +309,6 @@ export const CLEARED_DIALOG_STATE = {
   [TOOL_RULE_EDIT_PARAM]: null,
   [AGENT_TRY_PARAM]: null,
   [TOOL_PICKER_PARAM]: null,
+  [ANALYTICS_SERIES_PARAM]: null,
+  [ANALYTICS_TOOL_PARAM]: null,
 } as const satisfies Record<keyof typeof aiControlDialogParsers, null>;

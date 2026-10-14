@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -126,6 +128,7 @@ func (s *Service) Settle(
 	tenant pagination.TenantInfo,
 	step agentports.RunStep,
 ) error {
+	step.Outcome = withCause(step.Kind, step.Outcome)
 	if len(step.Outcome.Content) > maxStoredOutcomeChars {
 		s.l.Debug("a step's answer was too large to keep",
 			zap.String("tool", step.ToolName),
@@ -161,6 +164,7 @@ func (s *Service) Record(
 	tenant pagination.TenantInfo,
 	step agentports.RunStep,
 ) error {
+	step.Outcome = withCause(step.Kind, step.Outcome)
 	return s.repo.Record(ctx, toEntity(tenant, step, step.Status))
 }
 
@@ -241,6 +245,22 @@ func toEntity(
 // encodeOutcome and decodeOutcome move the outcome through the jsonb column.
 // It goes in as a map rather than raw bytes so an operator reading the table
 // can see what a tool answered without decoding anything.
+func withCause(
+	kind agentports.RunStepKind,
+	outcome agentports.RunStepOutcome,
+) agentports.RunStepOutcome {
+	if kind != agentports.RunStepTool || !outcome.Failed || outcome.Cause != "" {
+		return outcome
+	}
+	outcome.Cause = aianalytics.ClassifyToolFailure(
+		outcome.Verdict,
+		outcome.Reason,
+		outcome.Content,
+	)
+
+	return outcome
+}
+
 func encodeOutcome(outcome agentports.RunStepOutcome) (map[string]any, error) {
 	encoded, err := sonic.Marshal(outcome)
 	if err != nil {

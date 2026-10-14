@@ -1841,6 +1841,8 @@ var AgentRunStepColumns = struct {
 	AgentDefinitionID      buncolgen.Column // "agent_definition_id" → qualified: "ars.agent_definition_id"
 	AgentDefinitionVersion buncolgen.Column // "agent_definition_version" → qualified: "ars.agent_definition_version"
 	DelegateCallID         buncolgen.Column // "delegate_call_id" → qualified: "ars.delegate_call_id"
+	StartedAtMs            buncolgen.Column // "started_at_ms" → qualified: "ars.started_at_ms"
+	SettledAtMs            buncolgen.Column // "settled_at_ms" → qualified: "ars.settled_at_ms"
 	Version                buncolgen.Column // "version" → qualified: "ars.version"
 	CreatedAt              buncolgen.Column // "created_at" → qualified: "ars.created_at"
 	UpdatedAt              buncolgen.Column // "updated_at" → qualified: "ars.updated_at"
@@ -1863,6 +1865,8 @@ var AgentRunStepColumns = struct {
 	AgentDefinitionID:      buncolgen.NewColumn("agent_definition_id", "ars"),
 	AgentDefinitionVersion: buncolgen.NewColumn("agent_definition_version", "ars"),
 	DelegateCallID:         buncolgen.NewColumn("delegate_call_id", "ars"),
+	StartedAtMs:            buncolgen.NewColumn("started_at_ms", "ars"),
+	SettledAtMs:            buncolgen.NewColumn("settled_at_ms", "ars"),
 	Version:                buncolgen.NewColumn("version", "ars"),
 	CreatedAt:              buncolgen.NewColumn("created_at", "ars"),
 	UpdatedAt:              buncolgen.NewColumn("updated_at", "ars"),
@@ -1891,6 +1895,8 @@ var AgentRunStepFieldMap = map[string]string{
 	"agentDefinitionId":      "agent_definition_id",
 	"agentDefinitionVersion": "agent_definition_version",
 	"delegateCallId":         "delegate_call_id",
+	"startedAtMs":            "started_at_ms",
+	"settledAtMs":            "settled_at_ms",
 	"version":                "version",
 	"createdAt":              "created_at",
 	"updatedAt":              "updated_at",
@@ -1917,6 +1923,7 @@ var AgentRunStepInsertableColumns = []string{
 	"agent_definition_id",
 	"agent_definition_version",
 	"delegate_call_id",
+	"settled_at_ms",
 	"version",
 	"created_at",
 	"updated_at",
@@ -2003,6 +2010,7 @@ var AgentRunStepFilter = struct {
 	AgentDefinitionID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
 	AgentDefinitionVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionVersion" → DB: "agent_definition_version"
 	DelegateCallID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateCallId" → DB: "delegate_call_id"
+	SettledAtMs            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "settledAtMs" → DB: "settled_at_ms"
 	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -2060,6 +2068,9 @@ var AgentRunStepFilter = struct {
 	},
 	DelegateCallID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("delegateCallId", op, value)
+	},
+	SettledAtMs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("settledAtMs", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)

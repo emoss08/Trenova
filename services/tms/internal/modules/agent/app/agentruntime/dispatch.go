@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolsimulation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -105,7 +106,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		return refusal
 	}
 	if !s.holdsFor(ctx, req, call.Name) {
-		return refusedOutcome(aitrace.OutcomeDenied, "the agent does not hold the tool",
+		return refusedOutcome(aitrace.OutcomeDenied, aianalytics.ReasonNotHeld,
 			"Tool %q is not available to this agent.", call.Name)
 	}
 
@@ -148,7 +149,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 
 	tool, ok := s.actionTools.Get(call.Name)
 	if !ok {
-		return refusedOutcome(aitrace.OutcomeInvalid, "no such tool is registered",
+		return refusedOutcome(aitrace.OutcomeInvalid, aianalytics.ReasonUnregistered,
 			"Tool %q does not exist.", call.Name)
 	}
 

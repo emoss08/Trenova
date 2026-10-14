@@ -86,10 +86,10 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 83 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 275 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 272 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 38 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 52 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 94 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 95 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 34 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 48 |
@@ -97,25 +97,25 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1126 writes: 611 GraphQL mutations and 515 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1118 writes: 600 GraphQL mutations and 518 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 404 |
-| Exempt | 688 |
+| Covered by a tool | 398 |
+| Exempt | 686 |
 | — Security | 83 |
-| — Configuration | 275 |
+| — Configuration | 272 |
 | — User preference | 38 |
 | — Infrastructure | 52 |
-| — Agent administration | 94 |
+| — Agent administration | 95 |
 | — Counterparty | 34 |
 | — Read-only | 56 |
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1126 |
+| Total | 1118 |
 
-Of the 438 writes an agent should be able to make, 404 have a tool (92%).
+Of the 432 writes an agent should be able to make, 398 have a tool (92%).
 
 ## Pending
 
@@ -176,7 +176,7 @@ The writes no tool performs yet, and what the tool would do.
 | aiaudit | 3 | 0 | 3 | 0 |
 | aicontrol | 5 | 0 | 5 | 0 |
 | aifeedback | 2 | 0 | 2 | 0 |
-| aiprovider | 7 | 0 | 7 | 0 |
+| aiprovider | 8 | 0 | 8 | 0 |
 | airetrieval | 2 | 0 | 2 | 0 |
 | apikey | 4 | 0 | 4 | 0 |
 | assignment | 1 | 0 | 1 | 0 |
@@ -235,8 +235,7 @@ The writes no tool performs yet, and what the tool would do.
 | extractioneval | 5 | 0 | 5 | 0 |
 | extractionrollout | 1 | 0 | 1 | 0 |
 | extractionshadow | 1 | 0 | 1 | 0 |
-| factoring | 10 | 6 | 4 | 0 |
-| factoringcompany | 2 | 0 | 2 | 0 |
+| factoringcompany | 3 | 0 | 3 | 0 |
 | fiscalperiod | 9 | 5 | 4 | 0 |
 | fiscalyear | 7 | 0 | 7 | 0 |
 | fleetcode | 3 | 0 | 3 | 0 |
@@ -520,6 +519,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation patchAIProvider` | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
 | `mutation reorderAIProviders` | Exempt, agent-administration: Sets the order in which the model providers agents run on take work. |
+| `mutation routeAITask` | Exempt, agent-administration: Makes one model provider the first to take a task, from the AI analytics; it is the human check on where agents' work goes. |
 | `mutation testAIProviderDraft` | Exempt, read-only: Tests an unsaved provider's credentials once and returns the result; it saves nothing. |
 | `DELETE /api/v1/ai-providers/:providerID/`<br>aiproviderhandler.remove | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
 | `POST /api/v1/ai-providers/`<br>aiproviderhandler.create | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
@@ -1219,27 +1219,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation updateExtractionShadowSettings` | Exempt, agent-administration: Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against. |
 
-### factoring
-
-| Write | Decision |
-| --- | --- |
-| `mutation acknowledgeFactoringNoa` | Tool: `record_factoring_noa_acknowledgement` |
-| `mutation activateFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
-| `mutation createFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
-| `mutation draftFactoringNoa` | Tool: `draft_factoring_noa` |
-| `mutation endFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
-| `mutation releaseFactoringNoa` | Tool: `release_factoring_noa` |
-| `mutation requestMissingFactoringDocuments` | Tool: `request_missing_factoring_document` |
-| `mutation sendFactoringNoa` | Tool: `send_factoring_noa` |
-| `mutation setInvoiceFactoringOverride` | Tool: `set_invoice_factoring_override` |
-| `mutation updateFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
-
 ### factoringcompany
 
 | Write | Decision |
 | --- | --- |
-| `mutation createFactoringCompany`<br>twin `POST /api/v1/factoring-companies/` | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
-| `mutation updateFactoringCompany`<br>twin `PATCH /api/v1/factoring-companies/:factoringCompanyID/`<br>twin `PUT /api/v1/factoring-companies/:factoringCompanyID/` | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
+| `PATCH /api/v1/factoring-companies/:factoringCompanyID/`<br>factoringcompanyhandler.patch | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
+| `POST /api/v1/factoring-companies/`<br>factoringcompanyhandler.create | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
+| `PUT /api/v1/factoring-companies/:factoringCompanyID/`<br>factoringcompanyhandler.update | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
 
 ### fiscalperiod
 

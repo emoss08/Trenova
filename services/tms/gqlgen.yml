@@ -4844,6 +4844,30 @@ models:
     fields:
       visibleFailures:
         resolver: true
+  AIAnalyticsWindow:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics.Window
+  AIAnalyticsCompareBy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics.CompareBy
+  AIWorkOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics.Outcome
+  AIWorkSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics.Source
+  AIToolFailureCause:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics.Cause
+  AIToolFailureBlame:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics.Blame
+  AIAnalyticsEventKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics.EventKind
+  AIProviderErrorKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics.ProviderError
   AITuneUpKind:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aituneup.Kind

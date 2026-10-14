@@ -278,6 +278,12 @@ type AssignAIProviderTaskRequest struct {
 	Task       aiprovider.Task
 }
 
+type RouteAIProviderTaskRequest struct {
+	TenantInfo pagination.TenantInfo
+	ProviderID pulid.ID
+	Task       aiprovider.Task
+}
+
 type AIProviderService interface {
 	List(
 		ctx context.Context,
@@ -325,6 +331,11 @@ type AIProviderService interface {
 		req *AssignAIProviderTaskRequest,
 		actor *permissionports.RequestActor,
 	) (*aiprovider.Provider, error)
+	RouteTask(
+		ctx context.Context,
+		req *RouteAIProviderTaskRequest,
+		actor *permissionports.RequestActor,
+	) ([]*aiprovider.Provider, error)
 	// RoutePreview says where each task goes now and where it would go with
 	// the draft saved. It saves nothing.
 	RoutePreview(

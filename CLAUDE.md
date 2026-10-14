@@ -585,6 +585,18 @@ change is a `hash_version` change), or any agent source table the projector read
 retention sweep that deletes agent rows must stay behind `SourcePruneHorizon`. Never remove a
 chain key while rows signed with it are retained.
 
+## AI Analytics
+
+AI control's Analytics tab reads one query, `agentAnalytics`, over rollup tables
+(`ai_work_units`, `ai_work_unit_tools`, `ai_provider_hourly_stats`) that the five-minute
+`ai-analytics-refresh` job folds in from usage records, run steps and runs. Every threshold
+("few", ranking, suggested routes, the Nova sentences) lives on the server in
+`aianalytics/metrics.go`, answers are cached per tenant epoch in Redis, and series colours are
+assigned server-side so a model keeps its hue under every filter. **Read
+[docs/engineering/ai-analytics.md](docs/engineering/ai-analytics.md) before changing
+`aianalyticsservice`, `aianalyticsrepository`, `aianalyticsjobs`, the `aianalytics` domain, or
+what the completion router or step ledger records about a call.**
+
 ## Editions (self-hosted and Trenova Cloud)
 
 This repository builds the self-hosted product. Trenova Cloud code lives in a private repository

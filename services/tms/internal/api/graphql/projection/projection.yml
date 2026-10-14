@@ -466,6 +466,9 @@ virtuals:
     - documentTypes
   FactoringCompany:
     - agreements
+  AIAnalyticsProvider:
+    - removed
+    - shortName
 
 specials:
   Tractor:
