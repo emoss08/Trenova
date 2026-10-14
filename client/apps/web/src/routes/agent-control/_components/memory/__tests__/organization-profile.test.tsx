@@ -157,4 +157,35 @@ describe("OrganizationProfile", () => {
 
     expect(await screen.findByText(/No profile yet/)).toBeInTheDocument();
   });
+
+  it("draws the section's shape while the profile loads, then the profile", async () => {
+    let resolve: (value: AgentProfile) => void = () => undefined;
+    api.fetchAgentProfile.mockReturnValue(
+      new Promise<AgentProfile>((done) => {
+        resolve = done;
+      }),
+    );
+    renderProfile({ canCreate: true, canUpdate: true });
+
+    const section = screen.getByRole("region", { name: "Organization profile" });
+    expect(section).toHaveAttribute("aria-busy", "true");
+    expect(section.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: /Write it again/ })).not.toBeInTheDocument();
+
+    resolve(profile());
+    expect(
+      await screen.findByText("Acme Freight runs a regional fleet out of Dallas."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Organization profile" })).not.toHaveAttribute(
+      "aria-busy",
+    );
+  });
+
+  it("says when the profile could not be loaded instead of showing nothing", async () => {
+    api.fetchAgentProfile.mockRejectedValue(new Error("agent memory read is not allowed"));
+    renderProfile({ canCreate: true, canUpdate: true });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("agent memory read is not allowed");
+    expect(screen.queryByRole("form", { name: "Add guidance" })).not.toBeInTheDocument();
+  });
 });

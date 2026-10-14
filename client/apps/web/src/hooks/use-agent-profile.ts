@@ -1,13 +1,12 @@
+import { describeApiError } from "@/lib/api-error-message";
 import {
   AGENT_PROFILE_KEY,
   addAgentProfileGuidance,
-  agentProfileQueryKey,
-  fetchAgentProfile,
   regenerateAgentProfile,
   retireAgentProfileGuidance,
   type AgentProfileOwner,
 } from "@/lib/graphql/agent-profile";
-import { describeApiError } from "@/lib/api-error-message";
+import { agentProfileQueryOptions } from "@/lib/queries/agent-profile";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { toast } from "sonner";
@@ -22,11 +21,7 @@ export function useAgentProfile(owner: AgentProfileOwner, options?: { enabled?: 
   const queryClient = useQueryClient();
   const enabled = options?.enabled ?? true;
 
-  const profileQuery = useQuery({
-    queryKey: agentProfileQueryKey(owner),
-    queryFn: ({ signal }) => fetchAgentProfile(owner, { signal }),
-    enabled,
-  });
+  const profileQuery = useQuery({ ...agentProfileQueryOptions(owner), enabled });
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: [AGENT_PROFILE_KEY] });
 

@@ -1,4 +1,5 @@
 import { useAgentProfile } from "@/hooks/use-agent-profile";
+import { describeApiError } from "@/lib/api-error-message";
 import { MAX_PROFILE_GUIDANCE_CHARS } from "@/lib/graphql/agent-profile";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -17,8 +18,22 @@ export function DeskProfileCard() {
   const [draft, setDraft] = useState("");
 
   const profile = profileQuery.data;
+  if (profileQuery.isPending) {
+    return <DeskProfileCardSkeleton />;
+  }
   if (!profile) {
-    return null;
+    return (
+      <section className="dk-mm-me" aria-label={t("What agents know about your work")}>
+        <div className="dk-mm-me-h">
+          <span>
+            <b>{t("What agents know about your work")}</b>
+          </span>
+        </div>
+        <p className="dk-mm-me-d" role="alert">
+          {describeApiError(profileQuery.error, t("This could not be loaded"))}
+        </p>
+      </section>
+    );
   }
   const content = profile.current?.content;
 
@@ -108,6 +123,32 @@ export function DeskProfileCard() {
           {t("Add")}
         </Button>
       </form>
+    </section>
+  );
+}
+
+function DeskProfileCardSkeleton() {
+  const t = useT();
+
+  return (
+    <section
+      className="dk-mm-me dk-mm-me-sk"
+      aria-label={t("What agents know about your work")}
+      aria-busy="true"
+    >
+      <div className="dk-mm-me-h">
+        <span>
+          <b>{t("What agents know about your work")}</b>
+          <i className="dk-sk dk-mm-me-sk-e" />
+        </span>
+        <i className="dk-sk dk-mm-me-sk-b" />
+      </div>
+      <div className="dk-mm-me-sk-c" aria-hidden="true">
+        <i className="dk-sk" />
+        <i className="dk-sk" />
+        <i className="dk-sk" />
+      </div>
+      <i className="dk-sk dk-mm-me-sk-f" aria-hidden="true" />
     </section>
   );
 }

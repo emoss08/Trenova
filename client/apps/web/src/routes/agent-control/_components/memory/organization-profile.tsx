@@ -1,13 +1,14 @@
 import { useAgentProfile } from "@/hooks/use-agent-profile";
+import { describeApiError } from "@/lib/api-error-message";
 import {
   MAX_PROFILE_GUIDANCE_CHARS,
-  agentProfileHistoryQueryKey,
-  fetchAgentProfileHistory,
   type AgentProfileGuidance,
   type AgentProfileVersion,
 } from "@/lib/graphql/agent-profile";
+import { agentProfileHistoryQueryOptions } from "@/lib/queries/agent-profile";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -42,8 +43,21 @@ export function OrganizationProfile({
   const [historyOpen, setHistoryOpen] = useState(false);
 
   const profile = profileQuery.data;
+  if (profileQuery.isPending) {
+    return <OrganizationProfileSkeleton />;
+  }
   if (!profile) {
-    return null;
+    return (
+      <section className="sec" aria-label={t("Organization profile")}>
+        <header className="sh2">
+          <Ic n="brain" s={14} />
+          <h3>{t("What agents know about the organization")}</h3>
+        </header>
+        <p className="sgm-e t-d" role="alert">
+          {describeApiError(profileQuery.error, t("The profile could not be loaded"))}
+        </p>
+      </section>
+    );
   }
   const current = profile.current;
 
@@ -165,6 +179,34 @@ export function OrganizationProfile({
   );
 }
 
+function OrganizationProfileSkeleton() {
+  const t = useT();
+
+  return (
+    <section className="sec" aria-label={t("Organization profile")} aria-busy="true">
+      <header className="sh2">
+        <Ic n="brain" s={14} />
+        <h3>{t("What agents know about the organization")}</h3>
+        <span className="sp" />
+        <Skeleton className="h-3 w-28" />
+      </header>
+      <div className="sgm" aria-hidden="true">
+        <Skeleton className="h-3.5 w-full" />
+        <Skeleton className="h-3.5 w-11/12" />
+        <Skeleton className="h-3.5 w-4/5" />
+        <Skeleton className="h-3.5 w-2/3" />
+      </div>
+      <header className="sh2">
+        <h3>{t("Guidance")}</h3>
+      </header>
+      <div className="sgm" aria-hidden="true">
+        <Skeleton className="h-3.5 w-3/5" />
+        <Skeleton className="h-3 w-40" />
+      </div>
+    </section>
+  );
+}
+
 function GuidanceRow({
   line,
   canRetire,
@@ -201,13 +243,25 @@ function GuidanceRow({
 
 function ProfileHistory() {
   const t = useT();
-  const historyQuery = useQuery({
-    queryKey: agentProfileHistoryQueryKey,
-    queryFn: ({ signal }) => fetchAgentProfileHistory({ signal }),
-  });
+  const historyQuery = useQuery(agentProfileHistoryQueryOptions());
 
   if (historyQuery.isPending) {
-    return <p className="sgm-e">{t("Loading…")}</p>;
+    return (
+      <ul className="rf-l" aria-busy="true" aria-label={t("Earlier versions")}>
+        <li className="sgm" aria-hidden="true">
+          <Skeleton className="h-3 w-48" />
+          <Skeleton className="h-3.5 w-full" />
+          <Skeleton className="h-3.5 w-3/4" />
+        </li>
+      </ul>
+    );
+  }
+  if (historyQuery.isError) {
+    return (
+      <p className="sgm-e t-d" role="alert">
+        {describeApiError(historyQuery.error, t("Earlier versions could not be loaded"))}
+      </p>
+    );
   }
   const versions = historyQuery.data ?? [];
   if (versions.length === 0) {

@@ -81841,7 +81841,16 @@
     ]
   },
   "Earlier versions": {
-    "sites": 2,
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Earlier versions could not be loaded": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -106601,7 +106610,7 @@
     ]
   },
   "Guidance": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -129347,7 +129356,7 @@
     ]
   },
   "Loading…": {
-    "sites": 12,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -165309,7 +165318,7 @@
     ]
   },
   "Organization profile": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -244821,6 +244830,15 @@
       "routes/trailer"
     ]
   },
+  "The profile could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The profile could not be written again": {
     "sites": 1,
     "scope": [
@@ -251073,6 +251091,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "This could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This couldn't be loaded": {
@@ -274288,7 +274315,7 @@
     ]
   },
   "What agents know about the organization": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -274297,7 +274324,7 @@
     ]
   },
   "What agents know about your work": {
-    "sites": 2,
+    "sites": 6,
     "scope": [
       "ts"
     ],

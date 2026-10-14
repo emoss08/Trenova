@@ -118,4 +118,37 @@ describe("DeskProfileCard", () => {
       expect(api.retireAgentProfileGuidance).toHaveBeenCalledWith("mine", "aprg_9"),
     );
   });
+
+  it("draws the card's shape while the profile loads, then the card", async () => {
+    let resolve: (value: AgentProfile) => void = () => undefined;
+    api.fetchAgentProfile.mockReturnValue(
+      new Promise<AgentProfile>((done) => {
+        resolve = done;
+      }),
+    );
+    renderCard();
+
+    const card = screen.getByRole("region", { name: "What agents know about your work" });
+    expect(card).toHaveAttribute("aria-busy", "true");
+    expect(card.querySelectorAll(".dk-sk").length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("textbox", { name: "Tell agents about your work" }),
+    ).not.toBeInTheDocument();
+
+    resolve(mine());
+    expect(await screen.findByText(/Nothing yet/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "What agents know about your work" }),
+    ).not.toHaveAttribute("aria-busy");
+  });
+
+  it("says when the profile could not be loaded instead of showing nothing", async () => {
+    api.fetchAgentProfile.mockRejectedValue(new Error("assistant access is required"));
+    renderCard();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("assistant access is required");
+    expect(
+      screen.queryByRole("textbox", { name: "Tell agents about your work" }),
+    ).not.toBeInTheDocument();
+  });
 });
