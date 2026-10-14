@@ -43,7 +43,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 	}
 }
 
-func (a *Activities) ListOrganizationsActivity(
+func (a *Activities) ListProfileOrganizationsActivity(
 	ctx context.Context,
 	input *ListOrganizationsInput,
 ) (*temporaljobs.TenantPage, error) {

@@ -117,7 +117,7 @@ func SweepWorkflow(ctx workflow.Context, input *SweepInput) (*SweepResult, error
 			var page temporaljobs.TenantPage
 			err := workflow.ExecuteActivity(
 				listCtx,
-				a.ListOrganizationsActivity,
+				a.ListProfileOrganizationsActivity,
 				&ListOrganizationsInput{
 					After: after,
 					Limit: temporaljobs.DefaultOrganizationPageSize,
