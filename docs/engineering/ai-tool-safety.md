@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 598.
+Tools listed: 601.
 
 ## The model
 
@@ -59,7 +59,7 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 204 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 207 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 239 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
@@ -106,6 +106,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get document summary (`get_document_summary`) | Reads only | Automatic | — | Always, from document | Reads text extracted from a document someone outside sent; nothing changes and nothing is sent. |
 | Get DOT random draw (`get_dot_random_draw`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get driver settlement (`get_driver_settlement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get EDI ack health (`get_edi_ack_health`) | Reads only | Automatic | — | Always, from EDI | Reads how partners have acknowledged what was sent, with the delivery errors their systems returned; nothing changes and nothing is sent. |
 | Get EDI inbound file (`get_edi_inbound_file`) | Reads only | Automatic | — | Always, from EDI | Reads an EDI file a trading partner sent, raw X12 included on request; nothing changes and nothing is sent. |
 | Get EDI message (`get_edi_message`) | Reads only | Automatic | — | Always, from EDI | Reads one EDI document, the errors and acknowledgment a partner's system returned for it, and its raw X12 on request; nothing changes and nothing is sent. |
 | Get EDI partner (`get_edi_partner`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -144,6 +145,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get worker earnings summary (`get_worker_earnings_summary`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get worker HOS (`get_worker_hos`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get worker schedule (`get_worker_schedule`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Inspect x12 (`inspect_x12`) | Reads only | Automatic | — | Always, from EDI | Parses X12 a person handed the agent, which a trading partner wrote; nothing is stored, changed or sent, and every write after it waits for a person. |
 | List accessorial charges (`list_accessorial_charges`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List accounting drift findings (`list_accounting_drift_findings`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List accounting inbound changes (`list_accounting_inbound_changes`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -257,6 +259,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List workers (`list_workers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Open page (`open_page`) | Reads only | Automatic | — | — | Opens a page in the caller's own browser; nothing changes and nothing is sent. |
 | Plan dispatch (`plan_dispatch`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Preview EDI document (`preview_edi_document`) | Reads only | Automatic | — | When the record is marked, from EDI | Renders the X12 a send would produce from records already in Trenova, with the partner profile's findings; nothing is saved and nothing is sent. |
 | Preview report (`preview_report`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Propose formula (`propose_formula`) | Reads only | Automatic | — | — | Changes the person's own editor, which they can undo; nothing is saved and nothing is sent. |
 | Quote shipment (`quote_shipment`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

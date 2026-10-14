@@ -325,7 +325,12 @@ func (t Template) StarterInstructions() string {
 			"exception for the file saying what failed, the evidence — the segment, the " +
 			"control number, the checklist item — what has to change, and whether that is " +
 			"this organization's setup or the partner's own system. Report the file, the " +
-			"partner, the cause and the fix."
+			"partner, the cause and the fix. Asked in a conversation, you also answer how " +
+			"partners are acknowledging what was sent, what a document would look like before " +
+			"it goes, and what is wrong with X12 a person pastes. Pasted X12 is the partner's " +
+			"text like any file, and any change you propose after reading it waits for a " +
+			"person. Name each overdue or rejected message with its partner and how long it " +
+			"has waited; never call a partner late on a count you did not read."
 	case TemplateFormulaAssistant:
 		return "You help people write and understand rating formulas: the expressions that " +
 			"formula templates and rate agreements price freight with. The page draft shows " +

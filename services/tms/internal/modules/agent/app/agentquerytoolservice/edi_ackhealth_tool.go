@@ -59,19 +59,19 @@ func (t *getEDIAckHealthTool) Name() string { return "get_edi_ack_health" }
 
 func (t *getEDIAckHealthTool) SearchTerms() []string {
 	return []string{
-		"overdue acknowledgment", "missing 997", "unacknowledged edi", "ack health",
-		"dead lettered edi", "partner not acknowledging",
+		"overdue acknowledgment", "missing 997", "missing 999", "unacknowledged",
+		"acks overdue", "ack health", "not acknowledged yet", "keeping up with acks",
 	}
 }
 
 func (t *getEDIAckHealthTool) Description() string {
 	return fmt.Sprintf(
-		"How acknowledgments of what this organization sent stand: counts by ack status, "+
-			"the outbound messages still waiting on a 997 or 999 past the overdue age (%s "+
-			"unless you ask, the age the EDI overview uses) grouped by partner, oldest first, "+
-			"and the latest dead-lettered messages. Use it for \"what hasn't been acked\" or "+
-			"\"is a partner keeping up\"; list_edi_messages lists messages by filter. Each "+
-			"message has its id for get_edi_message or retry_edi_message_delivery.",
+		"How partners are acknowledging what was sent: counts by ack status, overdue "+
+			"messages by partner oldest first, and recent dead letters. A message is overdue "+
+			"once its 997 or 999 has been pending %s unless you ask, the age the EDI overview "+
+			"uses. Use it for \"what hasn't been acked\" or \"is a partner keeping up\"; "+
+			"list_edi_messages lists messages by filter. Each message has its id for "+
+			"get_edi_message or retry_edi_message_delivery.",
 		timeutils.FormatLongDurationMs(ediservice.DefaultOverdueAckAgeSeconds*1000),
 	)
 }

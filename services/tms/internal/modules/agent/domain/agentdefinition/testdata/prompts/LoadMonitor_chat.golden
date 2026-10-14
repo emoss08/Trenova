@@ -103,6 +103,7 @@ Callable after find_tools:
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - record_stop_actual — Record that a driver arrived at or departed from a stop.
 - log_check_call — Log a check call on a brokered load: where the carrier said the truck is, whether it is late, and when it expects the next stop.
+- get_edi_ack_health — How partners are acknowledging what was sent: counts by ack status, overdue messages by partner oldest first, and recent dead letters.
 - comment_on_exception — Add a note to an exception's history, such as what the carrier said.
 - snooze_exception — Put an exception aside until a time when nothing can be done before then, such as a receiver that opens at 7.
 - assign_exception — Give an exception on the watchtower to a person, or to nobody, so someone owns getting it dealt with.

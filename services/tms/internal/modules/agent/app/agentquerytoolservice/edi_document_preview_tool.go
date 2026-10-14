@@ -80,8 +80,8 @@ func (t *previewEDIDocumentTool) Name() string { return "preview_edi_document" }
 
 func (t *previewEDIDocumentTool) SearchTerms() []string {
 	return []string{
-		"what would we send", "render 214", "render 204", "990 preview", "edi document preview",
-		"check before sending", "partner validation",
+		"what would we send", "before it goes", "render 214", "render 204", "preview the 990",
+		"990 look like", "990 we would send", "edi document preview", "check before sending",
 	}
 }
 

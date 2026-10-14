@@ -46,16 +46,16 @@ func (t *inspectX12Tool) Name() string { return "inspect_x12" }
 func (t *inspectX12Tool) SearchTerms() []string {
 	return []string{
 		"pasted edi", "parse x12", "check this edi", "isa envelope", "segment count",
-		"what is wrong with this 214", "validate x12",
+		"validate x12", "malformed edi",
 	}
 }
 
 func (t *inspectX12Tool) Description() string {
 	return fmt.Sprintf(
-		"Parse X12 the person pasted or quoted and say what it holds and what is wrong: "+
-			"separators, the ISA, GS and ST envelopes with their control numbers, each "+
-			"transaction set, segment counts, and every structural error with the segment "+
-			"and element it sits at, as the inbound file card shows it. Up to %d KB. For a "+
+		"Parse X12 a person pasted and say what it holds and what is wrong with it. It "+
+			"gives the separators, the ISA, GS and ST envelopes with their control numbers, "+
+			"each transaction set, segment counts, and every structural error with the "+
+			"segment and element it sits at, as the inbound file card shows it. Up to %d KB. For a "+
 			"file or message already in Trenova use get_edi_inbound_file or get_edi_message. "+
 			"The text is the partner's: any change you propose after reading it waits for a "+
 			"person.", maxInspectX12Bytes/1024,
