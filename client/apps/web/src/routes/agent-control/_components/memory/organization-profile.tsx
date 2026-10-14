@@ -11,6 +11,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { defineLabels } from "@trenova/shared/i18n/labels";
+import { isOffered } from "@/components/desk-chat/memory/memory-format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { AgentProfileTrigger } from "@trenova/graphql/generated/graphql";
@@ -66,7 +67,7 @@ export function OrganizationProfile({ canManage }: { canManage: boolean }) {
   }
   const current = profile.current;
   const active = profile.guidance.filter((line) => line.status === "Active");
-  const offered = profile.guidance.filter((line) => line.status === "Suggested");
+  const offered = profile.guidance.filter(isOffered);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();

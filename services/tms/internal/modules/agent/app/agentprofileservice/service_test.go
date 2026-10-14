@@ -203,18 +203,15 @@ func (f *fakeGuidance) CountOpen(_ context.Context, ref agentprofileports.Subjec
 	return len(f.open(ref)), nil
 }
 
-// fakePermissions answers every check the same way: the person manages agent
-// memory, or does not.
-type fakePermissions struct {
-	permissionports.PermissionEngine
+// fakeMemories answers the one question the profile service asks the memory
+// service: whether the person manages agent memory.
+type fakeMemories struct {
+	agentports.AgentMemoryService
 	manages bool
 }
 
-func (f *fakePermissions) Check(
-	context.Context,
-	*permissionports.PermissionCheckRequest,
-) (*permissionports.PermissionCheckResult, error) {
-	return &permissionports.PermissionCheckResult{Allowed: f.manages}, nil
+func (f *fakeMemories) MayManageShared(context.Context, pagination.TenantInfo, pulid.ID) bool {
+	return f.manages
 }
 
 func (f *fakeGuidance) GetByID(
@@ -304,16 +301,16 @@ func (f *fakeScheduler) Request(_ context.Context, req *agentprofileports.Genera
 }
 
 type harness struct {
-	svc         *Service
-	profiles    *fakeProfiles
-	guidance    *fakeGuidance
-	facts       *fakeFacts
-	controls    *fakeControls
-	scheduler   *fakeScheduler
-	permissions *fakePermissions
-	plans       *platformplanportsmock.MockPlanService
-	tenant      pagination.TenantInfo
-	userID      pulid.ID
+	svc       *Service
+	profiles  *fakeProfiles
+	guidance  *fakeGuidance
+	facts     *fakeFacts
+	controls  *fakeControls
+	scheduler *fakeScheduler
+	memories  *fakeMemories
+	plans     *platformplanportsmock.MockPlanService
+	tenant    pagination.TenantInfo
+	userID    pulid.ID
 }
 
 func newHarness(t *testing.T) *harness {
@@ -322,15 +319,15 @@ func newHarness(t *testing.T) *harness {
 	// The harness's person manages agent memory, as an administrator does;
 	// tests about offering turn it off.
 	h := &harness{
-		profiles:    newFakeProfiles(),
-		guidance:    &fakeGuidance{},
-		facts:       &fakeFacts{organization: sampleActivity()},
-		controls:    &fakeControls{},
-		scheduler:   &fakeScheduler{},
-		permissions: &fakePermissions{manages: true},
-		plans:       platformplanportsmock.NewMockPlanService(t),
-		tenant:      pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-		userID:      pulid.MustNew("usr_"),
+		profiles:  newFakeProfiles(),
+		guidance:  &fakeGuidance{},
+		facts:     &fakeFacts{organization: sampleActivity()},
+		controls:  &fakeControls{},
+		scheduler: &fakeScheduler{},
+		memories:  &fakeMemories{manages: true},
+		plans:     platformplanportsmock.NewMockPlanService(t),
+		tenant:    pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		userID:    pulid.MustNew("usr_"),
 	}
 
 	orgs := tenantportsmock.NewMockOrganizationRepository(t)
@@ -350,7 +347,7 @@ func newHarness(t *testing.T) *harness {
 		Controls:      h.controls,
 		Plans:         h.plans,
 		Scheduler:     h.scheduler,
-		Permissions:   h.permissions,
+		Memories:      h.memories,
 	})
 	h.svc.now = func() int64 { return testNow }
 
@@ -575,7 +572,7 @@ func TestAddGuidance_IsOfferedByAPersonWhoDoesNotManageAgentMemory(t *testing.T)
 	t.Parallel()
 
 	h := newHarness(t)
-	h.permissions.manages = false
+	h.memories.manages = false
 
 	offered, err := h.svc.AddGuidance(t.Context(), &agentprofileports.AddGuidanceRequest{
 		Ref:     h.org(),
@@ -606,12 +603,12 @@ func TestApproveGuidance_KeepsAnOfferedLineAndAsksForTheProfileAgain(t *testing.
 	t.Parallel()
 
 	h := newHarness(t)
-	h.permissions.manages = false
+	h.memories.manages = false
 	offered, err := h.svc.AddGuidance(t.Context(), &agentprofileports.AddGuidanceRequest{
 		Ref: h.org(), Content: "The Laredo lane is seasonal.", Actor: h.person(),
 	})
 	require.NoError(t, err)
-	h.permissions.manages = true
+	h.memories.manages = true
 
 	approved, err := h.svc.ApproveGuidance(t.Context(), &agentprofileports.DecideGuidanceRequest{
 		Ref: h.org(), ID: offered.ID, Actor: h.person(),
@@ -633,12 +630,12 @@ func TestDismissGuidance_ClosesAnOfferedLineWithoutWritingAgain(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.permissions.manages = false
+	h.memories.manages = false
 	offered, err := h.svc.AddGuidance(t.Context(), &agentprofileports.AddGuidanceRequest{
 		Ref: h.org(), Content: "We stopped running reefers.", Actor: h.person(),
 	})
 	require.NoError(t, err)
-	h.permissions.manages = true
+	h.memories.manages = true
 
 	dismissed, err := h.svc.DismissGuidance(t.Context(), &agentprofileports.DecideGuidanceRequest{
 		Ref: h.org(), ID: offered.ID, Actor: h.person(),

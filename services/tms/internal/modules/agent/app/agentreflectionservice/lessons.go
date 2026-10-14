@@ -11,10 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
@@ -283,12 +281,6 @@ func (s *Service) audience(
 		return "", nil
 	}
 
-	shared := audience == audienceAgent || audience == audienceTeam ||
-		audience == audienceOrganization
-	if shared && !s.mayShare(ctx, plan.TenantInfo, person) {
-		audience = audienceMe
-	}
-
 	switch audience {
 	case audienceAgent:
 		req.Scope = agent.MemoryScopeAgent
@@ -323,35 +315,6 @@ func (s *Service) audience(
 	req.Suggest = suggest
 
 	return "", nil
-}
-
-func (s *Service) mayShare(
-	ctx context.Context,
-	tenant pagination.TenantInfo,
-	person pulid.ID,
-) bool {
-	if s.permissions == nil {
-		return false
-	}
-
-	actor := permissionports.UserActor(
-		pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID, UserID: person},
-	)
-	result, err := s.permissions.Check(
-		ctx,
-		actor.PermissionCheck(permission.ResourceAgentMemory, permission.OpManage),
-	)
-	if err != nil {
-		s.l.Warn(
-			"agent reflection: the person's memory permission could not be read; keeping lessons for them alone",
-			zap.String("user", person.String()),
-			zap.Error(err),
-		)
-
-		return false
-	}
-
-	return result != nil && result.Allowed
 }
 
 func (s *Service) attach(

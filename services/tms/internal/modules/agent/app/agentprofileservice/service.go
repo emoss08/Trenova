@@ -60,9 +60,9 @@ type Params struct {
 	Scheduler        agentprofileports.Scheduler                    `optional:"true"`
 	Audit            auditports.AuditService                        `optional:"true"`
 	Realtime         agentports.RealtimeService                     `optional:"true"`
-	// Permissions says who manages agent memory, and so keeps guidance about
+	// Memories says who manages agent memory, and so keeps guidance about
 	// the organization at once. Without it everyone offers it.
-	Permissions permissionports.PermissionEngine `optional:"true"`
+	Memories agentports.AgentMemoryService `optional:"true"`
 }
 
 type Service struct {
@@ -79,7 +79,7 @@ type Service struct {
 	scheduler        agentprofileports.Scheduler
 	audit            auditports.AuditService
 	realtime         agentports.RealtimeService
-	permissions      permissionports.PermissionEngine
+	memories         agentports.AgentMemoryService
 	now              func() int64
 }
 
@@ -104,34 +104,24 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 		scheduler:        p.Scheduler,
 		audit:            p.Audit,
 		realtime:         p.Realtime,
-		permissions:      p.Permissions,
+		memories:         p.Memories,
 		now:              timeutils.NowUnix,
 	}
 }
 
 // manages reports whether the actor is a person holding agent-memory manage:
 // the one who keeps guidance about the organization at once and decides what
-// others offered. A check that cannot be made reads as not held.
+// others offered. The memory service owns that question.
 func (s *Service) manages(ctx context.Context, actor *permissionports.RequestActor) bool {
-	if s.permissions == nil || actor == nil || !actor.IsUser() || actor.UserID.IsNil() {
+	if s.memories == nil || actor == nil || !actor.IsUser() || actor.UserID.IsNil() {
 		return false
 	}
 
-	result, err := s.permissions.Check(
+	return s.memories.MayManageShared(
 		ctx,
-		actor.PermissionCheck(permission.ResourceAgentMemory, permission.OpManage),
+		pagination.TenantInfo{OrgID: actor.OrganizationID, BuID: actor.BusinessUnitID},
+		actor.UserID,
 	)
-	if err != nil {
-		s.l.Warn(
-			"agent profile: the person's manage permission could not be read; offering the guidance",
-			zap.String("user", actor.UserID.String()),
-			zap.Error(err),
-		)
-
-		return false
-	}
-
-	return result != nil && result.Allowed
 }
 
 func AsService(s *Service) agentprofileports.Service { return s }
@@ -626,6 +616,40 @@ func (s *Service) AddGuidance(
 	ctx context.Context,
 	req *agentprofileports.AddGuidanceRequest,
 ) (*agentprofile.Guidance, error) {
+	entity, err := s.PlanGuidance(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := s.guidance.Create(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	if created.IsSuggested() {
+		s.logGuidance(
+			created,
+			nil,
+			req.Actor,
+			permission.OpCreate,
+			guidanceComment(created, "Offered"),
+		)
+		s.announce(ctx, req.Ref, created.ID, "offered")
+
+		return created, nil
+	}
+
+	s.logGuidance(created, nil, req.Actor, permission.OpCreate, guidanceComment(created, "Added"))
+	s.announce(ctx, req.Ref, created.ID, "guided")
+	s.schedule(ctx, req.Ref, agentprofile.TriggerGuidance, req.Actor.UserID)
+
+	return created, nil
+}
+
+func (s *Service) PlanGuidance(
+	ctx context.Context,
+	req *agentprofileports.AddGuidanceRequest,
+) (*agentprofile.Guidance, error) {
 	if req == nil || req.Actor == nil || req.Actor.UserID.IsNil() {
 		return nil, errortypes.NewAuthorizationError("Guidance is given by a person")
 	}
@@ -668,29 +692,7 @@ func (s *Service) AddGuidance(
 		return nil, err
 	}
 
-	created, err := s.guidance.Create(ctx, entity)
-	if err != nil {
-		return nil, err
-	}
-
-	if created.IsSuggested() {
-		s.logGuidance(
-			created,
-			nil,
-			req.Actor,
-			permission.OpCreate,
-			guidanceComment(created, "Offered"),
-		)
-		s.announce(ctx, req.Ref, created.ID, "offered")
-
-		return created, nil
-	}
-
-	s.logGuidance(created, nil, req.Actor, permission.OpCreate, guidanceComment(created, "Added"))
-	s.announce(ctx, req.Ref, created.ID, "guided")
-	s.schedule(ctx, req.Ref, agentprofile.TriggerGuidance, req.Actor.UserID)
-
-	return created, nil
+	return entity, nil
 }
 
 // ApproveGuidance keeps a line someone offered about the organization and

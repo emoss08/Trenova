@@ -46,6 +46,14 @@ function card(overrides: Partial<MemoryCard>): MemoryCard {
   };
 }
 
+/** Keep is held until the settings say who the person may keep for. */
+async function enabledKeep(): Promise<HTMLElement> {
+  const keep = screen.getByRole("button", { name: "Keep" });
+  await waitFor(() => expect(keep).toBeEnabled());
+
+  return keep;
+}
+
 function renderCard(
   memory: MemoryCard,
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
@@ -176,7 +184,7 @@ describe("DeskMemorySaved", () => {
     fireEvent.click(await within(choice).findByRole("radio", { name: /Dispatch/ }));
 
     expect(screen.getByRole("button", { name: "Visible to Dispatch" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
+    fireEvent.click(await enabledKeep());
 
     await waitFor(() =>
       expect(api.confirmDeskMemory).toHaveBeenCalledWith(
@@ -196,7 +204,7 @@ describe("DeskMemorySaved", () => {
     api.setDeskMemoryStatus.mockResolvedValue({ ...offered, status: "Retired", version: 3 });
     renderCard(offered);
 
-    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
+    fireEvent.click(await enabledKeep());
     expect(await screen.findByText("Kept for everyone")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Keep" })).not.toBeInTheDocument();
 
@@ -242,7 +250,7 @@ describe("DeskMemorySaved", () => {
     expect(screen.queryByRole("textbox", { name: "Memory" })).not.toBeInTheDocument();
     expect(screen.getByText("Match on the PRO")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
+    fireEvent.click(await enabledKeep());
     await waitFor(() =>
       expect(api.confirmDeskMemory).toHaveBeenCalledWith(
         "amem_1",
@@ -340,7 +348,7 @@ describe("DeskMemorySaved", () => {
     api.confirmDeskMemory.mockResolvedValue({ ...offered, status: "Active", version: 2 });
 
     const { unmount } = renderCard(offered, client);
-    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
+    fireEvent.click(await enabledKeep());
 
     await waitFor(() => expect(screen.getByText("Kept for everyone")).toBeInTheDocument());
     const kept = client.getQueryData<ThreadHistory>(key)?.pages[0].results[0].memories?.[0];
@@ -360,6 +368,15 @@ organization, is an administrator's to keep when the person does not manage
 agent memory. The card says so and offers them only a copy for themselves.
 */
 describe("an offer the person may not keep for others", () => {
+  it("holds Keep until it knows whether they may keep it for everyone", async () => {
+    api.fetchDeskMemorySettings.mockReturnValue(new Promise(() => {}));
+    renderCard(card({ status: "Suggested", scope: "Organization", kind: "Fact", source: "Agent" }));
+
+    const keep = await screen.findByRole("button", { name: "Keep" });
+    expect(keep).toBeDisabled();
+    expect(api.confirmDeskMemory).not.toHaveBeenCalled();
+  });
+
   it("offers a copy for just them and keeps it as their own", async () => {
     api.fetchDeskMemorySettings.mockResolvedValue({
       savingMode: "Automatic",

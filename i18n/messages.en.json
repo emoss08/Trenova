@@ -124545,15 +124545,6 @@
       "routes/shipment"
     ]
   },
-  "Keeping this for your team or the organization is an administrator's, and it is already in front of them. Keep it for yourself, or leave it for them to decide.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Keeping, changing, pausing or forgetting a memory shared with a team, the organization or every agent is an administrator's: it needs permission to manage agent memory": {
     "sites": 1,
     "scope": [
@@ -260686,15 +260677,6 @@
       "routes/admin"
     ]
   },
-  "This replaces a memory your team or organization shares; saving it needs permission to manage agent memory": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "This reply failed before it started.": {
     "sites": 1,
     "scope": [
@@ -296303,7 +296285,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components"
     ]
   },
   "example.com, subsidiary.com": {
@@ -299238,7 +299220,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components"
     ]
   },
   "the picked shipment": {
@@ -299338,7 +299320,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components"
     ]
   },
   "then {0}": {

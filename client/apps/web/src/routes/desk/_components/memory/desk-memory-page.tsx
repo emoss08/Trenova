@@ -38,6 +38,7 @@ import {
   savedLine,
   scopeLabel,
   usageLine,
+  isOffered,
 } from "@/components/desk-chat/memory/memory-format";
 import { DeskMemoryWhy } from "@/components/desk-chat/memory/desk-memory-why";
 import {
@@ -483,7 +484,7 @@ function MemoryRowView({
   const t = useT();
   const { memory } = row;
   const paused = memory.status === "Paused";
-  const offered = memory.status === "Suggested";
+  const offered = isOffered(memory);
   const withdrawn = memory.status === "Dismissed";
   const style = top === null ? undefined : { transform: `translateY(${top}px)` };
 

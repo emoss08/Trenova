@@ -614,6 +614,82 @@ func TestDeskMemories_AnOfferIsAcceptedOnlyByWhoItWasOfferedTo(t *testing.T) {
 	assert.True(t, errortypes.IsNotFoundError(err))
 }
 
+// What Avery offered for the organization is in front of an administrator:
+// she may withdraw it, but not rewrite it, pause it or keep it herself.
+func TestDeskMemories_AnOwnOfferIsOnlyTheAuthorsToWithdraw(t *testing.T) {
+	t.Parallel()
+
+	w := newDeskWorld()
+	avery := w.avery
+	offer := w.repo.put(&agent.Memory{
+		Kind: agent.MemoryKindFact, Source: agent.MemorySourceUser,
+		Status: agent.MemoryStatusSuggested, Content: "Granite wants the POD on the invoice.",
+		Scope: agent.MemoryScopeOrganization, CreatedByUserID: &avery,
+	})
+
+	_, err := w.svc.ReviseDesk(t.Context(), &agentports.ReviseDeskMemoryRequest{
+		Actor: w.actor(false), ID: offer.ID, Content: "Granite wants the POD and the BOL.",
+	})
+	require.Error(t, err, "an offer is not rewritten under the administrator")
+
+	_, err = w.svc.SetDeskStatus(t.Context(), &agentports.SetDeskMemoryStatusRequest{
+		Actor: w.actor(false), ID: offer.ID, Status: agent.MemoryStatusPaused,
+	})
+	require.Error(t, err, "an offer has no status of its own to change")
+
+	_, err = w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
+		Actor: w.actor(false), ID: offer.ID, Content: offer.Content, Scope: agent.MemoryScopeOrganization,
+	})
+	require.Error(t, err, "the author does not approve their own offer")
+
+	withdrawn, err := w.svc.DismissDesk(t.Context(), agentports.DeskMemoryRef{Actor: w.actor(false), ID: offer.ID})
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryStatusDismissed, withdrawn.Memory.Status)
+}
+
+// An agent offered Avery a memory for the organization. Without the manage
+// permission she cannot keep it for everyone, but she may keep a copy for
+// herself; with it she keeps it for everyone.
+func TestDeskMemories_AnAgentsOrganizationOfferIsKeptForEveryoneOnlyByAManager(t *testing.T) {
+	t.Parallel()
+
+	w := newDeskWorld()
+	avery := w.avery
+	offer := func() *agent.Memory {
+		return w.repo.put(&agent.Memory{
+			Kind: agent.MemoryKindFact, Source: agent.MemorySourceAgent,
+			Status: agent.MemoryStatusSuggested, Content: "Columbus loads need a lumper receipt.",
+			Scope: agent.MemoryScopeOrganization, CreatedByUserID: &avery,
+		})
+	}
+
+	forEveryone := offer()
+	_, err := w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
+		Actor: w.actor(false), ID: forEveryone.ID, Content: forEveryone.Content,
+		Scope: agent.MemoryScopeOrganization,
+	})
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+
+	own, err := w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
+		Actor: w.actor(false), ID: forEveryone.ID, Content: forEveryone.Content,
+		Scope: agent.MemoryScopeUser,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryStatusActive, own.Memory.Status)
+	assert.Equal(t, agent.MemoryScopeUser, own.Memory.Scope)
+	require.NotNil(t, own.Memory.OwnerUserID)
+	assert.Equal(t, avery, *own.Memory.OwnerUserID)
+
+	kept, err := w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
+		Actor: w.actor(true), ID: offer().ID, Content: "Columbus loads need a lumper receipt.",
+		Scope: agent.MemoryScopeOrganization,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryScopeOrganization, kept.Memory.Scope)
+	assert.Equal(t, agent.MemoryStatusActive, kept.Memory.Status)
+}
+
 func TestDeskMemories_NameWhatTheyReplacedAndWhatReplacedThem(t *testing.T) {
 	t.Parallel()
 

@@ -347,6 +347,13 @@ type AgentMemoryService interface {
 		req *UpdateAgentMemoryRequest,
 		actor *permissionports.RequestActor,
 	) (*agent.Memory, error)
+	// PreviewSetStatus is the memory SetStatus would change, after the same
+	// checks, so a preview can say when the change would be refused.
+	PreviewSetStatus(
+		ctx context.Context,
+		req *SetAgentMemoryStatusRequest,
+		actor *permissionports.RequestActor,
+	) (*agent.Memory, error)
 	SetStatus(
 		ctx context.Context,
 		req SetAgentMemoryStatusRequest,

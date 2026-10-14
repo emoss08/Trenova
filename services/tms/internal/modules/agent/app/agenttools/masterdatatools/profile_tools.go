@@ -50,6 +50,10 @@ type profileGuide interface {
 		ctx context.Context,
 		req *agentprofileports.AddGuidanceRequest,
 	) (*agentprofile.Guidance, error)
+	PlanGuidance(
+		ctx context.Context,
+		req *agentprofileports.AddGuidanceRequest,
+	) (*agentprofile.Guidance, error)
 }
 
 // GuideProfileTool writes down, in a line, what a person said the agents'
@@ -221,7 +225,7 @@ var guidanceFields = []string{"subject", common.FieldContent}
 var guidanceLabels = map[string]string{"subject": "About", common.FieldContent: "Guidance"}
 
 func (t *GuideProfileTool) Preview(
-	_ context.Context,
+	ctx context.Context,
 	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
@@ -229,22 +233,15 @@ func (t *GuideProfileTool) Preview(
 		return nil, err
 	}
 
-	summary := "Would add this to what agents are told about the organization's business; " +
-		"its profile would be written again with it."
-	if req.Ref.Subject == agentprofile.SubjectUser {
-		summary = "Would add this to what agents are told about your own work; your profile " +
-			"would be written again with it."
+	planned, err := t.profiles.PlanGuidance(ctx, req)
+	if err != nil {
+		if common.IsRefusal(err) {
+			return common.WarnWouldFail(toolpreview.Build(guidanceSummary(req, false)), err), nil
+		}
+
+		return nil, err
 	}
 
-	planned := &agentprofile.Guidance{
-		OrganizationID: req.Ref.OrganizationID,
-		BusinessUnitID: req.Ref.BusinessUnitID,
-		Subject:        req.Ref.Subject,
-		UserID:         req.Ref.PersonPtr(),
-		Content:        req.Content,
-		Status:         agentprofile.GuidanceStatusActive,
-		Source:         agentprofile.GuidanceSourceAgent,
-	}
 	change, err := toolpreview.Create(
 		toolpreview.Record{
 			Resource: permission.ResourceAgentMemory,
@@ -258,7 +255,24 @@ func (t *GuideProfileTool) Preview(
 		return nil, err
 	}
 
-	return toolpreview.Build(summary, change), nil
+	return toolpreview.Build(guidanceSummary(req, planned.IsSuggested()), change), nil
+}
+
+// guidanceSummary says what the line would do: shape the organization's or
+// the person's own profile, at once or once an administrator keeps it.
+func guidanceSummary(req *agentprofileports.AddGuidanceRequest, offered bool) string {
+	if req.Ref.Subject == agentprofile.SubjectUser {
+		return "Would add this to what agents are told about your own work; your profile " +
+			"would be written again with it."
+	}
+	if offered {
+		return "Would offer this for an administrator to add to what agents are told about " +
+			"the organization's business; its profile would be written again with it once " +
+			"they do."
+	}
+
+	return "Would add this to what agents are told about the organization's business; " +
+		"its profile would be written again with it."
 }
 
 func (t *GuideProfileTool) Validate(

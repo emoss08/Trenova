@@ -11308,7 +11308,7 @@
         "idempotent": false,
         "readsExternal": "never",
         "carriesTaint": false,
-        "rationale": "Retires an agent memory inside Trenova: the caller's own, or one shared with others when the person in the conversation may manage shared memory."
+        "rationale": "Retires an agent memory inside Trenova: one kept for the person in the conversation, or one shared with others when that person may manage shared memory. A run with nobody in it retires none."
       }
     },
     {

@@ -613,6 +613,8 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
   // themselves, and the teams they may keep for are theirs only when they manage.
   const manages = settings.data?.managesShared ?? false;
   const teams = manages ? (settings.data?.roles ?? []) : [];
+  // Until the settings are read, who the person may keep for is unknown, so
+  // the card holds Keep rather than promise a save the server would refuse.
   const offeredToAdministrators =
     asking && settings.data !== undefined && !manages && card.scope !== "User";
 
@@ -813,7 +815,7 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
           </Button>
           <Button
             size="sm"
-            disabled={save.isPending || (editing && edited() === "")}
+            disabled={save.isPending || settings.isLoading || (editing && edited() === "")}
             onClick={keep}
           >
             {t("Keep")}

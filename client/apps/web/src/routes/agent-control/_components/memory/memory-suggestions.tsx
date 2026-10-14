@@ -6,6 +6,7 @@ import {
   fetchAgentMemorySuggestions,
   type AgentMemorySuggestion,
 } from "@/lib/graphql/agent-memories";
+import { offeredFor } from "@/components/desk-chat/memory/memory-format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -146,12 +147,7 @@ function SuggestionCard({
   const quotes = evidence?.quotes ?? [];
   const learned = suggestion.source === "Reflection";
   const offeredByPerson = suggestion.source === "User";
-  const offeredFor =
-    suggestion.scope === "Role"
-      ? t("their team")
-      : suggestion.scope === "Agent"
-        ? t("everyone using this agent")
-        : t("the organization");
+  const audience = offeredFor(suggestion, t);
 
   return (
     <div className="sgm">
@@ -160,7 +156,7 @@ function SuggestionCard({
         {offeredByPerson
           ? t(
               "Offered by a colleague for {0} · {1}",
-              offeredFor,
+              audience,
               formatUnixDateTimeMedium(suggestion.createdAt),
             )
           : learned

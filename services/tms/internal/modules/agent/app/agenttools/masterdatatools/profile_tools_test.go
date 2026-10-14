@@ -18,7 +18,28 @@ import (
 
 type fakeProfileGuide struct {
 	agentprofileports.Service
-	added *agentprofileports.AddGuidanceRequest
+	added  *agentprofileports.AddGuidanceRequest
+	offers bool
+}
+
+func (f *fakeProfileGuide) PlanGuidance(
+	_ context.Context,
+	req *agentprofileports.AddGuidanceRequest,
+) (*agentprofile.Guidance, error) {
+	status := agentprofile.GuidanceStatusActive
+	if f.offers && req.Ref.Subject == agentprofile.SubjectOrganization {
+		status = agentprofile.GuidanceStatusSuggested
+	}
+
+	return &agentprofile.Guidance{
+		OrganizationID: req.Ref.OrganizationID,
+		BusinessUnitID: req.Ref.BusinessUnitID,
+		Subject:        req.Ref.Subject,
+		UserID:         req.Ref.PersonPtr(),
+		Content:        req.Content,
+		Status:         status,
+		Source:         req.Source,
+	}, nil
 }
 
 func (f *fakeProfileGuide) AddGuidance(
@@ -98,4 +119,30 @@ func TestGuideProfile_PreviewSaysWhatItWouldAdd(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "organization's business")
+}
+
+// Guidance about the organization from someone who does not manage agent
+// memory waits for an administrator, and the preview says so.
+func TestGuideProfile_PreviewSaysWhenItWouldBeOffered(t *testing.T) {
+	t.Parallel()
+
+	tool := NewGuideProfileTool(&fakeProfileGuide{offers: true})
+	previewer, ok := tool.(interface {
+		Preview(context.Context, agentports.ToolExecuteParams) (*agent.ToolPreview, error)
+	})
+	require.True(t, ok)
+
+	preview, err := previewer.Preview(t.Context(), agenttoolstest.MemoryParams(map[string]any{
+		"about":    "organization",
+		"guidance": "The Laredo lane is seasonal.",
+	}))
+	require.NoError(t, err)
+	assert.Contains(t, preview.Summary, "Would offer this for an administrator")
+
+	own, err := previewer.Preview(t.Context(), agenttoolstest.MemoryParams(map[string]any{
+		"about":    "me",
+		"guidance": "I only handle the Midwest accounts.",
+	}))
+	require.NoError(t, err)
+	assert.Contains(t, own.Summary, "your own work")
 }

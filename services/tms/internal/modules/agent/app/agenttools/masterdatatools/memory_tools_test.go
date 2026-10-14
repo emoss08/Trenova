@@ -28,6 +28,8 @@ type fakeMemories struct {
 	guard      agenttoolstest.WriteGuard
 	mode       agent.MemorySavingMode
 	roleIDs    []pulid.ID
+	offers     bool
+	refuse     error
 }
 
 func (f *fakeMemories) SavingMode(
@@ -73,10 +75,24 @@ func (f *fakeMemories) PreviewRemember(
 	req *agentports.RememberRequest,
 	actor *permissionports.RequestActor,
 ) (*agentports.RememberPlan, error) {
-	return &agentports.RememberPlan{
-		Memory:   agentmemoryservice.NewMemory(req, actor),
-		Existing: f.existing,
-	}, nil
+	planned := agentmemoryservice.NewMemory(req, actor)
+	if f.offers {
+		planned.Status = agent.MemoryStatusSuggested
+	}
+
+	return &agentports.RememberPlan{Memory: planned, Existing: f.existing}, nil
+}
+
+func (f *fakeMemories) PreviewSetStatus(
+	ctx context.Context,
+	req *agentports.SetAgentMemoryStatusRequest,
+	_ *permissionports.RequestActor,
+) (*agent.Memory, error) {
+	if f.refuse != nil {
+		return nil, f.refuse
+	}
+
+	return f.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo})
 }
 
 func (f *fakeMemories) GetByID(
@@ -288,4 +304,20 @@ func TestRemember_AskFirstOffersInsteadOfKeeping(t *testing.T) {
 	memory, err = tool.(agentports.MemoryRecordingTool).Record(t.Context(), approved)
 	require.NoError(t, err)
 	assert.Equal(t, agent.MemoryStatusActive, memory.Status)
+}
+
+// The tools a person uses through the assistant are gated on using the
+// assistant; what they may keep, forget or steer for others is the memory and
+// profile services' to decide.
+func TestMemoryTools_AreGatedOnUsingTheAssistant(t *testing.T) {
+	t.Parallel()
+
+	tools := []agentports.AgentTool{
+		NewForgetMemoryTool(&fakeMemories{}),
+		NewGuideProfileTool(&fakeProfileGuide{}),
+	}
+	for _, tool := range tools {
+		assert.Equal(t, permission.ResourceAssistant, tool.Policy().Resource, tool.Name())
+		assert.Equal(t, permission.OpCreate, tool.Policy().Operation, tool.Name())
+	}
 }

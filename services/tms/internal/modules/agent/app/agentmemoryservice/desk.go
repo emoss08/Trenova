@@ -815,10 +815,7 @@ func (s *Service) ConfirmDesk(
 		return nil, err
 	}
 	if offer {
-		return nil, errortypes.NewAuthorizationError(
-			"Keeping this for your team or the organization is an administrator's, and it is " +
-				"already in front of them. Keep it for yourself, or leave it for them to decide.",
-		)
+		return nil, errOfferInstead()
 	}
 	if err = s.mayReplace(ctx, person, current); err != nil {
 		return nil, err
@@ -875,9 +872,7 @@ func (s *Service) mayReplace(ctx context.Context, person *deskPerson, offered *a
 	}
 	shared := replaced.Scope == agent.MemoryScopeAgent && person.MayManageShared
 	if !shared && (!person.sees(replaced) || !person.mayChange(replaced)) {
-		return errortypes.NewAuthorizationError(
-			"This replaces a memory your team or organization shares; saving it needs permission to manage agent memory",
-		)
+		return errSharedMemoryManaged()
 	}
 
 	return nil

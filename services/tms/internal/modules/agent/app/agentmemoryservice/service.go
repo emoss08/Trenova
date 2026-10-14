@@ -509,7 +509,18 @@ func (s *Service) SetStatus(
 	return s.setStatus(ctx, &req, actor, s.manages(ctx, req.TenantInfo, actor))
 }
 
-func (s *Service) setStatus(
+func (s *Service) PreviewSetStatus(
+	ctx context.Context,
+	req *agentports.SetAgentMemoryStatusRequest,
+	actor *permissionports.RequestActor,
+) (*agent.Memory, error) {
+	return s.statusTarget(ctx, req, actor, s.manages(ctx, req.TenantInfo, actor))
+}
+
+// statusTarget is the memory a status change would act on, once the change
+// and the actor's right to make it have been checked; a preview reads it and
+// the write goes on from it.
+func (s *Service) statusTarget(
 	ctx context.Context,
 	req *agentports.SetAgentMemoryStatusRequest,
 	actor *permissionports.RequestActor,
@@ -534,6 +545,20 @@ func (s *Service) setStatus(
 		return nil, err
 	}
 	if err = mayChangeStatus(current, actor, manages); err != nil {
+		return nil, err
+	}
+
+	return current, nil
+}
+
+func (s *Service) setStatus(
+	ctx context.Context,
+	req *agentports.SetAgentMemoryStatusRequest,
+	actor *permissionports.RequestActor,
+	manages bool,
+) (*agent.Memory, error) {
+	current, err := s.statusTarget(ctx, req, actor, manages)
+	if err != nil {
 		return nil, err
 	}
 
@@ -727,14 +752,16 @@ func (s *Service) ApproveSuggestion(
 	return approved, nil
 }
 
-// approvedScope is who an approved suggestion is read by. A suggestion is
-// drawn from ratings of one agent's work, so by default it is kept for that
-// agent alone; an administrator may widen it to the whole organization.
+// approvedScope is who an approved suggestion is read by. One offered by an
+// agent or a person is kept for the readers it was offered to; one drawn from
+// ratings of an agent's work is kept for that agent alone. An administrator
+// may widen either to the whole organization.
 func approvedScope(requested agent.MemoryScope, suggestion *agent.Memory) agent.MemoryScope {
 	if requested == agent.MemoryScopeOrganization {
 		return agent.MemoryScopeOrganization
 	}
-	if suggestion.Source.OfferedByAgent() && suggestion.Scope.IsValid() {
+	offered := suggestion.Source.OfferedByAgent() || suggestion.Source == agent.MemorySourceUser
+	if offered && suggestion.Scope.IsValid() {
 		return suggestion.Scope
 	}
 	if suggestion.AgentDefinitionID == nil || suggestion.AgentDefinitionID.IsNil() {

@@ -104,7 +104,11 @@ func (r *guidanceRepository) List(
 
 				return sq
 			}).
-			OrderExpr(cols.Status.OrderAsc()).
+			OrderExpr(
+				cols.Status.Expr("CASE {} WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END"),
+				agentprofile.GuidanceStatusActive,
+				agentprofile.GuidanceStatusSuggested,
+			).
 			OrderExpr(cols.CreatedAt.OrderDesc()).
 			OrderExpr(cols.ID.OrderDesc()).
 			Limit(int64(limit)).

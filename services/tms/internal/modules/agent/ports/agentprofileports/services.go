@@ -132,6 +132,9 @@ type Service interface {
 	// from a person who does not manage shared memory, or written down by an
 	// agent for such a person, waits as Suggested for an administrator.
 	AddGuidance(ctx context.Context, req *AddGuidanceRequest) (*agentprofile.Guidance, error)
+	// PlanGuidance is the line AddGuidance would create, with the status it
+	// would be given, after the same checks and without writing it.
+	PlanGuidance(ctx context.Context, req *AddGuidanceRequest) (*agentprofile.Guidance, error)
 	RetireGuidance(ctx context.Context, req *RetireGuidanceRequest) (*agentprofile.Guidance, error)
 	ApproveGuidance(ctx context.Context, req *DecideGuidanceRequest) (*agentprofile.Guidance, error)
 	DismissGuidance(ctx context.Context, req *DecideGuidanceRequest) (*agentprofile.Guidance, error)

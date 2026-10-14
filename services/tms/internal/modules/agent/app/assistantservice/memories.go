@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -110,25 +109,8 @@ func (s *Service) deskMemoryActor(
 
 	return &agentports.DeskMemoryActor{
 		Actor:           actor,
-		MayManageShared: s.allowed(ctx, actor, permission.OpManage),
+		MayManageShared: s.memories.MayManageShared(ctx, tenant, userID),
 	}
-}
-
-func (s *Service) allowed(
-	ctx context.Context,
-	actor *permissionports.RequestActor,
-	operation permission.Operation,
-) bool {
-	if s.permissions == nil {
-		return false
-	}
-
-	result, err := s.permissions.Check(
-		ctx,
-		actor.PermissionCheck(permission.ResourceAgentMemory, operation),
-	)
-
-	return err == nil && result != nil && result.Allowed
 }
 
 func memoryNote(memory *agentports.DeskMemory) conversation.MemoryNote {

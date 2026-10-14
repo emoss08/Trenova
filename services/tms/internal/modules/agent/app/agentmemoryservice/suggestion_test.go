@@ -33,6 +33,12 @@ func (f *suggestionRepo) GetByID(
 	return &copied, nil
 }
 
+func (f *suggestionRepo) Update(_ context.Context, entity *agent.Memory) (*agent.Memory, error) {
+	f.memory = entity
+
+	return entity, nil
+}
+
 func (f *suggestionRepo) ResolveSuggestion(
 	_ context.Context,
 	req agentports.ResolveAgentMemorySuggestionRequest,
@@ -71,6 +77,7 @@ func suggestion() *agent.Memory {
 		Source:            agent.MemorySourceFeedback,
 		Status:            agent.MemoryStatusSuggested,
 		Content:           "Correction for Rate Desk. People said the numbers were made up.",
+		Scope:             agent.MemoryScopeAgent,
 		AgentDefinitionID: &agentID,
 		Evidence: &agent.MemoryEvidence{
 			FeedbackIDs: []pulid.ID{pulid.MustNew("aifb_")},
@@ -218,6 +225,58 @@ func TestApproveSuggestion_MakesTheEditedTextActive(t *testing.T) {
 	assert.Equal(t, int64(2), resolved.Version)
 }
 
+// A dispatcher offers a memory for the Billing team and an administrator
+// approves it from the queue, which names no scope: it is kept for Billing,
+// not widened to the organization, and the dispatcher stays its author.
+func TestApproveSuggestion_KeepsAPersonsOfferForTheirTeam(t *testing.T) {
+	t.Parallel()
+
+	dispatcher, billing := pulid.MustNew("usr_"), pulid.MustNew("rol_")
+	offer := suggestion()
+	offer.Source = agent.MemorySourceUser
+	offer.Kind = agent.MemoryKindInstruction
+	offer.AgentDefinitionID = nil
+	offer.Evidence = nil
+	offer.CreatedByUserID = &dispatcher
+	offer.SetAudience(agent.MemoryScopeRole, pulid.Nil, billing)
+	repo := &suggestionRepo{memory: offer}
+
+	approved, err := suggestionService(repo).ApproveSuggestion(
+		t.Context(),
+		&agentports.ApproveAgentMemorySuggestionRequest{
+			ID:         offer.ID,
+			TenantInfo: tenant(),
+			Content:    offer.Content,
+			Scope:      agent.MemoryScopeAgent,
+			Version:    2,
+		},
+		userActor(),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryStatusActive, approved.Status)
+	require.Len(t, repo.resolved, 1)
+	assert.Equal(t, agent.MemoryScopeRole, repo.resolved[0].Scope)
+	assert.Equal(t, billing, repo.resolved[0].RoleID)
+
+	forEveryone := suggestion()
+	forEveryone.Source = agent.MemorySourceUser
+	forEveryone.AgentDefinitionID = nil
+	forEveryone.Evidence = nil
+	forEveryone.CreatedByUserID = &dispatcher
+	forEveryone.SetAudience(agent.MemoryScopeOrganization, pulid.Nil, pulid.Nil)
+	repo = &suggestionRepo{memory: forEveryone}
+	_, err = suggestionService(repo).ApproveSuggestion(
+		t.Context(),
+		&agentports.ApproveAgentMemorySuggestionRequest{
+			ID: forEveryone.ID, TenantInfo: tenant(), Content: forEveryone.Content, Version: 2,
+		},
+		userActor(),
+	)
+	require.NoError(t, err)
+	require.Len(t, repo.resolved, 1)
+	assert.Equal(t, agent.MemoryScopeOrganization, repo.resolved[0].Scope)
+}
+
 func TestApproveSuggestion_RefusesEmptyText(t *testing.T) {
 	t.Parallel()
 
@@ -287,6 +346,39 @@ func TestDismissSuggestion_RecordsWhoDismissedIt(t *testing.T) {
 	assert.Positive(t, repo.resolved[0].At)
 }
 
+// Rewriting a memory the organization shares is an administrator's: without
+// the manage permission the change is refused, with it the words are saved.
+func TestUpdate_ASharedMemoryIsAnAdministratorsToRewrite(t *testing.T) {
+	t.Parallel()
+
+	shared := suggestion()
+	shared.Source = agent.MemorySourceUser
+	shared.Kind = agent.MemoryKindInstruction
+	shared.Status = agent.MemoryStatusActive
+	shared.AgentDefinitionID = nil
+	shared.Evidence = nil
+	shared.SetAudience(agent.MemoryScopeOrganization, pulid.Nil, pulid.Nil)
+	req := &agentports.UpdateAgentMemoryRequest{
+		ID:         shared.ID,
+		TenantInfo: tenant(),
+		Kind:       agent.MemoryKindInstruction,
+		Content:    "Quote in dollars, never euros.",
+		Version:    2,
+	}
+
+	repo := &suggestionRepo{memory: shared}
+	svc := &Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}}
+	_, err := svc.Update(t.Context(), req, userActor())
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+	assert.Equal(t, shared.Content, repo.memory.Content, "nothing was written")
+
+	svc.permissions = &fakePermissions{manages: true}
+	updated, err := svc.Update(t.Context(), req, userActor())
+	require.NoError(t, err)
+	assert.Equal(t, "Quote in dollars, never euros.", updated.Content)
+}
+
 func TestMemoryValidate_ASuggestionComesOnlyFromFeedbackWithEvidence(t *testing.T) {
 	t.Parallel()
 
@@ -296,9 +388,19 @@ func TestMemoryValidate_ASuggestionComesOnlyFromFeedbackWithEvidence(t *testing.
 	memory.Validate(me)
 	assert.True(t, me.HasErrors(), "feedback without its ratings is refused")
 
-	memory = suggestion()
-	memory.Source = agent.MemorySourceUser
+	own := suggestion()
+	own.Source = agent.MemorySourceUser
+	own.Evidence = nil
+	own.SetAudience(agent.MemoryScopeUser, pulid.MustNew("usr_"), pulid.Nil)
 	me = errortypes.NewMultiError()
-	memory.Validate(me)
-	assert.True(t, me.HasErrors(), "only feedback suggests")
+	own.Validate(me)
+	assert.True(t, me.HasErrors(), "a person's own memory is kept, never suggested")
+
+	offered := suggestion()
+	offered.Source = agent.MemorySourceUser
+	offered.Evidence = nil
+	offered.SetAudience(agent.MemoryScopeOrganization, pulid.Nil, pulid.Nil)
+	me = errortypes.NewMultiError()
+	offered.Validate(me)
+	assert.False(t, me.HasErrors(), "a person offers a memory for the organization")
 }

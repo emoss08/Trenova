@@ -352,8 +352,9 @@ func (t *ForgetMemoryTool) Policy() agentports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
-		Rationale: "Retires an agent memory inside Trenova: the caller's own, or one shared " +
-			"with others when the person in the conversation may manage shared memory.",
+		Rationale: "Retires an agent memory inside Trenova: one kept for the person in the " +
+			"conversation, or one shared with others when that person may manage shared " +
+			"memory. A run with nobody in it retires none.",
 	}
 }
 
