@@ -6,10 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
@@ -28,40 +24,16 @@ import (
 	"go.uber.org/zap"
 )
 
-type tenantRow struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-
 func seededTenant(ctx context.Context, t *testing.T, db *bun.DB) pagination.TenantInfo {
 	t.Helper()
 
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
+	data := seedtest.SeedFullTestData(t, ctx, db)
 
-	var row tenantRow
-	require.NoError(t, db.NewSelect().
-		TableExpr("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &row))
-
-	var userID pulid.ID
-	require.NoError(t, db.NewSelect().
-		TableExpr("users").
-		Column("id").
-		Where("business_unit_id = ?", row.BusinessUnitID).
-		Limit(1).
-		Scan(ctx, &userID))
-
-	return pagination.TenantInfo{OrgID: row.ID, BuID: row.BusinessUnitID, UserID: userID}
+	return pagination.TenantInfo{
+		OrgID:  data.Organization.ID,
+		BuID:   data.BusinessUnit.ID,
+		UserID: data.User.ID,
+	}
 }
 
 func insert(ctx context.Context, t *testing.T, db *bun.DB, models ...any) {
