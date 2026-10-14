@@ -24460,6 +24460,7 @@
               "driver_settlement",
               "edi_inbound_file",
               "edi_message",
+              "edi_transfer",
               "factoring_agreement",
               "factoring_company",
               "factoring_noa",
