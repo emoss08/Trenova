@@ -240,7 +240,9 @@ func DescribeFactoringMissingNoa(
 			summary = "Release the expired notice and send a new one; until it is signed, " +
 				"invoices to this customer are not ready to factor."
 			if row.NoaExpiresAt != nil {
-				summary = "The notice expired on " + factoringDate(*row.NoaExpiresAt) + ". " + summary
+				summary = "The notice expired on " + factoringDate(
+					*row.NoaExpiresAt,
+				) + ". " + summary
 				occurredAt = *row.NoaExpiresAt
 			}
 		case factoring.NoaStatusReleased:

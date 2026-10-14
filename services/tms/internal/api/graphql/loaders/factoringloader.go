@@ -66,10 +66,13 @@ func newFactoringStateByInvoiceIDLoader(
 ) *dataloadgen.Loader[string, *factoring.InvoiceState] {
 	return newLoader(batchValueFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*factoring.InvoiceState, error) {
-			return f.states.ListByInvoiceIDs(ctx, &factoringports.ListInvoiceStatesByInvoiceIDsRequest{
-				TenantInfo: tenantInfo,
-				InvoiceIDs: ids,
-			})
+			return f.states.ListByInvoiceIDs(
+				ctx,
+				&factoringports.ListInvoiceStatesByInvoiceIDsRequest{
+					TenantInfo: tenantInfo,
+					InvoiceIDs: ids,
+				},
+			)
 		},
 	))
 }

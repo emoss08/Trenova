@@ -35,7 +35,7 @@ var (
 
 type Agreement struct {
 	bun.BaseModel             `bun:"table:factoring_agreements,alias:facagr" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                 json:"-"`
+	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
 
 	ID                   pulid.ID            `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID       pulid.ID            `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
@@ -175,7 +175,11 @@ func ValidateFeeTiers(tiers []*FeeTier, multiErr *errortypes.MultiError) {
 		return
 	}
 	if len(tiers) > MaxFeeTiers {
-		multiErr.Add("feeTiers", errortypes.ErrInvalid, "An agreement can have at most 20 fee tiers")
+		multiErr.Add(
+			"feeTiers",
+			errortypes.ErrInvalid,
+			"An agreement can have at most 20 fee tiers",
+		)
 		return
 	}
 
@@ -184,7 +188,11 @@ func ValidateFeeTiers(tiers []*FeeTier, multiErr *errortypes.MultiError) {
 	for idx, tier := range ordered {
 		field := "feeTiers[" + strconv.Itoa(slices.Index(tiers, tier)) + "]"
 		if tier.RateBP < 0 || tier.RateBP > BasisPoints {
-			multiErr.Add(field+".rateBp", errortypes.ErrInvalid, "Fee rate must be between 0% and 100%")
+			multiErr.Add(
+				field+".rateBp",
+				errortypes.ErrInvalid,
+				"Fee rate must be between 0% and 100%",
+			)
 		}
 		if tier.FlatMinor < 0 {
 			multiErr.Add(field+".flatMinor", errortypes.ErrInvalid, "Flat fee cannot be negative")

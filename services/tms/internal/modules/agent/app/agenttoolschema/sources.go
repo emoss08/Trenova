@@ -2,9 +2,10 @@ package agenttoolschema
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"

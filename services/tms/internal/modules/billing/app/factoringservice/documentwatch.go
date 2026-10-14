@@ -27,7 +27,6 @@ type DocumentObserver struct {
 
 var _ documentports.DocumentChangeObserver = (*DocumentObserver)(nil)
 
-//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func NewDocumentObserver(p DocumentObserverParams) documentports.DocumentChangeObserver {
 	return &DocumentObserver{
 		invoices:  p.Invoices,
@@ -54,12 +53,18 @@ func (o *DocumentObserver) DocumentsChanged(
 			InvoiceIDs: ids,
 		})
 	case shipmentResourceType:
-		byShipment, err := o.invoices.ListByShipmentIDs(ctx, invoiceports.ListInvoicesByShipmentIDsRequest{
-			TenantInfo:  change.TenantInfo,
-			ShipmentIDs: ids,
-		})
+		byShipment, err := o.invoices.ListByShipmentIDs(
+			ctx,
+			invoiceports.ListInvoicesByShipmentIDsRequest{
+				TenantInfo:  change.TenantInfo,
+				ShipmentIDs: ids,
+			},
+		)
 		if err != nil {
-			o.l.Warn("could not find the invoices behind changed shipment documents", zap.Error(err))
+			o.l.Warn(
+				"could not find the invoices behind changed shipment documents",
+				zap.Error(err),
+			)
 			return
 		}
 		invoiceIDs := make([]pulid.ID, 0, len(byShipment))

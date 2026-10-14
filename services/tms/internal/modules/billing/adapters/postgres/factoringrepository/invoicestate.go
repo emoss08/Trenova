@@ -43,7 +43,7 @@ func NewInvoiceStateRepository(p Params) factoringports.InvoiceStateRepository {
 
 func (r *invoiceStateRepository) SetInvoiceOverride(
 	ctx context.Context,
-	req factoringports.SetInvoiceOverrideRequest,
+	req *factoringports.SetInvoiceOverrideRequest,
 ) error {
 	_, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (struct{}, error) {
 		inv := invoicecol.InvoiceColumns
@@ -245,7 +245,7 @@ func (r *invoiceStateRepository) scope(
 
 func (r *invoiceStateRepository) ClaimReadyAnnouncement(
 	ctx context.Context,
-	req factoringports.ClaimReadyAnnouncementRequest,
+	req *factoringports.ClaimReadyAnnouncementRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := factoringcol.InvoiceStateColumns

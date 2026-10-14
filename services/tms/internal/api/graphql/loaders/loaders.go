@@ -493,9 +493,18 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 			f.invoiceDisputesByInvoiceID,
 			tenantInfo,
 		),
-		factoringCompanyByID:           newFactoringCompanyByIDLoader(f.factoringCompanyByID, tenantInfo),
-		factoringStateByInvoiceID:      newFactoringStateByInvoiceIDLoader(f.factoringStateByInvoiceID, tenantInfo),
-		factoringAgreementsByCompanyID: newFactoringAgreementsByCompanyIDLoader(f.factoringAgreementsByCompanyID, tenantInfo),
+		factoringCompanyByID: newFactoringCompanyByIDLoader(
+			f.factoringCompanyByID,
+			tenantInfo,
+		),
+		factoringStateByInvoiceID: newFactoringStateByInvoiceIDLoader(
+			f.factoringStateByInvoiceID,
+			tenantInfo,
+		),
+		factoringAgreementsByCompanyID: newFactoringAgreementsByCompanyIDLoader(
+			f.factoringAgreementsByCompanyID,
+			tenantInfo,
+		),
 		lateChargeAssessmentsByInvoiceID: newLateChargeAssessmentsByInvoiceIDLoader(
 			f.lateChargeAssessmentsByInvoiceID,
 			tenantInfo,

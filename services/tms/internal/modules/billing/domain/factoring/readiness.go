@@ -139,7 +139,11 @@ func agreementCheck(in *ReadinessInputs) Check {
 func noaCheck(in *ReadinessInputs) Check {
 	switch {
 	case in.Noa.IsEffective(in.At):
-		return Check{Code: CheckNoa, Passed: true, Message: "The customer acknowledged the notice of assignment"}
+		return Check{
+			Code:    CheckNoa,
+			Passed:  true,
+			Message: "The customer acknowledged the notice of assignment",
+		}
 	case in.Noa == nil || in.Noa.Status == NoaStatusReleased:
 		return Check{
 			Code:    CheckNoa,

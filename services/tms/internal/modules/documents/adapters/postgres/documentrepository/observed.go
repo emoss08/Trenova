@@ -27,7 +27,6 @@ type observed struct {
 	l         *zap.Logger
 }
 
-//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func Observe(p ObservedParams) documentports.DocumentRepository {
 	observers := make([]documentports.DocumentChangeObserver, 0, len(p.Observers))
 	for _, o := range p.Observers {
@@ -45,7 +44,10 @@ func Observe(p ObservedParams) documentports.DocumentRepository {
 	}
 }
 
-func (o *observed) Create(ctx context.Context, entity *document.Document) (*document.Document, error) {
+func (o *observed) Create(
+	ctx context.Context,
+	entity *document.Document,
+) (*document.Document, error) {
 	created, err := o.DocumentRepository.Create(ctx, entity)
 	if err == nil {
 		o.notify(ctx, created)
@@ -53,7 +55,10 @@ func (o *observed) Create(ctx context.Context, entity *document.Document) (*docu
 	return created, err
 }
 
-func (o *observed) Update(ctx context.Context, entity *document.Document) (*document.Document, error) {
+func (o *observed) Update(
+	ctx context.Context,
+	entity *document.Document,
+) (*document.Document, error) {
 	updated, err := o.DocumentRepository.Update(ctx, entity)
 	if err == nil {
 		o.notify(ctx, updated)
@@ -112,8 +117,11 @@ func (o *observed) Delete(ctx context.Context, req documentports.DeleteDocumentR
 	return err
 }
 
-func (o *observed) BulkDelete(ctx context.Context, req documentports.BulkDeleteDocumentRequest) error {
-	before, loadErr := o.DocumentRepository.GetByIDs(ctx, req)
+func (o *observed) BulkDelete(
+	ctx context.Context,
+	req documentports.BulkDeleteDocumentRequest,
+) error {
+	before, loadErr := o.GetByIDs(ctx, req)
 	if loadErr != nil {
 		o.l.Warn("could not read documents before deleting them", zap.Error(loadErr))
 	}
@@ -144,7 +152,7 @@ func (o *observed) load(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) []*document.Document {
-	doc, err := o.DocumentRepository.GetByID(ctx, documentports.GetDocumentByIDRequest{
+	doc, err := o.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -159,10 +167,13 @@ func (o *observed) lineage(
 	tenantInfo pagination.TenantInfo,
 	lineageID pulid.ID,
 ) []*document.Document {
-	versions, err := o.DocumentRepository.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
-		LineageID:  lineageID,
-		TenantInfo: tenantInfo,
-	})
+	versions, err := o.ListVersions(
+		ctx,
+		documentports.ListDocumentVersionsRequest{
+			LineageID:  lineageID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil
 	}

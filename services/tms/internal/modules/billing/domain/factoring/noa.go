@@ -30,7 +30,7 @@ var _ bun.BeforeAppendModelHook = (*Noa)(nil)
 
 type Noa struct {
 	bun.BaseModel             `bun:"table:factoring_noas,alias:facnoa" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                           json:"-"`
+	pagination.CursorValueSet `bun:",embed"                            json:"-"`
 
 	ID                 pulid.ID  `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID     pulid.ID  `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
@@ -71,7 +71,10 @@ func (n *Noa) Validate(multiErr *errortypes.MultiError) {
 			validation.Required,
 			domainvalidation.ValidEnum[NoaStatus]("Invalid notice status"),
 		),
-		validation.Field(&n.SentTo, is.EmailFormat.Error("Recipient must be a valid email address")),
+		validation.Field(
+			&n.SentTo,
+			is.EmailFormat.Error("Recipient must be a valid email address"),
+		),
 		validation.Field(
 			&n.ReleaseReason,
 			validation.Length(0, MaxNoaReleaseReasonLength).
@@ -87,7 +90,11 @@ func (n *Noa) Validate(multiErr *errortypes.MultiError) {
 	switch n.Status {
 	case NoaStatusSent:
 		if n.SentAt == nil {
-			multiErr.Add("sentAt", errortypes.ErrRequired, "A sent notice needs the time it was sent")
+			multiErr.Add(
+				"sentAt",
+				errortypes.ErrRequired,
+				"A sent notice needs the time it was sent",
+			)
 		}
 	case NoaStatusAcknowledged:
 		if n.AcknowledgedAt == nil {
@@ -113,7 +120,11 @@ func (n *Noa) Validate(multiErr *errortypes.MultiError) {
 		}
 	case NoaStatusReleased:
 		if n.ReleasedAt == nil {
-			multiErr.Add("releasedAt", errortypes.ErrRequired, "A released notice needs its release time")
+			multiErr.Add(
+				"releasedAt",
+				errortypes.ErrRequired,
+				"A released notice needs its release time",
+			)
 		}
 	case NoaStatusDraft:
 	}
@@ -168,7 +179,11 @@ func (n *Noa) MarkSent(at int64, recipients []string) error {
 	return nil
 }
 
-func (n *Noa) Acknowledge(at, acknowledgedAt int64, signedDocumentID pulid.ID, expiresAt *int64) error {
+func (n *Noa) Acknowledge(
+	at, acknowledgedAt int64,
+	signedDocumentID pulid.ID,
+	expiresAt *int64,
+) error {
 	if !n.CanAcknowledge() {
 		return errortypes.NewBusinessError("Only a drafted or sent notice can be acknowledged")
 	}

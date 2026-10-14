@@ -101,7 +101,7 @@ type NoaRepository interface {
 	Create(ctx context.Context, entity *factoring.Noa) (*factoring.Noa, error)
 	Update(ctx context.Context, entity *factoring.Noa) (*factoring.Noa, error)
 	GetByID(ctx context.Context, req GetNoaRequest) (*factoring.Noa, error)
-	GetOpen(ctx context.Context, req GetOpenNoaRequest) (*factoring.Noa, error)
+	GetOpen(ctx context.Context, req *GetOpenNoaRequest) (*factoring.Noa, error)
 	ListOpen(ctx context.Context, req *ListOpenNoasRequest) (map[NoaPair]*factoring.Noa, error)
 	ListConnection(
 		ctx context.Context,
@@ -194,7 +194,7 @@ type SetInvoiceOverrideRequest struct {
 }
 
 type InvoiceStateRepository interface {
-	SetInvoiceOverride(ctx context.Context, req SetInvoiceOverrideRequest) error
+	SetInvoiceOverride(ctx context.Context, req *SetInvoiceOverrideRequest) error
 	ListSweepTenants(ctx context.Context) ([]pagination.TenantInfo, error)
 	ListShipmentContacts(
 		ctx context.Context,
@@ -210,7 +210,7 @@ type InvoiceStateRepository interface {
 		ctx context.Context,
 		req *ListInvoiceStateConnectionRequest,
 	) (*pagination.CursorListResult[*factoring.InvoiceState], error)
-	ClaimReadyAnnouncement(ctx context.Context, req ClaimReadyAnnouncementRequest) (bool, error)
+	ClaimReadyAnnouncement(ctx context.Context, req *ClaimReadyAnnouncementRequest) (bool, error)
 	ListReadyUnsubmitted(
 		ctx context.Context,
 		req ListReadyUnsubmittedRequest,

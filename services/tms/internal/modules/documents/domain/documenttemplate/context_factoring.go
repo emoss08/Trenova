@@ -40,14 +40,20 @@ const (
 	sampleFactorName           = "Lone Star Freight Funding, LLC"
 	sampleNoaEffectiveDate     = "2026-09-01"
 	sampleNoaNote              = "Invoices dated before September 1 that are still open are included."
+	organizationPath           = "Organization"
+	attachmentNamePath         = "AttachmentName"
+	sampleCountry              = "United States"
+	sampleDallasCityLine       = "Dallas, TX 75201"
+	sampleNoaSigner            = "Dana Whitfield"
+	sampleACHLabel             = "ACH"
 )
 
 func sampleFactorRemitTo() AddressBlock {
 	return AddressBlock{
 		Name:  sampleFactorName,
-		Lines: []string{"PO Box 660412", "Dallas, TX 75266", "United States"},
+		Lines: []string{"PO Box 660412", "Dallas, TX 75266", sampleCountry},
 		Details: []KeyValue{
-			{Label: "ACH", Value: "Routing 111000025 / Account 5520193377"},
+			{Label: sampleACHLabel, Value: "Routing 111000025 / Account 5520193377"},
 		},
 	}
 }
@@ -59,7 +65,7 @@ func newFactoringNoaSampleContext() any {
 		Reference:     "noa_01K3R8V6Q2M4ZJ7XW9T5B0C1DE",
 		Organization: AddressBlock{
 			Name:  sampleCompanyName,
-			Lines: []string{"2200 Commerce St", "Dallas, TX 75201", "United States"},
+			Lines: []string{"2200 Commerce St", sampleDallasCityLine, sampleCountry},
 			Details: []KeyValue{
 				{Label: "MC", Value: "MC-884120"},
 				{Label: "USDOT", Value: "3120457"},
@@ -67,14 +73,14 @@ func newFactoringNoaSampleContext() any {
 		},
 		Customer: AddressBlock{
 			Name:  sampleCustomerName,
-			Lines: []string{"410 Market Ave", "Fort Worth, TX 76102", "United States"},
+			Lines: []string{"410 Market Ave", "Fort Worth, TX 76102", sampleCountry},
 			Details: []KeyValue{
 				{Label: "AP Contact", Value: "ap@halstead.example"},
 			},
 		},
 		Factor: AddressBlock{
 			Name:  sampleFactorName,
-			Lines: []string{"1700 Pacific Ave, Suite 2100", "Dallas, TX 75201", "United States"},
+			Lines: []string{"1700 Pacific Ave, Suite 2100", sampleDallasCityLine, sampleCountry},
 			Details: []KeyValue{
 				{Label: "Phone", Value: "(214) 555-0187"},
 				{Label: "Email", Value: "verifications@lonestarfunding.example"},
@@ -83,7 +89,7 @@ func newFactoringNoaSampleContext() any {
 		RemitTo:     sampleFactorRemitTo(),
 		LogoDataURI: sampleLogoDataURI,
 		Note:        sampleNoaNote,
-		SignerName:  "Dana Whitfield",
+		SignerName:  sampleNoaSigner,
 		SignerTitle: "Controller",
 	}
 }
@@ -138,7 +144,7 @@ func (r *Registry) registerFactoringNoaKinds() {
 				Description: "The notice's identifier, printed small so the factor can match a returned acknowledgement to it.",
 			},
 			{
-				Path:        "Organization",
+				Path:        organizationPath,
 				Type:        VariableObject,
 				Description: "Your organization, as the party assigning its invoices.",
 				Fields:      addressBlockFields(),
@@ -209,7 +215,7 @@ func (r *Registry) registerFactoringNoaKinds() {
 			},
 			factoringNoteVariable(),
 			{
-				Path:        "AttachmentName",
+				Path:        attachmentNamePath,
 				Type:        VariableString,
 				Required:    true,
 				Description: "The file name of the attached notice. Required: the customer is asked to sign and return the attachment, so the message must name it.",

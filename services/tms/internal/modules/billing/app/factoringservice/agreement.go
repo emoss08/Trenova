@@ -313,8 +313,11 @@ func (s *AgreementService) validate(
 	}
 
 	factor, err := s.factors.GetByID(ctx, factoringcompanyports.GetFactoringCompanyByIDRequest{
-		ID:         entity.FactoringCompanyID,
-		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		ID: entity.FactoringCompanyID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 	})
 	if err != nil {
 		return err

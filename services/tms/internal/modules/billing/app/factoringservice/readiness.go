@@ -195,7 +195,6 @@ func (s *ReadinessService) evaluate(
 	if err != nil {
 		previous = nil
 	}
-	err = nil
 
 	next := &factoring.InvoiceState{
 		InvoiceID:          inv.ID,
@@ -244,12 +243,15 @@ func (s *ReadinessService) announce(
 	inv *invoice.Invoice,
 	now int64,
 ) bool {
-	claimed, err := s.states.ClaimReadyAnnouncement(ctx, factoringports.ClaimReadyAnnouncementRequest{
-		TenantInfo: tenantInfo,
-		InvoiceID:  state.InvoiceID,
-		ReadySince: *state.ReadySince,
-		At:         now,
-	})
+	claimed, err := s.states.ClaimReadyAnnouncement(
+		ctx,
+		&factoringports.ClaimReadyAnnouncementRequest{
+			TenantInfo: tenantInfo,
+			InvoiceID:  state.InvoiceID,
+			ReadySince: *state.ReadySince,
+			At:         now,
+		},
+	)
 	if err != nil {
 		s.l.Warn("could not claim the factoring ready announcement",
 			zap.String("invoiceId", state.InvoiceID.String()), zap.Error(err))
@@ -297,7 +299,7 @@ func (s *ReadinessService) gather(
 		in.AgreementDocuments = agreementNeeds(agreement)
 	}
 
-	noa, err := s.noas.GetOpen(ctx, factoringports.GetOpenNoaRequest{
+	noa, err := s.noas.GetOpen(ctx, &factoringports.GetOpenNoaRequest{
 		TenantInfo:         tenantInfo,
 		CustomerID:         inv.CustomerID,
 		FactoringCompanyID: factorID,
@@ -384,16 +386,20 @@ func (s *ReadinessService) acceptedTypes(
 		for _, id := range ids {
 			resourceIDs = append(resourceIDs, id.String())
 		}
-		docs, err := s.documents.GetByResourceIDs(ctx, &documentports.GetDocumentsByResourceIDsRequest{
-			TenantInfo:   tenantInfo,
-			ResourceType: resourceType,
-			ResourceIDs:  resourceIDs,
-		})
+		docs, err := s.documents.GetByResourceIDs(
+			ctx,
+			&documentports.GetDocumentsByResourceIDsRequest{
+				TenantInfo:   tenantInfo,
+				ResourceType: resourceType,
+				ResourceIDs:  resourceIDs,
+			},
+		)
 		if err != nil {
 			return err
 		}
 		for _, doc := range docs {
-			if doc == nil || doc.DocumentTypeID == nil || doc.StandingAt(now) != document.StandingAccepted {
+			if doc == nil || doc.DocumentTypeID == nil ||
+				doc.StandingAt(now) != document.StandingAccepted {
 				continue
 			}
 			owner, parseErr := pulid.Parse(doc.ResourceID)
@@ -457,7 +463,7 @@ func (s *ReadinessService) SetOverride(
 		return state, evalErr
 	}
 
-	if err = s.states.SetInvoiceOverride(ctx, factoringports.SetInvoiceOverrideRequest{
+	if err = s.states.SetInvoiceOverride(ctx, &factoringports.SetInvoiceOverrideRequest{
 		TenantInfo:           req.TenantInfo,
 		InvoiceID:            plan.After.ID,
 		Override:             plan.After.FactoringOverride,
@@ -550,7 +556,7 @@ func (s *ReadinessService) stampFor(
 	tenantInfo pagination.TenantInfo,
 	inv *invoice.Invoice,
 	override invoice.FactoringOverride,
-) (*pulid.ID, *pulid.ID, error) {
+) (factorID, agreementID *pulid.ID, err error) {
 	if override.Excludes() {
 		return nil, nil, nil
 	}
@@ -568,7 +574,6 @@ func (s *ReadinessService) stampFor(
 	if err != nil {
 		return nil, nil, err
 	}
-	var factorID *pulid.ID
 	for _, cus := range found {
 		if cus != nil && cus.ID == inv.CustomerID && cus.BillingProfile != nil &&
 			cus.BillingProfile.FactoringCompanyID != nil &&
@@ -596,8 +601,8 @@ func (s *ReadinessService) stampFor(
 		}
 		return nil, nil, err
 	}
-	agreementID := agreement.ID
-	return factorID, &agreementID, nil
+	stamped := agreement.ID
+	return factorID, &stamped, nil
 }
 
 func (s *ReadinessService) ListSweepTenants(ctx context.Context) ([]pagination.TenantInfo, error) {
@@ -611,11 +616,14 @@ func (s *ReadinessService) SweepTenant(
 	result := &factoringports.SweepResult{}
 	after := pulid.Nil
 	for seen := 0; seen < maxSweepInvoices; {
-		ids, err := s.states.ListCandidateInvoiceIDs(ctx, factoringports.ListCandidateInvoicesRequest{
-			TenantInfo:     tenantInfo,
-			AfterInvoiceID: after,
-			Limit:          sweepBatchSize,
-		})
+		ids, err := s.states.ListCandidateInvoiceIDs(
+			ctx,
+			factoringports.ListCandidateInvoicesRequest{
+				TenantInfo:     tenantInfo,
+				AfterInvoiceID: after,
+				Limit:          sweepBatchSize,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -661,11 +669,14 @@ func (s *ReadinessService) warnExpiringNoas(
 	}
 	warned := 0
 	for _, noa := range expiring {
-		claimed, claimErr := s.noas.ClaimExpiryWarning(ctx, factoringports.ClaimNoaExpiryWarningRequest{
-			TenantInfo: tenantInfo,
-			ID:         noa.ID,
-			At:         now,
-		})
+		claimed, claimErr := s.noas.ClaimExpiryWarning(
+			ctx,
+			factoringports.ClaimNoaExpiryWarningRequest{
+				TenantInfo: tenantInfo,
+				ID:         noa.ID,
+				At:         now,
+			},
+		)
 		if claimErr != nil {
 			s.l.Warn("could not claim a notice expiry warning",
 				zap.String("noaId", noa.ID.String()), zap.Error(claimErr))

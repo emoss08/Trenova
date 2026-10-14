@@ -380,7 +380,7 @@ func TestInvoiceStateProjection(t *testing.T) {
 
 	claimed, err := env.states.ClaimReadyAnnouncement(
 		env.ctx,
-		factoringports.ClaimReadyAnnouncementRequest{
+		&factoringports.ClaimReadyAnnouncementRequest{
 			TenantInfo: env.tenantInfo,
 			InvoiceID:  factored.ID,
 			ReadySince: *state.ReadySince,

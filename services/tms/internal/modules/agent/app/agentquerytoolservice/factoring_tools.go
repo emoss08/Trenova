@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -252,7 +253,11 @@ func (t *listFactoringReadyInvoicesTool) Query(
 	)
 	cursor, err := pagination.NewCursorInfo(limit, optionalString(params.Params, paramAfter))
 	if err != nil {
-		return nil, fmt.Errorf("parameter %q is not a cursor this tool returned: %w", paramAfter, err)
+		return nil, fmt.Errorf(
+			"parameter %q is not a cursor this tool returned: %w",
+			paramAfter,
+			err,
+		)
 	}
 
 	tenant := tenantOf(params)
@@ -416,7 +421,7 @@ func factoringAgreementRowFrom(a *factoring.Agreement, now int64) factoringAgree
 	for _, tier := range factoring.SortedFeeTiers(a.FeeTiers) {
 		daysTo := absentOpenEnded
 		if tier.DaysTo != nil {
-			daysTo = fmt.Sprintf("%d", *tier.DaysTo)
+			daysTo = strconv.Itoa(*tier.DaysTo)
 		}
 		row.FeeTiers = append(row.FeeTiers, factoringFeeTierRow{
 			DaysFrom:  tier.DaysFrom,
@@ -525,7 +530,11 @@ func (t *listFactoringNoasTool) Query(
 	)
 	cursor, err := pagination.NewCursorInfo(limit, optionalString(params.Params, paramAfter))
 	if err != nil {
-		return nil, fmt.Errorf("parameter %q is not a cursor this tool returned: %w", paramAfter, err)
+		return nil, fmt.Errorf(
+			"parameter %q is not a cursor this tool returned: %w",
+			paramAfter,
+			err,
+		)
 	}
 
 	page, err := t.noas.List(ctx, &factoringports.ListNoaConnectionRequest{

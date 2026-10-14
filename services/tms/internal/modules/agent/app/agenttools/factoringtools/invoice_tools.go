@@ -84,7 +84,7 @@ func (t *SetInvoiceFactoringOverrideTool) ParamSchema() map[string]any {
 }
 
 func (t *SetInvoiceFactoringOverrideTool) Policy() agentports.ToolPolicy {
-	return policy(t.Name(), policySpec{
+	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceInvoice,
 		operation:   permission.OpUpdate,
 		defaultTier: agent.TierActWithApproval,
@@ -177,7 +177,9 @@ func (t *SetInvoiceFactoringOverrideTool) Preview(
 		return nil, err
 	}
 	if !plan.Changed {
-		return toolpreview.Build("The invoice already reads " + string(req.Override) + "; nothing changes."), nil
+		return toolpreview.Build(
+			"The invoice already reads " + string(req.Override) + "; nothing changes.",
+		), nil
 	}
 	if req.Override.Excludes() {
 		return toolpreview.Build(
@@ -246,7 +248,7 @@ func (t *RequestMissingFactoringDocumentTool) ParamSchema() map[string]any {
 }
 
 func (t *RequestMissingFactoringDocumentTool) Policy() agentports.ToolPolicy {
-	return policy(t.Name(), policySpec{
+	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceCustomerCommunication,
 		operation:   permission.OpCreate,
 		defaultTier: agent.TierPropose,
@@ -273,7 +275,11 @@ func (t *RequestMissingFactoringDocumentTool) request(
 	if err != nil {
 		return nil, err
 	}
-	typeIDs, err := common.RequirePulidSlice(params.Params, paramDocumentTypeIDs, maxRequestedDocuments)
+	typeIDs, err := common.RequirePulidSlice(
+		params.Params,
+		paramDocumentTypeIDs,
+		maxRequestedDocuments,
+	)
 	if err != nil {
 		if _, given := params.Params[paramDocumentTypeIDs]; given {
 			return nil, err
@@ -324,7 +330,10 @@ func (t *RequestMissingFactoringDocumentTool) Preview(
 			Resource: permission.ResourceCustomerCommunication,
 			Label:    strings.Join(plan.Message.To, ", "),
 		},
-		common.EmailMessagePreview(sender, common.RenderedEmailPreview(send, plan.Message.VersionID)),
+		common.EmailMessagePreview(
+			sender,
+			common.RenderedEmailPreview(send, plan.Message.VersionID),
+		),
 	)
 	preview := toolpreview.Build(
 		"Would email "+strings.Join(plan.Message.To, ", ")+" ("+strings.ToLower(plan.RecipientKind)+

@@ -46,7 +46,6 @@ type RegistryParams struct {
 	Logger     *zap.Logger
 }
 
-//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func NewRegistry(p RegistryParams) registry.WorkerRegistry {
 	return registry.NewDomainRegistry(&DomainConfig, p.Activities, Workflows, p.Logger)
 }

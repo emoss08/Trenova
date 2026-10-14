@@ -190,7 +190,7 @@ func (s *ReadinessService) resolveRecipient(
 	req *factoringports.RequestMissingDocumentsRequest,
 	inv *invoice.Invoice,
 	needs []factoring.Check,
-) ([]string, string, error) {
+) (recipients []string, kind string, err error) {
 	if explicit := strings.TrimSpace(req.Recipient); explicit != "" {
 		to := stringutils.SplitEmailList(explicit)
 		if len(to) == 0 {

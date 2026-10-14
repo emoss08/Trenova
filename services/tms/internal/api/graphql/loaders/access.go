@@ -3,6 +3,7 @@ package loaders
 import (
 	"context"
 	"errors"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 
@@ -1426,10 +1427,17 @@ func (f *InboundDocumentReadingLoaderFactory) Attach(
 	})
 }
 
-func FactoringCompanyByID(ctx context.Context, key string) (*factoringcompany.FactoringCompany, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *factoringcompany.FactoringCompany] {
-		return s.factoringCompanyByID
-	})
+func FactoringCompanyByID(
+	ctx context.Context,
+	key string,
+) (*factoringcompany.FactoringCompany, error) {
+	return load(
+		ctx,
+		key,
+		func(s *set) *dataloadgen.Loader[string, *factoringcompany.FactoringCompany] {
+			return s.factoringCompanyByID
+		},
+	)
 }
 
 func (f *FactoringCompanyByIDLoaderFactory) Attach(
@@ -1456,7 +1464,10 @@ func (f *FactoringStateByInvoiceIDLoaderFactory) Attach(
 	})
 }
 
-func FactoringAgreementsByCompanyID(ctx context.Context, key string) ([]*factoring.Agreement, error) {
+func FactoringAgreementsByCompanyID(
+	ctx context.Context,
+	key string,
+) ([]*factoring.Agreement, error) {
 	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*factoring.Agreement] {
 		return s.factoringAgreementsByCompanyID
 	})

@@ -391,15 +391,18 @@ func (s *NoaService) prepare(
 		noaFileNameFallback,
 		maxNoaFileNameLength,
 	)
-	out.document, err = s.templates.RenderDocument(ctx, &documenttemplateports.RenderDocumentRequest{
-		TenantInfo:  tenantInfo,
-		Kind:        documenttemplate.KindFactoringNoaPDF,
-		CustomerID:  &cus.ID,
-		Data:        letterContext(out, s.now()),
-		ReferenceID: noa.ID,
-		UserID:      userID,
-		Title:       strings.TrimSuffix(out.fileName, ".pdf"),
-	})
+	out.document, err = s.templates.RenderDocument(
+		ctx,
+		&documenttemplateports.RenderDocumentRequest{
+			TenantInfo:  tenantInfo,
+			Kind:        documenttemplate.KindFactoringNoaPDF,
+			CustomerID:  &cus.ID,
+			Data:        letterContext(out, s.now()),
+			ReferenceID: noa.ID,
+			UserID:      userID,
+			Title:       strings.TrimSuffix(out.fileName, ".pdf"),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -646,7 +649,10 @@ func letterContext(p *preparedLetter, now int64) *documenttemplate.FactoringNoaC
 			Name:  p.factor.Name,
 			Lines: p.factor.MailingAddress().Lines(),
 		},
-		RemitTo:     documenttemplate.AddressBlock{Name: p.factor.Name, Lines: p.factor.RemitLines()},
+		RemitTo: documenttemplate.AddressBlock{
+			Name:  p.factor.Name,
+			Lines: p.factor.RemitLines(),
+		},
 		LogoDataURI: p.logo,
 		Note:        p.noa.Notes,
 	}
@@ -658,10 +664,13 @@ func letterEmailContext(p *preparedLetter, now int64) *documenttemplate.Factorin
 		effective = *p.noa.SentAt
 	}
 	return &documenttemplate.FactoringNoaEmailContext{
-		CustomerName:   p.customer.DisplayName(),
-		CompanyName:    p.org.Name,
-		FactorName:     p.factor.Name,
-		RemitTo:        documenttemplate.AddressBlock{Name: p.factor.Name, Lines: p.factor.RemitLines()},
+		CustomerName: p.customer.DisplayName(),
+		CompanyName:  p.org.Name,
+		FactorName:   p.factor.Name,
+		RemitTo: documenttemplate.AddressBlock{
+			Name:  p.factor.Name,
+			Lines: p.factor.RemitLines(),
+		},
 		EffectiveDate:  timeutils.FormatUnixDateIn(effective, p.org.Timezone),
 		Note:           p.noa.Notes,
 		AttachmentName: p.fileName,

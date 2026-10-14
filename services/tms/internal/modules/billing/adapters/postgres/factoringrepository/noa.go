@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
@@ -102,7 +103,7 @@ func (r *noaRepository) GetByID(
 
 func (r *noaRepository) GetOpen(
 	ctx context.Context,
-	req factoringports.GetOpenNoaRequest,
+	req *factoringports.GetOpenNoaRequest,
 ) (*factoring.Noa, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Noa, error) {
 		cols := factoringcol.NoaColumns
@@ -145,8 +146,10 @@ func (r *noaRepository) ListOpen(
 					return factoringcol.NoaScopeTenant(sq, req.TenantInfo).
 						Where(cols.Status.Ne(), factoring.NoaStatusReleased).
 						Where(
-							"("+cols.CustomerID.Qualified()+", "+cols.FactoringCompanyID.Qualified()+") IN (?)",
-							bun.In(pairValues(req.Pairs)),
+							"("+cols.CustomerID.Qualified()+
+								", "+cols.FactoringCompanyID.Qualified()+
+								") IN (?)",
+							bun.List(pairValues(req.Pairs)),
 						)
 				}).
 				Scan(ctx); err != nil {
@@ -182,7 +185,12 @@ func (r *noaRepository) ListConnection(
 					Model((*factoring.Noa)(nil)).
 					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 						return r.scope(
-							querybuilder.ApplyFiltersWithoutSort(sq, alias, req.Filter, (*factoring.Noa)(nil)),
+							querybuilder.ApplyFiltersWithoutSort(
+								sq,
+								alias,
+								req.Filter,
+								(*factoring.Noa)(nil),
+							),
 							req,
 						)
 					}).
@@ -301,16 +309,17 @@ func (r *noaRepository) ClaimExpiryWarning(
 	})
 }
 
-func pairValues(pairs []factoringports.NoaPair) [][]any {
-	values := make([][]any, 0, len(pairs))
+func pairValues(pairs []factoringports.NoaPair) []bun.TupleValues {
+	values := make([]bun.TupleValues, 0, len(pairs))
 	for _, pair := range pairs {
-		values = append(values, []any{pair.CustomerID, pair.FactoringCompanyID})
+		values = append(values, bun.Tuple([]pulid.ID{pair.CustomerID, pair.FactoringCompanyID}))
 	}
 	return values
 }
 
 func translateNoaError(err error, action string) error {
-	if dberror.IsUniqueConstraintViolation(err) && dberror.ExtractConstraintName(err) == openNoaIndex {
+	if dberror.IsUniqueConstraintViolation(err) &&
+		dberror.ExtractConstraintName(err) == openNoaIndex {
 		return errortypes.NewConflictError(
 			"This customer already has an open notice of assignment for this factor",
 		)

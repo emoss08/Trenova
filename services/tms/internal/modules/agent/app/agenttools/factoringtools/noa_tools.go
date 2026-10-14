@@ -43,7 +43,7 @@ type policySpec struct {
 	rationale   string
 }
 
-func policy(name string, spec policySpec) agentports.ToolPolicy {
+func policy(name string, spec *policySpec) agentports.ToolPolicy {
 	egress := spec.egress
 	if egress == "" {
 		egress = agent.EgressInternal
@@ -179,7 +179,7 @@ func (t *DraftFactoringNoaTool) ParamSchema() map[string]any {
 }
 
 func (t *DraftFactoringNoaTool) Policy() agentports.ToolPolicy {
-	return policy(t.Name(), policySpec{
+	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceFactoringNoa,
 		operation:   permission.OpCreate,
 		defaultTier: agent.TierAutoExecute,
@@ -283,7 +283,9 @@ func (t *SendFactoringNoaTool) Prerequisites() []string { return []string{toolLi
 
 func (t *SendFactoringNoaTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramNoaID:   noaIDParam("The drafted notice, from list_factoring_noas or draft_factoring_noa."),
+		paramNoaID: noaIDParam(
+			"The drafted notice, from list_factoring_noas or draft_factoring_noa.",
+		),
 		paramVersion: versionParam(),
 		paramRecipient: jsonschemautils.Text(
 			"Email addresses to send to, comma separated. Leave it out to use the " +
@@ -293,7 +295,7 @@ func (t *SendFactoringNoaTool) ParamSchema() map[string]any {
 }
 
 func (t *SendFactoringNoaTool) Policy() agentports.ToolPolicy {
-	return policy(t.Name(), policySpec{
+	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceFactoringNoa,
 		operation:   permission.OpUpdate,
 		defaultTier: agent.TierPropose,
@@ -368,13 +370,20 @@ func (t *SendFactoringNoaTool) Preview(
 			ID:       plan.Noa.ID,
 			Label:    "Notice of assignment",
 		},
-		common.EmailMessagePreview(sender, common.RenderedEmailPreview(send, plan.Message.VersionID)),
+		common.EmailMessagePreview(
+			sender,
+			common.RenderedEmailPreview(send, plan.Message.VersionID),
+		),
 	)
 
 	recipients := plan.Message.To
-	update, err := common.PlanUpdate(noaRecord(plan.Noa), plan.Noa, func(after *factoring.Noa) error {
-		return after.MarkSent(timeutils.NowUnix(), recipients)
-	}, noaPreviewOptions()...)
+	update, err := common.PlanUpdate(
+		noaRecord(plan.Noa),
+		plan.Noa,
+		func(after *factoring.Noa) error {
+			return after.MarkSent(timeutils.NowUnix(), recipients)
+		},
+		noaPreviewOptions()...)
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +442,7 @@ func (t *RecordFactoringNoaAcknowledgementTool) ParamSchema() map[string]any {
 }
 
 func (t *RecordFactoringNoaAcknowledgementTool) Policy() agentports.ToolPolicy {
-	return policy(t.Name(), policySpec{
+	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceFactoringNoa,
 		operation:   permission.OpUpdate,
 		defaultTier: agent.TierActWithApproval,
@@ -510,13 +519,24 @@ func (t *RecordFactoringNoaAcknowledgementTool) Preview(
 		return refused(summary, err)
 	}
 	req := planned.req
-	update, err := common.PlanUpdate(noaRecord(planned.noa), planned.noa, func(after *factoring.Noa) error {
-		return after.Acknowledge(timeutils.NowUnix(), req.AcknowledgedAt, req.SignedDocumentID, req.ExpiresAt)
-	}, noaPreviewOptions()...)
+	update, err := common.PlanUpdate(
+		noaRecord(planned.noa),
+		planned.noa,
+		func(after *factoring.Noa) error {
+			return after.Acknowledge(
+				timeutils.NowUnix(),
+				req.AcknowledgedAt,
+				req.SignedDocumentID,
+				req.ExpiresAt,
+			)
+		},
+		noaPreviewOptions()...)
 	if err != nil {
 		return nil, err
 	}
-	return update.PlanPreview(summary + " The customer's invoices can then be sold to the factor."), nil
+	return update.PlanPreview(
+		summary + " The customer's invoices can then be sold to the factor.",
+	), nil
 }
 
 type ReleaseFactoringNoaTool struct {
@@ -553,7 +573,7 @@ func (t *ReleaseFactoringNoaTool) ParamSchema() map[string]any {
 }
 
 func (t *ReleaseFactoringNoaTool) Policy() agentports.ToolPolicy {
-	return policy(t.Name(), policySpec{
+	return policy(t.Name(), &policySpec{
 		resource:    permission.ResourceFactoringNoa,
 		operation:   permission.OpUpdate,
 		defaultTier: agent.TierActWithApproval,
@@ -617,9 +637,13 @@ func (t *ReleaseFactoringNoaTool) Preview(
 		return refused(summary, err)
 	}
 	reason := planned.req.Reason
-	update, err := common.PlanUpdate(noaRecord(planned.noa), planned.noa, func(after *factoring.Noa) error {
-		return after.Release(timeutils.NowUnix(), reason)
-	}, noaPreviewOptions()...)
+	update, err := common.PlanUpdate(
+		noaRecord(planned.noa),
+		planned.noa,
+		func(after *factoring.Noa) error {
+			return after.Release(timeutils.NowUnix(), reason)
+		},
+		noaPreviewOptions()...)
 	if err != nil {
 		return nil, err
 	}

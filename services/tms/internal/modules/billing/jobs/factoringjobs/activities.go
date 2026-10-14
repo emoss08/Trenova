@@ -45,7 +45,6 @@ type Activities struct {
 	l         *zap.Logger
 }
 
-//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		readiness: p.Readiness,
@@ -87,22 +86,28 @@ func (a *Activities) resolveInvoices(
 ) ([]pulid.ID, error) {
 	ids := append(make([]pulid.ID, 0, len(targets.InvoiceIDs)), targets.InvoiceIDs...)
 	if len(targets.CustomerIDs) > 0 {
-		found, err := a.states.ListCustomerInvoiceIDs(ctx, &factoringports.ListCustomerInvoiceIDsRequest{
-			TenantInfo:  tenant,
-			CustomerIDs: targets.CustomerIDs,
-			Limit:       maxTargetInvoices,
-		})
+		found, err := a.states.ListCustomerInvoiceIDs(
+			ctx,
+			&factoringports.ListCustomerInvoiceIDsRequest{
+				TenantInfo:  tenant,
+				CustomerIDs: targets.CustomerIDs,
+				Limit:       maxTargetInvoices,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
 		ids = append(ids, found...)
 	}
 	for _, factorID := range targets.FactoringCompanyIDs {
-		found, err := a.states.ListCustomerInvoiceIDs(ctx, &factoringports.ListCustomerInvoiceIDsRequest{
-			TenantInfo:         tenant,
-			FactoringCompanyID: factorID,
-			Limit:              maxTargetInvoices,
-		})
+		found, err := a.states.ListCustomerInvoiceIDs(
+			ctx,
+			&factoringports.ListCustomerInvoiceIDsRequest{
+				TenantInfo:         tenant,
+				FactoringCompanyID: factorID,
+				Limit:              maxTargetInvoices,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}

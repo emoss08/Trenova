@@ -22,14 +22,14 @@ func (d *Deps) factorFor(
 	id pulid.ID,
 ) (*factoringcompany.FactoringCompany, error) {
 	if id.IsNil() || !loaders.Available(ctx) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // an unset factor resolves to null
 	}
 	authCtx, err := d.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if !d.HasPermission(ctx, authCtx, permission.ResourceFactoringCompany, permission.OpRead) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a factor the caller cannot read resolves to null
 	}
 	return loaders.FactoringCompanyByID(ctx, id.String())
 }

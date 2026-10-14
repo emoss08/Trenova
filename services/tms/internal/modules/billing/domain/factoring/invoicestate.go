@@ -14,7 +14,7 @@ const ReadyUnsubmittedSeconds = 24 * 60 * 60
 
 type InvoiceState struct {
 	bun.BaseModel             `bun:"table:factoring_invoice_states,alias:facst" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                    json:"-"`
+	pagination.CursorValueSet `bun:",embed"                                     json:"-"`
 
 	InvoiceID          pulid.ID  `json:"id"                 bun:"invoice_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID     pulid.ID  `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
@@ -73,7 +73,7 @@ func NextState(
 	return StateTransition{BecameReady: true}
 }
 
-func (s *InvoiceState) ReadyLongerThan(at int64, seconds int64) bool {
+func (s *InvoiceState) ReadyLongerThan(at, seconds int64) bool {
 	return s != nil && s.Verdict == VerdictReady && s.ReadySince != nil &&
 		at-*s.ReadySince >= seconds
 }

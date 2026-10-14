@@ -242,9 +242,12 @@ func (r *agreementRepository) load(
 
 func (r *agreementRepository) withChildren(q *bun.SelectQuery) *bun.SelectQuery {
 	return q.
-		Relation(factoringcol.AgreementRelations.FeeTiers, func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Order(factoringcol.FeeTierColumns.DaysFrom.OrderAsc())
-		}).
+		Relation(
+			factoringcol.AgreementRelations.FeeTiers,
+			func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Order(factoringcol.FeeTierColumns.DaysFrom.OrderAsc())
+			},
+		).
 		Relation("DocumentTypes")
 }
 
