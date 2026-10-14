@@ -38,7 +38,7 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `hos` | `true` \| `false` | `true` | HOS rings, sublines and HOS suggestions |
 | `maps` | `true` \| `false` | `false` | Map view shows the map or "not connected" |
 | `listRows` | number | `3` | Rows on the hazardous materials list, for checking a short and a long list page |
-| `aiProviders` | `configured` \| `many` \| `none` | `configured` | AI control: the prototype's three providers (one failing), five cloud providers, or none |
+| `aiProviders` | `configured` \| `many` \| `all` \| `none` | `configured` | AI control: the prototype's three providers (one failing), five cloud providers, both together, or none |
 | `aiPaused` | `true` \| `false` | `false` | Every agent paused in shadow |
 | `triage` | `live` \| `firstDay` \| `noMailbox` \| `deskOff` | `live` | Triage's queue: the prototype's mail with a new message every 26s, no mail yet, no source, or Nova off |
 | `triageTime` | `afternoon` \| `endOfDay` | `afternoon` | Triage's clock: 13:39 (the prototype's NOW) or 17:20, after the 17:00 wrap-up |
@@ -287,6 +287,17 @@ Regenerate them after the registry changes with a throwaway test that marshals
 `aiproviderhandler`'s catalog, `agentextensionservice.ListCatalog`,
 `agentdefinitionservice.buildToolCatalog` (parameters stripped) and `agent.KnownEvents()`.
 
+The Analytics tab (`?tab=analytics`, shots named `analytics-*`) reads `agentAnalytics` and
+`agentAnalyticsToolFailures` from `handlers/aianalytics.mjs`, which ports the Go service's rules
+(grouping by model, provider or deployment, "few" under 30 runs or 20 tool calls, suggested
+routes, the Nova sentences, health events and colour slots) over the month of work units in
+`fixtures/aianalytics.mjs`. The units are deterministic: the workstation's vLLM limped and
+recovered 12 days ago and stopped answering this morning, AWS Bedrock lost access a week ago,
+Google Gemini was turned off six days ago, and Llama 3.3 runs on both Groq and the workstation
+so the same-model card has a pair to compare. Use `aiProviders: "all"` for the analytics shots:
+it connects every provider the units name. `routeAITask` changes the mock's routing, so a
+suggestion disappears once it is taken.
+
 The Desk's resource cards have their own walkthrough:
 
 ```bash
@@ -371,6 +382,7 @@ realtime.mjs          The realtime stream: ready, heartbeats, invalidations and 
 fixtures/board.mjs    Shipments, drivers and carriers ported from the design prototype
 fixtures/session.mjs  Signed-in user and permission manifest
 fixtures/aicontrol.mjs  Agents, providers, runs, usage and tune-ups for AI control
+fixtures/aianalytics.mjs  A month of work units, tool calls and provider hours for AI control's Analytics
 fixtures/desk-cards.mjs  The records the Desk's resource cards draw, and their conversations
 fixtures/desk-edi.mjs    The EDI messages the EDI message card draws: X12, inspections, conversations
 fixtures/settings.mjs   The signed-in person's settings, sessions, sign-ins and teammates
@@ -382,6 +394,7 @@ fixtures/ai/          Catalogs dumped from the Go service
 handlers/rest.mjs     REST routes the shell and board call
 handlers/graphql.mjs  GraphQL operations, keyed by operation name
 handlers/aicontrol.mjs  AI control's GraphQL operations and REST routes
+handlers/aianalytics.mjs  AI control's Analytics query and tool-failure sheet, ported from the Go service
 handlers/deskcards.mjs  The Desk cards conversation and each card's GraphQL operations
 handlers/deskcase.mjs   A Desk case and a reply under way: case, waits, queue, turns and checklist settings
 handlers/deskthreads.mjs  The Desk rail: the conversation list and its shelf counts

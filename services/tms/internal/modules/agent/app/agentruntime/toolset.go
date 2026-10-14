@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -558,11 +559,11 @@ func (s *Service) unheldRefusal(set *toolSet, name string, exists bool) string {
 
 func (s *Service) unheldOutcome(set *toolSet, name string) toolOutcome {
 	if _, _, exists := s.toolGate(name); exists {
-		return refusedOutcome(aitrace.OutcomeDenied, "the agent does not hold the tool",
+		return refusedOutcome(aitrace.OutcomeDenied, aianalytics.ReasonNotHeld,
 			"%s", s.unheldRefusal(set, name, true))
 	}
 
-	return refusedOutcome(aitrace.OutcomeInvalid, "no such tool is registered",
+	return refusedOutcome(aitrace.OutcomeInvalid, aianalytics.ReasonUnregistered,
 		"%s", s.unheldRefusal(set, name, false))
 }
 

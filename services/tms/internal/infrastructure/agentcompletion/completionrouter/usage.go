@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"net/http"
 	"strings"
 	"time"
 
@@ -141,31 +142,40 @@ func classifyError(err error) string {
 	case err == nil:
 		return ""
 	case errors.Is(err, errRefused):
-		return "refused"
+		return aiusage.ErrorClassRefused
 	case errors.Is(err, context.DeadlineExceeded):
-		return "timeout"
+		return aiusage.ErrorClassTimeout
 	case errors.Is(err, context.Canceled):
-		return "cancelled"
+		return aiusage.ErrorClassCancelled
 	}
 
 	var netErr net.Error
 	if errors.As(err, &netErr) {
 		if netErr.Timeout() {
-			return "timeout"
+			return aiusage.ErrorClassTimeout
 		}
 
-		return "network"
+		return aiusage.ErrorClassNetwork
 	}
-	// A transport error carries the provider's own verdict: a 5xx or 429 is
-	// the provider being unavailable, a 4xx is the request being wrong.
-	// Anything else is an error of ours, which is the provider's fault only
-	// in the sense that we could not use what it sent.
+	// A transport error carries the provider's own verdict. A 429 is the
+	// provider rationing us and a 401 or 403 is a key it no longer accepts;
+	// any other 5xx is the provider being unavailable, and a 4xx is the
+	// request being wrong. Anything else is an error of ours, which is the
+	// provider's fault only in the sense that we could not use what it sent.
 	var transport *modeladapter.TransportError
-	if errors.As(err, &transport) && transport.Retryable {
-		return "provider_unavailable"
+	if errors.As(err, &transport) {
+		switch {
+		case transport.StatusCode == http.StatusTooManyRequests:
+			return aiusage.ErrorClassRateLimited
+		case transport.StatusCode == http.StatusUnauthorized,
+			transport.StatusCode == http.StatusForbidden:
+			return aiusage.ErrorClassAuth
+		case transport.Retryable:
+			return aiusage.ErrorClassUnavailable
+		}
 	}
 
-	return "provider_error"
+	return aiusage.ErrorClassProvider
 }
 
 // maxFailureMessageChars is how much of a provider's error is kept on the

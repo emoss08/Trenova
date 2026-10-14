@@ -1,5 +1,6 @@
 import { PROVIDER_HANDLERS } from "./aiproviders.mjs";
 import { AI_HANDLERS } from "./aicontrol.mjs";
+import { AI_ANALYTICS_HANDLERS } from "./aianalytics.mjs";
 import { DESK_HANDLERS, TRIAGE_HANDLERS } from "./triage.mjs";
 import { TriageError } from "./triage-model.mjs";
 import { DESK_CARD_HANDLERS } from "./deskcards.mjs";
@@ -1153,6 +1154,7 @@ const HANDLERS = {
   ...SHELL_HANDLERS,
   ...PROVIDER_HANDLERS,
   ...AI_HANDLERS,
+  ...AI_ANALYTICS_HANDLERS,
   ...DESK_HANDLERS,
   ...TRIAGE_HANDLERS,
   ...DESK_CARD_HANDLERS,
@@ -1349,21 +1351,30 @@ function formulaAndTriageOptions(state, input) {
   const query = String(input.query ?? "").toLowerCase();
   const others =
     input.resource === "SHIPMENT"
-      ? DESK_HANDLERS.SelectOptions(state, { input: { ...input, query: "", ids: undefined, offset: 0, first: 10000 } })
-          .selectOptions.edges.map((edge) => edge.node)
+      ? DESK_HANDLERS.SelectOptions(state, {
+          input: { ...input, query: "", ids: undefined, offset: 0, first: 10000 },
+        }).selectOptions.edges.map((edge) => edge.node)
       : [];
   let rows = [...formulaSelectRows(state, input.resource), ...others];
   if (input.ids?.length) rows = rows.filter((row) => input.ids.includes(row.id));
-  if (query) rows = rows.filter((row) => `${row.label} ${row.description ?? ""}`.toLowerCase().includes(query));
+  if (query)
+    rows = rows.filter((row) =>
+      `${row.label} ${row.description ?? ""}`.toLowerCase().includes(query),
+    );
   const offset = input.offset ?? 0;
   const first = input.first ?? 20;
   const page = rows.slice(offset, offset + first);
   return {
     selectOptions: {
-      edges: page.map((node, i) => ({ node, cursor: Buffer.from(`offset:${offset + i + 1}`).toString("base64url") })),
+      edges: page.map((node, i) => ({
+        node,
+        cursor: Buffer.from(`offset:${offset + i + 1}`).toString("base64url"),
+      })),
       pageInfo: {
         hasNextPage: offset + first < rows.length,
-        endCursor: page.length ? Buffer.from(`offset:${offset + page.length}`).toString("base64url") : null,
+        endCursor: page.length
+          ? Buffer.from(`offset:${offset + page.length}`).toString("base64url")
+          : null,
       },
       totalCount: rows.length,
     },

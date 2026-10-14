@@ -393,7 +393,6 @@
   "Untitled rating method": "未命名计价方式",
   "Use a previously saved version snapshot": "使用先前保存的版本快照",
   "Use the expression currently in the editor": "使用编辑器中当前的表达式",
-  "Use {0}": "使用 {0}",
   "Uses the preview's values ({0} changed) and expects": "使用预览的值（已更改 {0} 个）并预期",
   "Uses the preview's values and expects": "使用预览的值并预期",
   "Valid · {0, plural, one {# warning} other {# warnings}}": "有效 · {0, plural, one {# 个警告} other {# 个警告}}",

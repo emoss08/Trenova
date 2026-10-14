@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/aianalyticsjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/aiauditjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/aicorrectionjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/aifeedbackjobs"
@@ -43,6 +44,7 @@ func WorkerOptions() fx.Option {
 		aicorrectionjobs.Module,
 		aifeedbackjobs.Module,
 		aituneupjobs.Module,
+		aianalyticsjobs.Module,
 		decisioncommitjobs.Module,
 		retrievaljobs.Module,
 		dispatchjobs.Module,

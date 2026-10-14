@@ -2,6 +2,7 @@ package aiproviderservice
 
 import (
 	"context"
+	"errors"
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
@@ -198,4 +199,98 @@ func sameProviders(current []*aiprovider.Provider, ids []pulid.ID) bool {
 		}
 	}
 	return true
+}
+
+func (s *Service) RouteTask(
+	ctx context.Context,
+	req *agentports.RouteAIProviderTaskRequest,
+	actor *permissionports.RequestActor,
+) ([]*aiprovider.Provider, error) {
+	if !req.Task.IsValid() {
+		return nil, errortypes.NewValidationError("task", errortypes.ErrInvalid, "Unknown task")
+	}
+
+	current, err := s.repo.ListOrdered(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	plan, err := aiprovider.PlanRouteTo(current, req.Task, req.ProviderID)
+	if err != nil {
+		return nil, routeRefusal(err)
+	}
+
+	changes := make([]change, 0, len(plan.Unassign)+1)
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if plan.Assign {
+			saved, previous, modifyErr := s.modify(txCtx, &modifyRequest{
+				tenantInfo: req.TenantInfo,
+				providerID: plan.Target.ID,
+				actor:      actor,
+				edit: func(p *aiprovider.Provider) {
+					if !p.ServesTask(req.Task) {
+						p.Tasks = append(slices.Clone(p.Tasks), req.Task)
+					}
+				},
+			})
+			if modifyErr != nil {
+				return modifyErr
+			}
+			changes = append(changes, change{saved: saved, previous: previous})
+		}
+		for _, ahead := range plan.Unassign {
+			saved, previous, modifyErr := s.modify(txCtx, &modifyRequest{
+				tenantInfo: req.TenantInfo,
+				providerID: ahead.ID,
+				actor:      actor,
+				edit: func(p *aiprovider.Provider) {
+					p.Tasks = slices.DeleteFunc(
+						slices.Clone(p.Tasks),
+						func(task aiprovider.Task) bool {
+							return task == req.Task
+						},
+					)
+				},
+			})
+			if modifyErr != nil {
+				return modifyErr
+			}
+			changes = append(changes, change{saved: saved, previous: previous})
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for idx := range changes {
+		s.logAudit(&auditParams{
+			provider:  changes[idx].saved,
+			previous:  changes[idx].previous,
+			operation: permission.OpUpdate,
+			actor:     actor,
+			comment:   "Task routed to " + plan.Target.Name,
+		})
+	}
+
+	return s.ordered(ctx, req.TenantInfo)
+}
+
+func routeRefusal(err error) error {
+	var refusal *aiprovider.RouteRefusal
+	switch {
+	case errors.As(err, &refusal):
+		return errortypes.NewValidationError(
+			"providerId", errortypes.ErrInvalid,
+			"This provider can't take the task: "+refusal.Reason,
+		)
+	case errors.Is(err, aiprovider.ErrRouteTargetMissing):
+		return errortypes.NewNotFoundError("AI provider not found")
+	case errors.Is(err, aiprovider.ErrRouteUnchanged):
+		return errortypes.NewValidationError(
+			"providerId", errortypes.ErrInvalid,
+			"The task already goes to this provider",
+		)
+	default:
+		return err
+	}
 }

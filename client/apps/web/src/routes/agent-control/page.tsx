@@ -45,6 +45,7 @@ const MemoryTab = lazy(() => import("./_components/memory/memory-tab"));
 const RetrievalTab = lazy(() => import("./_components/retrieval/retrieval-tab"));
 const SafetyTab = lazy(() => import("./_components/safety/safety-tab"));
 const QualityTab = lazy(() => import("./_components/quality/quality-tab"));
+const AnalyticsTab = lazy(() => import("./_components/analytics/analytics-tab"));
 const ActivityTab = lazy(() => import("./_components/activity/activity-tab"));
 const AuditTab = lazy(() => import("./_components/audit/audit-tab"));
 
@@ -252,6 +253,7 @@ export function AgentControlPage() {
             {activeTab === "retrieval" && <RetrievalTab onOpenProviders={openProviders} />}
             {activeTab === "safety" && <SafetyTab view={activeView as SafetyView} />}
             {activeTab === "quality" && <QualityTab view={activeView as QualityView} />}
+            {activeTab === "analytics" && <AnalyticsTab />}
             {activeTab === "activity" && <ActivityTab view={activeView as ActivityView} />}
             {activeTab === "audit" && (
               <AuditTab view={activeView as AuditView} onOpenExports={openAuditExports} />

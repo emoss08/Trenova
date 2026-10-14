@@ -393,7 +393,6 @@
   "Untitled rating method": "Método de tarificación sin título",
   "Use a previously saved version snapshot": "Utilizar una instantánea de versión guardada previamente",
   "Use the expression currently in the editor": "Utilizar la expresión que hay actualmente en el editor",
-  "Use {0}": "Utilizar {0}",
   "Uses the preview's values ({0} changed) and expects": "Usa los valores de la vista previa ({0} cambiados) y espera",
   "Uses the preview's values and expects": "Usa los valores de la vista previa y espera",
   "Valid · {0, plural, one {# warning} other {# warnings}}": "Válido · {0, plural, one {# advertencia} other {# advertencias}}",

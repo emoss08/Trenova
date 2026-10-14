@@ -27,10 +27,17 @@ func TestPreviewRoutesMovesTasksToABetterPlacedDraft(t *testing.T) {
 		Tasks: []Task{TaskAssistantChat, TaskDailyBriefing},
 	}
 	ledger := &Provider{
-		ID: pulid.MustNew("aiprv_"), Name: "Ledger", Enabled: true, Trusted: true, Priority: 20, CreatedAt: 2,
+		ID: pulid.MustNew(
+			"aiprv_",
+		), Name: "Ledger", Enabled: true, Trusted: true, Priority: 20, CreatedAt: 2,
 		Tasks: []Task{TaskBillingDiagnosis},
 	}
-	draft := &Provider{Name: "New one", Enabled: true, Priority: 5, Tasks: []Task{TaskAssistantChat, TaskBillingDiagnosis}}
+	draft := &Provider{
+		Name:     "New one",
+		Enabled:  true,
+		Priority: 5,
+		Tasks:    []Task{TaskAssistantChat, TaskBillingDiagnosis},
+	}
 
 	routes := PreviewRoutes([]*Provider{primary, ledger}, draft)
 
@@ -55,7 +62,12 @@ func TestPreviewRoutesMovesTasksToABetterPlacedDraft(t *testing.T) {
 func TestPreviewRoutesOfADisabledEditDropsTheProvider(t *testing.T) {
 	t.Parallel()
 
-	only := &Provider{ID: pulid.MustNew("aiprv_"), Name: "Only", Enabled: true, Tasks: []Task{TaskAssistantChat}}
+	only := &Provider{
+		ID:      pulid.MustNew("aiprv_"),
+		Name:    "Only",
+		Enabled: true,
+		Tasks:   []Task{TaskAssistantChat},
+	}
 	edited := *only
 	edited.Enabled = false
 
@@ -69,10 +81,81 @@ func TestPreviewRoutesOfADisabledEditDropsTheProvider(t *testing.T) {
 func TestPreviewRoutesPutsANewDraftAfterProvidersOfItsPriority(t *testing.T) {
 	t.Parallel()
 
-	existing := &Provider{ID: pulid.MustNew("aiprv_"), Name: "Existing", Enabled: true, Priority: 1, CreatedAt: 99, Tasks: []Task{TaskAssistantChat}}
+	existing := &Provider{
+		ID:        pulid.MustNew("aiprv_"),
+		Name:      "Existing",
+		Enabled:   true,
+		Priority:  1,
+		CreatedAt: 99,
+		Tasks:     []Task{TaskAssistantChat},
+	}
 	draft := &Provider{Name: "Draft", Enabled: true, Priority: 1, Tasks: []Task{TaskAssistantChat}}
 
 	chat := routeOf(t, PreviewRoutes([]*Provider{existing}, draft), TaskAssistantChat)
 
 	assert.Equal(t, "Existing", chat.After.Name)
+}
+
+func TestPlanRouteToTakesTheTaskFromProvidersAheadAndGivesItToTheTarget(t *testing.T) {
+	t.Parallel()
+
+	first := &Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "Workstation vLLM", Enabled: true, Priority: 10,
+		Tasks: []Task{TaskAssistantChat, TaskFormulaAssistant},
+	}
+	off := &Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "Off", Enabled: false, Priority: 15,
+		Tasks: []Task{TaskAssistantChat},
+	}
+	target := &Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "AWS Bedrock", Enabled: true, Priority: 20,
+		Tasks: []Task{TaskDailyBriefing},
+	}
+	behind := &Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "Groq", Enabled: true, Priority: 30,
+		Tasks: []Task{TaskAssistantChat},
+	}
+
+	plan, err := PlanRouteTo([]*Provider{first, off, target, behind}, TaskAssistantChat, target.ID)
+	require.NoError(t, err)
+	assert.Same(t, target, plan.Target)
+	assert.True(t, plan.Assign)
+	assert.Equal(t, []*Provider{first}, plan.Unassign)
+}
+
+func TestPlanRouteToRefusesWhatWouldBreakOrChangeNothing(t *testing.T) {
+	t.Parallel()
+
+	only := &Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "Groq", Enabled: true, Priority: 10,
+		Tasks: []Task{TaskAssistantChat},
+	}
+	untrusted := &Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "Ollama", Enabled: true, Priority: 20,
+		Tasks: []Task{TaskAssistantChat, TaskDailyBriefing},
+	}
+	disabled := &Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "Off", Enabled: false, Priority: 30,
+		Tasks: []Task{TaskDailyBriefing},
+	}
+	ordered := []*Provider{only, untrusted, disabled}
+
+	_, err := PlanRouteTo(ordered, TaskBillingDiagnosis, untrusted.ID)
+	var refusal *RouteRefusal
+	require.ErrorAs(t, err, &refusal)
+	assert.Contains(t, refusal.Reason, "trusted")
+
+	_, err = PlanRouteTo(ordered, TaskDailyBriefing, disabled.ID)
+	require.ErrorAs(t, err, &refusal)
+	assert.Equal(t, "provider is disabled", refusal.Reason)
+
+	_, err = PlanRouteTo(ordered, TaskAssistantChat, untrusted.ID)
+	require.ErrorAs(t, err, &refusal)
+	assert.Contains(t, refusal.Reason, "Groq takes no other task")
+
+	_, err = PlanRouteTo(ordered, TaskAssistantChat, only.ID)
+	require.ErrorIs(t, err, ErrRouteUnchanged)
+
+	_, err = PlanRouteTo(ordered, TaskAssistantChat, pulid.MustNew("aiprv_"))
+	require.ErrorIs(t, err, ErrRouteTargetMissing)
 }

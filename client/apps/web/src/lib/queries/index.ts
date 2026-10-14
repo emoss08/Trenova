@@ -41,6 +41,7 @@ import { email } from "./email";
 import { formulaTemplate } from "./formula-template";
 import { googleMaps } from "./google-maps";
 import { agentExtension } from "./agent-extension";
+import { aiAnalytics } from "./ai-analytics";
 import { aiControl } from "./ai-control";
 import { aiProvider } from "./ai-provider";
 import { aiRetrieval } from "./ai-retrieval";
@@ -157,6 +158,7 @@ const workspaceQueries = mergeQueryKeys(
   organization,
   integration,
   accountingSync,
+  aiAnalytics,
   aiControl,
   aiProvider,
   aiRetrieval,

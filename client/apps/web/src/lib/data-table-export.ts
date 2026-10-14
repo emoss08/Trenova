@@ -120,7 +120,7 @@ export function spreadsheetSafeText(value: string | null | undefined): string | 
   return SPREADSHEET_FORMULA_PREFIX.test(value) ? `'${value}` : value;
 }
 
-function escapeCsvValue(value: string): string {
+export function escapeCsvValue(value: string): string {
   if (/[",\n\r]/.test(value)) {
     return `"${value.replaceAll('"', '""')}"`;
   }

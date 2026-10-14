@@ -398,7 +398,12 @@ func (r *RunResult) ServedFingerprint() *agent.Fingerprint {
 		return nil
 	}
 
-	return r.Fingerprint.Served(r.Model, r.ProviderID)
+	served := r.Fingerprint.Served(r.Model, r.ProviderID)
+	if served != nil {
+		served.StoppedAtLimit = r.Exhausted
+	}
+
+	return served
 }
 
 // LoopRefusal is one call the loop refused without dispatching it.
