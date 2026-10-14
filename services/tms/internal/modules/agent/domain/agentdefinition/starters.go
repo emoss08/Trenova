@@ -439,6 +439,11 @@ var templateStarters = map[Template][]starterQuestion{
 			"Which factoring schedules failed to send, and why?",
 			"list_factoring_submissions",
 		),
+		ask(
+			"What is each factor holding?",
+			"How much reserve does each factor still hold, and what fees have we paid?",
+			"get_factoring_reserve_balance",
+		),
 	},
 	TemplateBooksKeeper: {
 		ask(

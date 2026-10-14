@@ -54,6 +54,7 @@ type PlannedMovement struct {
 	AccountingDate   int64              `json:"accountingDate"`
 	FiscalPeriodID   pulid.ID           `json:"fiscalPeriodId"`
 	FiscalPeriodName string             `json:"fiscalPeriodName"`
+	EntryStatus      string             `json:"entryStatus"`
 	RequiresApproval bool               `json:"requiresApproval"`
 }
 

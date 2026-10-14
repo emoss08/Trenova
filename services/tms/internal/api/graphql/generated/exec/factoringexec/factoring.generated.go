@@ -27,13 +27,22 @@ var Shard = &gqlexec.Shard{
 		{Name: "FactoringDocumentRequestResult", Implementors: []string{"FactoringDocumentRequestResult"}},
 		{Name: "FactoringFeeTier", Implementors: []string{"FactoringFeeTier"}},
 		{Name: "FactoringFunding", Implementors: []string{"FactoringFunding"}},
+		{Name: "FactoringFundingPlan", Implementors: []string{"FactoringFundingPlan"}},
 		{Name: "FactoringInvoiceState", Implementors: []string{"FactoringInvoiceState"}},
 		{Name: "FactoringInvoiceStateConnection", Implementors: []string{"FactoringInvoiceStateConnection"}},
 		{Name: "FactoringInvoiceStateEdge", Implementors: []string{"FactoringInvoiceStateEdge"}},
 		{Name: "FactoringLiveSubmission", Implementors: []string{"FactoringLiveSubmission"}},
+		{Name: "FactoringMovement", Implementors: []string{"FactoringMovement"}},
 		{Name: "FactoringNoa", Implementors: []string{"FactoringNoa"}},
 		{Name: "FactoringNoaConnection", Implementors: []string{"FactoringNoaConnection"}},
 		{Name: "FactoringNoaEdge", Implementors: []string{"FactoringNoaEdge"}},
+		{Name: "FactoringPlannedLine", Implementors: []string{"FactoringPlannedLine"}},
+		{Name: "FactoringPlannedMovement", Implementors: []string{"FactoringPlannedMovement"}},
+		{Name: "FactoringReserveBalance", Implementors: []string{"FactoringReserveBalance"}},
+		{Name: "FactoringReserveEntry", Implementors: []string{"FactoringReserveEntry"}},
+		{Name: "FactoringReserveEntryConnection", Implementors: []string{"FactoringReserveEntryConnection"}},
+		{Name: "FactoringReserveEntryEdge", Implementors: []string{"FactoringReserveEntryEdge"}},
+		{Name: "FactoringReserveMovementPlan", Implementors: []string{"FactoringReserveMovementPlan"}},
 		{Name: "FactoringSubmission", Implementors: []string{"FactoringSubmission"}},
 		{Name: "FactoringSubmissionConnection", Implementors: []string{"FactoringSubmissionConnection"}},
 		{Name: "FactoringSubmissionEdge", Implementors: []string{"FactoringSubmissionEdge"}},
@@ -236,6 +245,50 @@ var Shard = &gqlexec.Shard{
 					return obj.EndedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:       "dueFromFactorAccountId",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Agreement)
+					return gqlexec.Resolver[resolverFactoringAgreement](ec, "FactoringAgreement").DueFromFactorAccountID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:       "feeExpenseAccountId",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Agreement)
+					return gqlexec.Resolver[resolverFactoringAgreement](ec, "FactoringAgreement").FeeExpenseAccountID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:       "liabilityAccountId",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Agreement)
+					return gqlexec.Resolver[resolverFactoringAgreement](ec, "FactoringAgreement").LiabilityAccountID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:       "cashAccountId",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Agreement)
+					return gqlexec.Resolver[resolverFactoringAgreement](ec, "FactoringAgreement").CashAccountID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
 			{
 				Name:     "version",
@@ -584,6 +637,93 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 		}},
+		{Object: "FactoringFundingPlan", Fields: []*gqlexec.Field{
+			{
+				Name:       "submissionId",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.FundingPlan)
+					return gqlexec.Resolver[resolverFactoringFundingPlan](ec, "FactoringFundingPlan").SubmissionID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:       "status",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.FundingPlan)
+					return gqlexec.Resolver[resolverFactoringFundingPlan](ec, "FactoringFundingPlan").Status(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionStatus),
+			},
+			{
+				Name:      "movements",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FactoringPlannedMovement",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.FundingPlan)
+					return obj.Movements, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringPlannedMovement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovementᚄ),
+			},
+			{
+				Name:     "fundedCount",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.FundingPlan)
+					return obj.FundedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "rejectCount",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.FundingPlan)
+					return obj.RejectCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "advanceMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.FundingPlan)
+					return obj.AdvanceMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "feeMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.FundingPlan)
+					return obj.FeeMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "reserveMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.FundingPlan)
+					return obj.ReserveMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+		}},
 		{Object: "FactoringInvoiceState", Fields: []*gqlexec.Field{
 			{
 				Name:     "invoiceId",
@@ -617,7 +757,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "verdict",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoring.InvoiceState)
 					return obj.Verdict, nil
@@ -803,12 +943,126 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "submissionStatus",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoringports.LiveItem)
 					return obj.SubmissionStatus, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionStatus),
+			},
+			{
+				Name:     "itemId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.LiveItem)
+					return obj.ItemID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "itemStatus",
+				NonNull:  true,
+				ChildErr: errNoChild12,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.LiveItem)
+					return obj.ItemStatus, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionItemStatus),
+			},
+		}},
+		{Object: "FactoringMovement", Fields: []*gqlexec.Field{
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild13,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Movement)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKind),
+			},
+			{
+				Name:     "treatment",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Movement)
+					return obj.Treatment, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringAccountingTreatment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐAccountingTreatment),
+			},
+			{
+				Name:     "cashMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Movement)
+					return obj.CashMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "feeMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Movement)
+					return obj.FeeMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "reserveMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Movement)
+					return obj.ReserveMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "liabilityMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Movement)
+					return obj.LiabilityMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "arMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Movement)
+					return obj.ARMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:       "invoiceEffect",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild14,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Movement)
+					return gqlexec.Resolver[resolverFactoringMovement](ec, "FactoringMovement").InvoiceEffect(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringInvoiceEffect2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringInvoiceEffect),
+			},
+			{
+				Name:     "invoiceMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Movement)
+					return obj.InvoiceMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
 			},
 		}},
 		{Object: "FactoringNoa", Fields: []*gqlexec.Field{
@@ -865,7 +1119,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoring.Noa)
 					return obj.Status, nil
@@ -1057,6 +1311,680 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "FactoringPlannedLine", Fields: []*gqlexec.Field{
+			{
+				Name:     "role",
+				NonNull:  true,
+				ChildErr: errNoChild16,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedLine)
+					return obj.Role, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringAccountRole2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐAccountRole),
+			},
+			{
+				Name:     "accountId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedLine)
+					return obj.AccountID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:       "account",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "JournalEntryLineAccount",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedLine)
+					return gqlexec.Resolver[resolverFactoringPlannedLine](ec, "FactoringPlannedLine").Account(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOJournalEntryLineAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJournalEntryLineAccount),
+			},
+			{
+				Name:     "debit",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedLine)
+					return obj.Debit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "credit",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedLine)
+					return obj.Credit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+		}},
+		{Object: "FactoringPlannedMovement", Fields: []*gqlexec.Field{
+			{
+				Name:     "itemId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedMovement)
+					return obj.ItemID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "invoiceId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedMovement)
+					return obj.InvoiceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "invoiceNumber",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedMovement)
+					return obj.InvoiceNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "customerId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedMovement)
+					return obj.CustomerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:      "movement",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FactoringMovement",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedMovement)
+					return obj.Movement, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringMovement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐMovement),
+			},
+			{
+				Name:      "lines",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FactoringPlannedLine",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedMovement)
+					return obj.Lines, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringPlannedLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedLineᚄ),
+			},
+			{
+				Name:     "requestedDate",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedMovement)
+					return obj.RequestedDate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "accountingDate",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedMovement)
+					return obj.AccountingDate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:       "fiscalPeriodId",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedMovement)
+					return gqlexec.Resolver[resolverFactoringPlannedMovement](ec, "FactoringPlannedMovement").FiscalPeriodID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "fiscalPeriodName",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedMovement)
+					return obj.FiscalPeriodName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "requiresApproval",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.PlannedMovement)
+					return obj.RequiresApproval, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "FactoringReserveBalance", Fields: []*gqlexec.Field{
+			{
+				Name:     "factoringCompanyId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveBalance)
+					return obj.FactoringCompanyID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "reserveMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveBalance)
+					return obj.ReserveMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "liabilityMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveBalance)
+					return obj.LiabilityMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "advancedMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveBalance)
+					return obj.AdvancedMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "releasedMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveBalance)
+					return obj.ReleasedMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "chargedBackMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveBalance)
+					return obj.ChargedBackMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "feeMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveBalance)
+					return obj.FeeMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "entryCount",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveBalance)
+					return obj.EntryCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "lastOccurredOn",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveBalance)
+					return obj.LastOccurredOn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+		}},
+		{Object: "FactoringReserveEntry", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "businessUnitId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.BusinessUnitID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "factoringCompanyId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.FactoringCompanyID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "agreementId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.AgreementID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "submissionId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.SubmissionID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "submissionItemId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.SubmissionItemID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "invoiceId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.InvoiceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "customerId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.CustomerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild13,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKind),
+			},
+			{
+				Name:     "treatment",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.Treatment, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringAccountingTreatment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐAccountingTreatment),
+			},
+			{
+				Name:     "currencyCode",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.CurrencyCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "cashMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.CashMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "feeMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.FeeMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "reserveMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.ReserveMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "liabilityMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.LiabilityMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "arMinor",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.ARMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "journalEntryId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.JournalEntryID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "journalBatchId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.JournalBatchID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "accountingDate",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.AccountingDate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "occurredOn",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.OccurredOn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:       "reversesEntryId",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return gqlexec.Resolver[resolverFactoringReserveEntry](ec, "FactoringReserveEntry").ReversesEntryID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "memo",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.Memo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:       "createdById",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return gqlexec.Resolver[resolverFactoringReserveEntry](ec, "FactoringReserveEntry").CreatedByID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:       "factoringCompany",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FactoringCompany",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return gqlexec.Resolver[resolverFactoringReserveEntry](ec, "FactoringReserveEntry").FactoringCompany(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOFactoringCompany2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋfactoringcompanyᚐFactoringCompany),
+			},
+			{
+				Name:       "invoice",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "Invoice",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return gqlexec.Resolver[resolverFactoringReserveEntry](ec, "FactoringReserveEntry").Invoice(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice),
+			},
+			{
+				Name:       "customer",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "Customer",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return gqlexec.Resolver[resolverFactoringReserveEntry](ec, "FactoringReserveEntry").Customer(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
+			},
+			{
+				Name:       "submission",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FactoringSubmission",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.ReserveEntry)
+					return gqlexec.Resolver[resolverFactoringReserveEntry](ec, "FactoringReserveEntry").Submission(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+			},
+		}},
+		{Object: "FactoringReserveEntryConnection", Fields: []*gqlexec.Field{
+			{
+				Name:      "edges",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FactoringReserveEntryEdge",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FactoringReserveEntryConnection)
+					return obj.Edges, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveEntryEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveEntryEdgeᚄ),
+			},
+			{
+				Name:      "pageInfo",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageInfo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FactoringReserveEntryConnection)
+					return obj.PageInfo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo),
+			},
+			{
+				Name:     "totalCount",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FactoringReserveEntryConnection)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+		}},
+		{Object: "FactoringReserveEntryEdge", Fields: []*gqlexec.Field{
+			{
+				Name:      "node",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FactoringReserveEntry",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FactoringReserveEntryEdge)
+					return obj.Node, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntry),
+			},
+			{
+				Name:     "cursor",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FactoringReserveEntryEdge)
+					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "FactoringReserveMovementPlan", Fields: []*gqlexec.Field{
+			{
+				Name:       "submissionId",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveMovementPlan)
+					return gqlexec.Resolver[resolverFactoringReserveMovementPlan](ec, "FactoringReserveMovementPlan").SubmissionID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:       "itemId",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveMovementPlan)
+					return gqlexec.Resolver[resolverFactoringReserveMovementPlan](ec, "FactoringReserveMovementPlan").ItemID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:       "itemStatus",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild12,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveMovementPlan)
+					return gqlexec.Resolver[resolverFactoringReserveMovementPlan](ec, "FactoringReserveMovementPlan").ItemStatus(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionItemStatus),
+			},
+			{
+				Name:      "movement",
+				HasChild:  true,
+				ChildType: "FactoringPlannedMovement",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveMovementPlan)
+					return obj.Movement, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovement),
+			},
+			{
+				Name:      "reverses",
+				HasChild:  true,
+				ChildType: "FactoringReserveEntry",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.ReserveMovementPlan)
+					return obj.Reverses, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFactoringReserveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntry),
+			},
+		}},
 		{Object: "FactoringSubmission", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
@@ -1121,7 +2049,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoring.Submission)
 					return obj.Status, nil
@@ -1213,7 +2141,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "transportMethod",
 				NonNull:  true,
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoring.Submission)
 					return obj.TransportMethod, nil
@@ -1303,6 +2231,15 @@ var Shard = &gqlexec.Shard{
 					return obj.CancelReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "fundedAt",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Submission)
+					return obj.FundedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
 			},
 			{
 				Name:       "submittedById",
@@ -1552,7 +2489,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoring.SubmissionItem)
 					return obj.Status, nil
@@ -1565,6 +2502,87 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoring.SubmissionItem)
 					return obj.ReleasedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "fundedOn",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.SubmissionItem)
+					return obj.FundedOn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "advanceMinor",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.SubmissionItem)
+					return obj.AdvanceMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "feeMinor",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.SubmissionItem)
+					return obj.FeeMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "reserveMinor",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.SubmissionItem)
+					return obj.ReserveMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "rejectionReason",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.SubmissionItem)
+					return obj.RejectionReason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "settledOn",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.SubmissionItem)
+					return obj.SettledOn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "chargedBackOn",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.SubmissionItem)
+					return obj.ChargedBackOn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "chargebackReason",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.SubmissionItem)
+					return obj.ChargebackReason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "chargebackWarnedAt",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.SubmissionItem)
+					return obj.ChargebackWarnedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
 			},
@@ -1629,7 +2647,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "transportMethod",
 				NonNull:  true,
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoringports.SubmissionPlan)
 					return obj.TransportMethod, nil
@@ -1845,6 +2863,17 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNFactoringVerdictTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐVerdictTotals),
 			},
+			{
+				Name:      "funded",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FactoringVerdictTotals",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoringports.Summary)
+					return obj.Funded, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringVerdictTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐVerdictTotals),
+			},
 		}},
 		{Object: "FactoringTransport", Fields: []*gqlexec.Field{
 			{
@@ -1870,7 +2899,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "method",
 				NonNull:  true,
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoring.Transport)
 					return obj.Method, nil
@@ -1928,7 +2957,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sftpAuthMethod",
-				ChildErr: errNoChild15,
+				ChildErr: errNoChild18,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoring.Transport)
 					return obj.SftpAuthMethod, nil
@@ -2053,7 +3082,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "factoringOverride",
 				NonNull:  true,
-				ChildErr: errNoChild16,
+				ChildErr: errNoChild19,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
 					return obj.FactoringOverride, nil
@@ -2299,6 +3328,58 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNFactoringTransportTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐTransportTestResult),
 			},
+			{
+				Name:       "recordFactoringFunding",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FactoringSubmission",
+				Args:       field_Mutation_recordFactoringFunding_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordFactoringFunding(ctx, fc.Args["input"].(gqlmodel.RecordFactoringFundingInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+			},
+			{
+				Name:       "releaseFactoringReserve",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FactoringSubmission",
+				Args:       field_Mutation_releaseFactoringReserve_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReleaseFactoringReserve(ctx, fc.Args["input"].(gqlmodel.FactoringReserveMovementInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+			},
+			{
+				Name:       "recordFactoringChargeback",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FactoringSubmission",
+				Args:       field_Mutation_recordFactoringChargeback_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordFactoringChargeback(ctx, fc.Args["input"].(gqlmodel.FactoringReserveMovementInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+			},
+			{
+				Name:       "reverseFactoringChargeback",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FactoringSubmission",
+				Args:       field_Mutation_reverseFactoringChargeback_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReverseFactoringChargeback(ctx, fc.Args["input"].(gqlmodel.FactoringReserveMovementInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
@@ -2452,6 +3533,90 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransport),
 			},
+			{
+				Name:       "factoringReserveEntries",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FactoringReserveEntryConnection",
+				Args:       field_Query_factoringReserveEntries_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringReserveEntries(ctx, fc.Args["input"].(gqlmodel.FactoringReserveEntryListInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveEntryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveEntryConnection),
+			},
+			{
+				Name:       "factoringReserveBalance",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FactoringReserveBalance",
+				Args:       field_Query_factoringReserveBalance_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringReserveBalance(ctx, fc.Args["factoringCompanyId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐReserveBalance),
+			},
+			{
+				Name:       "factoringFundingPlan",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FactoringFundingPlan",
+				Args:       field_Query_factoringFundingPlan_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringFundingPlan(ctx, fc.Args["input"].(gqlmodel.RecordFactoringFundingInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringFundingPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐFundingPlan),
+			},
+			{
+				Name:       "factoringReleasePlan",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FactoringReserveMovementPlan",
+				Args:       field_Query_factoringReleasePlan_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringReleasePlan(ctx, fc.Args["input"].(gqlmodel.FactoringReserveMovementInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐReserveMovementPlan),
+			},
+			{
+				Name:       "factoringChargebackPlan",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FactoringReserveMovementPlan",
+				Args:       field_Query_factoringChargebackPlan_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringChargebackPlan(ctx, fc.Args["input"].(gqlmodel.FactoringReserveMovementInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐReserveMovementPlan),
+			},
+			{
+				Name:       "factoringChargebackReversalPlan",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FactoringReserveMovementPlan",
+				Args:       field_Query_factoringChargebackReversalPlan_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringChargebackReversalPlan(ctx, fc.Args["input"].(gqlmodel.FactoringReserveMovementInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐReserveMovementPlan),
+			},
 		}},
 	},
 	Inputs: []gqlexec.Input{
@@ -2461,10 +3626,14 @@ var Shard = &gqlexec.Shard{
 		{Name: "DraftFactoringNoaInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDraftFactoringNoaInput)},
 		{Name: "FactoringAgreementInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFactoringAgreementInput)},
 		{Name: "FactoringFeeTierInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFactoringFeeTierInput)},
+		{Name: "FactoringFundingItemInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFactoringFundingItemInput)},
 		{Name: "FactoringInvoiceStateListInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFactoringInvoiceStateListInput)},
 		{Name: "FactoringNoaListInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFactoringNoaListInput)},
+		{Name: "FactoringReserveEntryListInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFactoringReserveEntryListInput)},
+		{Name: "FactoringReserveMovementInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFactoringReserveMovementInput)},
 		{Name: "FactoringSubmissionListInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFactoringSubmissionListInput)},
 		{Name: "FactoringSubmissionPlanInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFactoringSubmissionPlanInput)},
+		{Name: "RecordFactoringFundingInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRecordFactoringFundingInput)},
 		{Name: "ReleaseFactoringNoaInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReleaseFactoringNoaInput)},
 		{Name: "RequestMissingFactoringDocumentsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRequestMissingFactoringDocumentsInput)},
 		{Name: "RetryFactoringSubmissionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRetryFactoringSubmissionInput)},
@@ -2478,8 +3647,14 @@ var Shard = &gqlexec.Shard{
 		{Root: "FactoringAgreement", Check: func(r any) bool { _, ok := r.(resolverFactoringAgreement); return ok }},
 		{Root: "FactoringCheck", Check: func(r any) bool { _, ok := r.(resolverFactoringCheck); return ok }},
 		{Root: "FactoringCompany", Check: func(r any) bool { _, ok := r.(resolverFactoringCompany); return ok }},
+		{Root: "FactoringFundingPlan", Check: func(r any) bool { _, ok := r.(resolverFactoringFundingPlan); return ok }},
 		{Root: "FactoringInvoiceState", Check: func(r any) bool { _, ok := r.(resolverFactoringInvoiceState); return ok }},
+		{Root: "FactoringMovement", Check: func(r any) bool { _, ok := r.(resolverFactoringMovement); return ok }},
 		{Root: "FactoringNoa", Check: func(r any) bool { _, ok := r.(resolverFactoringNoa); return ok }},
+		{Root: "FactoringPlannedLine", Check: func(r any) bool { _, ok := r.(resolverFactoringPlannedLine); return ok }},
+		{Root: "FactoringPlannedMovement", Check: func(r any) bool { _, ok := r.(resolverFactoringPlannedMovement); return ok }},
+		{Root: "FactoringReserveEntry", Check: func(r any) bool { _, ok := r.(resolverFactoringReserveEntry); return ok }},
+		{Root: "FactoringReserveMovementPlan", Check: func(r any) bool { _, ok := r.(resolverFactoringReserveMovementPlan); return ok }},
 		{Root: "FactoringSubmission", Check: func(r any) bool { _, ok := r.(resolverFactoringSubmission); return ok }},
 		{Root: "FactoringSubmissionItem", Check: func(r any) bool { _, ok := r.(resolverFactoringSubmissionItem); return ok }},
 		{Root: "FactoringSubmissionPlan", Check: func(r any) bool { _, ok := r.(resolverFactoringSubmissionPlan); return ok }},
@@ -2495,6 +3670,10 @@ type resolverCustomerBillingProfile interface {
 }
 
 type resolverFactoringAgreement interface {
+	DueFromFactorAccountID(ctx context.Context, obj *factoring.Agreement) (*string, error)
+	FeeExpenseAccountID(ctx context.Context, obj *factoring.Agreement) (*string, error)
+	LiabilityAccountID(ctx context.Context, obj *factoring.Agreement) (*string, error)
+	CashAccountID(ctx context.Context, obj *factoring.Agreement) (*string, error)
 	FactoringCompany(ctx context.Context, obj *factoring.Agreement) (*factoringcompany.FactoringCompany, error)
 }
 
@@ -2508,6 +3687,11 @@ type resolverFactoringCompany interface {
 	Agreements(ctx context.Context, obj *factoringcompany.FactoringCompany) ([]*factoring.Agreement, error)
 }
 
+type resolverFactoringFundingPlan interface {
+	SubmissionID(ctx context.Context, obj *factoringports.FundingPlan) (string, error)
+	Status(ctx context.Context, obj *factoringports.FundingPlan) (factoring.SubmissionStatus, error)
+}
+
 type resolverFactoringInvoiceState interface {
 	Invoice(ctx context.Context, obj *factoring.InvoiceState) (*invoice.Invoice, error)
 	Customer(ctx context.Context, obj *factoring.InvoiceState) (*customer.Customer, error)
@@ -2515,10 +3699,37 @@ type resolverFactoringInvoiceState interface {
 	Submission(ctx context.Context, obj *factoring.InvoiceState) (*factoringports.LiveItem, error)
 }
 
+type resolverFactoringMovement interface {
+	InvoiceEffect(ctx context.Context, obj *factoring.Movement) (gqlmodel.FactoringInvoiceEffect, error)
+}
+
 type resolverFactoringNoa interface {
 	SignedDocumentID(ctx context.Context, obj *factoring.Noa) (*string, error)
 	Customer(ctx context.Context, obj *factoring.Noa) (*customer.Customer, error)
 	FactoringCompany(ctx context.Context, obj *factoring.Noa) (*factoringcompany.FactoringCompany, error)
+}
+
+type resolverFactoringPlannedLine interface {
+	Account(ctx context.Context, obj *factoringports.PlannedLine) (*gqlmodel.JournalEntryLineAccount, error)
+}
+
+type resolverFactoringPlannedMovement interface {
+	FiscalPeriodID(ctx context.Context, obj *factoringports.PlannedMovement) (*string, error)
+}
+
+type resolverFactoringReserveEntry interface {
+	ReversesEntryID(ctx context.Context, obj *factoring.ReserveEntry) (*string, error)
+	CreatedByID(ctx context.Context, obj *factoring.ReserveEntry) (*string, error)
+	FactoringCompany(ctx context.Context, obj *factoring.ReserveEntry) (*factoringcompany.FactoringCompany, error)
+	Invoice(ctx context.Context, obj *factoring.ReserveEntry) (*invoice.Invoice, error)
+	Customer(ctx context.Context, obj *factoring.ReserveEntry) (*customer.Customer, error)
+	Submission(ctx context.Context, obj *factoring.ReserveEntry) (*factoring.Submission, error)
+}
+
+type resolverFactoringReserveMovementPlan interface {
+	SubmissionID(ctx context.Context, obj *factoringports.ReserveMovementPlan) (string, error)
+	ItemID(ctx context.Context, obj *factoringports.ReserveMovementPlan) (string, error)
+	ItemStatus(ctx context.Context, obj *factoringports.ReserveMovementPlan) (factoring.SubmissionItemStatus, error)
 }
 
 type resolverFactoringSubmission interface {
@@ -2565,6 +3776,10 @@ type resolverMutation interface {
 	CancelFactoringSubmission(ctx context.Context, input gqlmodel.CancelFactoringSubmissionInput) (*factoring.Submission, error)
 	SaveFactoringTransport(ctx context.Context, input gqlmodel.SaveFactoringTransportInput) (*factoring.Transport, error)
 	TestFactoringTransport(ctx context.Context, factoringCompanyID string) (*factoringports.TransportTestResult, error)
+	RecordFactoringFunding(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoring.Submission, error)
+	ReleaseFactoringReserve(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
+	RecordFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
+	ReverseFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
 }
 
 type resolverQuery interface {
@@ -2579,6 +3794,12 @@ type resolverQuery interface {
 	FactoringSubmission(ctx context.Context, id string) (*factoring.Submission, error)
 	FactoringSubmissionPlan(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoringports.SubmissionPlan, error)
 	FactoringTransport(ctx context.Context, factoringCompanyID string) (*factoring.Transport, error)
+	FactoringReserveEntries(ctx context.Context, input gqlmodel.FactoringReserveEntryListInput) (*gqlmodel.FactoringReserveEntryConnection, error)
+	FactoringReserveBalance(ctx context.Context, factoringCompanyID string) (*factoringports.ReserveBalance, error)
+	FactoringFundingPlan(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoringports.FundingPlan, error)
+	FactoringReleasePlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error)
+	FactoringChargebackPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error)
+	FactoringChargebackReversalPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error)
 }
 
 var (
@@ -2592,13 +3813,16 @@ var (
 	errNoChild7  = errors.New("field of type FactoringCheckCode does not have child fields")
 	errNoChild8  = errors.New("field of type Boolean does not have child fields")
 	errNoChild9  = errors.New("field of type FactoringFixAction does not have child fields")
-	errNoChild10 = errors.New("field of type FactoringVerdict does not have child fields")
-	errNoChild11 = errors.New("field of type FactoringSubmissionStatus does not have child fields")
-	errNoChild12 = errors.New("field of type FactoringNoaStatus does not have child fields")
-	errNoChild13 = errors.New("field of type FactoringTransportMethod does not have child fields")
-	errNoChild14 = errors.New("field of type FactoringSubmissionItemStatus does not have child fields")
-	errNoChild15 = errors.New("field of type FactoringSftpAuthMethod does not have child fields")
-	errNoChild16 = errors.New("field of type InvoiceFactoringOverride does not have child fields")
+	errNoChild10 = errors.New("field of type FactoringSubmissionStatus does not have child fields")
+	errNoChild11 = errors.New("field of type FactoringVerdict does not have child fields")
+	errNoChild12 = errors.New("field of type FactoringSubmissionItemStatus does not have child fields")
+	errNoChild13 = errors.New("field of type FactoringReserveEntryKind does not have child fields")
+	errNoChild14 = errors.New("field of type FactoringInvoiceEffect does not have child fields")
+	errNoChild15 = errors.New("field of type FactoringNoaStatus does not have child fields")
+	errNoChild16 = errors.New("field of type FactoringAccountRole does not have child fields")
+	errNoChild17 = errors.New("field of type FactoringTransportMethod does not have child fields")
+	errNoChild18 = errors.New("field of type FactoringSftpAuthMethod does not have child fields")
+	errNoChild19 = errors.New("field of type InvoiceFactoringOverride does not have child fields")
 )
 
 func field_Mutation_createFactoringAgreement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -2796,6 +4020,58 @@ func field_Mutation_testFactoringTransport_args(ctx context.Context, ec *gqlexec
 	return args, nil
 }
 
+func field_Mutation_recordFactoringFunding_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RecordFactoringFundingInput, error) {
+			return unmarshalNRecordFactoringFundingInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecordFactoringFundingInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_releaseFactoringReserve_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FactoringReserveMovementInput, error) {
+			return unmarshalNFactoringReserveMovementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveMovementInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_recordFactoringChargeback_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FactoringReserveMovementInput, error) {
+			return unmarshalNFactoringReserveMovementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveMovementInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_reverseFactoringChargeback_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FactoringReserveMovementInput, error) {
+			return unmarshalNFactoringReserveMovementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveMovementInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func field_Query_factoringAgreements_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "factoringCompanyId",
@@ -2923,6 +4199,84 @@ func field_Query_factoringTransport_args(ctx context.Context, ec *gqlexec.Exec, 
 		return nil, err
 	}
 	args["factoringCompanyId"] = arg0
+	return args, nil
+}
+
+func field_Query_factoringReserveEntries_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FactoringReserveEntryListInput, error) {
+			return unmarshalNFactoringReserveEntryListInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveEntryListInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_factoringReserveBalance_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "factoringCompanyId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["factoringCompanyId"] = arg0
+	return args, nil
+}
+
+func field_Query_factoringFundingPlan_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RecordFactoringFundingInput, error) {
+			return unmarshalNRecordFactoringFundingInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecordFactoringFundingInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_factoringReleasePlan_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FactoringReserveMovementInput, error) {
+			return unmarshalNFactoringReserveMovementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveMovementInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_factoringChargebackPlan_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FactoringReserveMovementInput, error) {
+			return unmarshalNFactoringReserveMovementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveMovementInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_factoringChargebackReversalPlan_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FactoringReserveMovementInput, error) {
+			return unmarshalNFactoringReserveMovementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveMovementInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -3130,7 +4484,7 @@ func unmarshalInputFactoringAgreementInput(ctx context.Context, ec *gqlexec.Exec
 		asMap["minimumFeeMinor"] = 0
 	}
 
-	fieldsInOrder := [...]string{"factoringCompanyId", "effectiveFrom", "effectiveTo", "advanceRateBp", "reserveRateBp", "minimumFeeMinor", "chargebackWindowDays", "recourse", "accountingTreatment", "fundingDays", "submissionTime", "notes", "feeTiers", "documentTypeIds"}
+	fieldsInOrder := [...]string{"factoringCompanyId", "effectiveFrom", "effectiveTo", "advanceRateBp", "reserveRateBp", "minimumFeeMinor", "chargebackWindowDays", "recourse", "accountingTreatment", "fundingDays", "submissionTime", "notes", "feeTiers", "documentTypeIds", "dueFromFactorAccountId", "feeExpenseAccountId", "liabilityAccountId", "cashAccountId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3235,6 +4589,34 @@ func unmarshalInputFactoringAgreementInput(ctx context.Context, ec *gqlexec.Exec
 				return it, err
 			}
 			it.DocumentTypeIds = data
+		case "dueFromFactorAccountId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dueFromFactorAccountId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DueFromFactorAccountID = data
+		case "feeExpenseAccountId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("feeExpenseAccountId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FeeExpenseAccountID = data
+		case "liabilityAccountId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("liabilityAccountId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LiabilityAccountID = data
+		case "cashAccountId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cashAccountId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CashAccountID = data
 		}
 	}
 	return it, nil
@@ -3289,6 +4671,64 @@ func unmarshalInputFactoringFeeTierInput(ctx context.Context, ec *gqlexec.Exec, 
 				return it, err
 			}
 			it.FlatMinor = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputFactoringFundingItemInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FactoringFundingItemInput, error) {
+	var it gqlmodel.FactoringFundingItemInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"itemId", "outcome", "advanceMinor", "feeMinor", "reason"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "itemId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("itemId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ItemID = data
+		case "outcome":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("outcome"))
+			data, err := unmarshalNFactoringFundingOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐFundingOutcome(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Outcome = data
+		case "advanceMinor":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("advanceMinor"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AdvanceMinor = data
+		case "feeMinor":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("feeMinor"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FeeMinor = data
+		case "reason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Reason = data
 		}
 	}
 	return it, nil
@@ -3396,6 +4836,129 @@ func unmarshalInputFactoringNoaListInput(ctx context.Context, ec *gqlexec.Exec, 
 	return it, nil
 }
 
+func unmarshalInputFactoringReserveEntryListInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FactoringReserveEntryListInput, error) {
+	var it gqlmodel.FactoringReserveEntryListInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"table", "factoringCompanyId", "submissionId", "invoiceId", "kinds"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "table":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("table"))
+			data, err := unmarshalNDataTableConnectionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Table = data
+		case "factoringCompanyId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("factoringCompanyId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FactoringCompanyID = data
+		case "submissionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("submissionId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubmissionID = data
+		case "invoiceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invoiceId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.InvoiceID = data
+		case "kinds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kinds"))
+			data, err := unmarshalOFactoringReserveEntryKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKindᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kinds = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputFactoringReserveMovementInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FactoringReserveMovementInput, error) {
+	var it gqlmodel.FactoringReserveMovementInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"submissionId", "itemId", "version", "occurredOn", "cashMinor", "reason"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "submissionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("submissionId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubmissionID = data
+		case "itemId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("itemId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ItemID = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "occurredOn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("occurredOn"))
+			data, err := unmarshalNTimestamp2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OccurredOn = data
+		case "cashMinor":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cashMinor"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CashMinor = data
+		case "reason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Reason = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputFactoringSubmissionListInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FactoringSubmissionListInput, error) {
 	var it gqlmodel.FactoringSubmissionListInput
 	if obj == nil {
@@ -3472,6 +5035,64 @@ func unmarshalInputFactoringSubmissionPlanInput(ctx context.Context, ec *gqlexec
 				return it, err
 			}
 			it.InvoiceIds = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRecordFactoringFundingInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RecordFactoringFundingInput, error) {
+	var it gqlmodel.RecordFactoringFundingInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"submissionId", "version", "fundedOn", "items", "memo"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "submissionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("submissionId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubmissionID = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "fundedOn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fundedOn"))
+			data, err := unmarshalNTimestamp2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FundedOn = data
+		case "items":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("items"))
+			data, err := unmarshalNFactoringFundingItemInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringFundingItemInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Items = data
+		case "memo":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memo"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Memo = data
 		}
 	}
 	return it, nil
@@ -3905,6 +5526,21 @@ func unmarshalNFactoringFeeTierInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNFactoringFundingItemInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringFundingItemInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.FactoringFundingItemInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringFundingItemInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringFundingItemInput)
+}
+
+func unmarshalNFactoringFundingItemInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringFundingItemInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.FactoringFundingItemInput, error) {
+	res, err := unmarshalInputFactoringFundingItemInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFactoringFundingOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐFundingOutcome(ctx context.Context, ec *gqlexec.Exec, v any) (factoring.FundingOutcome, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := factoring.FundingOutcome(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNFactoringInvoiceStateListInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringInvoiceStateListInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.FactoringInvoiceStateListInput, error) {
 	res, err := unmarshalInputFactoringInvoiceStateListInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3924,6 +5560,22 @@ func unmarshalNFactoringNoaStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 func unmarshalNFactoringRecourse2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRecourse(ctx context.Context, ec *gqlexec.Exec, v any) (factoring.Recourse, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := factoring.Recourse(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKind(ctx context.Context, ec *gqlexec.Exec, v any) (factoring.ReserveEntryKind, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := factoring.ReserveEntryKind(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFactoringReserveEntryListInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveEntryListInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.FactoringReserveEntryListInput, error) {
+	res, err := unmarshalInputFactoringReserveEntryListInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFactoringReserveMovementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveMovementInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.FactoringReserveMovementInput, error) {
+	res, err := unmarshalInputFactoringReserveMovementInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -3972,6 +5624,11 @@ func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error
 func unmarshalNInvoiceFactoringOverride2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐFactoringOverride(ctx context.Context, ec *gqlexec.Exec, v any) (invoice.FactoringOverride, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := invoice.FactoringOverride(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRecordFactoringFundingInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecordFactoringFundingInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RecordFactoringFundingInput, error) {
+	res, err := unmarshalInputRecordFactoringFundingInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -4033,6 +5690,13 @@ func unmarshalOFactoringNoaStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 		return nil, nil
 	}
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringNoaStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐNoaStatus)
+}
+
+func unmarshalOFactoringReserveEntryKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKindᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]factoring.ReserveEntryKind, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKind)
 }
 
 func unmarshalOFactoringSftpAuthMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSftpAuthMethod(ctx context.Context, ec *gqlexec.Exec, v any) (*factoring.SftpAuthMethod, error) {
@@ -4128,6 +5792,14 @@ func marshalNDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "DocumentType", v)
 }
 
+func marshalNFactoringAccountRole2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐAccountRole(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoring.AccountRole) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNFactoringAccountingTreatment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐAccountingTreatment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoring.AccountingTreatment) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -4208,6 +5880,18 @@ func marshalNFactoringFunding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return ec.MarshalType(ctx, sel, "FactoringFunding", &v)
 }
 
+func marshalNFactoringFundingPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐFundingPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringports.FundingPlan) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FactoringFundingPlan", v)
+}
+
+func marshalNFactoringInvoiceEffect2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringInvoiceEffect(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.FactoringInvoiceEffect) graphql.Marshaler {
+	return v
+}
+
 func marshalNFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐInvoiceState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoring.InvoiceState) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -4238,6 +5922,10 @@ func marshalNFactoringInvoiceStateEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FactoringInvoiceStateEdge", v)
+}
+
+func marshalNFactoringMovement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐMovement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoring.Movement) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "FactoringMovement", &v)
 }
 
 func marshalNFactoringNoa2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐNoa(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoring.Noa) graphql.Marshaler {
@@ -4280,12 +5968,96 @@ func marshalNFactoringNoaStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return res
 }
 
+func marshalNFactoringPlannedLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringports.PlannedLine) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "FactoringPlannedLine", &v)
+}
+
+func marshalNFactoringPlannedLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []factoringports.PlannedLine) graphql.Marshaler {
+	return gqlexec.List[factoringports.PlannedLine]{
+		Elem:        marshalNFactoringPlannedLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedLine,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFactoringPlannedMovement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringports.PlannedMovement) graphql.Marshaler {
+	return gqlexec.List[*factoringports.PlannedMovement]{
+		Elem:        marshalNFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovement,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringports.PlannedMovement) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FactoringPlannedMovement", v)
+}
+
 func marshalNFactoringRecourse2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRecourse(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoring.Recourse) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNFactoringReserveBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐReserveBalance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringports.ReserveBalance) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FactoringReserveBalance", v)
+}
+
+func marshalNFactoringReserveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoring.ReserveEntry) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FactoringReserveEntry", v)
+}
+
+func marshalNFactoringReserveEntryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveEntryConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FactoringReserveEntryConnection) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FactoringReserveEntryConnection", v)
+}
+
+func marshalNFactoringReserveEntryEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveEntryEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FactoringReserveEntryEdge) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.FactoringReserveEntryEdge]{
+		Elem:        marshalNFactoringReserveEntryEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveEntryEdge,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFactoringReserveEntryEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringReserveEntryEdge(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FactoringReserveEntryEdge) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FactoringReserveEntryEdge", v)
+}
+
+func marshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoring.ReserveEntryKind) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐReserveMovementPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringports.ReserveMovementPlan) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FactoringReserveMovementPlan", v)
 }
 
 func marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoring.Submission) graphql.Marshaler {
@@ -4538,9 +6310,30 @@ func marshalOFactoringLiveSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "FactoringLiveSubmission", v)
 }
 
+func marshalOFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringports.PlannedMovement) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FactoringPlannedMovement", v)
+}
+
+func marshalOFactoringReserveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoring.ReserveEntry) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FactoringReserveEntry", v)
+}
+
 func marshalOFactoringSftpAuthMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSftpAuthMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoring.SftpAuthMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
+}
+
+func marshalOFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoring.Submission) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FactoringSubmission", v)
 }
 
 func marshalOFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoring.Transport) graphql.Marshaler {
@@ -4579,11 +6372,26 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
+func marshalOInt2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt64(*v)
+	return res
+}
+
 func marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoice.Invoice) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Invoice", v)
+}
+
+func marshalOJournalEntryLineAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJournalEntryLineAccount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.JournalEntryLineAccount) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "JournalEntryLineAccount", v)
 }
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

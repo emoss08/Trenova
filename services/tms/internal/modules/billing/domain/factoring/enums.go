@@ -231,6 +231,10 @@ func (o FundingOutcome) IsValid() bool {
 	return o == FundingOutcomeFunded || o == FundingOutcomeRejected
 }
 
+func AllFundingOutcomes() []FundingOutcome {
+	return []FundingOutcome{FundingOutcomeFunded, FundingOutcomeRejected}
+}
+
 type ReserveEntryKind string
 
 const (

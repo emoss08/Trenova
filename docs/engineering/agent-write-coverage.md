@@ -97,11 +97,11 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1138 writes: 625 GraphQL mutations and 513 REST writes, after merging 75 REST routes into the mutation they duplicate.
+1142 writes: 629 GraphQL mutations and 513 REST writes, after merging 75 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 409 |
+| Covered by a tool | 413 |
 | Exempt | 695 |
 | — Security | 83 |
 | — Configuration | 277 |
@@ -113,9 +113,9 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 48 |
 | — Duplicate | 8 |
 | **Pending** | **34** |
-| Total | 1138 |
+| Total | 1142 |
 
-Of the 443 writes an agent should be able to make, 409 have a tool (92%).
+Of the 447 writes an agent should be able to make, 413 have a tool (92%).
 
 ## Pending
 
@@ -236,7 +236,7 @@ The writes no tool performs yet, and what the tool would do.
 | extractioneval | 5 | 0 | 5 | 0 |
 | extractionrollout | 1 | 0 | 1 | 0 |
 | extractionshadow | 1 | 0 | 1 | 0 |
-| factoring | 15 | 9 | 6 | 0 |
+| factoring | 19 | 13 | 6 | 0 |
 | factoringcompany | 2 | 0 | 2 | 0 |
 | fiscalperiod | 9 | 5 | 4 | 0 |
 | fiscalyear | 7 | 0 | 7 | 0 |
@@ -1242,9 +1242,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation createFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
 | `mutation draftFactoringNoa` | Tool: `draft_factoring_noa` |
 | `mutation endFactoringAgreement` | Exempt, configuration: Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator. |
+| `mutation recordFactoringChargeback` | Tool: `record_factoring_chargeback` |
+| `mutation recordFactoringFunding` | Tool: `record_factoring_funding` |
 | `mutation releaseFactoringNoa` | Tool: `release_factoring_noa` |
+| `mutation releaseFactoringReserve` | Tool: `release_factoring_reserve` |
 | `mutation requestMissingFactoringDocuments` | Tool: `request_missing_factoring_document` |
 | `mutation retryFactoringSubmission` | Tool: `retry_factoring_submission` |
+| `mutation reverseFactoringChargeback` | Tool: `reverse_factoring_chargeback` |
 | `mutation saveFactoringTransport` | Exempt, configuration: How schedules reach a factor (its schedule inbox, or its SFTP host, account, password or key and host key) is set up by an administrator from the factor's onboarding instructions, and holds a credential no agent may read or write. |
 | `mutation sendFactoringNoa` | Tool: `send_factoring_noa` |
 | `mutation setInvoiceFactoringOverride` | Tool: `set_invoice_factoring_override` |

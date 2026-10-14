@@ -128,6 +128,7 @@ func (s *LedgerService) planMovement(
 		planned.FiscalPeriodID = plan.Period.ID
 		planned.FiscalPeriodName = plan.Period.Name
 	}
+	planned.EntryStatus = plan.Workflow.EntryStatus
 	planned.RequiresApproval = !plan.Workflow.Posted()
 	return planned, nil
 }

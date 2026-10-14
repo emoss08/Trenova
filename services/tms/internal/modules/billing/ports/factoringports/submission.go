@@ -14,6 +14,11 @@ type GetSubmissionRequest struct {
 	IncludeItems bool                  `json:"includeItems"`
 }
 
+type GetSubmissionsByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	IDs        []pulid.ID            `json:"ids"`
+}
+
 type GetSubmissionByKeyRequest struct {
 	TenantInfo     pagination.TenantInfo `json:"-"`
 	IdempotencyKey string                `json:"idempotencyKey"`
@@ -70,6 +75,7 @@ type SubmissionRepository interface {
 	Update(ctx context.Context, entity *factoring.Submission) (*factoring.Submission, error)
 	SetDocuments(ctx context.Context, req *SetSubmissionDocumentsRequest) error
 	GetByID(ctx context.Context, req GetSubmissionRequest) (*factoring.Submission, error)
+	GetByIDs(ctx context.Context, req GetSubmissionsByIDsRequest) ([]*factoring.Submission, error)
 	GetByIdempotencyKey(
 		ctx context.Context,
 		req GetSubmissionByKeyRequest,

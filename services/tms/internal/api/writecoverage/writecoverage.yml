@@ -1786,10 +1786,18 @@ writes:
     reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
   "mutation releaseFactoringNoa":
     tools: [release_factoring_noa]
+  "mutation recordFactoringChargeback":
+    tools: [record_factoring_chargeback]
+  "mutation recordFactoringFunding":
+    tools: [record_factoring_funding]
+  "mutation releaseFactoringReserve":
+    tools: [release_factoring_reserve]
   "mutation requestMissingFactoringDocuments":
     tools: [request_missing_factoring_document]
   "mutation retryFactoringSubmission":
     tools: [retry_factoring_submission]
+  "mutation reverseFactoringChargeback":
+    tools: [reverse_factoring_chargeback]
   "mutation saveFactoringTransport":
     exempt: configuration
     reason: "How schedules reach a factor (its schedule inbox, or its SFTP host, account, password or key and host key) is set up by an administrator from the factor's onboarding instructions, and holds a credential no agent may read or write."

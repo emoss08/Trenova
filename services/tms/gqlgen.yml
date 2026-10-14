@@ -1738,6 +1738,14 @@ models:
     fields:
       factoringCompany:
         resolver: true
+      dueFromFactorAccountId:
+        resolver: true
+      feeExpenseAccountId:
+        resolver: true
+      liabilityAccountId:
+        resolver: true
+      cashAccountId:
+        resolver: true
   FactoringNoa:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Noa
@@ -1841,6 +1849,70 @@ models:
   FactoringTransportTestResult:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.TransportTestResult
+  FactoringFundingOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.FundingOutcome
+  FactoringReserveEntryKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.ReserveEntryKind
+  FactoringAccountRole:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.AccountRole
+  FactoringReserveEntry:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.ReserveEntry
+    fields:
+      reversesEntryId:
+        resolver: true
+      createdById:
+        resolver: true
+      factoringCompany:
+        resolver: true
+      invoice:
+        resolver: true
+      customer:
+        resolver: true
+      submission:
+        resolver: true
+  FactoringReserveBalance:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.ReserveBalance
+  FactoringPlannedLine:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.PlannedLine
+    fields:
+      account:
+        resolver: true
+  FactoringMovement:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Movement
+    fields:
+      invoiceEffect:
+        resolver: true
+  FactoringPlannedMovement:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.PlannedMovement
+    fields:
+      fiscalPeriodId:
+        resolver: true
+  FactoringFundingPlan:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.FundingPlan
+    fields:
+      submissionId:
+        resolver: true
+      status:
+        resolver: true
+  FactoringReserveMovementPlan:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.ReserveMovementPlan
+    fields:
+      submissionId:
+        resolver: true
+      itemId:
+        resolver: true
+      itemStatus:
+        resolver: true
   InvoiceDisputeCaseStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.DisputeCaseStatus

@@ -519,3 +519,32 @@ func (r *submissionRepository) ClaimChargebackWarning(
 		return rows > 0, nil
 	})
 }
+
+func (r *submissionRepository) GetByIDs(
+	ctx context.Context,
+	req factoringports.GetSubmissionsByIDsRequest,
+) ([]*factoring.Submission, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoring.Submission, error) {
+		rows := make([]*factoring.Submission, 0, len(req.IDs))
+		if len(req.IDs) == 0 {
+			return rows, nil
+		}
+		if len(req.IDs) > maxSubmissionIDsPerLookup {
+			return nil, errortypes.NewValidationError(
+				"ids",
+				errortypes.ErrInvalid,
+				"Too many schedules were asked for at once",
+			)
+		}
+		cols := factoringcol.SubmissionColumns
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&rows).
+			Apply(factoringcol.SubmissionApplyTenant(req.TenantInfo)).
+			Where(cols.ID.In(), bun.List(req.IDs)).
+			Scan(ctx); err != nil {
+			return nil, fmt.Errorf("get factoring submissions by ids: %w", err)
+		}
+		return rows, nil
+	})
+}

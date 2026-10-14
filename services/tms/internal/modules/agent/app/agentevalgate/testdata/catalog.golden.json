@@ -13017,8 +13017,53 @@
       }
     },
     {
+      "name": "get_factoring_reserve_balance",
+      "description": "Read what a factor holds and has paid, from the factoring entries booked to the ledger. It shows the reserve it still holds, what is owed it under secured borrowing, the advances it paid, the reserves it released, what was paid back for chargebacks net of reversals, the fees booked, and the day of the last movement. Use it before release_factoring_reserve to see what the factor should remit.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "factoringCompanyId": {
+            "description": "The factor, from list_factoring_submissions or get_factoring_agreement.",
+            "type": "string",
+            "x-recordOf": "factoring_company"
+          }
+        },
+        "required": [
+          "factoringCompanyId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "factoring reserve",
+        "reserve balance",
+        "due from factor",
+        "factor fees"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "factoring_reserve",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "get_factoring_submission",
-      "description": "Read one schedule of accounts with every invoice on it and why it failed, if it did. Each invoice has its amount, expected advance, fee and reserve, and whether its packet was built; the schedule has its status, where it went, attempts and last error. Use its version with retry_factoring_submission or cancel_factoring_submission.",
+      "description": "Read one schedule of accounts with every invoice on it and why it failed, if it did. Each invoice has its item id, amount, expected advance, fee and reserve, whether its packet was built, and once the factor decided it, what it funded (the advance, fee and reserve it holds) or why it rejected it, and whether its reserve was released or it was charged back; the schedule has its status, where it went, attempts and last error. Use its version and an invoice's item id with record_factoring_funding, release_factoring_reserve, record_factoring_chargeback or reverse_factoring_chargeback, and with retry_factoring_submission or cancel_factoring_submission for a failed one.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -18147,7 +18192,8 @@
             "enum": [
               "Ready",
               "NotReady",
-              "Submitted"
+              "Submitted",
+              "Funded"
             ],
             "type": "string",
             "x-enumOf": "factoring.verdict"
@@ -18184,7 +18230,7 @@
     },
     {
       "name": "list_factoring_submissions",
-      "description": "List the schedules of accounts sent to factors, newest first, with their status and totals. Each has its number, factor, status (Sending, Sent, Failed or Cancelled), invoice count, expected funding, where it went, and for a failed one the last error. Pass a schedule's id to get_factoring_submission for its invoices, and its id and version to retry_factoring_submission or cancel_factoring_submission.",
+      "description": "List the schedules of accounts sent to factors, newest first, with their status and totals. Each has its number, factor, status (Sending, Sent, Failed, Cancelled, PartiallyFunded, Funded or Rejected), invoice count, expected funding, where it went, and for a failed one the last error. Pass a schedule's id to get_factoring_submission for its invoices; a failed one's id and version go to retry_factoring_submission or cancel_factoring_submission, and a sent one's to record_factoring_funding.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -18209,12 +18255,15 @@
                 "Sending",
                 "Sent",
                 "Failed",
-                "Cancelled"
+                "Cancelled",
+                "PartiallyFunded",
+                "Funded",
+                "Rejected"
               ],
               "type": "string",
               "x-enumOf": "factoring.submissionStatus"
             },
-            "maxItems": 4,
+            "maxItems": 7,
             "type": "array"
           }
         },
@@ -27261,6 +27310,187 @@
       }
     },
     {
+      "name": "record_factoring_chargeback",
+      "description": "Book a recourse factor's chargeback of a funded invoice the customer did not pay. The organization repays the factor (by default the advance and fee) and the factor gives up the reserve. Under a sale the invoice goes back on receivables and the organization collects it again. Refused under a non-recourse agreement. Say why. A person approves every booking.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "cash": {
+            "description": "What the organization paid or owes the factor, when it differs from the advance and fee; the difference is booked to the fee account. A decimal such as 1250.00.",
+            "type": "string"
+          },
+          "itemId": {
+            "description": "The invoice's line on the schedule (its item id) from get_factoring_submission.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          },
+          "occurredOn": {
+            "description": "The day the factor charged it back. As YYYY-MM-DD.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the factor charged it back.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "submissionId": {
+            "description": "The schedule, from list_factoring_submissions.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          },
+          "version": {
+            "description": "The schedule's version from get_factoring_submission, so a schedule someone changed since is not overwritten.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "submissionId",
+          "itemId",
+          "version",
+          "occurredOn",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "chargeback",
+        "charge back",
+        "recourse",
+        "repurchase invoice"
+      ],
+      "prerequisites": [
+        "get_factoring_submission"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_reserve",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books a repayment to the factor and reopens an invoice; only a person's approval runs it."
+      }
+    },
+    {
+      "name": "record_factoring_funding",
+      "description": "Record what the factor funded or rejected on a sent schedule, from its funding report or remittance. For each invoice, Funded with the advance and fee it paid (default: the expected ones from get_factoring_submission) or Rejected with why. Each funded invoice is booked to the ledger: cash in, the fee expensed, and, under a sale, the reserve the factor holds with the invoice settled; under secured borrowing, a liability to the factor. A rejected invoice goes back to the queue. A person approves every booking.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fundedOn": {
+            "description": "The day the factor funded. As YYYY-MM-DD.",
+            "type": "string"
+          },
+          "items": {
+            "description": "What the factor did with each invoice it decided; leave out the ones it has not decided yet.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "advance": {
+                  "description": "What the factor advanced, when it differs from the expected advance. A decimal such as 1250.00.",
+                  "type": "string"
+                },
+                "fee": {
+                  "description": "What the factor kept as its fee, when it differs from the expected fee. A decimal such as 1250.00.",
+                  "type": "string"
+                },
+                "itemId": {
+                  "description": "The invoice's line on the schedule (its item id) from get_factoring_submission.",
+                  "type": "string",
+                  "x-recordOf": "factoring_submission"
+                },
+                "outcome": {
+                  "description": "Whether the factor funded or rejected it.",
+                  "enum": [
+                    "Funded",
+                    "Rejected"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "factoring.fundingOutcome"
+                },
+                "reason": {
+                  "description": "Why the factor rejected it.",
+                  "maxLength": 500,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "itemId",
+                "outcome"
+              ],
+              "type": "object"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          },
+          "memo": {
+            "description": "A note kept with the entries, such as the factor's funding report number.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "submissionId": {
+            "description": "The sent schedule, from list_factoring_submissions.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          },
+          "version": {
+            "description": "The schedule's version from get_factoring_submission, so a schedule someone changed since is not overwritten.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "submissionId",
+          "version",
+          "fundedOn",
+          "items"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "factor funding",
+        "funding report",
+        "advance received",
+        "factor rejected"
+      ],
+      "prerequisites": [
+        "get_factoring_submission"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_reserve",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books the factor's advances and fees to the general ledger and settles invoices; only a person's approval runs it."
+      }
+    },
+    {
       "name": "record_factoring_noa_acknowledgement",
       "description": "Record that the customer signed and returned the notice of assignment. Name the signed copy, which must already be uploaded as a document on the notice, and the date they signed. From then on the customer's invoices can be ready to factor until the notice expires or is released.",
       "parameters": {
@@ -29061,6 +29291,79 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Ends the customer's assignment to the factor; only the factor can release it, so a person confirms the release."
+      }
+    },
+    {
+      "name": "release_factoring_reserve",
+      "description": "Book the factor's release of a funded invoice's reserve, once the customer paid the factor and the factor remitted what it held back. The cash defaults to the reserve held; anything the factor kept beyond that is booked as its fee. The invoice's factoring is then settled. A person approves every booking.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "cash": {
+            "description": "What the factor paid, when it differs from the reserve it held; the difference is booked to the fee account. A decimal such as 1250.00.",
+            "type": "string"
+          },
+          "itemId": {
+            "description": "The invoice's line on the schedule (its item id) from get_factoring_submission.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          },
+          "occurredOn": {
+            "description": "The day the factor paid the reserve. As YYYY-MM-DD.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "A note kept with the entry, such as the remittance number.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "submissionId": {
+            "description": "The schedule, from list_factoring_submissions.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          },
+          "version": {
+            "description": "The schedule's version from get_factoring_submission, so a schedule someone changed since is not overwritten.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "submissionId",
+          "itemId",
+          "version",
+          "occurredOn"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "reserve release",
+        "factor remittance",
+        "rebate",
+        "reserve paid"
+      ],
+      "prerequisites": [
+        "get_factoring_submission"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_reserve",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books the factor's reserve remittance to the general ledger; only a person's approval runs it."
       }
     },
     {
@@ -31287,6 +31590,75 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Takes cash back off the books and reopens the invoices it paid; only a person reverses a payment."
+      }
+    },
+    {
+      "name": "reverse_factoring_chargeback",
+      "description": "Undo an invoice's last chargeback with the opposite entry, when the factor withdrew it or it was recorded by mistake. The invoice goes back to funded with the factor. Say why. A person approves every booking.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "itemId": {
+            "description": "The invoice's line on the schedule (its item id) from get_factoring_submission.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          },
+          "occurredOn": {
+            "description": "The day the chargeback was withdrawn. As YYYY-MM-DD.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the chargeback is reversed.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "submissionId": {
+            "description": "The schedule, from list_factoring_submissions.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          },
+          "version": {
+            "description": "The schedule's version from get_factoring_submission, so a schedule someone changed since is not overwritten.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "submissionId",
+          "itemId",
+          "version",
+          "occurredOn",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "reverse chargeback",
+        "undo chargeback",
+        "chargeback withdrawn"
+      ],
+      "prerequisites": [
+        "get_factoring_submission"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_reserve",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books the opposite of a chargeback to the general ledger; only a person's approval runs it."
       }
     },
     {

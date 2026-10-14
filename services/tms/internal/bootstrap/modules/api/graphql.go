@@ -65,6 +65,7 @@ var graphQLLoaderModule = fx.Module("api-graphql-loaders", fx.Provide(
 	loaders.NewFactoringAgreementsByCompanyIDLoaderFactory,
 	loaders.NewFactoringSubmissionItemsLoaderFactory,
 	loaders.NewFactoringLiveItemByInvoiceIDLoaderFactory,
+	loaders.NewFactoringSubmissionByIDLoaderFactory,
 	loaders.NewLateChargeAssessmentsByInvoiceIDLoaderFactory,
 	loaders.NewInvoiceEDISendPlanByInvoiceIDLoaderFactory,
 	loaders.NewCarrierIntelSnapshotByCarrierIDLoaderFactory,

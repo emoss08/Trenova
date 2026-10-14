@@ -119,6 +119,10 @@ type ARCashFlowPoint {
   expectedMinor: Int!
   openDueMinor: Int!
   actualMinor: Int!
+  "Advances expected from factors on schedules not yet funded, in the week they are due."
+  factorAdvancesMinor: Int!
+  "Reserves factors hold, expected back in the week the customer's invoice falls due."
+  reserveReleasesMinor: Int!
   isForecast: Boolean!
 }
 
