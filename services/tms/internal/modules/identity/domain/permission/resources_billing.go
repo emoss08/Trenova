@@ -608,4 +608,48 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	r.registerRateResources()
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceFactoringAgreement.String(),
+		DisplayName: "Factoring Agreement",
+		Description: "Advance, reserve, fee and recourse terms agreed with a factor",
+		Category:    "Billing",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View factoring agreements"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Draft factoring agreements"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Change, activate and end factoring agreements",
+			},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export factoring agreements",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceFactoringNoa.String(),
+		DisplayName: "Notice of Assignment",
+		Description: "Notices telling customers to pay a factor instead",
+		Category:    "Billing",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View notices of assignment"},
+			{Operation: OpCreate, DisplayName: "Draft", Description: "Draft notices of assignment"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Send, record and release notices of assignment",
+			},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export notices of assignment",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
 }

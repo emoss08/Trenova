@@ -19,6 +19,7 @@ import { AlertTriangleIcon, LinkExternal01Icon } from "@trenova/shared/component
 import { Link } from "react-router";
 import { InvoiceAdjustmentRuntimeSection } from "./invoice-adjustment-runtime-section";
 import { InvoiceArContextSection } from "./invoice-ar-context-section";
+import { InvoiceFactoringSection } from "./invoice-factoring-section";
 import { recordPath } from "@/config/record-links";
 
 export function InvoiceOverviewTab({
@@ -80,22 +81,7 @@ export function InvoiceOverviewTab({
               </div>
             </div>
 
-            {invoice.factoringCompany ? (
-              <div className="bg-card rounded-lg border p-3">
-                <SectionLabel>{t("Factored")}</SectionLabel>
-                <div className="mt-1.5">
-                  <p className="text-sm font-medium">{invoice.factoringCompany.name}</p>
-                  <p className="text-2xs text-muted-foreground mt-0.5">
-                    {invoice.factoringCompany.code}
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    {t(
-                      "Assigned to this factor when it posted. The invoice is remitted to the factor and carries its notice of assignment.",
-                    )}
-                  </p>
-                </div>
-              </div>
-            ) : null}
+            <InvoiceFactoringSection invoice={invoice} />
 
             <InvoiceArContextSection invoice={invoice} />
 

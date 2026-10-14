@@ -3,6 +3,7 @@ package domainregistry
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -129,6 +130,11 @@ func RegisterEntities() []any {
 		&rateagreement.RateAgreementAccessorial{},
 		&rateagreement.RateAgreementFuelBinding{},
 		&ratequote.RateQuote{},
+		&factoring.Agreement{},
+		&factoring.FeeTier{},
+		&factoring.AgreementDocumentType{},
+		&factoring.Noa{},
+		&factoring.InvoiceState{},
 	}
 }
 
@@ -136,5 +142,6 @@ func RegisterManyToManyEntities() []any {
 	return []any{
 		&customer.CustomerBillingProfileDocumentType{},
 		&permission.RoleConstraintRole{},
+		&factoring.AgreementDocumentType{},
 	}
 }

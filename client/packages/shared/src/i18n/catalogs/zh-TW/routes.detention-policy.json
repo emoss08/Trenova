@@ -101,7 +101,6 @@
   "Only shipments of these types are governed. Specificity +4.": "僅適用於這些類型的運單。明確度 +4。",
   "Only these service levels are governed. Specificity +2.": "僅適用於這些服務等級。明確度 +2。",
   "Open (first-come) stops will not accrue detention under this policy.": "在此政策下，開放式 (先到先服務) 停靠點不會累計滯留費。",
-  "Open-ended": "無上限",
   "Overrides computed specificity when two policies tie. Leave at 0 unless you need an explicit override.": "當兩項政策明確度相同時，用於覆寫計算所得的明確度。除非需明確覆寫，否則請維持 0。",
   "Pays out {0} more than it bills": "支出比收入多 {0}",
   "Pickup override": "取貨覆寫",

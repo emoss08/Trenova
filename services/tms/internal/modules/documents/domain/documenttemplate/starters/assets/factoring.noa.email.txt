@@ -1,0 +1,20 @@
+{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
+
+{{ if .EffectiveDate }}{{ t "{0} has assigned its accounts receivable to {1}. From {2}, please pay every invoice from {0} only to the remittance address below." .CompanyName .FactorName .EffectiveDate }}{{ else }}{{ t "{0} has assigned its accounts receivable to {1}. Please pay every invoice from {0} only to the remittance address below." .CompanyName .FactorName }}{{ end }}
+
+{{ t "The notice of assignment is attached. Please update your payment records, sign the acknowledgement on the notice and return it by replying to this message." }}
+{{ if .Note }}
+{{ .Note }}
+{{ end }}
+{{ t "Factoring company" }}: {{ .FactorName }}
+{{ if .EffectiveDate }}{{ t "Effective" }}: {{ .EffectiveDate }}
+{{ end }}{{ t "Attached" }}: {{ .AttachmentName }}
+{{ if .RemitTo.Name }}
+{{ t "Remit payment to" }}:
+{{ .RemitTo.Name }}
+{{ range .RemitTo.Lines }}{{ . }}
+{{ end }}{{ range .RemitTo.Details }}{{ .Label }}: {{ .Value }}
+{{ end }}{{ end }}
+{{ t "This assignment can be released, and these payment instructions changed, only by written notice from {0}. Disregard any other request to send payment elsewhere." .FactorName }}
+{{ if .ReplyTo }}{{ t "Questions? Reply to this message or write to {0}." .ReplyTo }}
+{{ end }}{{ .CompanyName }}

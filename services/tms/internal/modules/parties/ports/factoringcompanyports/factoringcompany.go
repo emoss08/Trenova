@@ -18,6 +18,11 @@ type ListFactoringCompanyConnectionRequest struct {
 	FactoringCompanyColumns []string                 `json:"-"`
 }
 
+type GetFactoringCompaniesByIDsRequest struct {
+	IDs        []pulid.ID            `json:"ids"`
+	TenantInfo pagination.TenantInfo `json:"-"`
+}
+
 type GetFactoringCompanyByIDRequest struct {
 	ID           pulid.ID              `json:"id"           form:"id"`
 	TenantInfo   pagination.TenantInfo `json:"tenantInfo"   form:"tenantInfo"`
@@ -42,6 +47,10 @@ type FactoringCompanyRepository interface {
 		ctx context.Context,
 		req *ListFactoringCompanyConnectionRequest,
 	) (*pagination.CursorListResult[*factoringcompany.FactoringCompany], error)
+	GetByIDs(
+		ctx context.Context,
+		req GetFactoringCompaniesByIDsRequest,
+	) ([]*factoringcompany.FactoringCompany, error)
 	GetByID(
 		ctx context.Context,
 		req GetFactoringCompanyByIDRequest,

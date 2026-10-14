@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
@@ -129,6 +130,10 @@ var minters = map[permission.Resource]minter{
 	permission.ResourceInvoiceDispute: mint(
 		func(e *invoice.InvoiceDispute) pulid.ID { return e.ID },
 	),
+	permission.ResourceFactoringAgreement: mint(
+		func(e *factoring.Agreement) pulid.ID { return e.ID },
+	),
+	permission.ResourceFactoringNoa: mint(func(e *factoring.Noa) pulid.ID { return e.ID }),
 	permission.ResourceInvoiceRun: mint(
 		func(e *invoicerun.InvoiceRun) pulid.ID { return e.ID },
 	),

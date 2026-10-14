@@ -32,6 +32,7 @@ const (
 	SourceMissedDelivery         = SourceKind("MissedDelivery")
 	SourcePodMissing             = SourceKind("PodMissing")
 	SourceTenderExhausted        = SourceKind("TenderExhausted")
+	SourceFactoring              = SourceKind("Factoring")
 )
 
 // readResources is the permission a reader needs to be shown items of each
@@ -62,6 +63,7 @@ var readResources = map[SourceKind]permission.Resource{
 	SourceMissedDelivery:         permission.ResourceShipment,
 	SourcePodMissing:             permission.ResourceShipment,
 	SourceTenderExhausted:        permission.ResourceTender,
+	SourceFactoring:              permission.ResourceInvoice,
 }
 
 func (k SourceKind) IsValid() bool {
@@ -128,6 +130,8 @@ func (k SourceKind) Label() string {
 		return "POD missing"
 	case SourceTenderExhausted:
 		return "Tender exhausted"
+	case SourceFactoring:
+		return "Factoring"
 	default:
 		return string(k)
 	}
@@ -159,6 +163,7 @@ func AllSourceKinds() []SourceKind {
 		SourceMissedDelivery,
 		SourcePodMissing,
 		SourceTenderExhausted,
+		SourceFactoring,
 	}
 }
 
@@ -224,7 +229,8 @@ func (k SourceKind) OverseesAgents() bool {
 		SourceMissedPickup,
 		SourceMissedDelivery,
 		SourcePodMissing,
-		SourceTenderExhausted:
+		SourceTenderExhausted,
+		SourceFactoring:
 		return false
 	default:
 		return false

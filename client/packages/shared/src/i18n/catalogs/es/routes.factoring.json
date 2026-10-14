@@ -1,0 +1,16 @@
+{
+  "Checks": "Verificaciones",
+  "Every check an invoice must pass before it can be sold to the factor. A failed check names what clears it.": "Todas las verificaciones que una factura debe superar antes de venderse a la empresa de factoraje. Una verificación fallida indica qué la resuelve.",
+  "Factoring readiness": "Preparación para factoraje",
+  "Factoring summary": "Resumen de factoraje",
+  "Failed checks": "Verificaciones fallidas",
+  "Loading factoring readiness...": "Cargando preparación para factoraje...",
+  "No invoices are ready to factor": "No hay facturas listas para factorizar",
+  "No invoices are waiting on a fix": "No hay facturas pendientes de corrección",
+  "Posted invoices assigned to a factor, split by whether they are ready to sell. Open one to see the checks it failed and fix them.": "Facturas contabilizadas asignadas a una empresa de factoraje, separadas según estén listas para vender. Abra una para ver las verificaciones fallidas y corregirlas.",
+  "Ready over a day": "Lista hace más de un día",
+  "The factoring summary could not be loaded.": "No se pudo cargar el resumen de factoraje.",
+  "This invoice's factoring readiness could not be loaded.": "No se pudo cargar la preparación para factoraje de esta factura.",
+  "Verdict": "Veredicto",
+  "{0, plural, one {# invoice} other {# invoices}} not yet submitted": "{0, plural, one {# factura} other {# facturas}} aún sin enviar"
+}

@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -200,4 +202,95 @@ func TestExceptionAttentionFailsWhenTenantsCannotBeListed(t *testing.T) {
 
 	_, err := runExceptionAttention(t, a)
 	require.Error(t, err)
+}
+
+type fakeTenantSync struct {
+	tenantports.TenantSyncRepository
+
+	organizations []tenant.SyncOrganization
+	err           error
+}
+
+func (f *fakeTenantSync) ListOrganizations(context.Context) ([]tenant.SyncOrganization, error) {
+	return f.organizations, f.err
+}
+
+func runFactoringSweep(t *testing.T, a *Activities) (*WatchtowerSweepResult, error) {
+	t.Helper()
+
+	suite := &testsuite.WorkflowTestSuite{}
+	env := suite.NewTestActivityEnvironment()
+	env.RegisterActivity(a)
+
+	value, err := env.ExecuteActivity(a.FactoringSweepActivity)
+	if err != nil {
+		return nil, err
+	}
+	result := new(WatchtowerSweepResult)
+	require.NoError(t, value.Get(result))
+
+	return result, nil
+}
+
+func TestFactoringSweepReconcilesTheFactoringKindForEachOrganization(t *testing.T) {
+	t.Parallel()
+
+	healthy, broken := tenantInfo(), tenantInfo()
+	tower := &fakeWatchtower{failOrg: broken.OrgID}
+	a := &Activities{
+		watchtower: tower,
+		tenants: &fakeTenantSync{organizations: []tenant.SyncOrganization{
+			{ID: healthy.OrgID, BusinessUnitID: healthy.BuID},
+			{ID: broken.OrgID, BusinessUnitID: broken.BuID},
+		}},
+		l: zap.NewNop(),
+	}
+
+	result, err := runFactoringSweep(t, a)
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, result.OrganizationsProcessed)
+	assert.Equal(t, 2, result.Upserted)
+	assert.Equal(t, 1, result.Resolved)
+	assert.Equal(t, []string{broken.OrgID.String()}, result.FailedOrganizations)
+	require.Len(t, tower.calls, 2)
+	for _, call := range tower.calls {
+		assert.Equal(t, watchtower.SourceFactoring, call.kind)
+		assert.True(t, call.scoped, "each organization runs under its own scope")
+	}
+	assert.Equal(t, healthy, tower.calls[0].tenant)
+}
+
+func TestFactoringSweepFailsWhenOrganizationsCannotBeListed(t *testing.T) {
+	t.Parallel()
+
+	a := &Activities{
+		watchtower: &fakeWatchtower{},
+		tenants:    &fakeTenantSync{err: assert.AnError},
+		l:          zap.NewNop(),
+	}
+
+	_, err := runFactoringSweep(t, a)
+
+	require.Error(t, err)
+}
+
+func TestFactoringSweepIsScheduled(t *testing.T) {
+	t.Parallel()
+
+	var found bool
+	for _, s := range NewScheduleProvider().GetSchedules() {
+		if s.ID == "factoring-watchtower-sweep" {
+			found = true
+		}
+	}
+	assert.True(t, found)
+
+	var registered bool
+	for _, wf := range RegisterWorkflows() {
+		if wf.Name == FactoringSweepWorkflowName {
+			registered = true
+		}
+	}
+	assert.True(t, registered)
 }

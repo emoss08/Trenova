@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -1421,5 +1424,60 @@ func (f *InboundDocumentReadingLoaderFactory) Attach(
 			f,
 			tenantInfo,
 		)
+	})
+}
+
+func FactoringCompanyByID(
+	ctx context.Context,
+	key string,
+) (*factoringcompany.FactoringCompany, error) {
+	return load(
+		ctx,
+		key,
+		func(s *set) *dataloadgen.Loader[string, *factoringcompany.FactoringCompany] {
+			return s.factoringCompanyByID
+		},
+	)
+}
+
+func (f *FactoringCompanyByIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.factoringCompanyByID = newFactoringCompanyByIDLoader(f, tenantInfo)
+	})
+}
+
+func FactoringStateByInvoiceID(ctx context.Context, key string) (*factoring.InvoiceState, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *factoring.InvoiceState] {
+		return s.factoringStateByInvoiceID
+	})
+}
+
+func (f *FactoringStateByInvoiceIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.factoringStateByInvoiceID = newFactoringStateByInvoiceIDLoader(f, tenantInfo)
+	})
+}
+
+func FactoringAgreementsByCompanyID(
+	ctx context.Context,
+	key string,
+) ([]*factoring.Agreement, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*factoring.Agreement] {
+		return s.factoringAgreementsByCompanyID
+	})
+}
+
+func (f *FactoringAgreementsByCompanyIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.factoringAgreementsByCompanyID = newFactoringAgreementsByCompanyIDLoader(f, tenantInfo)
 	})
 }

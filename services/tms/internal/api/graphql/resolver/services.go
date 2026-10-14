@@ -34,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
@@ -290,6 +291,9 @@ type Params struct {
 	BillingQueueReviewService    billingqueueports.BillingQueueReviewService
 	InvoiceService               invoiceports.InvoiceService
 	InvoiceAdjustmentService     invoiceadjustmentports.InvoiceAdjustmentService
+	FactoringAgreementService    factoringports.AgreementService
+	FactoringNoaService          factoringports.NoaService
+	FactoringReadinessService    factoringports.ReadinessService
 	InvoiceDisputeService        invoiceports.InvoiceDisputeService
 	LateChargeService            latechargeports.LateChargeService
 	AgentRunService              agentports.AgentRunService
@@ -509,6 +513,9 @@ type Services struct {
 	BillingQueueReviewService    billingqueueports.BillingQueueReviewService
 	InvoiceService               invoiceports.InvoiceService
 	InvoiceAdjustmentService     invoiceadjustmentports.InvoiceAdjustmentService
+	FactoringAgreementService    factoringports.AgreementService
+	FactoringNoaService          factoringports.NoaService
+	FactoringReadinessService    factoringports.ReadinessService
 	InvoiceDisputeService        invoiceports.InvoiceDisputeService
 	LateChargeService            latechargeports.LateChargeService
 	AgentRunService              agentports.AgentRunService
@@ -735,6 +742,9 @@ func newServices(p *Params) *Services {
 		InvoiceService:               p.InvoiceService,
 		InvoiceAdjustmentService:     p.InvoiceAdjustmentService,
 		InvoiceDisputeService:        p.InvoiceDisputeService,
+		FactoringAgreementService:    p.FactoringAgreementService,
+		FactoringNoaService:          p.FactoringNoaService,
+		FactoringReadinessService:    p.FactoringReadinessService,
 		LateChargeService:            p.LateChargeService,
 		AgentRunService:              p.AgentRunService,
 		AgentDefinitionService:       p.AgentDefinitionService,

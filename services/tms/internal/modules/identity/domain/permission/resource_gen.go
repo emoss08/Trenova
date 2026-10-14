@@ -105,6 +105,8 @@ const (
 	// Billing
 	ResourceInvoice              Resource = "invoice"
 	ResourceInvoiceDispute       Resource = "invoice_dispute"
+	ResourceFactoringAgreement   Resource = "factoring_agreement"
+	ResourceFactoringNoa         Resource = "factoring_noa"
 	ResourceBillingQueue         Resource = "billing_queue"
 	ResourceInvoiceRun           Resource = "invoice_run"
 	ResourceAccessorialCharge    Resource = "accessorial_charge"

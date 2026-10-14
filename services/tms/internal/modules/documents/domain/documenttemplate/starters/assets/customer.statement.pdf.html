@@ -127,7 +127,7 @@
     <tbody>
       {{ range .OpenItems }}
       <tr>
-        <td class="doc">{{ .InvoiceNumber }}{{ if .Disputed }}<div class="party-detail">{{ t "In dispute" }}</div>{{ end }}</td>
+        <td class="doc">{{ .InvoiceNumber }}{{ if .Disputed }}<div class="party-detail">{{ t "In dispute" }}</div>{{ end }}{{ if .AssignedTo }}<div class="party-detail">{{ t "Pay to {0}" .AssignedTo }}</div>{{ end }}</td>
         <td>{{ .InvoiceDate }}</td>
         <td>{{ .DueDate }}</td>
         <td class="num">{{ if gt .DaysPastDue 0 }}{{ .DaysPastDue }}{{ end }}</td>
