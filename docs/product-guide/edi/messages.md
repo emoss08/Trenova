@@ -20,6 +20,12 @@ Keywords: was the invoice sent, 997 received, ack status, control number lookup
 2. Search or filter by **Partner**, **Transaction** or **Control number**, and read the **Delivery** and **Acknowledgment** columns.
 3. Select the row to see **Delivery** (status, **Attempts**, **Remote path**, **Last error**), **Acknowledgment** and the **Raw X12**.
 
+### Find what a partner accepted with errors or rejected
+Keywords: accepted with errors, 997 errors, AK5 E, rejected 214, acknowledgment errors
+1. Open [Messages](/edi/messages).
+2. Filter the **Acknowledgment** column to **Accepted with errors** or **Rejected**.
+3. Select a row. **Acknowledgment** shows what the partner's 997 or 999 reported against the document: the segment and element it noted and why. A document accepted with errors reached the partner's system, but the partner flagged something in it to fix before the next one.
+
 ### Retry a failed delivery
 Keywords: resend EDI, dead-lettered message, delivery failed
 1. Open [Messages](/edi/messages) and select the message's row.
