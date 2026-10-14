@@ -84,11 +84,19 @@ func (r *repository) ListInbound(
 			entities := make([]*edi.EDITransfer, 0, req.Filter.Pagination.SafeLimit())
 			cols := edicol.EDITransferColumns
 
-			total, err := r.db.DBForContext(ctx).
+			dba := r.db.DBForContext(ctx)
+			query := dba.
 				NewSelect().
 				Model(&entities).
 				Where(cols.TargetOrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
-				Where(cols.TargetBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
+				Where(cols.TargetBusinessUnitID.Eq(), req.Filter.TenantInfo.BuID)
+			if req.InboundFileID.IsNotNil() {
+				query = query.Where(
+					cols.InboundMessageID.In(),
+					inboundFileMessages(dba, req.InboundFileID, req.Filter.TenantInfo),
+				)
+			}
+			total, err := query.
 				Order(cols.CreatedAt.OrderDesc()).
 				Limit(int64(req.Filter.Pagination.SafeLimit())).
 				Offset(int64(req.Filter.Pagination.SafeOffset())).
@@ -145,7 +153,13 @@ func (r *repository) GetTransferByID(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		entity := new(edi.EDITransfer)
 		cols := edicol.EDITransferColumns
-		query := r.db.DBForContext(ctx).NewSelect().Model(entity).Where(cols.ID.Eq(), req.ID)
+		rel := edicol.EDITransferRelations
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Relation(rel.SourcePartner).
+			Relation(rel.TargetPartner).
+			Where(cols.ID.Eq(), req.ID)
 
 		query = applyTransferTenantFilter(query, req.TenantInfo, req.Direction)
 

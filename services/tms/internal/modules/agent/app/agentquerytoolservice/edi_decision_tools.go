@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 
@@ -283,6 +284,7 @@ type mappingNeedRow struct {
 type ediTransferView struct {
 	ediTransferRow
 
+	Title              string               `json:"title"`
 	Direction          string               `json:"direction"`
 	InboundMessageID   string               `json:"inboundMessageId,omitempty"`
 	ShipmentType       string               `json:"shipmentType,omitempty"`
@@ -325,6 +327,7 @@ func (t *getEDITransferTool) Query(
 	payload := &transfer.TenderPayload
 	view := &ediTransferView{
 		ediTransferRow:   ediTransferRowFrom(transfer),
+		Title:            transferTitle(transfer),
 		Direction:        transferOutbound,
 		InboundMessageID: pulidString(transfer.InboundMessageID),
 		ShipmentType:     payload.ShipmentTypeLabel,
@@ -1002,4 +1005,14 @@ func (t *listEDIPartnersTool) Query(
 	found := searchResult(criteria, rows, len(rows))
 
 	return cursorOutcome(&found, nil, result)
+}
+
+func transferTitle(transfer *edi.EDITransfer) string {
+	if bol := strings.TrimSpace(transfer.TenderPayload.BOL); bol != "" {
+		return bol
+	}
+	if transfer.SourcePartner != nil && strings.TrimSpace(transfer.SourcePartner.Name) != "" {
+		return "from " + strings.TrimSpace(transfer.SourcePartner.Name)
+	}
+	return ""
 }
