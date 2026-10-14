@@ -51,6 +51,8 @@ type AROpenItem struct {
 	SettlementStatus   string   `json:"settlementStatus"`
 	DisputeStatus      string   `json:"disputeStatus"`
 	HasShortPay        bool     `json:"hasShortPay"`
+	FactoringCompanyID pulid.ID `json:"factoringCompanyId,omitempty"`
+	FactoringCompany   string   `json:"factoringCompany,omitempty"`
 }
 
 type ListCustomerLedgerRequest struct {

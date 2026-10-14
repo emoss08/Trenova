@@ -63,6 +63,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/extractionrolloutresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/extractionshadowresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/factoringcompanyresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/factoringresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalyearresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fleetsafetyresolver"
@@ -224,7 +225,7 @@ type Resolver struct {
 	chargeAllocation                   *shipmentresolver.ChargeAllocationResolver
 	commodity                          *commodityresolver.CommodityResolver
 	customer                           *carrierintelligenceresolver.CustomerResolver
-	customerBillingProfile             *customerresolver.CustomerBillingProfileResolver
+	customerBillingProfile             *customerBillingProfileResolver
 	customerEmailProfile               *customerresolver.CustomerEmailProfileResolver
 	customerPayment                    *customerpaymentresolver.CustomerPaymentResolver
 	customerPaymentApplication         *customerpaymentresolver.CustomerPaymentApplicationResolver
@@ -258,6 +259,11 @@ type Resolver struct {
 	extractionShadowReport             *extractionshadowresolver.ExtractionShadowReportResolver
 	extractionShadowResult             *extractionshadowresolver.ExtractionShadowResultResolver
 	extractionSnapshot                 *extractionevalresolver.ExtractionSnapshotResolver
+	factoringAgreement                 *factoringresolver.FactoringAgreementResolver
+	factoringCheck                     *factoringresolver.FactoringCheckResolver
+	factoringCompany                   *factoringresolver.FactoringCompanyResolver
+	factoringInvoiceState              *factoringresolver.FactoringInvoiceStateResolver
+	factoringNoa                       *factoringresolver.FactoringNoaResolver
 	fiscalYear                         *fiscalyearresolver.FiscalYearResolver
 	fleetSafetyRank                    *fleetsafetyresolver.FleetSafetyRankResolver
 	fleetSafetyTerminal                *fleetsafetyresolver.FleetSafetyTerminalResolver
@@ -689,6 +695,12 @@ func FromServices(s *Services) *Resolver {
 	extractionshadowDeps := &extractionshadowresolver.Deps{
 		Core:                    s.Core,
 		ExtractionShadowService: s.ExtractionShadowService,
+	}
+	factoringDeps := &factoringresolver.Deps{
+		Core:                      s.Core,
+		FactoringAgreementService: s.FactoringAgreementService,
+		FactoringNoaService:       s.FactoringNoaService,
+		FactoringReadinessService: s.FactoringReadinessService,
 	}
 	factoringcompanyDeps := &factoringcompanyresolver.Deps{
 		Core:                    s.Core,
@@ -1160,7 +1172,10 @@ func FromServices(s *Services) *Resolver {
 		chargeAllocation:             &shipmentresolver.ChargeAllocationResolver{Deps: shipmentDeps},
 		commodity:                    &commodityresolver.CommodityResolver{Deps: commodityDeps},
 		customer:                     &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps},
-		customerBillingProfile:       &customerresolver.CustomerBillingProfileResolver{Deps: customerDeps},
+		customerBillingProfile: &customerBillingProfileResolver{
+			customerCustomerBillingProfile:  &customerCustomerBillingProfile{Deps: customerDeps},
+			factoringCustomerBillingProfile: &factoringCustomerBillingProfile{Deps: factoringDeps},
+		},
 		customerEmailProfile:         &customerresolver.CustomerEmailProfileResolver{Deps: customerDeps},
 		customerPayment:              &customerpaymentresolver.CustomerPaymentResolver{Deps: customerpaymentDeps},
 		customerPaymentApplication:   &customerpaymentresolver.CustomerPaymentApplicationResolver{Deps: customerpaymentDeps},
@@ -1194,6 +1209,11 @@ func FromServices(s *Services) *Resolver {
 		extractionShadowReport:       &extractionshadowresolver.ExtractionShadowReportResolver{Deps: extractionshadowDeps},
 		extractionShadowResult:       &extractionshadowresolver.ExtractionShadowResultResolver{Deps: extractionshadowDeps},
 		extractionSnapshot:           &extractionevalresolver.ExtractionSnapshotResolver{Deps: extractionevalDeps},
+		factoringAgreement:           &factoringresolver.FactoringAgreementResolver{Deps: factoringDeps},
+		factoringCheck:               &factoringresolver.FactoringCheckResolver{Deps: factoringDeps},
+		factoringCompany:             &factoringresolver.FactoringCompanyResolver{Deps: factoringDeps},
+		factoringInvoiceState:        &factoringresolver.FactoringInvoiceStateResolver{Deps: factoringDeps},
+		factoringNoa:                 &factoringresolver.FactoringNoaResolver{Deps: factoringDeps},
 		fiscalYear:                   &fiscalyearresolver.FiscalYearResolver{Deps: fiscalyearDeps},
 		fleetSafetyRank:              &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps},
 		fleetSafetyTerminal:          &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps},
@@ -1227,6 +1247,7 @@ func FromServices(s *Services) *Resolver {
 		inboundSnooze:        &inboundmessageresolver.InboundSnoozeResolver{Deps: inboundmessageDeps},
 		inboundSplitDocument: &inboundmessageresolver.InboundSplitDocumentResolver{Deps: inboundmessageDeps},
 		invoice: &invoiceResolver{
+			factoringInvoice:      &factoringInvoice{Deps: factoringDeps},
 			invoiceInvoice:        &invoiceInvoice{Deps: invoiceDeps},
 			invoicedisputeInvoice: &invoicedisputeInvoice{Deps: invoicedisputeDeps},
 			latechargeInvoice:     &latechargeInvoice{Deps: latechargeDeps},
@@ -1282,6 +1303,8 @@ func FromServices(s *Services) *Resolver {
 			extractionevalMutation:        &extractionevalMutation{Deps: extractionevalDeps},
 			extractionrolloutMutation:     &extractionrolloutMutation{Deps: extractionrolloutDeps},
 			extractionshadowMutation:      &extractionshadowMutation{Deps: extractionshadowDeps},
+			factoringMutation:             &factoringMutation{Deps: factoringDeps},
+			factoringcompanyMutation:      &factoringcompanyMutation{Deps: factoringcompanyDeps},
 			fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
 			fuelpurchaseMutation:          &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
 			fuelsurchargeMutation:         &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
@@ -1405,6 +1428,7 @@ func FromServices(s *Services) *Resolver {
 			extractionevalQuery:           &extractionevalQuery{Deps: extractionevalDeps},
 			extractionrolloutQuery:        &extractionrolloutQuery{Deps: extractionrolloutDeps},
 			extractionshadowQuery:         &extractionshadowQuery{Deps: extractionshadowDeps},
+			factoringQuery:                &factoringQuery{Deps: factoringDeps},
 			factoringcompanyQuery:         &factoringcompanyQuery{Deps: factoringcompanyDeps},
 			fiscalyearQuery:               &fiscalyearQuery{Deps: fiscalyearDeps},
 			fleetcodeQuery:                &fleetcodeQuery{Deps: fleetcodeDeps},
@@ -1915,6 +1939,11 @@ func (r *Resolver) CustomerBillingProfile() generated.CustomerBillingProfileReso
 	return r.customerBillingProfile
 }
 
+type customerBillingProfileResolver struct {
+	*customerCustomerBillingProfile
+	*factoringCustomerBillingProfile
+}
+
 func (r *Resolver) CustomerEmailProfile() generated.CustomerEmailProfileResolver {
 	return r.customerEmailProfile
 }
@@ -2047,6 +2076,26 @@ func (r *Resolver) ExtractionSnapshot() generated.ExtractionSnapshotResolver {
 	return r.extractionSnapshot
 }
 
+func (r *Resolver) FactoringAgreement() generated.FactoringAgreementResolver {
+	return r.factoringAgreement
+}
+
+func (r *Resolver) FactoringCheck() generated.FactoringCheckResolver {
+	return r.factoringCheck
+}
+
+func (r *Resolver) FactoringCompany() generated.FactoringCompanyResolver {
+	return r.factoringCompany
+}
+
+func (r *Resolver) FactoringInvoiceState() generated.FactoringInvoiceStateResolver {
+	return r.factoringInvoiceState
+}
+
+func (r *Resolver) FactoringNoa() generated.FactoringNoaResolver {
+	return r.factoringNoa
+}
+
 func (r *Resolver) FiscalYear() generated.FiscalYearResolver {
 	return r.fiscalYear
 }
@@ -2163,6 +2212,7 @@ func (r *Resolver) Invoice() generated.InvoiceResolver {
 }
 
 type invoiceResolver struct {
+	*factoringInvoice
 	*invoiceInvoice
 	*invoicedisputeInvoice
 	*latechargeInvoice
@@ -2268,6 +2318,8 @@ type mutationResolver struct {
 	*extractionevalMutation
 	*extractionrolloutMutation
 	*extractionshadowMutation
+	*factoringMutation
+	*factoringcompanyMutation
 	*fleetsafetyMutation
 	*fuelpurchaseMutation
 	*fuelsurchargeMutation
@@ -2462,6 +2514,7 @@ type queryResolver struct {
 	*extractionevalQuery
 	*extractionrolloutQuery
 	*extractionshadowQuery
+	*factoringQuery
 	*factoringcompanyQuery
 	*fiscalyearQuery
 	*fleetcodeQuery
@@ -2801,11 +2854,14 @@ type (
 	decisionsAgentProposal          = decisionsresolver.AgentProposalResolver
 	agentAgentRun                   = agentresolver.AgentRunResolver
 	decisionsAgentRun               = decisionsresolver.AgentRunResolver
+	customerCustomerBillingProfile  = customerresolver.CustomerBillingProfileResolver
+	factoringCustomerBillingProfile = factoringresolver.CustomerBillingProfileResolver
 	inboundmessageInboundAttachment = inboundmessageresolver.InboundAttachmentResolver
 	inboundreplyInboundAttachment   = inboundreplyresolver.InboundAttachmentResolver
 	inboundmessageInboundMessage    = inboundmessageresolver.InboundMessageResolver
 	inboundreplyInboundMessage      = inboundreplyresolver.InboundMessageResolver
 	triageInboundMessage            = triageresolver.InboundMessageResolver
+	factoringInvoice                = factoringresolver.InvoiceResolver
 	invoiceInvoice                  = invoiceresolver.InvoiceResolver
 	invoicedisputeInvoice           = invoicedisputeresolver.InvoiceResolver
 	latechargeInvoice               = latechargeresolver.InvoiceResolver
@@ -2844,6 +2900,8 @@ type (
 	extractionevalMutation          = extractionevalresolver.MutationResolver
 	extractionrolloutMutation       = extractionrolloutresolver.MutationResolver
 	extractionshadowMutation        = extractionshadowresolver.MutationResolver
+	factoringMutation               = factoringresolver.MutationResolver
+	factoringcompanyMutation        = factoringcompanyresolver.MutationResolver
 	fleetsafetyMutation             = fleetsafetyresolver.MutationResolver
 	fuelpurchaseMutation            = fuelpurchaseresolver.MutationResolver
 	fuelsurchargeMutation           = fuelsurchargeresolver.MutationResolver
@@ -2943,6 +3001,7 @@ type (
 	extractionevalQuery             = extractionevalresolver.QueryResolver
 	extractionrolloutQuery          = extractionrolloutresolver.QueryResolver
 	extractionshadowQuery           = extractionshadowresolver.QueryResolver
+	factoringQuery                  = factoringresolver.QueryResolver
 	factoringcompanyQuery           = factoringcompanyresolver.QueryResolver
 	fiscalyearQuery                 = fiscalyearresolver.QueryResolver
 	fleetcodeQuery                  = fleetcoderesolver.QueryResolver

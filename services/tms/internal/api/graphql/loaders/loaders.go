@@ -1,7 +1,9 @@
 package loaders
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
@@ -101,6 +103,9 @@ type FactoryParams struct {
 	CustomerPaymentApplicationsByInvoiceID    *CustomerPaymentApplicationsByInvoiceIDLoaderFactory
 	CreditMemoApplicationsByInvoiceID         *CreditMemoApplicationsByInvoiceIDLoaderFactory
 	InvoiceDisputesByInvoiceID                *InvoiceDisputesByInvoiceIDLoaderFactory
+	FactoringCompanyByID                      *FactoringCompanyByIDLoaderFactory
+	FactoringStateByInvoiceID                 *FactoringStateByInvoiceIDLoaderFactory
+	FactoringAgreementsByCompanyID            *FactoringAgreementsByCompanyIDLoaderFactory
 	LateChargeAssessmentsByInvoiceID          *LateChargeAssessmentsByInvoiceIDLoaderFactory
 	InvoiceEDISendPlanByInvoiceID             *InvoiceEDISendPlanByInvoiceIDLoaderFactory
 	CarrierIntelSnapshotByCarrierID           *CarrierIntelSnapshotByCarrierIDLoaderFactory
@@ -176,6 +181,9 @@ type Factory struct {
 	customerPaymentApplicationsByInvoiceID    *CustomerPaymentApplicationsByInvoiceIDLoaderFactory
 	creditMemoApplicationsByInvoiceID         *CreditMemoApplicationsByInvoiceIDLoaderFactory
 	invoiceDisputesByInvoiceID                *InvoiceDisputesByInvoiceIDLoaderFactory
+	factoringCompanyByID                      *FactoringCompanyByIDLoaderFactory
+	factoringStateByInvoiceID                 *FactoringStateByInvoiceIDLoaderFactory
+	factoringAgreementsByCompanyID            *FactoringAgreementsByCompanyIDLoaderFactory
 	lateChargeAssessmentsByInvoiceID          *LateChargeAssessmentsByInvoiceIDLoaderFactory
 	invoiceEDISendPlanByInvoiceID             *InvoiceEDISendPlanByInvoiceIDLoaderFactory
 	carrierIntelSnapshotByCarrierID           *CarrierIntelSnapshotByCarrierIDLoaderFactory
@@ -251,6 +259,9 @@ type set struct {
 	customerPaymentApplicationsByInvoiceID    *dataloadgen.Loader[string, []*customerpayment.Application]
 	creditMemoApplicationsByInvoiceID         *dataloadgen.Loader[string, []*customerpayment.CreditMemoApplication]
 	invoiceDisputesByInvoiceID                *dataloadgen.Loader[string, []*invoice.InvoiceDispute]
+	factoringCompanyByID                      *dataloadgen.Loader[string, *factoringcompany.FactoringCompany]
+	factoringStateByInvoiceID                 *dataloadgen.Loader[string, *factoring.InvoiceState]
+	factoringAgreementsByCompanyID            *dataloadgen.Loader[string, []*factoring.Agreement]
 	lateChargeAssessmentsByInvoiceID          *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment]
 	invoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *invoiceports.InvoiceEDISendPlan]
 	carrierIntelSnapshotByCarrierID           *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
@@ -333,6 +344,9 @@ func NewFactory(p FactoryParams) *Factory {
 		customerPaymentApplicationsByInvoiceID:    p.CustomerPaymentApplicationsByInvoiceID,
 		creditMemoApplicationsByInvoiceID:         p.CreditMemoApplicationsByInvoiceID,
 		invoiceDisputesByInvoiceID:                p.InvoiceDisputesByInvoiceID,
+		factoringCompanyByID:                      p.FactoringCompanyByID,
+		factoringStateByInvoiceID:                 p.FactoringStateByInvoiceID,
+		factoringAgreementsByCompanyID:            p.FactoringAgreementsByCompanyID,
 		lateChargeAssessmentsByInvoiceID:          p.LateChargeAssessmentsByInvoiceID,
 		invoiceEDISendPlanByInvoiceID:             p.InvoiceEDISendPlanByInvoiceID,
 		carrierIntelSnapshotByCarrierID:           p.CarrierIntelSnapshotByCarrierID,
@@ -479,6 +493,9 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 			f.invoiceDisputesByInvoiceID,
 			tenantInfo,
 		),
+		factoringCompanyByID:           newFactoringCompanyByIDLoader(f.factoringCompanyByID, tenantInfo),
+		factoringStateByInvoiceID:      newFactoringStateByInvoiceIDLoader(f.factoringStateByInvoiceID, tenantInfo),
+		factoringAgreementsByCompanyID: newFactoringAgreementsByCompanyIDLoader(f.factoringAgreementsByCompanyID, tenantInfo),
 		lateChargeAssessmentsByInvoiceID: newLateChargeAssessmentsByInvoiceIDLoader(
 			f.lateChargeAssessmentsByInvoiceID,
 			tenantInfo,

@@ -665,6 +665,8 @@ func (r *repository) Update(
 			Set("memo = ?", entity.Memo).
 			Set("remittance_instructions = ?", entity.RemittanceInstructions).
 			Set("factoring_company_id = ?", entity.FactoringCompanyID).
+			Set("factoring_agreement_id = ?", entity.FactoringAgreementID).
+			Set("factoring_override = ?", entity.FactoringOverride).
 			Set("email_subject_snapshot = ?", entity.EmailSubjectSnapshot).
 			Set("email_body_snapshot = ?", entity.EmailBodySnapshot).
 			Set("email_to_snapshot = ?", pgdialect.Array(entity.EmailToSnapshot)).

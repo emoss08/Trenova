@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
@@ -49,6 +50,10 @@ func (r *invoiceStateRepository) SetInvoiceOverride(
 		res, err := r.db.DBForContext(ctx).NewUpdate().
 			Model((*invoice.Invoice)(nil)).
 			Set(inv.FactoringOverride.Set(), req.Override).
+			Set(inv.FactoringCompanyID.Set(), req.FactoringCompanyID).
+			Set(inv.FactoringAgreementID.Set(), req.FactoringAgreementID).
+			Set(inv.Version.Inc(1)).
+			Set(inv.UpdatedAt.Set(), timeutils.NowUnix()).
 			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return invoicecol.InvoiceScopeTenantUpdate(uq, req.TenantInfo).
 					Where(inv.ID.Eq(), req.InvoiceID)

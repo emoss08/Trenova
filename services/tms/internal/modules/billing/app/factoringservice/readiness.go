@@ -476,14 +476,23 @@ func (s *ReadinessService) SetOverride(
 	}
 
 	previous := *inv
+	factorID, agreementID, err := s.stampFor(ctx, req.TenantInfo, inv, req.Override)
+	if err != nil {
+		return nil, err
+	}
 	if err = s.states.SetInvoiceOverride(ctx, factoringports.SetInvoiceOverrideRequest{
-		TenantInfo: req.TenantInfo,
-		InvoiceID:  inv.ID,
-		Override:   req.Override,
+		TenantInfo:           req.TenantInfo,
+		InvoiceID:            inv.ID,
+		Override:             req.Override,
+		FactoringCompanyID:   factorID,
+		FactoringAgreementID: agreementID,
 	}); err != nil {
 		return nil, err
 	}
 	inv.FactoringOverride = req.Override
+	inv.FactoringCompanyID = factorID
+	inv.FactoringAgreementID = agreementID
+	inv.Version++
 
 	comment := "Invoice follows the customer's factoring again"
 	if req.Override.Excludes() {
@@ -502,6 +511,61 @@ func (s *ReadinessService) SetOverride(
 	}
 	s.rec.publish(ctx, permission.ResourceInvoice, inv, actor, "updated")
 	return state, nil
+}
+
+func (s *ReadinessService) stampFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	inv *invoice.Invoice,
+	override invoice.FactoringOverride,
+) (*pulid.ID, *pulid.ID, error) {
+	if override.Excludes() {
+		return nil, nil, nil
+	}
+	if inv.Status != invoice.StatusPosted {
+		return inv.FactoringCompanyID, inv.FactoringAgreementID, nil
+	}
+
+	found, err := s.customers.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
+		TenantInfo:  tenantInfo,
+		CustomerIDs: []pulid.ID{inv.CustomerID},
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
+			IncludeBillingProfile: true,
+		},
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	var factorID *pulid.ID
+	for _, cus := range found {
+		if cus != nil && cus.ID == inv.CustomerID && cus.BillingProfile != nil &&
+			cus.BillingProfile.FactoringCompanyID != nil &&
+			!cus.BillingProfile.FactoringCompanyID.IsNil() {
+			id := *cus.BillingProfile.FactoringCompanyID
+			factorID = &id
+		}
+	}
+	if factorID == nil {
+		return nil, nil, nil
+	}
+
+	at := s.now()
+	if inv.PostedAt != nil {
+		at = *inv.PostedAt
+	}
+	agreement, err := s.agreements.GetInForce(ctx, factoringports.GetAgreementInForceRequest{
+		TenantInfo:         tenantInfo,
+		FactoringCompanyID: *factorID,
+		At:                 at,
+	})
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return factorID, nil, nil
+		}
+		return nil, nil, err
+	}
+	agreementID := agreement.ID
+	return factorID, &agreementID, nil
 }
 
 func (s *ReadinessService) ListSweepTenants(ctx context.Context) ([]pagination.TenantInfo, error) {

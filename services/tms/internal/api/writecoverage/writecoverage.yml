@@ -1747,6 +1747,32 @@ writes:
     exempt: configuration
     reason: "Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them."
 
+  # factoring
+  "mutation acknowledgeFactoringNoa":
+    tools: [record_factoring_noa_acknowledgement]
+  "mutation activateFactoringAgreement":
+    exempt: configuration
+    reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
+  "mutation createFactoringAgreement":
+    exempt: configuration
+    reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
+  "mutation draftFactoringNoa":
+    tools: [draft_factoring_noa]
+  "mutation endFactoringAgreement":
+    exempt: configuration
+    reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
+  "mutation releaseFactoringNoa":
+    tools: [release_factoring_noa]
+  "mutation requestMissingFactoringDocuments":
+    tools: [request_missing_factoring_document]
+  "mutation sendFactoringNoa":
+    tools: [send_factoring_noa]
+  "mutation setInvoiceFactoringOverride":
+    tools: [set_invoice_factoring_override]
+  "mutation updateFactoringAgreement":
+    exempt: configuration
+    reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
+
   # factoringcompany
   "PATCH /api/v1/factoring-companies/:factoringCompanyID/":
     exempt: configuration
@@ -1755,6 +1781,12 @@ writes:
     exempt: configuration
     reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
   "PUT /api/v1/factoring-companies/:factoringCompanyID/":
+    exempt: configuration
+    reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
+  "mutation createFactoringCompany":
+    exempt: configuration
+    reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
+  "mutation updateFactoringCompany":
     exempt: configuration
     reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
 

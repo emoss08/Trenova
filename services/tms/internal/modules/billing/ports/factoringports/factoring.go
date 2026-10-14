@@ -19,6 +19,11 @@ type ListAgreementsRequest struct {
 	FactoringCompanyID pulid.ID              `json:"factoringCompanyId"`
 }
 
+type ListAgreementsByFactoringCompanyIDsRequest struct {
+	TenantInfo          pagination.TenantInfo `json:"-"`
+	FactoringCompanyIDs []pulid.ID            `json:"factoringCompanyIds"`
+}
+
 type GetAgreementInForceRequest struct {
 	TenantInfo         pagination.TenantInfo `json:"-"`
 	FactoringCompanyID pulid.ID              `json:"factoringCompanyId"`
@@ -39,6 +44,10 @@ type AgreementRepository interface {
 		ctx context.Context,
 		req ListAgreementsRequest,
 	) ([]*factoring.Agreement, error)
+	ListByFactoringCompanyIDs(
+		ctx context.Context,
+		req *ListAgreementsByFactoringCompanyIDsRequest,
+	) (map[pulid.ID][]*factoring.Agreement, error)
 	GetInForce(ctx context.Context, req GetAgreementInForceRequest) (*factoring.Agreement, error)
 	ListInForce(
 		ctx context.Context,
@@ -179,6 +188,9 @@ type SetInvoiceOverrideRequest struct {
 	TenantInfo pagination.TenantInfo     `json:"-"`
 	InvoiceID  pulid.ID                  `json:"invoiceId"`
 	Override   invoice.FactoringOverride `json:"override"`
+
+	FactoringCompanyID   *pulid.ID `json:"factoringCompanyId"`
+	FactoringAgreementID *pulid.ID `json:"factoringAgreementId"`
 }
 
 type InvoiceStateRepository interface {

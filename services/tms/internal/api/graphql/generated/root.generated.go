@@ -66,6 +66,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionrolloutexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/extractionshadowexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/factoringcompanyexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/factoringexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalperiodexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalyearexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetcodeexec"
@@ -172,10 +173,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
@@ -399,6 +402,11 @@ type ResolverRoot interface {
 	ExtractionShadowReport() ExtractionShadowReportResolver
 	ExtractionShadowResult() ExtractionShadowResultResolver
 	ExtractionSnapshot() ExtractionSnapshotResolver
+	FactoringAgreement() FactoringAgreementResolver
+	FactoringCheck() FactoringCheckResolver
+	FactoringCompany() FactoringCompanyResolver
+	FactoringInvoiceState() FactoringInvoiceStateResolver
+	FactoringNoa() FactoringNoaResolver
 	FiscalYear() FiscalYearResolver
 	FleetSafetyRank() FleetSafetyRankResolver
 	FleetSafetyTerminal() FleetSafetyTerminalResolver
@@ -1077,6 +1085,7 @@ type CustomerBillingProfileResolver interface {
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	InvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy, error)
+	FactoringCompany(ctx context.Context, obj *customer.CustomerBillingProfile) (*factoringcompany.FactoringCompany, error)
 }
 
 type CustomerEmailProfileResolver interface {
@@ -1233,6 +1242,32 @@ type ExtractionShadowResultResolver interface {
 
 type ExtractionSnapshotResolver interface {
 	Fields(ctx context.Context, obj *aicorrection.Snapshot) ([]*gqlmodel.ExtractionSnapshotField, error)
+}
+
+type FactoringAgreementResolver interface {
+	FactoringCompany(ctx context.Context, obj *factoring.Agreement) (*factoringcompany.FactoringCompany, error)
+}
+
+type FactoringCheckResolver interface {
+	Fix(ctx context.Context, obj *factoring.Check) (*factoring.FixAction, error)
+	DocumentTypeID(ctx context.Context, obj *factoring.Check) (*string, error)
+	ShipmentID(ctx context.Context, obj *factoring.Check) (*string, error)
+}
+
+type FactoringCompanyResolver interface {
+	Agreements(ctx context.Context, obj *factoringcompany.FactoringCompany) ([]*factoring.Agreement, error)
+}
+
+type FactoringInvoiceStateResolver interface {
+	Invoice(ctx context.Context, obj *factoring.InvoiceState) (*invoice.Invoice, error)
+	Customer(ctx context.Context, obj *factoring.InvoiceState) (*customer.Customer, error)
+	FactoringCompany(ctx context.Context, obj *factoring.InvoiceState) (*factoringcompany.FactoringCompany, error)
+}
+
+type FactoringNoaResolver interface {
+	SignedDocumentID(ctx context.Context, obj *factoring.Noa) (*string, error)
+	Customer(ctx context.Context, obj *factoring.Noa) (*customer.Customer, error)
+	FactoringCompany(ctx context.Context, obj *factoring.Noa) (*factoringcompany.FactoringCompany, error)
 }
 
 type FiscalYearResolver interface {
@@ -1503,6 +1538,8 @@ type InvoiceResolver interface {
 	PaymentApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.Application, error)
 	CreditApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.CreditMemoApplication, error)
 	EDISendPlan(ctx context.Context, obj *invoice.Invoice) (*invoiceports.InvoiceEDISendPlan, error)
+	FactoringCompany(ctx context.Context, obj *invoice.Invoice) (*factoringcompany.FactoringCompany, error)
+	FactoringState(ctx context.Context, obj *invoice.Invoice) (*factoring.InvoiceState, error)
 	Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoice.InvoiceDispute, error)
 	OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoice.InvoiceDispute, error)
 	LateChargeAssessments(ctx context.Context, obj *invoice.Invoice) ([]*latecharge.LateChargeAssessment, error)
@@ -1866,6 +1903,18 @@ type MutationResolver interface {
 	CancelExtractionEvalRun(ctx context.Context, id string) (*extractioneval.ExtractionRun, error)
 	UpdateExtractionRollout(ctx context.Context, input gqlmodel.UpdateExtractionRolloutInput) (*extractionrollout.ExtractionRollout, error)
 	UpdateExtractionShadowSettings(ctx context.Context, input gqlmodel.UpdateExtractionShadowSettingsInput) (*extractionshadow.ShadowSettings, error)
+	CreateFactoringAgreement(ctx context.Context, input gqlmodel.FactoringAgreementInput) (*factoring.Agreement, error)
+	UpdateFactoringAgreement(ctx context.Context, input gqlmodel.UpdateFactoringAgreementInput) (*factoring.Agreement, error)
+	ActivateFactoringAgreement(ctx context.Context, input gqlmodel.ChangeFactoringAgreementStatusInput) (*factoring.Agreement, error)
+	EndFactoringAgreement(ctx context.Context, input gqlmodel.ChangeFactoringAgreementStatusInput) (*factoring.Agreement, error)
+	DraftFactoringNoa(ctx context.Context, input gqlmodel.DraftFactoringNoaInput) (*factoring.Noa, error)
+	SendFactoringNoa(ctx context.Context, input gqlmodel.SendFactoringNoaInput) (*factoring.Noa, error)
+	AcknowledgeFactoringNoa(ctx context.Context, input gqlmodel.AcknowledgeFactoringNoaInput) (*factoring.Noa, error)
+	ReleaseFactoringNoa(ctx context.Context, input gqlmodel.ReleaseFactoringNoaInput) (*factoring.Noa, error)
+	SetInvoiceFactoringOverride(ctx context.Context, input gqlmodel.SetInvoiceFactoringOverrideInput) (*factoring.InvoiceState, error)
+	RequestMissingFactoringDocuments(ctx context.Context, input gqlmodel.RequestMissingFactoringDocumentsInput) (*factoringports.RequestMissingDocumentsResult, error)
+	CreateFactoringCompany(ctx context.Context, input gqlmodel.FactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
+	UpdateFactoringCompany(ctx context.Context, input gqlmodel.UpdateFactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*worker.WorkerSafetyViolation, error)
 	UpdateSafetyViolation(ctx context.Context, input gqlmodel.UpdateSafetyViolationInput) (*worker.WorkerSafetyViolation, error)
 	DeleteSafetyViolation(ctx context.Context, id string) (bool, error)
@@ -2672,6 +2721,13 @@ type QueryResolver interface {
 	ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*extractionshadowports.ExtractionShadowReport, error)
 	ExtractionShadowResults(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionShadowResultConnection, error)
 	ExtractionShadowResult(ctx context.Context, id string) (*extractionshadow.ShadowResult, error)
+	FactoringAgreements(ctx context.Context, factoringCompanyID string) ([]*factoring.Agreement, error)
+	FactoringAgreement(ctx context.Context, id string) (*factoring.Agreement, error)
+	FactoringNoas(ctx context.Context, input gqlmodel.FactoringNoaListInput) (*gqlmodel.FactoringNoaConnection, error)
+	FactoringNoa(ctx context.Context, id string) (*factoring.Noa, error)
+	FactoringReadiness(ctx context.Context, invoiceID string) (*factoring.InvoiceState, error)
+	FactoringInvoiceStates(ctx context.Context, input gqlmodel.FactoringInvoiceStateListInput) (*gqlmodel.FactoringInvoiceStateConnection, error)
+	FactoringSummary(ctx context.Context) (*factoringports.Summary, error)
 	FactoringCompanies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FactoringCompanyConnection, error)
 	FactoringCompany(ctx context.Context, id string) (*factoringcompany.FactoringCompany, error)
 	FiscalYears(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalYearConnection, error)
@@ -3463,6 +3519,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		extractionevalexec.Shard,
 		extractionrolloutexec.Shard,
 		extractionshadowexec.Shard,
+		factoringexec.Shard,
 		factoringcompanyexec.Shard,
 		fiscalperiodexec.Shard,
 		fiscalyearexec.Shard,
@@ -3671,6 +3728,11 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"ExtractionShadowReport":             func() any { return r.ExtractionShadowReport() },
 			"ExtractionShadowResult":             func() any { return r.ExtractionShadowResult() },
 			"ExtractionSnapshot":                 func() any { return r.ExtractionSnapshot() },
+			"FactoringAgreement":                 func() any { return r.FactoringAgreement() },
+			"FactoringCheck":                     func() any { return r.FactoringCheck() },
+			"FactoringCompany":                   func() any { return r.FactoringCompany() },
+			"FactoringInvoiceState":              func() any { return r.FactoringInvoiceState() },
+			"FactoringNoa":                       func() any { return r.FactoringNoa() },
 			"FiscalYear":                         func() any { return r.FiscalYear() },
 			"FleetSafetyRank":                    func() any { return r.FleetSafetyRank() },
 			"FleetSafetyTerminal":                func() any { return r.FleetSafetyTerminal() },
@@ -5529,6 +5591,7 @@ enum AgentSubjectType {
   FormulaTemplate
   Invoice
   InvoiceDispute
+  FactoringNoa
 }
 
 enum AgentRunTrigger {
@@ -19498,6 +19561,353 @@ extend type Mutation {
   updateExtractionShadowSettings(input: UpdateExtractionShadowSettingsInput!): ExtractionShadowSettings!
 }
 `, BuiltIn: false},
+	{Name: "../schema/factoring.graphqls", Input: `enum FactoringAgreementStatus {
+  Draft
+  Active
+  Ended
+}
+
+"Who carries the loss when a customer does not pay a factored invoice."
+enum FactoringRecourse {
+  "The factor can charge an unpaid invoice back after the chargeback window."
+  Recourse
+  "The factor buys the invoice and carries the credit risk."
+  NonRecourse
+}
+
+"How factored invoices are booked."
+enum FactoringAccountingTreatment {
+  "Each funded invoice leaves receivables, with the fee as an expense."
+  Sale
+  "Receivables stay on the books and the advance is a liability to the factor."
+  SecuredBorrowing
+}
+
+enum FactoringNoaStatus {
+  Draft
+  Sent
+  Acknowledged
+  Released
+}
+
+enum FactoringVerdict {
+  Ready
+  NotReady
+  "Not something to factor: unposted, voided, paid, a credit memo, kept out, or not factored."
+  Excluded
+}
+
+enum FactoringCheckCode {
+  Eligible
+  Factored
+  Agreement
+  Noa
+  Dispute
+  BillingDocument
+  BillingValidation
+  AgreementDocument
+  ShipmentUnavailable
+}
+
+enum FactoringFixAction {
+  SetUpAgreement
+  SendNoa
+  RecordNoaAcknowledgement
+  ResolveDispute
+  RequestDocument
+  ReviewShipment
+}
+
+enum InvoiceFactoringOverride {
+  "The invoice follows its customer's factoring."
+  Default
+  "The invoice stays on the organization's own receivables."
+  Exclude
+}
+
+"One band of the factor's fee by how long the invoice stays open."
+type FactoringFeeTier {
+  id: ID!
+  "First day of the band, counted from funding."
+  daysFrom: Int!
+  "Day the band ends, exclusive. Null for the last, open-ended band."
+  daysTo: Int
+  "Fee as basis points of the invoice amount."
+  rateBp: Int!
+  "Flat fee for the band, in minor units."
+  flatMinor: Int!
+}
+
+"The terms an organization agreed with a factor."
+type FactoringAgreement {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  factoringCompanyId: ID!
+  status: FactoringAgreementStatus!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  "Share of the invoice advanced at funding, in basis points."
+  advanceRateBp: Int!
+  "Share of the invoice held back until the customer pays, in basis points."
+  reserveRateBp: Int!
+  minimumFeeMinor: Int!
+  "Days after the due date before a recourse factor can charge an unpaid invoice back."
+  chargebackWindowDays: Int!
+  recourse: FactoringRecourse!
+  accountingTreatment: FactoringAccountingTreatment!
+  "Business days from submission to funding."
+  fundingDays: Int!
+  "Minutes after midnight, in the organization's time zone, when the day's schedule is proposed."
+  submissionTime: Int!
+  notes: String
+  activatedAt: Timestamp
+  endedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  feeTiers: [FactoringFeeTier!]!
+  "Documents the factor needs with every invoice, beyond what billing already requires."
+  documentTypes: [DocumentType!]!
+  factoringCompany: FactoringCompany
+}
+
+"A notice telling a customer to pay a factor instead of the organization."
+type FactoringNoa {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  customerId: ID!
+  factoringCompanyId: ID!
+  status: FactoringNoaStatus!
+  sentAt: Timestamp
+  sentTo: String
+  acknowledgedAt: Timestamp
+  "The customer's signed copy, a document on this notice."
+  signedDocumentId: ID
+  expiresAt: Timestamp
+  releasedAt: Timestamp
+  releaseReason: String
+  notes: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  customer: Customer
+  factoringCompany: FactoringCompany
+}
+
+type FactoringNoaEdge {
+  node: FactoringNoa!
+  cursor: String!
+}
+
+type FactoringNoaConnection {
+  edges: [FactoringNoaEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"One readiness check on an invoice."
+type FactoringCheck {
+  code: FactoringCheckCode!
+  passed: Boolean!
+  message: String!
+  "What clears the check, when something can."
+  fix: FactoringFixAction
+  documentTypeId: ID
+  documentTypeName: String
+  shipmentId: ID
+  shipmentPro: String
+  detail: String
+}
+
+"Whether an invoice is ready to factor, and why not."
+type FactoringInvoiceState {
+  invoiceId: ID!
+  factoringCompanyId: ID
+  customerId: ID!
+  verdict: FactoringVerdict!
+  checks: [FactoringCheck!]!
+  failedChecks: Int!
+  openBalanceMinor: Int!
+  "When the invoice became ready; null while it is not."
+  readySince: Timestamp
+  evaluatedAt: Timestamp!
+  invoice: Invoice
+  customer: Customer
+  factoringCompany: FactoringCompany
+}
+
+type FactoringInvoiceStateEdge {
+  node: FactoringInvoiceState!
+  cursor: String!
+}
+
+type FactoringInvoiceStateConnection {
+  edges: [FactoringInvoiceStateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FactoringVerdictTotals {
+  count: Int!
+  amountMinor: Int!
+}
+
+type FactoringSummary {
+  ready: FactoringVerdictTotals!
+  notReady: FactoringVerdictTotals!
+  "Ready for more than a day without being submitted."
+  readyUnsubmitted: FactoringVerdictTotals!
+}
+
+type FactoringDocumentRequestResult {
+  recipient: String!
+  "Who was asked: Specified, Driver, Carrier or Customer."
+  recipientKind: String!
+  documentTypes: [String!]!
+  shipmentIds: [ID!]!
+  sent: Boolean!
+}
+
+input FactoringFeeTierInput {
+  daysFrom: Int!
+  daysTo: Int
+  rateBp: Int!
+  flatMinor: Int = 0
+}
+
+input FactoringAgreementInput {
+  factoringCompanyId: ID!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  advanceRateBp: Int!
+  reserveRateBp: Int!
+  minimumFeeMinor: Int = 0
+  chargebackWindowDays: Int!
+  recourse: FactoringRecourse!
+  accountingTreatment: FactoringAccountingTreatment!
+  fundingDays: Int!
+  submissionTime: Int!
+  notes: String
+  feeTiers: [FactoringFeeTierInput!]!
+  documentTypeIds: [ID!]
+}
+
+input UpdateFactoringAgreementInput {
+  id: ID!
+  version: Int!
+  agreement: FactoringAgreementInput!
+}
+
+input ChangeFactoringAgreementStatusInput {
+  id: ID!
+  version: Int!
+  "When the agreement stops covering invoices. Defaults to now."
+  endAt: Timestamp
+}
+
+input FactoringNoaListInput {
+  table: DataTableConnectionInput!
+  customerId: ID
+  factoringCompanyId: ID
+  statuses: [FactoringNoaStatus!]
+}
+
+input DraftFactoringNoaInput {
+  customerId: ID!
+  factoringCompanyId: ID!
+  notes: String
+}
+
+input SendFactoringNoaInput {
+  id: ID!
+  version: Int!
+  "Addresses to send to. Defaults to the customer's invoice email recipients."
+  recipient: String
+}
+
+input AcknowledgeFactoringNoaInput {
+  id: ID!
+  version: Int!
+  acknowledgedAt: Timestamp!
+  "The signed copy, uploaded as a document on this notice."
+  signedDocumentId: ID!
+  expiresAt: Timestamp
+}
+
+input ReleaseFactoringNoaInput {
+  id: ID!
+  version: Int!
+  reason: String!
+}
+
+input FactoringInvoiceStateListInput {
+  table: DataTableConnectionInput!
+  verdicts: [FactoringVerdict!]
+  factoringCompanyId: ID
+  customerId: ID
+}
+
+input SetInvoiceFactoringOverrideInput {
+  invoiceId: ID!
+  override: InvoiceFactoringOverride!
+  "Required when keeping the invoice out of factoring."
+  reason: String
+}
+
+input RequestMissingFactoringDocumentsInput {
+  invoiceId: ID!
+  "Ask for these only. Defaults to every document the invoice is missing."
+  documentTypeIds: [ID!]
+  "Defaults to the driver, then the carrier, then the customer's invoice email recipients."
+  recipient: String
+  message: String
+}
+
+extend type Invoice {
+  factoringOverride: InvoiceFactoringOverride!
+  "The agreement in force when the invoice posted."
+  factoringAgreementId: ID
+  "The factor the invoice was assigned to when it posted."
+  factoringCompany: FactoringCompany
+  "Whether the invoice is ready to factor. Null until it is first evaluated."
+  factoringState: FactoringInvoiceState
+}
+
+extend type CustomerBillingProfile {
+  factoringCompany: FactoringCompany
+}
+
+extend type FactoringCompany {
+  agreements: [FactoringAgreement!]!
+}
+
+extend type Query {
+  factoringAgreements(factoringCompanyId: ID!): [FactoringAgreement!]!
+  factoringAgreement(id: ID!): FactoringAgreement!
+  factoringNoas(input: FactoringNoaListInput!): FactoringNoaConnection!
+  factoringNoa(id: ID!): FactoringNoa!
+  "Evaluates the invoice now and returns its readiness."
+  factoringReadiness(invoiceId: ID!): FactoringInvoiceState!
+  factoringInvoiceStates(input: FactoringInvoiceStateListInput!): FactoringInvoiceStateConnection!
+  factoringSummary: FactoringSummary!
+}
+
+extend type Mutation {
+  createFactoringAgreement(input: FactoringAgreementInput!): FactoringAgreement!
+  updateFactoringAgreement(input: UpdateFactoringAgreementInput!): FactoringAgreement!
+  activateFactoringAgreement(input: ChangeFactoringAgreementStatusInput!): FactoringAgreement!
+  endFactoringAgreement(input: ChangeFactoringAgreementStatusInput!): FactoringAgreement!
+  draftFactoringNoa(input: DraftFactoringNoaInput!): FactoringNoa!
+  "Emails the customer the notice letter. Sending the same version again does not send twice."
+  sendFactoringNoa(input: SendFactoringNoaInput!): FactoringNoa!
+  acknowledgeFactoringNoa(input: AcknowledgeFactoringNoaInput!): FactoringNoa!
+  releaseFactoringNoa(input: ReleaseFactoringNoaInput!): FactoringNoa!
+  setInvoiceFactoringOverride(input: SetInvoiceFactoringOverrideInput!): FactoringInvoiceState!
+  requestMissingFactoringDocuments(input: RequestMissingFactoringDocumentsInput!): FactoringDocumentRequestResult!
+}
+`, BuiltIn: false},
 	{Name: "../schema/factoring_company.graphqls", Input: `"A factor an organization sells its receivables to. Customers assigned to it are invoiced with its remit-to and notice of assignment."
 type FactoringCompany {
   id: ID!
@@ -19540,6 +19950,35 @@ type FactoringCompanyConnection {
 extend type Query {
   factoringCompanies(input: DataTableConnectionInput!): FactoringCompanyConnection!
   factoringCompany(id: ID!): FactoringCompany
+}
+
+input FactoringCompanyInput {
+  status: EntityStatus!
+  code: String!
+  name: String!
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  stateId: ID!
+  postalCode: String!
+  email: String
+  phoneNumber: String
+  remittanceInstructions: String
+  noticeOfAssignment: String
+  "Kept in step with the agreement in force once the factor has one."
+  nonRecourse: Boolean = false
+  notes: String
+}
+
+input UpdateFactoringCompanyInput {
+  id: ID!
+  version: Int!
+  factoringCompany: FactoringCompanyInput!
+}
+
+extend type Mutation {
+  createFactoringCompany(input: FactoringCompanyInput!): FactoringCompany!
+  updateFactoringCompany(input: UpdateFactoringCompanyInput!): FactoringCompany!
 }
 `, BuiltIn: false},
 	{Name: "../schema/fiscal_period.graphqls", Input: `enum PeriodType {

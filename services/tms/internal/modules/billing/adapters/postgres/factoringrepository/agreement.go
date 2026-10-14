@@ -132,6 +132,37 @@ func (r *agreementRepository) ListByFactoringCompany(
 	})
 }
 
+func (r *agreementRepository) ListByFactoringCompanyIDs(
+	ctx context.Context,
+	req *factoringports.ListAgreementsByFactoringCompanyIDsRequest,
+) (map[pulid.ID][]*factoring.Agreement, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*factoring.Agreement, error) {
+			result := make(map[pulid.ID][]*factoring.Agreement, len(req.FactoringCompanyIDs))
+			if len(req.FactoringCompanyIDs) == 0 {
+				return result, nil
+			}
+			cols := factoringcol.AgreementColumns
+			rows := make([]*factoring.Agreement, 0, len(req.FactoringCompanyIDs))
+			if err := r.withChildren(r.db.DBForContext(ctx).NewSelect().Model(&rows)).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return factoringcol.AgreementScopeTenant(sq, req.TenantInfo).
+						Where(cols.FactoringCompanyID.In(), bun.List(req.FactoringCompanyIDs))
+				}).
+				Order(cols.EffectiveFrom.OrderDesc(), cols.ID.OrderDesc()).
+				Scan(ctx); err != nil {
+				return nil, fmt.Errorf("list factoring agreements by factor: %w", err)
+			}
+			for _, row := range rows {
+				result[row.FactoringCompanyID] = append(result[row.FactoringCompanyID], row)
+			}
+			return result, nil
+		},
+	)
+}
+
 func (r *agreementRepository) GetInForce(
 	ctx context.Context,
 	req factoringports.GetAgreementInForceRequest,

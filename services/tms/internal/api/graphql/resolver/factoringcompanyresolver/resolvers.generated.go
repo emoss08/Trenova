@@ -12,4 +12,6 @@ type Deps struct {
 	FactoringCompanyService *factoringcompanyservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

@@ -63,6 +63,7 @@ import (
 
 func SharedOptions() fx.Option {
 	return fx.Options(
+		fx.Decorate(documentrepository.Observe),
 		fx.Provide(
 			thumbnailservice.NewGenerator,
 			capturereleaseservice.New,

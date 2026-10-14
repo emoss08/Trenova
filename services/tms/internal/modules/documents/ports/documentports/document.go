@@ -143,3 +143,15 @@ type DocumentRepository interface {
 	BulkDelete(ctx context.Context, req BulkDeleteDocumentRequest) error
 	DeleteByLineageIDs(ctx context.Context, req DeleteDocumentLineageRequest) error
 }
+
+const DocumentChangeObserverGroup = `group:"document_change_observers"`
+
+type DocumentChange struct {
+	TenantInfo   pagination.TenantInfo
+	ResourceType string
+	ResourceIDs  []string
+}
+
+type DocumentChangeObserver interface {
+	DocumentsChanged(ctx context.Context, change *DocumentChange)
+}

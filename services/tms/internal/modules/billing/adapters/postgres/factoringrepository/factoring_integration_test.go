@@ -144,6 +144,7 @@ func (e *factoringEnv) agreement(factorID pulid.ID, from int64, to *int64) *fact
 		BusinessUnitID:       e.tenantInfo.BuID,
 		FactoringCompanyID:   factorID,
 		Status:               factoring.AgreementStatusActive,
+		ActivatedAt:          new(from),
 		EffectiveFrom:        from,
 		EffectiveTo:          to,
 		AdvanceRateBP:        9000,
@@ -234,6 +235,7 @@ func TestAgreementLifecycle(t *testing.T) {
 
 	draft := env.agreement(factor.ID, now, nil)
 	draft.Status = factoring.AgreementStatusDraft
+	draft.ActivatedAt = nil
 	_, err = env.agreements.Create(env.ctx, draft)
 	require.NoError(t, err, "a draft may overlap the active agreement")
 
