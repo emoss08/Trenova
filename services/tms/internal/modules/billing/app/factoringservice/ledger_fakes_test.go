@@ -196,3 +196,39 @@ func (f *fakeJournals) balance(accountID pulid.ID) int64 {
 	}
 	return total
 }
+
+func (f *fakeSubmissions) ClaimChargebackWarning(
+	_ context.Context,
+	req factoringports.ClaimChargebackWarningRequest,
+) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, sub := range f.byID {
+		for _, item := range sub.Items {
+			if item.ID != req.ItemID {
+				continue
+			}
+			if item.ChargebackWarnedAt != nil || item.Status != factoring.SubmissionItemStatusFunded {
+				return false, nil
+			}
+			at := req.At
+			item.ChargebackWarnedAt = &at
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+type fakeAttention struct {
+	factoringports.WatchtowerReader
+	due []*factoringports.ChargebackDue
+	req *factoringports.ListChargebacksDueRequest
+}
+
+func (f *fakeAttention) ListChargebacksDue(
+	_ context.Context,
+	req *factoringports.ListChargebacksDueRequest,
+) ([]*factoringports.ChargebackDue, error) {
+	f.req = req
+	return f.due, nil
+}

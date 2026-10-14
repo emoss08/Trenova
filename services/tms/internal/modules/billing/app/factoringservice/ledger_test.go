@@ -542,3 +542,61 @@ func TestReleaseOfAnEmptyReserveBooksNothing(t *testing.T) {
 	assert.Len(t, h.journals.postings, 1)
 	assert.Equal(t, factoring.SubmissionItemStatusSettled, result.Submission.Item(h.first.ID).Status)
 }
+
+func TestSweepWarnsOnceAboutChargebacksComingDue(t *testing.T) {
+	t.Parallel()
+	h := newLedgerHarness(t, factoring.AccountingTreatmentSale)
+	h.fundFirst(t)
+	attention := &fakeAttention{due: []*factoringports.ChargebackDue{
+		{
+			ItemID:        h.first.ID,
+			SubmissionID:  h.sub.ID,
+			InvoiceID:     h.first.InvoiceID,
+			InvoiceNumber: h.first.InvoiceNumber,
+			DeadlineAt:    testNow + 3*timeutils.SecondsPerDay,
+		},
+		{
+			ItemID:        h.second.ID,
+			SubmissionID:  h.sub.ID,
+			InvoiceID:     h.second.InvoiceID,
+			InvoiceNumber: h.second.InvoiceNumber,
+			DeadlineAt:    testNow + 3*timeutils.SecondsPerDay,
+		},
+	}}
+	events := &fakeEvents{}
+	svc := NewReadinessService(ReadinessParams{
+		Submissions: h.submissions,
+		Attention:   attention,
+		Events:      events,
+		Logger:      zap.NewNop(),
+	}).(*ReadinessService)
+	svc.now = func() int64 { return testNow }
+
+	warned, err := svc.warnChargebacksDue(t.Context(), h.tenantInfo)
+	require.NoError(t, err)
+	assert.Equal(t, 1, warned, "the rejected item is not funded and is skipped")
+	require.NotNil(t, attention.req)
+	assert.True(t, attention.req.UnwarnedOnly)
+	assert.Equal(t, testNow+7*timeutils.SecondsPerDay, attention.req.Before)
+	assert.Equal(t, []string{string(agent.EventFactoringChargebackDue)}, events.kinds())
+
+	warned, err = svc.warnChargebacksDue(t.Context(), h.tenantInfo)
+	require.NoError(t, err)
+	assert.Zero(t, warned, "a warned item is not announced again")
+}
+
+func TestLedgerRowsCarryTheirOwnIDs(t *testing.T) {
+	t.Parallel()
+	h := newLedgerHarness(t, factoring.AccountingTreatmentSale)
+	_, err := h.svc.RecordFunding(t.Context(), &factoringports.RecordFundingRequest{
+		TenantInfo: h.tenantInfo, SubmissionID: h.sub.ID, Version: h.version(t), FundedOn: testNow,
+		Items: []factoringports.FundingItemInput{
+			{ItemID: h.first.ID, Outcome: factoring.FundingOutcomeFunded},
+			{ItemID: h.second.ID, Outcome: factoring.FundingOutcomeFunded},
+		},
+	}, h.actor)
+	require.NoError(t, err)
+	require.Len(t, h.projection.entries, 2)
+	assert.True(t, h.projection.entries[0].ID.IsNotNil())
+	assert.NotEqual(t, h.projection.entries[0].ID, h.projection.entries[1].ID)
+}

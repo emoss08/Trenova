@@ -169,6 +169,10 @@ func (s SubmissionStatus) AwaitsFunding() bool {
 	return s == SubmissionStatusSent || s == SubmissionStatusPartially
 }
 
+func AwaitingFundingStatuses() []SubmissionStatus {
+	return []SubmissionStatus{SubmissionStatusSent, SubmissionStatusPartially}
+}
+
 func (s SubmissionStatus) IsLive() bool {
 	return s == SubmissionStatusSending || s == SubmissionStatusSent ||
 		s == SubmissionStatusFailed

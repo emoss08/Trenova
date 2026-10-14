@@ -73,11 +73,13 @@ type ARAgingTrendPoint struct {
 }
 
 type ARCashFlowPoint struct {
-	WeekStart     int64 `json:"weekStart"`
-	ExpectedMinor int64 `json:"expectedMinor"`
-	OpenDueMinor  int64 `json:"openDueMinor"`
-	ActualMinor   int64 `json:"actualMinor"`
-	IsForecast    bool  `json:"isForecast"`
+	WeekStart            int64 `json:"weekStart"`
+	ExpectedMinor        int64 `json:"expectedMinor"`
+	OpenDueMinor         int64 `json:"openDueMinor"`
+	ActualMinor          int64 `json:"actualMinor"`
+	FactorAdvancesMinor  int64 `json:"factorAdvancesMinor"`
+	ReserveReleasesMinor int64 `json:"reserveReleasesMinor"`
+	IsForecast           bool  `json:"isForecast"`
 }
 
 type ARCollectionTotals struct {

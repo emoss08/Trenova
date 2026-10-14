@@ -197,7 +197,8 @@ func (r *EvaluateResult) Add(other *EvaluateResult) {
 
 type SweepResult struct {
 	EvaluateResult
-	NoasWarned int `json:"noasWarned"`
+	NoasWarned        int `json:"noasWarned"`
+	ChargebacksWarned int `json:"chargebacksWarned"`
 }
 
 type SetOverrideRequest struct {

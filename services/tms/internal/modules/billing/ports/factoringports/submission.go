@@ -58,7 +58,14 @@ type SetSubmissionDocumentsRequest struct {
 	Packets               map[pulid.ID]pulid.ID `json:"packets"`
 }
 
+type ClaimChargebackWarningRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	ItemID     pulid.ID              `json:"itemId"`
+	At         int64                 `json:"at"`
+}
+
 type SubmissionRepository interface {
+	ClaimChargebackWarning(ctx context.Context, req ClaimChargebackWarningRequest) (bool, error)
 	Create(ctx context.Context, entity *factoring.Submission) (*factoring.Submission, error)
 	Update(ctx context.Context, entity *factoring.Submission) (*factoring.Submission, error)
 	SetDocuments(ctx context.Context, req *SetSubmissionDocumentsRequest) error

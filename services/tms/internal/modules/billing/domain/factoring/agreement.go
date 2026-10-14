@@ -24,6 +24,7 @@ const (
 	MaxAgreementNotesLength  = 2000
 	MaxFeeTiers              = 20
 	DefaultChargebackWindow  = 90
+	ChargebackWarningDays    = 7
 	DefaultFundingDays       = 2
 	DefaultSubmissionMinutes = 600
 )

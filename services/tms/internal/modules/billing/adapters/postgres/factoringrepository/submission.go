@@ -492,3 +492,30 @@ func liveItemStatuses(includeChargedBack bool) []factoring.SubmissionItemStatus 
 	}
 	return statuses
 }
+
+func (r *submissionRepository) ClaimChargebackWarning(
+	ctx context.Context,
+	req factoringports.ClaimChargebackWarningRequest,
+) (bool, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		cols := factoringcol.SubmissionItemColumns
+		res, err := r.db.DBForContext(ctx).NewUpdate().
+			Model((*factoring.SubmissionItem)(nil)).
+			Set(cols.ChargebackWarnedAt.Set(), req.At).
+			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return factoringcol.SubmissionItemScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ItemID).
+					Where(cols.Status.Eq(), factoring.SubmissionItemStatusFunded).
+					Where(cols.ChargebackWarnedAt.IsNull())
+			}).
+			Exec(ctx)
+		if err != nil {
+			return false, fmt.Errorf("claim chargeback warning: %w", err)
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return false, fmt.Errorf("claim chargeback warning: %w", err)
+		}
+		return rows > 0, nil
+	})
+}

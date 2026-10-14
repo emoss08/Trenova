@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
@@ -242,6 +243,153 @@ func (r *watchtowerReader) ListFailedSubmissions(
 				Limit(int64(limit)).
 				Scan(ctx, &rows); err != nil {
 				return nil, fmt.Errorf("list failed factoring schedules: %w", err)
+			}
+
+			return rows, nil
+		},
+	)
+}
+
+func (r *watchtowerReader) ListUnfundedSubmissions(
+	ctx context.Context,
+	req *factoringports.ListUnfundedSubmissionsRequest,
+) ([]*factoringports.UnfundedSubmission, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*factoringports.UnfundedSubmission, error) {
+			sub := factoringcol.SubmissionColumns
+			item := factoringcol.SubmissionItemColumns
+			itemTable := factoringcol.SubmissionItemTable
+			agr := factoringcol.AgreementColumns
+			agrTable := factoringcol.AgreementTable
+			fac := factoringcompanycol.FactoringCompanyColumns
+			facTable := factoringcompanycol.FactoringCompanyTable
+			dueAt := buncolgen.Expr("{0} + {1} * 86400", sub.SentAt, agr.FundingDays)
+
+			limit := boundedLimit(req.Limit, maxAttentionRows)
+			rows := make([]*factoringports.UnfundedSubmission, 0, min(limit, 16))
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model((*factoring.Submission)(nil)).
+				ColumnExpr(sub.ID.As("submission_id")).
+				ColumnExpr(sub.Number.As("number")).
+				ColumnExpr(sub.Status.As("status")).
+				ColumnExpr(sub.FactoringCompanyID.As("factoring_company_id")).
+				ColumnExpr(fac.Name.Expr(coalesceBlank)+" AS factor_name").
+				ColumnExpr(sub.CurrencyCode.As("currency_code")).
+				ColumnExpr("COUNT(*) AS pending_count").
+				ColumnExpr(item.ExpectedAdvanceMinor.Expr("SUM({})")+" AS expected_advance_minor").
+				ColumnExpr(sub.SentAt.As("sent_at")).
+				ColumnExpr(dueAt+" AS due_at").
+				Join("JOIN "+itemTable.As(itemTable.Alias)).
+				JoinOn(item.SubmissionID.EqColumn(sub.ID)).
+				JoinOn(item.OrganizationID.EqColumn(sub.OrganizationID)).
+				JoinOn(item.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
+				JoinOn(item.Status.Eq(), factoring.SubmissionItemStatusPending).
+				Join("JOIN "+agrTable.As(agrTable.Alias)).
+				JoinOn(agr.ID.EqColumn(sub.AgreementID)).
+				JoinOn(agr.OrganizationID.EqColumn(sub.OrganizationID)).
+				JoinOn(agr.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
+				Join("LEFT JOIN "+facTable.As(facTable.Alias)).
+				JoinOn(fac.ID.EqColumn(sub.FactoringCompanyID)).
+				JoinOn(fac.OrganizationID.EqColumn(sub.OrganizationID)).
+				JoinOn(fac.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return factoringcol.SubmissionScopeTenant(sq, req.TenantInfo).
+						Where(sub.Status.In(), bun.List(factoring.AwaitingFundingStatuses())).
+						Where(sub.SentAt.IsNotNull()).
+						Where(dueAt+" < ?", req.At)
+				}).
+				GroupExpr(sub.ID.Qualified()).
+				GroupExpr(sub.OrganizationID.Qualified()).
+				GroupExpr(sub.BusinessUnitID.Qualified()).
+				GroupExpr(fac.Name.Qualified()).
+				GroupExpr(agr.FundingDays.Qualified()).
+				OrderExpr(dueAt+" ASC").
+				Order(sub.ID.OrderAsc()).
+				Limit(int64(limit)).
+				Scan(ctx, &rows); err != nil {
+				return nil, fmt.Errorf("list unfunded factoring schedules: %w", err)
+			}
+
+			return rows, nil
+		},
+	)
+}
+
+func (r *watchtowerReader) ListChargebacksDue(
+	ctx context.Context,
+	req *factoringports.ListChargebacksDueRequest,
+) ([]*factoringports.ChargebackDue, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*factoringports.ChargebackDue, error) {
+			item := factoringcol.SubmissionItemColumns
+			sub := factoringcol.SubmissionColumns
+			subTable := factoringcol.SubmissionTable
+			agr := factoringcol.AgreementColumns
+			agrTable := factoringcol.AgreementTable
+			cus := customercol.CustomerColumns
+			cusTable := customercol.CustomerTable
+			fac := factoringcompanycol.FactoringCompanyColumns
+			facTable := factoringcompanycol.FactoringCompanyTable
+			deadline := buncolgen.Expr("{0} + {1} * 86400", item.FundedOn, agr.ChargebackWindowDays)
+
+			limit := boundedLimit(req.Limit, maxAttentionRows)
+			rows := make([]*factoringports.ChargebackDue, 0, min(limit, 16))
+			if err := r.db.DBForContext(ctx).NewSelect().
+				Model((*factoring.SubmissionItem)(nil)).
+				ColumnExpr(item.ID.As("item_id")).
+				ColumnExpr(item.SubmissionID.As("submission_id")).
+				ColumnExpr(sub.Number.As("submission_number")).
+				ColumnExpr(item.InvoiceID.As("invoice_id")).
+				ColumnExpr(item.InvoiceNumber.As("invoice_number")).
+				ColumnExpr(item.CustomerID.As("customer_id")).
+				ColumnExpr(cus.Name.Expr(coalesceBlank)+" AS customer_name").
+				ColumnExpr(sub.FactoringCompanyID.As("factoring_company_id")).
+				ColumnExpr(fac.Name.Expr(coalesceBlank)+" AS factor_name").
+				ColumnExpr(sub.CurrencyCode.As("currency_code")).
+				ColumnExpr(item.FaceMinor.As("face_minor")).
+				ColumnExpr(buncolgen.Expr(
+					"COALESCE({0}, 0) + COALESCE({1}, 0)",
+					item.AdvanceMinor,
+					item.FeeMinor,
+				)+" AS repurchase_minor").
+				ColumnExpr(item.FundedOn.As("funded_on")).
+				ColumnExpr(deadline+" AS deadline_at").
+				Join("JOIN "+subTable.As(subTable.Alias)).
+				JoinOn(sub.ID.EqColumn(item.SubmissionID)).
+				JoinOn(sub.OrganizationID.EqColumn(item.OrganizationID)).
+				JoinOn(sub.BusinessUnitID.EqColumn(item.BusinessUnitID)).
+				Join("JOIN "+agrTable.As(agrTable.Alias)).
+				JoinOn(agr.ID.EqColumn(sub.AgreementID)).
+				JoinOn(agr.OrganizationID.EqColumn(sub.OrganizationID)).
+				JoinOn(agr.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
+				Join("LEFT JOIN "+cusTable.As(cusTable.Alias)).
+				JoinOn(cus.ID.EqColumn(item.CustomerID)).
+				JoinOn(cus.OrganizationID.EqColumn(item.OrganizationID)).
+				JoinOn(cus.BusinessUnitID.EqColumn(item.BusinessUnitID)).
+				Join("LEFT JOIN "+facTable.As(facTable.Alias)).
+				JoinOn(fac.ID.EqColumn(sub.FactoringCompanyID)).
+				JoinOn(fac.OrganizationID.EqColumn(sub.OrganizationID)).
+				JoinOn(fac.BusinessUnitID.EqColumn(sub.BusinessUnitID)).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = factoringcol.SubmissionItemScopeTenant(sq, req.TenantInfo).
+						Where(item.Status.Eq(), factoring.SubmissionItemStatusFunded).
+						Where(item.FundedOn.IsNotNull()).
+						Where(agr.Recourse.Eq(), factoring.RecourseFull).
+						Where(deadline+" <= ?", req.Before)
+					if req.UnwarnedOnly {
+						sq = sq.Where(item.ChargebackWarnedAt.IsNull())
+					}
+					return sq
+				}).
+				OrderExpr(deadline+" ASC").
+				Order(item.ID.OrderAsc()).
+				Limit(int64(limit)).
+				Scan(ctx, &rows); err != nil {
+				return nil, fmt.Errorf("list factored invoices nearing chargeback: %w", err)
 			}
 
 			return rows, nil
