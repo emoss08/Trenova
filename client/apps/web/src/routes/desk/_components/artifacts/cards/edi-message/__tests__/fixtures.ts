@@ -106,6 +106,59 @@ export function wireMessage(overrides: Record<string, unknown> = {}): Record<str
   };
 }
 
+/**
+ * The wire form of the message's partner document profile, as edi.EDIPartnerDocumentProfile
+ * marshals it. Its acknowledgment column defaults to '{}', so a profile saved without
+ * acknowledgment expectations sends every field at its zero value: an empty type and an
+ * empty severity.
+ */
+export function wireDocumentProfile(
+  acknowledgment: Record<string, unknown> = {
+    expected: false,
+    type: "",
+    slaInMinutes: 0,
+    missingAckSeverity: "",
+  },
+): Record<string, unknown> {
+  return {
+    id: "edipdp_1",
+    businessUnitId: "bu_1",
+    organizationId: "org_1",
+    ediPartnerId: "edip_1",
+    documentTypeId: "edidt_1",
+    templateId: "editpl_1",
+    templateVersionId: null,
+    name: "Tyson 214",
+    status: "Active",
+    direction: "Outbound",
+    standard: "X12",
+    transactionSet: "214",
+    x12VersionOverride: "",
+    functionalGroupId: "QM",
+    envelope: {
+      interchangeSenderQualifier: "ZZ",
+      interchangeSenderId: "TRENOVA",
+      interchangeReceiverQualifier: "ZZ",
+      interchangeReceiverId: "TYSON",
+      applicationSenderCode: "TRENOVA",
+      applicationReceiverCode: "TYSON",
+      interchangeUsageIndicator: "P",
+      elementSeparator: "*",
+      segmentTerminator: "~",
+      componentSeparator: ">",
+      repetitionSeparator: "^",
+    },
+    acknowledgment,
+    validationMode: "Strict",
+    partnerSettings: {},
+    partnerSettingsSchemaId: null,
+    partnerSettingsSchemaVersion: 0,
+    version: 1,
+    createdAt: NOW - 30 * 24 * HOUR,
+    updatedAt: NOW - 30 * 24 * HOUR,
+  };
+}
+
 export const RAW_214 = [
   "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*TYSONFOODS     *261009*1415*U*00401*000000417*0*P*>",
   "GS*QM*TRENOVA*TYSONFOODS*20261009*1415*417*X*004010",
