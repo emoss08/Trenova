@@ -1,18 +1,20 @@
 import type { FactoringVerdict } from "@trenova/graphql/generated/graphql";
 import { parseAsStringLiteral } from "nuqs";
 
-export const FACTORING_TABS = ["ready", "not-ready"] as const;
+export const FACTORING_TABS = ["ready", "not-ready", "submitted", "schedules"] as const;
 export type FactoringTab = (typeof FACTORING_TABS)[number];
+export type FactoringQueueTab = Exclude<FactoringTab, "schedules">;
 
 export const factoringSearchParamsParser = {
   view: parseAsStringLiteral(FACTORING_TABS).withDefault("ready"),
 };
 
-const TAB_VERDICTS: Record<FactoringTab, FactoringVerdict[]> = {
+const TAB_VERDICTS: Record<FactoringQueueTab, FactoringVerdict[]> = {
   ready: ["Ready"],
   "not-ready": ["NotReady"],
+  submitted: ["Submitted"],
 };
 
-export function factoringTabVerdicts(tab: FactoringTab): FactoringVerdict[] {
+export function factoringTabVerdicts(tab: FactoringQueueTab): FactoringVerdict[] {
   return TAB_VERDICTS[tab];
 }

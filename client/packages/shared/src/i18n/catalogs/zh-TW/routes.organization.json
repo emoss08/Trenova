@@ -48,7 +48,6 @@
   "Raw X12 and payload snapshots for delivered/inbound messages older than this are blanked. 0 keeps raw payloads forever. Purged messages can no longer be replayed.": "早於此期限的已送達／收件訊息，其原始 X12 與酬載快照會被清空。設為 0 則永久保留原始酬載。已清除的訊息無法再重送。",
   "Raw inbound EDI file contents older than this are blanked while metadata is kept. 0 keeps raw payloads forever.": "早於此期限的 EDI 收件檔案內容會被清空，但保留中繼資料。設為 0 則永久保留原始酬載。",
   "Recipient email": "收件人電子郵件",
-  "Recipients": "收件人",
   "Reply-To": "回覆地址",
   "Reply-to email": "回覆電子郵件",
   "Retention windows": "保存期間",

@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 588.
+Tools listed: 593.
 
 ## The model
 
@@ -59,12 +59,12 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 201 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 203 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 238 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 239 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 24 |
-| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 37 |
+| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 39 |
 | Money | Moves or commits money. | Automatic | Yes | 98 |
 
 ## Reads only
@@ -112,6 +112,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get EDI transfer (`get_edi_transfer`) | Reads only | Automatic | — | Always, from EDI | Reads a load tender a trading partner wrote, stops and references included; nothing changes and nothing is sent. |
 | Get factoring agreement (`get_factoring_agreement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get factoring readiness (`get_factoring_readiness`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get factoring submission (`get_factoring_submission`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get fiscal close blockers (`get_fiscal_close_blockers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get formula template (`get_formula_template`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get fuel surcharge rates (`get_fuel_surcharge_rates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -185,6 +186,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List expiring credentials (`list_expiring_credentials`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring noas (`list_factoring_noas`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring ready invoices (`list_factoring_ready_invoices`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List factoring submissions (`list_factoring_submissions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List fiscal periods (`list_fiscal_periods`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List fleet codes (`list_fleet_codes`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List formula templates (`list_formula_templates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -315,6 +317,7 @@ Changes records only people inside the organization see.
 | Build invoice run (`build_invoice_run`) | Inside the organization | Automatic | — | — | Builds a proposal of invoices inside Trenova for a biller to review; it invoices nothing and is discarded with cancel_invoice_run. |
 | Cancel DOT random draw (`cancel_dot_random_draw`) | Inside the organization | Propose | — | — | Voids a round so the period is drawn again; the cancelled round and its reason stay on the record, and it cannot be undone. |
 | Cancel DOT test (`cancel_dot_test`) | Inside the organization | Propose | — | — | Voids a scheduled collection; the row and its reason stay on the record an auditor reads, and it cannot be undone. |
+| Cancel factoring submission (`cancel_factoring_submission`) | Inside the organization | Ask first | — | — | Releases invoices from a schedule; a person approves it. |
 | Cancel invoice run (`cancel_invoice_run`) | Inside the organization | Ask first | — | — | Discards a proposal of invoices; nothing was invoiced, and a new run is built with build_invoice_run. |
 | Cancel journal reversal (`cancel_journal_reversal`) | Inside the organization | Ask first | The reason is what the reversal's requester reads next, so a run that has read outside text proposes it. | — | Withdraws a reversal before it reaches the ledger; nothing is booked, and it is requested again if it was needed after all. |
 | Cancel manual journal (`cancel_manual_journal`) | Inside the organization | Ask first | The reason is what the journal's author reads next, so a run that has read outside text proposes it. | — | Withdraws a journal before it reaches the ledger; nothing is booked, and the entry is drafted again if it was needed after all. |
@@ -579,6 +582,7 @@ Sends to someone outside the organization.
 | Reschedule stop (`reschedule_stop`) | Sent outside the organization | Ask first | — | — | A changed appointment is sent as an EDI tender change to the trading partners the load was tendered to. |
 | Resolve service failure (`resolve_service_failure`) | Sent outside the organization | Ask first | — | — | Resolving a failure generates an EDI 214 to the customer's trading partner carrying the reason chosen. |
 | Retry EDI message delivery (`retry_edi_message_delivery`) | Sent outside the organization | Propose | — | — | Sends documents to trading partners outside the organization, who act on what they receive; a document sent cannot be recalled. A person always decides. |
+| Retry factoring submission (`retry_factoring_submission`) | Sent outside the organization | Ask first | — | — | Sends receivables out of the organization again; a person approves it. |
 | Review EDI tender change (`review_edi_tender_change`) | Sent outside the organization | Propose | — | — | Changes a load this organization committed to on another organization's word, and that organization sees the outcome. A person always decides. |
 | Review EDI transfer change (`review_edi_transfer_change`) | Sent outside the organization | Propose | — | — | Changes a shipment on another organization's report, and that organization sees the outcome on its own shipment. A person always decides. |
 | Review service failure (`review_service_failure`) | Sent outside the organization | Propose | — | — | Reviewing a failure is a person's attestation and may send an EDI 214 to the customer's trading partner; only a person approves it. |
@@ -592,6 +596,7 @@ Sends to someone outside the organization.
 | Send invoices (`send_invoices`) | Sent outside the organization | Propose | — | — | Emails several customers their invoices at once; only a person sends them, is named as who sent each, and sees every recipient before approving. |
 | Send rate confirmation (`send_rate_confirmation`) | Sent outside the organization | Propose | — | — | Emails a binding agreement, with a link to sign it, to a carrier outside the organization; the recipients come from the carrier's record, and a sent email cannot be recalled, so a person decides every send. |
 | Share customer tracking link (`share_customer_tracking_link`) | Seen by a customer, sent outside the organization | Ask first | Each call is classified by what it reaches. | — | Gives the customer a link to the shipment's tracking page and can email it outside the organization; the link can be revoked. |
+| Submit invoices to factor (`submit_invoices_to_factor`) | Sent outside the organization | Propose | — | — | Sells receivables to a factor and sends them out of the organization; a person approves every schedule. |
 | Tender move to carriers (`tender_move_to_carriers`) | Sent outside the organization | Ask first | — | — | Offers the load to carriers outside the organization. |
 | Tender move to routing guide (`tender_move_to_routing_guide`) | Sent outside the organization | Ask first | — | — | Offers the load to carriers outside the organization. |
 | Update customer (`update_customer`) | Inside the organization, sent outside the organization | Ask first | Each call is classified by what it reaches. A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it. | — | Changes a customer inside Trenova and leaves its billing and email profiles alone; nothing is sent. Changing who receives status emails is held for a person. |

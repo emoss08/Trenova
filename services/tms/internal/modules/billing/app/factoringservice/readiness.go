@@ -45,6 +45,7 @@ type ReadinessParams struct {
 	States        factoringports.InvoiceStateRepository
 	Agreements    factoringports.AgreementRepository
 	Noas          factoringports.NoaRepository
+	Submissions   factoringports.SubmissionRepository
 	Invoices      invoiceports.InvoiceRepository
 	Documents     documentports.DocumentRepository
 	Shipments     shipmentports.ShipmentService `optional:"true"`
@@ -63,6 +64,7 @@ type ReadinessService struct {
 	states        factoringports.InvoiceStateRepository
 	agreements    factoringports.AgreementRepository
 	noas          factoringports.NoaRepository
+	submissions   factoringports.SubmissionRepository
 	invoices      invoiceports.InvoiceRepository
 	documents     documentports.DocumentRepository
 	shipments     shipmentports.ShipmentService
@@ -86,6 +88,7 @@ func NewReadinessService(p ReadinessParams) factoringports.ReadinessService {
 		states:        p.States,
 		agreements:    p.Agreements,
 		noas:          p.Noas,
+		submissions:   p.Submissions,
 		invoices:      p.Invoices,
 		documents:     p.Documents,
 		shipments:     p.Shipments,
@@ -312,6 +315,14 @@ func (s *ReadinessService) gather(
 
 	in.OpenDispute = inv.DisputeStatus == invoice.DisputeStatusDisputed
 
+	live, err := s.liveItem(ctx, tenantInfo, inv.ID)
+	if err != nil {
+		return err
+	}
+	if live != nil {
+		in.SubmissionNumber = live.SubmissionNumber
+	}
+
 	legs := inv.LegShipmentIDs()
 	accepted, err := s.acceptedTypes(ctx, tenantInfo, inv.ID, legs, in.At)
 	if err != nil {
@@ -330,6 +341,21 @@ func (s *ReadinessService) gather(
 		in.Shipments = append(in.Shipments, facts)
 	}
 	return nil
+}
+
+func (s *ReadinessService) liveItem(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	invoiceID pulid.ID,
+) (*factoringports.LiveItem, error) {
+	live, err := s.submissions.ListLiveItems(ctx, &factoringports.ListLiveItemsRequest{
+		TenantInfo: tenantInfo,
+		InvoiceIDs: []pulid.ID{invoiceID},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return live[invoiceID], nil
 }
 
 func (s *ReadinessService) fillBillingReadiness(
@@ -538,6 +564,17 @@ func (s *ReadinessService) PlanOverride(
 	}
 	if inv.FactoringOverride == req.Override {
 		return &factoringports.OverridePlan{Before: inv, After: inv}, nil
+	}
+	live, err := s.liveItem(ctx, req.TenantInfo, inv.ID)
+	if err != nil {
+		return nil, err
+	}
+	if live != nil {
+		return nil, errortypes.NewBusinessError(
+			"Invoice {0} is on factoring schedule {1}; cancel the schedule before changing whether it is factored",
+			inv.Number,
+			live.SubmissionNumber,
+		)
 	}
 
 	factorID, agreementID, err := s.stampFor(ctx, req.TenantInfo, inv, req.Override)

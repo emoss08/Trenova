@@ -1059,3 +1059,847 @@ var NoaFilter = struct {
 		return buncolgen.NewFieldFilter("updatedAt", op, value)
 	},
 }
+
+// ---------------------------------------------------------------------------
+// Submission — table "factoring_submissions", alias "facsub"
+// ---------------------------------------------------------------------------
+
+// SubmissionTable holds the table name, alias, and primary key columns
+// for the "factoring_submissions" table. The alias "facsub" is used in all generated
+// SQL fragments (e.g. "facsub.id = ?").
+var SubmissionTable = buncolgen.TableInfo{
+	Name:       "factoring_submissions",
+	Alias:      "facsub",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// SubmissionColumns provides type-safe column references for the "factoring_submissions" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(SubmissionColumns.ID.String())
+//	// SELECT facsub.id FROM factoring_submissions AS facsub
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(SubmissionColumns.ID.Eq(), id)           // WHERE facsub.id = ?
+//	q.Order(SubmissionColumns.CreatedAt.OrderDesc())  // ORDER BY facsub.created_at DESC
+var SubmissionColumns = struct {
+	ID                    buncolgen.Column // "id" → qualified: "facsub.id"
+	OrganizationID        buncolgen.Column // "organization_id" → qualified: "facsub.organization_id"
+	BusinessUnitID        buncolgen.Column // "business_unit_id" → qualified: "facsub.business_unit_id"
+	Number                buncolgen.Column // "number" → qualified: "facsub.number"
+	FactoringCompanyID    buncolgen.Column // "factoring_company_id" → qualified: "facsub.factoring_company_id"
+	AgreementID           buncolgen.Column // "agreement_id" → qualified: "facsub.agreement_id"
+	Status                buncolgen.Column // "status" → qualified: "facsub.status"
+	CurrencyCode          buncolgen.Column // "currency_code" → qualified: "facsub.currency_code"
+	InvoiceCount          buncolgen.Column // "invoice_count" → qualified: "facsub.invoice_count"
+	FaceMinor             buncolgen.Column // "face_minor" → qualified: "facsub.face_minor"
+	ExpectedAdvanceMinor  buncolgen.Column // "expected_advance_minor" → qualified: "facsub.expected_advance_minor"
+	ExpectedFeeMinor      buncolgen.Column // "expected_fee_minor" → qualified: "facsub.expected_fee_minor"
+	ExpectedReserveMinor  buncolgen.Column // "expected_reserve_minor" → qualified: "facsub.expected_reserve_minor"
+	SchedulePDFDocumentID buncolgen.Column // "schedule_pdf_document_id" → qualified: "facsub.schedule_pdf_document_id"
+	ScheduleCSVDocumentID buncolgen.Column // "schedule_csv_document_id" → qualified: "facsub.schedule_csv_document_id"
+	TransportMethod       buncolgen.Column // "transport_method" → qualified: "facsub.transport_method"
+	TransportTarget       buncolgen.Column // "transport_target" → qualified: "facsub.transport_target"
+	TransportReference    buncolgen.Column // "transport_reference" → qualified: "facsub.transport_reference"
+	SendAttemptGroup      buncolgen.Column // "send_attempt_group" → qualified: "facsub.send_attempt_group"
+	Attempts              buncolgen.Column // "attempts" → qualified: "facsub.attempts"
+	LastError             buncolgen.Column // "last_error" → qualified: "facsub.last_error"
+	IdempotencyKey        buncolgen.Column // "idempotency_key" → qualified: "facsub.idempotency_key"
+	SentAt                buncolgen.Column // "sent_at" → qualified: "facsub.sent_at"
+	FailedAt              buncolgen.Column // "failed_at" → qualified: "facsub.failed_at"
+	CancelledAt           buncolgen.Column // "cancelled_at" → qualified: "facsub.cancelled_at"
+	CancelReason          buncolgen.Column // "cancel_reason" → qualified: "facsub.cancel_reason"
+	SubmittedByID         buncolgen.Column // "submitted_by_id" → qualified: "facsub.submitted_by_id"
+	AgentRunID            buncolgen.Column // "agent_run_id" → qualified: "facsub.agent_run_id"
+	Version               buncolgen.Column // "version" → qualified: "facsub.version"
+	CreatedAt             buncolgen.Column // "created_at" → qualified: "facsub.created_at"
+	UpdatedAt             buncolgen.Column // "updated_at" → qualified: "facsub.updated_at"
+}{
+	ID:                    buncolgen.NewColumn("id", "facsub"),
+	OrganizationID:        buncolgen.NewColumn("organization_id", "facsub"),
+	BusinessUnitID:        buncolgen.NewColumn("business_unit_id", "facsub"),
+	Number:                buncolgen.NewColumn("number", "facsub"),
+	FactoringCompanyID:    buncolgen.NewColumn("factoring_company_id", "facsub"),
+	AgreementID:           buncolgen.NewColumn("agreement_id", "facsub"),
+	Status:                buncolgen.NewColumn("status", "facsub"),
+	CurrencyCode:          buncolgen.NewColumn("currency_code", "facsub"),
+	InvoiceCount:          buncolgen.NewColumn("invoice_count", "facsub"),
+	FaceMinor:             buncolgen.NewColumn("face_minor", "facsub"),
+	ExpectedAdvanceMinor:  buncolgen.NewColumn("expected_advance_minor", "facsub"),
+	ExpectedFeeMinor:      buncolgen.NewColumn("expected_fee_minor", "facsub"),
+	ExpectedReserveMinor:  buncolgen.NewColumn("expected_reserve_minor", "facsub"),
+	SchedulePDFDocumentID: buncolgen.NewColumn("schedule_pdf_document_id", "facsub"),
+	ScheduleCSVDocumentID: buncolgen.NewColumn("schedule_csv_document_id", "facsub"),
+	TransportMethod:       buncolgen.NewColumn("transport_method", "facsub"),
+	TransportTarget:       buncolgen.NewColumn("transport_target", "facsub"),
+	TransportReference:    buncolgen.NewColumn("transport_reference", "facsub"),
+	SendAttemptGroup:      buncolgen.NewColumn("send_attempt_group", "facsub"),
+	Attempts:              buncolgen.NewColumn("attempts", "facsub"),
+	LastError:             buncolgen.NewColumn("last_error", "facsub"),
+	IdempotencyKey:        buncolgen.NewColumn("idempotency_key", "facsub"),
+	SentAt:                buncolgen.NewColumn("sent_at", "facsub"),
+	FailedAt:              buncolgen.NewColumn("failed_at", "facsub"),
+	CancelledAt:           buncolgen.NewColumn("cancelled_at", "facsub"),
+	CancelReason:          buncolgen.NewColumn("cancel_reason", "facsub"),
+	SubmittedByID:         buncolgen.NewColumn("submitted_by_id", "facsub"),
+	AgentRunID:            buncolgen.NewColumn("agent_run_id", "facsub"),
+	Version:               buncolgen.NewColumn("version", "facsub"),
+	CreatedAt:             buncolgen.NewColumn("created_at", "facsub"),
+	UpdatedAt:             buncolgen.NewColumn("updated_at", "facsub"),
+}
+
+// SubmissionFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Submission.GetStaticFieldMap().
+var SubmissionFieldMap = map[string]string{
+	"id":                    "id",
+	"organizationId":        "organization_id",
+	"businessUnitId":        "business_unit_id",
+	"number":                "number",
+	"factoringCompanyId":    "factoring_company_id",
+	"agreementId":           "agreement_id",
+	"status":                "status",
+	"currencyCode":          "currency_code",
+	"invoiceCount":          "invoice_count",
+	"faceMinor":             "face_minor",
+	"expectedAdvanceMinor":  "expected_advance_minor",
+	"expectedFeeMinor":      "expected_fee_minor",
+	"expectedReserveMinor":  "expected_reserve_minor",
+	"schedulePdfDocumentId": "schedule_pdf_document_id",
+	"scheduleCsvDocumentId": "schedule_csv_document_id",
+	"transportMethod":       "transport_method",
+	"transportTarget":       "transport_target",
+	"transportReference":    "transport_reference",
+	"sendAttemptGroup":      "send_attempt_group",
+	"attempts":              "attempts",
+	"lastError":             "last_error",
+	"sentAt":                "sent_at",
+	"failedAt":              "failed_at",
+	"cancelledAt":           "cancelled_at",
+	"cancelReason":          "cancel_reason",
+	"submittedById":         "submitted_by_id",
+	"agentRunId":            "agent_run_id",
+	"version":               "version",
+	"createdAt":             "created_at",
+	"updatedAt":             "updated_at",
+}
+
+// SubmissionInsertableColumns lists column names suitable for INSERT statements on the "factoring_submissions" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var SubmissionInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"number",
+	"factoring_company_id",
+	"agreement_id",
+	"status",
+	"currency_code",
+	"invoice_count",
+	"face_minor",
+	"expected_advance_minor",
+	"expected_fee_minor",
+	"expected_reserve_minor",
+	"schedule_pdf_document_id",
+	"schedule_csv_document_id",
+	"transport_method",
+	"transport_target",
+	"transport_reference",
+	"send_attempt_group",
+	"attempts",
+	"last_error",
+	"idempotency_key",
+	"sent_at",
+	"failed_at",
+	"cancelled_at",
+	"cancel_reason",
+	"submitted_by_id",
+	"agent_run_id",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// SubmissionRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(SubmissionRelations.FactoringCompany)
+//	// Bun eager-loads the FactoringCompany association via a separate query
+var SubmissionRelations = struct {
+	FactoringCompany string
+	Agreement        string
+	Items            string
+}{
+	FactoringCompany: "FactoringCompany",
+	Agreement:        "Agreement",
+	Items:            "Items",
+}
+
+// SubmissionScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE facsub.organization_id = ? AND facsub.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	factoringcol.SubmissionScopeTenant(sq, ti).
+//		Where(factoringcol.SubmissionColumns.ID.Eq(), id)
+func SubmissionScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, SubmissionColumns.OrganizationID, SubmissionColumns.BusinessUnitID, ti)
+}
+
+// SubmissionScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return factoringcol.SubmissionScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(factoringcol.SubmissionColumns.ID.In(), bun.List(ids))
+//	})
+func SubmissionScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, SubmissionColumns.OrganizationID, SubmissionColumns.BusinessUnitID, ti)
+}
+
+// SubmissionScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return factoringcol.SubmissionScopeTenantDelete(dq, req.TenantInfo).
+//			Where(factoringcol.SubmissionColumns.ID.Eq(), id)
+//	})
+func SubmissionScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, SubmissionColumns.OrganizationID, SubmissionColumns.BusinessUnitID, ti)
+}
+
+// SubmissionApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(factoringcol.SubmissionApplyTenant(tenantInfo))
+func SubmissionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(SubmissionColumns.OrganizationID, SubmissionColumns.BusinessUnitID, ti)
+}
+
+// SubmissionFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "factoring_submissions" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	SubmissionFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var SubmissionFilter = struct {
+	ID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Number                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "number" → DB: "number"
+	FactoringCompanyID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringCompanyId" → DB: "factoring_company_id"
+	AgreementID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agreementId" → DB: "agreement_id"
+	Status                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	CurrencyCode          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	InvoiceCount          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceCount" → DB: "invoice_count"
+	FaceMinor             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "faceMinor" → DB: "face_minor"
+	ExpectedAdvanceMinor  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedAdvanceMinor" → DB: "expected_advance_minor"
+	ExpectedFeeMinor      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedFeeMinor" → DB: "expected_fee_minor"
+	ExpectedReserveMinor  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedReserveMinor" → DB: "expected_reserve_minor"
+	SchedulePDFDocumentID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "schedulePdfDocumentId" → DB: "schedule_pdf_document_id"
+	ScheduleCSVDocumentID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scheduleCsvDocumentId" → DB: "schedule_csv_document_id"
+	TransportMethod       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transportMethod" → DB: "transport_method"
+	TransportTarget       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transportTarget" → DB: "transport_target"
+	TransportReference    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transportReference" → DB: "transport_reference"
+	SendAttemptGroup      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sendAttemptGroup" → DB: "send_attempt_group"
+	Attempts              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attempts" → DB: "attempts"
+	LastError             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastError" → DB: "last_error"
+	SentAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sentAt" → DB: "sent_at"
+	FailedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failedAt" → DB: "failed_at"
+	CancelledAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelledAt" → DB: "cancelled_at"
+	CancelReason          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelReason" → DB: "cancel_reason"
+	SubmittedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
+	AgentRunID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentRunId" → DB: "agent_run_id"
+	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	Number: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("number", op, value)
+	},
+	FactoringCompanyID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("factoringCompanyId", op, value)
+	},
+	AgreementID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agreementId", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("status", op, value)
+	},
+	CurrencyCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("currencyCode", op, value)
+	},
+	InvoiceCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("invoiceCount", op, value)
+	},
+	FaceMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("faceMinor", op, value)
+	},
+	ExpectedAdvanceMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("expectedAdvanceMinor", op, value)
+	},
+	ExpectedFeeMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("expectedFeeMinor", op, value)
+	},
+	ExpectedReserveMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("expectedReserveMinor", op, value)
+	},
+	SchedulePDFDocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("schedulePdfDocumentId", op, value)
+	},
+	ScheduleCSVDocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("scheduleCsvDocumentId", op, value)
+	},
+	TransportMethod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("transportMethod", op, value)
+	},
+	TransportTarget: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("transportTarget", op, value)
+	},
+	TransportReference: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("transportReference", op, value)
+	},
+	SendAttemptGroup: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sendAttemptGroup", op, value)
+	},
+	Attempts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("attempts", op, value)
+	},
+	LastError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("lastError", op, value)
+	},
+	SentAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sentAt", op, value)
+	},
+	FailedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("failedAt", op, value)
+	},
+	CancelledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("cancelledAt", op, value)
+	},
+	CancelReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("cancelReason", op, value)
+	},
+	SubmittedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("submittedById", op, value)
+	},
+	AgentRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("agentRunId", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// SubmissionItem — table "factoring_submission_items", alias "facsit"
+// ---------------------------------------------------------------------------
+
+// SubmissionItemTable holds the table name, alias, and primary key columns
+// for the "factoring_submission_items" table. The alias "facsit" is used in all generated
+// SQL fragments (e.g. "facsit.id = ?").
+var SubmissionItemTable = buncolgen.TableInfo{
+	Name:       "factoring_submission_items",
+	Alias:      "facsit",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// SubmissionItemColumns provides type-safe column references for the "factoring_submission_items" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(SubmissionItemColumns.ID.String())
+//	// SELECT facsit.id FROM factoring_submission_items AS facsit
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(SubmissionItemColumns.ID.Eq(), id)           // WHERE facsit.id = ?
+//	q.Order(SubmissionItemColumns.CreatedAt.OrderDesc())  // ORDER BY facsit.created_at DESC
+var SubmissionItemColumns = struct {
+	ID                   buncolgen.Column // "id" → qualified: "facsit.id"
+	OrganizationID       buncolgen.Column // "organization_id" → qualified: "facsit.organization_id"
+	BusinessUnitID       buncolgen.Column // "business_unit_id" → qualified: "facsit.business_unit_id"
+	SubmissionID         buncolgen.Column // "submission_id" → qualified: "facsit.submission_id"
+	InvoiceID            buncolgen.Column // "invoice_id" → qualified: "facsit.invoice_id"
+	InvoiceNumber        buncolgen.Column // "invoice_number" → qualified: "facsit.invoice_number"
+	CustomerID           buncolgen.Column // "customer_id" → qualified: "facsit.customer_id"
+	Position             buncolgen.Column // "position" → qualified: "facsit.position"
+	FaceMinor            buncolgen.Column // "face_minor" → qualified: "facsit.face_minor"
+	ExpectedAdvanceMinor buncolgen.Column // "expected_advance_minor" → qualified: "facsit.expected_advance_minor"
+	ExpectedFeeMinor     buncolgen.Column // "expected_fee_minor" → qualified: "facsit.expected_fee_minor"
+	ExpectedReserveMinor buncolgen.Column // "expected_reserve_minor" → qualified: "facsit.expected_reserve_minor"
+	ExpectedDays         buncolgen.Column // "expected_days" → qualified: "facsit.expected_days"
+	PacketDocumentID     buncolgen.Column // "packet_document_id" → qualified: "facsit.packet_document_id"
+	Status               buncolgen.Column // "status" → qualified: "facsit.status"
+	ReleasedAt           buncolgen.Column // "released_at" → qualified: "facsit.released_at"
+	CreatedAt            buncolgen.Column // "created_at" → qualified: "facsit.created_at"
+	UpdatedAt            buncolgen.Column // "updated_at" → qualified: "facsit.updated_at"
+}{
+	ID:                   buncolgen.NewColumn("id", "facsit"),
+	OrganizationID:       buncolgen.NewColumn("organization_id", "facsit"),
+	BusinessUnitID:       buncolgen.NewColumn("business_unit_id", "facsit"),
+	SubmissionID:         buncolgen.NewColumn("submission_id", "facsit"),
+	InvoiceID:            buncolgen.NewColumn("invoice_id", "facsit"),
+	InvoiceNumber:        buncolgen.NewColumn("invoice_number", "facsit"),
+	CustomerID:           buncolgen.NewColumn("customer_id", "facsit"),
+	Position:             buncolgen.NewColumn("position", "facsit"),
+	FaceMinor:            buncolgen.NewColumn("face_minor", "facsit"),
+	ExpectedAdvanceMinor: buncolgen.NewColumn("expected_advance_minor", "facsit"),
+	ExpectedFeeMinor:     buncolgen.NewColumn("expected_fee_minor", "facsit"),
+	ExpectedReserveMinor: buncolgen.NewColumn("expected_reserve_minor", "facsit"),
+	ExpectedDays:         buncolgen.NewColumn("expected_days", "facsit"),
+	PacketDocumentID:     buncolgen.NewColumn("packet_document_id", "facsit"),
+	Status:               buncolgen.NewColumn("status", "facsit"),
+	ReleasedAt:           buncolgen.NewColumn("released_at", "facsit"),
+	CreatedAt:            buncolgen.NewColumn("created_at", "facsit"),
+	UpdatedAt:            buncolgen.NewColumn("updated_at", "facsit"),
+}
+
+// SubmissionItemFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by SubmissionItem.GetStaticFieldMap().
+var SubmissionItemFieldMap = map[string]string{
+	"id":                   "id",
+	"organizationId":       "organization_id",
+	"businessUnitId":       "business_unit_id",
+	"submissionId":         "submission_id",
+	"invoiceId":            "invoice_id",
+	"invoiceNumber":        "invoice_number",
+	"customerId":           "customer_id",
+	"position":             "position",
+	"faceMinor":            "face_minor",
+	"expectedAdvanceMinor": "expected_advance_minor",
+	"expectedFeeMinor":     "expected_fee_minor",
+	"expectedReserveMinor": "expected_reserve_minor",
+	"expectedDays":         "expected_days",
+	"packetDocumentId":     "packet_document_id",
+	"status":               "status",
+	"releasedAt":           "released_at",
+	"createdAt":            "created_at",
+	"updatedAt":            "updated_at",
+}
+
+// SubmissionItemInsertableColumns lists column names suitable for INSERT statements on the "factoring_submission_items" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var SubmissionItemInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"submission_id",
+	"invoice_id",
+	"invoice_number",
+	"customer_id",
+	"position",
+	"face_minor",
+	"expected_advance_minor",
+	"expected_fee_minor",
+	"expected_reserve_minor",
+	"expected_days",
+	"packet_document_id",
+	"status",
+	"released_at",
+	"created_at",
+	"updated_at",
+}
+
+// SubmissionItemRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(SubmissionItemRelations.Invoice)
+//	// Bun eager-loads the Invoice association via a separate query
+var SubmissionItemRelations = struct {
+	Invoice  string
+	Customer string
+}{
+	Invoice:  "Invoice",
+	Customer: "Customer",
+}
+
+// SubmissionItemScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE facsit.organization_id = ? AND facsit.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	factoringcol.SubmissionItemScopeTenant(sq, ti).
+//		Where(factoringcol.SubmissionItemColumns.ID.Eq(), id)
+func SubmissionItemScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, SubmissionItemColumns.OrganizationID, SubmissionItemColumns.BusinessUnitID, ti)
+}
+
+// SubmissionItemScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return factoringcol.SubmissionItemScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(factoringcol.SubmissionItemColumns.ID.In(), bun.List(ids))
+//	})
+func SubmissionItemScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, SubmissionItemColumns.OrganizationID, SubmissionItemColumns.BusinessUnitID, ti)
+}
+
+// SubmissionItemScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return factoringcol.SubmissionItemScopeTenantDelete(dq, req.TenantInfo).
+//			Where(factoringcol.SubmissionItemColumns.ID.Eq(), id)
+//	})
+func SubmissionItemScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, SubmissionItemColumns.OrganizationID, SubmissionItemColumns.BusinessUnitID, ti)
+}
+
+// SubmissionItemApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(factoringcol.SubmissionItemApplyTenant(tenantInfo))
+func SubmissionItemApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(SubmissionItemColumns.OrganizationID, SubmissionItemColumns.BusinessUnitID, ti)
+}
+
+// SubmissionItemFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "factoring_submission_items" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	SubmissionItemFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var SubmissionItemFilter = struct {
+	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	SubmissionID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submissionId" → DB: "submission_id"
+	InvoiceID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	InvoiceNumber        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceNumber" → DB: "invoice_number"
+	CustomerID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
+	Position             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "position" → DB: "position"
+	FaceMinor            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "faceMinor" → DB: "face_minor"
+	ExpectedAdvanceMinor func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedAdvanceMinor" → DB: "expected_advance_minor"
+	ExpectedFeeMinor     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedFeeMinor" → DB: "expected_fee_minor"
+	ExpectedReserveMinor func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedReserveMinor" → DB: "expected_reserve_minor"
+	ExpectedDays         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedDays" → DB: "expected_days"
+	PacketDocumentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "packetDocumentId" → DB: "packet_document_id"
+	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	ReleasedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "releasedAt" → DB: "released_at"
+	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	SubmissionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("submissionId", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("invoiceId", op, value)
+	},
+	InvoiceNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("invoiceNumber", op, value)
+	},
+	CustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("customerId", op, value)
+	},
+	Position: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("position", op, value)
+	},
+	FaceMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("faceMinor", op, value)
+	},
+	ExpectedAdvanceMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("expectedAdvanceMinor", op, value)
+	},
+	ExpectedFeeMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("expectedFeeMinor", op, value)
+	},
+	ExpectedReserveMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("expectedReserveMinor", op, value)
+	},
+	ExpectedDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("expectedDays", op, value)
+	},
+	PacketDocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("packetDocumentId", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("status", op, value)
+	},
+	ReleasedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("releasedAt", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// Transport — table "factoring_transports", alias "factrn"
+// ---------------------------------------------------------------------------
+
+// TransportTable holds the table name, alias, and primary key columns
+// for the "factoring_transports" table. The alias "factrn" is used in all generated
+// SQL fragments (e.g. "factrn.id = ?").
+var TransportTable = buncolgen.TableInfo{
+	Name:       "factoring_transports",
+	Alias:      "factrn",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// TransportColumns provides type-safe column references for the "factoring_transports" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(TransportColumns.ID.String())
+//	// SELECT factrn.id FROM factoring_transports AS factrn
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(TransportColumns.ID.Eq(), id)           // WHERE factrn.id = ?
+//	q.Order(TransportColumns.CreatedAt.OrderDesc())  // ORDER BY factrn.created_at DESC
+var TransportColumns = struct {
+	ID                 buncolgen.Column // "id" → qualified: "factrn.id"
+	OrganizationID     buncolgen.Column // "organization_id" → qualified: "factrn.organization_id"
+	BusinessUnitID     buncolgen.Column // "business_unit_id" → qualified: "factrn.business_unit_id"
+	FactoringCompanyID buncolgen.Column // "factoring_company_id" → qualified: "factrn.factoring_company_id"
+	Method             buncolgen.Column // "method" → qualified: "factrn.method"
+	EmailRecipients    buncolgen.Column // "email_recipients" → qualified: "factrn.email_recipients"
+	AttachPackets      buncolgen.Column // "attach_packets" → qualified: "factrn.attach_packets"
+	SftpHost           buncolgen.Column // "sftp_host" → qualified: "factrn.sftp_host"
+	SftpPort           buncolgen.Column // "sftp_port" → qualified: "factrn.sftp_port"
+	SftpUsername       buncolgen.Column // "sftp_username" → qualified: "factrn.sftp_username"
+	SftpAuthMethod     buncolgen.Column // "sftp_auth_method" → qualified: "factrn.sftp_auth_method"
+	SftpSecret         buncolgen.Column // "sftp_secret" → qualified: "factrn.sftp_secret"
+	SftpKnownHostKey   buncolgen.Column // "sftp_known_host_key" → qualified: "factrn.sftp_known_host_key"
+	SftpDirectory      buncolgen.Column // "sftp_directory" → qualified: "factrn.sftp_directory"
+	LastTestedAt       buncolgen.Column // "last_tested_at" → qualified: "factrn.last_tested_at"
+	LastTestError      buncolgen.Column // "last_test_error" → qualified: "factrn.last_test_error"
+	Version            buncolgen.Column // "version" → qualified: "factrn.version"
+	CreatedAt          buncolgen.Column // "created_at" → qualified: "factrn.created_at"
+	UpdatedAt          buncolgen.Column // "updated_at" → qualified: "factrn.updated_at"
+}{
+	ID:                 buncolgen.NewColumn("id", "factrn"),
+	OrganizationID:     buncolgen.NewColumn("organization_id", "factrn"),
+	BusinessUnitID:     buncolgen.NewColumn("business_unit_id", "factrn"),
+	FactoringCompanyID: buncolgen.NewColumn("factoring_company_id", "factrn"),
+	Method:             buncolgen.NewColumn("method", "factrn"),
+	EmailRecipients:    buncolgen.NewColumn("email_recipients", "factrn"),
+	AttachPackets:      buncolgen.NewColumn("attach_packets", "factrn"),
+	SftpHost:           buncolgen.NewColumn("sftp_host", "factrn"),
+	SftpPort:           buncolgen.NewColumn("sftp_port", "factrn"),
+	SftpUsername:       buncolgen.NewColumn("sftp_username", "factrn"),
+	SftpAuthMethod:     buncolgen.NewColumn("sftp_auth_method", "factrn"),
+	SftpSecret:         buncolgen.NewColumn("sftp_secret", "factrn"),
+	SftpKnownHostKey:   buncolgen.NewColumn("sftp_known_host_key", "factrn"),
+	SftpDirectory:      buncolgen.NewColumn("sftp_directory", "factrn"),
+	LastTestedAt:       buncolgen.NewColumn("last_tested_at", "factrn"),
+	LastTestError:      buncolgen.NewColumn("last_test_error", "factrn"),
+	Version:            buncolgen.NewColumn("version", "factrn"),
+	CreatedAt:          buncolgen.NewColumn("created_at", "factrn"),
+	UpdatedAt:          buncolgen.NewColumn("updated_at", "factrn"),
+}
+
+// TransportFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Transport.GetStaticFieldMap().
+var TransportFieldMap = map[string]string{
+	"id":                 "id",
+	"organizationId":     "organization_id",
+	"businessUnitId":     "business_unit_id",
+	"factoringCompanyId": "factoring_company_id",
+	"method":             "method",
+	"emailRecipients":    "email_recipients",
+	"attachPackets":      "attach_packets",
+	"sftpHost":           "sftp_host",
+	"sftpPort":           "sftp_port",
+	"sftpUsername":       "sftp_username",
+	"sftpAuthMethod":     "sftp_auth_method",
+	"sftpKnownHostKey":   "sftp_known_host_key",
+	"sftpDirectory":      "sftp_directory",
+	"lastTestedAt":       "last_tested_at",
+	"lastTestError":      "last_test_error",
+	"version":            "version",
+	"createdAt":          "created_at",
+	"updatedAt":          "updated_at",
+}
+
+// TransportInsertableColumns lists column names suitable for INSERT statements on the "factoring_transports" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var TransportInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"factoring_company_id",
+	"method",
+	"email_recipients",
+	"attach_packets",
+	"sftp_host",
+	"sftp_port",
+	"sftp_username",
+	"sftp_auth_method",
+	"sftp_secret",
+	"sftp_known_host_key",
+	"sftp_directory",
+	"last_tested_at",
+	"last_test_error",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// TransportScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE factrn.organization_id = ? AND factrn.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	factoringcol.TransportScopeTenant(sq, ti).
+//		Where(factoringcol.TransportColumns.ID.Eq(), id)
+func TransportScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, TransportColumns.OrganizationID, TransportColumns.BusinessUnitID, ti)
+}
+
+// TransportScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return factoringcol.TransportScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(factoringcol.TransportColumns.ID.In(), bun.List(ids))
+//	})
+func TransportScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, TransportColumns.OrganizationID, TransportColumns.BusinessUnitID, ti)
+}
+
+// TransportScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return factoringcol.TransportScopeTenantDelete(dq, req.TenantInfo).
+//			Where(factoringcol.TransportColumns.ID.Eq(), id)
+//	})
+func TransportScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, TransportColumns.OrganizationID, TransportColumns.BusinessUnitID, ti)
+}
+
+// TransportApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(factoringcol.TransportApplyTenant(tenantInfo))
+func TransportApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(TransportColumns.OrganizationID, TransportColumns.BusinessUnitID, ti)
+}
+
+// TransportFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "factoring_transports" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	TransportFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var TransportFilter = struct {
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	FactoringCompanyID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "factoringCompanyId" → DB: "factoring_company_id"
+	Method             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
+	EmailRecipients    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailRecipients" → DB: "email_recipients"
+	AttachPackets      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attachPackets" → DB: "attach_packets"
+	SftpHost           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sftpHost" → DB: "sftp_host"
+	SftpPort           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sftpPort" → DB: "sftp_port"
+	SftpUsername       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sftpUsername" → DB: "sftp_username"
+	SftpAuthMethod     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sftpAuthMethod" → DB: "sftp_auth_method"
+	SftpKnownHostKey   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sftpKnownHostKey" → DB: "sftp_known_host_key"
+	SftpDirectory      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sftpDirectory" → DB: "sftp_directory"
+	LastTestedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastTestedAt" → DB: "last_tested_at"
+	LastTestError      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastTestError" → DB: "last_test_error"
+	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("businessUnitId", op, value)
+	},
+	FactoringCompanyID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("factoringCompanyId", op, value)
+	},
+	Method: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("method", op, value)
+	},
+	EmailRecipients: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("emailRecipients", op, value)
+	},
+	AttachPackets: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("attachPackets", op, value)
+	},
+	SftpHost: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sftpHost", op, value)
+	},
+	SftpPort: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sftpPort", op, value)
+	},
+	SftpUsername: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sftpUsername", op, value)
+	},
+	SftpAuthMethod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sftpAuthMethod", op, value)
+	},
+	SftpKnownHostKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sftpKnownHostKey", op, value)
+	},
+	SftpDirectory: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sftpDirectory", op, value)
+	},
+	LastTestedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("lastTestedAt", op, value)
+	},
+	LastTestError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("lastTestError", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	},
+}

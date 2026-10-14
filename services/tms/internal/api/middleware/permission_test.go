@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -468,4 +468,65 @@ func TestGetPermissionResult(t *testing.T) {
 	assert.True(t, result.Allowed)
 	assert.Equal(t, permission.DataScopeOrganization, result.DataScope)
 	engine.AssertExpectations(t)
+}
+
+func TestAllowed(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	userID := pulid.MustNew("usr_")
+	buID := pulid.MustNew("bu_")
+	orgID := pulid.MustNew("org_")
+
+	tests := []struct {
+		name      string
+		result    *permissionports.PermissionCheckResult
+		engineErr error
+		want      bool
+		wantErr   bool
+	}{
+		{
+			name:   "allowed",
+			result: &permissionports.PermissionCheckResult{Allowed: true},
+			want:   true,
+		},
+		{name: "denied", result: &permissionports.PermissionCheckResult{Allowed: false}},
+		{name: "engine error", engineErr: errors.New("engine down"), wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			engine := new(mockPermissionEngine)
+			engine.On("Check", mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
+				return req.UserID == userID && req.OrganizationID == orgID &&
+					req.Resource == "formula_template" && req.Operation == permission.OpRead
+			})).
+				Return(tt.result, tt.engineErr)
+
+			pm := newPermissionMiddleware(engine)
+
+			var (
+				got    bool
+				gotErr error
+			)
+			r := gin.New()
+			r.GET("/test", setAuthMiddleware(userID, buID, orgID), func(c *gin.Context) {
+				got, gotErr = pm.Allowed(c, "formula_template", permission.OpRead)
+				c.Status(http.StatusOK)
+			})
+
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/test", nil))
+
+			if tt.wantErr {
+				require.ErrorIs(t, gotErr, tt.engineErr)
+			} else {
+				require.NoError(t, gotErr)
+			}
+			assert.Equal(t, tt.want, got)
+			engine.AssertExpectations(t)
+		})
+	}
 }

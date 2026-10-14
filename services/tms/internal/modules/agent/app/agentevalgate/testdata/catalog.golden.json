@@ -3817,6 +3817,63 @@
       }
     },
     {
+      "name": "cancel_factoring_submission",
+      "description": "Cancel a schedule that failed to send and release its invoices, so they can go on another schedule once they are Ready again. Only a failed schedule can be cancelled: a sent one is with the factor. Say why.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "description": "Why the schedule is cancelled.",
+            "type": "string"
+          },
+          "submissionId": {
+            "description": "The failed schedule, from list_factoring_submissions.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          },
+          "version": {
+            "description": "The schedule's version from get_factoring_submission, so a schedule someone changed since is not overwritten.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "submissionId",
+          "version",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "cancel schedule",
+        "release invoices",
+        "failed schedule"
+      ],
+      "prerequisites": [
+        "list_factoring_submissions"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_submission",
+        "operation": "cancel",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Releases invoices from a schedule; a person approves it."
+      }
+    },
+    {
       "name": "cancel_invoice_run",
       "description": "Cancel an invoice run that will never be committed, such as one built for the wrong period or customers. Its shipments stay approved for the next run. Say why; the reason is kept on the run.",
       "parameters": {
@@ -12960,6 +13017,50 @@
       }
     },
     {
+      "name": "get_factoring_submission",
+      "description": "Read one schedule of accounts with every invoice on it and why it failed, if it did. Each invoice has its amount, expected advance, fee and reserve, and whether its packet was built; the schedule has its status, where it went, attempts and last error. Use its version with retry_factoring_submission or cancel_factoring_submission.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "submissionId": {
+            "description": "The schedule, from list_factoring_submissions.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          }
+        },
+        "required": [
+          "submissionId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "factoring schedule",
+        "schedule of accounts",
+        "failed schedule"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "factoring_submission",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "get_fiscal_close_blockers",
       "description": "Say whether a fiscal period can be closed and list every blocker in the way. Blockers include unposted entries, earlier periods still open, subledger differences and accounting controls; nothing changes. Take the period's id from list_fiscal_periods.",
       "parameters": {
@@ -18019,7 +18120,7 @@
     },
     {
       "name": "list_factoring_ready_invoices",
-      "description": "List factored customers' invoices by readiness, newest first, with the totals ready, not ready, and ready for more than a day without being submitted. Ready is the default; ask for NotReady to see what is holding invoices back, each with its failed checks. Pass an invoice to get_factoring_readiness for every check.",
+      "description": "List factored customers' invoices by readiness, newest first, with the totals. The totals are ready, not ready, submitted, and ready for more than a day without being submitted. Ready is the default; ask for NotReady to see what is holding invoices back, each with its failed checks, or Submitted for what is on a schedule. Pass Ready invoices to submit_invoices_to_factor, one factor per call, and an invoice to get_factoring_readiness for every check.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -18042,10 +18143,11 @@
             "type": "integer"
           },
           "verdict": {
-            "description": "Which invoices: Ready (the default) or NotReady.",
+            "description": "Which invoices: Ready (the default), NotReady, or Submitted (on a schedule with the factor).",
             "enum": [
               "Ready",
-              "NotReady"
+              "NotReady",
+              "Submitted"
             ],
             "type": "string",
             "x-enumOf": "factoring.verdict"
@@ -18061,6 +18163,71 @@
       "policy": {
         "kind": "query",
         "resource": "invoice",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_factoring_submissions",
+      "description": "List the schedules of accounts sent to factors, newest first, with their status and totals. Each has its number, factor, status (Sending, Sent, Failed or Cancelled), invoice count, expected funding, where it went, and for a failed one the last error. Pass a schedule's id to get_factoring_submission for its invoices, and its id and version to retry_factoring_submission or cancel_factoring_submission.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "type": "string"
+          },
+          "factoringCompanyId": {
+            "description": "Only schedules sent to this factor, from list_factoring_ready_invoices or get_invoice.",
+            "type": "string",
+            "x-recordOf": "factoring_company"
+          },
+          "limit": {
+            "description": "How many schedules to return, at most 50. Defaults to 25.",
+            "type": "integer"
+          },
+          "status": {
+            "description": "Only schedules in these statuses.",
+            "items": {
+              "description": "A schedule status.",
+              "enum": [
+                "Sending",
+                "Sent",
+                "Failed",
+                "Cancelled"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring.submissionStatus"
+            },
+            "maxItems": 4,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "factoring schedule",
+        "schedule of accounts",
+        "submitted to factor"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "factoring_submission",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -24464,6 +24631,7 @@
               "factoring_agreement",
               "factoring_company",
               "factoring_noa",
+              "factoring_submission",
               "formula_template",
               "fuel_purchase",
               "hazardous_material",
@@ -26280,7 +26448,8 @@
               "accounting_drift_finding",
               "invoice",
               "invoice_dispute",
-              "factoring_noa"
+              "factoring_noa",
+              "factoring_submission"
             ]
           },
           "subjectType": {
@@ -26308,7 +26477,8 @@
               "AccountingDriftFinding",
               "Invoice",
               "InvoiceDispute",
-              "FactoringNoa"
+              "FactoringNoa",
+              "FactoringSubmission"
             ],
             "type": "string",
             "x-enumOf": "agent.subjectType"
@@ -31015,6 +31185,58 @@
       }
     },
     {
+      "name": "retry_factoring_submission",
+      "description": "Send a schedule that failed to send again, using the factor's delivery settings as they are now. Read the schedule's last error with get_factoring_submission first: retry only once the cause is fixed (the factor's inbox or SFTP settings corrected and tested), or it will fail the same way. A person approves every retry.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "submissionId": {
+            "description": "The failed schedule, from list_factoring_submissions.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          },
+          "version": {
+            "description": "The schedule's version from get_factoring_submission, so a schedule someone changed since is not overwritten.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "submissionId",
+          "version"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "resend schedule",
+        "retry factoring",
+        "failed schedule"
+      ],
+      "prerequisites": [
+        "list_factoring_submissions"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_submission",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Sends receivables out of the organization again; a person approves it."
+      }
+    },
+    {
       "name": "reverse_customer_payment",
       "description": "Propose reversing a posted customer payment that bounced, was charged back or was recorded in error. Every invoice it paid is reopened by what it applied and a reversing ledger entry takes the cash back out. It cannot be undone, so a person always decides; say why.",
       "parameters": {
@@ -34541,6 +34763,65 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Credits, rebills or writes off receivables and books the entries that say so; only a person submits an adjustment, and the adjustment policy may still hold it for an approver."
+      }
+    },
+    {
+      "name": "submit_invoices_to_factor",
+      "description": "Sell Ready invoices to their factor on one schedule of accounts. It builds the schedule PDF and CSV and each invoice's packet (the invoice and its supporting documents), then sends them to the factor by email or SFTP, as the factor's delivery settings say. Every invoice must be Ready in list_factoring_ready_invoices and assigned to this factor; batch one factor's invoices per call, up to 200. Submitting the same invoices again returns the first schedule instead of sending twice.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "factoringCompanyId": {
+            "description": "The factor every invoice is assigned to, from list_factoring_ready_invoices.",
+            "type": "string",
+            "x-recordOf": "factoring_company"
+          },
+          "invoiceIds": {
+            "description": "The Ready invoices to sell, from list_factoring_ready_invoices.",
+            "items": {
+              "type": "string",
+              "x-recordOf": "invoice"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "factoringCompanyId",
+          "invoiceIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "factor invoices",
+        "schedule of accounts",
+        "submit to factor",
+        "sell invoices"
+      ],
+      "prerequisites": [
+        "list_factoring_ready_invoices"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_submission",
+        "operation": "submit",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Sells receivables to a factor and sends them out of the organization; a person approves every schedule."
       }
     },
     {

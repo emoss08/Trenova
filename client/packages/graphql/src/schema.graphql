@@ -5833,6 +5833,7 @@ enum AgentSubjectType {
   Document
   EDIInboundFile
   FactoringNoa
+  FactoringSubmission
   FormulaTemplate
   InboundMessage
   Insight
@@ -7300,6 +7301,12 @@ enum CSABasic {
   HazmatCompliance
   UnsafeDriving
   VehicleMaintenance
+}
+
+input CancelFactoringSubmissionInput {
+  id: ID!
+  reason: String!
+  version: Int!
 }
 
 input CancelFuelCardInput {
@@ -14818,6 +14825,21 @@ enum FactoringFixAction {
   SetUpAgreement
 }
 
+"""What the agreement in force says one invoice should bring in."""
+type FactoringFunding {
+  advanceMinor: Int!
+  """Days of terms left when submitted, which picks the fee tier."""
+  days: Int!
+  faceMinor: Int!
+  feeMinor: Int!
+  feeRateBp: Int!
+  reserveMinor: Int!
+  """
+  What is left after the advance and the fee, paid when the customer pays.
+  """
+  restOnReleaseMinor: Int!
+}
+
 """Whether an invoice is ready to factor, and why not."""
 type FactoringInvoiceState {
   checks: [FactoringCheck!]!
@@ -14832,6 +14854,8 @@ type FactoringInvoiceState {
   openBalanceMinor: Int!
   """When the invoice became ready; null while it is not."""
   readySince: Timestamp
+  """The schedule the invoice is on, while it is with the factor."""
+  submission: FactoringLiveSubmission
   verdict: FactoringVerdict!
 }
 
@@ -14851,6 +14875,13 @@ input FactoringInvoiceStateListInput {
   factoringCompanyId: ID
   table: DataTableConnectionInput!
   verdicts: [FactoringVerdict!]
+}
+
+"""The schedule an invoice is on while it is with the factor."""
+type FactoringLiveSubmission {
+  submissionId: ID!
+  submissionNumber: String!
+  submissionStatus: FactoringSubmissionStatus!
 }
 
 """
@@ -14914,11 +14945,179 @@ enum FactoringRecourse {
   Recourse
 }
 
+enum FactoringSftpAuthMethod {
+  Password
+  PrivateKey
+}
+
+"""A schedule of accounts: invoices sold to a factor in one delivery."""
+type FactoringSubmission {
+  agreementId: ID!
+  attempts: Int!
+  businessUnitId: ID!
+  cancelReason: String
+  cancelledAt: Timestamp
+  createdAt: Timestamp!
+  currencyCode: String!
+  expectedAdvanceMinor: Int!
+  expectedFeeMinor: Int!
+  expectedReserveMinor: Int!
+  faceMinor: Int!
+  factoringCompany: FactoringCompany
+  factoringCompanyId: ID!
+  failedAt: Timestamp
+  id: ID!
+  invoiceCount: Int!
+  items: [FactoringSubmissionItem!]!
+  lastError: String
+  number: String!
+  organizationId: ID!
+  scheduleCsvDocumentId: ID
+  schedulePdfDocumentId: ID
+  """Counts each send started by a person; a retry starts the next."""
+  sendAttemptGroup: Int!
+  sentAt: Timestamp
+  status: FactoringSubmissionStatus!
+  submittedById: ID
+  transportMethod: FactoringTransportMethod!
+  """The sent message ids, or the remote directory."""
+  transportReference: String
+  """Where the schedule was sent: the recipients, or user@host:directory."""
+  transportTarget: String!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type FactoringSubmissionConnection {
+  edges: [FactoringSubmissionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FactoringSubmissionEdge {
+  cursor: String!
+  node: FactoringSubmission!
+}
+
+"""One invoice on a schedule of accounts."""
+type FactoringSubmissionItem {
+  customer: Customer
+  customerId: ID!
+  expectedAdvanceMinor: Int!
+  expectedDays: Int!
+  expectedFeeMinor: Int!
+  expectedReserveMinor: Int!
+  faceMinor: Int!
+  id: ID!
+  invoice: Invoice
+  invoiceId: ID!
+  invoiceNumber: String!
+  """The invoice and its supporting documents merged into one PDF."""
+  packetDocumentId: ID
+  position: Int!
+  releasedAt: Timestamp
+  status: FactoringSubmissionItemStatus!
+  submissionId: ID!
+}
+
+enum FactoringSubmissionItemStatus {
+  Pending
+  """Released when its schedule was cancelled."""
+  Released
+}
+
+input FactoringSubmissionListInput {
+  factoringCompanyId: ID
+  statuses: [FactoringSubmissionStatus!]
+  table: DataTableConnectionInput!
+}
+
+"""
+The schedule that submitting these invoices would send, before anything is sent.
+"""
+type FactoringSubmissionPlan {
+  agreementId: ID!
+  """Whether each invoice's packet goes with the schedule."""
+  attachPackets: Boolean!
+  currencyCode: String!
+  expectedAdvanceMinor: Int!
+  expectedFeeMinor: Int!
+  expectedReserveMinor: Int!
+  faceMinor: Int!
+  factoringCompanyId: ID!
+  factoringCompanyName: String!
+  invoiceCount: Int!
+  items: [FactoringSubmissionPlanItem!]!
+  transportMethod: FactoringTransportMethod!
+  transportTarget: String!
+}
+
+input FactoringSubmissionPlanInput {
+  factoringCompanyId: ID!
+  invoiceIds: [ID!]!
+}
+
+type FactoringSubmissionPlanItem {
+  customerId: ID!
+  customerName: String!
+  dueDate: Timestamp
+  funding: FactoringFunding!
+  invoiceDate: Timestamp!
+  invoiceId: ID!
+  invoiceNumber: String!
+}
+
+enum FactoringSubmissionStatus {
+  """Cancelled after a failed send; its invoices were released."""
+  Cancelled
+  """Could not be delivered after every retry; retry it or cancel it."""
+  Failed
+  """Being built and delivered; retried automatically before it fails."""
+  Sending
+  Sent
+}
+
 type FactoringSummary {
   notReady: FactoringVerdictTotals!
   ready: FactoringVerdictTotals!
   """Ready for more than a day without being submitted."""
   readyUnsubmitted: FactoringVerdictTotals!
+  """On a schedule with the factor or being sent to it."""
+  submitted: FactoringVerdictTotals!
+}
+
+"""How schedules reach a factor. The SFTP secret is never returned."""
+type FactoringTransport {
+  """
+  Whether invoice packets are emailed with the schedule. SFTP always uploads them.
+  """
+  attachPackets: Boolean!
+  emailRecipients: [String!]!
+  factoringCompanyId: ID!
+  id: ID!
+  lastTestError: String
+  lastTestedAt: Timestamp
+  method: FactoringTransportMethod!
+  sftpAuthMethod: FactoringSftpAuthMethod
+  sftpDirectory: String
+  sftpHost: String
+  sftpKnownHostKey: String
+  sftpPort: Int
+  sftpSecretSet: Boolean!
+  sftpUsername: String
+  version: Int!
+}
+
+"""How schedules reach a factor."""
+enum FactoringTransportMethod {
+  Email
+  Sftp
+}
+
+type FactoringTransportTestResult {
+  message: String!
+  passed: Boolean!
+  transport: FactoringTransport!
 }
 
 enum FactoringVerdict {
@@ -14928,6 +15127,8 @@ enum FactoringVerdict {
   Excluded
   NotReady
   Ready
+  """On a schedule sent, being sent, or that failed to send to the factor."""
+  Submitted
 }
 
 type FactoringVerdictTotals {
@@ -19088,6 +19289,8 @@ type Mutation {
   cancelDotRandomDraw(id: ID!, reason: String!): DOTRandomDraw!
   cancelDotTest(id: ID!, reason: String!): WorkerDOTTest!
   cancelExtractionEvalRun(id: ID!): ExtractionEvalRun!
+  """Cancels a failed schedule and releases its invoices for another."""
+  cancelFactoringSubmission(input: CancelFactoringSubmissionInput!): FactoringSubmission!
   cancelFuelCard(input: CancelFuelCardInput!): FuelCard!
   cancelMyExpense(id: ID!): DriverExpense!
   cancelMyPto(id: ID!): PortalPto!
@@ -19742,6 +19945,10 @@ type Mutation {
   Starts a fresh transfer over the shipments a second attempt could still move.
   """
   retryBillingTransferRun(id: ID!): BillingTransferRun!
+  """
+  Sends a failed schedule again with the factor's current delivery settings.
+  """
+  retryFactoringSubmission(input: RetryFactoringSubmissionInput!): FactoringSubmission!
   reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
   """
   Clears a tainted memory's taint once a person has read it and keeps it: it is followed as the
@@ -19802,6 +20009,7 @@ type Mutation {
   Holds a tool lower than its declared rule for this organization, or returns it to the declared rule.
   """
   saveAgentToolRule(input: AgentToolRuleInput!, name: String!, version: Int!): AgentToolRuleSaved!
+  saveFactoringTransport(input: SaveFactoringTransportInput!): FactoringTransport!
   """
   Saves what a person wrote as the message's draft. documentIds replaces the draft's files; leaving it out keeps them.
   """
@@ -19914,6 +20122,10 @@ type Mutation {
   stopWaitingForInboundReply(id: ID!): InboundMessage!
   submitCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   submitDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  """
+  Builds the schedule and its packets and sends them to the factor. Submitting the same Ready invoices again returns the first schedule.
+  """
+  submitInvoicesToFactor(input: FactoringSubmissionPlanInput!): FactoringSubmission!
   submitMyExpense(input: SubmitMyExpenseInput!): DriverExpense!
   submitPerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
   switchCarrierIntelProvider(provider: String!): CarrierIntelControl!
@@ -19925,6 +20137,10 @@ type Mutation {
   tenderShipments(input: TenderShipmentsInput!): TenderShipmentsResult!
   """Probes an unsaved endpoint once and records nothing."""
   testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderDraftTestResult!
+  """
+  Connects with the saved settings without sending anything, and records the result.
+  """
+  testFactoringTransport(factoringCompanyId: ID!): FactoringTransportTestResult!
   """
   Tightens an agent's instructions (at most 20000 characters) without changing
   what they ask for. Saves nothing. Needs permission to create or update agents.
@@ -22345,7 +22561,15 @@ type Query {
   factoringNoas(input: FactoringNoaListInput!): FactoringNoaConnection!
   """Evaluates the invoice now and returns its readiness."""
   factoringReadiness(invoiceId: ID!): FactoringInvoiceState!
+  factoringSubmission(id: ID!): FactoringSubmission!
+  """
+  The schedule these invoices would make, with expected funding, without sending anything.
+  """
+  factoringSubmissionPlan(input: FactoringSubmissionPlanInput!): FactoringSubmissionPlan!
+  factoringSubmissions(input: FactoringSubmissionListInput!): FactoringSubmissionConnection!
   factoringSummary: FactoringSummary!
+  """Null until the factor's delivery is set up."""
+  factoringTransport(factoringCompanyId: ID!): FactoringTransport
   fiscalYear(id: ID!): FiscalYear
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
   fleetCode(id: ID!): FleetCode
@@ -24136,6 +24360,11 @@ input RetryAccountingSyncInput {
   integrationType: AccountingSystem!
 }
 
+input RetryFactoringSubmissionInput {
+  id: ID!
+  version: Int!
+}
+
 enum ReturnToDutyStatus {
   Complete
   FollowUpTesting
@@ -24512,6 +24741,23 @@ input SaveAccountingAppInput {
   environment: AccountingAppEnvironment!
   integrationType: AccountingSystem!
   webhookVerifierToken: String
+}
+
+input SaveFactoringTransportInput {
+  attachPackets: Boolean = true
+  emailRecipients: [String!]
+  factoringCompanyId: ID!
+  method: FactoringTransportMethod!
+  sftpAuthMethod: FactoringSftpAuthMethod
+  sftpDirectory: String
+  sftpHost: String
+  sftpKnownHostKey: String
+  sftpPort: Int
+  """Leave empty to keep the stored password or key."""
+  sftpSecret: String
+  sftpUsername: String
+  """Required when the factor already has delivery settings."""
+  version: Int
 }
 
 input SaveHomeLayoutPresetInput {

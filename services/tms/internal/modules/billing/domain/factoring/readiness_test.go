@@ -298,3 +298,17 @@ func TestNextState(t *testing.T) {
 	assert.True(t, tr.BecameReady, "a new ready period is announced again")
 	assert.Nil(t, fourth.ReadyAnnouncedAt)
 }
+
+func TestEvaluateReadinessSubmitted(t *testing.T) {
+	t.Parallel()
+
+	in := readyInputs()
+	in.SubmissionNumber = "FS2610000001"
+	in.OpenDispute = true
+	got := factoring.EvaluateReadiness(in)
+	assert.Equal(t, factoring.VerdictSubmitted, got.Verdict)
+	assert.Equal(t, 1, got.FailedCount())
+
+	in.Invoice.OpenBalanceMinor = 0
+	assert.Equal(t, factoring.VerdictExcluded, factoring.EvaluateReadiness(in).Verdict)
+}

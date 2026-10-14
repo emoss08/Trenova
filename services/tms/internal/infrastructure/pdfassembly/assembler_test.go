@@ -82,3 +82,24 @@ func TestRejectsGarbage(t *testing.T) {
 	_, err = assembler.Assemble(t.Context(), nil)
 	require.ErrorIs(t, err, pdfassembly.ErrNoPages)
 }
+
+func TestImageToPDF(t *testing.T) {
+	t.Parallel()
+
+	img := image.NewRGBA(image.Rect(0, 0, 40, 60))
+	encoded := new(bytes.Buffer)
+	require.NoError(t, png.Encode(encoded, img))
+
+	converter := pdfassembly.NewImageConverter()
+	pdf, err := converter.ImageToPDF(t.Context(), encoded.Bytes())
+	require.NoError(t, err)
+
+	count, err := pdfassembly.New().PageCount(t.Context(), pdf)
+	require.NoError(t, err)
+	assert.Equal(t, 1, count)
+
+	_, err = converter.ImageToPDF(t.Context(), nil)
+	require.ErrorIs(t, err, pdfassembly.ErrNoImage)
+	_, err = converter.ImageToPDF(t.Context(), []byte("not an image"))
+	require.Error(t, err)
+}

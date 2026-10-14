@@ -1,5 +1,6 @@
 import type { LocationCodeStrategy, SequenceConfig, SequenceType } from "@/types/sequence-config";
 import {
+  BankNote01Icon,
   BookOpen01Icon,
   ClipboardEditIcon,
   File06Icon,
@@ -29,6 +30,7 @@ export const sequenceTitles: Record<SequenceType, string> = defineLabels({
   driver_settlement: "Driver Settlement Number",
   carrier_settlement: "Carrier Settlement Number",
   invoice_run: "Invoice Run Number",
+  factoring_submission: "Factoring Schedule Number",
 });
 
 export const sequenceDescriptions: Record<SequenceType, string> = defineLabels({
@@ -45,6 +47,8 @@ export const sequenceDescriptions: Record<SequenceType, string> = defineLabels({
   carrier_settlement:
     "Controls carrier settlement numbering for paying carriers on brokered loads.",
   invoice_run: "Controls invoice run numbering for batches of invoices billed together.",
+  factoring_submission:
+    "Controls schedule of accounts numbering for invoices submitted to a factor.",
 });
 
 export const sequenceIcons: Record<SequenceType, IconComponent> = {
@@ -60,6 +64,7 @@ export const sequenceIcons: Record<SequenceType, IconComponent> = {
   driver_settlement: Wallet02Icon,
   carrier_settlement: HandshakeIcon,
   invoice_run: Rows03Icon,
+  factoring_submission: BankNote01Icon,
 };
 
 export type SidebarGroup = {
@@ -69,7 +74,7 @@ export type SidebarGroup = {
 
 export const sidebarGroups: SidebarGroup[] = [
   { label: "Operations", items: ["pro_number", "consolidation", "order", "work_order"] },
-  { label: "Billing", items: ["invoice", "invoice_run"] },
+  { label: "Billing", items: ["invoice", "invoice_run", "factoring_submission"] },
   { label: "Accounting", items: ["journal_batch", "journal_entry", "manual_journal_request"] },
   { label: "Settlements", items: ["driver_settlement", "carrier_settlement"] },
   { label: "Locations", items: ["location_code"] },
@@ -128,6 +133,7 @@ const defaultPrefixes: Record<SequenceType, string> = {
   driver_settlement: "STL",
   carrier_settlement: "CSTL",
   invoice_run: "IRUN",
+  factoring_submission: "FS",
 };
 
 export function defaultConfigForType(

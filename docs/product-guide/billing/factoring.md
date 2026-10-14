@@ -1,6 +1,8 @@
 ---
 path: /billing/factoring
-aliases: [factoring queue, ready to factor, factoring readiness, sell invoices, schedule of accounts, factored invoices, NOA, notice of assignment, missing POD for factoring]
+aliases: [factoring queue, ready to factor, factoring readiness, sell invoices, schedule of accounts, factored invoices, NOA, notice of assignment, missing POD for factoring, submit to factor, factoring schedule, failed schedule]
+covers:
+  - /billing/factoring/submissions/:id
 related:
   - /billing/configuration-files/factoring-companies
   - /billing/configuration-files/customers
@@ -13,10 +15,16 @@ An invoice is ready when it is posted and open with no open dispute, its custome
 notice of assignment for the factor, the factor has an active agreement, the shipment passes billing
 readiness, and the invoice carries every document the agreement asks for.
 
-The strip at the top totals the open balance of invoices that are **Ready**, **Not ready**, and
-**Ready over a day** (ready for more than a day without being submitted). The **Ready** and **Not ready**
-tabs list those invoices with their customer, factor and open balance. Open an invoice to see each
-check it was given, what failed, and the action that clears it.
+The strip at the top totals the open balance of invoices that are **Ready**, **Not ready**,
+**Submitted** (on a schedule with the factor), and **Ready over a day** (ready for more than a day
+without being submitted). The **Ready**, **Not ready** and **Submitted** tabs list those invoices
+with their customer, factor and open balance. Open an invoice to see each check it was given, what
+failed, and the action that clears it.
+
+Ready invoices are sold by sending them to their factor on a schedule of accounts: one PDF listing
+each invoice with the funding expected under the agreement, the same rows as a CSV, and one packet
+per invoice with its supporting documents. The **Schedules** tab lists every schedule sent, and each
+opens on its own page with its delivery, documents and invoices.
 
 ## Tasks
 
@@ -33,6 +41,25 @@ Keywords: factoring blocked, failed checks, not ready to factor, factoring readi
 3. Follow the check's link: **Open the factor's agreements** or **Open the factor's notices** for a
    missing agreement or notice, **Open the disputes** for an open dispute, and **Open the shipment**
    for a shipment that fails billing readiness.
+
+### Send ready invoices to the factor
+Keywords: submit to factor, sell invoices, send schedule of accounts, factor invoices, schedule of accounts
+1. Open [Factoring](/billing/factoring) and select the **Ready** tab.
+2. Select the invoices to send, then select **Submit to factor**.
+3. Check the schedule: the **Face value**, **Advance**, **Fee** and **Reserve** expected, where it
+   is sent, and each invoice. A schedule goes to one factor; when the selection spans several, pick
+   the **Factor** to send to now.
+4. Select **Send**. The schedule opens on its own page while it is built and delivered, and its
+   invoices move to the **Submitted** tab.
+
+### Retry or cancel a schedule that failed to send
+Keywords: factoring schedule failed, resend schedule, factor delivery failed, release invoices from schedule
+1. Open [Factoring](/billing/factoring), select the **Schedules** tab and open the schedule marked
+   **Failed to send**.
+2. Read why delivery failed at the top of the page. Fix the factor's delivery settings first if
+   they are wrong; see [Factoring companies](/billing/configuration-files/factoring-companies).
+3. Select **Retry** to send it again with the factor's current settings, or **Cancel schedule**,
+   enter the **Reason** and confirm to put its invoices back on the **Ready** tab.
 
 ### Ask for a missing document
 Keywords: request POD, missing proof of delivery, missing BOL for factoring, request paperwork
@@ -52,6 +79,14 @@ Keywords: exclude invoice from factoring, collect it ourselves, factoring overri
 ## Notes
 Opening the page needs read access to invoices. Requesting documents needs permission to create
 customer communications, and keeping an invoice out of factoring needs update access to invoices.
+Sending invoices to a factor needs permission to submit factoring schedules; retrying a failed
+schedule needs update access to them, and cancelling one needs permission to cancel them. Opening a
+schedule needs read access to factoring schedules.
+
+A schedule carries at most 200 invoices, all for one factor, and the factor needs schedule delivery
+set up first. A failed delivery is retried on its own before the schedule is marked **Failed to send**,
+and Watchtower raises it as an exception. An invoice on a schedule stays off the other tabs until the
+schedule is cancelled.
 
 Readiness is checked again whenever a document, the invoice, a dispute, the agreement or the notice
 changes, so a fixed check clears on its own. Voided, paid and credit memo invoices, and invoices kept

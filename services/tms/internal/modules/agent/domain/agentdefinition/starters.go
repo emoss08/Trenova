@@ -434,6 +434,11 @@ var templateStarters = map[Template][]starterQuestion{
 			"What are the advance, reserve and fee terms of the factoring agreement in force?",
 			"get_factoring_agreement",
 		),
+		ask(
+			"Which schedules failed?",
+			"Which factoring schedules failed to send, and why?",
+			"list_factoring_submissions",
+		),
 	},
 	TemplateBooksKeeper: {
 		ask(

@@ -5,7 +5,7 @@
   "steps": [
     {
       "step": 0,
-      "requestHash": "252ca17db7b3b8927cf107d8562303fa59f0fc5b52a466f203a66df6616321e3",
+      "requestHash": "4938d1752cc6494cb198865068bac3503ad8aaa60f5d190e04dc7c42205eb6ac",
       "response": {
         "toolCalls": [
           {
@@ -21,7 +21,7 @@
     },
     {
       "step": 1,
-      "requestHash": "0f26de0d58783ebebec0b4e34bd6f85dd10ed898976783ae364e118695f9831c",
+      "requestHash": "33f30ee8befe086ed8e18b412230daa838f635caad86c353cc37061b3aa6b762",
       "response": {
         "toolCalls": [
           {
@@ -64,7 +64,7 @@
     },
     {
       "step": 4,
-      "requestHash": "3aaae698291fab4918f44367c717265adda8ee0f113c2bb5b224b4f989debf3f",
+      "requestHash": "d83e7186efccdfd1040c0b53953274bd2a70e2d563c012611edaddddcd4e398e",
       "response": {
         "text": "The billing desk recorded a proposal to post 22,000.00; it waits for your approval. The email came from outside, so check the account before you approve it.",
         "model": "authored-stand-in"

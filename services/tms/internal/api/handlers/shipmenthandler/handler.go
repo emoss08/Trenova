@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/formulavisibility"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -48,6 +50,7 @@ type Handler struct {
 	etas            shipmenttrackingports.ShipmentEtaReader
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
+	formulas        formulavisibility.Gate
 	logger          *zap.Logger
 }
 
@@ -61,6 +64,7 @@ func New(p Params) *Handler {
 		etas:            p.Etas,
 		eh:              p.ErrorHandler,
 		pm:              p.PermissionMiddleware,
+		formulas:        formulavisibility.NewGate(p.PermissionMiddleware, p.Logger),
 		logger:          p.Logger.Named("api.shipment-handler"),
 	}
 }
@@ -286,7 +290,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*shipment.Shipment], error) {
-			return h.service.List(c.Request.Context(), &shipmentports.ListShipmentsRequest{
+			result, err := h.service.List(c.Request.Context(), &shipmentports.ListShipmentsRequest{
 				Filter: req,
 				Cursor: cursor,
 				ShipmentOptions: shipmentports.ShipmentOptions{
@@ -294,6 +298,11 @@ func (h *Handler) list(c *gin.Context) {
 					Status:                helpers.QueryString(c, "status"),
 				},
 			})
+			if err != nil {
+				return nil, err
+			}
+
+			return h.visibleShipmentPage(c, result), nil
 		},
 	)
 }
@@ -324,7 +333,7 @@ func (h *Handler) getUnassignedShipments(c *gin.Context) {
 		req,
 		h.eh,
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*shipment.Shipment], error) {
-			return h.service.GetUnassigned(
+			result, err := h.service.GetUnassigned(
 				c.Request.Context(),
 				&shipmentports.GetUnassignedShipmentsRequest{
 					Filter: req,
@@ -334,6 +343,11 @@ func (h *Handler) getUnassignedShipments(c *gin.Context) {
 					},
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
+
+			return h.visibleShipmentPage(c, result), nil
 		},
 	)
 }
@@ -531,7 +545,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	h.respondShipment(c, http.StatusOK, entity)
 }
 
 // @Summary Create a shipment
@@ -598,7 +612,7 @@ func (h *Handler) create(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusCreated, created)
+	h.respondShipment(c, http.StatusCreated, created)
 }
 
 // @Summary Update a shipment
@@ -639,7 +653,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	h.respondShipment(c, http.StatusOK, updated)
 }
 
 // @Summary Calculate shipment totals
@@ -885,7 +899,7 @@ func (h *Handler) getDelayedShipments(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entities)
+	h.respondShipments(c, entities)
 }
 
 // @Summary Delay eligible shipments
@@ -914,7 +928,7 @@ func (h *Handler) delayShipments(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entities)
+	h.respondShipments(c, entities)
 }
 
 // @Summary List auto-cancelable shipments
@@ -942,7 +956,7 @@ func (h *Handler) getAutoCancelableShipments(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entities)
+	h.respondShipments(c, entities)
 }
 
 // @Summary Auto-cancel eligible shipments
@@ -971,7 +985,7 @@ func (h *Handler) autoCancelShipments(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entities)
+	h.respondShipments(c, entities)
 }
 
 // @Summary Cancel a shipment
@@ -1018,7 +1032,7 @@ func (h *Handler) cancel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	h.respondShipment(c, http.StatusOK, entity)
 }
 
 // @Summary Re-rate a shipment from its contract
@@ -1095,7 +1109,7 @@ func (h *Handler) uncancel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	h.respondShipment(c, http.StatusOK, entity)
 }
 
 // @Summary Transfer shipment ownership
@@ -1142,7 +1156,7 @@ func (h *Handler) transferOwnership(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	h.respondShipment(c, http.StatusOK, entity)
 }
 
 func (h *Handler) transferToBilling(c *gin.Context) {
@@ -1169,7 +1183,13 @@ func (h *Handler) transferToBilling(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, item)
+	formulavisibility.Respond(
+		c,
+		h.formulas,
+		http.StatusOK,
+		item,
+		(*billingqueue.BillingQueueItem).WithoutFormulaContent,
+	)
 }
 
 func (h *Handler) bulkTransferToBilling(c *gin.Context) {
@@ -1188,5 +1208,11 @@ func (h *Handler) bulkTransferToBilling(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	formulavisibility.Respond(
+		c,
+		h.formulas,
+		http.StatusOK,
+		response,
+		(*shipmentports.BulkTransferToBillingResponse).WithoutFormulaContent,
+	)
 }

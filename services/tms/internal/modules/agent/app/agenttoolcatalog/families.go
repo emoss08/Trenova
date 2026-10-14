@@ -54,6 +54,12 @@ var families = [...][]string{
 		"send_factoring_noa",
 		"record_factoring_noa_acknowledgement",
 	},
+	{
+		"list_factoring_submissions",
+		"submit_invoices_to_factor",
+		"retry_factoring_submission",
+		"cancel_factoring_submission",
+	},
 	{"list_edi_inbound_files", "get_edi_inbound_file", "get_edi_partner"},
 	{"list_edi_transfers", "get_edi_transfer", "accept_edi_tender", "decline_edi_tender"},
 	{"list_edi_tender_changes", "review_edi_tender_change"},

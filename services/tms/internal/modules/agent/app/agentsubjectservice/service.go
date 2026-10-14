@@ -81,6 +81,7 @@ type Params struct {
 	Invoices          invoiceports.InvoiceRepository                         `optional:"true"`
 	Disputes          invoiceports.InvoiceDisputeRepository                  `optional:"true"`
 	Noas              factoringports.NoaRepository                           `optional:"true"`
+	Submissions       factoringports.SubmissionRepository                    `optional:"true"`
 	StopEtas          stopetaports.Repository                                `optional:"true"`
 }
 
@@ -112,6 +113,7 @@ type Service struct {
 	invoices          invoiceports.InvoiceRepository
 	disputes          invoiceports.InvoiceDisputeRepository
 	noas              factoringports.NoaRepository
+	submissions       factoringports.SubmissionRepository
 	stopEtas          stopetaports.Repository
 	logger            *zap.Logger
 }
@@ -142,6 +144,7 @@ func New(p Params) agentports.AgentSubjectDescriber {
 		invoices:          p.Invoices,
 		disputes:          p.Disputes,
 		noas:              p.Noas,
+		submissions:       p.Submissions,
 		stopEtas:          p.StopEtas,
 		logger:            p.Logger.Named("service.agentsubject"),
 	}
@@ -196,6 +199,8 @@ func (s *Service) Describe(
 		return s.invoiceDispute(ctx, tenant, subjectID)
 	case agent.SubjectFactoringNoa:
 		return s.factoringNoa(ctx, tenant, subjectID)
+	case agent.SubjectFactoringSubmission:
+		return s.factoringSubmission(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
 		return nil, nil
 	default:

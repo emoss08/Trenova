@@ -48,6 +48,17 @@ const (
 	sampleACHLabel             = "ACH"
 )
 
+func sampleCarrierOrganization() AddressBlock {
+	return AddressBlock{
+		Name:  sampleCompanyName,
+		Lines: []string{"2200 Commerce St", sampleDallasCityLine, sampleCountry},
+		Details: []KeyValue{
+			{Label: "MC", Value: "MC-884120"},
+			{Label: "USDOT", Value: "3120457"},
+		},
+	}
+}
+
 func sampleFactorRemitTo() AddressBlock {
 	return AddressBlock{
 		Name:  sampleFactorName,
@@ -63,14 +74,7 @@ func newFactoringNoaSampleContext() any {
 		LetterDate:    "2026-08-24",
 		EffectiveDate: sampleNoaEffectiveDate,
 		Reference:     "noa_01K3R8V6Q2M4ZJ7XW9T5B0C1DE",
-		Organization: AddressBlock{
-			Name:  sampleCompanyName,
-			Lines: []string{"2200 Commerce St", sampleDallasCityLine, sampleCountry},
-			Details: []KeyValue{
-				{Label: "MC", Value: "MC-884120"},
-				{Label: "USDOT", Value: "3120457"},
-			},
-		},
+		Organization:  sampleCarrierOrganization(),
 		Customer: AddressBlock{
 			Name:  sampleCustomerName,
 			Lines: []string{"410 Market Ave", "Fort Worth, TX 76102", sampleCountry},

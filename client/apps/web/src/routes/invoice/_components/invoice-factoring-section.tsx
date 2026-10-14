@@ -1,5 +1,6 @@
 import { FactoringVerdictBadge } from "@/components/factoring/factoring-badges";
 import { FactoringChecksList } from "@/components/factoring/factoring-checks-list";
+import { FactoringSubmissionLink } from "@/components/factoring/factoring-submission-link";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { SectionPanel } from "@/components/section-panel";
@@ -144,6 +145,11 @@ function FactoringPanel({ factoring }: { factoring: InvoiceFactoring }) {
           <DescriptionItem label={t("Checked")}>
             {state ? formatUnixDateTimeShort(state.evaluatedAt) : t("Not yet")}
           </DescriptionItem>
+          {state?.submission ? (
+            <DescriptionItem label={t("Schedule")} span="full">
+              <FactoringSubmissionLink submission={state.submission} />
+            </DescriptionItem>
+          ) : null}
         </DescriptionList>
       </div>
       {state ? <FailedChecks state={state} invoiceNumber={factoring.number} /> : null}

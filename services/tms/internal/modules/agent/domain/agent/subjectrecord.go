@@ -36,6 +36,7 @@ var subjectRecordKinds = map[SubjectType]permission.RecordKind{
 	SubjectInvoice:              "invoice",
 	SubjectInvoiceDispute:       "invoice_dispute",
 	SubjectFactoringNoa:         "factoring_noa",
+	SubjectFactoringSubmission:  "factoring_submission",
 }
 
 var subjectsByPrefix = func() map[string]SubjectType {

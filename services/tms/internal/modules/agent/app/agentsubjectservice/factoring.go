@@ -45,3 +45,42 @@ func (s *Service) factoringNoa(
 	})
 	return subject, nil
 }
+
+func (s *Service) factoringSubmission(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	submissionID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectFactoringSubmission,
+		ID:    submissionID.String(),
+		Label: "Factoring schedule",
+	}
+	if s.submissions == nil {
+		return subject, nil
+	}
+
+	found, err := s.submissions.GetByID(ctx, factoringports.GetSubmissionRequest{
+		ID:         submissionID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load factoring schedule: %w", err)
+	}
+
+	subject.Label = "Factoring schedule " + found.Number
+	subject.Notes = marshalNotes(map[string]any{
+		noteStatus:           found.Status,
+		noteNumber:           found.Number,
+		"factoringCompanyId": found.FactoringCompanyID,
+		"invoiceCount":       found.InvoiceCount,
+		"faceMinor":          found.FaceMinor,
+		"transportMethod":    found.TransportMethod,
+		"transportTarget":    found.TransportTarget,
+		"sentAt":             found.SentAt,
+		"failedAt":           found.FailedAt,
+		"lastError":          found.LastError,
+		"version":            found.Version,
+	})
+	return subject, nil
+}

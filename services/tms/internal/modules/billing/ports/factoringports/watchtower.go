@@ -58,7 +58,29 @@ type ExpiringNoa struct {
 	ExpiresAt          int64    `json:"expiresAt"          bun:"expires_at"`
 }
 
+type ListFailedSubmissionsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	Limit      int                   `json:"limit"`
+}
+
+type FailedSubmission struct {
+	SubmissionID       pulid.ID `json:"submissionId"       bun:"submission_id"`
+	Number             string   `json:"number"             bun:"number"`
+	FactoringCompanyID pulid.ID `json:"factoringCompanyId" bun:"factoring_company_id"`
+	FactorName         string   `json:"factorName"         bun:"factor_name"`
+	CurrencyCode       string   `json:"currencyCode"       bun:"currency_code"`
+	InvoiceCount       int      `json:"invoiceCount"       bun:"invoice_count"`
+	FaceMinor          int64    `json:"faceMinor"          bun:"face_minor"`
+	TransportTarget    string   `json:"transportTarget"    bun:"transport_target"`
+	LastError          string   `json:"lastError"          bun:"last_error"`
+	FailedAt           int64    `json:"failedAt"           bun:"failed_at"`
+}
+
 type WatchtowerReader interface {
+	ListFailedSubmissions(
+		ctx context.Context,
+		req *ListFailedSubmissionsRequest,
+	) ([]*FailedSubmission, error)
 	ListInvoiceLabels(
 		ctx context.Context,
 		req *ListInvoiceLabelsRequest,

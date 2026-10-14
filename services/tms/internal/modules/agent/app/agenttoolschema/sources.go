@@ -59,9 +59,13 @@ var (
 		"integration.accountingSystem",
 		accountingsync.AccountingSystems(),
 	)
-	FactoringQueueVerdicts = Source("factoring.verdict", factoring.QueueVerdicts())
-	FactoringNoaStatuses   = Source("factoring.noaStatus", factoring.AllNoaStatuses())
-	FactoringOverrides     = Source(
+	FactoringQueueVerdicts      = Source("factoring.verdict", factoring.QueueVerdicts())
+	FactoringNoaStatuses        = Source("factoring.noaStatus", factoring.AllNoaStatuses())
+	FactoringSubmissionStatuses = Source(
+		"factoring.submissionStatus",
+		factoring.AllSubmissionStatuses(),
+	)
+	FactoringOverrides = Source(
 		"invoice.factoringOverride",
 		invoice.FactoringOverrideValues(),
 	)

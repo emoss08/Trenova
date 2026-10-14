@@ -499,6 +499,11 @@ func (t Template) StarterTools() []string {
 			"send_factoring_noa",
 			"record_factoring_noa_acknowledgement",
 			"request_missing_factoring_document",
+			"list_factoring_submissions",
+			"get_factoring_submission",
+			"submit_invoices_to_factor",
+			"retry_factoring_submission",
+			"cancel_factoring_submission",
 			"list_invoices",
 			"get_invoice",
 		}
