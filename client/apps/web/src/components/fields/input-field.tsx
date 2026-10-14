@@ -2,7 +2,6 @@ import type React from "react";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import { Input, type InputProps } from "@trenova/shared/components/ui/input";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { FieldWrapper, type FieldLayout } from "./field-components";
 
 type BaseInputFieldProps = Omit<InputProps, "name"> & {
@@ -65,12 +64,4 @@ export function InputField<T extends FieldValues>({
   );
 }
 
-export function InputFieldSkeleton() {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <Skeleton className="flex h-4 w-37.5 items-center" />
-      <Skeleton className="h-7 max-w-prose" />
-      <Skeleton className="h-4 max-w-md" />
-    </div>
-  );
-}
+export { InputFieldSkeleton } from "./field-skeletons";

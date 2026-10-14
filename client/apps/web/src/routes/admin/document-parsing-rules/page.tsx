@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
+import { DocumentParsingRulesSkeleton } from "./skeleton";
 
 const DocumentParsingRulePageContent = lazy(
   () => import("./_components/document-parsing-rule-page-content"),
@@ -20,9 +21,9 @@ export function DocumentParsingRulesPage() {
         ),
       }}
     >
-      <SuspenseLoader>
+      <LazyComponent fallback={<DocumentParsingRulesSkeleton />}>
         <DocumentParsingRulePageContent />
-      </SuspenseLoader>
+      </LazyComponent>
     </PageLayout>
   );
 }

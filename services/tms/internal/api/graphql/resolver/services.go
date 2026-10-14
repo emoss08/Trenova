@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
@@ -345,6 +346,7 @@ type Params struct {
 	AgentRunEventRepo            agentports.AgentRunEventRepository
 	AIAuditService               aiauditports.AIAuditService
 	BriefingService              briefingports.BriefingService
+	AgentProfileService          agentprofileports.Service
 	AgentTools                   agentports.AgentToolRegistry
 	AgentControlService          agentports.AgentControlService
 	ProposalPreviewService       agentports.ProposalPreviewService `optional:"true"`
@@ -566,6 +568,7 @@ type Services struct {
 	AgentRunEventRepo            agentports.AgentRunEventRepository
 	AiAuditService               aiauditports.AIAuditService
 	BriefingService              briefingports.BriefingService
+	AgentProfileService          agentprofileports.Service
 	AgentTools                   agentports.AgentToolRegistry
 	AgentControlService          agentports.AgentControlService
 	ProposalPreviewService       agentports.ProposalPreviewService
@@ -793,6 +796,7 @@ func newServices(p *Params) *Services {
 		AgentRunEventRepo:            p.AgentRunEventRepo,
 		AiAuditService:               p.AIAuditService,
 		BriefingService:              p.BriefingService,
+		AgentProfileService:          p.AgentProfileService,
 		AgentTools:                   p.AgentTools,
 		AgentControlService:          p.AgentControlService,
 		ProposalPreviewService:       p.ProposalPreviewService,

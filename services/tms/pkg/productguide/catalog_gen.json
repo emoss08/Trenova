@@ -1,5 +1,5 @@
 {
-  "version": "sha256:88cb7ce6e63206a865a59c94de40c211d4746119f6bbace3362238f8ea6a7f41",
+  "version": "sha256:b7160f860bc38007f9d5280232640301746c69c27730431d6d2494b0b9b6771c",
   "modules": [
     {
       "id": "home",
@@ -3033,6 +3033,24 @@
           ]
         },
         {
+          "title": "See and steer what agents know about the organization",
+          "keywords": [
+            "organization profile",
+            "what agents know about us",
+            "business profile",
+            "agents assume",
+            "steer the agents",
+            "guidance"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Memory** in the rail. **What agents know about the organization** is at the top: the note every agent reads before it answers, with when it was last checked.",
+            "Open **What it was written from** to see the facts it came from: shipments, customers, lanes, fleet, drivers, integrations and settings, each worked out from your records.",
+            "Under **Guidance**, type what the records cannot show, such as \"The Laredo lane is seasonal; it runs from October to March\", and select **Add guidance**. The note is written again with it a few minutes later. Each line shows who gave it.",
+            "To take a line back, select **Retire** on it.",
+            "To have the note written again now, select **Write it again**. **Earlier versions** lists every version, including any attempt that did not finish."
+          ]
+        },
+        {
           "title": "Let agents learn from their work",
           "keywords": [
             "self-improving agents",
@@ -3046,13 +3064,13 @@
           "steps": [
             "Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, select **Edit** and turn **Learn from their work** on or off for every agent, then save. It is on unless someone turned it off.",
             "To change it for one agent, open the agent in **Agents** and turn **Learns from its work** on or off, then select **Save**.",
-            "Select **Memory** in the rail. **What agents learned** lists the latest times an agent looked back over its work: what made it look (a tool that worked after failing, a person correcting it, a proposal changed or refused, a reply rated unhelpful, a long task) and each lesson it kept, offered or turned down, with the reason.",
+            "Select **Memory** in the rail. **What agents learned** lists the latest times an agent looked back over its work: what made it look (a tool that worked after failing, a person correcting it, a proposal changed or refused, a reply rated unhelpful, a long task in a conversation) and each lesson it kept, offered or turned down, with the reason.",
             "A lesson shared beyond one person waits under **Nova suggests**, with the memory it would retire. Select **Approve** to keep it as written, **Edit** to reword it first, or **Dismiss**.",
             "Open any memory in the list to see **Where it came from**: why it was kept, what made the agent look back, what was said, the conversation or run it was drawn from, and the memory it replaces or that has replaced it."
           ]
         }
       ],
-      "notes": "An embedding provider turns memories, documents and mail into vectors so agents can find them by what they mean rather than by the exact words; until one is set up, agents search by keywords only. Social security, card and bank account numbers are masked before a document is sent. Changing the embedding model or its size re-indexes everything that was embedded. Providers with the same model and size back each other up; a provider with a different model is never used in their place.\n\nRetrieval is read with read access to AI providers; changing its settings or re-indexing needs update access to AI providers. Only chunks whose text changed are embedded again on a re-index, so the cost shown before one is the most it could cost, and a re-index when nothing changed costs nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is spent indexing pauses, and it resumes on its own the next month or as soon as the budget is raised. What agents' searches cost counts against each agent's own monthly budget. When the Embedding task is routed to a different model, every source is indexed under the new model beside the old one, and searches move to it only when all of it is done; **Sources** shows how far that has come.\n\nAn agent that has read content written outside the organization (an inbound email, an extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a run wrote) never sends anything to a customer, driver or outside address, or moves money, on its own: that change waits for a person's approval whatever tier the tool has, and the proposal is marked as having read outside content. A memory such a run wrote stops counting once a person reviews it or approves it as a suggestion; the review is recorded in the audit log, and **Where it came from** still shows that it came from outside content. A suggested memory drawn from ratings of one agent is kept for that agent alone once approved.\n\nAn agent looks back over a conversation once it has been quiet for ten minutes (or after an hour of steady back and forth), and over a background run once every proposal it raised is decided. It does so only when something in the work is worth learning from, so most conversations cost nothing. A lesson is a **Procedure** (the steps that worked, naming the tools), a **Fact** no record holds, or, from a person's own words, an **Instruction** that was not already saved. It is kept for the person in the conversation unless they may create agent memories, follows their saving preference, and replaces an older memory rather than contradicting it. A lesson for a team or the whole organization, and anything learned from work that read outside content, is only ever offered. Retiring or editing a learned memory works like any other.\n\nA memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is recorded about the record the conversation is about. When the organization keeps close to 5,000 active memories, the Memory section warns that fewer of them reach each prompt; retire what no longer holds.\n\nA provider on a cloud platform keeps its credential for the region, project, workspace and identity it was entered for. Change any of them, or the platform, and the editor asks for the credential again; the saved one is never sent somewhere it was not entered for. Signing in with the server's own credentials is off unless the server's operator turns it on, because on a server shared by several organizations it would spend the operator's cloud account; choosing it removes any credential the provider had saved.\n\nOpening the page needs read access to AI control. Each section in the rail appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a section someone cannot open is left out. **Safety** appears for people who may read agents, and **Quality** for people who may read the evaluation suite. **Worst rated** and satisfaction need read access to agent feedback, **Run suite now** and **Add to golden set** need create access to the evaluation suite, and changing **Sweep settings** needs update access to both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data, or whose work leaves the organization, shows a warning there as soon as the form says so, before it is saved; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles; someone without update access to roles can still save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nEvery night, at the hour chosen in **Sweep settings** (in the organization's timezone unless another is chosen there), each agent with active cases is replayed against a sample of its golden set with every write simulated. The sample always includes the cases the agent failed most recently and is otherwise spread across where the cases came from; it is the same sample for the same run. An agent is skipped when nothing about it (its instructions, tools, model or provider) or its cases changed since its last run, unless that run is older than the rerun limit. A run stops when the nightly or monthly budget is spent, and says so. When an agent's score falls below the median of its recent runs by more than the threshold, the run is marked **Regressed**, a Watchtower item is raised (critical when a case failed a hard check), and the people who can update AI control are told once, with what changed.\n\nThe **Audit trail** section appears for people with read access to the AI audit trail; reading agent runs does not grant it. **Verify now** needs the same read access. **Export trail** and **Download** need export access to the AI audit trail, and only the person who asked for an export can download it; the file can be downloaded until it expires, seven days after it was written unless the organization's configuration says otherwise. Requesting and downloading an export are written to the audit log. The audit log entries shown with an event appear only for people who may read the audit log. Arguments show only what the reader may see on that record; anything above it reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a minute of happening. How long they are kept is set on [Data retention](/organization/data-retention).\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
+      "notes": "An embedding provider turns memories, documents and mail into vectors so agents can find them by what they mean rather than by the exact words; until one is set up, agents search by keywords only. Social security, card and bank account numbers are masked before a document is sent. Changing the embedding model or its size re-indexes everything that was embedded. Providers with the same model and size back each other up; a provider with a different model is never used in their place.\n\nRetrieval is read with read access to AI providers; changing its settings or re-indexing needs update access to AI providers. Only chunks whose text changed are embedded again on a re-index, so the cost shown before one is the most it could cost, and a re-index when nothing changed costs nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is spent indexing pauses, and it resumes on its own the next month or as soon as the budget is raised. What agents' searches cost counts against each agent's own monthly budget. When the Embedding task is routed to a different model, every source is indexed under the new model beside the old one, and searches move to it only when all of it is done; **Sources** shows how far that has come.\n\nAn agent that has read content written outside the organization (an inbound email, an extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a run wrote) never sends anything to a customer, driver or outside address, or moves money, on its own: that change waits for a person's approval whatever tier the tool has, and the proposal is marked as having read outside content. A memory such a run wrote stops counting once a person reviews it or approves it as a suggestion; the review is recorded in the audit log, and **Where it came from** still shows that it came from outside content. A suggested memory drawn from ratings of one agent is kept for that agent alone once approved.\n\nAn agent looks back over a conversation once it has been quiet for ten minutes (or after an hour of steady back and forth), and over a background run once every proposal it raised is decided. It does so only when something in the work is worth learning from, so most conversations cost nothing. A lesson is a **Procedure** (the steps that worked, naming the tools), a **Fact** no record holds, or, from a person's own words, an **Instruction** that was not already saved. It is kept for the person in the conversation unless they may create agent memories, follows their saving preference, and replaces an older memory rather than contradicting it. A lesson for a team or the whole organization, anything learned from a background run nobody was in, and anything learned from work that read outside content, is only ever offered. Retiring or editing a learned memory works like any other.\n\nAgents are told what kind of business the organization is from a note written each night from its own records and from the guidance its people gave; each person who talks to agents has a short note of their own, kept up each week. A note is written again only when the facts behind it move, never edited by a model on its own, and never states a number that is not in the facts or the guidance; an attempt that would is set aside and the version before it stays. Notes are written only while **Learn from their work** is on. Seeing the organization's note needs read access to agent memory, adding guidance needs create access, and retiring a line or writing it again needs update access.\n\nA memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is recorded about the record the conversation is about. **Used** above a reply counts only the memories that bear on what was asked: a note about a shipment's customer is still in front of the agent when you ask about that shipment's arrival, but is not counted as used unless it is about that. A procedure the agent learned is brought in only for the kind of task it describes. When the organization keeps close to 5,000 active memories, the Memory section warns that fewer of them reach each prompt; retire what no longer holds.\n\nA provider on a cloud platform keeps its credential for the region, project, workspace and identity it was entered for. Change any of them, or the platform, and the editor asks for the credential again; the saved one is never sent somewhere it was not entered for. Signing in with the server's own credentials is off unless the server's operator turns it on, because on a server shared by several organizations it would spend the operator's cloud account; choosing it removes any credential the provider had saved.\n\nOpening the page needs read access to AI control. Each section in the rail appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a section someone cannot open is left out. **Safety** appears for people who may read agents, and **Quality** for people who may read the evaluation suite. **Worst rated** and satisfaction need read access to agent feedback, **Run suite now** and **Add to golden set** need create access to the evaluation suite, and changing **Sweep settings** needs update access to both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data, or whose work leaves the organization, shows a warning there as soon as the form says so, before it is saved; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles; someone without update access to roles can still save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nEvery night, at the hour chosen in **Sweep settings** (in the organization's timezone unless another is chosen there), each agent with active cases is replayed against a sample of its golden set with every write simulated. The sample always includes the cases the agent failed most recently and is otherwise spread across where the cases came from; it is the same sample for the same run. An agent is skipped when nothing about it (its instructions, tools, model or provider) or its cases changed since its last run, unless that run is older than the rerun limit. A run stops when the nightly or monthly budget is spent, and says so. When an agent's score falls below the median of its recent runs by more than the threshold, the run is marked **Regressed**, a Watchtower item is raised (critical when a case failed a hard check), and the people who can update AI control are told once, with what changed.\n\nThe **Audit trail** section appears for people with read access to the AI audit trail; reading agent runs does not grant it. **Verify now** needs the same read access. **Export trail** and **Download** need export access to the AI audit trail, and only the person who asked for an export can download it; the file can be downloaded until it expires, seven days after it was written unless the organization's configuration says otherwise. Requesting and downloading an export are written to the audit log. The audit log entries shown with an event appear only for people who may read the audit log. Arguments show only what the reader may see on that record; anything above it reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a minute of happening. How long they are kept is set on [Data retention](/organization/data-retention).\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
       "related": [
         "/admin/document-intelligence",
         "/admin/inbound-mailboxes",
@@ -6788,21 +6806,6 @@
             "Tick the rows you want to change.",
             "Use **Update status** in the action bar that appears and pick **Active** or **Inactive**."
           ]
-        },
-        {
-          "title": "Send a factored customer its notice of assignment",
-          "keywords": [
-            "send NOA",
-            "notice of assignment",
-            "factored customer",
-            "tell the customer to pay the factor"
-          ],
-          "steps": [
-            "Open [Customers](/billing/configuration-files/customers) and select the customer's row.",
-            "Open the **Billing profile** tab. Under **Factoring**, the **Notice of assignment** box shows where the customer's notice to its factor stands.",
-            "Select **Send NOA**. A notice is drafted first when the customer has none.",
-            "Optionally enter a **Recipient**, then select **Send notice**."
-          ]
         }
       ],
       "notes": "Viewing the page needs read access to customers; adding one needs create access and changing one needs update access. The **Broker vetting** tab needs a carrier intelligence provider connected under integrations.\n\nA statement customer's shipments collect in the **Statements** view of the [Billing queue](/billing/queue) until their period is billed.",
@@ -6810,8 +6813,7 @@
         "/billing/queue",
         "/billing/invoices",
         "/billing/rate-agreements",
-        "/billing/configuration-files/document-types",
-        "/billing/factoring"
+        "/billing/configuration-files/document-types"
       ],
       "covers": [],
       "createAction": {
@@ -6982,7 +6984,7 @@
         "Factoring companies"
       ],
       "description": "The factors your receivables are sold to. Customers assigned to one are invoiced with its remit-to and notice of assignment.",
-      "summary": "Factoring companies lists the factors you sell receivables to. Each one holds the factor's **Code**, **Name** and remit-to address, how customers pay it (**Remittance instructions**) and the **Notice of assignment** printed on every invoice assigned to it.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.\n\nA factor is either recourse or **Non-recourse**. With recourse, the usual arrangement, an invoice the customer never pays comes back to you, so factored invoices stay on the [Collections](/accounting/ar/collections) worklist and still count toward the customer's credit limit. A non-recourse factor buys the invoices outright and carries the risk, so its invoices leave the worklist and stop counting toward the credit limit.\n\nEach factor's panel also holds its **Agreements** and its **Notices of assignment**. The agreement records the terms: advance and reserve rates, the fee by days outstanding, the chargeback window, funding days and the documents the factor needs with every invoice. A notice of assignment tells one customer to pay the factor. A customer's invoices are only ready to factor on the [Factoring](/billing/factoring) page once the factor has an active agreement and the customer has acknowledged a notice.",
+      "summary": "Factoring companies lists the factors you sell receivables to. Each one holds the factor's **Code**, **Name** and remit-to address, how customers pay it (**Remittance instructions**) and the **Notice of assignment** printed on every invoice assigned to it.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.\n\nA factor is either recourse or **Non-recourse**. With recourse, the usual arrangement, an invoice the customer never pays comes back to you, so factored invoices stay on the [Collections](/accounting/ar/collections) worklist and still count toward the customer's credit limit. A non-recourse factor buys the invoices outright and carries the risk, so its invoices leave the worklist and stop counting toward the credit limit.",
       "requires": [
         {
           "resource": "factoring_company",
@@ -7054,86 +7056,12 @@
             "Open the **Billing profile** tab.",
             "Clear the **Factoring company**, then select **Save**."
           ]
-        },
-        {
-          "title": "Set up a factoring agreement",
-          "keywords": [
-            "factoring terms",
-            "advance rate",
-            "reserve",
-            "fee schedule",
-            "chargeback window",
-            "factoring contract"
-          ],
-          "steps": [
-            "Open [Factoring companies](/billing/configuration-files/factoring-companies) and select the factor's row.",
-            "Under **Agreements**, select **New agreement**.",
-            "Fill in **Starts**, **Advance rate**, **Reserve rate**, **Chargeback window**, **Recourse** and **Accounting treatment**.",
-            "Under **Fees**, enter each band's **Until day**, **Fee rate** and **Flat fee**. Select **Add tier** for another band and leave the last one open-ended.",
-            "Fill in **Funding days** and **Daily schedule time**, and pick the **Documents the factor needs**.",
-            "Select **Save draft**, then **Activate** once the contract is signed."
-          ]
-        },
-        {
-          "title": "End a factoring agreement",
-          "keywords": [
-            "stop factoring with a factor",
-            "terminate agreement"
-          ],
-          "steps": [
-            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
-            "Under **Agreements**, select **End** on the active agreement.",
-            "Optionally choose when it **Ends**, then select **End agreement**."
-          ]
-        },
-        {
-          "title": "Send a notice of assignment",
-          "keywords": [
-            "NOA",
-            "send NOA",
-            "notice of assignment letter",
-            "tell the customer to pay the factor"
-          ],
-          "steps": [
-            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
-            "Under **Notices of assignment**, select **New notice**, choose the **Customer**, then select **Save draft**.",
-            "In the dialog that opens, optionally enter a **Recipient**, then select **Send notice**."
-          ]
-        },
-        {
-          "title": "Record a signed notice of assignment",
-          "keywords": [
-            "NOA acknowledged",
-            "signed NOA",
-            "upload signed notice",
-            "acknowledgement"
-          ],
-          "steps": [
-            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
-            "Under **Notices of assignment**, select **Record acknowledgement** on the customer's notice.",
-            "Choose **Acknowledged on**, upload the signed copy or pick it under **Signed copy**, and optionally set when it **Expires**.",
-            "Select **Record acknowledgement**."
-          ]
-        },
-        {
-          "title": "Release a notice of assignment",
-          "keywords": [
-            "release NOA",
-            "stop the factor collecting",
-            "customer pays us again"
-          ],
-          "steps": [
-            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
-            "Under **Notices of assignment**, select **Release** on the notice.",
-            "Enter the **Reason**, then select **Release notice**."
-          ]
         }
       ],
-      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nRecourse is a property of the agreement, so it applies to every invoice assigned to the factor, including ones already posted. Credit standings follow at the next credit review, which runs each night and whenever the customer's receivables change.\n\nAgreements need factoring agreement access and notices need notice of assignment access. An ended agreement cannot be changed, and a factor has one active agreement at a time.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.",
+      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nRecourse is a property of the agreement, so it applies to every invoice assigned to the factor, including ones already posted. Credit standings follow at the next credit review, which runs each night and whenever the customer's receivables change.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.",
       "related": [
         "/billing/configuration-files/customers",
-        "/billing/invoices",
-        "/billing/factoring"
+        "/billing/invoices"
       ],
       "covers": [],
       "createAction": {
@@ -7494,100 +7422,6 @@
           "panelType": "create"
         }
       },
-      "inNavigation": true
-    },
-    {
-      "path": "/billing/factoring",
-      "name": "Factoring",
-      "module": "billing",
-      "breadcrumb": [
-        "Billing management",
-        "Factoring"
-      ],
-      "description": "Posted invoices assigned to a factor, split by whether they are ready to sell. Open one to see the checks it failed and fix them.",
-      "summary": "Factoring lists every posted invoice assigned to a factor and says whether it is ready to sell. An invoice is ready when it is posted and open with no open dispute, its customer has acknowledged a notice of assignment for the factor, the factor has an active agreement, the shipment passes billing readiness, and the invoice carries every document the agreement asks for.\n\nThe strip at the top totals the open balance of invoices that are **Ready**, **Not ready**, and **Ready over a day** (ready for more than a day without being submitted). The **Ready** and **Not ready** tabs list those invoices with their customer, factor and open balance. Open an invoice to see each check it was given, what failed, and the action that clears it.",
-      "requires": [
-        {
-          "resource": "invoice",
-          "operation": "read"
-        }
-      ],
-      "capabilities": [],
-      "aliases": [
-        "factoring queue",
-        "ready to factor",
-        "factoring readiness",
-        "sell invoices",
-        "schedule of accounts",
-        "factored invoices",
-        "NOA",
-        "notice of assignment",
-        "missing POD for factoring"
-      ],
-      "tasks": [
-        {
-          "title": "See which invoices are ready to factor",
-          "keywords": [
-            "ready to sell",
-            "factoring queue",
-            "invoices ready for the factor"
-          ],
-          "steps": [
-            "Open [Factoring](/billing/factoring).",
-            "Select the **Ready** tab, or the **Ready** figure in the strip. **Ready since** shows when each invoice became ready."
-          ]
-        },
-        {
-          "title": "Find out why an invoice is not ready",
-          "keywords": [
-            "factoring blocked",
-            "failed checks",
-            "not ready to factor",
-            "factoring readiness checks"
-          ],
-          "steps": [
-            "Open [Factoring](/billing/factoring) and select the **Not ready** tab.",
-            "Select the invoice's row. Its **Checks** list the failed checks first, each with what clears it.",
-            "Follow the check's link: **Open the factor's agreements** or **Open the factor's notices** for a missing agreement or notice, **Open the disputes** for an open dispute, and **Open the shipment** for a shipment that fails billing readiness."
-          ]
-        },
-        {
-          "title": "Ask for a missing document",
-          "keywords": [
-            "request POD",
-            "missing proof of delivery",
-            "missing BOL for factoring",
-            "request paperwork"
-          ],
-          "steps": [
-            "Open [Factoring](/billing/factoring), select the **Not ready** tab and select the invoice's row.",
-            "On the check for the missing document, select **Request documents**.",
-            "Optionally enter a **Recipient** and a **Message**, then select **Send request**. With no recipient, the driver is asked first, then the carrier, then the customer's invoice contacts."
-          ]
-        },
-        {
-          "title": "Keep one invoice out of factoring",
-          "keywords": [
-            "exclude invoice from factoring",
-            "collect it ourselves",
-            "factoring override",
-            "do not factor"
-          ],
-          "steps": [
-            "Open [Invoices](/billing/invoices) and select the invoice.",
-            "In the **Factoring** section on the **Overview** tab, change **Factoring** to **Keep out of factoring**.",
-            "Enter the **Reason**, then select **Save**. Change it back to **Follow the customer** to return the invoice to its customer's factor."
-          ]
-        }
-      ],
-      "notes": "Opening the page needs read access to invoices. Requesting documents needs permission to create customer communications, and keeping an invoice out of factoring needs update access to invoices.\n\nReadiness is checked again whenever a document, the invoice, a dispute, the agreement or the notice changes, so a fixed check clears on its own. Voided, paid and credit memo invoices, and invoices kept out of factoring, are not listed.\n\nAgreements and notices of assignment are kept on each factor; see [Factoring companies](/billing/configuration-files/factoring-companies).",
-      "related": [
-        "/billing/configuration-files/factoring-companies",
-        "/billing/configuration-files/customers",
-        "/billing/invoices"
-      ],
-      "covers": [],
-      "createAction": null,
       "inNavigation": true
     },
     {
@@ -9781,7 +9615,7 @@
         "Memory"
       ],
       "description": "**What Desk remembers** lists everything the agents keep about how you and your team work.",
-      "summary": "**What Desk remembers** lists everything the agents keep about how you and your team work. That covers what you told them to keep in mind, what they saved from your conversations, and what they learned by looking back over their own work. Open it from **Memory** in the Desk sidebar.\n\nEach memory shows who it is for (**Just you**, one of your teams, or the **Organization**), when it was saved and where from, and how many times agents have used it. You can add memories, change their words or who they are for, pause them, forget them, and choose whether agents save new memories on their own or ask you first.",
+      "summary": "**What Desk remembers** lists everything the agents keep about how you and your team work. That covers what you told them to keep in mind, what they saved from your conversations, and what they learned by looking back over their own work. Open it from **Memory** in the Desk sidebar.\n\nAt the top, **What agents know about your work** is a short note agents read before every conversation with you: what your own records show you work on, kept up each week, and the lines you told them. It is how a short request such as \"my invoices\" or \"the Acme load\" is read the way you mean it.\n\nEach memory shows who it is for (**Just you**, one of your teams, or the **Organization**), when it was saved and where from, and how many times agents have used it. You can add memories, change their words or who they are for, pause them, forget them, and choose whether agents save new memories on their own or ask you first.",
       "requires": [
         {
           "resource": "assistant",
@@ -9792,6 +9626,9 @@
       "aliases": [
         "agent memory",
         "AI memory",
+        "what agents know about me",
+        "my profile",
+        "tell agents what I do",
         "what the AI remembers",
         "what Desk remembers",
         "saved preferences",
@@ -9805,6 +9642,23 @@
         "remember this"
       ],
       "tasks": [
+        {
+          "title": "See and correct what agents know about you",
+          "keywords": [
+            "my profile",
+            "what agents know about me",
+            "agents assume",
+            "wrong about me",
+            "tell agents what I do"
+          ],
+          "steps": [
+            "Open [What Desk remembers](/desk/memory). **What agents know about your work** is at the top. Before you have worked with agents for a while it says **Nothing yet**.",
+            "If something is wrong or missing, type it into **Tell agents about your work**, for example \"I only handle the Midwest accounts\", and select **Add**. The note is written again with it a few minutes later.",
+            "To take a line back, select **Retire** next to it. The note is written again without it.",
+            "To have the note written again now, select **Write it again**.",
+            "You can also just say it in a conversation (\"I'm in billing now\"): the agent writes the line down for you."
+          ]
+        },
         {
           "title": "Teach Desk something",
           "keywords": [
@@ -17694,33 +17548,6 @@
         "panelEntityId": "{id}"
       },
       "deskCard": true
-    },
-    {
-      "entity": "factoring_agreement",
-      "label": "Factoring agreement",
-      "path": "/billing/configuration-files/factoring-companies",
-      "params": {
-        "section": "agreements",
-        "agreement": "{id}"
-      }
-    },
-    {
-      "entity": "factoring_company",
-      "label": "Factoring company",
-      "path": "/billing/configuration-files/factoring-companies",
-      "params": {
-        "panelType": "edit",
-        "panelEntityId": "{id}"
-      }
-    },
-    {
-      "entity": "factoring_noa",
-      "label": "Notice of assignment",
-      "path": "/billing/configuration-files/factoring-companies",
-      "params": {
-        "section": "notices",
-        "noa": "{id}"
-      }
     },
     {
       "entity": "formula_template",

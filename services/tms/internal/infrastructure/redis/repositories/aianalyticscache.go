@@ -16,10 +16,12 @@ import (
 )
 
 const (
-	aiAnalyticsPrefix    = "ai-analytics"
-	aiAnalyticsEpochPart = "epoch"
-	AIAnalyticsCacheTTL  = 2 * time.Minute
-	aiAnalyticsEpochTTL  = 7 * 24 * time.Hour
+	aiAnalyticsPrefix     = "ai-analytics"
+	aiAnalyticsEpochPart  = "epoch"
+	aiAnalyticsPalette    = "palette"
+	AIAnalyticsCacheTTL   = 2 * time.Minute
+	aiAnalyticsEpochTTL   = 7 * 24 * time.Hour
+	AIAnalyticsPaletteTTL = time.Hour
 )
 
 type AIAnalyticsCacheParams struct {
@@ -56,7 +58,7 @@ func AIAnalyticsKey(key *aianalyticsports.CacheKey) string {
 		string(req.CompareBy),
 		req.AgentDefinitionID.String(),
 		string(req.Task),
-		req.Timezone,
+		strconv.FormatUint(key.Buckets, 16),
 		key.Locale,
 	}, ":")
 }
@@ -111,6 +113,50 @@ func (c *aiAnalyticsCache) Set(
 		AIAnalyticsCacheTTL,
 	); err != nil {
 		return fmt.Errorf("write ai analytics: %w", err)
+	}
+	return nil
+}
+
+func AIAnalyticsPaletteKey(tenant pagination.TenantInfo, epoch int64) string {
+	return strings.Join([]string{
+		aiAnalyticsPrefix,
+		aiAnalyticsPalette,
+		tenant.OrgID.String(),
+		tenant.BuID.String(),
+		strconv.FormatInt(epoch, 10),
+	}, ":")
+}
+
+func (c *aiAnalyticsCache) Palette(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	epoch int64,
+) ([]aianalyticsports.DeploymentKey, bool, error) {
+	var keys []aianalyticsports.DeploymentKey
+	err := redishelpers.GetStringJSON(ctx, c.client, AIAnalyticsPaletteKey(tenant, epoch), &keys)
+	if err == nil {
+		return keys, true, nil
+	}
+	if redishelpers.IsRedisNil(err) || errors.Is(err, redis.Nil) {
+		return nil, false, nil
+	}
+	return nil, false, fmt.Errorf("read ai analytics palette: %w", err)
+}
+
+func (c *aiAnalyticsCache) SetPalette(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	epoch int64,
+	keys []aianalyticsports.DeploymentKey,
+) error {
+	if err := redishelpers.SetStringJSON(
+		ctx,
+		c.client,
+		AIAnalyticsPaletteKey(tenant, epoch),
+		keys,
+		AIAnalyticsPaletteTTL,
+	); err != nil {
+		return fmt.Errorf("write ai analytics palette: %w", err)
 	}
 	return nil
 }

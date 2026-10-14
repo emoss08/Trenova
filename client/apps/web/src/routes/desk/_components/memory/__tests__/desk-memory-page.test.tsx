@@ -23,6 +23,16 @@ vi.mock("@/lib/graphql/desk-memories", async (importOriginal) => ({
   ...api,
 }));
 
+vi.mock("@/lib/graphql/agent-profile", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/agent-profile")>()),
+  fetchAgentProfile: vi.fn().mockResolvedValue({
+    subject: "User",
+    current: null,
+    latestFailure: null,
+    guidance: [],
+  }),
+}));
+
 vi.mock("@trenova/shared/stores/auth-store", () => ({
   useAuthStore: (selector: (s: { user: unknown }) => unknown) =>
     selector({ user: { id: "usr_1", name: "Avery Lane", timezone: "UTC" } }),

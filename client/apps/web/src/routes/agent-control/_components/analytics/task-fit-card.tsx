@@ -14,7 +14,6 @@ import { ConfirmDialog } from "../kit/modal";
 import { completionIntensity, percent, type SeriesColors } from "./analytics-model";
 import { AnalyticsCard } from "./card";
 import { HeatHead } from "./heat-head";
-import { highlightClass, useHighlight } from "./highlight";
 
 type TaskFitCardProps = {
   tasks: readonly AIAnalyticsTaskRow[];
@@ -38,7 +37,6 @@ export const TaskFitCard = memo(function TaskFitCard({
   canRoute,
 }: TaskFitCardProps) {
   const t = useT();
-  const { hot } = useHighlight();
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState<AIAnalyticsTaskRow | null>(null);
   const labelOf = (row: AIAnalyticsTaskRow) => t(taskLabels.get(row.task) ?? row.task);
@@ -130,7 +128,8 @@ export const TaskFitCard = memo(function TaskFitCard({
                       <span
                         key={item.key}
                         role="cell"
-                        className={cn("an-c z", highlightClass(hot, item.key))}
+                        className="an-c z"
+                        data-series={item.key}
                         aria-label={t("Not routed here")}
                       >
                         —
@@ -143,12 +142,12 @@ export const TaskFitCard = memo(function TaskFitCard({
                     <span
                       key={item.key}
                       role="cell"
+                      data-series={item.key}
                       className={cn(
                         "an-c ok",
                         cell.few && "few",
                         current && "rt",
                         best && "is-best",
-                        highlightClass(hot, item.key),
                       )}
                       style={
                         {

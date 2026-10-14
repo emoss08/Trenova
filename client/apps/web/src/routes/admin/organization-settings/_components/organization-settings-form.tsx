@@ -17,7 +17,7 @@ import { organization } from "@/lib/queries/organization";
 import { userOrganization } from "@/lib/queries/user";
 import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Card,
@@ -51,61 +51,44 @@ import {
 } from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import type { ChangeEvent } from "react";
-import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Activity, useCallback, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { SecurityAccessWorkspace } from "./security-access-workspace";
 import { translate } from "@trenova/shared/i18n/runtime";
 
-const emptyOrganizationDefaults: OrganizationSettings = {
-  id: "",
-  version: 0,
-  createdAt: 0,
-  updatedAt: 0,
-  bucketName: "",
-  businessUnitId: "",
-  loginSlug: "",
-  name: "",
-  scacCode: "",
-  dotNumber: "",
-  logoUrl: "",
-  addressLine1: "",
-  addressLine2: "",
-  city: "",
-  stateId: "",
-  postalCode: "",
-  timezone: "",
-  taxId: "",
-  brokerageEnabled: true,
-  assetOperationsEnabled: true,
-  state: null,
-};
-
 export default function OrganizationSettingsForm() {
   const t = useT();
 
-  const queryClient = useQueryClient();
-  const organizationId = useAuthStore((state) => state.user?.currentOrganizationId) ?? "";
+  const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
 
-  const organizationQuery = useQuery({
-    ...organization.detail(organizationId),
-    enabled: Boolean(organizationId),
-  });
+  if (!organizationId) {
+    return (
+      <div className="text-muted-foreground py-8 text-sm">
+        {t("No active organization found for this session.")}
+      </div>
+    );
+  }
+
+  return <OrganizationSettingsTabs organizationId={organizationId} />;
+}
+
+function OrganizationSettingsTabs({ organizationId }: { organizationId: string }) {
+  const t = useT();
+
+  const queryClient = useQueryClient();
+
+  const { data } = useSuspenseQuery(organization.detail(organizationId));
 
   const form = useForm<OrganizationSettings>({
     resolver: zodResolver(organizationSettingsSchema) as Resolver<OrganizationSettings>,
-    defaultValues: emptyOrganizationDefaults,
+    defaultValues: data,
+    values: data,
   });
 
   const [tab, setTab] = useQueryState("tab", organizationSettingsTabParser);
 
   const { handleSubmit, reset } = form;
-
-  useEffect(() => {
-    if (organizationQuery.data) {
-      reset(organizationQuery.data);
-    }
-  }, [organizationQuery.data, reset]);
 
   const { mutateAsync: updateOrganization } = useOptimisticMutation({
     queryKey: organization.detail(organizationId).queryKey,
@@ -147,30 +130,10 @@ export default function OrganizationSettingsForm() {
 
   const onSubmit = useCallback(
     async (values: OrganizationSettings) => {
-      if (!organizationId) {
-        return;
-      }
-
       await updateOrganization(values);
     },
-    [organizationId, updateOrganization],
+    [updateOrganization],
   );
-
-  if (!organizationId) {
-    return (
-      <div className="text-muted-foreground py-8 text-sm">
-        {t("No active organization found for this session.")}
-      </div>
-    );
-  }
-
-  if (organizationQuery.isLoading) {
-    return (
-      <div className="text-muted-foreground py-8 text-sm">
-        {t("Loading organization settings...")}
-      </div>
-    );
-  }
 
   return (
     <Tabs

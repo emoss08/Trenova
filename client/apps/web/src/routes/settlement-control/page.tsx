@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
+import { SettlementControlSkeleton } from "./skeleton";
 
 const SettlementControlForm = lazy(() => import("./_components/settlement-control-form"));
 
@@ -17,9 +18,9 @@ export function SettlementControlPage() {
         ),
       }}
     >
-      <SuspenseLoader>
+      <LazyComponent fallback={<SettlementControlSkeleton />}>
         <SettlementControlForm />
-      </SuspenseLoader>
+      </LazyComponent>
     </PageLayout>
   );
 }

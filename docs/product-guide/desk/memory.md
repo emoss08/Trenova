@@ -1,6 +1,6 @@
 ---
 path: /desk/memory
-aliases: [agent memory, AI memory, what the AI remembers, what Desk remembers, saved preferences, standing instructions, teach the assistant, learned lessons, learned steps, forget a memory, forget something, memory settings, remember this]
+aliases: [agent memory, AI memory, what agents know about me, my profile, tell agents what I do, what the AI remembers, what Desk remembers, saved preferences, standing instructions, teach the assistant, learned lessons, learned steps, forget a memory, forget something, memory settings, remember this]
 related:
   - /desk
   - /admin/agent-control
@@ -9,9 +9,19 @@ related:
 ## What it's for
 **What Desk remembers** lists everything the agents keep about how you and your team work. That covers what you told them to keep in mind, what they saved from your conversations, and what they learned by looking back over their own work. Open it from **Memory** in the Desk sidebar.
 
+At the top, **What agents know about your work** is a short note agents read before every conversation with you: what your own records show you work on, kept up each week, and the lines you told them. It is how a short request such as "my invoices" or "the Acme load" is read the way you mean it.
+
 Each memory shows who it is for (**Just you**, one of your teams, or the **Organization**), when it was saved and where from, and how many times agents have used it. You can add memories, change their words or who they are for, pause them, forget them, and choose whether agents save new memories on their own or ask you first.
 
 ## Tasks
+
+### See and correct what agents know about you
+Keywords: my profile, what agents know about me, agents assume, wrong about me, tell agents what I do
+1. Open [What Desk remembers](/desk/memory). **What agents know about your work** is at the top. Before you have worked with agents for a while it says **Nothing yet**.
+2. If something is wrong or missing, type it into **Tell agents about your work**, for example "I only handle the Midwest accounts", and select **Add**. The note is written again with it a few minutes later.
+3. To take a line back, select **Retire** next to it. The note is written again without it.
+4. To have the note written again now, select **Write it again**.
+5. You can also just say it in a conversation ("I'm in billing now"): the agent writes the line down for you.
 
 ### Teach Desk something
 Keywords: add memory, remember this, standing instruction, preference, tell the agent

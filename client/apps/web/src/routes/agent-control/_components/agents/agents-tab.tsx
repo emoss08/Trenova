@@ -56,6 +56,7 @@ import { usePauseAgents } from "../overview/use-pause-agents";
 import { toAgentPanelRow, toSaveRequest } from "./agent-form-schema";
 import { AgentDetail } from "./agent-detail";
 import { AgentRow } from "./agent-row";
+import { AgentShelvesSkeleton } from "./agents-skeleton";
 import { groupAgentsByTrigger } from "./agent-roster";
 import { AgentBuilder, type BuilderStart } from "./builder/agent-builder";
 import {
@@ -495,6 +496,7 @@ export default function AgentsTab() {
           </DropdownMenu>
         )}
       </div>
+      {agentsQuery.isLoading && <AgentShelvesSkeleton />}
       {shelves.map((shelf) => (
         <section key={shelf.trigger} className="shelf">
           <header className="shelf-h">

@@ -12,7 +12,7 @@ import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { BulkBillingTransferCandidateRowsSkeleton } from "./bulk-billing-transfer-dialog-skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
@@ -26,8 +26,6 @@ const STATUS_FILTERS: readonly { value: StatusFilterValue; label: string }[] = [
   { value: "ReadyToInvoice", label: "Ready to invoice" },
   { value: "Completed", label: "Completed" },
 ];
-
-const LOADING_ROWS = 6;
 
 type BulkBillingTransferCandidatesProps = {
   filters: BillingTransferCandidateFilters;
@@ -127,11 +125,7 @@ export function BulkBillingTransferCandidates({
 
         <ScrollArea className="h-[min(26rem,50vh)]">
           {isLoading ? (
-            <div className="flex flex-col gap-2 p-3" aria-busy="true">
-              {Array.from({ length: LOADING_ROWS }, (_, index) => (
-                <Skeleton key={index} className="h-8 w-full" />
-              ))}
-            </div>
+            <BulkBillingTransferCandidateRowsSkeleton />
           ) : isError ? (
             <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
               <p className="text-sm font-medium">{t("The shipments could not be loaded")}</p>

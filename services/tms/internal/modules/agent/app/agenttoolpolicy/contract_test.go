@@ -140,6 +140,8 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 	}, watchtower.Sources)
 	assert.True(t, registeredPolicy(t, "remember").CarriesTaint)
 	assert.NotNil(t, registeredPolicy(t, "remember").TaintHold)
+	assert.True(t, registeredPolicy(t, "guide_profile").CarriesTaint)
+	assert.NotNil(t, registeredPolicy(t, "guide_profile").TaintHold)
 	assert.True(t, registeredPolicy(t, "add_shipment_comment").CarriesTaint)
 }
 
@@ -224,6 +226,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"resolve_carrier_intel_event":    {agent.EgressInternal},
 		"dismiss_insight":                {agent.EgressInternal},
 		"remember":                       {agent.EgressPersonal, agent.EgressInternal},
+		"guide_profile":                  {agent.EgressPersonal, agent.EgressInternal},
 		"forget_memory":                  {agent.EgressInternal},
 		"evaluate_service_failures":      {agent.EgressInternal},
 		"resolve_bank_receipt_work_item": {agent.EgressInternal},

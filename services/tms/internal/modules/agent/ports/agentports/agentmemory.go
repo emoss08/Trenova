@@ -64,11 +64,14 @@ type SearchAgentMemoriesRequest struct {
 	Reader            agent.MemoryReader
 	Now               int64
 	Query             string
-	IDs               []pulid.ID
-	Kind              agent.MemoryKind
-	Subject           *MemorySubjectRef
-	ToolName          string
-	Limit             int
+	// Terms are the query's meaningful words. When no memory matches every
+	// word, a memory sharing two of them is found instead.
+	Terms    []string
+	IDs      []pulid.ID
+	Kind     agent.MemoryKind
+	Subject  *MemorySubjectRef
+	ToolName string
+	Limit    int
 }
 
 type CountActiveAgentMemoriesRequest struct {

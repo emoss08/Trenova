@@ -265,6 +265,11 @@ names the token to use instead.
   Figures are `KpiStrip`/`KpiStripItem`, titled blocks are `SectionPanel`, read-only
   label/value is `DescriptionList`, inline callouts are `<Alert size="sm">`, and dialogs take
   `size` rather than an arbitrary max-width. See "Page anatomy" in the design-system doc.
+- Loading states are the layout of what loads. `DataTableLazyComponent` wraps only components
+  that render `DataTable`; everything else is `LazyComponent` with a required `fallback` that is
+  its own `<name>-skeleton.tsx`, and the component's own data-loading state draws the same
+  skeleton. `pnpm lint:skeletons` runs in CI and fails a table skeleton around anything that is
+  not a table, or a `<Suspense>` without a fallback. See "Loading states" in the design-system doc.
 - Icons come from `@trenova/shared/components/icons`: every Untitled UI icon as `<Name>Icon`
   (`Truck01Icon`, `SearchLgIcon`) plus Trenova's custom set drawn on the same grid, typed
   `IconComponent`. Never import `lucide-react` or `@untitledui/icons` directly; lint refuses both.
@@ -374,6 +379,12 @@ content proposes every later write, is in
 How an agent looks back over a quiet conversation or a settled run and keeps what the work
 taught (`agentreflectionservice`, `reflectionjobs`, the `agent_reflections` table) is under
 "Learning from the work" in agent-runtime.md.
+What agents are told about the organization's business and about the person they are
+talking to — profiles worked out from the records, written up by a model, steered by people's
+guidance and never edited by hand (`agentprofileservice`, `agentprofilejobs`, the
+`agent_profiles` and `agent_profile_guidance` tables, the `guide_profile` tool) — is in
+[docs/engineering/agent-profiles.md](docs/engineering/agent-profiles.md). Read it before
+adding a fact, changing the writing prompt, or touching the profile sections of the prompt.
 An agent parking its work until something happens in the world (`wait_until`, a truck
 reaching a stop, a reply, an appointment or free time coming round, drive time running low,
 a time) and picking it up as a new turn or run is described in

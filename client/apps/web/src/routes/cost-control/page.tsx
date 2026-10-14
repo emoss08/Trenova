@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { lazy, Suspense } from "react";
-import { PageSkeleton } from "./skeleton";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { lazy } from "react";
+import { CostControlSkeleton } from "./skeleton";
 
 const CostControlForm = lazy(() => import("./_components/cost-control-form"));
 
@@ -17,9 +18,9 @@ export function CostControlPage() {
         ),
       }}
     >
-      <Suspense fallback={<PageSkeleton />}>
+      <LazyComponent fallback={<CostControlSkeleton />}>
         <CostControlForm />
-      </Suspense>
+      </LazyComponent>
     </PageLayout>
   );
 }

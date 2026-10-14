@@ -63,6 +63,11 @@ var (
 		aiusage.SurfaceRetrieval,
 	)
 
+	nonCompletionSurfaces = quoted(
+		aiusage.SurfaceIndexing,
+		aiusage.SurfaceRetrieval,
+	)
+
 	callEndMs = "COALESCE(u.recorded_at_ms, u.created_at * 1000)"
 
 	bucketSQL = fmt.Sprintf(
@@ -160,7 +165,23 @@ const unitConflict = `ON CONFLICT (id, business_unit_id, organization_id) DO UPD
 	tool_calls = EXCLUDED.tool_calls,
 	tool_failures_model = EXCLUDED.tool_failures_model,
 	tool_failures_tool = EXCLUDED.tool_failures_tool,
-	refresh_stamp = EXCLUDED.refresh_stamp`
+	refresh_stamp = EXCLUDED.refresh_stamp
+	WHERE (
+		ai_work_units.source, ai_work_units.agent_definition_id, ai_work_units.provider_id,
+		ai_work_units.model, ai_work_units.task, ai_work_units.outcome,
+		ai_work_units.decision_run_id, ai_work_units.started_at_ms, ai_work_units.finished_at,
+		ai_work_units.duration_ms, ai_work_units.first_token_ms, ai_work_units.model_calls,
+		ai_work_units.failed_calls, ai_work_units.failovers, ai_work_units.input_tokens,
+		ai_work_units.output_tokens, ai_work_units.cost_usd, ai_work_units.tool_calls,
+		ai_work_units.tool_failures_model, ai_work_units.tool_failures_tool
+	) IS DISTINCT FROM (
+		EXCLUDED.source, EXCLUDED.agent_definition_id, EXCLUDED.provider_id, EXCLUDED.model,
+		EXCLUDED.task, EXCLUDED.outcome, EXCLUDED.decision_run_id, EXCLUDED.started_at_ms,
+		EXCLUDED.finished_at, EXCLUDED.duration_ms, EXCLUDED.first_token_ms,
+		EXCLUDED.model_calls, EXCLUDED.failed_calls, EXCLUDED.failovers, EXCLUDED.input_tokens,
+		EXCLUDED.output_tokens, EXCLUDED.cost_usd, EXCLUDED.tool_calls,
+		EXCLUDED.tool_failures_model, EXCLUDED.tool_failures_tool
+	)`
 
 func ownedUnitsSQL(src ownedSource) string {
 	return fmt.Sprintf(`WITH owners AS (
@@ -481,7 +502,7 @@ var (
 		ON a.hour = g.hour AND a.provider_id = g.provider_id AND a.model = g.model
 		AND a.task = g.task AND a.agent_definition_id = g.agent_definition_id`,
 		providerErrorSQL,
-		standaloneSurfaces,
+		nonCompletionSurfaces,
 		bucketSQL,
 		aianalytics.HistogramBuckets-1,
 	)

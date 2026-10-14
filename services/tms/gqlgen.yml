@@ -2727,6 +2727,38 @@ models:
   Briefing:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.Briefing
+  AgentProfileVersion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile.Profile
+    fields:
+      guidanceIds:
+        fieldName: GuidanceIDs
+  AgentProfileGuidance:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile.Guidance
+    fields:
+      createdById:
+        fieldName: CreatedByID
+      createdByName:
+        resolver: true
+  AgentProfileFact:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile.Fact
+  AgentProfileSubject:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile.Subject
+  AgentProfileStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile.Status
+  AgentProfileTrigger:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile.Trigger
+  AgentProfileGuidanceStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile.GuidanceStatus
+  AgentProfileGuidanceSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile.GuidanceSource
   BriefingRoleKey:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.RoleKey

@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckDoubleIcon, CheckIcon, Inbox01Icon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { toast } from "sonner";
+import { NotificationListSkeleton } from "./notification-list-skeleton";
 
 function NotificationRow({
   notification,
@@ -123,12 +124,7 @@ export default function NotificationList() {
   }, [invalidate, t]);
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-2 py-16">
-        <Inbox01Icon className="text-muted-foreground/40 size-6" />
-        <p className="text-muted-foreground text-sm">{t("Loading notifications...")}</p>
-      </div>
-    );
+    return <NotificationListSkeleton />;
   }
 
   if (notifications.length === 0) {

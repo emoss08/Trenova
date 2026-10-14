@@ -1,10 +1,9 @@
 import type { AIAnalyticsSeries } from "@/lib/graphql/ai-analytics";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
 import { memo, useMemo } from "react";
 import { CAUSES, percent, whoseRows, type SeriesColors } from "./analytics-model";
 import { AnalyticsCard, Swatch } from "./card";
-import { highlightClass, hoverProps, useHighlight } from "./highlight";
+import { hoverProps, useSetHot } from "./highlight";
 
 /**
  * Failed tool calls split by whose mistake they were: the model's to the left, the tool's
@@ -18,7 +17,7 @@ export const WhoseMistakeCard = memo(function WhoseMistakeCard({
   colors: SeriesColors;
 }) {
   const t = useT();
-  const { hot, setHot } = useHighlight();
+  const setHot = useSetHot();
   const rows = useMemo(() => whoseRows(series), [series]);
   const max = Math.max(...rows.map((row) => Math.max(row.modelTotal, row.toolTotal)), 0) || 1;
   const label = (cause: string) => t(CAUSES.find((entry) => entry.cause === cause)?.label ?? cause);
@@ -37,7 +36,8 @@ export const WhoseMistakeCard = memo(function WhoseMistakeCard({
       {rows.map((row, index) => (
         <div
           key={row.series.key}
-          className={cn("an-whr", highlightClass(hot, row.series.key))}
+          className="an-whr"
+          data-series={row.series.key}
           {...hoverProps(setHot, row.series.key)}
         >
           <span className="an-whv mono">{percent(row.modelTotal, 1)}</span>

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -38,7 +39,8 @@ type Params struct {
 
 type Service struct {
 	l           *zap.Logger
-	repo        aianalyticsports.AnalyticsRepository
+	reader      aianalyticsports.AnalyticsReader
+	refresher   aianalyticsports.AnalyticsRefresher
 	cache       aianalyticsports.AnalyticsCache
 	providers   agentports.AIProviderRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
@@ -50,7 +52,8 @@ var _ aianalyticsports.AnalyticsService = (*Service)(nil)
 func New(p Params) *Service {
 	return &Service{
 		l:           p.Logger.Named("service.ai-analytics"),
-		repo:        p.Repo,
+		reader:      p.Repo,
+		refresher:   p.Repo,
 		cache:       p.Cache,
 		providers:   p.Providers,
 		definitions: p.Definitions,
@@ -69,14 +72,9 @@ func validateRequest(req *aianalyticsports.AnalyticsRequest) (*time.Location, er
 	if req.Task != "" && !req.Task.IsValid() {
 		multiErr.Add("task", errortypes.ErrInvalid, "Unknown task")
 	}
-	location := time.UTC
-	if req.Timezone != "" {
-		loaded, err := time.LoadLocation(req.Timezone)
-		if err != nil {
-			multiErr.Add("timezone", errortypes.ErrInvalid, "Unknown timezone")
-		} else {
-			location = loaded
-		}
+	location, err := timeutils.LookupLocation(req.Timezone)
+	if err != nil {
+		multiErr.Add("timezone", errortypes.ErrInvalid, "Unknown timezone")
 	}
 	if multiErr.HasErrors() {
 		return nil, multiErr
@@ -121,14 +119,18 @@ type stateReading struct {
 	refreshedAt *int64
 }
 
-func (s *Service) read(
-	ctx context.Context,
-	req *aianalyticsports.AnalyticsRequest,
-	filter aianalyticsports.Filter,
-	starts []int64,
-	until int64,
-) (*readings, error) {
+type readRequest struct {
+	request *aianalyticsports.AnalyticsRequest
+	filter  aianalyticsports.Filter
+	starts  []int64
+	until   int64
+	cache   *aianalyticsports.CacheKey
+}
+
+func (s *Service) read(ctx context.Context, in *readRequest) (*readings, error) {
 	out := new(readings)
+	req := in.request
+	filter := in.filter
 
 	group, gctx := errgroup.WithContext(ctx)
 	group.SetLimit(readConcurrency)
@@ -136,27 +138,16 @@ func (s *Service) read(
 		group.Go(func() error { return fn(gctx) })
 	}
 
-	run(func(ctx context.Context) error {
-		state, err := s.repo.RefreshState(ctx, req.TenantInfo)
-		if err == nil && state != nil {
-			refreshed := state.RefreshedAt
-			out.state.refreshedAt = &refreshed
-		}
-		return err
-	})
-	run(
-		func(ctx context.Context) (err error) { out.totals, err = s.repo.Totals(ctx, filter); return },
-	)
 	run(func(ctx context.Context) (err error) {
-		out.deployments, err = s.repo.Deployments(ctx, filter)
+		out.trend, err = s.reader.Trend(ctx, aianalyticsports.TrendRequest{
+			Filter:       filter,
+			Grouping:     req.CompareBy.Grouping(),
+			BucketStarts: in.starts,
+		})
 		return
 	})
 	run(func(ctx context.Context) (err error) {
-		out.durations, err = s.repo.OutcomeDurations(ctx, filter, req.CompareBy.Grouping())
-		return
-	})
-	run(func(ctx context.Context) (err error) {
-		out.deploymentDurations, err = s.repo.OutcomeDurations(
+		out.deploymentDurations, err = s.reader.OutcomeDurations(
 			ctx,
 			filter,
 			aianalytics.GroupingDeployment,
@@ -164,59 +155,93 @@ func (s *Service) read(
 		return
 	})
 	run(func(ctx context.Context) (err error) {
-		out.trend, err = s.repo.Trend(ctx, aianalyticsports.TrendRequest{
-			Filter:       filter,
-			Grouping:     req.CompareBy.Grouping(),
-			BucketStarts: starts,
-		})
+		out.histograms, err = s.reader.FirstTokenHistograms(ctx, filter)
+		return
+	})
+	run(func(ctx context.Context) (err error) {
+		out.durations, err = s.reader.OutcomeDurations(ctx, filter, req.CompareBy.Grouping())
 		return
 	})
 	run(
-		func(ctx context.Context) (err error) { out.toolCells, err = s.repo.ToolCells(ctx, filter); return },
+		func(ctx context.Context) (err error) { out.totals, err = s.reader.Totals(ctx, filter); return },
 	)
 	run(
-		func(ctx context.Context) (err error) { out.taskCells, err = s.repo.TaskCells(ctx, filter); return },
+		func(ctx context.Context) (err error) { out.toolCells, err = s.reader.ToolCells(ctx, filter); return },
 	)
+	run(func(ctx context.Context) (err error) {
+		out.deployments, err = s.reader.Deployments(ctx, filter)
+		return
+	})
+	run(func(ctx context.Context) (err error) {
+		out.providerHours, err = s.reader.ProviderHours(ctx, filter)
+		return
+	})
+	run(func(ctx context.Context) (err error) {
+		out.providerCalls, err = s.reader.ProviderCalls(ctx, filter)
+		return
+	})
 	run(
-		func(ctx context.Context) (err error) { out.decisions, err = s.repo.Decisions(ctx, filter); return },
-	)
-	run(
-		func(ctx context.Context) (err error) { out.ratings, err = s.repo.Ratings(ctx, filter); return },
+		func(ctx context.Context) (err error) { out.taskCells, err = s.reader.TaskCells(ctx, filter); return },
 	)
 	run(func(ctx context.Context) (err error) {
-		out.providerCalls, err = s.repo.ProviderCalls(ctx, filter)
+		out.palette, err = s.palette(ctx, req.TenantInfo, in.cache, in.until)
 		return
 	})
 	run(func(ctx context.Context) (err error) {
-		out.histograms, err = s.repo.FirstTokenHistograms(ctx, filter)
-		return
-	})
-	run(func(ctx context.Context) (err error) {
-		out.providerHours, err = s.repo.ProviderHours(ctx, filter)
-		return
-	})
-	run(func(ctx context.Context) (err error) {
-		out.versions, err = s.repo.ProviderVersions(ctx, filter)
-		return
-	})
-	run(func(ctx context.Context) (err error) {
-		out.palette, err = s.repo.Palette(
-			ctx,
-			req.TenantInfo,
-			until-aianalytics.WindowMonth.Seconds(),
-		)
+		out.versions, err = s.reader.ProviderVersions(ctx, filter)
 		return
 	})
 	run(func(ctx context.Context) (err error) {
 		out.providers, err = s.providers.ListOrdered(ctx, req.TenantInfo)
 		return
 	})
+	run(func(ctx context.Context) error {
+		state, err := s.reader.RefreshState(ctx, req.TenantInfo)
+		if err == nil && state != nil {
+			refreshed := state.RefreshedAt
+			out.state.refreshedAt = &refreshed
+		}
+		return err
+	})
+	run(
+		func(ctx context.Context) (err error) { out.decisions, err = s.reader.Decisions(ctx, filter); return },
+	)
+	run(
+		func(ctx context.Context) (err error) { out.ratings, err = s.reader.Ratings(ctx, filter); return },
+	)
 
 	if err := group.Wait(); err != nil {
 		return nil, fmt.Errorf("read ai analytics: %w", err)
 	}
 
 	return out, nil
+}
+
+func (s *Service) palette(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	key *aianalyticsports.CacheKey,
+	until int64,
+) ([]aianalyticsports.DeploymentKey, error) {
+	if key != nil {
+		cached, found, err := s.cache.Palette(ctx, tenant, key.Epoch)
+		if err != nil {
+			s.l.Warn("failed to read the cached ai analytics palette", zap.Error(err))
+		} else if found {
+			return cached, nil
+		}
+	}
+	keys, err := s.reader.Palette(ctx, tenant, until-aianalytics.WindowMonth.Seconds())
+	if err != nil {
+		return nil, err
+	}
+	if key != nil {
+		if setErr := s.cache.SetPalette(ctx, tenant, key.Epoch, keys); setErr != nil {
+			s.l.Warn("failed to cache the ai analytics palette", zap.Error(setErr))
+		}
+	}
+
+	return keys, nil
 }
 
 func (s *Service) Analytics(
@@ -229,16 +254,26 @@ func (s *Service) Analytics(
 	}
 	req.Timezone = location.String()
 	locale := i18n.FromContext(ctx)
+	now := s.clock().Unix()
+	starts := aianalytics.BucketStarts(req.Window, location, now)
 
-	key, cached := s.cached(ctx, req, locale)
+	key, cached := s.cached(ctx, &aianalyticsports.CacheKey{
+		Request: req,
+		Locale:  locale.String(),
+		Buckets: aianalytics.BucketsDigest(starts),
+	})
 	if cached != nil {
 		return cached, nil
 	}
 
-	now := s.clock().Unix()
 	filter := s.filter(req, now)
-	starts := aianalytics.BucketStarts(req.Window, location, now)
-	data, err := s.read(ctx, req, filter, starts, now)
+	data, err := s.read(ctx, &readRequest{
+		request: req,
+		filter:  filter,
+		starts:  starts,
+		until:   now,
+		cache:   key,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -262,18 +297,17 @@ func (s *Service) Analytics(
 
 func (s *Service) cached(
 	ctx context.Context,
-	req *aianalyticsports.AnalyticsRequest,
-	locale i18n.Locale,
+	key *aianalyticsports.CacheKey,
 ) (*aianalyticsports.CacheKey, *aianalyticsports.Analytics) {
 	if s.cache == nil {
 		return nil, nil
 	}
-	epoch, err := s.cache.Epoch(ctx, req.TenantInfo)
+	epoch, err := s.cache.Epoch(ctx, key.Request.TenantInfo)
 	if err != nil {
 		s.l.Warn("failed to read the ai analytics epoch", zap.Error(err))
 		return nil, nil
 	}
-	key := &aianalyticsports.CacheKey{Request: req, Epoch: epoch, Locale: locale.String()}
+	key.Epoch = epoch
 	out := new(aianalyticsports.Analytics)
 	found, err := s.cache.Get(ctx, key, out)
 	if err != nil {
@@ -306,35 +340,36 @@ func (s *Service) ToolFailures(
 	}
 
 	filter := s.filter(&req.AnalyticsRequest, s.clock().Unix())
-	rows, err := s.repo.ToolFailures(ctx, aianalyticsports.ToolFailureRequest{
-		Filter:    filter,
-		SeriesKey: req.SeriesKey,
-		ToolName:  req.ToolName,
-		Limit:     recentFailureLimit,
+	var rows *aianalyticsports.ToolFailureRows
+	var providers []*aiprovider.Provider
+	group, gctx := errgroup.WithContext(ctx)
+	group.Go(func() (err error) {
+		rows, err = s.reader.ToolFailures(gctx, aianalyticsports.ToolFailureRequest{
+			Filter:    filter,
+			SeriesKey: req.SeriesKey,
+			ToolName:  req.ToolName,
+			Limit:     recentFailureLimit,
+		})
+		return err
 	})
-	if err != nil {
-		return nil, err
+	group.Go(func() (err error) {
+		providers, err = s.providers.ListOrdered(gctx, req.TenantInfo)
+		return err
+	})
+	if err := group.Wait(); err != nil {
+		return nil, fmt.Errorf("read ai analytics tool failures: %w", err)
 	}
 
 	agents, err := s.agentNames(ctx, req.TenantInfo, rows.Examples)
 	if err != nil {
 		return nil, err
 	}
-	providers, err := s.providers.ListOrdered(ctx, req.TenantInfo)
-	if err != nil {
-		return nil, err
-	}
-	deployments, err := s.repo.Deployments(ctx, filter)
-	if err != nil {
-		return nil, err
-	}
 
 	return failureDetail(failureDetailInput{
-		request:     req,
-		rows:        rows,
-		agents:      agents,
-		providers:   providerIndex(i18n.FromContext(ctx), providers),
-		deployments: deployments,
+		request:   req,
+		rows:      rows,
+		agents:    agents,
+		providers: providerIndex(i18n.FromContext(ctx), providers),
 	}), nil
 }
 

@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -38,9 +38,9 @@ export function MyTeamPage() {
         ),
       }}
     >
-      <DataTableLazyComponent fallback={<MyTeamSkeleton />}>
+      <LazyComponent fallback={<MyTeamSkeleton />}>
         <MyTeamConsole />
-      </DataTableLazyComponent>
+      </LazyComponent>
     </PageLayout>
   );
 }

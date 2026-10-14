@@ -1,10 +1,11 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { organization } from "@/lib/queries/organization";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
-import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { lazy } from "react";
+import { OrganizationSettingsSkeleton } from "./skeleton";
 
 const OrganizationSettingsForm = lazy(() => import("./_components/organization-settings-form"));
 
@@ -26,9 +27,9 @@ export function OrganizationSettingsPage() {
       }}
       className="p-0"
     >
-      <SuspenseLoader>
+      <LazyComponent fallback={<OrganizationSettingsSkeleton />}>
         <OrganizationSettingsForm />
-      </SuspenseLoader>
+      </LazyComponent>
     </PageLayout>
   );
 }

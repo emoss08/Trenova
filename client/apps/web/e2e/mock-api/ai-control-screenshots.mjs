@@ -81,6 +81,16 @@ const SHOTS = [
     act: (page) => scrollToSection(page, "Tool calls that failed"),
   },
   {
+    name: "analytics-highlight",
+    scenario: { aiProviders: "all" },
+    query: "?tab=analytics",
+    act: async (page) => {
+      await scrollToSection(page, "Leaderboard");
+      await page.getByTitle("Hide from charts").nth(1).hover();
+      await page.waitForTimeout(400);
+    },
+  },
+  {
     name: "analytics-tradeoffs",
     scenario: { aiProviders: "all" },
     query: "?tab=analytics",

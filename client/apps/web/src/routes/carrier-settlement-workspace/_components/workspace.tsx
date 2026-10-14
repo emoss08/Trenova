@@ -3,7 +3,6 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { SettlementPeriodEmpty } from "@/components/settlements/settlement-period-empty";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   fetchCarrierSettlementWorkspaceSummary,
   fetchWorkspaceCarrierSettlements,
@@ -18,6 +17,7 @@ import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { CarrierSettlementDetail } from "@/routes/carrier-settlement/_components/settlement-detail";
 import { CarrierContextRail } from "./carrier-context-rail";
+import { WorkspaceSkeleton } from "./workspace-skeleton";
 import { SettlementQueue, type QueueFilter } from "./settlement-queue";
 import { WorkspaceSummaryStrip } from "./workspace-summary";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
@@ -122,12 +122,7 @@ export default function Workspace() {
   });
 
   if (summaryLoading || !summary) {
-    return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
+    return <WorkspaceSkeleton />;
   }
 
   const hasSettlements = (settlements ?? []).length > 0;

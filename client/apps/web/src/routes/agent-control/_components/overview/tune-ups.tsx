@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { Ic } from "../kit/ic";
 import { SecH } from "../kit/layout";
 import { Mark, Tile } from "../kit/marks";
+import { TuneUpsSkeleton } from "./overview-skeleton";
 import { tuneUpCopy, type TuneUpLabels, type TuneUpTone } from "./tune-up-copy";
 import { invalidateAIControlCounts } from "./use-ai-control-stats";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -64,7 +65,9 @@ export function TuneUps() {
           </span>
         }
       />
-      {tuneUpsQuery.isLoading ? null : items.length === 0 ? (
+      {tuneUpsQuery.isLoading ? (
+        <TuneUpsSkeleton />
+      ) : items.length === 0 ? (
         <div className="clr">
           <span className="clr-i">
             <Ic n="check" s={16} w={2.4} />

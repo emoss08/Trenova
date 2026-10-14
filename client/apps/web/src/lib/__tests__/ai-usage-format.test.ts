@@ -60,4 +60,11 @@ describe("aiUsageFeatureLabel", () => {
     expect(aiUsageFeatureLabel("ShipmentImportChat", t)).toBe("Import assistant");
     expect(aiUsageFeatureLabel(null, t)).toBe("Other");
   });
+
+  it("names the agents' own background work, so its spend is not left under Other", () => {
+    expect(aiUsageFeatureLabel("AgentProfile", t)).toBe("Agent profiles");
+    expect(aiUsageFeatureLabel("AgentReflection", t)).toBe("Agents learning from their work");
+    expect(aiUsageFeatureLabel("AgentDrafting", t)).toBe("Agent drafting");
+    expect(aiUsageFeatureLabel("AccountingMapping", t)).toBe("Accounting mapping");
+  });
 });

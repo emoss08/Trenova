@@ -30,8 +30,11 @@ var ErrCatalogItemKeyTooLong = errors.New("a catalog item key is longer than the
 var ErrCatalogItemKeyRepeated = errors.New("a catalog item key appears twice in one corpus")
 
 type QueryVectorRequest struct {
-	TenantInfo  pagination.TenantInfo
-	Text        string
+	TenantInfo pagination.TenantInfo
+	Text       string
+	// Focus is the turn's own message, which Text may follow with the one
+	// before it. It is never embedded; it is read for the turn's words.
+	Focus       string
 	Attribution aiusageports.AIUsageAttribution
 }
 
@@ -90,6 +93,7 @@ func TurnQueryRequest(req *RunRequest) QueryVectorRequest {
 	return QueryVectorRequest{
 		TenantInfo:  req.Actor.TenantInfo(),
 		Text:        TurnQueryText(req.Input, req.History),
+		Focus:       req.Input,
 		Attribution: attribution,
 	}
 }

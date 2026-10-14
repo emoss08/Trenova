@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { Suspense } from "react";
 import { Spinner } from "./ui/spinner";
 
 export type ComponentLoaderProps = {
@@ -21,14 +20,4 @@ export function ComponentLoader({ className, message, description }: ComponentLo
       </p>
     </div>
   );
-}
-
-export function SuspenseLoader({
-  children,
-  componentLoaderProps,
-}: {
-  children: React.ReactNode;
-  componentLoaderProps?: ComponentLoaderProps;
-}) {
-  return <Suspense fallback={<ComponentLoader {...componentLoaderProps} />}>{children}</Suspense>;
 }

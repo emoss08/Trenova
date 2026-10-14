@@ -318,7 +318,7 @@ func TestLessonRequest_WorkThatReadOutsideContentOnlyEverOffers(t *testing.T) {
 	assert.True(t, fromRun.Suggest)
 }
 
-func TestLessonRequest_ARunKeepsLessonsForItsAgent(t *testing.T) {
+func TestLessonRequest_ARunOffersLessonsForItsAgent(t *testing.T) {
 	t.Parallel()
 
 	svc := lessonService(&fakeMemories{}, false)
@@ -328,7 +328,8 @@ func TestLessonRequest_ARunKeepsLessonsForItsAgent(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, reason)
 		assert.Equal(t, agent.MemoryScopeAgent, req.Scope, audience)
-		assert.False(t, req.Suggest, audience)
+		assert.True(t, req.Suggest,
+			"a lesson nobody watched being learned waits for a person: %s", audience)
 	}
 
 	organization, _, err := svc.lessonRequest(

@@ -373,6 +373,31 @@ func TestTaskFitSuggestsRoutingToTheProviderOfTheModelThatFinishesMore(t *testin
 	assert.Nil(t, billing.Suggestion)
 }
 
+func TestTaskFitSuggestsNoRouteWhenTheViewIsNarrowedToOneAgent(t *testing.T) {
+	t.Parallel()
+
+	got := assemble(&assembly{
+		request: &aianalyticsports.AnalyticsRequest{
+			Window:            aianalytics.WindowMonth,
+			CompareBy:         aianalytics.CompareByModel,
+			AgentDefinitionID: pulid.ID("agd_billing"),
+		},
+		since: 1_788_000_000,
+		until: 1_790_592_000,
+		data:  fixture(),
+	})
+
+	require.NotEmpty(t, got.Tasks)
+	for _, task := range got.Tasks {
+		assert.Nil(
+			t,
+			task.Suggestion,
+			"routing changes every agent, so one agent's figures cannot drive it",
+		)
+	}
+	assert.Equal(t, sonnetKey, got.Tasks[0].BestSeriesKey, "the fit itself is still shown")
+}
+
 func TestTaskFitRoutesToTheDeploymentThatFinishesTheTaskBest(t *testing.T) {
 	t.Parallel()
 
@@ -487,7 +512,12 @@ func TestProviderHealthIsPerDeploymentAndCountsOnlyErrorsBeforeAnAnswer(t *testi
 		{Error: aianalytics.ProviderErrorTimedOut, Calls: 15},
 		{Error: aianalytics.ProviderErrorCouldNotConnect, Calls: 5},
 	}, vllm.ErrorsByKind)
-	assert.Equal(t, int64(1_790_000_000), *vllm.LastCalledAt)
+	assert.Equal(
+		t,
+		int64(1_790_003_599),
+		*vllm.LastCalledAt,
+		"the last call was somewhere in the hour that starts at 1_790_000_000",
+	)
 	assert.Equal(t, 0, got.Providers[1].Errors)
 	assert.Empty(t, got.Providers[1].ErrorsByKind)
 }

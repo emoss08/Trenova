@@ -5,6 +5,7 @@ import "slices"
 const (
 	CoreToolRecallMemory   = "recall_memory"
 	CoreToolRemember       = "remember"
+	CoreToolGuideProfile   = "guide_profile"
 	CoreToolRaiseException = "raise_exception"
 	CoreToolFlagForReview  = "flag_for_manual_review"
 	CoreToolFindInTrenova  = "find_in_trenova"
@@ -17,6 +18,7 @@ const (
 var coreTools = [...]string{
 	CoreToolRecallMemory,
 	CoreToolRemember,
+	CoreToolGuideProfile,
 	CoreToolRaiseException,
 	CoreToolFlagForReview,
 	CoreToolFindInTrenova,
@@ -32,7 +34,9 @@ var coreTools = [...]string{
 // not have to know to tick them. find_in_trenova, open_page and read_attachment
 // answer for the person in the conversation, so a run nobody is watching goes
 // without them; read_attachment rides only on a conversation a file was
-// attached to.
+// attached to. guide_profile writes down what a person said about the
+// organization's business or their own work, so it rides only where a person
+// is talking to the agent.
 // find_tools and ask_user are the other two always-on tools; the runtime
 // answers those itself, so they are not registry tools and are not listed here.
 func CoreTools() []string {

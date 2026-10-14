@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   ResizableHandle,
@@ -10,6 +10,8 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { SpinnerIcon } from "@trenova/shared/components/icons";
 import { lazy, useState } from "react";
 import type { Control, Path } from "react-hook-form";
+import { AIActivityPanelSkeleton } from "./ai-activity-panel-skeleton";
+import { DocumentPreviewPanelSkeleton } from "./document-preview-panel-skeleton";
 import { FieldReconciliationList } from "./field-reconciliation-list";
 import { ReconciliationHeader } from "./reconciliation-header";
 import { RequiredFieldsSection } from "./required-fields-section";
@@ -79,9 +81,9 @@ export default function ReconciliationWorkspace({
     <div className="flex min-h-0 flex-1 flex-col">
       <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
         <ResizablePanel defaultSize={35} minSize={20}>
-          <SuspenseLoader componentLoaderProps={{ message: t("Loading document preview...") }}>
+          <LazyComponent fallback={<DocumentPreviewPanelSkeleton />}>
             <DocumentPreviewPanel documentId={documentId} fileName={fileName} />
-          </SuspenseLoader>
+          </LazyComponent>
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={40} minSize={30}>
@@ -167,7 +169,7 @@ export default function ReconciliationWorkspace({
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={25} minSize={18} collapsible collapsedSize={0}>
-          <SuspenseLoader componentLoaderProps={{ message: t("Loading AI activity panel...") }}>
+          <LazyComponent fallback={<AIActivityPanelSkeleton />}>
             <AIActivityPanel
               documentId={documentId}
               state={state}
@@ -181,7 +183,7 @@ export default function ReconciliationWorkspace({
               lastCreateError={lastCreateError}
               onClearCreateError={onClearCreateError}
             />
-          </SuspenseLoader>
+          </LazyComponent>
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

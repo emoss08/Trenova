@@ -4,13 +4,17 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Send01Icon } from "@trenova/shared/components/icons";
-import { lazy } from "react";
+import { lazyComponent } from "@/lib/lazy-component";
+import { BulkBillingTransferDialogSkeleton } from "./bulk-billing-transfer-dialog-skeleton";
 
-const BulkBillingTransferDialog = lazy(() =>
-  import("./bulk-billing-transfer-dialog").then((module) => ({
-    default: module.BulkBillingTransferDialog,
-  })),
+// Read when the pointer or focus reaches the button, so by the click the dialog is usually here.
+const transferDialog = lazyComponent(
+  () => import("./bulk-billing-transfer-dialog"),
+  (module) => module.BulkBillingTransferDialog,
 );
+const BulkBillingTransferDialog = transferDialog.Component;
+
+const preloadTransferDialog = () => void transferDialog.preload().catch(() => undefined);
 
 /**
  * The header entry point. Transferring moves a shipment and can mark it Ready to
@@ -38,12 +42,26 @@ export function BulkBillingTransferAction({
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => onOpenChange(true)}>
+      <Button
+        size="sm"
+        variant="outline"
+        onPointerEnter={preloadTransferDialog}
+        onFocus={preloadTransferDialog}
+        onClick={() => onOpenChange(true)}
+      >
         <Send01Icon className="size-3.5" />
         {t("Transfer to billing")}
       </Button>
       {open ? (
-        <LazyComponent>
+        <LazyComponent
+          fallback={
+            <BulkBillingTransferDialogSkeleton
+              open={open}
+              onOpenChange={onOpenChange}
+              runId={runId}
+            />
+          }
+        >
           <BulkBillingTransferDialog
             open={open}
             onOpenChange={onOpenChange}

@@ -99,6 +99,14 @@ export function aiUsageFeatureLabel(feature: AiUsageFeature | null, t: Translate
       return t("Document sorting");
     case "DocumentIntelligenceExtract":
       return t("Document extraction");
+    case "AccountingMapping":
+      return t("Accounting mapping");
+    case "AgentReflection":
+      return t("Agents learning from their work");
+    case "AgentDrafting":
+      return t("Agent drafting");
+    case "AgentProfile":
+      return t("Agent profiles");
     case null:
       return t("Other");
   }

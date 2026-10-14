@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
+import { SequenceConfigSkeleton } from "./skeleton";
 
 const SequenceConfigForm = lazy(() => import("./_components/sequence-config-form"));
 
@@ -15,9 +16,9 @@ export function SequenceConfigPage() {
         description: t("Configure sequence generation formats for shipments and billing workflows"),
       }}
     >
-      <SuspenseLoader>
+      <LazyComponent fallback={<SequenceConfigSkeleton />}>
         <SequenceConfigForm />
-      </SuspenseLoader>
+      </LazyComponent>
     </PageLayout>
   );
 }

@@ -1,5 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import {
   describeBillingSchedule,
   periodRange,
@@ -17,7 +16,6 @@ import {
   GhostLine,
 } from "@trenova/shared/components/ui/empty-sheet";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { StatementGroup, StatementShipment } from "@trenova/shared/types/statement";
@@ -32,6 +30,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { invalidateStatements, statementDetailQuery } from "../../statement-queries";
 import { BillStatementDialog } from "./bill-statement-dialog";
+import { StatementDetailSkeleton, StatementDetailUnselected } from "./statement-detail-skeleton";
 import { StatementGroupCard } from "./statement-group-card";
 import { StatementTimeline } from "./statement-timeline";
 import { recordPath } from "@/config/record-links";
@@ -112,25 +111,11 @@ export function StatementDetail({
   });
 
   if (isLoading) {
-    return (
-      <div className="bg-card flex min-h-0 flex-col gap-3 overflow-hidden p-4">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-14 w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
-    );
+    return <StatementDetailSkeleton />;
   }
 
   if (!statement) {
-    return (
-      <BillingDetailUnselected
-        layout="cards"
-        title={t("Pick a statement")}
-        description={t(
-          "See what a customer has accumulated this period, which invoices it becomes, and bill it early if you have to.",
-        )}
-      />
-    );
+    return <StatementDetailUnselected />;
   }
 
   const offCycle = statement.periodEnd > nowSeconds;

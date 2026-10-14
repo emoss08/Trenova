@@ -1,0 +1,114 @@
+"Whom an agent profile describes: the organization's business, or one person's work in it."
+enum AgentProfileSubject {
+  Organization
+  User
+}
+
+"Where a version of a profile stands. Only the current version is told to agents."
+enum AgentProfileStatus {
+  Current
+  Superseded
+  Failed
+}
+
+"What made a version get written."
+enum AgentProfileTrigger {
+  Scheduled
+  Requested
+  Guidance
+}
+
+enum AgentProfileGuidanceStatus {
+  Active
+  Retired
+}
+
+"Who worded a line of guidance: a person typing it, or an agent writing down what a person said."
+enum AgentProfileGuidanceSource {
+  Person
+  Agent
+}
+
+"One thing a query worked out from the records. Facts are never written by a model."
+type AgentProfileFact {
+  key: String!
+  text: String!
+}
+
+"""
+One version of a profile: a model's write-up of the facts and the guidance in
+force when it was written. A failed version says why and was never told to
+agents.
+"""
+type AgentProfileVersion {
+  id: ID!
+  subject: AgentProfileSubject!
+  status: AgentProfileStatus!
+  trigger: AgentProfileTrigger!
+  "The write-up agents are told; empty for a failed version."
+  content: String
+  facts: [AgentProfileFact!]!
+  "The guidance in force when it was written."
+  guidanceIds: [ID!]!
+  model: String
+  errorMessage: String
+  "When the facts were last worked out and found to give this version."
+  checkedAt: Timestamp!
+  createdAt: Timestamp!
+}
+
+"A line people gave about how to read a profile. The next version honours every active line."
+type AgentProfileGuidance {
+  id: ID!
+  subject: AgentProfileSubject!
+  content: String!
+  status: AgentProfileGuidanceStatus!
+  source: AgentProfileGuidanceSource!
+  createdById: ID!
+  "Who gave it, by name."
+  createdByName: String
+  "The conversation it was given in, when an agent wrote it down."
+  threadId: ID
+  retiredAt: Timestamp
+  createdAt: Timestamp!
+}
+
+"A profile as AI Control and the Desk show it."
+type AgentProfile {
+  subject: AgentProfileSubject!
+  "The version agents are told, or null before the first is written."
+  current: AgentProfileVersion
+  "The newest attempt, when it failed after the current version was written."
+  latestFailure: AgentProfileVersion
+  "The active guidance, newest first."
+  guidance: [AgentProfileGuidance!]!
+}
+
+input AgentProfileGuidanceInput {
+  "One plain sentence, at most 500 characters."
+  content: String!
+}
+
+extend type Query {
+  "What agents are told about the organization's business."
+  agentOrganizationProfile: AgentProfile!
+  "The organization profile's versions, newest first."
+  agentOrganizationProfileHistory(limit: Int): [AgentProfileVersion!]!
+  "What agents are told about the signed-in person's own work."
+  myAgentProfile: AgentProfile!
+}
+
+extend type Mutation {
+  "Add a line of guidance to the organization's profile; it is written again with it."
+  addAgentOrganizationProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!
+  "Retire a line of guidance from the organization's profile; it is written again without it."
+  retireAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
+  "Write the organization's profile again now."
+  regenerateAgentOrganizationProfile: Boolean!
+  "Add a line of guidance to the signed-in person's own profile."
+  addMyAgentProfileGuidance(input: AgentProfileGuidanceInput!): AgentProfileGuidance!
+  "Retire a line of guidance from the signed-in person's own profile."
+  retireMyAgentProfileGuidance(id: ID!): AgentProfileGuidance!
+  "Write the signed-in person's own profile again now."
+  regenerateMyAgentProfile: Boolean!
+}

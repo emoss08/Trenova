@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
 import { randomDrawsQuery, randomPoolsQuery } from "./_components/queries";
 import { RandomTestingSkeleton } from "./_components/random-testing-skeleton";
@@ -24,9 +24,9 @@ export function RandomTestingPage() {
         ),
       }}
     >
-      <DataTableLazyComponent fallback={<RandomTestingSkeleton />}>
+      <LazyComponent fallback={<RandomTestingSkeleton />}>
         <RandomTestingConsole />
-      </DataTableLazyComponent>
+      </LazyComponent>
     </PageLayout>
   );
 }

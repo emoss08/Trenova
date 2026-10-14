@@ -473,6 +473,38 @@ hyphen.
 - An inline callout is `<Alert variant size="sm">`, not a hand-tinted box.
   `bg-warning/10 rounded-md p-3` was written sixty times at fifteen opacities.
 
+### Loading states
+
+A page's first paint is its Suspense fallback: the chunk is still on the wire, or a
+suspense query has not answered. That paint is the page's own layout in `ui-shimmer`,
+with every section where the real one lands, so nothing moves when the answer arrives.
+AI control's tabs, the fuel dashboard, the holiday calendar and a dozen consoles used to
+open as a grid of table rows and then jump into a layout that shared nothing with it.
+
+- **A data table** sits in `DataTableLazyComponent`, which draws the table's skeleton.
+  It takes no other fallback and wraps nothing but components that render `DataTable`.
+- **Anything else** sits in `LazyComponent` from
+  `@trenova/shared/components/error-boundary`, whose `fallback` is required: the
+  skeleton of what loads, in a `<name>-skeleton.tsx` beside it. The page imports that
+  module up front, so it stays tiny — primitives and the page's own stylesheet, never
+  the lazy module, its queries or its charts. `fallback={null}` is for what is not on
+  screen yet, such as a dialog that has not opened.
+- **The same skeleton serves both waits.** A component that shows a loading state of
+  its own while its `useQuery` answers draws the skeleton's body, not a spinner, so the
+  code load and the data load look identical (`AnalyticsBodySkeleton` inside
+  `AnalyticsTabSkeleton`).
+- A settings page is `SettingsFormSkeleton` described with the form's own sections and
+  fields. A table inside a larger layout is `DataTableSkeleton` for that part only.
+- The skeleton's root carries `aria-busy` and an `aria-label` naming what loads; the
+  placeholders sit under `aria-hidden`.
+- A spinner (`ComponentLoader`) is not a page or section loading state.
+
+`pnpm lint:skeletons` (`scripts/check-loading-skeletons.mjs`) runs in CI. It follows
+each child of a `DataTableLazyComponent` to its module (through `lazy`,
+`lazyComponent` and imports) and fails when that module does not render a
+`DataTable`, and it fails a `<Suspense>` with no `fallback`. A genuine exception takes
+`loading-skeleton-ignore: <reason>` in a comment on or above the line.
+
 ## Icons
 
 Every icon is imported from `@trenova/shared/components/icons`. It exports each
@@ -988,6 +1020,7 @@ front page has not started one.
 
 ```bash
 pnpm lint:design      # the seven rules, with the token to use instead
+pnpm lint:skeletons   # every Suspense fallback is the layout of what loads
 node scripts/tw-probe.mjs bleed:px-3 text-warning   # does this class emit, and as what?
 pnpm lint             # oxlint
 pnpm typecheck        # Badge variants and status phases are typed

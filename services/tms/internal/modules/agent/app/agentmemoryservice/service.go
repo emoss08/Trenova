@@ -716,6 +716,7 @@ func (s *Service) Recall(
 		Reader:            reader,
 		Now:               timeutils.NowUnix(),
 		Query:             strings.TrimSpace(req.Query),
+		Terms:             recallTerms(req.Query),
 		IDs:               req.IDs,
 		Kind:              req.Kind,
 		ToolName:          req.ToolName,
@@ -917,7 +918,7 @@ func (s *Service) ForContext(
 	return &agentports.MemoryContext{
 		Memories:  ranked.Memories,
 		Subjects:  subjects,
-		Relevance: Relevance(req.Text, ranked),
+		Relevance: Relevance(req.Focus, req.Text, ranked),
 	}, nil
 }
 

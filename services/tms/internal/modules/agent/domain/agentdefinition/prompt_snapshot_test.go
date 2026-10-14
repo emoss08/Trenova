@@ -85,6 +85,9 @@ func canonicalContext(trigger agent.RunTrigger) agentdefinition.RuntimeContext {
 		Timezone:         "America/Chicago",
 		Now:              snapshotNow,
 		Trigger:          trigger,
+		OrganizationProfile: "Acme Freight runs its own fleet of sleeper tractors and dry vans " +
+			"and brokers overflow to outside carriers. Most of its freight is retail " +
+			"replenishment out of Dallas, with Texas to California its busiest lane.",
 	}
 }
 
@@ -105,6 +108,8 @@ func promptContexts() []promptContext {
 				}
 				rc.Guide = true
 				rc.Facts = []string{"Invoice date is Oct 3", "Acme pays net 45"}
+				rc.UserProfile = "This person dispatches the Dallas terminal's regional loads " +
+					"and works mostly with Northwind Foods and Contoso Retail."
 
 				return &agentports.RunRequest{
 					Definition: definition,

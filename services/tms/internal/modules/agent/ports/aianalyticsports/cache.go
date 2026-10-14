@@ -10,6 +10,7 @@ type CacheKey struct {
 	Request *AnalyticsRequest
 	Epoch   int64
 	Locale  string
+	Buckets uint64
 }
 
 type AnalyticsCache interface {
@@ -17,4 +18,15 @@ type AnalyticsCache interface {
 	BumpEpoch(ctx context.Context, tenant pagination.TenantInfo) error
 	Get(ctx context.Context, key *CacheKey, dest *Analytics) (bool, error)
 	Set(ctx context.Context, key *CacheKey, value *Analytics) error
+	Palette(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		epoch int64,
+	) ([]DeploymentKey, bool, error)
+	SetPalette(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		epoch int64,
+		keys []DeploymentKey,
+	) error
 }
