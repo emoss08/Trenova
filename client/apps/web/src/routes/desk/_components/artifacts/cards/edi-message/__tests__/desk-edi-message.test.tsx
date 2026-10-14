@@ -202,6 +202,20 @@ describe("DeskEdiMessage", () => {
     expect(screen.queryByText("This EDI message could not be read")).toBeNull();
   });
 
+  it("draws the X12 of a message no profile or template generated", async () => {
+    route({
+      "/edi/messages/edimsg_1/inspect/": () =>
+        wireInspection({
+          provenance: { profileId: null, templateId: null, templateVersionId: null },
+        }),
+    });
+    draw();
+
+    const x12 = await screen.findByRole("list", { name: "X12 segments" });
+    expect(within(x12).getAllByRole("listitem")).toHaveLength(10);
+    expect(screen.queryByText(/could not be inspected/u)).toBeNull();
+  });
+
   it("stops the envelope where delivery gave up, says why, and pins each finding to its segment", async () => {
     route({
       "/edi/messages/edimsg_1/": () =>

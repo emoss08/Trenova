@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ediAcknowledgmentConfigSchema,
+  ediMessageInspectionSchema,
   ediPartnerDocumentProfileSchema,
 } from "@trenova/shared/types/edi";
 
@@ -84,5 +85,44 @@ describe("ediPartnerDocumentProfileSchema", () => {
 
     expect(profile.acknowledgment.missingAckSeverity).toBe("Warning");
     expect(profile.acknowledgment.expected).toBe(false);
+  });
+});
+
+describe("ediMessageInspectionSchema provenance", () => {
+  // edi.EDIMessage keeps its profile and template ids nullzero: an inbound message, or one
+  // generated without a profile, has none, and a nil pulid.ID marshals as null.
+  const provenance = ediMessageInspectionSchema.shape.provenance;
+
+  it("reads a message no profile or template generated", () => {
+    expect(
+      provenance.parse({
+        messageId: "edimsg_1",
+        profileId: null,
+        templateId: null,
+        templateVersionId: null,
+        generatedAt: 1_760_000_000,
+        generatedById: null,
+      }),
+    ).toEqual({
+      messageId: "edimsg_1",
+      profileId: null,
+      templateId: null,
+      templateVersionId: null,
+      generatedAt: 1_760_000_000,
+      generatedById: null,
+    });
+  });
+
+  it("keeps the ids of a message a profile's template generated", () => {
+    expect(
+      provenance.parse({
+        messageId: "edimsg_1",
+        profileId: "edipdp_1",
+        templateId: "editpl_1",
+        templateVersionId: "editplv_1",
+        generatedAt: 1_760_000_000,
+        generatedById: "usr_1",
+      }).templateVersionId,
+    ).toBe("editplv_1");
   });
 });
