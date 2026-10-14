@@ -180,6 +180,21 @@ func TestCalculate_RatesWithTheSnapshotInForceOnTheRatingDate(t *testing.T) {
 	}
 }
 
+func TestCalculate_RefusesToRateBeforeADeferredFirstApprovalStarts(t *testing.T) {
+	t.Parallel()
+
+	template := activeTemplate(`100`)
+	template.CurrentVersionNumber = 1
+	deferredTo := unixDate(2099, time.January, 1)
+	svc := setupLifecycleService(t, template,
+		approvedSnapshot(template, 1, `100`, unixDate(2025, time.January, 1), &deferredTo),
+	)
+
+	_, err := calculateOn(t, svc, template, unixDate(2026, time.March, 1))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "approved to bill from 2099-01-01")
+}
+
 func TestCalculate_AnActiveTemplateWithNoApprovedSnapshotRatesItsRow(t *testing.T) {
 	t.Parallel()
 

@@ -58,9 +58,8 @@ type InstallStandardsResponse struct {
 // InstallStandards creates the standard template library for a tenant. It is
 // idempotent by name: templates the organization already has are skipped, so a
 // re-run only fills gaps and never duplicates the set an organization's
-// contracts already point at. The templates land as drafts: a catalog entry is
-// a starting point, and nothing rates shipments until a person has given it
-// scenarios and another has approved it.
+// contracts already point at. The catalog is vendor-curated and validated at
+// install time, so the templates land Active without a review cycle.
 func (s *Service) InstallStandards(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

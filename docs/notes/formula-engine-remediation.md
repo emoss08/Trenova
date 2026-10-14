@@ -43,14 +43,42 @@ workstreams follows from that.
 | Workstream | State |
 |---|---|
 | WS0. Relation fields reach a real shipment's environment | done, on `master` as `a7b2653e` (landed ahead of WS1) |
-| WS1. Rate with the relations the schema needs, and fail on what didn't resolve | done, in review |
-| WS2. Data-contract defects (silent mispricing) | done, in review |
-| WS3. Data-contract defects (loud failures the preview hides) | done, in review |
-| WS4. Engine hardening and money arithmetic | done, in review |
-| WS5. Template lifecycle: billing continuity, effective dating, approval | done, in review |
-| WS6. Language conformance between editor and server | done, in review |
+| WS1. Rate with the relations the schema needs, and fail on what didn't resolve | done, on `master` (PR #730) |
+| WS2. Data-contract defects (silent mispricing) | done, on `master` (PR #730) |
+| WS3. Data-contract defects (loud failures the preview hides) | done, on `master` (PR #730) |
+| WS4. Engine hardening and money arithmetic | done, on `master` (PR #730) |
+| WS5. Template lifecycle: billing continuity, effective dating, approval | done, on `master` (PR #730) |
+| WS6. Language conformance between editor and server | done, on `master` (PR #730) |
 
 ---
+
+## Post-merge review follow-up
+
+A review of #730 after it merged found these; each landed with a failing test first.
+
+- A template whose first approval was deferred to a later date billed that content at once:
+  `EffectiveAsOf` fell back to the earliest approved snapshot whenever none was in force. It now
+  does so only once that window has started; before then rating refuses, naming the date, and GET
+  reports the window as `billing.pending`.
+- One shipment whose relation could not be loaded (a reference outside the tenant, a deleted row)
+  failed a whole backtest or approval impact. The batch now falls back to hydrating each shipment
+  on its own and the failure lands on that shipment's row.
+- The server's reserved-name check for inputs covered the documented functions but not the expr
+  builtins the engine keeps (`date`, `count`, `first`, …), so an input could shadow a call the
+  editor refused. `IsReservedName` now covers both lists.
+- The proposal card said every name resolved while the schema was still loading; it now reads
+  `analysis.pending` (`proposalCheck`).
+- A bulk archive refused for a template that had left Active reported a version mismatch; it now
+  names the templates whose status changed.
+- The comments the workstreams added to Go code were removed, and the three pre-existing comments
+  they had extended were restored to their earlier text.
+- `client/turbo.json`: `typecheck` waits for the package's own `codegen`, which closes the race
+  that failed the Typecheck job on #730.
+
+Kept as designed after review: hydration runs before the rate-lock check because a locked
+shipment's fuel formula still evaluates; the engine clones the environment per VM run because
+that is what keeps an abandoned line from writing into the next; scheduling a billed version
+again writes the row the way a future-dated approval does, with `billing` naming what bills.
 
 ## WS0. Relation fields reach a real shipment's environment — done
 
@@ -626,8 +654,10 @@ unscheduling a version that already took effect is unchecked (`effectivedate.go:
 Fix:
 - Approval closes a window: the new snapshot is effective from approval time (or a chosen future
   date); earlier snapshots keep the past.
-- Rating resolves the snapshot effective at the rating date; before the first window, the
-  earliest approved snapshot.
+- Rating resolves the snapshot effective at the rating date; a shipment dated before the first
+  window takes the earliest approved snapshot once that window has started. Until a template's
+  first approved window starts (an approval deferred to a later date), nothing bills and rating
+  refuses, naming the date.
 - `ClearScheduled` clears only future dates (`effective_from > now`); unscheduling a window that
   already started is refused.
 - `RateQuote` records the formula template version alongside the agreement version
@@ -725,7 +755,9 @@ The model behind all of it: an approved snapshot (version status Active) bills f
 `EffectiveFrom` if it was scheduled and its approval time otherwise
 (`FormulaTemplateVersion.EffectiveStart`). Rating resolves the snapshot in force at the rating
 date (`formula.Service.ResolveBillingVersion`, `effectiveversioncache.EffectiveAsOf`); before
-the first window it uses the earliest approved snapshot. The template row is what is being
+the first window it uses the earliest approved snapshot once that window has started; while a
+template's only approved windows lie ahead, rating refuses and names the start date
+(`BillingResolution.Scheduled`; GET `billing.pending`). The template row is what is being
 edited, never what bills, unless the template is Active and has no approved snapshot at all
 (templates approved before snapshots existed).
 

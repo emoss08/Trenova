@@ -1,12 +1,13 @@
 import { usePermission } from "@/hooks/use-permission";
 import { downloadCsv, exportFilename } from "@/lib/data-table-export";
 import type { AgentAnalytics, AIAnalyticsInput } from "@/lib/graphql/ai-analytics";
+import { lazyComponent } from "@/lib/lazy-component";
 import { aiAnalytics } from "@/lib/queries/ai-analytics";
 import { aiProvider } from "@/lib/queries/ai-provider";
 import { assistant } from "@/lib/queries/assistant";
+import { whenIdle } from "@/lib/when-idle";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
@@ -16,7 +17,7 @@ import type { FieldFilter } from "@trenova/shared/types/data-table";
 import type { AiAnalyticsWindow } from "@trenova/graphql/generated/graphql";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
-import { useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ANALYTICS_AGENT_PARAM,
   ANALYTICS_COMPARE_PARAM,
@@ -35,6 +36,7 @@ import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { Ic } from "../kit/ic";
 import { AnalyticsFigures } from "./analytics-figures";
 import { AnalyticsScope } from "./analytics-scope";
+import { AnalyticsBodySkeleton } from "./analytics-skeleton";
 import { AnalyticsSummary } from "./analytics-summary";
 import {
   analyticsCsv,
@@ -55,13 +57,26 @@ import { OverTimeCard } from "./over-time-card";
 import { ProviderHealthCard } from "./provider-health-card";
 import { RunTimeCard } from "./run-time-card";
 import { SameModelCard } from "./same-model-card";
-import { SeriesSheet } from "./series-sheet";
 import { TaskFitCard } from "./task-fit-card";
 import { ToolCallsCard } from "./tool-calls-card";
-import { ToolFailureSheet } from "./tool-failure-sheet";
 import { TradeoffsCard } from "./tradeoffs-card";
 import { WhoseMistakeCard } from "./whose-mistake-card";
 import "./analytics.css";
+
+/** The sheets open on a click, so their code is read once the page is idle, not with the tab. */
+const SeriesSheet = lazyComponent(
+  () => import("./series-sheet"),
+  (module) => module.SeriesSheet,
+);
+const ToolFailureSheet = lazyComponent(
+  () => import("./tool-failure-sheet"),
+  (module) => module.ToolFailureSheet,
+);
+
+function preloadSheets() {
+  void SeriesSheet.preload().catch(() => undefined);
+  void ToolFailureSheet.preload().catch(() => undefined);
+}
 
 /** The figures are worked out every few minutes; reading them again sooner shows nothing new. */
 const ANALYTICS_STALE_MS = 60_000;
@@ -84,6 +99,10 @@ export default function AnalyticsTab() {
   const [openSeries, setOpenSeries] = useQueryState(ANALYTICS_SERIES_PARAM, analyticsSeriesParser);
   const [openTool, setOpenTool] = useQueryState(ANALYTICS_TOOL_PARAM, analyticsToolParser);
   const [hidden, setHidden] = useState<readonly string[]>([]);
+  const [sheetsUsed, setSheetsUsed] = useState(Boolean(openSeries));
+  if (openSeries && !sheetsUsed) {
+    setSheetsUsed(true);
+  }
 
   const { allowed: canReadAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { allowed: canRoute } = usePermission(Resource.AIProvider, Operation.Update);
@@ -128,6 +147,8 @@ export default function AnalyticsTab() {
   );
 
   const analytics = analyticsQuery.data;
+  const loaded = Boolean(analytics);
+  useEffect(() => (loaded ? whenIdle(preloadSheets) : undefined), [loaded]);
   const colors = useMemo(() => seriesColors(analytics?.series ?? []), [analytics?.series]);
   const deploymentColors = useMemo(
     () =>
@@ -278,7 +299,7 @@ export default function AnalyticsTab() {
             </AlertAction>
           </Alert>
         ) : loading || !analytics ? (
-          <AnalyticsSkeleton />
+          <AnalyticsBodySkeleton />
         ) : empty ? (
           <div className="empty">
             <b>
@@ -386,46 +407,39 @@ export default function AnalyticsTab() {
           </>
         )}
 
-        <SeriesSheet
-          open={Boolean(sheetSeries) && !openTool}
-          series={sheetSeries}
-          tools={analytics?.tools ?? []}
-          compareBy={compareBy}
-          onOpenProvider={openProvider}
-          onOpenRuns={() => go({ tab: "activity", view: "runs", fieldFilters: agentFilter })}
-          onClose={closeSheet}
-        />
-        <ToolFailureSheet
-          open={Boolean(openSeries && openTool)}
-          input={input}
-          series={sheetSeries}
-          seriesKey={openSeries}
-          toolName={openTool}
-          onOpenToolRules={() => go({ tab: "safety", view: "rules" })}
-          onOpenFailedRuns={() =>
-            go({
-              tab: "activity",
-              view: "runs",
-              fieldFilters: [...agentFilter, { field: "status", operator: "eq", value: "Failed" }],
-            })
-          }
-          onClose={closeSheet}
-        />
+        {sheetsUsed && (
+          <Suspense fallback={null}>
+            <SeriesSheet.Component
+              open={Boolean(sheetSeries) && !openTool}
+              series={sheetSeries}
+              tools={analytics?.tools ?? []}
+              compareBy={compareBy}
+              onOpenProvider={openProvider}
+              onOpenRuns={() => go({ tab: "activity", view: "runs", fieldFilters: agentFilter })}
+              onClose={closeSheet}
+            />
+            <ToolFailureSheet.Component
+              open={Boolean(openSeries && openTool)}
+              input={input}
+              series={sheetSeries}
+              seriesKey={openSeries}
+              toolName={openTool}
+              onOpenToolRules={() => go({ tab: "safety", view: "rules" })}
+              onOpenFailedRuns={() =>
+                go({
+                  tab: "activity",
+                  view: "runs",
+                  fieldFilters: [
+                    ...agentFilter,
+                    { field: "status", operator: "eq", value: "Failed" },
+                  ],
+                })
+              }
+              onClose={closeSheet}
+            />
+          </Suspense>
+        )}
       </div>
     </HighlightProvider>
-  );
-}
-
-function AnalyticsSkeleton() {
-  return (
-    <div className="flex flex-col gap-4 pt-4" aria-busy>
-      <Skeleton className="h-20 w-full" />
-      <div className="an-g3">
-        <Skeleton className="h-72 w-full" />
-        <Skeleton className="h-72 w-full" />
-        <Skeleton className="h-72 w-full" />
-      </div>
-      <Skeleton className="h-96 w-full" />
-    </div>
   );
 }

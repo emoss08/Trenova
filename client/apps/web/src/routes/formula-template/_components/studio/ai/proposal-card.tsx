@@ -18,6 +18,7 @@ import {
   AlertTriangleIcon,
   CheckCircleIcon,
   CheckIcon,
+  ClockIcon,
   Code01Icon,
   ReverseLeftIcon,
   Scales01Icon,
@@ -35,6 +36,7 @@ import {
   policyChanged,
   type ProposalTarget,
 } from "./formula-draft";
+import { proposalCheck } from "./proposal-check";
 import { ProposedScenariosCard } from "./proposed-scenarios-card";
 import { TickedText } from "./ticked-text";
 
@@ -199,17 +201,21 @@ export function ProposalCard({
     const nextKnown = buildKnownIdentifiers(schema, next.variableDefinitions);
     return analyzeExpression(next.expression, nextKnown);
   }, [next.expression, next.variableDefinitions, schema]);
-  const check = !proposal.check.valid
-    ? { tone: "bad" as const, text: proposal.check.error || t("The engine could not run it.") }
-    : analysis.errorCount > 0
-      ? {
-          tone: "warn" as const,
-          text: analysis.problems.find((problem) => problem.severity === "error")?.message ?? "",
-        }
-      : {
-          tone: "ok" as const,
-          text: t("Checked against the shipment schema. Every name resolves."),
-        };
+  const verdict = proposalCheck(proposal.check, analysis);
+  const check =
+    verdict.kind === "engine"
+      ? { tone: "bad" as const, text: verdict.message || t("The engine could not run it.") }
+      : verdict.kind === "problem"
+        ? { tone: "warn" as const, text: verdict.message }
+        : verdict.kind === "pending"
+          ? {
+              tone: "pending" as const,
+              text: t("Waiting for the shipment schema to check names."),
+            }
+          : {
+              tone: "ok" as const,
+              text: t("Checked against the shipment schema. Every name resolves."),
+            };
 
   const content = {
     expression: next.expression,
@@ -349,10 +355,13 @@ export function ProposalCard({
           check.tone === "ok" && "text-success",
           check.tone === "warn" && "text-warning",
           check.tone === "bad" && "text-danger",
+          check.tone === "pending" && "text-foreground-muted",
         )}
       >
         {check.tone === "ok" ? (
           <CheckCircleIcon className="mt-px size-3.5 shrink-0" />
+        ) : check.tone === "pending" ? (
+          <ClockIcon className="mt-px size-3.5 shrink-0" />
         ) : check.tone === "warn" ? (
           <AlertTriangleIcon className="mt-px size-3.5 shrink-0" />
         ) : (

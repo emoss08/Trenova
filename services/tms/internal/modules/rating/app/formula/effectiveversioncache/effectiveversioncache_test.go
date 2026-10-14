@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -91,12 +91,41 @@ func TestEffectiveAsOf_PicksTheWindowInForceElseTheEarliest(t *testing.T) {
 	}
 
 	versionAt := func(asOf int64) int64 {
-		return effectiveversioncache.EffectiveAsOf(approved, asOf).VersionNumber
+		inForce, pending := effectiveversioncache.EffectiveAsOf(approved, asOf, 1000)
+		require.Nil(t, pending)
+		return inForce.VersionNumber
 	}
 	assert.EqualValues(t, 1, versionAt(50), "before every window, the earliest approved snapshot")
 	assert.EqualValues(t, 1, versionAt(499))
 	assert.EqualValues(t, 2, versionAt(500))
 	assert.EqualValues(t, 2, versionAt(899), "a scheduled start is not in force before its date")
 	assert.EqualValues(t, 3, versionAt(900))
-	assert.Nil(t, effectiveversioncache.EffectiveAsOf(nil, 900))
+
+	inForce, pending := effectiveversioncache.EffectiveAsOf(nil, 900, 1000)
+	assert.Nil(t, inForce)
+	assert.Nil(t, pending)
+}
+
+func TestEffectiveAsOf_ADeferredFirstApprovalIsScheduledUntilItStarts(t *testing.T) {
+	t.Parallel()
+
+	deferredTo := int64(900)
+	approved := []*formulatemplate.FormulaTemplateVersion{
+		{VersionNumber: 1, CreatedAt: 100, EffectiveFrom: &deferredTo},
+	}
+
+	inForce, scheduled := effectiveversioncache.EffectiveAsOf(approved, 500, 500)
+	assert.Nil(t, inForce, "nothing bills before the date the approver chose")
+	require.NotNil(t, scheduled)
+	assert.EqualValues(t, 1, scheduled.VersionNumber)
+
+	inForce, scheduled = effectiveversioncache.EffectiveAsOf(approved, 950, 950)
+	require.NotNil(t, inForce)
+	assert.EqualValues(t, 1, inForce.VersionNumber)
+	assert.Nil(t, scheduled)
+
+	inForce, scheduled = effectiveversioncache.EffectiveAsOf(approved, 50, 950)
+	require.NotNil(t, inForce, "once the window has started, a backdated shipment takes it")
+	assert.EqualValues(t, 1, inForce.VersionNumber)
+	assert.Nil(t, scheduled)
 }

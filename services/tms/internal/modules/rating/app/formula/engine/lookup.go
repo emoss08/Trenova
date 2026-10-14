@@ -133,6 +133,11 @@ func IsReservedName(name string) bool {
 			return true
 		}
 	}
+	for i := range builtinSpecs {
+		if builtinSpecs[i].Name == name {
+			return true
+		}
+	}
 	return false
 }
 

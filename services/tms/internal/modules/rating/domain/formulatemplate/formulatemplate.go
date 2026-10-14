@@ -41,6 +41,7 @@ var (
 type BillingVersion struct {
 	VersionNumber int64 `json:"versionNumber"`
 	EffectiveFrom int64 `json:"effectiveFrom"`
+	Pending       bool  `json:"pending,omitempty"`
 }
 
 type FormulaTemplate struct {

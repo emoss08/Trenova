@@ -170,8 +170,8 @@ func (s *Service) Calculate(
 			append(formulaerrors.LogFields(err), zap.Error(err))...)
 		return nil, err
 	}
-	if billing != nil && resp.Receipt != nil {
-		start := billing.EffectiveStart()
+	if billing.InForce != nil && resp.Receipt != nil {
+		start := billing.InForce.EffectiveStart()
 		resp.Receipt.EffectiveFrom = &start
 	}
 
@@ -227,9 +227,14 @@ func templateReads(template *formulatemplate.FormulaTemplate, name string) bool 
 	return false
 }
 
+type BillingResolution struct {
+	InForce   *formulatemplate.FormulaTemplateVersion
+	Scheduled *formulatemplate.FormulaTemplateVersion
+}
+
 func billingContent(
 	template *formulatemplate.FormulaTemplate,
-	billing *formulatemplate.FormulaTemplateVersion,
+	billing BillingResolution,
 ) (*formulatemplate.FormulaTemplate, error) {
 	switch {
 	case template.Status == formulatemplate.StatusInactive:
@@ -239,8 +244,16 @@ func billingContent(
 			"Formula template {0} is archived and no longer rates shipments",
 			template.Name,
 		)
-	case billing != nil:
-		return template.ApplyVersion(billing), nil
+	case billing.InForce != nil:
+		return template.ApplyVersion(billing.InForce), nil
+	case billing.Scheduled != nil:
+		return nil, errortypes.NewValidationError(
+			"formulaTemplateId",
+			errortypes.ErrInvalid,
+			"Formula template {0} is approved to bill from {1}, so it cannot rate shipments before then",
+			template.Name,
+			timeutils.FormatCalendarDate(billing.Scheduled.EffectiveStart(), time.UTC),
+		)
 	case template.Status == formulatemplate.StatusActive:
 		return template, nil
 	default:
@@ -258,7 +271,7 @@ func (s *Service) ResolveBillingVersion(
 	template *formulatemplate.FormulaTemplate,
 	tenantInfo pagination.TenantInfo,
 	asOf int64,
-) (*formulatemplate.FormulaTemplateVersion, error) {
+) (BillingResolution, error) {
 	approved, err := effectiveversioncache.GetVersions(
 		ctx,
 		template.ID,
@@ -273,10 +286,11 @@ func (s *Service) ResolveBillingVersion(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return BillingResolution{}, err
 	}
 
-	return effectiveversioncache.EffectiveAsOf(approved, asOf), nil
+	inForce, scheduled := effectiveversioncache.EffectiveAsOf(approved, asOf, timeutils.NowUnix())
+	return BillingResolution{InForce: inForce, Scheduled: scheduled}, nil
 }
 
 type RateRequest struct {

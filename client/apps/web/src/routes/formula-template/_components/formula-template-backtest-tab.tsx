@@ -2,6 +2,10 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { EntityRedirectLink } from "@/components/link";
 import { KpiStrip } from "@/components/kpi/kpi-strip";
 import { DeltaValue, StatTile } from "@/components/metric-tiles";
+import {
+  DataTableVirtualRows,
+  type VirtualRowSlot,
+} from "@/components/data-table/data-table-virtual-rows";
 import { downloadCsv, exportFilename } from "@/lib/data-table-export";
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
@@ -45,7 +49,7 @@ import {
   PlayIcon,
   Shield01Icon,
 } from "@trenova/shared/components/icons";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useWatch, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { backtestCsv, describeVersionOption } from "./backtest-export";
@@ -73,6 +77,7 @@ const SOURCE_OPTIONS: { value: CandidateSource; label: string; description: stri
 
 const VERSION_PICKER_LIMIT = 100;
 const SHIPMENTS_BASE_URL = "/shipment-management/shipments";
+const BACKTEST_ROW_HEIGHT = 40;
 
 function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
   const t = useT();
@@ -134,13 +139,21 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
   );
 }
 
-function BacktestResultRow({ result }: { result: BacktestResult }) {
+function BacktestResultRow({
+  result,
+  measureRef,
+  index,
+}: {
+  result: BacktestResult;
+  measureRef: VirtualRowSlot["measureRef"];
+  index: number;
+}) {
   const t = useT();
 
   const hasError = !!result.currentError || !!result.candidateError;
 
   return (
-    <TableRow>
+    <TableRow ref={measureRef} data-index={index}>
       <TableCell className="font-mono text-xs">
         <EntityRedirectLink
           entityId={result.shipmentId}
@@ -272,6 +285,7 @@ export default function FormulaTemplateBacktestTab({
   template,
 }: FormulaTemplateBacktestTabProps) {
   const t = useT();
+  const tableRef = useRef<HTMLTableElement | null>(null);
 
   const [source, setSource] = useState<CandidateSource>("editor");
   const [versionNumber, setVersionNumber] = useState<number>(template?.currentVersionNumber ?? 1);
@@ -400,7 +414,7 @@ export default function FormulaTemplateBacktestTab({
           </div>
 
           <div className="overflow-hidden rounded-lg border">
-            <Table>
+            <Table ref={tableRef} containerClassName="max-h-[32rem]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">{t("Pro #")}</TableHead>
@@ -421,9 +435,21 @@ export default function FormulaTemplateBacktestTab({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  mutation.data.results.map((result) => (
-                    <BacktestResultRow key={result.shipmentId} result={result} />
-                  ))
+                  <DataTableVirtualRows
+                    items={mutation.data.results}
+                    getKey={(result) => result.shipmentId}
+                    tableRef={tableRef}
+                    estimateSize={BACKTEST_ROW_HEIGHT}
+                    colSpan={5}
+                    renderItem={(result, slot) => (
+                      <BacktestResultRow
+                        key={result.shipmentId}
+                        result={result}
+                        measureRef={slot.measureRef}
+                        index={slot.index}
+                      />
+                    )}
+                  />
                 )}
               </TableBody>
             </Table>
