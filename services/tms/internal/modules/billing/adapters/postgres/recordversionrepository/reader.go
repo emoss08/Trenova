@@ -4,6 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
+	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
+
 	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
 	"github.com/emoss08/trenova/pkg/buncolgen/bankreceiptcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/bankreceiptworkitemcol"
@@ -451,6 +456,26 @@ var lookups = map[permission.Resource]lookup{
 		scope:   invoicecol.InvoiceDisputeScopeTenant,
 		idEq:    invoicecol.InvoiceDisputeColumns.ID.Eq(),
 		version: versionOf(func(entity *invoice.InvoiceDispute) int64 { return entity.Version }),
+	},
+	permission.ResourceFactoringNoa: {
+		model:   func() versioned { return new(factoring.Noa) },
+		scope:   factoringcol.NoaScopeTenant,
+		idEq:    factoringcol.NoaColumns.ID.Eq(),
+		version: versionOf(func(entity *factoring.Noa) int64 { return entity.Version }),
+	},
+	permission.ResourceFactoringSubmission: {
+		model:   func() versioned { return new(factoring.Submission) },
+		scope:   factoringcol.SubmissionScopeTenant,
+		idEq:    factoringcol.SubmissionColumns.ID.Eq(),
+		version: versionOf(func(entity *factoring.Submission) int64 { return entity.Version }),
+	},
+	permission.ResourceFactoringCompany: {
+		model: func() versioned { return new(factoringcompany.FactoringCompany) },
+		scope: factoringcompanycol.FactoringCompanyScopeTenant,
+		idEq:  factoringcompanycol.FactoringCompanyColumns.ID.Eq(),
+		version: versionOf(
+			func(entity *factoringcompany.FactoringCompany) int64 { return entity.Version },
+		),
 	},
 	permission.ResourceInvoiceRun: {
 		model:   func() versioned { return new(invoicerun.InvoiceRun) },

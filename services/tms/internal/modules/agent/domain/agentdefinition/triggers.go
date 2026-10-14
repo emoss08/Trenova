@@ -17,6 +17,7 @@ func (t Template) StarterTrigger() TriggerMode {
 		TemplateInsightAnalyst,
 		TemplateEDIDesk,
 		TemplateBooksKeeper,
+		TemplateFactoringClerk,
 		// The dispatch sweep now raises a move that is close enough to its
 		// start to matter, so coverage is answered per move, with the move
 		// as the run's subject, rather than by re-planning the board every
@@ -74,6 +75,13 @@ func (t Template) StarterEvents() []agent.EventKind {
 		return []agent.EventKind{agent.EventInsightDetected}
 	case TemplateEDIDesk:
 		return []agent.EventKind{agent.EventEDIFileQuarantined}
+	case TemplateFactoringClerk:
+		return []agent.EventKind{
+			agent.EventFactoringInvoiceReady,
+			agent.EventFactoringNoaExpiring,
+			agent.EventFactoringSubmissionSent,
+			agent.EventFactoringSubmissionFailed,
+		}
 	case TemplateBooksKeeper:
 		return []agent.EventKind{
 			agent.EventAccountingSyncFailed,

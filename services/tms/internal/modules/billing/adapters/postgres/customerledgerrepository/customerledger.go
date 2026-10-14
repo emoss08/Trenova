@@ -114,7 +114,8 @@ func (r *repository) SumBalanceAsOf(
 }
 
 // nonRecourseFactoredEntryFilter drops an entry whose invoice was sold to a
-// non-recourse factor. An invoice's own entry names it as its source; a
+// factor without recourse: the agreement stamped on the invoice decides, and
+// an invoice posted before agreements existed falls back to the factor's flag. An invoice's own entry names it as its source; a
 // payment, credit memo or write-off applied to it names it as the related
 // invoice.
 const nonRecourseFactoredEntryFilter = `NOT EXISTS (
@@ -124,13 +125,17 @@ const nonRecourseFactoredEntryFilter = `NOT EXISTS (
 		ON fac.id = inv.factoring_company_id
 		AND fac.organization_id = inv.organization_id
 		AND fac.business_unit_id = inv.business_unit_id
+	LEFT JOIN factoring_agreements AS agr
+		ON agr.id = inv.factoring_agreement_id
+		AND agr.organization_id = inv.organization_id
+		AND agr.business_unit_id = inv.business_unit_id
 	WHERE inv.organization_id = cle.organization_id
 		AND inv.business_unit_id = cle.business_unit_id
 		AND inv.id = COALESCE(
 			cle.related_invoice_id,
 			CASE WHEN cle.source_object_type = 'Invoice' THEN cle.source_object_id END
 		)
-		AND fac.non_recourse
+		AND COALESCE(agr.recourse = 'NonRecourse', fac.non_recourse)
 )`
 
 // SumCustomerBalances totals each named customer's subledger. A customer with

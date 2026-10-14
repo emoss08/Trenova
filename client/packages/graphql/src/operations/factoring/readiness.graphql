@@ -1,0 +1,168 @@
+fragment FactoringInvoiceStateFields on FactoringInvoiceState {
+  invoiceId
+  factoringCompanyId
+  customerId
+  verdict
+  failedChecks
+  openBalanceMinor
+  readySince
+  evaluatedAt
+  submission {
+    submissionId
+    submissionNumber
+    submissionStatus
+  }
+  checks {
+    code
+    passed
+    message
+    fix
+    documentTypeId
+    documentTypeName
+    shipmentId
+    shipmentPro
+    detail
+  }
+  invoice {
+    id
+    number
+    status
+    currencyCode
+    billToName
+  }
+  customer {
+    id
+    code
+    name
+  }
+  factoringCompany {
+    id
+    code
+    name
+  }
+}
+
+query FactoringInvoiceStateTable(
+  $input: DataTableConnectionInput!
+  $verdicts: [FactoringVerdict!]
+  $factoringCompanyId: ID
+  $customerId: ID
+  $includeTotalCount: Boolean = true
+) {
+  factoringInvoiceStates(
+    input: {
+      table: $input
+      verdicts: $verdicts
+      factoringCompanyId: $factoringCompanyId
+      customerId: $customerId
+    }
+  ) {
+    edges {
+      node {
+        invoiceId
+        factoringCompanyId
+        customerId
+        verdict
+        failedChecks
+        openBalanceMinor
+        readySince
+        evaluatedAt
+        submission {
+          submissionId
+          submissionNumber
+          submissionStatus
+        }
+        checks {
+          code
+          passed
+          message
+          fix
+          documentTypeId
+          documentTypeName
+          shipmentId
+          shipmentPro
+          detail
+        }
+        invoice {
+          id
+          number
+          status
+          currencyCode
+          billToName
+        }
+        customer {
+          id
+          code
+          name
+        }
+        factoringCompany {
+          id
+          code
+          name
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query FactoringSummary {
+  factoringSummary {
+    ready {
+      count
+      amountMinor
+    }
+    notReady {
+      count
+      amountMinor
+    }
+    submitted {
+      count
+      amountMinor
+    }
+    readyUnsubmitted {
+      count
+      amountMinor
+    }
+  }
+}
+
+query InvoiceFactoring($id: ID!) {
+  invoice(id: $id) {
+    id
+    number
+    status
+    billType
+    currencyCode
+    factoringOverride
+    factoringOverrideReason
+    factoringAgreementId
+    factoringCompany {
+      id
+      code
+      name
+    }
+    factoringState {
+      ...FactoringInvoiceStateFields
+    }
+  }
+}
+
+mutation SetInvoiceFactoringOverride($input: SetInvoiceFactoringOverrideInput!) {
+  setInvoiceFactoringOverride(input: $input) {
+    ...FactoringInvoiceStateFields
+  }
+}
+
+mutation RequestMissingFactoringDocuments($input: RequestMissingFactoringDocumentsInput!) {
+  requestMissingFactoringDocuments(input: $input) {
+    recipient
+    recipientKind
+    documentTypes
+    shipmentIds
+    sent
+  }
+}

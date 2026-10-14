@@ -57,6 +57,12 @@ type CapturePDFAssembler interface {
 	Split(ctx context.Context, pdf []byte) ([][]byte, error)
 }
 
+// ImagePDFConverter puts a JPEG or PNG image on a letter-size PDF page, so a
+// photographed document can be merged with PDFs.
+type ImagePDFConverter interface {
+	ImageToPDF(ctx context.Context, image []byte) ([]byte, error)
+}
+
 // CaptureAnalysisRequest is one proposed document to read before a person
 // files it.
 type CaptureAnalysisRequest struct {

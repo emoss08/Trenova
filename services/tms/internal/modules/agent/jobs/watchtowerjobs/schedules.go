@@ -67,6 +67,17 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			},
 		},
 		{
+			ID:            "factoring-watchtower-sweep",
+			Description:   "Raise and clear factoring items: late ready invoices and notices of assignment",
+			Spec:          schedule.Every(15 * time.Minute),
+			Workflow:      FactoringSweepWorkflow,
+			TaskQueue:     temporaltype.TaskQueueSystem.String(),
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "factoring-watchtower-sweep",
+			},
+		},
+		{
 			ID:          "watchtower-retention",
 			Description: "Remove watchtower items resolved more than a month ago",
 			// Weekly is often enough for a month-long window, and it keeps

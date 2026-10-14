@@ -2,6 +2,7 @@ package canned
 
 import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 )
 
@@ -389,6 +390,69 @@ func orderRevenueSummary() *Entry {
 			Filters:    andFilters(windowFilter(createdAtFieldKey)),
 			Sort:       []report.SortSpec{desc("order_total")},
 			Parameters: []report.ParameterDef{windowParam(90)},
+		},
+	}
+}
+
+func invoicesReadyToFactor() *Entry {
+	return &Entry{
+		Key:     "invoices-ready-to-factor",
+		Version: initialVersion,
+		Name:    "Invoices Ready to Factor",
+		Description: "Factored invoices that pass every readiness check and are waiting to be " +
+			"submitted, with their factor, open balance and how long they have been ready, " +
+			"oldest first",
+		Category:      categoryBilling,
+		Tags:          []string{"invoices", tagAR, "factoring"},
+		DefaultFormat: report.FormatXLSX,
+		Definition: &report.Definition{
+			IRVersion: report.CurrentIRVersion,
+			Entity:    entityFactoringState,
+			Columns: []report.ColumnSpec{
+				dimCol("invoice_number", "Invoice Number", "number", invoiceEdge),
+				dimCol(customerColumnID, customerLabel, nameField, customerEdge),
+				dimCol("factor", "Factor", nameField, factorCompanyEdge),
+				dateDim("invoice_date", "Invoice Date", "invoiceDate", invoiceEdge),
+				dateDim("due_date", "Due Date", "dueDate", invoiceEdge),
+				dateDim("ready_since", "Ready Since", "readySince"),
+				sumMinor(openBalanceColumnID, "Open Balance", "openBalanceMinor"),
+			},
+			Filters: andFilters(report.FieldFilter{
+				Ref:      report.FieldRef{Field: "verdict"},
+				Operator: dbtype.OpEqual,
+				Value:    verdictReady,
+			}),
+			Sort: []report.SortSpec{asc("ready_since")},
+		},
+	}
+}
+
+func factoringSchedules() *Entry {
+	return &Entry{
+		Key:     "factoring-schedules",
+		Version: initialVersion,
+		Name:    "Factoring Schedules",
+		Description: "Every schedule of accounts sent to a factor, newest first, with how many " +
+			"invoices it carried, their total, the advance, fee and reserve the agreement " +
+			"expected, and whether it was delivered",
+		Category:      categoryBilling,
+		Tags:          []string{"invoices", tagAR, "factoring"},
+		DefaultFormat: report.FormatXLSX,
+		Definition: &report.Definition{
+			IRVersion: report.CurrentIRVersion,
+			Entity:    entityFactoringSchedule,
+			Columns: []report.ColumnSpec{
+				dimCol("schedule_number", "Schedule", "number"),
+				dimCol("factor", "Factor", nameField, factorCompanyEdge),
+				dateDim("submitted_on", "Submitted", "createdAt"),
+				dimCol("status", "Status", "status"),
+				dimCol("sent_to", "Sent To", "transportTarget"),
+				sumMinor("face", "Face Amount", "faceMinor"),
+				sumMinor("expected_advance", "Expected Advance", "expectedAdvanceMinor"),
+				sumMinor("expected_fee", "Expected Fee", "expectedFeeMinor"),
+				sumMinor("expected_reserve", "Expected Reserve", "expectedReserveMinor"),
+			},
+			Sort: []report.SortSpec{desc("submitted_on")},
 		},
 	}
 }

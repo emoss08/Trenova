@@ -28,6 +28,8 @@ enum AgentSubjectType {
   FormulaTemplate
   Invoice
   InvoiceDispute
+  FactoringNoa
+  FactoringSubmission
 }
 
 enum AgentRunTrigger {

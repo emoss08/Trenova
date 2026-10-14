@@ -27,6 +27,10 @@ const (
 	EventAccountingPaymentProposed    = EventKind("accounting.inbound_payment_proposed")
 	EventAccountingDriftDetected      = EventKind("accounting.drift_detected")
 	EventAccountingReconciliationDue  = EventKind("accounting.reconciliation_due")
+	EventFactoringInvoiceReady        = EventKind("factoring.invoice_ready")
+	EventFactoringNoaExpiring         = EventKind("factoring.noa_expiring")
+	EventFactoringSubmissionSent      = EventKind("factoring.submission_sent")
+	EventFactoringSubmissionFailed    = EventKind("factoring.submission_failed")
 )
 
 type EventDescriptor struct {
@@ -180,6 +184,30 @@ var knownEvents = []EventDescriptor{
 		SubjectType: SubjectAccountingConnection,
 		Label:       "Weekly books reconciliation",
 		Description: "The weekly point to review how the accounting system and Trenova compare: open differences, what was fixed, and what still needs a person.",
+	},
+	{
+		Kind:        EventFactoringInvoiceReady,
+		SubjectType: SubjectInvoice,
+		Label:       "Invoice ready to factor",
+		Description: "A posted invoice for a factored customer passed every readiness check: an agreement in force, an acknowledged notice of assignment, no dispute, and every document the factor asks for.",
+	},
+	{
+		Kind:        EventFactoringNoaExpiring,
+		SubjectType: SubjectFactoringNoa,
+		Label:       "Notice of assignment expiring",
+		Description: "A customer's acknowledged notice of assignment expires within 30 days; once it lapses, its invoices stop being ready to factor until a new one is acknowledged.",
+	},
+	{
+		Kind:        EventFactoringSubmissionSent,
+		SubjectType: SubjectFactoringSubmission,
+		Label:       "Factoring schedule sent",
+		Description: "A schedule of accounts and its invoice packets reached the factor by email or SFTP; its invoices now wait on the factor's funding.",
+	},
+	{
+		Kind:        EventFactoringSubmissionFailed,
+		SubjectType: SubjectFactoringSubmission,
+		Label:       "Factoring schedule failed to send",
+		Description: "A schedule of accounts could not be delivered to the factor after every retry; it waits for someone to fix the factor's delivery settings and retry it, or cancel it and release its invoices.",
 	},
 }
 

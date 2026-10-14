@@ -489,6 +489,24 @@ func (t Template) StarterTools() []string {
 			"list_edi_partners",
 			"reprocess_edi_inbound_files",
 		}
+	case TemplateFactoringClerk:
+		return []string{
+			"list_factoring_ready_invoices",
+			"get_factoring_readiness",
+			"get_factoring_agreement",
+			"list_factoring_noas",
+			"draft_factoring_noa",
+			"send_factoring_noa",
+			"record_factoring_noa_acknowledgement",
+			"request_missing_factoring_document",
+			"list_factoring_submissions",
+			"get_factoring_submission",
+			"submit_invoices_to_factor",
+			"retry_factoring_submission",
+			"cancel_factoring_submission",
+			"list_invoices",
+			"get_invoice",
+		}
 	case TemplateBooksKeeper:
 		return []string{
 			"get_accounting_sync_status",

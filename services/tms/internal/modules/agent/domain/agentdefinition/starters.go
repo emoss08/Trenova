@@ -413,6 +413,33 @@ var templateStarters = map[Template][]starterQuestion{
 			"list_edi_transfers",
 		),
 	},
+	TemplateFactoringClerk: {
+		ask(
+			"Which invoices are ready to factor?",
+			"Which invoices are ready to sell to the factor, and how much is ready in all?",
+			"list_factoring_ready_invoices",
+		),
+		ask(
+			"What holds an invoice back?",
+			"Why is this invoice not ready to factor, and what clears it?",
+			"get_factoring_readiness",
+		),
+		ask(
+			"Which customers have no notice?",
+			"Which factored customers have no acknowledged notice of assignment?",
+			"list_factoring_noas",
+		),
+		ask(
+			"What are the factor's terms?",
+			"What are the advance, reserve and fee terms of the factoring agreement in force?",
+			"get_factoring_agreement",
+		),
+		ask(
+			"Which schedules failed?",
+			"Which factoring schedules failed to send, and why?",
+			"list_factoring_submissions",
+		),
+	},
 	TemplateBooksKeeper: {
 		ask(
 			"What did not reach the books?",

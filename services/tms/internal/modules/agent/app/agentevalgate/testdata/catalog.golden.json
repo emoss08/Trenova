@@ -3817,6 +3817,63 @@
       }
     },
     {
+      "name": "cancel_factoring_submission",
+      "description": "Cancel a schedule that failed to send and release its invoices, so they can go on another schedule once they are Ready again. Only a failed schedule can be cancelled: a sent one is with the factor. Say why.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "description": "Why the schedule is cancelled.",
+            "type": "string"
+          },
+          "submissionId": {
+            "description": "The failed schedule, from list_factoring_submissions.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          },
+          "version": {
+            "description": "The schedule's version from get_factoring_submission, so a schedule someone changed since is not overwritten.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "submissionId",
+          "version",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "cancel schedule",
+        "release invoices",
+        "failed schedule"
+      ],
+      "prerequisites": [
+        "list_factoring_submissions"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_submission",
+        "operation": "cancel",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Releases invoices from a schedule; a person approves it."
+      }
+    },
+    {
       "name": "cancel_invoice_run",
       "description": "Cancel an invoice run that will never be committed, such as one built for the wrong period or customers. Its shipments stay approved for the next run. Say why; the reason is kept on the run.",
       "parameters": {
@@ -9711,6 +9768,63 @@
       }
     },
     {
+      "name": "draft_factoring_noa",
+      "description": "Draft a notice of assignment telling a factored customer to pay the factor. It sends nothing: send_factoring_noa emails the letter once it is drafted. A customer can have only one open notice per factor, so check list_factoring_noas first; an invoice is not ready to factor until the customer acknowledges one.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customerId": {
+            "description": "The factored customer, from the invoice or list_customers.",
+            "type": "string",
+            "x-recordOf": "customer"
+          },
+          "factoringCompanyId": {
+            "description": "The factor the customer's invoices are assigned to, from get_invoice or list_factoring_ready_invoices.",
+            "type": "string",
+            "x-recordOf": "factoring_company"
+          },
+          "notes": {
+            "description": "A note printed on the letter, when there is one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId",
+          "factoringCompanyId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "notice of assignment",
+        "noa",
+        "factoring letter"
+      ],
+      "prerequisites": [
+        "list_factoring_noas"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_noa",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Drafts a letter nobody outside sees until it is sent."
+      }
+    },
+    {
       "name": "draft_manual_journal",
       "description": "Draft a manual journal entry for the general ledger: its lines, the accounts they post to and the day it is booked. It is saved as a draft and books nothing; submit_manual_journal sends it for approval. Take accounts from list_gl_accounts and make the debits equal the credits.",
       "parameters": {
@@ -12809,6 +12923,141 @@
         "source": "edi",
         "carriesTaint": false,
         "rationale": "Reads a load tender a trading partner wrote, stops and references included; nothing changes and nothing is sent."
+      }
+    },
+    {
+      "name": "get_factoring_agreement",
+      "description": "Get a factor's agreements, newest first, marking the one in force. Each gives the advance and reserve rates, fee tiers by days outstanding, minimum fee, recourse and chargeback window, accounting treatment, funding days, the daily submission time, and the documents the factor needs with every invoice. A factor with no agreement in force has no invoices ready to factor.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "factoringCompanyId": {
+            "description": "The factor, from get_invoice, list_factoring_noas or list_factoring_ready_invoices.",
+            "type": "string",
+            "x-recordOf": "factoring_company"
+          }
+        },
+        "required": [
+          "factoringCompanyId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "factoring agreement",
+        "advance rate",
+        "factoring fee",
+        "recourse"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "factoring_agreement",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "get_factoring_readiness",
+      "description": "Check now whether a posted invoice is ready to sell to its factor, and why not. Every check comes back with what clears it: SetUpAgreement, SendNoa, RecordNoaAcknowledgement, ResolveDispute, RequestDocument (with the document type and shipment) or ReviewShipment. An Excluded verdict means the invoice is not something to factor: a draft, voided, paid, a credit memo, kept out by set_invoice_factoring_override, or for a customer that is not factored.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "description": "The invoice, from list_invoices, get_invoice or list_factoring_ready_invoices.",
+            "type": "string",
+            "x-recordOf": "invoice"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "factor",
+        "factoring",
+        "ready to factor",
+        "notice of assignment",
+        "noa"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "invoice",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "get_factoring_submission",
+      "description": "Read one schedule of accounts with every invoice on it and why it failed, if it did. Each invoice has its amount, expected advance, fee and reserve, and whether its packet was built; the schedule has its status, where it went, attempts and last error. Use its version with retry_factoring_submission or cancel_factoring_submission.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "submissionId": {
+            "description": "The schedule, from list_factoring_submissions.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          }
+        },
+        "required": [
+          "submissionId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "factoring schedule",
+        "schedule of accounts",
+        "failed schedule"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "factoring_submission",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
       }
     },
     {
@@ -17800,6 +18049,205 @@
       }
     },
     {
+      "name": "list_factoring_noas",
+      "description": "List notices of assignment, the letters telling customers to pay a factor. Each says who it is for, whether it was sent, acknowledged with a signed copy, or released, and when it expires. Effective is true only for an acknowledged, unexpired notice; an invoice is not ready to factor without one. Pass id and version to send_factoring_noa, record_factoring_noa_acknowledgement or release_factoring_noa.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "type": "string"
+          },
+          "customerId": {
+            "description": "Only this customer's notices, from list_customers or get_invoice.",
+            "type": "string",
+            "x-recordOf": "customer"
+          },
+          "factoringCompanyId": {
+            "description": "Only notices for this factor, from get_invoice or list_factoring_ready_invoices.",
+            "type": "string",
+            "x-recordOf": "factoring_company"
+          },
+          "limit": {
+            "description": "How many notices to return, at most 50. Defaults to 25.",
+            "type": "integer"
+          },
+          "status": {
+            "description": "Only notices in these statuses.",
+            "items": {
+              "description": "A notice status.",
+              "enum": [
+                "Draft",
+                "Sent",
+                "Acknowledged",
+                "Released"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring.noaStatus"
+            },
+            "maxItems": 4,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "notice of assignment",
+        "noa",
+        "factoring letter"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "factoring_noa",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_factoring_ready_invoices",
+      "description": "List factored customers' invoices by readiness, newest first, with the totals. The totals are ready, not ready, submitted, and ready for more than a day without being submitted. Ready is the default; ask for NotReady to see what is holding invoices back, each with its failed checks, or Submitted for what is on a schedule. Pass Ready invoices to submit_invoices_to_factor, one factor per call, and an invoice to get_factoring_readiness for every check.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "type": "string"
+          },
+          "customerId": {
+            "description": "Only this customer's invoices, from list_customers or get_invoice.",
+            "type": "string",
+            "x-recordOf": "customer"
+          },
+          "factoringCompanyId": {
+            "description": "Only invoices assigned to this factor, from get_invoice or list_factoring_noas.",
+            "type": "string",
+            "x-recordOf": "factoring_company"
+          },
+          "limit": {
+            "description": "How many invoices to return, at most 50. Defaults to 25.",
+            "type": "integer"
+          },
+          "verdict": {
+            "description": "Which invoices: Ready (the default), NotReady, or Submitted (on a schedule with the factor).",
+            "enum": [
+              "Ready",
+              "NotReady",
+              "Submitted"
+            ],
+            "type": "string",
+            "x-enumOf": "factoring.verdict"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "factoring queue",
+        "ready to factor",
+        "factor"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "invoice",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_factoring_submissions",
+      "description": "List the schedules of accounts sent to factors, newest first, with their status and totals. Each has its number, factor, status (Sending, Sent, Failed or Cancelled), invoice count, expected funding, where it went, and for a failed one the last error. Pass a schedule's id to get_factoring_submission for its invoices, and its id and version to retry_factoring_submission or cancel_factoring_submission.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "type": "string"
+          },
+          "factoringCompanyId": {
+            "description": "Only schedules sent to this factor, from list_factoring_ready_invoices or get_invoice.",
+            "type": "string",
+            "x-recordOf": "factoring_company"
+          },
+          "limit": {
+            "description": "How many schedules to return, at most 50. Defaults to 25.",
+            "type": "integer"
+          },
+          "status": {
+            "description": "Only schedules in these statuses.",
+            "items": {
+              "description": "A schedule status.",
+              "enum": [
+                "Sending",
+                "Sent",
+                "Failed",
+                "Cancelled"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring.submissionStatus"
+            },
+            "maxItems": 4,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "factoring schedule",
+        "schedule of accounts",
+        "submitted to factor"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "factoring_submission",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_fiscal_periods",
       "description": "List fiscal periods, the months, quarters or adjusting periods the books close by, with their dates and whether each is open, locked or closed. get_fiscal_close_blockers says what stops one from closing. Filters: status (Inactive|Open|Locked|Closed|PermanentlyClosed): Open accepts postings; Locked and Closed do not; periodType (Month|Quarter|Week|Adjusting); text: name; number: periodNumber; date: startDate, endDate; boolean: isAdjusting. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
@@ -22697,7 +23145,8 @@
                 "MissedPickup",
                 "MissedDelivery",
                 "PodMissing",
-                "TenderExhausted"
+                "TenderExhausted",
+                "Factoring"
               ],
               "type": "string",
               "x-enumOf": "watchtower.sourceKind"
@@ -24178,6 +24627,10 @@
               "driver_settlement",
               "edi_inbound_file",
               "edi_message",
+              "factoring_agreement",
+              "factoring_company",
+              "factoring_noa",
+              "factoring_submission",
               "formula_template",
               "fuel_purchase",
               "hazardous_material",
@@ -25993,7 +26446,9 @@
               "accounting_inbound_change",
               "accounting_drift_finding",
               "invoice",
-              "invoice_dispute"
+              "invoice_dispute",
+              "factoring_noa",
+              "factoring_submission"
             ]
           },
           "subjectType": {
@@ -26020,7 +26475,9 @@
               "AccountingInboundChange",
               "AccountingDriftFinding",
               "Invoice",
-              "InvoiceDispute"
+              "InvoiceDispute",
+              "FactoringNoa",
+              "FactoringSubmission"
             ],
             "type": "string",
             "x-enumOf": "agent.subjectType"
@@ -26801,6 +27258,81 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Adds a previous employer to the qualification file inside Trenova; nothing is sent to the employer, and it is corrected or removed the same way."
+      }
+    },
+    {
+      "name": "record_factoring_noa_acknowledgement",
+      "description": "Record that the customer signed and returned the notice of assignment. Name the signed copy, which must already be uploaded as a document on the notice, and the date they signed. From then on the customer's invoices can be ready to factor until the notice expires or is released.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "acknowledgedAt": {
+            "description": "When the customer signed the notice. It cannot be in the future. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "When the notice stops applying, if the factor's agreement says so. Leave it out for a notice that runs until released. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
+            "type": "string"
+          },
+          "noaId": {
+            "description": "The sent notice, from list_factoring_noas.",
+            "type": "string",
+            "x-recordOf": "factoring_noa"
+          },
+          "signedDocumentId": {
+            "description": "The signed copy, a document uploaded to this notice, from search_documents.",
+            "type": "string",
+            "x-recordOf": "document"
+          },
+          "version": {
+            "description": "The notice's version from list_factoring_noas, so a notice someone changed since is not overwritten.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "noaId",
+          "version",
+          "acknowledgedAt",
+          "signedDocumentId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "signed noa",
+        "acknowledged notice",
+        "customer signed"
+      ],
+      "prerequisites": [
+        "list_factoring_noas"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_noa",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Lets the customer's invoices be sold to the factor; a person confirms the signed copy is the customer's."
       }
     },
     {
@@ -28475,6 +29007,63 @@
       }
     },
     {
+      "name": "release_factoring_noa",
+      "description": "Release a notice of assignment, for example once the factor's release letter arrives or the customer leaves factoring, with the reason. The customer's invoices stop being ready to factor. It does not change the customer's billing profile; take the factor off it separately when the customer pays the organization again.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "noaId": {
+            "description": "The open notice, from list_factoring_noas.",
+            "type": "string",
+            "x-recordOf": "factoring_noa"
+          },
+          "reason": {
+            "description": "Why the notice is released, such as the factor's release letter, in one sentence.",
+            "type": "string"
+          },
+          "version": {
+            "description": "The notice's version from list_factoring_noas, so a notice someone changed since is not overwritten.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "noaId",
+          "version",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "release notice",
+        "noa release",
+        "stop factoring"
+      ],
+      "prerequisites": [
+        "list_factoring_noas"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_noa",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Ends the customer's assignment to the factor; only the factor can release it, so a person confirms the release."
+      }
+    },
+    {
       "name": "release_shipment_hold",
       "description": "Clear a hold so the shipment can move again. Only release a hold whose reason you have confirmed is resolved — releasing one that still applies is how a shipment leaves without the paperwork it was waiting on.",
       "parameters": {
@@ -29429,6 +30018,71 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Emails an outside party a request for paperwork in words the model wrote."
+      }
+    },
+    {
+      "name": "request_missing_factoring_document",
+      "description": "Email a request for the documents an invoice needs before it can be sold to the factor. It goes to the driver, then the carrier, then the customer's invoice email recipients, unless recipient names someone. It asks for every missing document get_factoring_readiness lists, or only documentTypeIds. The same request to the same people goes out at most once a day.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "documentTypeIds": {
+            "description": "Ask only for these document types, from get_factoring_readiness.",
+            "items": {
+              "type": "string",
+              "x-recordOf": "document_type"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          },
+          "invoiceId": {
+            "description": "The invoice, from get_factoring_readiness or list_factoring_ready_invoices.",
+            "type": "string",
+            "x-recordOf": "invoice"
+          },
+          "message": {
+            "description": "The request in plain prose. Leave it out for the standard wording; the template adds the greeting, letterhead and the list of documents.",
+            "type": "string"
+          },
+          "recipient": {
+            "description": "Email addresses to ask instead, comma separated.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "missing pod",
+        "missing rate confirmation",
+        "factoring documents"
+      ],
+      "prerequisites": [
+        "get_factoring_readiness"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "customer_communication",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Emails a driver, carrier or customer outside the organization."
       }
     },
     {
@@ -30527,6 +31181,58 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Sends documents to trading partners outside the organization, who act on what they receive; a document sent cannot be recalled. A person always decides."
+      }
+    },
+    {
+      "name": "retry_factoring_submission",
+      "description": "Send a schedule that failed to send again, using the factor's delivery settings as they are now. Read the schedule's last error with get_factoring_submission first: retry only once the cause is fixed (the factor's inbox or SFTP settings corrected and tested), or it will fail the same way. A person approves every retry.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "submissionId": {
+            "description": "The failed schedule, from list_factoring_submissions.",
+            "type": "string",
+            "x-recordOf": "factoring_submission"
+          },
+          "version": {
+            "description": "The schedule's version from get_factoring_submission, so a schedule someone changed since is not overwritten.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "submissionId",
+          "version"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "resend schedule",
+        "retry factoring",
+        "failed schedule"
+      ],
+      "prerequisites": [
+        "list_factoring_submissions"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_submission",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Sends receivables out of the organization again; a person approves it."
       }
     },
     {
@@ -32271,6 +32977,62 @@
       }
     },
     {
+      "name": "send_factoring_noa",
+      "description": "Email the customer the notice of assignment letter as a PDF, from the organization's own template, asking them to pay the factor and return a signed copy. It goes to the customer's invoice email recipients unless recipient names others. Sending the same version twice does not send twice. Once the signed copy is back, upload it to the notice and call record_factoring_noa_acknowledgement.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "noaId": {
+            "description": "The drafted notice, from list_factoring_noas or draft_factoring_noa.",
+            "type": "string",
+            "x-recordOf": "factoring_noa"
+          },
+          "recipient": {
+            "description": "Email addresses to send to, comma separated. Leave it out to use the customer's invoice email recipients.",
+            "type": "string"
+          },
+          "version": {
+            "description": "The notice's version from list_factoring_noas, so a notice someone changed since is not overwritten.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "noaId",
+          "version"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "send notice of assignment",
+        "email noa",
+        "factoring letter"
+      ],
+      "prerequisites": [
+        "list_factoring_noas"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_noa",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Tells a customer, in writing, to pay someone else; a person decides every one."
+      }
+    },
+    {
       "name": "send_invoice",
       "description": "Propose emailing an invoice to the customer. The recipients, subject, wording and attachments come from the organization and the customer's billing profile; nothing is chosen by you. A person always decides. Propose it after post_invoice when the customer is not sent invoices automatically. For more than one invoice, propose send_invoices once with all of them instead.",
       "parameters": {
@@ -32704,6 +33466,67 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Hands a change to the shipment the person is building on their own page; nothing is saved and nothing is sent."
+      }
+    },
+    {
+      "name": "set_invoice_factoring_override",
+      "description": "Keep one invoice of a factored customer out of factoring, or put it back. Exclude, with the reason, leaves it on the organization's own receivables; Default puts it back on the customer's factoring. Excluding takes the factor off the invoice, so it is collected and counts toward credit like any other; Default assigns it to the customer's current factor and the agreement in force when it posted. It cannot bring a single invoice into factoring for a customer that is not factored.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "description": "The invoice, from list_invoices or list_factoring_ready_invoices.",
+            "type": "string",
+            "x-recordOf": "invoice"
+          },
+          "override": {
+            "description": "Exclude keeps it out of factoring; Default follows the customer's factoring.",
+            "enum": [
+              "Default",
+              "Exclude"
+            ],
+            "type": "string",
+            "x-enumOf": "invoice.factoringOverride"
+          },
+          "reason": {
+            "description": "Why the invoice stays out of factoring. Required for Exclude.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId",
+          "override"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "do not factor",
+        "exclude from factoring",
+        "keep invoice"
+      ],
+      "prerequisites": [
+        "get_factoring_readiness"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Moves one invoice between the organization's receivables and the factor's; reversible until the invoice is submitted."
       }
     },
     {
@@ -33939,6 +34762,65 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Credits, rebills or writes off receivables and books the entries that say so; only a person submits an adjustment, and the adjustment policy may still hold it for an approver."
+      }
+    },
+    {
+      "name": "submit_invoices_to_factor",
+      "description": "Sell Ready invoices to their factor on one schedule of accounts. It builds the schedule PDF and CSV and each invoice's packet (the invoice and its supporting documents), then sends them to the factor by email or SFTP, as the factor's delivery settings say. Every invoice must be Ready in list_factoring_ready_invoices and assigned to this factor; batch one factor's invoices per call, up to 200. Submitting the same invoices again returns the first schedule instead of sending twice.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "factoringCompanyId": {
+            "description": "The factor every invoice is assigned to, from list_factoring_ready_invoices.",
+            "type": "string",
+            "x-recordOf": "factoring_company"
+          },
+          "invoiceIds": {
+            "description": "The Ready invoices to sell, from list_factoring_ready_invoices.",
+            "items": {
+              "type": "string",
+              "x-recordOf": "invoice"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "factoringCompanyId",
+          "invoiceIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "factor invoices",
+        "schedule of accounts",
+        "submit to factor",
+        "sell invoices"
+      ],
+      "prerequisites": [
+        "list_factoring_ready_invoices"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "factoring_submission",
+        "operation": "submit",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Sells receivables to a factor and sends them out of the organization; a person approves every schedule."
       }
     },
     {

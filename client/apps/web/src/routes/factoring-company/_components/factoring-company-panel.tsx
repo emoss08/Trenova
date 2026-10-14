@@ -21,6 +21,15 @@ import { useCallback, useEffect } from "react";
 import { FormProvider, type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { FactoringCompanyForm } from "./factoring-company-form";
+import { FactoringAgreementsSection } from "./factoring-agreements-section";
+import { FactoringDeliverySection } from "./factoring-delivery-section";
+import { FactoringNoticesSection } from "./factoring-notices-section";
+import { useClearFactoringRecordParams } from "./use-factoring-record-redirect";
+import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import { factoring as factoringQueries } from "@/lib/queries/factoring";
+import { factoringCompanyRecordSearchParamsParser } from "../use-factoring-company-state";
+import { useQuery } from "@tanstack/react-query";
+import { useQueryStates } from "nuqs";
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
@@ -29,11 +38,16 @@ const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
 
 export function FactoringCompanyPanel({
   open,
-  onOpenChange,
+  onOpenChange: onPanelOpenChange,
   mode,
   row,
 }: DataTablePanelProps<FactoringCompany>) {
   const t = useT();
+  const clearRecordParams = useClearFactoringRecordParams();
+  const onOpenChange = (next: boolean) => {
+    if (!next) clearRecordParams();
+    onPanelOpenChange(next);
+  };
 
   const form = useForm<FactoringCompany>({
     resolver: zodResolver(factoringCompanySchema) as Resolver<FactoringCompany>,
@@ -84,10 +98,19 @@ type FactoringCompanyEditPanelProps = Pick<
 function FactoringCompanyEditPanel({
   open,
   onOpenChange,
-  row,
+  row: listRow,
   form,
 }: FactoringCompanyEditPanelProps) {
   const t = useT();
+  const [{ panelEntityId }] = useQueryStates(panelSearchParamsParser);
+  const [{ agreement: highlightedAgreement, noa: highlightedNoa }] = useQueryStates(
+    factoringCompanyRecordSearchParamsParser,
+  );
+  const fetched = useQuery({
+    ...factoringQueries.company(panelEntityId ?? ""),
+    enabled: open && !listRow && !!panelEntityId,
+  });
+  const row = listRow ?? (fetched.data as FactoringCompany | null | undefined) ?? null;
 
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
@@ -193,6 +216,7 @@ function FactoringCompanyEditPanel({
       onOpenChange={onOpenChange}
       title={row?.name ?? t("Factoring company")}
       description={panelDescription}
+      size="lg"
       footer={
         <>
           <Button type="button" variant="outline" onClick={handleClose}>
@@ -212,11 +236,23 @@ function FactoringCompanyEditPanel({
       {!row ? (
         <ComponentLoader message={t("Loading factoring company...")} />
       ) : (
-        <FormProvider {...form}>
-          <Form id="panel-edit-form" onSubmit={handleSubmit(handleFormSubmit)}>
-            <FactoringCompanyForm />
-          </Form>
-        </FormProvider>
+        <div className="flex flex-col gap-6">
+          <FormProvider {...form}>
+            <Form id="panel-edit-form" onSubmit={handleSubmit(handleFormSubmit)}>
+              <FactoringCompanyForm />
+            </Form>
+          </FormProvider>
+          {row.id ? (
+            <>
+              <FactoringAgreementsSection
+                factoringCompanyId={row.id}
+                highlightedId={highlightedAgreement}
+              />
+              <FactoringNoticesSection factoringCompanyId={row.id} highlightedId={highlightedNoa} />
+              <FactoringDeliverySection factoringCompanyId={row.id} />
+            </>
+          ) : null}
+        </div>
       )}
     </DataTablePanelContainer>
   );

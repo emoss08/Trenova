@@ -1456,3 +1456,155 @@ entities:
       resolvedAt: { label: "Resolved At" }
       detectedAt: { label: "Detected At" }
       lastSeenAt: { label: "Last Seen At" }
+
+  # Free text a person wrote for the factor (remittance instructions, the
+  # notice wording) is a document body, not something a report groups by.
+  factoring_company:
+    struct: factoringcompany.FactoringCompany
+    resource: factoring_company
+    label: Factoring Company
+    pluralLabel: Factoring Companies
+    description: Factors that buy customer invoices and the remittance details invoices carry to them
+    category: Parties
+    excludeFields:
+      - remittanceInstructions
+      - noticeOfAssignment
+      - notes
+    fields:
+      code: { label: "Code" }
+      name: { label: "Name" }
+      nonRecourse: { label: "Non-Recourse" }
+
+  # The effective dates are instants whose column names miss the epoch
+  # heuristic; the submission time is minutes after midnight, which the
+  # heuristic would otherwise read as an instant because it ends in _time.
+  factoring_agreement:
+    struct: factoring.Agreement
+    resource: factoring_agreement
+    label: Factoring Agreement
+    pluralLabel: Factoring Agreements
+    description: The terms each factor buys invoices on, with their advance, reserve and effective dates
+    category: Billing
+    fields:
+      status: { label: "Status" }
+      effectiveFrom: { label: "Effective From", type: epoch }
+      effectiveTo: { label: "Effective To", type: epoch }
+      advanceRateBp: { label: "Advance Rate (bp)" }
+      reserveRateBp: { label: "Reserve Rate (bp)" }
+      minimumFeeMinor: { label: "Minimum Fee (Minor)" }
+      chargebackWindowDays: { label: "Chargeback Window (Days)" }
+      recourse: { label: "Recourse", enumLabels: { Recourse: "Recourse", NonRecourse: "Non-Recourse" } }
+      accountingTreatment: { label: "Accounting Treatment", enumLabels: { SecuredBorrowing: "Secured Borrowing" } }
+      fundingDays: { label: "Funding Days" }
+      submissionTime: { label: "Submission Cutoff (Minutes After Midnight)", type: int }
+      activatedAt: { label: "Activated At" }
+      endedAt: { label: "Ended At" }
+    edges:
+      factoringCompany: { label: "Factoring Company" }
+
+  factoring_noa:
+    struct: factoring.Noa
+    resource: factoring_noa
+    label: Notice of Assignment
+    pluralLabel: Notices of Assignment
+    description: Notices telling each customer to pay a factor, from draft to signed acknowledgement, expiry and release
+    category: Billing
+    fields:
+      status: { label: "Status" }
+      sentAt: { label: "Sent At" }
+      sentTo: { label: "Sent To" }
+      acknowledgedAt: { label: "Acknowledged At" }
+      signedDocumentId: { label: "Signed Copy Document ID" }
+      expiresAt: { label: "Expires At" }
+      expiryWarnedAt: { label: "Expiry Warned At" }
+      releasedAt: { label: "Released At" }
+      releaseReason: { label: "Release Reason" }
+      notes: { label: "Notes" }
+    edges:
+      customer: { label: Customer }
+      factoringCompany: { label: "Factoring Company" }
+
+  # One row per factored invoice: its last readiness verdict. The checks are a
+  # JSON list of every rule and why it failed, which a report cannot group by;
+  # the failed-check count carries what a report needs from it. Ready since is
+  # an instant whose column name misses the epoch heuristic.
+  factoring_invoice_state:
+    struct: factoring.InvoiceState
+    resource: invoice
+    label: Invoice Factoring State
+    pluralLabel: Invoice Factoring States
+    description: Whether each factored invoice is ready to submit to its factor, what is holding it back, and since when
+    category: Billing
+    excludeFields:
+      - checks
+    fields:
+      id: { label: "Invoice ID" }
+      verdict: { label: "Verdict", enumLabels: { Ready: "Ready to Factor", NotReady: "Not Ready", Submitted: "Submitted", Excluded: "Excluded" } }
+      failedChecks: { label: "Failed Checks", format: count }
+      openBalanceMinor: { label: "Open Balance (Minor)" }
+      readySince: { label: "Ready Since", type: epoch }
+      readyAnnouncedAt: { label: "Ready Announced At" }
+      evaluatedAt: { label: "Evaluated At" }
+    edges:
+      invoice: { label: Invoice }
+      customer: { label: Customer }
+      factoringCompany: { label: "Factoring Company" }
+
+  # A schedule of accounts sent to a factor. The amounts are what the agreement
+  # in force expected when it was submitted; funding comes later.
+  factoring_submission:
+    struct: factoring.Submission
+    resource: factoring_submission
+    label: Factoring Schedule
+    pluralLabel: Factoring Schedules
+    description: Schedules of accounts sent to each factor, with their invoices' total, expected advance, fee and reserve, and how delivery went
+    category: Billing
+    fields:
+      number: { label: "Schedule Number" }
+      status: { label: "Status" }
+      currencyCode: { label: "Currency" }
+      invoiceCount: { label: "Invoices", format: count }
+      faceMinor: { label: "Face Amount (Minor)" }
+      expectedAdvanceMinor: { label: "Expected Advance (Minor)" }
+      expectedFeeMinor: { label: "Expected Fee (Minor)" }
+      expectedReserveMinor: { label: "Expected Reserve (Minor)" }
+      schedulePdfDocumentId: { label: "Schedule PDF Document ID" }
+      scheduleCsvDocumentId: { label: "Schedule CSV Document ID" }
+      transportMethod: { label: "Sent By", enumLabels: { Sftp: "SFTP" } }
+      transportTarget: { label: "Sent To" }
+      transportReference: { label: "Delivery Reference" }
+      sendAttemptGroup: { label: "Send Number", type: int }
+      attempts: { label: "Attempts", type: int }
+      lastError: { label: "Last Error" }
+      sentAt: { label: "Sent At" }
+      failedAt: { label: "Failed At" }
+      cancelledAt: { label: "Cancelled At" }
+      cancelReason: { label: "Cancel Reason" }
+      submittedById: { label: "Submitted By ID" }
+      agentRunId: { label: "Agent Run ID" }
+    edges:
+      factoringCompany: { label: "Factoring Company" }
+      agreement: { label: "Agreement" }
+
+  factoring_submission_item:
+    struct: factoring.SubmissionItem
+    resource: factoring_submission
+    label: Factoring Schedule Invoice
+    pluralLabel: Factoring Schedule Invoices
+    description: Each invoice on a factoring schedule, with what the factor was expected to advance, charge and hold back on it
+    category: Billing
+    fields:
+      submissionId: { label: "Schedule ID" }
+      invoiceNumber: { label: "Invoice Number" }
+      position: { label: "Line", type: int }
+      faceMinor: { label: "Face Amount (Minor)" }
+      expectedAdvanceMinor: { label: "Expected Advance (Minor)" }
+      expectedFeeMinor: { label: "Expected Fee (Minor)" }
+      expectedReserveMinor: { label: "Expected Reserve (Minor)" }
+      expectedDays: { label: "Expected Days to Pay", type: int }
+      packetDocumentId: { label: "Packet Document ID" }
+      status: { label: "Status" }
+      releasedAt: { label: "Released At" }
+    edges:
+      invoice: { label: Invoice }
+      customer: { label: Customer }

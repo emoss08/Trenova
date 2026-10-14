@@ -1,0 +1,124 @@
+<header class="masthead">
+  <div class="issuer">
+    {{ if .LogoDataURI }}<img class="logo" src="{{ .LogoDataURI }}" alt="{{ .Organization.Name }}">{{ end }}
+    <div class="issuer-name">{{ .Organization.Name }}</div>
+    {{ range .Organization.Lines }}<div class="issuer-line">{{ . }}</div>{{ end }}
+    {{ range .Organization.Details }}<div class="issuer-line">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+
+  <div class="schedule-id">
+    <div class="doc-type">{{ t "Schedule of accounts" }}</div>
+    <div class="schedule-number">{{ .Number }}</div>
+    <dl class="meta">
+      <dt>{{ t "Date" }}</dt><dd>{{ .ScheduleDate }}</dd>
+      <dt>{{ t "Invoices" }}</dt><dd>{{ .InvoiceCount }}</dd>
+      {{ if .CurrencyCode }}<dt>{{ t "Currency" }}</dt><dd>{{ .CurrencyCode }}</dd>{{ end }}
+    </dl>
+  </div>
+</header>
+
+<section class="parties">
+  <div class="party">
+    <h2>{{ t "Seller" }}</h2>
+    <div class="party-name">{{ .Organization.Name }}</div>
+    {{ range .Organization.Lines }}<div>{{ . }}</div>{{ end }}
+  </div>
+
+  {{ if .Factor.Name }}
+  <div class="party">
+    <h2>{{ t "Factoring company" }}</h2>
+    <div class="party-name">{{ .Factor.Name }}</div>
+    {{ range .Factor.Lines }}<div>{{ . }}</div>{{ end }}
+    {{ range .Factor.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+  {{ end }}
+</section>
+
+<section class="summary">
+  <div class="figure">
+    <div class="figure-label">{{ t "Invoices sold" }}</div>
+    <div class="figure-value">{{ .TotalFace }}</div>
+  </div>
+  <div class="figure">
+    <div class="figure-label">{{ if .AdvanceRate }}{{ t "Advance at {0}" .AdvanceRate }}{{ else }}{{ t "Advance" }}{{ end }}</div>
+    <div class="figure-value">{{ .TotalAdvance }}</div>
+  </div>
+  <div class="figure">
+    <div class="figure-label">{{ t "Expected fees" }}</div>
+    <div class="figure-value">{{ .TotalFee }}</div>
+  </div>
+  <div class="figure">
+    <div class="figure-label">{{ if .ReserveRate }}{{ t "Reserve at {0}" .ReserveRate }}{{ else }}{{ t "Reserve" }}{{ end }}</div>
+    <div class="figure-value">{{ .TotalReserve }}</div>
+  </div>
+</section>
+
+<section class="block">
+  <table class="grid wide">
+    <thead>
+      <tr>
+        <th class="line-col">#</th>
+        <th>{{ t "Invoice" }}</th>
+        <th>{{ t "Debtor" }}</th>
+        <th>{{ t "Invoice date" }}</th>
+        <th>{{ t "Due date" }}</th>
+        <th>{{ t "Reference" }}</th>
+        <th class="num">{{ t "Amount" }}</th>
+        <th class="num">{{ t "Advance" }}</th>
+        <th class="num">{{ t "Fee" }}</th>
+        <th class="num">{{ t "Reserve" }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range $index, $item := .Items }}
+      <tr>
+        <td class="line-col">{{ add $index 1 }}</td>
+        <td class="doc">{{ $item.InvoiceNumber }}</td>
+        <td>
+          <div>{{ $item.Debtor }}{{ if $item.DebtorCode }} ({{ $item.DebtorCode }}){{ end }}</div>
+          {{ if $item.DebtorAddress }}<div class="debtor-address">{{ $item.DebtorAddress }}</div>{{ end }}
+        </td>
+        <td class="doc">{{ $item.InvoiceDate }}</td>
+        <td class="doc">{{ $item.DueDate }}</td>
+        <td>{{ $item.Reference }}</td>
+        <td class="num">{{ $item.Amount }}</td>
+        <td class="num">{{ $item.Advance }}</td>
+        <td class="num">{{ $item.Fee }}</td>
+        <td class="num">{{ $item.Reserve }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="6">{{ t "Total" }}</td>
+        <td class="num">{{ .TotalFace }}</td>
+        <td class="num">{{ .TotalAdvance }}</td>
+        <td class="num">{{ .TotalFee }}</td>
+        <td class="num">{{ .TotalReserve }}</td>
+      </tr>
+    </tfoot>
+  </table>
+</section>
+
+<section class="totals">
+  <dl>
+    <dt>{{ t "Invoices sold" }}</dt><dd>{{ .TotalFace }}</dd>
+    <dt class="due">{{ t "Expected payment" }}</dt><dd class="due">{{ .ExpectedPayment }}</dd>
+  </dl>
+</section>
+
+<section class="certification">
+  <p>{{ t "{0} sells and assigns to {1} the invoices listed above, and certifies that each was issued for services performed and is owed in full, without dispute, offset or prior assignment." .Organization.Name .Factor.Name }}{{ if .Recourse }} {{ t "Terms: {0}." .Recourse }}{{ end }}</p>
+  <p>{{ t "Fees, advance and reserve are estimates under the agreement in force; the factor's funding statement governs." }}</p>
+</section>
+
+<section class="signoff">
+  <div>
+    <div class="sign-line"></div>
+    <div class="sign-label">{{ t "Authorized signature" }}</div>
+  </div>
+  <div>
+    <div class="sign-line"></div>
+    <div class="sign-label">{{ t "Date" }}</div>
+  </div>
+</section>

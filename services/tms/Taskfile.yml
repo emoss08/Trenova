@@ -195,6 +195,15 @@ tasks:
     cmds:
       - docker rm -f {{.TEST_DB_CONTAINER}} 2>/dev/null || true
 
+  test-netsuite-sandbox:
+    desc: Run the NetSuite adapter against a real sandbox account (skips unless TRENOVA_NETSUITE_SANDBOX_* is set)
+    cmds:
+      # Reads need ACCOUNT_ID, CLIENT_ID, CERTIFICATE_ID and PRIVATE_KEY_FILE
+      # (a certificate mapping on the sandbox; SUBSIDIARY_ID for OneWorld).
+      # The invoice and payment lifecycle also needs CUSTOMER_ID, ITEM_ID and
+      # DEPOSIT_ACCOUNT_ID, and writes then voids real records in the sandbox.
+      - go test -tags=nomsgpack,netsuitesandbox -count=1 -v -run '^TestSandbox' ./internal/infrastructure/accounting/nsconnector/
+
   test-coverage:
     desc: Run unit tests with coverage
     cmds:

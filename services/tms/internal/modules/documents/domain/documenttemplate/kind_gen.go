@@ -27,6 +27,16 @@ const (
 	KindCustomerStatementPDF Kind = "customer.statement.pdf"
 	// KindCustomerStatementEmail is the message that delivers a statement.
 	KindCustomerStatementEmail Kind = "customer.statement.email"
+	// KindFactoringNoaPDF is the letter telling a customer that its invoices
+	// are assigned to a factor and must be paid to the factor.
+	KindFactoringNoaPDF Kind = "factoring.noa.pdf"
+	// KindFactoringNoaEmail is the message that delivers a notice of assignment.
+	KindFactoringNoaEmail Kind = "factoring.noa.email"
+	// KindFactoringSchedulePDF is the schedule of accounts sent to a factor
+	// with each batch of invoices sold to it.
+	KindFactoringSchedulePDF Kind = "factoring.schedule.pdf"
+	// KindFactoringScheduleEmail is the message a schedule is sent in.
+	KindFactoringScheduleEmail Kind = "factoring.schedule.email"
 
 	// Detention.
 
@@ -181,6 +191,10 @@ func AllKinds() []Kind {
 		KindPaymentReminderEmail,
 		KindCustomerStatementPDF,
 		KindCustomerStatementEmail,
+		KindFactoringNoaPDF,
+		KindFactoringNoaEmail,
+		KindFactoringSchedulePDF,
+		KindFactoringScheduleEmail,
 		KindDetentionNoticeEmail,
 		KindDetentionNoticePDF,
 		KindRateConfirmationPDF,

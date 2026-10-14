@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
 	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
+	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
@@ -29,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -176,6 +178,16 @@ var subjectTables = map[agent.SubjectType]subjectTable{
 		model:  func() any { return (*invoice.InvoiceDispute)(nil) },
 		tenant: invoicecol.InvoiceDisputeApplyTenant,
 		id:     invoicecol.InvoiceDisputeColumns.ID,
+	},
+	agent.SubjectFactoringNoa: {
+		model:  func() any { return (*factoring.Noa)(nil) },
+		tenant: factoringcol.NoaApplyTenant,
+		id:     factoringcol.NoaColumns.ID,
+	},
+	agent.SubjectFactoringSubmission: {
+		model:  func() any { return (*factoring.Submission)(nil) },
+		tenant: factoringcol.SubmissionApplyTenant,
+		id:     factoringcol.SubmissionColumns.ID,
 	},
 }
 

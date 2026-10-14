@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/money"
@@ -85,6 +86,7 @@ func pdfContext(from *issuer, p *prepared, note string) *documenttemplate.Custom
 			Total:         money.FormatMinor(item.TotalAmountMinor, currency),
 			Open:          money.FormatMinor(item.OpenAmountMinor, currency),
 			Disputed:      item.DisputeStatus == string(invoice.DisputeStatusDisputed),
+			AssignedTo:    assignedTo(item, p, from.org.Name),
 		})
 	}
 	out.TotalOpen = format(totalOpen)
@@ -152,4 +154,20 @@ func invoiceFooter(control *tenant.BillingControl) string {
 		return ""
 	}
 	return strings.TrimSpace(control.DefaultInvoiceFooter)
+}
+
+// assignedTo names the factor an open invoice was assigned to when it posted,
+// when that is not who the statement asks to be paid: a customer that has
+// changed factors still owes its older invoices to the factor named on them.
+func assignedTo(item *customerledgerports.AROpenItem, p *prepared, orgName string) string {
+	if item.FactoringCompanyID.IsNil() {
+		if p.factor != nil {
+			return orgName
+		}
+		return ""
+	}
+	if p.factor != nil && p.factor.ID == item.FactoringCompanyID {
+		return ""
+	}
+	return item.FactoringCompany
 }

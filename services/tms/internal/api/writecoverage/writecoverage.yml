@@ -1774,14 +1774,49 @@ writes:
     exempt: configuration
     reason: "Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them."
 
+  # factoring
+  "mutation acknowledgeFactoringNoa":
+    tools: [record_factoring_noa_acknowledgement]
+  "mutation activateFactoringAgreement":
+    exempt: configuration
+    reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
+  "mutation createFactoringAgreement":
+    exempt: configuration
+    reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
+  "mutation cancelFactoringSubmission":
+    tools: [cancel_factoring_submission]
+  "mutation draftFactoringNoa":
+    tools: [draft_factoring_noa]
+  "mutation endFactoringAgreement":
+    exempt: configuration
+    reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
+  "mutation releaseFactoringNoa":
+    tools: [release_factoring_noa]
+  "mutation requestMissingFactoringDocuments":
+    tools: [request_missing_factoring_document]
+  "mutation retryFactoringSubmission":
+    tools: [retry_factoring_submission]
+  "mutation saveFactoringTransport":
+    exempt: configuration
+    reason: "How schedules reach a factor (its schedule inbox, or its SFTP host, account, password or key and host key) is set up by an administrator from the factor's onboarding instructions, and holds a credential no agent may read or write."
+  "mutation sendFactoringNoa":
+    tools: [send_factoring_noa]
+  "mutation setInvoiceFactoringOverride":
+    tools: [set_invoice_factoring_override]
+  "mutation submitInvoicesToFactor":
+    tools: [submit_invoices_to_factor]
+  "mutation testFactoringTransport":
+    exempt: configuration
+    reason: "Testing a factor's delivery settings connects with the administrator's stored credential and changes nothing but the recorded test result."
+  "mutation updateFactoringAgreement":
+    exempt: configuration
+    reason: "Factoring agreement terms (advance, reserve, fee tiers, recourse, accounting treatment) are copied from the signed contract with the factor by an administrator."
+
   # factoringcompany
-  "PATCH /api/v1/factoring-companies/:factoringCompanyID/":
+  "mutation createFactoringCompany":
     exempt: configuration
     reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
-  "POST /api/v1/factoring-companies/":
-    exempt: configuration
-    reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
-  "PUT /api/v1/factoring-companies/:factoringCompanyID/":
+  "mutation updateFactoringCompany":
     exempt: configuration
     reason: "A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator."
 

@@ -31,6 +31,7 @@ const (
 	TemplateWorkforceCoordinator = Template("WorkforceCoordinator")
 	TemplateFuelTaxClerk         = Template("FuelTaxClerk")
 	TemplateReportAnalyst        = Template("ReportAnalyst")
+	TemplateFactoringClerk       = Template("FactoringClerk")
 )
 
 func (t Template) IsValid() bool {
@@ -62,7 +63,8 @@ func (t Template) IsValid() bool {
 		TemplateMasterDataSteward,
 		TemplateWorkforceCoordinator,
 		TemplateFuelTaxClerk,
-		TemplateReportAnalyst:
+		TemplateReportAnalyst,
+		TemplateFactoringClerk:
 		return true
 	default:
 		return false
@@ -99,6 +101,7 @@ func AllTemplates() []Template {
 		TemplateWorkforceCoordinator,
 		TemplateFuelTaxClerk,
 		TemplateReportAnalyst,
+		TemplateFactoringClerk,
 	}
 }
 
@@ -160,6 +163,8 @@ func (t Template) Label() string {
 		return "Fuel and IFTA clerk"
 	case TemplateReportAnalyst:
 		return "Report analyst"
+	case TemplateFactoringClerk:
+		return "Factoring clerk"
 	default:
 		return string(t)
 	}
@@ -253,6 +258,10 @@ func (t Template) Description() string {
 	case TemplateReportAnalyst:
 		return "Builds, runs and explains reports and dashboards, compares runs to say what " +
 			"moved, and proposes schedules that email a report for a person to approve."
+	case TemplateFactoringClerk:
+		return "Gets factored invoices ready to sell and sends them: chases the notices of " +
+			"assignment and documents the factor needs, proposes one schedule per factor for " +
+			"the invoices that are ready, and follows up schedules that fail to send."
 	default:
 		return ""
 	}

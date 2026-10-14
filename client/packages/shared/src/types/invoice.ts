@@ -464,6 +464,8 @@ export const invoiceSchema = z.object({
   /** The factoring company the invoice was assigned to when it posted. */
   factoringCompanyId: nullableStringSchema,
   factoringCompany: invoiceFactorSchema.nullish().transform((value) => value ?? undefined),
+  /** Default follows the customer's factoring; Exclude keeps the invoice on the organization's own receivables. */
+  factoringOverride: z.enum(["Default", "Exclude"]).default("Default"),
   /** Whether this invoice bills only part of what its shipments charged. */
   isSplitBill: z.boolean().default(false),
   subtotalAmount: decimalStringSchema,

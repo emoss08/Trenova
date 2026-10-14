@@ -2,11 +2,13 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
+import { useFactoringRecordRedirect } from "./_components/use-factoring-record-redirect";
 
 const Table = lazy(() => import("./_components/factoring-company-table"));
 
 export function FactoringCompaniesPage() {
   const t = useT();
+  useFactoringRecordRedirect();
 
   return (
     <PageLayout

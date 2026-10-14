@@ -101,7 +101,6 @@
   "Only shipments of these types are governed. Specificity +4.": "仅适用于这些类型的运单。精确度 +4。",
   "Only these service levels are governed. Specificity +2.": "仅适用于这些服务等级。精确度 +2。",
   "Open (first-come) stops will not accrue detention under this policy.": "在此策略下，开放式 (先到先服务) 停靠点不会累计滞留费。",
-  "Open-ended": "无上限",
   "Overrides computed specificity when two policies tie. Leave at 0 unless you need an explicit override.": "当两项策略精确度相同时，用于覆盖计算所得的精确度。除非需明确覆盖，否则请维持 0。",
   "Pays out {0} more than it bills": "支出比收入多 {0}",
   "Pickup override": "提货覆盖",

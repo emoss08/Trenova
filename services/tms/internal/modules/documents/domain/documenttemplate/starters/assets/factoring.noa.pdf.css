@@ -1,0 +1,219 @@
+/* The notice shares the invoice's type rules, so a customer reading both sees
+   one house style. It is a one-page letter, so every block keeps itself whole. */
+
+body {
+  font-size: 9.5pt;
+  line-height: 1.5;
+}
+
+h2 {
+  margin: 0 0 4px;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+/* Masthead */
+
+.masthead {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: start;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #111827;
+}
+
+.logo {
+  display: block;
+  max-height: 44px;
+  margin-bottom: 8px;
+}
+
+.issuer-name {
+  font-size: 13pt;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.issuer-line {
+  color: #4b5563;
+  font-size: 8.5pt;
+}
+
+.notice-id {
+  min-width: 220px;
+  text-align: right;
+}
+
+.doc-type {
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.notice-date {
+  margin-bottom: 6px;
+  font-size: 16pt;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 1px 10px;
+  margin: 0;
+  justify-content: end;
+}
+
+.meta dt {
+  color: #6b7280;
+  font-size: 8pt;
+  text-align: right;
+}
+
+.meta dd {
+  margin: 0;
+  font-size: 8.5pt;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Parties */
+
+.parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 14px;
+}
+
+/* An address block must not be split across a page boundary: half a remit-to
+   address is worse than pushing the whole block to the next page. */
+.party {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.party-name {
+  font-weight: 700;
+}
+
+.party-detail {
+  margin-top: 2px;
+  color: #4b5563;
+  font-size: 8.5pt;
+}
+
+/* Letter */
+
+.letter {
+  margin-top: 16px;
+}
+
+.letter p {
+  margin: 0 0 8px;
+}
+
+.subject {
+  font-weight: 700;
+}
+
+.instruction {
+  font-weight: 600;
+}
+
+.note {
+  color: #374151;
+}
+
+/* The remittance address is the instruction the customer acts on, so it is
+   boxed like the statement's assignment notice and never split. */
+.remit {
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1.5px solid #111827;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Sign-off */
+
+.signoff {
+  margin-top: 8px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.signoff p {
+  margin: 0;
+}
+
+.signer-line {
+  width: 220px;
+  height: 28px;
+  border-bottom: 1px solid #111827;
+  margin-bottom: 4px;
+}
+
+/* Acknowledgement */
+
+.acknowledgement {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1.5px dashed #6b7280;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.acknowledgement p {
+  margin: 0 0 6px;
+}
+
+.sign-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 28px;
+  margin-top: 8px;
+}
+
+.sign-field {
+  break-inside: avoid;
+}
+
+.sign-line {
+  height: 26px;
+  border-bottom: 1px solid #111827;
+}
+
+.sign-label {
+  margin-top: 3px;
+  color: #6b7280;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Closing */
+
+.closing {
+  margin-top: 18px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 7.5pt;
+  text-align: center;
+}
+
+.closing p {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

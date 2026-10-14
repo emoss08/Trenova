@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
@@ -74,6 +75,7 @@ type Params struct {
 	CustomerRepo         customerports.CustomerRepository
 	OrganizationRepo     tenantports.OrganizationRepository
 	FactoringRepo        factoringcompanyports.FactoringCompanyRepository
+	AgreementRepo        factoringports.AgreementRepository `optional:"true"`
 	DocumentTypeRepo     documenttypeports.DocumentTypeRepository
 	CustomerLedgerRepo   customerledgerports.CustomerLedgerProjectionRepository
 	BillingRepo          tenantports.BillingControlRepository
@@ -122,6 +124,7 @@ type Service struct {
 	customerRepo         customerports.CustomerRepository
 	organizationRepo     tenantports.OrganizationRepository
 	factoringRepo        factoringcompanyports.FactoringCompanyRepository
+	agreementRepo        factoringports.AgreementRepository
 	documentTypeRepo     documenttypeports.DocumentTypeRepository
 	customerLedgerRepo   customerledgerports.CustomerLedgerProjectionRepository
 	billingRepo          tenantports.BillingControlRepository
@@ -202,6 +205,7 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		customerRepo:                p.CustomerRepo,
 		organizationRepo:            p.OrganizationRepo,
 		factoringRepo:               p.FactoringRepo,
+		agreementRepo:               p.AgreementRepo,
 		documentTypeRepo:            p.DocumentTypeRepo,
 		customerLedgerRepo:          p.CustomerLedgerRepo,
 		billingRepo:                 p.BillingRepo,

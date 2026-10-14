@@ -12,6 +12,26 @@ package permission
 // OpApprove is deliberately absent: guardExecute refuses it to an agent
 // principal outright, so approving is a person's, whatever any list says.
 var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
+	// The factoring clerk reads the agreements it works under and drafts,
+	// sends, records and releases notices of assignment. Agreement terms are
+	// copied from the signed contract by a person, so writing them is not
+	// an agent's.
+	ResourceFactoringAgreement: {
+		OpRead: {},
+	},
+	ResourceFactoringNoa: {
+		OpRead:   {},
+		OpCreate: {},
+		OpUpdate: {},
+	},
+	// The clerk proposes each schedule and each retry or cancellation of a
+	// failed one; a person approves every one of them before it runs.
+	ResourceFactoringSubmission: {
+		OpRead:   {},
+		OpSubmit: {},
+		OpUpdate: {},
+		OpCancel: {},
+	},
 	// Creating a shipment from a document is the intake desk's whole job.
 	// Editing or cancelling one that already exists is a person's: those
 	// tools are offered in chat, where the actor is the person asking.

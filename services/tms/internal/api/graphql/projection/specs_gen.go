@@ -49,6 +49,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/extractionevalcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/extractionrolloutcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/extractionshadowcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
@@ -388,7 +389,21 @@ var ExtractionShadowResultSpec TypeSpec
 
 var ExtractionShadowSettingsSpec TypeSpec
 
+var FactoringAgreementSpec TypeSpec
+
 var FactoringCompanySpec TypeSpec
+
+var FactoringFeeTierSpec TypeSpec
+
+var FactoringInvoiceStateSpec TypeSpec
+
+var FactoringNoaSpec TypeSpec
+
+var FactoringSubmissionSpec TypeSpec
+
+var FactoringSubmissionItemSpec TypeSpec
+
+var FactoringTransportSpec TypeSpec
 
 var FiscalPeriodSpec TypeSpec
 
@@ -9358,6 +9373,13 @@ func init() {
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
 			},
+			{
+				Name:        "factoringCompany",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FactoringCompanySpec,
+				},
+			},
 		},
 	}
 
@@ -14003,6 +14025,118 @@ func init() {
 		},
 	}
 
+	FactoringAgreementSpec = TypeSpec{
+		TypeName: "FactoringAgreement",
+		FieldMap: factoringcol.AgreementFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "effectiveFrom",
+				FieldMapKey: "effectiveFrom",
+			},
+			{
+				Name:        "effectiveTo",
+				FieldMapKey: "effectiveTo",
+			},
+			{
+				Name:        "advanceRateBp",
+				FieldMapKey: "advanceRateBp",
+			},
+			{
+				Name:        "reserveRateBp",
+				FieldMapKey: "reserveRateBp",
+			},
+			{
+				Name:        "minimumFeeMinor",
+				FieldMapKey: "minimumFeeMinor",
+			},
+			{
+				Name:        "chargebackWindowDays",
+				FieldMapKey: "chargebackWindowDays",
+			},
+			{
+				Name:        "recourse",
+				FieldMapKey: "recourse",
+			},
+			{
+				Name:        "accountingTreatment",
+				FieldMapKey: "accountingTreatment",
+			},
+			{
+				Name:        "fundingDays",
+				FieldMapKey: "fundingDays",
+			},
+			{
+				Name:        "submissionTime",
+				FieldMapKey: "submissionTime",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "activatedAt",
+				FieldMapKey: "activatedAt",
+			},
+			{
+				Name:        "endedAt",
+				FieldMapKey: "endedAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name: "feeTiers",
+				Relation: &RelationSpec{
+					Target: &FactoringFeeTierSpec,
+				},
+			},
+			{
+				Name:    "documentTypes",
+				Special: "documentTypes",
+			},
+			{
+				Name:        "factoringCompany",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FactoringCompanySpec,
+				},
+			},
+		},
+	}
+
 	FactoringCompanySpec = TypeSpec{
 		TypeName: "FactoringCompany",
 		FieldMap: factoringcompanycol.FactoringCompanyFieldMap,
@@ -14097,6 +14231,497 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
+			},
+			{
+				Name:    "agreements",
+				Special: "agreements",
+			},
+		},
+	}
+
+	FactoringFeeTierSpec = TypeSpec{
+		TypeName: "FactoringFeeTier",
+		FieldMap: factoringcol.FeeTierFieldMap,
+		AlwaysColumns: []string{
+			"id",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "daysFrom",
+				FieldMapKey: "daysFrom",
+			},
+			{
+				Name:        "daysTo",
+				FieldMapKey: "daysTo",
+			},
+			{
+				Name:        "rateBp",
+				FieldMapKey: "rateBp",
+			},
+			{
+				Name:        "flatMinor",
+				FieldMapKey: "flatMinor",
+			},
+		},
+	}
+
+	FactoringInvoiceStateSpec = TypeSpec{
+		TypeName: "FactoringInvoiceState",
+		FieldMap: factoringcol.InvoiceStateFieldMap,
+		AlwaysColumns: []string{
+			"invoice_id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "invoiceId",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "verdict",
+				FieldMapKey: "verdict",
+			},
+			{
+				Name:        "checks",
+				FieldMapKey: "checks",
+			},
+			{
+				Name:        "failedChecks",
+				FieldMapKey: "failedChecks",
+			},
+			{
+				Name:        "openBalanceMinor",
+				FieldMapKey: "openBalanceMinor",
+			},
+			{
+				Name:        "readySince",
+				FieldMapKey: "readySince",
+			},
+			{
+				Name:        "evaluatedAt",
+				FieldMapKey: "evaluatedAt",
+			},
+			{
+				Name:        "invoice",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &InvoiceSpec,
+				},
+			},
+			{
+				Name:        "customer",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &CustomerSpec,
+				},
+			},
+			{
+				Name:        "factoringCompany",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FactoringCompanySpec,
+				},
+			},
+			{
+				Name:    "submission",
+				Special: "submission",
+			},
+		},
+	}
+
+	FactoringNoaSpec = TypeSpec{
+		TypeName: "FactoringNoa",
+		FieldMap: factoringcol.NoaFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "sentAt",
+				FieldMapKey: "sentAt",
+			},
+			{
+				Name:        "sentTo",
+				FieldMapKey: "sentTo",
+			},
+			{
+				Name:        "acknowledgedAt",
+				FieldMapKey: "acknowledgedAt",
+			},
+			{
+				Name:        "signedDocumentId",
+				FieldMapKey: "signedDocumentId",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "releasedAt",
+				FieldMapKey: "releasedAt",
+			},
+			{
+				Name:        "releaseReason",
+				FieldMapKey: "releaseReason",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "customer",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &CustomerSpec,
+				},
+			},
+			{
+				Name:        "factoringCompany",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FactoringCompanySpec,
+				},
+			},
+		},
+	}
+
+	FactoringSubmissionSpec = TypeSpec{
+		TypeName: "FactoringSubmission",
+		FieldMap: factoringcol.SubmissionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "number",
+				FieldMapKey: "number",
+			},
+			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
+				Name:        "agreementId",
+				FieldMapKey: "agreementId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "invoiceCount",
+				FieldMapKey: "invoiceCount",
+			},
+			{
+				Name:        "faceMinor",
+				FieldMapKey: "faceMinor",
+			},
+			{
+				Name:        "expectedAdvanceMinor",
+				FieldMapKey: "expectedAdvanceMinor",
+			},
+			{
+				Name:        "expectedFeeMinor",
+				FieldMapKey: "expectedFeeMinor",
+			},
+			{
+				Name:        "expectedReserveMinor",
+				FieldMapKey: "expectedReserveMinor",
+			},
+			{
+				Name:        "schedulePdfDocumentId",
+				FieldMapKey: "schedulePdfDocumentId",
+			},
+			{
+				Name:        "scheduleCsvDocumentId",
+				FieldMapKey: "scheduleCsvDocumentId",
+			},
+			{
+				Name:        "transportMethod",
+				FieldMapKey: "transportMethod",
+			},
+			{
+				Name:        "transportTarget",
+				FieldMapKey: "transportTarget",
+			},
+			{
+				Name:        "transportReference",
+				FieldMapKey: "transportReference",
+			},
+			{
+				Name:        "sendAttemptGroup",
+				FieldMapKey: "sendAttemptGroup",
+			},
+			{
+				Name:        "attempts",
+				FieldMapKey: "attempts",
+			},
+			{
+				Name:        "lastError",
+				FieldMapKey: "lastError",
+			},
+			{
+				Name:        "sentAt",
+				FieldMapKey: "sentAt",
+			},
+			{
+				Name:        "failedAt",
+				FieldMapKey: "failedAt",
+			},
+			{
+				Name:        "cancelledAt",
+				FieldMapKey: "cancelledAt",
+			},
+			{
+				Name:        "cancelReason",
+				FieldMapKey: "cancelReason",
+			},
+			{
+				Name:        "submittedById",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name: "items",
+				Relation: &RelationSpec{
+					Target: &FactoringSubmissionItemSpec,
+				},
+			},
+			{
+				Name:        "factoringCompany",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FactoringCompanySpec,
+				},
+			},
+		},
+	}
+
+	FactoringSubmissionItemSpec = TypeSpec{
+		TypeName: "FactoringSubmissionItem",
+		FieldMap: factoringcol.SubmissionItemFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "submissionId",
+				FieldMapKey: "submissionId",
+			},
+			{
+				Name:        "invoiceId",
+				FieldMapKey: "invoiceId",
+			},
+			{
+				Name:        "invoiceNumber",
+				FieldMapKey: "invoiceNumber",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "position",
+				FieldMapKey: "position",
+			},
+			{
+				Name:        "faceMinor",
+				FieldMapKey: "faceMinor",
+			},
+			{
+				Name:        "expectedAdvanceMinor",
+				FieldMapKey: "expectedAdvanceMinor",
+			},
+			{
+				Name:        "expectedFeeMinor",
+				FieldMapKey: "expectedFeeMinor",
+			},
+			{
+				Name:        "expectedReserveMinor",
+				FieldMapKey: "expectedReserveMinor",
+			},
+			{
+				Name:        "expectedDays",
+				FieldMapKey: "expectedDays",
+			},
+			{
+				Name:        "packetDocumentId",
+				FieldMapKey: "packetDocumentId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "releasedAt",
+				FieldMapKey: "releasedAt",
+			},
+			{
+				Name:        "invoice",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &InvoiceSpec,
+				},
+			},
+			{
+				Name:        "customer",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &CustomerSpec,
+				},
+			},
+		},
+	}
+
+	FactoringTransportSpec = TypeSpec{
+		TypeName: "FactoringTransport",
+		FieldMap: factoringcol.TransportFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "factoringCompanyId",
+				FieldMapKey: "factoringCompanyId",
+			},
+			{
+				Name:        "method",
+				FieldMapKey: "method",
+			},
+			{
+				Name:        "emailRecipients",
+				FieldMapKey: "emailRecipients",
+			},
+			{
+				Name:        "attachPackets",
+				FieldMapKey: "attachPackets",
+			},
+			{
+				Name:        "sftpHost",
+				FieldMapKey: "sftpHost",
+			},
+			{
+				Name:        "sftpPort",
+				FieldMapKey: "sftpPort",
+			},
+			{
+				Name:        "sftpUsername",
+				FieldMapKey: "sftpUsername",
+			},
+			{
+				Name:        "sftpAuthMethod",
+				FieldMapKey: "sftpAuthMethod",
+			},
+			{
+				Name:    "sftpSecretSet",
+				Special: "sftpSecretSet",
+			},
+			{
+				Name:        "sftpKnownHostKey",
+				FieldMapKey: "sftpKnownHostKey",
+			},
+			{
+				Name:        "sftpDirectory",
+				FieldMapKey: "sftpDirectory",
+			},
+			{
+				Name:        "lastTestedAt",
+				FieldMapKey: "lastTestedAt",
+			},
+			{
+				Name:        "lastTestError",
+				FieldMapKey: "lastTestError",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
 			},
 		},
 	}
@@ -17097,6 +17722,29 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &InvoiceLineSpec,
 				},
+			},
+			{
+				Name:        "factoringOverride",
+				FieldMapKey: "factoringOverride",
+			},
+			{
+				Name:        "factoringOverrideReason",
+				FieldMapKey: "factoringOverrideReason",
+			},
+			{
+				Name:        "factoringAgreementId",
+				FieldMapKey: "factoringAgreementId",
+			},
+			{
+				Name:        "factoringCompany",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &FactoringCompanySpec,
+				},
+			},
+			{
+				Name:    "factoringState",
+				Special: "factoringState",
 			},
 			{
 				Name:    "disputes",

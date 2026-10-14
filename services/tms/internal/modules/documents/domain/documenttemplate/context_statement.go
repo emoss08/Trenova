@@ -67,6 +67,10 @@ type StatementOpenItem struct {
 	Total         string
 	Open          string
 	Disputed      bool
+	// AssignedTo is who this invoice is paid to when that is not the
+	// statement's RemitTo: the factor it was assigned to when it posted, or
+	// your organization for an invoice posted before the customer was factored.
+	AssignedTo string
 }
 
 // CustomerStatementEmailContext is the message a statement is attached to.
@@ -181,6 +185,7 @@ func newCustomerStatementSampleContext() any {
 				Total:         sampleTotalAmount,
 				Open:          "USD 575.12",
 				Disputed:      false,
+				AssignedTo:    "Lonestar Freight Capital",
 			},
 			{
 				InvoiceNumber: sampleInvoiceNo,
@@ -390,7 +395,7 @@ func (r *Registry) registerCustomerStatementKinds() {
 					{
 						Path:        invoiceDatePath,
 						Type:        VariableDate,
-						Description: "When the invoice was issued.",
+						Description: invoiceIssuedDescription,
 					},
 					{Path: dueDatePath, Type: VariableDate, Description: "When payment is due."},
 					{
@@ -404,6 +409,11 @@ func (r *Registry) registerCustomerStatementKinds() {
 						Path:        "Disputed",
 						Type:        VariableBool,
 						Description: "True while the customer disputes the invoice.",
+					},
+					{
+						Path:        "AssignedTo",
+						Type:        VariableString,
+						Description: "Who this invoice is paid to when that differs from RemitTo: the factor it was assigned to when it posted, or your organization for an invoice posted before the customer was factored. Blank when it is paid to RemitTo; print it whenever it is set.",
 					},
 				},
 			},
