@@ -59,6 +59,7 @@ var FormulaTemplateColumns = struct {
 	Expression           buncolgen.Column // "expression" → qualified: "ft.expression"
 	Status               buncolgen.Column // "status" → qualified: "ft.status"
 	SchemaID             buncolgen.Column // "schema_id" → qualified: "ft.schema_id"
+	LanguageVersion      buncolgen.Column // "language_version" → qualified: "ft.language_version"
 	VariableDefinitions  buncolgen.Column // "variable_definitions" → qualified: "ft.variable_definitions"
 	BreakdownDefinitions buncolgen.Column // "breakdown_definitions" → qualified: "ft.breakdown_definitions"
 	MinCharge            buncolgen.Column // "min_charge" → qualified: "ft.min_charge"
@@ -89,6 +90,7 @@ var FormulaTemplateColumns = struct {
 	Expression:           buncolgen.NewColumn("expression", "ft"),
 	Status:               buncolgen.NewColumn("status", "ft"),
 	SchemaID:             buncolgen.NewColumn("schema_id", "ft"),
+	LanguageVersion:      buncolgen.NewColumn("language_version", "ft"),
 	VariableDefinitions:  buncolgen.NewColumn("variable_definitions", "ft"),
 	BreakdownDefinitions: buncolgen.NewColumn("breakdown_definitions", "ft"),
 	MinCharge:            buncolgen.NewColumn("min_charge", "ft"),
@@ -125,6 +127,7 @@ var FormulaTemplateFieldMap = map[string]string{
 	"expression":           "expression",
 	"status":               "status",
 	"schemaId":             "schema_id",
+	"languageVersion":      "language_version",
 	"variableDefinitions":  "variable_definitions",
 	"breakdownDefinitions": "breakdown_definitions",
 	"minCharge":            "min_charge",
@@ -157,6 +160,7 @@ var FormulaTemplateInsertableColumns = []string{
 	"expression",
 	"status",
 	"schema_id",
+	"language_version",
 	"variable_definitions",
 	"breakdown_definitions",
 	"min_charge",
@@ -253,6 +257,7 @@ var FormulaTemplateFilter = struct {
 	Expression           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expression" → DB: "expression"
 	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	SchemaID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "schemaId" → DB: "schema_id"
+	LanguageVersion      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "languageVersion" → DB: "language_version"
 	VariableDefinitions  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "variableDefinitions" → DB: "variable_definitions"
 	BreakdownDefinitions func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "breakdownDefinitions" → DB: "breakdown_definitions"
 	MinCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCharge" → DB: "min_charge"
@@ -298,6 +303,9 @@ var FormulaTemplateFilter = struct {
 	},
 	SchemaID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("schemaId", op, value)
+	},
+	LanguageVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("languageVersion", op, value)
 	},
 	VariableDefinitions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("variableDefinitions", op, value)
@@ -392,6 +400,7 @@ var FormulaTemplateVersionColumns = struct {
 	Expression           buncolgen.Column // "expression" → qualified: "ftv.expression"
 	Status               buncolgen.Column // "status" → qualified: "ftv.status"
 	SchemaID             buncolgen.Column // "schema_id" → qualified: "ftv.schema_id"
+	LanguageVersion      buncolgen.Column // "language_version" → qualified: "ftv.language_version"
 	VariableDefinitions  buncolgen.Column // "variable_definitions" → qualified: "ftv.variable_definitions"
 	BreakdownDefinitions buncolgen.Column // "breakdown_definitions" → qualified: "ftv.breakdown_definitions"
 	MinCharge            buncolgen.Column // "min_charge" → qualified: "ftv.min_charge"
@@ -417,6 +426,7 @@ var FormulaTemplateVersionColumns = struct {
 	Expression:           buncolgen.NewColumn("expression", "ftv"),
 	Status:               buncolgen.NewColumn("status", "ftv"),
 	SchemaID:             buncolgen.NewColumn("schema_id", "ftv"),
+	LanguageVersion:      buncolgen.NewColumn("language_version", "ftv"),
 	VariableDefinitions:  buncolgen.NewColumn("variable_definitions", "ftv"),
 	BreakdownDefinitions: buncolgen.NewColumn("breakdown_definitions", "ftv"),
 	MinCharge:            buncolgen.NewColumn("min_charge", "ftv"),
@@ -448,6 +458,7 @@ var FormulaTemplateVersionFieldMap = map[string]string{
 	"expression":           "expression",
 	"status":               "status",
 	"schemaId":             "schema_id",
+	"languageVersion":      "language_version",
 	"variableDefinitions":  "variable_definitions",
 	"breakdownDefinitions": "breakdown_definitions",
 	"minCharge":            "min_charge",
@@ -477,6 +488,7 @@ var FormulaTemplateVersionInsertableColumns = []string{
 	"expression",
 	"status",
 	"schema_id",
+	"language_version",
 	"variable_definitions",
 	"breakdown_definitions",
 	"min_charge",
@@ -564,6 +576,7 @@ var FormulaTemplateVersionFilter = struct {
 	Expression           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expression" → DB: "expression"
 	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	SchemaID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "schemaId" → DB: "schema_id"
+	LanguageVersion      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "languageVersion" → DB: "language_version"
 	VariableDefinitions  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "variableDefinitions" → DB: "variable_definitions"
 	BreakdownDefinitions func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "breakdownDefinitions" → DB: "breakdown_definitions"
 	MinCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCharge" → DB: "min_charge"
@@ -610,6 +623,9 @@ var FormulaTemplateVersionFilter = struct {
 	},
 	SchemaID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("schemaId", op, value)
+	},
+	LanguageVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("languageVersion", op, value)
 	},
 	VariableDefinitions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("variableDefinitions", op, value)

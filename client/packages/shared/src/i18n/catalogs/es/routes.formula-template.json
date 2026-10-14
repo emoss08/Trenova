@@ -140,6 +140,7 @@
   "Fails on the preview load": "Falla con la carga de vista previa",
   "Fails on this load": "Falla con esta carga",
   "Fewer decimal places": "Menos decimales",
+  "Field and function names are checked once the shipment schema has loaded": "Los nombres de campos y funciones se comprueban cuando se ha cargado el esquema del envío",
   "First approval; everything below is new": "Primera aprobación; todo lo que sigue es nuevo",
   "Fix instead": "Corregir en su lugar",
   "Fix the blocking checks to submit.": "Corrija las verificaciones bloqueantes para enviar.",

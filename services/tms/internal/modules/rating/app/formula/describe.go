@@ -39,24 +39,65 @@ func (s *Service) DescribeSchema(
 		return variables[i].Name < variables[j].Name
 	})
 
-	specs := engine.FunctionSpecs()
-	functions := make([]formulatemplatetypes.SchemaFunctionInfo, 0, len(specs))
-	for _, spec := range specs {
-		functions = append(functions, formulatemplatetypes.SchemaFunctionInfo{
-			Name:        spec.Name,
-			Signature:   spec.Signature,
-			Description: spec.Description,
-			Example:     spec.Example,
-			Category:    spec.Category,
-			Operator:    spec.Operator,
-		})
-	}
-
 	return &formulatemplatetypes.SchemaDescription{
 		SchemaID:  schemaID,
 		Variables: variables,
-		Functions: functions,
+		Functions: describeFunctions(),
+		Builtins:  describeBuiltins(),
+		Disabled:  describeDisabled(),
 	}, nil
+}
+
+func describeFunctions() []formulatemplatetypes.SchemaFunctionInfo {
+	specs := engine.FunctionSpecs()
+	functions := make([]formulatemplatetypes.SchemaFunctionInfo, 0, len(specs))
+	for i := range specs {
+		spec := &specs[i]
+		info := functionInfo(spec.Name, spec.Signature, spec.FunctionShape)
+		info.Description = spec.Description
+		info.Example = spec.Example
+		info.Category = spec.Category
+		info.Operator = spec.Operator
+		functions = append(functions, info)
+	}
+	return functions
+}
+
+func describeBuiltins() []formulatemplatetypes.SchemaFunctionInfo {
+	specs := engine.BuiltinSpecs()
+	builtins := make([]formulatemplatetypes.SchemaFunctionInfo, 0, len(specs))
+	for _, spec := range specs {
+		builtins = append(builtins, functionInfo(spec.Name, spec.Signature, spec.FunctionShape))
+	}
+	return builtins
+}
+
+func describeDisabled() []formulatemplatetypes.SchemaDisabledFunction {
+	disabled := engine.DisabledFunctions()
+	described := make([]formulatemplatetypes.SchemaDisabledFunction, 0, len(disabled))
+	for _, fn := range disabled {
+		described = append(described, formulatemplatetypes.SchemaDisabledFunction{
+			Name:        fn.Name,
+			Reason:      fn.Reason,
+			Replacement: fn.Replacement,
+		})
+	}
+	return described
+}
+
+func functionInfo(
+	name, signature string,
+	fnShape engine.FunctionShape,
+) formulatemplatetypes.SchemaFunctionInfo {
+	return formulatemplatetypes.SchemaFunctionInfo{
+		Name:        name,
+		Signature:   signature,
+		MinArgs:     fnShape.MinArgs,
+		MaxArgs:     fnShape.MaxArgs,
+		Returns:     fnShape.Returns,
+		NumericArgs: fnShape.NumericArgs,
+		Predicate:   fnShape.Predicate,
+	}
 }
 
 func collectSchemaVariables(

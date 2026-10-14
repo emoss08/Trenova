@@ -614,13 +614,13 @@ func TestEngine_ValidateExpressionWithEnv(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:       "boolean result is valid",
+			name:       "boolean result is refused; it would bill 1 or 0",
 			expression: "x > y",
 			env: map[string]any{
 				"x": 0.0,
 				"y": 0.0,
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name:       "undefined variable",

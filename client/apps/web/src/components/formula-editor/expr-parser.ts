@@ -75,8 +75,15 @@ const NEGATABLE = new Set(["contains", "matches", "startsWith", "endsWith", "in"
 
 const UNARY_PRECEDENCE: Record<string, number> = { not: 50, "!": 50, "-": 90, "+": 90 };
 
+/*
+ * The tokens as expr's lexer reads them: numbers with `_` separators, hex,
+ * octal and binary literals and a trailing `.` (`1.`) that is not the start of
+ * a `..` range; quoted strings with backslash escapes and backtick strings
+ * that take none (a doubled backtick is a backtick); identifiers of any
+ * letters, as Go's unicode.IsLetter reads them; and `#`, `#acc`, `#index`.
+ */
 const TOKEN =
-  /(\s+)|(\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|(\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?)|("(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?|`(?:\\.|[^`\\])*`?)|([A-Za-z_][A-Za-z0-9_]*)|(\?\?|\?\.|==|!=|<=|>=|&&|\|\||\*\*|\.\.|[-+*/%<>!?:^=|])|([(),;[\]{}.])|(#)|(.)/gy;
+  /(\s+)|(\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|(0[xX][0-9a-fA-F_]+|0[oO][0-7_]+|0[bB][01_]+|\d[\d_]*(?:\.(?!\.)[\d_]*)?(?:[eE][+-]?[\d_]+)?|\.\d[\d_]*(?:[eE][+-]?[\d_]+)?)|("(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?|`(?:``|[^`])*`?)|([\p{L}_][\p{L}\p{N}_]*)|(\?\?|\?\.|==|!=|<=|>=|&&|\|\||\*\*|\.\.|[-+*/%<>!?:^=|])|([(),;[\]{}.])|(#[\p{L}_][\p{L}\p{N}_]*|#)|(.)/guy;
 
 export type Tokenized = {
   tokens: Token[];
@@ -99,7 +106,7 @@ export function tokenize(
   const tokens: Token[] = [];
   const diagnostics: SyntaxDiagnostic[] = [];
   const comments: Range[] = [];
-  const pattern = new RegExp(TOKEN.source, "gy");
+  const pattern = new RegExp(TOKEN.source, "guy");
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(source)) !== null) {
     const text = match[0];
@@ -118,8 +125,7 @@ export function tokenize(
     if (match[3] !== undefined) {
       tokens.push({ kind: "number", text, from, to });
     } else if (match[4] !== undefined) {
-      const quote = text[0];
-      if (text.length < 2 || text[text.length - 1] !== quote || text.endsWith(`\\${quote}`)) {
+      if (!stringClosed(text)) {
         diagnostics.push({ from, to, message: translate("This text is never closed") });
       }
       tokens.push({ kind: "string", text, from, to });
@@ -148,15 +154,73 @@ export function tokenize(
   return { tokens, diagnostics, comments };
 }
 
+function stringClosed(text: string): boolean {
+  const quote = text[0];
+  if (text.length < 2 || text[text.length - 1] !== quote) return false;
+  if (quote === "`") {
+    let run = 0;
+    for (let index = text.length - 1; index > 0 && text[index] === "`"; index -= 1) run += 1;
+    return run % 2 === 1;
+  }
+  let backslashes = 0;
+  for (let index = text.length - 2; index > 0 && text[index] === "\\"; index -= 1) backslashes += 1;
+  return backslashes % 2 === 0;
+}
+
+const ESCAPES: Record<string, string> = {
+  n: "\n",
+  t: "\t",
+  r: "\r",
+  b: "\b",
+  f: "\f",
+  v: "\v",
+  a: "\u0007",
+  "\\": "\\",
+  '"': '"',
+  "'": "'",
+  "`": "`",
+};
+
+/** A string literal's value: escapes read in quoted strings, a doubled backtick in a raw one. */
+export function stringValue(text: string): string {
+  const quote = text[0];
+  const body = text.slice(1, stringClosed(text) ? -1 : undefined);
+  if (quote === "`") return body.replaceAll("``", "`");
+  return body.replace(
+    /\\(u\{[0-9a-fA-F]+\}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|x[0-9a-fA-F]{2}|[0-7]{3}|[\s\S])/gu,
+    (whole, escape: string) => {
+      const head = escape[0];
+      if ((head === "u" || head === "U" || head === "x") && escape.length > 1) {
+        const hex = escape.replace(/^[uUx]\{?|\}$/gu, "");
+        return String.fromCodePoint(Number.parseInt(hex, 16));
+      }
+      if (/^[0-7]{3}$/u.test(escape)) return String.fromCodePoint(Number.parseInt(escape, 8));
+      return ESCAPES[escape] ?? whole;
+    },
+  );
+}
+
+/** A number literal's value: `_` separators dropped, hex, octal and binary read as such. */
+export function numberValue(text: string): number {
+  const digits = text.replaceAll("_", "");
+  if (/^0[xXoObB]/u.test(digits)) return Number(digits.toLowerCase());
+  return Number(digits.endsWith(".") ? digits.slice(0, -1) : digits);
+}
+
+/** Whether a number literal is a whole number to the engine: no fraction and no exponent. */
+export function isWholeLiteral(text: string): boolean {
+  return /^0[xXoObB]/u.test(text) || !/[.eE]/u.test(text);
+}
+
 /** How many pairs of parentheses the author wrote around a node; the formatter keeps them. */
 type Grouped = { grouped?: number };
 
 type NodeVariant =
-  | (Range & { kind: "number"; value: number })
+  | (Range & { kind: "number"; value: number; whole: boolean })
   | (Range & { kind: "string"; value: string })
   | (Range & { kind: "bool"; value: boolean })
   | (Range & { kind: "nil" })
-  | (Range & { kind: "pointer" })
+  | (Range & { kind: "pointer"; name: string })
   | (Range & { kind: "ident"; name: string })
   | (Range & {
       kind: "member";
@@ -165,7 +229,7 @@ type NodeVariant =
       propertyRange: Range;
       optional: boolean;
     })
-  | (Range & { kind: "index"; object: Node; index: Node })
+  | (Range & { kind: "index"; object: Node; index: Node; optional: boolean })
   | (Range & { kind: "slice"; object: Node; start: Node | null; end: Node | null })
   | (Range & { kind: "call"; callee: Node; args: Node[]; parens: Range })
   | (Range & { kind: "unary"; op: string; operand: Node; opRange: Range })
@@ -175,7 +239,11 @@ type NodeVariant =
   | (Range & { kind: "array"; items: Node[] })
   | (Range & { kind: "map"; entries: { key: string; value: Node }[] })
   | (Range & { kind: "predicate"; body: Node })
+  | (Range & { kind: "sequence"; lets: LetEntry[]; body: Node })
   | (Range & { kind: "missing" });
+
+/** A `let` inside parentheses, an `if` block or a predicate, scoped to what follows it there. */
+export type LetEntry = Range & { name: string; nameRange: Range; value: Node };
 
 export type Node = NodeVariant & Grouped;
 
@@ -406,6 +474,13 @@ class Parser {
           return left;
         }
         this.advance();
+        if (!this.is("punct", "(")) {
+          this.report(
+            name,
+            translate("A function after '|' needs its parentheses: value | {0}()", name.text),
+            { label: translate("Add ()"), insert: `${name.text}()` },
+          );
+        }
         const args = this.is("punct", "(") ? this.parseArguments() : { args: [], parens: name };
         left = {
           kind: "call",
@@ -505,13 +580,63 @@ class Parser {
       return this.missing(this.current.from);
     }
     const open = this.advance();
-    const body = this.is("punct", "}") ? this.missing(this.current.from) : this.parseExpression(0);
+    const body = this.is("punct", "}") ? this.missing(this.current.from) : this.parseSequence();
     if (this.is("punct", "}")) {
       this.advance();
     } else {
       this.report(open, translate("'{0}' opened here is never closed", "{"));
     }
     return body;
+  }
+
+  /**
+   * `let` lines followed by a value, where expr allows them besides the top
+   * level: inside parentheses, an `if` block and a predicate's braces. The
+   * names are scoped to the value that follows.
+   */
+  private parseSequence(): Node {
+    if (!this.is("keyword", "let")) return this.parseExpression(0);
+    const start = this.current.from;
+    const lets: LetEntry[] = [];
+    while (this.is("keyword", "let")) {
+      const letToken = this.advance();
+      let name = "";
+      let nameRange: Range = { from: letToken.to, to: letToken.to };
+      if (this.is("ident")) {
+        const nameToken = this.advance();
+        name = nameToken.text;
+        nameRange = nameToken;
+      } else {
+        this.report(letToken, translate("'let' needs a name: let fuel = …"));
+      }
+      if (this.isOp("=")) {
+        this.advance();
+      } else {
+        this.report(nameRange, translate("'let {0}' needs '=' and a value", name));
+      }
+      const value =
+        this.is("punct", ";") || this.is("eof")
+          ? this.missing(this.current.from)
+          : this.parseExpression(0);
+      const end = this.tokens[this.index - 1]?.to ?? letToken.to;
+      if (this.is("punct", ";")) {
+        this.advance();
+      } else {
+        this.report({ from: end, to: end }, translate("A 'let' line ends with ';'"), {
+          label: translate("Add ';'"),
+          insert: ";",
+        });
+      }
+      lets.push({ name, nameRange, value, from: letToken.from, to: end });
+    }
+    const body = this.parseExpression(0);
+    if (body.kind === "missing") {
+      this.report(
+        lets[lets.length - 1],
+        translate("A 'let' here needs the value it is for after it"),
+      );
+    }
+    return { kind: "sequence", lets, body, from: start, to: body.to };
   }
 
   private parseUnary(): Node {
@@ -538,6 +663,11 @@ class Parser {
 
   private parsePostfix(node: Node): Node {
     for (;;) {
+      if (this.isOp("?.") && this.peek().kind === "punct" && this.peek().text === "[") {
+        this.advance();
+        node = this.parseIndex(node, true);
+        continue;
+      }
       if (this.is("punct", ".") || this.isOp("?.")) {
         const dot = this.advance();
         if (this.is("ident") || this.is("keyword")) {
@@ -562,36 +692,41 @@ class Parser {
         continue;
       }
       if (this.is("punct", "[")) {
-        const open = this.advance();
-        let start: Node | null = null;
-        let end: Node | null = null;
-        let slice = false;
-        if (!this.isOp(":")) start = this.parseExpression(0);
-        if (this.isOp(":")) {
-          slice = true;
-          this.advance();
-          if (!this.is("punct", "]")) end = this.parseExpression(0);
-        }
-        const close = this.current;
-        if (this.is("punct", "]")) {
-          this.advance();
-        } else {
-          this.report(open, translate("'[' opened here is never closed"));
-        }
-        const to = this.is("eof") ? close.from : close.to;
-        node = slice
-          ? { kind: "slice", object: node, start, end, from: node.from, to }
-          : {
-              kind: "index",
-              object: node,
-              index: start ?? this.missing(open.to),
-              from: node.from,
-              to,
-            };
+        node = this.parseIndex(node, false);
         continue;
       }
       return node;
     }
+  }
+
+  private parseIndex(node: Node, optional: boolean): Node {
+    const open = this.advance();
+    let start: Node | null = null;
+    let end: Node | null = null;
+    let slice = false;
+    if (!this.isOp(":")) start = this.parseExpression(0);
+    if (this.isOp(":")) {
+      slice = true;
+      this.advance();
+      if (!this.is("punct", "]")) end = this.parseExpression(0);
+    }
+    const close = this.current;
+    if (this.is("punct", "]")) {
+      this.advance();
+    } else {
+      this.report(open, translate("'[' opened here is never closed"));
+    }
+    const to = this.is("eof") ? close.from : close.to;
+    return slice
+      ? { kind: "slice", object: node, start, end, from: node.from, to }
+      : {
+          kind: "index",
+          object: node,
+          index: start ?? this.missing(open.to),
+          optional,
+          from: node.from,
+          to,
+        };
   }
 
   private parseArguments(): { args: Node[]; parens: Range } {
@@ -599,6 +734,7 @@ class Parser {
     const args: Node[] = [];
     if (!this.is("punct", ")")) {
       for (;;) {
+        if (this.is("punct", ")") && args.length > 0) break;
         if (this.is("punct", ")") || this.is("eof")) {
           this.report(
             this.tokens[this.index - 1],
@@ -635,22 +771,21 @@ class Parser {
     switch (token.kind) {
       case "number": {
         this.advance();
-        return { kind: "number", value: Number(token.text), from: token.from, to: token.to };
-      }
-      case "string": {
-        this.advance();
-        const quote = token.text[0];
-        const closed = token.text.length >= 2 && token.text.endsWith(quote);
         return {
-          kind: "string",
-          value: token.text.slice(1, closed ? -1 : undefined),
+          kind: "number",
+          value: numberValue(token.text),
+          whole: isWholeLiteral(token.text),
           from: token.from,
           to: token.to,
         };
       }
+      case "string": {
+        this.advance();
+        return { kind: "string", value: stringValue(token.text), from: token.from, to: token.to };
+      }
       case "pointer": {
         this.advance();
-        return { kind: "pointer", from: token.from, to: token.to };
+        return { kind: "pointer", name: token.text.slice(1), from: token.from, to: token.to };
       }
       case "ident": {
         this.advance();
@@ -666,7 +801,14 @@ class Parser {
           return { kind: "nil", from: token.from, to: token.to };
         }
         if (token.text === "if") {
-          return this.parseIf();
+          const node = this.parseIf();
+          this.report(
+            { from: node.from, to: token.to },
+            translate(
+              "An 'if' that is part of a calculation needs parentheses around the whole 'if … else …'",
+            ),
+          );
+          return node;
         }
         if (token.text === "let") {
           this.report(
@@ -685,7 +827,7 @@ class Parser {
           this.advance();
           const inner = this.is("punct", ")")
             ? this.missing(this.current.from)
-            : this.parseExpression(0);
+            : this.parseSequence();
           if (inner.kind === "missing") this.report(token, translate("'()' is empty"));
           if (this.is("punct", ")")) {
             const close = this.advance();
@@ -726,7 +868,7 @@ class Parser {
           const property = this.advance();
           return {
             kind: "member",
-            object: { kind: "pointer", from: dot.from, to: dot.from },
+            object: { kind: "pointer", name: "", from: dot.from, to: dot.from },
             property: property.text,
             propertyRange: property,
             optional: false,
@@ -781,7 +923,7 @@ class Parser {
       return { kind: "map", entries, from: open.from, to: this.tokens[this.index - 1].to };
     }
     if (!isMap) {
-      const body = this.parseExpression(0);
+      const body = this.parseSequence();
       if (this.is("punct", "}")) {
         const close = this.advance();
         return { kind: "predicate", body, from: open.from, to: close.to };
@@ -867,6 +1009,10 @@ export function* walk(node: Node): Generator<Node> {
     case "predicate":
       yield* walk(node.body);
       break;
+    case "sequence":
+      for (const entry of node.lets) yield* walk(entry.value);
+      yield* walk(node.body);
+      break;
     default:
       break;
   }
@@ -917,6 +1063,8 @@ export function childrenOf(node: Node): Node[] {
       return node.entries.map((entry) => entry.value);
     case "predicate":
       return [node.body];
+    case "sequence":
+      return [...node.lets.map((entry) => entry.value), node.body];
     default:
       return [];
   }

@@ -140,6 +140,7 @@
   "Fails on the preview load": "在預覽貨載上失敗",
   "Fails on this load": "在此貨載上失敗",
   "Fewer decimal places": "減少小數位數",
+  "Field and function names are checked once the shipment schema has loaded": "運單結構載入完成後才會檢查欄位和函數名稱",
   "First approval; everything below is new": "首次核准；以下全部為新增內容",
   "Fix instead": "改為修正",
   "Fix the blocking checks to submit.": "修正阻擋的檢查項目後即可送出。",

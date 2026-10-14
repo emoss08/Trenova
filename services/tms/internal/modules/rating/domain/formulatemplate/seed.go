@@ -25,6 +25,10 @@ type Seed struct {
 	Expression  string
 	SchemaID    string
 
+	// LanguageVersion is the formula language the expression is written in;
+	// unset means the current one.
+	LanguageVersion formulatypes.LanguageVersion
+
 	VariableDefinitions  []*formulatypes.VariableDefinition
 	BreakdownDefinitions []*formulatypes.BreakdownDefinition
 	MinCharge            decimal.NullDecimal
@@ -74,6 +78,7 @@ func (s Seed) Build() *FormulaTemplate {
 		Expression:           s.Expression,
 		Status:               status,
 		SchemaID:             schemaID,
+		LanguageVersion:      s.LanguageVersion.OrCurrent(),
 		VariableDefinitions:  variables,
 		BreakdownDefinitions: breakdowns,
 		MinCharge:            s.MinCharge,
@@ -104,6 +109,7 @@ func SeedFromTemplate(source *FormulaTemplate) Seed {
 		Type:                 source.Type,
 		Expression:           source.Expression,
 		SchemaID:             source.SchemaID,
+		LanguageVersion:      source.LanguageVersion,
 		VariableDefinitions:  source.VariableDefinitions,
 		BreakdownDefinitions: source.BreakdownDefinitions,
 		MinCharge:            source.MinCharge,
@@ -130,6 +136,7 @@ func SeedFromVersion(snapshot *FormulaTemplateVersion) Seed {
 		Type:                 snapshot.Type,
 		Expression:           snapshot.Expression,
 		SchemaID:             snapshot.SchemaID,
+		LanguageVersion:      snapshot.LanguageVersion,
 		VariableDefinitions:  snapshot.VariableDefinitions,
 		BreakdownDefinitions: snapshot.BreakdownDefinitions,
 		MinCharge:            snapshot.MinCharge,

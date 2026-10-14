@@ -140,6 +140,7 @@
   "Fails on the preview load": "在预览货载上失败",
   "Fails on this load": "在此货载上失败",
   "Fewer decimal places": "减少小数位",
+  "Field and function names are checked once the shipment schema has loaded": "运单架构加载完成后才会检查字段和函数名称",
   "First approval; everything below is new": "首次批准；以下全部为新增内容",
   "Fix instead": "改为修复",
   "Fix the blocking checks to submit.": "请修复阻止提交的检查项。",

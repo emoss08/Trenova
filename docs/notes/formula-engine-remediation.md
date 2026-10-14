@@ -48,7 +48,7 @@ workstreams follows from that.
 | WS3. Data-contract defects (loud failures the preview hides) | done, in review |
 | WS4. Engine hardening and money arithmetic | done, in review |
 | WS5. Template lifecycle: billing continuity, effective dating, approval | done, in review |
-| WS6. Language conformance between editor and server | open |
+| WS6. Language conformance between editor and server | done, in review |
 
 ---
 
@@ -868,6 +868,102 @@ Add `language_version` (default 1) to formula templates, their versions, and agr
 accessorial conditions, carried through import/export and the agent tools. Nothing reads it yet;
 it is what lets a later decimal evaluator or typed front end change semantics per template
 without changing what existing templates bill.
+
+### Done
+
+Tests:
+- **Corpus.** `formula/testdata/conformance.json`, read by `formula/conformance_test.go` and by the
+  editor's `__tests__/conformance.test.ts`.
+- **Schema fixture.** `formula/describe_golden_test.go` keeps the editor's copy of the schema
+  description (`testdata/shipment.describe.json`) equal to what the engine publishes.
+- **Server shapes.** `engine/functionshape_test.go`.
+- **Editor.** `expr-grammar.test.ts` and the updated `expr-check`, `known-identifiers`, `expr-lint`,
+  export and starter-value tests.
+- **Language version.**
+  - `formulatypes/language_test.go`.
+  - The language-version cases in the domain's `formulatemplate_test.go`, in
+    `rateagreement/accessorial_language_test.go` and in `import_test.go`.
+  - The accessorial row case in the agent's `rating_tools_test.go`.
+
+- **6.1.** The corpus has 73 cases. Each states whether the engine saves an expression, with the
+  inputs the corpus declares; most also give what it comes to on a fixed real shipment.
+  - The engine test runs each case through the save-time validation and, where a value is
+    given, through `EvaluateExpression`.
+  - The editor test runs the same expressions through `checkExpression` against the engine's
+    published schema. It requires an error exactly where the engine refuses.
+  - Cases that pin an error position also check that `engineErrorRange` lands where the
+    engine's message points.
+  - The editor reads the engine's `DescribeSchema("shipment")` from a golden file, which a Go
+    test holds equal to the live output. Regenerate it with `-update-description`.
+- **6.2.** Every reported divergence was probed against the engine first (expr 1.17.8, the real
+  schema). Each is a corpus case, and the editor now agrees with all of them:
+  1. Comparisons chain the way the engine chains them, and a parenthesized comparison does not.
+  2. The tokenizer reads the engine's number syntax:
+     - `_` separators;
+     - hex, octal and binary literals;
+     - `1.` (as long as it isn't the start of a `..` range).
+  3. `#acc` and `#index` parse. `#acc` outside `reduce()` and an unknown named pointer are errors.
+  4. `let` parses inside parentheses, `if` blocks and predicates, with its own scope.
+     - Redeclaring a name from an enclosing scope is an error.
+     - Sibling scopes may reuse a name.
+  5. `?.[` parses.
+  6. A trailing comma parses.
+  7. Identifiers take any Unicode letter, as Go's `unicode.IsLetter` does.
+  8. The editor knows every builtin from the engine (6.3).
+  9. A `let` that shadows a field or an input is an error (the engine: "cannot redeclare"). It
+     used to be a warning.
+  10. A `let` named after a function or a builtin is an error.
+  11. `%` takes whole numbers only, as the engine does. These count as whole: integer literals,
+      `integer` schema fields, whole `let`s, `int()`/`len()`/`count()`-style results, and `+ - * %`
+      of whole numbers. A fraction is an error, with an `int(…)` fix.
+  12. `==` between kinds the engine types differently is an error. Nested relation fields
+      (`origin.zip == 75201`) reach the engine untyped, so it compiles them and they are never
+      true. The editor keeps a warning there, and the corpus records why.
+  13. **The server stays.** `sum` is overridden to accumulate in decimal and to take several values
+      (`sum(a, b, c)`), and expr turns predicate parsing off for an overridden builtin. Giving
+      `sum` a predicate would break every stored `sum(a, b, c)`. The editor refuses
+      `sum(stops, .weight)` and offers `sum(map(stops, .weight))`.
+  14. `.field` outside a predicate is an error.
+  15. A bare `if` operand is an error; a parenthesized one, a call argument or a ternary branch
+      is fine, as in the engine.
+  16. A pipe without parentheses is an error, with an "Add ()" fix.
+  17. A date plus or minus a number is an error. A date plus a duration, and a date minus a date,
+      are not.
+  18. The error position bug is confirmed. The engine's column is 1-based and counts runes;
+      `engineErrorRange` converts it, and the fixture that encoded the wrong column is fixed.
+  19. Backtick strings take no escapes, and a doubled backtick is a literal one. Quoted strings
+      are unescaped (`\n`, `\u…`, `\x…`, octal). `1.` is a number.
+  - **The server moved once.** A true/false result passed save-time validation, and then rating
+    refused it on every shipment. `validateResultType` now refuses it at save with the rating
+    error. Only template validation uses that path; accessorial conditions go through
+    `EvaluatePredicate`.
+  - The editor previously refused `sum(map(…))` because its hand-kept list marked `sum` as
+    numbers-only. It is accepted now.
+- **6.3.** `GET /formula-templates/schema` publishes every function's shape: `minArgs`, `maxArgs`,
+  `returns`, `numericArgs` and `predicate`.
+  - The documented functions derive their shape from their Go signatures when they are
+    executable, and declare it otherwise.
+  - The expr builtins the engine keeps come in `builtins` (`engine/functionshape.go`). A test
+    holds that list equal to expr's own builtins, minus the disabled ones and the ones Trenova
+    overrides.
+  - The disabled builtins come in `disabled`, with a reason code and a replacement.
+  - The editor's hand-kept lists are gone: `SHIPMENT_VARIABLES`, `AVAILABLE_FUNCTIONS`,
+    `FALLBACK_SCHEMA`, `EXPR_BUILTIN_FUNCTIONS`, `DISABLED_FUNCTIONS`, and the return-type,
+    numeric-parameter, arity and predicate tables. The keyword and operator-word sets now come
+    from the parser.
+  - Until the schema loads, `ready` is false. The checks report no unknown name, arity or
+    disabled-function finding, and the problems panel says names are not checked yet.
+- **6.4.** The formula language version is stored and checked; nothing reads it yet.
+  - `language_version` (default 1) is on `formula_templates` and `formula_template_versions`, and
+    `condition_language_version` on `rate_agreement_accessorials` (migration
+    `20261231009260`).
+  - Snapshots copy it both ways, forks and imports keep it, and a change of language is a
+    material change.
+  - An unset version reads as the current one, and a version this server cannot read is refused
+    on save and on import.
+  - Exports carry it (export format 1.4), and older exports import as version 1.
+  - `get_formula_template` returns it with the template. The rate agreement tool names it beside
+    an accessorial's condition.
 
 ---
 

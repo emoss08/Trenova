@@ -713,8 +713,10 @@ func validateResultType(value any) error {
 	case float64, float32,
 		int, int64, int32, int16, int8,
 		uint, uint64, uint32, uint16, uint8,
-		decimal.Decimal, decimal.NullDecimal, bool:
+		decimal.Decimal, decimal.NullDecimal:
 		return nil
+	case bool:
+		return ErrBooleanAmount
 	default:
 		return fmt.Errorf("%w, got %s", ErrNonNumericResult, errors.DescribeValue(value))
 	}

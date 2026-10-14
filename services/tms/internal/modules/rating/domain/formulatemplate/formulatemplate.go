@@ -57,6 +57,7 @@ type FormulaTemplate struct {
 	Expression           string                              `json:"expression"           bun:"expression,type:TEXT,notnull"`
 	Status               Status                              `json:"status"               bun:"status,type:formula_template_status_enum,notnull,default:'Draft'"`
 	SchemaID             string                              `json:"schemaId"             bun:"schema_id,type:VARCHAR(100),notnull,default:'shipment'"`
+	LanguageVersion      formulatypes.LanguageVersion        `json:"languageVersion"      bun:"language_version,type:SMALLINT,notnull,default:1"`
 	VariableDefinitions  []*formulatypes.VariableDefinition  `json:"variableDefinitions"  bun:"variable_definitions,type:JSONB,notnull,default:'[]'"`
 	BreakdownDefinitions []*formulatypes.BreakdownDefinition `json:"breakdownDefinitions" bun:"breakdown_definitions,type:JSONB,notnull,default:'[]'"`
 	MinCharge            decimal.NullDecimal                 `json:"minCharge"            bun:"min_charge,type:NUMERIC(19,4)"`
@@ -119,6 +120,7 @@ func (ft *FormulaTemplate) Validate(multiErr *errortypes.MultiError) {
 
 	ft.validateGuardrails(multiErr)
 	ft.validateSizes(multiErr)
+	formulatypes.ValidateLanguageVersion("languageVersion", ft.LanguageVersion, multiErr)
 	if len(ft.VariableDefinitions) > MaxVariableDefinitions {
 		multiErr.Add(
 			"variableDefinitions",
@@ -176,6 +178,7 @@ func (ft *FormulaTemplate) ApplyVersion(version *FormulaTemplateVersion) *Formul
 	resolved := *ft
 	resolved.Expression = version.Expression
 	resolved.SchemaID = version.SchemaID
+	resolved.LanguageVersion = version.LanguageVersion.OrCurrent()
 	resolved.Type = version.Type
 	resolved.VariableDefinitions = version.VariableDefinitions
 	resolved.BreakdownDefinitions = version.BreakdownDefinitions
@@ -223,6 +226,7 @@ func (ft *FormulaTemplate) HasMaterialChange(other *FormulaTemplate) bool {
 
 	return ft.Expression != other.Expression ||
 		ft.SchemaID != other.SchemaID ||
+		ft.LanguageVersion.OrCurrent() != other.LanguageVersion.OrCurrent() ||
 		ft.Type != other.Type ||
 		!nullDecimalEqual(ft.MinCharge, other.MinCharge) ||
 		!nullDecimalEqual(ft.MaxCharge, other.MaxCharge) ||
@@ -281,8 +285,10 @@ func (ft *FormulaTemplate) BeforeAppendModel(_ context.Context, query bun.Query)
 			ft.ID = pulid.MustNew("ft_")
 		}
 		ft.NormalizeRounding()
+		ft.LanguageVersion = ft.LanguageVersion.OrCurrent()
 		ft.CreatedAt = now
 	case *bun.UpdateQuery:
+		ft.LanguageVersion = ft.LanguageVersion.OrCurrent()
 		ft.UpdatedAt = now
 	}
 

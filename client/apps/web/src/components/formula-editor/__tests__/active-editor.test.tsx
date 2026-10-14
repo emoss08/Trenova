@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import { ActiveEditorProvider, useActiveEditorInsert } from "../active-editor";
 import { ExpressionEditor } from "../expression-editor";
+import { describedShipment } from "@/components/formula-editor/__tests__/described-shipment";
 
 vi.mock("@trenova/shared/components/theme-provider", () => ({
   useTheme: () => ({ theme: "light", setTheme: vi.fn() }),
@@ -22,7 +23,7 @@ function Harness() {
   const { control } = useForm<{ main: string; line: string }>({
     defaultValues: { main: "", line: "" },
   });
-  const known = buildKnownIdentifiers(undefined, []);
+  const known = buildKnownIdentifiers(describedShipment, []);
   return (
     <ActiveEditorProvider>
       <div data-testid="main">

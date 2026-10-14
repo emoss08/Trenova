@@ -393,6 +393,7 @@ type rateAccessorialRow struct {
 	Amount              string       `json:"amount,omitempty"`
 	MaxAmount           string       `json:"maxAmount,omitempty"`
 	ApplyCondition      string       `json:"applyCondition,omitempty"`
+	ConditionLanguage   int16        `json:"conditionLanguageVersion,omitempty"`
 }
 
 type rateFuelRow struct {
@@ -624,6 +625,9 @@ func (t *getRateAgreementTool) accessorials(
 		}
 		if showCondition {
 			row.ApplyCondition = accessorial.ApplyCondition
+			if accessorial.ApplyCondition != "" {
+				row.ConditionLanguage = int16(accessorial.ConditionLanguageVersion.OrCurrent())
+			}
 		}
 		rows = append(rows, row)
 	}

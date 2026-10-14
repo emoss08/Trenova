@@ -12,12 +12,56 @@ import (
 
 var ErrDisabledBuiltin = goErrors.New("function is not available in formulas")
 
-var disabledBuiltins = map[string]string{
-	"now": "a formula must price a shipment the same way every time it runs; " +
-		"use ratingTime, the date the contract terms are read at",
-	"toJSON":   "formulas price shipments and do not serialize them",
-	"fromJSON": "formulas read the shipment's fields directly and have nothing to parse",
-	"repeat":   "formulas compare codes and do not build text",
+const (
+	DisabledNondeterministic = "nondeterministic"
+	DisabledSerialization    = "serialization"
+	DisabledTextBuilding     = "textBuilding"
+)
+
+type DisabledFunction struct {
+	Name        string `json:"name"`
+	Reason      string `json:"reason"`
+	Replacement string `json:"replacement,omitempty"`
+	message     string
+}
+
+var disabledBuiltins = map[string]DisabledFunction{
+	"now": {
+		Name:        "now",
+		Reason:      DisabledNondeterministic,
+		Replacement: RatingTimeVariable,
+		message: "a formula must price a shipment the same way every time it runs; " +
+			"use ratingTime, the date the contract terms are read at",
+	},
+	"toJSON": {
+		Name:    "toJSON",
+		Reason:  DisabledSerialization,
+		message: "formulas price shipments and do not serialize them",
+	},
+	"fromJSON": {
+		Name:    "fromJSON",
+		Reason:  DisabledSerialization,
+		message: "formulas read the shipment's fields directly and have nothing to parse",
+	},
+	"repeat": {
+		Name:    "repeat",
+		Reason:  DisabledTextBuilding,
+		message: "formulas compare codes and do not build text",
+	},
+}
+
+func DisabledFunctions() []DisabledFunction {
+	names := make([]string, 0, len(disabledBuiltins))
+	for name := range disabledBuiltins {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	disabled := make([]DisabledFunction, 0, len(names))
+	for _, name := range names {
+		disabled = append(disabled, disabledBuiltins[name])
+	}
+	return disabled
 }
 
 func disabledBuiltinOptions() []expr.Option {
@@ -40,7 +84,7 @@ func disabledBuiltinUse(expression string) error {
 		return nil
 	}
 
-	return fmt.Errorf("%w: %s() — %s", ErrDisabledBuiltin, name, disabledBuiltins[name])
+	return fmt.Errorf("%w: %s() — %s", ErrDisabledBuiltin, name, disabledBuiltins[name].message)
 }
 
 func disabledBuiltinIn(expression string) string {

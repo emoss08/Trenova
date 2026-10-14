@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:b0de3c9cf384d6016b0e8f0fd823a5e0189672d2ff0fe5a0c8908ef6f8da6ac6"
+const Version = "sha256:4e3390b382651e70a58406353f098ff4cb448c5f6b145e3d4dbea80e670c9361"
 
 var Default = indexed(defaultCatalog)
 
@@ -13326,6 +13326,15 @@ var defaultCatalog = Catalog{
 					Label:        "Apply Condition",
 					Type:         FieldString,
 					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "conditionLanguageVersion",
+					Column:       buncolgen.NewColumn("condition_language_version", "raga"),
+					Label:        "Condition Language Version",
+					Type:         FieldString,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,

@@ -463,28 +463,28 @@ func TestValidateResultType(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		input   any
-		wantErr bool
+		name  string
+		input any
+		want  error
 	}{
-		{name: "float64", input: float64(1.5), wantErr: false},
-		{name: "int", input: int(1), wantErr: false},
-		{name: "uint64", input: uint64(1), wantErr: false},
-		{name: "decimal", input: decimal.NewFromInt(1), wantErr: false},
-		{name: "null decimal", input: decimal.NullDecimal{}, wantErr: false},
-		{name: "bool", input: true, wantErr: false},
-		{name: "string", input: "hello", wantErr: true},
-		{name: "nil", input: nil, wantErr: true},
-		{name: "slice", input: []any{1.0}, wantErr: true},
-		{name: "map", input: map[string]any{"a": 1.0}, wantErr: true},
+		{name: "float64", input: float64(1.5)},
+		{name: "int", input: int(1)},
+		{name: "uint64", input: uint64(1)},
+		{name: "decimal", input: decimal.NewFromInt(1)},
+		{name: "null decimal", input: decimal.NullDecimal{}},
+		{name: "bool", input: true, want: ErrBooleanAmount},
+		{name: "string", input: "hello", want: ErrNonNumericResult},
+		{name: "nil", input: nil, want: ErrNonNumericResult},
+		{name: "slice", input: []any{1.0}, want: ErrNonNumericResult},
+		{name: "map", input: map[string]any{"a": 1.0}, want: ErrNonNumericResult},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			err := validateResultType(tt.input)
-			if tt.wantErr {
-				require.ErrorIs(t, err, ErrNonNumericResult)
+			if tt.want != nil {
+				require.ErrorIs(t, err, tt.want)
 				return
 			}
 			require.NoError(t, err)
