@@ -532,10 +532,17 @@ func (s *Service) GetByID(
 	if err != nil {
 		return nil, err
 	}
-	if billing != nil {
+	switch {
+	case billing.InForce != nil:
 		template.Billing = &formulatemplate.BillingVersion{
-			VersionNumber: billing.VersionNumber,
-			EffectiveFrom: billing.EffectiveStart(),
+			VersionNumber: billing.InForce.VersionNumber,
+			EffectiveFrom: billing.InForce.EffectiveStart(),
+		}
+	case billing.Scheduled != nil:
+		template.Billing = &formulatemplate.BillingVersion{
+			VersionNumber: billing.Scheduled.VersionNumber,
+			EffectiveFrom: billing.Scheduled.EffectiveStart(),
+			Pending:       true,
 		}
 	}
 

@@ -26,6 +26,19 @@ describe("billingLabel", () => {
     );
   });
 
+  it("says nothing bills until a deferred first approval starts", () => {
+    expect(
+      billingLabel(
+        {
+          status: "Active",
+          currentVersionNumber: 1,
+          billing: { versionNumber: 1, effectiveFrom: 4_070_908_800, pending: true },
+        },
+        t,
+      ),
+    ).toBe("Nothing bills until v1 takes effect");
+  });
+
   it("says nothing when the content shown is the content billing", () => {
     expect(
       billingLabel({ status: "Active", currentVersionNumber: 5, billing: billingV5 }, t),

@@ -25,8 +25,6 @@ type Seed struct {
 	Expression  string
 	SchemaID    string
 
-	// LanguageVersion is the formula language the expression is written in;
-	// unset means the current one.
 	LanguageVersion formulatypes.LanguageVersion
 
 	VariableDefinitions  []*formulatypes.VariableDefinition

@@ -538,9 +538,6 @@ func (stubTotalsVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
-// ListApproved is reached through the effective-version cache whenever a
-// formula rates. The embedded interface is nil, so leaving it unimplemented
-// panics rather than failing: these tests have no approved snapshots.
 func (stubTotalsVersionRepo) ListApproved(
 	_ context.Context,
 	_ *formulatemplateports.ListScheduledVersionsRequest,

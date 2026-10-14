@@ -45,8 +45,6 @@ type LookupExplainer interface {
 	ExplainLookup2(table string, rowKey, colKey any) (formulatypes.LookupMatch, bool)
 }
 
-// StampedLookup is implemented by providers that know the version of the
-// tables they were built from, so a receipt names the rates it read.
 type StampedLookup interface {
 	RateTableStamp() string
 }

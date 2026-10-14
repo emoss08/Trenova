@@ -3,6 +3,7 @@ package formulatemplaterepository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
@@ -450,7 +451,7 @@ func (r *repository) bulkUpdateStatus(
 
 	cols := formulatemplatecol.FormulaTemplateColumns
 	entities := make([]*formulatemplate.FormulaTemplate, 0, len(req.TemplateIDs))
-	results, err := r.db.DBForContext(ctx).
+	_, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(&entities).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
@@ -471,14 +472,6 @@ func (r *repository) bulkUpdateStatus(
 		return nil, err
 	}
 
-	if err = dberror.CheckBulkRowsAffected(
-		results,
-		"FormulaTemplate",
-		req.TemplateIDs,
-	); err != nil {
-		return nil, err
-	}
-
 	updatedIDs := make([]pulid.ID, 0, len(entities))
 	for _, entity := range entities {
 		updatedIDs = append(updatedIDs, entity.ID)
@@ -487,7 +480,12 @@ func (r *repository) bulkUpdateStatus(
 		sliceutils.Dedupe(req.TemplateIDs),
 		updatedIDs,
 	); len(skipped) > 0 {
-		return nil, dberror.CreateBulkVersionMismatchError("FormulaTemplate", skipped)
+		return nil, errortypes.NewValidationError(
+			"templateIds",
+			errortypes.ErrInvalid,
+			"Templates {0} are no longer Active or Inactive, so none were updated; refresh and try again",
+			strings.Join(pulid.Map(skipped, func(id pulid.ID) string { return id.String() }), ", "),
+		)
 	}
 
 	return entities, nil

@@ -86,6 +86,8 @@ const scheduledWindowsSchema = z
 export const billingVersionSchema = z.object({
   versionNumber: z.number(),
   effectiveFrom: z.number(),
+  /** True while the window has not started and nothing bills until it does. */
+  pending: z.boolean().optional(),
 });
 export type BillingVersion = z.output<typeof billingVersionSchema>;
 
