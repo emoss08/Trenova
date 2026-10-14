@@ -237,7 +237,7 @@ func (p *deskPerson) mayChange(memory *agent.Memory) bool {
 // one is not quietly turned into an offer.
 func errOfferInstead() error {
 	return errortypes.NewAuthorizationError(
-		"Keeping a memory for your team or the organization is an administrator's. Keep " +
+		"Only an administrator keeps a memory for your team or the organization. Keep " +
 			"this one for yourself, or write a new one for them and it will be offered to " +
 			"an administrator.",
 	)

@@ -214,10 +214,16 @@ describe("DeskMemoryPage", () => {
     ).toBeTruthy();
     expect(screen.queryByText("Saved today from “Added by hand”")).toBeNull();
 
+    // Once withdrawn the server no longer lists it, but the row says what happened.
     api.fetchDeskMemories.mockResolvedValue(page([own]));
     await userEvent.click(screen.getByRole("button", { name: "Withdraw" }));
 
     await waitFor(() => expect(api.dismissDeskMemory).toHaveBeenCalledWith("m3"));
+    expect(
+      await screen.findByText("Withdrawn. No administrator will see this offer."),
+    ).toBeTruthy();
+    expect(screen.queryByText("Granite wants the POD on the invoice.")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Undo" })).toBeNull();
   });
 
   it("says a memory for others is offered when the person does not manage agent memory", async () => {

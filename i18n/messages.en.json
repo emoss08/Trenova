@@ -124509,15 +124509,6 @@
       "go/other"
     ]
   },
-  "Keeping a memory for your team or the organization is an administrator's. Keep this one for yourself, or write a new one for them and it will be offered to an administrator.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Keeping both": {
     "sites": 1,
     "scope": [
@@ -124543,15 +124534,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Keeping, changing, pausing or forgetting a memory shared with a team, the organization or every agent is an administrator's: it needs permission to manage agent memory": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Keeps a lesson when a conversation settles. Lessons shared beyond one person wait for approval.": {
@@ -164391,6 +164373,24 @@
     ]
   },
   "Only an adjustment awaiting approval or whose execution failed can be approved or rejected; this one is {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only an administrator keeps a memory for your team or the organization. Keep this one for yourself, or write a new one for them and it will be offered to an administrator.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only an administrator keeps, changes, pauses or forgets a memory shared with a team, the organization or every agent: it needs permission to manage agent memory": {
     "sites": 1,
     "scope": [
       "go"

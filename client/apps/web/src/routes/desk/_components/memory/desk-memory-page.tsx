@@ -222,9 +222,14 @@ export function DeskMemoryPage() {
     resourceName: "Memory",
   });
 
+  // The server stops listing a withdrawn offer, so the row stays in place as a
+  // withdrawn line the same way a forgotten memory does.
   const withdrawMutation = useApiMutation({
     mutationFn: (memory: DeskMemory) => dismissDeskMemory(memory.id),
-    onSuccess: () => void refresh(),
+    onSuccess: (withdrawn) => {
+      dispatch({ type: "forgot", memory: withdrawn });
+      void refresh();
+    },
     resourceName: "Memory",
   });
 

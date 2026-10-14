@@ -178,9 +178,9 @@ func (s *Service) manages(
 // people's conversations read without the permission to.
 func errSharedMemoryManaged() error {
 	return errortypes.NewAuthorizationError(
-		"Keeping, changing, pausing or forgetting a memory shared with a team, the " +
-			"organization or every agent is an administrator's: it needs permission to " +
-			"manage agent memory",
+		"Only an administrator keeps, changes, pauses or forgets a memory shared with a " +
+			"team, the organization or every agent: it needs permission to manage agent " +
+			"memory",
 	)
 }
 
