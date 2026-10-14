@@ -1,4 +1,5 @@
 import { ArrowDownLeftIcon, ArrowUpRightIcon } from "@trenova/shared/components/icons";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { TransferDirection } from "@/lib/edi/transfer-sides";
@@ -201,7 +202,11 @@ export function MappingLedgerView({ ledger }: { ledger: MappingLedger }) {
         aria-valuemin={0}
         aria-valuemax={ledger.total}
         aria-valuenow={ledger.resolved}
-        aria-label={t("{0} of {1} mapped", ledger.resolved, ledger.total)}
+        aria-label={t(
+          "{0} of {1} mapped",
+          formatNumber(ledger.resolved),
+          formatNumber(ledger.total),
+        )}
       >
         <i style={{ inlineSize: `${Math.round(share * 100)}%` }} />
       </div>

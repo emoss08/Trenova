@@ -167324,15 +167324,6 @@
       "routes/fleet-safety"
     ]
   },
-  "Open outbound transfers": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Open page": {
     "sites": 1,
     "scope": [

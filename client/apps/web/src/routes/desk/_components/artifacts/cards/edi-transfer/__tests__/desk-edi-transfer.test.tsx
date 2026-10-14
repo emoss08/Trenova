@@ -1,10 +1,11 @@
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { edi } from "@/lib/queries/edi";
 import { money } from "../../../record-card/record-card-values";
 import { DeskEdiTransfer, DeskEdiTransferArtifact } from "../desk-edi-transfer";
 import { wireMappingPreview, wireTransfer } from "./fixtures";
@@ -75,7 +76,7 @@ function draw(props: Partial<Parameters<typeof DeskEdiTransfer>[0]> = {}) {
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  return { ...view, ...handlers };
+  return { ...view, ...handlers, queryClient };
 }
 
 function section(title: string): HTMLElement {
@@ -139,7 +140,10 @@ describe("DeskEdiTransfer", () => {
 
     const mappings = section("Mappings");
     expect(within(mappings).getByText("3 of 5 mapped")).toBeInTheDocument();
-    expect(within(mappings).getByRole("meter")).toHaveAttribute("aria-valuenow", "3");
+    expect(within(mappings).getByRole("meter", { name: "3 of 5 mapped" })).toHaveAttribute(
+      "aria-valuenow",
+      "3",
+    );
     expect(within(mappings).getAllByText("Not mapped")).toHaveLength(2);
     expect(within(section("Route")).getByText("Not mapped")).toBeInTheDocument();
     expect(within(section("Route")).getByText("Ours: Acme Plant 2 (Dallas)")).toBeInTheDocument();
@@ -214,15 +218,30 @@ describe("DeskEdiTransfer", () => {
     expect(screen.getByText("To Lone Star Logistics")).toBeInTheDocument();
     expect(document.querySelector(".dk-rec-st")).toHaveTextContent("Awaiting their decision");
     expect(screen.getByText("Lone Star Logistics decides on their side")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open outbound transfers" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Open tender" })).toHaveAttribute(
       "href",
-      "/edi/transfers/outbound",
+      "/edi/transfers/inbound?panelType=edit&panelEntityId=edilt_s2610_1366",
     );
     expect(
       within(section("Records it names")).getByRole("button", { name: /Shipment tendered/u }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Mappings", level: 3 })).toBeNull();
     expect(asked("/edi/transfers/edilt_s2610_1366/mapping-preview/")).toBe(false);
+  });
+
+  it("holds its outline until it knows which organization is reading", async () => {
+    useAuthStore.setState({ user: null });
+    const { container, queryClient } = draw({ recordId: "edilt_s2610_1366" });
+
+    await vi.waitFor(() =>
+      expect(queryClient.getQueryState(edi.transfer("edilt_s2610_1366").queryKey)?.status).toBe(
+        "success",
+      ),
+    );
+    await act(async () => {});
+    expect(container.querySelector(".dk-rec-skel")).not.toBeNull();
+    expect(screen.queryByText("Outbound tender")).toBeNull();
+    expect(screen.queryByText("Inbound tender")).toBeNull();
   });
 
   it("says the tender could not be read, and keeps the way back", async () => {

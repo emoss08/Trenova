@@ -70,9 +70,6 @@ const OPEN_TO_DECISION: ReadonlySet<EDITransferStatus> = new Set([
   "PendingApproval",
 ]);
 
-/** The page a tender we sent is listed on; the record link opens the inbound one. */
-const OUTBOUND_TRANSFERS_PAGE = "/edi/transfers/outbound";
-
 /**
  * One load tender as the EDI coordinator or dispatcher deciding on it reads
  * it, opened from a table's row or looked up by the agent: who tendered it to
@@ -98,8 +95,10 @@ export function DeskEdiTransfer({
     placeholderData: keepPreviousData,
   });
   const transfer = query.data;
+  // A tender reads one way or the other only from the reader's organization.
+  const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
 
-  if (!transfer) {
+  if (!transfer || !organizationId) {
     return query.isError ? (
       <CardUnreadable
         kind={t("EDI transfer")}
@@ -117,6 +116,7 @@ export function DeskEdiTransfer({
     <EdiTransferCard
       key={transfer.id}
       transfer={transfer}
+      organizationId={organizationId}
       rowOrder={rowOrder}
       onSelect={onSelect}
       onBack={onBack}
@@ -155,17 +155,18 @@ function barHint(
 
 function EdiTransferCard({
   transfer,
+  organizationId,
   rowOrder,
   onSelect,
   onBack,
   backLabel,
 }: Omit<EdiTransferCardProps, "order" | "recordId"> & {
   transfer: EDITransfer;
+  organizationId: string;
   rowOrder: readonly string[];
 }) {
   const t = useT();
   const access = useCardAccess(EDI_TRANSFER_SECTIONS);
-  const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
   const id = transfer.id;
   const direction = transferDirection(transfer, organizationId);
   const open = OPEN_TO_DECISION.has(transfer.status);
@@ -323,17 +324,10 @@ function EdiTransferCard({
 
       <CardBar>
         <CardBarHint>{barHint(transfer, direction, partner?.name ?? "", t)}</CardBarHint>
-        {direction === "inbound" ? (
-          <Link className="dk-ax-btn dk-ink" to={recordPath("edi_transfer", id)}>
-            <CardIcon name="ext" size={13} />
-            {t("Open tender")}
-          </Link>
-        ) : (
-          <Link className="dk-ax-btn dk-ink" to={OUTBOUND_TRANSFERS_PAGE}>
-            <CardIcon name="ext" size={13} />
-            {t("Open outbound transfers")}
-          </Link>
-        )}
+        <Link className="dk-ax-btn dk-ink" to={recordPath("edi_transfer", id)}>
+          <CardIcon name="ext" size={13} />
+          {t("Open tender")}
+        </Link>
       </CardBar>
     </RecordCard>
   );
