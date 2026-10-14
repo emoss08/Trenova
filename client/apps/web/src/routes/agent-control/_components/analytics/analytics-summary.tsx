@@ -38,11 +38,15 @@ export function AnalyticsSummary({
             <Ic n="download" s={13} />
             {t("Export")}
           </Button>
-          <span className="an-upd">
-            {refreshedAt === null
-              ? t("Working out the first analytics")
-              : t("Updated {0}", formatRelativeTime(refreshedAt - now))}
-          </span>
+          {analytics ? (
+            <span className="an-upd">
+              {refreshedAt === null
+                ? t("Working out the first analytics")
+                : t("Updated {0}", formatRelativeTime(refreshedAt - now))}
+            </span>
+          ) : (
+            <span className="an-upd ui-shimmer block h-3 w-28 rounded" aria-hidden />
+          )}
         </>
       }
     >

@@ -796,6 +796,7 @@ function runTimeNoteOf(deployments) {
 
 function agentAnalytics(state, input) {
   if (state.scenario.aiAnalytics === "error") throw new Error("analytics read failed");
+  if (state.scenario.aiAnalytics === "hold") return { __hold: true };
   const now = state.now();
   const { since, units } = scope(state, input, now);
   const compareBy = input.compareBy ?? "Model";
@@ -916,7 +917,10 @@ function routeTask(state, task, providerId) {
 }
 
 export const AI_ANALYTICS_HANDLERS = {
-  AgentAnalytics: (state, v) => ({ agentAnalytics: agentAnalytics(state, v.input) }),
+  AgentAnalytics: (state, v) => {
+    const analytics = agentAnalytics(state, v.input);
+    return analytics.__hold ? analytics : { agentAnalytics: analytics };
+  },
   AgentAnalyticsToolFailures: (state, v) => ({
     agentAnalyticsToolFailures: toolFailures(state, v.input, v.seriesKey, v.toolName),
   }),
