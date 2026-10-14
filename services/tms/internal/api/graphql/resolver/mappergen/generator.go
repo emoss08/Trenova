@@ -535,12 +535,12 @@ func buildGeneratedType(
 
 		return generatedType{}, false, nil
 	}
-	if !isStandardTenantedEntity(domainStruct) {
+	if hasInput && !isStandardTenantedEntity(domainStruct) {
 		log.note(
 			name,
 			declineStageType,
 			"",
-			binding.GoName+" has no organizationId/businessUnitId field, so tenancy cannot be inferred",
+			binding.GoName+" has no organizationId/businessUnitId field, so a create mapper cannot infer tenancy",
 		)
 
 		return generatedType{}, false, nil

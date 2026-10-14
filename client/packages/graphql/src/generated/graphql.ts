@@ -1646,6 +1646,21 @@ export type AvailabilityPreference =
   | 'Preferred'
   | 'Unavailable';
 
+export type AvailabilityStatus =
+  | 'available'
+  | 'away'
+  | 'focus';
+
+export type AvatarStyle =
+  | 'auto'
+  | 'citrus'
+  | 'dusk'
+  | 'ember'
+  | 'lagoon'
+  | 'mint'
+  | 'orchid'
+  | 'slate';
+
 export type BackfillJurisdictionMilesInput = {
   /** Count the moves and miles that would be attributed without starting the workflow. */
   dryRun?: boolean | null | undefined;
@@ -2770,6 +2785,21 @@ export type CreateSettlementDisputeInput = {
   description: string;
   settlementId: string | number;
   settlementLineId?: string | number | null | undefined;
+};
+
+export type CreateUserInput = {
+  emailAddress: string;
+  /** Defaults to the instance's default language. */
+  locale?: string | null | undefined;
+  mustChangePassword?: boolean | null | undefined;
+  name: string;
+  /** Roles granted in the current organization. Every grant is checked against the caller's own access. */
+  roleIds?: Array<string | number> | null | undefined;
+  status: EntityStatus;
+  /** Defaults to TwelveHour. */
+  timeFormat?: TimeFormat | null | undefined;
+  timezone: string;
+  username: string;
 };
 
 export type CreateWorkerPtoInput = {
@@ -7342,6 +7372,10 @@ export type TimeEntrySource =
   | 'Manual'
   | 'Portal';
 
+export type TimeFormat =
+  | 'TwelveHour'
+  | 'TwentyFourHour';
+
 export type TimesheetFilterInput = {
   from?: number | null | undefined;
   limit?: number | null | undefined;
@@ -8145,6 +8179,29 @@ export type UpdateWorkerSafetyEventInput = {
   severity: SafetySeverity;
   shipmentId?: string | number | null | undefined;
   version: number;
+};
+
+export type UserPatchInput = {
+  /** Omit to leave unchanged; null is rejected. */
+  emailAddress?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  isLocked?: boolean | null | undefined;
+  /** Omit to leave unchanged; null is rejected. An empty string clears it. */
+  jobTitle?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  locale?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  mustChangePassword?: boolean | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  name?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. An empty string clears it. */
+  phoneNumber?: string | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  status?: EntityStatus | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  timeFormat?: TimeFormat | null | undefined;
+  /** Omit to leave unchanged; null is rejected. */
+  timezone?: string | null | undefined;
 };
 
 export type VerifyCarrierEquipmentInput = {
@@ -16634,6 +16691,28 @@ export type DeskTrailerCardQueryVariables = Exact<{
 
 export type DeskTrailerCardQuery = { trailer: { id: string, code: string, status: EquipmentStatus, make: string, model: string, year: number | null, vin: string, licensePlateNumber: string, registrationNumber: string, registrationExpiry: number | null, lastInspectionDate: number | null, maxLoadWeight: number | null, externalId: string, ownershipType: EquipmentOwnershipType, lessorName: string, leaseReference: string, leaseEndDate: number | null, createdAt: number, registrationState: { abbreviation: string } | null, equipmentType: { id: string, code: string, description: string } | null, equipmentManufacturer: { id: string, name: string } | null, fleetCode: { id: string, code: string } | null, ownerWorker: { id: string, firstName: string, lastName: string } | null, lastKnownLocation: { id: string, name: string, latitude: number | null, longitude: number | null } | null } | null };
 
+export type UserDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type UserDetailQuery = { user: { id: string, businessUnitId: string, currentOrganizationId: string, status: EntityStatus, name: string, username: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string, timezone: string, timeFormat: TimeFormat, locale: string, isLocked: boolean, mustChangePassword: boolean, jobTitle: string, phoneNumber: string, avatarStyle: AvatarStyle, availabilityStatus: AvailabilityStatus, version: number, createdAt: number, updatedAt: number, lastLoginAt: number | null, passwordChangedAt: number | null } | null };
+
+export type CreateUserMutationVariables = Exact<{
+  input: CreateUserInput;
+}>;
+
+
+export type CreateUserMutation = { createUser: { id: string, status: EntityStatus, name: string, username: string, emailAddress: string, timezone: string, timeFormat: TimeFormat, locale: string, isLocked: boolean, mustChangePassword: boolean, version: number, createdAt: number, updatedAt: number, lastLoginAt: number | null, passwordChangedAt: number | null } };
+
+export type PatchUserMutationVariables = Exact<{
+  id: string | number;
+  input: UserPatchInput;
+}>;
+
+
+export type PatchUserMutation = { patchUser: { id: string, businessUnitId: string, currentOrganizationId: string, status: EntityStatus, name: string, username: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string, timezone: string, timeFormat: TimeFormat, locale: string, isLocked: boolean, mustChangePassword: boolean, jobTitle: string, phoneNumber: string, avatarStyle: AvatarStyle, availabilityStatus: AvailabilityStatus, version: number, createdAt: number, updatedAt: number, lastLoginAt: number | null, passwordChangedAt: number | null } };
+
 export type UserTableRowFieldsFragment = { id: string, businessUnitId: string, currentOrganizationId: string, status: EntityStatus, name: string, username: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string, timezone: string, isLocked: boolean, mustChangePassword: boolean, version: number, lastLoginAt: number | null, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'UserTableRowFieldsFragment' };
 
 export type UserTableQueryVariables = Exact<{
@@ -17877,6 +17956,7 @@ export { TendersByShipmentDocument, LiveTenderByMoveDocument } from "./documents
 export { TimesheetsDocument, TimesheetDocument, OpenTimeClockEntryDocument, OpenTimeClockEntriesDocument, TimeClockEntriesDocument, PayrollExportsDocument, PayrollExportRowsDocument, ClockInDocument, ClockOutDocument, RecordTimeEntryDocument, DeleteTimeEntryDocument, TransitionTimesheetDocument, GeneratePayrollExportDocument, VoidPayrollExportDocument } from "./documents/timesheet/operations";
 export { DeskTractorCardDocument, DeskTractorPositionDocument, DeskTractorInspectionsDocument } from "./documents/tractor/desk";
 export { DeskTrailerCardDocument } from "./documents/trailer/desk";
+export { UserDetailDocument, CreateUserDocument, PatchUserDocument } from "./documents/user/detail";
 export { UserTableRowFieldsFragmentDoc, UserTableDocument } from "./documents/user/table";
 export { WatchtowerItemFieldsFragmentDoc, WatchtowerItemEventFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, MarkWatchtowerSeenDocument, DismissWatchtowerItemDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, WatchtowerItemHistoryDocument, WatchtowerResolutionCodesDocument, AssignWatchtowerItemDocument, AcknowledgeWatchtowerItemDocument, StartWatchtowerItemDocument, SnoozeWatchtowerItemDocument, SetWatchtowerItemDueDocument, CommentOnWatchtowerItemDocument, ResolveWatchtowerItemDocument, ReopenWatchtowerItemDocument } from "./documents/watchtower/watchtower";
 export { WorkerChecklistTemplateItemFieldsFragmentDoc, WorkerChecklistTemplateFieldsFragmentDoc, WorkerChecklistItemFieldsFragmentDoc, WorkerChecklistFieldsFragmentDoc, WorkerChecklistTemplateTableDocument, ActiveWorkerChecklistTemplatesDocument, WorkerChecklistsDocument, CreateWorkerChecklistTemplateDocument, UpdateWorkerChecklistTemplateDocument, ArchiveWorkerChecklistTemplateDocument, RestoreWorkerChecklistTemplateDocument, StartWorkerChecklistDocument, CompleteWorkerChecklistItemDocument, SkipWorkerChecklistItemDocument, MarkWorkerChecklistItemNotApplicableDocument, ReopenWorkerChecklistItemDocument, CancelWorkerChecklistDocument } from "./documents/worker-checklist/operations";

@@ -1,14 +1,11 @@
 package userservice
 
-import (
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/pkg/validationframework"
-)
+import "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 
 func NewTestValidator() *Validator {
-	return &Validator{
-		validator: validationframework.NewTenantedValidatorBuilder[*tenant.User]().
-			WithModelName("User").
-			Build(),
-	}
+	return newValidator(nil)
+}
+
+func NewTestValidatorWithRepository(users tenantports.UserRepository) *Validator {
+	return newValidator(users)
 }

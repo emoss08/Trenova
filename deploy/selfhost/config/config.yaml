@@ -160,6 +160,7 @@ security:
   passwordReset:
     baseUrl: https://localhost # from .env (https://DOMAIN)
     tokenTtl: 30m
+    inviteTokenTtl: 168h
     maxRequestsPerHour: 5
   graphql:
     maxRequestBodyBytes: 1048576

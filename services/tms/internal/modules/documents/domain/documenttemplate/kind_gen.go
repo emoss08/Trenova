@@ -79,6 +79,7 @@ const (
 	// KindPasswordResetEmail carries the single-use link that lets somebody who has
 	// lost their password choose a new one.
 	KindPasswordResetEmail Kind = "account.password_reset.email"
+	KindAccountInviteEmail Kind = "account.invite.email"
 
 	// Agent.
 
@@ -192,6 +193,7 @@ func AllKinds() []Kind {
 		KindCustomerStatusEmail,
 		KindDriverPortalInvitationEmail,
 		KindPasswordResetEmail,
+		KindAccountInviteEmail,
 		KindAgentRequestMissingDocsEmail,
 		KindAgentCustomerUpdateEmail,
 		KindAgentProposalReminderEmail,

@@ -2599,6 +2599,21 @@ type CreateSettlementDisputeInput struct {
 	Description      string                           `json:"description"`
 }
 
+type CreateUserInput struct {
+	Name         string `json:"name"`
+	Username     string `json:"username"`
+	EmailAddress string `json:"emailAddress"`
+	Timezone     string `json:"timezone"`
+	// Defaults to TwelveHour.
+	TimeFormat *TimeFormat `json:"timeFormat,omitempty"`
+	// Defaults to the instance's default language.
+	Locale             *string            `json:"locale,omitempty"`
+	Status             domaintypes.Status `json:"status"`
+	MustChangePassword *bool              `json:"mustChangePassword,omitempty"`
+	// Roles granted in the current organization. Every grant is checked against the caller's own access.
+	RoleIds []string `json:"roleIds,omitempty"`
+}
+
 type CreateWorkerPTOInput struct {
 	WorkerID  string         `json:"workerId"`
 	Type      worker.PTOType `json:"type"`
@@ -10403,6 +10418,29 @@ type UserConnection struct {
 type UserEdge struct {
 	Node   *tenant.User `json:"node"`
 	Cursor string       `json:"cursor"`
+}
+
+type UserPatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Status graphql.Omittable[*domaintypes.Status] `json:"status,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Name graphql.Omittable[*string] `json:"name,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	EmailAddress graphql.Omittable[*string] `json:"emailAddress,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Timezone graphql.Omittable[*string] `json:"timezone,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	TimeFormat graphql.Omittable[*TimeFormat] `json:"timeFormat,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Locale graphql.Omittable[*string] `json:"locale,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	IsLocked graphql.Omittable[*bool] `json:"isLocked,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	MustChangePassword graphql.Omittable[*bool] `json:"mustChangePassword,omitempty"`
+	// Omit to leave unchanged; null is rejected. An empty string clears it.
+	JobTitle graphql.Omittable[*string] `json:"jobTitle,omitempty"`
+	// Omit to leave unchanged; null is rejected. An empty string clears it.
+	PhoneNumber graphql.Omittable[*string] `json:"phoneNumber,omitempty"`
 }
 
 type VehicleInspection struct {

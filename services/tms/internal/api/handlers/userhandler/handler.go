@@ -72,11 +72,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpRead),
 		h.get,
 	)
-	api.PUT(
-		"/:userID/",
-		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
-		h.update,
-	)
 	api.GET(
 		"/:userID/role-assignments/",
 		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpRead),
@@ -86,11 +81,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:userID/effective-permissions/",
 		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpRead),
 		h.getUserEffectivePermissions,
-	)
-	api.PATCH(
-		"/:userID/",
-		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
-		h.patch,
 	)
 	api.POST(
 		"/bulk-update-status/",
@@ -823,94 +813,4 @@ func (h *Handler) switchOrganization(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
-}
-
-// @Summary Patch a user
-// @ID patchUser
-// @Tags Users
-// @Accept json
-// @Produce json
-// @Param userID path string true "User ID"
-// @Param request body tenant.User true "User payload"
-// @Success 200 {object} tenant.User
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/{userID}/ [patch]
-func (h *Handler) patch(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	userID, err := pulid.MustParse(c.Param("userID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	existing, err := h.service.GetByID(c.Request.Context(), tenantports.GetUserByIDRequest{
-		TenantInfo: pagination.TenantInfo{
-			UserID: userID,
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-		},
-		IncludeMemberships: true,
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	if err = authctx.BindJSON(c, authCtx, existing); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	updated, err := h.service.Update(c.Request.Context(), existing, authCtx.UserID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, updated)
-}
-
-// @Summary Update a user
-// @ID updateUser
-// @Tags Users
-// @Accept json
-// @Produce json
-// @Param userID path string true "User ID"
-// @Param request body tenant.User true "User payload"
-// @Success 200 {object} tenant.User
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/{userID}/ [put]
-func (h *Handler) update(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	userID, err := pulid.MustParse(c.Param("userID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity := new(tenant.User)
-	entity.ID = userID
-
-	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	updated, err := h.service.Update(c.Request.Context(), entity, authCtx.UserID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, updated)
 }
