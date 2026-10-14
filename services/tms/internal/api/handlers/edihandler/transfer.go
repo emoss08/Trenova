@@ -166,10 +166,24 @@ func (h *Handler) listInboundTransfers(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
+	inboundFileID := pulid.Nil
+	if raw := c.Query("inboundFileId"); raw != "" {
+		parsed, err := pulid.Parse(raw)
+		if err != nil {
+			h.eh.HandleError(c, errortypes.NewValidationError(
+				"inboundFileId",
+				errortypes.ErrInvalid,
+				"Inbound file ID is not a valid ID",
+			))
+			return
+		}
+		inboundFileID = parsed
+	}
+
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDITransfer], error) {
 		return h.service.ListInboundTransfers(
 			c.Request.Context(),
-			&ediports.ListEDITransfersRequest{Filter: req},
+			&ediports.ListEDITransfersRequest{Filter: req, InboundFileID: inboundFileID},
 		)
 	})
 }

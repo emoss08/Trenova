@@ -5,8 +5,8 @@ package agentmemoryrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +30,14 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
-	avery, jordan := data.User.ID, pulid.MustNew("usr_")
+	tx, err := db.BeginTx(ctx, nil)
+	require.NoError(t, err)
+	jordanUser := seedtest.NewUser(data.Organization.ID, data.BusinessUnit.ID).
+		WithUsername("jordan").
+		WithEmail("jordan@example.com").
+		Build(t, ctx, tx)
+	require.NoError(t, tx.Commit())
+	avery, jordan := data.User.ID, jordanUser.ID
 	billing, dispatch := pulid.MustNew("rol_"), pulid.MustNew("rol_")
 	now := timeutils.NowUnix()
 
@@ -56,10 +63,33 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 	billings := keep("Acme is billed net-45.", agent.MemoryScopeRole, pulid.Nil, billing)
 	dispatchs := keep("Dispatch note.", agent.MemoryScopeRole, pulid.Nil, dispatch)
 	paused := keep("Harbor wants PODs on every invoice.", agent.MemoryScopeUser, avery, pulid.Nil)
-	_, err := repo.SetStatus(ctx, agentports.SetAgentMemoryStatusQuery{
+	_, err = repo.SetStatus(ctx, agentports.SetAgentMemoryStatusQuery{
 		ID: paused.ID, TenantInfo: tenant, Status: agent.MemoryStatusPaused, At: now,
 	})
 	require.NoError(t, err)
+
+	// What Avery offered for the organization waits for an administrator: no
+	// prompt reads it, but her Desk lists it as hers to withdraw. Jordan's offer
+	// and an agent's suggestion are not hers.
+	offer := func(content string, by pulid.ID, source agent.MemorySource) *agent.Memory {
+		memory := &agent.Memory{
+			OrganizationID:  tenant.OrgID,
+			BusinessUnitID:  tenant.BuID,
+			Kind:            agent.MemoryKindInstruction,
+			Source:          source,
+			Status:          agent.MemoryStatusSuggested,
+			Content:         content,
+			CreatedByUserID: &by,
+		}
+		memory.SetAudience(agent.MemoryScopeOrganization, pulid.Nil, pulid.Nil)
+		created, err := repo.Create(ctx, memory)
+		require.NoError(t, err)
+
+		return created
+	}
+	averysOffer := offer("Granite wants the POD on the invoice.", avery, agent.MemorySourceUser)
+	jordansOffer := offer("Jordan's offer.", jordan, agent.MemorySourceUser)
+	agentsOffer := offer("An agent's offer.", avery, agent.MemorySourceAgent)
 
 	reader := agent.MemoryReader{UserID: avery, RoleIDs: []pulid.ID{billing}}
 	listed, err := repo.ListActive(ctx, agentports.ListActiveAgentMemoriesRequest{
@@ -96,10 +126,14 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 	for _, row := range rows {
 		listedIDs = append(listedIDs, row.Memory.ID)
 	}
-	assert.ElementsMatch(t, []pulid.ID{organization.ID, averys.ID, billings.ID, paused.ID}, listedIDs,
-		"the Desk lists the paused one too")
+	assert.ElementsMatch(t,
+		[]pulid.ID{organization.ID, averys.ID, billings.ID, paused.ID, averysOffer.ID},
+		listedIDs,
+		"the Desk lists the paused one too, and what she offered for the organization")
 	assert.NotContains(t, listedIDs, jordans.ID)
 	assert.NotContains(t, listedIDs, dispatchs.ID)
+	assert.NotContains(t, listedIDs, jordansOffer.ID, "another person's offer is theirs")
+	assert.NotContains(t, listedIDs, agentsOffer.ID, "an agent's suggestion waits in its conversation")
 
 	counts, err := repo.CountDesk(ctx, agentports.DeskMemoryFilter{TenantInfo: tenant, Reader: reader})
 	require.NoError(t, err)
@@ -111,10 +145,10 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 		}
 	}
 	assert.Equal(t, map[agent.MemoryScope]int{
-		agent.MemoryScopeOrganization: 1,
+		agent.MemoryScopeOrganization: 2,
 		agent.MemoryScopeUser:         2,
 		agent.MemoryScopeRole:         1,
-	}, byScope)
+	}, byScope, "her offer counts with the organization's")
 
 	searched, err := repo.ListDesk(ctx, agentports.ListDeskMemoriesQuery{
 		Filter: agentports.DeskMemoryFilter{TenantInfo: tenant, Reader: reader, Query: "facil"},

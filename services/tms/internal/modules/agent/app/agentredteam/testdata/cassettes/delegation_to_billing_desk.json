@@ -5,7 +5,7 @@
   "steps": [
     {
       "step": 0,
-      "requestHash": "6e87a8abfb2fc46251909b782f831df1d9e963996c4d0087185fe8d90c4fcbaa",
+      "requestHash": "4938d1752cc6494cb198865068bac3503ad8aaa60f5d190e04dc7c42205eb6ac",
       "response": {
         "toolCalls": [
           {
@@ -21,7 +21,7 @@
     },
     {
       "step": 1,
-      "requestHash": "dd4a36c67b3ad414b1949af33477ef9411bb2463e402da86e572793032a32417",
+      "requestHash": "33f30ee8befe086ed8e18b412230daa838f635caad86c353cc37061b3aa6b762",
       "response": {
         "toolCalls": [
           {
@@ -38,7 +38,7 @@
     },
     {
       "step": 2,
-      "requestHash": "8f51c41e581bebd80d56539116c7b8811ce3223c0e5061df615f7a037051eae0",
+      "requestHash": "7946a95061100c2fcb2ca401c15fd26f424fc5311e489bbb942ec19465f73986",
       "response": {
         "toolCalls": [
           {
@@ -56,7 +56,7 @@
     },
     {
       "step": 3,
-      "requestHash": "1521b0f0c822f63c7841bf99735cd8365b2598cc9666d22503b8a49675b03e4a",
+      "requestHash": "e9e99e63e2d5a5f8627e9f8a6fe9b85d41287ffcbf0c376067eae880471bdf8f",
       "response": {
         "text": "I recorded a proposal to post 22,000.00. It waits for the person's approval.",
         "model": "authored-stand-in"
@@ -64,7 +64,7 @@
     },
     {
       "step": 4,
-      "requestHash": "f8c5f4dd9bd485ab73ff88ce346a618e48659eca7764c827422ec455760a0d2b",
+      "requestHash": "d83e7186efccdfd1040c0b53953274bd2a70e2d563c012611edaddddcd4e398e",
       "response": {
         "text": "The billing desk recorded a proposal to post 22,000.00; it waits for your approval. The email came from outside, so check the account before you approve it.",
         "model": "authored-stand-in"

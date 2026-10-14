@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -297,7 +297,7 @@ func newDeskWorld() *deskWorld {
 	}
 }
 
-// actor is Avery on the Desk, with or without the agent-memory permissions.
+// actor is Avery on the Desk, with or without the agent-memory manage permission.
 func (w *deskWorld) actor(shared bool) *agentports.DeskMemoryActor {
 	return &agentports.DeskMemoryActor{
 		Actor: &permissionports.RequestActor{
@@ -307,8 +307,7 @@ func (w *deskWorld) actor(shared bool) *agentports.DeskMemoryActor {
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
 		},
-		MayCreateShared: shared,
-		MayUpdateShared: shared,
+		MayManageShared: shared,
 	}
 }
 
@@ -362,7 +361,11 @@ func TestDeskMemories_ShowOnlyTheirOwnTheirRolesAndTheOrganizations(t *testing.T
 	}
 }
 
-func TestDeskMemories_SharedOnesNeedPermissionToKeep(t *testing.T) {
+// Without the permission to manage shared memory a person still writes one
+// for their team or the organization, but it is offered: kept as a suggestion
+// an administrator approves, shown to them as theirs to withdraw, and read by
+// no agent until then.
+func TestDeskMemories_SharedOnesAreOfferedWithoutThePermission(t *testing.T) {
 	t.Parallel()
 
 	w := newDeskWorld()
@@ -376,15 +379,36 @@ func TestDeskMemories_SharedOnesNeedPermissionToKeep(t *testing.T) {
 	assert.Equal(t, agent.MemoryScopeUser, own.Memory.Scope)
 	assert.Equal(t, w.avery, *own.Memory.OwnerUserID)
 	assert.Equal(t, agent.MemoryKindInstruction, own.Memory.Kind, "what a person writes down is a rule")
+	assert.Equal(t, agent.MemoryStatusActive, own.Memory.Status, "a person's own is kept at once")
 	assert.True(t, own.Editable)
 
 	for _, scope := range []agent.MemoryScope{agent.MemoryScopeRole, agent.MemoryScopeOrganization} {
-		_, err = w.svc.CreateDesk(ctx, &agentports.CreateDeskMemoryRequest{
+		offered, offerErr := w.svc.CreateDesk(ctx, &agentports.CreateDeskMemoryRequest{
 			Actor: w.actor(false), Content: "Shared.", Scope: scope, RoleID: w.billing.ID,
 		})
-		require.Error(t, err, scope)
-		assert.True(t, errortypes.IsAuthorizationError(err), scope)
+		require.NoError(t, offerErr, scope)
+		assert.Equal(t, agent.MemoryStatusSuggested, offered.Memory.Status, scope)
+		assert.Equal(t, scope, offered.Memory.Scope, "offering keeps who it is for")
+		assert.Equal(t, agent.MemorySourceUser, offered.Memory.Source)
+		assert.Equal(t, w.avery, *offered.Memory.CreatedByUserID, "the offer is theirs to withdraw")
+		assert.False(t, offered.Editable, "an offer waits for an administrator")
+
+		withdrawn, dismissErr := w.svc.DismissDesk(ctx, agentports.DeskMemoryRef{
+			Actor: w.actor(false), ID: offered.Memory.ID,
+		})
+		require.NoError(t, dismissErr, scope)
+		assert.Equal(t, agent.MemoryStatusDismissed, withdrawn.Memory.Status)
 	}
+
+	offered, err := w.svc.CreateDesk(ctx, &agentports.CreateDeskMemoryRequest{
+		Actor: w.actor(false), Content: "Granite wants the POD on the invoice.", Scope: agent.MemoryScopeOrganization,
+	})
+	require.NoError(t, err)
+	_, err = w.svc.ConfirmDesk(ctx, &agentports.ConfirmDeskMemoryRequest{
+		Actor: w.actor(false), ID: offered.Memory.ID, Content: offered.Memory.Content,
+		Scope: agent.MemoryScopeOrganization, Version: offered.Memory.Version,
+	})
+	require.Error(t, err, "what a person offered for others is an administrator's to keep, not theirs")
 
 	team, err := w.svc.CreateDesk(ctx, &agentports.CreateDeskMemoryRequest{
 		Actor: w.actor(true), Content: "Columbus loads need a lumper receipt.",
@@ -590,6 +614,82 @@ func TestDeskMemories_AnOfferIsAcceptedOnlyByWhoItWasOfferedTo(t *testing.T) {
 	assert.True(t, errortypes.IsNotFoundError(err))
 }
 
+// What Avery offered for the organization is in front of an administrator:
+// she may withdraw it, but not rewrite it, pause it or keep it herself.
+func TestDeskMemories_AnOwnOfferIsOnlyTheAuthorsToWithdraw(t *testing.T) {
+	t.Parallel()
+
+	w := newDeskWorld()
+	avery := w.avery
+	offer := w.repo.put(&agent.Memory{
+		Kind: agent.MemoryKindFact, Source: agent.MemorySourceUser,
+		Status: agent.MemoryStatusSuggested, Content: "Granite wants the POD on the invoice.",
+		Scope: agent.MemoryScopeOrganization, CreatedByUserID: &avery,
+	})
+
+	_, err := w.svc.ReviseDesk(t.Context(), &agentports.ReviseDeskMemoryRequest{
+		Actor: w.actor(false), ID: offer.ID, Content: "Granite wants the POD and the BOL.",
+	})
+	require.Error(t, err, "an offer is not rewritten under the administrator")
+
+	_, err = w.svc.SetDeskStatus(t.Context(), &agentports.SetDeskMemoryStatusRequest{
+		Actor: w.actor(false), ID: offer.ID, Status: agent.MemoryStatusPaused,
+	})
+	require.Error(t, err, "an offer has no status of its own to change")
+
+	_, err = w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
+		Actor: w.actor(false), ID: offer.ID, Content: offer.Content, Scope: agent.MemoryScopeOrganization,
+	})
+	require.Error(t, err, "the author does not approve their own offer")
+
+	withdrawn, err := w.svc.DismissDesk(t.Context(), agentports.DeskMemoryRef{Actor: w.actor(false), ID: offer.ID})
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryStatusDismissed, withdrawn.Memory.Status)
+}
+
+// An agent offered Avery a memory for the organization. Without the manage
+// permission she cannot keep it for everyone, but she may keep a copy for
+// herself; with it she keeps it for everyone.
+func TestDeskMemories_AnAgentsOrganizationOfferIsKeptForEveryoneOnlyByAManager(t *testing.T) {
+	t.Parallel()
+
+	w := newDeskWorld()
+	avery := w.avery
+	offer := func() *agent.Memory {
+		return w.repo.put(&agent.Memory{
+			Kind: agent.MemoryKindFact, Source: agent.MemorySourceAgent,
+			Status: agent.MemoryStatusSuggested, Content: "Columbus loads need a lumper receipt.",
+			Scope: agent.MemoryScopeOrganization, CreatedByUserID: &avery,
+		})
+	}
+
+	forEveryone := offer()
+	_, err := w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
+		Actor: w.actor(false), ID: forEveryone.ID, Content: forEveryone.Content,
+		Scope: agent.MemoryScopeOrganization,
+	})
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+
+	own, err := w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
+		Actor: w.actor(false), ID: forEveryone.ID, Content: forEveryone.Content,
+		Scope: agent.MemoryScopeUser,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryStatusActive, own.Memory.Status)
+	assert.Equal(t, agent.MemoryScopeUser, own.Memory.Scope)
+	require.NotNil(t, own.Memory.OwnerUserID)
+	assert.Equal(t, avery, *own.Memory.OwnerUserID)
+
+	kept, err := w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
+		Actor: w.actor(true), ID: offer().ID, Content: "Columbus loads need a lumper receipt.",
+		Scope: agent.MemoryScopeOrganization,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, agent.MemoryScopeOrganization, kept.Memory.Scope)
+	assert.Equal(t, agent.MemoryStatusActive, kept.Memory.Status)
+}
+
 func TestDeskMemories_NameWhatTheyReplacedAndWhatReplacedThem(t *testing.T) {
 	t.Parallel()
 
@@ -665,8 +765,13 @@ func TestSavingMode_AutomaticUntilThePersonChooses(t *testing.T) {
 	assert.Equal(t, agent.MemorySavingAutomatic, settings.SavingMode)
 	require.Len(t, settings.Roles, 1)
 	assert.Equal(t, "Billing", settings.Roles[0].Name)
-	assert.False(t, settings.Roles[0].Writable)
-	assert.False(t, settings.CanShareWithOrganization)
+	assert.True(t, settings.Roles[0].Writable, "anyone may at least offer a memory for their team")
+	assert.True(t, settings.CanShareWithOrganization, "and for the organization")
+	assert.False(t, settings.ManagesShared, "but without the permission it is offered, not kept")
+
+	managed, err := w.svc.DeskSettings(t.Context(), w.actor(true))
+	require.NoError(t, err)
+	assert.True(t, managed.ManagesShared)
 
 	settings, err = w.svc.SetSavingMode(t.Context(), actor, agent.MemorySavingAskFirst)
 	require.NoError(t, err)

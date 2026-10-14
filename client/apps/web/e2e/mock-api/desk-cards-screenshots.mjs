@@ -90,6 +90,34 @@ const CARDS = [
     empty: "edi-990-acme",
     gone: "edi-gone",
   },
+  {
+    card: "edi-file",
+    loaded: "edi-file-sim",
+    attention: "edi-file-acme",
+    empty: "edi-file-old",
+    gone: "edi-file-gone",
+  },
+  {
+    card: "edi-file-held",
+    loaded: "edi-file-bad",
+    attention: "edi-file-dup",
+    empty: "edi-file-old",
+    gone: "edi-file-gone",
+  },
+  {
+    card: "tender",
+    loaded: "tender-accepted",
+    attention: "tender-mapping",
+    empty: "tender-superseded",
+    gone: "tender-gone",
+  },
+  {
+    card: "tender-closed",
+    loaded: "tender-outbound",
+    attention: "tender-failed",
+    empty: "tender-declined",
+    gone: "tender-gone",
+  },
 ];
 
 function shotsFor({ card, loaded, attention, empty, gone }) {

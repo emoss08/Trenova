@@ -125,9 +125,6 @@ func TestTheAllowListGrantsNothingNoToolClaims(t *testing.T) {
 		permission.ResourceAgentException: {
 			permission.OpRead: "the loop reads its own exceptions",
 		},
-		permission.ResourceAgentMemory: {
-			permission.OpUpdate: "remember overwrites what it wrote before",
-		},
 		permission.ResourceBillingQueue: {
 			permission.OpRead: "agentsubjectservice loads the item a run is about",
 		},

@@ -92,6 +92,27 @@ export function usageLine(
   return t("Used {0}× · last {1}", memory.useCount, lower);
 }
 
+/**
+ * Whether a memory, or a line of profile guidance, is waiting for someone else
+ * to keep it: an administrator for anything shared, the person it was offered
+ * to otherwise.
+ */
+export function isOffered(record: { status: string }): boolean {
+  return record.status === "Suggested";
+}
+
+/** Who an offer is for, as the object of "offered for …". */
+export function offeredFor(memory: { scope: string }, t: TranslateFn): string {
+  switch (memory.scope) {
+    case "Role":
+      return t("their team");
+    case "Agent":
+      return t("everyone using this agent");
+    default:
+      return t("the organization");
+  }
+}
+
 /** Who a memory is kept for, in the page's words. */
 export function scopeLabel(
   memory: { scope: string; roleName?: string | null },

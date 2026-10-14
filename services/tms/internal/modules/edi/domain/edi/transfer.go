@@ -161,6 +161,17 @@ func (t *EDITransfer) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	return nil
 }
 
+func (t *EDITransfer) ReceivedBy(orgID pulid.ID) bool {
+	return t.TargetOrganizationID == orgID
+}
+
+func (t *EDITransfer) Counterparty(orgID pulid.ID) *EDIPartner {
+	if t.ReceivedBy(orgID) {
+		return t.TargetPartner
+	}
+	return t.SourcePartner
+}
+
 func (t *EDITransfer) GetID() pulid.ID {
 	return t.ID
 }

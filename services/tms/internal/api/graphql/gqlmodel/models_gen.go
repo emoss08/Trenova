@@ -1036,7 +1036,7 @@ type AgentProfile struct {
 	Current *agentprofile.Profile `json:"current,omitempty"`
 	// The newest attempt, when it failed after the current version was written.
 	LatestFailure *agentprofile.Profile `json:"latestFailure,omitempty"`
-	// The active guidance, newest first.
+	// The active and the offered guidance, active first, then newest first.
 	Guidance []*agentprofile.Guidance `json:"guidance"`
 }
 
@@ -2492,7 +2492,7 @@ type CreateCarrierInvoiceMatchInput struct {
 
 type CreateDeskMemoryInput struct {
 	Content string `json:"content"`
-	// User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds.
+	// User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise.
 	Scope  agent.MemoryScope `json:"scope"`
 	RoleID *string           `json:"roleId,omitempty"`
 }
@@ -2923,7 +2923,7 @@ type DeskMemory struct {
 	LastUsedAt *int `json:"lastUsedAt,omitempty"`
 	CreatedAt  int  `json:"createdAt"`
 	Version    int  `json:"version"`
-	// The person may change, pause and forget it: their own always, a role's or the organization's with permission to update agent memories.
+	// The person may change, pause and forget it: their own always, a role's or the organization's when they manage agent memory. An offered memory waits for an administrator and is not editable.
 	Editable bool `json:"editable"`
 	// Why it was kept, in the words of the agent that kept it; empty for one a person wrote down.
 	Reason string `json:"reason"`
@@ -2964,7 +2964,7 @@ type DeskMemoryPage struct {
 type DeskMemoryRole struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-	// The person may keep memories for the role: it needs permission to create agent memories.
+	// The person may write memories for the role: kept at once when they manage agent memory, offered to an administrator otherwise.
 	Writable bool `json:"writable"`
 }
 
@@ -2972,8 +2972,10 @@ type DeskMemorySettings struct {
 	SavingMode agent.MemorySavingMode `json:"savingMode"`
 	// The person's roles by name.
 	Roles []*DeskMemoryRole `json:"roles"`
-	// The person may keep memories for the whole organization.
+	// The person may write memories for the whole organization: kept at once when they manage agent memory, offered to an administrator otherwise.
 	CanShareWithOrganization bool `json:"canShareWithOrganization"`
+	// The person manages agent memory: what they write for a team or the organization is kept at once, and they may change what others share.
+	ManagesShared bool `json:"managesShared"`
 }
 
 type DetachPayEventInput struct {

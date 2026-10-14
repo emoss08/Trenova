@@ -96,9 +96,10 @@ export function memoryChips(
 
 /**
  * What the page holds beside what the server listed: the row being edited and
- * its draft, the memories forgotten in this visit, which stay in place as a
- * "Forgotten · Undo" line until the person leaves, and the memories added in
- * this visit, which arrive with a highlight.
+ * its draft, the memories forgotten or the offers withdrawn in this visit,
+ * which stay in place as a "Forgotten · Undo" or "Withdrawn" line until the
+ * person leaves, and the memories added in this visit, which arrive with a
+ * highlight.
  */
 export type MemoryPageState = {
   editing: { id: string; draft: string } | null;
@@ -172,9 +173,10 @@ function newestFirst(a: DeskMemory, b: DeskMemory): number {
 
 /**
  * The rows the list shows: what the server listed, with each memory forgotten
- * in this visit put back where it stood as a forgotten line. The server no
- * longer lists a forgotten memory, so without this its Undo would vanish with
- * the next refresh. Forgotten ones outside the filter or the search stay out.
+ * or offer withdrawn in this visit put back where it stood as a gone line. The
+ * server no longer lists either, so without this the Undo or the Withdrawn
+ * notice would vanish with the next refresh. Gone ones outside the filter or
+ * the search stay out.
  */
 export function memoryRows(
   listed: readonly DeskMemory[],

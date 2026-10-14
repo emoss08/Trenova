@@ -28,19 +28,44 @@ const (
 	MaxActiveGuidance = 50
 )
 
+// GuidanceStatus is where a line stands. Active lines shape the next version;
+// a Suggested line was offered about the organization by someone who may not
+// manage shared memory, or by an agent, and waits for an administrator to
+// approve it or dismiss it; Retired and Dismissed lines are kept for the record.
 type GuidanceStatus string
 
 const (
-	GuidanceStatusActive  = GuidanceStatus("Active")
-	GuidanceStatusRetired = GuidanceStatus("Retired")
+	GuidanceStatusActive    = GuidanceStatus("Active")
+	GuidanceStatusSuggested = GuidanceStatus("Suggested")
+	GuidanceStatusRetired   = GuidanceStatus("Retired")
+	GuidanceStatusDismissed = GuidanceStatus("Dismissed")
 )
 
 func (s GuidanceStatus) IsValid() bool {
-	return s == GuidanceStatusActive || s == GuidanceStatusRetired
+	switch s {
+	case GuidanceStatusActive,
+		GuidanceStatusSuggested,
+		GuidanceStatusRetired,
+		GuidanceStatusDismissed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Closed reports a line nobody reads any more: retired after shaping the
+// profile, or dismissed before it ever did.
+func (s GuidanceStatus) Closed() bool {
+	return s == GuidanceStatusRetired || s == GuidanceStatusDismissed
 }
 
 func AllGuidanceStatuses() []GuidanceStatus {
-	return []GuidanceStatus{GuidanceStatusActive, GuidanceStatusRetired}
+	return []GuidanceStatus{
+		GuidanceStatusActive,
+		GuidanceStatusSuggested,
+		GuidanceStatusRetired,
+		GuidanceStatusDismissed,
+	}
 }
 
 // GuidanceSource says who worded the line: a person typing it, or an agent
@@ -117,8 +142,12 @@ func (g *Guidance) Validate(multiErr *errortypes.MultiError) {
 	if (g.Subject == SubjectUser) != (g.UserID != nil && g.UserID.IsNotNil()) {
 		multiErr.Add("userId", errortypes.ErrInvalid, "Only guidance about a person names them")
 	}
-	if (g.Status == GuidanceStatusRetired) != (g.RetiredAt != nil) {
-		multiErr.Add("retiredAt", errortypes.ErrInvalid, "Only retired guidance says when")
+	if g.Status.Closed() != (g.RetiredAt != nil) {
+		multiErr.Add(
+			"retiredAt",
+			errortypes.ErrInvalid,
+			"Only retired or dismissed guidance says when",
+		)
 	}
 }
 
@@ -128,7 +157,20 @@ func (g *Guidance) Retire(by pulid.ID, at int64) {
 	g.RetiredAt = &at
 }
 
+// Approve makes an offered line one the next version honours.
+func (g *Guidance) Approve() { g.Status = GuidanceStatusActive }
+
+// Dismiss closes an offered line without it ever shaping the profile; who
+// closed it and when are kept as for a retired line.
+func (g *Guidance) Dismiss(by pulid.ID, at int64) {
+	g.Status = GuidanceStatusDismissed
+	g.RetiredByID = &by
+	g.RetiredAt = &at
+}
+
 func (g *Guidance) IsActive() bool { return g != nil && g.Status == GuidanceStatusActive }
+
+func (g *Guidance) IsSuggested() bool { return g != nil && g.Status == GuidanceStatusSuggested }
 
 func (g *Guidance) GetID() pulid.ID { return g.ID }
 

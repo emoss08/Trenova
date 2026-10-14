@@ -30,8 +30,11 @@ type RememberRequest struct {
 	Scope       agent.MemoryScope
 	OwnerUserID pulid.ID
 	RoleID      pulid.ID
-	// Suggest keeps the memory as a suggestion for the person to accept
-	// rather than reading it into prompts at once: they asked to be asked.
+	// Suggest keeps the memory as a suggestion rather than reading it into
+	// prompts at once: the person asked to be asked, or the memory is for a
+	// team, the organization or every agent and the actor may not manage
+	// shared memory, so an administrator decides. The service sets it in the
+	// second case whatever the caller asked.
 	Suggest bool
 	// PersonUserID is the person whose conversation the memory was picked
 	// up in, recorded as who it came from; only they accept a suggestion.
@@ -250,11 +253,11 @@ type DeskMemoryCount struct {
 // memories beyond their own.
 type DeskMemoryActor struct {
 	Actor *permissionports.RequestActor
-	// MayCreateShared and MayUpdateShared are the agent-memory create and
-	// update permissions, which a role's and the organization's memories
-	// need: they reach other people's conversations.
-	MayCreateShared bool
-	MayUpdateShared bool
+	// MayManageShared is the agent-memory manage permission, which keeping,
+	// changing, pausing or forgetting a role's, the organization's or every
+	// agent's memories needs: they reach other people's conversations.
+	// Without it a person offers such a memory and an administrator keeps it.
+	MayManageShared bool
 }
 
 type ListDeskMemoriesRequest struct {
@@ -276,9 +279,14 @@ type DeskMemoryPage struct {
 }
 
 type DeskMemorySettings struct {
-	SavingMode               agent.MemorySavingMode
-	Roles                    []DeskMemoryRole
+	SavingMode agent.MemorySavingMode
+	Roles      []DeskMemoryRole
+	// CanShareWithOrganization says the person may put a memory in front of
+	// the whole organization, kept at once or offered for an administrator.
 	CanShareWithOrganization bool
+	// ManagesShared says the person keeps shared memories themselves; without
+	// it what they keep for a team or the organization is offered.
+	ManagesShared bool
 }
 
 type CreateDeskMemoryRequest struct {
@@ -339,6 +347,13 @@ type AgentMemoryService interface {
 		req *UpdateAgentMemoryRequest,
 		actor *permissionports.RequestActor,
 	) (*agent.Memory, error)
+	// PreviewSetStatus is the memory SetStatus would change, after the same
+	// checks, so a preview can say when the change would be refused.
+	PreviewSetStatus(
+		ctx context.Context,
+		req *SetAgentMemoryStatusRequest,
+		actor *permissionports.RequestActor,
+	) (*agent.Memory, error)
 	SetStatus(
 		ctx context.Context,
 		req SetAgentMemoryStatusRequest,
@@ -358,6 +373,11 @@ type AgentMemoryService interface {
 		req *ListAgentMemoryConnectionRequest,
 	) (*pagination.CursorListResult[*agent.Memory], error)
 	Recall(ctx context.Context, req RecallAgentMemoriesRequest) ([]RecalledMemory, error)
+	// MayManageShared reports whether the person holds agent-memory manage:
+	// the right to keep, change and approve what reaches other people's
+	// conversations. Nobody but a person holds it, and a check that cannot
+	// be made reads as not held.
+	MayManageShared(ctx context.Context, tenant pagination.TenantInfo, userID pulid.ID) bool
 	// ForContext returns the memories a prompt may carry, best first, with
 	// the records they were read for. Nothing is counted as used until a
 	// prompt carries it; RecordUse does that.

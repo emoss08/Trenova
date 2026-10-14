@@ -1227,9 +1227,17 @@ export type AgentProfileGuidanceSource =
   | 'Agent'
   | 'Person';
 
+/**
+ * Where a line stands. Active lines shape the next version. A Suggested line
+ * about the organization was offered by someone who does not manage agent memory,
+ * or written down by an agent, and waits for an administrator to approve or
+ * dismiss it. Retired and Dismissed lines are kept for the record.
+ */
 export type AgentProfileGuidanceStatus =
   | 'Active'
-  | 'Retired';
+  | 'Dismissed'
+  | 'Retired'
+  | 'Suggested';
 
 /** Where a version of a profile stands. Only the current version is told to agents. */
 export type AgentProfileStatus =
@@ -2689,7 +2697,7 @@ export type CreateCarrierInvoiceMatchInput = {
 export type CreateDeskMemoryInput = {
   content: string;
   roleId?: string | number | null | undefined;
-  /** User, Role or Organization. Role and Organization need permission to create agent memories, and Role a role the person holds. */
+  /** User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise. */
   scope: AgentMemoryScope;
 };
 
@@ -9884,7 +9892,7 @@ export type AgentProposalCountQuery = { agentProposals: { totalCount: number | n
 
 export type DeskMemoryFieldsFragment = { id: string, content: string, kind: AgentMemoryKind, scope: AgentMemoryScope, roleId: string | null, roleName: string, status: AgentMemoryStatus, source: AgentMemorySource, sourceTitle: string, useCount: number, lastUsedAt: number | null, createdAt: number, version: number, editable: boolean, reason: string, quotes: Array<string>, replaces: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus } | null } & { ' $fragmentName'?: 'DeskMemoryFieldsFragment' };
 
-export type DeskMemorySettingsFieldsFragment = { savingMode: AgentMemorySavingMode, canShareWithOrganization: boolean, roles: Array<{ id: string, name: string, writable: boolean }> } & { ' $fragmentName'?: 'DeskMemorySettingsFieldsFragment' };
+export type DeskMemorySettingsFieldsFragment = { savingMode: AgentMemorySavingMode, canShareWithOrganization: boolean, managesShared: boolean, roles: Array<{ id: string, name: string, writable: boolean }> } & { ' $fragmentName'?: 'DeskMemorySettingsFieldsFragment' };
 
 export type DeskMemoriesQueryVariables = Exact<{
   input: DeskMemoriesInput;
@@ -10056,7 +10064,7 @@ export type ResolveAgentExceptionMutationVariables = Exact<{
 
 export type ResolveAgentExceptionMutation = { resolveAgentException: { id: string, resolutionState: AgentResolutionState, resolutionNotes: string, version: number, updatedAt: number } };
 
-export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, tainted: boolean, taints: boolean, reviewedByUserId: string | null, reviewedAt: number | null, sourceRunId: string | null, sourceProposalId: string | null, sourceThreadId: string | null, reflectionId: string | null, supersedesId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number, supersedes: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus, createdAt: number } | null, evidence: { feedbackIds: Array<string>, patternKey: string, ratingCount: number, distinctUsers: number, distinctThreads: number, reason: string, quotes: Array<string>, firstRatedAt: number, lastRatedAt: number, signals: Array<string> } | null } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
+export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, scope: AgentMemoryScope, roleId: string | null, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, tainted: boolean, taints: boolean, reviewedByUserId: string | null, reviewedAt: number | null, sourceRunId: string | null, sourceProposalId: string | null, sourceThreadId: string | null, reflectionId: string | null, supersedesId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number, supersedes: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus, createdAt: number } | null, evidence: { feedbackIds: Array<string>, patternKey: string, ratingCount: number, distinctUsers: number, distinctThreads: number, reason: string, quotes: Array<string>, firstRatedAt: number, lastRatedAt: number, signals: Array<string> } | null } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
 
 export type AgentMemoryTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -10235,6 +10243,20 @@ export type RegenerateAgentOrganizationProfileMutationVariables = Exact<{ [key: 
 
 
 export type RegenerateAgentOrganizationProfileMutation = { regenerateAgentOrganizationProfile: boolean };
+
+export type ApproveAgentOrganizationProfileGuidanceMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ApproveAgentOrganizationProfileGuidanceMutation = { approveAgentOrganizationProfileGuidance: { ' $fragmentRefs'?: { 'AgentProfileGuidanceFieldsFragment': AgentProfileGuidanceFieldsFragment } } };
+
+export type DismissAgentOrganizationProfileGuidanceMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DismissAgentOrganizationProfileGuidanceMutation = { dismissAgentOrganizationProfileGuidance: { ' $fragmentRefs'?: { 'AgentProfileGuidanceFieldsFragment': AgentProfileGuidanceFieldsFragment } } };
 
 export type AddMyAgentProfileGuidanceMutationVariables = Exact<{
   input: AgentProfileGuidanceInput;
@@ -18233,7 +18255,7 @@ export { AgentExceptionTableRowFieldsFragmentDoc, AgentExceptionDetailFieldsFrag
 export { AgentMemoryTableRowFieldsFragmentDoc, AgentReflectionRowFieldsFragmentDoc, AgentMemoryTableDocument, AgentMemoryCountDocument, AgentMemoryUsageDocument, CreateAgentMemoryDocument, UpdateAgentMemoryDocument, SetAgentMemoryStatusDocument, ReviewAgentMemoryDocument, ApproveAgentMemorySuggestionDocument, DismissAgentMemorySuggestionDocument, AgentReflectionsDocument } from "./documents/agent/memories";
 export { AgentPlanTableRowFieldsFragmentDoc, AgentPlanTableDocument, AgentPlanDetailDocument, DecideAgentPlanDocument } from "./documents/agent/plans";
 export { AgentProposalPreviewFieldsFragmentDoc, AgentPlanPreviewFieldsFragmentDoc, AgentProposalPreviewDocument, MyProposalPreviewDocument, AgentPlanPreviewDocument, MyPlanPreviewDocument } from "./documents/agent/previews";
-export { AgentProfileVersionFieldsFragmentDoc, AgentProfileGuidanceFieldsFragmentDoc, AgentProfileFieldsFragmentDoc, AgentOrganizationProfileDocument, AgentOrganizationProfileHistoryDocument, MyAgentProfileDocument, AddAgentOrganizationProfileGuidanceDocument, RetireAgentOrganizationProfileGuidanceDocument, RegenerateAgentOrganizationProfileDocument, AddMyAgentProfileGuidanceDocument, RetireMyAgentProfileGuidanceDocument, RegenerateMyAgentProfileDocument } from "./documents/agent/profile";
+export { AgentProfileVersionFieldsFragmentDoc, AgentProfileGuidanceFieldsFragmentDoc, AgentProfileFieldsFragmentDoc, AgentOrganizationProfileDocument, AgentOrganizationProfileHistoryDocument, MyAgentProfileDocument, AddAgentOrganizationProfileGuidanceDocument, RetireAgentOrganizationProfileGuidanceDocument, RegenerateAgentOrganizationProfileDocument, ApproveAgentOrganizationProfileGuidanceDocument, DismissAgentOrganizationProfileGuidanceDocument, AddMyAgentProfileGuidanceDocument, RetireMyAgentProfileGuidanceDocument, RegenerateMyAgentProfileDocument } from "./documents/agent/profile";
 export { AgentEvidenceRefFieldsFragmentDoc, AgentProposalTableRowFieldsFragmentDoc, AgentProposalDetailFieldsFragmentDoc, AgentProposalTableDocument, AgentProposalDetailDocument, DecideAgentProposalDocument } from "./documents/agent/proposals";
 export { AgentSuiteRunFieldsFragmentDoc, AgentQualityPointFieldsFragmentDoc, AgentWorstRatedAnswerFieldsFragmentDoc, AgentQualityControlFieldsFragmentDoc, AgentSuiteRunCaseFieldsFragmentDoc, AgentQualityOverviewDocument, AgentQualityAgentTableDocument, AgentWorstRatedAnswerTableDocument, AgentQualityDocument, AgentSuiteRunTableDocument, AgentSuiteRunDocument, AgentSuiteRunCaseTableDocument, AgentQualityControlDocument, UpdateAgentQualityControlDocument, RunAgentSuiteDocument } from "./documents/agent/quality";
 export { AiRetrievalStatusFieldsFragmentDoc, AiRetrievalFailedEntryFieldsFragmentDoc, AiRetrievalStatusDocument, AiRetrievalReindexEstimateDocument, AiRetrievalFailedEntryTableDocument, UpdateAiRetrievalSettingsDocument, ReindexAiRetrievalSourceDocument } from "./documents/agent/retrieval";

@@ -2,7 +2,6 @@ package edix12inspect
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -40,16 +39,22 @@ func validateRequiredEnvelope(segments []X12Segment) []NormalizedDiagnostic {
 	return diagnostics
 }
 
+type envelopeNesting struct {
+	present       map[string]bool
+	inInterchange bool
+	inGroup       bool
+	inTransaction bool
+}
+
 func validateEnvelopeOrder(segments []X12Segment) []NormalizedDiagnostic {
 	diagnostics := []NormalizedDiagnostic{}
-	lastOrder := -1
+	nesting := envelopeNesting{present: make(map[string]bool, len(requiredEnvelopeOrder))}
+	for i := range segments {
+		nesting.present[segments[i].SegmentID] = true
+	}
 	for i := range segments {
 		segment := &segments[i]
-		order := slices.Index(requiredEnvelopeOrder, segment.SegmentID)
-		if order < 0 {
-			continue
-		}
-		if order < lastOrder {
+		if nesting.outOfOrder(segment.SegmentID) {
 			diagnostics = append(diagnostics, NormalizedDiagnostic{
 				Severity:     edi.ValidationSeverityError,
 				Code:         "x12.envelope.order",
@@ -60,12 +65,50 @@ func validateEnvelopeOrder(segments []X12Segment) []NormalizedDiagnostic {
 					"Envelope segment %s appears out of order.",
 					segment.SegmentID,
 				),
-				SuggestedFix: "Order envelope controls as ISA, GS, ST, SE, GE, IEA.",
+				SuggestedFix: "Nest each ST/SE transaction set in a GS/GE group, " +
+					"and each group in the ISA/IEA interchange.",
 			})
 		}
-		lastOrder = max(lastOrder, order)
+		nesting.advance(segment.SegmentID)
 	}
 	return diagnostics
+}
+
+func (n *envelopeNesting) outOfOrder(segmentID string) bool {
+	switch segmentID {
+	case "ISA":
+		return n.inInterchange
+	case "GS":
+		return n.present["ISA"] && (!n.inInterchange || n.inGroup)
+	case "ST":
+		return n.present["GS"] && (!n.inGroup || n.inTransaction)
+	case "GE":
+		return n.inTransaction
+	case "IEA":
+		return n.inGroup
+	default:
+		return false
+	}
+}
+
+func (n *envelopeNesting) advance(segmentID string) {
+	switch segmentID {
+	case "ISA":
+		n.inInterchange = true
+	case "GS":
+		n.inGroup = true
+	case "ST":
+		n.inTransaction = true
+	case "SE":
+		n.inTransaction = false
+	case "GE":
+		n.inGroup = false
+		n.inTransaction = false
+	case "IEA":
+		n.inInterchange = false
+		n.inGroup = false
+		n.inTransaction = false
+	}
 }
 
 func validateISA(segments []X12Segment) []NormalizedDiagnostic {

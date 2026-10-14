@@ -34,10 +34,11 @@ beforeEach(() => {
 /*
 A lesson an agent offers in a person's own conversation is theirs to keep or
 turn down on the Desk. AI Control's queue holds only what reaches beyond one
-person: a lesson for everyone using an agent, and one for the organization.
+person: a lesson for everyone using an agent, one for the organization, and a
+memory a colleague offered for their team.
 */
 describe("fetchAgentMemorySuggestions", () => {
-  it("asks for suggestions kept for an agent or the organization, newest first", async () => {
+  it("asks for suggestions kept for an agent, a team or the organization, newest first", async () => {
     requestGraphQLMock.mockResolvedValue({ agentMemories: { edges: [] } } as never);
     const controller = new AbortController();
 
@@ -50,7 +51,7 @@ describe("fetchAgentMemorySuggestions", () => {
     expect(call.variables?.input).toMatchObject({
       fieldFilters: [
         { field: "status", operator: "eq", value: "Suggested" },
-        { field: "scope", operator: "in", value: ["Agent", "Organization"] },
+        { field: "scope", operator: "in", value: ["Agent", "Organization", "Role"] },
       ],
       sort: [{ field: "createdAt", direction: "desc" }],
     });

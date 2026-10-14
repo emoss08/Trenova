@@ -212,6 +212,47 @@ func TestGuidance_IsKeptPerProfileAndRetiredUnderItsVersion(t *testing.T) {
 	assert.Equal(t, agentprofile.GuidanceStatusActive, listed[0].Status, "active lines lead")
 	require.NotNil(t, listed[0].CreatedBy, "who gave each line is read with it")
 
+	// A line someone offered waits beside the active ones: listed and counted
+	// as open, read into no version, and closed as dismissed without ever
+	// shaping the profile.
+	offered, err := f.guidance.Create(ctx, &agentprofile.Guidance{
+		OrganizationID: f.tenant.OrgID,
+		BusinessUnitID: f.tenant.BuID,
+		Subject:        org.Subject,
+		Content:        "The Chicago lane is new this quarter.",
+		Status:         agentprofile.GuidanceStatusSuggested,
+		Source:         agentprofile.GuidanceSourceAgent,
+		CreatedByID:    f.userID,
+	})
+	require.NoError(t, err)
+
+	open, err := f.guidance.List(ctx, &agentprofileports.ListGuidanceRequest{Ref: org})
+	require.NoError(t, err)
+	require.Len(t, open, 2, "the active line and the offered one; the retired one is left out")
+	assert.Equal(t, agentprofile.GuidanceStatusActive, open[0].Status, "active lines lead")
+	assert.Equal(t, agentprofile.GuidanceStatusSuggested, open[1].Status)
+
+	openCount, err := f.guidance.CountOpen(ctx, org)
+	require.NoError(t, err)
+	assert.Equal(t, 2, openCount)
+	activeCount, err := f.guidance.CountActive(ctx, org)
+	require.NoError(t, err)
+	assert.Equal(t, 1, activeCount, "an offered line shapes no version")
+
+	active, err = f.guidance.ListActive(ctx, org)
+	require.NoError(t, err)
+	require.Len(t, active, 1)
+
+	offered.Dismiss(f.userID, timeutils.NowUnix())
+	dismissed, err := f.guidance.Update(ctx, offered)
+	require.NoError(t, err)
+	assert.Equal(t, agentprofile.GuidanceStatusDismissed, dismissed.Status)
+	require.NotNil(t, dismissed.RetiredAt)
+
+	openCount, err = f.guidance.CountOpen(ctx, org)
+	require.NoError(t, err)
+	assert.Equal(t, 1, openCount)
+
 	_, err = f.guidance.GetByID(ctx, agentprofileports.GetGuidanceRequest{
 		ID:         pulid.MustNew("aprg_"),
 		TenantInfo: f.tenant,

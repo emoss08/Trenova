@@ -7,6 +7,8 @@ import {
   AgentProfileFieldsFragmentDoc,
   AgentProfileGuidanceFieldsFragmentDoc,
   AgentProfileVersionFieldsFragmentDoc,
+  ApproveAgentOrganizationProfileGuidanceDocument,
+  DismissAgentOrganizationProfileGuidanceDocument,
   MyAgentProfileDocument,
   RegenerateAgentOrganizationProfileDocument,
   RegenerateMyAgentProfileDocument,
@@ -164,6 +166,37 @@ export async function retireAgentProfileGuidance(
   return getFragmentData(
     AgentProfileGuidanceFieldsFragmentDoc,
     data.retireAgentOrganizationProfileGuidance,
+  );
+}
+
+/**
+ * An administrator's decision on a line someone offered about the organization:
+ * approving keeps it and the profile is written again with it; dismissing closes
+ * it before it ever shaped the profile. Only the organization's lines are offered.
+ */
+export async function approveAgentProfileGuidance(id: string): Promise<AgentProfileGuidance> {
+  const data = await requestGraphQL({
+    document: ApproveAgentOrganizationProfileGuidanceDocument,
+    operationName: "ApproveAgentOrganizationProfileGuidance",
+    variables: { id },
+  });
+
+  return getFragmentData(
+    AgentProfileGuidanceFieldsFragmentDoc,
+    data.approveAgentOrganizationProfileGuidance,
+  );
+}
+
+export async function dismissAgentProfileGuidance(id: string): Promise<AgentProfileGuidance> {
+  const data = await requestGraphQL({
+    document: DismissAgentOrganizationProfileGuidanceDocument,
+    operationName: "DismissAgentOrganizationProfileGuidance",
+    variables: { id },
+  });
+
+  return getFragmentData(
+    AgentProfileGuidanceFieldsFragmentDoc,
+    data.dismissAgentOrganizationProfileGuidance,
   );
 }
 
