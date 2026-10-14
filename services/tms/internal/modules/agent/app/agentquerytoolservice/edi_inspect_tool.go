@@ -135,7 +135,7 @@ func (t *inspectX12Tool) Query(
 	return view, nil
 }
 
-func bounded[T any](rows []T) ([]T, int) {
+func bounded[T any](rows []T) (kept []T, cut int) {
 	if len(rows) <= maxInspectRows {
 		return rows, 0
 	}

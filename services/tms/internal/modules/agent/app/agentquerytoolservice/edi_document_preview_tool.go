@@ -185,7 +185,9 @@ func (t *previewEDIDocumentTool) Query(
 		}
 		view := documentPreviewView(call.set, &answered.OutboundDocumentPreview)
 		view.Response = string(answered.Choice)
-		view.outside = []agent.RecordRef{{EntityType: ediTransferEntity, ID: call.transferID.String()}}
+		view.outside = []agent.RecordRef{
+			{EntityType: ediTransferEntity, ID: call.transferID.String()},
+		}
 
 		return t.gated(ctx, params, view), nil
 	}
@@ -251,10 +253,15 @@ func readDocumentPreviewCall(params map[string]any) (*documentPreviewCall, error
 	call.reason = strings.TrimSpace(optionalString(params, paramDeclineReason))
 
 	if call.set == edi.TransactionSet990 {
-		return call, call.check990()
+		err = call.check990()
+	} else {
+		err = call.checkShipmentDocument()
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	return call, call.checkShipmentDocument()
+	return call, nil
 }
 
 func (c *documentPreviewCall) check990() error {
