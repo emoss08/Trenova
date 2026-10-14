@@ -8862,6 +8862,7 @@
   "There is nobody in this pool to draw from": "此抽選池中沒有可供抽選的人員",
   "There is nothing on this run to invoice": "此批次中沒有可開立發票的項目",
   "There is nothing to compact yet. Compacting summarizes the turns before the latest two.": "目前還沒有可精簡的內容。精簡會摘要最新兩個回合之前的對話。",
+  "There isn't enough of your work on record yet to write about. Work with agents for a while and try again.": "你的工作紀錄還不足以撰寫概況。請與代理合作一段時間後再試。",
   "There's no POD on file": "檔案中沒有送達證明",
   "These are not documents of this organization: {0}": "這些不是本組織的文件：{0}",
   "These are not {0} records of this organization: {1}": "這些不是本組織的{0}記錄：{1}",

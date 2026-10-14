@@ -249708,6 +249708,15 @@
       "go/other"
     ]
   },
+  "There isn't enough of your work on record yet to write about. Work with agents for a while and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "There's no POD on file": {
     "sites": 1,
     "scope": [

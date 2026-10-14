@@ -19,9 +19,9 @@ const (
 	// the message before it.
 	minFocusWords = 2
 	// A word is rare enough to bear on its own when it appears in at most
-	// this share of the candidates, or in no more than rareWordDocs of them.
+	// this share of the candidates, and never in more than one of a few.
 	rareWordShare = 0.1
-	rareWordDocs  = 2
+	rareWordDocs  = 1
 )
 
 // conversationalWords carry a reply rather than a subject. They are left out
@@ -45,7 +45,7 @@ var conversationalWords = map[string]struct{}{
 // queryWord is one word the turn used, with the forms a memory may spell it
 // in: the word, its singular and the product's words for it.
 type queryWord struct {
-	word  string
+	raw   string
 	forms map[string]struct{}
 }
 
@@ -124,19 +124,21 @@ func queryWords(text string) []queryWord {
 			continue
 		}
 		seen[singular] = struct{}{}
-		words = append(words, queryWord{word: singular, forms: agentsearch.Terms(token)})
+		words = append(words, queryWord{raw: token, forms: agentsearch.Terms(token)})
 	}
 
 	return words
 }
 
 // recallTerms are the words of a recall query a memory can be found by when
-// it does not match every word: the meaningful ones, singular.
+// it does not match every word: the meaningful ones, as typed, because the
+// search matches them as prefixes of what a memory spells ("policies" finds
+// "policies"; "policy" would not).
 func recallTerms(query string) []string {
 	words := queryWords(query)
 	terms := make([]string, 0, len(words))
 	for _, word := range words {
-		terms = append(terms, word.word)
+		terms = append(terms, word.raw)
 	}
 
 	return terms
@@ -160,7 +162,9 @@ func memoryTokens(memory *agent.Memory) map[string]struct{} {
 }
 
 // rareWords marks the turn's words that few candidates share, the ones that
-// say which memory the turn is about rather than what kind of work it is.
+// say which memory the turn is about rather than what kind of work it is. A
+// word most of a small set shares is not rare in it, however small the set;
+// with one candidate there is nothing to compare, and a shared word stands.
 func rareWords(words []queryWord, tokens []map[string]struct{}) []bool {
 	limit := max(rareWordDocs, int(float64(len(tokens))*rareWordShare))
 	rare := make([]bool, len(words))
@@ -171,7 +175,7 @@ func rareWords(words []queryWord, tokens []map[string]struct{}) []bool {
 				docs++
 			}
 		}
-		rare[idx] = docs > 0 && docs <= limit
+		rare[idx] = docs > 0 && docs <= limit && (docs < len(tokens) || len(tokens) == 1)
 	}
 
 	return rare

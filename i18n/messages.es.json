@@ -26914,6 +26914,7 @@
   "There is nobody in this pool to draw from": "No hay nadie en este grupo de quien sortear",
   "There is nothing on this run to invoice": "No hay nada que facturar en esta ejecución",
   "There is nothing to compact yet. Compacting summarizes the turns before the latest two.": "Todavía no hay nada que compactar. Al compactar se resumen los turnos anteriores a los dos más recientes.",
+  "There isn't enough of your work on record yet to write about. Work with agents for a while and try again.": "Todavía no hay suficiente trabajo tuyo registrado para escribir al respecto. Trabaja un tiempo con los agentes y vuelve a intentarlo.",
   "There's no POD on file": "No hay ningún POD registrado",
   "There's no arrival time on record for {0}, so the stop times can't settle it.": "No hay hora de llegada registrada para {0}, así que los horarios de las paradas no pueden resolverlo.",
   "These are invisible in the revenue total, and they are usually why a tariff prices differently from how it was written.": "Estos no se ven en el total de ingresos, y suelen ser la razón por la que una tarifa se aplica de forma distinta a como se redactó.",

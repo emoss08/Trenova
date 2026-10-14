@@ -166,6 +166,10 @@ func (r *profileRepository) Publish(
 		cols := agentprofilecol.ProfileColumns
 		dba := r.db.DBForContext(ctx)
 
+		if kept, found, err := r.alreadyKept(ctx, dba, entity); err != nil || found {
+			return kept, err
+		}
+
 		if _, err := dba.NewUpdate().
 			Model((*agentprofile.Profile)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
@@ -197,8 +201,13 @@ func (r *profileRepository) RecordFailure(
 	entity *agentprofile.Profile,
 ) (*agentprofile.Profile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentprofile.Profile, error) {
+		dba := r.db.DBForContext(ctx)
+		if kept, found, err := r.alreadyKept(ctx, dba, entity); err != nil || found {
+			return kept, err
+		}
+
 		entity.Status = agentprofile.StatusFailed
-		if _, err := r.db.DBForContext(ctx).
+		if _, err := dba.
 			NewInsert().
 			Model(entity).
 			Returning("*").
@@ -290,6 +299,38 @@ func (r *profileRepository) Prune(
 
 		return int(affected), nil
 	})
+}
+
+// alreadyKept finds the version a retried write already committed, by the id
+// the plan chose for it, so a Finish that ran twice keeps one version.
+func (r *profileRepository) alreadyKept(
+	ctx context.Context,
+	dba bun.IDB,
+	entity *agentprofile.Profile,
+) (kept *agentprofile.Profile, found bool, err error) {
+	if entity.ID.IsNil() {
+		return nil, false, nil
+	}
+	cols := agentprofilecol.ProfileColumns
+	kept = new(agentprofile.Profile)
+	err = dba.NewSelect().
+		Model(kept).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return agentprofilecol.ProfileScopeTenant(sq, pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			}).Where(cols.ID.Eq(), entity.ID)
+		}).
+		Scan(ctx)
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, false, nil
+		}
+
+		return nil, false, fmt.Errorf("look for an agent profile version already kept: %w", err)
+	}
+
+	return kept, true, nil
 }
 
 func refOf(entity *agentprofile.Profile) agentprofileports.SubjectRef {

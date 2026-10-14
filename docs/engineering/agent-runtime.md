@@ -670,8 +670,8 @@ into a message that names its own. A word is one of the turn's meaningful words
 "now", "thanks" or "yes"), matched in any of its forms: itself, its singular,
 and the schema's word for it (`agentsearch.Terms`), against
 `agentsearch.TokenSet` on the memory. **Enough** is one word that is rare among
-the candidates (in at most a tenth of them, or no more than two), or any two
-words: in an organization whose memories all say "shipment", asking about a
+the candidates (in at most a tenth of them, never in more than one of a few, and
+not one most of a small set shares), or any two words: in an organization whose memories all say "shipment", asking about a
 shipment makes none of them bear on that word alone, while "hazmat" or a
 customer's name does. A one-word question needs that one word. The similarity
 and word tests are unioned, so a memory found either way bears. When there is
@@ -736,7 +736,7 @@ delegate reads the memories of no record. No `GetVersion` gate.
 GIN index). A query is `websearch_to_tsquery` or'd with every word as a prefix,
 ranked by `ts_rank_cd`; when nothing matches every word, any **two** of its
 meaningful words are tried as prefixes (`SearchAgentMemoriesRequest.Terms`, read
-the way relevance reads a turn, at most eight of them), so a question finds the
+the way relevance reads a turn but kept as typed, at most eight of them), so a question finds the
 memories that share most of it, and one common word — or "the" — never matches
 every memory on its own. A query with one meaningful word has no looser pass. A
 query with websearch operators (quotes, `or`, `-word`) is taken as written. It

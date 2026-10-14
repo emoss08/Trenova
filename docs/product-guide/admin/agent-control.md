@@ -495,7 +495,7 @@ Keywords: tainted memory, outside content, writes waiting for approval, review m
    or right-click it in the list.
 
 ### See and steer what agents know about the organization
-Keywords: organization profile, what agents know about us, business profile, agents assume, our lanes, our customers, steer the agents, guidance
+Keywords: organization profile, what agents know about us, business profile, agents assume, steer the agents, guidance
 1. Open [AI control](/admin/agent-control) and select **Memory** in the rail. **What agents know about the organization** is at the top: the note every agent reads before it answers, with when it was last checked.
 2. Open **What it was written from** to see the facts it came from: shipments, customers, lanes, fleet, drivers, integrations and settings, each worked out from your records.
 3. Under **Guidance**, type what the records cannot show, such as "The Laredo lane is seasonal; it runs from October to March", and select **Add guidance**. The note is written again with it a few minutes later. Each line shows who gave it.

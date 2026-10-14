@@ -1,6 +1,6 @@
 ---
 path: /desk/memory
-aliases: [agent memory, AI memory, what agents know about my work, my profile, about my work, tell the agent my role, what the AI remembers, what Desk remembers, saved preferences, standing instructions, teach the assistant, learned lessons, learned steps, forget a memory, forget something, memory settings, remember this]
+aliases: [agent memory, AI memory, what agents know about me, my profile, tell agents what I do, what the AI remembers, what Desk remembers, saved preferences, standing instructions, teach the assistant, learned lessons, learned steps, forget a memory, forget something, memory settings, remember this]
 related:
   - /desk
   - /admin/agent-control
@@ -15,8 +15,8 @@ Each memory shows who it is for (**Just you**, one of your teams, or the **Organ
 
 ## Tasks
 
-### See and correct what agents know about your work
-Keywords: my profile, about my work, my role, agents assume, wrong about me, tell agents what I do
+### See and correct what agents know about you
+Keywords: my profile, what agents know about me, agents assume, wrong about me, tell agents what I do
 1. Open [What Desk remembers](/desk/memory). **What agents know about your work** is at the top. Before you have worked with agents for a while it says **Nothing yet**.
 2. If something is wrong or missing, type it into **Tell agents about your work**, for example "I only handle the Midwest accounts", and select **Add**. The note is written again with it a few minutes later.
 3. To take a line back, select **Retire** next to it. The note is written again without it.

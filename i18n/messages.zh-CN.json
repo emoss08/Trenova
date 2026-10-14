@@ -26914,6 +26914,7 @@
   "There is nobody in this pool to draw from": "此抽选池中没有可供抽选的人员",
   "There is nothing on this run to invoice": "此批次中没有可开具发票的项目",
   "There is nothing to compact yet. Compacting summarizes the turns before the latest two.": "暂时没有可压缩的内容。压缩会总结最近两轮之前的轮次。",
+  "There isn't enough of your work on record yet to write about. Work with agents for a while and try again.": "你的工作记录还不足以撰写概况。请与智能体合作一段时间后再试。",
   "There's no POD on file": "没有存档的送达证明",
   "There's no arrival time on record for {0}, so the stop times can't settle it.": "{0} 没有到达时间记录，因此无法根据停靠点时间判定。",
   "These are invisible in the revenue total, and they are usually why a tariff prices differently from how it was written.": "这些项目不会显示在营收总额中，而它们通常正是运价表实际计价与其书面规定不同的原因。",

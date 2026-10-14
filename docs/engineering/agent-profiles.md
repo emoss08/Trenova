@@ -51,12 +51,15 @@ A scheduled pass also skips a profile written or checked recently, without worki
 facts: the organization's within 20 hours, a person's within six days (`organizationInterval`,
 `userInterval`). A person asking
 (`Requested`) or guidance changing (`Guidance`) writes it at once, whatever the schedule;
-`Requested` even writes a version whose digest has not changed.
+`Requested` even writes a version whose digest has not changed. `Regenerate` refuses up front
+where a pass would write nothing (plan, learning off, a person with no work on record), so the
+person is told why rather than left waiting.
 
 ## Guards
 
 - **Figures.** `readReply` runs `numberguard.CheckNumbers` over the write-up against every
-  figure in the facts and the guidance. A write-up citing anything else fails the version.
+  figure in the facts, the guidance and the organization's own name ("Route 66 Logistics").
+  A write-up citing anything else fails the version.
 - **A failed version never becomes current.** `Finish` records it with `status = Failed` and
   its reason; the current version stays what agents are told, and AI Control says the last
   attempt did not finish.
@@ -72,6 +75,9 @@ facts: the organization's within 20 hours, a person's within six days (`organiza
 - **Prompt framing.** Both profiles are fenced (`<organization_profile>`, `<person_profile>`),
   listed among the tags whose text is data, and introduced as background, never a source:
   agents still look figures up.
+- **Retries.** `Prepare` chooses the version's id (`GenerationPlan.VersionID`), and `Publish`
+  and `RecordFailure` return the row already kept under it, so a `Finish` activity retried
+  after its transaction committed keeps one version and announces it once.
 - **Retention.** Each profile keeps its newest 60 versions (`agentprofileports.KeptVersions`);
   `Prune` runs after every write and never removes the current version.
 
@@ -82,9 +88,9 @@ facts: the organization's within 20 hours, a person's within six days (`organiza
 | Workflow | When |
 |---|---|
 | `AgentProfileSweepWorkflow` | daily at 09:17 UTC (`agent-profiles` schedule), fanning out one child per organization |
-| `AgentProfileOrganizationWorkflow` | the organization's profile, then each person who started an agent turn in the last 14 days (`ActiveUserDays`, at most 500), four at a time |
+| `AgentProfileOrganizationWorkflow` | the organization's profile, then each person who started an agent turn in the last 14 days (`ActiveUserDays`, at most 500), four at a time. The organization's failure does not cost its people their profiles; an organization that writes none (learning off, no agents in the plan) lists nobody |
 | `AgentProfileWorkflow` | one profile: prepare → model → finish → prune |
-| `AgentProfileRequestWorkflow` | `agent-profile:<org>:<bu>:organization` or `…:user:<id>`, started or signalled by `agentprofilecontract.Scheduler`. A person asking writes at once; guidance waits for two quiet minutes (at most ten), so several lines cost one write |
+| `AgentProfileRequestWorkflow` | `agent-profile:<org>:<bu>:organization` or `…:user:<id>`, started or signalled by `agentprofilecontract.Scheduler`. A person asking writes at once; guidance waits for two quiet minutes (at most ten), so several lines cost one write. The request that starts the workflow arrives as its first signal too, and is folded in before the write rather than written twice |
 
 Activities read the tenant from the request's `SubjectRef` (organization and business unit;
 the person is `PersonID`, never `UserID`, so it is not mistaken for the actor).

@@ -161,8 +161,11 @@ func SweepWorkflow(ctx workflow.Context, input *SweepInput) (*SweepResult, error
 }
 
 // OrganizationWorkflow writes the organization's profile, then the profile of
-// each person who talked to an agent lately, a few at a time. One person's
-// failure is theirs; it does not fail the organization.
+// each person who talked to an agent lately, a few at a time. Each profile's
+// failure is its own: the organization's does not cost its people theirs, and
+// one person's does not fail the organization. An organization that writes no
+// profiles at all (learning off, or a plan without agents) writes none of its
+// people's either, without asking each one.
 func OrganizationWorkflow(
 	ctx workflow.Context,
 	input *OrganizationInput,
@@ -175,9 +178,17 @@ func OrganizationWorkflow(
 		Ref:     agentprofileports.OrganizationSubject(tenantInfo),
 		Trigger: agentprofile.TriggerScheduled,
 	}, &organization); err != nil {
-		return result, err
+		result.Failed++
+		workflow.GetLogger(ctx).Error("could not write an organization's agent profile",
+			"organizationId", tenantInfo.OrgID.String(),
+			"error", err.Error(),
+		)
+	} else {
+		result.add(&organization)
+		if organization.Gated {
+			return result, nil
+		}
 	}
-	result.add(&organization)
 
 	var a *Activities
 	listCtx := withPriority(ctx, listOptions, tenantInfo)
@@ -246,6 +257,10 @@ func RequestWorkflow(
 	req := input.Request
 
 	for {
+		// The request that started the workflow was also signalled to it, so
+		// a person asking once is heard once: what is already waiting is
+		// folded in before the write, never after it.
+		drain(signals, &req)
 		if req.Trigger != agentprofile.TriggerRequested {
 			waitForQuiet(ctx, signals, &req)
 		}
@@ -287,6 +302,8 @@ func generate(
 	}
 	if !plan.Ready() {
 		result.Skipped++
+		result.Gated = plan.Skip == agentprofileports.SkipNotAllowed ||
+			plan.Skip == agentprofileports.SkipLearningOff
 
 		return nil
 	}

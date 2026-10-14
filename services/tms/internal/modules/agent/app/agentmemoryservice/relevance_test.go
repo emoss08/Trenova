@@ -177,3 +177,28 @@ func TestRelevance_ConversationalWordsAreNotATopic(t *testing.T) {
 	assert.True(t, relevance.Judged)
 	assert.False(t, relevance.Bears(memory.ID))
 }
+
+func TestRecallTerms_AreTheWordsAsTyped(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, []string{"detention", "policies", "acme"},
+		recallTerms("the detention policies for acme"),
+		"a prefix search finds \"policies\" by \"policies\", not by \"policy\"")
+}
+
+func TestRelevance_AWordMostOfAFewMemoriesShareIsNotRare(t *testing.T) {
+	t.Parallel()
+
+	first := relevanceMemory("Every shipment for Acme is checked twice.")
+	second := relevanceMemory("A shipment to Dallas needs a lumper receipt.")
+	third := relevanceMemory("Pay drivers on Friday.")
+
+	relevance := Relevance("Where is my shipment to Dallas?", "", agentports.RankedMemories{
+		Memories: []*agent.Memory{first, second, third},
+	})
+
+	assert.True(t, relevance.Judged)
+	assert.False(t, relevance.Bears(first.ID), "two of three say shipment; the word picks neither")
+	assert.True(t, relevance.Bears(second.ID), "Dallas does")
+	assert.False(t, relevance.Bears(third.ID))
+}

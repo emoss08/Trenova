@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentprofilejobs/agentprofilecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -220,4 +221,108 @@ func TestMerge_APersonAskingOutranksGuidance(t *testing.T) {
 		Ref: orgRef(), Trigger: agentprofile.TriggerGuidance,
 	})
 	assert.Equal(t, agentprofile.TriggerRequested, merged.Trigger)
+}
+
+func TestRequestWorkflow_TheRequestThatStartedItIsHeardOnce(t *testing.T) {
+	t.Parallel()
+
+	env := newEnv(t)
+	var a *Activities
+	request := agentprofileports.GenerateRequest{
+		Ref:           orgRef(),
+		Trigger:       agentprofile.TriggerRequested,
+		RequestedByID: pulid.ID("usr_a"),
+	}
+
+	// SignalWithStartWorkflow hands the same request over twice: as the start
+	// argument and as the first signal.
+	env.RegisterDelayedCallback(func() {
+		env.SignalWorkflow(agentprofilecontract.RequestedSignalName, request)
+	}, 0)
+
+	env.OnActivity(a.PrepareProfileActivity, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, req *agentprofileports.GenerateRequest) (*agentprofileports.GenerationPlan, error) {
+			return readyPlan(req), nil
+		}).Once()
+	env.OnActivity(a.ProfileModelActivity, mock.Anything, mock.Anything).
+		Return(&ModelReply{Result: &agentports.StructuredCompletionResult{Text: "{}"}}, nil).Once()
+	env.OnActivity(a.FinishProfileActivity, mock.Anything, mock.Anything).
+		Return(written(), nil).Once()
+	env.OnActivity(a.PruneProfileActivity, mock.Anything, mock.Anything).Return(nil).Once()
+
+	env.ExecuteWorkflow(RequestWorkflow, &agentprofilecontract.RequestInput{Request: request})
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+
+	var result ProfileResult
+	require.NoError(t, env.GetWorkflowResult(&result))
+	assert.Equal(t, 1, result.Written, "one click is one write")
+	env.AssertExpectations(t)
+}
+
+func TestOrganizationWorkflow_TheOrganizationsFailureIsNotItsPeoples(t *testing.T) {
+	t.Parallel()
+
+	env := newEnv(t)
+	env.RegisterWorkflow(ProfileWorkflow)
+	var a *Activities
+	person := pulid.ID("usr_a")
+
+	env.OnActivity(a.PrepareProfileActivity, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, req *agentprofileports.GenerateRequest) (*agentprofileports.GenerationPlan, error) {
+			if req.Ref.Subject == agentprofile.SubjectOrganization {
+				return nil, temporal.NewNonRetryableApplicationError("facts", "Broken", errors.New("facts"))
+			}
+			return readyPlan(req), nil
+		})
+	env.OnActivity(a.ListActiveUsersActivity, mock.Anything, mock.Anything).
+		Return([]pulid.ID{person}, nil).Once()
+	env.OnActivity(a.ProfileModelActivity, mock.Anything, mock.Anything).
+		Return(&ModelReply{Result: &agentports.StructuredCompletionResult{Text: "{}"}}, nil).Once()
+	env.OnActivity(a.FinishProfileActivity, mock.Anything, mock.Anything).
+		Return(written(), nil).Once()
+	env.OnActivity(a.PruneProfileActivity, mock.Anything, mock.Anything).Return(nil).Once()
+
+	env.ExecuteWorkflow(OrganizationWorkflow, &OrganizationInput{
+		TenantWorkItem: temporaljobs.NewTenantWorkItem(orgRef().Tenant(), 1),
+		Now:            1_790_000_000,
+	})
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+
+	var result OrganizationResult
+	require.NoError(t, env.GetWorkflowResult(&result))
+	assert.Equal(t, 1, result.Failed, "the organization's profile")
+	assert.Equal(t, 1, result.Written, "the person's profile was still written")
+	assert.Equal(t, 1, result.People)
+	env.AssertExpectations(t)
+}
+
+func TestOrganizationWorkflow_AnOrganizationThatWritesNoProfilesAsksNobody(t *testing.T) {
+	t.Parallel()
+
+	env := newEnv(t)
+	env.RegisterWorkflow(ProfileWorkflow)
+	var a *Activities
+
+	env.OnActivity(a.PrepareProfileActivity, mock.Anything, mock.Anything).
+		Return(&agentprofileports.GenerationPlan{
+			Ref:  orgRef(),
+			Skip: agentprofileports.SkipLearningOff,
+		}, nil).Once()
+
+	env.ExecuteWorkflow(OrganizationWorkflow, &OrganizationInput{
+		TenantWorkItem: temporaljobs.NewTenantWorkItem(orgRef().Tenant(), 1),
+		Now:            1_790_000_000,
+	})
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+
+	var result OrganizationResult
+	require.NoError(t, env.GetWorkflowResult(&result))
+	assert.Zero(t, result.People, "its people were not listed, let alone written about")
+	env.AssertExpectations(t)
 }

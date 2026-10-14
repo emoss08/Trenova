@@ -184,6 +184,8 @@ func (s *Service) Prepare(
 
 	plan.Facts = facts
 	plan.Digest = Digest(facts, guidance)
+	plan.VersionID = pulid.MustNew("aprf_")
+	plan.OrganizationName = organizationName
 	for _, line := range guidance {
 		plan.GuidanceIDs = append(plan.GuidanceIDs, line.ID)
 	}
@@ -389,6 +391,7 @@ func (s *Service) Finish(
 	plan := req.Plan
 
 	entity := &agentprofile.Profile{
+		ID:             plan.VersionID,
 		OrganizationID: plan.Ref.OrganizationID,
 		BusinessUnitID: plan.Ref.BusinessUnitID,
 		Subject:        plan.Ref.Subject,
@@ -454,6 +457,9 @@ func (s *Service) written(
 	guidance, err := s.guidanceTexts(ctx, req.Plan)
 	if err != nil {
 		return "", err.Error()
+	}
+	if name := strings.TrimSpace(req.Plan.OrganizationName); name != "" {
+		guidance = append(guidance, name)
 	}
 	content, err = readReply(req.Result.Text, req.Plan.Facts, guidance)
 	if err != nil {
@@ -730,6 +736,17 @@ func (s *Service) Regenerate(ctx context.Context, req *agentprofileports.Regener
 		return errortypes.NewBusinessError(
 			"Profiles cannot be written right now. Try again shortly.",
 		)
+	}
+	if req.Ref.Subject == agentprofile.SubjectUser {
+		facts, _, factsErr := s.workOutFacts(ctx, req.Ref)
+		if factsErr != nil {
+			return factsErr
+		}
+		if !HasActivity(facts) {
+			return errortypes.NewBusinessError(
+				"There isn't enough of your work on record yet to write about. Work with agents for a while and try again.",
+			)
+		}
 	}
 
 	return s.scheduler.Request(ctx, &agentprofileports.GenerateRequest{

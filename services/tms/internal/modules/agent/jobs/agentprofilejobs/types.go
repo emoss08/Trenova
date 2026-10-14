@@ -61,6 +61,9 @@ type ProfileResult struct {
 	Written int `json:"written"`
 	Failed  int `json:"failed"`
 	Skipped int `json:"skipped"`
+	// Gated says the organization writes no profiles at all: learning is off
+	// or its plan has no agents.
+	Gated bool `json:"gated,omitempty"`
 }
 
 func (r *ProfileResult) add(other *ProfileResult) {

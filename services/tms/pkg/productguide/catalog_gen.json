@@ -1,5 +1,5 @@
 {
-  "version": "sha256:b325ef69b45edb30860d76e1bb48110c8c5d3c9d11bb637640cc26c6cba61f30",
+  "version": "sha256:b7160f860bc38007f9d5280232640301746c69c27730431d6d2494b0b9b6771c",
   "modules": [
     {
       "id": "home",
@@ -3039,8 +3039,6 @@
             "what agents know about us",
             "business profile",
             "agents assume",
-            "our lanes",
-            "our customers",
             "steer the agents",
             "guidance"
           ],
@@ -9628,10 +9626,9 @@
       "aliases": [
         "agent memory",
         "AI memory",
-        "what agents know about my work",
+        "what agents know about me",
         "my profile",
-        "about my work",
-        "tell the agent my role",
+        "tell agents what I do",
         "what the AI remembers",
         "what Desk remembers",
         "saved preferences",
@@ -9646,11 +9643,10 @@
       ],
       "tasks": [
         {
-          "title": "See and correct what agents know about your work",
+          "title": "See and correct what agents know about you",
           "keywords": [
             "my profile",
-            "about my work",
-            "my role",
+            "what agents know about me",
             "agents assume",
             "wrong about me",
             "tell agents what I do"

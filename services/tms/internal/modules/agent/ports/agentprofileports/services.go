@@ -41,15 +41,19 @@ type GenerateRequest struct {
 // a new version is due, the request that writes it. A worker runs the request
 // in its own activity and hands the reply to Finish.
 type GenerationPlan struct {
-	Ref           SubjectRef                              `json:"ref"`
-	Trigger       agentprofile.Trigger                    `json:"trigger"`
-	RequestedByID pulid.ID                                `json:"requestedById,omitempty"`
-	Skip          SkipReason                              `json:"skip,omitempty"`
-	Facts         agentprofile.Facts                      `json:"facts"`
-	GuidanceIDs   []pulid.ID                              `json:"guidanceIds"`
-	Digest        string                                  `json:"digest"`
-	CurrentID     pulid.ID                                `json:"currentId,omitempty"`
-	Request       *agentports.StructuredCompletionRequest `json:"request,omitempty"`
+	Ref           SubjectRef           `json:"ref"`
+	Trigger       agentprofile.Trigger `json:"trigger"`
+	RequestedByID pulid.ID             `json:"requestedById,omitempty"`
+	Skip          SkipReason           `json:"skip,omitempty"`
+	Facts         agentprofile.Facts   `json:"facts"`
+	GuidanceIDs   []pulid.ID           `json:"guidanceIds"`
+	Digest        string               `json:"digest"`
+	CurrentID     pulid.ID             `json:"currentId,omitempty"`
+	// VersionID is the id the version will be kept under, chosen when the
+	// plan is made, so a Finish run twice keeps one version.
+	VersionID        pulid.ID                                `json:"versionId,omitempty"`
+	OrganizationName string                                  `json:"organizationName,omitempty"`
+	Request          *agentports.StructuredCompletionRequest `json:"request,omitempty"`
 }
 
 func (p *GenerationPlan) Ready() bool {

@@ -141,8 +141,10 @@ type writtenProfile struct {
 }
 
 // readReply keeps the model's profile only when it says something, fits, and
-// cites no figure the facts or guidance do not hold. Anything else fails the
-// version, and the one before it stays what agents are told.
+// cites no figure the facts or guidance do not hold; the organization's own
+// name rides with the guidance, so "Route 66 Logistics" is not a figure.
+// Anything else fails the version, and the one before it stays what agents
+// are told.
 func readReply(
 	text string,
 	facts agentprofile.Facts,

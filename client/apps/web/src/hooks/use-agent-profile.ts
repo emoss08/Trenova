@@ -7,13 +7,10 @@ import {
   retireAgentProfileGuidance,
   type AgentProfileOwner,
 } from "@/lib/graphql/agent-profile";
+import { describeApiError } from "@/lib/api-error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { toast } from "sonner";
-
-function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error && error.message ? error.message : fallback;
-}
 
 /**
  * A profile agents are told, and what a person may do to it: give a line of guidance,
@@ -40,7 +37,7 @@ export function useAgentProfile(owner: AgentProfileOwner, options?: { enabled?: 
       await refresh();
     },
     onError: (error) => {
-      toast.error(errorMessage(error, t("The guidance could not be added")));
+      toast.error(describeApiError(error, t("The guidance could not be added")));
     },
   });
 
@@ -51,7 +48,7 @@ export function useAgentProfile(owner: AgentProfileOwner, options?: { enabled?: 
       await refresh();
     },
     onError: (error) => {
-      toast.error(errorMessage(error, t("The guidance could not be retired")));
+      toast.error(describeApiError(error, t("The guidance could not be retired")));
     },
   });
 
@@ -61,7 +58,7 @@ export function useAgentProfile(owner: AgentProfileOwner, options?: { enabled?: 
       toast.success(t("The profile is being written again; it will update here when it's done"));
     },
     onError: (error) => {
-      toast.error(errorMessage(error, t("The profile could not be written again")));
+      toast.error(describeApiError(error, t("The profile could not be written again")));
     },
   });
 

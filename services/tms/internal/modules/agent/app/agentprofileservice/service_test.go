@@ -78,7 +78,14 @@ func (f *fakeProfiles) Publish(
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	entity.ID = pulid.MustNew("aprf_")
+	for _, kept := range f.published {
+		if entity.ID.IsNotNil() && kept.ID == entity.ID {
+			return kept, nil
+		}
+	}
+	if entity.ID.IsNil() {
+		entity.ID = pulid.MustNew("aprf_")
+	}
 	entity.Status = agentprofile.StatusCurrent
 	f.published = append(f.published, entity)
 	f.current[refFor(entity)] = entity
@@ -623,4 +630,62 @@ func TestPrepare_AnUnchangedProfileIsNotWorkedOutAgainUntilItIsDue(t *testing.T)
 	require.NoError(t, err)
 	assert.Equal(t, agentprofileports.SkipTooSoon, plan.Skip,
 		"a person's facts checked yesterday are not worked out again for a week")
+}
+
+func TestFinish_RunAgainAfterACommitKeepsOneVersion(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	plan, err := h.svc.Prepare(t.Context(), &agentprofileports.GenerateRequest{Ref: h.org()})
+	require.NoError(t, err)
+	require.True(t, plan.VersionID.IsNotNil(), "the plan names the version before it is written")
+
+	finish := &agentprofileports.FinishGenerationRequest{
+		Plan:   plan,
+		Result: reply("Acme Freight runs its own fleet."),
+	}
+	first, err := h.svc.Finish(t.Context(), finish)
+	require.NoError(t, err)
+	second, err := h.svc.Finish(t.Context(), finish)
+	require.NoError(t, err)
+
+	assert.Equal(t, first.ProfileID, second.ProfileID)
+	assert.Equal(t, plan.VersionID, first.ProfileID)
+	assert.Len(t, h.profiles.published, 1, "a retried activity does not stack a second version")
+}
+
+func TestFinish_TheOrganizationsOwnNameIsNotAFigure(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.svc.organizations = tenantportsmock.NewMockOrganizationRepository(t)
+	h.svc.organizations.(*tenantportsmock.MockOrganizationRepository).EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(&tenant.Organization{Name: "Route 66 Logistics", AssetOperationsEnabled: true}, nil)
+
+	plan, err := h.svc.Prepare(t.Context(), &agentprofileports.GenerateRequest{Ref: h.org()})
+	require.NoError(t, err)
+	assert.Equal(t, "Route 66 Logistics", plan.OrganizationName)
+
+	outcome, err := h.svc.Finish(t.Context(), &agentprofileports.FinishGenerationRequest{
+		Plan:   plan,
+		Result: reply("Route 66 Logistics runs its own fleet, mostly sleepers."),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, agentprofile.StatusCurrent, outcome.Status)
+}
+
+func TestRegenerate_SaysWhenAPersonHasNoWorkToWriteAbout(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.facts.user = &agentprofileports.UserActivity{JobTitle: "Dispatcher"}
+
+	err := h.svc.Regenerate(t.Context(), &agentprofileports.RegenerateRequest{
+		Ref:   agentprofileports.UserSubject(h.tenant, h.userID),
+		Actor: h.person(),
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "enough of your work")
+	assert.Empty(t, h.scheduler.requests, "nothing is queued that would write nothing")
 }

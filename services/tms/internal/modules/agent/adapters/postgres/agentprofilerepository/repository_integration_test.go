@@ -250,3 +250,24 @@ func TestFacts_ReadEveryAggregateWithoutError(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, users, "nobody has talked to an agent in a fresh organization")
 }
+
+func TestPublish_TheSameVersionWrittenTwiceIsKeptOnce(t *testing.T) {
+	ctx, f := newProfileFixture(t)
+	org := agentprofileports.OrganizationSubject(f.tenant)
+
+	entity := f.version(org, "Runs a regional fleet.")
+	entity.ID = pulid.MustNew("aprf_")
+	first, err := f.profiles.Publish(ctx, entity)
+	require.NoError(t, err)
+
+	again := f.version(org, "Runs a regional fleet.")
+	again.ID = entity.ID
+	second, err := f.profiles.Publish(ctx, again)
+	require.NoError(t, err)
+	assert.Equal(t, first.ID, second.ID)
+
+	history, err := f.profiles.ListHistory(ctx, agentprofileports.ListProfileHistoryRequest{Ref: org})
+	require.NoError(t, err)
+	require.Len(t, history, 1)
+	assert.Equal(t, agentprofile.StatusCurrent, history[0].Status)
+}
