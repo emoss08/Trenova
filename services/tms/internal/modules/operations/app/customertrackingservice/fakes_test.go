@@ -390,7 +390,7 @@ func newHarness() *harness {
 		now:           testNow,
 	}
 	cfg := &config.Config{}
-	cfg.Tendering.PublicBaseURL = "https://app.example.com/"
+	cfg.App.WebBaseURL = "https://app.example.com/"
 	h.service = &Service{
 		l:             zap.NewNop(),
 		cfg:           cfg,

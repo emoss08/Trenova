@@ -445,7 +445,7 @@ func dispatcherConfirmation(name string, at int64) rateconfirmation.Confirmation
 }
 
 func (s *Service) signLinkConfigured() bool {
-	return s.cfg != nil && s.cfg.Tendering.GetPublicBaseURL() != ""
+	return s.cfg != nil && s.cfg.PublicLinkBaseURL() != ""
 }
 
 func copyRateCon(

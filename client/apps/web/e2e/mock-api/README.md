@@ -1,7 +1,8 @@
 # Mock API
 
 A dependency-free Node server that stands in for the TMS API, so the shipments board
-(`/shipment-management/shipments`), AI control (`/admin/agent-control`), Triage (`/triage`, the
+(`/shipment-management/shipments`, with each shipment's Customer tracking tab), the customer
+tracking page (`/shipment-tracking/<token>`), AI control (`/admin/agent-control`), Triage (`/triage`, the
 redesign of `/inbox`), the Desk (`/desk`) and the Formula Studio
 (`/billing/configuration-files/formula-templates/new`, `…/<id>/edit`) can be run, clicked through and screenshotted without Postgres, Redis,
 Temporal or an AI provider. It answers the REST session endpoints the app shell needs, every
@@ -145,6 +146,21 @@ other scenarios and the realtime stream, and fails if any operation in the two f
 An operation the mock does not know is logged as `unhandled GraphQL operation <name>` (or
 `unhandled GET <path>`) and answered with an empty result; add a handler in
 `handlers/graphql.mjs` or `handlers/rest.mjs` when a new one appears.
+
+## Customer tracking
+
+`handlers/customertracking.mjs` serves the customer's tracking page and the shipment panel's
+Customer tracking tab. `GET /api/v1/shipment-tracking-links/<token>/` answers one view per
+token, timed against the real clock: `in-transit`, `delayed` (a weather hold and a late
+delivery), `delivered`, `pod-ready` (delivered with the POD on file), `planned`, `canceled` and
+`minimal` (a customer shown the route alone); any other token is a dead link.
+`GET /api/v1/shipments/<id>/customer-tracking/preview/` is the in-transit view with equipment,
+freight and holds hidden, as the fixture's settings say. The tab's queries keep links per
+shipment for the scenario, so issuing and revoking change what the next read returns.
+
+```bash
+node e2e/mock-api/customer-tracking-screenshots.mjs [outDir] [name,name,...]
+```
 
 ## Formula Studio
 

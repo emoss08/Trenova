@@ -78,8 +78,11 @@ reaches the page by being merely present.
 ## Links
 
 `customer_tracking_links` stores a link's SHA-256 hash, never the token (`tokenutils.New`); the
-URL is `tendering.publicBaseUrl` + `/shipment-tracking/<token>` and is returned once, to the
-person or agent that issued it. A link has a purpose (`Shared` by a person or agent, or
+URL is the public link base + `/shipment-tracking/<token>` and is returned once, to the
+person or agent that issued it. The base is `Config.PublicLinkBaseURL()`: `tendering.publicBaseUrl`
+when an installation set it, else `app.webBaseUrl`. Carrier tracking links, tender offers and
+public rate confirmations use the same resolver, so one setting serves every link a customer or
+carrier opens. A link has a purpose (`Shared` by a person or agent, or
 `Notification` when minted for a status email), an optional recipient, an expiry from the
 profile's TTL, a revoke time, and a view count with the last view.
 
@@ -95,6 +98,15 @@ and `Referrer-Policy: no-referrer`, and resolve the tenant from the link
 (`dbscope.WithTenant`), never from the request. The proof-of-delivery download works only when
 `ProofOfDelivery` is visible. A daily retention schedule deletes links revoked or expired more
 than 30 days ago.
+
+### Preview
+
+`GET /shipments/:shipmentID/customer-tracking/preview/` (shipment read) returns the view a link
+sent now would show: the same `PublicTrackingView`, built by the same `buildView` the token path
+uses, from the shipment's current state and the customer's profile (or the defaults), with
+`expiresAt` set to now plus the profile's TTL. It mints no link, records no view, and answers
+`Cache-Control: no-store`. It works while the customer's links are off, so staff can check what
+turning them on would show.
 
 ## Status emails, exactly once
 
@@ -161,7 +173,37 @@ to the unattended customer update desk.
 
 ## Web
 
-The customer form's **Tracking** tab edits the profile. The shipment panel's **Customer
-Tracking** tab shares a link (the URL is shown once), lists links with their state, views and
-recipient, revokes one or all, and lists each status email with what became of it. The public
-page at `/shipment-tracking/:token` needs no sign-in and draws only what the view returns.
+The customer form's **Tracking** tab edits the profile.
+
+The shipment panel's **Customer Tracking** tab (`shipment-customer-tracking.tsx`) is sections
+split by hairlines, not cards:
+
+- **Shared with** names the customer, shows whether links are on and their lifetime, and how
+  many details the page shows (the tooltip lists what is shown and what is hidden). **Preview**
+  opens the public page, drawn from the preview endpoint, in a full-screen dialog with a
+  preview bar in place of the live indicator and none of the link-only actions; **Settings**
+  opens the customer's Tracking tab.
+- **Tracking links** emails a new link or makes one to copy (the URL is shown once), lists live
+  links with recipient, when sent, opens and expiry, revokes one or all, and folds expired and
+  revoked links away. Canceled shipments and customers with links off say why nothing can be
+  shared.
+- **Status emails** draws the four events as a track: sent, retrying, failed, skipped, not yet,
+  or off by the customer's rules (`statusEmailSteps`), with the server's last error for a
+  retrying or failed email.
+
+The public page at `/shipment-tracking/:token` needs no sign-in and draws only what the view
+returns (`routes/shipment-tracking-public`, `TrackingView`):
+
+- a serif headline with one sentence per status (`trackingHeadline`) and the expected arrival
+  measured against the appointment window (`minutesOutsideWindow`), with **Add to calendar**
+  (an `.ics` from `@trenova/shared/lib/calendar-file`) and **Copy link**;
+- the route ribbon: stops spaced evenly, the driven part filled, and the truck placed by
+  `journeyOf` between the last departure and the next expected arrival, labelled with the last
+  reported location;
+- the stops, the shipper's updates and holds, references, and the POD download;
+- a glow and truck halo in the status's tone, refreshing every two minutes with a live
+  indicator.
+
+The mock API serves both surfaces (`client/apps/web/e2e/mock-api/handlers/customertracking.mjs`:
+tokens `in-transit`, `delayed`, `delivered`, `pod-ready`, `planned`, `canceled`, `minimal`), and
+`e2e/mock-api/customer-tracking-screenshots.mjs` captures every state.

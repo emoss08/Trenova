@@ -4,7 +4,6 @@ import type {
   CustomerTrackingLinkRow,
 } from "@/lib/graphql/customer-tracking";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
 
 export type LinkState = "live" | "expired" | "revoked";
 
@@ -16,35 +15,8 @@ export function linkState(link: CustomerTrackingLinkRow, now: number): LinkState
   return link.expiresAt > now ? "live" : "expired";
 }
 
-export function linkStateAttrs(t: TranslateFn): Record<LinkState, BadgeAttrProps> {
-  return {
-    live: { phase: "active", text: t("Live") },
-    expired: { phase: "closed", text: t("Expired") },
-    revoked: { phase: "closed", text: t("Revoked") },
-  };
-}
-
 export function liveLinkCount(links: readonly CustomerTrackingLinkRow[], now: number): number {
   return links.filter((link) => linkState(link, now) === "live").length;
-}
-
-export function notificationStatusAttrs(
-  t: TranslateFn,
-): Record<CustomerStatusNotificationRow["status"], BadgeAttrProps> {
-  return {
-    Pending: {
-      phase: "queued",
-      text: t("Pending"),
-      description: t("Owed and not yet sent; retried after a failure"),
-    },
-    Sent: { phase: "complete", text: t("Sent") },
-    Skipped: { phase: "closed", text: t("Skipped") },
-    Failed: {
-      phase: "failed",
-      text: t("Failed"),
-      description: t("Gave up after repeated failures"),
-    },
-  };
 }
 
 export function statusEventLabel(t: TranslateFn, event: CustomerStatusNotificationRow["event"]) {
@@ -121,4 +93,41 @@ export function trackingFieldLabel(t: TranslateFn, field: CustomerTrackingField)
     default:
       return t("Proof of delivery");
   }
+}
+
+export const STATUS_EVENTS: readonly CustomerStatusNotificationRow["event"][] = [
+  "PickedUp",
+  "Delayed",
+  "Delivered",
+  "PodReady",
+];
+
+/** Where one status email stands on this shipment. */
+export type StatusEmailStep = {
+  event: CustomerStatusNotificationRow["event"];
+  /** Whether the customer's rules send this email at all. */
+  enabled: boolean;
+  /** The latest email owed for the event, if one has been. */
+  latest: CustomerStatusNotificationRow | null;
+  /** How many have been owed, e.g. a delay email per late stop. */
+  count: number;
+};
+
+/**
+ * The four status emails in the order a shipment earns them, each with
+ * whether the rules send it and the latest one owed. A rule turned off after
+ * an email went out still shows that email.
+ */
+export function statusEmailSteps(
+  rules: Readonly<Record<CustomerStatusNotificationRow["event"], boolean>>,
+  rows: readonly CustomerStatusNotificationRow[],
+): StatusEmailStep[] {
+  return STATUS_EVENTS.map((event) => {
+    const owed = rows.filter((row) => row.event === event);
+    const latest = owed.reduce<CustomerStatusNotificationRow | null>(
+      (best, row) => (best == null || row.occurredAt > best.occurredAt ? row : best),
+      null,
+    );
+    return { event, enabled: rules[event], latest, count: owed.length };
+  });
 }
