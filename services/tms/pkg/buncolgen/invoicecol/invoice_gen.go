@@ -2038,6 +2038,7 @@ var InvoiceLineColumns = struct {
 	RateUnit            buncolgen.Column // "rate_unit" → qualified: "invl.rate_unit"
 	Rate                buncolgen.Column // "rate" → qualified: "invl.rate"
 	RateBasisAmount     buncolgen.Column // "rate_basis_amount" → qualified: "invl.rate_basis_amount"
+	FormulaTemplateID   buncolgen.Column // "formula_template_id" → qualified: "invl.formula_template_id"
 	FormulaTemplateName buncolgen.Column // "formula_template_name" → qualified: "invl.formula_template_name"
 	AllocationPercent   buncolgen.Column // "allocation_percent" → qualified: "invl.allocation_percent"
 	ChargeAllocationID  buncolgen.Column // "charge_allocation_id" → qualified: "invl.charge_allocation_id"
@@ -2066,6 +2067,7 @@ var InvoiceLineColumns = struct {
 	RateUnit:            buncolgen.NewColumn("rate_unit", "invl"),
 	Rate:                buncolgen.NewColumn("rate", "invl"),
 	RateBasisAmount:     buncolgen.NewColumn("rate_basis_amount", "invl"),
+	FormulaTemplateID:   buncolgen.NewColumn("formula_template_id", "invl"),
 	FormulaTemplateName: buncolgen.NewColumn("formula_template_name", "invl"),
 	AllocationPercent:   buncolgen.NewColumn("allocation_percent", "invl"),
 	ChargeAllocationID:  buncolgen.NewColumn("charge_allocation_id", "invl"),
@@ -2100,6 +2102,7 @@ var InvoiceLineFieldMap = map[string]string{
 	"rateUnit":            "rate_unit",
 	"rate":                "rate",
 	"rateBasisAmount":     "rate_basis_amount",
+	"formulaTemplateId":   "formula_template_id",
 	"formulaTemplateName": "formula_template_name",
 	"allocationPercent":   "allocation_percent",
 	"chargeAllocationId":  "charge_allocation_id",
@@ -2132,6 +2135,7 @@ var InvoiceLineInsertableColumns = []string{
 	"rate_unit",
 	"rate",
 	"rate_basis_amount",
+	"formula_template_id",
 	"formula_template_name",
 	"allocation_percent",
 	"charge_allocation_id",
@@ -2222,6 +2226,7 @@ var InvoiceLineFilter = struct {
 	RateUnit            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateUnit" → DB: "rate_unit"
 	Rate                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rate" → DB: "rate"
 	RateBasisAmount     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateBasisAmount" → DB: "rate_basis_amount"
+	FormulaTemplateID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
 	FormulaTemplateName func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateName" → DB: "formula_template_name"
 	AllocationPercent   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allocationPercent" → DB: "allocation_percent"
 	ChargeAllocationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "chargeAllocationId" → DB: "charge_allocation_id"
@@ -2289,6 +2294,9 @@ var InvoiceLineFilter = struct {
 	},
 	RateBasisAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("rateBasisAmount", op, value)
+	},
+	FormulaTemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("formulaTemplateId", op, value)
 	},
 	FormulaTemplateName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("formulaTemplateName", op, value)
