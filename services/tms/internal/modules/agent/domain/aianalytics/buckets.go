@@ -54,11 +54,7 @@ func alignBucket(location *time.Location, at, size int64) int64 {
 
 func BucketsDigest(starts []int64) uint64 {
 	digest := fnv.New64a()
-	var word [8]byte
-	for _, start := range starts {
-		binary.LittleEndian.PutUint64(word[:], uint64(start))
-		_, _ = digest.Write(word[:])
-	}
+	_ = binary.Write(digest, binary.LittleEndian, starts)
 
 	return digest.Sum64()
 }
