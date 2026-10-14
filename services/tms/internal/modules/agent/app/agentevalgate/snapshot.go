@@ -42,6 +42,7 @@ type PolicySnapshot struct {
 	Source              string   `json:"source,omitempty"`
 	Sources             []string `json:"sources,omitempty"`
 	CarriesTaint        bool     `json:"carriesTaint"`
+	CapsLaterWrites     bool     `json:"capsLaterWrites,omitempty"`
 	Rationale           string   `json:"rationale"`
 }
 
@@ -128,6 +129,7 @@ func snapshotPolicy(policy *agentports.ToolPolicy) PolicySnapshot {
 		Source:              policy.Source.String(),
 		Sources:             sources,
 		CarriesTaint:        policy.CarriesTaint,
+		CapsLaterWrites:     policy.CapsLaterWrites,
 		Rationale:           policy.Rationale,
 	}
 }

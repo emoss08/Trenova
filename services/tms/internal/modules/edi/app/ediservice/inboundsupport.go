@@ -428,17 +428,10 @@ func (s *Service) generateExternalTenderResponse(
 		)
 		return
 	}
-	payload := buildTenderResponsePayload(transfer)
-	if _, err = s.GenerateDocument(ctx, &GenerateEDIDocumentRequest{
-		TenantInfo:               tenantInfo,
-		PartnerDocumentProfileID: profile.ID,
-		EDIPartnerID:             transfer.TargetPartnerID,
-		TransferID:               transfer.ID,
-		TransactionSet:           edi.TransactionSet990,
-		Direction:                edi.DocumentDirectionOutbound,
-		Payload:                  &payload,
-		GeneratedByID:            actorID,
-	}); err != nil {
+	if _, err = s.GenerateDocument(
+		ctx,
+		tenderResponseRequest(tenantInfo, transfer, profile.ID, actorID),
+	); err != nil {
 		s.l.Warn(
 			"failed to generate outbound 990 EDI tender response",
 			zap.String("transferId", transfer.ID.String()),
